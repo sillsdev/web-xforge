@@ -1,4 +1,4 @@
-import { ScrVersType } from '../sfdomain-model.generated';
+import { ScrVersType } from '../question';
 import { BookSet } from './book-set';
 
 /**

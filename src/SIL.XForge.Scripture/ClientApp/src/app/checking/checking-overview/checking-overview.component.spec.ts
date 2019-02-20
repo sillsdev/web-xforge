@@ -5,13 +5,20 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { Observable, of } from 'rxjs';
+import { Snapshot } from 'sharedb/lib/client';
+import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 
 import { AuthService } from 'xforge-common/auth.service';
+import { RealtimeDoc } from 'xforge-common/realtime-doc';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { Question } from '../../core/models/question';
+import { QuestionData } from '../../core/models/question-data';
+import { Text } from '../../core/models/text';
 import { QuestionService } from '../../core/question.service';
+import { SFProjectService } from '../../core/sfproject.service';
 import { SFAdminAuthGuard } from '../../shared/sfadmin-auth.guard';
 import { QuestionDialogComponent } from '../question-dialog/question-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview.component';
@@ -28,9 +35,8 @@ describe('CheckingOverviewComponent', () => {
 
     it('should open dialog when "Add question" button is clicked', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.fixture.detectChanges();
       when(env.mockedMdcDialogRefForQDC.afterClosed()).thenReturn(of('close'));
-      when(env.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(env.mockedMdcDialogRefForQDC));
+      env.fixture.detectChanges();
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
       expect().nothing();
@@ -38,23 +44,29 @@ describe('CheckingOverviewComponent', () => {
 
     it('should not add a question if cancelled', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.fixture.detectChanges();
       when(env.mockedMdcDialogRefForQDC.afterClosed()).thenReturn(of('close'));
-      when(env.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(env.mockedMdcDialogRefForQDC));
+      env.fixture.detectChanges();
+      flush();
+      verify(env.mockedQuestionService.connect(anything())).once();
+
+      resetCalls(env.mockedQuestionService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedQuestionService.create(anything())).never();
+      verify(env.mockedQuestionService.connect(anything())).never();
       expect().nothing();
     }));
 
     it('should add a question if requested', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.fixture.detectChanges();
       when(env.mockedMdcDialogRefForQDC.afterClosed()).thenReturn(of(''));
-      when(env.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(env.mockedMdcDialogRefForQDC));
+      env.fixture.detectChanges();
+      flush();
+      verify(env.mockedQuestionService.connect(anything())).once();
+
+      resetCalls(env.mockedQuestionService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedQuestionService.create(anything())).once();
+      verify(env.mockedQuestionService.connect(anything())).once();
       expect().nothing();
     }));
   });
@@ -76,14 +88,19 @@ class TestEnvironment {
   mockedMdcDialog: MdcDialog = mock(MdcDialog);
   mockedMdcDialogRefForQDC: MdcDialogRef<QuestionDialogComponent> = mock(MdcDialogRef);
   mockedSFAdminAuthGuard: SFAdminAuthGuard = mock(SFAdminAuthGuard);
-  mockedUserService: UserService = mock(UserService);
+  mockedProjectService: SFProjectService = mock(SFProjectService);
   mockedQuestionService: QuestionService = mock(QuestionService);
+  mockedUserService: UserService = mock(UserService);
   mockedAuthService: AuthService = mock(AuthService);
+  mockedRealtimeOfflineStore: RealtimeOfflineStore = mock(RealtimeOfflineStore);
   overlayContainer: OverlayContainer;
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({}));
+    when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedMdcDialogRefForQDC));
     when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
+    when(this.mockedProjectService.getTexts(anything())).thenReturn(of([{ id: 'text01' } as Text]));
+    when(this.mockedQuestionService.connect(anything())).thenResolve(this.createQuestionData());
 
     TestBed.configureTestingModule({
       imports: [DialogTestModule],
@@ -93,8 +110,9 @@ class TestEnvironment {
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
         { provide: MdcDialog, useFactory: () => instance(this.mockedMdcDialog) },
         { provide: SFAdminAuthGuard, useFactory: () => instance(this.mockedSFAdminAuthGuard) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
+        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) },
         { provide: QuestionService, useFactory: () => instance(this.mockedQuestionService) },
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) }
       ]
     });
@@ -118,5 +136,46 @@ class TestEnvironment {
 
   makeUserAProjectAdmin(isProjectAdmin: boolean = true) {
     this.component.isProjectAdmin$ = of(isProjectAdmin);
+  }
+
+  private createQuestionData(): QuestionData {
+    const doc = new MockRealtimeDoc('text01', []);
+    return new QuestionData(doc, instance(this.mockedRealtimeOfflineStore));
+  }
+}
+
+class MockRealtimeDoc implements RealtimeDoc {
+  readonly version: number = 1;
+  readonly type: string = 'ot-json0';
+  readonly pendingOps: any[] = [];
+
+  constructor(public readonly id: string, public readonly data: Question[]) {}
+
+  idle(): Observable<void> {
+    return of();
+  }
+
+  fetch(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  ingestSnapshot(_snapshot: Snapshot): Promise<void> {
+    return Promise.resolve();
+  }
+
+  subscribe(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  submitOp(_data: any, _source?: any): Promise<void> {
+    return Promise.resolve();
+  }
+
+  remoteChanges(): Observable<any> {
+    return of();
+  }
+
+  destroy(): Promise<void> {
+    return Promise.resolve();
   }
 }

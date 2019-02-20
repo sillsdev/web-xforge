@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { map } from 'rxjs/operators';
 
 import { JsonApiService, QueryObservable } from 'xforge-common/json-api.service';
 import { RealtimeService } from 'xforge-common/realtime.service';

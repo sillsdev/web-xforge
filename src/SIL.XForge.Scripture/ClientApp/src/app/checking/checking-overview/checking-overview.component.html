@@ -11,6 +11,13 @@
   </div>
 
   <div fxLayout="row wrap" fxLayoutAlign="start center">
-    <button mdc-button (click)="questionDialog()" *ngIf="(isProjectAdmin$ | async)"><mdc-icon>edit</mdc-icon></button>
+    <div *ngIf="(isProjectAdmin$ | async)">
+      <ul>
+        <li *ngFor="let text of texts">
+          <button mdc-button (click)="questionDialog()"><mdc-icon>edit</mdc-icon></button> {{ text?.name }}
+          <span *ngIf="questionCount(text.id) > 0"> - {{ questionCount(text.id) }} questions</span>
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
