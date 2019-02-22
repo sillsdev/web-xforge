@@ -1,0 +1,25 @@
+<mdc-drawer [drawer]="drawerType" *ngIf="(isLoggedIn | async)" [open]="isExpanded">
+  <mdc-drawer-header title="Main Menu"></mdc-drawer-header>
+  <mdc-drawer-content>
+    <a
+      mdc-list-item
+      routerLink="/home"
+      [routerLinkActive]="['mdc-list-item--activated']"
+      [routerLinkActiveOptions]="{ exact: true }"
+      (click)="collapseDrawer()"
+    >
+      <mdc-icon mdcListItemGraphic>home</mdc-icon>
+      Home
+    </a>
+    <a
+      mdc-list-item
+      routerLink="/fetch-data"
+      [routerLinkActive]="['mdc-list-item--activated']"
+      [routerLinkActiveOptions]="{ exact: true }"
+      (click)="collapseDrawer()"
+    >
+      <mdc-icon mdcListItemGraphic>view_list</mdc-icon>
+      Fetch Data
+    </a>
+  </mdc-drawer-content>
+</mdc-drawer>

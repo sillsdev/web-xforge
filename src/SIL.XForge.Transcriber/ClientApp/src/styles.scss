@@ -1,0 +1,50 @@
+/* Generic styles for the main html/body page itself */
+@import '~src/global';
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-grow {
+  flex: 1 1 auto;
+}
+
+.flex-max {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.cdk-overlay-pane.inviteDialogComponent {
+  width: 80%;
+  max-width: 400px !important;
+}
+
+.cdk-overlay-pane.inviteDialogComponent > .mat-dialog-container {
+  padding-top: 5px !important;
+}
+
+.snackbar-above-footer {
+  bottom: 63px;
+  @include media-breakpoint-only(xs) {
+    bottom: 45px;
+  }
+}

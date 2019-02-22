@@ -34,6 +34,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodeGenerator", "src\SIL.XF
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SIL.XForge.Scripture.CodeGenerator.Tests", "test\SIL.XForge.Scripture.CodeGenerator.Tests\SIL.XForge.Scripture.CodeGenerator.Tests.csproj", "{8A93D94E-7332-4ADE-BCA0-F47B7040CAE0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SIL.XForge.Transcriber", "src\SIL.XForge.Transcriber\SIL.XForge.Transcriber.csproj", "{C80150AD-FF56-4AD1-92C2-BFF1978BAE1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -80,6 +82,10 @@ Global
 		{8A93D94E-7332-4ADE-BCA0-F47B7040CAE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A93D94E-7332-4ADE-BCA0-F47B7040CAE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A93D94E-7332-4ADE-BCA0-F47B7040CAE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C80150AD-FF56-4AD1-92C2-BFF1978BAE1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C80150AD-FF56-4AD1-92C2-BFF1978BAE1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C80150AD-FF56-4AD1-92C2-BFF1978BAE1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C80150AD-FF56-4AD1-92C2-BFF1978BAE1C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -95,6 +101,7 @@ Global
 		{F23E9D31-B0D0-46E4-9768-794AC0254DFB} = {0584AC24-20DC-4BEB-B537-2DB709E43292}
 		{D9AE44E1-21D9-4590-AF75-E4F6536DDF9B} = {FAE8A070-D147-4FEB-B263-14C0BF50DEAE}
 		{8A93D94E-7332-4ADE-BCA0-F47B7040CAE0} = {0584AC24-20DC-4BEB-B537-2DB709E43292}
+		{C80150AD-FF56-4AD1-92C2-BFF1978BAE1C} = {FAE8A070-D147-4FEB-B263-14C0BF50DEAE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7F3BD410-097C-457C-9FDF-547598955EAD}

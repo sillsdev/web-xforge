@@ -1,0 +1,25 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "noImplicitAny": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "alwaysStrict": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "target": "es5",
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["es2017", "dom"],
+    "module": "es2015",
+    "baseUrl": "./",
+    "paths": {
+      "xforge-common/*": ["./src/xforge-common/*"],
+      "identity/*": ["./src/identity/*"]
+    }
+  }
+}

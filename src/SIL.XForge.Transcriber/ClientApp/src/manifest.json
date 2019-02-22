@@ -1,0 +1,16 @@
+{
+  "name": "Transcriber",
+  "short_name": "Transcriber",
+  "theme_color": "#1976d2",
+  "background_color": "#fafafa",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/home",
+  "icons": [
+    {
+      "src": "assets/icons/transcriber.ico",
+      "sizes": "48x48",
+      "type": "image/vnd.microsoft.icon"
+    }
+  ]
+}
