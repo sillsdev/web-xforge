@@ -3,6 +3,9 @@
     <h2 fxFlex fxLayoutAlign="start center"><mdc-icon>notes</mdc-icon> Available Texts</h2>
     <div fxLayoutAlign="end stretch" *ngIf="(isProjectAdmin$ | async)">
       <div>
+        <button mdc-button (click)="mockQuestions()">
+          <mdc-icon>note_add</mdc-icon> <span fxHide.xs>Mock questions</span>
+        </button>
         <button mdc-button (click)="questionDialog(true)" id="add-question-button">
           <mdc-icon>note_add</mdc-icon> <span fxHide.xs>Add question</span>
         </button>
@@ -14,8 +17,14 @@
     <div *ngIf="(isProjectAdmin$ | async)">
       <ul>
         <li *ngFor="let text of texts">
-          <button mdc-button (click)="questionDialog()"><mdc-icon>edit</mdc-icon></button> {{ text?.name }}
-          <span *ngIf="questionCount(text.id) > 0"> - {{ questionCount(text.id) }} questions</span>
+          <!-- <button mdc-button (click)="insertComments(text.id)"><mdc-icon>edit</mdc-icon></button> -->
+          <button mdc-button (click)="insertCommentNoAwait(text.id)"><mdc-icon>add</mdc-icon></button>
+          <button mdc-button (click)="updateCommentNoAwait(text.id)"><mdc-icon>edit</mdc-icon></button>
+          <button mdc-button (click)="deleteCommentNoAwait(text.id)"><mdc-icon>close</mdc-icon></button>
+          {{ text?.name }}
+          <span *ngIf="questionCount(text.id) != null">
+            - {{ questionCount(text.id) }} questions (v{{ questionVersion(text.id) }})
+          </span>
         </li>
       </ul>
     </div>

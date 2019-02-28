@@ -29,6 +29,10 @@ export abstract class RealtimeData<T = any, Ops = any> implements RecordIdentity
     return this.doc.data;
   }
 
+  get version(): number {
+    return this.doc.version;
+  }
+
   async subscribe(): Promise<void> {
     const offlineData = await this.store.getItem(this.id);
     if (offlineData != null) {
