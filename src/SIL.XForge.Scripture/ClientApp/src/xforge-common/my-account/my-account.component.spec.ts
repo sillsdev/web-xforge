@@ -32,7 +32,8 @@ describe('MyAccountComponent', () => {
         email: 'bob@example.com',
         contactMethod: 'email',
         mobilePhone: '+123 11 2222-33-4444',
-        site: { currentProjectId: 'testproject01', lastLogin: date.toISOString() } as Site
+        gender: 'male',
+        site: { currentProjectId: 'testproject01', lastLogin: date } as Site
       })
     );
   });
@@ -255,6 +256,51 @@ describe('MyAccountComponent', () => {
     );
 
     verifyStates(env, 'contactMethod', {
+      state: env.component.elementState.Error,
+      spinner: false,
+      greenCheck: false,
+      errorIcon: true,
+      inputEnabled: true
+    });
+  }));
+
+  it('handles network error for combobox (select)', fakeAsync(() => {
+    const technicalDetails = 'squirrel chewed thru line. smoke lost.';
+    when(env.mockedUserService.onlineUpdateCurrentUserAttributes(anything())).thenReject({ stack: technicalDetails });
+
+    const newValue = 'female';
+    const originalValue = env.component.userFromDatabase.gender;
+    expect(originalValue).not.toEqual(newValue, 'test set up wrong');
+    expect(env.component.formGroup.get('gender').value).toEqual(originalValue, 'test setup problem');
+
+    // change value on page
+    env.component.formGroup.get('gender').setValue(newValue);
+    env.genderCombo.nativeElement.dispatchEvent(new Event('change'));
+    // flush();
+    env.fixture.detectChanges();
+
+    env.component.formGroup.get('gender').setValue(newValue);
+    env.fixture.detectChanges();
+
+    verifyStates(env, 'gender', {
+      state: env.component.elementState.Submitting,
+      spinner: true,
+      greenCheck: false,
+      errorIcon: false,
+      inputEnabled: false
+    });
+
+    // Time passes
+    flush();
+    env.fixture.detectChanges();
+    expect(env.component.userFromDatabase.gender).toEqual(originalValue, 'test setup problem?');
+
+    expect(env.component.formGroup.get('gender').value).toEqual(
+      originalValue,
+      'should have set form value back to original value'
+    );
+
+    verifyStates(env, 'gender', {
       state: env.component.elementState.Error,
       spinner: false,
       greenCheck: false,
@@ -632,6 +678,14 @@ class TestEnvironment {
 
   contactMethodToggle(toggleName: string): DebugElement {
     return this.fixture.debugElement.query(By.css(`mat-button-toggle[value="${toggleName}"]`));
+  }
+
+  comboItem(value: string): DebugElement {
+    return this.fixture.debugElement.query(By.css(`option[value="${value}"]`));
+  }
+
+  get genderCombo(): DebugElement {
+    return this.fixture.debugElement.query(By.css(`mdc-select[formControlName="gender"]`));
   }
 
   get matErrors(): Array<DebugElement> {

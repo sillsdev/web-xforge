@@ -4,7 +4,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { DateAdapter, NativeDateAdapter } from '@angular/material';
 import { Title } from '@angular/platform-browser';
 import { distanceInWordsToNow } from 'date-fns';
-
+import { Subscription } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../auth.service';
 import { ElementState } from '../models/element-state';
@@ -52,6 +52,7 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
   /** Elements in this component and their states. */
   controlStates = new Map<string, ElementState>();
+  controlChangeSubscriptions = new Map<string, Subscription>();
 
   formGroup = new FormGroup({
     name: new FormControl(),
@@ -127,12 +128,16 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
     // Update states when control values change.
     for (const controlName of Object.keys(this.formGroup.controls)) {
-      this.subscribe(this.formGroup.get(controlName).valueChanges, this.onControlValueChanges(controlName));
+      this.controlChangeSubscriptions[controlName] = this.subscribe(
+        this.formGroup.get(controlName).valueChanges,
+        this.onControlValueChanges(controlName)
+      );
     }
   }
 
   ngOnDestroy() {
     super.ngOnDestroy();
+    this.controlChangeSubscriptions.forEach(sub => sub.unsubscribe());
     // Set title back, until titling is done more elegantly,
     // like https://toddmotto.com/dynamic-page-titles-angular-2-router-events
     this.titleService.setTitle(environment.siteName);
@@ -182,16 +187,23 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
     this.update(element);
   }
 
-  async update(element: string): Promise<void> {
+  async update(element: string, value?: any): Promise<void> {
     const updatedAttributes: Partial<User> = {};
-    updatedAttributes[element] = this.formGroup.controls[element].value;
+    updatedAttributes[element] = value ? value : this.formGroup.controls[element].value;
+    // mdc-select (gender) fires this event once during form setup.
+    // Unfortunately, registering this event in ngOnInit instead of in the HTML results in near infinite recursion.
+    // Prevent an extra server call and a confusing status icon when nothing has changed.
+    if (this.userFromDatabase[element] === updatedAttributes[element]) {
+      return;
+    }
 
     this.formGroup.get(element).disable();
+    this.controlChangeSubscriptions[element].unsubscribe();
     this.controlStates.set(element, ElementState.Submitting);
 
     if (
       element === 'mobilePhone' &&
-      !this.formGroup.controls[element].value &&
+      !updatedAttributes[element] &&
       (this.userFromDatabase.contactMethod === 'sms' || this.userFromDatabase.contactMethod === 'emailSms')
     ) {
       updatedAttributes['contactMethod'] = null;
@@ -211,6 +223,12 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
       this.formGroup.get(element).enable();
       this.controlStates.set(element, ElementState.Error);
+    } finally {
+      // this.formGroup.get(element).enable();
+      this.controlChangeSubscriptions[element] = this.subscribe(
+        this.formGroup.get(element).valueChanges,
+        this.onControlValueChanges(element)
+      );
     }
   }
 
