@@ -1,0 +1,71 @@
+{
+  "version": "0.2.0",
+  "compounds": [
+    {
+      "name": "Full App",
+      "configurations": [".NET Core", "XDebug", "Launch Chrome"]
+    }
+  ],
+  "configurations": [
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Node debugger",
+      "port": 9229
+    },
+    {
+      "name": ".NET Core",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "dotnet",
+      "program": "${workspaceRoot}/src/netcore-api/SIL.XForge.WebApi.Server/bin/Debug/netcoreapp2.0/SIL.XForge.WebApi.Server.dll",
+      "args": [],
+      "cwd": "${workspaceRoot}/src/netcore-api/SIL.XForge.WebApi.Server/",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "type": "chrome",
+      "runtimeExecutable": "/usr/bin/chromium-browser",
+      "request": "launch",
+      "name": "Launch Chromium on Linux",
+      "url": "https://languageforge.local",
+      "webRoot": "${workspaceRoot}"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Launch Chrome",
+      "url": "https://languageforge.local",
+      "webRoot": "${workspaceRoot}"
+    },
+    {
+      "type": "chrome",
+      "request": "attach",
+      "name": "Attach to Chrome",
+      "port": 9222,
+      "webRoot": "${workspaceRoot}"
+    },
+    {
+      "name": "XDebug",
+      "type": "php",
+      "request": "launch",
+      "port": 9000,
+      "windows":{
+        "localSourceRoot": "${workspaceRoot}",
+        "serverSourceRoot": "${env:WSL_XFORGE_PATH}"
+      }
+    },
+    {
+      "name": "PHP script",
+      "type": "php",
+      "request": "launch",
+      "program": "${file}",
+      "cwd": "${fileDirname}",
+      "port": 9000
+    }
+  ]
+}

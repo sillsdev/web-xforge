@@ -1,0 +1,67 @@
+*~
+*.swp
+.DS_Store
+.externalToolBuilders
+.idea/
+.settings
+.vagrant/
+deploy/**/*.retry
+deploy/ansible.cfg
+deploy/callback_plugins/*.pyc
+deploy/site_files/
+deploy/site_info/
+docs/semdom/*.xml
+docs/semdom/semdom lists/*.xml
+node_modules/
+output/chrome/
+PhpUnitTests.xml
+phpUnitConsole.txt
+src/angular-app/**/helps/**/page/*.html
+!src/assets/index.html
+src/assets/
+!src/cache/index.html
+!src/cache/.htaccess
+src/cache/
+src/dist/
+src/js/lib/languageforge.min.js
+src/js/lib/scriptureforge.min.js
+src/node_modules/
+!src/vendor/lift/
+src/vendor/
+test/CodeCoverage/
+vagrant_ansible_inventory_*
+test/app/protractorConfBrowserStack.js
+artifacts/
+src/userConfig.php
+
+# CSS files generated from Sass
+src/angular-app/bellows/apps/**/*.css
+src/angular-app/bellows/shared/*.css
+src/angular-app/bellows/shared/**/*.css
+src/angular-app/languageforge/**/*.css
+src/angular-app/scriptureforge/**/*.css
+src/Site/views/**/*.css
+
+secrets/
+
+# VS files
+.vs
+[Bb]in
+[Dd]ebug*/
+obj/
+[Rr]elease*/
+!/src/releasenotes
+_ReSharper*/
+*.user
+
+appsettings.user.json
+
+# E2E JS files generated from Typescript
+test/app/**/*.e2e-spec.js.map
+test/app/**/*.e2e-spec.js
+test/app/**/shared/*.js.map
+test/app/**/shared/*.js
+
+# Generated files
+src/Api/Library/Shared/WebsiteInstances.php
+src/angular-app/bellows/core/website-instances.generated-data.ts
