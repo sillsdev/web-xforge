@@ -1,5 +1,4 @@
 import { VerseRefData } from './verse-ref-data';
-import { UserRef } from 'xforge-common/models/user';
 
 export interface Answer {
   id: string;
