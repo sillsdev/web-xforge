@@ -263,7 +263,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.summary.unread = 0;
     for (const question of this.questions) {
       if (question.answers.length) {
-        if (question.answers.filter(answer => (answer.ownerRef = this.userService.currentUserId)).length) {
+        if (question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length) {
           this.summary.answered++;
         }
       } else if (this.questionsPanel.hasUserRead(question)) {

@@ -36,7 +36,7 @@ export class CheckingAnswersComponent {
   constructor(private userService: UserService) {}
 
   get currentUserTotalAnswers(): number {
-    return this.question.answers.filter(answer => (answer.ownerRef = this.userService.currentUserId)).length;
+    return this.question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length;
   }
 
   get hasUserRead(): boolean {
