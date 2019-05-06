@@ -1,0 +1,4 @@
+---
+# vars/buildagent
+
+mongo_path: /var/lib/mongodb
