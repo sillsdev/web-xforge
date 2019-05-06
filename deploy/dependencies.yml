@@ -1,13 +1,11 @@
 ---
-
 - name: Deploy development environment for beta.scriptureforge.org
   hosts: all
   become: yes
   vars_files:
-    - "vars/{{deploy}}.yml"
+    - "vars/config_{{config}}.yml"
     # conditional import
-    -
-      - "vars/{{ansible_distribution}}-{{ansible_distribution_major_version | int}}.yml"
+    - - "vars/{{ansible_distribution}}-{{ansible_distribution_major_version | int}}.yml"
       - "vars/{{ansible_distribution}}.yml"
       - "vars/{{ansible_os_family}}.yml"
       - "vars/os_defaults.yml"
@@ -42,7 +40,7 @@
         - dotnet-sdk-2.1
         - mongodb-org
         - nodejs
-      tags: [ 'packages' ]
+      tags: ["packages"]
 
     - name: install n
       shell: npm install -g n
@@ -54,7 +52,7 @@
 
     - name: update the mongo config file
       lineinfile:
-        dest: /etc/mongod.conf
+        path: /etc/mongod.conf
         regexp: '^(\s*dbPath: ).*$'
         line: '\1{{mongo_path}}'
         backrefs: yes
@@ -67,19 +65,36 @@
         state: started
         enabled: yes
 
+    - name: get the username running the deploy
+      become: no
+      local_action: command whoami
+      register: username_on_the_host
+    - name: Add folders
+      file:
+        path: "{{item}}"
+        state: directory
+        owner: "{{ username_on_the_host.stdout }}"
+        group: "{{ username_on_the_host.stdout }}"
+        mode: "u=rwX,g=rX,o=rX"
+      with_items:
+        - "/var/lib/scriptureforge"
+        - "/var/lib/scriptureforge/sync"
+        - "/var/lib/xforge"
+        - "/var/lib/xforge/avatars"
+
     - name: add localhost to dnsmasq
       lineinfile:
-        dest: /etc/NetworkManager/dnsmasq.d/localhost-domain
+        path: /etc/NetworkManager/dnsmasq.d/localhost-domain
         line: "{{item}}"
         state: present
         create: yes
-        mode: 'u=rw,g=r,o=r'
+        mode: "u=rw,g=r,o=r"
       with_items:
         - "address=/localhost/127.0.0.1"
         - "address=/localhost/::1"
       when: inventory_hostname == "localhost"
       notify: restart network
-      tags: [ 'network' ]
+      tags: ["network"]
 
   handlers:
     - name: restart mongod
