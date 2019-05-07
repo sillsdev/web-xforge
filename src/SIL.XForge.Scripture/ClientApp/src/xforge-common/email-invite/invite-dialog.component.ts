@@ -1,15 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-
 import { environment } from '../../environments/environment';
 import { NoticeService } from '../notice.service';
 import { InviteAction, ProjectService } from '../project.service';
+import { SubscriptionDisposable } from '../subscription-disposable';
+import { UserService } from '../user.service';
 
 @Component({
   templateUrl: './invite-dialog.component.html',
   styleUrls: ['./invite-dialog.component.scss']
 })
-export class InviteDialogComponent {
+export class InviteDialogComponent extends SubscriptionDisposable implements OnInit {
   emailPattern = '[a-zA-Z0-9.-_]{1,}@[a-zA-Z0-9.-]{2,}[.]{1}[a-zA-Z]{2,}';
   sendInviteForm: FormGroup = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email, Validators.pattern(this.emailPattern)])
@@ -17,10 +18,24 @@ export class InviteDialogComponent {
   isSubmitted: boolean = false;
   siteName = environment.siteName;
 
-  constructor(private readonly noticeService: NoticeService, private readonly projectService: ProjectService) {}
+  private projectId: string;
+
+  constructor(
+    private readonly noticeService: NoticeService,
+    private readonly projectService: ProjectService,
+    private readonly userService: UserService
+  ) {
+    super();
+  }
 
   get email() {
     return this.sendInviteForm.get('email');
+  }
+
+  ngOnInit(): void {
+    this.subscribe(this.userService.getCurrentUser(), user => {
+      this.projectId = user.site.currentProjectId;
+    });
   }
 
   async onSubmit(): Promise<void> {
@@ -29,7 +44,7 @@ export class InviteDialogComponent {
     }
 
     this.isSubmitted = true;
-    const actionPerformed = await this.projectService.onlineInvite(this.sendInviteForm.value.email);
+    const actionPerformed = await this.projectService.onlineInvite(this.sendInviteForm.value.email, this.projectId);
     let message: string = '';
     this.isSubmitted = false;
     switch (actionPerformed) {

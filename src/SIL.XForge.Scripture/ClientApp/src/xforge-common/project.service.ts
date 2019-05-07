@@ -69,8 +69,8 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
     );
   }
 
-  onlineInvite(email: string): Promise<InviteAction> {
-    return this.jsonApiService.onlineInvoke(this.type, 'invite', { email });
+  onlineInvite(email: string, id: string): Promise<InviteAction> {
+    return this.jsonApiService.onlineInvoke(this.identity(id), 'invite', { email });
   }
 
   onlineGet(id: string, include?: string[][]): QueryObservable<T> {
