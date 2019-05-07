@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { first } from 'rxjs/operators';
 import { NoticeService } from '../../notice.service';
 import { InviteAction, ProjectService } from '../../project.service';
-import { SubscriptionDisposable } from '../../subscription-disposable';
 import { XFValidators } from '../../xfvalidators';
 
 @Component({
@@ -10,7 +11,7 @@ import { XFValidators } from '../../xfvalidators';
   templateUrl: './collaborators.component.html',
   styleUrls: ['./collaborators.component.scss']
 })
-export class CollaboratorsComponent extends SubscriptionDisposable {
+export class CollaboratorsComponent {
   userSelectionForm = new FormGroup({
     user: new FormControl('')
   });
@@ -18,10 +19,15 @@ export class CollaboratorsComponent extends SubscriptionDisposable {
     email: new FormControl('', [XFValidators.email])
   });
 
+  private projectId: string;
   private inviteButtonClicked = false;
 
-  constructor(private readonly projectService: ProjectService, private readonly noticeService: NoticeService) {
-    super();
+  constructor(
+    private readonly activatedRoute: ActivatedRoute,
+    private readonly projectService: ProjectService,
+    private readonly noticeService: NoticeService
+  ) {
+    this.activatedRoute.params.pipe(first()).subscribe(params => (this.projectId = params['projectId']));
   }
 
   get inviteDisabled(): boolean {
@@ -31,7 +37,7 @@ export class CollaboratorsComponent extends SubscriptionDisposable {
   async onInvite(): Promise<void> {
     this.inviteButtonClicked = true;
     const email = this.userInviteForm.value.email;
-    const action = await this.projectService.onlineInvite(email);
+    const action = await this.projectService.onlineInvite(email, this.projectId);
     if (action === InviteAction.Invited) {
       const message = 'An invitation email has been sent to ' + email + '.';
       this.noticeService.show(message);

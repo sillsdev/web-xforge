@@ -1,4 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from '../../notice.service';
 import { InviteAction, ProjectService } from '../../project.service';
@@ -22,7 +24,7 @@ describe('CollaboratorsComponent', () => {
     const env = new TestEnvironment();
     env.setTextFieldValue(env.emailInput, env.userInSFEmail);
     env.clickButton(env.inviteButton);
-    verify(env.mockedProjectService.onlineInvite(env.userInSFEmail)).once();
+    verify(env.mockedProjectService.onlineInvite(env.userInSFEmail, 'project01')).once();
     let message = 'An email has been sent to ' + env.userInSFEmail + ' adding them to this project.';
     verify(env.mockedNoticeService.show(message)).once();
     env.setTextFieldValue(env.emailInput, env.newUserEmail);
@@ -45,12 +47,15 @@ class TestEnvironment {
   userInProjectEmail = 'userinprojectemail@example.com';
   mockedNoticeService: NoticeService = mock(NoticeService);
   mockedProjectService: ProjectService = mock(ProjectService);
+  mockedActivatedRoute: ActivatedRoute = mock(ActivatedRoute);
 
   constructor() {
+    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     TestBed.configureTestingModule({
       declarations: [CollaboratorsComponent],
       imports: [UICommonModule],
       providers: [
+        { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
         { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) }
       ]
@@ -87,8 +92,8 @@ class TestEnvironment {
   }
 
   private setupMockInviteActions() {
-    when(this.mockedProjectService.onlineInvite(this.userInSFEmail)).thenResolve(InviteAction.Joined);
-    when(this.mockedProjectService.onlineInvite(this.newUserEmail)).thenResolve(InviteAction.Invited);
-    when(this.mockedProjectService.onlineInvite(this.userInProjectEmail)).thenResolve(InviteAction.None);
+    when(this.mockedProjectService.onlineInvite(this.userInSFEmail, 'project01')).thenResolve(InviteAction.Joined);
+    when(this.mockedProjectService.onlineInvite(this.newUserEmail, 'project01')).thenResolve(InviteAction.Invited);
+    when(this.mockedProjectService.onlineInvite(this.userInProjectEmail, 'project01')).thenResolve(InviteAction.None);
   }
 }
