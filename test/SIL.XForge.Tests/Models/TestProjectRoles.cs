@@ -8,6 +8,8 @@ namespace SIL.XForge.Models
 
         public const string Manager = "manager";
         public const string Contributor = "contributor";
+        public const string Administrator = "administrator";
+        public const string Reviewer = "reviewer";
 
         public static TestProjectRoles Instance { get; } = new TestProjectRoles();
 
