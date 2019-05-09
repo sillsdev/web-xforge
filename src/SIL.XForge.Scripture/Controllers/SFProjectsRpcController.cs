@@ -15,7 +15,7 @@ using SIL.XForge.Services;
 namespace SIL.XForge.Scripture.Controllers
 {
     [RpcRoute("projects")]
-    public class SFProjectsRpcController : ProjectsRpcController<SFProjectEntity, SFProjectUserEntity>
+    public class SFProjectsRpcController : ProjectsRpcController<SFProjectEntity>
     {
         private readonly IRepository<TranslateMetrics> _translateMetrics;
 
@@ -40,7 +40,7 @@ namespace SIL.XForge.Scripture.Controllers
             return Ok();
         }
 
-        protected override SFProjectUserEntity CreateProjectUser(string userId)
+        protected override ProjectUserEntity CreateProjectUser(string userId)
         {
             return new SFProjectUserEntity
             {
@@ -51,13 +51,12 @@ namespace SIL.XForge.Scripture.Controllers
             };
         }
 
-        protected override async Task<bool> IsProjectSharingOptionEnabled(string option)
+        protected override bool IsProjectSharingOptionEnabled(string option)
         {
-            SFProjectEntity project = await Projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
-            if (!project.CheckingConfig.share.Enabled)
+            if (!Project.CheckingConfig.Share.Enabled)
                 return false;
             if (option == ShareOptions.Email)
-                return project.CheckingConfig.share.ViaEmail;
+                return Project.CheckingConfig.Share.ViaEmail;
             return false;
         }
     }

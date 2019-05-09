@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using NUnit.Framework;
 using JsonApiDotNetCore.Internal;
+using EdjCase.JsonRpc.Core;
+using EdjCase.JsonRpc.Router.Defaults;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -35,10 +37,10 @@ namespace SIL.XForge.Controllers
                 .FirstOrDefault(p => p.Id == project01Id).Users.ToArray();
             Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] { user01Id, user02Id }));
 
-            string result = await env.Controller.Invite(email);
+            RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
 
             Assert.That(env.Users.Query().Any(x => x.Email == email), Is.True);
-            Assert.That(result, Is.EqualTo("invited"));
+            Assert.That(result.ReturnObject, Is.EqualTo("invited"));
             string subject = "You've been invited to the project Project 1 on xForge";
             // Skip verification for the body, we may change the content
             await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Is(subject), Arg.Any<string>());
@@ -72,10 +74,10 @@ namespace SIL.XForge.Controllers
                 .FirstOrDefault(p => p.Id == project01Id).Users.ToArray();
             Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] { user01Id, user02Id }));
 
-            string result = await env.Controller.Invite(email);
+            RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
 
             Assert.That(env.Users.Query().Any(x => x.Email == email), Is.True);
-            Assert.That(result, Is.EqualTo("joined"));
+            Assert.That(result.ReturnObject, Is.EqualTo("joined"));
             string subject = "You've been added to the project Project 1 on xForge";
             // Skip verification for the body, we may change the content
             await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Is(subject), Arg.Any<string>());
@@ -98,9 +100,9 @@ namespace SIL.XForge.Controllers
             Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] { user01Id, user02Id }));
 
             UserEntity user02 = env.Users.Query().FirstOrDefault(u => u.Id == user02Id);
-            string result = await env.Controller.Invite(user02.Email);
+            RpcMethodSuccessResult result = await env.Controller.Invite(user02.Email) as RpcMethodSuccessResult;
 
-            Assert.That(result, Is.EqualTo("none"));
+            Assert.That(result.ReturnObject, Is.EqualTo("none"));
             projectUsers = env.Projects.Query().FirstOrDefault(p => p.Id == project01Id).Users.ToArray();
             Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] { user01Id, user02Id }));
         }
@@ -112,8 +114,8 @@ namespace SIL.XForge.Controllers
             env.SetUser(user01Id, SystemRoles.User);
             env.SetProject(project02Id);
             const string email = "newuser@example.com";
-            string result = await env.Controller.Invite(email);
-            Assert.That(result, Is.EqualTo("invited"));
+            RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
+            Assert.That(result.ReturnObject, Is.EqualTo("invited"));
         }
 
         [Test]
@@ -123,23 +125,21 @@ namespace SIL.XForge.Controllers
             env.SetUser(user01Id, SystemRoles.User);
             env.SetProject(project02Id);
             const string email = "newuser@example.com";
-            string result = await env.Controller.Invite(email);
-            Assert.That(result, Is.EqualTo("invited"));
+            RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
+            Assert.That(result.ReturnObject, Is.EqualTo("invited"));
         }
 
         [Test]
-        public void SendInvite_InviteDisabled_ForbiddenException()
+        public async Task SendInvite_InviteDisabled_ForbiddenException()
         {
             var env = new TestEnvironment();
             env.SetUser(user02Id, SystemRoles.User);
             env.SetProject(project02Id);
             const string email = "newuser@example.com";
-            var ex = Assert.ThrowsAsync<JsonApiException>(async () =>
-            {
-                await env.Controller.Invite(email);
-            });
-            Assert.That(ex.GetStatusCode(), Is.EqualTo(StatusCodes.Status403Forbidden),
-                "The user should have been forbidden to invite other users");
+            RpcMethodErrorResult result = await env.Controller.Invite(email) as RpcMethodErrorResult;
+            Assert.That(result.ErrorCode, Is.EqualTo((int)RpcErrorCode.InvalidRequest),
+                "The user should have been forbidden to invite other users"
+            );
         }
 
         private class TestEnvironment
@@ -190,7 +190,7 @@ namespace SIL.XForge.Controllers
                             }
                         },
                         CheckingConfig = new TestCheckingConfig {
-                            share = new TestCheckingConfigShare
+                            Share = new TestCheckingConfigShare
                             {
                                 Enabled = false,
                                 ViaEmail = false
