@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { first } from 'rxjs/operators';
 import { NoticeService } from '../../notice.service';
 import { InviteAction, ProjectService } from '../../project.service';
+import { SubscriptionDisposable } from '../../subscription-disposable';
 import { XFValidators } from '../../xfvalidators';
 
 @Component({
@@ -11,7 +11,7 @@ import { XFValidators } from '../../xfvalidators';
   templateUrl: './collaborators.component.html',
   styleUrls: ['./collaborators.component.scss']
 })
-export class CollaboratorsComponent {
+export class CollaboratorsComponent extends SubscriptionDisposable implements OnInit {
   userSelectionForm = new FormGroup({
     user: new FormControl('')
   });
@@ -27,11 +27,15 @@ export class CollaboratorsComponent {
     private readonly projectService: ProjectService,
     private readonly noticeService: NoticeService
   ) {
-    this.activatedRoute.params.pipe(first()).subscribe(params => (this.projectId = params['projectId']));
+    super();
   }
 
   get inviteDisabled(): boolean {
     return this.userInviteForm.invalid || !this.userInviteForm.value.email || this.inviteButtonClicked;
+  }
+
+  ngOnInit() {
+    this.subscribe(this.activatedRoute.params, params => (this.projectId = params['projectId']));
   }
 
   async onInvite(): Promise<void> {

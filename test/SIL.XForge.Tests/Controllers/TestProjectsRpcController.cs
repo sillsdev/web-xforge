@@ -8,7 +8,7 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Controllers
 {
-    public class TestProjectsRpcController : ProjectsRpcController<TestProjectEntity, TestProjectUserEntity>
+    public class TestProjectsRpcController : ProjectsRpcController<TestProjectEntity>
     {
         public TestProjectsRpcController(IUserAccessor userAccessor, IHttpRequestAccessor httpRequestAccessor,
             IRepository<TestProjectEntity> projects, IRepository<UserEntity> users, IEmailService emailService,
@@ -17,7 +17,7 @@ namespace SIL.XForge.Controllers
         {
         }
 
-        protected override TestProjectUserEntity CreateProjectUser(string userId)
+        protected override ProjectUserEntity CreateProjectUser(string userId)
         {
             return new TestProjectUserEntity
             {
@@ -30,13 +30,12 @@ namespace SIL.XForge.Controllers
 
         protected override string ProjectAdminRole => TestProjectRoles.Administrator;
 
-        protected override async Task<bool> IsProjectSharingOptionEnabled(string option)
+        protected override bool IsProjectSharingOptionEnabled(string option)
         {
-            TestProjectEntity project = await Projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
-            if (!project.CheckingConfig.share.Enabled)
+            if (!Project.CheckingConfig.Share.Enabled)
                 return false;
             if (option == ShareOptions.Email)
-                return project.CheckingConfig.share.ViaEmail;
+                return Project.CheckingConfig.Share.ViaEmail;
             return false;
         }
     }
