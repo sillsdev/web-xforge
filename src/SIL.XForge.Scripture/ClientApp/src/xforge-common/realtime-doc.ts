@@ -1,5 +1,5 @@
 import * as RichText from 'rich-text';
-import { fromEvent, Observable, of, Subject, merge } from 'rxjs';
+import { fromEvent, Observable, of, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { Doc, OTType, Snapshot, types } from 'sharedb/lib/client';
 
@@ -33,7 +33,7 @@ export interface RealtimeDoc {
 
 /**
  * This is a ShareDB implementation of the realtime document interface.
- * 
+ *
  * Cache for an IndexedDB record. Also allows access thru to a mongodb record.
  * See RealtimeData for syncing this with IndexedDB.
  */
@@ -156,12 +156,11 @@ export class SharedbRealtimeDoc implements RealtimeDoc {
  * This is a memory-based implementation of the realtime document interface. It is useful for unit tests.
  */
 export class MemoryRealtimeDoc implements RealtimeDoc {
-  version: number = 1;
   readonly pendingOps: any[] = [];
+  version: number = 1;
+  onCreateSubject = new Subject<void>();
 
   constructor(public readonly type: OTType, public readonly id: string, public data: any) {}
-
-  onCreateSubject = new Subject<void>();
 
   idle(): Observable<void> {
     return of();

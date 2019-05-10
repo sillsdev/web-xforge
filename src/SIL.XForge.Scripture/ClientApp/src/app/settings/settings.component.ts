@@ -152,6 +152,29 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     );
   }
 
+  ngOnDestroy(): void {
+    super.ngOnDestroy();
+    this.noticeService.loadingFinished();
+  }
+
+  logInWithParatext(): void {
+    const url = '/projects/' + this.projectId + '/settings';
+    this.paratextService.logIn(url);
+  }
+
+  openDeleteProjectDialog(): void {
+    const config: MdcDialogConfig = {
+      data: { name: this.project.projectName }
+    };
+    const dialogRef = this.dialog.open(DeleteProjectDialogComponent, config);
+    dialogRef.afterClosed().subscribe(async result => {
+      if (result === 'accept') {
+        await this.userService.updateCurrentProjectId();
+        await this.projectService.onlineDelete(this.projectId);
+      }
+    });
+  }
+
   private onFormValueChanges(newValue: any): void {
     if (this.form.valid || this.isOnlyBasedOnInvalid) {
       let isUpdateNeeded: boolean = false;
@@ -232,29 +255,6 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
       // reset invalid form value
       setTimeout(() => this.form.patchValue(this.previousFormValues), 1000);
     }
-  }
-
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
-    this.noticeService.loadingFinished();
-  }
-
-  logInWithParatext(): void {
-    const url = '/projects/' + this.projectId + '/settings';
-    this.paratextService.logIn(url);
-  }
-
-  openDeleteProjectDialog(): void {
-    const config: MdcDialogConfig = {
-      data: { name: this.project.projectName }
-    };
-    const dialogRef = this.dialog.open(DeleteProjectDialogComponent, config);
-    dialogRef.afterClosed().subscribe(async result => {
-      if (result === 'accept') {
-        await this.userService.updateCurrentProjectId();
-        await this.projectService.onlineDelete(this.projectId);
-      }
-    });
   }
 
   private updateSettingsInfo() {

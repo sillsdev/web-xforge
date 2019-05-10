@@ -1,4 +1,3 @@
-import { Callback, Doc, OTType, Snapshot } from 'sharedb/lib/client';
 import { async } from '@angular/core/testing';
 import { MemoryRealtimeDoc } from 'xforge-common/realtime-doc';
 import { RealtimeData } from './realtime-data';

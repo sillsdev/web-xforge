@@ -1,6 +1,6 @@
+import { async } from '@angular/core/testing';
 import { Callback, Doc, OTType, Snapshot } from 'sharedb/lib/client';
 import { SharedbRealtimeDoc } from './realtime-doc';
-import { async } from '@angular/core/testing';
 
 describe('SharedbRealtimeDoc', () => {
   it('does not crash with null type', () => {

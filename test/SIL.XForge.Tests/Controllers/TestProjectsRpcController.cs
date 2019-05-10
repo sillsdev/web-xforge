@@ -30,12 +30,12 @@ namespace SIL.XForge.Controllers
 
         protected override string ProjectAdminRole => TestProjectRoles.Administrator;
 
-        protected override bool IsProjectSharingOptionEnabled(string option)
+        protected override bool IsProjectSharingOptionEnabled(TestProjectEntity project, string option)
         {
-            if (!Project.CheckingConfig.Share.Enabled)
+            if (!project.CheckingConfig.Share.Enabled)
                 return false;
             if (option == ShareOptions.Email)
-                return Project.CheckingConfig.Share.ViaEmail;
+                return project.CheckingConfig.Share.ViaEmail;
             return false;
         }
     }
