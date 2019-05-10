@@ -3,8 +3,10 @@ import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-
+import { User } from 'xforge-common/models/user';
+import { UserService } from 'xforge-common/user.service';
 import { NoticeService } from '../notice.service';
 import { InviteAction, ProjectService } from '../project.service';
 import { UICommonModule } from '../ui-common.module';
@@ -19,7 +21,7 @@ describe('EmailInviteComponent', () => {
     env.clickElement(env.inviteButton);
 
     env.clickElement(env.closeButton);
-    verify(env.mockedProjectService.onlineInvite(anything())).never();
+    verify(env.mockedProjectService.onlineInvite(anything(), anything())).never();
     expect().nothing();
     flush();
   }));
@@ -33,7 +35,7 @@ describe('EmailInviteComponent', () => {
     env.setInputValue(env.emailInput, 'notAnEmailAddress');
 
     env.clickElement(env.closeButton);
-    verify(env.mockedProjectService.onlineInvite(anything())).never();
+    verify(env.mockedProjectService.onlineInvite(anything(), anything())).never();
     expect().nothing();
     flush();
   }));
@@ -48,7 +50,7 @@ describe('EmailInviteComponent', () => {
     env.setInputValue(env.emailInput, '');
 
     env.clickElement(env.closeButton);
-    verify(env.mockedProjectService.onlineInvite(anything())).never();
+    verify(env.mockedProjectService.onlineInvite(anything(), anything())).never();
     expect().nothing();
     flush();
   }));
@@ -64,7 +66,7 @@ describe('EmailInviteComponent', () => {
     env.clickElement(env.sendInviteButton);
 
     env.clickElement(env.closeButton);
-    verify(env.mockedProjectService.onlineInvite(anything())).once();
+    verify(env.mockedProjectService.onlineInvite(anything(), 'project01')).once();
     expect().nothing();
     flush();
   }));
@@ -85,15 +87,25 @@ class TestEnvironment {
   mockedMdcDialogRef: MdcDialogRef<InviteDialogComponent>;
   mockedProjectService: ProjectService;
   mockedNoticeService: NoticeService;
+  mockedUserService: UserService;
   overlayContainer: OverlayContainer;
 
   constructor() {
     this.mockedMdcDialogRef = mock(MdcDialogRef);
     this.mockedProjectService = mock(ProjectService);
     this.mockedNoticeService = mock(NoticeService);
+    this.mockedUserService = mock(UserService);
 
-    when(this.mockedProjectService.onlineInvite(anything())).thenResolve(InviteAction.Invited);
+    when(this.mockedProjectService.onlineInvite(anything(), anything())).thenResolve(InviteAction.Invited);
     when(this.mockedNoticeService.show(anything())).thenResolve();
+    when(this.mockedUserService.getCurrentUser()).thenReturn(
+      of(
+        new User({
+          id: 'user01',
+          site: { currentProjectId: 'project01' }
+        })
+      )
+    );
 
     TestBed.configureTestingModule({
       imports: [DialogTestModule],
@@ -102,7 +114,8 @@ class TestEnvironment {
       providers: [
         { provide: MdcDialogRef, useFactory: () => instance(this.mockedMdcDialogRef) },
         { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
+        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
       ]
     });
     this.fixture = TestBed.createComponent(EmailInviteComponent);

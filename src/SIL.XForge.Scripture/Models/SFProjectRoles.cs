@@ -7,15 +7,15 @@ namespace SIL.XForge.Scripture.Models
     {
         public const string Administrator = "pt_administrator";
         public const string Translator = "pt_translator";
+        public const string SFReviewer = "sf_reviewer";
 
         public static SFProjectRoles Instance { get; } = new SFProjectRoles();
 
         private SFProjectRoles()
         {
-            var translatorRights = new HashSet<Right>
+            var sfReviewerRights = new HashSet<Right>
             {
                 new Right(SFDomain.Texts, Operation.View),
-                new Right(SFDomain.Texts, Operation.Edit),
 
                 new Right(SFDomain.Questions, Operation.View),
 
@@ -28,6 +28,12 @@ namespace SIL.XForge.Scripture.Models
                 new Right(SFDomain.Comments, Operation.Create),
                 new Right(SFDomain.Comments, Operation.EditOwn),
                 new Right(SFDomain.Comments, Operation.DeleteOwn),
+            };
+            Rights[SFReviewer] = sfReviewerRights;
+
+            var translatorRights = new HashSet<Right>(sfReviewerRights)
+            {
+                new Right(SFDomain.Texts, Operation.Edit),
 
                 new Right(SFDomain.SyncJobs, Operation.View),
                 new Right(SFDomain.SyncJobs, Operation.Create),

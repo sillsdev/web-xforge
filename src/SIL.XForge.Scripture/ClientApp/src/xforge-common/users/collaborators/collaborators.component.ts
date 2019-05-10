@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { NoticeService } from '../../notice.service';
 import { InviteAction, ProjectService } from '../../project.service';
 import { SubscriptionDisposable } from '../../subscription-disposable';
@@ -10,7 +11,7 @@ import { XFValidators } from '../../xfvalidators';
   templateUrl: './collaborators.component.html',
   styleUrls: ['./collaborators.component.scss']
 })
-export class CollaboratorsComponent extends SubscriptionDisposable {
+export class CollaboratorsComponent extends SubscriptionDisposable implements OnInit {
   userSelectionForm = new FormGroup({
     user: new FormControl('')
   });
@@ -18,9 +19,14 @@ export class CollaboratorsComponent extends SubscriptionDisposable {
     email: new FormControl('', [XFValidators.email])
   });
 
+  private projectId: string;
   private inviteButtonClicked = false;
 
-  constructor(private readonly projectService: ProjectService, private readonly noticeService: NoticeService) {
+  constructor(
+    private readonly activatedRoute: ActivatedRoute,
+    private readonly projectService: ProjectService,
+    private readonly noticeService: NoticeService
+  ) {
     super();
   }
 
@@ -28,10 +34,14 @@ export class CollaboratorsComponent extends SubscriptionDisposable {
     return this.userInviteForm.invalid || !this.userInviteForm.value.email || this.inviteButtonClicked;
   }
 
+  ngOnInit() {
+    this.subscribe(this.activatedRoute.params, params => (this.projectId = params['projectId']));
+  }
+
   async onInvite(): Promise<void> {
     this.inviteButtonClicked = true;
     const email = this.userInviteForm.value.email;
-    const action = await this.projectService.onlineInvite(email);
+    const action = await this.projectService.onlineInvite(email, this.projectId);
     if (action === InviteAction.Invited) {
       const message = 'An invitation email has been sent to ' + email + '.';
       this.noticeService.show(message);

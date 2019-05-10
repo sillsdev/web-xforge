@@ -3,11 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-
+import { User } from '../models/user';
 import { NoticeService } from '../notice.service';
 import { InviteAction, ProjectService } from '../project.service';
 import { UICommonModule } from '../ui-common.module';
+import { UserService } from '../user.service';
 import { InviteDialogComponent } from './invite-dialog.component';
 
 // ts lint complains that a directive should be used as an attribute
@@ -44,6 +46,7 @@ describe('InviteDialogComponent', () => {
   let testViewContainer: ViewContainerRef;
   let mockedNoticeService: NoticeService;
   let mockedProjectService: ProjectService;
+  let mockedUserService: UserService;
 
   class TestEnvironment {
     fixture: ComponentFixture<ChildViewContainerComponent>;
@@ -89,12 +92,22 @@ describe('InviteDialogComponent', () => {
   beforeEach(() => {
     mockedNoticeService = mock(NoticeService);
     mockedProjectService = mock(ProjectService);
-    when(mockedProjectService.onlineInvite(anything())).thenResolve(InviteAction.Invited);
+    mockedUserService = mock(UserService);
+    when(mockedUserService.getCurrentUser()).thenReturn(
+      of(
+        new User({
+          id: 'user01',
+          site: { currentProjectId: 'project01' }
+        })
+      )
+    );
+    when(mockedProjectService.onlineInvite(anything(), anything())).thenResolve(InviteAction.Invited);
     TestBed.configureTestingModule({
       imports: [DialogTestModule],
       providers: [
         { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
-        { provide: ProjectService, useFactory: () => instance(mockedProjectService) }
+        { provide: ProjectService, useFactory: () => instance(mockedProjectService) },
+        { provide: UserService, useFactory: () => instance(mockedUserService) }
       ]
     });
   });
@@ -116,7 +129,7 @@ describe('InviteDialogComponent', () => {
     expect(env.component.sendInviteForm.valid).toBe(false);
     expect(env.component.email.hasError('email')).toBeFalsy();
     env.clickElement(env.closeButton);
-    verify(mockedProjectService.onlineInvite(anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).never();
     flush();
   }));
 
@@ -133,7 +146,7 @@ describe('InviteDialogComponent', () => {
     expect(env.component.sendInviteForm.valid).toBe(false);
     expect(env.component.email.hasError('email')).toBe(true);
     env.clickElement(env.closeButton);
-    verify(mockedProjectService.onlineInvite(anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).never();
     flush();
   }));
 
@@ -151,7 +164,7 @@ describe('InviteDialogComponent', () => {
     expect(env.component.sendInviteForm.valid).toBe(false);
     expect(env.component.email.hasError('required')).toBe(true);
     env.clickElement(env.closeButton);
-    verify(mockedProjectService.onlineInvite(anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).never();
     flush();
   }));
 
@@ -167,7 +180,7 @@ describe('InviteDialogComponent', () => {
     expect(env.component.sendInviteForm.valid).toBe(false);
     expect(env.component.email.hasError('pattern')).toBe(true);
     env.clickElement(env.closeButton);
-    verify(mockedProjectService.onlineInvite(anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).never();
     flush();
   }));
 
@@ -185,7 +198,7 @@ describe('InviteDialogComponent', () => {
     expect(env.component.email.hasError('email')).toBe(false);
     env.clickElement(env.sendInviteButton);
     env.clickElement(env.closeButton);
-    verify(mockedProjectService.onlineInvite(emailAddress)).once();
+    verify(mockedProjectService.onlineInvite(emailAddress, 'project01')).once();
     flush();
     const message = 'An invitation email has been sent to ' + emailAddress + '.';
     verify(mockedNoticeService.show(message)).once();

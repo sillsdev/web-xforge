@@ -4,7 +4,7 @@ namespace SIL.XForge.Scripture.Models
     {
         public bool UsersSeeEachOthersResponses { get; set; } = true;
         public bool DownloadAudioFiles { get; set; } = true;
-        public CheckingConfigShare share { get; set; } = new CheckingConfigShare();
+        public CheckingConfigShare Share { get; set; } = new CheckingConfigShare();
     }
 
     public class CheckingConfigShare

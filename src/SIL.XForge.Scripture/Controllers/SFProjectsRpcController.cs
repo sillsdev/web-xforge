@@ -1,8 +1,10 @@
 using System.Threading.Tasks;
+using System.Linq;
 using EdjCase.JsonRpc.Core;
 using EdjCase.JsonRpc.Router;
 using EdjCase.JsonRpc.Router.Abstractions;
 using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using SIL.XForge.Configuration;
 using SIL.XForge.Controllers;
 using SIL.XForge.DataAccess;
@@ -25,6 +27,8 @@ namespace SIL.XForge.Scripture.Controllers
             _translateMetrics = translateMetrics;
         }
 
+        protected override string ProjectAdminRole => SFProjectRoles.Administrator;
+
         public async Task<IRpcMethodResult> AddTranslateMetrics(TranslateMetrics metrics)
         {
             if (!await IsAuthorizedAsync())
@@ -34,6 +38,26 @@ namespace SIL.XForge.Scripture.Controllers
             metrics.ProjectRef = ResourceId;
             await _translateMetrics.ReplaceAsync(metrics, true);
             return Ok();
+        }
+
+        protected override ProjectUserEntity CreateProjectUser(string userId)
+        {
+            return new SFProjectUserEntity
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                UserRef = userId,
+                ProjectRef = ResourceId,
+                Role = SFProjectRoles.SFReviewer
+            };
+        }
+
+        protected override bool IsProjectSharingOptionEnabled(SFProjectEntity project, string option)
+        {
+            if (!project.CheckingConfig.Share.Enabled)
+                return false;
+            if (option == ShareOptions.Email)
+                return project.CheckingConfig.Share.ViaEmail;
+            return false;
         }
     }
 }
