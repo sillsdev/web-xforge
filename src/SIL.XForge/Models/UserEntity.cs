@@ -53,7 +53,7 @@ namespace SIL.XForge.Models
 
         public Dictionary<string, object> ExtraElements { get; protected set; }
 
-        public IEnumerable<Claim> GetClaims(string site)
+        public IEnumerable<Claim> GetClaims()
         {
             var claims = new List<Claim>
             {

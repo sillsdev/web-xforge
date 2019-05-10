@@ -96,7 +96,7 @@ namespace SIL.XForge.Controllers
                     Active = false,
                     Sites = new Dictionary<string, Site>
                     {
-                        { DictionaryKeySerializer.SerializeKey(_siteOptions.Value.Origin.Authority), new Site{} }
+                        { _siteOptions.Value.Id, new Site() }
                     }
                 };
                 await _users.InsertAsync(user);

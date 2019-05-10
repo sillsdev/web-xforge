@@ -77,7 +77,7 @@ namespace SIL.XForge.Services
             entity.CanonicalEmail = UserEntity.CanonicalizeEmail(entity.Email);
             entity.Sites = new Dictionary<string, Site>
             {
-                { DictionaryKeySerializer.SerializeKey(_siteOptions.Value.Origin.Authority), new Site() }
+                { _siteOptions.Value.Id, new Site() }
             };
             return base.InsertEntityAsync(entity);
         }
@@ -112,7 +112,7 @@ namespace SIL.XForge.Services
                     break;
                 case nameof(UserResource.Site):
                     SiteOptions siteOptions = _siteOptions.Value;
-                    string siteKey = DictionaryKeySerializer.SerializeKey(siteOptions.Origin.Authority);
+                    string siteKey = siteOptions.Id;
                     if (value == null)
                         update.Unset(u => u.Sites[siteKey]);
                     else if (((Site)value).CurrentProjectId == null)

@@ -90,6 +90,7 @@ namespace SIL.XForge.Controllers
                 var options = Substitute.For<IOptions<SiteOptions>>();
                 options.Value.Returns(new SiteOptions
                 {
+                    Id = "xf",
                     Name = "xForge",
                     Origin = new Uri("http://localhost")
                 });

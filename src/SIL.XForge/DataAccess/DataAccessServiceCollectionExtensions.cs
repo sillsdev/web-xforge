@@ -60,7 +60,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     var customSitesSerializer =
                         new DictionaryInterfaceImplementerSerializer<Dictionary<string, Site>>(
-                            DictionaryRepresentation.Document, new DictionaryKeySerializer(),
+                            DictionaryRepresentation.Document, new StringSerializer(),
                             BsonSerializer.SerializerRegistry.GetSerializer<Site>());
                     cm.GetMemberMap(u => u.Sites).SetSerializer(customSitesSerializer);
                 },

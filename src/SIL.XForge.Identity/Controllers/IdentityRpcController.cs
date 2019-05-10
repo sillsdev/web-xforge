@@ -180,7 +180,7 @@ namespace SIL.XForge.Identity.Controllers
                         Active = true,
                         Sites = new Dictionary<string, Site>
                         {
-                            { _siteOptions.Value.Origin.Authority, new Site() }
+                            { _siteOptions.Value.Id, new Site() }
                         }
                     };
                     await _users.InsertAsync(user);
@@ -285,7 +285,7 @@ namespace SIL.XForge.Identity.Controllers
             };
             // issue authentication cookie with subject ID and name
             await _httpContextAccessor.HttpContext.SignInAsync(user.Id, user.Name, props);
-            string siteKey = DictionaryKeySerializer.SerializeKey(_siteOptions.Value.Origin.Authority);
+            string siteKey = _siteOptions.Value.Id;
             await _users.UpdateAsync(u => u.Id == user.Id, update => update
                 .Set(u => u.Sites[siteKey].LastLogin, DateTime.UtcNow)
             );

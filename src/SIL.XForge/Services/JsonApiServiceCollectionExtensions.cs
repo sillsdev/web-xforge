@@ -33,7 +33,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             // setup auto mapper
             var siteOptions = configuration.GetOptions<SiteOptions>();
-            string siteKey = siteOptions.Origin.Authority;
+            string siteKey = siteOptions.Id;
             services.AddAutoMapper(mapConfig =>
                 {
                     mapConfig.ValidateInlineMaps = false;
