@@ -86,16 +86,15 @@ namespace SIL.XForge.Identity.Controllers
             var env = new TestEnvironment();
 
             UserEntity user = await env.Users.GetAsync(TestUserId);
-            DateTime lastLogin = user.Sites[env.SiteOptions.Value.Origin.Authority].LastLogin;
+            DateTime lastLogin = user.Sites[env.SiteOptions.Value.Id].LastLogin;
             Assert.That(lastLogin < DateTime.UtcNow);
             LogInResult result = await env.Controller.LogIn(TestUsername, TestPassword, false, TestReturnUrl);
             Assert.That(result.Success, Is.True);
             user = await env.Users.GetAsync(TestUserId);
-            Assert.Greater(user.Sites[env.SiteOptions.Value.Origin.Authority].LastLogin, lastLogin);
+            Assert.Greater(user.Sites[env.SiteOptions.Value.Id].LastLogin, lastLogin);
         }
 
         [Test]
-        [Ignore("Temporary fix for QA - Fix Sites key serialization")]
         public async Task LogIn_SiteValueSet()
         {
             var env = new TestEnvironment();
@@ -112,9 +111,7 @@ namespace SIL.XForge.Identity.Controllers
 
             Assert.That(result.Success, Is.True);
             UserEntity newUser = await env.Users.GetAsync("newuser");
-            Assert.That(newUser.Sites.Keys.ToArray(), Is.EquivalentTo(new[] {
-                env.SiteOptions.Value.Origin.Authority
-            }));
+            Assert.That(newUser.Sites.Keys, Is.EquivalentTo(new[] { env.SiteOptions.Value.Id }));
         }
 
         [Test]
@@ -313,9 +310,9 @@ namespace SIL.XForge.Identity.Controllers
                 Email = "me@example.com",
                 CanonicalEmail = "me@example.com",
                 Sites = new Dictionary<string, Site>
-                    {
-                        { env.SiteOptions.Value.Origin.Authority, new Site() }
-                    }
+                {
+                    { env.SiteOptions.Value.Id, new Site() }
+                }
             });
             string result = await env.Controller.SignUp("User Name", "unimportant1234", "me@example.com");
 
@@ -490,6 +487,7 @@ namespace SIL.XForge.Identity.Controllers
                 SiteOptions = Substitute.For<IOptions<SiteOptions>>();
                 SiteOptions.Value.Returns(new SiteOptions
                 {
+                    Id = "xf",
                     Name = "xForge",
                     Origin = new Uri("http://localhost")
                 });
@@ -514,9 +512,7 @@ namespace SIL.XForge.Identity.Controllers
                             CanonicalEmail = UserEntity.CanonicalizeEmail(TestUserEmail),
                             Sites = new Dictionary<string, Site>
                             {
-                                { SiteOptions.Value.Origin.Authority, new Site
-                                    { LastLogin = DateTime.UtcNow.AddDays(-1) }
-                                }
+                                { SiteOptions.Value.Id, new Site { LastLogin = DateTime.UtcNow.AddDays(-1) } }
                             }
                         }
                     });

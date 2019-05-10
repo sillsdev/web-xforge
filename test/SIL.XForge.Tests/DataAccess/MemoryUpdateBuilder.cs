@@ -148,9 +148,27 @@ namespace SIL.XForge.DataAccess
                                         newOwners.AddRange(((IEnumerable)owner).Cast<object>());
                                         break;
                                     default:
-                                        newOwner = method.Invoke(owner, new object[] { index });
-                                        if (newOwner != null)
-                                            newOwners.Add(newOwner);
+                                        var dict = owner as IDictionary;
+                                        if (dict != null)
+                                        {
+                                            newOwner = dict[index];
+                                            if (newOwner != null)
+                                            {
+                                                newOwners.Add(newOwner);
+                                            }
+                                            else
+                                            {
+                                                Type valueType = owner.GetType().GenericTypeArguments[1];
+                                                newOwner = Activator.CreateInstance(valueType);
+                                                dict[index] = newOwner;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            newOwner = method.Invoke(owner, new object[] { index });
+                                            if (newOwner != null)
+                                                newOwners.Add(newOwner);
+                                        }
                                         break;
                                 }
                                 break;

@@ -21,6 +21,7 @@ namespace SIL.XForge.Services
         where TResource : class, IResource
         where TEntity : Entity, new()
     {
+        public const string SiteId = "xf";
         public const string SiteAuthority = "xf.localhost:5000";
         public static readonly string TempDir = Path.Combine(Path.GetTempPath(), "ResourceServiceTests");
         public static readonly string SiteDir = Path.Combine(TempDir, "site");
@@ -47,7 +48,7 @@ namespace SIL.XForge.Services
             var config = new MapperConfiguration(cfg =>
                 {
                     cfg.ValidateInlineMaps = false;
-                    cfg.AddProfile(new XFMapperProfile(SiteAuthority));
+                    cfg.AddProfile(new XFMapperProfile(SiteId));
                     SetupMapper(cfg);
                 });
             Mapper = config.CreateMapper();
@@ -57,6 +58,7 @@ namespace SIL.XForge.Services
             SiteOptions = Substitute.For<IOptions<SiteOptions>>();
             SiteOptions.Value.Returns(new SiteOptions
             {
+                Id = SiteId,
                 Name = "xForge",
                 Origin = new Uri("http://" + SiteAuthority),
                 SiteDir = SiteDir,

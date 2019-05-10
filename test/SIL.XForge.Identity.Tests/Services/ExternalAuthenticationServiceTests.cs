@@ -11,8 +11,10 @@ using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Identity.Authentication;
 using SIL.XForge.Models;
@@ -143,9 +145,10 @@ namespace SIL.XForge.Identity.Services
                             CanonicalEmail = UserEntity.CanonicalizeEmail(TestUserEmail)
                         }
                     });
-
                 Events = Substitute.For<IEventService>();
-                Service = new ExternalAuthenticationService(Events, Users, HttpContextAccessor);
+                IOptions<SiteOptions> siteOptions = Microsoft.Extensions.Options.Options.Create(
+                    new SiteOptions { Id = "xf" });
+                Service = new ExternalAuthenticationService(Events, Users, HttpContextAccessor, siteOptions);
             }
 
             public MemoryRepository<UserEntity> Users { get; }

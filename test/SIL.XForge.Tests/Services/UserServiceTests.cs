@@ -325,7 +325,6 @@ namespace SIL.XForge.Services
         }
 
         [Test]
-        [Ignore("Temporary fix for QA - Fix Sites key serialization")]
         public async Task UpdateAsync_SetSiteProjectId()
         {
             using (var env = new TestEnvironment())
@@ -335,7 +334,7 @@ namespace SIL.XForge.Services
                 CollectionAssert.IsNotEmpty(initialEntity.Sites);
 
                 DateTime lastLogin = env.Entities.Query()
-                    .FirstOrDefault(u => u.Id == User02Id).Sites[TestEnvironment.SiteAuthority].LastLogin;
+                    .FirstOrDefault(u => u.Id == User02Id).Sites[TestEnvironment.SiteId].LastLogin;
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("site"), new Site { CurrentProjectId = "project01" } }
@@ -356,9 +355,9 @@ namespace SIL.XForge.Services
 
                 UserEntity updatedEntity = await env.Service.GetEntityAsync(resource.Id);
                 Assert.That(updatedEntity.Sites.Count, Is.EqualTo(1));
-                Assert.That(updatedEntity.Sites[TestEnvironment.SiteAuthority].CurrentProjectId,
+                Assert.That(updatedEntity.Sites[TestEnvironment.SiteId].CurrentProjectId,
                     Is.EqualTo("project01"));
-                Assert.That(updatedEntity.Sites[TestEnvironment.SiteAuthority].LastLogin, Is.EqualTo(lastLogin));
+                Assert.That(updatedEntity.Sites[TestEnvironment.SiteId].LastLogin, Is.EqualTo(lastLogin));
             }
         }
 
@@ -370,9 +369,7 @@ namespace SIL.XForge.Services
                 env.SetUser(User01Id, SystemRoles.SystemAdmin);
                 UserEntity initialEntity = await env.Service.GetEntityAsync(User02Id);
                 Assert.That(initialEntity.Sites.Count, Is.EqualTo(1));
-                Assert.That(initialEntity.Sites[DictionaryKeySerializer.SerializeKey(TestEnvironment.SiteAuthority)]
-                        .CurrentProjectId,
-                    Is.EqualTo("project01"));
+                Assert.That(initialEntity.Sites[TestEnvironment.SiteId].CurrentProjectId, Is.EqualTo("project01"));
 
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
@@ -395,7 +392,6 @@ namespace SIL.XForge.Services
         }
 
         [Test]
-        [Ignore("Temporary fix for QA - Fix Sites key serialization")]
         public async Task UpdateAsync_UnsetSiteProjectId()
         {
             using (var env = new TestEnvironment())
@@ -403,10 +399,9 @@ namespace SIL.XForge.Services
                 env.SetUser(User03Id, SystemRoles.User);
                 UserEntity initialEntity = await env.Service.GetEntityAsync(User03Id);
                 Assert.That(initialEntity.Sites.Count, Is.EqualTo(1));
-                Assert.That(initialEntity.Sites[TestEnvironment.SiteAuthority].CurrentProjectId,
-                    Is.EqualTo("project03"));
+                Assert.That(initialEntity.Sites[TestEnvironment.SiteId].CurrentProjectId, Is.EqualTo("project03"));
                 DateTime lastLogin = env.Entities.Query()
-                    .FirstOrDefault(u => u.Id == User03Id).Sites[TestEnvironment.SiteAuthority].LastLogin;
+                    .FirstOrDefault(u => u.Id == User03Id).Sites[TestEnvironment.SiteId].LastLogin;
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("site"), new Site { CurrentProjectId = null } }
@@ -427,8 +422,8 @@ namespace SIL.XForge.Services
 
                 UserEntity updatedEntity = await env.Service.GetEntityAsync(resource.Id);
                 Assert.That(updatedEntity.Sites.Count, Is.EqualTo(1));
-                Assert.That(updatedEntity.Sites[TestEnvironment.SiteAuthority].CurrentProjectId, Is.Null);
-                Assert.That(updatedEntity.Sites[TestEnvironment.SiteAuthority].LastLogin, Is.EqualTo(lastLogin));
+                Assert.That(updatedEntity.Sites[TestEnvironment.SiteId].CurrentProjectId, Is.Null);
+                Assert.That(updatedEntity.Sites[TestEnvironment.SiteId].LastLogin, Is.EqualTo(lastLogin));
             }
         }
 
@@ -656,8 +651,9 @@ namespace SIL.XForge.Services
                         CanonicalEmail = "user02@example.com",
                         Sites = new Dictionary<string, Site>
                         {
-                            { DictionaryKeySerializer.SerializeKey(SiteAuthority), new Site
-                                { CurrentProjectId = "project01", LastLogin = new DateTime(2019, 5, 1) }
+                            {
+                                SiteId,
+                                new Site { CurrentProjectId = "project01", LastLogin = new DateTime(2019, 5, 1) }
                             }
                         }
                     },
@@ -669,8 +665,9 @@ namespace SIL.XForge.Services
                         CanonicalEmail = "user03@example.com",
                         Sites = new Dictionary<string, Site>
                         {
-                            { DictionaryKeySerializer.SerializeKey(SiteAuthority), new Site
-                                { CurrentProjectId = "project03", LastLogin = new DateTime(2019, 5, 1) }
+                            {
+                                SiteId,
+                                new Site { CurrentProjectId = "project03", LastLogin = new DateTime(2019, 5, 1) }
                             }
                         }
                     },

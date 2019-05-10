@@ -4,6 +4,7 @@ namespace SIL.XForge.Configuration
 {
     public class SiteOptions
     {
+        public string Id { get; set; }
         public string Name { get; set; }
         public Uri Origin { get; set; }
         public string SmtpServer { get; set; }

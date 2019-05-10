@@ -11,6 +11,8 @@ using IdentityServer4.Events;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Identity.Authentication;
 using SIL.XForge.Models;
@@ -22,13 +24,15 @@ namespace SIL.XForge.Identity.Services
         private readonly IRepository<UserEntity> _users;
         private readonly IEventService _events;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IOptions<SiteOptions> _siteOptions;
 
         public ExternalAuthenticationService(IEventService events, IRepository<UserEntity> users,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor, IOptions<SiteOptions> siteOptions)
         {
             _events = events;
             _users = users;
             _httpContextAccessor = httpContextAccessor;
+            _siteOptions = siteOptions;
         }
 
         public async Task<string> LogInAsync(string userId = null)
@@ -165,7 +169,11 @@ namespace SIL.XForge.Identity.Services
                         Role = SystemRoles.User,
                         Active = true,
                         ParatextId = externalUserId,
-                        ParatextTokens = paratextTokens
+                        ParatextTokens = paratextTokens,
+                        Sites = new Dictionary<string, Site>
+                        {
+                            { _siteOptions.Value.Id, new Site() }
+                        }
                     };
                     break;
                 default:
