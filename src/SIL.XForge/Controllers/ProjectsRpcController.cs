@@ -26,7 +26,6 @@ namespace SIL.XForge.Controllers
         private readonly IRepository<UserEntity> _users;
         private readonly IEmailService _emailService;
         private readonly IOptions<SiteOptions> _siteOptions;
-        private TEntity _project;
 
         protected ProjectsRpcController(IUserAccessor userAccessor, IHttpRequestAccessor httpRequestAccessor,
             IRepository<TEntity> projects, IRepository<UserEntity> users, IEmailService emailService,
@@ -44,24 +43,19 @@ namespace SIL.XForge.Controllers
             get { return _projects; }
         }
 
-        protected TEntity Project
-        {
-            get { return _project; }
-        }
-
         protected abstract string ProjectAdminRole { get; }
 
         public async Task<IRpcMethodResult> Invite(string email)
         {
-            _project = await GetCurrentProject();
+            TEntity project = await _projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
             // Check the user has permission to invite another user
-            if (!CheckCanInvite(ShareOptions.Email))
+            if (!CheckCanInvite(project, ShareOptions.Email))
                 return ForbiddenError();
 
             if (await CreateInvitedUserAccount(email))
             {
                 SiteOptions siteOptions = _siteOptions.Value;
-                string projectName = _project.ProjectName;
+                string projectName = project.ProjectName;
                 string inviterName = User.Name;
                 string url = $"{siteOptions.Origin}identity/sign-up?e={HttpUtility.UrlEncode(email)}";
                 string subject = $"You've been invited to the project {projectName} on {siteOptions.Name}";
@@ -81,11 +75,11 @@ namespace SIL.XForge.Controllers
                 string canonicalEmail = UserEntity.CanonicalizeEmail(email);
                 UserEntity user = await _users.Query().FirstOrDefaultAsync(u => u.CanonicalEmail == canonicalEmail);
 
-                if (await AddUserToProject(user.Id) == null)
+                if (!await AddUserToProject(user.Id))
                     return Ok("none");
 
                 SiteOptions siteOptions = _siteOptions.Value;
-                string projectName = _project.ProjectName;
+                string projectName = project.ProjectName;
                 string inviterName = User.Name;
                 string subject = $"You've been added to the project {projectName} on {siteOptions.Name}";
                 string body = "<p>Hello </p><p></p>" +
@@ -138,34 +132,30 @@ namespace SIL.XForge.Controllers
             }
         }
 
-        private async Task<TEntity> GetCurrentProject()
-        {
-            return await _projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
-        }
-
-
-        private async Task<TEntity> AddUserToProject(string userId)
+        private async Task<bool> AddUserToProject(string userId)
         {
             ProjectUserEntity entity = CreateProjectUser(userId);
-            return await _projects.UpdateAsync(p => p.Id == ResourceId && !p.Users.Any(pu => pu.UserRef == userId),
-                update => update.Add(project => project.Users, entity)
-            );
+            TEntity updatedProject =
+                await _projects.UpdateAsync(p => p.Id == ResourceId && !p.Users.Any(pu => pu.UserRef == userId),
+                    update => update.Add(project => project.Users, entity)
+                );
+            return updatedProject != null;
         }
 
-        private bool CheckCanInvite(string option)
+        private bool CheckCanInvite(TEntity project, string option)
         {
             // Is the user part of the project
-            ProjectUserEntity projectUser = _project.Users.FirstOrDefault(u => u.UserRef == User.UserId);
+            ProjectUserEntity projectUser = project.Users.FirstOrDefault(u => u.UserRef == User.UserId);
             if (projectUser != null)
             {
                 if (projectUser.Role == ProjectAdminRole)
                     return true;
-                return IsProjectSharingOptionEnabled(option);
+                return IsProjectSharingOptionEnabled(project, option);
             }
             return false;
         }
 
         protected abstract ProjectUserEntity CreateProjectUser(string userId);
-        protected abstract bool IsProjectSharingOptionEnabled(string option);
+        protected abstract bool IsProjectSharingOptionEnabled(TEntity project, string option);
     }
 }

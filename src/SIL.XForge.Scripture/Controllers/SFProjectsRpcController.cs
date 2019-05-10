@@ -51,12 +51,12 @@ namespace SIL.XForge.Scripture.Controllers
             };
         }
 
-        protected override bool IsProjectSharingOptionEnabled(string option)
+        protected override bool IsProjectSharingOptionEnabled(SFProjectEntity project, string option)
         {
-            if (!Project.CheckingConfig.Share.Enabled)
+            if (!project.CheckingConfig.Share.Enabled)
                 return false;
             if (option == ShareOptions.Email)
-                return Project.CheckingConfig.Share.ViaEmail;
+                return project.CheckingConfig.Share.ViaEmail;
             return false;
         }
     }
