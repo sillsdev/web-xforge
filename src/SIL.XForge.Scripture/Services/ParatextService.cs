@@ -91,10 +91,12 @@ namespace SIL.XForge.Scripture.Services
                 // determine if the project is connectable, i.e. either the project exists and the user hasn't been
                 // added to the project, or the project doesn't exist and the user is the administrator
                 bool isConnectable;
+                bool isConnected = false;
                 string projectId = null;
                 if (existingProjects.TryGetValue(paratextId, out SFProjectEntity project))
                 {
                     projectId = project.Id;
+                    isConnected = true;
                     isConnectable = !project.Users.Any(u => u.UserRef == user.Id);
                 }
                 else if (role == SFProjectRoles.Administrator)
@@ -117,7 +119,8 @@ namespace SIL.XForge.Scripture.Services
                     LanguageTag = (string)projectObj["language_ldml"],
                     LanguageName = langName,
                     ProjectId = projectId,
-                    IsConnectable = isConnectable
+                    IsConnectable = isConnectable,
+                    IsConnected = isConnected
                 });
             }
             return projects;

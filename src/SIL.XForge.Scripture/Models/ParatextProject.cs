@@ -8,5 +8,6 @@ namespace SIL.XForge.Scripture.Models
         public string LanguageName { get; set; }
         public string ProjectId { get; set; }
         public bool IsConnectable { get; set; }
+        public bool IsConnected { get; set; }
     }
 }

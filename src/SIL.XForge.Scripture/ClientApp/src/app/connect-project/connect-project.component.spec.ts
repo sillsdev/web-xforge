@@ -86,7 +86,8 @@ describe('ConnectProjectComponent', () => {
           languageTag: 'en',
           languageName: 'English',
           projectId: 'project01',
-          isConnectable: true
+          isConnectable: true,
+          isConnected: false
         }
       ])
     );
@@ -104,6 +105,93 @@ describe('ConnectProjectComponent', () => {
     verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
+  it('should display non-connectable projects disabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedParatextService.getProjects()).thenReturn(
+      of<ParatextProject[]>([
+        {
+          paratextId: 'pt01',
+          name: 'Target1',
+          languageTag: 'en',
+          languageName: 'English',
+          isConnectable: true,
+          isConnected: false
+        },
+        {
+          paratextId: 'pt02',
+          name: 'Target2',
+          languageTag: 'mri',
+          languageName: 'Maori',
+          isConnectable: false,
+          isConnected: true
+        },
+        {
+          paratextId: 'pt03',
+          name: 'Target3',
+          languageTag: 'th',
+          languageName: 'Thai',
+          isConnectable: true,
+          isConnected: true
+        },
+        {
+          paratextId: 'pt04',
+          name: 'Source',
+          languageTag: 'es',
+          languageName: 'Spanish',
+          isConnectable: false,
+          isConnected: false
+        }
+      ])
+    );
+    env.fixture.detectChanges();
+    expect(env.component.state).toEqual('input');
+    expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
+    expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
+    expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
+    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(true);
+    expect(env.isMenuItemDisabled(env.projectSelect, 3)).toBe(true);
+    expect(env.nonAdminMessage).not.toBeNull();
+  }));
+
+  it('should not display non-administrator message', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedParatextService.getProjects()).thenReturn(
+      of<ParatextProject[]>([
+        {
+          paratextId: 'pt01',
+          name: 'Target1',
+          languageTag: 'en',
+          languageName: 'English',
+          isConnectable: true,
+          isConnected: false
+        },
+        {
+          paratextId: 'pt02',
+          name: 'Target2',
+          languageTag: 'mri',
+          languageName: 'Maori',
+          isConnectable: false,
+          isConnected: true
+        },
+        {
+          paratextId: 'pt03',
+          name: 'Target3',
+          languageTag: 'th',
+          languageName: 'Thai',
+          isConnectable: true,
+          isConnected: true
+        }
+      ])
+    );
+    env.fixture.detectChanges();
+    expect(env.component.state).toEqual('input');
+    expect(env.getMenuItems(env.projectSelect).length).toEqual(3);
+    expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
+    expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
+    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(true);
+    expect(env.nonAdminMessage).toBeNull();
+  }));
+
   it('should create when non-existent project is selected', fakeAsync(() => {
     const env = new TestEnvironment();
     when(env.mockedParatextService.getProjects()).thenReturn(
@@ -113,14 +201,16 @@ describe('ConnectProjectComponent', () => {
           name: 'Target',
           languageTag: 'en',
           languageName: 'English',
-          isConnectable: true
+          isConnectable: true,
+          isConnected: false
         },
         {
           paratextId: 'pt02',
           name: 'Source',
           languageTag: 'es',
           languageName: 'Spanish',
-          isConnectable: false
+          isConnectable: false,
+          isConnected: false
         }
       ])
     );
@@ -180,7 +270,8 @@ describe('ConnectProjectComponent', () => {
           name: 'Target',
           languageTag: 'en',
           languageName: 'English',
-          isConnectable: true
+          isConnectable: true,
+          isConnected: false
         }
       ])
     );
@@ -273,6 +364,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#no-projects-msg'));
   }
 
+  get nonAdminMessage(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#connect-non-admin-msg'));
+  }
+
   get projectsMenu(): DebugElement {
     return this.fixture.debugElement.query(By.css('#projects-menu'));
   }
@@ -313,9 +408,12 @@ class TestEnvironment {
     tick();
   }
 
-  getMenuItem(menu: DebugElement, index: number): string {
-    const items = menu.nativeElement.querySelectorAll('mdc-list-item');
-    return items.item(index).textContent;
+  getMenuItems(menu: DebugElement): DebugElement[] {
+    return menu.queryAll(By.css('mdc-list-item'));
+  }
+
+  isMenuItemDisabled(menu: DebugElement, index: number): boolean {
+    return this.getMenuItems(menu)[index].nativeElement.classList.contains('mdc-list-item--disabled');
   }
 
   inputElement(element: DebugElement): HTMLInputElement {

@@ -36,12 +36,12 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
       checking: new FormControl(false)
     })
   });
-  targetProjects: ParatextProject[];
+  projects: ParatextProject[] = null;
   sourceProjects: ParatextProject[];
   state: 'connecting' | 'loading' | 'input' | 'login';
   connectProjectName: string;
 
-  private projects: ParatextProject[] = null;
+  private targetProjects: ParatextProject[];
   private job: SyncJob;
 
   constructor(
@@ -76,6 +76,13 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
     const paratextId: string = this.connectProjectForm.controls.paratextId.value;
     const project = this.projects.find(p => p.paratextId === paratextId);
     return project != null && project.projectId == null;
+  }
+
+  get hasNonAdministratorProject(): boolean {
+    if (!this.projects) {
+      return false;
+    }
+    return this.projects.filter(p => !p.isConnected && !p.isConnectable).length > 0;
   }
 
   ngOnInit(): void {
