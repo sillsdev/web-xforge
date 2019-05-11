@@ -5,4 +5,5 @@ export interface ParatextProject {
   languageName: string;
   projectId?: string;
   isConnectable: boolean;
+  isConnected: boolean;
 }
