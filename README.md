@@ -44,10 +44,11 @@ Successful builds from our CI server deploy to:
 
 ### Gitflow
 
-We use [Gitflow](http://nvie.com/posts/a-successful-git-branching-model/) with two modifications:
+We use [Gitflow](http://nvie.com/posts/a-successful-git-branching-model/) with some modifications:
 
-- Our `live` branch is the the Gitflow `master` production branch.
 - Our `master` branch is the Gitflow `develop` development branch. All pull requests go against `master`.
+- Our `qa` branch is similar to a Gitflow `release` branch.
+- Our `live` branch is the the Gitflow `master` production branch.
 
 If you are working on a site _Beta_ then it looks like normal Gitflow and pull requests go against the relevant site development branch.
 
@@ -63,24 +64,40 @@ TypeScript follows the [Angular Style Guide](https://angular.io/guide/styleguide
 
 To this end you'll also want to be familiar with [Upgrading from AngularJS](https://angular.io/guide/upgrade) particularly the [Preparation](https://angular.io/guide/upgrade#preparation) section.
 
-We plan to use [Prettier](https://prettier.io/) with pre-commit hook after re-writing the whole repo with Prettier first.
+We use [Prettier](https://prettier.io/) with a pre-commit hook.
 
 ### Layout
 
-We use [Angular Flex-Layout](https://github.com/angular/flex-layout) with [Material Design components for Angular](https://material.angular.io/guides) including the [Material Design Icons](https://google.github.io/material-design-icons/).
+We use [Angular Flex-Layout](https://github.com/angular/flex-layout) with [Angular MDC](https://trimox.github.io/angular-mdc-web) including the [Material Design Icons](https://google.github.io/material-design-icons/).
 
 ### Recommended Development Environment
 
-Our recommended development environment for web development is Linux Ubuntu GNOME.
+Our recommended development environment for web development is Ubuntu 16.04.
 
 - [Vagrant GUI Setup](#vagrant-gui-setup). A Vagrant box with xForge already installed is downloaded and set up on your machine. This is the easiest and cleanest to setup.
-- [Local Linux Development Setup](#local-linux-development-setup). Everything is installed directly on your machine, which needs to be running Ubuntu 16.04. This is the best method because everything runs at full speed.
+- [Local Linux Development Setup](#local-linux-development-setup). Everything is installed directly on your machine, which needs to be running Ubuntu 16.04. This is the fastest method because development is not done in a virtual machine.
 
 #### Vagrant GUI Setup
 
-Install [VirtualBox](https://www.virtualbox.org/) and [Vagrant](https://www.vagrantup.com/) and [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and setup **git** for you (at least _name_ and _email_ is needed in `.gitconfig`). Make sure virtualization is enabled in your BIOS.
+Install [VirtualBox](https://www.virtualbox.org/), [Vagrant](https://www.vagrantup.com/), and [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git). To do this in Linux, run
 
-Create a directory for the installation, such as `src/xForge`. Download the file [deploy/vagrant_xenial_gui/Vagrantfile](https://raw.githubusercontent.com/sillsdev/web-xforge/master/deploy/vagrant_xenial_gui/Vagrantfile) to the directory where you want to install. Then open the command line to that directory and run `vagrant up`. This will download a box (it's about 5GB, so expect it to take a while) and run a few setup steps. When it is complete the virtual machine should be open. After compiling Scripture Forge, browse to http://localhost:5000 and use the default login credentials "admin" and "password".
+    sudo apt install vagrant virtualbox virtualbox-guest-additions-iso git
+
+Setup git. At least name and email is needed in `.gitconfig`. You can do this from a terminal by running
+
+    git config --global user.name "My Name"
+    git config --global user.email "me@example.com"
+
+Hardware-assisted virtualization (VT-x or AMD-V) needs to be enabled in your BIOS.
+
+Create a directory to manage the development machine, such as `xforge`. Checkout the xforge git repository to access (and later receive updates to) the vagrant development machine configuration file:
+
+    git clone https://github.com/sillsdev/web-xforge.git
+    cd web-xforge.git/deploy/vagrant_xenial_gui
+
+Run `vagrant up`. This will download, initialize, and run the development machine. The machine is about 5GB, so expect the download to take a while.
+
+In the guest development machine, compile Scripture Forge, browse to http://localhost:5000 and use the default login credentials "admin" and "password".
 
 #### Local Linux Development Setup
 
@@ -123,7 +140,9 @@ git pull
 git checkout -b feature/<featureName>
 ```
 
-Then do some useful work and commit it. Then
+Do some useful work and commit it.
+
+Upload your work:
 
 ```bash
 git push origin feature/<featureName>
@@ -135,7 +154,7 @@ Make PR's against the **master** branch. If the **master** branch has moved on s
 
 Ensure all [tests](#testing) are passing before submitting a PR.
 
-We now use [Reviewable](https://reviewable.io/) for GitHub Pull Requests (PR). When submitting a PR, a **This change is Reviewable** link is added to the PR description. Remember to hit the **Publish** button after adding comments in Reviewable.
+We use [Reviewable](https://reviewable.io/) for GitHub Pull Requests (PRs). When submitting a PR, a **This change is Reviewable** link is added to the PR description. Remember to click the **Publish** button after adding comments in Reviewable.
 
 If the person reviewing feels comfortable to approve it they can. However if they want other eyes on it, mention it in a comment on the PR.
 If you have minor changes to request on a PR you can say 'Make change X and then LGTM'. This means the person making the PR can merge it themselves after the requested change.
@@ -180,7 +199,7 @@ Or just use VS Code with this project's recommended extensions.
 
 ### Angular Unit Testing
 
-To run front end unit tests, make sure `ng serve` and `dotnet run` are **not** running (_CTRL-C_ to end them), then from the repo root
+To run front end unit tests, make sure `ng serve` is **not** running (_CTRL-C_ to end them), then from the repo root
 
 ```bash
 cd src/SIL.XForge.Scripture/ClientApp/
@@ -265,7 +284,7 @@ cd src/SIL.XForge.Scripture/ClientApp/
 ./rune2e.sh debug
 ```
 
-Open `chrome://inspect/#devices` in Chromium and click **inspect**. This opens an instance of DevTools and immediately breaks the code at the top of the ng module. Hit continue (or F8) in your debugger to run your e2e tests, and hit any `debugger` statements in your code. Close the DevTools window to finish the tests.
+Open `chrome://inspect/#devices` in Chromium and click **inspect**. This opens an instance of DevTools and immediately breaks the code at the top of the ng module. Click the continue button (or press F8) in your debugger to run your e2e tests, and hit any `debugger` statements in your code. Close the DevTools window to finish the tests.
 
 ### PWA Testing
 
