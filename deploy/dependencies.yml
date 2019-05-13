@@ -35,17 +35,25 @@
       when: base_distribution == 'ubuntu' and (base_distribution_release == 'xenial' or base_distribution_release == 'bionic')
   tasks:
     - name: install packages
-      apt: name="{{item}}" state=present update_cache='yes'
-      with_items:
-        - dotnet-sdk-2.1
-        - mongodb-org
-        - nodejs
+      apt:
+        name: [
+          'dotnet-sdk-2.1',
+          'mongodb-org',
+          'nodejs',
+          'npm',
+        ]
+        update_cache: yes
       tags: ["packages"]
 
+    - name: Set npm prefix
+      shell: "npm config set prefix /usr/local"
+
     - name: install n
-      shell: npm install -g n
-      args:
-        creates: /usr/local/bin/n
+      npm:
+        name: n
+        path: "{{lookup('env','HOME')}}/src/web-xforge/src/SIL.XForge.Scripture/ClientApp"
+        state: latest
+        global: yes
 
     - name: change node version
       shell: "n {{node_version}}"
@@ -58,24 +66,19 @@
         backrefs: yes
       notify: restart mongod
     - name: ensure mongod service is running (and enable it at boot)
-
       # Note that the mongodb-org packages install a service named "mongod", not "mongodb"
       service:
         name: mongod
         state: started
         enabled: yes
 
-    - name: get the username running the deploy
-      become: no
-      local_action: command whoami
-      register: username_on_the_host
     - name: Add folders
       file:
         path: "{{item}}"
         state: directory
-        owner: "{{ username_on_the_host.stdout }}"
-        group: "{{ username_on_the_host.stdout }}"
-        mode: "u=rwX,g=rX,o=rX"
+        owner: "{{lookup('env','USER')}}"
+        group: "www-data"
+        mode: "u=rwX,g=rwX,o=rX"
       with_items:
         - "/var/lib/scriptureforge"
         - "/var/lib/scriptureforge/sync"
@@ -95,6 +98,25 @@
       when: inventory_hostname == "localhost"
       notify: restart network
       tags: ["network"]
+
+    - name: Enable convenient access to ng from commandline | bin dir
+      become: no
+      file:
+        path: "{{lookup('env','HOME')}}/bin"
+        state: directory
+    - name: Enable convenient access to ng from commandline | symlink
+      become: no
+      file:
+        src: "{{lookup('env','HOME')}}/src/web-xforge/src/SIL.XForge.Scripture/ClientApp/node_modules/.bin/ng"
+        path: "{{lookup('env','HOME')}}/bin/ng"
+        state: link
+
+    - name: Use chromium for unit tests
+      become: no
+      lineinfile:
+        path: "{{lookup('env','HOME')}}/.pam_environment"
+        line: 'CHROME_BIN=chromium-browser'
+        create: yes
 
   handlers:
     - name: restart mongod
