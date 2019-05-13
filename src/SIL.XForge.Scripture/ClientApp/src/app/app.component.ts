@@ -1,6 +1,6 @@
 import { MdcDialog, MdcSelect, MdcTopAppBar } from '@angular-mdc/web';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MediaChange, ObservableMedia } from '@angular/flex-layout';
+import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap, withLatestFrom } from 'rxjs/operators';
@@ -50,7 +50,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     private readonly locationService: LocationService,
     private readonly userService: UserService,
     private readonly noticeService: NoticeService,
-    media: ObservableMedia,
+    media: MediaObserver,
     private readonly projectService: SFProjectService,
     private readonly realtimeService: RealtimeService,
     private readonly route: ActivatedRoute,
@@ -58,7 +58,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     private readonly dialog: MdcDialog
   ) {
     super();
-    this.subscribe(media.asObservable(), (change: MediaChange) => {
+    this.subscribe(media.media$, (change: MediaChange) => {
       this.isDrawerPermanent = change.mqAlias !== 'xs' && change.mqAlias !== 'sm';
     });
   }

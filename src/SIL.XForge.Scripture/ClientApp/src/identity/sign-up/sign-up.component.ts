@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ObservableMedia } from '@angular/flex-layout';
+import { MediaObserver } from '@angular/flex-layout';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Params } from '@angular/router';
 
@@ -31,11 +31,11 @@ export class SignUpComponent extends SubscriptionDisposable implements OnInit {
   private emailEntry: string;
 
   constructor(
+    public readonly media: MediaObserver,
     private readonly identityService: IdentityService,
     private readonly authService: AuthService,
     private readonly activatedRoute: ActivatedRoute,
-    private readonly noticeService: NoticeService,
-    public readonly media: ObservableMedia
+    private readonly noticeService: NoticeService
   ) {
     super();
   }
