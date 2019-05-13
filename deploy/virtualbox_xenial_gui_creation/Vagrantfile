@@ -255,7 +255,7 @@ Vagrant.configure("2") do |config|
     cd ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp
     npm install
 
-    npm i @angular/cli@7.0.6
+    npm i @angular/cli@7.3.8
 
     mkdir -p ~/bin
     ln -s ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp/node_modules/.bin/ng ~/bin/ng
