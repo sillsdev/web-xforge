@@ -1,4 +1,3 @@
-import { OverlayContainer } from '@angular-mdc/web';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -49,6 +48,24 @@ describe('LogInComponent', () => {
     verify(env.mockedNoticeService.show('Invalid email/username or password.')).once();
     expect().nothing();
     flush();
+  }));
+
+  it('should redirect after login if a return url is given', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedActivatedRoute.queryParams).thenReturn(of({ returnUrl: '/return-url' }));
+    when(env.mockedIdentityService.logIn('user', 'password', true, '/return-url')).thenResolve({
+      success: true,
+      isReturnUrlTrusted: true
+    });
+    env.fixture.detectChanges();
+
+    env.setTextFieldValue(env.userTextField, 'user');
+    env.setTextFieldValue(env.passwordTextField, 'password');
+    env.clickSubmitButton();
+
+    verify(env.mockedIdentityService.logIn('user', 'password', true, '/return-url')).once();
+    verify(env.mockedLocationService.go('/return-url')).once();
+    expect().nothing();
   }));
 
   it('should do nothing when form is invalid', fakeAsync(() => {
