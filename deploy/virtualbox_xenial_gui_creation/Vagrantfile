@@ -52,6 +52,7 @@ Vagrant.configure("2") do |config|
     echo grub-pc grub-pc/install_devices_disks_changed multiselect $(ls /dev/disk/by-id/ata-VBOX_HARDDISK_VB*|grep -v part) | sudo debconf-set-selections
 
     tryharderto sudo apt-get update
+    sleep 10s
     tryharderto sudo apt-get -y upgrade
 
     # In order to run gsettings over SSH we have to set DBUS_SESSION_BUS_ADDRESS. See https://askubuntu.com/a/457023
@@ -200,36 +201,12 @@ Vagrant.configure("2") do |config|
 
     function tryharderto() { i=0; until "$@"; do ((++i > 3)) && false; echo >&2 Retrying $i; sleep 2m; done }
 
-    # Set some permissions at boot
-    sudo tee /root/xf-permissions >/dev/null << END
-    #!/bin/bash
-    mkdir -p /tmp/jsonSessionData
-    chown vagrant:www-data -R /tmp/jsonSessionData
-    chmod 775 -R /tmp/jsonSessionData
-    END
-    sudo chmod +x /root/xf-permissions
-
-    sudo tee /etc/systemd/system/xf-permissions.service >/dev/null << END
-    [Unit]
-    Description=xf-permissions
-
-    [Service]
-    ExecStart=/root/xf-permissions
-
-    [Install]
-    WantedBy=multi-user.target
-    END
-    sudo systemctl enable xf-permissions
-
-    echo >> ~/.pam_environment CHROME_BIN=chromium-browser
-
     sudo add-apt-repository ppa:ansible/ansible
-    # Add mongo public key
     tryharderto sudo apt-get update
     tryharderto sudo apt-get -y install ansible git
+
     mkdir -p ~/src
     cd ~/src
-
     if [ ! -d "web-xforge" ]; then
       git clone --depth 1 --recurse-submodules https://github.com/sillsdev/web-xforge.git
     else
@@ -244,23 +221,8 @@ Vagrant.configure("2") do |config|
     [ ! -f .git/shallow ] || git fetch --unshallow
 
     cd ~/src/web-xforge/deploy/
-    tryharderto sudo apt-get -y install npm
     ansible-playbook -i hosts playbook_create_config.yml --limit localhost
     ansible-playbook playbook_xenial.yml --limit localhost
-
-    npm config set prefix /usr/local
-
-    sudo npm i -g npm@6.4.1
-
-    cd ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp
-    npm install
-
-    npm i @angular/cli@7.3.8
-
-    mkdir -p ~/bin
-    ln -s ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp/node_modules/.bin/ng ~/bin/ng
-
-    sudo chgrp -R www-data /var/lib/xforge
 
     tee ~/Desktop/development-tools/dev-readme.txt >/dev/null <<END
     xForge Development Machine
@@ -322,10 +284,31 @@ Vagrant.configure("2") do |config|
     rm -v ~/zeros
     sleep 10s
 
-    echo "Shutting down in 1 minute from within guest, to ensure graceful shutdown since the host loses contact because we deleted the ssh host keys. The guest should not be booted again until after the base box is created, to avoid generating new ssh host keys."
-    sudo shutdown +1
+    echo "Shutting down from within guest, to ensure graceful shutdown since the host can lose contact because we deleted the ssh host keys. The guest should not be booted again until after the base box is created, to avoid generating new ssh host keys."
+    sudo shutdown
 
     echo "Section ended successfully."
+  SHELL
+
+  # Manual-only. Run using `vagrant provision --provision-with test`. Not to be included in product.
+  config.vm.provision "test", run: "never", type: "shell", privileged: false, inline: <<~SHELL
+    set -e -o pipefail -x
+
+    touch ~/Desktop/machine-used-for-tests-do-not-distribute.txt
+    cd ~/src/web-xforge
+    dotnet test
+    ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp/test-headless.sh
+    cd ~/src/web-xforge/src/SIL.XForge.Scripture
+    dotnet build
+    dotnet run &
+    # Delay to hopefully finish compiling before running browser.
+    sleep 90s
+    DISPLAY=:0 chromium-browser 'http://localhost:5000' &
+    echo 'In guest, now log in to http://localhost:5000 in Chromium using user admin, password password.'
+    # More delay in case we disconnect before there is any more build output.
+    sleep 1m
+
+    echo "Test ended successfully."
   SHELL
 
 end
