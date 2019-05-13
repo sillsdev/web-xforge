@@ -34,8 +34,8 @@ export class AvatarComponent {
     return this.user && this.user.avatarUrl == null ? this.user.googleId : '';
   }
 
-  get email(): string {
-    return this.user && this.user.avatarUrl == null ? this.user.email : '';
+  get emailMd5(): string {
+    return this.user && this.user.avatarUrl == null ? this.user.emailMd5 : '';
   }
 
   get name(): string {

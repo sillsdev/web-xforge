@@ -54,6 +54,24 @@ namespace SIL.XForge.Controllers
         }
 
         [Test]
+        public async Task SendInvite_NoUser_UserCreatedWithEmailMd5()
+        {
+            var env = new TestEnvironment();
+            env.SetUser(user01Id, SystemRoles.User);
+            env.SetProject(project01Id);
+            ProjectUserEntity[] projectUsers = env.Projects.Query()
+                .FirstOrDefault(p => p.Id == project01Id).Users.ToArray();
+            Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] { user01Id, user02Id }));
+
+            string email = "newuser01@example.com";
+            RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
+            Assert.That(result.ReturnObject, Is.EqualTo("invited"));
+            UserEntity invitedUser = env.Users.Query().First(u => u.Email == email);
+            Assert.That(invitedUser.EmailMd5, Is.Not.Null);
+            Assert.That(invitedUser.VerifyEmailMd5(UserEntity.HashEmail(UserEntity.CanonicalizeEmail(email))), Is.True);
+        }
+
+        [Test]
         public async Task SendInvite_UserNoProjects_JoinedEmail()
         {
             var env = new TestEnvironment();

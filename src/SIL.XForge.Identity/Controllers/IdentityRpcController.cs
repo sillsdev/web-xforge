@@ -174,6 +174,7 @@ namespace SIL.XForge.Identity.Controllers
                         Name = name,
                         Email = email,
                         CanonicalEmail = UserEntity.CanonicalizeEmail(email),
+                        EmailMd5 = UserEntity.HashEmail(email),
                         EmailVerified = false,
                         Password = UserEntity.HashPassword(password),
                         Role = SystemRoles.User,

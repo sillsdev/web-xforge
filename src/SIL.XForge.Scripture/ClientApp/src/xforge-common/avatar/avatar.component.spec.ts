@@ -6,7 +6,7 @@ describe('AvatarComponent', () => {
     component.user = null;
     expect(component.avatarUrl).toBeDefined();
     expect(component.googleId).toBeDefined();
-    expect(component.email).toBeDefined();
+    expect(component.emailMd5).toBeDefined();
     expect(component.name).toBeDefined();
   });
 });

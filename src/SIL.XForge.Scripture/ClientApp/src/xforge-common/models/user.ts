@@ -10,6 +10,7 @@ export class User extends Resource {
   name?: string;
   email?: string;
   canonicalEmail?: string;
+  emailMd5?: string;
   emailVerified?: boolean;
   googleId?: string;
   password?: string;
