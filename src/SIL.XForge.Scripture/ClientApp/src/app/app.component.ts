@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { LocationService } from 'xforge-common/location.service';
+import { SystemRole } from 'xforge-common/models/system-role';
 import { User } from 'xforge-common/models/user';
 import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -109,7 +110,20 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     }
   }
 
+  get isLoggedIn(): Promise<boolean> {
+    return this.authService.isLoggedIn;
+  }
+
+  get isLoading(): boolean {
+    return this.noticeService.isLoading;
+  }
+
+  get isSystemAdmin(): boolean {
+    return this.authService.currentUserRole === SystemRole.SystemAdmin;
+  }
+
   async ngOnInit(): Promise<void> {
+    this.noticeService.loadingStarted();
     this.authService.init();
     if (await this.isLoggedIn) {
       this.currentUser$ = this.userService.getCurrentUser();
@@ -226,14 +240,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
         }
       );
     }
-  }
-
-  get isLoggedIn(): Promise<boolean> {
-    return this.authService.isLoggedIn;
-  }
-
-  get isLoading(): boolean {
-    return this.noticeService.isLoading;
+    this.noticeService.loadingFinished();
   }
 
   logOut(): void {

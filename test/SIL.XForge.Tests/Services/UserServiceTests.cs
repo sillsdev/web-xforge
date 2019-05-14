@@ -65,26 +65,6 @@ namespace SIL.XForge.Services
         }
 
         [Test]
-        public async Task CreateAsync_CaseInsensitiveUsername()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.SystemAdmin);
-
-                var userResource = new UserResource
-                {
-                    Id = "usernew",
-                    Email = "usernew@example.com",
-                    Username = "USER_01"
-                };
-                UserResource newResource = await env.Service.CreateAsync(userResource);
-
-                Assert.That(newResource, Is.Not.Null);
-                Assert.That(newResource.Username, Is.EqualTo("user_01"));
-            }
-        }
-
-        [Test]
         public async Task CreateAsync_Email()
         {
             using (var env = new TestEnvironment())
@@ -175,18 +155,17 @@ namespace SIL.XForge.Services
             {
                 env.SetUser(User01Id, SystemRoles.User);
                 UserEntity initialEntity = await env.Service.GetEntityAsync(User01Id);
-                Assert.That(initialEntity.Username, Is.Not.EqualTo("new"));
 
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
-                        { env.GetAttribute("username"), "new" }
+                        { env.GetAttribute("avatar-url"), "newUrl" }
                     });
                 env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
 
                 var resource = new UserResource
                 {
                     Id = User02Id,
-                    Username = "new"
+                    AvatarUrl = "newUrl"
                 };
                 var ex = Assert.ThrowsAsync<JsonApiException>(async () =>
                     {
@@ -200,7 +179,8 @@ namespace SIL.XForge.Services
                 UserResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
 
                 Assert.That(updatedResource, Is.Not.Null);
-                Assert.That(updatedResource.Username, Is.EqualTo("new"), "should be permitted to update own account");
+                Assert.That(updatedResource.AvatarUrl, Is.EqualTo("newUrl"),
+                    "should be permitted to update own account");
             }
         }
 
@@ -211,48 +191,23 @@ namespace SIL.XForge.Services
             {
                 env.SetUser(User01Id, SystemRoles.SystemAdmin);
                 UserEntity initialEntity = await env.Service.GetEntityAsync(User02Id);
-                Assert.That(initialEntity.Username, Is.Not.EqualTo("new"));
 
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
-                        { env.GetAttribute("username"), "new" }
+                        { env.GetAttribute("avatar-url"), "newUrl" }
                     });
                 env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
 
                 var resource = new UserResource
                 {
                     Id = User02Id,
-                    Username = "new"
+                    AvatarUrl = "newUrl"
                 };
 
                 UserResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
 
                 Assert.That(updatedResource, Is.Not.Null);
-                Assert.That(updatedResource.Username, Is.EqualTo("new"));
-            }
-        }
-
-        [Test]
-        public async Task UpdateAsync_CaseInsensitiveUsername()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.SystemAdmin);
-                env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
-                    {
-                        { env.GetAttribute("username"), "USER_01" }
-                    });
-                env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
-
-                var resource = new UserResource
-                {
-                    Id = User01Id,
-                    Username = "USER_01"
-                };
-                UserResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
-
-                Assert.That(updatedResource, Is.Not.Null);
-                Assert.That(updatedResource.Username, Is.EqualTo("user_01"));
+                Assert.That(updatedResource.AvatarUrl, Is.EqualTo("newUrl"));
             }
         }
 
@@ -685,7 +640,6 @@ namespace SIL.XForge.Services
                     new UserEntity
                     {
                         Id = User01Id,
-                        Username = User01Id,
                         Email = User01Email,
                         CanonicalEmail = User01Email
                     },
@@ -693,7 +647,6 @@ namespace SIL.XForge.Services
                     {
                         Id = User02Id,
                         Name = User02Name,
-                        Username = User02Id,
                         Email = "user02@example.com",
                         CanonicalEmail = "user02@example.com",
                         AvatarUrl = "user02avatarurl",
@@ -710,7 +663,6 @@ namespace SIL.XForge.Services
                     new UserEntity
                     {
                         Id = User03Id,
-                        Username = User03Id,
                         Email = "user03@example.com",
                         CanonicalEmail = "user03@example.com",
                         Sites = new Dictionary<string, Site>
@@ -724,7 +676,6 @@ namespace SIL.XForge.Services
                     new UserEntity
                     {
                         Id = ParatextUserId,
-                        Username = ParatextUserId,
                         Email = "paratextuser01@example.com",
                         CanonicalEmail = "paratextuser01@example.com",
                         ParatextId = "paratextuser01id",

@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using SIL.Machine.WebApi.Models;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -35,7 +35,7 @@ namespace SIL.XForge.Scripture.Services
             }
             if (projectId != null)
             {
-                string userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                string userId = context.User.FindFirst(XFClaimTypes.UserId)?.Value;
                 if (await _projects.Query().AnyAsync(p => p.Id == projectId && p.Users.Any(pu => pu.UserRef == userId)))
                 {
                     List<IAuthorizationRequirement> pendingRequirements = context.PendingRequirements.ToList();

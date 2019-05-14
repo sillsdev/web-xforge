@@ -4,7 +4,6 @@ using JsonApiDotNetCore.Controllers;
 using JsonApiDotNetCore.Internal;
 using JsonApiDotNetCore.Models;
 using JsonApiDotNetCore.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,7 +14,7 @@ namespace SIL.XForge.Controllers
     /// <summary>
     /// This is the base class for all JSON-API controllers.
     /// </summary>
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize]
     public abstract class JsonApiControllerBase<T> : JsonApiController<T, string> where T : class, IIdentifiable<string>
     {
         public JsonApiControllerBase(IJsonApiContext jsonApiContext, IResourceService<T, string> resourceService,

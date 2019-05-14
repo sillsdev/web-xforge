@@ -9,7 +9,6 @@ namespace SIL.XForge.Services
         public XFMapperProfile(string site)
         {
             CreateMap<UserEntity, UserResource>()
-                .ForMember(ur => ur.Password, o => o.Ignore())
                 .ForMember(ur => ur.Site, o => o.MapFrom(ue => ue.Sites.ContainsKey(site) ? ue.Sites[site] : null))
                 .ReverseMap()
                 .ForPath(ue => ue.Sites, opt => opt.MapFrom(ur => new Dictionary<string, Site>

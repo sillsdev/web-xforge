@@ -58,9 +58,9 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   project: SFProject;
   projectCurrentUser: SFProjectUser;
   text: Text;
-  questions: Question[] = [];
+  questions: Readonly<Question[]> = [];
   checkingData: CheckingData = { questionData: {}, commentData: {} };
-  comments: Comment[] = [];
+  comments: Readonly<Comment[]> = [];
   summary: Summary = {
     read: 0,
     unread: 0,

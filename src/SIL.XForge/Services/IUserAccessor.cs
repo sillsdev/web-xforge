@@ -6,5 +6,6 @@ namespace SIL.XForge.Services
         string UserId { get; }
         string SystemRole { get; }
         string Name { get; }
+        string AuthId { get; }
     }
 }

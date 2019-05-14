@@ -176,24 +176,5 @@ namespace SIL.XForge.DataAccess
                 }
             }
         }
-
-        public static Task<UserEntity> UpdateByIdentifierAsync(this IRepository<UserEntity> users,
-            string userIdentifier, Action<IUpdateBuilder<UserEntity>> update, bool upsert = false)
-        {
-            return users.UpdateAsync(UserIdentifierFilter(userIdentifier), update, upsert);
-        }
-
-        public static async Task<Attempt<UserEntity>> TryGetByIdentifier(this IRepository<UserEntity> users,
-            string userIdentifier)
-        {
-            UserEntity user = await users.Query().SingleOrDefaultAsync(UserIdentifierFilter(userIdentifier));
-            return new Attempt<UserEntity>(user != null, user);
-        }
-
-        private static Expression<Func<UserEntity, bool>> UserIdentifierFilter(string userIdentifier)
-        {
-            return u => u.Username == UserEntity.NormalizeUsername(userIdentifier)
-                || u.CanonicalEmail == UserEntity.CanonicalizeEmail(userIdentifier);
-        }
     }
 }

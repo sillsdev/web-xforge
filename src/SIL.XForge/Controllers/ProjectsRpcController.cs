@@ -1,19 +1,14 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
-using JsonApiDotNetCore.Internal;
 using MongoDB.Bson;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Http;
 using EdjCase.JsonRpc.Router.Abstractions;
-using EdjCase.JsonRpc.Core;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Services;
-using SIL.XForge.Utils;
 
 namespace SIL.XForge.Controllers
 {
@@ -93,13 +88,6 @@ namespace SIL.XForge.Controllers
             return _projects.Query().AnyAsync(p => p.Id == ResourceId && p.Users.Any(pu => pu.UserRef == User.UserId));
         }
 
-        protected IRpcMethodResult ForbiddenError()
-        {
-            return Error((int)RpcErrorCode.InvalidRequest,
-                "The specified user does not have permission to perform this operation"
-            );
-        }
-
         private async Task<bool> CreateInvitedUserAccount(string email)
         {
             try
@@ -110,10 +98,6 @@ namespace SIL.XForge.Controllers
                     Email = email,
                     CanonicalEmail = UserEntity.CanonicalizeEmail(email),
                     EmailMd5 = UserEntity.HashEmail(email),
-                    EmailVerified = false,
-                    Role = SystemRoles.User,
-                    ValidationKey = Security.GenerateKey(),
-                    ValidationExpirationDate = DateTime.Now.AddDays(7),
                     Active = false,
                     Sites = new Dictionary<string, Site>
                     {

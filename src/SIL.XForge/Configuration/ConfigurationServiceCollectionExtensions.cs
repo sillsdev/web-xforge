@@ -10,9 +10,9 @@ namespace SIL.XForge.Configuration
         {
             services.AddOptions<DataAccessOptions>(configuration);
             services.AddOptions<SiteOptions>(configuration);
-            services.AddOptions<SecurityOptions>(configuration);
             services.AddOptions<ParatextOptions>(configuration);
             services.AddOptions<RealtimeOptions>(configuration);
+            services.AddOptions<AuthOptions>(configuration);
             return services;
         }
 

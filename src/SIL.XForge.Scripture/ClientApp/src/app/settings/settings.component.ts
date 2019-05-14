@@ -159,7 +159,7 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
 
   logInWithParatext(): void {
     const url = '/projects/' + this.projectId + '/settings';
-    this.paratextService.logIn(url);
+    this.paratextService.linkParatext(url);
   }
 
   openDeleteProjectDialog(): void {

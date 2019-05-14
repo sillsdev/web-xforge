@@ -259,9 +259,9 @@ namespace SIL.XForge.Scripture.Services
             {
                 Users = new MemoryRepository<UserEntity>(new[]
                     {
-                        new UserEntity { Id = "user01", Username = "user01" },
-                        new UserEntity { Id = "user02", Username = "user02" },
-                        new UserEntity { Id = "user03", Username = "user03" }
+                        new UserEntity { Id = "user01" },
+                        new UserEntity { Id = "user02" },
+                        new UserEntity { Id = "user03" }
                     });
                 ParatextService = Substitute.For<IParatextService>();
                 var jobs = Substitute.For<IRepository<SyncJobEntity>>();

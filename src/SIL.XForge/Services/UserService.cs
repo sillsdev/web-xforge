@@ -88,10 +88,6 @@ namespace SIL.XForge.Services
 
         protected override Task<UserEntity> InsertEntityAsync(UserEntity entity)
         {
-            if (!string.IsNullOrEmpty(entity.Username))
-                entity.Username = UserEntity.NormalizeUsername(entity.Username);
-            if (!string.IsNullOrEmpty(entity.Password))
-                entity.Password = UserEntity.HashPassword(entity.Password);
             entity.CanonicalEmail = UserEntity.CanonicalizeEmail(entity.Email);
             entity.EmailMd5 = UserEntity.HashEmail(entity.Email);
             entity.Sites = new Dictionary<string, Site>
@@ -105,15 +101,6 @@ namespace SIL.XForge.Services
         {
             switch (name)
             {
-                case nameof(UserResource.Username):
-                    if (value == null)
-                        update.Unset(u => u.Username);
-                    else
-                        update.Set(u => u.Username, UserEntity.NormalizeUsername((string)value));
-                    break;
-                case nameof(UserResource.Password):
-                    update.Set(u => u.Password, UserEntity.HashPassword((string)value));
-                    break;
                 case nameof(UserResource.Email):
                     update.Set(u => u.Email, value);
                     update.Set(u => u.CanonicalEmail, UserEntity.CanonicalizeEmail((string)value));

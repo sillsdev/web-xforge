@@ -13,6 +13,7 @@ using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using SIL.ObjectModel;
 using SIL.WritingSystems;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -22,7 +23,7 @@ using SIL.XForge.Scripture.Models;
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>Exchanges data with PT projects in the cloud.</summary>
-    public class ParatextService : IParatextService, IDisposable
+    public class ParatextService : DisposableBase, IParatextService
     {
         private readonly IOptions<ParatextOptions> _options;
         private readonly IRepository<UserEntity> _users;
@@ -234,30 +235,11 @@ namespace SIL.XForge.Scripture.Services
             return now < accessToken.ValidFrom || now > accessToken.ValidTo;
         }
 
-        #region IDisposable Support
-        private bool _disposedValue; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing)
+        protected override void DisposeManagedResources()
         {
-            if (!_disposedValue)
-            {
-                if (disposing)
-                {
-                    _dataAccessClient.Dispose();
-                    _registryClient.Dispose();
-                    _httpClientHandler.Dispose();
-                }
-
-                _disposedValue = true;
-            }
+            _dataAccessClient.Dispose();
+            _registryClient.Dispose();
+            _httpClientHandler.Dispose();
         }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-        }
-        #endregion
     }
 }

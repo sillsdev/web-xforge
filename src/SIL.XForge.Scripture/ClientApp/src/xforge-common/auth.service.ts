@@ -1,134 +1,221 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthConfig, JwksValidationHandler, OAuthErrorEvent, OAuthService } from 'angular-oauth2-oidc';
+import { RecordIdentity } from '@orbit/data';
+import { AuthorizeOptions, WebAuth } from 'auth0-js';
+import jwtDecode from 'jwt-decode';
+import { of, Subscription, timer } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
+import { JsonApiService } from './json-api.service';
 import { LocationService } from './location.service';
+import { SystemRole } from './models/system-role';
+import { User } from './models/user';
 import { OrbitService } from './orbit-service';
 import { RealtimeService } from './realtime.service';
+
+const XF_USER_ID_CLAIM = 'http://xforge.org/useridentifier';
+const XF_ROLE_CLAIM = 'http://xforge.org/role';
+
+interface AuthState {
+  returnUrl?: string;
+  linking?: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private tryLoginPromise: Promise<boolean>;
+  private tryLogInPromise: Promise<boolean>;
+  private refreshSubscription: Subscription;
+
+  private readonly auth0 = new WebAuth({
+    clientID: environment.authClientId,
+    domain: environment.authDomain,
+    responseType: 'token id_token',
+    redirectUri: this.locationService.origin + '/projects',
+    scope: 'openid profile email',
+    audience: 'sf-api'
+  });
 
   constructor(
-    private readonly oauthService: OAuthService,
     private readonly orbitService: OrbitService,
     private readonly realtimeService: RealtimeService,
     private readonly locationService: LocationService,
+    private readonly jsonApiService: JsonApiService,
     private readonly router: Router
   ) {}
 
   get currentUserId(): string {
-    const claims = this.oauthService.getIdentityClaims();
-    if (claims != null) {
-      return claims['sub'];
-    }
-    return null;
+    return localStorage.getItem('user_id');
   }
 
-  get currentUserName(): string {
-    const claims = this.oauthService.getIdentityClaims();
-    if (claims != null) {
-      return claims['name'];
-    }
-    return null;
-  }
-
-  get isLoggedIn(): Promise<boolean> {
-    return this.tryLoginPromise;
+  get currentUserRole(): SystemRole {
+    return localStorage.getItem('role') as SystemRole;
   }
 
   get accessToken(): string {
-    return this.oauthService.getAccessToken();
+    return localStorage.getItem('access_token');
+  }
+
+  get expiresAt(): number {
+    return Number(localStorage.getItem('expires_at'));
+  }
+
+  get isLoggedIn(): Promise<boolean> {
+    return this.tryLogInPromise;
+  }
+
+  private get isAuthenticated(): boolean {
+    return this.accessToken != null && Date.now() < this.expiresAt;
   }
 
   init(): void {
-    const authConfig: AuthConfig = {
-      issuer: this.locationService.origin,
-      redirectUri: this.locationService.origin + '/projects',
-      clientId: 'xForge',
-      scope: 'openid profile email api',
-      postLogoutRedirectUri: this.locationService.origin + '/',
-      silentRefreshRedirectUri: this.locationService.origin + '/silent-refresh.html',
-      requireHttps: environment.production,
-      // OAuthService changes "window.location.hash" to clear the the hash fragment. This triggers the "popstate" and
-      // "hashchange" browser events, which causes the Angular router to navigate. It is possible that the router
-      // does not handle these events properly and navigates to the root ("/"). We workaround this issue by clearing
-      // the hash through a direct call to the router.
-      clearHashAfterLogin: false
-    };
-
-    this.oauthService.configure(authConfig);
-    this.oauthService.tokenValidationHandler = new JwksValidationHandler();
-    this.oauthService.setupAutomaticSilentRefresh();
-    this.oauthService.events.subscribe(event => {
-      if (event.type === 'token_received') {
-        this.tryLoginPromise.then(() => {
-          this.orbitService.setAccessToken(this.oauthService.getAccessToken());
-          this.realtimeService.setAccessToken(this.oauthService.getAccessToken());
-        });
-      }
-    });
-    this.tryLoginPromise = this.oauthService.loadDiscoveryDocumentAndTryLogin().then(async result => {
-      let isLoggedIn = result;
-      if (isLoggedIn) {
-        // remove hash fragment manually (contains access and id tokens)
-        this.router.navigateByUrl(this.locationService.pathname);
-      }
-      // if we weren't able to log in, try a silent refresh, this can avoid an extra page load.
-      // don't try to perform a silent refresh if we in the middle of an implicit flow, because it will overwrite the
-      // nonce and cause it to fail.
-      if (!isLoggedIn && !this.isLoggingIn) {
-        try {
-          const event = await this.oauthService.silentRefresh();
-          if (event.type === 'silently_refreshed') {
-            isLoggedIn = true;
-          }
-        } catch (err) {
-          if (err instanceof OAuthErrorEvent && err.reason['error'] === 'login_required') {
-            this.oauthService.logOut(true);
-          } else {
-            throw err;
-          }
-        }
-      }
-      if (isLoggedIn) {
-        await this.orbitService.init(this.oauthService.getAccessToken());
-        this.realtimeService.init(this.oauthService.getAccessToken());
-        return true;
-      }
-      return false;
-    });
+    this.tryLogInPromise = this.tryLogIn();
   }
 
-  logIn(): void {
-    this.oauthService.initImplicitFlow();
+  logIn(returnUrl: string): void {
+    const state: AuthState = { returnUrl };
+    const options: AuthorizeOptions = { state: JSON.stringify(state) };
+    this.auth0.authorize(options);
   }
 
-  externalLogIn(rememberLogIn: boolean, returnUrl?: string): void {
-    let url = `/identity/challenge?provider=Paratext&rememberLogIn=${rememberLogIn}`;
-    if (returnUrl != null) {
-      url += '&returnUrl=' + returnUrl;
-    }
-    const userId = this.currentUserId;
-    if (userId != null) {
-      url += '&userId=' + userId;
-    }
-    this.locationService.go(url);
+  linkParatext(returnUrl: string): void {
+    const state: AuthState = { returnUrl, linking: true };
+    const options: AuthorizeOptions = { connection: 'paratext', state: JSON.stringify(state) };
+    this.auth0.authorize(options);
   }
 
   logOut(): void {
-    this.oauthService.logOut();
+    this.clearState();
+    this.auth0.logout({ returnTo: this.locationService.origin + '/' });
   }
 
-  logOutNoRedirect(): void {
-    this.oauthService.logOut(true);
+  private async tryLogIn(): Promise<boolean> {
+    let authResult = await this.parseHash();
+    if (!(await this.handleAuth(authResult))) {
+      this.clearState();
+      try {
+        authResult = await this.checkSession();
+        if (!(await this.handleAuth(authResult))) {
+          return false;
+        }
+      } catch (err) {
+        return false;
+      }
+    }
+    return true;
   }
 
-  private get isLoggingIn(): boolean {
-    // we can tell if we are in the middle of an implicit flow if a nonce is stored and nothing else
-    return sessionStorage.getItem('nonce') != null && this.oauthService.getAccessToken() == null;
+  private async handleAuth(authResult: auth0.Auth0DecodedHash): Promise<boolean> {
+    if (authResult == null || authResult.accessToken == null || authResult.idToken == null) {
+      return false;
+    }
+
+    const state: AuthState = JSON.parse(authResult.state);
+    let secondaryId: string;
+    if (state.linking != null && state.linking) {
+      secondaryId = authResult.idTokenPayload.sub;
+      if (!this.isAuthenticated) {
+        await this.renewTokens();
+      }
+    } else {
+      this.localLogIn(authResult);
+    }
+    this.scheduleRenewal();
+    await this.orbitService.init(this.accessToken);
+    await this.realtimeService.init(this.accessToken);
+    const userIdentity: RecordIdentity = { type: User.TYPE, id: this.currentUserId };
+    if (secondaryId != null) {
+      await this.jsonApiService.onlineInvoke(userIdentity, 'linkParatextAccount', { authId: secondaryId });
+    } else {
+      await this.jsonApiService.onlineInvoke(userIdentity, 'updateUserFromAuth');
+    }
+    if (state.returnUrl != null) {
+      this.router.navigateByUrl(state.returnUrl);
+    } else if (this.locationService.hash !== '') {
+      this.router.navigateByUrl(this.locationService.pathname);
+    }
+    return true;
+  }
+
+  private scheduleRenewal(): void {
+    if (!this.isAuthenticated) {
+      return;
+    }
+    this.unscheduleRenwewal();
+
+    const expiresAt = this.expiresAt;
+    const expiresIn$ = of(expiresAt).pipe(
+      mergeMap(expAt => {
+        const now = Date.now();
+        return timer(Math.max(1, expAt - now));
+      })
+    );
+
+    this.refreshSubscription = expiresIn$.subscribe(() => {
+      this.renewTokens();
+      this.scheduleRenewal();
+    });
+  }
+
+  private unscheduleRenwewal(): void {
+    if (this.refreshSubscription != null) {
+      this.refreshSubscription.unsubscribe();
+    }
+  }
+
+  private async renewTokens(): Promise<void> {
+    try {
+      const authResult = await this.checkSession();
+      if (authResult != null && authResult.accessToken != null && authResult.idToken != null) {
+        this.localLogIn(authResult);
+        this.orbitService.setAccessToken(this.accessToken);
+        this.realtimeService.setAccessToken(this.accessToken);
+      }
+    } catch (err) {
+      this.logOut();
+    }
+  }
+
+  private parseHash(): Promise<auth0.Auth0DecodedHash> {
+    return new Promise<auth0.Auth0DecodedHash>((resolve, reject) => {
+      this.auth0.parseHash((err, authResult) => {
+        if (err != null) {
+          reject(err);
+        } else {
+          resolve(authResult);
+        }
+      });
+    });
+  }
+
+  private checkSession(): Promise<auth0.Auth0DecodedHash> {
+    return new Promise<auth0.Auth0DecodedHash>((resolve, reject) => {
+      this.auth0.checkSession({ state: JSON.stringify({}) }, (err, authResult) => {
+        if (err != null) {
+          reject(err);
+        } else {
+          resolve(authResult);
+        }
+      });
+    });
+  }
+
+  private localLogIn(authResult: auth0.Auth0DecodedHash): void {
+    const expiresAt = authResult.expiresIn * 1000 + Date.now();
+    localStorage.setItem('access_token', authResult.accessToken);
+    localStorage.setItem('id_token', authResult.idToken);
+    localStorage.setItem('expires_at', expiresAt.toString());
+    const claims = jwtDecode(authResult.accessToken);
+    localStorage.setItem('user_id', claims[XF_USER_ID_CLAIM]);
+    localStorage.setItem('role', claims[XF_ROLE_CLAIM]);
+  }
+
+  private clearState(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('id_token');
+    localStorage.removeItem('expires_at');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('role');
   }
 }

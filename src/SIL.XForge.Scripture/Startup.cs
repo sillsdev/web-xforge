@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net.Http;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using JsonApiDotNetCore.Extensions;
@@ -78,23 +77,12 @@ namespace SIL.XForge.Scripture
 
             services.AddCommonServices();
 
-            services.AddXFIdentityServer(Configuration, IsDevelopment);
-
-            var siteOptions = Configuration.GetOptions<SiteOptions>();
-            services.AddAuthentication()
+            var authOptions = Configuration.GetOptions<AuthOptions>();
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
-                    if (IsDevelopment)
-                    {
-                        options.RequireHttpsMetadata = false;
-                        options.BackchannelHttpHandler = new HttpClientHandler
-                        {
-                            ServerCertificateCustomValidationCallback
-                                = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                        };
-                    }
-                    options.Authority = siteOptions.Origin.ToString();
-                    options.Audience = "api";
+                    options.Authority = $"https://{authOptions.Domain}/";
+                    options.Audience = "sf-api";
                 });
 
             services.AddSFDataAccess(Configuration);
@@ -115,6 +103,7 @@ namespace SIL.XForge.Scripture
                 });
             }
 
+            var siteOptions = Configuration.GetOptions<SiteOptions>();
             var dataAccessOptions = Configuration.GetOptions<DataAccessOptions>();
             services.AddMachine(config =>
                 {
@@ -164,7 +153,7 @@ namespace SIL.XForge.Scripture
             if (SpaDevServerStartup == SpaDevServerStartup.None)
                 app.UseSpaStaticFiles();
 
-            app.UseXFIdentityServer();
+            app.UseAuthentication();
 
             app.UseJsonApi();
 

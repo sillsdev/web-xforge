@@ -25,18 +25,20 @@ namespace SIL.XForge.Realtime
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IOptions<DataAccessOptions> _dataAccessOptions;
         private readonly IOptions<RealtimeOptions> _realtimeOptions;
+        private readonly IOptions<AuthOptions> _authOptions;
         private readonly IMongoDatabase _database;
         private readonly string _modulePath;
         private bool _started;
 
         public RealtimeService(INodeServices nodeServices, IOptions<SiteOptions> siteOptions,
             IOptions<DataAccessOptions> dataAccessOptions, IOptions<RealtimeOptions> realtimeOptions,
-            IMongoClient mongoClient)
+            IOptions<AuthOptions> authOptions, IMongoClient mongoClient)
         {
             _nodeServices = nodeServices;
             _siteOptions = siteOptions;
             _dataAccessOptions = dataAccessOptions;
             _realtimeOptions = realtimeOptions;
+            _authOptions = authOptions;
             _database = mongoClient.GetDatabase(_dataAccessOptions.Value.MongoDatabaseName);
             _modulePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Realtime",
                 "realtime-server");
@@ -100,7 +102,7 @@ namespace SIL.XForge.Realtime
             {
                 connectionString = mongo,
                 port = _realtimeOptions.Value.Port,
-                origin = _siteOptions.Value.Origin.ToString(),
+                authority = $"https://{_authOptions.Value.Domain}/",
                 projectsCollectionName = _realtimeOptions.Value.ProjectsCollectionName,
                 projectRoles = CreateProjectRoles(_realtimeOptions.Value.ProjectRoles),
                 collections = _realtimeOptions.Value.Collections.Select(c => CreateCollectionConfig(c)).ToArray()

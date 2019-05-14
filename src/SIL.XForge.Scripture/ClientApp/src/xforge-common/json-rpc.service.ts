@@ -37,7 +37,7 @@ export class JsonRpcError {
 export class JsonRpcService {
   constructor(private readonly http: HttpClient) {}
 
-  async invoke<T>(url: string, method: string, params: any): Promise<T> {
+  async invoke<T>(url: string, method: string, params: any = {}): Promise<T> {
     const request: JsonRpcRequest = {
       jsonrpc: '2.0',
       method,

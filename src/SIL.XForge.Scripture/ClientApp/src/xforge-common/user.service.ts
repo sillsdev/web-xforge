@@ -38,10 +38,6 @@ export class UserService extends ResourceService {
     return this.authService.currentUserId;
   }
 
-  hasCurrentUserRole(role: string): Observable<boolean> {
-    return this.getCurrentUser().pipe(map(currentUser => currentUser && currentUser.role === role));
-  }
-
   hasCurrentUserProjectRole(projectId: string, role: string): Observable<boolean> {
     if (!projectId) {
       return of(false);

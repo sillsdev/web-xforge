@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using System.Linq;
 using EdjCase.JsonRpc.Core;
 using EdjCase.JsonRpc.Router;
 using EdjCase.JsonRpc.Router.Abstractions;

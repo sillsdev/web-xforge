@@ -220,8 +220,7 @@ namespace SIL.XForge.Controllers
                 Users = new MemoryRepository<UserEntity>(
                     uniqueKeySelectors: new Func<UserEntity, object>[]
                     {
-                        u => u.CanonicalEmail,
-                        u => u.Username
+                        u => u.CanonicalEmail
                     },
                     entities: new[]
                     {

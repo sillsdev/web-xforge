@@ -114,7 +114,7 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit {
 
   logInWithParatext(): void {
     const url = '/projects/' + this.projectId + '/sync';
-    this.paratextService.logIn(url);
+    this.paratextService.linkParatext(url);
   }
 
   async syncProject(): Promise<void> {

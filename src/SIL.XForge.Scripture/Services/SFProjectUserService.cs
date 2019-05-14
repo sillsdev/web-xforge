@@ -27,7 +27,7 @@ namespace SIL.XForge.Scripture.Services
         protected override async Task<SFProjectUserEntity> InsertEntityAsync(SFProjectUserEntity entity)
         {
             UserEntity user = await _users.GetAsync(UserId);
-            if (user.Role == SystemRoles.User || entity.Role == null)
+            if (entity.Role == null)
             {
                 // get role from Paratext project
                 string paratextId = await Projects.Query().Where(p => p.Id == entity.ProjectRef)

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using IdentityModel;
 using Microsoft.AspNetCore.Http;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Services
 {
@@ -16,8 +17,8 @@ namespace SIL.XForge.Services
         private ClaimsPrincipal User => _httpContextAccessor.HttpContext.User;
 
         public bool IsAuthenticated => User.Identity.IsAuthenticated;
-        public string UserId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        public string SystemRole => User.FindFirst(ClaimTypes.Role)?.Value;
+        public string UserId => User.FindFirst(XFClaimTypes.UserId)?.Value;
+        public string SystemRole => User.FindFirst(XFClaimTypes.Role)?.Value;
         public string Name
         {
             get
@@ -33,5 +34,7 @@ namespace SIL.XForge.Services
                 return string.Empty;
             }
         }
+
+        public string AuthId => User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 }

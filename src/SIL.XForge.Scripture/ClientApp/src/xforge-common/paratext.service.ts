@@ -20,8 +20,8 @@ export class ParatextService {
 
   constructor(private readonly http: HttpClient, private readonly authService: AuthService) {}
 
-  logIn(returnUrl: string): void {
-    this.authService.externalLogIn(true, returnUrl);
+  linkParatext(returnUrl: string): void {
+    this.authService.linkParatext(returnUrl);
   }
 
   getProjects(): Observable<ParatextProject[]> {

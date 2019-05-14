@@ -28,6 +28,10 @@ export class LocationService {
     return window.location.pathname;
   }
 
+  get hash(): string {
+    return window.location.hash;
+  }
+
   go(url: string): void {
     window.location.href = url;
   }

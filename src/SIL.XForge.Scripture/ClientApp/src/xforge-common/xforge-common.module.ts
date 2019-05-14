@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ngfModule } from 'angular-file';
-import { OAuthModule } from 'angular-oauth2-oidc';
 import { AvatarModule } from 'ngx-avatar';
+import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
-import { ChangePasswordComponent } from './change-password/change-password.component';
 import { EmailInviteComponent } from './email-invite/email-invite.component';
 import { InviteDialogComponent } from './email-invite/invite-dialog.component';
 import { DeleteAccountDialogComponent } from './my-account/delete-account-dialog/delete-account-dialog.component';
@@ -22,7 +22,6 @@ import { WriteStatusComponent } from './write-status/write-status.component';
 
 const componentExports = [
   AvatarComponent,
-  ChangePasswordComponent,
   CollaboratorsComponent,
   DeleteAccountDialogComponent,
   EmailInviteComponent,
@@ -45,12 +44,12 @@ export const xForgeCommonEntryComponents = [InviteDialogComponent, SaDeleteDialo
     AvatarModule,
     CommonModule,
     ngfModule,
-    OAuthModule,
     RouterModule,
     UICommonModule
   ],
   declarations: componentExports,
   exports: componentExports,
+  providers: [{ provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true }],
   entryComponents: [DeleteAccountDialogComponent]
 })
 export class XForgeCommonModule {}
