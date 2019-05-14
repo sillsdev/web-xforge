@@ -88,7 +88,7 @@ namespace SIL.XForge.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser(User01Id, SystemRoles.SystemAdmin);
-                string email = "UserNew@example.com";
+                string email = "UserNew@example.com ";
 
                 var userResource = new UserResource
                 {
@@ -98,7 +98,7 @@ namespace SIL.XForge.Services
                 UserResource newResource = await env.Service.CreateAsync(userResource);
 
                 Assert.That(newResource, Is.Not.Null);
-                Assert.That(newResource.Email, Is.EqualTo("UserNew@example.com"));
+                Assert.That(newResource.Email, Is.EqualTo("UserNew@example.com "));
                 Assert.That(newResource.CanonicalEmail, Is.EqualTo("usernew@example.com"));
                 UserEntity newUser = await env.Service.GetEntityAsync(newResource.Id);
                 Assert.That(newUser.VerifyEmailMd5(UserEntity.HashEmail(UserEntity.CanonicalizeEmail(email))),
@@ -265,11 +265,11 @@ namespace SIL.XForge.Services
 
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
-                        { env.GetAttribute("email"), "New@example.com" }
+                        { env.GetAttribute("email"), "New@example.com " }
                     });
                 env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
 
-                string email = "New@example.com";
+                string email = "New@example.com ";
                 var resource = new UserResource
                 {
                     Id = User01Id,
@@ -278,7 +278,7 @@ namespace SIL.XForge.Services
                 UserResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
 
                 Assert.That(updatedResource, Is.Not.Null);
-                Assert.That(updatedResource.Email, Is.EqualTo("New@example.com"));
+                Assert.That(updatedResource.Email, Is.EqualTo("New@example.com "));
                 Assert.That(updatedResource.CanonicalEmail, Is.EqualTo("new@example.com"));
                 UserEntity updatedEntity = await env.Service.GetEntityAsync(resource.Id);
                 Assert.That(updatedEntity.VerifyEmailMd5(UserEntity.HashEmail(UserEntity.CanonicalizeEmail(email))),

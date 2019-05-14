@@ -108,6 +108,10 @@ namespace SIL.XForge.Identity.Services
             await _events.RaiseAsync(new UserLoginSuccessEvent(provider, userIdClaim.Value, user.Id, user.Name));
             await httpContext.SignInAsync(user.Id, user.Name, provider, localSignInProps,
                 additionalLocalClaims.ToArray());
+            string siteKey = _siteOptions.Value.Id;
+            await _users.UpdateAsync(u => u.Id == user.Id, update => update
+                .Set(u => u.Sites[siteKey].LastLogin, DateTime.UtcNow)
+            );
 
             // delete temporary cookie used during external authentication
             await httpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
@@ -165,6 +169,7 @@ namespace SIL.XForge.Identity.Services
                         Name = name,
                         Email = email,
                         CanonicalEmail = UserEntity.CanonicalizeEmail(email),
+                        EmailMd5 = UserEntity.HashEmail(email),
                         EmailVerified = true,
                         Role = SystemRoles.User,
                         Active = true,

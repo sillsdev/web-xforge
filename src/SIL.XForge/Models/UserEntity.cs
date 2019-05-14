@@ -18,7 +18,7 @@ namespace SIL.XForge.Models
 
         public static string CanonicalizeEmail(string email)
         {
-            return email?.ToLowerInvariant();
+            return email?.Trim().ToLowerInvariant();
         }
 
         public static string HashEmail(string email)

@@ -43,16 +43,31 @@ describe('SignUpComponent', () => {
     expect().nothing();
   }));
 
+  it('should trim email by default', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.setTextFieldValue(env.nameTextField, 'testUser1');
+    env.setTextFieldValue(env.passwordTextField, 'password');
+    env.setTextFieldValue(env.emailTextField, ' extraspaces@example.com ');
+    env.setRecaptchaValue();
+    // Leading and trailing white spaces are ignored by the text field and don't trigger the validator
+    expect(env.component.email.hasError('email')).toBe(false);
+    env.clickSubmitButton();
+    verify(env.mockedIdentityService.signUp('testUser1', 'password', 'extraspaces@example.com')).once();
+  }));
+
   it('should display errors on individual input fields', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setTextFieldValue(env.nameTextField, '');
-    expect(env.component.name.hasError('required')).toBeTruthy();
+    expect(env.component.name.hasError('required')).toBe(true);
     env.setTextFieldValue(env.nameTextField, 'bare');
-    expect(env.component.name.hasError('required')).toBeFalsy();
+    expect(env.component.name.hasError('required')).toBe(false);
     env.setTextFieldValue(env.passwordTextField, 'bones');
-    expect(env.component.password.hasError('minlength')).toBeTruthy();
+    expect(env.component.password.hasError('minlength')).toBe(true);
     env.setTextFieldValue(env.emailTextField, 'notavalidemail');
-    expect(env.component.email.hasError('email')).toBeTruthy();
+    expect(env.component.email.hasError('email')).toBe(true);
+    env.setTextFieldValue(env.emailTextField, 'domainshort@pu');
+    expect(env.component.email.hasError('email')).toBe(true);
   }));
 
   it('should fill in email if user signs up through email link', fakeAsync(() => {

@@ -52,6 +52,8 @@ namespace SIL.XForge.Identity.Services
             Assert.That(user.ParatextId, Is.EqualTo(ParatextId));
             Assert.That(user.ParatextTokens.RefreshToken, Is.EqualTo(RefreshToken));
             Assert.That(user.ParatextTokens.AccessToken, Is.EqualTo(AccessToken));
+            DateTime date = DateTime.UtcNow.AddMinutes(-1);
+            Assert.That(user.Sites[env.SiteOptions.Value.Id].LastLogin, Is.GreaterThan(date));
         }
 
         [Test]
@@ -104,7 +106,7 @@ namespace SIL.XForge.Identity.Services
         [Test]
         public async Task SignUpAsync_UserDoesNotExist()
         {
-            const string ParatextEmail = "new@test.com";
+            const string ParatextEmail = "new@Test.com";
             var env = new TestEnvironment();
             env.SetAuthenticateResult(ParatextEmail);
 
@@ -123,12 +125,20 @@ namespace SIL.XForge.Identity.Services
             Assert.That(user.ParatextId, Is.EqualTo(ParatextId));
             Assert.That(user.ParatextTokens.RefreshToken, Is.EqualTo(RefreshToken));
             Assert.That(user.ParatextTokens.AccessToken, Is.EqualTo(AccessToken));
+            Assert.That(user.CanonicalEmail, Is.EqualTo(UserEntity.CanonicalizeEmail(ParatextEmail)));
+            Assert.That(user.VerifyEmailMd5(UserEntity.HashEmail(UserEntity.CanonicalizeEmail(ParatextEmail))),
+                Is.True
+            );
+            DateTime date = DateTime.UtcNow.AddMinutes(-1);
+            Assert.That(user.Sites[env.SiteOptions.Value.Id].LastLogin, Is.GreaterThan(date));
         }
 
         class TestEnvironment : HttpTestEnvironmentBase
         {
             public TestEnvironment()
             {
+                SiteOptions = Microsoft.Extensions.Options.Options.Create(
+                    new SiteOptions { Id = "xf" });
                 Users = new MemoryRepository<UserEntity>(
                     uniqueKeySelectors: new Func<UserEntity, object>[]
                     {
@@ -142,18 +152,23 @@ namespace SIL.XForge.Identity.Services
                             Id = TestUserId,
                             Name = TestName,
                             Email = TestUserEmail,
-                            CanonicalEmail = UserEntity.CanonicalizeEmail(TestUserEmail)
+                            CanonicalEmail = UserEntity.CanonicalizeEmail(TestUserEmail),
+                            Sites = new Dictionary<string, Site>
+                            {
+                                {
+                                    SiteOptions.Value.Id, new Site()
+                                }
+                            }
                         }
                     });
                 Events = Substitute.For<IEventService>();
-                IOptions<SiteOptions> siteOptions = Microsoft.Extensions.Options.Options.Create(
-                    new SiteOptions { Id = "xf" });
-                Service = new ExternalAuthenticationService(Events, Users, HttpContextAccessor, siteOptions);
+                Service = new ExternalAuthenticationService(Events, Users, HttpContextAccessor, SiteOptions);
             }
 
             public MemoryRepository<UserEntity> Users { get; }
             public IEventService Events { get; }
             public ExternalAuthenticationService Service { get; }
+            public IOptions<SiteOptions> SiteOptions { get; }
 
             public void SetAuthenticateResult(string email)
             {
