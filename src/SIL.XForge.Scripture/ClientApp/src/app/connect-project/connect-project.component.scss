@@ -7,13 +7,13 @@
 }
 
 .title {
-  margin-bottom: 2rem;
+  margin-bottom: 32px;
 }
 
 .content {
   display: flex;
   flex-direction: column;
-  max-width: 32rem;
+  max-width: 512px;
   width: 100%;
 
   .paratext-login-container {
@@ -22,15 +22,15 @@
     align-items: center;
 
     > button {
-      margin-top: 1.2rem;
+      margin-top: 19px;
       background-color: $pt-button-green;
       color: white;
-      height: 2.5rem;
+      height: 40px;
 
       > .paratext-logo {
-        width: 2rem;
-        height: 2rem;
-        margin-right: 0.5rem;
+        width: 32px;
+        height: 32px;
+        margin-right: 8px;
       }
     }
   }
@@ -39,10 +39,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2rem;
+    padding: 32px;
 
     > .progress-label {
-      margin-bottom: 1.2rem;
+      margin-bottom: 19px;
     }
   }
 
@@ -52,7 +52,7 @@
 
     #project-select {
       width: 100%;
-      margin-right: 2rem;
+      margin-right: 32px;
     }
 
     #no-projects-msg {
@@ -60,17 +60,17 @@
     }
 
     mdc-card {
-      margin-top: 2rem;
+      margin-top: 32px;
 
       .card-title {
         display: flex;
         flex-direction: row;
         align-items: center;
-        margin: 0.5rem 1rem 0 1rem;
+        margin: 8px 16px 0 16px;
       }
 
       .card-content {
-        padding: 1rem;
+        padding: 16px;
       }
 
       mdc-select {
@@ -78,19 +78,19 @@
       }
 
       mdc-list-divider {
-        margin-left: 1.4rem;
+        margin-left: 22px;
       }
     }
 
     #connect-submit-button {
       align-self: center;
-      margin-top: 2rem;
+      margin-top: 32px;
       @include mdc-button-filled-accessible($pt-button-green);
     }
 
     p.helper-select,
     .indented-field-row {
-      margin-top: 1rem;
+      margin-top: 16px;
     }
 
     .helper-text {
@@ -100,8 +100,8 @@
 
     .invalid-feedback {
       color: var(--mdc-theme-error);
-      font-size: 0.75rem;
-      margin-left: 2rem;
+      font-size: 12px;
+      margin-left: 32px;
     }
   }
 }

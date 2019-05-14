@@ -307,14 +307,16 @@ class TestEnvironment {
         name: 'ParatextP1',
         languageTag: 'qaa',
         languageName: 'unspecified',
-        isConnectable: true
+        isConnectable: true,
+        isConnected: false
       },
       {
         paratextId: 'paratextId02',
         name: 'ParatextP2',
         languageTag: 'qaa',
         languageName: 'unspecified',
-        isConnectable: true
+        isConnectable: true,
+        isConnected: false
       }
     ]);
     when(this.mockedParatextService.getProjects()).thenReturn(this.paratectProjects$);

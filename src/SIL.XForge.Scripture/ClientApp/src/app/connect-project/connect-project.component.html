@@ -15,24 +15,37 @@
     ></mdc-linear-progress>
   </mdc-card>
   <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
-    <mdc-form-field *ngIf="hasConnectableProjects; else noProjectMsg">
-      <mdc-select
-        #projectSelect
-        id="project-select"
-        placeholder="Paratext Project"
-        formControlName="paratextId"
-        required
-        outlined
-      >
-        <mdc-menu id="projects-menu">
-          <mdc-list>
-            <mdc-list-item *ngFor="let project of targetProjects" [value]="project.paratextId">
-              {{ project.name }}
-            </mdc-list-item>
-          </mdc-list>
-        </mdc-menu>
-      </mdc-select>
-    </mdc-form-field>
+    <ng-container *ngIf="projects?.length > 0; else noProjectMsg">
+      <p *ngIf="hasNonAdministratorProject && !showTasks" id="connect-non-admin-msg">
+        ** You must be the Paratext Administrator of a project to start it here. Ask your Administrator to connect to
+        your project then you can also connect to it here after that.
+      </p>
+      <mdc-form-field>
+        <mdc-select
+          #projectSelect
+          id="project-select"
+          placeholder="Paratext Project"
+          formControlName="paratextId"
+          required
+          outlined
+        >
+          <mdc-menu id="projects-menu">
+            <mdc-list>
+              <mdc-list-item
+                *ngFor="let project of projects"
+                [value]="project.paratextId"
+                [disabled]="project.isConnected || !project.isConnectable"
+              >
+                <span>
+                  {{ project.name }}<span *ngIf="project.isConnected">&nbsp;(already connected)</span>
+                  <span *ngIf="!project.isConnected && !project.isConnectable">&nbsp;**</span>
+                </span>
+              </mdc-list-item>
+            </mdc-list>
+          </mdc-menu>
+        </mdc-select>
+      </mdc-form-field>
+    </ng-container>
     <ng-template #noProjectMsg>
       <p *ngIf="state !== 'loading'" id="no-projects-msg">
         Looks like there are no connectable projects for you.<br />Please go to Paratext to register a project to
@@ -57,13 +70,13 @@
           </mdc-form-field>
         </div>
         <div fxLayout="row" fxLayoutAlign="start center">
-          <div fxFlex="2.75rem" class="indent"></div>
+          <div fxFlex="44px" class="indent"></div>
           <p fxFlex class="helper-text">
             Collaborate with other translators working on the same text and use translation suggestions.
           </p>
         </div>
         <div fxLayout="row" fxLayoutAlign="start center" class="indented-field-row">
-          <div fxFlex="2.75rem" class="indent"></div>
+          <div fxFlex="44px" class="indent"></div>
           <mdc-form-field fxFlex="1 1 0%">
             <mdc-select placeholder="Based on" formControlName="sourceParatextId" id="based-on-select" required>
               <mdc-menu>
@@ -86,7 +99,7 @@
           </mdc-form-field>
         </div>
         <div fxLayout="row" fxLayoutAlign="start center">
-          <div fxFlex="2.75rem" class="indent"></div>
+          <div fxFlex="44px" class="indent"></div>
           <p fxFlex class="helper-text">
             Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses,
             ask targeted questions, allow discussion of answers.
