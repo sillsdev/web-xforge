@@ -53,7 +53,8 @@ namespace SIL.XForge.Services
 
                 var userResource = new UserResource
                 {
-                    Id = "usernew"
+                    Id = "usernew",
+                    Email = "usernew@example.com"
                 };
                 UserResource newResource = await env.Service.CreateAsync(userResource);
 
@@ -71,6 +72,7 @@ namespace SIL.XForge.Services
                 var userResource = new UserResource
                 {
                     Id = "usernew",
+                    Email = "usernew@example.com",
                     Username = "USER_01"
                 };
                 UserResource newResource = await env.Service.CreateAsync(userResource);
@@ -86,17 +88,22 @@ namespace SIL.XForge.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser(User01Id, SystemRoles.SystemAdmin);
+                string email = "UserNew@example.com";
 
                 var userResource = new UserResource
                 {
                     Id = "usernew",
-                    Email = "UserNew@example.com"
+                    Email = email
                 };
                 UserResource newResource = await env.Service.CreateAsync(userResource);
 
                 Assert.That(newResource, Is.Not.Null);
                 Assert.That(newResource.Email, Is.EqualTo("UserNew@example.com"));
                 Assert.That(newResource.CanonicalEmail, Is.EqualTo("usernew@example.com"));
+                UserEntity newUser = await env.Service.GetEntityAsync(newResource.Id);
+                Assert.That(newUser.VerifyEmailMd5(UserEntity.HashEmail(UserEntity.CanonicalizeEmail(email))),
+                    Is.True
+                );
             }
         }
 
@@ -127,6 +134,7 @@ namespace SIL.XForge.Services
                 var userResource = new UserResource
                 {
                     Id = "usernew",
+                    Email = "usernew@example.com",
                     MobilePhone = "+1 234 567 8900",
                     ContactMethod = "sms"
                 };
@@ -147,6 +155,7 @@ namespace SIL.XForge.Services
                 var userResource = new UserResource
                 {
                     Id = "usernew",
+                    Email = "usernew@example.com",
                     MobilePhone = "+1 234 567 8900"
                 };
                 UserResource newResource = await env.Service.CreateAsync(userResource);
@@ -260,16 +269,21 @@ namespace SIL.XForge.Services
                     });
                 env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
 
+                string email = "New@example.com";
                 var resource = new UserResource
                 {
                     Id = User01Id,
-                    Email = "New@example.com"
+                    Email = email
                 };
                 UserResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
 
                 Assert.That(updatedResource, Is.Not.Null);
                 Assert.That(updatedResource.Email, Is.EqualTo("New@example.com"));
                 Assert.That(updatedResource.CanonicalEmail, Is.EqualTo("new@example.com"));
+                UserEntity updatedEntity = await env.Service.GetEntityAsync(resource.Id);
+                Assert.That(updatedEntity.VerifyEmailMd5(UserEntity.HashEmail(UserEntity.CanonicalizeEmail(email))),
+                    Is.True
+                );
             }
         }
 

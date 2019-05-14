@@ -75,6 +75,7 @@ namespace SIL.XForge.Services
             if (!string.IsNullOrEmpty(entity.Password))
                 entity.Password = UserEntity.HashPassword(entity.Password);
             entity.CanonicalEmail = UserEntity.CanonicalizeEmail(entity.Email);
+            entity.EmailMd5 = UserEntity.HashEmail(entity.Email);
             entity.Sites = new Dictionary<string, Site>
             {
                 { _siteOptions.Value.Id, new Site() }
@@ -98,6 +99,7 @@ namespace SIL.XForge.Services
                 case nameof(UserResource.Email):
                     update.Set(u => u.Email, value);
                     update.Set(u => u.CanonicalEmail, UserEntity.CanonicalizeEmail((string)value));
+                    update.Set(u => u.EmailMd5, UserEntity.HashEmail((string)value));
                     break;
                 case nameof(UserResource.ParatextId):
                     if (value == null)

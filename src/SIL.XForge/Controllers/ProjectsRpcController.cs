@@ -112,6 +112,7 @@ namespace SIL.XForge.Controllers
                     Id = ObjectId.GenerateNewId().ToString(),
                     Email = email,
                     CanonicalEmail = UserEntity.CanonicalizeEmail(email),
+                    EmailMd5 = UserEntity.HashEmail(email),
                     EmailVerified = false,
                     Role = SystemRoles.User,
                     ValidationKey = Security.GenerateKey(),

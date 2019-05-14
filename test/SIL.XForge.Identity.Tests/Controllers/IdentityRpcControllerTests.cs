@@ -265,7 +265,6 @@ namespace SIL.XForge.Identity.Controllers
                 Arg.Any<AuthenticationProperties>());
         }
 
-
         [Test]
         public async Task SignUp_DefaultContactMethodIsEmail()
         {
@@ -279,6 +278,21 @@ namespace SIL.XForge.Identity.Controllers
             Assert.That(env.Users.Query().All(x => UserEntity.ContactMethods.email.Equals(x.ContactMethod)),
                 "should be default");
         }
+
+        [Test]
+        public async Task SignUp_NewUser_EmailMd5Set()
+        {
+            var env = new TestEnvironment();
+            string email = "newuser01@example.com";
+
+            string result = await env.Controller.SignUp("New User 01", "password1234", email);
+
+            Assert.That(result, Is.EqualTo("success"));
+            UserEntity newUser = env.Users.Query().Single(u => u.Email == email);
+            Assert.That(newUser.EmailMd5, Is.Not.Null);
+            Assert.That(newUser.VerifyEmailMd5(UserEntity.HashEmail(UserEntity.CanonicalizeEmail(email))), Is.True);
+        }
+
         [Test]
         public async Task SignUp_DuplicateEmailOrUserRejected()
         {
