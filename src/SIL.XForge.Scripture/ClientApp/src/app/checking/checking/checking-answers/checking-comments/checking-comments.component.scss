@@ -1,0 +1,22 @@
+@import '../../checking-global';
+
+.comment {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid $borderColor;
+  padding: 10px 0;
+
+  .divider {
+    padding: 0 10px;
+  }
+
+  .actions {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+
+    button {
+      height: auto;
+    }
+  }
+}
