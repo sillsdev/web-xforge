@@ -6,6 +6,7 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../environments/environment';
 import { IdentityService } from '../identity.service';
 import { SignUpResult } from '../models/sign-up-result';
@@ -20,7 +21,7 @@ export class SignUpComponent extends SubscriptionDisposable implements OnInit {
     name: new FormControl('', Validators.required),
     password: new FormControl('', [Validators.required, Validators.minLength(7)]),
     showPassword: new FormControl(false),
-    email: new FormControl('', [Validators.required, Validators.email]),
+    email: new FormControl('', [Validators.required, XFValidators.email]),
     recaptcha: new FormControl(null, Validators.required)
   });
   signUpDisabled: boolean;
