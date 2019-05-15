@@ -8,6 +8,8 @@ import { SharedModule } from '../shared/shared.module';
 import { CheckingOverviewComponent } from './checking-overview/checking-overview.component';
 import { CheckingRoutingModule } from './checking-routing.module';
 import { CheckingAnswersComponent } from './checking/checking-answers/checking-answers.component';
+import { CheckingCommentFormComponent } from './checking/checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
+import { CheckingCommentsComponent } from './checking/checking-answers/checking-comments/checking-comments.component';
 import { CheckingOwnerComponent } from './checking/checking-answers/checking-owner/checking-owner.component';
 import { CheckingQuestionsComponent } from './checking/checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking/checking-text/checking-text.component';
@@ -24,7 +26,9 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     CheckingAnswersComponent,
     QuestionDialogComponent,
     FontSizeComponent,
-    CheckingOwnerComponent
+    CheckingOwnerComponent,
+    CheckingCommentsComponent,
+    CheckingCommentFormComponent
   ],
   imports: [
     CheckingRoutingModule,

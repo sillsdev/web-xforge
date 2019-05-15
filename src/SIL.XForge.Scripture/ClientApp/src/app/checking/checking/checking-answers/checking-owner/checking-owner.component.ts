@@ -16,6 +16,10 @@ export class CheckingOwnerComponent implements OnInit {
 
   constructor(private userService: UserService) {}
 
+  get name(): string {
+    return this.userService.currentUserId === this.owner.id ? 'Me' : this.owner.name;
+  }
+
   ngOnInit() {
     this.userService.onlineGet(this.ownerRef).subscribe(userData => {
       this.owner = userData.data;

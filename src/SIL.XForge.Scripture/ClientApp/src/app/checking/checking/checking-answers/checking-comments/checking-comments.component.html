@@ -1,0 +1,31 @@
+<div *ngFor="let comment of comments">
+  <div class="comment" *ngIf="!activeComment || (commentFormVisible && activeComment.id !== comment.id)">
+    <span class="comment-text">{{ comment.text }}</span> <span class="divider">-</span>
+    <app-checking-owner [ownerRef]="comment.ownerRef"></app-checking-owner>
+    <div class="actions">
+      <button *ngIf="hasPermission(comment, 'edit')" mdc-button (click)="editComment(comment)" class="comment-edit">
+        Edit
+      </button>
+      <button
+        *ngIf="hasPermission(comment, 'delete')"
+        mdc-button
+        (click)="deleteComment(comment)"
+        class="comment-delete"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+  <app-checking-comment-form
+    *ngIf="commentFormVisible && activeComment && activeComment.id === comment.id"
+    (save)="submit($event)"
+    (cancel)="hideCommentForm()"
+    [text]="comment.text"
+  ></app-checking-comment-form>
+</div>
+<app-checking-comment-form
+  *ngIf="commentFormVisible && !activeComment"
+  (save)="submit($event)"
+  (cancel)="hideCommentForm()"
+></app-checking-comment-form>
+<button *ngIf="!commentFormVisible" mdc-button (click)="showCommentForm()" class="add-comment">Add a comment</button>

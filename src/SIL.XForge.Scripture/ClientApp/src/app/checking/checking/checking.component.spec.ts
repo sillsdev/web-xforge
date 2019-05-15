@@ -14,6 +14,7 @@ import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
+import { CommentData } from '../../core/models/comment-data';
 import { Question } from '../../core/models/question';
 import { QuestionData } from '../../core/models/question-data';
 import { SFProjectRef, SFProjectUserRef } from '../../core/models/sfdomain-model.generated';
@@ -26,6 +27,8 @@ import { SFProjectUserService } from '../../core/sfproject-user.service';
 import { TextService } from '../../core/text.service';
 import { SharedModule } from '../../shared/shared.module';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
+import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
+import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingOwnerComponent } from './checking-answers/checking-owner/checking-owner.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
@@ -179,6 +182,52 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.likeTotal).toBe(0);
     }));
+
+    describe('Comments', () => {
+      it('can comment on an answer', fakeAsync(() => {
+        env.selectQuestion(1);
+        env.answerQuestion('Answer question to be commented on');
+        env.commentOnAnswer(0, 'Response to answer');
+        expect(env.getAnswerComments(0).length).toBe(1);
+      }));
+
+      it('can edit comment on an answer', fakeAsync(() => {
+        env.selectQuestion(1);
+        env.answerQuestion('Answer question to be commented on');
+        env.commentOnAnswer(0, 'Response to answer');
+        env.clickButton(env.getEditCommentButton(0, 0));
+        env.setTextFieldValue(env.getYourCommentField(0), 'Edited comment');
+        env.clickButton(env.getSaveCommentButton(0));
+        env.waitForSliderUpdate();
+        expect(env.getAnswerCommentText(0, 0)).toBe('Edited comment');
+        expect(env.getAnswerComments(0).length).toBe(1);
+      }));
+
+      it('can delete comment on an answer', fakeAsync(() => {
+        env.selectQuestion(1);
+        env.answerQuestion('Answer question to be commented on');
+        env.commentOnAnswer(0, 'Response to answer');
+        expect(env.getAnswerComments(0).length).toBe(1);
+        env.clickButton(env.getDeleteCommentButton(0, 0));
+        env.waitForSliderUpdate();
+        expect(env.getAnswerComments(0).length).toBe(0);
+      }));
+
+      it('comments only appear on the relevant answer', fakeAsync(() => {
+        env.selectQuestion(1);
+        env.answerQuestion('Answer question to be commented on');
+        env.commentOnAnswer(0, 'First comment');
+        env.commentOnAnswer(0, 'Second comment');
+        expect(env.getAnswerComments(0).length).toBe(2);
+        env.selectQuestion(2);
+        env.answerQuestion('Second answer question to be commented on');
+        env.commentOnAnswer(0, 'Third comment');
+        expect(env.getAnswerComments(0).length).toBe(1);
+        expect(env.getAnswerCommentText(0, 0)).toBe('Third comment');
+        env.selectQuestion(1);
+        expect(env.getAnswerCommentText(0, 1)).toBe('First comment');
+      }));
+    });
   });
 
   describe('Text', () => {
@@ -225,7 +274,9 @@ class TestEnvironment {
         CheckingTextComponent,
         CheckingQuestionsComponent,
         CheckingAnswersComponent,
-        CheckingOwnerComponent
+        CheckingOwnerComponent,
+        CheckingCommentsComponent,
+        CheckingCommentFormComponent
       ],
       schemas: [NO_ERRORS_SCHEMA],
       imports: [UICommonModule, AngularSplitModule.forRoot(), SharedModule],
@@ -333,6 +384,50 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  commentOnAnswer(answerIndex: number, comment: string): void {
+    this.clickButton(this.getAddCommentButton(answerIndex));
+    this.setTextFieldValue(this.getYourCommentField(answerIndex), comment);
+    this.clickButton(this.getSaveCommentButton(answerIndex));
+    this.waitForSliderUpdate();
+  }
+
+  getAnswer(index: number): DebugElement {
+    return this.answers[index];
+  }
+
+  getAddCommentButton(answerIndex: number): DebugElement {
+    return this.getAnswer(answerIndex).query(By.css('.add-comment'));
+  }
+
+  getAnswerComments(answerIndex: number): DebugElement[] {
+    return this.getAnswer(answerIndex).queryAll(By.css('.comment'));
+  }
+
+  getAnswerComment(answerIndex: number, commentIndex: number): DebugElement {
+    return this.getAnswerComments(answerIndex)[commentIndex];
+  }
+
+  getAnswerCommentText(answerIndex: number, commentIndex: number): string {
+    const commentText = this.getAnswerComment(answerIndex, commentIndex);
+    return commentText.query(By.css('.comment-text')).nativeElement.textContent;
+  }
+
+  getDeleteCommentButton(answerIndex: number, commentIndex: number): DebugElement {
+    return this.getAnswerComments(answerIndex)[commentIndex].query(By.css('.comment-delete'));
+  }
+
+  getEditCommentButton(answerIndex: number, commentIndex: number): DebugElement {
+    return this.getAnswerComments(answerIndex)[commentIndex].query(By.css('.comment-edit'));
+  }
+
+  getSaveCommentButton(answerIndex: number): DebugElement {
+    return this.getAnswer(answerIndex).query(By.css('.save-comment'));
+  }
+
+  getYourCommentField(answerIndex: number): DebugElement {
+    return this.getAnswer(answerIndex).query(By.css('mdc-text-field[formControlName="commentText"]'));
+  }
+
   selectQuestion(questionNumber: number, includeReadTimer: boolean = true): DebugElement {
     const question = this.fixture.debugElement.query(
       By.css('#questions-panel .mdc-list-item:nth-child(' + questionNumber + ')')
@@ -409,6 +504,7 @@ class TestEnvironment {
     when(this.mockedTextService.getQuestionData(deepEqual(text1_1id))).thenResolve(
       this.createQuestionData(text1_1id, questionData)
     );
+    when(this.mockedTextService.getCommentData(deepEqual(text1_1id))).thenResolve(this.createCommentData(text1_1id));
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedUserService.onlineGet('user01')).thenReturn(of(new MapQueryResults(this.testUser)));
     when(this.mockedProjectUserService.update(anything())).thenReturn(new Promise(() => {}));
@@ -417,6 +513,11 @@ class TestEnvironment {
   private createQuestionData(id: TextJsonDataId, data: Question[]): QuestionData {
     const doc = new MemoryRealtimeDoc(OTJson0.type, id.toString(), data);
     return new QuestionData(doc, instance(this.mockedRealtimeOfflineStore));
+  }
+
+  private createCommentData(id: TextJsonDataId): CommentData {
+    const doc = new MemoryRealtimeDoc(OTJson0.type, id.toString(), []);
+    return new CommentData(doc, instance(this.mockedRealtimeOfflineStore));
   }
 
   private createTextData(): TextData {
