@@ -125,8 +125,9 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
             .getManyIncluded<SFProjectUser>(this.project.users)
             .find(pu => (pu.user == null ? '' : pu.user.id) === this.userService.currentUserId);
           this.chapters = this.text.chapters.map(c => c.number);
-          this._chapter = undefined;
           if (prevTextId !== this.text.id) {
+            // Trigger the chapter setter to bind the new text and questions.
+            this._chapter = undefined;
             this.chapter = 1;
           }
         }
