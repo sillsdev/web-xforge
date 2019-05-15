@@ -36,6 +36,24 @@ namespace SIL.XForge.Services
             return base.GetRelationship(relationshipName);
         }
 
+        public override async Task<UserResource> GetAsync(string id)
+        {
+            if (SystemRole == SystemRoles.User && UserId != id)
+            {
+                UserEntity entity = await GetEntityQueryable().SingleOrDefaultAsync(u => u.Id == id);
+                UserResource resource = new UserResource
+                {
+                    Id = id,
+                    Name = entity.Name,
+                    AvatarUrl = entity.AvatarUrl,
+                    EmailMd5 = entity.EmailMd5,
+                    GoogleId = entity.GoogleId
+                };
+                return resource;
+            }
+            return await base.GetAsync(id);
+        }
+
         public async Task<Uri> SaveAvatarAsync(string id, string name, Stream inputStream)
         {
             await CheckCanUpdateDeleteAsync(id);

@@ -28,7 +28,7 @@ namespace SIL.XForge.Models
         [Attr]
         public string Role { get; set; }
         [Attr]
-        public bool Active { get; set; }
+        public bool? Active { get; set; }
         [Attr]
         public string AvatarUrl { get; set; }
         [Attr]
@@ -36,7 +36,7 @@ namespace SIL.XForge.Models
         [Attr]
         public string ContactMethod { get; set; }
         [Attr]
-        public DateTime Birthday { get; set; }
+        public DateTime? Birthday { get; set; }
         [Attr]
         public string Gender { get; set; }
         [Attr(isFilterable: false, isSortable: false)]

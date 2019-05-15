@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using AutoMapper;
 using JsonApiDotNetCore.Internal;
@@ -23,6 +24,7 @@ namespace SIL.XForge.Services
         private const string User02Id = "user02";
         private const string User03Id = "user03";
         private const string User01Email = "user01@example.com";
+        private const string User02Name = "User 02";
 
         [Test]
         public void CreateAsync_UserRole()
@@ -488,6 +490,36 @@ namespace SIL.XForge.Services
         }
 
         [Test]
+        public async Task GetAsync_UserRole_ReturnsMinimalResource()
+        {
+            using (var env = new TestEnvironment())
+            {
+                env.SetUser(User01Id, SystemRoles.User);
+                env.JsonApiContext.QuerySet.Returns(new QuerySet());
+                env.JsonApiContext.PageManager.Returns(new PageManager());
+
+                UserResource resource = await env.Service.GetAsync(User02Id);
+                IEnumerable<PropertyInfo> nonNullProperties =
+                    resource.GetType().GetProperties().Where(p => p.GetValue(resource) != null);
+                Assert.That(nonNullProperties.Select(p => p.Name).ToArray(), Is.EquivalentTo(new[] {
+                    nameof(UserResource.Id),
+                    nameof(UserResource.StringId),
+                    nameof(UserResource.Name),
+                    nameof(UserResource.GoogleId),
+                    nameof(UserResource.EmailMd5),
+                    nameof(UserResource.AvatarUrl)
+                }));
+
+                Assert.That(resource.Id, Is.EqualTo(User02Id));
+                Assert.That(resource.StringId, Is.EqualTo(User02Id));
+                Assert.That(resource.Name, Is.EqualTo(User02Name));
+                Assert.That(resource.GoogleId, Is.EqualTo("user02googleid"));
+                Assert.That(resource.EmailMd5, Is.EqualTo("user02emailmd5"));
+                Assert.That(resource.AvatarUrl, Is.EqualTo("user02avatarurl"));
+            }
+        }
+
+        [Test]
         public async Task GetAsync_SystemAdminRole()
         {
             using (var env = new TestEnvironment())
@@ -660,9 +692,13 @@ namespace SIL.XForge.Services
                     new UserEntity
                     {
                         Id = User02Id,
+                        Name = User02Name,
                         Username = User02Id,
                         Email = "user02@example.com",
                         CanonicalEmail = "user02@example.com",
+                        AvatarUrl = "user02avatarurl",
+                        EmailMd5 = "user02emailmd5",
+                        GoogleId = "user02googleid",
                         Sites = new Dictionary<string, Site>
                         {
                             {

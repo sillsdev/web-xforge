@@ -85,7 +85,7 @@ namespace SIL.XForge.Services
             return await query.ToListAsync(MapAsync);
         }
 
-        public async Task<TResource> GetAsync(string id)
+        public virtual async Task<TResource> GetAsync(string id)
         {
             TEntity entity = await GetEntityAsync(id);
             if (entity == null)
