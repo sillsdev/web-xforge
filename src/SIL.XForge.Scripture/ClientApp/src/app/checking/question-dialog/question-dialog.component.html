@@ -15,7 +15,10 @@
                 outlined
                 id="scripture-start"
               ></mdc-text-field>
-              <mdc-helper-text validation>*Required, e.g. JHN 3:16</mdc-helper-text>
+              <mdc-helper-text validation>
+                *Required<span *ngIf="scriptureStart.hasError('verseFormat')">, e.g. JHN 3:16</span>
+                <span *ngIf="scriptureStart.hasError('verseRange')">, must be inside verse range</span>
+              </mdc-helper-text>
             </mdc-form-field>
             <mdc-form-field>
               <mdc-text-field
@@ -25,7 +28,10 @@
                 outlined
                 id="scripture-end"
               ></mdc-text-field>
-              <mdc-helper-text validation>*Required, e.g. JHN 3:16</mdc-helper-text>
+              <mdc-helper-text validation>
+                *<span *ngIf="scriptureStart.hasError('verseFormat')">E.g. JHN 3:16</span>
+                <span *ngIf="scriptureStart.hasError('verseRange')">Must be inside verse range</span>
+              </mdc-helper-text>
             </mdc-form-field>
           </div>
           <mdc-form-field fluid>
