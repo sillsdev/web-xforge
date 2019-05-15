@@ -13,7 +13,7 @@ import { QuestionData } from '../../core/models/question-data';
 import { ScrVers } from '../../core/models/scripture/scr-vers';
 import { VerseRef } from '../../core/models/scripture/verse-ref';
 import { ScrVersType } from '../../core/models/scripture/versification';
-import { Text } from '../../core/models/text';
+import { Text, TextsByBook } from '../../core/models/text';
 import { getTextJsonDataIdStr, TextJsonDataId } from '../../core/models/text-json-data-id';
 import { SFProjectService } from '../../core/sfproject.service';
 import { TextService } from '../../core/text.service';
@@ -30,12 +30,13 @@ import {
   styleUrls: ['./checking-overview.component.scss']
 })
 export class CheckingOverviewComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
+  isLoading = true;
   itemVisible: { [textId: string]: boolean } = {};
   questions: { [textId: string]: QuestionData } = {};
   getTextJsonDataIdStr = getTextJsonDataIdStr;
   isProjectAdmin$: Observable<boolean>;
   texts: Text[];
-  textsByBook: { [bookId: string]: Text };
+  textsByBook: TextsByBook;
 
   private projectId: string;
 
@@ -55,6 +56,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     this.subscribe(
       this.activatedRoute.params.pipe(
         tap(params => {
+          this.isLoading = true;
           this.noticeService.loadingStarted();
           this.projectId = params['projectId'];
           this.isProjectAdmin$ = this.adminAuthGuard.allowTransition(this.projectId);
@@ -71,6 +73,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
             await this.bindQuestionData(new TextJsonDataId(text.id, chapter.number));
           }
         }
+        this.isLoading = false;
         this.noticeService.loadingFinished();
       }
     );
@@ -187,7 +190,8 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     const dialogConfig: MdcDialogConfig<QuestionDialogData> = {
       data: {
         editMode,
-        question
+        question,
+        textsByBook: this.textsByBook
       }
     };
     const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig);

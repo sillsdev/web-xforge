@@ -1,14 +1,15 @@
 import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-
 import { Question } from '../../core/models/question';
+import { TextsByBook } from '../../core/models/text';
 import { VerseRefData } from '../../core/models/verse-ref-data';
 import { SFValidators } from '../../shared/sfvalidators';
 
 export interface QuestionDialogData {
   editMode: boolean;
   question: Question;
+  textsByBook: TextsByBook;
 }
 
 export interface QuestionDialogResult {
@@ -31,8 +32,8 @@ export class QuestionDialogComponent implements OnInit {
 
   modeLabel = this.data && this.data.editMode ? 'Edit' : 'New';
   questionForm: FormGroup = new FormGroup({
-    scriptureStart: new FormControl('', [Validators.required, SFValidators.verseStr]),
-    scriptureEnd: new FormControl('', [SFValidators.verseStr]),
+    scriptureStart: new FormControl('', [Validators.required, SFValidators.verseStr(this.data.textsByBook)]),
+    scriptureEnd: new FormControl('', [SFValidators.verseStr(this.data.textsByBook)]),
     questionText: new FormControl('', [Validators.required])
   });
 
@@ -40,6 +41,14 @@ export class QuestionDialogComponent implements OnInit {
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent>,
     @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData
   ) {}
+
+  get scriptureStart() {
+    return this.questionForm.get('scriptureStart');
+  }
+
+  get scriptureEnd() {
+    return this.questionForm.get('scriptureEnd');
+  }
 
   ngOnInit(): void {
     if (this.data && this.data.question) {
@@ -66,8 +75,8 @@ export class QuestionDialogComponent implements OnInit {
     }
 
     this.dialogRef.close({
-      scriptureStart: this.questionForm.get('scriptureStart').value,
-      scriptureEnd: this.questionForm.get('scriptureEnd').value,
+      scriptureStart: this.scriptureStart.value,
+      scriptureEnd: this.scriptureEnd.value,
       text: this.questionForm.get('questionText').value
     } as QuestionDialogResult);
   }

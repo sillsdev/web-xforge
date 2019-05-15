@@ -34,13 +34,21 @@ describe('CheckingOverviewComponent', () => {
       expect(env.addQuestionButton).toBeDefined();
     }));
 
+    it('should disable "Add question" button when loading', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      expect(env.addQuestionButton.nativeElement.disabled).toBe(true);
+    }));
+
     it('should open dialog when "Add question" button is clicked', fakeAsync(() => {
       const env = new TestEnvironment();
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
       env.fixture.detectChanges();
+      flush();
+      env.fixture.detectChanges();
+      expect(env.addQuestionButton.nativeElement.disabled).toBe(false);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      expect().nothing();
     }));
 
     it('should not add a question if cancelled', fakeAsync(() => {
@@ -48,13 +56,14 @@ describe('CheckingOverviewComponent', () => {
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
       env.fixture.detectChanges();
       flush();
+      env.fixture.detectChanges();
+      expect(env.addQuestionButton.nativeElement.disabled).toBe(false);
       verify(env.mockedTextService.getQuestionData(anything())).twice();
 
       resetCalls(env.mockedTextService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
       verify(env.mockedTextService.getQuestionData(anything())).never();
-      expect().nothing();
     }));
 
     it('should add a question if requested', fakeAsync(() => {
@@ -68,13 +77,14 @@ describe('CheckingOverviewComponent', () => {
       );
       env.fixture.detectChanges();
       flush();
+      env.fixture.detectChanges();
+      expect(env.addQuestionButton.nativeElement.disabled).toBe(false);
       verify(env.mockedTextService.getQuestionData(anything())).twice();
 
       resetCalls(env.mockedTextService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
       verify(env.mockedTextService.getQuestionData(anything())).once();
-      expect().nothing();
     }));
   });
 
@@ -157,8 +167,8 @@ class TestEnvironment {
     when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
     when(this.mockedProjectService.getTexts(anything())).thenReturn(
       of([
-        { id: 'text01', bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1 }] } as Text,
-        { id: 'text02', bookId: 'LUK', name: 'Luke', chapters: [{ number: 1 }] } as Text
+        { id: 'text01', bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1, lastVerse: 25 }] } as Text,
+        { id: 'text02', bookId: 'LUK', name: 'Luke', chapters: [{ number: 1, lastVerse: 80 }] } as Text
       ])
     );
     const text1_1id = new TextJsonDataId('text01', 1);
