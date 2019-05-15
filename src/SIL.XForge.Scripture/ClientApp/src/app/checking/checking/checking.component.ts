@@ -7,6 +7,8 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof, objectId } from 'xforge-common/utils';
 import { Answer } from '../../core/models/answer';
+import { Comment } from '../../core/models/comment';
+import { CommentData } from '../../core/models/comment-data';
 import { Question } from '../../core/models/question';
 import { QuestionData } from '../../core/models/question-data';
 import { SFProject } from '../../core/models/sfproject';
@@ -16,6 +18,7 @@ import { TextDataId } from '../../core/models/text-data';
 import { getTextJsonDataIdStr, TextJsonDataId } from '../../core/models/text-json-data-id';
 import { TextService } from '../../core/text.service';
 import { AnswerAction } from './checking-answers/checking-answers.component';
+import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
 
@@ -23,6 +26,11 @@ interface Summary {
   unread: number;
   read: number;
   answered: number;
+}
+
+interface CheckingData {
+  questionData: { [textId: string]: QuestionData };
+  commentData: { [textId: string]: CommentData };
 }
 
 @Component({
@@ -36,6 +44,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.answersPanelContainerElement = answersPanelContainerElement;
     this.calculateScriptureSliderPosition();
   }
+
   @HostBinding('class') classes = 'flex-max';
   @ViewChild(CheckingTextComponent) scripturePanel: CheckingTextComponent;
   @ViewChild(CheckingQuestionsComponent) questionsPanel: CheckingQuestionsComponent;
@@ -47,7 +56,8 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   projectCurrentUser: SFProjectUser;
   text: Text;
   questions: Question[] = [];
-  questionData: { [textId: string]: QuestionData } = {};
+  checkingData: CheckingData = { questionData: {}, commentData: {} };
+  comments: Comment[] = [];
   summary: Summary = {
     read: 0,
     unread: 0,
@@ -75,14 +85,19 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     if (this._chapter !== value) {
       this._chapter = value;
       this.textDataId = new TextDataId(this.text.id, this.chapter);
-      this.bindQuestionData(new TextJsonDataId(this.text.id, this.chapter)).then(() => {
-        this.questions = this.questionData[getTextJsonDataIdStr(this.text.id, this.chapter)].data;
+      this.bindCheckingData(new TextJsonDataId(this.text.id, this.chapter)).then(() => {
+        this.questions = this.checkingData.questionData[this.textJsonDataId].data;
+        this.comments = this.checkingData.commentData[this.textJsonDataId].data;
       });
     }
   }
 
   private get answerPanelElementHeight(): number {
     return this.answersPanelContainerElement ? this.answersPanelContainerElement.nativeElement.offsetHeight : 0;
+  }
+
+  private get textJsonDataId(): string {
+    return getTextJsonDataIdStr(this.text.id, this.chapter);
   }
 
   private get minAnswerPanelHeight(): number {
@@ -144,6 +159,26 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.calculateScriptureSliderPosition();
   }
 
+  commentAction(commentAction: CommentAction) {
+    if (commentAction.action === 'save') {
+      let comment: Comment = commentAction.comment;
+      if (!comment) {
+        comment = {
+          id: objectId(),
+          ownerRef: this.userService.currentUserId,
+          projectRef: this.project.id,
+          answerRef: commentAction.answer.id,
+          text: ''
+        };
+      }
+      comment.text = commentAction.text;
+      this.saveComment(comment);
+    } else if (commentAction.action === 'delete') {
+      this.deleteComment(commentAction.comment);
+    }
+    this.calculateScriptureSliderPosition();
+  }
+
   checkSliderPosition(event: any) {
     if (event.hasOwnProperty('sizes')) {
       if (event.sizes[1] < this.minAnswerPanelHeight) {
@@ -169,13 +204,22 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     return this.questionsPanel.activeQuestion.answers.findIndex(existingAnswer => existingAnswer.id === answer.id);
   }
 
+  private getCommentIndex(comment: Comment) {
+    return this.comments.findIndex(existingComment => existingComment.id === comment.id);
+  }
+
   private deleteAnswer(answer: Answer) {
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
-      this.questionData[getTextJsonDataIdStr(this.text.id, this.chapter)].deleteFromList(
-        this.questionsPanel.activeQuestion,
-        [this.questionsPanel.activeQuestionIndex, 'answers', answerIndex]
-      );
+      const answerComments = this.comments.filter(comment => comment.answerRef === answer.id);
+      for (const answerComment of answerComments) {
+        this.deleteComment(answerComment);
+      }
+      this.checkingData.questionData[this.textJsonDataId].deleteFromList(this.questionsPanel.activeQuestion, [
+        this.questionsPanel.activeQuestionIndex,
+        'answers',
+        answerIndex
+      ]);
       this.refreshSummary();
     }
   }
@@ -195,13 +239,13 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     const questionWithAnswer = clone(this.questionsPanel.activeQuestion);
     questionWithAnswer.answers = answers;
     if (answerIndex >= 0) {
-      this.questionData[getTextJsonDataIdStr(this.text.id, this.chapter)].replaceInList(
+      this.checkingData.questionData[this.textJsonDataId].replaceInList(
         this.questionsPanel.activeQuestion.answers[answerIndex],
         questionWithAnswer.answers[answerIndex],
         [this.questionsPanel.activeQuestionIndex, 'answers', answerIndex]
       );
     } else {
-      this.questionData[getTextJsonDataIdStr(this.text.id, this.chapter)].insertInList(questionWithAnswer.answers[0], [
+      this.checkingData.questionData[this.textJsonDataId].insertInList(questionWithAnswer.answers[0], [
         this.questionsPanel.activeQuestionIndex,
         'answers',
         0
@@ -210,18 +254,38 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.refreshSummary();
   }
 
+  private saveComment(comment: Comment) {
+    const comments = <Comment[]>clone(this.comments);
+    const commentIndex = this.getCommentIndex(comment);
+    if (commentIndex >= 0) {
+      this.checkingData.commentData[this.textJsonDataId].replaceInList(comments[commentIndex], comment, [commentIndex]);
+    } else {
+      this.checkingData.commentData[this.textJsonDataId].insertInList(comment);
+    }
+  }
+
+  private deleteComment(comment: Comment) {
+    const commentIndex = this.getCommentIndex(comment);
+    if (commentIndex >= 0) {
+      this.checkingData.commentData[this.textJsonDataId].deleteFromList(this.comments, [commentIndex]);
+    }
+  }
+
   private likeAnswer(answer: Answer) {
     const currentUserId = this.userService.currentUserId;
     const userRefIndex = answer.likes.findIndex(userRef => userRef.toString() === currentUserId);
     const answerIndex = this.getAnswerIndex(answer);
 
     if (userRefIndex >= 0) {
-      this.questionData[getTextJsonDataIdStr(this.text.id, this.chapter)].deleteFromList(
-        this.questionsPanel.activeQuestion,
-        [this.questionsPanel.activeQuestionIndex, 'answers', answerIndex, 'likes', userRefIndex]
-      );
+      this.checkingData.questionData[this.textJsonDataId].deleteFromList(this.questionsPanel.activeQuestion, [
+        this.questionsPanel.activeQuestionIndex,
+        'answers',
+        answerIndex,
+        'likes',
+        userRefIndex
+      ]);
     } else {
-      this.questionData[getTextJsonDataIdStr(this.text.id, this.chapter)].insertInList(currentUserId, [
+      this.checkingData.questionData[this.textJsonDataId].insertInList(currentUserId, [
         this.questionsPanel.activeQuestionIndex,
         'answers',
         answerIndex,
@@ -240,21 +304,23 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     }, 1);
   }
 
-  private async bindQuestionData(id: TextJsonDataId): Promise<void> {
+  private async bindCheckingData(id: TextJsonDataId): Promise<void> {
     if (id == null) {
       return;
     }
 
-    this.unbindQuestionData(id);
-    this.questionData[id.toString()] = await this.textService.getQuestionData(id);
+    this.unbindCheckingData(id);
+    this.checkingData.questionData[id.toString()] = await this.textService.getQuestionData(id);
+    this.checkingData.commentData[id.toString()] = await this.textService.getCommentData(id);
   }
 
-  private unbindQuestionData(id: TextJsonDataId): void {
-    if (!(id.toString() in this.questionData)) {
+  private unbindCheckingData(id: TextJsonDataId): void {
+    if (!(id.toString() in this.checkingData.questionData)) {
       return;
     }
 
-    delete this.questionData[id.toString()];
+    delete this.checkingData.questionData[id.toString()];
+    delete this.checkingData.commentData[id.toString()];
   }
 
   private refreshSummary() {
@@ -263,7 +329,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.summary.unread = 0;
     for (const question of this.questions) {
       if (question.answers.length) {
-        if (question.answers.filter(answer => (answer.ownerRef = this.userService.currentUserId)).length) {
+        if (question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length) {
           this.summary.answered++;
         }
       } else if (this.questionsPanel.hasUserRead(question)) {

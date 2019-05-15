@@ -13,10 +13,11 @@ import { SyncJob } from './sync-job';
 import { Text } from './text';
 import { QuestionData } from './question-data';
 import { TextData } from './text-data';
+import { CommentData } from './comment-data';
 
 // All resource, resource ref, and realtime doc types should be added to schema and generated into this config
 export const SFDOMAIN_MODEL_CONFIG: DomainModelConfig = {
   resourceTypes: [SFProject, SFProjectUser, SyncJob, Text],
   resourceRefTypes: [SFProjectRef, SFProjectUserRef, SyncJobRef, TextRef],
-  realtimeDataTypes: [QuestionData, TextData]
+  realtimeDataTypes: [QuestionData, TextData, CommentData]
 };

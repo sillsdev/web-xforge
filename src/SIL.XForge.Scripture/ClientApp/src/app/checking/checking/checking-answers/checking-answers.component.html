@@ -32,6 +32,7 @@
   </form>
 </div>
 <div class="answers-container" *ngIf="!answerFormVisible">
+  <h3>{{ question.answers.length }} Answers</h3>
   <div class="answer" *ngFor="let answer of question.answers">
     <div class="like">
       <mdc-icon id="like-answer" (click)="likeAnswer(answer)">thumb_up</mdc-icon
@@ -61,6 +62,11 @@
           [layoutStacked]="true"
         ></app-checking-owner>
       </div>
+      <app-checking-comments
+        (action)="submitCommentAction($event)"
+        [comments]="getComments(answer)"
+        [answer]="answer"
+      ></app-checking-comments>
     </div>
   </div>
 </div>
