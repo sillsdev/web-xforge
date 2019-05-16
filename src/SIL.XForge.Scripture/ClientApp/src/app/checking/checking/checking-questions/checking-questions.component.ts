@@ -60,7 +60,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   hasUserAnswered(question: Question): boolean {
-    return question.answers.filter(answer => (answer.ownerRef = this.userService.currentUserId)).length > 0;
+    return question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length > 0;
   }
 
   hasUserRead(question: Question): boolean {

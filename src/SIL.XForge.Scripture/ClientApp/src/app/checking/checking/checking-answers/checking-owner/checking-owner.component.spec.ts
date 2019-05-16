@@ -1,13 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { Component, DebugElement, ViewChild } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { OAuthService } from 'angular-oauth2-oidc';
+import { AvatarService } from 'ngx-avatar';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { MapQueryResults } from 'xforge-common/json-api.service';
-import { DomainModel } from 'xforge-common/models/domain-model';
 import { User } from 'xforge-common/models/user';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
@@ -77,9 +75,8 @@ class TestEnvironment {
   fixture: ComponentFixture<HostComponent>;
 
   mockedRouter: Router;
-  mockedDomainModel: DomainModel;
-  mockedOAuthService: OAuthService;
   mockedUserService: UserService;
+  mockedAvatarService: AvatarService;
   testUser = new User({
     id: 'user01',
     email: 'user01@example.com',
@@ -91,19 +88,15 @@ class TestEnvironment {
   });
 
   constructor() {
-    this.mockedRouter = mock(Router);
-    this.mockedDomainModel = mock(DomainModel);
-    this.mockedOAuthService = mock(OAuthService);
     this.mockedUserService = mock(UserService);
+    this.mockedAvatarService = mock(AvatarService);
 
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingOwnerComponent],
       imports: [UICommonModule, XForgeCommonModule],
       providers: [
-        { provide: Router, useFactory: () => instance(this.mockedRouter) },
-        { provide: DomainModel, useFactory: () => instance(this.mockedDomainModel) },
-        { provide: OAuthService, useFactory: () => instance(this.mockedOAuthService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
+        { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) }
       ]
     });
 
