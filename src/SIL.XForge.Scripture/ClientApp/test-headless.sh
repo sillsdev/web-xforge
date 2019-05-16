@@ -11,7 +11,7 @@ SPEC_FILES="$@"
 
 # Re-write test.ts 'require.context' line to only use specific tests, rather than all spec.ts files.
 filter_tests() {
-  [[ -n ${SPEC_FILES} ]] || return
+  [[ -n ${SPEC_FILES} ]] || return 0
 
   for spec in ${SPEC_FILES}; do
     find -name "${spec}" | grep -q . || echo -e "\033[1;31mWarning: ${spec} not found.\033[0m"
@@ -22,7 +22,7 @@ filter_tests() {
 }
 
 cleanup() {
-  [[ -n ${SPEC_FILES} ]] || return
+  [[ -n ${SPEC_FILES} ]] || return 0
   # Restore filter less bluntly than `git checkout`. May need to update if test.ts changes.
   readonly FILTER='\\.spec\\.ts\$'
   perl -pi -e "s:(require.context.*\, /).*(/\);)(.*$):\$1${FILTER}\$2:" "${SETTINGS_FILE}"

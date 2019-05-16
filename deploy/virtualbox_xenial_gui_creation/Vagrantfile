@@ -1,9 +1,10 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# This Vagrantfile is for the creation of a VirtualBox image where xForge is
-# installed, for development of xForge.
-# Currently the result is hosted as NathanielPaulus/xenial64-xforge
+# This Vagrantfile is for the creation of a VirtualBox basebox image where
+# xForge is installed, for development of xForge. Developers wishing to
+# use the resulting box for the development of xForge should instead
+# be using the Vagrantfile in ../vagrant_xenial_gui.
 
 Vagrant.configure("2") do |config|
   config.vm.box = "chrisvire/xenial64"
@@ -15,6 +16,9 @@ Vagrant.configure("2") do |config|
     v.memory = 4096
     v.cpus = 4
     v.gui = true
+    # Enable 3D acceleration and enough video RAM for larger displays.
+    v.customize ["modifyvm", :id, "--accelerate3d", "on"]
+    v.customize ["modifyvm", :id, "--vram", "128"]
   end
 
   config.vm.provision "ubuntu-setup", type: "shell", privileged: false, inline: <<~SHELL
@@ -39,6 +43,9 @@ Vagrant.configure("2") do |config|
         echo >&2 ATTENTION You must log into the box, as described in instructions.md, to perform the provisioning. Trying again in a minute.
         sleep 1m
     done
+
+    # Change mirror in base box
+    sudo perl -pi -e 's/us.archive.ubuntu.com/archive.ubuntu.com/g' /etc/apt/sources.list
 
     # Pre-answer grub-pc dpkg dialog
     echo grub-pc grub-pc/install_devices multiselect $(ls /dev/disk/by-id/ata-VBOX_HARDDISK_VB*|grep -v part) | sudo debconf-set-selections
@@ -71,7 +78,7 @@ Vagrant.configure("2") do |config|
     echo $'[SeatDefaults]\nautologin-user=vagrant' | sudo tee /etc/lightdm/lightdm.conf.d/12-autologin.conf > /dev/null
 
     # Remove some of the packages suggested by ubuntu-desktop
-    tryharderto sudo apt-get -y purge update-manager update-notifier aisleriot cheese deja-dup example-content fwupd fwupdate fwupdate-signed gnome-accessibility-themes gnome-calendar gnome-font-viewer gnome-mahjongg gnome-mines gnome-orca gnome-screensaver gnome-sudoku libreoffice* remmina rhythmbox shotwell simple-scan thunderbird* totem transmission-gtk usb-creator-gtk
+    tryharderto sudo apt-get -y purge update-manager update-notifier aisleriot cheese deja-dup example-content fwupd fwupdate fwupdate-signed gnome-accessibility-themes gnome-calendar gnome-font-viewer gnome-mahjongg gnome-mines gnome-orca gnome-screensaver gnome-sudoku libreoffice* remmina rhythmbox shotwell simple-scan thunderbird* transmission-gtk usb-creator-gtk
     [ ! -f ~/examples.desktop ] || rm ~/examples.desktop
 
     # Remove mistake in ssh_config in base image, if present.
@@ -101,7 +108,9 @@ Vagrant.configure("2") do |config|
       chromium-browser \
       dconf-tools \
       git-cola \
-      python-pyinotify
+      inotify-tools \
+      python-pyinotify \
+      paratext-8.0
 
     # Install ack if available, and however the package is named
     sleep 10s
@@ -119,6 +128,9 @@ Vagrant.configure("2") do |config|
     sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
     tryharderto sudo apt-get update
     tryharderto sudo apt-get install code
+    # Let VS Code watch lots of files.
+    sudo tee -a /etc/sysctl.conf >/dev/null <<< 'fs.inotify.max_user_watches=524288'
+    sudo sysctl -p # Only needed if we want to use the change before rebooting.
 
     # Settings
 
@@ -140,7 +152,8 @@ Vagrant.configure("2") do |config|
 
     TOOLSDIR=$HOME/Desktop/development-tools
     mkdir -p "\$TOOLSDIR"
-    cp -aL /usr/share/applications/{terminator,code,gitkraken,byobu}.desktop "\$TOOLSDIR"
+    # Note: `chromium-browser` will need to change to `chromium` in Ubuntu 18.04+.
+    cp -aL /usr/share/applications/{terminator,code,gitkraken,byobu,chromium-browser,paratext8}.desktop "\$TOOLSDIR"
     chmod +x "\$TOOLSDIR"/*.desktop
 
     OUTPUTFILE="$TOOLSDIR/xf-git-cola.desktop"
@@ -171,8 +184,8 @@ Vagrant.configure("2") do |config|
     ENDOFOUTPUTFILE
     chmod +x "$OUTPUTFILE"
 
-    # On Ubuntu 18.04, trust the launchers. (Will be useful in a future version of the vagrant box)
-    if [[ $(lsb_release -sc) == "bionic" ]]; then
+    # On Ubuntu 18.04+, trust the launchers. (Will be useful in a future version of the vagrant box)
+    if which gio; then
       cd $HOME/Desktop/development-tools
       for launcher in *desktop; do
         gio set "$launcher" metadata::trusted yes
@@ -231,22 +244,39 @@ Vagrant.configure("2") do |config|
     [ ! -f .git/shallow ] || git fetch --unshallow
 
     cd ~/src/web-xforge/deploy/
-    # REVIEW Should these be from master or sf-develop branch?
+    tryharderto sudo apt-get -y install npm
     ansible-playbook -i hosts playbook_create_config.yml --limit localhost
     ansible-playbook playbook_xenial.yml --limit localhost
 
     npm config set prefix /usr/local
 
-    # Set assets directory to be usable both by vagrant and www-data users.
-    setfacl -d -m u::rwX,g::rwX ~/src/web-xforge/src/assets
-    sudo chown -R vagrant:www-data ~/src/web-xforge/src/assets
-    chmod g+w ~/src/web-xforge/src/assets
-    # This chmod needs to be sudo since vagrant isn't effectively in www-data group yet.
-    sudo chmod g+s ~/src/web-xforge/src/assets
-
     sudo npm i -g npm@6.4.1
 
-    cd ~/src/web-xforge
+    cd ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp
+    npm install
+
+    npm i @angular/cli@7.3.8
+
+    mkdir -p ~/bin
+    ln -s ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp/node_modules/.bin/ng ~/bin/ng
+
+    sudo chgrp -R www-data /var/lib/xforge
+
+    tee ~/Desktop/development-tools/dev-readme.txt >/dev/null <<END
+    xForge Development Machine
+
+    If possible, your git user and email were set from your host machine. If not, run
+
+        git config --global user.name "My Name"
+        git config --global user.email "me@example.com"
+
+    See the xForge Project Workflow gdoc for setting developer secrets,
+    Paratext account setup, enabling multiple monitors in VirtualBox, etc.
+
+    You may find it helpful to increase the amount of RAM your virtual machine
+    is given, by increasing 'vb.memory' in 'Vagrantfile', then running
+    'vagrant halt && vagrant up' from your host.
+    END
 
     echo "Section ended successfully."
   SHELL

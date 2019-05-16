@@ -1,0 +1,18 @@
+{
+  "description": "XForge Development Box running Ubuntu 16.04",
+  "name": "xforge-u1604",
+  "versions": [
+    {
+      "version": "0.3.0",
+      "status": "active",
+      "providers": [
+        {
+          "checksum": "6d3e6e65e8799deebbc748cfcc32381aa579404e55e77b8ad03b734a312207c0",
+          "checksum_type": "sha256",
+           "name": "virtualbox",
+           "url": "http://linux.lsdev.sil.org/vagrant/xforge/xforge-u1604-0.3.0.box"
+        }
+      ]
+    }
+  ]
+}
