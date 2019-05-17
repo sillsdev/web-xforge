@@ -142,15 +142,19 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   answerAction(answerAction: AnswerAction) {
     if (answerAction.action === 'save') {
       let answer: Answer = answerAction.answer;
+      const dateNow: string = new Date().toUTCString();
       if (!answer) {
         answer = {
           id: objectId(),
           ownerRef: this.userService.currentUserId,
           text: '',
-          likes: []
+          likes: [],
+          dateCreated: dateNow,
+          dateModified: dateNow
         };
       }
       answer.text = answerAction.text;
+      answer.dateModified = dateNow;
       this.saveAnswer(answer);
     } else if (answerAction.action === 'delete') {
       this.deleteAnswer(answerAction.answer);
@@ -163,16 +167,20 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   commentAction(commentAction: CommentAction) {
     if (commentAction.action === 'save') {
       let comment: Comment = commentAction.comment;
+      const dateNow: string = new Date().toUTCString();
       if (!comment) {
         comment = {
           id: objectId(),
           ownerRef: this.userService.currentUserId,
           projectRef: this.project.id,
           answerRef: commentAction.answer.id,
-          text: ''
+          text: '',
+          dateCreated: dateNow,
+          dateModified: dateNow
         };
       }
       comment.text = commentAction.text;
+      comment.dateModified = dateNow;
       this.saveComment(comment);
     } else if (commentAction.action === 'delete') {
       this.deleteComment(commentAction.comment);
