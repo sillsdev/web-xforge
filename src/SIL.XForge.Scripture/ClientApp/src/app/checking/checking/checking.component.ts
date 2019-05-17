@@ -147,10 +147,13 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
           id: objectId(),
           ownerRef: this.userService.currentUserId,
           text: '',
-          likes: []
+          likes: [],
+          dateCreated: new Date().toUTCString(),
+          dateModified: new Date().toUTCString()
         };
       }
       answer.text = answerAction.text;
+      answer.dateModified = new Date().toUTCString();
       this.saveAnswer(answer);
     } else if (answerAction.action === 'delete') {
       this.deleteAnswer(answerAction.answer);
@@ -169,10 +172,13 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
           ownerRef: this.userService.currentUserId,
           projectRef: this.project.id,
           answerRef: commentAction.answer.id,
-          text: ''
+          text: '',
+          dateCreated: new Date().toUTCString(),
+          dateModified: new Date().toUTCString()
         };
       }
       comment.text = commentAction.text;
+      comment.dateModified = new Date().toUTCString();
       this.saveComment(comment);
     } else if (commentAction.action === 'delete') {
       this.deleteComment(commentAction.comment);

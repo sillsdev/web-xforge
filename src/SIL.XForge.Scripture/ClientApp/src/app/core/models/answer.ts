@@ -8,4 +8,6 @@ export interface Answer {
   text?: string;
   audioUrl?: string;
   likes: string[];
+  dateModified: string;
+  dateCreated: string;
 }

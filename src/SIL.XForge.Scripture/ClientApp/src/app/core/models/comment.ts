@@ -9,4 +9,6 @@ export interface Comment {
   scriptureEnd?: VerseRefData;
   text?: string;
   audioUrl?: string;
+  dateModified: string;
+  dateCreated: string;
 }

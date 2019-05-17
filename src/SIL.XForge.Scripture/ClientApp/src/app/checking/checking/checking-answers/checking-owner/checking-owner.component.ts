@@ -10,11 +10,15 @@ import { UserService } from 'xforge-common/user.service';
 export class CheckingOwnerComponent implements OnInit {
   @Input() ownerRef: string;
   @Input() includeAvatar: boolean = false;
-  @Input() dateTime: Date = new Date(); // TODO: (NW) Today's date set for testing purposes - remove once date is in DB
+  @Input() dateTime: string = '';
   @Input() layoutStacked: boolean = false;
   owner: User = new User();
 
   constructor(private userService: UserService) {}
+
+  get date(): Date {
+    return new Date(this.dateTime);
+  }
 
   get name(): string {
     return this.userService.currentUserId === this.owner.id ? 'Me' : this.owner.name;
