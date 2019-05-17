@@ -34,11 +34,12 @@
               <mdc-list-item
                 *ngFor="let project of projects"
                 [value]="project.paratextId"
-                [disabled]="project.isConnected || !project.isConnectable"
+                [disabled]="!project.isConnectable"
               >
                 <span>
-                  {{ project.name }}<span *ngIf="project.isConnected">&nbsp;(already connected)</span>
-                  <span *ngIf="!project.isConnected && !project.isConnectable">&nbsp;**</span>
+                  {{ project.name }}
+                  <span *ngIf="!project.isConnectable && project.isConnected">&nbsp;(already connected)</span>
+                  <span *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</span>
                 </span>
               </mdc-list-item>
             </mdc-list>

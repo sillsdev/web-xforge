@@ -101,7 +101,6 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.submitButton);
 
     verify(env.mockedSFProjectUserService.onlineCreate('project01', 'user01')).once();
-
     verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
@@ -148,7 +147,7 @@ describe('ConnectProjectComponent', () => {
     expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
     expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
     expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(true);
+    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(false);
     expect(env.isMenuItemDisabled(env.projectSelect, 3)).toBe(true);
     expect(env.nonAdminMessage).not.toBeNull();
   }));
@@ -188,7 +187,7 @@ describe('ConnectProjectComponent', () => {
     expect(env.getMenuItems(env.projectSelect).length).toEqual(3);
     expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
     expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(true);
+    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(false);
     expect(env.nonAdminMessage).toBeNull();
   }));
 
