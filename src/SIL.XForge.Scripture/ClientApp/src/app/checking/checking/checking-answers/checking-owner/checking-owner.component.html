@@ -9,7 +9,7 @@
   <div>
     <div class="name">{{ name }}</div>
     <div class="date-time" *ngIf="dateTime">
-      {{ dateTime | date: "d MMM yy" }} at <span class="time">{{ dateTime | date: "h:mma" }}</span>
+      {{ date | date: "d MMM yy" }} at <span class="time">{{ dateTime | date: "h:mma" }}</span>
     </div>
   </div>
 </div>

@@ -1,7 +1,7 @@
 <div *ngFor="let comment of comments">
   <div class="comment" *ngIf="!activeComment || (commentFormVisible && activeComment.id !== comment.id)">
     <span class="comment-text">{{ comment.text }}</span> <span class="divider">-</span>
-    <app-checking-owner [ownerRef]="comment.ownerRef"></app-checking-owner>
+    <app-checking-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-checking-owner>
     <div class="actions">
       <button *ngIf="hasPermission(comment, 'edit')" mdc-button (click)="editComment(comment)" class="comment-edit">
         Edit

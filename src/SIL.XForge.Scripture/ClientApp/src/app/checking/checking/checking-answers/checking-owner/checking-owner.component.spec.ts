@@ -47,7 +47,7 @@ describe('CheckingOwnerComponent', () => {
     env.fixture.componentInstance.checkingOwner.dateTime = null;
     env.fixture.detectChanges();
     expect(env.fixture.debugElement.query(By.css('.layout .date-time'))).toBe(null);
-    env.fixture.componentInstance.checkingOwner.dateTime = new Date(2019, 3, 25, 12, 30, 0);
+    env.fixture.componentInstance.checkingOwner.dateTime = '2019-04-25T12:30:00';
     env.fixture.detectChanges();
     expect(env.dateTime).toBe(' 25 Apr 19 at 12:30PM');
   });
