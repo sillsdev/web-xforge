@@ -3,7 +3,7 @@
     <h2 fxFlex fxLayoutAlign="start center"><mdc-icon>notes</mdc-icon> Texts with Questions</h2>
     <div fxLayoutAlign="end center" *ngIf="(isProjectAdmin$ | async)">
       <div>
-        <button mdc-button (click)="questionDialog()" id="add-question-button">
+        <button mdc-button (click)="questionDialog()" [disabled]="isLoading" id="add-question-button">
           <mdc-icon>note_add</mdc-icon> <span fxHide.xs>Add question</span>
         </button>
       </div>
