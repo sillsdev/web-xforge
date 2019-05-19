@@ -23,6 +23,8 @@ export class CheckingCommentsComponent {
 
   activeComment: Comment;
   commentFormVisible: boolean = false;
+  maxCommentsToShow: number = 3;
+  showAllComments: boolean = false;
 
   constructor(private userService: UserService) {}
 
@@ -66,5 +68,6 @@ export class CheckingCommentsComponent {
       comment: this.activeComment
     });
     this.hideCommentForm();
+    this.showAllComments = true;
   }
 }

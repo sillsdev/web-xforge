@@ -1,5 +1,11 @@
-<div *ngFor="let comment of comments">
-  <div class="comment" *ngIf="!activeComment || (commentFormVisible && activeComment.id !== comment.id)">
+<div *ngFor="let comment of comments; index as i">
+  <div
+    class="comment"
+    *ngIf="
+      (!activeComment || (commentFormVisible && activeComment.id !== comment.id)) &&
+      (i + 1 < maxCommentsToShow || comments.length == maxCommentsToShow || showAllComments)
+    "
+  >
     <span class="comment-text">{{ comment.text }}</span> <span class="divider">-</span>
     <app-checking-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-checking-owner>
     <div class="actions">
@@ -28,4 +34,19 @@
   (save)="submit($event)"
   (cancel)="hideCommentForm()"
 ></app-checking-comment-form>
-<button *ngIf="!commentFormVisible" mdc-button (click)="showCommentForm()" class="add-comment">Add a comment</button>
+<button
+  *ngIf="!commentFormVisible && comments.length > maxCommentsToShow && !showAllComments"
+  mdc-button
+  (click)="showAllComments = true"
+  class="show-all-comments"
+>
+  Show {{ comments.length - (maxCommentsToShow - 1) }} more comments
+</button>
+<button
+  *ngIf="!commentFormVisible && (comments.length <= maxCommentsToShow || showAllComments)"
+  mdc-button
+  (click)="showCommentForm()"
+  class="add-comment"
+>
+  Add a comment
+</button>
