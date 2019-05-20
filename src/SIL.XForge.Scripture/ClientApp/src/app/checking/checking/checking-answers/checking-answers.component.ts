@@ -67,7 +67,11 @@ export class CheckingAnswersComponent {
   }
 
   getComments(answer: Answer): Comment[] {
-    return this.comments.filter(comment => comment.answerRef === answer.id);
+    return this.comments
+      .filter(comment => comment.answerRef === answer.id)
+      .sort((a: Comment, b: Comment) => {
+        return new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime();
+      });
   }
 
   hasPermission(answer: Answer, permission: string): boolean {

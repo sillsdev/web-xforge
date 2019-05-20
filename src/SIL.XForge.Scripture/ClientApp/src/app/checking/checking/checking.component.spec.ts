@@ -14,6 +14,7 @@ import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
+import { Comment } from '../../core/models/comment';
 import { CommentData } from '../../core/models/comment-data';
 import { Question } from '../../core/models/question';
 import { QuestionData } from '../../core/models/question-data';
@@ -226,6 +227,25 @@ describe('CheckingComponent', () => {
         expect(env.getAnswerCommentText(0, 0)).toBe('Third comment');
         env.selectQuestion(1);
         expect(env.getAnswerCommentText(0, 1)).toBe('First comment');
+      }));
+
+      it('comments display show more button', fakeAsync(() => {
+        // Show maximum of 3 comments before displaying 'show all' button
+        env.selectQuestion(7);
+        expect(env.getAnswerComments(0).length).toBe(3);
+        expect(env.getShowAllCommentsButton(0)).toBeFalsy();
+        expect(env.getAddCommentButton(0)).toBeTruthy();
+        // If more than 3 comments then only show 2 initially along with `show all` button
+        env.selectQuestion(8);
+        expect(env.getAnswerComments(0).length).toBe(2);
+        expect(env.getShowAllCommentsButton(0)).toBeTruthy();
+        expect(env.getAddCommentButton(0)).toBeFalsy();
+        env.clickButton(env.getShowAllCommentsButton(0));
+        env.waitForSliderUpdate();
+        // Once 'show all' button has been clicked then show all comments
+        expect(env.getAnswerComments(0).length).toBe(4);
+        expect(env.getShowAllCommentsButton(0)).toBeFalsy();
+        expect(env.getAddCommentButton(0)).toBeTruthy();
       }));
     });
   });
@@ -451,6 +471,10 @@ class TestEnvironment {
     tick();
   }
 
+  getShowAllCommentsButton(answerIndex: number): DebugElement {
+    return this.getAnswer(answerIndex).query(By.css('.show-all-comments'));
+  }
+
   waitForSliderUpdate(): void {
     tick(1);
     this.fixture.detectChanges();
@@ -489,6 +513,7 @@ class TestEnvironment {
     );
     when(this.mockedTextService.getTextData(deepEqual(new TextDataId('text01', 1)))).thenResolve(this.createTextData());
     const text1_1id = new TextJsonDataId('text01', 1);
+    const dateNow: string = new Date().toUTCString();
     const questionData = [];
     for (let questionNumber = 1; questionNumber <= 14; questionNumber++) {
       questionData.push({
@@ -501,10 +526,51 @@ class TestEnvironment {
         answers: []
       });
     }
+    questionData[6].answers.push({
+      id: 'a7Id',
+      ownerRef: 'user01',
+      text: 'Answer 7 on question',
+      likes: [],
+      dateCreated: dateNow,
+      dateModified: dateNow
+    });
+    questionData[7].answers.push({
+      id: 'a8Id',
+      ownerRef: 'user01',
+      text: 'Answer 8 on question',
+      likes: [],
+      dateCreated: dateNow,
+      dateModified: dateNow
+    });
+    const commentData = [];
+    for (let commentNumber = 1; commentNumber <= 3; commentNumber++) {
+      commentData.push({
+        id: 'c' + commentNumber + 'Id',
+        ownerRef: this.testUser.id,
+        projectRef: undefined,
+        answerRef: 'a7Id',
+        text: 'Comment ' + commentNumber + ' on question 7',
+        dateCreated: dateNow,
+        dateModified: dateNow
+      });
+    }
+    for (let commentNumber = 1; commentNumber <= 4; commentNumber++) {
+      commentData.push({
+        id: 'c' + commentNumber + 'Id',
+        ownerRef: this.testUser.id,
+        projectRef: undefined,
+        answerRef: 'a8Id',
+        text: 'Comment ' + commentNumber + ' on question 8',
+        dateCreated: dateNow,
+        dateModified: dateNow
+      });
+    }
     when(this.mockedTextService.getQuestionData(deepEqual(text1_1id))).thenResolve(
       this.createQuestionData(text1_1id, questionData)
     );
-    when(this.mockedTextService.getCommentData(deepEqual(text1_1id))).thenResolve(this.createCommentData(text1_1id));
+    when(this.mockedTextService.getCommentData(deepEqual(text1_1id))).thenResolve(
+      this.createCommentData(text1_1id, commentData)
+    );
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedUserService.onlineGet('user01')).thenReturn(of(new MapQueryResults(this.testUser)));
     when(this.mockedProjectUserService.update(anything())).thenReturn(new Promise(() => {}));
@@ -515,8 +581,8 @@ class TestEnvironment {
     return new QuestionData(doc, instance(this.mockedRealtimeOfflineStore));
   }
 
-  private createCommentData(id: TextJsonDataId): CommentData {
-    const doc = new MemoryRealtimeDoc(OTJson0.type, id.toString(), []);
+  private createCommentData(id: TextJsonDataId, data: Comment[]): CommentData {
+    const doc = new MemoryRealtimeDoc(OTJson0.type, id.toString(), data);
     return new CommentData(doc, instance(this.mockedRealtimeOfflineStore));
   }
 
