@@ -136,6 +136,17 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     }
   }
 
+  get isSuggestionsEnabled(): boolean {
+    return this.translateUserConfig.isSuggestionsEnabled;
+  }
+
+  set isSuggestionsEnabled(value: boolean) {
+    if (this.isSuggestionsEnabled !== value) {
+      this.translateUserConfig.isSuggestionsEnabled = value;
+      this.updateUserConfig();
+    }
+  }
+
   get translateUserConfig(): TranslateProjectUserConfig {
     return this.projectUser == null ? null : this.projectUser.translateConfig;
   }
@@ -488,7 +499,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     this.translationSession = null;
     const sourceSegment = this.source.segmentText;
     const words = this.sourceWordTokenizer.tokenizeToStrings(sourceSegment);
-    if (words.length === 0) {
+    if (words.length === 0 || this.isSuggestionsEnabled === false) {
       return;
     } else if (words.length > MAX_SEGMENT_LENGTH) {
       this.translationSession = null;
