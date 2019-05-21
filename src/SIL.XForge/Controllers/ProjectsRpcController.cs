@@ -52,15 +52,14 @@ namespace SIL.XForge.Controllers
             if (!CheckCanInvite(project, ShareOptions.Email))
                 return ForbiddenError();
 
+            UserEntity inviter = await _users.GetAsync(User.UserId);
             if (await CreateInvitedUserAccount(email))
             {
                 SiteOptions siteOptions = _siteOptions.Value;
-                string projectName = project.ProjectName;
-                string inviterName = User.Name;
                 string url = $"{siteOptions.Origin}identity/sign-up?e={HttpUtility.UrlEncode(email)}";
-                string subject = $"You've been invited to the project {projectName} on {siteOptions.Name}";
+                string subject = $"You've been invited to the project {project.ProjectName} on {siteOptions.Name}";
                 string body = "<p>Hello </p><p></p>" +
-                    $"<p>{inviterName} invites you to join the {projectName} project on {siteOptions.Name}." +
+                    $"<p>{inviter.Name} invites you to join the {project.ProjectName} project on {siteOptions.Name}." +
                     "</p><p></p>" +
                     "<p>You're almost ready to start. Just click the link below to complete your signup and " +
                     "then you will be ready to get started.</p><p></p>" +
@@ -79,11 +78,9 @@ namespace SIL.XForge.Controllers
                     return Ok("none");
 
                 SiteOptions siteOptions = _siteOptions.Value;
-                string projectName = project.ProjectName;
-                string inviterName = User.Name;
-                string subject = $"You've been added to the project {projectName} on {siteOptions.Name}";
+                string subject = $"You've been added to the project {project.ProjectName} on {siteOptions.Name}";
                 string body = "<p>Hello </p><p></p>" +
-                    $"<p>{inviterName} has just added you to the {projectName} project on {siteOptions.Name}." +
+                    $"<p>{inviter.Name} has just added you to the {project.ProjectName} project on {siteOptions.Name}." +
                     "</p><p></p>" +
                     $"<p>Regards</p><p>    The {siteOptions.Name} team</p>";
                 await _emailService.SendEmailAsync(email, subject, body);
