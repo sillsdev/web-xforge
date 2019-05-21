@@ -1,4 +1,4 @@
-import { MdcSlider } from '@angular-mdc/web';
+import { MdcSlider, MdcSwitch } from '@angular-mdc/web';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -376,6 +376,48 @@ describe('EditorComponent', () => {
     env.dispose();
   }));
 
+  it('toggle suggestions', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setTranslateConfig({
+      selectedTextRef: 'text01',
+      selectedChapter: 1,
+      selectedSegment: 'verse_1_1',
+      confidenceThreshold: 0.5,
+      isSuggestionsEnabled: true
+    });
+    env.waitForSuggestion();
+    expect(env.component.isSuggestionsEnabled).toBe(true);
+    verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+    const toggle: MdcSwitch = env.suggestionsToggle.componentInstance;
+    expect(toggle.checked).toBe(true);
+    resetCalls(env.mockedSFProjectUserService);
+    resetCalls(env.mockedRemoteTranslationEngine);
+    // Turn off suggestions
+    toggle.toggle();
+    tick(1000);
+    env.fixture.detectChanges();
+    expect(env.component.isSuggestionsEnabled).toBe(false);
+    verify(env.mockedSFProjectUserService.update(anything())).once();
+    let range = env.component.target.getSegmentRange('verse_1_3');
+    env.component.target.editor.setSelection(range.index, 0, 'user');
+    env.waitForSuggestion();
+    verify(env.mockedSFProjectUserService.update(anything())).twice();
+    verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
+    // Turn on suggestions
+    toggle.toggle();
+    tick(1000);
+    env.fixture.detectChanges();
+    expect(env.component.isSuggestionsEnabled).toBe(true);
+    verify(env.mockedSFProjectUserService.update(anything())).thrice();
+    range = env.component.target.getSegmentRange('verse_1_1');
+    env.component.target.editor.setSelection(range.index, 0, 'user');
+    env.waitForSuggestion();
+    verify(env.mockedSFProjectUserService.update(anything())).times(4);
+    verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+
+    env.dispose();
+  }));
+
   it('update confidence threshold', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setTranslateConfig({
@@ -599,6 +641,10 @@ class TestEnvironment {
 
   get suggestion(): DebugElement {
     return this.fixture.debugElement.query(By.css('app-suggestion'));
+  }
+
+  get suggestionsToggle(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#suggestions-toggle'));
   }
 
   get confidenceThresholdSlider(): DebugElement {
