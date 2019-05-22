@@ -1,41 +1,75 @@
-<div id="projects-app" class="container-fluid flex-max">
-  <div class="row">
-    <div class="col">
-      <h1>{{ project?.projectName }}</h1>
+<div id="projects-app" class="flex-max">
+  <div class="project-title">
+    <h1>{{ project?.projectName }}</h1>
+    <div class="project-actions">
+      <button mdc-button primary *ngIf="!this.isDrawerPermanent" (click)="toggleDrawer()">
+        <mdc-icon>menu</mdc-icon><span class="mdc-button__label">Questions ({{ totalQuestions() }})</span>
+      </button>
+      <app-email-invite></app-email-invite>
     </div>
   </div>
-  <div class="row flex-fill">
-    <div class="col d-flex" id="questions-panel">
-      <div class="flex-max">
-        <div class="panel">
-          <div class="panel-heading">
-            <mdc-icon>help</mdc-icon>
-            <h2>Questions ({{ totalQuestions() }})</h2>
-          </div>
-          <div class="panel-content">
-            <app-checking-questions
-              #questionsPanel
-              (update)="questionUpdated($event)"
-              (changed)="questionChanged($event)"
-              [questions]="questions"
-              [projectCurrentUser]="projectCurrentUser"
-            ></app-checking-questions>
+  <div id="checking-app-container" class="d-flex flex-fill flex-nowrap">
+    <mdc-drawer
+      id="question-drawer"
+      [drawer]="isDrawerPermanent ? 'permanent' : 'modal'"
+      [open]="isExpanded"
+      (closed)="drawerCollapsed()"
+      dir="rtl"
+    >
+      <div class="d-flex flex-max" id="questions-panel" dir="ltr">
+        <div class="flex-max">
+          <div class="panel">
+            <div class="panel-heading">
+              <mdc-icon>help</mdc-icon>
+              <h2>Questions ({{ totalQuestions() }})</h2>
+              <button
+                mdc-icon-button
+                class="collapse-question-menu"
+                (click)="collapseDrawer()"
+                icon="clear"
+                title="Close questions menu"
+              ></button>
+            </div>
+            <div class="panel-content">
+              <app-checking-questions
+                #questionsPanel
+                (update)="questionUpdated($event)"
+                (changed)="questionChanged($event)"
+                [questions]="questions"
+                [projectCurrentUser]="projectCurrentUser"
+              ></app-checking-questions>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="col" id="text-panel">
+    </mdc-drawer>
+    <div id="text-panel">
       <div class="flex-max" id="scripture-panel">
         <div class="panel">
-          <div class="panel-heading row">
+          <div class="panel-heading">
             <div class="panel-nav">
-              <mdc-icon>library_books</mdc-icon>
-              <h2>{{ text?.name }}</h2>
-              <app-chapter-nav [chapters]="chapters" [(chapter)]="chapter"></app-chapter-nav>
-            </div>
-            <div class="panel-activity">
+              <div>
+                <mdc-icon>library_books</mdc-icon>
+                <div #textNameAnchor mdcMenuSurfaceAnchor>
+                  <h2 class="chapter-select" (click)="chapterMenu.open = !chapterMenu.open">
+                    {{ text?.name }} <mdc-icon *ngIf="!chapterMenu.open">keyboard_arrow_down</mdc-icon
+                    ><mdc-icon *ngIf="chapterMenu.open">keyboard_arrow_up</mdc-icon>
+                  </h2>
+                  <mdc-menu
+                    #chapterMenu
+                    anchorCorner="bottomStart"
+                    [anchorElement]="textNameAnchor"
+                    (selected)="onChapterSelect($event)"
+                  >
+                    <mdc-list>
+                      <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
+                        >{{ text?.name }} {{ cs }}</mdc-list-item
+                      >
+                    </mdc-list>
+                  </mdc-menu>
+                </div>
+              </div>
               <app-font-size (apply)="applyFontChange($event)"></app-font-size>
-              <app-email-invite></app-email-invite>
             </div>
           </div>
           <div id="split-container" #splitContainer>

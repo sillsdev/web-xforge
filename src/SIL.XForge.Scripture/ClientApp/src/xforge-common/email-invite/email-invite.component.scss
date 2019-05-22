@@ -1,3 +1,16 @@
+@import '~src/global';
+
 .email-invite-panel {
   float: right;
+}
+#invite-icon-btn {
+  display: none;
+}
+@include media-breakpoint-down(sm) {
+  #invite-btn {
+    display: none;
+  }
+  #invite-icon-btn {
+    display: block;
+  }
 }

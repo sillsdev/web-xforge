@@ -1,3 +1,15 @@
-<button (click)="decreaseFontSize()" [disabled]="fontSize === min" mdc-button><mdc-icon>remove</mdc-icon></button>
+<button
+  (click)="decreaseFontSize()"
+  [disabled]="fontSize === min"
+  mdc-icon-button
+  icon="remove"
+  title="Decrease font size"
+></button>
 <span>Aa</span>
-<button mdc-button (click)="increaseFontSize()" [disabled]="fontSize === max"><mdc-icon>add</mdc-icon></button>
+<button
+  mdc-icon-button
+  (click)="increaseFontSize()"
+  [disabled]="fontSize === max"
+  icon="add"
+  title="Increase font size"
+></button>

@@ -22,7 +22,7 @@ import {
   MdcTypographyModule
 } from '@angular-mdc/web';
 import { NgModule } from '@angular/core';
-import { FlexLayoutModule } from '@angular/flex-layout';
+import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
   MatButtonModule,
@@ -106,9 +106,38 @@ const modules = [
   ChartsModule
 ];
 
+const appFlexLayoutBreakPoints = [
+  {
+    alias: 'xs',
+    suffix: 'xs',
+    mediaQuery: 'screen and (max-width: 575px)'
+  },
+  {
+    alias: 'sm',
+    suffix: 'sm',
+    mediaQuery: 'screen and (min-width: 576px) and (max-width: 767px)'
+  },
+  {
+    alias: 'md',
+    suffix: 'md',
+    mediaQuery: 'screen and (min-width: 768px) and (max-width: 991px)'
+  },
+  {
+    alias: 'lg',
+    suffix: 'lg',
+    mediaQuery: 'screen and (min-width: 992px) and (max-width: 1199px)'
+  },
+  {
+    alias: 'xl',
+    suffix: 'xl',
+    mediaQuery: 'screen and (min-width: 1200px)'
+  }
+];
+
 @NgModule({
   declarations: [BlurOnClickDirective],
   imports: modules,
-  exports: [...modules, BlurOnClickDirective]
+  exports: [...modules, BlurOnClickDirective],
+  providers: [{ provide: BREAKPOINT, useValue: appFlexLayoutBreakPoints, multi: true }]
 })
 export class UICommonModule {}

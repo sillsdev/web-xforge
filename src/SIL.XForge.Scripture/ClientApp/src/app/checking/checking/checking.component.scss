@@ -1,35 +1,99 @@
 @import 'checking-global';
 
 #projects-app {
-  #questions-panel {
-    max-width: 400px;
-    min-width: 300px;
-    @include media-breakpoint-down(md) {
-      max-width: 300px;
+  .project-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    @include media-breakpoint-down(sm) {
+      flex-direction: column;
+      align-items: flex-start;
     }
+    h1 {
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      width: 100%;
+      flex: 1;
+      @include media-breakpoint-down(sm) {
+        margin: 0 0 15px;
+        flex: unset;
+      }
+    }
+    .project-actions {
+      display: flex;
+      > *:not(:last-child) {
+        margin-right: 10px;
+      }
+      @include media-breakpoint-down(sm) {
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+    }
+  }
+  #checking-app-container {
+    height: 100%;
+  }
+  #question-drawer {
+    min-width: 300px;
+    border: 0;
+    &.mdc-drawer--modal {
+      top: 0;
+    }
+    .collapse-question-menu {
+      @include mdc-icon-button-size(24px, 24px, 8px);
+      @include media-breakpoint-up(md) {
+        display: none;
+      }
+    }
+  }
+  #questions-panel {
   }
   #text-panel {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    height: 100%;
+    .chapter-select {
+      cursor: pointer;
+    }
     #split-container {
       display: flex;
       flex: 1;
+      height: 100%;
     }
     #scripture-panel {
+      > .panel {
+        .panel-heading {
+          padding-left: 0;
+          padding-right: 0;
+        }
+      }
       .panel-content {
         height: 100%;
       }
       .panel-nav {
         display: flex;
-      }
-      .panel-activity {
-        display: flex;
-        place-content: center space-between;
-        width: 100%;
+        justify-content: space-between;
+        flex: 1;
+        > div {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          h2 {
+            flex: 0;
+          }
+        }
       }
     }
     #answer-panel {
       padding: 12px 15px;
+      @include media-breakpoint-down(sm) {
+        padding-left: 0;
+        padding-right: 0;
+      }
     }
     #project-navigation {
       background-color: lighten($sf_grey, 70%);
@@ -37,6 +101,9 @@
       align-items: center;
       justify-content: flex-end;
       padding: 9px;
+      @include media-breakpoint-down(sm) {
+        margin: 0 -20px -14px;
+      }
     }
     #project-summary {
       width: 36px;
