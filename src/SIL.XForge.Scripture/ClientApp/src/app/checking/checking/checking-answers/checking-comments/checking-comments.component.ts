@@ -5,7 +5,7 @@ import { Answer } from '../../../../core/models/answer';
 import { Comment } from '../../../../core/models/comment';
 
 export interface CommentAction {
-  action: 'delete' | 'save' | 'show-form' | 'hide-form';
+  action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'show-comments';
   comment?: Comment;
   answer?: Answer;
   text?: string;
@@ -50,6 +50,13 @@ export class CheckingCommentsComponent {
     this.activeComment = undefined;
     this.action.emit({
       action: 'hide-form'
+    });
+  }
+
+  showComments(): void {
+    this.showAllComments = true;
+    this.action.emit({
+      action: 'show-comments'
     });
   }
 

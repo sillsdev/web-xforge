@@ -37,7 +37,7 @@
 <button
   *ngIf="!commentFormVisible && comments.length > maxCommentsToShow && !showAllComments"
   mdc-button
-  (click)="showAllComments = true"
+  (click)="showComments()"
   class="show-all-comments"
 >
   Show {{ comments.length - (maxCommentsToShow - 1) }} more comments

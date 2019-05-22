@@ -1,39 +1,67 @@
-<div id="projects-app" class="container-fluid flex-max">
-  <div class="row">
-    <div class="col">
-      <h1>{{ project?.projectName }}</h1>
-    </div>
-  </div>
-  <div class="row flex-fill">
-    <div class="col d-flex" id="questions-panel">
-      <div class="flex-max">
-        <div class="panel">
-          <div class="panel-heading">
-            <mdc-icon>help</mdc-icon>
-            <h2>Questions ({{ totalQuestions() }})</h2>
-          </div>
-          <div class="panel-content">
-            <app-checking-questions
-              #questionsPanel
-              (update)="questionUpdated($event)"
-              (changed)="questionChanged($event)"
-              [questions]="questions"
-              [projectCurrentUser]="projectCurrentUser"
-            ></app-checking-questions>
+<div id="projects-app" class="flex-max">
+  <div id="checking-app-container" class="d-flex flex-fill flex-nowrap">
+    <mdc-drawer
+      id="question-drawer"
+      [drawer]="isDrawerPermanent ? 'permanent' : 'modal'"
+      [open]="isExpanded"
+      (closed)="drawerCollapsed()"
+    >
+      <div class="d-flex flex-max" id="questions-panel">
+        <div class="flex-max">
+          <div class="panel">
+            <div class="panel-heading">
+              <mdc-icon>help</mdc-icon>
+              <h2>Questions ({{ totalQuestions() }})</h2>
+              <button
+                mdc-icon-button
+                class="collapse-question-menu"
+                (click)="collapseDrawer()"
+                icon="clear"
+                title="Close questions menu"
+              ></button>
+            </div>
+            <div class="panel-content">
+              <app-checking-questions
+                #questionsPanel
+                (update)="questionUpdated($event)"
+                (changed)="questionChanged($event)"
+                [questions]="questions"
+                [projectCurrentUser]="projectCurrentUser"
+              ></app-checking-questions>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="col" id="text-panel">
+    </mdc-drawer>
+    <div id="text-panel">
       <div class="flex-max" id="scripture-panel">
         <div class="panel">
-          <div class="panel-heading row">
+          <div class="panel-heading">
             <div class="panel-nav">
-              <mdc-icon>library_books</mdc-icon>
-              <h2>{{ text?.name }}</h2>
-              <app-chapter-nav [chapters]="chapters" [(chapter)]="chapter"></app-chapter-nav>
-            </div>
-            <div class="panel-activity">
+              <div>
+                <mdc-icon fxHide.lt-md>library_books</mdc-icon>
+                <div #textNameAnchor mdcMenuSurfaceAnchor>
+                  <h2 class="chapter-select" (click)="chapterMenu.open = !chapterMenu.open">
+                    <span>{{ text?.name }}</span>
+                    <div>
+                      {{ chapter }} <mdc-icon *ngIf="!chapterMenu.open">keyboard_arrow_down</mdc-icon
+                      ><mdc-icon *ngIf="chapterMenu.open">keyboard_arrow_up</mdc-icon>
+                    </div>
+                  </h2>
+                  <mdc-menu
+                    #chapterMenu
+                    anchorCorner="bottomStart"
+                    [anchorElement]="textNameAnchor"
+                    (selected)="onChapterSelect($event)"
+                  >
+                    <mdc-list>
+                      <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
+                        >{{ text?.name }} {{ cs }}</mdc-list-item
+                      >
+                    </mdc-list>
+                  </mdc-menu>
+                </div>
+              </div>
               <app-font-size (apply)="applyFontChange($event)"></app-font-size>
               <app-email-invite></app-email-invite>
             </div>
@@ -66,35 +94,58 @@
         </div>
       </div>
       <div *ngIf="questionsPanel.activeQuestion" id="project-navigation">
-        <button
-          mdc-button
-          (click)="questionsPanel.previousQuestion()"
-          [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
-          class="prev-question"
-        >
-          <mdc-icon>chevron_left</mdc-icon>Previous
+        <button mdc-button *ngIf="!this.isDrawerPermanent" (click)="toggleDrawer()">
+          <span class="mdc-button__label">View Questions</span>
         </button>
-        <button
-          (click)="questionsPanel.nextQuestion()"
-          [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
-          class="next-question"
-          mdc-button
-        >
-          Next<mdc-icon>chevron_right</mdc-icon>
-        </button>
-        <div>
-          <div id="project-summary">
-            <canvas
-              baseChart
-              width="36"
-              height="36"
-              chartType="doughnut"
-              [legend]="false"
-              [labels]="['Unread', 'Read', 'Answered']"
-              [data]="[summary.unread, summary.read, summary.answered]"
-              [colors]="[{ backgroundColor: ['#3a3a3a', '#fff', '#B8D332'] }]"
-              [options]="{ events: [] }"
-            ></canvas>
+        <div class="d-flex justify-content-end">
+          <button
+            mdc-button
+            fxHide.xs
+            (click)="questionsPanel.previousQuestion()"
+            [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
+            class="prev-question"
+          >
+            <mdc-icon>chevron_left</mdc-icon>Previous
+          </button>
+          <button
+            mdc-button
+            fxHide.xs
+            (click)="questionsPanel.nextQuestion()"
+            [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
+            class="next-question"
+          >
+            Next<mdc-icon>chevron_right</mdc-icon>
+          </button>
+          <button
+            mdc-icon-button
+            fxHide.gt-xs
+            (click)="questionsPanel.previousQuestion()"
+            [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
+            class="prev-question"
+            icon="chevron_left"
+          ></button>
+          <button
+            mdc-icon-button
+            fxHide.gt-xs
+            (click)="questionsPanel.nextQuestion()"
+            [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
+            class="next-question"
+            icon="chevron_right"
+          ></button>
+          <div>
+            <div id="project-summary">
+              <canvas
+                baseChart
+                width="36"
+                height="36"
+                chartType="doughnut"
+                [legend]="false"
+                [labels]="['Unread', 'Read', 'Answered']"
+                [data]="[summary.unread, summary.read, summary.answered]"
+                [colors]="[{ backgroundColor: ['#3a3a3a', '#fff', '#B8D332'] }]"
+                [options]="{ events: [] }"
+              ></canvas>
+            </div>
           </div>
         </div>
       </div>
