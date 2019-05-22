@@ -10,6 +10,7 @@
 
 .mdc-list {
   width: 100%;
+  padding: 0;
 
   .mdc-list-item {
     cursor: pointer;
@@ -18,6 +19,7 @@
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
+      width: 100%;
 
       &:before {
         position: absolute;

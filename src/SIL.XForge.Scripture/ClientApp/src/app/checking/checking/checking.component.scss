@@ -1,35 +1,83 @@
 @import 'checking-global';
 
 #projects-app {
-  #questions-panel {
-    max-width: 400px;
+  #checking-app-container {
+    height: 100%;
+  }
+  #question-drawer {
     min-width: 300px;
-    @include media-breakpoint-down(md) {
-      max-width: 300px;
+    border: 0;
+    &.mdc-drawer--modal {
+      top: 0;
     }
+    .collapse-question-menu {
+      @include mdc-icon-button-size(24px, 24px, 8px);
+      @include media-breakpoint-up(md) {
+        display: none;
+      }
+    }
+  }
+  #questions-panel {
   }
   #text-panel {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    height: 100%;
+    .chapter-select {
+      cursor: pointer;
+    }
     #split-container {
       display: flex;
       flex: 1;
+      height: 100%;
     }
     #scripture-panel {
+      > .panel {
+        .panel-heading {
+          padding-left: 0;
+          padding-right: 0;
+        }
+      }
       .panel-content {
         height: 100%;
       }
       .panel-nav {
         display: flex;
-      }
-      .panel-activity {
-        display: flex;
-        place-content: center space-between;
-        width: 100%;
+        justify-content: space-between;
+        flex: 1;
+        > div {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          h2 {
+            flex: 0;
+            display: flex;
+            align-items: center;
+            @include media-breakpoint-down(sm) {
+              width: calc(100vw - 120px);
+            }
+            span {
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              overflow: hidden;
+              margin-right: 5px;
+            }
+            > div {
+              display: flex;
+              align-items: center;
+            }
+          }
+        }
       }
     }
     #answer-panel {
       padding: 12px 15px;
+      @include media-breakpoint-down(sm) {
+        padding-left: 0;
+        padding-right: 0;
+      }
     }
     #project-navigation {
       background-color: lighten($sf_grey, 70%);
@@ -37,6 +85,16 @@
       align-items: center;
       justify-content: flex-end;
       padding: 9px;
+      @include media-breakpoint-down(sm) {
+        margin: 0 -20px -14px;
+        justify-content: space-between;
+      }
+      @include media-breakpoint-down(xs) {
+        .next-question,
+        .prev-question {
+          @include mdc-icon-button-size(24px, 24px, 8px);
+        }
+      }
     }
     #project-summary {
       width: 36px;

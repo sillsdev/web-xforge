@@ -59,7 +59,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   ) {
     super();
     this.subscribe(media.media$, (change: MediaChange) => {
-      this.isDrawerPermanent = change.mqAlias !== 'xs' && change.mqAlias !== 'sm';
+      this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg'].includes(change.mqAlias);
     });
   }
 

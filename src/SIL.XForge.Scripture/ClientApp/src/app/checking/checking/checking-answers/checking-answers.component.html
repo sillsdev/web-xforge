@@ -31,43 +31,45 @@
     </div>
   </form>
 </div>
-<div class="answers-container" *ngIf="!answerFormVisible">
-  <h3>{{ question.answers.length }} Answers</h3>
-  <div class="answer" *ngFor="let answer of question.answers">
-    <div class="like">
-      <mdc-icon id="like-answer" (click)="likeAnswer(answer)">thumb_up</mdc-icon
-      ><span class="like-count">{{ answer.likes.length }}</span>
-    </div>
-    <div class="answer-detail">
-      <div class="scripture-reference"></div>
-      <div class="answer-text">{{ answer.text }}</div>
-      <div class="audio-control"></div>
-      <div class="answer-footer">
-        <div class="actions">
-          <button *ngIf="hasPermission(answer, 'edit')" mdc-button (click)="editAnswer(answer)" class="answer-edit">
-            Edit
-          </button>
-          <button
-            *ngIf="hasPermission(answer, 'delete')"
-            mdc-button
-            (click)="deleteAnswer(answer)"
-            class="answer-delete"
-          >
-            Delete
-          </button>
-        </div>
-        <app-checking-owner
-          [ownerRef]="answer.ownerRef"
-          [includeAvatar]="true"
-          [layoutStacked]="true"
-          [dateTime]="answer.dateCreated"
-        ></app-checking-owner>
+<div class="answers-container">
+  <ng-container *ngIf="!answerFormVisible && question.answers.length">
+    <h3>{{ question.answers.length }} Answers</h3>
+    <div class="answer" *ngFor="let answer of question.answers">
+      <div class="like">
+        <mdc-icon id="like-answer" (click)="likeAnswer(answer)">thumb_up</mdc-icon
+        ><span class="like-count">{{ answer.likes.length }}</span>
       </div>
-      <app-checking-comments
-        (action)="submitCommentAction($event)"
-        [comments]="getComments(answer)"
-        [answer]="answer"
-      ></app-checking-comments>
+      <div class="answer-detail">
+        <div class="scripture-reference"></div>
+        <div class="answer-text">{{ answer.text }}</div>
+        <div class="audio-control"></div>
+        <div class="answer-footer">
+          <div class="actions">
+            <button *ngIf="hasPermission(answer, 'edit')" mdc-button (click)="editAnswer(answer)" class="answer-edit">
+              Edit
+            </button>
+            <button
+              *ngIf="hasPermission(answer, 'delete')"
+              mdc-button
+              (click)="deleteAnswer(answer)"
+              class="answer-delete"
+            >
+              Delete
+            </button>
+          </div>
+          <app-checking-owner
+            [ownerRef]="answer.ownerRef"
+            [includeAvatar]="true"
+            [layoutStacked]="true"
+            [dateTime]="answer.dateCreated"
+          ></app-checking-owner>
+        </div>
+        <app-checking-comments
+          (action)="submitCommentAction($event)"
+          [comments]="getComments(answer)"
+          [answer]="answer"
+        ></app-checking-comments>
+      </div>
     </div>
-  </div>
+  </ng-container>
 </div>

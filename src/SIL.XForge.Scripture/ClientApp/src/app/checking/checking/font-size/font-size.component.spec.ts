@@ -25,6 +25,7 @@ describe('FontSizeComponent', () => {
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
     env.createHostComponent(template);
+    env.clickButton(env.toggleSelectorButton);
     const fontSize = env.fontSize;
     env.clickButton(env.increaseButton);
     const newFontSize = env.fontSize;
@@ -37,6 +38,7 @@ describe('FontSizeComponent', () => {
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
     env.createHostComponent(template);
+    env.clickButton(env.toggleSelectorButton);
     const fontSize = env.fontSize;
     env.clickButton(env.increaseButton);
     let newFontSize = env.fontSize;
@@ -52,6 +54,7 @@ describe('FontSizeComponent', () => {
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
     env.createHostComponent(template);
+    env.clickButton(env.toggleSelectorButton);
     const fontSize = env.fontSize;
     expect(env.decreaseButton.nativeElement.disabled).toBe(true);
     for (let i: number = 0; i < 30; i++) {
@@ -67,6 +70,7 @@ describe('FontSizeComponent', () => {
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
     env.createHostComponent(template);
+    env.clickButton(env.toggleSelectorButton);
     const fontSize = env.fontSize;
     expect(fontSize).toBe(2);
     expect(env.decreaseButton.nativeElement.disabled).toBe(true);
@@ -78,6 +82,7 @@ describe('FontSizeComponent', () => {
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
     env.createHostComponent(template);
+    env.clickButton(env.toggleSelectorButton);
     const fontSize = env.fontSize;
     expect(fontSize).toBe(1);
     expect(env.decreaseButton.nativeElement.disabled).toBe(false);
@@ -89,6 +94,7 @@ describe('FontSizeComponent', () => {
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
     env.createHostComponent(template);
+    env.clickButton(env.toggleSelectorButton);
     for (let i: number = 0; i < 5; i++) {
       env.clickButton(env.increaseButton);
     }
@@ -104,6 +110,7 @@ describe('FontSizeComponent', () => {
     `;
     expect(function() {
       env.createHostComponent(template);
+      env.clickButton(env.toggleSelectorButton);
     }).toThrow(new RangeError('min (1) can not be larger than max (0.5)'));
   });
 });
@@ -138,12 +145,16 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  get toggleSelectorButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#font-size-toggle'));
+  }
+
   get increaseButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('button:last-child'));
+    return this.fixture.debugElement.query(By.css('mdc-menu-surface button:last-child'));
   }
 
   get decreaseButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('button:first-child'));
+    return this.fixture.debugElement.query(By.css('mdc-menu-surface button:first-child'));
   }
 
   get fontSize(): number {
