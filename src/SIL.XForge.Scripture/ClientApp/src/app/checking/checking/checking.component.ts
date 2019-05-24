@@ -224,11 +224,10 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       for (const answerComment of answerComments) {
         this.deleteComment(answerComment);
       }
-      this.checkingData.questionData[this.textJsonDataId].deleteFromList(this.questionsPanel.activeQuestion, [
-        this.questionsPanel.activeQuestionIndex,
-        'answers',
-        answerIndex
-      ]);
+      this.checkingData.questionData[this.textJsonDataId].deleteFromList(
+        this.questionsPanel.activeQuestion.answers[answerIndex],
+        [this.questionsPanel.activeQuestionIndex, 'answers', answerIndex]
+      );
       this.refreshSummary();
     }
   }
@@ -239,7 +238,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     if (answerIndex >= 0) {
       answers[answerIndex] = answer;
     } else {
-      answers.push(answer);
+      answers.unshift(answer);
     }
     this.updateQuestionAnswers(answers, answerIndex);
   }
@@ -276,7 +275,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   private deleteComment(comment: Comment) {
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
-      this.checkingData.commentData[this.textJsonDataId].deleteFromList(this.comments, [commentIndex]);
+      this.checkingData.commentData[this.textJsonDataId].deleteFromList(comment, [commentIndex]);
     }
   }
 
