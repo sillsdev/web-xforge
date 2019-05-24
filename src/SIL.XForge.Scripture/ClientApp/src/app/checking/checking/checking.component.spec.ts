@@ -127,6 +127,15 @@ describe('CheckingComponent', () => {
       expect(env.answers[0].query(By.css('.answer-text')).nativeElement.textContent).toBe('Answer question 2');
     }));
 
+    it('inserts newer answer above older answers', fakeAsync(() => {
+      env.selectQuestion(6);
+      expect(env.answers.length).toEqual(1);
+      env.answerQuestion('Just added answer');
+      expect(env.answers.length).toEqual(2);
+      expect(env.answers[0].query(By.css('.answer-text')).nativeElement.textContent).toBe('Just added answer');
+      expect(env.answers[1].query(By.css('.answer-text')).nativeElement.textContent).toBe('Answer 6 on question');
+    }));
+
     it('can cancel answering a question', fakeAsync(() => {
       const question = env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
@@ -271,15 +280,8 @@ class TestEnvironment {
   mockedRealtimeOfflineStore: RealtimeOfflineStore;
   mockedUserService: UserService;
   mockedProjectUserService: SFProjectUserService;
-  testUser = new User({
-    id: 'user01',
-    email: 'user01@example.com',
-    name: 'User 01',
-    password: 'password01',
-    role: 'user',
-    active: true,
-    dateCreated: '2019-01-01T12:00:00.000Z'
-  });
+  testUser = this.createUser('01');
+  secondUser = this.createUser('02');
 
   constructor() {
     this.mockedTextService = mock(TextService);
@@ -480,6 +482,18 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  private createUser(id: string): User {
+    return new User({
+      id: 'user' + id,
+      email: 'user' + id + '@example.com',
+      name: 'User ' + id,
+      password: 'password' + id,
+      role: 'user',
+      active: true,
+      dateCreated: '2019-01-01T12:00:00.000Z'
+    });
+  }
+
   private setupProjectData(): void {
     when(
       this.mockedTextService.get('text01', deepEqual([[nameof<Text>('project'), nameof<SFProject>('users')]]))
@@ -526,9 +540,17 @@ class TestEnvironment {
         answers: []
       });
     }
+    questionData[5].answers.push({
+      id: 'a6Id',
+      ownerRef: this.secondUser.id,
+      text: 'Answer 6 on question',
+      likes: [],
+      dateCreated: dateNow,
+      dateModified: dateNow
+    });
     questionData[6].answers.push({
       id: 'a7Id',
-      ownerRef: 'user01',
+      ownerRef: this.testUser.id,
       text: 'Answer 7 on question',
       likes: [],
       dateCreated: dateNow,
@@ -536,7 +558,7 @@ class TestEnvironment {
     });
     questionData[7].answers.push({
       id: 'a8Id',
-      ownerRef: 'user01',
+      ownerRef: this.testUser.id,
       text: 'Answer 8 on question',
       likes: [],
       dateCreated: dateNow,
@@ -573,6 +595,7 @@ class TestEnvironment {
     );
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedUserService.onlineGet('user01')).thenReturn(of(new MapQueryResults(this.testUser)));
+    when(this.mockedUserService.onlineGet('user02')).thenReturn(of(new MapQueryResults(this.secondUser)));
     when(this.mockedProjectUserService.update(anything())).thenReturn(new Promise(() => {}));
   }
 
