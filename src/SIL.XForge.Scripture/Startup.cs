@@ -115,12 +115,17 @@ namespace SIL.XForge.Scripture
                 });
             }
 
+            var dataAccessOptions = Configuration.GetOptions<DataAccessOptions>();
             services.AddMachine(config =>
                 {
                     config.AuthenticationSchemes = new[] { JwtBearerDefaults.AuthenticationScheme };
                 })
                 .AddEngineOptions(o => o.EnginesDir = Path.Combine(siteOptions.SiteDir, "engines"))
-                .AddMongoDataAccess(o => o.MachineDatabaseName = "xforge_machine")
+                .AddMongoDataAccess(o =>
+                {
+                    o.ConnectionString = dataAccessOptions.ConnectionString;
+                    o.MachineDatabaseName = "xforge_machine";
+                })
                 .AddTextCorpus<SFTextCorpusFactory>();
             services.AddSingleton<IAuthorizationHandler, MachineAuthorizationHandler>();
             services.AddSingleton<IBuildHandler, SFBuildHandler>();
