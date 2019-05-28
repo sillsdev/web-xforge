@@ -1,3 +1,24 @@
-<button (click)="decreaseFontSize()" [disabled]="fontSize === min" mdc-button><mdc-icon>remove</mdc-icon></button>
-<span>Aa</span>
-<button mdc-button (click)="increaseFontSize()" [disabled]="fontSize === max"><mdc-icon>add</mdc-icon></button>
+<div mdcMenuSurfaceAnchor #fontSizeAnchor>
+  <button
+    mdc-icon-button
+    (click)="fontSizeSurface.open = !fontSizeSurface.open"
+    icon="format_size"
+    id="font-size-toggle"
+  ></button>
+  <mdc-menu-surface #fontSizeSurface [anchorElement]="fontSizeAnchor" anchorCorner="bottomEnd" id="font-menu-surface">
+    <button
+      (click)="decreaseFontSize()"
+      [disabled]="fontSize === min"
+      mdc-icon-button
+      icon="remove"
+      title="Decrease font size"
+    ></button>
+    <button
+      mdc-icon-button
+      (click)="increaseFontSize()"
+      [disabled]="fontSize === max"
+      icon="add"
+      title="Increase font size"
+    ></button>
+  </mdc-menu-surface>
+</div>

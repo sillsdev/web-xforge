@@ -2,6 +2,13 @@
 @import 'variables';
 @import '~@angular-mdc/theme/material';
 /* Only import relevant Bootstrap 4.x styles */
+$grid-breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px
+) !default;
 @import '~bootstrap/scss/bootstrap-grid';
 
 .panel {
@@ -12,6 +19,7 @@
     display: flex;
     align-items: center;
     padding: 0.5rem 1rem;
+    height: 56px;
     .material-icons {
       margin-right: 10px;
     }

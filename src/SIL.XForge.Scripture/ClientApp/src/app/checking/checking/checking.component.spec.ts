@@ -44,13 +44,11 @@ describe('CheckingComponent', () => {
     env.fixture.detectChanges();
     tick(1);
     env.fixture.detectChanges();
+    tick(env.questionReadTimer);
+    env.fixture.detectChanges();
   }));
 
   describe('Interface', () => {
-    it('can load a project', () => {
-      expect(env.projectHeading).toEqual('Project 01');
-    });
-
     it('can navigate using next button', fakeAsync(() => {
       env.selectQuestion(1);
       env.clickButton(env.nextButton);
@@ -90,9 +88,9 @@ describe('CheckingComponent', () => {
     }));
 
     it('question status change to read', fakeAsync(() => {
-      let question = env.selectQuestion(1, false);
+      let question = env.selectQuestion(2, false);
       expect(question.classes['question-read']).toBeFalsy();
-      question = env.selectQuestion(2);
+      question = env.selectQuestion(3);
       expect(question.classes['question-read']).toBeTruthy();
     }));
 
@@ -110,15 +108,9 @@ describe('CheckingComponent', () => {
   });
 
   describe('Answers', () => {
-    it('answer panel is not initiated without a selected question', () => {
-      expect(env.answerPanel).toBeNull();
-    });
-
-    it('answer panel is now showing', fakeAsync(() => {
-      env.selectQuestion(1);
+    it('answer panel is initiated and shows the first question', () => {
       expect(env.answerPanel).toBeDefined();
-      expect(env.answerPanel.query(By.css('.question')).nativeElement.textContent).toBe('Book 1, Q1 text');
-    }));
+    });
 
     it('can answer a question', fakeAsync(() => {
       const question = env.selectQuestion(2);
@@ -387,11 +379,11 @@ class TestEnvironment {
   }
 
   get increaseFontSizeButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('app-font-size button:last-child'));
+    return this.fixture.debugElement.query(By.css('app-font-size mdc-menu-surface button:last-child'));
   }
 
   get decreaseFontSizeButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('app-font-size button:first-child'));
+    return this.fixture.debugElement.query(By.css('app-font-size mdc-menu-surface button:first-child'));
   }
 
   answerQuestion(answer: string): void {

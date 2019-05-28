@@ -1,4 +1,6 @@
+import { MdcMenuSelectedEvent } from '@angular-mdc/web';
 import { Component, ElementRef, HostBinding, OnInit, ViewChild } from '@angular/core';
+import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import { clone } from '@orbit/utils';
 import { SplitComponent } from 'angular-split';
@@ -42,7 +44,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
     // Need to trigger the calculation for the slider after DOM has been updated
     this.answersPanelContainerElement = answersPanelContainerElement;
-    this.calculateScriptureSliderPosition();
+    this.calculateScriptureSliderPosition(true);
   }
 
   @HostBinding('class') classes = 'flex-max';
@@ -66,13 +68,16 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   answersPanelContainerElement: ElementRef;
   textDataId: TextDataId;
   chapters: number[] = [];
+  isExpanded: boolean = false;
 
   private _chapter: number;
+  private _isDrawerPermanent: boolean = true;
 
   constructor(
     private activatedRoute: ActivatedRoute,
     private textService: TextService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private media: MediaObserver
   ) {
     super();
   }
@@ -92,8 +97,33 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     }
   }
 
+  get chapterStrings(): string[] {
+    return this.chapters.map(c => c.toString());
+  }
+
+  get isDrawerPermanent(): boolean {
+    return this._isDrawerPermanent;
+  }
+
+  set isDrawerPermanent(value: boolean) {
+    if (this._isDrawerPermanent !== value) {
+      this._isDrawerPermanent = value;
+      if (!this._isDrawerPermanent) {
+        this.collapseDrawer();
+      }
+    }
+  }
+
   private get answerPanelElementHeight(): number {
     return this.answersPanelContainerElement ? this.answersPanelContainerElement.nativeElement.offsetHeight : 0;
+  }
+
+  private get answerPanelElementMinimumHeight(): number {
+    return this.answerPanelElementHeight
+      ? this.answerPanelElementHeight -
+          this.answersPanelContainerElement.nativeElement.querySelector('.answers-container').offsetHeight +
+          20
+      : 0;
   }
 
   private get textJsonDataId(): string {
@@ -101,6 +131,10 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   private get minAnswerPanelHeight(): number {
+    // Add 1 extra percentage to allow for gutter (slider toggle) height eating in to calculated space requested
+    return Math.ceil((this.answerPanelElementMinimumHeight / this.splitContainerElementHeight) * 100) + 1;
+  }
+  private get maxAnswerPanelHeight(): number {
     // Add 1 extra percentage to allow for gutter (slider toggle) height eating in to calculated space requested
     return Math.ceil((this.answerPanelElementHeight / this.splitContainerElementHeight) * 100) + 1;
   }
@@ -133,6 +167,10 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         }
       }
     );
+    this.subscribe(this.media.media$, (change: MediaChange) => {
+      this.calculateScriptureSliderPosition();
+      this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg', 'md', 'lt-md'].includes(change.mqAlias);
+    });
   }
 
   applyFontChange(fontSize: string) {
@@ -161,7 +199,23 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     } else if (answerAction.action === 'like') {
       this.likeAnswer(answerAction.answer);
     }
-    this.calculateScriptureSliderPosition();
+    this.calculateScriptureSliderPosition(true);
+  }
+
+  collapseDrawer() {
+    this.isExpanded = false;
+  }
+
+  openDrawer() {
+    this.isExpanded = true;
+  }
+
+  toggleDrawer() {
+    this.isExpanded = !this.isExpanded;
+  }
+
+  drawerCollapsed(): void {
+    this.isExpanded = false;
   }
 
   commentAction(commentAction: CommentAction) {
@@ -185,7 +239,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     } else if (commentAction.action === 'delete') {
       this.deleteComment(commentAction.comment);
     }
-    this.calculateScriptureSliderPosition();
+    this.calculateScriptureSliderPosition(true);
   }
 
   checkSliderPosition(event: any) {
@@ -196,13 +250,21 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     }
   }
 
+  onChapterSelect(event: MdcMenuSelectedEvent) {
+    const chapter = parseInt(event.source.value, 10);
+    if (this.chapter !== chapter) {
+      this.chapter = chapter;
+    }
+  }
+
   questionUpdated(question: Question) {
     this.refreshSummary();
   }
 
   questionChanged(question: Question) {
-    this.calculateScriptureSliderPosition();
+    this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
+    this.collapseDrawer();
   }
 
   totalQuestions() {
@@ -303,11 +365,14 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     }
   }
 
-  private calculateScriptureSliderPosition(): void {
+  private calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {
     // Wait while Angular updates visible DOM elements before we can calculate the height correctly
     setTimeout((): void => {
-      const scripturePanelHeight = 100 - this.minAnswerPanelHeight;
-      const answerPanelHeight = this.minAnswerPanelHeight;
+      let answerPanelHeight = maximizeAnswerPanel ? this.maxAnswerPanelHeight : this.minAnswerPanelHeight;
+      if (answerPanelHeight > 100) {
+        answerPanelHeight = 100;
+      }
+      const scripturePanelHeight = 100 - answerPanelHeight;
       this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
     }, 1);
   }

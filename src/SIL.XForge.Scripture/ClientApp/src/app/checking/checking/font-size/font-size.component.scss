@@ -3,13 +3,16 @@
 :host {
   display: flex;
   align-items: center;
-  border: 1px solid $sf-grey;
-  border-radius: 4px;
-  background-color: lighten($sf_grey, 70%);
   span {
     padding: 0 5px;
   }
-  .mdc-button {
-    margin-right: 0;
+  .mdc-icon-button {
+    @include mdc-icon-button-size(24px, 24px, 8px);
+  }
+  #font-menu-surface {
+    display: flex;
+    right: unset !important;
+    left: -50%;
+    overflow: hidden;
   }
 }
