@@ -2,9 +2,13 @@
 
 When creating the base box, do the following.
 
-  - Log in to the desktop immediately so gsettings will work. You may need to attempt the login twice.
-  - Resize the guest window to be slightly bigger. Launch Files, unmaximize, and close Files.
-  - Automatically logging in means we don't unlock the login keyring at login. Prevent Chromium from causing the login keyring password prompt by doing the following.
+  - Log in to the desktop immediately so gsettings will work. You may need to
+    attempt the login twice.
+  - Resize the guest window to be slightly bigger. Launch Files, unmaximize,
+    and close Files.
+  - Automatically logging in means we don't unlock the login keyring at login.
+    Prevent Chromium from causing the login keyring password prompt by doing
+    the following.
     Launch 'Passwords and Keys'. Right-click Passwords > Login. Click Change Password. Change password from "vagrant" to blank. Close 'Passwords and Keys'.
 
 Let the vagrant box shut itself down after it finishes provisioning, so the zeros file has time to be deleted.
@@ -61,7 +65,7 @@ Broken-down, repeatable, checkpointed steps to ease development and testing chan
         vagrant snapshot delete 3-after-cleanup || true &&
         vagrant snapshot save 3-after-cleanup && sleep 30s &&
     # create product
-    rm -v xforge-u1604-VERSION.box && date &&
+    rm -vf xforge-u1604-VERSION.box && date &&
         time vagrant package --base vag-u1604-xf-creation --output xforge-u1604-VERSION.box &&
         sha256sum *.box &&
     # test
