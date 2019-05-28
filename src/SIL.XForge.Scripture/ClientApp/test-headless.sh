@@ -5,6 +5,8 @@
 # Example:
 #   src/SIL.XForge.Scripture/ClientApp/test-headless.sh foo.spec.ts baz.spec.ts
 
+set -u -e -o pipefail
+
 readonly ROOT_PATH="$(dirname "$0")"
 readonly SETTINGS_FILE="${ROOT_PATH}/src/test.ts"
 SPEC_FILES="$@"

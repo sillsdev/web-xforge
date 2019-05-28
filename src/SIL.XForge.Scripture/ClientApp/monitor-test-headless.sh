@@ -3,6 +3,8 @@
 # Usage:
 #   src/SIL.XForge.Scripture/ClientApp/monitor-test-headless.sh [arguments to test-headless.sh]
 
+set -u
+
 readonly ROOT_PATH="$(dirname "$0")"
 
 command -v inotifywait >/dev/null || {
