@@ -3,6 +3,18 @@
   "name": "xforge-u1604",
   "versions": [
     {
+      "version": "0.4.0",
+      "status": "active",
+      "providers": [
+        {
+          "checksum": "f0703b1ea55ca0796e2b885b8eb9a6b1ae0a0f1f123e36ced32f779fa3dbb90b",
+          "checksum_type": "sha256",
+           "name": "virtualbox",
+           "url": "http://linux.lsdev.sil.org/vagrant/xforge/xforge-u1604-0.4.0.box"
+        }
+      ]
+    },
+    {
       "version": "0.3.0",
       "status": "active",
       "providers": [
