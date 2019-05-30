@@ -101,8 +101,8 @@ export class QuestionDialogComponent implements OnInit {
     if (
       !scriptureStartRef.valid ||
       !scriptureEndRef.valid ||
-      group.controls.scriptureStart.hasError('verseFormat') ||
-      group.controls.scriptureStart.hasError('verseRange')
+      group.controls.scriptureEnd.hasError('verseFormat') ||
+      group.controls.scriptureEnd.hasError('verseRange')
     ) {
       return null;
     }
@@ -133,6 +133,6 @@ class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
         control.parent.hasError('verseBeforeStart'))
     );
 
-    return invalidCtrl || invalidStart;
+    return control.touched && (invalidCtrl || invalidStart);
   }
 }

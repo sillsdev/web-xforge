@@ -40,6 +40,10 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureStart.setValue('MAT 1:1');
     expect(env.component.scriptureStart.valid).toBe(true);
     expect(env.component.scriptureStart.errors).toBeNull();
+    env.component.scriptureStart.setValue('MAT 1:1#');
+    expect(env.component.scriptureStart.errors.verseFormat).toBe(true);
+    env.component.scriptureStart.setValue('MAT 1:1a');
+    expect(env.component.scriptureStart.errors).toBeNull();
     env.component.scriptureStart.setValue('TIT 1:1');
     expect(env.component.scriptureStart.errors.verseRange).toBe(true);
     env.component.scriptureStart.setValue('MAT 1:26');

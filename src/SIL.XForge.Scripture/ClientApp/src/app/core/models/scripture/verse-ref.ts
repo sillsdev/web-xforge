@@ -87,9 +87,10 @@ export class VerseRef {
    * Determines if the verse string is in a valid format (does not consider versification).
    */
   static isVerseParseable(verse: string): boolean {
+    const VERSE_REGEXP = /^\d{1,}[0-9abAB,-]{0,}$/;
     return (
       verse.length !== 0 &&
-      '0123456789'.includes(verse[0]) &&
+      VERSE_REGEXP.test(verse) &&
       verse[verse.length - 1] !== this.verseRangeSeparator &&
       verse[verse.length - 1] !== this.verseSequenceIndicator
     );
