@@ -128,7 +128,7 @@ export class AuthService {
     if (secondaryId != null) {
       await this.jsonApiService.onlineInvoke(userIdentity, 'linkParatextAccount', { authId: secondaryId });
     } else {
-      await this.jsonApiService.onlineInvoke(userIdentity, 'updateUserFromAuth');
+      await this.jsonApiService.onlineInvoke(userIdentity, 'pullAuthUserProfile');
     }
     if (state.returnUrl != null) {
       this.router.navigateByUrl(state.returnUrl);

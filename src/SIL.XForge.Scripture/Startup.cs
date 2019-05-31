@@ -3,8 +3,6 @@ using System.IO;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using JsonApiDotNetCore.Extensions;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -14,9 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
-using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
-using SIL.XForge.Scripture.Services;
 
 namespace SIL.XForge.Scripture
 {
@@ -77,13 +73,7 @@ namespace SIL.XForge.Scripture
 
             services.AddCommonServices();
 
-            var authOptions = Configuration.GetOptions<AuthOptions>();
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.Authority = $"https://{authOptions.Domain}/";
-                    options.Audience = "sf-api";
-                });
+            services.AddXFAuthentication(Configuration, "sf-api");
 
             services.AddSFDataAccess(Configuration);
 
@@ -103,21 +93,7 @@ namespace SIL.XForge.Scripture
                 });
             }
 
-            var siteOptions = Configuration.GetOptions<SiteOptions>();
-            var dataAccessOptions = Configuration.GetOptions<DataAccessOptions>();
-            services.AddMachine(config =>
-                {
-                    config.AuthenticationSchemes = new[] { JwtBearerDefaults.AuthenticationScheme };
-                })
-                .AddEngineOptions(o => o.EnginesDir = Path.Combine(siteOptions.SiteDir, "engines"))
-                .AddMongoDataAccess(o =>
-                {
-                    o.ConnectionString = dataAccessOptions.ConnectionString;
-                    o.MachineDatabaseName = "xforge_machine";
-                })
-                .AddTextCorpus<SFTextCorpusFactory>();
-            services.AddSingleton<IAuthorizationHandler, MachineAuthorizationHandler>();
-            services.AddSingleton<IBuildHandler, SFBuildHandler>();
+            services.AddSFMachine(Configuration);
 
             containerBuilder.Populate(services);
 

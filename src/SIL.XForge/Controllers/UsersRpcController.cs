@@ -1,8 +1,9 @@
 using System;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
+using idunno.Authentication.Basic;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Configuration;
@@ -27,43 +28,20 @@ namespace SIL.XForge.Controllers
             _authService = authService;
         }
 
-        public async Task<IRpcMethodResult> UpdateUserFromAuth()
+        [Authorize(AuthenticationSchemes = BasicAuthenticationDefaults.AuthenticationScheme)]
+        public async Task<IRpcMethodResult> PushAuthUserProfile(JObject userProfile)
+        {
+            await UpdateUserFromProfile(userProfile);
+            return Ok();
+        }
+
+        public async Task<IRpcMethodResult> PullAuthUserProfile()
         {
             if (ResourceId != User.UserId)
                 return ForbiddenError();
 
-            JObject userObj = await _authService.GetUserAsync(User.AuthId);
-            await _users.UpdateAsync(ResourceId, update =>
-                {
-                    update.Set(u => u.Name, (string)userObj["name"]);
-                    var email = (string)userObj["email"];
-                    update.Set(u => u.Email, email);
-                    update.Set(u => u.CanonicalEmail, UserEntity.CanonicalizeEmail(email));
-                    update.Set(u => u.EmailMd5, UserEntity.HashEmail(email));
-                    update.Set(u => u.AvatarUrl, (string)userObj["picture"]);
-                    var identities = (JArray)userObj["identities"];
-                    foreach (JObject identity in identities)
-                    {
-                        switch ((string)identity["connection"])
-                        {
-                            case "google-oauth2":
-                                update.Set(u => u.GoogleId, (string)identity["user_id"]);
-                                break;
-                            case "paratext":
-                                var ptId = (string)identity["user_id"];
-                                update.Set(u => u.ParatextId, ptId.Split('|')[1]);
-                                update.Set(u => u.ParatextTokens, new Tokens
-                                {
-                                    AccessToken = (string)identity["access_token"],
-                                    RefreshToken = (string)identity["refresh_token"]
-                                });
-                                break;
-                        }
-                    }
-                    update.Set(u => u.Sites[_siteOptions.Value.Id].LastLogin, (DateTime)userObj["last_login"]);
-                    update.SetOnInsert(u => u.AuthId, User.AuthId);
-                    update.SetOnInsert(u => u.Active, true);
-                }, true);
+            JObject userProfile = await _authService.GetUserAsync(User.AuthId);
+            await UpdateUserFromProfile(userProfile);
             return Ok();
         }
 
@@ -87,6 +65,41 @@ namespace SIL.XForge.Controllers
                 .Set(u => u.ParatextId, ptId.Split('|')[1])
                 .Set(u => u.ParatextTokens, ptTokens));
             return Ok();
+        }
+
+        private Task UpdateUserFromProfile(JObject userProfile)
+        {
+            return _users.UpdateAsync(ResourceId, update =>
+                {
+                    update.Set(u => u.Name, (string)userProfile["name"]);
+                    var email = (string)userProfile["email"];
+                    update.Set(u => u.Email, email);
+                    update.Set(u => u.CanonicalEmail, UserEntity.CanonicalizeEmail(email));
+                    update.Set(u => u.EmailMd5, UserEntity.HashEmail(email));
+                    update.Set(u => u.AvatarUrl, (string)userProfile["picture"]);
+                    var identities = (JArray)userProfile["identities"];
+                    foreach (JObject identity in identities)
+                    {
+                        switch ((string)identity["connection"])
+                        {
+                            case "google-oauth2":
+                                update.Set(u => u.GoogleId, (string)identity["user_id"]);
+                                break;
+                            case "paratext":
+                                var ptId = (string)identity["user_id"];
+                                update.Set(u => u.ParatextId, ptId.Split('|')[1]);
+                                update.Set(u => u.ParatextTokens, new Tokens
+                                {
+                                    AccessToken = (string)identity["access_token"],
+                                    RefreshToken = (string)identity["refresh_token"]
+                                });
+                                break;
+                        }
+                    }
+                    update.Set(u => u.Sites[_siteOptions.Value.Id].LastLogin, (DateTime)userProfile["last_login"]);
+                    update.SetOnInsert(u => u.AuthId, User.AuthId);
+                    update.SetOnInsert(u => u.Active, true);
+                }, true);
         }
     }
 }
