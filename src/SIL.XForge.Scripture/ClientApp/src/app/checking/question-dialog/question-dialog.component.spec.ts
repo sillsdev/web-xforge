@@ -56,6 +56,16 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.setValue('MAT 1:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
+    env.component.scriptureEnd.setValue('MAT 1:1#');
+    expect(env.component.scriptureEnd.errors.verseFormat).toBe(true);
+    env.component.scriptureEnd.setValue('MAT 1:1a');
+    expect(env.component.scriptureEnd.errors).toBeNull();
+    env.component.scriptureEnd.setValue('TIT 1:1');
+    expect(env.component.scriptureEnd.errors.verseRange).toBe(true);
+    env.component.scriptureEnd.setValue('MAT 1:26');
+    expect(env.component.scriptureEnd.errors.verseRange).toBe(true);
+    env.component.scriptureEnd.setValue('MAT 1:25');
+    expect(env.component.scriptureEnd.errors).toBeNull();
   }));
 
   it('should validate matching book and chapter', fakeAsync(() => {

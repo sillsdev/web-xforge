@@ -101,8 +101,8 @@ export class QuestionDialogComponent implements OnInit {
     if (
       !scriptureStartRef.valid ||
       !scriptureEndRef.valid ||
-      group.controls.scriptureEnd.hasError('verseFormat') ||
-      group.controls.scriptureEnd.hasError('verseRange')
+      group.controls.scriptureStart.errors ||
+      group.controls.scriptureEnd.errors
     ) {
       return null;
     }

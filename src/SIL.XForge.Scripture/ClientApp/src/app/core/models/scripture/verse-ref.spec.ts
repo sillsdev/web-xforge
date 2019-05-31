@@ -72,4 +72,15 @@ describe('VerseRef Model', () => {
     // expect(vref.allVerses().Count()).toEqual(2);
     expect(vref.versification).toEqual(ScrVers.Vulgate);
   });
+
+  it('should be invalid', () => {
+    let vref = VerseRef.fromStr('LUK 3:a4');
+    expect(vref.valid).toBe(false);
+
+    const badEndings = ['c', '-', ',', '.', '+', '#', '@'];
+    for (const ch of badEndings) {
+      vref = VerseRef.fromStr('LUK 3:4' + ch, ScrVers.Vulgate);
+      expect(vref.valid).toBe(false);
+    }
+  });
 });
