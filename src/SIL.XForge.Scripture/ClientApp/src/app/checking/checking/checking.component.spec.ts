@@ -116,16 +116,15 @@ describe('CheckingComponent', () => {
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
-      expect(env.answers[0].query(By.css('.answer-text')).nativeElement.textContent).toBe('Answer question 2');
+      expect(env.getAnswerText(0)).toBe('Answer question 2');
     }));
 
     it('inserts newer answer above older answers', fakeAsync(() => {
       env.selectQuestion(6);
-      expect(env.answers.length).toEqual(1);
       env.answerQuestion('Just added answer');
       expect(env.answers.length).toEqual(2);
-      expect(env.answers[0].query(By.css('.answer-text')).nativeElement.textContent).toBe('Just added answer');
-      expect(env.answers[1].query(By.css('.answer-text')).nativeElement.textContent).toBe('Answer 6 on question');
+      expect(env.getAnswerText(0)).toBe('Just added answer');
+      expect(env.getAnswerText(1)).toBe('Answer 6 on question');
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
@@ -153,7 +152,7 @@ describe('CheckingComponent', () => {
       env.setTextFieldValue(env.yourAnswerField, 'Edited question 2 answer');
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.answers[0].query(By.css('.answer-text')).nativeElement.textContent).toBe('Edited question 2 answer');
+      expect(env.getAnswerText(0)).toBe('Edited question 2 answer');
     }));
 
     it('can delete an answer', fakeAsync(() => {
@@ -183,6 +182,13 @@ describe('CheckingComponent', () => {
       env.clickButton(env.likeButton);
       env.waitForSliderUpdate();
       expect(env.likeTotal).toBe(0);
+    }));
+
+    it('do not show answers until current user has submitted an answer', fakeAsync(() => {
+      env.selectQuestion(6);
+      expect(env.answers.length).toBe(0);
+      env.answerQuestion('Answer from user01');
+      expect(env.answers.length).toBe(2);
     }));
 
     describe('Comments', () => {
@@ -366,10 +372,6 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#project-navigation .prev-question'));
   }
 
-  get projectHeading(): string {
-    return this.fixture.debugElement.query(By.css('h1')).nativeElement.textContent;
-  }
-
   get questions(): DebugElement[] {
     return this.fixture.debugElement.queryAll(By.css('#questions-panel .mdc-list-item'));
   }
@@ -407,6 +409,10 @@ class TestEnvironment {
 
   getAnswer(index: number): DebugElement {
     return this.answers[index];
+  }
+
+  getAnswerText(index: number): string {
+    return this.getAnswer(index).query(By.css('.answer-text')).nativeElement.textContent;
   }
 
   getAddCommentButton(answerIndex: number): DebugElement {
