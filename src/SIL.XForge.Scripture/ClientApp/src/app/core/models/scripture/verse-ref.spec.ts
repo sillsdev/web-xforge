@@ -72,4 +72,13 @@ describe('VerseRef Model', () => {
     // expect(vref.allVerses().Count()).toEqual(2);
     expect(vref.versification).toEqual(ScrVers.Vulgate);
   });
+
+  it('converts to VerseRefData', () => {
+    const vref = VerseRef.fromStr('LUK 3:4', ScrVers.English);
+    const output = vref.toVerseRefData();
+    expect(output.book).toEqual('LUK');
+    expect(output.chapter).toEqual('3');
+    expect(output.verse).toEqual('4');
+    // Not testing versification since ScrVers isn't reporting that yet
+  });
 });
