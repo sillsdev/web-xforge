@@ -1,3 +1,4 @@
+import { VerseRefData } from '../verse-ref-data';
 import { Canon } from './canon';
 import { ScrVers } from './scr-vers';
 import { ScrVersType } from './versification';
@@ -294,6 +295,15 @@ export class VerseRef {
       prevVerse = bbbcccvvv;
     }*/
     return ValidStatusType.Valid; // TODO: make Valid tests Valid Status tests
+  }
+
+  toVerseRefData(): VerseRefData {
+    const refData: VerseRefData = {};
+    refData.book = this.book;
+    refData.chapter = this.chapter;
+    refData.verse = this.verse;
+    refData.versification = this.versification.name;
+    return refData;
   }
 
   /**
