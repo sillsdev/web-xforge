@@ -32,7 +32,7 @@
   </form>
 </div>
 <div class="answers-container">
-  <ng-container *ngIf="!answerFormVisible && question.answers.length">
+  <ng-container *ngIf="!answerFormVisible && currentUserTotalAnswers">
     <h3>{{ question.answers.length }} Answers</h3>
     <div class="answer" *ngFor="let answer of question.answers">
       <div class="like">
