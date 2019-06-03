@@ -14,6 +14,7 @@ import { ConnectProjectComponent } from './connect-project/connect-project.compo
 import { CoreModule } from './core/core.module';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { ProjectComponent } from './project/project.component';
+import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings/settings.component';
 import { SharedModule } from './shared/shared.module';
@@ -30,7 +31,8 @@ import { TranslateModule } from './translate/translate.module';
     ProjectDeletedDialogComponent,
     SettingsComponent,
     StartComponent,
-    SyncComponent
+    SyncComponent,
+    ScriptureChooserDialogComponent
   ],
   imports: [
     AppRoutingModule,
@@ -47,7 +49,12 @@ import { TranslateModule } from './translate/translate.module';
     XForgeCommonModule
   ],
   providers: [DatePipe],
-  entryComponents: [DeleteProjectDialogComponent, ProjectDeletedDialogComponent, ...xForgeCommonEntryComponents],
+  entryComponents: [
+    DeleteProjectDialogComponent,
+    ProjectDeletedDialogComponent,
+    ScriptureChooserDialogComponent,
+    ...xForgeCommonEntryComponents
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

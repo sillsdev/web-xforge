@@ -1,4 +1,5 @@
 import { ErrorStateMatcher, MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, Inject, OnInit } from '@angular/core';
 import {
   AbstractControl,
@@ -14,6 +15,10 @@ import { ScrVers } from '../../core/models/scripture/scr-vers';
 import { VerseRef } from '../../core/models/scripture/verse-ref';
 import { TextsByBook } from '../../core/models/text';
 import { VerseRefData } from '../../core/models/verse-ref-data';
+import {
+  ScriptureChooserDialogComponent,
+  ScriptureChooserDialogData
+} from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { SFValidators } from '../../shared/sfvalidators';
 
 export interface QuestionDialogData {
@@ -40,6 +45,15 @@ export class QuestionDialogComponent implements OnInit {
     return result;
   }
 
+  private static verseRefToVerseRefData(input: VerseRef): VerseRefData {
+    const refData: VerseRefData = {};
+    refData.book = input.book;
+    refData.chapter = input.chapter;
+    refData.verse = input.verse;
+    refData.versification = input.versification.name;
+    return refData;
+  }
+
   modeLabel = this.data && this.data.editMode ? 'Edit' : 'New';
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   questionForm: FormGroup = new FormGroup(
@@ -53,7 +67,8 @@ export class QuestionDialogComponent implements OnInit {
 
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
-    @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData
+    @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData,
+    readonly dialog: MdcDialog
   ) {}
 
   get scriptureStart(): AbstractControl {
@@ -92,6 +107,22 @@ export class QuestionDialogComponent implements OnInit {
       scriptureStart: this.scriptureStart.value,
       scriptureEnd: this.scriptureEnd.value,
       text: this.questionText.value
+    });
+  }
+
+  /** Edit text of control using Scripture chooser dialog. */
+  openScriptureChooser(control: FormControl) {
+    const currentVerseSelection = QuestionDialogComponent.verseRefToVerseRefData(
+      VerseRef.fromStr(control.value, ScrVers.English)
+    );
+    const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
+      data: { input: currentVerseSelection, booksAndChaptersToShow: this.data.textsByBook }
+    };
+    const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig);
+    dialogRef.afterClosed().subscribe((result: VerseRefData) => {
+      if (result !== 'close') {
+        control.setValue(QuestionDialogComponent.verseRefDataToString(result));
+      }
     });
   }
 

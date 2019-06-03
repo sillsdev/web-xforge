@@ -14,7 +14,11 @@
                 formControlName="scriptureStart"
                 outlined
                 id="scripture-start"
-              ></mdc-text-field>
+              >
+                <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureStart)"
+                  >expand_more</mdc-icon
+                >
+              </mdc-text-field>
               <mdc-helper-text validation id="question-scripture-start-helper-text">
                 *Required<span *ngIf="scriptureStart.hasError('verseFormat')">, e.g. JHN 3:16</span>
                 <span *ngIf="scriptureStart.hasError('verseRange')">, must be inside verse range</span>
@@ -28,7 +32,11 @@
                 outlined
                 [errorStateMatcher]="parentAndStartMatcher"
                 id="scripture-end"
-              ></mdc-text-field>
+              >
+                <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureEnd)"
+                  >expand_more</mdc-icon
+                >
+              </mdc-text-field>
               <mdc-helper-text validation>
                 <span *ngIf="scriptureEnd.hasError('verseFormat')">e.g. JHN 3:16</span>
                 <span *ngIf="scriptureEnd.hasError('verseRange')">Must be inside verse range</span>
@@ -52,7 +60,7 @@
           </mdc-form-field>
         </form>
       </mdc-dialog-content>
-      <mdc-dialog-actions align="end">
+      <mdc-dialog-actions>
         <button mdcDialogButton mdcDialogAction="close" id="question-cancel-btn">Cancel</button>
         <button mdc-button primary form="question-form" id="question-save-btn">Save</button>
       </mdc-dialog-actions>
