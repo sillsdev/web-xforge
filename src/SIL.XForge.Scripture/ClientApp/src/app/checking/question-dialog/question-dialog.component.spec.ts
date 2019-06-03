@@ -3,10 +3,16 @@ import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { instance, mock } from 'ts-mockito';
+import { of } from 'rxjs';
+import { anything, capture, instance, mock, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { Question } from '../../core/models/question';
+import { VerseRefData } from '../../core/models/verse-ref-data';
+import {
+  ScriptureChooserDialogComponent,
+  ScriptureChooserDialogData
+} from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { QuestionDialogComponent } from './question-dialog.component';
 
 describe('QuestionDialogComponent', () => {
@@ -125,6 +131,25 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureEnd.errors).toBeNull();
     expect(env.component.questionForm.errors).toBeNull();
   }));
+
+  it('opens verse chooser, uses result', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    env.component.scriptureStart.setValue('MAT 3:4');
+    expect(env.component.scriptureStart.value).not.toEqual('LUK 1:2');
+
+    env.clickElement(env.scriptureStartInputIcon);
+    flush();
+    verify(env.dialogSpy.open(anything(), anything())).once();
+    expect((capture(env.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>).data.input).toEqual({
+      book: 'MAT',
+      chapter: '3',
+      verse: '4',
+      versification: undefined
+    });
+    flush();
+    expect(env.component.scriptureStart.value).toEqual('LUK 1:2');
+  }));
 });
 
 @Directive({
@@ -150,9 +175,19 @@ class ChildViewContainerComponent {
 
 @NgModule({
   imports: [CommonModule, UICommonModule],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent, QuestionDialogComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, QuestionDialogComponent],
-  entryComponents: [ChildViewContainerComponent, QuestionDialogComponent]
+  declarations: [
+    ViewContainerDirective,
+    ChildViewContainerComponent,
+    QuestionDialogComponent,
+    ScriptureChooserDialogComponent
+  ],
+  exports: [
+    ViewContainerDirective,
+    ChildViewContainerComponent,
+    QuestionDialogComponent,
+    ScriptureChooserDialogComponent
+  ],
+  entryComponents: [ChildViewContainerComponent, QuestionDialogComponent, ScriptureChooserDialogComponent]
 })
 class DialogTestModule {}
 
@@ -164,10 +199,12 @@ class TestEnvironment {
   afterCloseCallback: jasmine.Spy;
 
   mockedAuthService: AuthService = mock(AuthService);
+  mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
+  dialogSpy: MdcDialog;
 
   constructor() {
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, FormsModule, DialogTestModule, UICommonModule],
+      imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
       providers: [{ provide: AuthService, useFactory: () => instance(this.mockedAuthService) }]
     });
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
@@ -193,6 +230,13 @@ class TestEnvironment {
     this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
     this.component = this.dialogRef.componentInstance;
     this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
+
+    // Set up MdcDialog mocking after it's already used above in creating the component.
+    this.dialogSpy = spy(this.component.dialog);
+    when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
+    const chooserDialogResult: VerseRefData = { book: 'LUK', chapter: '1', verse: '2' };
+    when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
+
     this.fixture.detectChanges();
   }
 
@@ -206,6 +250,10 @@ class TestEnvironment {
 
   get scriptureStartInput(): HTMLInputElement {
     return this.overlayContainerElement.querySelector('#scripture-start');
+  }
+
+  get scriptureStartInputIcon(): HTMLInputElement {
+    return this.scriptureStartInput.querySelector('mdc-icon');
   }
 
   get scriptureStartValidationMsg(): HTMLElement {
