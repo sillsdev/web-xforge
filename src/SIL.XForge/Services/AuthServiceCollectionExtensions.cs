@@ -27,7 +27,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     {
                         OnValidateCredentials = context =>
                         {
-                            var authService = context.HttpContext.RequestServices.GetService<AuthService>();
+                            var authService = context.HttpContext.RequestServices.GetService<IAuthService>();
                             if (authService.ValidatePushCredentials(context.Username, context.Password))
                             {
                                 Claim[] claims = new[]

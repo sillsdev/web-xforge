@@ -4,38 +4,61 @@
   padding: 1rem;
 }
 
+.task-setting {
+  display: flex;
+  flex-direction: column;
+  &.indent {
+    margin-top: 1rem;
+    margin-left: 2.05rem;
+  }
+
+  > .task-setting-field {
+    display: flex;
+
+    > app-write-status {
+      margin-left: 2rem;
+    }
+  }
+
+  > .helper-text {
+    color: var(--mdc-theme-text-hint-on-background);
+    &.checkbox-helper-text {
+      margin: 0 0 0 2.75rem;
+    }
+
+    &.select-helper-text {
+      margin-top: 1rem;
+    }
+  }
+}
+
+#share-level-anyone-field {
+  margin-right: 1.25rem;
+}
+
 #btn-log-in-settings {
   background-color: $pt-button-green;
   color: white;
   height: 2.5rem;
 }
 
-.paratext-logo {
-  width: 2rem;
-  height: 2rem;
-  margin-right: 0.5rem;
-}
-
-p.helper-select,
-.indented-field-row {
+.paratext-login-container {
   margin-top: 1rem;
-}
+  margin-left: 2.75rem;
 
-.helper-text {
-  color: var(--mdc-theme-text-hint-on-background);
-  margin: 0;
-}
+  .paratext-logo {
+    width: 2rem;
+    height: 2rem;
+    margin-right: 0.5rem;
+  }
 
-.more-options {
-  margin-left: 1rem;
+  > .more-options {
+    margin-left: 1rem;
+  }
 }
 
 .invalid-feedback {
   color: var(--mdc-theme-error);
-}
-
-.status {
-  margin-left: 2rem;
 }
 
 #delete-project {

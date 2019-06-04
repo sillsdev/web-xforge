@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 using SIL.XForge.Models;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.DataAccess
 {
@@ -13,7 +14,8 @@ namespace SIL.XForge.DataAccess
     {
         private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
-            TypeNameHandling = TypeNameHandling.Auto
+            TypeNameHandling = TypeNameHandling.Auto,
+            ContractResolver = new WritableContractResolver()
         };
 
         private readonly Dictionary<string, string> _entities;
@@ -137,7 +139,15 @@ namespace SIL.XForge.DataAccess
                 if (isInsert)
                 {
                     entity = new T();
-                    entity.Id = ObjectId.GenerateNewId().ToString();
+                    string id = ObjectId.GenerateNewId().ToString();
+                    var binaryExpr = filter.Body as BinaryExpression;
+                    if (binaryExpr != null)
+                    {
+                        object value = ExpressionHelper.FindConstantValue(binaryExpr.Right);
+                        if (value is string)
+                            id = (string)value;
+                    }
+                    entity.Id = id;
                 }
                 else
                 {

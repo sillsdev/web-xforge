@@ -12,6 +12,7 @@ import {
   MdcListModule,
   MdcMenuModule,
   MdcMenuSurfaceModule,
+  MdcRadioModule,
   MdcSelectModule,
   MdcSliderModule,
   MdcSnackbarModule,
@@ -52,6 +53,7 @@ import { ChartsModule } from 'ng2-charts';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 
 const modules = [
+  ChartsModule,
   FlexLayoutModule,
   FormsModule,
   MatButtonModule,
@@ -88,6 +90,7 @@ const modules = [
   MdcListModule,
   MdcMenuModule,
   MdcMenuSurfaceModule,
+  MdcRadioModule,
   MdcSelectModule,
   MdcSliderModule,
   MdcSnackbarModule,
@@ -96,8 +99,7 @@ const modules = [
   MdcTextFieldModule,
   MdcTopAppBarModule,
   MdcTypographyModule,
-  ReactiveFormsModule,
-  ChartsModule
+  ReactiveFormsModule
 ];
 
 const appFlexLayoutBreakPoints = [

@@ -8,9 +8,9 @@ namespace SIL.XForge.Models
         public string ProjectName { get; set; }
         public InputSystem InputSystem { get; set; } = new InputSystem();
 
-        public List<ProjectUserEntity> Users { get; protected set; } = new List<ProjectUserEntity>();
+        public List<ProjectUserEntity> Users { get; set; } = new List<ProjectUserEntity>();
 
-        public Dictionary<string, object> ExtraElements { get; protected set; }
+        public Dictionary<string, object> ExtraElements { get; set; }
 
         public abstract ProjectRoles Roles { get; }
 

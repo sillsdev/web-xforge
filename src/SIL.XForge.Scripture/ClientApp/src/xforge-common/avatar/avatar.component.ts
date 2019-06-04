@@ -15,14 +15,6 @@ export class AvatarComponent {
     return this.user ? this.user.avatarUrl : '';
   }
 
-  get googleId(): string {
-    return this.user && this.user.avatarUrl == null ? this.user.googleId : '';
-  }
-
-  get emailMd5(): string {
-    return this.user && this.user.avatarUrl == null ? this.user.emailMd5 : '';
-  }
-
   get name(): string {
     return this.user ? this.user.name : '';
   }

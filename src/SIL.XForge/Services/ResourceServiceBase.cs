@@ -32,7 +32,7 @@ namespace SIL.XForge.Services
 
         protected IJsonApiContext JsonApiContext { get; }
         protected string UserId => _userAccessor.UserId;
-        protected string SystemRole => _userAccessor.SystemRole;
+        protected string SystemRole => _userAccessor.Role;
 
         public async Task<TResource> CreateAsync(TResource resource)
         {

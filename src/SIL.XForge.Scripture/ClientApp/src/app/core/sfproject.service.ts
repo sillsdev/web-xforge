@@ -3,6 +3,7 @@ import { RemoteTranslationEngine } from '@sillsdev/machine';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { JsonApiService } from 'xforge-common/json-api.service';
+import { ShareConfig } from 'xforge-common/models/share-config';
 import { ProjectService } from 'xforge-common/project.service';
 import { nameof, objectId } from 'xforge-common/utils';
 import { MachineHttpClient } from './machine-http-client';
@@ -23,6 +24,10 @@ export class SFProjectService extends ProjectService<SFProject> {
 
   constructor(jsonApiService: JsonApiService, private readonly machineHttp: MachineHttpClient) {
     super(SFProject.TYPE, jsonApiService, SFProjectService.ROLES);
+  }
+
+  getShareConfig(id: string): Observable<ShareConfig> {
+    return this.get(id).pipe(map(r => (r.data == null ? null : r.data.checkingConfig.share)));
   }
 
   createTranslationEngine(projectId: string): RemoteTranslationEngine {

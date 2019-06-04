@@ -23,6 +23,7 @@ class TestUserEntryComponent {
     id: 'user01',
     email: 'user01@example.com',
     name: 'User 01',
+    role: 'user',
     active: true,
     dateCreated: '2019-01-01T12:00:00.000Z',
     site: {
@@ -156,6 +157,7 @@ describe('System Administration User Entry Component', () => {
       expect(env.component.fullName.value).toBe('User 01');
       env.setInputValue(env.nameInput, 'Updated Name');
       expect(env.component.email.value).toBe('user01@example.com');
+      expect(env.component.role.value).toBe('user');
       expect(env.component.activateStatus.value).toBe(true);
       env.clickElement(env.updateButton);
       verify(env.mockedUserService.onlineUpdateAttributes(anything(), anything())).once();

@@ -1,9 +1,9 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { instance, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from '../../notice.service';
-import { InviteAction, ProjectService } from '../../project.service';
+import { ProjectService } from '../../project.service';
 import { UICommonModule } from '../../ui-common.module';
 import { CollaboratorsComponent } from './collaborators.component';
 
@@ -20,21 +20,13 @@ describe('CollaboratorsComponent', () => {
     expect(env.component.inviteDisabled).toBe(false);
   }));
 
-  it('should display action messages', fakeAsync(() => {
+  it('should display notice', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTextFieldValue(env.emailInput, env.userInSFEmail);
+    env.setTextFieldValue(env.emailInput, 'user@example.com');
     env.clickButton(env.inviteButton);
-    verify(env.mockedProjectService.onlineInvite(env.userInSFEmail, 'project01')).once();
-    let message = 'An email has been sent to ' + env.userInSFEmail + ' adding them to this project.';
-    verify(env.mockedNoticeService.show(message)).once();
-    env.setTextFieldValue(env.emailInput, env.newUserEmail);
-    env.clickButton(env.inviteButton);
-    message = 'An invitation email has been sent to ' + env.newUserEmail + '.';
-    verify(env.mockedNoticeService.show(message)).once();
-    env.setTextFieldValue(env.emailInput, env.userInProjectEmail);
-    env.clickButton(env.inviteButton);
-    message = 'This user is already part of the project.';
-    verify(env.mockedNoticeService.show(message)).once();
+    verify(env.mockedProjectService.onlineInvite('project01', 'user@example.com')).once();
+    verify(env.mockedNoticeService.show(anything())).once();
+    expect().nothing();
   }));
 });
 
@@ -42,15 +34,13 @@ class TestEnvironment {
   fixture: ComponentFixture<CollaboratorsComponent>;
   component: CollaboratorsComponent;
 
-  newUserEmail = 'newuser@example.com';
-  userInSFEmail = 'userinscriptureforge@example.com';
-  userInProjectEmail = 'userinprojectemail@example.com';
-  mockedNoticeService: NoticeService = mock(NoticeService);
-  mockedProjectService: ProjectService = mock(ProjectService);
-  mockedActivatedRoute: ActivatedRoute = mock(ActivatedRoute);
+  mockedNoticeService = mock(NoticeService);
+  mockedProjectService = mock(ProjectService);
+  mockedActivatedRoute = mock(ActivatedRoute);
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    when(this.mockedProjectService.onlineInvite('project01', anything())).thenResolve();
     TestBed.configureTestingModule({
       declarations: [CollaboratorsComponent],
       imports: [UICommonModule],
@@ -61,7 +51,6 @@ class TestEnvironment {
       ]
     });
 
-    this.setupMockInviteActions();
     this.fixture = TestBed.createComponent(CollaboratorsComponent);
     this.component = this.fixture.componentInstance;
 
@@ -89,11 +78,5 @@ class TestEnvironment {
     inputElem.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();
     tick();
-  }
-
-  private setupMockInviteActions() {
-    when(this.mockedProjectService.onlineInvite(this.userInSFEmail, 'project01')).thenResolve(InviteAction.Joined);
-    when(this.mockedProjectService.onlineInvite(this.newUserEmail, 'project01')).thenResolve(InviteAction.Invited);
-    when(this.mockedProjectService.onlineInvite(this.userInProjectEmail, 'project01')).thenResolve(InviteAction.None);
   }
 }

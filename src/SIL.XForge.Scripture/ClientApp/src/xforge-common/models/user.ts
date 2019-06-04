@@ -7,12 +7,10 @@ export class User extends Resource {
 
   name?: string;
   email?: string;
-  canonicalEmail?: string;
-  emailMd5?: string;
-  googleId?: string;
   paratextId?: string;
   active?: boolean;
   avatarUrl?: string;
+  role?: string;
   mobilePhone?: string;
   contactMethod?: 'email' | 'sms' | 'emailSms';
   birthday?: Date;

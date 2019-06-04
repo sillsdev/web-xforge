@@ -14,7 +14,7 @@ using SIL.XForge.Configuration;
 
 namespace SIL.XForge.Services
 {
-    public class AuthService : DisposableBase
+    public class AuthService : DisposableBase, IAuthService
     {
         private readonly HttpClient _httpClient;
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);

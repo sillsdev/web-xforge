@@ -32,6 +32,10 @@ export class LocationService {
     return window.location.hash;
   }
 
+  get search(): string {
+    return window.location.search;
+  }
+
   go(url: string): void {
     window.location.href = url;
   }

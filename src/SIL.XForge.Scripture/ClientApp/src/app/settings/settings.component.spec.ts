@@ -1,7 +1,7 @@
 import { OverlayContainer } from '@angular-mdc/web';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, NgModule, NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
@@ -9,6 +9,7 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { MapQueryResults } from 'xforge-common/json-api.service';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
+import { ShareLevel } from 'xforge-common/models/share-config';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -137,7 +138,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject(
           new TestProject({
-            checkingConfig: { enabled: true, usersSeeEachOthersResponses: false, share: { viaEmail: false } },
+            checkingConfig: { enabled: true, usersSeeEachOthersResponses: false, share: { enabled: false } },
             translateConfig: { enabled: false, sourceParatextId: undefined }
           })
         );
@@ -161,7 +162,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject(
           new TestProject({
-            checkingConfig: { enabled: true, usersSeeEachOthersResponses: false, share: { viaEmail: false } },
+            checkingConfig: { enabled: true, usersSeeEachOthersResponses: false, share: { enabled: false } },
             translateConfig: { enabled: false, sourceParatextId: undefined }
           })
         );
@@ -180,7 +181,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject(
           new TestProject({
-            checkingConfig: { enabled: true, usersSeeEachOthersResponses: false, share: { viaEmail: false } },
+            checkingConfig: { enabled: true, usersSeeEachOthersResponses: false, share: { enabled: false } },
             translateConfig: { enabled: false, sourceParatextId: undefined }
           })
         );
@@ -209,11 +210,11 @@ describe('SettingsComponent', () => {
         expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
         expect(env.seeOthersResponsesCheckbox).toBeNull();
-        expect(env.shareViaEmailCheckbox).toBeNull();
+        expect(env.shareCheckbox).toBeNull();
         env.clickElement(env.inputElement(env.checkingCheckbox));
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
         expect(env.seeOthersResponsesCheckbox).toBeDefined();
-        expect(env.shareViaEmailCheckbox).toBeDefined();
+        expect(env.shareCheckbox).toBeDefined();
       }));
 
       it('changing state of checking option results in status icon', fakeAsync(() => {
@@ -225,9 +226,28 @@ describe('SettingsComponent', () => {
         env.clickElement(env.seeOthersResponsesCheckbox);
         expect(env.statusDone(env.seeOthersResponsesStatus)).toBeDefined();
 
-        expect(env.statusDone(env.shareViaEmailStatus)).toBeNull();
-        env.clickElement(env.shareViaEmailCheckbox);
-        expect(env.statusDone(env.shareViaEmailStatus)).toBeDefined();
+        expect(env.statusDone(env.shareStatus)).toBeNull();
+        env.clickElement(env.shareCheckbox);
+        expect(env.statusDone(env.shareStatus)).toBeDefined();
+      }));
+
+      it('share level should be disabled if share set to false', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject(
+          new TestProject({
+            checkingConfig: {
+              enabled: true,
+              usersSeeEachOthersResponses: false,
+              share: { enabled: true, level: ShareLevel.Anyone }
+            },
+            translateConfig: { enabled: false, sourceParatextId: undefined }
+          })
+        );
+        env.wait();
+
+        expect(env.component.form.controls.shareLevel.disabled).toEqual(false);
+        env.clickElement(env.inputElement(env.shareCheckbox));
+        expect(env.component.form.controls.shareLevel.disabled).toEqual(true);
       }));
     });
   });
@@ -237,7 +257,6 @@ describe('SettingsComponent', () => {
       const env = new TestEnvironment();
       expect(env.dangerZoneTitle.textContent).toContain('Danger Zone');
       expect(env.deleteProjectButton.textContent).toContain('Delete this project');
-      flush();
     }));
 
     it('should disable Delete button while loading', fakeAsync(() => {
@@ -324,13 +343,13 @@ class TestEnvironment {
       new MapQueryResults(
         new TestProject({
           id: 'project01',
-          checkingConfig: { enabled: false, usersSeeEachOthersResponses: false, share: { viaEmail: false } },
+          checkingConfig: { enabled: false, usersSeeEachOthersResponses: false, share: { enabled: false } },
           translateConfig: { enabled: true, sourceParatextId: 'paratextId01' }
         })
       )
     );
     when(this.mockedSFProjectService.onlineGet(anything())).thenReturn(this.project$);
-    when(this.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).thenCall(() => Promise.resolve());
+    when(this.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).thenResolve();
     when(this.mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(this.mockedUserService.updateCurrentProjectId(anything())).thenResolve();
     TestBed.configureTestingModule({
@@ -394,12 +413,12 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#see-others-responses-status'));
   }
 
-  get shareViaEmailCheckbox(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#checkbox-share-via-email'));
+  get shareCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-share'));
   }
 
-  get shareViaEmailStatus(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#share-via-email-status'));
+  get shareStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#share-status'));
   }
 
   get dangerZoneTitle(): HTMLElement {
@@ -474,9 +493,9 @@ class TestEnvironment {
 
   wait(): void {
     this.fixture.detectChanges();
-    flush();
+    tick();
     this.fixture.detectChanges();
-    flush();
+    tick();
   }
 
   setupProject(project: SFProject) {

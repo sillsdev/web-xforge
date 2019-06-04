@@ -15,7 +15,7 @@ const shareDBAccess = require('sharedb-access');
 ShareDB.types.register(richText.type);
 ShareDB.types.register(otJson0.type);
 
-const XF_USER_ID_CLAIM = 'http://xforge.org/useridentifier';
+const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 
 // This should stay in sync with the corresponding enum in "Models/Operation.cs".
 const Operation = {

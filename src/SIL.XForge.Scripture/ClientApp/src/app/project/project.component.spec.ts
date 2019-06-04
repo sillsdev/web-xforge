@@ -1,8 +1,7 @@
-import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-
 import { MapQueryResults } from 'xforge-common/json-api.service';
 import { UserRef } from 'xforge-common/models/user';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -19,8 +18,9 @@ describe('ProjectComponent', () => {
     const env = new TestEnvironment();
     env.setProjectData({ selectedTask: 'translate' });
     env.fixture.detectChanges();
-    flush();
+    tick();
 
+    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'text02']), anything())).once();
     expect().nothing();
   }));
@@ -29,8 +29,9 @@ describe('ProjectComponent', () => {
     const env = new TestEnvironment();
     env.setProjectData({ isTranslateEnabled: false });
     env.fixture.detectChanges();
-    flush();
+    tick();
 
+    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(env.mockedRouter.navigate(deepEqual(['./', 'checking', 'text01']), anything())).once();
     expect().nothing();
   }));
@@ -39,8 +40,9 @@ describe('ProjectComponent', () => {
     const env = new TestEnvironment();
     env.setProjectData({ isTranslateEnabled: false, hasTexts: false });
     env.fixture.detectChanges();
-    flush();
+    tick();
 
+    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(env.mockedRouter.navigate(anything(), anything())).never();
     expect().nothing();
   }));
@@ -49,8 +51,9 @@ describe('ProjectComponent', () => {
     const env = new TestEnvironment();
     env.setNoProjectData();
     env.fixture.detectChanges();
-    flush();
+    tick();
 
+    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(env.mockedRouter.navigate(anything(), anything())).never();
     expect().nothing();
   }));
@@ -59,22 +62,36 @@ describe('ProjectComponent', () => {
     const env = new TestEnvironment();
     env.setNoProjectUserData();
     env.fixture.detectChanges();
-    flush();
+    tick();
 
+    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(env.mockedRouter.navigate(anything(), anything())).never();
     expect().nothing();
   }));
 
   it('handle partial data', fakeAsync(() => {
     // Similar to SF-229
-
     const env = new TestEnvironment();
     env.setLimitedProjectUserData();
+
     expect(() => {
       env.fixture.detectChanges();
-      flush();
+      tick();
     }).not.toThrow();
+    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(env.mockedRouter.navigate(anything(), anything())).never();
+    expect().nothing();
+  }));
+
+  it('check sharing link', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setProjectData({ selectedTask: 'translate' });
+    env.setLinkSharing(true);
+    env.fixture.detectChanges();
+    tick();
+
+    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).once();
+    verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'text02']), anything())).once();
     expect().nothing();
   }));
 });
@@ -90,7 +107,12 @@ class TestEnvironment {
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    const snapshot = new ActivatedRouteSnapshot();
+    snapshot.queryParams = { sharing: 'true' };
+    when(this.mockedActivatedRoute.snapshot).thenReturn(snapshot);
     when(this.mockedUserService.currentUserId).thenReturn('user01');
+    when(this.mockedSFProjectService.onlineCheckLinkSharing('project01')).thenResolve();
+    this.setLinkSharing(false);
 
     TestBed.configureTestingModule({
       declarations: [ProjectComponent],
@@ -196,5 +218,11 @@ class TestEnvironment {
         )
       )
     );
+  }
+
+  setLinkSharing(enabled: boolean): void {
+    const snapshot = new ActivatedRouteSnapshot();
+    snapshot.queryParams = { sharing: enabled ? 'true' : undefined };
+    when(this.mockedActivatedRoute.snapshot).thenReturn(snapshot);
   }
 }
