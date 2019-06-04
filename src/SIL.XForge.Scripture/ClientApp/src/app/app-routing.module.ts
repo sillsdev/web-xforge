@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { MyAccountComponent } from 'xforge-common/my-account/my-account.component';
 import { SystemAdminAuthGuard } from 'xforge-common/system-admin-auth.guard';

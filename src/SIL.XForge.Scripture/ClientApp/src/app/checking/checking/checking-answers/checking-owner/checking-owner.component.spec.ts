@@ -81,6 +81,7 @@ class TestEnvironment {
     id: 'user01',
     email: 'user01@example.com',
     name: 'User 01',
+    role: 'user',
     active: true,
     dateCreated: '2019-01-01T12:00:00.000Z'
   });

@@ -45,9 +45,7 @@ namespace SIL.XForge.Services
                 {
                     Id = id,
                     Name = entity.Name,
-                    AvatarUrl = entity.AvatarUrl,
-                    EmailMd5 = entity.EmailMd5,
-                    GoogleId = entity.GoogleId
+                    AvatarUrl = entity.AvatarUrl
                 };
                 return resource;
             }
@@ -79,17 +77,14 @@ namespace SIL.XForge.Services
             if (filter.Attribute == "search")
             {
                 string value = filter.Value.ToLowerInvariant();
-                string email = UserEntity.CanonicalizeEmail(filter.Value);
                 return entities.Where(u => u.Name.ToLowerInvariant().Contains(value)
-                    || u.CanonicalEmail.Contains(email));
+                    || u.Email.ToLowerInvariant().Contains(value));
             }
             return base.ApplyFilter(entities, filter);
         }
 
         protected override Task<UserEntity> InsertEntityAsync(UserEntity entity)
         {
-            entity.CanonicalEmail = UserEntity.CanonicalizeEmail(entity.Email);
-            entity.EmailMd5 = UserEntity.HashEmail(entity.Email);
             entity.Sites = new Dictionary<string, Site>
             {
                 { _siteOptions.Value.Id, new Site() }
@@ -101,21 +96,12 @@ namespace SIL.XForge.Services
         {
             switch (name)
             {
-                case nameof(UserResource.Email):
-                    update.Set(u => u.Email, value);
-                    update.Set(u => u.CanonicalEmail, UserEntity.CanonicalizeEmail((string)value));
-                    update.Set(u => u.EmailMd5, UserEntity.HashEmail((string)value));
-                    break;
                 case nameof(UserResource.ParatextId):
                     if (value == null)
                     {
                         update.Unset(u => u.ParatextId);
                         update.Unset(u => u.ParatextTokens);
                     }
-                    break;
-                case nameof(UserResource.ContactMethod):
-                    Enum.TryParse((string)value, true, out UserEntity.ContactMethods method);
-                    update.Set(u => u.ContactMethod, method);
                     break;
                 case nameof(UserResource.Site):
                     SiteOptions siteOptions = _siteOptions.Value;

@@ -5,143 +5,131 @@
     <p>Select which tasks are available. At least one task must be selected.</p>
     <mdc-card class="card" outlined>
       <form [formGroup]="form">
-        <ng-container *ngIf="!isLoading && form.errors && form.errors.requireAtLeastOneWithValue">
+        <ng-container *ngIf="!isLoading && form.errors && form.errors['requireAtLeastOneWithValue']">
           <div class="card-content invalid-feedback">You must select at least one option</div>
           <mdc-list-divider></mdc-list-divider>
         </ng-container>
         <div class="card-content">
-          <div fxLayout="row" fxLayoutAlign="start center">
-            <mdc-form-field>
-              <mdc-checkbox formControlName="translate" id="checkbox-translate"></mdc-checkbox>
-              <label>Translate</label>
-            </mdc-form-field>
-            <app-write-status
-              fxFlex
-              fxLayoutAlign="start center"
-              class="status"
-              [state]="translateState"
-              [formGroup]="form"
-              id="translate-status"
-            ></app-write-status>
-          </div>
-          <div fxLayout="row" fxLayoutAlign="start center">
-            <div fxFlex="2.75rem" class="indent"></div>
-            <p fxFlex class="helper-text">
+          <div class="task-setting">
+            <div class="task-setting-field">
+              <mdc-form-field>
+                <mdc-checkbox formControlName="translate" id="checkbox-translate"></mdc-checkbox>
+                <label>Translate</label>
+              </mdc-form-field>
+              <app-write-status
+                [state]="getControlState('translate')"
+                [formGroup]="form"
+                id="translate-status"
+              ></app-write-status>
+            </div>
+            <div class="helper-text checkbox-helper-text">
               Collaborate with other translators working on the same text and use translation suggestions.
-            </p>
+            </div>
           </div>
-          <div
-            *ngIf="!isLoading && !isLoggedInToParatext"
-            fxLayout="row"
-            fxLayoutAlign="start center"
-            class="indented-field-row"
-          >
-            <div fxFlex="2.75rem" class="indent"></div>
+          <div *ngIf="!isLoading && !isLoggedInToParatext" class="paratext-login-container">
             <button class="action-button" mdc-button (click)="logInWithParatext()" id="btn-log-in-settings">
               <img src="/assets/paratext_logo.png" alt="Paratext Logo" class="paratext-logo" /> Log in to Paratext
             </button>
             <span class="more-options">to enable <b>Translate</b> and see more options</span>
           </div>
           <ng-container *ngIf="translate && isLoggedInToParatext">
-            <div fxLayout="row" fxLayoutAlign="start center" class="indented-field-row">
-              <div fxFlex="2.75rem" class="indent"></div>
-              <mdc-form-field>
-                <mdc-select placeholder="Based on" formControlName="sourceParatextId" id="based-on-select">
-                  <mdc-menu>
-                    <mdc-list>
-                      <mdc-list-item *ngFor="let project of sourceProjects" [value]="project.paratextId">
-                        {{ project.name }}
-                      </mdc-list-item>
-                    </mdc-list>
-                  </mdc-menu>
-                </mdc-select>
-              </mdc-form-field>
-              <app-write-status
-                fxFlex
-                fxLayoutAlign="start center"
-                class="status"
-                [state]="sourceParatextIdState"
-                [formGroup]="form"
-                id="based-on-status"
-              ></app-write-status>
-            </div>
-            <div fxLayout="row" fxLayoutAlign="start center">
-              <div fxFlex="2.75rem" class="indent"></div>
-              <p fxFlex class="helper-text helper-select">
+            <div class="task-setting indent">
+              <div class="task-setting-field">
+                <mdc-form-field>
+                  <mdc-select placeholder="Based on" formControlName="sourceParatextId" id="based-on-select">
+                    <mdc-menu>
+                      <mdc-list>
+                        <mdc-list-item *ngFor="let project of sourceProjects" [value]="project.paratextId">
+                          {{ project.name }}
+                        </mdc-list-item>
+                      </mdc-list>
+                    </mdc-menu>
+                  </mdc-select>
+                </mdc-form-field>
+                <app-write-status
+                  [state]="getControlState('sourceParatextId')"
+                  [formGroup]="form"
+                  id="based-on-status"
+                ></app-write-status>
+              </div>
+              <div class="helper-text select-helper-text">
                 If your Paratext project is a <b>Daughter Translation</b> or you would like to use your project as a
                 <b>Daughter Translation</b>, choose the project this translation is based on. This will enable a number
                 of features that can offer translation suggestions.
-              </p>
+              </div>
             </div>
           </ng-container>
         </div>
         <mdc-list-divider></mdc-list-divider>
         <div class="card-content">
-          <div fxLayout="row" fxLayoutAlign="start center">
-            <mdc-form-field>
-              <mdc-checkbox formControlName="checking" id="checkbox-community-checking"></mdc-checkbox>
-              <label>Community Checking</label>
-            </mdc-form-field>
-            <app-write-status
-              fxFlex
-              fxLayoutAlign="start center"
-              class="status"
-              [state]="checkingState"
-              [formGroup]="form"
-              id="checking-status"
-            ></app-write-status>
-          </div>
-          <div fxLayout="row" fxLayoutAlign="start center">
-            <div fxFlex="2.75rem" class="indent"></div>
-            <p fxFlex class="helper-text">
+          <div class="task-setting">
+            <div class="task-setting-field">
+              <mdc-form-field>
+                <mdc-checkbox formControlName="checking" id="checkbox-community-checking"></mdc-checkbox>
+                <label>Community Checking</label>
+              </mdc-form-field>
+              <app-write-status
+                [state]="getControlState('checking')"
+                [formGroup]="form"
+                id="checking-status"
+              ></app-write-status>
+            </div>
+            <div class="helper-text checkbox-helper-text">
               Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses,
               ask targeted questions, allow discussion of answers.
-            </p>
+            </div>
           </div>
           <ng-container *ngIf="checking">
-            <div fxLayout="row" fxLayoutAlign="start center" class="indented-field-row">
-              <div fxFlex="2.05rem" class="indent"></div>
-              <mdc-form-field>
-                <mdc-checkbox formControlName="seeOthersResponses" id="checkbox-see-others-responses"></mdc-checkbox>
-                <label>See other's answers and comments</label>
-              </mdc-form-field>
-              <app-write-status
-                fxFlex
-                fxLayoutAlign="start center"
-                class="status"
-                [state]="seeOthersResponsesState"
-                [formGroup]="form"
-                id="see-others-responses-status"
-              ></app-write-status>
-            </div>
-            <div fxLayout="row" fxLayoutAlign="start center">
-              <div fxFlex="4.8rem" class="indent"></div>
-              <p fxFlex class="helper-text">
+            <div class="task-setting indent">
+              <div class="task-setting-field">
+                <mdc-form-field>
+                  <mdc-checkbox formControlName="seeOthersResponses" id="checkbox-see-others-responses"></mdc-checkbox>
+                  <label>See other's answers and comments</label>
+                </mdc-form-field>
+                <app-write-status
+                  [state]="getControlState('seeOthersResponses')"
+                  [formGroup]="form"
+                  id="see-others-responses-status"
+                ></app-write-status>
+              </div>
+              <div class="helper-text checkbox-helper-text">
                 Users can see each other's answers and comments to interact with each other.
-              </p>
+              </div>
             </div>
-            <div fxLayout="row" fxLayoutAlign="start center" class="indented-field-row">
-              <div fxFlex="2.05rem" class="indent"></div>
-              <mdc-form-field>
-                <mdc-checkbox formControlName="shareViaEmail" id="checkbox-share-via-email"></mdc-checkbox>
-                <label>Share via email</label>
-              </mdc-form-field>
-              <app-write-status
-                fxFlex
-                fxLayoutAlign="start center"
-                class="status"
-                [state]="shareViaEmailState"
-                [formGroup]="form"
-                id="share-via-email-status"
-              ></app-write-status>
-            </div>
-            <div fxLayout="row" fxLayoutAlign="start center">
-              <div fxFlex="4.8rem" class="indent"></div>
-              <p fxFlex class="helper-text">
+            <div class="task-setting indent">
+              <div class="task-setting-field">
+                <mdc-form-field>
+                  <mdc-checkbox formControlName="share" id="checkbox-share"></mdc-checkbox>
+                  <label>Share</label>
+                </mdc-form-field>
+                <app-write-status
+                  [state]="getControlState('share')"
+                  [formGroup]="form"
+                  id="share-status"
+                ></app-write-status>
+              </div>
+              <div class="helper-text checkbox-helper-text">
                 Users can share by inviting a friend to join the project.<br />
                 <i>Administrator's</i> can always invite others to the project in
                 <a [routerLink]="['/projects', projectId, 'users']">Users</a>.
-              </p>
+              </div>
+              <mdc-radio-group id="share-level-radio-group" formControlName="shareLevel" class="task-setting indent">
+                <div class="task-setting-field">
+                  <mdc-form-field id="share-level-anyone-field">
+                    <mdc-radio id="radio-shareLevel-anyone" value="anyone"></mdc-radio>
+                    <label>Anyone with a link</label>
+                  </mdc-form-field>
+                  <mdc-form-field>
+                    <mdc-radio id="radio-shareLevel-specific" value="specific"></mdc-radio>
+                    <label>Specific people</label>
+                  </mdc-form-field>
+                  <app-write-status
+                    [state]="getControlState('shareLevel')"
+                    [formGroup]="form"
+                    id="shareLevel-status"
+                  ></app-write-status>
+                </div>
+              </mdc-radio-group>
             </div>
           </ng-container>
         </div>

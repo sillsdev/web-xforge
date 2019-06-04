@@ -43,11 +43,11 @@ namespace SIL.XForge.Scripture.CodeGenerator
             HandWrittenBaseClasses["ProjectUserResourceRef"] = "xforge-common/models/project-user";
             HandWrittenBaseClasses["ProjectDataResource"] = "xforge-common/models/project-data";
             HandWrittenBaseClasses["ProjectDataResourceRef"] = "xforge-common/models/project-data";
+            HandWrittenBaseClasses["ShareConfig"] = "xforge-common/models/share-config";
 
             TypeScriptInterfaces = new List<string>
             {
                 "CheckingConfig",
-                "CheckingConfigShare",
                 "TaskConfig",
                 "TranslateConfig",
                 "InputSystem",

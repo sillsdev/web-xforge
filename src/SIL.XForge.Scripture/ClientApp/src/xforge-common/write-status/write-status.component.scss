@@ -1,5 +1,10 @@
 @import '~src/global';
 
+:host {
+  display: flex;
+  align-items: center;
+}
+
 .check-icon {
   color: green;
 }

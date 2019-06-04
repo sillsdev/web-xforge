@@ -13,7 +13,7 @@ import { User } from './models/user';
 import { OrbitService } from './orbit-service';
 import { RealtimeService } from './realtime.service';
 
-const XF_USER_ID_CLAIM = 'http://xforge.org/useridentifier';
+const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 const XF_ROLE_CLAIM = 'http://xforge.org/role';
 
 interface AuthState {
@@ -127,7 +127,7 @@ export class AuthService {
     const userIdentity: RecordIdentity = { type: User.TYPE, id: this.currentUserId };
     if (secondaryId != null) {
       await this.jsonApiService.onlineInvoke(userIdentity, 'linkParatextAccount', { authId: secondaryId });
-    } else {
+    } else if (!environment.production) {
       await this.jsonApiService.onlineInvoke(userIdentity, 'pullAuthUserProfile');
     }
     if (state.returnUrl != null) {
@@ -152,8 +152,8 @@ export class AuthService {
       })
     );
 
-    this.refreshSubscription = expiresIn$.subscribe(() => {
-      this.renewTokens();
+    this.refreshSubscription = expiresIn$.subscribe(async () => {
+      await this.renewTokens();
       this.scheduleRenewal();
     });
   }

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NoticeService } from '../../notice.service';
-import { InviteAction, ProjectService } from '../../project.service';
+import { ProjectService } from '../../project.service';
 import { SubscriptionDisposable } from '../../subscription-disposable';
 import { XFValidators } from '../../xfvalidators';
 
@@ -41,17 +41,8 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
   async onInvite(): Promise<void> {
     this.inviteButtonClicked = true;
     const email = this.userInviteForm.value.email;
-    const action = await this.projectService.onlineInvite(email, this.projectId);
-    if (action === InviteAction.Invited) {
-      const message = 'An invitation email has been sent to ' + email + '.';
-      this.noticeService.show(message);
-    } else if (action === InviteAction.Joined) {
-      const message = 'An email has been sent to ' + email + ' adding them to this project.';
-      this.noticeService.show(message);
-    } else if (action === InviteAction.None) {
-      const message = 'This user is already part of the project.';
-      this.noticeService.show(message);
-    }
+    await this.projectService.onlineInvite(this.projectId, email);
+    this.noticeService.show('An invitation email has been sent to ' + email);
     this.userInviteForm.reset();
     this.inviteButtonClicked = false;
   }

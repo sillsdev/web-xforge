@@ -1,20 +1,15 @@
 import { Record } from '@orbit/data';
 import { clone } from '@orbit/utils';
 import { combineLatest, Observable } from 'rxjs';
-import { debounceTime, distinctUntilChanged, first, map, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, first, switchMap } from 'rxjs/operators';
 import { registerCustomFilter } from './custom-filter-specifier';
 import { GetAllParameters, JsonApiService, QueryObservable } from './json-api.service';
 import { InputSystem } from './models/input-system';
 import { Project } from './models/project';
 import { NONE_ROLE, ProjectRole } from './models/project-role';
+import { ShareConfig } from './models/share-config';
 import { ResourceService } from './resource.service';
 import { nameof } from './utils';
-
-export enum InviteAction {
-  None = 'none',
-  Joined = 'joined',
-  Invited = 'invited'
-}
 
 export abstract class ProjectService<T extends Project = Project> extends ResourceService {
   private static readonly SEARCH_FILTER = 'search';
@@ -39,6 +34,8 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
   get(id: string, include?: string[][]): QueryObservable<T> {
     return this.jsonApiService.get<T>(this.identity(id), include);
   }
+
+  abstract getShareConfig(id: string): Observable<ShareConfig>;
 
   onlineUpdateAttributes(id: string, attrs: Partial<T>): Promise<T> {
     return this.jsonApiService.onlineUpdateAttributes(this.identity(id), attrs);
@@ -69,8 +66,12 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
     );
   }
 
-  onlineInvite(email: string, id: string): Promise<InviteAction> {
+  onlineInvite(id: string, email: string): Promise<void> {
     return this.jsonApiService.onlineInvoke(this.identity(id), 'invite', { email });
+  }
+
+  onlineCheckLinkSharing(id: string): Promise<void> {
+    return this.jsonApiService.onlineInvoke(this.identity(id), 'checkLinkSharing');
   }
 
   onlineGet(id: string, include?: string[][]): QueryObservable<T> {

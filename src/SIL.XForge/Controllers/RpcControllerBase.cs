@@ -46,5 +46,10 @@ namespace SIL.XForge.Controllers
                 "The specified user does not have permission to perform this operation"
             );
         }
+
+        protected IRpcMethodResult InvalidParamsError()
+        {
+            return Error((int)RpcErrorCode.InvalidParams);
+        }
     }
 }

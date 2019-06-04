@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
 using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Configuration;
@@ -13,31 +14,44 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Controllers
 {
+    /// <summary>
+    /// This is the controller for all JSON-RPC commands on user resources.
+    /// </summary>
     public class UsersRpcController : RpcControllerBase
     {
         private readonly IRepository<UserEntity> _users;
         private readonly IOptions<SiteOptions> _siteOptions;
-        private readonly AuthService _authService;
+        private readonly IAuthService _authService;
+        private readonly IHostingEnvironment _hostingEnv;
 
         public UsersRpcController(IUserAccessor userAccessor, IHttpRequestAccessor httpRequestAccessor,
-            IRepository<UserEntity> users, IOptions<SiteOptions> siteOptions, AuthService authService)
+            IRepository<UserEntity> users, IOptions<SiteOptions> siteOptions, IAuthService authService,
+            IHostingEnvironment hostingEnv)
             : base(userAccessor, httpRequestAccessor)
         {
             _users = users;
             _siteOptions = siteOptions;
             _authService = authService;
+            _hostingEnv = hostingEnv;
         }
 
+        /// <summary>
+        /// Updates the user entity from the specified Auth0 user profile. Auth0 calls this command from a rule.
+        /// </summary>
         [Authorize(AuthenticationSchemes = BasicAuthenticationDefaults.AuthenticationScheme)]
-        public async Task<IRpcMethodResult> PushAuthUserProfile(JObject userProfile)
+        public Task PushAuthUserProfile(JObject userProfile)
         {
-            await UpdateUserFromProfile(userProfile);
-            return Ok();
+            return UpdateUserFromProfile(userProfile);
         }
 
+        /// <summary>
+        /// Updates the current user's entity from the user's corresponding Auth0 profile. This command is used instead
+        /// of <see cref="PushAuthUserProfile"/> in development environments, because Auth0 rules cannot call a local
+        /// development machine.
+        /// </summary>
         public async Task<IRpcMethodResult> PullAuthUserProfile()
         {
-            if (ResourceId != User.UserId)
+            if (ResourceId != User.UserId || !_hostingEnv.IsDevelopment())
                 return ForbiddenError();
 
             JObject userProfile = await _authService.GetUserAsync(User.AuthId);
@@ -45,16 +59,19 @@ namespace SIL.XForge.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Links
+        /// </summary>
         public async Task<IRpcMethodResult> LinkParatextAccount(string authId)
         {
             if (ResourceId != User.UserId)
                 return ForbiddenError();
 
             await _authService.LinkAccounts(User.AuthId, authId);
-            JObject userObj = await _authService.GetUserAsync(User.AuthId);
-            var identities = (JArray)userObj["identities"];
+            JObject userProfile = await _authService.GetUserAsync(User.AuthId);
+            var identities = (JArray)userProfile["identities"];
             JObject ptIdentity = identities.OfType<JObject>()
-                .FirstOrDefault(i => (string)i["connection"] == "paratext");
+                .First(i => (string)i["connection"] == "paratext");
             var ptId = (string)ptIdentity["user_id"];
             var ptTokens = new Tokens
             {
@@ -67,39 +84,41 @@ namespace SIL.XForge.Controllers
             return Ok();
         }
 
-        private Task UpdateUserFromProfile(JObject userProfile)
+        private async Task UpdateUserFromProfile(JObject userProfile)
         {
-            return _users.UpdateAsync(ResourceId, update =>
+            var identities = (JArray)userProfile["identities"];
+            JObject ptIdentity = identities.OfType<JObject>()
+                .FirstOrDefault(i => (string)i["connection"] == "paratext");
+            string ptId = null;
+            Tokens ptTokens = null;
+            if (ptIdentity != null)
+            {
+                ptId = (string)ptIdentity["user_id"];
+                ptTokens = new Tokens
+                {
+                    AccessToken = (string)ptIdentity["access_token"],
+                    RefreshToken = (string)ptIdentity["refresh_token"]
+                };
+            }
+            UserEntity user = await _users.UpdateAsync(ResourceId, update =>
                 {
                     update.Set(u => u.Name, (string)userProfile["name"]);
-                    var email = (string)userProfile["email"];
-                    update.Set(u => u.Email, email);
-                    update.Set(u => u.CanonicalEmail, UserEntity.CanonicalizeEmail(email));
-                    update.Set(u => u.EmailMd5, UserEntity.HashEmail(email));
+                    update.Set(u => u.Email, (string)userProfile["email"]);
                     update.Set(u => u.AvatarUrl, (string)userProfile["picture"]);
-                    var identities = (JArray)userProfile["identities"];
-                    foreach (JObject identity in identities)
-                    {
-                        switch ((string)identity["connection"])
-                        {
-                            case "google-oauth2":
-                                update.Set(u => u.GoogleId, (string)identity["user_id"]);
-                                break;
-                            case "paratext":
-                                var ptId = (string)identity["user_id"];
-                                update.Set(u => u.ParatextId, ptId.Split('|')[1]);
-                                update.Set(u => u.ParatextTokens, new Tokens
-                                {
-                                    AccessToken = (string)identity["access_token"],
-                                    RefreshToken = (string)identity["refresh_token"]
-                                });
-                                break;
-                        }
-                    }
-                    update.Set(u => u.Sites[_siteOptions.Value.Id].LastLogin, (DateTime)userProfile["last_login"]);
-                    update.SetOnInsert(u => u.AuthId, User.AuthId);
+                    update.Set(u => u.Role, (string)userProfile["app_metadata"]["xf_role"]);
+                    if (ptId != null)
+                        update.Set(u => u.ParatextId, ptId.Split('|')[1]);
+                    if (ptTokens != null)
+                        update.SetOnInsert(u => u.ParatextTokens, ptTokens);
+                    string key = _siteOptions.Value.Id;
+                    update.Set(u => u.Sites[key].LastLogin, DateTime.UtcNow);
+                    update.SetOnInsert(u => u.AuthId, (string)userProfile["user_id"]);
                     update.SetOnInsert(u => u.Active, true);
                 }, true);
+
+            // only update the PT tokens if they are newer
+            if (ptTokens != null && (user.ParatextTokens == null || ptTokens.IssuedAt > user.ParatextTokens.IssuedAt))
+                await _users.UpdateAsync(ResourceId, update => update.Set(u => u.ParatextTokens, ptTokens));
         }
     }
 }

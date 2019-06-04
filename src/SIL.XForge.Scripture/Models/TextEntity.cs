@@ -36,6 +36,6 @@ namespace SIL.XForge.Scripture.Models
 
         public string Name { get; set; }
         public string BookId { get; set; }
-        public List<Chapter> Chapters { get; protected set; } = new List<Chapter>();
+        public List<Chapter> Chapters { get; set; } = new List<Chapter>();
     }
 }

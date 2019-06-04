@@ -52,7 +52,7 @@ export class SaUserEntryComponent implements OnInit {
     this.accountUserForm = this.formBuilder.group({
       fullName: ['', Validators.compose([Validators.required])],
       email: ['', Validators.compose([Validators.required, Validators.email, Validators.pattern(this.emailPattern)])],
-      role: [''],
+      role: ['', Validators.compose([Validators.required])],
       activateStatus: []
     });
   }
@@ -119,6 +119,7 @@ export class SaUserEntryComponent implements OnInit {
     const newUser: Partial<User> = {
       name: this.accountUserForm.value.fullName,
       email: this.accountUserForm.value.email,
+      role: this.accountUserForm.value.role,
       active: true
     };
     try {
@@ -144,6 +145,7 @@ export class SaUserEntryComponent implements OnInit {
     const updateUser: Partial<User> = {
       name: this.accountUserForm.value.fullName,
       email: this.accountUserForm.value.email,
+      role: this.accountUserForm.value.role,
       active: this.accountUserForm.value.activateStatus
     };
     try {
@@ -175,6 +177,7 @@ export class SaUserEntryComponent implements OnInit {
         this.accountUserForm.patchValue({
           fullName: response.data.name,
           email: response.data.email,
+          role: response.data.role,
           activateStatus: response.data.active
         });
         if (

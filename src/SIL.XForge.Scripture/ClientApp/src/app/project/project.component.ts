@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { from, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
-
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
@@ -30,6 +30,15 @@ export class ProjectComponent extends SubscriptionDisposable implements OnInit {
         map(params => params['projectId'] as string),
         distinctUntilChanged(),
         filter(projectId => projectId != null),
+        switchMap(projectId => {
+          // if the link has sharing turned on, check if the current user needs to be added to the project
+          const sharing = this.route.snapshot.queryParams['sharing'] as string;
+          if (sharing === 'true') {
+            return from(this.projectService.onlineCheckLinkSharing(projectId)).pipe(map(() => projectId));
+          } else {
+            return of(projectId);
+          }
+        }),
         switchMap(projectId =>
           this.projectService.get(projectId, [[nameof<SFProject>('users')], [nameof<SFProject>('texts')]])
         )

@@ -19,6 +19,7 @@ using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -127,12 +128,19 @@ namespace SIL.XForge.Scripture.Services
             return projects;
         }
 
-        public async Task<string> GetProjectRoleAsync(UserEntity user, string paratextId)
+        public async Task<Attempt<string>> TryGetProjectRoleAsync(UserEntity user, string paratextId)
         {
-            string response = await CallApiAsync(_registryClient, user, HttpMethod.Get,
-                $"projects/{paratextId}/members/{user.ParatextId}");
-            var memberObj = JObject.Parse(response);
-            return (string)memberObj["role"];
+            try
+            {
+                string response = await CallApiAsync(_registryClient, user, HttpMethod.Get,
+                    $"projects/{paratextId}/members/{user.ParatextId}");
+                var memberObj = JObject.Parse(response);
+                return Attempt.Success((string)memberObj["role"]);
+            }
+            catch (HttpRequestException)
+            {
+                return Attempt.Failure((string)null);
+            }
         }
 
         public string GetParatextUsername(UserEntity user)
@@ -182,7 +190,7 @@ namespace SIL.XForge.Scripture.Services
             user.ParatextTokens = new Tokens
             {
                 AccessToken = (string)responseObj["access_token"],
-                RefreshToken = (string)responseObj["refresh_token"]
+                RefreshToken = (string)responseObj["refresh_token"],
             };
             await _users.UpdateAsync(user, b => b.Set(u => u.ParatextTokens, user.ParatextTokens));
         }
@@ -193,7 +201,7 @@ namespace SIL.XForge.Scripture.Services
             if (user.ParatextTokens?.AccessToken == null)
                 throw new SecurityException("The current user is not signed into Paratext.");
 
-            bool expired = IsAccessTokenExpired(user);
+            bool expired = !user.ParatextTokens.ValidateLifetime();
             bool refreshed = false;
             while (!refreshed)
             {
@@ -226,13 +234,6 @@ namespace SIL.XForge.Scripture.Services
             }
 
             throw new SecurityException("The current user's Paratext access token is invalid.");
-        }
-
-        private static bool IsAccessTokenExpired(UserEntity user)
-        {
-            var accessToken = new JwtSecurityToken(user.ParatextTokens.AccessToken);
-            var now = DateTime.UtcNow;
-            return now < accessToken.ValidFrom || now > accessToken.ValidTo;
         }
 
         protected override void DisposeManagedResources()

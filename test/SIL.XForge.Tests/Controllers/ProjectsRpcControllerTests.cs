@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using NUnit.Framework;
-using JsonApiDotNetCore.Internal;
 using EdjCase.JsonRpc.Core;
 using EdjCase.JsonRpc.Router.Defaults;
 using SIL.XForge.Configuration;
@@ -18,146 +17,69 @@ namespace SIL.XForge.Controllers
     [TestFixture]
     public class ProjectsRpcControllerTests
     {
-        private const string project01Id = "project01";
-        private const string project02Id = "project02";
-        private const string user01Id = "user01";
-        private const string user02Id = "user02";
+        private const string Project01 = "project01";
+        private const string Project02 = "project02";
+        private const string Project03 = "project03";
+        private const string User01 = "user01";
+        private const string User02 = "user02";
 
         [Test]
-        public async Task SendInvite_NoUser_InvitedEmail()
+        public async Task Invite_ProjectAdminSharingDisabled_UserInvited()
         {
             var env = new TestEnvironment();
-            env.SetUser(user01Id, SystemRoles.User);
-            env.SetProject(project01Id);
-            const string email = "abc1@example.com";
-            Assert.That(env.Users.Query().Any(x => x.Email == email), Is.False);
-            UserEntity invitedUser = env.Users.Query().FirstOrDefault(u => u.Email == email);
-            Assert.IsNull(invitedUser);
-            ProjectUserEntity[] projectUsers = env.Projects.Query()
-                .FirstOrDefault(p => p.Id == project01Id).Users.ToArray();
-            Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] { user01Id, user02Id }));
-
-            RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
-
-            Assert.That(env.Users.Query().Any(x => x.Email == email), Is.True);
-            Assert.That(result.ReturnObject, Is.EqualTo("invited"));
-            string subject = "You've been invited to the project Project 1 on xForge";
-            // Skip verification for the body, we may change the content
-            await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Is(subject), Arg.Any<string>());
-            invitedUser = env.Users.Query().First(u => u.Email == email);
-            projectUsers = env.Projects.Query().FirstOrDefault(p => p.Id == project01Id).Users.ToArray();
-            Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] {
-                user01Id,
-                user02Id,
-                invitedUser.Id
-            }));
-        }
-
-        [Test]
-        public async Task SendInvite_NoUser_UserCreatedWithEmailMd5()
-        {
-            var env = new TestEnvironment();
-            env.SetUser(user01Id, SystemRoles.User);
-            env.SetProject(project01Id);
-            ProjectUserEntity[] projectUsers = env.Projects.Query()
-                .FirstOrDefault(p => p.Id == project01Id).Users.ToArray();
-            Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] { user01Id, user02Id }));
-
-            string email = "newuser01@example.com";
-            RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
-            Assert.That(result.ReturnObject, Is.EqualTo("invited"));
-            UserEntity invitedUser = env.Users.Query().First(u => u.Email == email);
-            Assert.That(invitedUser.EmailMd5, Is.Not.Null);
-            Assert.That(invitedUser.VerifyEmailMd5(UserEntity.HashEmail(UserEntity.CanonicalizeEmail(email))), Is.True);
-        }
-
-        [Test]
-        public async Task SendInvite_UserNoProjects_JoinedEmail()
-        {
-            var env = new TestEnvironment();
-            env.SetUser(user01Id, SystemRoles.User);
-            env.SetProject(project01Id);
-            const string email = "userwithoutprojects@example.com";
-            env.Users.Add(new[]
-                {
-                    new UserEntity
-                    {
-                        Id = "userwithoutprojects",
-                        Email = email,
-                        CanonicalEmail = email
-                    }
-                });
-            Assert.That(env.Users.Query().Any(x => x.Email == email), Is.True);
-            ProjectUserEntity[] projectUsers = env.Projects.Query()
-                .FirstOrDefault(p => p.Id == project01Id).Users.ToArray();
-            Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] { user01Id, user02Id }));
-
-            RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
-
-            Assert.That(env.Users.Query().Any(x => x.Email == email), Is.True);
-            Assert.That(result.ReturnObject, Is.EqualTo("joined"));
-            string subject = "You've been added to the project Project 1 on xForge";
-            // Skip verification for the body, we may change the content
-            await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Is(subject), Arg.Any<string>());
-            projectUsers = env.Projects.Query().FirstOrDefault(p => p.Id == project01Id).Users.ToArray();
-            Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] {
-                user01Id,
-                user02Id,
-                "userwithoutprojects"
-            }));
-        }
-
-        [Test]
-        public async Task SendInvite_UserInProject_NoneResult()
-        {
-            var env = new TestEnvironment();
-            env.SetUser(user01Id, SystemRoles.User);
-            env.SetProject(project01Id);
-            ProjectUserEntity[] projectUsers = env.Projects.Query()
-                .FirstOrDefault(p => p.Id == project01Id).Users.ToArray();
-            Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] { user01Id, user02Id }));
-
-            UserEntity user02 = env.Users.Query().FirstOrDefault(u => u.Id == user02Id);
-            RpcMethodSuccessResult result = await env.Controller.Invite(user02.Email) as RpcMethodSuccessResult;
-
-            Assert.That(result.ReturnObject, Is.EqualTo("none"));
-            projectUsers = env.Projects.Query().FirstOrDefault(p => p.Id == project01Id).Users.ToArray();
-            Assert.That(projectUsers.Select(pu => pu.UserRef), Is.EquivalentTo(new[] { user01Id, user02Id }));
-        }
-
-        [Test]
-        public async Task SendInvite_ProjectAdminInviteDisabled_UserInvited()
-        {
-            var env = new TestEnvironment();
-            env.SetUser(user01Id, SystemRoles.User);
-            env.SetProject(project02Id);
+            env.SetUser(User01, SystemRoles.User);
+            env.SetProject(Project01);
             const string email = "newuser@example.com";
             RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
-            Assert.That(result.ReturnObject, Is.EqualTo("invited"));
+            Assert.That(result, Is.Not.Null);
         }
 
         [Test]
-        public async Task SendInvite_InviteEnabled_UserInvited()
+        public async Task Invite_LinkSharingEnabled_UserInvited()
         {
             var env = new TestEnvironment();
-            env.SetUser(user01Id, SystemRoles.User);
-            env.SetProject(project02Id);
+            env.SetUser(User01, SystemRoles.User);
+            env.SetProject(Project02);
             const string email = "newuser@example.com";
             RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
-            Assert.That(result.ReturnObject, Is.EqualTo("invited"));
+            Assert.That(result, Is.Not.Null);
+            await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
+                Arg.Is<string>(body => body.Contains($"http://localhost/projects/{Project02}?sharing=true")));
         }
 
         [Test]
-        public async Task SendInvite_InviteDisabled_ForbiddenException()
+        public async Task Invite_SharingDisabled_ForbiddenError()
         {
             var env = new TestEnvironment();
-            env.SetUser(user02Id, SystemRoles.User);
-            env.SetProject(project02Id);
+            env.SetUser(User02, SystemRoles.User);
+            env.SetProject(Project01);
             const string email = "newuser@example.com";
             RpcMethodErrorResult result = await env.Controller.Invite(email) as RpcMethodErrorResult;
             Assert.That(result.ErrorCode, Is.EqualTo((int)RpcErrorCode.InvalidRequest),
-                "The user should have been forbidden to invite other users"
-            );
+                "The user should be forbidden from inviting other users");
+        }
+
+        [Test]
+        public async Task CheckLinkSharing_LinkSharingDisabled_ForbiddenError()
+        {
+            var env = new TestEnvironment();
+            env.SetUser(User02, SystemRoles.User);
+            env.SetProject(Project03);
+            RpcMethodErrorResult result = await env.Controller.CheckLinkSharing() as RpcMethodErrorResult;
+            Assert.That(result.ErrorCode, Is.EqualTo((int)RpcErrorCode.InvalidRequest),
+                "The user should be forbidden to join the project");
+        }
+
+        [Test]
+        public async Task CheckLinkSharing_LinkSharingEnabled_UserJoined()
+        {
+            var env = new TestEnvironment();
+            env.SetUser(User02, SystemRoles.User);
+            env.SetProject(Project02);
+            RpcMethodSuccessResult result = await env.Controller.CheckLinkSharing() as RpcMethodSuccessResult;
+            Assert.That(result, Is.Not.Null);
+            TestProjectEntity project = env.Projects.Get(Project02);
+            Assert.That(project.Users.Any(pu => pu.UserRef == User02), Is.True);
         }
 
         private class TestEnvironment
@@ -172,69 +94,86 @@ namespace SIL.XForge.Controllers
                 {
                     new TestProjectEntity
                     {
-                        Id = project01Id,
+                        Id = Project01,
                         ProjectName = "Project 1",
                         Users = {
                             new TestProjectUserEntity {
                                 Id = "projectuser01",
-                                UserRef = user01Id,
-                                ProjectRef = project01Id,
+                                UserRef = User01,
+                                ProjectRef = Project01,
                                 Role = TestProjectRoles.Administrator
                             },
                             new TestProjectUserEntity {
                                 Id = "projectuser02",
-                                UserRef = user02Id,
-                                ProjectRef = project01Id,
+                                UserRef = User02,
+                                ProjectRef = Project01,
                                 Role = TestProjectRoles.Reviewer
+                            }
+                        },
+                        CheckingConfig = new TestCheckingConfig {
+                            Enabled = true,
+                            Share = new ShareConfig
+                            {
+                                Enabled = false
                             }
                         }
                     },
                     new TestProjectEntity
                     {
-                        Id = project02Id,
+                        Id = Project02,
                         ProjectName = "Project 2",
                         Users = {
                             new TestProjectUserEntity {
                                 Id = "projectuser03",
-                                UserRef = user01Id,
-                                ProjectRef = project02Id,
+                                UserRef = User01,
+                                ProjectRef = Project02,
                                 Role = TestProjectRoles.Administrator
-                            },
-                            new TestProjectUserEntity {
-                                Id = "projectuser04",
-                                UserRef = user02Id,
-                                ProjectRef = project02Id,
-                                Role = TestProjectRoles.Reviewer
                             }
                         },
                         CheckingConfig = new TestCheckingConfig {
-                            Share = new TestCheckingConfigShare
+                            Enabled = true,
+                            Share = new ShareConfig
                             {
-                                Enabled = false,
-                                ViaEmail = false
+                                Enabled = true,
+                                Level = ShareLevel.Anyone
+                            }
+                        }
+                    },
+                    new TestProjectEntity
+                    {
+                        Id = Project03,
+                        ProjectName = "Project 3",
+                        Users = {
+                            new TestProjectUserEntity {
+                                Id = "projectuser05",
+                                UserRef = User01,
+                                ProjectRef = Project02,
+                                Role = TestProjectRoles.Administrator
+                            }
+                        },
+                        CheckingConfig = new TestCheckingConfig {
+                            Enabled = true,
+                            Share = new ShareConfig
+                            {
+                                Enabled = true,
+                                Level = ShareLevel.Specific
                             }
                         }
                     }
                 });
 
                 Users = new MemoryRepository<UserEntity>(
-                    uniqueKeySelectors: new Func<UserEntity, object>[]
-                    {
-                        u => u.CanonicalEmail
-                    },
                     entities: new[]
                     {
                         new UserEntity
                         {
-                            Id = user01Id,
-                            Email = "user01@example.com",
-                            CanonicalEmail = "user01@example.com"
+                            Id = User01,
+                            Email = "user01@example.com"
                         },
                         new UserEntity
                         {
-                            Id = user02Id,
-                            Email = "user02@example.com",
-                            CanonicalEmail = "user02@example.com"
+                            Id = User02,
+                            Email = "user02@example.com"
                         }
                     });
                 var options = Substitute.For<IOptions<SiteOptions>>();
@@ -255,7 +194,7 @@ namespace SIL.XForge.Controllers
             {
                 UserAccessor.IsAuthenticated.Returns(true);
                 UserAccessor.UserId.Returns(userId);
-                UserAccessor.SystemRole.Returns(role);
+                UserAccessor.Role.Returns(role);
             }
 
             public void SetProject(string projectId)

@@ -1,41 +1,64 @@
 @import '~src/global';
 
 .card-content {
-  padding: 1rem;
+  padding: 16px;
+}
+
+.task-setting {
+  display: flex;
+  flex-direction: column;
+  &.indent {
+    margin-top: 16px;
+    margin-left: 34px;
+  }
+
+  > .task-setting-field {
+    display: flex;
+
+    > app-write-status {
+      margin-left: 32px;
+    }
+  }
+
+  > .helper-text {
+    color: var(--mdc-theme-text-hint-on-background);
+    &.checkbox-helper-text {
+      margin: 0 0 0 44px;
+    }
+
+    &.select-helper-text {
+      margin-top: 16px;
+    }
+  }
+}
+
+#share-level-anyone-field {
+  margin-right: 20px;
 }
 
 #btn-log-in-settings {
   background-color: $pt-button-green;
   color: white;
-  height: 2.5rem;
+  height: 40px;
 }
 
-.paratext-logo {
-  width: 2rem;
-  height: 2rem;
-  margin-right: 0.5rem;
-}
+.paratext-login-container {
+  margin-top: 16px;
+  margin-left: 44px;
 
-p.helper-select,
-.indented-field-row {
-  margin-top: 1rem;
-}
+  .paratext-logo {
+    width: 32px;
+    height: 32px;
+    margin-right: 8px;
+  }
 
-.helper-text {
-  color: var(--mdc-theme-text-hint-on-background);
-  margin: 0;
-}
-
-.more-options {
-  margin-left: 1rem;
+  > .more-options {
+    margin-left: 16px;
+  }
 }
 
 .invalid-feedback {
   color: var(--mdc-theme-error);
-}
-
-.status {
-  margin-left: 2rem;
 }
 
 #delete-project {

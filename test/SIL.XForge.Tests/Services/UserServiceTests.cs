@@ -65,90 +65,6 @@ namespace SIL.XForge.Services
         }
 
         [Test]
-        public async Task CreateAsync_Email()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.SystemAdmin);
-                string email = "UserNew@example.com ";
-
-                var userResource = new UserResource
-                {
-                    Id = "usernew",
-                    Email = email
-                };
-                UserResource newResource = await env.Service.CreateAsync(userResource);
-
-                Assert.That(newResource, Is.Not.Null);
-                Assert.That(newResource.Email, Is.EqualTo("UserNew@example.com "));
-                Assert.That(newResource.CanonicalEmail, Is.EqualTo("usernew@example.com"));
-                UserEntity newUser = await env.Service.GetEntityAsync(newResource.Id);
-                Assert.That(newUser.VerifyEmailMd5(UserEntity.HashEmail(UserEntity.CanonicalizeEmail(email))),
-                    Is.True
-                );
-            }
-        }
-
-        [Test]
-        public void CreateAsync_Email_Conflict()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.SystemAdmin);
-
-                var userResource = new UserResource
-                {
-                    Id = "usernew",
-                    Email = User01Email
-                };
-                var exc = Assert.ThrowsAsync<JsonApiException>(() => env.Service.CreateAsync(userResource));
-                Assert.That(exc.GetStatusCode(), Is.EqualTo(StatusCodes.Status409Conflict));
-            }
-        }
-
-        [Test]
-        public async Task CreateAsync_ContactMethod()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.SystemAdmin);
-
-                var userResource = new UserResource
-                {
-                    Id = "usernew",
-                    Email = "usernew@example.com",
-                    MobilePhone = "+1 234 567 8900",
-                    ContactMethod = "sms"
-                };
-                UserResource newResource = await env.Service.CreateAsync(userResource);
-
-                Assert.That(newResource, Is.Not.Null);
-                Assert.That(newResource.ContactMethod, Is.EqualTo(UserEntity.ContactMethods.sms.ToString()));
-            }
-        }
-
-        [Test]
-        public async Task CreateAsync_ContactMethod_Default()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.SystemAdmin);
-
-                var userResource = new UserResource
-                {
-                    Id = "usernew",
-                    Email = "usernew@example.com",
-                    MobilePhone = "+1 234 567 8900"
-                };
-                UserResource newResource = await env.Service.CreateAsync(userResource);
-
-                Assert.That(newResource, Is.Not.Null);
-                Assert.That(newResource.ContactMethod, Is.EqualTo(UserEntity.ContactMethods.email.ToString()),
-                    "should be default");
-            }
-        }
-
-        [Test]
         public async Task UpdateAsync_UserRole()
         {
             using (var env = new TestEnvironment())
@@ -208,90 +124,6 @@ namespace SIL.XForge.Services
 
                 Assert.That(updatedResource, Is.Not.Null);
                 Assert.That(updatedResource.AvatarUrl, Is.EqualTo("newUrl"));
-            }
-        }
-
-        [Test]
-        public async Task UpdateAsync_Email()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.SystemAdmin);
-                UserEntity initialEntity = await env.Service.GetEntityAsync(User01Id);
-                Assert.That(initialEntity.CanonicalEmail, Is.Not.EqualTo("new@example.com"));
-
-                env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
-                    {
-                        { env.GetAttribute("email"), "New@example.com " }
-                    });
-                env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
-
-                string email = "New@example.com ";
-                var resource = new UserResource
-                {
-                    Id = User01Id,
-                    Email = email
-                };
-                UserResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
-
-                Assert.That(updatedResource, Is.Not.Null);
-                Assert.That(updatedResource.Email, Is.EqualTo("New@example.com "));
-                Assert.That(updatedResource.CanonicalEmail, Is.EqualTo("new@example.com"));
-                UserEntity updatedEntity = await env.Service.GetEntityAsync(resource.Id);
-                Assert.That(updatedEntity.VerifyEmailMd5(UserEntity.HashEmail(UserEntity.CanonicalizeEmail(email))),
-                    Is.True
-                );
-            }
-        }
-
-        [Test]
-        public void UpdateAsync_Email_Conflict()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.SystemAdmin);
-                env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
-                    {
-                        { env.GetAttribute("email"), User01Email }
-                    });
-                env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
-
-                var resource = new UserResource
-                {
-                    Id = User02Id,
-                    Email = User01Email
-                };
-
-                var exception = Assert.ThrowsAsync<JsonApiException>(
-                    () => env.Service.UpdateAsync(resource.Id, resource));
-                Assert.That(exception.GetStatusCode(), Is.EqualTo(StatusCodes.Status409Conflict));
-            }
-        }
-
-        [Test]
-        public async Task UpdateAsync_ContactMethod()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.SystemAdmin);
-                UserEntity initialEntity = await env.Service.GetEntityAsync(User01Id);
-                Assert.That(initialEntity.ContactMethod, Is.Not.EqualTo(UserEntity.ContactMethods.emailSms));
-
-                env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
-                {
-                    {env.GetAttribute("contact-method"), "emailSms"}
-                });
-                env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
-
-                var resource = new UserResource
-                {
-                    Id = User01Id,
-                    ContactMethod = "emailSms"
-                };
-                UserResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
-
-                Assert.That(updatedResource, Is.Not.Null);
-                Assert.That(updatedResource.ContactMethod, Is.EqualTo(UserEntity.ContactMethods.emailSms.ToString()));
             }
         }
 
@@ -460,16 +292,12 @@ namespace SIL.XForge.Services
                     nameof(UserResource.Id),
                     nameof(UserResource.StringId),
                     nameof(UserResource.Name),
-                    nameof(UserResource.GoogleId),
-                    nameof(UserResource.EmailMd5),
                     nameof(UserResource.AvatarUrl)
                 }));
 
                 Assert.That(resource.Id, Is.EqualTo(User02Id));
                 Assert.That(resource.StringId, Is.EqualTo(User02Id));
                 Assert.That(resource.Name, Is.EqualTo(User02Name));
-                Assert.That(resource.GoogleId, Is.EqualTo("user02googleid"));
-                Assert.That(resource.EmailMd5, Is.EqualTo("user02emailmd5"));
                 Assert.That(resource.AvatarUrl, Is.EqualTo("user02avatarurl"));
             }
         }
@@ -625,14 +453,6 @@ namespace SIL.XForge.Services
 
             public UserService Service { get; }
 
-            protected override IEnumerable<Func<UserEntity, object>> GetUniqueKeySelectors()
-            {
-                return new Func<UserEntity, object>[]
-                {
-                    entity => entity.CanonicalEmail
-                };
-            }
-
             protected override IEnumerable<UserEntity> GetInitialData()
             {
                 return new[]
@@ -640,18 +460,14 @@ namespace SIL.XForge.Services
                     new UserEntity
                     {
                         Id = User01Id,
-                        Email = User01Email,
-                        CanonicalEmail = User01Email
+                        Email = User01Email
                     },
                     new UserEntity
                     {
                         Id = User02Id,
                         Name = User02Name,
                         Email = "user02@example.com",
-                        CanonicalEmail = "user02@example.com",
                         AvatarUrl = "user02avatarurl",
-                        EmailMd5 = "user02emailmd5",
-                        GoogleId = "user02googleid",
                         Sites = new Dictionary<string, Site>
                         {
                             {
@@ -664,7 +480,6 @@ namespace SIL.XForge.Services
                     {
                         Id = User03Id,
                         Email = "user03@example.com",
-                        CanonicalEmail = "user03@example.com",
                         Sites = new Dictionary<string, Site>
                         {
                             {
@@ -677,7 +492,6 @@ namespace SIL.XForge.Services
                     {
                         Id = ParatextUserId,
                         Email = "paratextuser01@example.com",
-                        CanonicalEmail = "paratextuser01@example.com",
                         ParatextId = "paratextuser01id",
                         ParatextTokens = new Tokens
                         {
