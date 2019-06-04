@@ -71,16 +71,18 @@ describe('CheckingComponent', () => {
       const next = env.nextButton;
       expect(prev.nativeElement.disabled).toBe(true);
       expect(next.nativeElement.disabled).toBe(false);
-      env.selectQuestion(14);
+      env.selectQuestion(15);
       expect(prev.nativeElement.disabled).toBe(false);
       expect(next.nativeElement.disabled).toBe(true);
     }));
   });
 
   describe('Questions', () => {
-    it('questions are displaying', () => {
-      expect(env.questions.length).toEqual(14);
-    });
+    it('questions are displaying', fakeAsync(() => {
+      expect(env.questions.length).toEqual(15);
+      const question = env.selectQuestion(15);
+      expect(env.getQuestionText(question)).toBe('Question relating to chapter 2');
+    }));
 
     it('can select a question', fakeAsync(() => {
       const question = env.selectQuestion(1);
@@ -440,6 +442,10 @@ class TestEnvironment {
     return this.getAnswerComments(answerIndex)[commentIndex].query(By.css('.comment-edit'));
   }
 
+  getQuestionText(question: DebugElement): string {
+    return question.query(By.css('.question-title')).nativeElement.textContent;
+  }
+
   getSaveCommentButton(answerIndex: number): DebugElement {
     return this.getAnswer(answerIndex).query(By.css('.save-comment'));
   }
@@ -502,7 +508,7 @@ class TestEnvironment {
             id: 'text01',
             bookId: 'JHN',
             name: 'John',
-            chapters: [{ number: 1 }],
+            chapters: [{ number: 1 }, { number: 2 }],
             project: new SFProjectRef('project01')
           }),
           undefined,
@@ -524,11 +530,14 @@ class TestEnvironment {
       )
     );
     when(this.mockedTextService.getTextData(deepEqual(new TextDataId('text01', 1)))).thenResolve(this.createTextData());
+    when(this.mockedTextService.getTextData(deepEqual(new TextDataId('text01', 2)))).thenResolve(this.createTextData());
     const text1_1id = new TextJsonDataId('text01', 1);
+    const text1_2id = new TextJsonDataId('text01', 2);
     const dateNow: string = new Date().toUTCString();
-    const questionData = [];
+    const questionData1 = [];
+    const questionData2 = [];
     for (let questionNumber = 1; questionNumber <= 14; questionNumber++) {
-      questionData.push({
+      questionData1.push({
         id: 'q' + questionNumber + 'Id',
         ownerRef: undefined,
         projectRef: undefined,
@@ -538,7 +547,16 @@ class TestEnvironment {
         answers: []
       });
     }
-    questionData[5].answers.push({
+    questionData2.push({
+      id: 'q15Id',
+      ownerRef: undefined,
+      projectRef: undefined,
+      text: 'Question relating to chapter 2',
+      scriptureStart: { book: 'JHN', chapter: '2', verse: '1', versification: 'English' },
+      scriptureEnd: { book: 'JHN', chapter: '2', verse: '2', versification: 'English' },
+      answers: []
+    });
+    questionData1[5].answers.push({
       id: 'a6Id',
       ownerRef: this.secondUser.id,
       text: 'Answer 6 on question',
@@ -546,7 +564,7 @@ class TestEnvironment {
       dateCreated: dateNow,
       dateModified: dateNow
     });
-    questionData[6].answers.push({
+    questionData1[6].answers.push({
       id: 'a7Id',
       ownerRef: this.testUser.id,
       text: 'Answer 7 on question',
@@ -554,7 +572,7 @@ class TestEnvironment {
       dateCreated: dateNow,
       dateModified: dateNow
     });
-    questionData[7].answers.push({
+    questionData1[7].answers.push({
       id: 'a8Id',
       ownerRef: this.testUser.id,
       text: 'Answer 8 on question',
@@ -586,10 +604,16 @@ class TestEnvironment {
       });
     }
     when(this.mockedTextService.getQuestionData(deepEqual(text1_1id))).thenResolve(
-      this.createQuestionData(text1_1id, questionData)
+      this.createQuestionData(text1_1id, questionData1)
     );
     when(this.mockedTextService.getCommentData(deepEqual(text1_1id))).thenResolve(
       this.createCommentData(text1_1id, commentData)
+    );
+    when(this.mockedTextService.getQuestionData(deepEqual(text1_2id))).thenResolve(
+      this.createQuestionData(text1_2id, questionData2)
+    );
+    when(this.mockedTextService.getCommentData(deepEqual(text1_2id))).thenResolve(
+      this.createCommentData(text1_2id, [])
     );
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedUserService.onlineGet('user01')).thenReturn(of(new MapQueryResults(this.testUser)));

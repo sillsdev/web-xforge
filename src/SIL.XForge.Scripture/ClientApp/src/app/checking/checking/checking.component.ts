@@ -90,10 +90,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     if (this._chapter !== value) {
       this._chapter = value;
       this.textDataId = new TextDataId(this.text.id, this.chapter);
-      this.bindCheckingData(new TextJsonDataId(this.text.id, this.chapter)).then(() => {
-        this.questions = this.checkingData.questionData[this.textJsonDataId].data;
-        this.comments = this.checkingData.commentData[this.textJsonDataId].data;
-      });
+      this.comments = this.checkingData.commentData[this.textJsonDataId].data;
     }
   }
 
@@ -150,7 +147,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
           return this.textService.get(params['textId'], [[nameof<Text>('project'), nameof<SFProject>('users')]]);
         })
       ),
-      textData => {
+      async textData => {
         const prevTextId = this.text == null ? '' : this.text.id;
         this.text = textData.data;
         if (this.text != null) {
@@ -160,7 +157,15 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
             .find(pu => (pu.user == null ? '' : pu.user.id) === this.userService.currentUserId);
           this.chapters = this.text.chapters.map(c => c.number);
           if (prevTextId !== this.text.id) {
-            // Trigger the chapter setter to bind the new text and questions.
+            this.questions = [];
+            for (const chapter of this.chapters) {
+              await this.bindCheckingData(new TextJsonDataId(this.text.id, chapter)).then(() => {
+                this.questions = this.questions.concat(
+                  this.checkingData.questionData[getTextJsonDataIdStr(this.text.id, chapter)].data
+                );
+              });
+            }
+            // Trigger the chapter setter to bind the relevant comments.
             this._chapter = undefined;
             this.chapter = 1;
           }
@@ -262,6 +267,9 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   questionChanged(question: Question) {
+    if (this.questionsPanel.activateQuestionChapter !== this.chapter) {
+      this.chapter = this.questionsPanel.activateQuestionChapter;
+    }
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
     this.collapseDrawer();
@@ -288,7 +296,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       }
       this.checkingData.questionData[this.textJsonDataId].deleteFromList(
         this.questionsPanel.activeQuestion.answers[answerIndex],
-        [this.questionsPanel.activeQuestionIndex, 'answers', answerIndex]
+        [this.activeChapterQuestionIndex, 'answers', answerIndex]
       );
       this.refreshSummary();
     }
@@ -312,16 +320,22 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       this.checkingData.questionData[this.textJsonDataId].replaceInList(
         this.questionsPanel.activeQuestion.answers[answerIndex],
         questionWithAnswer.answers[answerIndex],
-        [this.questionsPanel.activeQuestionIndex, 'answers', answerIndex]
+        [this.activeChapterQuestionIndex, 'answers', answerIndex]
       );
     } else {
       this.checkingData.questionData[this.textJsonDataId].insertInList(questionWithAnswer.answers[0], [
-        this.questionsPanel.activeQuestionIndex,
+        this.activeChapterQuestionIndex,
         'answers',
         0
       ]);
     }
     this.refreshSummary();
+  }
+
+  get activeChapterQuestionIndex(): number {
+    return this.checkingData.questionData[this.textJsonDataId].data.findIndex(
+      question => question.id === this.questionsPanel.activeQuestion.id
+    );
   }
 
   private saveComment(comment: Comment) {
@@ -348,7 +362,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
 
     if (userRefIndex >= 0) {
       this.checkingData.questionData[this.textJsonDataId].deleteFromList(this.questionsPanel.activeQuestion, [
-        this.questionsPanel.activeQuestionIndex,
+        this.activeChapterQuestionIndex,
         'answers',
         answerIndex,
         'likes',
@@ -356,7 +370,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       ]);
     } else {
       this.checkingData.questionData[this.textJsonDataId].insertInList(currentUserId, [
-        this.questionsPanel.activeQuestionIndex,
+        this.activeChapterQuestionIndex,
         'answers',
         answerIndex,
         'likes',
