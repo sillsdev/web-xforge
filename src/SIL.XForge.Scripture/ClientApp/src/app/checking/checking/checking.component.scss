@@ -7,6 +7,9 @@
   #question-drawer {
     min-width: 300px;
     border: 0;
+    @include media-breakpoint-up(md) {
+      z-index: 1;
+    }
     &.mdc-drawer--modal {
       top: 0;
     }
