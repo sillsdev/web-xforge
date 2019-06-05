@@ -166,12 +166,13 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
     }
 
     // Set form values from database, if present.
+    const yyyy_mm_dd = this.userFromDatabase.birthday ? this.userFromDatabase.birthday.split('T')[0] : null;
     this.formGroup.setValue({
       name: this.userFromDatabase.name || '',
       email: this.userFromDatabase.email || '',
       mobilePhone: this.userFromDatabase.mobilePhone || '',
       contactMethod: this.userFromDatabase.contactMethod || null,
-      birthday: this.userFromDatabase.birthday || null,
+      birthday: yyyy_mm_dd,
       gender: this.userFromDatabase.gender || null
     });
 
