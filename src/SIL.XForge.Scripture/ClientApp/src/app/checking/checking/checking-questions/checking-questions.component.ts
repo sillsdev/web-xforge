@@ -33,6 +33,10 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     });
   }
 
+  get activateQuestionChapter(): number {
+    return parseInt(this.activeQuestion.scriptureStart.chapter, 10);
+  }
+
   get activeQuestionIndex(): number {
     return this.questions.findIndex(question => question.id === this.activeQuestion.id);
   }
