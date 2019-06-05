@@ -31,8 +31,9 @@ export class CheckingAnswersComponent {
   @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
 
   activeAnswer: Answer;
+  readonly someNonwhitespace = /\S+/;
   answerForm: FormGroup = new FormGroup({
-    answerText: new FormControl('', [Validators.required])
+    answerText: new FormControl('', [Validators.required, Validators.pattern(this.someNonwhitespace)])
   });
   answerFormVisible: boolean = false;
   private _question: Question;

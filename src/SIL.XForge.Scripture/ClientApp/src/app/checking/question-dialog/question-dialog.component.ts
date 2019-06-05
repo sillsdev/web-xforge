@@ -56,11 +56,12 @@ export class QuestionDialogComponent implements OnInit {
 
   modeLabel = this.data && this.data.editMode ? 'Edit' : 'New';
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
+  readonly someNonwhitespace = /\S+/;
   questionForm: FormGroup = new FormGroup(
     {
       scriptureStart: new FormControl('', [Validators.required, SFValidators.verseStr(this.data.textsByBook)]),
       scriptureEnd: new FormControl('', [SFValidators.verseStr(this.data.textsByBook)]),
-      questionText: new FormControl('', [Validators.required])
+      questionText: new FormControl('', [Validators.required, Validators.pattern(this.someNonwhitespace)])
     },
     this.validateVerseAfterStart
   );

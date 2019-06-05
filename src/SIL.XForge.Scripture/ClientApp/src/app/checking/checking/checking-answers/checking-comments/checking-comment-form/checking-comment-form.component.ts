@@ -11,8 +11,9 @@ export class CheckingCommentFormComponent {
   @Output() save: EventEmitter<String> = new EventEmitter<String>();
   @Output() cancel: EventEmitter<Boolean> = new EventEmitter<Boolean>();
 
+  readonly someNonwhitespace = /\S+/;
   commentForm: FormGroup = new FormGroup({
-    commentText: new FormControl('', [Validators.required])
+    commentText: new FormControl('', [Validators.required, Validators.pattern(this.someNonwhitespace)])
   });
   constructor() {}
 
