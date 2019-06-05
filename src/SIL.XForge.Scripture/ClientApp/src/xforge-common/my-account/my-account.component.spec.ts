@@ -1,6 +1,6 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogRef, MdcSelect } from '@angular-mdc/web';
 import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, NgModule } from '@angular/core';
-import { fakeAsync, flush } from '@angular/core/testing';
+import { fakeAsync, flush, tick } from '@angular/core/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ErrorStateMatcher, ShowOnDirtyErrorStateMatcher } from '@angular/material';
 import { By } from '@angular/platform-browser';
@@ -34,7 +34,7 @@ describe('MyAccountComponent', () => {
         contactMethod: 'email',
         mobilePhone: '+123 11 2222-33-4444',
         gender: 'male',
-        site: { currentProjectId: 'testproject01', lastLogin: date } as Site
+        site: { currentProjectId: 'testproject01', lastLogin: date.toISOString() } as Site
       })
     );
   });
@@ -63,8 +63,7 @@ describe('MyAccountComponent', () => {
     const originalName = env.component.userFromDatabase.name;
     expect(env.component.formGroup.get('name').value).toEqual(originalName, 'test setup problem');
 
-    verifyStates(
-      env,
+    env.verifyStates(
       'name',
       {
         state: env.component.elementState.InSync,
@@ -81,11 +80,9 @@ describe('MyAccountComponent', () => {
     // change name on page
     const newName = 'robert';
     expect(originalName).not.toBe(newName, 'test set up wrong');
-    env.component.formGroup.get('name').setValue(newName);
-    env.fixture.detectChanges();
+    env.setTextFieldValue(env.nameInput, newName);
 
-    verifyStates(
-      env,
+    env.verifyStates(
       'name',
       {
         state: env.component.elementState.Dirty,
@@ -103,8 +100,7 @@ describe('MyAccountComponent', () => {
     env.updateButton('name').nativeElement.click();
     env.fixture.detectChanges();
 
-    verifyStates(
-      env,
+    env.verifyStates(
       'name',
       {
         state: env.component.elementState.Submitting,
@@ -123,8 +119,7 @@ describe('MyAccountComponent', () => {
     flush();
     env.fixture.detectChanges();
 
-    verifyStates(
-      env,
+    env.verifyStates(
       'name',
       {
         state: env.component.elementState.Submitted,
@@ -144,11 +139,9 @@ describe('MyAccountComponent', () => {
 
     // modify text
     const newerName = 'Bobby';
-    env.component.formGroup.get('name').setValue(newerName);
-    env.fixture.detectChanges();
+    env.setTextFieldValue(env.nameInput, newerName);
 
-    verifyStates(
-      env,
+    env.verifyStates(
       'name',
       {
         state: env.component.elementState.Dirty,
@@ -164,11 +157,9 @@ describe('MyAccountComponent', () => {
 
     // Modify text back to what it is in the database. In other words, manually editing
     // it back to a 'clean state'.
-    env.component.formGroup.get('name').setValue(newName);
-    env.fixture.detectChanges();
+    env.setTextFieldValue(env.nameInput, newName);
 
-    verifyStates(
-      env,
+    env.verifyStates(
       'name',
       {
         state: env.component.elementState.InSync,
@@ -193,14 +184,12 @@ describe('MyAccountComponent', () => {
     // change name on page
     const newName = 'robert';
     expect(originalName).not.toEqual(newName, 'test set up wrong');
-    env.component.formGroup.get('name').setValue(newName);
-    env.fixture.detectChanges();
+    env.setTextFieldValue(env.nameInput, newName);
 
     // click update
     env.clickButton(env.updateButton('name'));
 
-    verifyStates(
-      env,
+    env.verifyStates(
       'name',
       {
         state: env.component.elementState.Error,
@@ -238,7 +227,7 @@ describe('MyAccountComponent', () => {
     env.fixture.detectChanges();
     expect(env.component.formGroup.get('contactMethod').value).toEqual(newValue, 'test setup problem');
 
-    verifyStates(env, 'contactMethod', {
+    env.verifyStates('contactMethod', {
       state: env.component.elementState.Submitting,
       spinner: true,
       greenCheck: false,
@@ -256,7 +245,7 @@ describe('MyAccountComponent', () => {
       'should have set form value back to original value'
     );
 
-    verifyStates(env, 'contactMethod', {
+    env.verifyStates('contactMethod', {
       state: env.component.elementState.Error,
       spinner: false,
       greenCheck: false,
@@ -275,15 +264,8 @@ describe('MyAccountComponent', () => {
     expect(env.component.formGroup.get('gender').value).toEqual(originalValue, 'test setup problem');
 
     // change value on page
-    env.component.formGroup.get('gender').setValue(newValue);
-    env.genderCombo.nativeElement.dispatchEvent(new Event('change'));
-    // flush();
-    env.fixture.detectChanges();
-
-    env.component.formGroup.get('gender').setValue(newValue);
-    env.fixture.detectChanges();
-
-    verifyStates(env, 'gender', {
+    env.selectValue(env.genderSelect, newValue);
+    env.verifyStates('gender', {
       state: env.component.elementState.Submitting,
       spinner: true,
       greenCheck: false,
@@ -301,7 +283,7 @@ describe('MyAccountComponent', () => {
       'should have set form value back to original value'
     );
 
-    verifyStates(env, 'gender', {
+    env.verifyStates('gender', {
       state: env.component.elementState.Error,
       spinner: false,
       greenCheck: false,
@@ -312,15 +294,12 @@ describe('MyAccountComponent', () => {
 
   describe('validation', () => {
     it('error if email address removed', fakeAsync(() => {
-      expect(env.component.userFromDatabase.email.length).toBeGreaterThan(3, 'test not set up');
-
+      expect(env.component.userFromDatabase.email).toBe('bob@example.com');
       // Delete email from form
-      env.component.formGroup.get('email').setValue('');
-      env.component.formGroup.get('email').markAsDirty();
-      env.fixture.detectChanges();
+      env.setTextFieldValue(env.emailInput, '');
+      expect(env.buttonIcon('email')).not.toBeNull();
 
-      verifyStates(
-        env,
+      env.verifyStates(
         'email',
         {
           state: env.component.elementState.Invalid,
@@ -335,33 +314,34 @@ describe('MyAccountComponent', () => {
       );
 
       // Expect specific error message
-      expect(env.component.formGroup.controls['email'].hasError('required')).toBe(true);
-      expect(env.matErrors.length).toEqual(1);
-      expect((env.matErrors[0].nativeElement as HTMLElement).innerText).toContain('must supply a valid email');
+      expect(env.component.formGroup.get('email').hasError('required')).toBe(true);
+      expect((env.getHelperText(env.emailInput.parent).nativeElement as HTMLElement).innerText).toContain(
+        'must supply a valid email'
+      );
     }));
 
     describe('validate email pattern', () => {
-      it('good email pattern means no error and enabled update button', () => {
-        expectEmailPatternIsGood(env, 'bob_smith+extension@lunar-astronaut.technology');
-      });
+      it('good email pattern means no error and enabled update button', fakeAsync(() => {
+        env.expectEmailPatternIsGood('bob_smith+extension@lunar-astronaut.technology');
+      }));
 
-      it('bad email pattern means error message and disabled update button', () => {
-        expectEmailPatternIsBad(env, 'bob smith@example.com');
-      });
+      it('bad email pattern means error message and disabled update button', fakeAsync(() => {
+        env.expectEmailPatternIsBad('bob smith@example.com');
+      }));
 
-      xdescribe('by-hand, more extensive pattern checking', () => {
-        it('no error for good email pattern', () => {
+      describe('by-hand, more extensive pattern checking', () => {
+        it('no error for good email pattern', fakeAsync(() => {
           const goodEmail1 = 'john@example.com';
           expect(env.userInDatabase.email).not.toEqual(goodEmail1, 'setup');
 
-          expectEmailPatternIsGood(env, goodEmail1);
-          expectEmailPatternIsGood(env, 'bob.james.smith.smitheyson@lunar-astronaut.technology');
-          expectEmailPatternIsGood(env, 'bob_smith@example.com');
-          expectEmailPatternIsGood(env, 'bob+extension@example.com');
-          expectEmailPatternIsGood(env, 'a@w.org');
-        });
+          env.expectEmailPatternIsGood(goodEmail1);
+          env.expectEmailPatternIsGood('bob.james.smith.smitheyson@lunar-astronaut.technology');
+          env.expectEmailPatternIsGood('bob_smith@example.com');
+          env.expectEmailPatternIsGood('bob+extension@example.com');
+          env.expectEmailPatternIsGood('a@w.org');
+        }));
 
-        it('error for bad email pattern', () => {
+        it('error for bad email pattern', fakeAsync(() => {
           const badEmailPatterns = [
             'bob',
             'example.com',
@@ -395,9 +375,9 @@ describe('MyAccountComponent', () => {
             'bob@example.c$om'
           ];
           for (const badEmailPattern of badEmailPatterns) {
-            expectEmailPatternIsBad(env, badEmailPattern);
+            env.expectEmailPatternIsBad(badEmailPattern);
           }
-        });
+        }));
       });
     });
   });
@@ -530,10 +510,10 @@ describe('MyAccountComponent', () => {
 
   describe('delete account', () => {
     it('should have a title and a delete account button', fakeAsync(() => {
-      expect(env.deleteAccountElement.nativeElement.querySelector('mat-card mat-card-title').textContent).toContain(
+      expect(env.deleteAccountElement.nativeElement.querySelector('mdc-card h2').textContent).toContain(
         'Delete my account'
       );
-      expect(env.deleteAccountElement.nativeElement.querySelector('mat-card mat-card-title').textContent).toContain(
+      expect(env.deleteAccountElement.nativeElement.querySelector('mdc-card h2').textContent).toContain(
         env.userInDatabase.name
       );
     }));
@@ -633,6 +613,54 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  get nameInput(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#name-field'));
+  }
+
+  get emailInput(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#email-field'));
+  }
+
+  get genderSelect(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#gender-select'));
+  }
+
+  get header2(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('h2');
+  }
+
+  get lastLogin(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('#last-login');
+  }
+
+  get paratextLinkElement(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#paratext-link'));
+  }
+
+  get paratextLinkLabel(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#paratext-link-label'));
+  }
+
+  get connectParatextButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#connect-paratext-button'));
+  }
+
+  get unlinkParatextButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#unlink-paratext-button'));
+  }
+
+  get deleteAccountElement(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#delete-account'));
+  }
+
+  get deleteAccountButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#delete-account-button'));
+  }
+
+  get avatars(): DebugElement[] {
+    return this.fixture.debugElement.queryAll(By.css('app-avatar'));
+  }
+
   /** Handler for mockUserService.updateUserAttributes that updates the fake database. */
   mockUserServiceUpdateUserAttributes(): (updatedAttributes: Partial<User>) => Promise<User> {
     return (updatedAttributes: Partial<User>) => {
@@ -685,123 +713,91 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css(`option[value="${value}"]`));
   }
 
-  get genderCombo(): DebugElement {
-    return this.fixture.debugElement.query(By.css(`mdc-select[formControlName="gender"]`));
+  getHelperText(formField: DebugElement): DebugElement {
+    return formField.query(By.css('mdc-helper-text'));
   }
 
-  get matErrors(): Array<DebugElement> {
-    return this.fixture.debugElement.queryAll(By.css('mat-error'));
+  setTextFieldValue(elem: DebugElement, value: string): void {
+    const inputElem: HTMLInputElement = elem.nativeElement.querySelector('input');
+    inputElem.value = value;
+    inputElem.dispatchEvent(new Event('input'));
+    tick();
+    this.fixture.detectChanges();
   }
 
-  get header2(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('h2');
+  selectValue(field: DebugElement, value: string): void {
+    const select: MdcSelect = field.componentInstance;
+    select.value = value;
+    this.fixture.detectChanges();
   }
 
-  get lastLogin(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#last-login');
+  expectEmailPatternIsBad(badEmail: string) {
+    this.setTextFieldValue(this.emailInput, badEmail);
+    expect(this.component.formGroup.get('email').hasError('email')).toBe(true);
+    expect((this.getHelperText(this.emailInput.parent).nativeElement as HTMLElement).innerText).toContain(
+      'valid email address'
+    );
+    this.verifyStates(
+      'email',
+      {
+        state: this.component.elementState.Invalid,
+        updateButtonEnabled: false,
+        arrow: true,
+        spinner: false,
+        greenCheck: false,
+        errorIcon: false,
+        inputEnabled: true
+      },
+      this.updateButton('email').nativeElement
+    );
   }
 
-  get paratextLinkElement(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#paratext-link'));
+  expectEmailPatternIsGood(goodEmail: string) {
+    this.setTextFieldValue(this.emailInput, goodEmail);
+    expect(this.component.formGroup.controls.email.errors).toBeNull();
+    this.verifyStates(
+      'email',
+      {
+        state: this.component.elementState.Dirty,
+        updateButtonEnabled: true,
+        arrow: true,
+        spinner: false,
+        greenCheck: false,
+        errorIcon: false,
+        inputEnabled: true
+      },
+      this.updateButton('email').nativeElement
+    );
   }
 
-  get paratextLinkLabel(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#paratext-link-label'));
-  }
-
-  get connectParatextButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#connect-paratext-button'));
-  }
-
-  get unlinkParatextButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#unlink-paratext-button'));
-  }
-
-  get deleteAccountElement(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#delete-account'));
-  }
-
-  get deleteAccountButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#delete-account-button'));
-  }
-
-  get avatars(): DebugElement[] {
-    return this.fixture.debugElement.queryAll(By.css('app-avatar'));
-  }
-}
-
-function expectEmailPatternIsBad(env: TestEnvironment, badEmail: string) {
-  env.component.formGroup.get('email').setValue(badEmail);
-  env.component.formGroup.get('email').markAsDirty();
-  env.fixture.detectChanges();
-  // Using .toBe() so the bad email prints in failure output
-  expect(env.matErrors.length).toBe(1, badEmail);
-  expect((env.matErrors[0].nativeElement as HTMLElement).innerText).toContain('valid email address');
+  /**
+   * Verify states of controls associated with a specifc datum.
+   * Controls using an Update button can make use of updateButtonEnabled and arrow. */
   verifyStates(
-    env,
-    'email',
-    {
-      state: env.component.elementState.Invalid,
-      updateButtonEnabled: false,
-      arrow: true,
-      spinner: false,
-      greenCheck: false,
-      errorIcon: false,
-      inputEnabled: true
+    controlName: string,
+    expected: {
+      state: any;
+      updateButtonEnabled?: boolean;
+      arrow?: boolean;
+      spinner: boolean;
+      greenCheck: boolean;
+      errorIcon: boolean;
+      inputEnabled: boolean;
     },
-    env.updateButton('email').nativeElement
-  );
-}
+    updateButton?: any
+  ) {
+    expect(this.component.controlStates.get(controlName)).toBe(expected.state);
+    expect(this.spinner(controlName) !== null).toBe(expected.spinner, 'spinner');
+    expect(this.greenCheck(controlName) !== null).toBe(expected.greenCheck, 'greencheck');
+    expect(this.errorIcon(controlName) !== null).toBe(expected.errorIcon, 'errorIcon');
+    expect(this.component.formGroup.get(controlName).enabled).toBe(expected.inputEnabled, controlName + '.enabled');
 
-function expectEmailPatternIsGood(env: TestEnvironment, goodEmail: string) {
-  env.component.formGroup.get('email').setValue(goodEmail);
-  env.component.formGroup.get('email').markAsDirty();
-  env.fixture.detectChanges();
-  expect(env.matErrors.length).toEqual(0);
-  verifyStates(
-    env,
-    'email',
-    {
-      state: env.component.elementState.Dirty,
-      updateButtonEnabled: true,
-      arrow: true,
-      spinner: false,
-      greenCheck: false,
-      errorIcon: false,
-      inputEnabled: true
-    },
-    env.updateButton('email').nativeElement
-  );
-}
+    if (expected.updateButtonEnabled !== undefined) {
+      expect(updateButton.disabled).not.toBe(expected.updateButtonEnabled, controlName + ' update button enabled');
+    }
 
-/**
- * Verify states of controls associated with a specifc datum.
- * Controls using an Update button can make use of updateButtonEnabled and arrow. */
-function verifyStates(
-  env: TestEnvironment,
-  controlName: string,
-  expected: {
-    state: any;
-    updateButtonEnabled?: boolean;
-    arrow?: boolean;
-    spinner: boolean;
-    greenCheck: boolean;
-    errorIcon: boolean;
-    inputEnabled: boolean;
-  },
-  updateButton?: any
-) {
-  expect(env.component.controlStates.get(controlName)).toBe(expected.state);
-  expect(env.spinner(controlName) !== null).toBe(expected.spinner, 'spinner');
-  expect(env.greenCheck(controlName) !== null).toBe(expected.greenCheck, 'greencheck');
-  expect(env.errorIcon(controlName) !== null).toBe(expected.errorIcon, 'errorIcon');
-  expect(env.component.formGroup.get(controlName).enabled).toBe(expected.inputEnabled, controlName + '.enabled');
-
-  if (expected.updateButtonEnabled !== undefined) {
-    expect(updateButton.disabled).not.toBe(expected.updateButtonEnabled, controlName + ' update button enabled');
-  }
-
-  if (expected.arrow !== undefined) {
-    expect(env.buttonIcon(controlName) !== null).toBe(expected.arrow, controlName + ' arrow');
+    if (expected.arrow !== undefined) {
+      expect(this.buttonIcon(controlName) !== null).toBe(expected.arrow, controlName + ' arrow');
+    }
   }
 }
