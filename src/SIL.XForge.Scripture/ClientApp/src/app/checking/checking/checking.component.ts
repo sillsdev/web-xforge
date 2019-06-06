@@ -1,4 +1,4 @@
-import { MdcMenuSelectedEvent } from '@angular-mdc/web';
+import { MdcList, MdcMenuSelectedEvent } from '@angular-mdc/web';
 import { Component, ElementRef, HostBinding, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
@@ -53,6 +53,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   @ViewChild(SplitComponent) splitComponent: SplitComponent;
   @ViewChild('splitContainer') splitContainerElement: ElementRef;
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement: ElementRef;
+  @ViewChild('chapterMenuList') chapterMenuList: MdcList;
 
   project: SFProject;
   projectCurrentUser: SFProjectUser;
@@ -225,6 +226,14 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
 
   drawerCollapsed(): void {
     this.isExpanded = false;
+  }
+
+  chapterMenuOpened() {
+    // Focus is lost when the menu closes so need to set it again
+    // Need to wait for DOM to update as we can't set the focus until it is visible and no built in method
+    setTimeout(() => {
+      this.chapterMenuList.focusItemAtIndex(this.chapter - 1);
+    }, 10);
   }
 
   commentAction(commentAction: CommentAction) {
@@ -419,10 +428,8 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.summary.read = 0;
     this.summary.unread = 0;
     for (const question of this.questions) {
-      if (question.answers.length) {
-        if (question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length) {
-          this.summary.answered++;
-        }
+      if (this.questionsPanel.hasUserAnswered(question)) {
+        this.summary.answered++;
       } else if (this.questionsPanel.hasUserRead(question)) {
         this.summary.read++;
       } else {

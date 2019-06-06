@@ -53,8 +53,9 @@
                     anchorCorner="bottomStart"
                     [anchorElement]="textNameAnchor"
                     (selected)="onChapterSelect($event)"
+                    (opened)="chapterMenuOpened()"
                   >
-                    <mdc-list>
+                    <mdc-list #chapterMenuList>
                       <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
                         >{{ text?.name }} {{ cs }}</mdc-list-item
                       >
