@@ -137,7 +137,6 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
   ngOnDestroy() {
     super.ngOnDestroy();
-    this.controlChangeSubscriptions.forEach(sub => sub.unsubscribe());
     // Set title back, until titling is done more elegantly,
     // like https://toddmotto.com/dynamic-page-titles-angular-2-router-events
     this.titleService.setTitle(environment.siteName);
@@ -199,7 +198,6 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
     }
 
     this.formGroup.get(element).disable();
-    this.controlChangeSubscriptions[element].unsubscribe();
     this.controlStates.set(element, ElementState.Submitting);
 
     if (
@@ -208,6 +206,11 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
       (this.userFromDatabase.contactMethod === 'sms' || this.userFromDatabase.contactMethod === 'emailSms')
     ) {
       updatedAttributes['contactMethod'] = null;
+    }
+
+    if (element === 'birthday') {
+      // Using the date-picker does not mark the field as touched. This prevents the console error.
+      this.formGroup.get(element).markAsTouched();
     }
 
     try {
@@ -224,12 +227,6 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
       this.formGroup.get(element).enable();
       this.controlStates.set(element, ElementState.Error);
-    } finally {
-      // this.formGroup.get(element).enable();
-      this.controlChangeSubscriptions[element] = this.subscribe(
-        this.formGroup.get(element).valueChanges,
-        this.onControlValueChanges(element)
-      );
     }
   }
 
@@ -282,6 +279,9 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
   private onControlValueChanges(controlName: string): () => void {
     return () => {
+      if (this.controlStates.get(controlName) === ElementState.Submitting) {
+        return;
+      }
       const isClean = this.userFromDatabase[controlName] === this.formGroup.get(controlName).value;
       const newState = isClean ? ElementState.InSync : ElementState.Dirty;
       this.controlStates.set(controlName, newState);

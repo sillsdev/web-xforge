@@ -1,39 +1,18 @@
 @import '~src/global';
 
 .account-form {
-  max-width: 30rem;
-  .last-login-element,
-  .gender-input {
-    margin-bottom: 1rem;
-  }
+  max-width: 30em;
   mdc-text-field {
     width: 100%;
   }
-}
-
-.update-button-spinner {
-  float: left;
-}
-
-.contactMethod-spinner,
-.birthday-spinner,
-.gender-spinner {
-  float: right;
-  margin-top: 1.5rem;
-  margin-right: 0.5rem;
-}
-
-.check-icon {
-  color: green;
-}
-
-.error-icon {
-  color: red;
+  .update-button {
+    top: 20px;
+  }
 }
 
 .delete-account mdc-card {
   border: 2px solid red;
-  padding: 1rem;
+  padding: 1em;
   h2 {
     font-weight: normal;
     margin: 0;
@@ -45,15 +24,13 @@
 }
 
 .login-info {
-  margin-right: 1rem;
+  margin: 0.5em 1em 0.5em 0em;
 }
 
 .nowrap {
   white-space: nowrap;
 }
 
-.linked-paratext,
-.linked-google,
 .delete-account {
-  margin-bottom: 1rem;
+  margin-bottom: 1em;
 }

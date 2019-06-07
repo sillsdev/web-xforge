@@ -1,14 +1,13 @@
 <h2>Account details</h2>
 <div fxLayout="column" fxLayoutAlign="start start">
-  <div fxLayout="row" fxLayout.lt-sm="row wrap" fxLayoutAlign="start stretch" fxLayoutGap="1rem">
+  <div fxLayout="row" fxLayout.lt-sm="row wrap" fxLayoutAlign="start stretch" fxLayoutGap="1em">
     <div class="account-form">
       <form [formGroup]="formGroup">
-        <div fxLayout="column" fxLayoutAlign="space-between stretch">
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1rem">
+        <div fxLayout="column" fxLayoutAlign="space-between stretch" fxLayoutGap="1em">
+          <div fxLayout="row" fxLayoutGap="1em">
             <div fxFlex>
               <mdc-form-field>
                 <mdc-text-field id="name-field" formControlName="name" label="Name"></mdc-text-field>
-                <mdc-helper-text>Your name as you would like it to appear on this site</mdc-helper-text>
               </mdc-form-field>
             </div>
             <div>
@@ -20,51 +19,30 @@
                 mdc-button
                 outlined
                 (click)="updateClicked('name')"
+                class="update-button"
               >
-                <mdc-icon
-                  id="name-update-done"
-                  *ngIf="controlStates.get('name') === elementState.Submitted"
-                  class="mdc-button__icon check-icon"
-                  >done</mdc-icon
-                >
-                <mdc-icon
-                  id="name-error-icon"
-                  *ngIf="controlStates.get('name') === elementState.Error"
-                  class="mdc-button__icon error-icon"
-                  >error</mdc-icon
-                >
                 <mdc-icon
                   id="name-button-icon"
                   *ngIf="
                     controlStates.get('name') === elementState.InSync ||
                     controlStates.get('name') === elementState.Dirty
                   "
-                  class="mdc-button__icon"
                   >send</mdc-icon
-                >
-                <mat-spinner
-                  id="name-update-spinner"
-                  *ngIf="controlStates.get('name') === elementState.Submitting"
-                  [diameter]="15"
-                  class="mdc-button__icon update-button-spinner"
-                  aria-label="Update in progress"
-                ></mat-spinner>
-                Update
+                ><app-write-status [formGroup]="formGroup" [state]="controlStates.get('name')"></app-write-status>
+                &nbsp;Update
               </button>
             </div>
           </div>
 
-          <div class="last-login-element" fxLayout="row wrap" fxLayoutAlign="start center">
+          <div fxLayout="row wrap">
             <div fxFlex class="login-info">
-              <span id="last-login">{{ lastLoginMessage }}</span>
+              <span id="last-login" class="nowrap">{{ lastLoginMessage }}</span>
             </div>
-            <div fxLayoutAlign="end stretch">
-              <button id="my-account-change-password-btn" mdc-button outlined [routerLink]="['/change-password']">
-                <mdc-icon>edit</mdc-icon>Change password
-              </button>
-            </div>
+            <button id="my-account-change-password-btn" mdc-button outlined [routerLink]="['/change-password']">
+              <mdc-icon>edit</mdc-icon>Change password
+            </button>
           </div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1em">
+          <div fxLayout="row" fxLayoutGap="1em">
             <div fxFlex>
               <mdc-form-field>
                 <mdc-text-field id="email-field" formControlName="email" label="Email"></mdc-text-field>
@@ -90,19 +68,9 @@
                 mdc-button
                 outlined
                 (click)="updateClicked('email')"
+                class="update-button"
               >
-                <mdc-icon
-                  id="email-update-done"
-                  *ngIf="controlStates.get('email') === elementState.Submitted"
-                  class="mdc-button__icon check-icon"
-                  >done</mdc-icon
-                >
-                <mdc-icon
-                  id="email-error-icon"
-                  *ngIf="controlStates.get('email') === elementState.Error"
-                  class="mdc-button__icon error-icon"
-                  >error</mdc-icon
-                >
+                <app-write-status [formGroup]="formGroup" [state]="controlStates.get('email')"></app-write-status>
                 <mdc-icon
                   id="email-button-icon"
                   *ngIf="
@@ -110,22 +78,14 @@
                     controlStates.get('email') === elementState.Dirty ||
                     controlStates.get('email') === elementState.Invalid
                   "
-                  class="mdc-button__icon"
                   >send</mdc-icon
                 >
-                <mat-spinner
-                  id="email-update-spinner"
-                  *ngIf="controlStates.get('email') === elementState.Submitting"
-                  [diameter]="15"
-                  class="mdc-button__icon update-button-spinner"
-                  aria-label="Update in progress"
-                ></mat-spinner>
-                Update
+                &nbsp;Update
               </button>
             </div>
           </div>
 
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="1rem">
+          <div fxLayout="row" fxLayoutGap="1em">
             <div fxFlex>
               <mdc-form-field>
                 <mdc-text-field formControlName="mobilePhone" label="Phone"></mdc-text-field>
@@ -142,36 +102,18 @@
                 mdc-button
                 outlined
                 (click)="updateClicked('mobilePhone')"
+                class="update-button"
               >
-                <mdc-icon
-                  id="mobilePhone-update-done"
-                  *ngIf="controlStates.get('mobilePhone') === elementState.Submitted"
-                  class="mdc-button__icon check-icon"
-                  >done</mdc-icon
-                >
-                <mdc-icon
-                  id="mobilePhone-error-icon"
-                  *ngIf="controlStates.get('mobilePhone') === elementState.Error"
-                  class="mdc-button__icon error-icon"
-                  >error</mdc-icon
-                >
+                <app-write-status [formGroup]="formGroup" [state]="controlStates.get('mobilePhone')"></app-write-status>
                 <mdc-icon
                   id="mobilePhone-button-icon"
                   *ngIf="
                     controlStates.get('mobilePhone') === elementState.InSync ||
                     controlStates.get('mobilePhone') === elementState.Dirty
                   "
-                  class="mdc-button__icon"
                   >send</mdc-icon
                 >
-                <mat-spinner
-                  id="mobilePhone-update-spinner"
-                  *ngIf="controlStates.get('mobilePhone') === elementState.Submitting"
-                  [diameter]="15"
-                  class="mdc-button__icon update-button-spinner"
-                  aria-label="Update in progress"
-                ></mat-spinner>
-                Update
+                &nbsp;Update
               </button>
             </div>
           </div>
@@ -190,58 +132,24 @@
                 ><i class="material-icons">email</i><i class="material-icons">textsms</i> Both</mat-button-toggle
               >
             </mat-button-toggle-group>
-            <mat-spinner
-              id="contactMethod-update-spinner"
-              *ngIf="controlStates.get('contactMethod') === elementState.Submitting"
-              [diameter]="15"
-              class="contactMethod-spinner"
-              aria-label="Update in progress"
-            ></mat-spinner>
-            <i
-              id="contactMethod-update-done"
-              *ngIf="controlStates.get('contactMethod') === elementState.Submitted"
-              class="material-icons check-icon"
-              >done</i
-            >
-            <i
-              id="contactMethod-error-icon"
-              *ngIf="controlStates.get('contactMethod') === elementState.Error"
-              class="material-icons error-icon"
-              >error</i
-            >
+            <app-write-status [formGroup]="formGroup" [state]="controlStates.get('contactMethod')"></app-write-status>
           </div>
         </div>
 -->
           <div fxLayout="row" fxLayoutAlign="start center">
             <div fxFlex>
               <mdc-form-field>
-                <mdc-text-field type="date" label="Birthdate" formControlName="birthday" (change)="update('birthday')">
+                <mdc-text-field type="date" label="Birthday" formControlName="birthday" (change)="update('birthday')">
                   <mdc-icon mdcTextFieldIcon trailing>event</mdc-icon>
                 </mdc-text-field>
-                <mdc-helper-text persistent><span>MM-DD-YYYY</span></mdc-helper-text>
               </mdc-form-field>
             </div>
             <div>
-              <mat-spinner
-                id="birthday-update-spinner"
-                *ngIf="controlStates.get('birthday') === elementState.Submitting"
-                [diameter]="15"
-                class="birthday-spinner"
-                aria-label="Update in progress"
-              ></mat-spinner>
-              <mdc-icon
-                id="birthday-update-done"
-                *ngIf="controlStates.get('birthday') === elementState.Submitted"
-                class="check-icon"
-                >done</mdc-icon
-              >
-              <mdc-icon id="birthday-error-icon" *ngIf="controlStates.get('birthday') === elementState.Error"
-                >error</mdc-icon
-              >
+              <app-write-status [formGroup]="formGroup" [state]="controlStates.get('birthday')"></app-write-status>
             </div>
           </div>
 
-          <div fxLayout="row" fxLayoutAlign="start center" class="gender-input">
+          <div fxLayout="row" fxLayoutAlign="start center">
             <mdc-form-field fluid>
               <mdc-select
                 id="gender-select"
@@ -257,36 +165,17 @@
                 </mdc-menu>
               </mdc-select>
             </mdc-form-field>
-            <mat-spinner
-              id="gender-update-spinner"
-              *ngIf="controlStates.get('gender') === elementState.Submitting"
-              [diameter]="15"
-              class="gender-spinner"
-              aria-label="Update in progress"
-            ></mat-spinner>
-            <mdc-icon
-              id="gender-update-done"
-              *ngIf="controlStates.get('gender') === elementState.Submitted"
-              class="check-icon"
-              >done</mdc-icon
-            >
-            <mdc-icon
-              id="gender-error-icon"
-              *ngIf="controlStates.get('gender') === elementState.Error"
-              class="material-icons error-icon"
-              >error</mdc-icon
-            >
+            <app-write-status [formGroup]="formGroup" [state]="controlStates.get('gender')"></app-write-status>
           </div>
           <div
             *ngIf="isLinkedToParatext"
             fxLayout="row"
             fxLayoutAlign="space-between center"
-            fxLayoutGap="1rem"
+            fxLayoutGap="1em"
             id="paratext-link"
-            class="linked-paratext"
           >
             <div>Linked to Paratext account</div>
-            <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="0.5rem">
+            <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="0.5em">
               <label id="paratext-link-label">
                 <strong>{{ paratextUsername }}</strong>
               </label>
@@ -295,7 +184,7 @@
               </button>
             </div>
           </div>
-          <div *ngIf="!isLinkedToParatext" id="paratext-link" class="linked-paratext">
+          <div *ngIf="!isLinkedToParatext" id="paratext-link">
             <button mdc-button outlined id="connect-paratext-button" (click)="logInWithParatext()">
               <mdc-icon>link</mdc-icon> Connect to Paratext
             </button>
@@ -305,12 +194,11 @@
         *ngIf="isLinkedToGoogle"
         fxLayout="row"
         fxLayoutAlign="space-between center"
-        fxLayoutGap="1rem"
+        fxLayoutGap="1em"
         id="google-link"
-        class="linked-google"
       >
         <div>Linked to Google account</div>
-        <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="0.5rem">
+        <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="0.5em">
           <label
             ><strong>{{ googleUsername }}</strong></label
           >
@@ -319,7 +207,7 @@
           </button>
         </div>
       </div>
-      <div *ngIf="!isLinkedToGoogle" id="google-link" class="linked-google">
+      <div *ngIf="!isLinkedToGoogle" id="google-link">
         <button mdc-button outlined><mdc-icon>link</mdc-icon> Connect to Google</button>
       </div>
       -->
