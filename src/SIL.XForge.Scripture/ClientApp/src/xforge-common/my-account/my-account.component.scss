@@ -1,27 +1,17 @@
-.update-button-spinner {
-  float: left;
-  // margin-top: 0.6em;
-  // margin-right: 0.5em;
+@import '~src/global';
+
+.account-form {
+  max-width: 30em;
+  mdc-text-field {
+    width: 100%;
+  }
+  .update-button {
+    top: 20px;
+  }
 }
 
-.contactMethod-spinner,
-.birthday-spinner,
-.gender-spinner {
-  float: right;
-  margin-top: 1.5em;
-  margin-right: 0.5em;
-}
-
-.check-icon {
-  color: green;
-}
-
-// mdc-card button {
-//   left: 1em;
-// }
-
-.error-icon {
-  color: red;
+.linked-accounts {
+  margin-bottom: 1em;
 }
 
 .delete-account mdc-card {
@@ -31,28 +21,20 @@
     font-weight: normal;
     margin: 0;
   }
+
   #delete-account-button {
-    color: red;
-    // Help button stay within the card border
-    margin-right: 1em;
+    @include mdc-button-container-fill-color(red);
   }
 }
 
 .login-info {
-  margin-right: 1em;
+  margin: 0.5em 1em 0.5em 0em;
 }
 
 .nowrap {
   white-space: nowrap;
 }
 
-.linked-paratext,
-.linked-google,
 .delete-account {
-  margin-bottom: 1em;
-}
-
-mdc-divider {
-  margin-top: 1em;
   margin-bottom: 1em;
 }

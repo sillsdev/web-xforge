@@ -13,7 +13,7 @@ export class User extends Resource {
   role?: string;
   mobilePhone?: string;
   contactMethod?: 'email' | 'sms' | 'emailSms';
-  birthday?: Date;
+  birthday?: string;
   gender?: 'female' | 'male';
   site?: Site;
 

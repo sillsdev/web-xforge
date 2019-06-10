@@ -52,7 +52,6 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
   /** Elements in this component and their states. */
   controlStates = new Map<string, ElementState>();
-  controlChangeSubscriptions = new Map<string, Subscription>();
 
   formGroup = new FormGroup({
     name: new FormControl(),
@@ -128,16 +127,12 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
     // Update states when control values change.
     for (const controlName of Object.keys(this.formGroup.controls)) {
-      this.controlChangeSubscriptions[controlName] = this.subscribe(
-        this.formGroup.get(controlName).valueChanges,
-        this.onControlValueChanges(controlName)
-      );
+      this.subscribe(this.formGroup.get(controlName).valueChanges, this.onControlValueChanges(controlName));
     }
   }
 
   ngOnDestroy() {
     super.ngOnDestroy();
-    this.controlChangeSubscriptions.forEach(sub => sub.unsubscribe());
     // Set title back, until titling is done more elegantly,
     // like https://toddmotto.com/dynamic-page-titles-angular-2-router-events
     this.titleService.setTitle(environment.siteName);
@@ -166,12 +161,16 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
     }
 
     // Set form values from database, if present.
+    const yyyy_mm_dd =
+      new Date(this.userFromDatabase.birthday).getUTCFullYear() > 1900
+        ? this.userFromDatabase.birthday.split('T')[0]
+        : null;
     this.formGroup.setValue({
       name: this.userFromDatabase.name || '',
       email: this.userFromDatabase.email || '',
       mobilePhone: this.userFromDatabase.mobilePhone || '',
       contactMethod: this.userFromDatabase.contactMethod || null,
-      birthday: this.userFromDatabase.birthday || null,
+      birthday: yyyy_mm_dd,
       gender: this.userFromDatabase.gender || null
     });
 
@@ -198,7 +197,6 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
     }
 
     this.formGroup.get(element).disable();
-    this.controlChangeSubscriptions[element].unsubscribe();
     this.controlStates.set(element, ElementState.Submitting);
 
     if (
@@ -223,12 +221,6 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
       this.formGroup.get(element).enable();
       this.controlStates.set(element, ElementState.Error);
-    } finally {
-      // this.formGroup.get(element).enable();
-      this.controlChangeSubscriptions[element] = this.subscribe(
-        this.formGroup.get(element).valueChanges,
-        this.onControlValueChanges(element)
-      );
     }
   }
 
@@ -281,6 +273,9 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
   private onControlValueChanges(controlName: string): () => void {
     return () => {
+      if (this.controlStates.get(controlName) === ElementState.Submitting) {
+        return;
+      }
       const isClean = this.userFromDatabase[controlName] === this.formGroup.get(controlName).value;
       const newState = isClean ? ElementState.InSync : ElementState.Dirty;
       this.controlStates.set(controlName, newState);
