@@ -15,6 +15,8 @@ const shareDBAccess = require('sharedb-access');
 ShareDB.types.register(richText.type);
 ShareDB.types.register(otJson0.type);
 
+const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
+
 // This should stay in sync with the corresponding enum in "Models/Operation.cs".
 const Operation = {
   Create: 1,
@@ -57,7 +59,7 @@ class RealtimeServer {
 
     this.jwksClient = jwks({
       cache: true,
-      jwksUri: `${options.origin}.well-known/openid-configuration/jwks`
+      jwksUri: `${options.authority}.well-known/jwks.json`
     });
 
     this.backend = new ShareDB({
@@ -170,7 +172,8 @@ class RealtimeServer {
 
   async setConnectSession(request) {
     if (request.req.user != null) {
-      const session = { userId: request.req.user.sub, isServer: false };
+      const userId = request.req.user[XF_USER_ID_CLAIM];
+      const session = { userId, isServer: false };
       await this.updateUserProjectRoles(session);
       request.agent.connectSession = session;
     } else {

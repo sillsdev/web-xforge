@@ -5,5 +5,6 @@ export const environment = {
   siteName: 'Scripture Forge',
   realtimePort: 5002,
   realtimeUrl: '/',
-  captchaId: '6Lc88HYUAAAAAI2ME1nZ5_RQMkE-pPnhddQc7-rj'
+  authDomain: 'sil-appbuilder.auth0.com',
+  authClientId: 'aoAGb9Yx1H5WIsvCW6JJCteJhSa37ftH'
 };

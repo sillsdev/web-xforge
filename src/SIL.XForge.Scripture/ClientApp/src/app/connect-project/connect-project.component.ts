@@ -135,7 +135,7 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
   }
 
   logInWithParatext(): void {
-    this.paratextService.logIn('/connect-project');
+    this.paratextService.linkParatext('/connect-project');
   }
 
   async submit(): Promise<void> {

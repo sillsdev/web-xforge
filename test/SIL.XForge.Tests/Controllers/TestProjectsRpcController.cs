@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using SIL.XForge.Configuration;
@@ -30,13 +29,15 @@ namespace SIL.XForge.Controllers
 
         protected override string ProjectAdminRole => TestProjectRoles.Administrator;
 
-        protected override bool IsProjectSharingOptionEnabled(TestProjectEntity project, string option)
+        protected override bool TryGetShareConfig(TestProjectEntity project, out ShareConfig shareConfig)
         {
-            if (!project.CheckingConfig.Share.Enabled)
+            if (!project.CheckingConfig.Enabled)
+            {
+                shareConfig = null;
                 return false;
-            if (option == ShareOptions.Email)
-                return project.CheckingConfig.Share.ViaEmail;
-            return false;
+            }
+            shareConfig = project.CheckingConfig.Share;
+            return true;
         }
     }
 }

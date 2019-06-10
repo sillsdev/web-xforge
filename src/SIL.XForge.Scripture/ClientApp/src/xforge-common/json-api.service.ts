@@ -613,10 +613,10 @@ export class JsonApiService {
    *
    * @param {(RecordIdentity | string)} identityOrType The type or resource to perform command on.
    * @param {string} method The command name.
-   * @param {*} params The command parameters.
+   * @param {*} [params] The command parameters.
    * @returns {Promise<T>} The command result.
    */
-  onlineInvoke<T>(identityOrType: RecordIdentity | string, method: string, params: any): Promise<T> {
+  onlineInvoke<T>(identityOrType: RecordIdentity | string, method: string, params: any = {}): Promise<T> {
     let type: string;
     let id: string;
     if (typeof identityOrType === 'string') {

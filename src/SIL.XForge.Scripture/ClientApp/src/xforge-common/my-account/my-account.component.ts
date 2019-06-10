@@ -228,7 +228,7 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
   }
 
   logInWithParatext(): void {
-    this.paratextService.logIn('/my-account');
+    this.paratextService.linkParatext('/my-account');
   }
 
   openDeleteAccountDialog(): void {

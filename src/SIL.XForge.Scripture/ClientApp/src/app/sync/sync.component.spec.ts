@@ -28,7 +28,7 @@ describe('SyncComponent', () => {
   it('should redirect the user to log in to paratext', fakeAsync(() => {
     const env = new TestEnvironment();
     env.clickElement(env.logInButton);
-    verify(env.mockedParatextService.logIn(anything())).once();
+    verify(env.mockedParatextService.linkParatext(anything())).once();
     expect().nothing();
   }));
 

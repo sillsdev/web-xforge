@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using System.Security;
 using System.Threading.Tasks;
-using IdentityServer4.Extensions;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SIL.XForge.DataAccess;
@@ -15,7 +13,7 @@ namespace SIL.XForge.Scripture.Controllers
 {
     [Route("paratext-api")]
     [ApiController]
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize]
     public class ParatextController : ControllerBase
     {
         private readonly IRepository<UserEntity> _users;

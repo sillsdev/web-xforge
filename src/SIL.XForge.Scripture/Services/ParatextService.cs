@@ -13,16 +13,18 @@ using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using SIL.ObjectModel;
 using SIL.WritingSystems;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>Exchanges data with PT projects in the cloud.</summary>
-    public class ParatextService : IParatextService, IDisposable
+    public class ParatextService : DisposableBase, IParatextService
     {
         private readonly IOptions<ParatextOptions> _options;
         private readonly IRepository<UserEntity> _users;
@@ -126,12 +128,19 @@ namespace SIL.XForge.Scripture.Services
             return projects;
         }
 
-        public async Task<string> GetProjectRoleAsync(UserEntity user, string paratextId)
+        public async Task<Attempt<string>> TryGetProjectRoleAsync(UserEntity user, string paratextId)
         {
-            string response = await CallApiAsync(_registryClient, user, HttpMethod.Get,
-                $"projects/{paratextId}/members/{user.ParatextId}");
-            var memberObj = JObject.Parse(response);
-            return (string)memberObj["role"];
+            try
+            {
+                string response = await CallApiAsync(_registryClient, user, HttpMethod.Get,
+                    $"projects/{paratextId}/members/{user.ParatextId}");
+                var memberObj = JObject.Parse(response);
+                return Attempt.Success((string)memberObj["role"]);
+            }
+            catch (HttpRequestException)
+            {
+                return Attempt.Failure((string)null);
+            }
         }
 
         public string GetParatextUsername(UserEntity user)
@@ -181,7 +190,7 @@ namespace SIL.XForge.Scripture.Services
             user.ParatextTokens = new Tokens
             {
                 AccessToken = (string)responseObj["access_token"],
-                RefreshToken = (string)responseObj["refresh_token"]
+                RefreshToken = (string)responseObj["refresh_token"],
             };
             await _users.UpdateAsync(user, b => b.Set(u => u.ParatextTokens, user.ParatextTokens));
         }
@@ -192,7 +201,7 @@ namespace SIL.XForge.Scripture.Services
             if (user.ParatextTokens?.AccessToken == null)
                 throw new SecurityException("The current user is not signed into Paratext.");
 
-            bool expired = IsAccessTokenExpired(user);
+            bool expired = !user.ParatextTokens.ValidateLifetime();
             bool refreshed = false;
             while (!refreshed)
             {
@@ -227,37 +236,11 @@ namespace SIL.XForge.Scripture.Services
             throw new SecurityException("The current user's Paratext access token is invalid.");
         }
 
-        private static bool IsAccessTokenExpired(UserEntity user)
+        protected override void DisposeManagedResources()
         {
-            var accessToken = new JwtSecurityToken(user.ParatextTokens.AccessToken);
-            var now = DateTime.UtcNow;
-            return now < accessToken.ValidFrom || now > accessToken.ValidTo;
+            _dataAccessClient.Dispose();
+            _registryClient.Dispose();
+            _httpClientHandler.Dispose();
         }
-
-        #region IDisposable Support
-        private bool _disposedValue; // To detect redundant calls
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposedValue)
-            {
-                if (disposing)
-                {
-                    _dataAccessClient.Dispose();
-                    _registryClient.Dispose();
-                    _httpClientHandler.Dispose();
-                }
-
-                _disposedValue = true;
-            }
-        }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-        }
-        #endregion
     }
 }

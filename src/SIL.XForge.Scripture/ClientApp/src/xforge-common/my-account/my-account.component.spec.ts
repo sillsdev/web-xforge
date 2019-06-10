@@ -29,7 +29,6 @@ describe('MyAccountComponent', () => {
     env = new TestEnvironment(
       new User({
         name: 'bob smith',
-        username: 'bobusername',
         email: 'bob@example.com',
         contactMethod: 'email',
         mobilePhone: '+123 11 2222-33-4444',

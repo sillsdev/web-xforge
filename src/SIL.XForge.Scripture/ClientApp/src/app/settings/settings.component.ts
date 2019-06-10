@@ -1,12 +1,13 @@
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { clone } from '@orbit/utils';
 import { combineLatest } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { ElementState } from 'xforge-common/models/element-state';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
+import { ShareLevel } from 'xforge-common/models/share-config';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -18,6 +19,15 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
 
 type VoidFunc = (() => void);
 
+interface Settings {
+  translate?: boolean;
+  sourceParatextId?: string;
+  checking?: boolean;
+  seeOthersResponses?: boolean;
+  share?: boolean;
+  shareLevel?: ShareLevel;
+}
+
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
 @Component({
   selector: 'app-settings',
@@ -25,13 +35,14 @@ type VoidFunc = (() => void);
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
-  form: FormGroup = new FormGroup(
+  form = new FormGroup(
     {
-      translate: new FormControl({ value: false, disabled: true }),
+      translate: new FormControl(false),
       sourceParatextId: new FormControl(undefined),
-      checking: new FormControl({ value: false, disabled: true }),
+      checking: new FormControl(false),
       seeOthersResponses: new FormControl(false),
-      shareViaEmail: new FormControl(false)
+      share: new FormControl(false),
+      shareLevel: new FormControl(undefined)
     },
     XFValidators.requireOneWithValue(['translate', 'checking'], true)
   );
@@ -45,7 +56,7 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
   // to update its status
   private isFirstLoad: boolean = true;
   private paratextProjects: ParatextProject[];
-  private previousFormValues: any;
+  private previousFormValues: Settings;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -68,39 +79,11 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
   }
 
   get translate(): boolean {
-    return this.form.get('translate').value;
-  }
-
-  get translateState(): ElementState {
-    return this.controlStates.get('translate');
-  }
-
-  get sourceParatextIdState(): ElementState {
-    return this.controlStates.get('sourceParatextId');
+    return this.form.controls.translate.value;
   }
 
   get checking(): boolean {
-    return this.form.get('checking').value;
-  }
-
-  get checkingState(): ElementState {
-    return this.controlStates.get('checking');
-  }
-
-  get seeOthersResponses(): boolean {
-    return this.form.get('seeOthersResponses').value;
-  }
-
-  get seeOthersResponsesState(): ElementState {
-    return this.controlStates.get('seeOthersResponses');
-  }
-
-  get shareViaEmail(): boolean {
-    return this.form.get('shareViaEmail').value;
-  }
-
-  get shareViaEmailState(): ElementState {
-    return this.controlStates.get('shareViaEmail');
+    return this.form.controls.checking.value;
   }
 
   private get isOnlyBasedOnInvalid(): boolean {
@@ -115,10 +98,10 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     return this.form.controls.sourceParatextId.invalid && invalidCount === 1;
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.form.disable();
     this.form.setErrors({ required: true });
-    this.form.valueChanges.subscribe((value: any) => this.onFormValueChanges(value));
+    this.form.valueChanges.subscribe(value => this.onFormValueChanges(value));
     this.setAllControlsToInSync();
     this.subscribe(
       this.route.params.pipe(
@@ -159,7 +142,7 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
 
   logInWithParatext(): void {
     const url = '/projects/' + this.projectId + '/settings';
-    this.paratextService.logIn(url);
+    this.paratextService.linkParatext(url);
   }
 
   openDeleteProjectDialog(): void {
@@ -175,7 +158,11 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     });
   }
 
-  private onFormValueChanges(newValue: any): void {
+  getControlState(setting: string): ElementState {
+    return this.controlStates.get(setting);
+  }
+
+  private onFormValueChanges(newValue: Settings): void {
     if (this.form.valid || this.isOnlyBasedOnInvalid) {
       let isUpdateNeeded: boolean = false;
       const updatedProject = {
@@ -223,16 +210,38 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
         this.updateControlState('seeOthersResponses', successHandlers, failStateHandlers);
         isUpdateNeeded = true;
       }
-      if (newValue.shareViaEmail !== this.project.checkingConfig.share.viaEmail) {
+      if (newValue.share !== this.project.checkingConfig.share.enabled) {
         if (!updatedProject.checkingConfig.share) {
           updatedProject.checkingConfig.share = {};
         }
         if (!this.project.checkingConfig.share) {
           this.project.checkingConfig.share = {};
         }
-        updatedProject.checkingConfig.share.viaEmail = newValue.shareViaEmail;
-        this.project.checkingConfig.share.viaEmail = newValue.shareViaEmail;
-        this.updateControlState('shareViaEmail', successHandlers, failStateHandlers);
+        updatedProject.checkingConfig.share.enabled = newValue.share;
+        this.project.checkingConfig.share.enabled = newValue.share;
+        this.updateControlState('share', successHandlers, failStateHandlers);
+        isUpdateNeeded = true;
+        const shareLevelControl = this.form.controls.shareLevel;
+        if (newValue.share) {
+          shareLevelControl.enable();
+        } else {
+          shareLevelControl.disable();
+        }
+      }
+      if (
+        newValue.shareLevel != null &&
+        newValue.shareLevel !== this.project.checkingConfig.share.level &&
+        this.form.controls.shareLevel.enabled
+      ) {
+        if (!updatedProject.checkingConfig.share) {
+          updatedProject.checkingConfig.share = {};
+        }
+        if (!this.project.checkingConfig.share) {
+          this.project.checkingConfig.share = {};
+        }
+        updatedProject.checkingConfig.share.level = newValue.shareLevel;
+        this.project.checkingConfig.share.level = newValue.shareLevel;
+        this.updateControlState('shareLevel', successHandlers, failStateHandlers);
         isUpdateNeeded = true;
       }
       if (!isUpdateNeeded) {
@@ -263,12 +272,16 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
       sourceParatextId: this.project.translateConfig.sourceParatextId,
       checking: this.project.checkingConfig.enabled,
       seeOthersResponses: this.project.checkingConfig.usersSeeEachOthersResponses,
-      shareViaEmail: this.project.checkingConfig.share.viaEmail
+      share: this.project.checkingConfig.share.enabled,
+      shareLevel: this.project.checkingConfig.share.level
     };
     this.setValidators();
     this.form.reset(this.previousFormValues);
     if (!this.isLoggedInToParatext) {
       this.form.controls.translate.disable();
+    }
+    if (!this.project.checkingConfig.share.enabled) {
+      this.form.controls.shareLevel.disable();
     }
     this.setAllControlsToInSync();
   }
@@ -284,7 +297,8 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('checking', ElementState.InSync);
     this.controlStates.set('seeOthersResponses', ElementState.InSync);
-    this.controlStates.set('shareViaEmail', ElementState.InSync);
+    this.controlStates.set('share', ElementState.InSync);
+    this.controlStates.set('shareLevel', ElementState.InSync);
   }
 
   // Update the controlStates for handling submitting a settings change (used to show spinner and success checkmark)

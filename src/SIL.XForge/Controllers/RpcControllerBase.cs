@@ -1,5 +1,6 @@
+using EdjCase.JsonRpc.Core;
 using EdjCase.JsonRpc.Router;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using EdjCase.JsonRpc.Router.Abstractions;
 using Microsoft.AspNetCore.Authorization;
 using SIL.XForge.Services;
 
@@ -8,7 +9,7 @@ namespace SIL.XForge.Controllers
     /// <summary>
     /// This is the base class for all JSON-RPC controllers.
     /// </summary>
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize]
     public abstract class RpcControllerBase : RpcController
     {
         private readonly IHttpRequestAccessor _httpRequestAccessor;
@@ -37,6 +38,18 @@ namespace SIL.XForge.Controllers
                     return null;
                 return path.Substring(index, length);
             }
+        }
+
+        protected IRpcMethodResult ForbiddenError()
+        {
+            return Error((int)RpcErrorCode.InvalidRequest,
+                "The specified user does not have permission to perform this operation"
+            );
+        }
+
+        protected IRpcMethodResult InvalidParamsError()
+        {
+            return Error((int)RpcErrorCode.InvalidParams);
         }
     }
 }

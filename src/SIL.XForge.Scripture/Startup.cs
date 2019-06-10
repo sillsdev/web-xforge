@@ -1,11 +1,8 @@
 using System;
 using System.IO;
-using System.Net.Http;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using JsonApiDotNetCore.Extensions;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -15,9 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
-using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
-using SIL.XForge.Scripture.Services;
 
 namespace SIL.XForge.Scripture
 {
@@ -78,24 +73,7 @@ namespace SIL.XForge.Scripture
 
             services.AddCommonServices();
 
-            services.AddXFIdentityServer(Configuration, IsDevelopment);
-
-            var siteOptions = Configuration.GetOptions<SiteOptions>();
-            services.AddAuthentication()
-                .AddJwtBearer(options =>
-                {
-                    if (IsDevelopment)
-                    {
-                        options.RequireHttpsMetadata = false;
-                        options.BackchannelHttpHandler = new HttpClientHandler
-                        {
-                            ServerCertificateCustomValidationCallback
-                                = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                        };
-                    }
-                    options.Authority = siteOptions.Origin.ToString();
-                    options.Audience = "api";
-                });
+            services.AddXFAuthentication(Configuration, "sf-api");
 
             services.AddSFDataAccess(Configuration);
 
@@ -115,20 +93,7 @@ namespace SIL.XForge.Scripture
                 });
             }
 
-            var dataAccessOptions = Configuration.GetOptions<DataAccessOptions>();
-            services.AddMachine(config =>
-                {
-                    config.AuthenticationSchemes = new[] { JwtBearerDefaults.AuthenticationScheme };
-                })
-                .AddEngineOptions(o => o.EnginesDir = Path.Combine(siteOptions.SiteDir, "engines"))
-                .AddMongoDataAccess(o =>
-                {
-                    o.ConnectionString = dataAccessOptions.ConnectionString;
-                    o.MachineDatabaseName = "xforge_machine";
-                })
-                .AddTextCorpus<SFTextCorpusFactory>();
-            services.AddSingleton<IAuthorizationHandler, MachineAuthorizationHandler>();
-            services.AddSingleton<IBuildHandler, SFBuildHandler>();
+            services.AddSFMachine(Configuration);
 
             containerBuilder.Populate(services);
 
@@ -164,7 +129,7 @@ namespace SIL.XForge.Scripture
             if (SpaDevServerStartup == SpaDevServerStartup.None)
                 app.UseSpaStaticFiles();
 
-            app.UseXFIdentityServer();
+            app.UseAuthentication();
 
             app.UseJsonApi();
 

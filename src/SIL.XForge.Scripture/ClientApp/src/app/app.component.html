@@ -31,7 +31,7 @@
               </div>
               <mdc-list-divider></mdc-list-divider>
               <mdc-list>
-                <mdc-list-item *ngIf="currentUser.isSystemAdmin" routerLink="/system-administration">
+                <mdc-list-item *ngIf="isSystemAdmin" routerLink="/system-administration">
                   System Administration
                 </mdc-list-item>
                 <mdc-list-item name="myProjects" routerLink="/projects">My Projects</mdc-list-item>
@@ -41,11 +41,6 @@
             </mdc-list-group>
           </mdc-menu>
         </div>
-      </mdc-top-app-bar-section>
-      <!-- isLoggedIn is intentionally strict equality with false so in its unresolved state this is not rendered -->
-      <mdc-top-app-bar-section align="end" *ngIf="(isLoggedIn | async) === false">
-        <a routerLink="/identity/sign-up"> <mdc-icon mdcTopAppBarActionItem title="Sign up">person_add</mdc-icon> </a>
-        <a routerLink="/identity/log-in"> <mdc-icon mdcTopAppBarActionItem title="Log in">lock</mdc-icon> </a>
       </mdc-top-app-bar-section>
     </mdc-top-app-bar-row>
   </mdc-top-app-bar>

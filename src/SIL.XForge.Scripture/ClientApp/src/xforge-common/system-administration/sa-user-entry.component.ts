@@ -1,7 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-
 import { SystemRole } from '../models/system-role';
 import { User } from '../models/user';
 import { NoticeService } from '../notice.service';
@@ -31,9 +30,7 @@ export class SaUserEntryComponent implements OnInit {
 
   btnUserAdd: boolean = true;
   btnUserUpdate: boolean = false;
-  btnChangePassword: boolean = false;
 
-  showPasswordPanel: boolean = true;
   showActivateDeActivatePanel: boolean = false;
 
   userActivateDeactive: string;
@@ -54,10 +51,8 @@ export class SaUserEntryComponent implements OnInit {
   ) {
     this.accountUserForm = this.formBuilder.group({
       fullName: ['', Validators.compose([Validators.required])],
-      username: [],
       email: ['', Validators.compose([Validators.required, Validators.email, Validators.pattern(this.emailPattern)])],
       role: ['', Validators.compose([Validators.required])],
-      password: ['', Validators.compose([Validators.required, Validators.minLength(7)])],
       activateStatus: []
     });
   }
@@ -73,8 +68,6 @@ export class SaUserEntryComponent implements OnInit {
       this.headerTitle = 'Account details';
       this.btnUserAdd = false;
       this.btnUserUpdate = true;
-      this.btnChangePassword = true;
-      this.showPasswordPanel = false;
       this.showActivateDeActivatePanel = true;
       this.getCurrentUser(this._editUserId);
     } else {
@@ -101,10 +94,6 @@ export class SaUserEntryComponent implements OnInit {
     return this.formControls.email;
   }
 
-  get password() {
-    return this.formControls.password;
-  }
-
   get role() {
     return this.formControls.role;
   }
@@ -117,19 +106,8 @@ export class SaUserEntryComponent implements OnInit {
     if (!this.editUserId) {
       this.btnUserAdd = true;
       this.btnUserUpdate = false;
-      this.btnChangePassword = false;
-      this.showPasswordPanel = true;
       this.showActivateDeActivatePanel = false;
     }
-    this.password.setValidators([Validators.required]);
-    this.password.updateValueAndValidity();
-  }
-
-  onChangePassword(): void {
-    this.showPasswordPanel = true;
-    this.btnChangePassword = false;
-    this.isSubmitted = true;
-    this.password.markAsTouched();
   }
 
   async onUserAdd(): Promise<void> {
@@ -140,11 +118,9 @@ export class SaUserEntryComponent implements OnInit {
 
     const newUser: Partial<User> = {
       name: this.accountUserForm.value.fullName,
-      username: this.accountUserForm.value.username,
       email: this.accountUserForm.value.email,
       role: this.accountUserForm.value.role,
-      active: true,
-      password: this.accountUserForm.value.password
+      active: true
     };
     try {
       await this.userService.onlineCreate(newUser);
@@ -163,24 +139,15 @@ export class SaUserEntryComponent implements OnInit {
   }
 
   async onUpdate(): Promise<void> {
-    if (!this.showPasswordPanel) {
-      this.password.clearValidators();
-      this.password.updateValueAndValidity();
-    }
     if (this.accountUserForm.invalid) {
       return;
     }
     const updateUser: Partial<User> = {
       name: this.accountUserForm.value.fullName,
-      username: this.accountUserForm.value.username,
       email: this.accountUserForm.value.email,
       role: this.accountUserForm.value.role,
       active: this.accountUserForm.value.activateStatus
     };
-    if (this.accountUserForm.value.password != null) {
-      // The password was changed, so we need to update the password property of our user
-      updateUser.password = this.accountUserForm.value.password;
-    }
     try {
       await this.userService.onlineUpdateAttributes(this.editUserId, updateUser);
     } catch (e) {
@@ -204,14 +171,11 @@ export class SaUserEntryComponent implements OnInit {
   getCurrentUser(userId: string): void {
     this.btnUserAdd = false;
     this.btnUserUpdate = true;
-    this.btnChangePassword = true;
-    this.showPasswordPanel = false;
     this.showActivateDeActivatePanel = true;
     this.userService.onlineGet(userId).subscribe(response => {
       if (response != null) {
         this.accountUserForm.patchValue({
           fullName: response.data.name,
-          username: response.data.username,
           email: response.data.email,
           role: response.data.role,
           activateStatus: response.data.active

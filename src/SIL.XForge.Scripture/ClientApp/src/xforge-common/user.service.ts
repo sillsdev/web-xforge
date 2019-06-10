@@ -4,7 +4,6 @@ import { Record } from '@orbit/data';
 import { clone } from '@orbit/utils';
 import { combineLatest, Observable, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, shareReplay, switchMap } from 'rxjs/operators';
-
 import { AuthService } from './auth.service';
 import { registerCustomFilter } from './custom-filter-specifier';
 import { GetAllParameters, JsonApiService, QueryObservable } from './json-api.service';
@@ -36,10 +35,6 @@ export class UserService extends ResourceService {
 
   get currentUserId(): string {
     return this.authService.currentUserId;
-  }
-
-  hasCurrentUserRole(role: string): Observable<boolean> {
-    return this.getCurrentUser().pipe(map(currentUser => currentUser && currentUser.role === role));
   }
 
   hasCurrentUserProjectRole(projectId: string, role: string): Observable<boolean> {
@@ -171,10 +166,10 @@ export class UserService extends ResourceService {
     }
 
     const userName = record.attributes[nameof<User>('name')] as string;
-    const userEmail = record.attributes[nameof<User>('canonicalEmail')] as string;
+    const userEmail = record.attributes[nameof<User>('email')] as string;
     if (
       (userName != null && userName.toLowerCase().includes(value)) ||
-      (userEmail != null && userEmail.includes(value))
+      (userEmail != null && userEmail.toLowerCase().includes(value))
     ) {
       return true;
     }

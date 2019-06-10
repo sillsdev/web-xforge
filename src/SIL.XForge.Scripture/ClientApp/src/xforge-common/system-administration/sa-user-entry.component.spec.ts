@@ -5,8 +5,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
-import { anything, capture, instance, mock, verify, when } from 'ts-mockito/lib/ts-mockito';
-
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { Site } from 'xforge-common/models/site';
 import { MapQueryResults } from '../json-api.service';
 import { User } from '../models/user';
@@ -24,7 +23,6 @@ class TestUserEntryComponent {
     id: 'user01',
     email: 'user01@example.com',
     name: 'User 01',
-    password: 'password01',
     role: 'user',
     active: true,
     dateCreated: '2019-01-01T12:00:00.000Z',
@@ -39,8 +37,7 @@ class TestUserEntryComponent {
     this.mockedNoticeService = mock(NoticeService);
     const updatedUser = new User({
       id: 'user01',
-      name: 'Updated Name',
-      username: 'updatedusername'
+      name: 'Updated Name'
     });
     when(this.mockedUserService.onlineUpdateAttributes(anything(), anything())).thenResolve(updatedUser);
     TestBed.configureTestingModule({
@@ -66,10 +63,6 @@ class TestUserEntryComponent {
     return this.fixture.debugElement.query(By.css('#full-name'));
   }
 
-  get usernameInput(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#username'));
-  }
-
   get emailInput(): DebugElement {
     return this.fixture.debugElement.query(By.css('#email'));
   }
@@ -82,20 +75,12 @@ class TestUserEntryComponent {
     return this.fixture.debugElement.query(By.css('#last-login'));
   }
 
-  get passwordInput(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#password'));
-  }
-
   get addButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#add-button'));
   }
 
   get updateButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#update-button'));
-  }
-
-  get changePasswordButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#changepassword-button'));
   }
 
   get accountUserFormDiv(): DebugElement {
@@ -171,11 +156,7 @@ describe('System Administration User Entry Component', () => {
       env.useExistingUser();
       expect(env.component.fullName.value).toBe('User 01');
       env.setInputValue(env.nameInput, 'Updated Name');
-      env.setInputValue(env.usernameInput, 'updatedusername');
       expect(env.component.email.value).toBe('user01@example.com');
-      expect(env.component.showPasswordPanel).toBe(false);
-      // The user's password is not stored on the form
-      expect(env.component.password.value).toBe('');
       expect(env.component.role.value).toBe('user');
       expect(env.component.activateStatus.value).toBe(true);
       env.clickElement(env.updateButton);
@@ -219,52 +200,6 @@ describe('System Administration User Entry Component', () => {
       const expected = new RegExp('.*Ordered rabbit stew but got vegetable soup!.*');
       expect(() => env.clickElement(env.updateButton)).toThrowError(expected);
     }));
-
-    it('should allow the user to be updated when password field is untouched', fakeAsync(() => {
-      const env = new TestUserEntryComponent();
-      env.useExistingUser();
-      expect(env.component.showPasswordPanel).toBe(false);
-      // The user's password is not stored on the form
-      expect(env.component.password.value).toBe('');
-      expect(env.component.password.hasError('required')).toBe(true);
-      // The validations on the password get bypassed when showPasswordPanel is false
-      env.clickElement(env.updateButton);
-      verify(env.mockedUserService.onlineUpdateAttributes(anything(), anything())).once();
-    }));
-
-    it('should not update the password when the password field is untouched', fakeAsync(() => {
-      const env = new TestUserEntryComponent();
-      env.useExistingUser();
-      const passwordBefore = env.testUser.password;
-      expect(env.component.password.value).toBe('');
-      env.clickElement(env.updateButton);
-      verify(env.mockedUserService.onlineUpdateAttributes(anything(), anything())).once();
-      expect(env.testUser.password).toEqual(passwordBefore);
-    }));
-
-    it('should show the password field when the button is pressed', fakeAsync(() => {
-      const env = new TestUserEntryComponent();
-      env.useExistingUser();
-      expect(env.component.showPasswordPanel).toBe(false);
-      env.clickElement(env.changePasswordButton);
-      expect(env.component.showPasswordPanel).toBe(true);
-    }));
-
-    it('should update password when new password is entered', fakeAsync(() => {
-      const env = new TestUserEntryComponent();
-      env.useExistingUser();
-      expect(env.changePasswordButton.nativeElement.textContent).toContain('Change Password');
-      env.clickElement(env.changePasswordButton);
-      env.setInputValue(env.passwordInput, 'short');
-      expect(env.component.password.hasError('minlength')).toBe(true);
-      env.setInputValue(env.passwordInput, 'newvalidpassword');
-      expect(env.component.password.hasError('minlength')).toBe(false);
-      env.clickElement(env.updateButton);
-      verify(env.mockedUserService.onlineUpdateAttributes(anything(), anything())).once();
-      const [userId, partialUser] = capture(env.mockedUserService.onlineUpdateAttributes).last();
-      expect(userId).toBe('user01');
-      expect(partialUser.password).toBe('newvalidpassword');
-    }));
   });
 
   describe('New user account details', () => {
@@ -273,7 +208,6 @@ describe('System Administration User Entry Component', () => {
       env.simulateAddUser();
       expect(env.addButton.nativeElement.textContent).toContain('Add');
       expect(env.title.nativeElement.textContent).toContain('New account details');
-      expect(env.component.showPasswordPanel).toBe(true);
     }));
 
     it('should not submit if form is invalid ', fakeAsync(() => {
@@ -285,8 +219,6 @@ describe('System Administration User Entry Component', () => {
       expect(env.component.email.hasError('email')).toBe(true);
       env.setInputValue(env.emailInput, 'invalidemail@example');
       expect(env.component.email.hasError('pattern')).toBe(true);
-      env.setInputValue(env.passwordInput, '');
-      expect(env.component.password.hasError('required')).toBe(true);
       env.clickElement(env.addButton);
       verify(env.mockedUserService.onlineCreate(anything())).never();
       verify(env.mockedNoticeService.show(anything())).never();
@@ -297,7 +229,6 @@ describe('System Administration User Entry Component', () => {
       env.simulateAddUser();
       env.setInputValue(env.nameInput, 'New Name');
       env.setInputValue(env.emailInput, 'newemail@example.com');
-      env.setInputValue(env.passwordInput, 'newpassword');
       // The default role is set to be user
       expect(env.component.role.value).toBe('user');
       expect(env.component.accountUserForm.valid).toBe(true);
@@ -312,7 +243,6 @@ describe('System Administration User Entry Component', () => {
       env.simulateAddUser();
       env.setInputValue(env.nameInput, 'New Name');
       env.setInputValue(env.emailInput, env.testUser.email);
-      env.setInputValue(env.passwordInput, env.testUser.password);
       expect(env.component.accountUserForm.valid).toBe(true);
       env.clickElement(env.addButton);
       verify(env.mockedUserService.onlineCreate(anything())).once();
@@ -325,7 +255,6 @@ describe('System Administration User Entry Component', () => {
       env.simulateAddUser();
       env.setInputValue(env.nameInput, 'New Name');
       env.setInputValue(env.emailInput, 'newEmail@example.com');
-      env.setInputValue(env.passwordInput, 'new password');
       const expected = new RegExp('.*Ordered rabbit stew but got veggie!.*');
       expect(() => env.clickElement(env.addButton)).toThrowError(expected);
     }));

@@ -14,6 +14,7 @@ using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -26,8 +27,8 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser("user02", SystemRoles.User);
-                env.ParatextService.GetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
-                    .Returns(Task.FromResult(SFProjectRoles.Administrator));
+                env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
+                    .Returns(Task.FromResult(Attempt.Success(SFProjectRoles.Administrator)));
 
                 Assert.That(env.ContainsProjectUser("projectusernew"), Is.False);
 
@@ -55,8 +56,8 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser("user02", SystemRoles.User);
-                env.ParatextService.GetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
-                    .Returns(Task.FromResult(SFProjectRoles.Administrator));
+                env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
+                    .Returns(Task.FromResult(Attempt.Success(SFProjectRoles.Administrator)));
 
                 Assert.That(env.ContainsProjectUser("projectusernew"), Is.False);
 
@@ -83,8 +84,8 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser("user02", SystemRoles.SystemAdmin);
-                env.ParatextService.GetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
-                    .Returns(Task.FromResult(SFProjectRoles.Administrator));
+                env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
+                    .Returns(Task.FromResult(Attempt.Success(SFProjectRoles.Administrator)));
 
                 Assert.That(env.ContainsProjectUser("projectusernew"), Is.False);
 
@@ -259,9 +260,9 @@ namespace SIL.XForge.Scripture.Services
             {
                 Users = new MemoryRepository<UserEntity>(new[]
                     {
-                        new UserEntity { Id = "user01", Username = "user01" },
-                        new UserEntity { Id = "user02", Username = "user02" },
-                        new UserEntity { Id = "user03", Username = "user03" }
+                        new UserEntity { Id = "user01" },
+                        new UserEntity { Id = "user02" },
+                        new UserEntity { Id = "user03" }
                     });
                 ParatextService = Substitute.For<IParatextService>();
                 var jobs = Substitute.For<IRepository<SyncJobEntity>>();

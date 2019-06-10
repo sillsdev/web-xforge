@@ -16,9 +16,6 @@
           </mat-form-field>
 
           <mat-form-field>
-            <input id="username" matInput placeholder="Username" formControlName="username" />
-          </mat-form-field>
-          <mat-form-field>
             <input id="email" matInput placeholder="Email Address" formControlName="email" />
             <mat-error *ngIf="email.errors?.required && isSubmitted"> Email is required </mat-error>
             <mat-error *ngIf="(email.errors?.email || email.errors?.pattern) && isSubmitted">
@@ -32,27 +29,6 @@
             </mat-select>
             <mat-error *ngIf="role.errors?.required && isSubmitted"> System Role is required </mat-error>
           </mat-form-field>
-          <div *ngIf="showPasswordPanel">
-            <mat-form-field class="password-field">
-              <input
-                matInput
-                placeholder="Password"
-                type="password"
-                id="password"
-                name="Password"
-                formControlName="password"
-                minlength="7"
-              />
-              <mat-error *ngIf="password.errors?.minlength">Password must be at least 7 characters</mat-error>
-              <mat-error *ngIf="password.errors?.required && isSubmitted"
-                >Password is required</mat-error
-              > </mat-form-field
-            ><br />
-            <password-strength-meter
-              [password]="accountUserForm.value.password"
-              item-width="200px"
-            ></password-strength-meter>
-          </div>
           <div *ngIf="showActivateDeActivatePanel">
             <p id="last-login" mat-line>Last login {{ userLastLoginDate }}</p>
             <p id="date-created" mat-line>User created {{ userCreatedDate }}</p>
@@ -84,16 +60,6 @@
               (click)="onUpdate()"
             >
               Update
-            </button>
-            <button
-              mat-raised-button
-              id="changepassword-button"
-              *ngIf="btnChangePassword"
-              type="button"
-              class="changepassword-button"
-              (click)="onChangePassword()"
-            >
-              Change Password
             </button>
           </mat-card-actions>
         </form>

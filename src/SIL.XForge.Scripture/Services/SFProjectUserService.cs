@@ -8,6 +8,7 @@ using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -27,7 +28,7 @@ namespace SIL.XForge.Scripture.Services
         protected override async Task<SFProjectUserEntity> InsertEntityAsync(SFProjectUserEntity entity)
         {
             UserEntity user = await _users.GetAsync(UserId);
-            if (user.Role == SystemRoles.User || entity.Role == null)
+            if (SystemRole == SystemRoles.User || entity.Role == null)
             {
                 // get role from Paratext project
                 string paratextId = await Projects.Query().Where(p => p.Id == entity.ProjectRef)
@@ -37,7 +38,11 @@ namespace SIL.XForge.Scripture.Services
                     throw new JsonApiException(StatusCodes.Status400BadRequest,
                         "The specified project could not be found.");
                 }
-                entity.Role = await _paratextService.GetProjectRoleAsync(user, paratextId);
+                Attempt<string> attempt = await _paratextService.TryGetProjectRoleAsync(user, paratextId);
+                if (attempt.TryResult(out string role))
+                    entity.Role = role;
+                else
+                    entity.Role = SFProjectRoles.SFReviewer;
             }
 
             return await base.InsertEntityAsync(entity);

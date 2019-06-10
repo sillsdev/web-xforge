@@ -77,7 +77,7 @@ namespace SIL.XForge.Services
         {
             UserAccessor.IsAuthenticated.Returns(true);
             UserAccessor.UserId.Returns(userId);
-            UserAccessor.SystemRole.Returns(role);
+            UserAccessor.Role.Returns(role);
         }
 
         public AttrAttribute GetAttribute(string name)

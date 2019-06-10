@@ -63,18 +63,6 @@ namespace Microsoft.Extensions.DependencyInjection
                             DictionaryRepresentation.Document, new StringSerializer(),
                             BsonSerializer.SerializerRegistry.GetSerializer<Site>());
                     cm.GetMemberMap(u => u.Sites).SetSerializer(customSitesSerializer);
-                },
-                indexSetup: indexes =>
-                {
-                    IndexKeysDefinitionBuilder<UserEntity> builder = Builders<UserEntity>.IndexKeys;
-                    indexes.CreateOrUpdate(new CreateIndexModel<UserEntity>(builder.Ascending(u => u.CanonicalEmail),
-                        new CreateIndexOptions { Unique = true }));
-                    indexes.CreateOrUpdate(new CreateIndexModel<UserEntity>(builder.Ascending(u => u.Username),
-                        new CreateIndexOptions<UserEntity>
-                        {
-                            Unique = true,
-                            PartialFilterExpression = Builders<UserEntity>.Filter.Exists(u => u.Username)
-                        }));
                 });
 
             return services;

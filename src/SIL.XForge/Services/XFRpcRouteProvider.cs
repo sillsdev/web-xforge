@@ -38,7 +38,8 @@ namespace SIL.XForge.Services
         {
             if (this._routeCache == null)
             {
-                List<TypeInfo> controllerTypes = Assembly.GetEntryAssembly().DefinedTypes
+                List<TypeInfo> controllerTypes = new[] { Assembly.GetEntryAssembly(), Assembly.GetExecutingAssembly() }
+                    .SelectMany(a => a.DefinedTypes)
                     .Where(t => !t.IsAbstract && t.IsSubclassOf(typeof(RpcControllerBase)))
                     .ToList();
 

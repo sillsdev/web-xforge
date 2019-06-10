@@ -15,6 +15,17 @@
         @RenderBody()
     </div>
     <script src="~/lib/material-design-lite/js/material.min.js"></script>
+    <script src="https://cdn.auth0.com/js/auth0/9.10/auth0.min.js"></script>
+    <script type="text/javascript">
+        var webAuth = new auth0.WebAuth({
+            clientID: '@ViewData["ClientId"]',
+            domain: '@ViewData["Domain"]',
+            responseType: 'token id_token',
+            redirectUri: window.location.origin + '/projects',
+            scope: 'openid profile email',
+            audience: 'sf-api'
+        });
+    </script>
     @RenderSection("scripts", required: false)
 </body>
 </html>

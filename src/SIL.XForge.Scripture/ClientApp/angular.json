@@ -27,7 +27,7 @@
             "tsConfig": "src/tsconfig.app.json",
             "progress": true,
             "polyfills": "src/polyfills.ts",
-            "assets": ["src/favicon.ico", "src/assets", "src/silent-refresh.html", "src/manifest.json"],
+            "assets": ["src/favicon.ico", "src/assets", "src/manifest.json"],
             "styles": [
               {
                 "input": "node_modules/@angular/material/prebuilt-themes/indigo-pink.css"
