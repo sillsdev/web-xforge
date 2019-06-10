@@ -16,8 +16,9 @@ export class SFValidators {
       }
       // basic test that the verse contains only the allowed characters
       const ALLOWED_CHARS_REGEXP = /^\d{1,}[0-9abAB,-]{0,}$/;
-      // expressions for the format that should test false
+      // any valid letter followed by anything other than a comma or dash is not valid
       const LETTER_COMMA_DASH_REGEXP = /[abAB][^,-]/;
+      // any non-digit character following a comma or dash is disallowed
       const COMMA_DASH_DIGIT_REGEXP = /[,-]\D/;
       const versePart = (control.value as string).split(':')[1];
       if (

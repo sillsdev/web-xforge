@@ -74,7 +74,7 @@ describe('VerseRef Model', () => {
   });
 
   it('should be invalid', () => {
-    let vref = VerseRef.fromStr('LUK 3:a4,', ScrVers.Vulgate);
+    let vref = VerseRef.fromStr('LUK 3:,', ScrVers.Vulgate);
     expect(vref.valid).toBe(false);
     expect(vref.validStatus).toBe(ValidStatusType.OutOfRange);
     expect(vref.verse).toBe('');

@@ -67,7 +67,17 @@ describe('QuestionDialogComponent', () => {
   it('should produce error', fakeAsync(() => {
     const env = new TestEnvironment();
     flush();
-    const invalidVerses = ['MAT 1:1#', 'MAT 1:1c', 'MAT 1:aa', 'MAT 1:1a2', 'MAT 1:1,', 'MAT 1:1--2', 'MAT 1:1,2:1'];
+    const invalidVerses = [
+      'MAT 1',
+      'MAT a1',
+      'MAT 1:1#',
+      'MAT 1:1c',
+      'MAT 1:aa',
+      'MAT 1:1a2',
+      'MAT 1:1,',
+      'MAT 1:1--2',
+      'MAT 1:1,2:1'
+    ];
     for (const v of invalidVerses) {
       env.component.scriptureStart.setValue(v);
       expect(env.component.scriptureStart.errors.verseFormat).toBe(true);
