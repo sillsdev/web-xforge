@@ -13,6 +13,8 @@ import { RealtimeService } from 'xforge-common/realtime.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
+import { version } from '../../../version.json';
+import { environment } from '../environments/environment';
 import { SFProject } from './core/models/sfproject';
 import { SFProjectUser } from './core/models/sfproject-user';
 import { Text } from './core/models/text';
@@ -28,15 +30,15 @@ export const CONNECT_PROJECT_OPTION = '*connect-project*';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent extends SubscriptionDisposable implements OnInit {
-  currentUser$: Observable<User>;
-
+  version: string = version;
+  issueEmail: string = environment.issueEmail;
   isExpanded: boolean = false;
-
   translateVisible: boolean = false;
   checkingVisible: boolean = false;
 
   projects: SFProject[];
   texts: Text[];
+  currentUser$: Observable<User>;
   isProjectAdmin$: Observable<boolean>;
 
   private _projectSelect: MdcSelect;
@@ -62,6 +64,10 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     this.subscribe(media.media$, (change: MediaChange) => {
       this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg'].includes(change.mqAlias);
     });
+  }
+
+  get issueMailTo(): string {
+    return encodeURI('mailto:' + environment.issueEmail + '?subject=Scripture Forge v2 Issue');
   }
 
   @ViewChild('topAppBar')

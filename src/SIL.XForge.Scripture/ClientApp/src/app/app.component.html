@@ -16,7 +16,29 @@
       </mdc-top-app-bar-section>
       <mdc-top-app-bar-section align="end" *ngIf="(currentUser$ | async) as currentUser">
         <mdc-icon mdcTopAppBarActionItem title="Notifications">notifications</mdc-icon>
-        <mdc-icon mdcTopAppBarActionItem title="Help">help</mdc-icon>
+        <div mdcMenuSurfaceAnchor #helpMenuAnchor>
+          <mdc-icon mdcTopAppBarActionItem title="Help" (click)="helpMenu.open = !helpMenu.open">help</mdc-icon>
+          <mdc-menu #helpMenu [anchorCorner]="'bottomStart'" [anchorElement]="helpMenuAnchor">
+            <mdc-list-group>
+              <mdc-list>
+                <mdc-list-item name="issues">
+                  <a target="_blank" [href]="issueMailTo" mdcListItemMeta>
+                    <mdc-list-item-text>
+                      Report an Issue
+                      <div>
+                        <small>email&nbsp;{{ issueEmail }}</small>
+                      </div>
+                    </mdc-list-item-text>
+                  </a>
+                </mdc-list-item>
+              </mdc-list>
+              <mdc-list-divider></mdc-list-divider>
+              <div class="mdc-list-group__subheader">
+                <small>Product version: v{{ version }}</small>
+              </div>
+            </mdc-list-group>
+          </mdc-menu>
+        </div>
         <div mdcMenuSurfaceAnchor #userMenuAnchor>
           <mdc-icon mdcTopAppBarActionItem [title]="currentUser.name" (click)="userMenu.open = !userMenu.open">
             <app-avatar id="avatarId" [user]="currentUser" size="32" [round]="true"></app-avatar>

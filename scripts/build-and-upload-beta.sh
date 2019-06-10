@@ -8,7 +8,7 @@ DEPLOY_PATH=/var/www/$APP_NAME.org$APP_SUFFIX
 pushd .. > /dev/null
 
 rm -rf $BUILD_OUTPUT/app/*
-dotnet publish -c $CONFIGURATION -r $DEPLOY_RUNTIME -o ../../$BUILD_OUTPUT/app src/$PROJECT/$PROJECT.csproj || exit 1
+dotnet publish src/$PROJECT/$PROJECT.csproj -c $CONFIGURATION -r $DEPLOY_RUNTIME -o ../../$BUILD_OUTPUT/app /p:VersionPrefix=$BUILD_NUMBER || exit 1
 
 cat <<EOF > $BUILD_OUTPUT/app/secrets.json
 {
@@ -20,6 +20,12 @@ cat <<EOF > $BUILD_OUTPUT/app/secrets.json
     "BackendClientSecret": "$AUTH_BACKEND_SECRET",
     "WebhookPassword": "$AUTH_WEBHOOK_PASSWORD"
   }
+}
+EOF
+
+cat <<EOF > $BUILD_OUTPUT/app/version.json
+{
+  "version": "$BUILD_NUMBER"
 }
 EOF
 
