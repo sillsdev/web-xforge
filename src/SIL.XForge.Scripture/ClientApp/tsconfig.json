@@ -16,6 +16,7 @@
     "typeRoots": ["node_modules/@types"],
     "lib": ["es2017", "dom"],
     "module": "es2015",
+    "resolveJsonModule": true,
     "baseUrl": "./",
     "paths": {
       "xforge-common/*": ["./src/xforge-common/*"]
