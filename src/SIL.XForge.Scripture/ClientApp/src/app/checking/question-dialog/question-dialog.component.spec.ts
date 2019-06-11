@@ -40,6 +40,8 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureStart.setValue('MAT 1:1');
     expect(env.component.scriptureStart.valid).toBe(true);
     expect(env.component.scriptureStart.errors).toBeNull();
+    env.component.scriptureStart.setValue('MAT 1:1a');
+    expect(env.component.scriptureStart.errors).toBeNull();
     env.component.scriptureStart.setValue('TIT 1:1');
     expect(env.component.scriptureStart.errors.verseRange).toBe(true);
     env.component.scriptureStart.setValue('MAT 1:26');
@@ -52,6 +54,36 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.setValue('MAT 1:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
+    env.component.scriptureEnd.setValue('MAT 1:1a');
+    expect(env.component.scriptureEnd.errors).toBeNull();
+    env.component.scriptureEnd.setValue('TIT 1:1');
+    expect(env.component.scriptureEnd.errors.verseRange).toBe(true);
+    env.component.scriptureEnd.setValue('MAT 1:26');
+    expect(env.component.scriptureEnd.errors.verseRange).toBe(true);
+    env.component.scriptureEnd.setValue('MAT 1:25');
+    expect(env.component.scriptureEnd.errors).toBeNull();
+  }));
+
+  it('should produce error', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    const invalidVerses = [
+      'MAT 1',
+      'MAT a1',
+      'MAT 1:1#',
+      'MAT 1:1c',
+      'MAT 1:aa',
+      'MAT 1:1a2',
+      'MAT 1:1,',
+      'MAT 1:1--2',
+      'MAT 1:1,2:1'
+    ];
+    for (const v of invalidVerses) {
+      env.component.scriptureStart.setValue(v);
+      expect(env.component.scriptureStart.errors.verseFormat).toBe(true);
+      env.component.scriptureEnd.setValue(v);
+      expect(env.component.scriptureEnd.errors.verseFormat).toBe(true);
+    }
   }));
 
   it('should validate matching book and chapter', fakeAsync(() => {

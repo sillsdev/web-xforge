@@ -1,5 +1,5 @@
 import { ScrVers } from './scr-vers';
-import { VerseRef } from './verse-ref';
+import { ValidStatusType, VerseRef } from './verse-ref';
 
 /**
  * Partially converted from https://github.com/sillsdev/libpalaso/blob/master/SIL.Scripture.Tests/VerseRefTests.cs
@@ -71,5 +71,22 @@ describe('VerseRef Model', () => {
     // expect(vref.segment(null)).toEqual('b');
     // expect(vref.allVerses().Count()).toEqual(2);
     expect(vref.versification).toEqual(ScrVers.Vulgate);
+  });
+
+  it('should be invalid', () => {
+    let vref = VerseRef.fromStr('LUK 3:,', ScrVers.Vulgate);
+    expect(vref.valid).toBe(false);
+    expect(vref.validStatus).toBe(ValidStatusType.OutOfRange);
+    expect(vref.verse).toBe('');
+
+    vref = VerseRef.fromStr('LUK 3:4,', ScrVers.Vulgate);
+    expect(vref.valid).toBe(false);
+    expect(vref.validStatus).toBe(ValidStatusType.OutOfRange);
+    expect(vref.verse).toBe('');
+
+    vref = VerseRef.fromStr('LUK 3:4-', ScrVers.Vulgate);
+    expect(vref.valid).toBe(false);
+    expect(vref.validStatus).toBe(ValidStatusType.OutOfRange);
+    expect(vref.verse).toBe('');
   });
 });
