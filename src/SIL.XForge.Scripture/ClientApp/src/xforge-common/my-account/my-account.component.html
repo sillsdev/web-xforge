@@ -1,6 +1,6 @@
 <h2>Account details</h2>
 <div fxLayout="column" fxLayoutAlign="start start">
-  <div fxLayout="row" fxLayout.lt-sm="row wrap" fxLayoutAlign="start stretch" fxLayoutGap="1em">
+  <div fxLayout="row" fxLayout.lt-sm="row wrap" fxLayoutAlign="start stretch">
     <div class="account-form">
       <form [formGroup]="formGroup">
         <div fxLayout="column" fxLayoutAlign="space-between stretch" fxLayoutGap="1em">
@@ -137,7 +137,7 @@
         </div>
 -->
           <div fxLayout="row" fxLayoutGap="1em">
-            <div fxFlex>
+            <div fxFlex id="birthday-div">
               <mdc-form-field>
                 <mdc-text-field type="date" label="Birthday" formControlName="birthday"> </mdc-text-field>
               </mdc-form-field>
@@ -178,6 +178,7 @@
               >
                 <mdc-menu>
                   <mdc-list>
+                    <mdc-list-item value="unspecified"><i>-- please select one --</i></mdc-list-item>
                     <mdc-list-item value="female">Female</mdc-list-item>
                     <mdc-list-item value="male">Male</mdc-list-item>
                   </mdc-list>

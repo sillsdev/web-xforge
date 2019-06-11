@@ -2,6 +2,14 @@
 
 .account-form {
   max-width: 30em;
+  @include media-breakpoint-up(sm) {
+    margin-right: 1em;
+  }
+  #birthday-div {
+    @include media-breakpoint-down(sm) {
+      width: 9em;
+    }
+  }
   mdc-text-field {
     width: 100%;
   }
