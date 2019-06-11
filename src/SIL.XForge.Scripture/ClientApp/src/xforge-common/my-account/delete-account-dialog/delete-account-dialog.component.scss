@@ -4,6 +4,10 @@
   @include mdc-dialog-max-width(50rem, 2rem);
 }
 
+mdc-icon {
+  vertical-align: middle;
+}
+
 button {
   margin-right: 1em;
 }

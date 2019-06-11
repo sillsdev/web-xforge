@@ -4,7 +4,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { DateAdapter, NativeDateAdapter } from '@angular/material';
 import { Title } from '@angular/platform-browser';
 import { distanceInWordsToNow } from 'date-fns';
-
+import { Subscription } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../auth.service';
 import { ElementState } from '../models/element-state';
@@ -161,12 +161,16 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
     }
 
     // Set form values from database, if present.
+    const yyyy_mm_dd =
+      new Date(this.userFromDatabase.birthday).getUTCFullYear() > 1900
+        ? this.userFromDatabase.birthday.split('T')[0]
+        : null;
     this.formGroup.setValue({
       name: this.userFromDatabase.name || '',
       email: this.userFromDatabase.email || '',
       mobilePhone: this.userFromDatabase.mobilePhone || '',
       contactMethod: this.userFromDatabase.contactMethod || null,
-      birthday: this.userFromDatabase.birthday || null,
+      birthday: yyyy_mm_dd,
       gender: this.userFromDatabase.gender || null
     });
 
@@ -182,16 +186,22 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
     this.update(element);
   }
 
-  async update(element: string): Promise<void> {
+  async update(element: string, value?: any): Promise<void> {
     const updatedAttributes: Partial<User> = {};
-    updatedAttributes[element] = this.formGroup.controls[element].value;
+    updatedAttributes[element] = value ? value : this.formGroup.controls[element].value;
+    // mdc-select (gender) fires this event once during form setup.
+    // Unfortunately, registering this event in ngOnInit instead of in the HTML results in near infinite recursion.
+    // Prevent an extra server call and a confusing status icon when nothing has changed.
+    if (this.userFromDatabase[element] === updatedAttributes[element]) {
+      return;
+    }
 
     this.formGroup.get(element).disable();
     this.controlStates.set(element, ElementState.Submitting);
 
     if (
       element === 'mobilePhone' &&
-      !this.formGroup.controls[element].value &&
+      !updatedAttributes[element] &&
       (this.userFromDatabase.contactMethod === 'sms' || this.userFromDatabase.contactMethod === 'emailSms')
     ) {
       updatedAttributes['contactMethod'] = null;
@@ -263,6 +273,9 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
   private onControlValueChanges(controlName: string): () => void {
     return () => {
+      if (this.controlStates.get(controlName) === ElementState.Submitting) {
+        return;
+      }
       const isClean = this.userFromDatabase[controlName] === this.formGroup.get(controlName).value;
       const newState = isClean ? ElementState.InSync : ElementState.Dirty;
       this.controlStates.set(controlName, newState);
