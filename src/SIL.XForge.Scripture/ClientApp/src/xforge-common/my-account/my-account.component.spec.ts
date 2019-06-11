@@ -8,7 +8,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { merge } from '@orbit/utils';
 import { of } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 
 import { ngfModule } from 'angular-file';
 import { AuthService } from '../auth.service';
@@ -153,6 +153,17 @@ describe('MyAccountComponent', () => {
       },
       env.updateButton('name').nativeElement
     );
+  }));
+
+  it('should set gender to null', fakeAsync(() => {
+    expect(env.component.formGroup.get('gender').value).toBe('male');
+    env.selectValue(env.genderSelect, 'unspecified');
+    tick();
+
+    expect(env.component.formGroup.get('gender').value).toBe('unspecified');
+    expect(env.genderSelect.nativeElement.innerText).toContain('-- please select one --');
+    const updatedUser: Partial<User> = { gender: null };
+    verify(env.mockedUserService.onlineUpdateCurrentUserAttributes(deepEqual(updatedUser))).once();
   }));
 
   it('handles network error', fakeAsync(() => {
