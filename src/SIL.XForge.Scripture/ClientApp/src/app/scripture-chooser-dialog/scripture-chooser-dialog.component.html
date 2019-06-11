@@ -1,0 +1,76 @@
+<mdc-dialog>
+  <mdc-dialog-container class="dialogContainer">
+    <mdc-dialog-surface id="bookPane" *ngIf="showing === 'books'">
+      <mdc-dialog-title>
+        <button mdcIconButton id="backout-button" (click)="onClickBackoutButton($event)" (focus)="onCloseFocus($event)">
+          <mdc-icon>close</mdc-icon>
+        </button>
+        <span>Choose book</span>
+      </mdc-dialog-title>
+      <mdc-dialog-content>
+        <div class="upperBookSet">
+          <button
+            *ngFor="let book of otBooks"
+            mdc-button
+            [primary]="data.input?.book === book"
+            (click)="onClickBook($event)"
+          >
+            {{ book }}
+          </button>
+        </div>
+        <button
+          *ngFor="let book of ntBooks"
+          mdc-button
+          [primary]="data.input?.book === book"
+          (click)="onClickBook($event)"
+        >
+          {{ book }}
+        </button>
+      </mdc-dialog-content>
+    </mdc-dialog-surface>
+
+    <mdc-dialog-surface id="chapterPane" *ngIf="showing === 'chapters'">
+      <mdc-dialog-title>
+        <button mdcIconButton id="backout-button" (click)="onClickBackoutButton($event)">
+          <mdc-icon>navigate_before</mdc-icon>
+        </button>
+        <span>Choose chapter</span>
+      </mdc-dialog-title>
+      <mdc-dialog-content>
+        <div class="reference">{{ data.booksAndChaptersToShow[selection.book].name }}</div>
+        <button
+          *ngFor="let chapter of chaptersOf(selection?.book)"
+          mdc-button
+          [primary]="data.input?.book === selection?.book && +data.input?.chapter === +chapter"
+          (click)="onClickChapter($event)"
+        >
+          {{ chapter }}
+        </button>
+      </mdc-dialog-content>
+    </mdc-dialog-surface>
+
+    <mdc-dialog-surface id="versePane" *ngIf="showing === 'verses'">
+      <mdc-dialog-title>
+        <button mdcIconButton id="backout-button" (click)="onClickBackoutButton($event)">
+          <mdc-icon>navigate_before</mdc-icon>
+        </button>
+        <span>Choose verse</span>
+      </mdc-dialog-title>
+      <mdc-dialog-content>
+        <div class="reference">{{ data.booksAndChaptersToShow[selection.book].name }} {{ selection.chapter }}</div>
+        <button
+          *ngFor="let verse of versesOf(selection?.book, selection?.chapter)"
+          mdc-button
+          [primary]="
+            data.input?.book === selection?.book &&
+            data.input?.chapter === selection?.chapter &&
+            +data.input?.verse === +verse
+          "
+          (click)="onClickVerse($event)"
+        >
+          {{ verse }}
+        </button>
+      </mdc-dialog-content>
+    </mdc-dialog-surface>
+  </mdc-dialog-container>
+</mdc-dialog>
