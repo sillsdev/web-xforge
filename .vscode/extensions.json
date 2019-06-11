@@ -2,11 +2,12 @@
   // See http://go.microsoft.com/fwlink/?LinkId=827846
   // for the documentation about the extensions.json format
   "recommendations": [
-    "msjsdiag.debugger-for-chrome",
+    "angular.ng-template",
     "EditorConfig.editorconfig",
-    "eg2.tslint",
     "esbenp.prettier-vscode",
+    "formulahendry.dotnet-test-explorer",
     "ms-vscode.csharp",
-    "formulahendry.dotnet-test-explorer"
+    "ms-vscode.vscode-typescript-tslint-plugin",
+    "msjsdiag.debugger-for-chrome"
   ]
 }
