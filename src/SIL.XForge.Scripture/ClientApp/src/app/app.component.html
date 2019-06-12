@@ -70,7 +70,7 @@
   <mdc-drawer-content>
     <mdc-list id="menu-list">
       <mdc-list-item
-        class="translate-tab"
+        class="translate-nav-item"
         *ngIf="selectedProject.translateConfig?.enabled"
         (selectionChange)="translateVisible = !translateVisible"
       >
@@ -104,7 +104,7 @@
       </div>
       <mdc-list-divider *ngIf="selectedProject.translateConfig?.enabled"></mdc-list-divider>
       <mdc-list-item
-        class="community-checking-tab"
+        class="community-checking-nav-item"
         *ngIf="selectedProject.checkingConfig?.enabled"
         (selectionChange)="checkingVisible = !checkingVisible"
       >
