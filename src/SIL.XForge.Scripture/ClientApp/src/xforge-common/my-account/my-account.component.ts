@@ -1,10 +1,8 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { DateAdapter, NativeDateAdapter } from '@angular/material';
 import { Title } from '@angular/platform-browser';
 import { distanceInWordsToNow } from 'date-fns';
-import { Subscription } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../auth.service';
 import { ElementState } from '../models/element-state';
@@ -16,35 +14,13 @@ import { UserService } from '../user.service';
 import { XFValidators } from '../xfvalidators';
 import { DeleteAccountDialogComponent } from './delete-account-dialog/delete-account-dialog.component';
 
-/** Support ISO8601 formatted dates for datepicker, and handle timezone issues. */
-export class ISO8601DateAdapter extends NativeDateAdapter {
-  /** Return date in ISO 8601 YYYY-mm-DD format. */
-  format(date: Date, displayFormat: Object): string {
-    // Cut off 'T00:00:00.000Z' from the end of the string.
-    return date.toISOString().split('T')[0];
-  }
-
-  // Return date information in UTC rather than local time, to make calendar
-  // pop-up not sometimes show the previous day and look incorrect.
-  getFullYear(date: Date): number {
-    return date.getUTCFullYear();
-  }
-  getMonth(date: Date): number {
-    return date.getUTCMonth();
-  }
-  getDate(date: Date): number {
-    return date.getUTCDate();
-  }
-}
-
 /**
  * The My Account page lets users edit their account information.
  */
 @Component({
   selector: 'app-my-account',
   templateUrl: './my-account.component.html',
-  styleUrls: ['./my-account.component.scss'],
-  providers: [{ provide: DateAdapter, useClass: ISO8601DateAdapter }]
+  styleUrls: ['./my-account.component.scss']
 })
 export class MyAccountComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
   // Make enum available to template (see https://github.com/angular/angular/issues/2885 )
@@ -171,7 +147,7 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
       mobilePhone: this.userFromDatabase.mobilePhone || '',
       contactMethod: this.userFromDatabase.contactMethod || null,
       birthday: yyyy_mm_dd,
-      gender: this.userFromDatabase.gender || null
+      gender: this.userFromDatabase.gender || 'unspecified'
     });
 
     // Update states.
@@ -188,7 +164,8 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
   async update(element: string, value?: any): Promise<void> {
     const updatedAttributes: Partial<User> = {};
-    updatedAttributes[element] = value ? value : this.formGroup.controls[element].value;
+    const updateValue = value ? value : this.formGroup.controls[element].value;
+    updatedAttributes[element] = updateValue === 'unspecified' ? null : updateValue;
     // mdc-select (gender) fires this event once during form setup.
     // Unfortunately, registering this event in ngOnInit instead of in the HTML results in near infinite recursion.
     // Prevent an extra server call and a confusing status icon when nothing has changed.
