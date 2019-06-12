@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { UserService } from 'xforge-common/user.service';
 import { Answer } from '../../../../core/models/answer';
 import { Comment } from '../../../../core/models/comment';
+import { SFProjectRoles } from '../../../../core/models/sfproject-roles';
+import { SFProjectUser } from '../../../../core/models/sfproject-user';
 
 export interface CommentAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'show-comments';
@@ -17,6 +18,7 @@ export interface CommentAction {
   styleUrls: ['./checking-comments.component.scss']
 })
 export class CheckingCommentsComponent {
+  @Input() projectCurrentUser: SFProjectUser;
   @Output() action: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
   @Input() comments: Comment[] = [];
   @Input() answer: Answer;
@@ -27,6 +29,10 @@ export class CheckingCommentsComponent {
   showAllComments: boolean = false;
 
   constructor(private userService: UserService) {}
+
+  get isAdministrator(): boolean {
+    return this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
+  }
 
   editComment(comment: Comment) {
     this.activeComment = comment;
@@ -41,8 +47,12 @@ export class CheckingCommentsComponent {
   }
 
   hasPermission(comment: Comment, permission: string): boolean {
-    // TODO: (NW) Improve permission checking in later Jira task
-    return this.userService.currentUserId === comment.ownerRef;
+    if (this.userService.currentUserId === comment.ownerRef) {
+      return true;
+    } else if (permission === 'delete' && this.isAdministrator) {
+      return true;
+    }
+    return false;
   }
 
   hideCommentForm() {

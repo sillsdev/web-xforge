@@ -4,6 +4,8 @@ import { UserService } from 'xforge-common/user.service';
 import { Answer } from '../../../core/models/answer';
 import { Comment } from '../../../core/models/comment';
 import { Question } from '../../../core/models/question';
+import { SFProject } from '../../../core/models/sfproject';
+import { SFProjectRoles } from '../../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../../core/models/sfproject-user';
 import { CommentAction } from './checking-comments/checking-comments.component';
 
@@ -19,6 +21,7 @@ export interface AnswerAction {
   styleUrls: ['./checking-answers.component.scss']
 })
 export class CheckingAnswersComponent {
+  @Input() project: SFProject;
   @Input() projectCurrentUser: SFProjectUser;
   @Input() set question(question: Question) {
     if (question !== this._question) {
@@ -36,9 +39,20 @@ export class CheckingAnswersComponent {
   });
   answerFormVisible: boolean = false;
   private _question: Question;
-  private _comments: Comment[];
 
   constructor(private userService: UserService) {}
+
+  get answers(): Answer[] {
+    if (this.canSeeOtherUserResponses || this.isAdministrator) {
+      return this.question.answers;
+    } else {
+      return this.question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
+    }
+  }
+
+  get canSeeOtherUserResponses(): boolean {
+    return this.project.checkingConfig.usersSeeEachOthersResponses;
+  }
 
   get currentUserTotalAnswers(): number {
     return this.question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length;
@@ -50,8 +64,20 @@ export class CheckingAnswersComponent {
       : false;
   }
 
+  get isAdministrator(): boolean {
+    return this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
+  }
+
   get question(): Question {
     return this._question;
+  }
+
+  get totalAnswersHeading(): string {
+    if (this.canSeeOtherUserResponses || this.isAdministrator) {
+      return this.answers.length + ' Answers';
+    } else {
+      return 'Your Answer';
+    }
   }
 
   deleteAnswer(answer: Answer) {
@@ -75,8 +101,12 @@ export class CheckingAnswersComponent {
   }
 
   hasPermission(answer: Answer, permission: string): boolean {
-    // TODO: (NW) Improve permission checking in later Jira task
-    return this.userService.currentUserId === answer.ownerRef;
+    if (this.userService.currentUserId === answer.ownerRef) {
+      return true;
+    } else if (permission === 'delete' && this.isAdministrator) {
+      return true;
+    }
+    return false;
   }
 
   hideAnswerForm() {

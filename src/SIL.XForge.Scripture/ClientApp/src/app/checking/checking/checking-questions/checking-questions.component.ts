@@ -3,7 +3,10 @@ import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { Answer } from '../../../core/models/answer';
 import { Question } from '../../../core/models/question';
+import { SFProject } from '../../../core/models/sfproject';
+import { SFProjectRoles } from '../../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../../core/models/sfproject-user';
 import { SFProjectUserService } from '../../../core/sfproject-user.service';
 
@@ -13,6 +16,7 @@ import { SFProjectUserService } from '../../../core/sfproject-user.service';
   styleUrls: ['./checking-questions.component.scss']
 })
 export class CheckingQuestionsComponent extends SubscriptionDisposable {
+  @Input() project: SFProject;
   @Input() projectCurrentUser: SFProjectUser;
   @Output() update: EventEmitter<Question> = new EventEmitter<Question>();
   @Output() changed: EventEmitter<Question> = new EventEmitter<Question>();
@@ -54,9 +58,20 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     this._questions = questions;
   }
 
+  getAnswers(question: Question): Answer[] {
+    if (this.project.checkingConfig.usersSeeEachOthersResponses || this.isAdministrator) {
+      return question.answers;
+    } else {
+      return question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
+    }
+  }
+
   getUnreadAnswers(question: Question): number {
+    if (!this.isAdministrator) {
+      return 0;
+    }
     // TODO: (NW) Limit to unread answers and comments
-    return question.answers.length;
+    return this.getAnswers(question).length;
   }
 
   checkCanChangeQuestion(newIndex: number): boolean {
@@ -71,6 +86,10 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     return this.projectCurrentUser.questionRefsRead
       ? this.projectCurrentUser.questionRefsRead.includes(question.id)
       : false;
+  }
+
+  get isAdministrator(): boolean {
+    return this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
   }
 
   nextQuestion(): void {
