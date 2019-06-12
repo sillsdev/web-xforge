@@ -22,8 +22,8 @@
             domain: '@ViewData["Domain"]',
             responseType: 'token id_token',
             redirectUri: window.location.origin + '/projects',
-            scope: 'openid profile email',
-            audience: 'sf-api'
+            scope: 'openid profile email @ViewData["Scope"]',
+            audience: '@ViewData["Audience"]'
         });
     </script>
     @RenderSection("scripts", required: false)

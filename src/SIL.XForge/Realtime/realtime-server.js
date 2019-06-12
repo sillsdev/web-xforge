@@ -47,6 +47,8 @@ class RealtimeServer {
     this.connectionString = options.connectionString;
     this.port = options.port;
     this.projectsCollectionName = options.projectsCollectionName;
+    this.audience = options.audience;
+    this.scope = options.scope;
     this.projectRoles = new Map();
     for (const role of options.projectRoles) {
       this.projectRoles.set(role.name, new Set(role.rights));
@@ -140,18 +142,19 @@ class RealtimeServer {
     const url = info.req.url;
     if (url.includes('?access_token=')) {
       const token = url.split('?access_token=')[1];
-      jwt.verify(
-        token,
-        (header, done) => this.getKey(header, done),
-        (err, decoded) => {
-          if (err) {
-            done(false, 401, 'Unauthorized');
-          } else {
+      jwt.verify(token, (header, done) => this.getKey(header, done), { audience: this.audience }, (err, decoded) => {
+        if (err) {
+          done(false, 401, 'Unauthorized');
+        } else {
+          const scopeClaim = decoded['scope'];
+          if (scopeClaim != null && scopeClaim.split(' ').includes(this.scope)) {
             info.req.user = decoded;
             done(true);
+          } else {
+            done(false, 401, 'A required scope has not been granted.');
           }
         }
-      );
+      });
     } else if (isLocalRequest(info.req)) {
       done(true);
     } else {

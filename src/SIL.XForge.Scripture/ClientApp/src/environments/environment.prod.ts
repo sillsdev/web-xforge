@@ -4,5 +4,7 @@ export const environment = {
   issueEmail: 'issues@beta.qa.scriptureforge.org',
   siteName: 'Scripture Forge',
   realtimePort: undefined as number,
-  realtimeUrl: '/realtime-api/'
+  realtimeUrl: '/realtime-api/',
+  audience: 'https://scriptureforge.org/',
+  scope: 'sf_data'
 };

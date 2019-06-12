@@ -6,10 +6,12 @@ namespace SIL.XForge.Configuration
     public class AuthOptions
     {
         public string Domain { get; set; }
-        public string FrontendClientId { get; set; } = "frontend_client_id";
-        public string BackendClientId { get; set; } = "backend_client_id";
-        public string BackendClientSecret { get; set; } = "client_secret";
-        public string PushUsername { get; set; } = "push_username";
-        public string PushPassword { get; set; } = "push_password";
+        public string Audience { get; set; }
+        public string Scope { get; set; }
+        public string FrontendClientId { get; set; }
+        public string BackendClientId { get; set; }
+        public string BackendClientSecret { get; set; }
+        public string WebhookUsername { get; set; }
+        public string WebhookPassword { get; set; }
     }
 }

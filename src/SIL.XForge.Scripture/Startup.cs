@@ -73,7 +73,7 @@ namespace SIL.XForge.Scripture
 
             services.AddCommonServices();
 
-            services.AddXFAuthentication(Configuration, "sf-api");
+            services.AddXFAuthentication(Configuration);
 
             services.AddSFDataAccess(Configuration);
 

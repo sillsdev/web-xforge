@@ -33,10 +33,10 @@ namespace SIL.XForge.Services
             };
         }
 
-        public bool ValidatePushCredentials(string username, string password)
+        public bool ValidateWebhookCredentials(string username, string password)
         {
             AuthOptions authOptions = _authOptions.Value;
-            return authOptions.PushUsername == username && authOptions.PushPassword == password;
+            return authOptions.WebhookUsername == username && authOptions.WebhookPassword == password;
         }
 
         public async Task<JObject> GetUserAsync(string authId)
