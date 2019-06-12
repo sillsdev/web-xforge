@@ -26,6 +26,7 @@
                 (update)="questionUpdated($event)"
                 (changed)="questionChanged($event)"
                 [questions]="questions"
+                [project]="project"
                 [projectCurrentUser]="projectCurrentUser"
               ></app-checking-questions>
             </div>
@@ -82,6 +83,7 @@
               <as-split-area size="0">
                 <div *ngIf="questionsPanel.activeQuestion" id="answer-panel" #answerPanelContainer>
                   <app-checking-answers
+                    [project]="project"
                     [question]="questionsPanel.activeQuestion"
                     [comments]="comments"
                     [projectCurrentUser]="projectCurrentUser"

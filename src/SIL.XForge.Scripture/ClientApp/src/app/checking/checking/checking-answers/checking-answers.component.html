@@ -8,7 +8,13 @@
 >
   <div class="question">{{ question.text }}</div>
   <div *ngIf="!answerFormVisible" class="actions">
-    <button *ngIf="!currentUserTotalAnswers" mdc-button primary (click)="showAnswerForm()" id="add-answer">
+    <button
+      *ngIf="!currentUserTotalAnswers && !isAdministrator"
+      mdc-button
+      primary
+      (click)="showAnswerForm()"
+      id="add-answer"
+    >
       Add Answer
     </button>
   </div>
@@ -32,9 +38,9 @@
   </form>
 </div>
 <div class="answers-container">
-  <ng-container *ngIf="!answerFormVisible && currentUserTotalAnswers">
-    <h3>{{ question.answers.length }} Answers</h3>
-    <div class="answer" *ngFor="let answer of question.answers">
+  <ng-container *ngIf="!answerFormVisible && answers.length && (currentUserTotalAnswers || isAdministrator)">
+    <h3>{{ totalAnswersHeading }}</h3>
+    <div class="answer" *ngFor="let answer of answers">
       <div class="like">
         <mdc-icon id="like-answer" (click)="likeAnswer(answer)">thumb_up</mdc-icon
         ><span class="like-count">{{ answer.likes.length }}</span>
@@ -65,6 +71,7 @@
           ></app-checking-owner>
         </div>
         <app-checking-comments
+          [projectCurrentUser]="projectCurrentUser"
           (action)="submitCommentAction($event)"
           [comments]="getComments(answer)"
           [answer]="answer"

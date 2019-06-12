@@ -8,6 +8,7 @@ import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, when } from 'ts-mockito';
 import { MapQueryResults } from 'xforge-common/json-api.service';
+import { ShareLevel } from 'xforge-common/models/share-config';
 import { User } from 'xforge-common/models/user';
 import { MemoryRealtimeDoc } from 'xforge-common/realtime-doc';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
@@ -20,6 +21,7 @@ import { Question } from '../../core/models/question';
 import { QuestionData } from '../../core/models/question-data';
 import { SFProjectRef, SFProjectUserRef } from '../../core/models/sfdomain-model.generated';
 import { SFProject } from '../../core/models/sfproject';
+import { SFProjectRoles } from '../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../core/models/sfproject-user';
 import { Text } from '../../core/models/text';
 import { Delta, getTextDataIdStr, TextData, TextDataId } from '../../core/models/text-data';
@@ -40,16 +42,11 @@ describe('CheckingComponent', () => {
   let env: TestEnvironment;
   beforeEach(fakeAsync(() => {
     env = new TestEnvironment();
-    // Need to wait for questions and text promises to finish
-    env.fixture.detectChanges();
-    tick(1);
-    env.fixture.detectChanges();
-    tick(env.questionReadTimer);
-    env.fixture.detectChanges();
   }));
 
   describe('Interface', () => {
     it('can navigate using next button', fakeAsync(() => {
+      env.setupAdminScenarioData();
       env.selectQuestion(1);
       env.clickButton(env.nextButton);
       tick(env.questionReadTimer);
@@ -58,6 +55,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can navigate using previous button', fakeAsync(() => {
+      env.setupAdminScenarioData();
       env.selectQuestion(2);
       env.clickButton(env.previousButton);
       tick(env.questionReadTimer);
@@ -66,6 +64,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('check navigate buttons disable at the end of the question list', fakeAsync(() => {
+      env.setupAdminScenarioData();
       env.selectQuestion(1);
       const prev = env.previousButton;
       const next = env.nextButton;
@@ -79,17 +78,20 @@ describe('CheckingComponent', () => {
 
   describe('Questions', () => {
     it('questions are displaying', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       expect(env.questions.length).toEqual(15);
       const question = env.selectQuestion(15);
       expect(env.getQuestionText(question)).toBe('Question relating to chapter 2');
     }));
 
     it('can select a question', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       const question = env.selectQuestion(1);
       expect(question.classes['mdc-list-item--activated']).toBeTruthy();
     }));
 
     it('question status change to read', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       let question = env.selectQuestion(2, false);
       expect(question.classes['question-read']).toBeFalsy();
       question = env.selectQuestion(3);
@@ -97,24 +99,27 @@ describe('CheckingComponent', () => {
     }));
 
     it('question status change to answered', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(question.classes['question-answered']).toBeTruthy();
     }));
 
     it('question shows answers icon and total', fakeAsync(() => {
-      const question = env.selectQuestion(2);
-      env.answerQuestion('Answer question 2');
+      env.setupAdminScenarioData();
+      const question = env.selectQuestion(6);
       expect(question.query(By.css('.view-answers span')).nativeElement.textContent).toEqual('1');
     }));
   });
 
   describe('Answers', () => {
-    it('answer panel is initiated and shows the first question', () => {
+    it('answer panel is initiated and shows the first question', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       expect(env.answerPanel).toBeDefined();
-    });
+    }));
 
     it('can answer a question', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
@@ -122,14 +127,16 @@ describe('CheckingComponent', () => {
     }));
 
     it('inserts newer answer above older answers', fakeAsync(() => {
-      env.selectQuestion(6);
+      env.setupReviewerScenarioData();
+      env.selectQuestion(7);
       env.answerQuestion('Just added answer');
       expect(env.answers.length).toEqual(2);
       expect(env.getAnswerText(0)).toBe('Just added answer');
-      expect(env.getAnswerText(1)).toBe('Answer 6 on question');
+      expect(env.getAnswerText(1)).toBe('Answer 7 on question');
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       const question = env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       expect(env.yourAnswerField).toBeDefined();
@@ -140,6 +147,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('check answering validation', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       const question = env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
@@ -148,6 +156,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can edit an answer', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       env.clickButton(env.answers[0].query(By.css('.answer-edit')));
@@ -158,6 +167,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can delete an answer', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
@@ -167,6 +177,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('answers reset when changing questions', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
@@ -175,6 +186,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can like and unlike an answer', fakeAsync(() => {
+      env.setupReviewerScenarioData();
       env.selectQuestion(1);
       env.answerQuestion('Answer question to be liked');
       expect(env.likeTotal).toBe(0);
@@ -187,14 +199,28 @@ describe('CheckingComponent', () => {
     }));
 
     it('do not show answers until current user has submitted an answer', fakeAsync(() => {
-      env.selectQuestion(6);
+      env.setupReviewerScenarioData();
+      env.selectQuestion(7);
       expect(env.answers.length).toBe(0);
-      env.answerQuestion('Answer from user01');
+      env.answerQuestion('Answer from reviewer');
       expect(env.answers.length).toBe(2);
+    }));
+
+    it('reviewer can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
+      env.setupReviewerScenarioData();
+      env.component.project.checkingConfig.usersSeeEachOthersResponses = false;
+      env.fixture.detectChanges();
+      env.selectQuestion(6);
+      expect(env.answers.length).toBe(1);
+      env.selectQuestion(7);
+      expect(env.answers.length).toBe(0);
+      env.answerQuestion('Answer from reviewer');
+      expect(env.answers.length).toBe(1);
     }));
 
     describe('Comments', () => {
       it('can comment on an answer', fakeAsync(() => {
+        env.setupReviewerScenarioData();
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -202,6 +228,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('can edit comment on an answer', fakeAsync(() => {
+        env.setupReviewerScenarioData();
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -214,6 +241,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('can delete comment on an answer', fakeAsync(() => {
+        env.setupReviewerScenarioData();
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -224,6 +252,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('comments only appear on the relevant answer', fakeAsync(() => {
+        env.setupReviewerScenarioData();
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'First comment');
@@ -239,6 +268,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('comments display show more button', fakeAsync(() => {
+        env.setupAdminScenarioData();
         // Show maximum of 3 comments before displaying 'show all' button
         env.selectQuestion(7);
         expect(env.getAnswerComments(0).length).toBe(3);
@@ -261,6 +291,7 @@ describe('CheckingComponent', () => {
 
   describe('Text', () => {
     it('can increase and decrease font size', fakeAsync(() => {
+      env.setupAdminScenarioData();
       const editor = env.quillEditor;
       expect(editor.style.fontSize).toBe('1rem');
       env.clickButton(env.increaseFontSizeButton);
@@ -280,8 +311,8 @@ class TestEnvironment {
   mockedRealtimeOfflineStore: RealtimeOfflineStore;
   mockedUserService: UserService;
   mockedProjectUserService: SFProjectUserService;
-  testUser = this.createUser('01');
-  secondUser = this.createUser('02');
+  adminUser = this.createUser('01', SFProjectRoles.ParatextAdministrator);
+  reviewerUser = this.createUser('02', SFProjectRoles.Reviewer);
 
   constructor() {
     this.mockedTextService = mock(TextService);
@@ -291,14 +322,14 @@ class TestEnvironment {
 
     TestBed.configureTestingModule({
       declarations: [
-        CheckingComponent,
-        FontSizeComponent,
-        CheckingTextComponent,
-        CheckingQuestionsComponent,
         CheckingAnswersComponent,
-        CheckingOwnerComponent,
+        CheckingCommentFormComponent,
         CheckingCommentsComponent,
-        CheckingCommentFormComponent
+        CheckingComponent,
+        CheckingOwnerComponent,
+        CheckingQuestionsComponent,
+        CheckingTextComponent,
+        FontSizeComponent
       ],
       schemas: [NO_ERRORS_SCHEMA],
       imports: [UICommonModule, AngularSplitModule.forRoot(), SharedModule],
@@ -312,9 +343,6 @@ class TestEnvironment {
         { provide: SFProjectUserService, useFactory: () => instance(this.mockedProjectUserService) }
       ]
     });
-    this.setupProjectData();
-    this.fixture = TestBed.createComponent(CheckingComponent);
-    this.component = this.fixture.componentInstance;
   }
 
   get answerPanel(): DebugElement {
@@ -486,18 +514,17 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private createUser(id: string): User {
-    return new User({
-      id: 'user' + id,
-      email: 'user' + id + '@example.com',
-      name: 'User ' + id,
-      role: 'user',
-      active: true,
-      dateCreated: '2019-01-01T12:00:00.000Z'
-    });
+  setupAdminScenarioData(): void {
+    this.setupDefaultProjectData(this.adminUser);
+    this.initComponentEnviroment();
   }
 
-  private setupProjectData(): void {
+  setupReviewerScenarioData(): void {
+    this.setupDefaultProjectData(this.reviewerUser);
+    this.initComponentEnviroment();
+  }
+
+  private setupDefaultProjectData(user: User): void {
     when(
       this.mockedTextService.get('text01', deepEqual([[nameof<Text>('project'), nameof<SFProject>('users')]]))
     ).thenReturn(
@@ -515,11 +542,27 @@ class TestEnvironment {
             new SFProject({
               id: 'project01',
               projectName: 'Project 01',
-              users: [new SFProjectUserRef('u01')]
+              checkingConfig: {
+                usersSeeEachOthersResponses: true,
+                share: {
+                  enabled: true,
+                  level: ShareLevel.Anyone
+                }
+              },
+              users: [new SFProjectUserRef(this.adminUser.id), new SFProjectUserRef(this.reviewerUser.id)]
             }),
             new SFProjectUser({
-              id: 'u01',
-              user: this.testUser,
+              id: this.adminUser.id,
+              user: this.adminUser,
+              role: this.adminUser.role,
+              questionRefsRead: [],
+              answerRefsRead: [],
+              commentRefsRead: []
+            }),
+            new SFProjectUser({
+              id: this.reviewerUser.id,
+              user: this.reviewerUser,
+              role: this.reviewerUser.role,
               questionRefsRead: [],
               answerRefsRead: [],
               commentRefsRead: []
@@ -557,7 +600,7 @@ class TestEnvironment {
     });
     questionData1[5].answers.push({
       id: 'a6Id',
-      ownerRef: this.secondUser.id,
+      ownerRef: this.reviewerUser.id,
       text: 'Answer 6 on question',
       likes: [],
       dateCreated: dateNow,
@@ -565,7 +608,7 @@ class TestEnvironment {
     });
     questionData1[6].answers.push({
       id: 'a7Id',
-      ownerRef: this.testUser.id,
+      ownerRef: this.adminUser.id,
       text: 'Answer 7 on question',
       likes: [],
       dateCreated: dateNow,
@@ -573,7 +616,7 @@ class TestEnvironment {
     });
     questionData1[7].answers.push({
       id: 'a8Id',
-      ownerRef: this.testUser.id,
+      ownerRef: this.adminUser.id,
       text: 'Answer 8 on question',
       likes: [],
       dateCreated: dateNow,
@@ -583,7 +626,7 @@ class TestEnvironment {
     for (let commentNumber = 1; commentNumber <= 3; commentNumber++) {
       commentData.push({
         id: 'c' + commentNumber + 'Id',
-        ownerRef: this.testUser.id,
+        ownerRef: this.adminUser.id,
         projectRef: undefined,
         answerRef: 'a7Id',
         text: 'Comment ' + commentNumber + ' on question 7',
@@ -594,7 +637,7 @@ class TestEnvironment {
     for (let commentNumber = 1; commentNumber <= 4; commentNumber++) {
       commentData.push({
         id: 'c' + commentNumber + 'Id',
-        ownerRef: this.testUser.id,
+        ownerRef: this.adminUser.id,
         projectRef: undefined,
         answerRef: 'a8Id',
         text: 'Comment ' + commentNumber + ' on question 8',
@@ -614,10 +657,32 @@ class TestEnvironment {
     when(this.mockedTextService.getCommentData(deepEqual(text1_2id))).thenResolve(
       this.createCommentData(text1_2id, [])
     );
-    when(this.mockedUserService.currentUserId).thenReturn('user01');
-    when(this.mockedUserService.onlineGet('user01')).thenReturn(of(new MapQueryResults(this.testUser)));
-    when(this.mockedUserService.onlineGet('user02')).thenReturn(of(new MapQueryResults(this.secondUser)));
+    when(this.mockedUserService.currentUserId).thenReturn(user.id);
+    when(this.mockedUserService.onlineGet(this.adminUser.id)).thenReturn(of(new MapQueryResults(this.adminUser)));
+    when(this.mockedUserService.onlineGet(this.reviewerUser.id)).thenReturn(of(new MapQueryResults(this.reviewerUser)));
     when(this.mockedProjectUserService.update(anything())).thenReturn(new Promise(() => {}));
+  }
+
+  private initComponentEnviroment(): void {
+    this.fixture = TestBed.createComponent(CheckingComponent);
+    this.component = this.fixture.componentInstance;
+    // Need to wait for questions and text promises to finish
+    this.fixture.detectChanges();
+    tick(1);
+    this.fixture.detectChanges();
+    tick(this.questionReadTimer);
+    this.fixture.detectChanges();
+  }
+
+  private createUser(id: string, role: string): User {
+    return new User({
+      id: 'user' + id,
+      email: 'user' + id + '@example.com',
+      name: 'User ' + id,
+      role: role,
+      active: true,
+      dateCreated: '2019-01-01T12:00:00.000Z'
+    });
   }
 
   private createQuestionData(id: TextJsonDataId, data: Question[]): QuestionData {
