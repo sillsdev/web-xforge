@@ -33,8 +33,8 @@ export class AuthService {
     domain: environment.authDomain,
     responseType: 'token id_token',
     redirectUri: this.locationService.origin + '/projects',
-    scope: 'openid profile email',
-    audience: 'sf-api'
+    scope: 'openid profile email ' + environment.scope,
+    audience: environment.audience
   });
 
   constructor(
@@ -128,7 +128,12 @@ export class AuthService {
     if (secondaryId != null) {
       await this.jsonApiService.onlineInvoke(userIdentity, 'linkParatextAccount', { authId: secondaryId });
     } else if (!environment.production) {
-      await this.jsonApiService.onlineInvoke(userIdentity, 'pullAuthUserProfile');
+      try {
+        await this.jsonApiService.onlineInvoke(userIdentity, 'pullAuthUserProfile');
+      } catch (err) {
+        console.error(err);
+        return false;
+      }
     }
     if (state.returnUrl != null) {
       this.router.navigateByUrl(state.returnUrl);

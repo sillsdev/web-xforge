@@ -105,7 +105,9 @@ namespace SIL.XForge.Realtime
                 authority = $"https://{_authOptions.Value.Domain}/",
                 projectsCollectionName = _realtimeOptions.Value.ProjectsCollectionName,
                 projectRoles = CreateProjectRoles(_realtimeOptions.Value.ProjectRoles),
-                collections = _realtimeOptions.Value.Collections.Select(c => CreateCollectionConfig(c)).ToArray()
+                collections = _realtimeOptions.Value.Collections.Select(c => CreateCollectionConfig(c)).ToArray(),
+                audience = _authOptions.Value.Audience,
+                scope = _authOptions.Value.Scope
             };
         }
 
