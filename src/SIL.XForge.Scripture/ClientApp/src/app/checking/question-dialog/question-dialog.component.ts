@@ -111,7 +111,7 @@ export class QuestionDialogComponent implements OnInit {
   }
 
   /** Edit text of control using Scripture chooser dialog. */
-  openScriptureChooser(control: FormControl) {
+  openScriptureChooser(control: AbstractControl) {
     const currentVerseSelection = QuestionDialogComponent.verseRefToVerseRefData(
       VerseRef.fromStr(control.value, ScrVers.English)
     );
