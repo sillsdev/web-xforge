@@ -1,15 +1,20 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
+import * as OTJson0 from 'ot-json0';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { MapQueryResults } from 'xforge-common/json-api.service';
 import { UserRef } from 'xforge-common/models/user';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { SFProject, SFProjectRef } from '../core/models/sfproject';
+import { SFProjectData } from '../core/models/sfproject-data';
+import { SFProjectDataDoc } from '../core/models/sfproject-data-doc';
+import { SFProjectRoles } from '../core/models/sfproject-roles';
 import { SFProjectUser, SFProjectUserRef } from '../core/models/sfproject-user';
-import { TextRef } from '../core/models/text';
 import { SFProjectService } from '../core/sfproject.service';
 import { ProjectComponent } from './project.component';
 
@@ -28,6 +33,17 @@ describe('ProjectComponent', () => {
   it('navigate to first text when no last selected text', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setProjectData({ isTranslateEnabled: false });
+    env.fixture.detectChanges();
+    tick();
+
+    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
+    verify(env.mockedRouter.navigate(deepEqual(['./', 'checking', 'text01']), anything())).once();
+    expect().nothing();
+  }));
+
+  it('navigate to checking task if a reviewer and no last selected text', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setProjectData({ role: SFProjectRoles.Reviewer });
     env.fixture.detectChanges();
     tick();
 
@@ -104,6 +120,7 @@ class TestEnvironment {
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedRouter = mock(Router);
   readonly mockedSFProjectService = mock(SFProjectService);
+  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
@@ -129,49 +146,40 @@ class TestEnvironment {
   }
 
   setNoProjectData(): void {
-    when(
-      this.mockedSFProjectService.get(
-        'project01',
-        deepEqual([[nameof<SFProject>('users')], [nameof<SFProject>('texts')]])
-      )
-    ).thenReturn(of(new MapQueryResults(null)));
+    when(this.mockedSFProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
+      of(new MapQueryResults(null))
+    );
   }
 
   setNoProjectUserData(): void {
-    when(
-      this.mockedSFProjectService.get(
-        'project01',
-        deepEqual([[nameof<SFProject>('users')], [nameof<SFProject>('texts')]])
-      )
-    ).thenReturn(
+    when(this.mockedSFProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
       of(
         new MapQueryResults(
           new SFProject({
             id: 'project01',
             translateConfig: { enabled: true },
-            checkingConfig: { enabled: true },
-            texts: [new TextRef('text01'), new TextRef('text02')]
+            checkingConfig: { enabled: true }
           })
         )
       )
     );
+    this.setProjectDataDoc();
   }
 
-  setProjectData(args: { isTranslateEnabled?: boolean; hasTexts?: boolean; selectedTask?: string }): void {
-    when(
-      this.mockedSFProjectService.get(
-        'project01',
-        deepEqual([[nameof<SFProject>('users')], [nameof<SFProject>('texts')]])
-      )
-    ).thenReturn(
+  setProjectData(args: {
+    isTranslateEnabled?: boolean;
+    hasTexts?: boolean;
+    selectedTask?: string;
+    role?: SFProjectRoles;
+  }): void {
+    when(this.mockedSFProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
       of(
         new MapQueryResults(
           new SFProject({
             id: 'project01',
             translateConfig: { enabled: args.isTranslateEnabled == null || args.isTranslateEnabled },
             checkingConfig: { enabled: true },
-            users: [new SFProjectUserRef('projectuser01')],
-            texts: args.hasTexts == null || args.hasTexts ? [new TextRef('text01'), new TextRef('text02')] : undefined
+            users: [new SFProjectUserRef('projectuser01')]
           }),
           undefined,
           [
@@ -179,31 +187,27 @@ class TestEnvironment {
               id: 'projectuser01',
               user: new UserRef('user01'),
               project: new SFProjectRef('project01'),
+              role: args.role == null ? SFProjectRoles.ParatextTranslator : args.role,
               selectedTask: args.selectedTask,
-              translateConfig: { selectedTextRef: args.selectedTask == null ? undefined : 'text02' }
+              translateConfig: { selectedBookId: args.selectedTask == null ? undefined : 'text02' }
             })
           ]
         )
       )
     );
+    this.setProjectDataDoc(args.hasTexts == null || args.hasTexts);
   }
 
   // Such as from an incomplete offline storage
   setLimitedProjectUserData(): void {
-    when(
-      this.mockedSFProjectService.get(
-        'project01',
-        deepEqual([[nameof<SFProject>('users')], [nameof<SFProject>('texts')]])
-      )
-    ).thenReturn(
+    when(this.mockedSFProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
       of(
         new MapQueryResults(
           new SFProject({
             id: 'project01',
             translateConfig: { enabled: true },
             checkingConfig: { enabled: true },
-            users: [new SFProjectUserRef('projectuser01')],
-            texts: [new TextRef('text01'), new TextRef('text02')]
+            users: [new SFProjectUserRef('projectuser01')]
           }),
           undefined,
           [
@@ -218,11 +222,21 @@ class TestEnvironment {
         )
       )
     );
+    this.setProjectDataDoc();
   }
 
   setLinkSharing(enabled: boolean): void {
     const snapshot = new ActivatedRouteSnapshot();
     snapshot.queryParams = { sharing: enabled ? 'true' : undefined };
     when(this.mockedActivatedRoute.snapshot).thenReturn(snapshot);
+  }
+
+  private setProjectDataDoc(hasTexts: boolean = true): void {
+    const projectData: SFProjectData = {
+      texts: hasTexts ? [{ bookId: 'text01' }, { bookId: 'text02' }] : undefined
+    };
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', projectData);
+    const doc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    when(this.mockedSFProjectService.getDataDoc('project01')).thenResolve(doc);
   }
 }

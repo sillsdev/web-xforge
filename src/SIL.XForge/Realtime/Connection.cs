@@ -1,33 +1,32 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.NodeServices;
 using SIL.ObjectModel;
 
 namespace SIL.XForge.Realtime
 {
     public class Connection : DisposableBase, IConnection
     {
-        private readonly INodeServices _nodeServices;
-        private readonly string _modulePath;
+        private readonly RealtimeService _realtimeService;
         private int _handle;
 
         private readonly Dictionary<string, Dictionary<string, object>> _documents;
 
-        public Connection(INodeServices nodeServices, string modulePath)
+        internal Connection(RealtimeService realtimeService)
         {
-            _nodeServices = nodeServices;
-            _modulePath = modulePath;
+            _realtimeService = realtimeService;
             _documents = new Dictionary<string, Dictionary<string, object>>();
         }
 
         public async Task StartAsync()
         {
-            _handle = await _nodeServices.InvokeExportAsync<int>(_modulePath, "connect");
+            _handle = await _realtimeService.InvokeExportAsync<int>("connect");
         }
 
-        public IDocument<TData, TOp> Get<TData, TOp>(string collection, string id)
+        public IDocument<TData> Get<TData>(string type, string id)
         {
+            string collection = _realtimeService.GetCollectionName(type);
+
             if (!_documents.TryGetValue(collection, out Dictionary<string, object> docs))
             {
                 docs = new Dictionary<string, object>();
@@ -36,21 +35,21 @@ namespace SIL.XForge.Realtime
 
             if (!docs.TryGetValue(id, out object doc))
             {
-                doc = new Document<TData, TOp>(this, collection, id);
+                string otTypeName = _realtimeService.GetOTTypeName(type);
+                doc = new Document<TData>(this, otTypeName, collection, id);
                 docs[id] = doc;
             }
-            return (Document<TData, TOp>)doc;
+            return (Document<TData>)doc;
         }
 
-        internal Task<T> InvokeAsync<T>(string functionName, params object[] args)
+        internal Task<T> InvokeExportAsync<T>(string functionName, params object[] args)
         {
-            return _nodeServices.InvokeExportAsync<T>(_modulePath, functionName,
-                new object[] { _handle }.Concat(args).ToArray());
+            return _realtimeService.InvokeExportAsync<T>(functionName, new object[] { _handle }.Concat(args).ToArray());
         }
 
         protected override void DisposeManagedResources()
         {
-            _nodeServices.InvokeExportAsync<object>(_modulePath, "disconnect", _handle).GetAwaiter().GetResult();
+            InvokeExportAsync<object>("disconnect").GetAwaiter().GetResult();
         }
     }
 }

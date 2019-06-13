@@ -255,8 +255,6 @@ describe('ConnectProjectComponent', () => {
     });
     verify(env.mockedSFProjectService.onlineCreate(deepEqual(project))).once();
 
-    verify(env.mockedSFProjectUserService.onlineCreate('project01', 'user01')).once();
-
     verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 

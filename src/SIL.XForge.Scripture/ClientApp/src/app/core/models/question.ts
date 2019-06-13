@@ -4,7 +4,6 @@ import { VerseRefData } from './verse-ref-data';
 export interface Question {
   id: string;
   ownerRef: string;
-  projectRef: string;
   source?: QuestionSource;
   scriptureStart?: VerseRefData;
   scriptureEnd?: VerseRefData;

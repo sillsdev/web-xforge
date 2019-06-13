@@ -4,17 +4,19 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
 import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
+import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { SFProjectData } from 'src/app/core/models/sfproject-data';
+import { SFProjectDataDoc } from 'src/app/core/models/sfproject-data-doc';
+import { deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
-import { MemoryRealtimeDoc } from 'xforge-common/realtime-doc';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { Text } from '../../core/models/text';
-import { Delta, TextData, TextDataId } from '../../core/models/text-data';
+import { Delta, TextDoc } from '../../core/models/text-doc';
+import { TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectService } from '../../core/sfproject.service';
-import { TextService } from '../../core/text.service';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
 describe('TranslateOverviewComponent', () => {
@@ -24,7 +26,6 @@ describe('TranslateOverviewComponent', () => {
       env.fixture.detectChanges();
       expect(env.progressTitle.textContent).toContain('Progress');
       expect(env.component.texts.length).toEqual(3);
-      expect(env.component.isLoading).toBe(false);
       env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
       env.expectContainsTextProgress(1, 'Mark', '10 of 20 segments');
       env.expectContainsTextProgress(2, 'Luke', '10 of 20 segments');
@@ -76,7 +77,6 @@ class TestEnvironment {
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedSFProjectService = mock(SFProjectService);
   readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedTextService = mock(TextService);
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
@@ -86,9 +86,9 @@ class TestEnvironment {
   private trainingProgress$ = new Subject<ProgressStatus>();
 
   constructor() {
-    const params = { ['projectId']: 'projectid01' } as Params;
+    const params = { ['projectId']: 'project01' } as Params;
     when(this.mockedActivatedRoute.params).thenReturn(of(params));
-    when(this.mockedSFProjectService.createTranslationEngine('projectid01')).thenReturn(
+    when(this.mockedSFProjectService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );
     when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
@@ -99,8 +99,7 @@ class TestEnvironment {
       providers: [
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: TextService, useFactory: () => instance(this.mockedTextService) }
+        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
       ],
       schemas: [NO_ERRORS_SCHEMA]
     });
@@ -151,35 +150,23 @@ class TestEnvironment {
   }
 
   setupProjectData(): void {
-    const projectTexts = [
-      new Text({
-        id: 'text01',
-        bookId: 'MAT',
-        name: 'Matthew',
-        chapters: [{ number: 1 }, { number: 2 }]
-      }),
-      new Text({
-        id: 'text02',
-        bookId: 'MRK',
-        name: 'Mark',
-        chapters: [{ number: 1 }, { number: 2 }]
-      }),
-      new Text({
-        id: 'text03',
-        bookId: 'LUK',
-        name: 'Luke',
-        chapters: [{ number: 1 }, { number: 2 }]
-      })
-    ];
+    const projectData: SFProjectData = {
+      texts: [
+        { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1 }, { number: 2 }] },
+        { bookId: 'MRK', name: 'Mark', chapters: [{ number: 1 }, { number: 2 }] },
+        { bookId: 'LUK', name: 'Luke', chapters: [{ number: 1 }, { number: 2 }] }
+      ]
+    };
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', projectData);
+    const doc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    when(this.mockedSFProjectService.getDataDoc('project01')).thenResolve(doc);
 
-    when(this.mockedSFProjectService.getTexts(anything())).thenReturn(of(projectTexts));
-
-    this.addTextData(new TextDataId('text01', 1));
-    this.addTextData(new TextDataId('text01', 2));
-    this.addTextData(new TextDataId('text02', 1));
-    this.addTextData(new TextDataId('text02', 2));
-    this.addTextData(new TextDataId('text03', 1));
-    this.addTextData(new TextDataId('text03', 2));
+    this.addTextDoc(new TextDocId('project01', 'MAT', 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 'MAT', 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 'MRK', 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 'MRK', 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 'LUK', 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 'LUK', 2, 'target'));
   }
 
   updateTrainingProgress(percentCompleted: number): void {
@@ -200,11 +187,11 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private addTextData(id: TextDataId): void {
-    when(this.mockedTextService.getTextData(deepEqual(id))).thenResolve(this.createTextData(id));
+  private addTextDoc(id: TextDocId): void {
+    when(this.mockedSFProjectService.getTextDoc(deepEqual(id))).thenResolve(this.createTextDoc(id));
   }
 
-  private createTextData(id: TextDataId): TextData {
+  private createTextDoc(id: TextDocId): TextDoc {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapter.toString(), style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
@@ -228,7 +215,7 @@ class TestEnvironment {
     delta.insert({ verse: { number: '10', style: 'v' } });
     delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapter}_10` });
     delta.insert('\n', { para: { style: 'p' } });
-    const doc = new MemoryRealtimeDoc(RichText.type, id.toString(), delta);
-    return new TextData(doc, instance(this.mockedRealtimeOfflineStore));
+    const adapter = new MemoryRealtimeDocAdapter(RichText.type, id.toString(), delta);
+    return new TextDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 }

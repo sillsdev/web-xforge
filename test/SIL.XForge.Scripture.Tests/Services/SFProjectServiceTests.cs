@@ -13,6 +13,7 @@ using NUnit.Framework;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 
@@ -194,8 +195,11 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(result, Is.True);
                 Assert.That(env.Entities.Contains("project01"), Is.False);
                 await env.SyncJobMapper.Received().DeleteAllAsync("project01");
-                await env.TextMapper.Received().DeleteAllAsync("project01");
                 await env.EngineService.Received().RemoveProjectAsync("project01");
+                await env.RealtimeService.Received().DeleteProjectDocsAsync(SFRootDataTypes.Texts, "project01");
+                await env.RealtimeService.Received().DeleteProjectDocsAsync(SFRootDataTypes.Questions, "project01");
+                await env.RealtimeService.Received().DeleteProjectDocsAsync(SFRootDataTypes.Comments, "project01");
+                await env.RealtimeService.Received().DeleteProjectDocsAsync(RootDataTypes.Projects, "project01");
                 Assert.That(Directory.Exists(syncDir), Is.False);
             }
         }
@@ -220,12 +224,37 @@ namespace SIL.XForge.Scripture.Services
                 EngineService = Substitute.For<IEngineService>();
                 BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
                 SyncJobMapper = Substitute.For<IProjectDataMapper<SyncJobResource, SyncJobEntity>>();
-                TextMapper = Substitute.For<IProjectDataMapper<TextResource, TextEntity>>();
-                Service = new SFProjectService(JsonApiContext, Mapper, UserAccessor, Entities, EngineService,
-                    SiteOptions, new SyncJobManager(Jobs, Entities, BackgroundJobClient))
+                RealtimeService = Substitute.For<IRealtimeService>();
+                var projectDataDoc = Substitute.For<IDocument<SFProjectData>>();
+                projectDataDoc.Data.Returns(new SFProjectData
                 {
-                    SyncJobMapper = SyncJobMapper,
-                    TextMapper = TextMapper
+                    Texts =
+                        {
+                            new TextInfo
+                            {
+                                BookId = "MAT",
+                                Name = "Matthew",
+                                Chapters = { new Chapter { Number = 1, LastVerse = 3 } }
+                            },
+                            new TextInfo
+                            {
+                                BookId = "MRK",
+                                Name = "Mark",
+                                Chapters =
+                                {
+                                    new Chapter { Number = 1, LastVerse = 3 },
+                                    new Chapter { Number = 2, LastVerse = 3 }
+                                }
+                            }
+                        }
+                });
+                var conn = Substitute.For<IConnection>();
+                conn.Get<SFProjectData>(RootDataTypes.Projects, "project01").Returns(projectDataDoc);
+                RealtimeService.ConnectAsync().Returns(Task.FromResult(conn));
+                Service = new SFProjectService(JsonApiContext, Mapper, UserAccessor, Entities, EngineService,
+                    SiteOptions, new SyncJobManager(Jobs, Entities, BackgroundJobClient), RealtimeService)
+                {
+                    SyncJobMapper = SyncJobMapper
                 };
             }
 
@@ -234,7 +263,7 @@ namespace SIL.XForge.Scripture.Services
             public IEngineService EngineService { get; }
             public IBackgroundJobClient BackgroundJobClient { get; }
             public IProjectDataMapper<SyncJobResource, SyncJobEntity> SyncJobMapper { get; }
-            public IProjectDataMapper<TextResource, TextEntity> TextMapper { get; }
+            public IRealtimeService RealtimeService { get; }
 
             protected override IEnumerable<SFProjectEntity> GetInitialData()
             {

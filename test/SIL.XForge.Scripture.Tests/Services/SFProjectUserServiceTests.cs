@@ -12,6 +12,7 @@ using NUnit.Framework;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
@@ -113,7 +114,7 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser("user01", SystemRoles.User);
-                var newConfig = new TranslateProjectUserConfig { SelectedTextRef = "text02" };
+                var newConfig = new TranslateProjectUserConfig { SelectedBookId = "text02" };
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("translate-config"), newConfig }
@@ -128,7 +129,7 @@ namespace SIL.XForge.Scripture.Services
                 SFProjectUserResource updatedProjectUser = await env.Service.UpdateAsync(projectUser.Id, projectUser);
 
                 Assert.That(updatedProjectUser, Is.Not.Null);
-                Assert.That(updatedProjectUser.TranslateConfig.SelectedTextRef, Is.EqualTo("text02"));
+                Assert.That(updatedProjectUser.TranslateConfig.SelectedBookId, Is.EqualTo("text02"));
             }
         }
 
@@ -138,7 +139,7 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser("user02", SystemRoles.User);
-                var newConfig = new TranslateProjectUserConfig { SelectedTextRef = "text02" };
+                var newConfig = new TranslateProjectUserConfig { SelectedBookId = "text02" };
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("translate-config"), newConfig }
@@ -165,7 +166,7 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser("user02", SystemRoles.SystemAdmin);
-                var newConfig = new TranslateProjectUserConfig { SelectedTextRef = "text02" };
+                var newConfig = new TranslateProjectUserConfig { SelectedBookId = "text02" };
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("translate-config"), newConfig }
@@ -180,7 +181,7 @@ namespace SIL.XForge.Scripture.Services
                 SFProjectUserResource updatedProjectUser = await env.Service.UpdateAsync(projectUser.Id, projectUser);
 
                 Assert.That(updatedProjectUser, Is.Not.Null);
-                Assert.That(updatedProjectUser.TranslateConfig.SelectedTextRef, Is.EqualTo("text02"));
+                Assert.That(updatedProjectUser.TranslateConfig.SelectedBookId, Is.EqualTo("text02"));
             }
         }
 
@@ -268,11 +269,13 @@ namespace SIL.XForge.Scripture.Services
                 var jobs = Substitute.For<IRepository<SyncJobEntity>>();
                 var engineService = Substitute.For<IEngineService>();
                 var backgroundJobClient = Substitute.For<IBackgroundJobClient>();
+                var realtimeService = Substitute.For<IRealtimeService>();
                 Service = new SFProjectUserService(JsonApiContext, Mapper, UserAccessor, Entities, Users,
                     ParatextService)
                 {
                     ProjectMapper = new SFProjectService(JsonApiContext, Mapper, UserAccessor, Entities,
-                        engineService, SiteOptions, new SyncJobManager(jobs, Entities, backgroundJobClient)),
+                        engineService, SiteOptions, new SyncJobManager(jobs, Entities, backgroundJobClient),
+                        realtimeService),
                     UserMapper = new UserService(JsonApiContext, Mapper, UserAccessor, Users, SiteOptions)
                 };
             }
@@ -302,7 +305,7 @@ namespace SIL.XForge.Scripture.Services
                                 Id = "projectuser01",
                                 UserRef = "user01",
                                 Role = SFProjectRoles.Translator,
-                                TranslateConfig = new TranslateProjectUserConfig { SelectedTextRef = "text01" }
+                                TranslateConfig = new TranslateProjectUserConfig { SelectedBookId = "text01" }
                             }
                         }
                     },

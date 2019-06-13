@@ -19,13 +19,12 @@
     </div>
     <mdc-list-divider></mdc-list-divider>
     <mdc-list *ngIf="texts != null" twoLine [interactive]="false">
-      <mdc-list-item *ngFor="let textInfo of texts">
+      <mdc-list-item *ngFor="let textProgress of texts">
         <mdc-icon mdcListItemGraphic>book</mdc-icon>
-        <mdc-list-item-text
-          [secondaryText]="textInfo.progress.translated + ' of ' + textInfo.progress.total + ' segments'"
-          ><a [routerLink]="['./', textInfo.text.id]">{{ textInfo.text.name }}</a></mdc-list-item-text
+        <mdc-list-item-text [secondaryText]="textProgress.translated + ' of ' + textProgress.total + ' segments'"
+          ><a [routerLink]="['./', textProgress.text.bookId]">{{ textProgress.text.name }}</a></mdc-list-item-text
         >
-        <div class="progress" mdcListItemMeta [title]="textInfo.progress.percentage + '%'">
+        <div class="progress" mdcListItemMeta [title]="textProgress.percentage + '%'">
           <canvas
             baseChart
             width="32"
@@ -33,7 +32,7 @@
             chartType="doughnut"
             [legend]="false"
             [labels]="['Translated', 'Blank']"
-            [data]="[textInfo.progress.translated, textInfo.progress.blank]"
+            [data]="[textProgress.translated, textProgress.blank]"
             [colors]="[{ backgroundColor: ['#b8d332', '#ececec'] }]"
             [options]="{ events: [], elements: { arc: { borderWidth: 0 } } }"
           ></canvas>

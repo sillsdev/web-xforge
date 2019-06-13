@@ -15,7 +15,7 @@ import { MatSnackBarModule } from '@angular/material';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { Text, TextsByBook } from '../core/models/text';
+import { TextInfo, TextsByBook } from '../core/models/text-info';
 import { VerseRefData } from '../core/models/verse-ref-data';
 import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './scripture-chooser-dialog.component';
 
@@ -228,13 +228,13 @@ describe('ScriptureChooserDialog', () => {
         bookId: 'EPH',
         name: 'Ephesians',
         chapters: [{ number: 3, lastVerse: 21 }]
-      } as Text,
+      } as TextInfo,
       {
         id: 'text04',
         bookId: 'ROM',
         name: 'Romans',
         chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }]
-      } as Text
+      } as TextInfo
     ];
     const env = new TestEnvironment({ textsInProject: onlyNTTexts });
     expect(env.component.hasOTBooks).toBe(false);
@@ -270,19 +270,17 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('ignores rangeStart if book not in texts', fakeAsync(() => {
-    const texts = [
+    const texts: TextInfo[] = [
       {
-        id: 'text03',
         bookId: 'EPH',
         name: 'Ephesians',
         chapters: [{ number: 3, lastVerse: 21 }]
-      } as Text,
+      },
       {
-        id: 'text04',
         bookId: 'ROM',
         name: 'Romans',
         chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }]
-      } as Text
+      }
       // No RUT text
     ];
 
@@ -311,19 +309,17 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('ignores rangeStart if chapter not in texts', fakeAsync(() => {
-    const texts = [
+    const texts: TextInfo[] = [
       {
-        id: 'text03',
         bookId: 'EPH',
         name: 'Ephesians',
         chapters: [{ number: 3, lastVerse: 21 }]
-      } as Text,
+      },
       {
-        id: 'text04',
         bookId: 'ROM',
         name: 'Romans',
         chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }]
-      } as Text
+      }
     ];
 
     const env = new TestEnvironment({
@@ -351,19 +347,17 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('ignores rangeStart if verse > lastVerse', fakeAsync(() => {
-    const texts = [
+    const texts: TextInfo[] = [
       {
-        id: 'text03',
         bookId: 'EPH',
         name: 'Ephesians',
         chapters: [{ number: 3, lastVerse: 21 }]
-      } as Text,
+      },
       {
-        id: 'text04',
         bookId: 'ROM',
         name: 'Romans',
         chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }]
-      } as Text
+      }
     ];
 
     const env = new TestEnvironment({
@@ -437,7 +431,11 @@ describe('ScriptureChooserDialog', () => {
     closeIconName = 'close';
     backIconName = 'navigate_before';
 
-    constructor(args?: { inputScriptureReference?: VerseRefData; textsInProject?: Text[]; rangeStart?: VerseRefData }) {
+    constructor(args?: {
+      inputScriptureReference?: VerseRefData;
+      textsInProject?: TextInfo[];
+      rangeStart?: VerseRefData;
+    }) {
       TestBed.configureTestingModule({
         imports: [TestModule],
         providers: [{ provide: MDC_DIALOG_DATA }]
@@ -458,25 +456,25 @@ describe('ScriptureChooserDialog', () => {
           bookId: 'EXO',
           name: 'Exodus',
           chapters: [{ number: 39, lastVerse: 43 }, { number: 40, lastVerse: 38 }]
-        } as Text,
+        } as TextInfo,
         {
           id: 'text02',
           bookId: 'MAT',
           name: 'Matthew',
           chapters: [{ number: 1, lastVerse: 25 }, { number: 2, lastVerse: 23 }]
-        } as Text,
+        } as TextInfo,
         {
           id: 'text03',
           bookId: 'EPH',
           name: 'Ephesians',
           chapters: [{ number: 3, lastVerse: 21 }]
-        } as Text,
+        } as TextInfo,
         {
           id: 'text04',
           bookId: 'ROM',
           name: 'Romans',
           chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }]
-        } as Text
+        } as TextInfo
       ];
       if (args && args.textsInProject) {
         textsInProject = args.textsInProject;

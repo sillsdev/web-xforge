@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Humanizer;
 using Microsoft.AspNetCore.NodeServices;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -11,6 +11,7 @@ using MongoDB.Driver;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.Models;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Realtime
 {
@@ -49,7 +50,7 @@ namespace SIL.XForge.Realtime
                 return;
 
             object options = CreateOptions();
-            _nodeServices.InvokeExportAsync<object>(_modulePath, "start", options).GetAwaiter().GetResult();
+            InvokeExportAsync<object>("start", options).GetAwaiter().GetResult();
             _started = true;
         }
 
@@ -58,14 +59,14 @@ namespace SIL.XForge.Realtime
             if (!_started)
                 return;
 
-            _nodeServices.InvokeExportAsync<object>(_modulePath, "stop").GetAwaiter().GetResult();
+            InvokeExportAsync<object>("stop").GetAwaiter().GetResult();
             _started = false;
         }
 
 
         public async Task<IConnection> ConnectAsync()
         {
-            var conn = new Connection(_nodeServices, _modulePath);
+            var conn = new Connection(this);
             try
             {
                 await conn.StartAsync();
@@ -78,15 +79,36 @@ namespace SIL.XForge.Realtime
             }
         }
 
-        public async Task DeleteAllAsync(string type, IEnumerable<string> ids)
+        public string GetCollectionName(string type)
         {
-            IMongoCollection<BsonDocument> snapshotCollection = _database.GetCollection<BsonDocument>(type + "_data");
-            FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.In("_id", ids);
+            string collection = type.Singularize().Underscore() + "_data";
+            if (type == RootDataTypes.Projects)
+                collection = _dataAccessOptions.Value.Prefix + "_" + collection;
+            return collection;
+        }
+
+        public async Task DeleteProjectDocsAsync(string type, string projectId)
+        {
+            string collectionName = GetCollectionName(type);
+
+            IMongoCollection<BsonDocument> snapshotCollection = _database.GetCollection<BsonDocument>(collectionName);
+            FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Regex("_id", $"^{projectId}");
             await snapshotCollection.DeleteManyAsync(idFilter);
 
-            IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>("o_" + type + "_data");
-            FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.In("d", ids);
+            IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>("o_" + collectionName);
+            FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", $"^{projectId}");
             await opsCollection.DeleteManyAsync(dFilter);
+        }
+
+        internal Task<T> InvokeExportAsync<T>(string exportedFunctionName, params object[] args)
+        {
+            return _nodeServices.InvokeExportAsync<T>(_modulePath, exportedFunctionName, args);
+        }
+
+        internal string GetOTTypeName(string type)
+        {
+            RealtimeDocConfig docConfig = _realtimeOptions.Value.Docs.First(dc => dc.Type == type);
+            return docConfig.OTTypeName;
         }
 
         protected override void DisposeManagedResources()
@@ -99,14 +121,15 @@ namespace SIL.XForge.Realtime
             string mongo = $"{_dataAccessOptions.Value.ConnectionString}/{_dataAccessOptions.Value.MongoDatabaseName}";
             return new
             {
-                connectionString = mongo,
-                port = _realtimeOptions.Value.Port,
-                authority = $"https://{_authOptions.Value.Domain}/",
-                projectsCollectionName = _realtimeOptions.Value.ProjectsCollectionName,
-                projectRoles = CreateProjectRoles(_realtimeOptions.Value.ProjectRoles),
-                collections = _realtimeOptions.Value.Collections.Select(c => CreateCollectionConfig(c)).ToArray(),
-                audience = _authOptions.Value.Audience,
-                scope = _authOptions.Value.Scope
+                ConnectionString = mongo,
+                Port = _realtimeOptions.Value.Port,
+                Authority = $"https://{_authOptions.Value.Domain}/",
+                ProjectsCollectionName =
+                    $"{_dataAccessOptions.Value.Prefix}_{RootDataTypes.Projects.Underscore()}",
+                ProjectRoles = CreateProjectRoles(_realtimeOptions.Value.ProjectRoles),
+                Collections = _realtimeOptions.Value.Docs.Select(c => CreateCollectionConfig(c)).ToArray(),
+                Audience = _authOptions.Value.Audience,
+                Scope = _authOptions.Value.Scope
             };
         }
 
@@ -114,21 +137,20 @@ namespace SIL.XForge.Realtime
         {
             return projectRoles.Rights.Select(kvp => new
             {
-                name = kvp.Key,
-                rights = kvp.Value.Select(r => r.Domain + (int)r.Operation).ToArray()
+                Name = kvp.Key,
+                Rights = kvp.Value.Select(r => r.Domain + (int)r.Operation).ToArray()
             }).ToArray();
         }
 
-        private static object CreateCollectionConfig(RealtimeCollectionConfig collectionConfig)
+        private object CreateCollectionConfig(RealtimeDocConfig docConfig)
         {
             return new
             {
-                name = collectionConfig.Name,
-                metadataName = collectionConfig.MetadataName,
-                otTypeName = collectionConfig.OTTypeName,
-                types = collectionConfig.Types
+                Name = GetCollectionName(docConfig.Type),
+                OTTypeName = docConfig.OTTypeName,
+                Models = docConfig.Models
                     .OrderByDescending(t => t.Path.Count)
-                    .Select(t => new { domain = t.Domain, path = t.Path.ToArray() })
+                    .Select(t => new { Domain = t.Domain, Path = t.Path.Select(s => s.ToCamelCase()).ToArray() })
                     .ToArray()
             };
         }

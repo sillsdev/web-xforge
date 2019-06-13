@@ -8,5 +8,6 @@ export const environment = {
   authDomain: 'sil-appbuilder.auth0.com',
   authClientId: 'aoAGb9Yx1H5WIsvCW6JJCteJhSa37ftH',
   audience: 'https://scriptureforge.org/',
-  scope: 'sf_data'
+  scope: 'sf_data',
+  prefix: 'sf'
 };
