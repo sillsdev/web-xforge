@@ -11,6 +11,7 @@ import { nameof, objectId } from 'xforge-common/utils';
 import { Answer } from '../../core/models/answer';
 import { Comment } from '../../core/models/comment';
 import { CommentData } from '../../core/models/comment-data';
+import { Like } from '../../core/models/like';
 import { Question } from '../../core/models/question';
 import { QuestionData } from '../../core/models/question-data';
 import { SFProject } from '../../core/models/sfproject';
@@ -333,12 +334,12 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       this.checkingData.questionData[this.textJsonDataId].replaceInList(
         this.questionsPanel.activeQuestion.answers[answerIndex],
         questionWithAnswer.answers[answerIndex],
-        [this.activeChapterQuestionIndex, 'answers', answerIndex]
+        [this.activeChapterQuestionIndex, nameof<Question>('answers'), answerIndex]
       );
     } else {
       this.checkingData.questionData[this.textJsonDataId].insertInList(questionWithAnswer.answers[0], [
         this.activeChapterQuestionIndex,
-        'answers',
+        nameof<Question>('answers'),
         0
       ]);
     }
@@ -370,23 +371,23 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
 
   private likeAnswer(answer: Answer) {
     const currentUserId = this.userService.currentUserId;
-    const userRefIndex = answer.likes.findIndex(userRef => userRef.toString() === currentUserId);
+    const likeIndex = answer.likes.findIndex(like => like.ownerRef === currentUserId);
     const answerIndex = this.getAnswerIndex(answer);
 
-    if (userRefIndex >= 0) {
-      this.checkingData.questionData[this.textJsonDataId].deleteFromList(this.questionsPanel.activeQuestion, [
+    if (likeIndex >= 0) {
+      this.checkingData.questionData[this.textJsonDataId].deleteFromList(answer.likes[likeIndex], [
         this.activeChapterQuestionIndex,
-        'answers',
+        nameof<Question>('answers'),
         answerIndex,
-        'likes',
-        userRefIndex
+        nameof<Answer>('likes'),
+        likeIndex
       ]);
     } else {
-      this.checkingData.questionData[this.textJsonDataId].insertInList(currentUserId, [
+      this.checkingData.questionData[this.textJsonDataId].insertInList({ ownerRef: currentUserId } as Like, [
         this.activeChapterQuestionIndex,
-        'answers',
+        nameof<Question>('answers'),
         answerIndex,
-        'likes',
+        nameof<Answer>('likes'),
         0
       ]);
     }
