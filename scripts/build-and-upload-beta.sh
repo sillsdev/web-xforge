@@ -16,8 +16,9 @@ cat <<EOF > $BUILD_OUTPUT/app/secrets.json
     "ClientId": "$PARATEXT_CLIENT_ID",
     "ClientSecret": "$PARATEXT_API_TOKEN"
   },
-  "GoogleCaptcha": {
-    "CaptchaSecret": "$CAPTCHA_SECRET_KEY"
+  "Auth": {
+    "BackendClientSecret": "$AUTH_BACKEND_SECRET",
+    "WebhookPassword": "$AUTH_WEBHOOK_PASSWORD"
   }
 }
 EOF
