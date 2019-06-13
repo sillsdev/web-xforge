@@ -6,9 +6,17 @@ import { VerseRefData } from '../core/models/verse-ref-data';
 
 export interface ScriptureChooserDialogData {
   /** Starting verse selection, to highlight */
-  input: VerseRefData;
+  input?: VerseRefData;
+
   /** Set of books and chapters to make available for selection */
   booksAndChaptersToShow: TextsByBook;
+
+  /** Starting verse of a range, that this dialog will be used to select the end
+   *  of. If present, the dialog will only show a verse picker, for the start
+   *  verse and verses following thru the end of the chapter.
+   *  A value of null or undefined will cause normal dialog behaviour of
+   *  book,chapter,verse selection. */
+  rangeStart?: VerseRefData;
 }
 
 /** Dialog to allow selection of a particular Scripture reference. */
@@ -18,7 +26,7 @@ export interface ScriptureChooserDialogData {
   styleUrls: ['./scripture-chooser-dialog.component.scss']
 })
 export class ScriptureChooserDialogComponent implements OnInit {
-  showing: 'books' | 'chapters' | 'verses';
+  showing: 'books' | 'chapters' | 'verses' | 'rangeEnd';
   otBooks: string[] = [];
   ntBooks: string[] = [];
   chapters: number[] = [];
@@ -41,6 +49,27 @@ export class ScriptureChooserDialogComponent implements OnInit {
     const books = Object.keys(this.data.booksAndChaptersToShow);
     this.otBooks = books.filter(book => this.isOT(book));
     this.ntBooks = books.filter(book => !this.isOT(book));
+
+    if (!!this.data.rangeStart) {
+      // Is rangeStart for a book and chapter in the list we know about, and
+      // with a verse not greater than the last verse of that chapter?
+      if (
+        books.includes(this.data.rangeStart.book) &&
+        this.data.booksAndChaptersToShow[this.data.rangeStart.book].chapters.some(
+          chap => chap.number === +this.data.rangeStart.chapter
+        ) &&
+        +this.data.rangeStart.verse <=
+          this.data.booksAndChaptersToShow[this.data.rangeStart.book].chapters.find(
+            chap => chap.number === +this.data.rangeStart.chapter
+          ).lastVerse
+      ) {
+        this.selection.book = this.data.rangeStart.book;
+        this.selection.chapter = this.data.rangeStart.chapter;
+        this.showRangeEndSelection();
+        return;
+      }
+    }
+
     this.showBookSelection();
   }
 
@@ -71,7 +100,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
   }
 
   onClickBackoutButton() {
-    if (this.showing === 'books') {
+    if (this.showing === 'books' || this.showing === 'rangeEnd') {
       this.dialogRef.close('close');
     }
     if (this.showing === 'chapters') {
@@ -94,6 +123,10 @@ export class ScriptureChooserDialogComponent implements OnInit {
     this.showing = 'verses';
   }
 
+  showRangeEndSelection() {
+    this.showing = 'rangeEnd';
+  }
+
   /** Is the book in the OT?
    * False if in NT or invalid. */
   isOT(bookId: string): boolean {
@@ -104,7 +137,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
 
   /** Returns an array of all chapters for a given book that the dialog was told about.
    * (Not necessarily all possible chapters of a given book.) */
-  private chaptersOf(bookId: string): number[] {
+  chaptersOf(bookId: string): number[] {
     if (!bookId) {
       return null;
     }
@@ -112,13 +145,18 @@ export class ScriptureChooserDialogComponent implements OnInit {
   }
 
   /** Returns an array of all verses in a chapter.*/
-  private versesOf(bookId: string, chapter: string): number[] {
+  versesOf(bookId: string, chapter: string, startingWithVerse?: number): number[] {
     if (!bookId || !chapter) {
       return null;
     }
+
     const lastVerse = this.data.booksAndChaptersToShow[bookId].chapters.find(chap => chap.number === +chapter)
       .lastVerse;
-    // Return array of [1, 2, ... , lastVerse]
-    return Array.from([...Array(lastVerse + 1).keys()]).slice(1);
+    // Array of [1, 2, ... , lastVerse]
+    let verses = Array.from([...Array(lastVerse + 1).keys()]).slice(1);
+    if (!!startingWithVerse) {
+      verses = verses.slice(startingWithVerse - 1);
+    }
+    return verses;
   }
 }

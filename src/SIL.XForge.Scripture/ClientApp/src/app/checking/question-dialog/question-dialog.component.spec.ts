@@ -132,7 +132,7 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.questionForm.errors).toBeNull();
   }));
 
-  it('opens verse chooser, uses result', fakeAsync(() => {
+  it('opens reference chooser, uses result', fakeAsync(() => {
     const env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('MAT 3:4');
@@ -141,12 +141,60 @@ describe('QuestionDialogComponent', () => {
     env.clickElement(env.scriptureStartInputIcon);
     flush();
     verify(env.dialogSpy.open(anything(), anything())).once();
-    expect((capture(env.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>).data.input).toEqual({
+    const dataPassedToDialog = (capture(env.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>)
+      .data as ScriptureChooserDialogData;
+    expect(dataPassedToDialog.input).toEqual({
       book: 'MAT',
       chapter: '3',
       verse: '4',
       versification: undefined
     });
+    flush();
+    expect(env.component.scriptureStart.value).toEqual('LUK 1:2');
+  }));
+
+  it('passes start reference to end-reference chooser', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    env.component.scriptureStart.setValue('LUK 1:1');
+    env.component.scriptureEnd.setValue('GEN 5:6');
+
+    env.clickElement(env.scriptureEndInputIcon);
+    flush();
+    verify(env.dialogSpy.open(anything(), anything())).once();
+    const dataPassedToDialog = (capture(env.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>)
+      .data as ScriptureChooserDialogData;
+    // Dialog receives unhelpful input value that can be ignored.
+    expect(dataPassedToDialog.input).toEqual({
+      book: 'GEN',
+      chapter: '5',
+      verse: '6',
+      versification: undefined
+    });
+    // rangeStart should have been passed in, and from scriptureStart value.
+    expect(dataPassedToDialog.rangeStart).toEqual({ book: 'LUK', chapter: '1', verse: '1', versification: undefined });
+    flush();
+    expect(env.component.scriptureEnd.value).toEqual('LUK 1:2');
+  }));
+
+  it('does not pass start reference as range start when opening start-reference chooser', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    env.component.scriptureStart.setValue('LUK 1:1');
+
+    env.clickElement(env.scriptureStartInputIcon);
+    flush();
+    verify(env.dialogSpy.open(anything(), anything())).once();
+    const dataPassedToDialog = (capture(env.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>)
+      .data as ScriptureChooserDialogData;
+    expect(dataPassedToDialog.input).toEqual({
+      book: 'LUK',
+      chapter: '1',
+      verse: '1',
+      versification: undefined
+    });
+    // rangeStart should not have been passed in.
+    expect(dataPassedToDialog.rangeStart).toBeUndefined();
     flush();
     expect(env.component.scriptureStart.value).toEqual('LUK 1:2');
   }));
@@ -254,6 +302,10 @@ class TestEnvironment {
 
   get scriptureStartInputIcon(): HTMLInputElement {
     return this.scriptureStartInput.querySelector('mdc-icon');
+  }
+
+  get scriptureEndInputIcon(): HTMLInputElement {
+    return this.scriptureEndInput.querySelector('mdc-icon');
   }
 
   get scriptureStartValidationMsg(): HTMLElement {
