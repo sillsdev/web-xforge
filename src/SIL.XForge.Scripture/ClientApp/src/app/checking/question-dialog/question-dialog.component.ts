@@ -115,9 +115,20 @@ export class QuestionDialogComponent implements OnInit {
     const currentVerseSelection = QuestionDialogComponent.verseRefToVerseRefData(
       VerseRef.fromStr(control.value, ScrVers.English)
     );
+
+    let startReference: VerseRefData;
+    if (control === this.scriptureStart) {
+      startReference = undefined;
+    } else {
+      startReference = QuestionDialogComponent.verseRefToVerseRefData(
+        VerseRef.fromStr(this.scriptureStart.value, ScrVers.English)
+      );
+    }
+
     const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
-      data: { input: currentVerseSelection, booksAndChaptersToShow: this.data.textsByBook }
+      data: { input: currentVerseSelection, booksAndChaptersToShow: this.data.textsByBook, rangeStart: startReference }
     };
+
     const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig);
     dialogRef.afterClosed().subscribe((result: VerseRefData) => {
       if (result !== 'close') {

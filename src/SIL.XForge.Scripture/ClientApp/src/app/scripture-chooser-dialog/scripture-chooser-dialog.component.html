@@ -72,5 +72,31 @@
         </button>
       </mdc-dialog-content>
     </mdc-dialog-surface>
+
+    <mdc-dialog-surface id="rangeEndPane" *ngIf="showing === 'rangeEnd'">
+      <mdc-dialog-title>
+        <button mdcIconButton id="backout-button" (click)="onClickBackoutButton($event)" (focus)="onCloseFocus($event)">
+          <mdc-icon>close</mdc-icon>
+        </button>
+        <span>Choose end verse</span>
+      </mdc-dialog-title>
+      <mdc-dialog-content>
+        <div class="reference">
+          {{ data.booksAndChaptersToShow[data.rangeStart.book].name }} {{ data.rangeStart.chapter }}
+        </div>
+        <button
+          *ngFor="let verse of versesOf(data.rangeStart.book, data.rangeStart.chapter, data.rangeStart.verse)"
+          mdc-button
+          [primary]="
+            data.input?.book === data.rangeStart.book &&
+            data.input?.chapter === data.rangeStart.chapter &&
+            +data.input?.verse === +verse
+          "
+          (click)="onClickVerse($event)"
+        >
+          {{ verse }}
+        </button>
+      </mdc-dialog-content>
+    </mdc-dialog-surface>
   </mdc-dialog-container>
 </mdc-dialog>
