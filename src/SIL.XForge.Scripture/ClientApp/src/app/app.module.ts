@@ -1,9 +1,10 @@
 import { DatePipe } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { NgModule } from '@angular/core';
+import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
+import { ExceptionHandlingService } from 'xforge-common/exception-handling-service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { xForgeCommonEntryComponents, XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { environment } from '../environments/environment';
@@ -48,7 +49,7 @@ import { TranslateModule } from './translate/translate.module';
     UICommonModule,
     XForgeCommonModule
   ],
-  providers: [DatePipe],
+  providers: [DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
   entryComponents: [
     DeleteProjectDialogComponent,
     ProjectDeletedDialogComponent,
