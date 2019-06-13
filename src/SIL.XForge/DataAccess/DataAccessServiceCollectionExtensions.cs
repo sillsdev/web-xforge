@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using Hangfire;
 using Hangfire.Mongo;
+using Humanizer;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
@@ -22,7 +24,8 @@ namespace Microsoft.Extensions.DependencyInjection
             IConfiguration configuration)
         {
             var options = configuration.GetOptions<DataAccessOptions>();
-            services.AddHangfire(x => x.UseMongoStorage(options.ConnectionString, options.JobDatabase,
+            services.AddHangfire(x => x.UseMongoStorage(options.ConnectionString,
+                options.JobDatabaseName ?? options.Prefix + "_jobs",
                 new MongoStorageOptions
                 {
                     MigrationOptions = new MongoMigrationOptions
@@ -55,7 +58,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IMongoDatabase>(
                 sp => sp.GetService<IMongoClient>().GetDatabase(options.MongoDatabaseName));
 
-            services.AddMongoRepository<UserEntity>("users",
+            services.AddMongoRepository<UserEntity>(RootDataTypes.Users,
                 mapSetup: cm =>
                 {
                     var customSitesSerializer =
@@ -68,12 +71,19 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        public static void AddMongoRepository<T>(this IServiceCollection services, string collectionName,
+        public static void AddMongoRepository<T>(this IServiceCollection services, string type,
             Action<BsonClassMap<T>> mapSetup = null, Action<IMongoIndexManager<T>> indexSetup = null) where T : Entity
         {
             DataAccessClassMap.RegisterClass(mapSetup);
-            services.AddSingleton<IRepository<T>>(sp => new MongoRepository<T>(
-                sp.GetService<IMongoDatabase>().GetCollection<T>(collectionName), c => indexSetup?.Invoke(c.Indexes)));
+            services.AddSingleton<IRepository<T>>(sp =>
+                {
+                    var options = sp.GetService<IOptions<DataAccessOptions>>();
+                    string collection = type.Underscore();
+                    if (type == RootDataTypes.Projects)
+                        collection = $"{options.Value.Prefix}_{collection}";
+                    return new MongoRepository<T>(sp.GetService<IMongoDatabase>().GetCollection<T>(collection),
+                        c => indexSetup?.Invoke(c.Indexes));
+                });
         }
     }
 }

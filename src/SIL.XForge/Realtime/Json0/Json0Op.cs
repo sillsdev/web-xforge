@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using Newtonsoft.Json;
 
 namespace SIL.XForge.Realtime.Json0
@@ -10,36 +9,12 @@ namespace SIL.XForge.Realtime.Json0
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class Json0Op
     {
-        public static Json0Op ListInsert(object item, params object[] path)
+        public static List<Json0Op> New()
         {
-            return new Json0Op { Path = path.ToList(), InsertItem = item };
+            return new List<Json0Op>();
         }
 
-        public static Json0Op ListDelete(object item, params object[] path)
-        {
-            return new Json0Op { Path = path.ToList(), DeleteItem = item };
-        }
-
-        public static Json0Op ListReplace(object oldItem, object newItem, params object[] path)
-        {
-            return new Json0Op { Path = path.ToList(), DeleteItem = oldItem, InsertItem = newItem };
-        }
-
-        public static Json0Op ObjectInsert(object value, params object[] path)
-        {
-            return new Json0Op { Path = path.ToList(), InsertProp = value };
-        }
-
-        public static Json0Op ObjectDelete(object value, params object[] path)
-        {
-            return new Json0Op { Path = path.ToList(), DeleteProp = value };
-        }
-
-        public static Json0Op ObjectReplace(object oldValue, object newValue, params object[] path)
-        {
-            return new Json0Op { Path = path.ToList(), DeleteProp = oldValue, InsertProp = newValue };
-        }
-
+        [JsonProperty("p")]
         public List<object> Path { get; set; } = new List<object>();
 
         [JsonProperty("li")]
@@ -49,7 +24,7 @@ namespace SIL.XForge.Realtime.Json0
         public object DeleteItem { get; set; }
 
         [JsonProperty("lm")]
-        public int MoveIndex { get; set; }
+        public int? MoveIndex { get; set; }
 
         [JsonProperty("oi")]
         public object InsertProp { get; set; }

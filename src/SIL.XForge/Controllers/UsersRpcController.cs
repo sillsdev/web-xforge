@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using EdjCase.JsonRpc.Router;
 using EdjCase.JsonRpc.Router.Abstractions;
 using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,7 @@ namespace SIL.XForge.Controllers
     /// <summary>
     /// This is the controller for all JSON-RPC commands on user resources.
     /// </summary>
+    [RpcRoute(RootDataTypes.Users)]
     public class UsersRpcController : RpcControllerBase
     {
         private readonly IRepository<UserEntity> _users;

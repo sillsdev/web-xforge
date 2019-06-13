@@ -14,7 +14,7 @@ import { XFValidators } from 'xforge-common/xfvalidators';
 import { Question } from '../../core/models/question';
 import { ScrVers } from '../../core/models/scripture/scr-vers';
 import { VerseRef } from '../../core/models/scripture/verse-ref';
-import { TextsByBook } from '../../core/models/text';
+import { TextsByBook } from '../../core/models/text-info';
 import { VerseRefData } from '../../core/models/verse-ref-data';
 import {
   ScriptureChooserDialogComponent,

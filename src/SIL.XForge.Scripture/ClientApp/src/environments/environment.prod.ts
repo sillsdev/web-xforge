@@ -8,5 +8,6 @@ export const environment = {
   authDomain: 'login.languagetechnology.org',
   authClientId: 'tY2wXn40fsL5VsPM4uIHNtU6ZUEXGeFn',
   audience: 'https://scriptureforge.org/',
-  scope: 'sf_data'
+  scope: 'sf_data',
+  prefix: 'sf'
 };

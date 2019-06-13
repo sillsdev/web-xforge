@@ -10,7 +10,6 @@ namespace Microsoft.AspNetCore.Builder
 
             app.InitRepository<SFProjectEntity>();
             app.InitRepository<SyncJobEntity>();
-            app.InitRepository<TextEntity>();
         }
     }
 }

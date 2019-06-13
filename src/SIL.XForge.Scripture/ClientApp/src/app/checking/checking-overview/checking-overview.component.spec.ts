@@ -10,16 +10,16 @@ import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { MemoryRealtimeDoc } from 'xforge-common/realtime-doc';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { Question } from '../../core/models/question';
-import { QuestionData } from '../../core/models/question-data';
-import { Text } from '../../core/models/text';
-import { TextJsonDataId } from '../../core/models/text-json-data-id';
+import { QuestionsDoc } from '../../core/models/questions-doc';
+import { SFProjectData } from '../../core/models/sfproject-data';
+import { SFProjectDataDoc } from '../../core/models/sfproject-data-doc';
+import { TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectService } from '../../core/sfproject.service';
-import { TextService } from '../../core/text.service';
 import { SFAdminAuthGuard } from '../../shared/sfadmin-auth.guard';
 import { QuestionDialogComponent } from '../question-dialog/question-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview.component';
@@ -58,12 +58,12 @@ describe('CheckingOverviewComponent', () => {
       flush();
       env.fixture.detectChanges();
       expect(env.addQuestionButton.nativeElement.disabled).toBe(false);
-      verify(env.mockedTextService.getQuestionData(anything())).twice();
+      verify(env.mockedProjectService.getQuestionsDoc(anything())).twice();
 
-      resetCalls(env.mockedTextService);
+      resetCalls(env.mockedProjectService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedTextService.getQuestionData(anything())).never();
+      verify(env.mockedProjectService.getQuestionsDoc(anything())).never();
     }));
 
     it('should add a question if requested', fakeAsync(() => {
@@ -79,25 +79,25 @@ describe('CheckingOverviewComponent', () => {
       flush();
       env.fixture.detectChanges();
       expect(env.addQuestionButton.nativeElement.disabled).toBe(false);
-      verify(env.mockedTextService.getQuestionData(anything())).twice();
+      verify(env.mockedProjectService.getQuestionsDoc(anything())).twice();
 
-      resetCalls(env.mockedTextService);
+      resetCalls(env.mockedProjectService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedTextService.getQuestionData(anything())).once();
+      verify(env.mockedProjectService.getQuestionsDoc(anything())).once();
     }));
   });
 
   describe('Edit Question', () => {
     it('should expand/collapse questions in book text', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextJsonDataId('text01', 1);
+      const id = new TextDocId('project01', 'MAT', 1);
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       expect(env.questionEdits.length).toEqual(0);
       expect(env.component.itemVisible[id.toString()]).toBeFalsy();
       expect(env.component.questions[id.toString()].data.length).toBeGreaterThan(0);
-      expect(env.component.questionCount(id.textId, id.chapter)).toBeGreaterThan(0);
+      expect(env.component.questionCount(id.bookId, id.chapter)).toBeGreaterThan(0);
 
       env.simulateRowClick(0);
       expect(env.textRows.length).toEqual(3);
@@ -114,7 +114,7 @@ describe('CheckingOverviewComponent', () => {
 
     it('should edit question', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextJsonDataId('text01', 1);
+      const id = new TextDocId('project01', 'MAT', 1);
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
         of({
           scriptureStart: 'MAT 3:3',
@@ -127,12 +127,12 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(5);
       expect(env.questionEdits.length).toEqual(2);
-      verify(env.mockedTextService.getQuestionData(anything())).twice();
+      verify(env.mockedProjectService.getQuestionsDoc(anything())).twice();
 
-      resetCalls(env.mockedTextService);
+      resetCalls(env.mockedProjectService);
       env.clickElement(env.questionEdits[0]);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedTextService.getQuestionData(anything())).never();
+      verify(env.mockedProjectService.getQuestionsDoc(anything())).never();
     }));
   });
 });
@@ -155,38 +155,39 @@ class TestEnvironment {
   mockedQuestionDialogRef: MdcDialogRef<QuestionDialogComponent> = mock(MdcDialogRef);
   mockedNoticeService = mock(NoticeService);
   mockedProjectService: SFProjectService = mock(SFProjectService);
-  mockedTextService: TextService = mock(TextService);
   mockedUserService: UserService = mock(UserService);
   mockedAuthService: AuthService = mock(AuthService);
   mockedRealtimeOfflineStore: RealtimeOfflineStore = mock(RealtimeOfflineStore);
   overlayContainer: OverlayContainer;
 
   constructor() {
-    when(this.mockedActivatedRoute.params).thenReturn(of({}));
+    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedQuestionDialogRef));
     when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
-    when(this.mockedProjectService.getTexts(anything())).thenReturn(
-      of([
-        { id: 'text01', bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1, lastVerse: 25 }] } as Text,
-        { id: 'text02', bookId: 'LUK', name: 'Luke', chapters: [{ number: 1, lastVerse: 80 }] } as Text
+    const projectData: SFProjectData = {
+      texts: [
+        { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1, lastVerse: 25 }] },
+        { bookId: 'LUK', name: 'Luke', chapters: [{ number: 1, lastVerse: 80 }] }
+      ]
+    };
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', projectData);
+    const projectDataDoc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    when(this.mockedProjectService.getDataDoc('project01')).thenResolve(projectDataDoc);
+
+    const text1_1id = new TextDocId('project01', 'MAT', 1);
+    when(this.mockedProjectService.getQuestionsDoc(deepEqual(text1_1id))).thenResolve(
+      this.createQuestionsDoc(text1_1id, [
+        { id: 'q1Id', ownerRef: undefined, text: 'Book 1, Q1 text' },
+        { id: 'q2Id', ownerRef: undefined, text: 'Book 1, Q2 text' }
       ])
     );
-    const text1_1id = new TextJsonDataId('text01', 1);
-    when(this.mockedTextService.getQuestionData(deepEqual(text1_1id))).thenResolve(
-      this.createQuestionData(text1_1id, [
-        { id: 'q1Id', ownerRef: undefined, projectRef: undefined, text: 'Book 1, Q1 text' },
-        { id: 'q2Id', ownerRef: undefined, projectRef: undefined, text: 'Book 1, Q2 text' }
-      ])
+    const text1_3id = new TextDocId('project01', 'MAT', 3);
+    when(this.mockedProjectService.getQuestionsDoc(deepEqual(text1_3id))).thenResolve(
+      this.createQuestionsDoc(text1_3id, [])
     );
-    const text1_3id = new TextJsonDataId('text01', 3);
-    when(this.mockedTextService.getQuestionData(deepEqual(text1_3id))).thenResolve(
-      this.createQuestionData(text1_3id, [])
-    );
-    const text2_1id = new TextJsonDataId('text02', 1);
-    when(this.mockedTextService.getQuestionData(deepEqual(text2_1id))).thenResolve(
-      this.createQuestionData(text2_1id, [
-        { id: 'q3Id', ownerRef: undefined, projectRef: undefined, text: 'Book 2, Q3 text' }
-      ])
+    const text2_1id = new TextDocId('project01', 'LUK', 1);
+    when(this.mockedProjectService.getQuestionsDoc(deepEqual(text2_1id))).thenResolve(
+      this.createQuestionsDoc(text2_1id, [{ id: 'q3Id', ownerRef: undefined, text: 'Book 2, Q3 text' }])
     );
 
     TestBed.configureTestingModule({
@@ -199,7 +200,6 @@ class TestEnvironment {
         { provide: MdcDialog, useFactory: () => instance(this.mockedMdcDialog) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) },
-        { provide: TextService, useFactory: () => instance(this.mockedTextService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) }
       ]
@@ -230,12 +230,12 @@ class TestEnvironment {
   /**
    * simulate row click since actually clicking on the row deosn't fire the selectionChange event
    */
-  simulateRowClick(index: number, id?: TextJsonDataId): void {
+  simulateRowClick(index: number, id?: TextDocId): void {
     let idStr: string;
     if (id) {
       idStr = id.toString();
     } else {
-      idStr = this.component.texts[index].id;
+      idStr = this.component.texts[index].bookId;
     }
     this.component.itemVisible[idStr] = !this.component.itemVisible[idStr];
     this.fixture.detectChanges();
@@ -255,8 +255,8 @@ class TestEnvironment {
     this.component.isProjectAdmin$ = of(isProjectAdmin);
   }
 
-  private createQuestionData(id: TextJsonDataId, data: Question[]): QuestionData {
-    const doc = new MemoryRealtimeDoc(OTJson0.type, id.toString(), data);
-    return new QuestionData(doc, instance(this.mockedRealtimeOfflineStore));
+  private createQuestionsDoc(id: TextDocId, data: Question[]): QuestionsDoc {
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, id.toString(), data);
+    return new QuestionsDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 }

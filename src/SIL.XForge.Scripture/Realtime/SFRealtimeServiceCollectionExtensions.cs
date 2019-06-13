@@ -1,6 +1,6 @@
 using SIL.XForge.Configuration;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
-using SIL.XForge.Scripture.DataAccess;
 using SIL.XForge.Scripture.Models;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -13,28 +13,31 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddRealtimeServer(o =>
                 {
                     o.ProjectRoles = SFProjectRoles.Instance;
-                    o.ProjectsCollectionName = SFDataAccessConstants.ProjectsCollectionName;
-                    o.Collections = new[]
+                    o.Docs = new[]
                     {
-                        new RealtimeCollectionConfig(SFDataAccessConstants.TextDataCollectionName,
-                            SFDataAccessConstants.TextsCollectionName, OTType.RichText)
+                        new RealtimeDocConfig(RootDataTypes.Projects, OTType.Json0),
+                        new RealtimeDocConfig(SFRootDataTypes.Texts, OTType.RichText)
                         {
-                            Types = { new RealtimeType(SFDomain.Texts) }
+                            Models = { new RealtimeModelConfig(SFDomain.Texts) }
                         },
-                        new RealtimeCollectionConfig(SFDataAccessConstants.QuestionDataCollectionName,
-                            SFDataAccessConstants.TextsCollectionName, OTType.Json0)
+                        new RealtimeDocConfig(SFRootDataTypes.Questions, OTType.Json0)
                         {
-                            Types =
+                            Models =
                             {
-                                new RealtimeType(SFDomain.Questions) { Path = { "$" } },
-                                new RealtimeType(SFDomain.Answers) { Path = { "$", "answers", "$" }},
-                                new RealtimeType(SFDomain.Likes) { Path = { "$", "answers", "$", "likes", "$" } }
+                                new RealtimeModelConfig(SFDomain.Questions) { Path = { "$" } },
+                                new RealtimeModelConfig(SFDomain.Answers)
+                                {
+                                    Path = { "$", nameof(Question.Answers), "$" }
+                                },
+                                new RealtimeModelConfig(SFDomain.Likes)
+                                {
+                                    Path = { "$", nameof(Question.Answers), "$", nameof(Answer.Likes), "$" }
+                                }
                             }
                         },
-                        new RealtimeCollectionConfig(SFDataAccessConstants.CommentDataCollectionName,
-                            SFDataAccessConstants.TextsCollectionName, OTType.Json0)
+                        new RealtimeDocConfig(SFRootDataTypes.Comments, OTType.Json0)
                         {
-                            Types = { new RealtimeType(SFDomain.Comments) { Path = { "$" } } }
+                            Models = { new RealtimeModelConfig(SFDomain.Comments) { Path = { "$" } } }
                         }
                     };
                 }, launchWithDebugging);

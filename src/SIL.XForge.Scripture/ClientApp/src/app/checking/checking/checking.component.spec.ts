@@ -10,24 +10,25 @@ import { anything, deepEqual, instance, mock, when } from 'ts-mockito';
 import { MapQueryResults } from 'xforge-common/json-api.service';
 import { ShareLevel } from 'xforge-common/models/share-config';
 import { User } from 'xforge-common/models/user';
-import { MemoryRealtimeDoc } from 'xforge-common/realtime-doc';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { Comment } from '../../core/models/comment';
-import { CommentData } from '../../core/models/comment-data';
+import { CommentsDoc } from '../../core/models/comments-doc';
 import { Question } from '../../core/models/question';
-import { QuestionData } from '../../core/models/question-data';
-import { SFProjectRef, SFProjectUserRef } from '../../core/models/sfdomain-model.generated';
+import { QuestionsDoc } from '../../core/models/questions-doc';
+import { SFProjectUserRef } from '../../core/models/sfdomain-model.generated';
 import { SFProject } from '../../core/models/sfproject';
+import { SFProjectData } from '../../core/models/sfproject-data';
+import { SFProjectDataDoc } from '../../core/models/sfproject-data-doc';
 import { SFProjectRoles } from '../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../core/models/sfproject-user';
-import { Text } from '../../core/models/text';
-import { Delta, getTextDataIdStr, TextData, TextDataId } from '../../core/models/text-data';
-import { TextJsonDataId } from '../../core/models/text-json-data-id';
+import { Delta, TextDoc } from '../../core/models/text-doc';
+import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
-import { TextService } from '../../core/text.service';
+import { SFProjectService } from '../../core/sfproject.service';
 import { SharedModule } from '../../shared/shared.module';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
@@ -322,18 +323,18 @@ class TestEnvironment {
   fixture: ComponentFixture<CheckingComponent>;
   questionReadTimer: number = 2000;
 
-  mockedTextService: TextService;
   mockedRealtimeOfflineStore: RealtimeOfflineStore;
   mockedUserService: UserService;
   mockedProjectUserService: SFProjectUserService;
+  mockedProjectService: SFProjectService;
   adminUser = this.createUser('01', SFProjectRoles.ParatextAdministrator);
   reviewerUser = this.createUser('02', SFProjectRoles.Reviewer);
 
   constructor() {
-    this.mockedTextService = mock(TextService);
     this.mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
     this.mockedUserService = mock(UserService);
     this.mockedProjectUserService = mock(SFProjectUserService);
+    this.mockedProjectService = mock(SFProjectService);
 
     TestBed.configureTestingModule({
       declarations: [
@@ -351,11 +352,11 @@ class TestEnvironment {
       providers: [
         {
           provide: ActivatedRoute,
-          useValue: { params: of({ textId: 'text01' }) }
+          useValue: { params: of({ projectId: 'project01', bookId: 'JHN' }) }
         },
-        { provide: TextService, useFactory: () => instance(this.mockedTextService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
-        { provide: SFProjectUserService, useFactory: () => instance(this.mockedProjectUserService) }
+        { provide: SFProjectUserService, useFactory: () => instance(this.mockedProjectUserService) },
+        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
       ]
     });
   }
@@ -544,32 +545,23 @@ class TestEnvironment {
   }
 
   private setupDefaultProjectData(user: User): void {
-    when(
-      this.mockedTextService.get('text01', deepEqual([[nameof<Text>('project'), nameof<SFProject>('users')]]))
-    ).thenReturn(
+    when(this.mockedProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
       of(
-        new MapQueryResults<Text>(
-          new Text({
-            id: 'text01',
-            bookId: 'JHN',
-            name: 'John',
-            chapters: [{ number: 1 }, { number: 2 }],
-            project: new SFProjectRef('project01')
+        new MapQueryResults(
+          new SFProject({
+            id: 'project01',
+            projectName: 'Project 01',
+            checkingConfig: {
+              usersSeeEachOthersResponses: true,
+              share: {
+                enabled: true,
+                level: ShareLevel.Anyone
+              }
+            },
+            users: [new SFProjectUserRef(this.adminUser.id), new SFProjectUserRef(this.reviewerUser.id)]
           }),
           undefined,
           [
-            new SFProject({
-              id: 'project01',
-              projectName: 'Project 01',
-              checkingConfig: {
-                usersSeeEachOthersResponses: true,
-                share: {
-                  enabled: true,
-                  level: ShareLevel.Anyone
-                }
-              },
-              users: [new SFProjectUserRef(this.adminUser.id), new SFProjectUserRef(this.reviewerUser.id)]
-            }),
             new SFProjectUser({
               id: this.adminUser.id,
               user: this.adminUser,
@@ -590,18 +582,27 @@ class TestEnvironment {
         )
       )
     );
-    when(this.mockedTextService.getTextData(deepEqual(new TextDataId('text01', 1)))).thenResolve(this.createTextData());
-    when(this.mockedTextService.getTextData(deepEqual(new TextDataId('text01', 2)))).thenResolve(this.createTextData());
-    const text1_1id = new TextJsonDataId('text01', 1);
-    const text1_2id = new TextJsonDataId('text01', 2);
+    const projectData: SFProjectData = {
+      texts: [{ bookId: 'JHN', name: 'John', hasSource: false, chapters: [{ number: 1 }, { number: 2 }] }]
+    };
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', projectData);
+    const projectDataDoc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    when(this.mockedProjectService.getDataDoc('project01')).thenResolve(projectDataDoc);
+    when(this.mockedProjectService.getTextDoc(deepEqual(new TextDocId('project01', 'JHN', 1, 'target')))).thenResolve(
+      this.createTextDoc()
+    );
+    when(this.mockedProjectService.getTextDoc(deepEqual(new TextDocId('project01', 'JHN', 2, 'target')))).thenResolve(
+      this.createTextDoc()
+    );
+    const text1_1id = new TextDocId('project01', 'JHN', 1);
+    const text1_2id = new TextDocId('project01', 'JHN', 2);
     const dateNow: string = new Date().toUTCString();
-    const questionData1 = [];
-    const questionData2 = [];
+    const questionData1: Question[] = [];
+    const questionData2: Question[] = [];
     for (let questionNumber = 1; questionNumber <= 14; questionNumber++) {
       questionData1.push({
         id: 'q' + questionNumber + 'Id',
         ownerRef: undefined,
-        projectRef: undefined,
         text: 'Book 1, Q' + questionNumber + ' text',
         scriptureStart: { book: 'JHN', chapter: '1', verse: '1', versification: 'English' },
         scriptureEnd: { book: 'JHN', chapter: '1', verse: '2', versification: 'English' },
@@ -611,7 +612,6 @@ class TestEnvironment {
     questionData2.push({
       id: 'q15Id',
       ownerRef: undefined,
-      projectRef: undefined,
       text: 'Question relating to chapter 2',
       scriptureStart: { book: 'JHN', chapter: '2', verse: '1', versification: 'English' },
       scriptureEnd: { book: 'JHN', chapter: '2', verse: '2', versification: 'English' },
@@ -641,7 +641,7 @@ class TestEnvironment {
       dateCreated: dateNow,
       dateModified: dateNow
     });
-    const commentData = [];
+    const commentData: Comment[] = [];
     for (let commentNumber = 1; commentNumber <= 3; commentNumber++) {
       commentData.push({
         id: 'c' + commentNumber + 'Id',
@@ -664,17 +664,17 @@ class TestEnvironment {
         dateModified: dateNow
       });
     }
-    when(this.mockedTextService.getQuestionData(deepEqual(text1_1id))).thenResolve(
-      this.createQuestionData(text1_1id, questionData1)
+    when(this.mockedProjectService.getQuestionsDoc(deepEqual(text1_1id))).thenResolve(
+      this.createQuestionsDoc(text1_1id, questionData1)
     );
-    when(this.mockedTextService.getCommentData(deepEqual(text1_1id))).thenResolve(
-      this.createCommentData(text1_1id, commentData)
+    when(this.mockedProjectService.getCommentsDoc(deepEqual(text1_1id))).thenResolve(
+      this.createCommentsDoc(text1_1id, commentData)
     );
-    when(this.mockedTextService.getQuestionData(deepEqual(text1_2id))).thenResolve(
-      this.createQuestionData(text1_2id, questionData2)
+    when(this.mockedProjectService.getQuestionsDoc(deepEqual(text1_2id))).thenResolve(
+      this.createQuestionsDoc(text1_2id, questionData2)
     );
-    when(this.mockedTextService.getCommentData(deepEqual(text1_2id))).thenResolve(
-      this.createCommentData(text1_2id, [])
+    when(this.mockedProjectService.getCommentsDoc(deepEqual(text1_2id))).thenResolve(
+      this.createCommentsDoc(text1_2id, [])
     );
     when(this.mockedUserService.currentUserId).thenReturn(user.id);
     when(this.mockedUserService.onlineGet(this.adminUser.id)).thenReturn(of(new MapQueryResults(this.adminUser)));
@@ -704,17 +704,17 @@ class TestEnvironment {
     });
   }
 
-  private createQuestionData(id: TextJsonDataId, data: Question[]): QuestionData {
-    const doc = new MemoryRealtimeDoc(OTJson0.type, id.toString(), data);
-    return new QuestionData(doc, instance(this.mockedRealtimeOfflineStore));
+  private createQuestionsDoc(id: TextDocId, data: Question[]): QuestionsDoc {
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, id.toString(), data);
+    return new QuestionsDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 
-  private createCommentData(id: TextJsonDataId, data: Comment[]): CommentData {
-    const doc = new MemoryRealtimeDoc(OTJson0.type, id.toString(), data);
-    return new CommentData(doc, instance(this.mockedRealtimeOfflineStore));
+  private createCommentsDoc(id: TextDocId, data: Comment[]): CommentsDoc {
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, id.toString(), data);
+    return new CommentsDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 
-  private createTextData(): TextData {
+  private createTextDoc(): TextDoc {
     const mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
     const delta = new Delta();
     delta.insert({ chapter: { number: '1', style: 'c' } });
@@ -732,7 +732,11 @@ class TestEnvironment {
     delta.insert({ verse: { number: '5', style: 'v' } });
     delta.insert(`target: chapter 1, `, { segment: 'verse_1_5' });
     delta.insert('\n', { para: { style: 'p' } });
-    const doc = new MemoryRealtimeDoc(RichText.type, getTextDataIdStr('text01', 1, 'target'), delta);
-    return new TextData(doc, instance(mockedRealtimeOfflineStore));
+    const adapter = new MemoryRealtimeDocAdapter(
+      RichText.type,
+      getTextDocIdStr('project01', 'JHN', 1, 'target'),
+      delta
+    );
+    return new TextDoc(adapter, instance(mockedRealtimeOfflineStore));
   }
 }

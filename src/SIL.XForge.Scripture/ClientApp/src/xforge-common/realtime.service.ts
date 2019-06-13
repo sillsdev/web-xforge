@@ -7,8 +7,8 @@ import { Connection } from 'sharedb/lib/client';
 import { environment } from '../environments/environment';
 import { LocationService } from './location.service';
 import { DomainModel } from './models/domain-model';
-import { RealtimeData } from './models/realtime-data';
-import { SharedbRealtimeDoc } from './realtime-doc';
+import { RealtimeDoc } from './models/realtime-doc';
+import { SharedbRealtimeDocAdapter } from './realtime-doc-adapter';
 import { RealtimeOfflineStore } from './realtime-offline-store';
 
 function serializeRecordIdentity(identity: RecordIdentity): string {
@@ -26,7 +26,7 @@ function serializeRecordIdentity(identity: RecordIdentity): string {
 export class RealtimeService {
   private ws: ReconnectingWebSocket;
   private connection: Connection;
-  private readonly dataMap = new Map<string, Promise<RealtimeData>>();
+  private readonly docs = new Map<string, Promise<RealtimeDoc>>();
   private readonly stores = new Map<string, RealtimeOfflineStore>();
   private resetPromise: Promise<void> = Promise.resolve();
   private accessToken: string;
@@ -44,19 +44,19 @@ export class RealtimeService {
   }
 
   /**
-   * Gets the realtime data with the specified identity. It is not necessary to subscribe to the returned model.
+   * Gets the real-time data with the specified identity. It is not necessary to subscribe to the returned model.
    *
    * @param {RecordIdentity} identity The data identity.
    * @returns {Promise<T>} The realtime data.
    */
-  async get<T extends RealtimeData>(identity: RecordIdentity): Promise<T> {
+  async get<T extends RealtimeDoc>(identity: RecordIdentity): Promise<T> {
     // wait for pending reset to complete before getting data
     await this.resetPromise;
     const key = serializeRecordIdentity(identity);
-    let dataPromise = this.dataMap.get(key);
+    let dataPromise = this.docs.get(key);
     if (dataPromise == null) {
-      dataPromise = this.createData(identity);
-      this.dataMap.set(key, dataPromise);
+      dataPromise = this.createDoc(identity);
+      this.docs.set(key, dataPromise);
     }
     return await (dataPromise as Promise<T>);
   }
@@ -65,20 +65,28 @@ export class RealtimeService {
    * Resets the realtime data cache.
    */
   reset(): void {
-    if (this.dataMap.size > 0) {
+    if (this.docs.size > 0) {
       this.resetPromise = this.clearDataMap();
     }
   }
 
   /**
-   * Deletes realtime data from local storage.
+   * Deletes all real-time docs from local storage for a specified type and project.
    *
-   * @param {RecordIdentity} identity The data identity.
+   * @param {string} type The doc type.
+   * @param {string} projectId The project id.
    * @returns {Promise<void>} Resolves when the data has been deleted.
    */
-  localDelete(identity: RecordIdentity): Promise<void> {
-    const store = this.getStore(identity.type);
-    return store.delete(identity.id);
+  async localDeleteProjectDocs(type: string, projectId: string): Promise<void> {
+    const store = this.getStore(type);
+
+    const tasks: Promise<void>[] = [];
+    for (const id of await store.keys()) {
+      if (id.startsWith(projectId)) {
+        tasks.push(store.delete(id));
+      }
+    }
+    await Promise.all(tasks);
   }
 
   private getUrl(): string {
@@ -101,25 +109,29 @@ export class RealtimeService {
     return this.stores.get(type);
   }
 
-  private async createData(identity: RecordIdentity): Promise<RealtimeData> {
-    const sharedbDoc = this.connection.get(underscore(identity.type) + '_data', identity.id);
+  private async createDoc(identity: RecordIdentity): Promise<RealtimeDoc> {
+    let collection = underscore(identity.type) + '_data';
+    if (identity.type === 'project') {
+      collection = environment.prefix + '_' + collection;
+    }
+    const sharedbDoc = this.connection.get(collection, identity.id);
     const store = this.getStore(identity.type);
-    const RealtimeDataType = this.domainModel.getRealtimeDataType(identity.type);
-    const realtimeData = new RealtimeDataType(new SharedbRealtimeDoc(sharedbDoc), store);
-    await realtimeData.subscribe();
-    return realtimeData;
+    const RealtimeDocType = this.domainModel.getRealtimeDocType(identity.type);
+    const realtimeDoc = new RealtimeDocType(new SharedbRealtimeDocAdapter(sharedbDoc), store);
+    await realtimeDoc.subscribe();
+    return realtimeDoc;
   }
 
   private async clearDataMap(): Promise<void> {
     const disposePromises: Promise<void>[] = [];
-    for (const dataPromise of this.dataMap.values()) {
+    for (const dataPromise of this.docs.values()) {
       disposePromises.push(this.disposeData(dataPromise));
     }
-    this.dataMap.clear();
+    this.docs.clear();
     await Promise.all(disposePromises);
   }
 
-  private async disposeData(dataPromise: Promise<RealtimeData>): Promise<void> {
+  private async disposeData(dataPromise: Promise<RealtimeDoc>): Promise<void> {
     const data = await dataPromise;
     await data.dispose();
   }

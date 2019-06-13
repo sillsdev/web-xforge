@@ -285,7 +285,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       id: objectId(),
       type,
       sessionId: this.id,
-      textRef: this.target.id.textId,
+      bookId: this.target.id.bookId,
       chapter: this.target.id.chapter
     };
     if (type === 'edit') {
@@ -301,7 +301,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
 
   private incrementMetric(metric: Extract<keyof TranslateMetrics, string>, amount: number = 1): void {
     if (this.metrics[metric] == null) {
-      this.metrics[metric] = 0;
+      (this.metrics[metric] as number) = 0;
     }
     (this.metrics[metric] as number) += amount;
   }
@@ -312,7 +312,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
     }
     (this.metrics[metric] as number) -= amount;
     if (this.metrics[metric] <= 0) {
-      this.metrics[metric] = undefined;
+      (this.metrics[metric] as number) = undefined;
     }
   }
 }

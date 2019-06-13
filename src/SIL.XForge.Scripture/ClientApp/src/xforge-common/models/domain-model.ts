@@ -1,11 +1,11 @@
-import { RealtimeDataConstructor } from './realtime-data';
+import { RealtimeDocConstructor } from './realtime-doc';
 import { ResourceConstructor, ResourceRefConstructor } from './resource';
 import { User, UserRef } from './user';
 
 export interface DomainModelConfig {
   resourceTypes: ResourceConstructor[];
   resourceRefTypes: ResourceRefConstructor[];
-  realtimeDataTypes: RealtimeDataConstructor[];
+  realtimeDocTypes: RealtimeDocConstructor[];
 }
 
 /**
@@ -16,14 +16,14 @@ export interface DomainModelConfig {
 export class DomainModel {
   private readonly resourceTypes: Map<string, ResourceConstructor>;
   private readonly resourceRefTypes = new Map<string, ResourceRefConstructor>();
-  private readonly realtimeDataTypes = new Map<string, RealtimeDataConstructor>();
+  private readonly realtimeDocTypes = new Map<string, RealtimeDocConstructor>();
 
   constructor(settings: DomainModelConfig) {
     this.resourceTypes = this.createMap(settings.resourceTypes);
     this.resourceTypes.set(User.TYPE, User);
     this.resourceRefTypes = this.createMap(settings.resourceRefTypes);
     this.resourceRefTypes.set(UserRef.TYPE, UserRef);
-    this.realtimeDataTypes = this.createMap(settings.realtimeDataTypes);
+    this.realtimeDocTypes = this.createMap(settings.realtimeDocTypes);
   }
 
   getResourceType(recordType: string): ResourceConstructor {
@@ -34,8 +34,8 @@ export class DomainModel {
     return this.resourceRefTypes.get(recordType);
   }
 
-  getRealtimeDataType(recordType: string): RealtimeDataConstructor {
-    return this.realtimeDataTypes.get(recordType);
+  getRealtimeDocType(recordType: string): RealtimeDocConstructor {
+    return this.realtimeDocTypes.get(recordType);
   }
 
   private createMap(models: any[]): Map<string, any> {

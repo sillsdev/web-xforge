@@ -1,43 +1,46 @@
 import { RecordIdentity } from '@orbit/data';
 import { merge, Observable, Subscription } from 'rxjs';
-
-import { RealtimeDoc } from '../realtime-doc';
+import { RealtimeDocAdapter } from '../realtime-doc-adapter';
 import { RealtimeOfflineData, RealtimeOfflineStore } from '../realtime-offline-store';
 
-export interface RealtimeDataConstructor {
+export interface RealtimeDocConstructor {
   readonly TYPE: string;
 
-  new (doc: RealtimeDoc, store: RealtimeOfflineStore): RealtimeData;
+  new (adapter: RealtimeDocAdapter, store: RealtimeOfflineStore): RealtimeDoc;
 }
 
 /**
- * This is the base class for all realtime data models. This class manages the interaction between offline storage of
- * the data and the underlying realtime (ShareDB) document.
+ * This is the base class for all real-time data models. This class manages the interaction between offline storage of
+ * the data and access to the real-time backend.
  *
  * @template T The actual data type.
  * @template Ops The operations data type.
  */
-export abstract class RealtimeData<T = any, Ops = any> implements RecordIdentity {
-  private readonly subscription: Subscription;
+export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity {
+  private readonly updateOfflineDataSub: Subscription;
+  private readonly onDeleteSub: Subscription;
 
   private offlineSnapshotVersion: number;
 
   constructor(
     public readonly type: string,
-    private readonly doc: RealtimeDoc,
+    private readonly adapter: RealtimeDocAdapter,
     private readonly store: RealtimeOfflineStore
   ) {
-    this.subscription = merge(this.doc.remoteChanges(), this.doc.idle(), this.doc.onCreate()).subscribe(() =>
-      this.updateOfflineData()
-    );
+    this.updateOfflineDataSub = merge(
+      this.adapter.remoteChanges(),
+      this.adapter.idle(),
+      this.adapter.onCreate()
+    ).subscribe(() => this.updateOfflineData());
+    this.onDeleteSub = this.adapter.onDelete().subscribe(() => this.store.delete(this.id));
   }
 
   get id(): string {
-    return this.doc.id;
+    return this.adapter.id;
   }
 
   get data(): Readonly<T> {
-    return this.doc.data;
+    return this.adapter.data;
   }
 
   /**
@@ -50,19 +53,19 @@ export abstract class RealtimeData<T = any, Ops = any> implements RecordIdentity
     const offlineData = await this.store.getItem(this.id);
     if (offlineData != null) {
       if (offlineData.pendingOps.length > 0) {
-        await this.doc.fetch();
-        await Promise.all(offlineData.pendingOps.map(op => this.doc.submitOp(op)));
+        await this.adapter.fetch();
+        await Promise.all(offlineData.pendingOps.map(op => this.adapter.submitOp(op)));
       } else {
-        await this.doc.ingestSnapshot(offlineData.snapshot);
-        this.offlineSnapshotVersion = this.doc.version;
+        await this.adapter.ingestSnapshot(offlineData.snapshot);
+        this.offlineSnapshotVersion = this.adapter.version;
       }
     }
-    await this.doc.subscribe();
+    await this.adapter.subscribe();
   }
 
   /** Fires when underlying data is recreated. */
   onCreate(): Observable<void> {
-    return this.doc.onCreate();
+    return this.adapter.onCreate();
   }
 
   /**
@@ -71,7 +74,7 @@ export abstract class RealtimeData<T = any, Ops = any> implements RecordIdentity
    * @returns {Observable<Ops>} The remote changes observable.
    */
   remoteChanges(): Observable<Ops> {
-    return this.doc.remoteChanges();
+    return this.adapter.remoteChanges();
   }
 
   /**
@@ -83,7 +86,7 @@ export abstract class RealtimeData<T = any, Ops = any> implements RecordIdentity
    * @returns {Promise<void>} Resolves when the operations have been successfully submitted.
    */
   async submit(ops: Ops, source?: any): Promise<void> {
-    const submitPromise = this.doc.submitOp(ops, source);
+    const submitPromise = this.adapter.submitOp(ops, source);
     // update offline data when the op is first submitted
     this.updateOfflineData();
     await submitPromise;
@@ -95,23 +98,23 @@ export abstract class RealtimeData<T = any, Ops = any> implements RecordIdentity
    * Updates offline storage with the current state of the realtime data.
    */
   updateOfflineData(): void {
-    if (this.doc.type == null) {
+    if (this.adapter.type == null) {
       return;
     }
 
-    const pendingOps = this.doc.pendingOps.map(op => this.prepareDataForStore(op));
+    const pendingOps = this.adapter.pendingOps.map(op => this.prepareDataForStore(op));
 
     // if the snapshot hasn't changed, then don't bother to update
-    if (pendingOps.length === 0 && this.doc.version === this.offlineSnapshotVersion) {
+    if (pendingOps.length === 0 && this.adapter.version === this.offlineSnapshotVersion) {
       return;
     }
 
-    this.offlineSnapshotVersion = this.doc.version;
+    this.offlineSnapshotVersion = this.adapter.version;
     const offlineData: RealtimeOfflineData = {
       snapshot: {
-        v: this.doc.version,
-        data: this.prepareDataForStore(this.doc.data),
-        type: this.doc.type.name
+        v: this.adapter.version,
+        data: this.prepareDataForStore(this.adapter.data),
+        type: this.adapter.type.name
       },
       pendingOps
     };
@@ -124,8 +127,9 @@ export abstract class RealtimeData<T = any, Ops = any> implements RecordIdentity
    * @returns {Promise<void>} Resolves when the data has been successfully disposed.
    */
   dispose(): Promise<void> {
-    this.subscription.unsubscribe();
-    return this.doc.destroy();
+    this.updateOfflineDataSub.unsubscribe();
+    this.onDeleteSub.unsubscribe();
+    return this.adapter.destroy();
   }
 
   protected prepareDataForStore(data: T): any {

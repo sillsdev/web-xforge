@@ -42,6 +42,11 @@ function deepGet(path, obj) {
   return curValue;
 }
 
+function getProjectId(docId) {
+  const parts = docId.split(':');
+  return parts[0];
+}
+
 class RealtimeServer {
   constructor(options) {
     this.connectionString = options.connectionString;
@@ -76,17 +81,10 @@ class RealtimeServer {
         .then(() => done())
         .catch(err => done(err));
     });
-    this.backend.use('apply', (request, done) => {
-      this.setProjectId(request)
-        .then(() => done())
-        .catch(err => done(err));
-    });
 
     shareDBAccess(this.backend);
-    this.collections = new Map();
     for (const collectionConfig of options.collections) {
       this.addDataAccessRules(collectionConfig);
-      this.collections.set(collectionConfig.name, collectionConfig.metadataName);
     }
 
     // Connect any incoming WebSocket connection to ShareDB
@@ -202,21 +200,6 @@ class RealtimeServer {
     }
   }
 
-  async getProjectId(collectionName, docId) {
-    const metadataName = this.collections.get(collectionName);
-    const coll = this.database.collection(metadataName);
-    const parts = docId.split(':');
-    const text = await coll.findOne({ _id: new ObjectId(parts[0]) });
-    return text == null ? '' : text.projectRef.toHexString();
-  }
-
-  async setProjectId(request) {
-    if (request.op.create) {
-      const projectId = await this.getProjectId(request.collection, request.id);
-      request.snapshot.m.projectRef = projectId;
-    }
-  }
-
   async getUserProjectRole(session, projectId) {
     let projectRole = session.projectRoles.get(projectId);
     if (projectRole == null) {
@@ -238,7 +221,7 @@ class RealtimeServer {
         return true;
       }
 
-      const projectId = await this.getProjectId(collectionConfig.name, docId);
+      const projectId = getProjectId(docId);
       if (projectId === '') {
         return false;
       }
@@ -247,19 +230,19 @@ class RealtimeServer {
         return false;
       }
 
-      for (const type of collectionConfig.types) {
-        if (!this.hasRight(role, type.domain, Operation.View)) {
+      for (const model of collectionConfig.models) {
+        if (!this.hasRight(role, model.domain, Operation.View)) {
           return false;
         }
       }
       return true;
     });
-    this.backend.allowUpdate(collectionConfig.name, async (_docId, oldDoc, newDoc, ops, session, request) => {
+    this.backend.allowUpdate(collectionConfig.name, async (docId, oldDoc, newDoc, ops, session) => {
       if (session.isServer) {
         return true;
       }
 
-      const projectId = request.snapshot.m.projectRef;
+      const projectId = getProjectId(docId);
       const role = await this.getUserProjectRole(session, projectId);
       if (role == null) {
         return false;
@@ -267,39 +250,39 @@ class RealtimeServer {
 
       switch (collectionConfig.otTypeName) {
         case richText.type.name:
-          if (!this.hasRight(role, collectionConfig.types[0].domain, Operation.Edit)) {
+          if (!this.hasRight(role, collectionConfig.models[0].domain, Operation.Edit)) {
             return false;
           }
           break;
 
         case otJson0.type.name:
           for (const op of ops) {
-            const type = this.getMatchingType(collectionConfig, op.p);
-            if (type == null) {
+            const modelConfig = this.getMatchingModelConfig(collectionConfig, op.p);
+            if (modelConfig == null) {
               return false;
             }
 
-            if (type.path.length < op.p.length) {
+            if (modelConfig.path.length < op.p.length) {
               // property update
-              const entityPath = op.p.slice(0, type.path.length);
+              const entityPath = op.p.slice(0, modelConfig.path.length);
               const oldEntity = deepGet(entityPath, oldDoc);
               const newEntity = deepGet(entityPath, newDoc);
-              if (!this.checkJsonEditRight(session.userId, role, type, oldEntity, newEntity)) {
+              if (!this.checkJsonEditRight(session.userId, role, modelConfig, oldEntity, newEntity)) {
                 return false;
               }
             } else if (op.li != null && op.ld != null) {
               // replace
-              if (!this.checkJsonEditRight(session.userId, role, type, op.ld, op.li)) {
+              if (!this.checkJsonEditRight(session.userId, role, modelConfig, op.ld, op.li)) {
                 return false;
               }
             } else if (op.li != null) {
               // create
-              if (!this.checkJsonCreateRight(session.userId, role, type, op.li)) {
+              if (!this.checkJsonCreateRight(session.userId, role, modelConfig, op.li)) {
                 return false;
               }
             } else if (op.ld != null) {
               // delete
-              if (!this.checkJsonDeleteRight(session.userId, role, type, op.ld)) {
+              if (!this.checkJsonDeleteRight(session.userId, role, modelConfig, op.ld)) {
                 return false;
               }
             }
@@ -339,26 +322,26 @@ class RealtimeServer {
     return this.hasRight(role, type.domain, Operation.DeleteOwn) && oldEntity.ownerRef === userId;
   }
 
-  getMatchingType(collectionConfig, path) {
-    for (const type of collectionConfig.types) {
-      if (path.length < type.path.length) {
+  getMatchingModelConfig(collectionConfig, path) {
+    for (const modelConfig of collectionConfig.models) {
+      if (path.length < modelConfig.path.length) {
         continue;
       }
 
       let match = true;
-      for (let i = 0; i < type.path.length; i++) {
-        if (type.path[i] === '$') {
+      for (let i = 0; i < modelConfig.path.length; i++) {
+        if (modelConfig.path[i] === '$') {
           if (typeof path[i] != 'number') {
             match = false;
             break;
           }
-        } else if (type.path[i] !== path[i]) {
+        } else if (modelConfig.path[i] !== path[i]) {
           match = false;
           break;
         }
       }
       if (match) {
-        return type;
+        return modelConfig;
       }
     }
     return null;
@@ -366,7 +349,7 @@ class RealtimeServer {
 }
 
 function createSnapshot(doc) {
-  return { version: doc.version, data: doc.data, type: doc.type == null ? null : doc.type.name };
+  return { version: doc.version, data: doc.data };
 }
 
 module.exports = {

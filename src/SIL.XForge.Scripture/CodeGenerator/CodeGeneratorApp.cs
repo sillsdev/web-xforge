@@ -282,14 +282,15 @@ namespace SIL.XForge.Scripture.CodeGenerator
             {
                 imports += $"import {{ {type} }} from './{GetFileNameFromTypeName(type)}';{Environment.NewLine}";
             }
-            imports += $"import {{ QuestionData }} from './question-data';{Environment.NewLine}";
-            imports += $"import {{ TextData }} from './text-data';{Environment.NewLine}";
-            imports += $"import {{ CommentData }} from './comment-data';{Environment.NewLine}";
+            imports += $"import {{ QuestionsDoc }} from './questions-doc';{Environment.NewLine}";
+            imports += $"import {{ TextDoc }} from './text-doc';{Environment.NewLine}";
+            imports += $"import {{ CommentsDoc }} from './comments-doc';{Environment.NewLine}";
+            imports += $"import {{ SFProjectDataDoc }} from './sfproject-data-doc';{Environment.NewLine}";
 
             var config = $"export const SFDOMAIN_MODEL_CONFIG: DomainModelConfig = {{{Environment.NewLine}"
                        + $" resourceTypes: [ {string.Join($",{Environment.NewLine}    ", importTypes.ToArray())} ],{Environment.NewLine}"
                        + $" resourceRefTypes: [ {string.Join($",{Environment.NewLine}    ", (from t in importTypes select t + "Ref").ToArray())} ],{Environment.NewLine}"
-                       + " realtimeDataTypes: [ QuestionData, TextData, CommentData ]" // TODO: Generate?
+                       + " realtimeDocTypes: [ QuestionsDoc, TextDoc, CommentsDoc, SFProjectDataDoc ]" // TODO: Generate?
                        + "};";
             var fileContents = $"{classComment}{Environment.NewLine}" +
                                $"{imports}{Environment.NewLine}" +

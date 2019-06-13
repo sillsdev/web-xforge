@@ -5,7 +5,7 @@ import { EditorComponent } from './editor/editor.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 
 const routes: Routes = [
-  { path: 'projects/:projectId/translate/:textId', component: EditorComponent, canActivate: [AuthGuard] },
+  { path: 'projects/:projectId/translate/:bookId', component: EditorComponent, canActivate: [AuthGuard] },
   { path: 'projects/:projectId/translate', component: TranslateOverviewComponent, canActivate: [AuthGuard] }
 ];
 

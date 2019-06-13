@@ -8,7 +8,7 @@ namespace SIL.XForge.Scripture.Models
         public string SessionId { get; set; }
         public string UserRef { get; set; }
         public string ProjectRef { get; set; }
-        public string TextRef { get; set; }
+        public string BookId { get; set; }
         public int Chapter { get; set; }
 
         // editing metrics

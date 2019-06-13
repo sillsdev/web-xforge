@@ -6,7 +6,6 @@ namespace SIL.XForge.Scripture.Models
     {
         public string Id { get; set; }
         public string OwnerRef { get; set; }
-        public string ProjectRef { get; set; }
         public string Source { get; set; }
         public VerseRefData ScriptureStart { get; set; }
         public VerseRefData ScriptureEnd { get; set; }
@@ -15,6 +14,6 @@ namespace SIL.XForge.Scripture.Models
         public string Text { get; set; }
         public string AudioUrl { get; set; }
         public string ModelAnswer { get; set; }
-        public List<Answer> Answers { get; set; }
+        public List<Answer> Answers { get; set; } = new List<Answer>();
     }
 }

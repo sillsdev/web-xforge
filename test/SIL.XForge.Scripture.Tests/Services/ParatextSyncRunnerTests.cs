@@ -25,7 +25,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            env.Connection.Get<Delta, Delta>(null, null).ReturnsForAnyArgs(env.Document);
+            env.Connection.Get<Delta>(null, null).ReturnsForAnyArgs(env.Document);
 
             var newFileBuffer = new byte[1000];
             var newFileStream = new MemoryStream(newFileBuffer);
@@ -58,7 +58,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            env.Connection.Get<Delta, Delta>("abc", "abc").ReturnsForAnyArgs(env.EmptyDocument);
+            env.Connection.Get<Delta>("abc", "abc").ReturnsForAnyArgs(env.EmptyDocument);
 
             var newFileBuffer = new byte[1000];
             var newFileStream = new MemoryStream(newFileBuffer);
@@ -82,7 +82,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(textWrittenToDisk, Does.Contain("<usx"));
 
             // Assert that data was created in mongo
-            await env.EmptyDocument.Received().CreateAsync(Arg.Any<Delta>(), OTType.RichText);
+            await env.EmptyDocument.Received().CreateAsync(Arg.Any<Delta>());
         }
 
         [Test]
@@ -90,7 +90,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            env.Connection.Get<Delta, Delta>(null, null).ReturnsForAnyArgs(env.Document);
+            env.Connection.Get<Delta>(null, null).ReturnsForAnyArgs(env.Document);
 
             var newFileBuffer = new byte[1000];
             var newFileStream = new MemoryStream(newFileBuffer);
@@ -111,7 +111,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Assert that mongo text_data records were deleted and re-created.
             await env.Document.ReceivedWithAnyArgs().DeleteAsync();
-            await env.Document.ReceivedWithAnyArgs().CreateAsync(Arg.Any<Delta>(), OTType.RichText);
+            await env.Document.ReceivedWithAnyArgs().CreateAsync(Arg.Any<Delta>());
         }
 
         [Test]
@@ -122,7 +122,7 @@ namespace SIL.XForge.Scripture.Services
             var steamToDisk = new MemoryStream(buffer);
             env.FileSystemService.CreateFile("/nonexistent/path.xml").Returns(steamToDisk);
 
-            var text = new TextEntity { BookId = "abc" };
+            var text = new TextInfo { BookId = "abc" };
             var outputUsx = await env.Runner.FetchAndSaveBookUsxAsync(null, text, null, "/nonexistent/path.xml");
             var textWrittenToDisk = Encoding.UTF8.GetString(steamToDisk.ToArray());
             Assert.That(textWrittenToDisk, Does.Contain("<usx"));
@@ -135,7 +135,8 @@ namespace SIL.XForge.Scripture.Services
 
             public TestEnvironment()
             {
-                Document = Substitute.For<IDocument<Delta, Delta>>();
+                Document = Substitute.For<IDocument<Delta>>();
+                Document.IsLoaded.Returns(true);
                 Document.Data.Returns(Delta.New()
                     .InsertChapter("1")
                     .InsertVerse("1")
@@ -146,7 +147,8 @@ namespace SIL.XForge.Scripture.Services
                     .InsertText("This is verse 3.", "verse_1_3")
                     .Insert("\n"));
 
-                EmptyDocument = Substitute.For<IDocument<Delta, Delta>>();
+                EmptyDocument = Substitute.For<IDocument<Delta>>();
+                EmptyDocument.IsLoaded.Returns(false);
 
                 Connection = Substitute.For<IConnection>();
 
@@ -178,20 +180,15 @@ namespace SIL.XForge.Scripture.Services
                             ParatextId="abc123"
                         }
                     });
-                Texts = new MemoryRepository<TextEntity>(new[]
+                Text = new TextInfo
+                {
+                    BookId = "abc",
+                    Chapters =
                     {
-                        new TextEntity
-                        {
-                            BookId = "abc",
-                            Id = "text03",
-                            ProjectRef = "project02",
-                            Chapters =
-                            {
-                                new Chapter { Number = 1, LastVerse = 3 },
-                                new Chapter { Number = 2, LastVerse = 3 }
-                            }
-                        }
-                    });
+                        new Chapter { Number = 1, LastVerse = 3 },
+                        new Chapter { Number = 2, LastVerse = 3 }
+                    }
+                };
                 var engineService = Substitute.For<IEngineService>();
                 ParatextService = Substitute.For<IParatextService>();
                 ParatextService.GetBookTextAsync(null, null, null).ReturnsForAnyArgs(usxText);
@@ -200,22 +197,21 @@ namespace SIL.XForge.Scripture.Services
                 FileSystemService = Substitute.For<IFileSystemService>();
                 var logger = Substitute.For<ILogger<ParatextSyncRunner>>();
 
-                Runner = new ParatextSyncRunner(siteOptions, users, Jobs, Projects, Texts, engineService,
-                    ParatextService, realtimeService, FileSystemService, logger);
+                Runner = new ParatextSyncRunner(siteOptions, users, Jobs, Projects, engineService, ParatextService,
+                    realtimeService, FileSystemService, logger);
                 Runner._job = Jobs.Get("1234");
             }
 
             public IConnection Connection { get; }
-            public IDocument<Delta, Delta> Document { get; }
-            public IDocument<Delta, Delta> EmptyDocument { get; }
+            public IDocument<Delta> Document { get; }
+            public IDocument<Delta> EmptyDocument { get; }
             public ParatextSyncRunner Runner { get; }
             public MemoryRepository<SyncJobEntity> Jobs { get; }
             public MemoryRepository<SFProjectEntity> Projects { get; }
-            public MemoryRepository<TextEntity> Texts { get; }
             public IParatextService ParatextService { get; }
             public IFileSystemService FileSystemService { get; }
             public SFProjectEntity Project => Projects.Get("project01");
-            public TextEntity Text => Texts.Get("text03");
+            public TextInfo Text { get; }
         }
     }
 }
