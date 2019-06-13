@@ -4,23 +4,23 @@ import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import { clone } from '@orbit/utils';
 import { SplitComponent } from 'angular-split';
-import { switchMap } from 'rxjs/operators';
+import { combineLatest, from } from 'rxjs';
+import { filter, map, switchMap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof, objectId } from 'xforge-common/utils';
 import { Answer } from '../../core/models/answer';
 import { Comment } from '../../core/models/comment';
-import { CommentData } from '../../core/models/comment-data';
+import { CommentsDoc } from '../../core/models/comments-doc';
 import { Like } from '../../core/models/like';
 import { Question } from '../../core/models/question';
-import { QuestionData } from '../../core/models/question-data';
+import { QuestionsDoc } from '../../core/models/questions-doc';
 import { SFProject } from '../../core/models/sfproject';
 import { SFProjectUser } from '../../core/models/sfproject-user';
-import { Text } from '../../core/models/text';
-import { TextDataId } from '../../core/models/text-data';
-import { getTextJsonDataIdStr, TextJsonDataId } from '../../core/models/text-json-data-id';
+import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
+import { TextInfo } from '../../core/models/text-info';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
-import { TextService } from '../../core/text.service';
+import { SFProjectService } from '../../core/sfproject.service';
 import { AnswerAction } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
@@ -33,8 +33,8 @@ interface Summary {
 }
 
 interface CheckingData {
-  questionData: { [textId: string]: QuestionData };
-  commentData: { [textId: string]: CommentData };
+  questionsDocs: { [docId: string]: QuestionsDoc };
+  commentsDocs: { [docId: string]: CommentsDoc };
 }
 
 @Component({
@@ -59,9 +59,9 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
 
   project: SFProject;
   projectCurrentUser: SFProjectUser;
-  text: Text;
+  text: TextInfo;
   questions: Readonly<Question[]> = [];
-  checkingData: CheckingData = { questionData: {}, commentData: {} };
+  checkingData: CheckingData = { questionsDocs: {}, commentsDocs: {} };
   comments: Readonly<Comment[]> = [];
   summary: Summary = {
     read: 0,
@@ -69,7 +69,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     answered: 0
   };
   answersPanelContainerElement: ElementRef;
-  textDataId: TextDataId;
+  textDocId: TextDocId;
   chapters: number[] = [];
   isExpanded: boolean = false;
   resetAnswerPanelHeightOnFormHide: boolean = false;
@@ -78,10 +78,10 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   private _isDrawerPermanent: boolean = true;
 
   constructor(
-    private activatedRoute: ActivatedRoute,
-    private textService: TextService,
+    private readonly activatedRoute: ActivatedRoute,
+    private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    private media: MediaObserver,
+    private readonly media: MediaObserver,
     private projectUserService: SFProjectUserService
   ) {
     super();
@@ -94,8 +94,8 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   set chapter(value: number) {
     if (this._chapter !== value) {
       this._chapter = value;
-      this.textDataId = new TextDataId(this.text.id, this.chapter);
-      this.comments = this.checkingData.commentData[this.textJsonDataId].data;
+      this.textDocId = new TextDocId(this.project.id, this.text.bookId, this.chapter, 'target');
+      this.comments = this.checkingData.commentsDocs[this.textJsonDocId].data;
     }
   }
 
@@ -128,8 +128,8 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       : 0;
   }
 
-  private get textJsonDataId(): string {
-    return getTextJsonDataIdStr(this.text.id, this.chapter);
+  private get textJsonDocId(): string {
+    return getTextDocIdStr(this.project.id, this.text.bookId, this.chapter);
   }
 
   private get minAnswerPanelHeight(): number {
@@ -149,33 +149,42 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.subscribe(
       this.activatedRoute.params.pipe(
         switchMap(params => {
-          return this.textService.get(params['textId'], [[nameof<Text>('project'), nameof<SFProject>('users')]]);
-        })
+          const projectId = params['projectId'];
+          const bookId = params['bookId'];
+          return combineLatest(
+            this.projectService.get(projectId, [[nameof<SFProject>('users')]]),
+            from(this.projectService.getDataDoc(projectId)).pipe(
+              map(projectData => projectData.data.texts.find(t => t.bookId === bookId))
+            )
+          );
+        }),
+        filter(([projectResults, text]) => projectResults.data != null && text != null)
       ),
-      async textData => {
-        const prevTextId = this.text == null ? '' : this.text.id;
-        this.text = textData.data;
-        if (this.text != null) {
-          this.project = textData.getIncluded(this.text.project);
-          this.projectCurrentUser = textData
-            .getManyIncluded<SFProjectUser>(this.project.users)
-            .find(pu => (pu.user == null ? '' : pu.user.id) === this.userService.currentUserId);
-          this.chapters = this.text.chapters.map(c => c.number);
-          if (prevTextId !== this.text.id) {
-            const bindCheckingDataPromises: Promise<void>[] = [];
-            this.questions = [];
-            for (const chapter of this.chapters) {
-              bindCheckingDataPromises.push(this.bindCheckingData(new TextJsonDataId(this.text.id, chapter)));
-            }
-            // Trigger the chapter setter to bind the relevant comments.
-            await Promise.all(bindCheckingDataPromises);
-            this._chapter = undefined;
-            this.chapter = 1;
-            for (const chapter of this.chapters) {
-              this.questions = this.questions.concat(
-                this.checkingData.questionData[getTextJsonDataIdStr(this.text.id, chapter)].data
-              );
-            }
+      async ([projectResults, text]) => {
+        const prevProjectId = this.project == null ? '' : this.project.id;
+        const prevBookId = this.text == null ? '' : this.text.bookId;
+        this.text = text;
+        this.project = projectResults.data;
+        this.projectCurrentUser = projectResults
+          .getManyIncluded<SFProjectUser>(this.project.users)
+          .find(pu => (pu.user == null ? '' : pu.user.id) === this.userService.currentUserId);
+        this.chapters = this.text.chapters.map(c => c.number);
+        if (prevProjectId !== this.project.id || prevBookId !== this.text.bookId) {
+          const bindCheckingDataPromises: Promise<void>[] = [];
+          this.questions = [];
+          for (const chapter of this.chapters) {
+            bindCheckingDataPromises.push(
+              this.bindCheckingData(new TextDocId(this.project.id, this.text.bookId, chapter))
+            );
+          }
+          // Trigger the chapter setter to bind the relevant comments.
+          await Promise.all(bindCheckingDataPromises);
+          this._chapter = undefined;
+          this.chapter = 1;
+          for (const chapter of this.chapters) {
+            this.questions = this.questions.concat(
+              this.checkingData.questionsDocs[getTextDocIdStr(this.project.id, this.text.bookId, chapter)].data
+            );
           }
         }
       }
@@ -343,7 +352,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       for (const answerComment of answerComments) {
         this.deleteComment(answerComment);
       }
-      this.checkingData.questionData[this.textJsonDataId].deleteFromList(
+      this.checkingData.questionsDocs[this.textJsonDocId].deleteFromList(
         this.questionsPanel.activeQuestion.answers[answerIndex],
         [this.activeChapterQuestionIndex, 'answers', answerIndex]
       );
@@ -366,13 +375,13 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     const questionWithAnswer = clone(this.questionsPanel.activeQuestion);
     questionWithAnswer.answers = answers;
     if (answerIndex >= 0) {
-      this.checkingData.questionData[this.textJsonDataId].replaceInList(
+      this.checkingData.questionsDocs[this.textJsonDocId].replaceInList(
         this.questionsPanel.activeQuestion.answers[answerIndex],
         questionWithAnswer.answers[answerIndex],
         [this.activeChapterQuestionIndex, nameof<Question>('answers'), answerIndex]
       );
     } else {
-      this.checkingData.questionData[this.textJsonDataId].insertInList(questionWithAnswer.answers[0], [
+      this.checkingData.questionsDocs[this.textJsonDocId].insertInList(questionWithAnswer.answers[0], [
         this.activeChapterQuestionIndex,
         nameof<Question>('answers'),
         0
@@ -382,7 +391,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   get activeChapterQuestionIndex(): number {
-    return this.checkingData.questionData[this.textJsonDataId].data.findIndex(
+    return this.checkingData.questionsDocs[this.textJsonDocId].data.findIndex(
       question => question.id === this.questionsPanel.activeQuestion.id
     );
   }
@@ -391,16 +400,16 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     const comments = <Comment[]>clone(this.comments);
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
-      this.checkingData.commentData[this.textJsonDataId].replaceInList(comments[commentIndex], comment, [commentIndex]);
+      this.checkingData.commentsDocs[this.textJsonDocId].replaceInList(comments[commentIndex], comment, [commentIndex]);
     } else {
-      this.checkingData.commentData[this.textJsonDataId].insertInList(comment);
+      this.checkingData.commentsDocs[this.textJsonDocId].insertInList(comment);
     }
   }
 
   private deleteComment(comment: Comment) {
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
-      this.checkingData.commentData[this.textJsonDataId].deleteFromList(comment, [commentIndex]);
+      this.checkingData.commentsDocs[this.textJsonDocId].deleteFromList(comment, [commentIndex]);
     }
   }
 
@@ -410,7 +419,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     const answerIndex = this.getAnswerIndex(answer);
 
     if (likeIndex >= 0) {
-      this.checkingData.questionData[this.textJsonDataId].deleteFromList(answer.likes[likeIndex], [
+      this.checkingData.questionsDocs[this.textJsonDocId].deleteFromList(answer.likes[likeIndex], [
         this.activeChapterQuestionIndex,
         nameof<Question>('answers'),
         answerIndex,
@@ -418,7 +427,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         likeIndex
       ]);
     } else {
-      this.checkingData.questionData[this.textJsonDataId].insertInList({ ownerRef: currentUserId } as Like, [
+      this.checkingData.questionsDocs[this.textJsonDocId].insertInList({ ownerRef: currentUserId } as Like, [
         this.activeChapterQuestionIndex,
         nameof<Question>('answers'),
         answerIndex,
@@ -449,23 +458,23 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     }, 1);
   }
 
-  private async bindCheckingData(id: TextJsonDataId): Promise<void> {
+  private async bindCheckingData(id: TextDocId): Promise<void> {
     if (id == null) {
       return;
     }
 
     this.unbindCheckingData(id);
-    this.checkingData.questionData[id.toString()] = await this.textService.getQuestionData(id);
-    this.checkingData.commentData[id.toString()] = await this.textService.getCommentData(id);
+    this.checkingData.questionsDocs[id.toString()] = await this.projectService.getQuestionsDoc(id);
+    this.checkingData.commentsDocs[id.toString()] = await this.projectService.getCommentsDoc(id);
   }
 
-  private unbindCheckingData(id: TextJsonDataId): void {
-    if (!(id.toString() in this.checkingData.questionData)) {
+  private unbindCheckingData(id: TextDocId): void {
+    if (!(id.toString() in this.checkingData.questionsDocs)) {
       return;
     }
 
-    delete this.checkingData.questionData[id.toString()];
-    delete this.checkingData.commentData[id.toString()];
+    delete this.checkingData.questionsDocs[id.toString()];
+    delete this.checkingData.commentsDocs[id.toString()];
   }
 
   private refreshSummary() {

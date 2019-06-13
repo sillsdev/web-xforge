@@ -14,24 +14,26 @@ import {
   TranslationResultBuilder,
   WordAlignmentMatrix
 } from '@sillsdev/machine';
+import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, of, Subject } from 'rxjs';
+import { SFProjectData } from 'src/app/core/models/sfproject-data';
+import { SFProjectDataDoc } from 'src/app/core/models/sfproject-data-doc';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { MapQueryResults, QueryResults } from 'xforge-common/json-api.service';
 import { UserRef } from 'xforge-common/models/user';
 import { NoticeService } from 'xforge-common/notice.service';
-import { MemoryRealtimeDoc } from 'xforge-common/realtime-doc';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { SFProject, SFProjectRef } from '../../core/models/sfproject';
 import { SFProjectUser, SFProjectUserRef, TranslateProjectUserConfig } from '../../core/models/sfproject-user';
-import { Text } from '../../core/models/text';
-import { Delta, TextData, TextDataId } from '../../core/models/text-data';
+import { Delta, TextDoc } from '../../core/models/text-doc';
+import { TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
 import { SFProjectService } from '../../core/sfproject.service';
-import { TextService } from '../../core/text.service';
 import { SharedModule } from '../../shared/shared.module';
 import { CONFIDENCE_THRESHOLD_TIMEOUT, EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { SuggestionComponent } from './suggestion.component';
@@ -53,7 +55,7 @@ describe('EditorComponent', () => {
 
   it('start with previously selected segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 2, selectedSegment: 'verse_2_1' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 2, selectedSegment: 'verse_2_1' });
     env.waitForSuggestion();
     expect(env.component.textName).toBe('Book 1');
     expect(env.component.chapter).toBe(2);
@@ -68,16 +70,16 @@ describe('EditorComponent', () => {
 
   it('source retrieved after target', fakeAsync(() => {
     const env = new TestEnvironment();
-    const sourceId = new TextDataId('text01', 1, 'source');
-    let resolve: (value?: TextData) => void;
-    when(env.mockedTextService.getTextData(deepEqual(sourceId))).thenReturn(new Promise(r => (resolve = r)));
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_2' });
+    const sourceId = new TextDocId('project01', 'text01', 1, 'source');
+    let resolve: (value?: TextDoc) => void;
+    when(env.mockedSFProjectService.getTextDoc(deepEqual(sourceId))).thenReturn(new Promise(r => (resolve = r)));
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_2' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_2');
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
     expect(env.component.showSuggestion).toBe(false);
 
-    resolve(env.createTextData(sourceId));
+    resolve(env.createTextDoc(sourceId));
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_2');
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
@@ -88,7 +90,7 @@ describe('EditorComponent', () => {
 
   it('select non-blank segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
@@ -112,7 +114,7 @@ describe('EditorComponent', () => {
 
   it('select blank segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_1');
 
@@ -168,7 +170,7 @@ describe('EditorComponent', () => {
 
   it('insert suggestion in non-blank segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -182,7 +184,7 @@ describe('EditorComponent', () => {
 
   it('insert space when typing character after inserting a suggestion', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -203,7 +205,7 @@ describe('EditorComponent', () => {
 
   it('insert space when inserting a suggestion after inserting a previous suggestion', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -226,7 +228,7 @@ describe('EditorComponent', () => {
 
   it('do not insert space when typing punctuation after inserting a suggestion', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -247,7 +249,7 @@ describe('EditorComponent', () => {
 
   it('train a modified segment after selecting a different segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -266,7 +268,7 @@ describe('EditorComponent', () => {
 
   it('do not train an unmodified segment after selecting a different segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -290,21 +292,21 @@ describe('EditorComponent', () => {
 
   it('change texts', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.textName).toBe('Book 1');
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
 
     resetCalls(env.mockedRemoteTranslationEngine);
-    env.updateParams({ projectId: 'project01', textId: 'text02' });
+    env.updateParams({ projectId: 'project01', bookId: 'text02' });
     env.waitForSuggestion();
     expect(env.component.textName).toBe('Book 2');
     expect(env.component.target.segmentRef).toBe('');
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
 
     resetCalls(env.mockedRemoteTranslationEngine);
-    env.updateParams({ projectId: 'project01', textId: 'text01' });
+    env.updateParams({ projectId: 'project01', bookId: 'text01' });
     env.waitForSuggestion();
     expect(env.component.textName).toBe('Book 1');
     expect(env.component.target.segmentRef).toBe('verse_1_1');
@@ -315,7 +317,7 @@ describe('EditorComponent', () => {
 
   it('change chapters', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.chapter).toBe(1);
     expect(env.component.target.segmentRef).toBe('verse_1_1');
@@ -340,14 +342,14 @@ describe('EditorComponent', () => {
 
   it('local and remote selected segment are different', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.chapter).toBe(1);
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
 
     resetCalls(env.mockedRemoteTranslationEngine);
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_2' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_2' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_2');
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
@@ -358,7 +360,7 @@ describe('EditorComponent', () => {
   it('selected segment checksum unset on server', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setTranslateConfig({
-      selectedTextRef: 'text01',
+      selectedBookId: 'text01',
       selectedChapter: 1,
       selectedSegment: 'verse_1_1',
       selectedSegmentChecksum: 0
@@ -368,7 +370,7 @@ describe('EditorComponent', () => {
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     expect(env.component.target.segment.initialChecksum).toBe(0);
 
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     expect(env.component.target.segment.initialChecksum).not.toBe(0);
@@ -379,7 +381,7 @@ describe('EditorComponent', () => {
   it('toggle suggestions', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setTranslateConfig({
-      selectedTextRef: 'text01',
+      selectedBookId: 'text01',
       selectedChapter: 1,
       selectedSegment: 'verse_1_1',
       confidenceThreshold: 0.5,
@@ -421,7 +423,7 @@ describe('EditorComponent', () => {
   it('update confidence threshold', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setTranslateConfig({
-      selectedTextRef: 'text01',
+      selectedBookId: 'text01',
       selectedChapter: 1,
       selectedSegment: 'verse_1_2',
       confidenceThreshold: 0.5
@@ -449,7 +451,7 @@ describe('EditorComponent', () => {
 
   it('training status', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     expect(env.component.showTrainingProgress).toBe(false);
@@ -482,7 +484,7 @@ describe('EditorComponent', () => {
 
   it('close training status', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedTextRef: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     expect(env.component.showTrainingProgress).toBe(false);
@@ -580,7 +582,6 @@ class TestEnvironment {
   readonly mockedSFProjectService = mock(SFProjectService);
   readonly mockedUserService = mock(UserService);
   readonly mockedSFProjectUserService = mock(SFProjectUserService);
-  readonly mockedTextService = mock(TextService);
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
@@ -589,20 +590,18 @@ class TestEnvironment {
   lastApprovedPrefix: string[] = [];
 
   private readonly params$: BehaviorSubject<Params>;
-  private readonly text01$: BehaviorSubject<QueryResults<Text>>;
-  private readonly text02$: BehaviorSubject<QueryResults<Text>>;
+  private readonly project$: BehaviorSubject<QueryResults<SFProject>>;
   private trainingProgress$ = new Subject<ProgressStatus>();
 
   constructor() {
-    this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', textId: 'text01' });
-    this.addTextData(new TextDataId('text01', 1, 'source'));
-    this.addTextData(new TextDataId('text01', 1, 'target'));
-    this.addTextData(new TextDataId('text01', 2, 'source'));
-    this.addTextData(new TextDataId('text01', 2, 'target'));
-    this.addTextData(new TextDataId('text02', 1, 'source'));
-    this.addTextData(new TextDataId('text02', 1, 'target'));
-    this.text01$ = new BehaviorSubject<QueryResults<Text>>(new MapQueryResults(null));
-    this.text02$ = new BehaviorSubject<QueryResults<Text>>(new MapQueryResults(null));
+    this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'text01' });
+    this.addTextDoc(new TextDocId('project01', 'text01', 1, 'source'));
+    this.addTextDoc(new TextDocId('project01', 'text01', 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 'text01', 2, 'source'));
+    this.addTextDoc(new TextDocId('project01', 'text01', 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 'text02', 1, 'source'));
+    this.addTextDoc(new TextDocId('project01', 'text02', 1, 'target'));
+    this.project$ = new BehaviorSubject<QueryResults<SFProject>>(new MapQueryResults(null));
 
     when(this.mockedActivatedRoute.params).thenReturn(this.params$);
     when(this.mockedUserService.currentUserId).thenReturn('user01');
@@ -610,18 +609,24 @@ class TestEnvironment {
     when(this.mockedSFProjectService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );
+    const projectData: SFProjectData = {
+      texts: [
+        { bookId: 'text01', name: 'Book 1', chapters: [{ number: 1 }, { number: 2 }] },
+        { bookId: 'text02', name: 'Book 2', chapters: [{ number: 1 }] }
+      ]
+    };
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', projectData);
+    const projectDataDoc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    when(this.mockedSFProjectService.getDataDoc('project01')).thenResolve(projectDataDoc);
     when(this.mockedRemoteTranslationEngine.translateInteractively(1, anything())).thenCall(
       (_n: number, segment: string[]) =>
         Promise.resolve(new MockInteractiveTranslationSession(segment, prefix => (this.lastApprovedPrefix = prefix)))
     );
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(this.mockedSFProjectService.addTranslateMetrics('project01', anything())).thenResolve();
-    when(
-      this.mockedTextService.get('text01', deepEqual([[nameof<Text>('project'), nameof<SFProject>('users')]]))
-    ).thenReturn(this.text01$);
-    when(
-      this.mockedTextService.get('text02', deepEqual([[nameof<Text>('project'), nameof<SFProject>('users')]]))
-    ).thenReturn(this.text02$);
+    when(this.mockedSFProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
+      this.project$
+    );
 
     TestBed.configureTestingModule({
       declarations: [EditorComponent, SuggestionComponent],
@@ -630,7 +635,6 @@ class TestEnvironment {
         { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
         { provide: SFProjectUserService, useFactory: () => instance(this.mockedSFProjectUserService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
-        { provide: TextService, useFactory: () => instance(this.mockedTextService) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) }
       ]
@@ -668,37 +672,23 @@ class TestEnvironment {
   }
 
   setTranslateConfig(userTranslateConfig: TranslateProjectUserConfig): void {
-    const included = [
-      new SFProject({
-        id: 'project01',
-        users: [new SFProjectUserRef('projectuser01')],
-        inputSystem: { languageName: 'Target' },
-        translateConfig: { enabled: true, sourceInputSystem: { languageName: 'Source' } }
-      }),
-      new SFProjectUser({
-        id: 'projectuser01',
-        user: new UserRef('user01'),
-        project: new SFProjectRef('project01'),
-        translateConfig: userTranslateConfig
-      })
-    ];
-    this.text01$.next(
+    this.project$.next(
       new MapQueryResults(
-        new Text({
-          id: 'text01',
-          name: 'Book 1',
-          chapters: [{ number: 1 }, { number: 2 }],
-          project: new SFProjectRef('project01')
+        new SFProject({
+          id: 'project01',
+          users: [new SFProjectUserRef('projectuser01')],
+          inputSystem: { languageName: 'Target' },
+          translateConfig: { enabled: true, sourceInputSystem: { languageName: 'Source' } }
         }),
         undefined,
-        included
-      )
-    );
-    this.text02$.next(
-      new MapQueryResults(
-        new Text({ id: 'text02', name: 'Book 2', chapters: [{ number: 1 }], project: new SFProjectRef('project01') }),
-        undefined,
-        included
+        [
+          new SFProjectUser({
+            id: 'projectuser01',
+            user: new UserRef('user01'),
+            project: new SFProjectRef('project01'),
+            translateConfig: userTranslateConfig
+          })
+        ]
       )
     );
   }
@@ -780,7 +770,7 @@ class TestEnvironment {
     this.component.metricsSession.dispose();
   }
 
-  createTextData(id: TextDataId): TextData {
+  createTextDoc(id: TextDocId): TextDoc {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapter.toString(), style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
@@ -810,11 +800,11 @@ class TestEnvironment {
         break;
     }
     delta.insert('\n', { para: { style: 'p' } });
-    const doc = new MemoryRealtimeDoc(RichText.type, id.toString(), delta);
-    return new TextData(doc, instance(this.mockedRealtimeOfflineStore));
+    const adapter = new MemoryRealtimeDocAdapter(RichText.type, id.toString(), delta);
+    return new TextDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 
-  private addTextData(id: TextDataId): void {
-    when(this.mockedTextService.getTextData(deepEqual(id))).thenResolve(this.createTextData(id));
+  private addTextDoc(id: TextDocId): void {
+    when(this.mockedSFProjectService.getTextDoc(deepEqual(id))).thenResolve(this.createTextDoc(id));
   }
 }

@@ -6,7 +6,6 @@ import { map, switchMap, tap } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { nameof } from 'xforge-common/utils';
 import { SFProject } from '../core/models/sfproject';
 import { SyncJob } from '../core/models/sync-job';
 import { SFProjectService } from '../core/sfproject.service';
@@ -81,11 +80,7 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit {
         switchMap(() =>
           combineLatest(
             this.projectReload$.pipe(
-              switchMap(() =>
-                // even though we don't need the texts for this view, we get them anyway, so that it forces a refresh
-                // of the available texts in the nav menu
-                this.projectService.onlineGet(this.projectId, [[nameof<SFProject>('texts')]]).pipe(map(r => r.data))
-              )
+              switchMap(() => this.projectService.onlineGet(this.projectId).pipe(map(r => r.data)))
             ),
             this.paratextService.getParatextUsername()
           )

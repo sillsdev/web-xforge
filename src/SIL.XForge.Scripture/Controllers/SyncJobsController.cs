@@ -9,6 +9,7 @@ using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Controllers
 {
+    [Route(SFRootDataTypes.SyncJobs)]
     public class SyncJobsController : JsonApiControllerBase<SyncJobResource>
     {
         public SyncJobsController(IJsonApiContext jsonApiContext,

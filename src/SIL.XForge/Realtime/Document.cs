@@ -1,15 +1,15 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SIL.XForge.Realtime
 {
-    public class Document<TData, TOp> : IDocument<TData, TOp>
+    public class Document<TData> : IDocument<TData>
     {
         private readonly Connection _conn;
 
-        internal Document(Connection conn, string collection, string id)
+        internal Document(Connection conn, string otTypeName, string collection, string id)
         {
             _conn = conn;
+            OTTypeName = otTypeName;
             Collection = collection;
             Id = id;
         }
@@ -20,51 +20,42 @@ namespace SIL.XForge.Realtime
 
         public int Version { get; private set; } = -1;
 
-        public string Type { get; private set; }
+        public string OTTypeName { get; }
 
         public TData Data { get; private set; }
 
-        public bool IsLoaded { get; private set; }
+        public bool IsLoaded => Data != null;
 
-        public async Task CreateAsync(TData data, string type)
+        public async Task CreateAsync(TData data)
         {
-            var snapshot = await _conn.InvokeAsync<Snapshot<TData>>("createDoc", Collection, Id, data, type);
+            var snapshot = await _conn.InvokeExportAsync<Snapshot<TData>>("createDoc", Collection, Id, data,
+                OTTypeName);
             UpdateFromSnapshot(snapshot);
         }
 
         public async Task FetchAsync()
         {
-            var snapshot = await _conn.InvokeAsync<Snapshot<TData>>("fetchDoc", Collection, Id);
+            var snapshot = await _conn.InvokeExportAsync<Snapshot<TData>>("fetchDoc", Collection, Id);
             UpdateFromSnapshot(snapshot);
         }
 
-        public async Task SubmitOpAsync(TOp op)
+        public async Task SubmitOpAsync(object op)
         {
-            var snapshot = await _conn.InvokeAsync<Snapshot<TData>>("submitOp", Collection, Id, op);
-            UpdateFromSnapshot(snapshot);
-        }
-
-        public async Task SubmitOpsAsync(IEnumerable<TOp> ops)
-        {
-            var snapshot = await _conn.InvokeAsync<Snapshot<TData>>("submitOp", Collection, Id, ops);
+            var snapshot = await _conn.InvokeExportAsync<Snapshot<TData>>("submitOp", Collection, Id, op);
             UpdateFromSnapshot(snapshot);
         }
 
         public async Task DeleteAsync()
         {
-            await _conn.InvokeAsync<object>("deleteDoc", Collection, Id);
+            await _conn.InvokeExportAsync<object>("deleteDoc", Collection, Id);
             Version = -1;
-            Type = null;
             Data = default(TData);
-            IsLoaded = false;
         }
 
         private void UpdateFromSnapshot(Snapshot<TData> snapshot)
         {
             Version = snapshot.Version;
             Data = snapshot.Data;
-            Type = snapshot.Type;
-            IsLoaded = true;
         }
     }
 }

@@ -1,25 +1,25 @@
 import { async } from '@angular/core/testing';
 import { Callback, Doc, OTType, Snapshot } from 'sharedb/lib/client';
-import { SharedbRealtimeDoc } from './realtime-doc';
+import { SharedbRealtimeDocAdapter } from './realtime-doc-adapter';
 
-describe('SharedbRealtimeDoc', () => {
+describe('SharedbRealtimeDocAccessor', () => {
   it('does not crash with null type', () => {
     // Connection.cs permits type to be null
     const doc = new MockDoc();
     doc.type = null;
-    const realtimeDoc = new SharedbRealtimeDoc(doc);
+    const docAccessor = new SharedbRealtimeDocAdapter(doc);
     expect(() => {}).not.toThrow();
   });
 
   it('reports create events', async(() => {
     const doc = new MockDoc();
     doc.type = null;
-    const realtimeDoc = new SharedbRealtimeDoc(doc);
+    const docAccessor = new SharedbRealtimeDocAdapter(doc);
     let callbackCount = 0;
     const callback = () => {
       callbackCount++;
     };
-    realtimeDoc.onCreate().subscribe(callback);
+    docAccessor.onCreate().subscribe(callback);
     expect(callbackCount).toEqual(2);
   }));
 });

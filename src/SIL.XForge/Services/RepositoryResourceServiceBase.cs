@@ -33,10 +33,10 @@ namespace SIL.XForge.Services
                 await Entities.InsertAsync(entity);
                 return await Entities.GetAsync(entity.Id);
             }
-            catch (DuplicateKeyException)
+            catch (DuplicateKeyException dke)
             {
                 throw new JsonApiException(StatusCodes.Status409Conflict,
-                    "Another entity with the same key already exists.");
+                    "Another entity with the same key already exists.", dke);
             }
         }
 

@@ -6,7 +6,7 @@ import { CheckingOverviewComponent } from './checking-overview/checking-overview
 import { CheckingComponent } from './checking/checking.component';
 
 const routes: Routes = [
-  { path: 'projects/:projectId/checking/:textId', component: CheckingComponent, canActivate: [AuthGuard] },
+  { path: 'projects/:projectId/checking/:bookId', component: CheckingComponent, canActivate: [AuthGuard] },
   { path: 'projects/:projectId/checking', component: CheckingOverviewComponent, canActivate: [AuthGuard] }
 ];
 

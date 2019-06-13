@@ -16,7 +16,7 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Controllers
 {
-    [RpcRoute("projects")]
+    [RpcRoute(RootDataTypes.Projects)]
     public class SFProjectsRpcController : ProjectsRpcController<SFProjectEntity>
     {
         private readonly IRepository<TranslateMetrics> _translateMetrics;

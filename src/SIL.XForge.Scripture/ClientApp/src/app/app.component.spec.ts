@@ -5,6 +5,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testi
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import * as OTJson0 from 'ot-json0';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -12,14 +13,18 @@ import { MapQueryResults, QueryResults } from 'xforge-common/json-api.service';
 import { LocationService } from 'xforge-common/location.service';
 import { User, UserRef } from 'xforge-common/models/user';
 import { NoticeService } from 'xforge-common/notice.service';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
 import { SFProject, SFProjectRef } from './core/models/sfproject';
+import { SFProjectData } from './core/models/sfproject-data';
+import { SFProjectDataDoc } from './core/models/sfproject-data-doc';
+import { SFProjectRoles } from './core/models/sfproject-roles';
 import { SFProjectUser } from './core/models/sfproject-user';
-import { Text, TextRef } from './core/models/text';
 import { SFProjectService } from './core/sfproject.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
@@ -30,7 +35,7 @@ describe('AppComponent', () => {
     env.navigate(['/projects', 'project01']);
     env.init();
 
-    expect(env.isDrawerVisible).toBeTruthy();
+    expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     expect(env.menuLength).toEqual(5);
     verify(env.mockedUserService.updateCurrentProjectId(anything())).never();
@@ -41,10 +46,25 @@ describe('AppComponent', () => {
     env.navigate(['/projects', 'project02']);
     env.init();
 
-    expect(env.isDrawerVisible).toBeTruthy();
+    expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project02');
     expect(env.menuLength).toEqual(4);
+    expect(env.component.isCheckingEnabled).toEqual(true);
+    expect(env.component.isTranslateEnabled).toEqual(false);
     verify(env.mockedUserService.updateCurrentProjectId('project02')).once();
+  }));
+
+  it('hide translate task for reviewers', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project03']);
+    env.init();
+
+    expect(env.isDrawerVisible).toEqual(true);
+    expect(env.selectedProjectId).toEqual('project03');
+    expect(env.menuLength).toEqual(4);
+    expect(env.component.isCheckingEnabled).toEqual(true);
+    expect(env.component.isTranslateEnabled).toEqual(false);
+    verify(env.mockedUserService.updateCurrentProjectId('project03')).once();
   }));
 
   it('expand/collapse task', fakeAsync(() => {
@@ -52,10 +72,10 @@ describe('AppComponent', () => {
     env.navigate(['/projects', 'project01']);
     env.init();
 
-    expect(env.isDrawerVisible).toBeTruthy();
+    expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     env.selectItem(0);
-    expect(env.menuLength).toEqual(8);
+    expect(env.menuLength).toEqual(7);
     env.selectItem(0);
     expect(env.menuLength).toEqual(5);
   }));
@@ -65,10 +85,10 @@ describe('AppComponent', () => {
     env.navigate(['/projects', 'project01']);
     env.init();
 
-    expect(env.isDrawerVisible).toBeTruthy();
+    expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     env.selectProject('project02');
-    expect(env.isDrawerVisible).toBeTruthy();
+    expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project02');
     expect(env.location.path()).toEqual('/projects/project02');
     verify(env.mockedUserService.updateCurrentProjectId('project02')).once();
@@ -79,10 +99,10 @@ describe('AppComponent', () => {
     env.navigate(['/projects', 'project01']);
     env.init();
 
-    expect(env.isDrawerVisible).toBeTruthy();
+    expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     env.selectProject(CONNECT_PROJECT_OPTION);
-    expect(env.isDrawerVisible).toBeFalsy();
+    expect(env.isDrawerVisible).toEqual(false);
     expect(env.location.path()).toEqual('/connect-project');
   }));
 
@@ -91,7 +111,7 @@ describe('AppComponent', () => {
     env.navigate(['/my-account']);
     env.init();
 
-    expect(env.isDrawerVisible).toBeFalsy();
+    expect(env.isDrawerVisible).toEqual(false);
     expect(env.component.selectedProject).toBeUndefined();
   }));
 
@@ -100,13 +120,13 @@ describe('AppComponent', () => {
     env.navigate(['/projects', 'project01']);
     env.init();
 
-    expect(env.isDrawerVisible).toBeTruthy();
+    expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     env.deleteProject(false);
     expect(env.projectDeletedDialog).toBeDefined();
     verify(env.mockedUserService.updateCurrentProjectId()).once();
     env.confirmDialog();
-    expect(env.isDrawerVisible).toBeFalsy();
+    expect(env.isDrawerVisible).toEqual(false);
     expect(env.location.path()).toEqual('/projects');
     verify(env.mockedSFProjectService.localDelete('project01')).once();
   }));
@@ -118,7 +138,7 @@ describe('AppComponent', () => {
     env.navigate(['/projects', 'project01']);
     env.init();
 
-    expect(env.isDrawerVisible).toBeFalsy();
+    expect(env.isDrawerVisible).toEqual(false);
     verify(env.mockedUserService.updateCurrentProjectId()).once();
     expect(env.location.path()).toEqual('/projects');
   }));
@@ -128,10 +148,10 @@ describe('AppComponent', () => {
     env.navigate(['/projects', 'project01']);
     env.init();
 
-    expect(env.isDrawerVisible).toBeTruthy();
+    expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     env.deleteProject(true);
-    expect(env.isDrawerVisible).toBeFalsy();
+    expect(env.isDrawerVisible).toEqual(false);
     expect(env.location.path()).toEqual('/projects');
   }));
 
@@ -185,9 +205,9 @@ class MockComponent {}
 const ROUTES: Route[] = [
   { path: 'projects/:projectId/settings', component: MockComponent },
   { path: 'projects/:projectId', component: MockComponent },
-  { path: 'projects/:projectId/translate/:textId', component: MockComponent },
+  { path: 'projects/:projectId/translate/:bookId', component: MockComponent },
   { path: 'projects/:projectId/translate', component: MockComponent },
-  { path: 'projects/:projectId/checking/:textId', component: MockComponent },
+  { path: 'projects/:projectId/checking/:bookId', component: MockComponent },
   { path: 'projects/:projectId/checking', component: MockComponent },
   { path: 'projects', component: MockComponent },
   { path: 'my-account', component: MockComponent },
@@ -217,6 +237,7 @@ class TestEnvironment {
   readonly mockedRealtimeService = mock(RealtimeService);
   readonly mockedLocationService = mock(LocationService);
   readonly mockedNoticeService = mock(NoticeService);
+  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
   private readonly currentUser: User;
   private readonly projects$: BehaviorSubject<QueryResults<SFProjectUser[]>>;
@@ -233,12 +254,20 @@ class TestEnvironment {
           new SFProjectUser({
             id: 'projectuser01',
             project: new SFProjectRef('project01'),
-            user: new UserRef('user01')
+            user: new UserRef('user01'),
+            role: SFProjectRoles.ParatextTranslator
           }),
           new SFProjectUser({
             id: 'projectuser02',
             project: new SFProjectRef('project02'),
-            user: new UserRef('user01')
+            user: new UserRef('user01'),
+            role: SFProjectRoles.Reviewer
+          }),
+          new SFProjectUser({
+            id: 'projectuser03',
+            project: new SFProjectRef('project03'),
+            user: new UserRef('user01'),
+            role: SFProjectRoles.Reviewer
           })
         ],
         undefined,
@@ -247,45 +276,48 @@ class TestEnvironment {
             id: 'project01',
             projectName: 'project01',
             translateConfig: { enabled: true },
-            checkingConfig: { enabled: true },
-            texts: [new TextRef('text01'), new TextRef('text02')]
+            checkingConfig: { enabled: true }
           }),
           new SFProject({
             id: 'project02',
             projectName: 'project02',
             translateConfig: { enabled: false },
-            checkingConfig: { enabled: true },
-            texts: [new TextRef('text03'), new TextRef('text04')]
+            checkingConfig: { enabled: true }
           }),
-          new Text({
-            id: 'text01',
-            name: 'Book 1'
-          }),
-          new Text({
-            id: 'text02',
-            name: 'Book 2'
-          }),
-          new Text({
-            id: 'text03',
-            name: 'Book 3'
-          }),
-          new Text({
-            id: 'text04',
-            name: 'Book 4'
+          new SFProject({
+            id: 'project03',
+            projectName: 'project03',
+            translateConfig: { enabled: true },
+            checkingConfig: { enabled: true }
           })
         ]
       )
     );
+    this.addProjectDataDoc('project01', {
+      texts: [
+        { bookId: 'text01', name: 'Book 1', hasSource: true },
+        { bookId: 'text02', name: 'Book 2', hasSource: false }
+      ]
+    });
+    this.addProjectDataDoc('project02', {
+      texts: [
+        { bookId: 'text03', name: 'Book 3', hasSource: false },
+        { bookId: 'text04', name: 'Book 4', hasSource: false }
+      ]
+    });
+    this.addProjectDataDoc('project03', {
+      texts: [
+        { bookId: 'text05', name: 'Book 5', hasSource: true },
+        { bookId: 'text06', name: 'Book 6', hasSource: true }
+      ]
+    });
 
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedAuthService.isLoggedIn).thenResolve(true);
     when(this.mockedUserService.getCurrentUser()).thenReturn(of(this.currentUser));
-    when(
-      this.mockedUserService.getProjects(
-        'user01',
-        deepEqual([[nameof<SFProjectUser>('project'), nameof<SFProject>('texts')]])
-      )
-    ).thenReturn(this.projects$);
+    when(this.mockedUserService.getProjects('user01', deepEqual([[nameof<SFProjectUser>('project')]]))).thenReturn(
+      this.projects$
+    );
     when(this.mockedUserService.updateCurrentProjectId(anything())).thenResolve();
     when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
 
@@ -400,5 +432,11 @@ class TestEnvironment {
 
   setProjects(results: MapQueryResults<SFProjectUser[]>): void {
     this.projects$.next(results);
+  }
+
+  private addProjectDataDoc(projectId: string, projectData: SFProjectData): void {
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, projectId, projectData);
+    const doc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    when(this.mockedSFProjectService.getDataDoc(projectId)).thenResolve(doc);
   }
 }

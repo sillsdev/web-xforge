@@ -12,7 +12,7 @@ import {
   TranslationSuggester
 } from '@sillsdev/machine';
 import { DeltaStatic, RangeStatic } from 'quill';
-import { BehaviorSubject, fromEvent, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, combineLatest, from, fromEvent, Subject, Subscription } from 'rxjs';
 import { debounceTime, filter, map, repeat, skip, switchMap, tap } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -21,11 +21,11 @@ import { nameof } from 'xforge-common/utils';
 import XRegExp from 'xregexp';
 import { SFProject } from '../../core/models/sfproject';
 import { SFProjectUser, TranslateProjectUserConfig } from '../../core/models/sfproject-user';
-import { Text } from '../../core/models/text';
-import { Delta, TextDataId, TextType } from '../../core/models/text-data';
+import { Delta } from '../../core/models/text-doc';
+import { TextDocId, TextType } from '../../core/models/text-doc-id';
+import { TextInfo } from '../../core/models/text-info';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
 import { SFProjectService } from '../../core/sfproject.service';
-import { TextService } from '../../core/text.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
@@ -67,7 +67,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
   private insertSuggestionEnd: number = -1;
   private projectUser: SFProjectUser;
   private project: SFProject;
-  private text: Text;
+  private text: TextInfo;
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
   private confidenceThreshold$: BehaviorSubject<number>;
@@ -83,7 +83,6 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     private readonly projectUserService: SFProjectUserService,
-    private readonly textService: TextService,
     private readonly noticeService: NoticeService
   ) {
     super();
@@ -124,9 +123,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
   }
 
   get isTargetTextRight(): boolean {
-    return this.translateUserConfig == null || this.translateUserConfig == null
-      ? true
-      : this.translateUserConfig.isTargetTextRight;
+    return this.translateUserConfig == null ? true : this.translateUserConfig.isTargetTextRight;
   }
 
   set isTargetTextRight(value: boolean) {
@@ -137,7 +134,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
   }
 
   get isSuggestionsEnabled(): boolean {
-    return this.translateUserConfig.isSuggestionsEnabled;
+    return this.translateUserConfig == null ? true : this.translateUserConfig.isSuggestionsEnabled;
   }
 
   set isSuggestionsEnabled(value: boolean) {
@@ -201,16 +198,23 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
           this.targetLoaded = false;
           this.noticeService.loadingStarted();
         }),
-        switchMap(params =>
-          this.textService.get(params['textId'], [[nameof<Text>('project'), nameof<SFProject>('users')]])
-        ),
-        filter(r => r.data != null)
+        switchMap(params => {
+          const projectId = params['projectId'];
+          const bookId = params['bookId'];
+          return combineLatest(
+            this.projectService.get(projectId, [[nameof<SFProject>('users')]]),
+            from(this.projectService.getDataDoc(projectId)).pipe(
+              map(projectData => projectData.data.texts.find(t => t.bookId === bookId))
+            )
+          );
+        }),
+        filter(([projectResults, text]) => projectResults.data != null && text != null)
       ),
-      r => {
+      ([projectResults, text]) => {
         const prevProjectId = this.project == null ? '' : this.project.id;
-        this.text = r.data;
-        this.project = r.getIncluded(this.text.project);
-        this.projectUser = r
+        this.project = projectResults.data;
+        this.text = text;
+        this.projectUser = projectResults
           .getManyIncluded<SFProjectUser>(this.project.users)
           .find(pu => (pu.user == null ? '' : pu.user.id) === this.userService.currentUserId);
         this.chapters = this.text.chapters.map(c => c.number);
@@ -225,7 +229,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
             this.confidenceThreshold$.next(pcnt);
           }
           let chapter = 1;
-          if (this.translateUserConfig.selectedTextRef === this.text.id) {
+          if (this.translateUserConfig.selectedBookId === this.text.bookId) {
             if (this.translateUserConfig.selectedChapter != null && this.translateUserConfig.selectedChapter !== 0) {
               chapter = this.translateUserConfig.selectedChapter;
             }
@@ -334,12 +338,12 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
         if (
           this.translateUserConfig != null &&
           this.target.segmentRef !== '' &&
-          (this.translateUserConfig.selectedTextRef !== this.text.id ||
+          (this.translateUserConfig.selectedBookId !== this.text.bookId ||
             this.translateUserConfig.selectedChapter !== this._chapter ||
             this.translateUserConfig.selectedSegment !== this.target.segmentRef)
         ) {
           this.projectUser.selectedTask = 'translate';
-          this.translateUserConfig.selectedTextRef = this.text.id;
+          this.translateUserConfig.selectedBookId = this.text.bookId;
           this.translateUserConfig.selectedChapter = this._chapter;
           this.translateUserConfig.selectedSegment = this.target.segmentRef;
           this.translateUserConfig.selectedSegmentChecksum = this.target.segmentChecksum;
@@ -465,15 +469,15 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     let selectedSegmentChecksum: number;
     if (
       this.translateUserConfig != null &&
-      this.translateUserConfig.selectedTextRef === this.text.id &&
+      this.translateUserConfig.selectedBookId === this.text.bookId &&
       this.translateUserConfig.selectedChapter === this._chapter &&
       this.translateUserConfig.selectedSegment !== ''
     ) {
       selectedSegment = this.translateUserConfig.selectedSegment;
       selectedSegmentChecksum = this.translateUserConfig.selectedSegmentChecksum;
     }
-    const sourceId = new TextDataId(this.text.id, this._chapter, 'source');
-    const targetId = new TextDataId(this.text.id, this._chapter, 'target');
+    const sourceId = new TextDocId(this.project.id, this.text.bookId, this._chapter, 'source');
+    const targetId = new TextDocId(this.project.id, this.text.bookId, this._chapter, 'target');
     if (!eq(targetId, this.target.id)) {
       // blur the target before switching so that scrolling is reset to the top
       this.target.blur();
@@ -579,7 +583,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
 
     await this.translationSession.approve(true);
     segment.acceptChanges();
-    console.log('Segment ' + segment.ref + ' of document ' + segment.textId + ' was trained successfully.');
+    console.log('Segment ' + segment.ref + ' of document ' + segment.bookId + ' was trained successfully.');
   }
 
   private canTrainSegment(segment: Segment): boolean {

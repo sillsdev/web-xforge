@@ -2,8 +2,9 @@ import { Component, EventEmitter, Input, OnDestroy, Output, ViewEncapsulation } 
 import { deepMerge, eq } from '@orbit/utils';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import { Subscription } from 'rxjs';
-import { Delta, TextData, TextDataId } from '../../core/models/text-data';
-import { TextService } from '../../core/text.service';
+import { Delta, TextDoc } from '../../core/models/text-doc';
+import { TextDocId } from '../../core/models/text-doc-id';
+import { SFProjectService } from '../../core/sfproject.service';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { Segmenter } from './segmenter';
@@ -78,11 +79,12 @@ export class TextComponent implements OnDestroy {
       userOnly: true
     }
   };
-  private _id?: TextDataId;
+  private _id?: TextDocId;
   private _modules: any = this.DEFAULT_MODULES;
   private _editor?: Quill;
-  private textDataSub?: Subscription;
-  private textData?: TextData;
+  private remoteChangesSub?: Subscription;
+  private onCreateSub?: Subscription;
+  private textDoc?: TextDoc;
   private segmenter?: Segmenter;
   private _segment?: Segment;
   private initialTextFetched: boolean = false;
@@ -91,14 +93,14 @@ export class TextComponent implements OnDestroy {
   private initialSegmentFocus?: boolean;
   private _highlightSegment: boolean = false;
 
-  constructor(private readonly textService: TextService) {}
+  constructor(private readonly projectService: SFProjectService) {}
 
-  get id(): TextDataId {
+  get id(): TextDocId {
     return this._id;
   }
 
   @Input()
-  set id(value: TextDataId) {
+  set id(value: TextDocId) {
     if (!eq(this._id, value)) {
       this._id = value;
       this._segment = undefined;
@@ -232,7 +234,7 @@ export class TextComponent implements OnDestroy {
 
   onContentChanged(delta: DeltaStatic, source: Sources): void {
     if (source === 'user') {
-      this.textData.submit(delta, this._editor);
+      this.textDoc.submit(delta, this._editor);
     }
 
     // skip updating when only formatting changes occurred
@@ -267,12 +269,12 @@ export class TextComponent implements OnDestroy {
     const editorElem = this._editor.container.getElementsByClassName('ql-editor')[0];
     const placeholderText = editorElem.getAttribute('data-placeholder');
     editorElem.setAttribute('data-placeholder', '');
-    this.textData = await this.textService.getTextData(this._id);
-    this._editor.setContents(this.textData.data);
+    this.textDoc = await this.projectService.getTextDoc(this._id);
+    this._editor.setContents(this.textDoc.data);
     this._editor.history.clear();
-    this.textDataSub = this.textData.remoteChanges().subscribe(ops => this._editor.updateContents(ops));
-    this.textData.onCreate().subscribe(() => {
-      this._editor.setContents(this.textData.data);
+    this.remoteChangesSub = this.textDoc.remoteChanges().subscribe(ops => this._editor.updateContents(ops));
+    this.onCreateSub = this.textDoc.onCreate().subscribe(() => {
+      this._editor.setContents(this.textDoc.data);
       this._editor.history.clear();
     });
 
@@ -282,10 +284,11 @@ export class TextComponent implements OnDestroy {
   }
 
   private unbindQuill(): void {
-    if (this.textData == null) {
+    if (this.textDoc == null) {
       return;
     }
-    this.textDataSub.unsubscribe();
+    this.remoteChangesSub.unsubscribe();
+    this.onCreateSub.unsubscribe();
     this._editor.setText('', 'silent');
   }
 
@@ -370,7 +373,7 @@ export class TextComponent implements OnDestroy {
   }
 
   private tryChangeSegment(segmentRef: string, checksum?: number, focus: boolean = false): boolean {
-    if (this._segment != null && this._id.textId === this._segment.textId && segmentRef === this._segment.ref) {
+    if (this._segment != null && this._id.bookId === this._segment.bookId && segmentRef === this._segment.ref) {
       // the selection has not changed to a different segment
       return false;
     }
@@ -396,7 +399,7 @@ export class TextComponent implements OnDestroy {
     if (this._segment != null && this.highlightSegment) {
       this.toggleHighlight(this._segment.range, false);
     }
-    this._segment = new Segment(this._id.textId, segmentRef);
+    this._segment = new Segment(this._id.bookId, segmentRef);
     if (checksum != null) {
       this._segment.initialChecksum = checksum;
     }

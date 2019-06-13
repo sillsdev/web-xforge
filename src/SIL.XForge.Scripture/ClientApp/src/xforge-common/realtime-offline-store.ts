@@ -14,6 +14,10 @@ export interface RealtimeOfflineData {
 export class RealtimeOfflineStore {
   constructor(private readonly store: LocalForage) {}
 
+  keys(): Promise<string[]> {
+    return this.store.keys();
+  }
+
   getItem(id: string): Promise<RealtimeOfflineData> {
     return this.store.getItem(id);
   }

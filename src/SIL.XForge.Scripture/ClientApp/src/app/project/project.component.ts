@@ -6,6 +6,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { SFProject } from '../core/models/sfproject';
+import { canTranslate } from '../core/models/sfproject-roles';
 import { SFProjectUser } from '../core/models/sfproject-user';
 import { SFProjectService } from '../core/sfproject.service';
 
@@ -39,11 +40,9 @@ export class ProjectComponent extends SubscriptionDisposable implements OnInit {
             return of(projectId);
           }
         }),
-        switchMap(projectId =>
-          this.projectService.get(projectId, [[nameof<SFProject>('users')], [nameof<SFProject>('texts')]])
-        )
+        switchMap(projectId => this.projectService.get(projectId, [[nameof<SFProject>('users')]]))
       ),
-      r => {
+      async r => {
         const project = r.data;
         if (project == null) {
           return;
@@ -57,35 +56,38 @@ export class ProjectComponent extends SubscriptionDisposable implements OnInit {
         // navigate to last location
         if (projectUser.selectedTask != null && projectUser.selectedTask !== '') {
           // the user has previously navigated to a location in a task
-          let textId: string;
+          let bookId: string;
           switch (projectUser.selectedTask) {
             case 'translate':
-              textId = projectUser.translateConfig.selectedTextRef;
+              bookId = projectUser.translateConfig.selectedBookId;
               break;
 
             case 'checking':
               // TODO: get last selected text
               break;
           }
-          if (textId != null) {
-            this.router.navigate(['./', projectUser.selectedTask, textId], {
+          if (bookId != null) {
+            this.router.navigate(['./', projectUser.selectedTask, bookId], {
               relativeTo: this.route,
               replaceUrl: true
             });
           }
-        } else if (project.texts != null && project.texts.length > 0) {
-          // the user has not navigated anywhere before, so navigate to the default location in the first enabled task
-          let task: string;
-          if (project.translateConfig != null && project.translateConfig.enabled) {
-            task = 'translate';
-          } else if (project.checkingConfig != null && project.checkingConfig.enabled) {
-            task = 'checking';
-          }
-          if (task != null) {
-            this.router.navigate(['./', task, project.texts[0].id], {
-              relativeTo: this.route,
-              replaceUrl: true
-            });
+        } else {
+          const projectDataDoc = await this.projectService.getDataDoc(project.id);
+          if (projectDataDoc.data.texts != null && projectDataDoc.data.texts.length > 0) {
+            // the user has not navigated anywhere before, so navigate to the default location in the first enabled task
+            let task: string;
+            if (project.translateConfig != null && project.translateConfig.enabled && canTranslate(projectUser.role)) {
+              task = 'translate';
+            } else if (project.checkingConfig != null && project.checkingConfig.enabled) {
+              task = 'checking';
+            }
+            if (task != null) {
+              this.router.navigate(['./', task, projectDataDoc.data.texts[0].bookId], {
+                relativeTo: this.route,
+                replaceUrl: true
+              });
+            }
           }
         }
       }
