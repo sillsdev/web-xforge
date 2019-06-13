@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using JsonApiDotNetCore.Models;
 using SIL.XForge.Models;
 
@@ -17,8 +16,5 @@ namespace SIL.XForge.Scripture.Models
 
         [HasOne(withForeignKey: nameof(ActiveSyncJobRef))]
         public SyncJobResource ActiveSyncJob { get; set; }
-        [HasMany]
-        [SchemaInfo(Inverse = nameof(TextResource.Project), IsDependent = true)]
-        public IReadOnlyList<TextResource> Texts { get; set; }
     }
 }

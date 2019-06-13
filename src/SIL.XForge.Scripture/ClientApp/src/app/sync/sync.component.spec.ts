@@ -42,10 +42,10 @@ describe('SyncComponent', () => {
 
   it('should sync project when the button is clicked', fakeAsync(() => {
     const env = new TestEnvironment(true);
-    verify(env.mockedProjectService.onlineGet(anything(), anything())).once();
+    verify(env.mockedProjectService.onlineGet('testproject01')).once();
     env.clickElement(env.syncButton);
-    verify(env.mockedSyncJobService.start(anything())).once();
-    verify(env.mockedSyncJobService.listen(anything())).once();
+    verify(env.mockedSyncJobService.start('testproject01')).once();
+    verify(env.mockedSyncJobService.listen('syncjob01')).once();
     // Simulate sync starting
     env.emitSyncJob(SyncJobState.PENDING);
     expect(env.component.syncJobActive).toBe(true);
@@ -68,10 +68,10 @@ describe('SyncComponent', () => {
 
   it('should report error if sync has a problem', fakeAsync(() => {
     const env = new TestEnvironment(true);
-    verify(env.mockedProjectService.onlineGet(anything(), anything())).once();
+    verify(env.mockedProjectService.onlineGet('testproject01')).once();
     env.clickElement(env.syncButton);
-    verify(env.mockedSyncJobService.start(anything())).once();
-    verify(env.mockedSyncJobService.listen(anything())).once();
+    verify(env.mockedSyncJobService.start('testproject01')).once();
+    verify(env.mockedSyncJobService.listen('syncjob01')).once();
     // Simulate sync in progress
     env.emitSyncJob(SyncJobState.PENDING);
     expect(env.component.syncJobActive).toBe(true);
@@ -120,10 +120,11 @@ class TestEnvironment {
     if (isInProgress) {
       project.activeSyncJob = new SyncJobRef('syncjob01');
     }
-    when(this.mockedProjectService.onlineGet(anything(), anything())).thenReturn(of(new MapQueryResults(project)));
+    when(this.mockedProjectService.onlineGet('testproject01')).thenReturn(of(new MapQueryResults(project)));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(this.mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
-    when(this.mockedSyncJobService.listen(anything())).thenReturn(this.subject);
+    when(this.mockedSyncJobService.start('testproject01')).thenResolve('syncjob01');
+    when(this.mockedSyncJobService.listen('syncjob01')).thenReturn(this.subject);
     this.syncJob = new SyncJob({
       id: 'syncjob01',
       project: new SFProjectRef('testproject01')

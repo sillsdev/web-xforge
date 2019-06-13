@@ -16,8 +16,10 @@ import { nameof } from 'xforge-common/utils';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { SFProject } from './core/models/sfproject';
+import { SFProjectDataDoc } from './core/models/sfproject-data-doc.js';
+import { canTranslate, SFProjectRoles } from './core/models/sfproject-roles.js';
 import { SFProjectUser } from './core/models/sfproject-user';
-import { Text } from './core/models/text';
+import { TextInfo } from './core/models/text-info';
 import { SFProjectService } from './core/sfproject.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
@@ -37,7 +39,6 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   checkingVisible: boolean = false;
 
   projects: SFProject[];
-  texts: Text[];
   currentUser$: Observable<User>;
   isProjectAdmin$: Observable<boolean>;
 
@@ -46,6 +47,8 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   private _topAppBar: MdcTopAppBar;
   private _selectedProject: SFProject;
   private _isDrawerPermanent: boolean = true;
+  private projectDataDoc: SFProjectDataDoc;
+  private selectedProjectRole: SFProjectRoles;
 
   constructor(
     private readonly router: Router,
@@ -128,10 +131,41 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     return this.authService.currentUserRole === SystemRole.SystemAdmin;
   }
 
+  get isTranslateEnabled(): boolean {
+    if (this.selectedProject == null || this.selectedProject.translateConfig == null) {
+      return false;
+    }
+    return (
+      this.selectedProject.translateConfig.enabled &&
+      this.selectedProjectRole != null &&
+      canTranslate(this.selectedProjectRole)
+    );
+  }
+
+  get translateTexts(): TextInfo[] {
+    return this.texts.filter(t => t.hasSource);
+  }
+
+  get isCheckingEnabled(): boolean {
+    if (this.selectedProject == null || this.selectedProject.checkingConfig == null) {
+      return false;
+    }
+    return this.selectedProject.checkingConfig.enabled;
+  }
+
+  get checkingTexts(): TextInfo[] {
+    return this.texts;
+  }
+
+  private get texts(): TextInfo[] {
+    return this.projectDataDoc == null || this.projectDataDoc.data == null ? [] : this.projectDataDoc.data.texts;
+  }
+
   async ngOnInit(): Promise<void> {
     this.noticeService.loadingStarted();
     this.authService.init();
     if (await this.isLoggedIn) {
+      this.projectService.init();
       this.currentUser$ = this.userService.getCurrentUser();
 
       // retrieve the projectId from the current route. Since the nav menu is outside of the router outlet, it cannot
@@ -177,9 +211,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
         projectId$.pipe(
           switchMap(projectId =>
             this.userService
-              .getProjects(this.userService.currentUserId, [
-                [nameof<SFProjectUser>('project'), nameof<SFProject>('texts')]
-              ])
+              .getProjects(this.userService.currentUserId, [[nameof<SFProjectUser>('project')]])
               .pipe(map(r => ({ results: r, projectId })))
           ),
           withLatestFrom(this.userService.getCurrentUser())
@@ -187,7 +219,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
         ([resultsAndProjectId, user]) => {
           const results = resultsAndProjectId.results;
           const projectId = resultsAndProjectId.projectId;
-          this.projects = results.data.map(pu => results.getIncluded(pu.project));
+          this.projects = results.data.map(pu => results.getIncluded<SFProject>(pu.project)).filter(p => p != null);
           // if the project deleted dialog is displayed, don't do anything
           if (this.projectDeletedDialogRef != null) {
             return;
@@ -214,12 +246,15 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
           }
 
           this.selectedProject = selectedProject;
+          this.selectedProjectRole =
+            this.selectedProject == null
+              ? undefined
+              : (results.data.find(pu => pu.project.id === this.selectedProject.id).role as SFProjectRoles);
 
           // Return early if 'Connect project' was clicked, or if we don't have all the
           // properties we need yet for the below or template.
           if (
             this.selectedProject == null ||
-            this.selectedProject.texts == null ||
             this.selectedProject.translateConfig == null ||
             this.selectedProject.checkingConfig == null ||
             this.selectedProject.id == null ||
@@ -228,11 +263,11 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
             return;
           }
 
-          this.texts = results.getManyIncluded(this.selectedProject.texts);
-          if (!this.selectedProject.translateConfig.enabled) {
+          this.projectService.getDataDoc(this.selectedProject.id).then(doc => (this.projectDataDoc = doc));
+          if (!this.isTranslateEnabled) {
             this.translateVisible = false;
           }
-          if (!this.selectedProject.checkingConfig.enabled) {
+          if (!this.isCheckingEnabled) {
             this.checkingVisible = false;
           }
           if (this._projectSelect != null) {

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -9,8 +8,8 @@ using SIL.Machine.Corpora;
 using SIL.Machine.Tokenization;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
-using SIL.XForge.DataAccess;
-using SIL.XForge.Scripture.DataAccess;
+using SIL.XForge.Models;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
@@ -18,14 +17,14 @@ namespace SIL.XForge.Scripture.Services
     public class SFTextCorpusFactory : ITextCorpusFactory
     {
         private readonly IMongoClient _mongoClient;
-        private readonly IRepository<TextEntity> _texts;
         private readonly IOptions<DataAccessOptions> _dataAccessOptions;
+        private readonly IRealtimeService _realtimeService;
 
-        public SFTextCorpusFactory(IOptions<DataAccessOptions> dataAccessOptions, IRepository<TextEntity> texts)
+        public SFTextCorpusFactory(IOptions<DataAccessOptions> dataAccessOptions, IRealtimeService realtimeService)
         {
             _dataAccessOptions = dataAccessOptions;
             _mongoClient = new MongoClient(dataAccessOptions.Value.ConnectionString);
-            _texts = texts;
+            _realtimeService = realtimeService;
         }
 
         public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type)
@@ -39,7 +38,7 @@ namespace SIL.XForge.Scripture.Services
             StringTokenizer wordTokenizer = new LatinWordTokenizer();
             IMongoDatabase database = _mongoClient.GetDatabase(_dataAccessOptions.Value.MongoDatabaseName);
             IMongoCollection<BsonDocument> textDataColl = database.GetCollection<BsonDocument>(
-                SFDataAccessConstants.TextDataCollectionName);
+                _realtimeService.GetCollectionName(SFRootDataTypes.Texts));
             var texts = new List<IText>();
             foreach (string projectId in projects)
             {
@@ -56,15 +55,25 @@ namespace SIL.XForge.Scripture.Services
                         throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextType));
                 }
 
-                List<TextEntity> textList = await _texts.Query().Where(t => t.ProjectRef == projectId).ToListAsync();
-                foreach (TextEntity text in textList)
+                using (IConnection conn = await _realtimeService.ConnectAsync())
                 {
-                    foreach (Chapter chapter in text.Chapters)
+                    IDocument<SFProjectData> projectDataDoc = conn.Get<SFProjectData>(RootDataTypes.Projects,
+                        projectId);
+                    await projectDataDoc.FetchAsync();
+
+                    foreach (TextInfo text in projectDataDoc.Data.Texts)
                     {
-                        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter
-                            .Eq("_id", TextEntity.GetTextDataId(text.Id, chapter.Number, textType));
-                        BsonDocument doc = await textDataColl.Find(filter).FirstAsync();
-                        texts.Add(new SFScriptureText(wordTokenizer, projectId, text.Id, chapter.Number, doc));
+                        foreach (Chapter chapter in text.Chapters)
+                        {
+                            string id = TextInfo.GetTextDocId(projectId, text.BookId, chapter.Number, textType);
+                            FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", id);
+                            BsonDocument doc = await textDataColl.Find(filter).FirstOrDefaultAsync();
+                            if (doc != null)
+                            {
+                                texts.Add(new SFScriptureText(wordTokenizer, projectId, text.BookId, chapter.Number,
+                                    doc));
+                            }
+                        }
                     }
                 }
             }

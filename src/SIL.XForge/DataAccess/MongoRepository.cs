@@ -40,7 +40,7 @@ namespace SIL.XForge.DataAccess
             catch (MongoWriteException e)
             {
                 if (e.WriteError.Category == ServerErrorCategory.DuplicateKey)
-                    throw new DuplicateKeyException();
+                    throw new DuplicateKeyException(e);
                 throw;
             }
         }

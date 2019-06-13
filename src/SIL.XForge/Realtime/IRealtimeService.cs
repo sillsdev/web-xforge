@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SIL.XForge.Realtime
@@ -10,6 +9,8 @@ namespace SIL.XForge.Realtime
 
         Task<IConnection> ConnectAsync();
 
-        Task DeleteAllAsync(string type, IEnumerable<string> ids);
+        string GetCollectionName(string type);
+
+        Task DeleteProjectDocsAsync(string type, string projectId);
     }
 }

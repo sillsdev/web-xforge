@@ -10,7 +10,7 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Controllers
 {
-    [Route("users")]
+    [Route(RootDataTypes.Users)]
     public class UsersController : JsonApiControllerBase<UserResource>
     {
         private readonly IUserService _userService;

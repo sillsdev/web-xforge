@@ -6,10 +6,11 @@ import { Doc, OTType, Snapshot, types } from 'sharedb/lib/client';
 types.register(RichText.type);
 
 /**
- * This interface represents a realtime document. Realtime documents can be concurrently updated by multiple users. The
- * realtime document is synchronized in realtime for all users.
+ * This interface represents an adapter for a real-time document. An adapter is used to fetch and mutate a real-time
+ * document on the backend. Real-time documents can be concurrently updated by multiple users. The document is
+ * synchronized in real-time for all users.
  */
-export interface RealtimeDoc {
+export interface RealtimeDocAdapter {
   readonly id: string;
   readonly data: any;
   readonly version: number;
@@ -25,6 +26,8 @@ export interface RealtimeDoc {
   /** Fires when underlying data is recreated. */
   onCreate(): Observable<void>;
 
+  onDelete(): Observable<void>;
+
   /** Fires when there are changes to underlying data. */
   remoteChanges(): Observable<any>;
 
@@ -32,12 +35,9 @@ export interface RealtimeDoc {
 }
 
 /**
- * This is a ShareDB implementation of the realtime document interface.
- *
- * Cache for an IndexedDB record. Also allows access thru to a mongodb record.
- * See RealtimeData for syncing this with IndexedDB.
+ * This is a ShareDB implementation of the real-time document adapter interface.
  */
-export class SharedbRealtimeDoc implements RealtimeDoc {
+export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
   constructor(private readonly doc: Doc) {}
 
   get id(): string {
@@ -78,6 +78,10 @@ export class SharedbRealtimeDoc implements RealtimeDoc {
 
   onCreate(): Observable<void> {
     return fromEvent(this.doc, 'create');
+  }
+
+  onDelete(): Observable<void> {
+    return fromEvent(this.doc, 'del');
   }
 
   fetch(): Promise<void> {
@@ -153,12 +157,13 @@ export class SharedbRealtimeDoc implements RealtimeDoc {
 }
 
 /**
- * This is a memory-based implementation of the realtime document interface. It is useful for unit tests.
+ * This is a memory-based implementation of the real-time document adapter interface. It is useful for unit tests.
  */
-export class MemoryRealtimeDoc implements RealtimeDoc {
+export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly pendingOps: any[] = [];
   version: number = 1;
-  onCreateSubject = new Subject<void>();
+  private readonly onCreateSubject = new Subject<void>();
+  private readonly onDeleteSubject = new Subject<void>();
 
   constructor(public readonly type: OTType, public readonly id: string, public data: any) {}
 
@@ -192,10 +197,22 @@ export class MemoryRealtimeDoc implements RealtimeDoc {
   }
 
   onCreate(): Observable<void> {
-    return this.onCreateSubject.asObservable();
+    return this.onCreateSubject;
+  }
+
+  onDelete(): Observable<void> {
+    return this.onDeleteSubject;
   }
 
   destroy(): Promise<void> {
     return Promise.resolve();
+  }
+
+  fireCreate(): void {
+    this.onCreateSubject.next();
+  }
+
+  fireDelete(): void {
+    this.onDeleteSubject.next();
   }
 }

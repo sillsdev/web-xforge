@@ -538,7 +538,7 @@ class TestEnvironment extends SubscriptionDisposable {
     const domainModel = new DomainModel({
       resourceTypes: [TestProject, TestProjectUser],
       resourceRefTypes: [TestProjectRef, TestProjectUserRef],
-      realtimeDataTypes: []
+      realtimeDocTypes: []
     });
 
     this.schema = new Schema(TEST_SCHEMA_SETTINGS);

@@ -161,7 +161,6 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
       }
 
       newProject = await this.projectService.onlineCreate(newProject);
-      await this.projectUserService.onlineCreate(newProject.id, this.userService.currentUserId);
       this.subscribe(this.syncJobService.listen(newProject.activeSyncJob.id), async job => {
         this.job = job;
         if (!job.isActive) {

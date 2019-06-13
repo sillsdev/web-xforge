@@ -57,7 +57,7 @@
       <div class="card-title">
         <span mdcHeadline6>Tasks</span>
         <span
-          *ngIf="connectProjectForm.errors && connectProjectForm.errors.requireAtLeastOneWithValue"
+          *ngIf="connectProjectForm.errors && connectProjectForm.errors['requireAtLeastOneWithValue']"
           class="invalid-feedback"
         >
           You must select at least one option

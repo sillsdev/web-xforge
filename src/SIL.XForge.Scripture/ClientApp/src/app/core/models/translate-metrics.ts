@@ -5,7 +5,7 @@ export interface TranslateMetrics {
   id: string;
   type: TranslateMetricsType;
   sessionId: string;
-  textRef: string;
+  bookId: string;
   chapter: number;
 
   // editing metrics

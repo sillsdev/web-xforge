@@ -2,13 +2,13 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
 import { Subscription } from 'rxjs';
-import { filter, map, repeat, switchMap, tap } from 'rxjs/operators';
+import { filter, map, repeat, tap } from 'rxjs/operators';
+import { SFProjectDataDoc } from 'src/app/core/models/sfproject-data-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { Text } from '../../core/models/text';
-import { TextDataId } from '../../core/models/text-data';
+import { TextDocId } from '../../core/models/text-doc-id';
+import { TextInfo } from '../../core/models/text-info';
 import { SFProjectService } from '../../core/sfproject.service';
-import { TextService } from '../../core/text.service';
 
 const ENGINE_QUALITY_STAR_COUNT = 3;
 
@@ -25,9 +25,10 @@ class Progress {
   }
 }
 
-interface TextInfo {
-  text: Text;
-  progress: Progress;
+class TextProgress extends Progress {
+  constructor(public readonly text: TextInfo) {
+    super();
+  }
 }
 
 @Component({
@@ -36,7 +37,7 @@ interface TextInfo {
   styleUrls: ['./translate-overview.component.scss']
 })
 export class TranslateOverviewComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
-  texts: TextInfo[];
+  texts: TextProgress[];
   overallProgress = new Progress();
   trainingPercentage: number = 0;
   isTraining: boolean = false;
@@ -45,15 +46,15 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
   engineConfidence: number = 0;
   trainedSegmentCount: number = 0;
 
-  private _isLoading = true;
-  private trainingSubscription: Subscription;
+  private trainingSub: Subscription;
   private translationEngine: RemoteTranslationEngine;
+  private projectDataDoc: SFProjectDataDoc;
+  private projectDataChangesSub: Subscription;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
     private readonly noticeService: NoticeService,
-    private readonly projectService: SFProjectService,
-    private readonly textService: TextService
+    private readonly projectService: SFProjectService
   ) {
     super();
     this.engineQualityStars = [];
@@ -62,34 +63,38 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
     }
   }
 
-  get isLoading(): boolean {
-    return this._isLoading;
-  }
-
   ngOnInit(): void {
-    this.subscribe(
-      this.activatedRoute.params.pipe(
-        map(params => params['projectId']),
-        tap(projectId => {
-          this.noticeService.loadingStarted();
-          this._isLoading = true;
-          this.createTranslationEngine(projectId);
-        }),
-        switchMap(projectId => this.projectService.getTexts(projectId))
-      ),
-      async texts => {
-        this.texts = texts.map(t => ({ text: t, progress: new Progress() }));
+    this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
+      this.noticeService.loadingStarted();
+      try {
+        this.createTranslationEngine(projectId);
+        this.projectDataDoc = await this.projectService.getDataDoc(projectId);
         await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
-        this._isLoading = false;
+      } finally {
         this.noticeService.loadingFinished();
       }
-    );
+
+      if (this.projectDataChangesSub != null) {
+        this.projectDataChangesSub.unsubscribe();
+      }
+      this.projectDataChangesSub = this.projectDataDoc.remoteChanges().subscribe(async () => {
+        this.noticeService.loadingStarted();
+        try {
+          await this.calculateProgress();
+        } finally {
+          this.noticeService.loadingFinished();
+        }
+      });
+    });
   }
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.trainingSubscription != null) {
-      this.trainingSubscription.unsubscribe();
+    if (this.projectDataChangesSub != null) {
+      this.projectDataChangesSub.unsubscribe();
+    }
+    if (this.trainingSub != null) {
+      this.trainingSub.unsubscribe();
     }
     this.noticeService.loadingFinished();
   }
@@ -101,29 +106,30 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
   }
 
   private async calculateProgress(): Promise<void> {
+    this.texts = this.projectDataDoc.data.texts.map(t => new TextProgress(t));
     this.overallProgress = new Progress();
     const updateTextProgressPromises: Promise<void>[] = [];
-    for (const textInfo of this.texts) {
-      updateTextProgressPromises.push(this.updateTextProgress(textInfo));
+    for (const textProgress of this.texts) {
+      updateTextProgressPromises.push(this.updateTextProgress(textProgress));
     }
     await Promise.all(updateTextProgressPromises);
   }
 
-  private async updateTextProgress(textInfo: TextInfo): Promise<void> {
-    for (const chapter of textInfo.text.chapters) {
-      const textId = new TextDataId(textInfo.text.id, chapter.number);
-      const chapterText = await this.textService.getTextData(textId);
+  private async updateTextProgress(textProgress: TextProgress): Promise<void> {
+    for (const chapter of textProgress.text.chapters) {
+      const textDocId = new TextDocId(this.projectDataDoc.id, textProgress.text.bookId, chapter.number, 'target');
+      const chapterText = await this.projectService.getTextDoc(textDocId);
       const { translated, blank } = chapterText.getSegmentCount();
-      textInfo.progress.translated += translated;
-      textInfo.progress.blank += blank;
+      textProgress.translated += translated;
+      textProgress.blank += blank;
       this.overallProgress.translated += translated;
       this.overallProgress.blank += blank;
     }
   }
 
   private createTranslationEngine(projectId: string): void {
-    if (this.trainingSubscription != null) {
-      this.trainingSubscription.unsubscribe();
+    if (this.trainingSub != null) {
+      this.trainingSub.unsubscribe();
     }
     this.translationEngine = this.projectService.createTranslationEngine(projectId);
     const trainingStatus$ = this.translationEngine.listenForTrainingStatus().pipe(
@@ -134,7 +140,7 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
       repeat(),
       filter(progress => progress.percentCompleted > 0)
     );
-    this.trainingSubscription = trainingStatus$.subscribe(async progress => {
+    this.trainingSub = trainingStatus$.subscribe(async progress => {
       this.trainingPercentage = progress.percentCompleted;
       this.isTraining = true;
     });
