@@ -28,7 +28,8 @@ namespace Microsoft.Extensions.DependencyInjection
                             Types =
                             {
                                 new RealtimeType(SFDomain.Questions) { Path = { "$" } },
-                                new RealtimeType(SFDomain.Answers) { Path = { "$", "answers", "$" }}
+                                new RealtimeType(SFDomain.Answers) { Path = { "$", "answers", "$" }},
+                                new RealtimeType(SFDomain.Likes) { Path = { "$", "answers", "$", "likes", "$" } }
                             }
                         },
                         new RealtimeCollectionConfig(SFDataAccessConstants.CommentDataCollectionName,

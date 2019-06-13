@@ -263,10 +263,6 @@ class RealtimeServer {
 
             if (type.path.length < op.p.length) {
               // property update
-              if (op.p.slice(type.path.length)[0] === 'likes' && op.p.slice(type.path.length).length === 2) {
-                // allow users to like and unlike
-                return true;
-              }
               const entityPath = op.p.slice(0, type.path.length);
               const oldEntity = deepGet(entityPath, oldDoc);
               const newEntity = deepGet(entityPath, newDoc);

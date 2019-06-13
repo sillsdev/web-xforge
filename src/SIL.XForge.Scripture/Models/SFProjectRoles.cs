@@ -28,6 +28,10 @@ namespace SIL.XForge.Scripture.Models
                 new Right(SFDomain.Comments, Operation.Create),
                 new Right(SFDomain.Comments, Operation.EditOwn),
                 new Right(SFDomain.Comments, Operation.DeleteOwn),
+
+                new Right(SFDomain.Likes, Operation.View),
+                new Right(SFDomain.Likes, Operation.Create),
+                new Right(SFDomain.Likes, Operation.DeleteOwn)
             };
             Rights[SFReviewer] = sfReviewerRights;
 
@@ -51,7 +55,9 @@ namespace SIL.XForge.Scripture.Models
                 new Right(SFDomain.Answers, Operation.Delete),
 
                 new Right(SFDomain.Comments, Operation.Edit),
-                new Right(SFDomain.Comments, Operation.Delete)
+                new Right(SFDomain.Comments, Operation.Delete),
+
+                new Right(SFDomain.Likes, Operation.Delete)
             };
             Rights[Administrator] = administratorRights;
         }

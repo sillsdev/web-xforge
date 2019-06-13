@@ -7,5 +7,6 @@ namespace SIL.XForge.Scripture.Models
         public const int Questions = 1200;
         public const int Answers = 1300;
         public const int Comments = 1400;
+        public const int Likes = 1500;
     }
 }

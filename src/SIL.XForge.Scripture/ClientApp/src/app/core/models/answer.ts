@@ -1,3 +1,4 @@
+import { Like } from './like';
 import { VerseRefData } from './verse-ref-data';
 
 export interface Answer {
@@ -7,7 +8,7 @@ export interface Answer {
   scriptureEnd?: VerseRefData;
   text?: string;
   audioUrl?: string;
-  likes: string[];
+  likes: Like[];
   dateModified: string;
   dateCreated: string;
 }
