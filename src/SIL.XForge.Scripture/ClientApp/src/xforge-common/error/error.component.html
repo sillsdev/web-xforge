@@ -1,0 +1,6 @@
+<div fxLayout="column" fxLayoutAlign="start center" class="container">
+  <h1>An error has occurred.</h1>
+  <h3 id="error-code">{{ errorCode }}</h3>
+  <span><a (click)="showDetails = !showDetails" class="text-blue">Click for details</a></span>
+  <pre *ngIf="showDetails">{{ stack }}</pre>
+</div>

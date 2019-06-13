@@ -6,6 +6,7 @@ import { ngfModule } from 'angular-file';
 import { AvatarModule } from 'ngx-avatar';
 import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
+import { ErrorComponent } from './error/error.component';
 import { DeleteAccountDialogComponent } from './my-account/delete-account-dialog/delete-account-dialog.component';
 import { MyAccountComponent } from './my-account/my-account.component';
 import { ProjectsComponent } from './projects/projects.component';
@@ -24,6 +25,7 @@ const componentExports = [
   AvatarComponent,
   CollaboratorsComponent,
   DeleteAccountDialogComponent,
+  ErrorComponent,
   MyAccountComponent,
   ProjectsComponent,
   SaDeleteDialogComponent,
