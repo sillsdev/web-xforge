@@ -40,7 +40,7 @@ Successful builds from our CI server deploy to:
 
 | Site               | QA                                                               | Live                                                       |
 | ------------------ | ---------------------------------------------------------------- | ---------------------------------------------------------- |
-| Scripture Forge v2 | [beta.qa.scriptureforge.org](https://beta.qa.scriptureforge.org) | [beta.scriptureforge.org](https://beta.scriptureforge.org) |
+| Scripture Forge v2 | [qa.beta.scriptureforge.org](https://qa.beta.scriptureforge.org) | [beta.scriptureforge.org](https://beta.scriptureforge.org) |
 
 ### Gitflow
 

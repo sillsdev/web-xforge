@@ -7,9 +7,9 @@
 export const environment = {
   production: false,
   pwaTest: false,
-  issueEmail: 'issues@beta.qa.scriptureforge.org',
+  issueEmail: 'issues@qa.beta.scriptureforge.org',
   siteName: 'Scripture Forge',
-  realtimePort: 5002,
+  realtimePort: 5003,
   realtimeUrl: '/',
   authDomain: 'sil-appbuilder.auth0.com',
   authClientId: 'aoAGb9Yx1H5WIsvCW6JJCteJhSa37ftH',
