@@ -1,6 +1,5 @@
-using ShareDB.Json0;
-using ShareDB.RichText;
 using SIL.XForge.Configuration;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.DataAccess;
 using SIL.XForge.Scripture.Models;
 
@@ -18,12 +17,12 @@ namespace Microsoft.Extensions.DependencyInjection
                     o.Collections = new[]
                     {
                         new RealtimeCollectionConfig(SFDataAccessConstants.TextDataCollectionName,
-                            SFDataAccessConstants.TextsCollectionName, RichTextOTType.Instance.Name)
+                            SFDataAccessConstants.TextsCollectionName, OTType.RichText)
                         {
                             Types = { new RealtimeType(SFDomain.Texts) }
                         },
                         new RealtimeCollectionConfig(SFDataAccessConstants.QuestionDataCollectionName,
-                            SFDataAccessConstants.TextsCollectionName, Json0OTType.Instance.Name)
+                            SFDataAccessConstants.TextsCollectionName, OTType.Json0)
                         {
                             Types =
                             {
@@ -33,7 +32,7 @@ namespace Microsoft.Extensions.DependencyInjection
                             }
                         },
                         new RealtimeCollectionConfig(SFDataAccessConstants.CommentDataCollectionName,
-                            SFDataAccessConstants.TextsCollectionName, Json0OTType.Instance.Name)
+                            SFDataAccessConstants.TextsCollectionName, OTType.Json0)
                         {
                             Types = { new RealtimeType(SFDomain.Comments) { Path = { "$" } } }
                         }

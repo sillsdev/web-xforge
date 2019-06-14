@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 
-namespace ShareDB.RichText
+namespace SIL.XForge.Realtime.RichText
 {
     internal static class DiffAlgorithm
     {

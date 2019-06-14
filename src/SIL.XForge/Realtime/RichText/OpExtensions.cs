@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 
-namespace ShareDB.RichText
+namespace SIL.XForge.Realtime.RichText
 {
     public static class OpExtensions
     {
@@ -16,11 +16,11 @@ namespace ShareDB.RichText
         public static int OpLength(this JToken op)
         {
             if (op[Delta.DeleteType]?.Type == JTokenType.Integer)
-                return (int) op[Delta.DeleteType];
+                return (int)op[Delta.DeleteType];
             if (op[Delta.RetainType]?.Type == JTokenType.Integer)
-                return (int) op[Delta.RetainType];
+                return (int)op[Delta.RetainType];
             if (op[Delta.InsertType]?.Type == JTokenType.String)
-                return ((string) op[Delta.InsertType]).Length;
+                return ((string)op[Delta.InsertType]).Length;
             return 1;
         }
     }

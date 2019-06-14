@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
 using Newtonsoft.Json.Linq;
-using ShareDB.RichText;
+using SIL.XForge.Realtime.RichText;
 
 namespace SIL.XForge.Scripture.Services
 {

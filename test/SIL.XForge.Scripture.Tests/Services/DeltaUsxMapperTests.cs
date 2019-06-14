@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Xml.Linq;
 using NUnit.Framework;
-using ShareDB.RichText;
+using SIL.XForge.Realtime.RichText;
 
 namespace SIL.XForge.Scripture.Services
 {

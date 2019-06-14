@@ -2,7 +2,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ShareDB.RichText
+namespace SIL.XForge.Realtime.RichText
 {
     public class DeltaEqualityComparer : IEqualityComparer<Delta>
     {

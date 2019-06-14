@@ -1,6 +1,6 @@
 using System;
 
-namespace ShareDB.RichText
+namespace SIL.XForge.Realtime.RichText
 {
     internal class Diff
     {

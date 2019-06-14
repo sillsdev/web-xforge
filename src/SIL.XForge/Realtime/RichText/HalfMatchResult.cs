@@ -1,6 +1,6 @@
 using System;
 
-namespace ShareDB.RichText
+namespace SIL.XForge.Realtime.RichText
 {
     internal struct HalfMatchResult : IEquatable<HalfMatchResult>
     {
@@ -28,7 +28,7 @@ namespace ShareDB.RichText
         public string CommonMiddle { get; private set; }
         public string Prefix2 { get; private set; }
         public string Suffix2 { get; private set; }
-        public bool IsEmpty { get { return string.IsNullOrEmpty(CommonMiddle); }}
+        public bool IsEmpty { get { return string.IsNullOrEmpty(CommonMiddle); } }
 
         public static readonly HalfMatchResult Empty = new HalfMatchResult();
 
@@ -37,7 +37,7 @@ namespace ShareDB.RichText
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals((HalfMatchResult) obj);
+            return Equals((HalfMatchResult)obj);
         }
 
         public bool Equals(HalfMatchResult other)
@@ -51,10 +51,10 @@ namespace ShareDB.RichText
             unchecked
             {
                 var hashCode = (Prefix1 != null ? Prefix1.GetHashCode() : 0);
-                hashCode = (hashCode*397) ^ (Suffix1 != null ? Suffix1.GetHashCode() : 0);
-                hashCode = (hashCode*397) ^ (CommonMiddle != null ? CommonMiddle.GetHashCode() : 0);
-                hashCode = (hashCode*397) ^ (Prefix2 != null ? Prefix2.GetHashCode() : 0);
-                hashCode = (hashCode*397) ^ (Suffix2 != null ? Suffix2.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Suffix1 != null ? Suffix1.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (CommonMiddle != null ? CommonMiddle.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Prefix2 != null ? Prefix2.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Suffix2 != null ? Suffix2.GetHashCode() : 0);
                 return hashCode;
             }
         }

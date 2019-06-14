@@ -1,5 +1,5 @@
 using Newtonsoft.Json.Linq;
-using ShareDB.RichText;
+using SIL.XForge.Realtime.RichText;
 
 namespace SIL.XForge.Scripture.Services
 {
