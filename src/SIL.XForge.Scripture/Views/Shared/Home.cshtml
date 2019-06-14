@@ -64,9 +64,11 @@
         </div>
         <div id="copyright" class="flex-row prim-center sec-center">
             <div>
-              v @System.Reflection.Assembly.GetEntryAssembly().GetName().Version
-              Copyright &copy; <span class="notranslate"> @DateTime.Now.Year </span><a href="http://www.sil.org">SIL International</a>.
-              Use of this site is governed by our <a href="/terms_and_conditions">terms and conditions</a>.
+              &copy; <span class="notranslate"> @DateTime.Now.Year </span><a target="_blank" href="http://www.sil.org">SIL International</a>
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              v<span>@System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion</span>
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              <a href="/terms_and_conditions">Terms</a>
             </div>
         </div>
     </div>
