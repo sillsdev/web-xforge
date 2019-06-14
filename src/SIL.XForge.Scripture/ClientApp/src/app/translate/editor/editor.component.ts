@@ -29,6 +29,9 @@ import { TextService } from '../../core/text.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
+import { HelpHeroService } from 'src/app/app.module';
+import { HEvent, HEventInfo } from 'src/typings';
+import { SFProjectRoles } from 'src/app/core/models/sfproject-roles';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 export const CONFIDENCE_THRESHOLD_TIMEOUT = 500;
@@ -84,7 +87,8 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     private readonly projectService: SFProjectService,
     private readonly projectUserService: SFProjectUserService,
     private readonly textService: TextService,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private readonly helpHeroService: HelpHeroService
   ) {
     super();
     const wordTokenizer = new LatinWordTokenizer();
@@ -289,6 +293,8 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
             this.targetWordTokenizer
           );
         }
+
+        this.startUserOnboardingTour(); // start HelpHero tour for the Translate feature
       }
     );
   }
@@ -601,5 +607,21 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     const otherRange = this.source.segment.range;
     const otherBounds = this.source.editor.selection.getBounds(otherRange.index);
     this.source.editor.scrollingContainer.scrollTop += otherBounds.top - thisBounds.top;
+  }
+
+  private startUserOnboardingTour() {
+    // HelpHero user-onboarding tour setup
+    let isProjectAdmin: boolean = this.projectUser.role === SFProjectRoles.ParatextAdministrator;
+
+    this.helpHeroService.setProperty({
+      isAdmin: isProjectAdmin
+    });
+
+    // Start the Translate tour
+    if (isProjectAdmin) {
+      this.helpHeroService.startTour('YjhplnLK8XH', { skipIfAlreadySeen: true }); // start Admin tour
+    } else {
+      this.helpHeroService.startTour('EbFyorsmloj', { skipIfAlreadySeen: true }); // start Translator tour
+    }
   }
 }
