@@ -6,13 +6,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
-using ShareDB;
-using ShareDB.RichText;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 
@@ -26,7 +25,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            env.Connection.Get<Delta>(null, null).ReturnsForAnyArgs(env.Document);
+            env.Connection.Get<Delta, Delta>(null, null).ReturnsForAnyArgs(env.Document);
 
             var newFileBuffer = new byte[1000];
             var newFileStream = new MemoryStream(newFileBuffer);
@@ -59,7 +58,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            env.Connection.Get<Delta>("abc", "abc").ReturnsForAnyArgs(env.EmptyDocument);
+            env.Connection.Get<Delta, Delta>("abc", "abc").ReturnsForAnyArgs(env.EmptyDocument);
 
             var newFileBuffer = new byte[1000];
             var newFileStream = new MemoryStream(newFileBuffer);
@@ -83,7 +82,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(textWrittenToDisk, Does.Contain("<usx"));
 
             // Assert that data was created in mongo
-            await env.EmptyDocument.Received().CreateAsync(Arg.Any<Delta>());
+            await env.EmptyDocument.Received().CreateAsync(Arg.Any<Delta>(), OTType.RichText);
         }
 
         [Test]
@@ -91,7 +90,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            env.Connection.Get<Delta>(null, null).ReturnsForAnyArgs(env.Document);
+            env.Connection.Get<Delta, Delta>(null, null).ReturnsForAnyArgs(env.Document);
 
             var newFileBuffer = new byte[1000];
             var newFileStream = new MemoryStream(newFileBuffer);
@@ -112,7 +111,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Assert that mongo text_data records were deleted and re-created.
             await env.Document.ReceivedWithAnyArgs().DeleteAsync();
-            await env.Document.ReceivedWithAnyArgs().CreateAsync(Arg.Any<Delta>());
+            await env.Document.ReceivedWithAnyArgs().CreateAsync(Arg.Any<Delta>(), OTType.RichText);
         }
 
         [Test]
@@ -136,9 +135,7 @@ namespace SIL.XForge.Scripture.Services
 
             public TestEnvironment()
             {
-                Document = Substitute.For<IDocument<Delta>>();
-                Document.CreateAsync(null as Delta).ReturnsForAnyArgs(true);
-                Document.FetchAsync().ReturnsForAnyArgs(true);
+                Document = Substitute.For<IDocument<Delta, Delta>>();
                 Document.Data.Returns(Delta.New()
                     .InsertChapter("1")
                     .InsertVerse("1")
@@ -148,11 +145,8 @@ namespace SIL.XForge.Scripture.Services
                     .InsertVerse("3")
                     .InsertText("This is verse 3.", "verse_1_3")
                     .Insert("\n"));
-                Document.SubmitOpAsync(null as Delta).ReturnsForAnyArgs(true);
-                Document.DeleteAsync().ReturnsForAnyArgs(true);
 
-                EmptyDocument = Substitute.For<IDocument<Delta>>();
-                EmptyDocument.CreateAsync(null as Delta).ReturnsForAnyArgs(true);
+                EmptyDocument = Substitute.For<IDocument<Delta, Delta>>();
 
                 Connection = Substitute.For<IConnection>();
 
@@ -212,8 +206,8 @@ namespace SIL.XForge.Scripture.Services
             }
 
             public IConnection Connection { get; }
-            public IDocument<Delta> Document { get; }
-            public IDocument<Delta> EmptyDocument { get; }
+            public IDocument<Delta, Delta> Document { get; }
+            public IDocument<Delta, Delta> EmptyDocument { get; }
             public ParatextSyncRunner Runner { get; }
             public MemoryRepository<SyncJobEntity> Jobs { get; }
             public MemoryRepository<SFProjectEntity> Projects { get; }

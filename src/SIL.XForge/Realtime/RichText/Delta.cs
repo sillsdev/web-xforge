@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ShareDB.RichText
+namespace SIL.XForge.Realtime.RichText
 {
     public class Delta
     {
@@ -21,24 +21,22 @@ namespace ShareDB.RichText
             return new Delta();
         }
 
-        private readonly List<JToken> _ops;
-
         public Delta()
         {
-            _ops = new List<JToken>();
+            Ops = new List<JToken>();
         }
 
         public Delta(IEnumerable<JToken> ops)
         {
-            _ops = ops.ToList();
+            Ops = ops.ToList();
         }
 
         public Delta(Delta delta)
         {
-            _ops = delta._ops.Select(op => op.DeepClone()).ToList();
+            Ops = delta.Ops.Select(op => op.DeepClone()).ToList();
         }
 
-        public IReadOnlyList<JToken> Ops => _ops;
+        public List<JToken> Ops { get; set; }
 
         public Delta Insert(object text, object attributes = null)
         {
@@ -93,16 +91,16 @@ namespace ShareDB.RichText
 
         public Delta Chop()
         {
-            JToken lastOp = _ops.Count == 0 ? null : _ops[_ops.Count - 1];
+            JToken lastOp = Ops.Count == 0 ? null : Ops[Ops.Count - 1];
             if (lastOp != null && lastOp[RetainType] != null && lastOp[Attributes] == null)
-                _ops.RemoveAt(_ops.Count - 1);
+                Ops.RemoveAt(Ops.Count - 1);
             return this;
         }
 
         public Delta Compose(Delta other)
         {
-            var thisIter = new OpIterator(_ops);
-            var otherIter = new OpIterator(other._ops);
+            var thisIter = new OpIterator(Ops);
+            var otherIter = new OpIterator(other.Ops);
             var delta = new Delta();
             while (thisIter.HasNext() || otherIter.HasNext())
             {
@@ -196,17 +194,17 @@ namespace ShareDB.RichText
 
         public int GetLength()
         {
-            return _ops.Sum(op => op.OpLength());
+            return Ops.Sum(op => op.OpLength());
         }
 
         public bool DeepEquals(Delta other)
         {
-            if (_ops.Count != other._ops.Count)
+            if (Ops.Count != other.Ops.Count)
                 return false;
 
-            for (int i = 0; i < _ops.Count; i++)
+            for (int i = 0; i < Ops.Count; i++)
             {
-                if (!JToken.DeepEquals(_ops[i], other._ops[i]))
+                if (!JToken.DeepEquals(Ops[i], other.Ops[i]))
                     return false;
             }
             return true;
@@ -214,31 +212,31 @@ namespace ShareDB.RichText
 
         public override string ToString()
         {
-            var array = new JArray(_ops);
+            var array = new JArray(Ops);
             return array.ToString();
         }
 
         private Delta Add(JToken newOp)
         {
-            int index = _ops.Count;
-            JToken lastOp = _ops.Count == 0 ? null : _ops[_ops.Count - 1];
+            int index = Ops.Count;
+            JToken lastOp = Ops.Count == 0 ? null : Ops[Ops.Count - 1];
             newOp = (JObject)newOp.DeepClone();
             if (lastOp != null && lastOp.Type == JTokenType.Object)
             {
                 if (newOp.OpType() == DeleteType && lastOp.OpType() == DeleteType)
                 {
                     int delete = (int)lastOp[DeleteType] + (int)newOp[DeleteType];
-                    _ops[index - 1] = new JObject(new JProperty(DeleteType, delete));
+                    Ops[index - 1] = new JObject(new JProperty(DeleteType, delete));
                     return this;
                 }
 
                 if (lastOp.OpType() == DeleteType && newOp.OpType() == InsertType)
                 {
                     index -= 1;
-                    lastOp = index == 0 ? null : _ops[index - 1];
+                    lastOp = index == 0 ? null : Ops[index - 1];
                     if (lastOp?.Type != JTokenType.Object)
                     {
-                        _ops.Insert(0, newOp);
+                        Ops.Insert(0, newOp);
                         return this;
                     }
                 }
@@ -251,7 +249,7 @@ namespace ShareDB.RichText
                         var op = new JObject(new JProperty(InsertType, insert));
                         if (newOp[Attributes]?.Type == JTokenType.Object)
                             op[Attributes] = newOp[Attributes];
-                        _ops[index - 1] = op;
+                        Ops[index - 1] = op;
                         return this;
                     }
                     else if (newOp.OpType() == RetainType && lastOp.OpType() == RetainType)
@@ -260,13 +258,13 @@ namespace ShareDB.RichText
                         var op = new JObject(new JProperty(RetainType, retain));
                         if (newOp[Attributes]?.Type == JTokenType.Object)
                             op[Attributes] = newOp[Attributes];
-                        _ops[index - 1] = op;
+                        Ops[index - 1] = op;
                         return this;
                     }
                 }
             }
 
-            _ops.Insert(index, newOp);
+            Ops.Insert(index, newOp);
             return this;
         }
 

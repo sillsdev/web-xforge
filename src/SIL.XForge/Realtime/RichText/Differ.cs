@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace ShareDB.RichText
+namespace SIL.XForge.Realtime.RichText
 {
     internal static class Differ
     {

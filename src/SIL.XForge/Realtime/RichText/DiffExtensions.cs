@@ -21,7 +21,7 @@
 
 using System.Collections.Generic;
 
-namespace ShareDB.RichText
+namespace SIL.XForge.Realtime.RichText
 {
     internal static class DiffExtensions
     {

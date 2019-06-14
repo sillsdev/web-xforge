@@ -28,10 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ShareDB\ShareDB.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Include="$(RealtimeRoot)node_modules\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

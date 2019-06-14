@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
 
-namespace ShareDB
+namespace SIL.XForge.Realtime
 {
     public interface IConnection : IDisposable
     {
         Task StartAsync();
-        IDocument<T> Get<T>(string collection, string id);
+        IDocument<TData, TOp> Get<TData, TOp>(string collection, string id);
     }
 }

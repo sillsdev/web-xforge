@@ -53,6 +53,8 @@ class RealtimeServer {
     for (const role of options.projectRoles) {
       this.projectRoles.set(role.name, new Set(role.rights));
     }
+    this.connections = new Map();
+    this.connectionIndex = 0;
 
     // Create web servers to serve files and listen to WebSocket connections
     const app = express();
@@ -127,6 +129,22 @@ class RealtimeServer {
     console.log('Realtime Server stopped.');
   }
 
+  connect() {
+    const connection = this.backend.connect();
+    const index = this.connectionIndex++;
+    this.connections.set(index, connection);
+    return index;
+  }
+
+  disconnect(handle) {
+    this.connections.delete(handle);
+  }
+
+  getDoc(handle, collection, id) {
+    const conn = this.connections.get(handle);
+    return conn.get(collection, id);
+  }
+
   getKey(header, done) {
     this.jwksClient.getSigningKey(header.kid, (err, key) => {
       if (err) {
@@ -174,13 +192,13 @@ class RealtimeServer {
   }
 
   async setConnectSession(request) {
-    if (request.req.user != null) {
+    if (request.stream.isServer || request.req.user == null) {
+      request.agent.connectSession = { isServer: true };
+    } else {
       const userId = request.req.user[XF_USER_ID_CLAIM];
       const session = { userId, isServer: false };
       await this.updateUserProjectRoles(session);
       request.agent.connectSession = session;
-    } else {
-      request.agent.connectSession = { isServer: true };
     }
   }
 
@@ -347,6 +365,10 @@ class RealtimeServer {
   }
 }
 
+function createSnapshot(doc) {
+  return { version: doc.version, data: doc.data, type: doc.type == null ? null : doc.type.name };
+}
+
 module.exports = {
   start: (callback, options) => {
     server = new RealtimeServer(options);
@@ -362,5 +384,35 @@ module.exports = {
       server.stop();
     }
     callback();
+  },
+
+  connect: callback => {
+    const handle = server.connect();
+    callback(null, handle);
+  },
+
+  disconnect: (callback, handle) => {
+    server.disconnect(handle);
+    callback(null);
+  },
+
+  createDoc: (callback, handle, collection, id, data, type) => {
+    const doc = server.getDoc(handle, collection, id);
+    doc.create(data, type, err => callback(err, createSnapshot(doc)));
+  },
+
+  fetchDoc: (callback, handle, collection, id) => {
+    const doc = server.getDoc(handle, collection, id);
+    doc.fetch(err => callback(err, createSnapshot(doc)));
+  },
+
+  submitOp: (callback, handle, collection, id, op) => {
+    const doc = server.getDoc(handle, collection, id);
+    doc.submitOp(op, err => callback(err, createSnapshot(doc)));
+  },
+
+  deleteDoc: (callback, handle, collection, id) => {
+    const doc = server.getDoc(handle, collection, id);
+    doc.del(err => callback(err));
   }
 };
