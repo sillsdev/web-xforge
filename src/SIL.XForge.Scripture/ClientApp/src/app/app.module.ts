@@ -20,6 +20,28 @@ import { SharedModule } from './shared/shared.module';
 import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
+import initHelpHero from 'helphero';
+import * as typings from '../typings';
+
+export class HelpHeroService {
+  static $inject: string[] = [];
+  helpHeroClient: typings.HelpHero;
+  constructor() {
+    this.helpHeroClient = initHelpHero('9yZMlWWMsDS');
+  }
+  setIdentity(id: string): void {
+    this.helpHeroClient.identify(id);
+  }
+  setProperty(jObj: any): void {
+    this.helpHeroClient.update(jObj);
+  }
+  startTour(tourId: string, options?: any) {
+    this.helpHeroClient.startTour(tourId, options);
+  }
+  on(eventName: typings.HEventKind, listenerFn: (event: typings.HEvent, info: typings.HEventInfo) => void) {
+    this.helpHeroClient.on(eventName, listenerFn);
+  }
+}
 
 @NgModule({
   declarations: [

@@ -4,7 +4,7 @@ import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import { clone } from '@orbit/utils';
 import { SplitComponent } from 'angular-split';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof, objectId } from 'xforge-common/utils';
@@ -23,6 +23,9 @@ import { AnswerAction } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
+import { HelpHeroService } from 'src/app/app.module';
+import { HEvent, HEventInfo } from 'src/typings';
+import { SFProjectRoles } from 'src/app/core/models/sfproject-roles';
 
 interface Summary {
   unread: number;
@@ -78,6 +81,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     private activatedRoute: ActivatedRoute,
     private textService: TextService,
     private readonly userService: UserService,
+    private readonly helpHeroService: HelpHeroService,
     private media: MediaObserver
   ) {
     super();
@@ -157,6 +161,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
             .getManyIncluded<SFProjectUser>(this.project.users)
             .find(pu => (pu.user == null ? '' : pu.user.id) === this.userService.currentUserId);
           this.chapters = this.text.chapters.map(c => c.number);
+
           if (prevTextId !== this.text.id) {
             const bindCheckingDataPromises: Promise<void>[] = [];
             this.questions = [];
@@ -174,6 +179,8 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
             this._chapter = undefined;
             this.chapter = 1;
           }
+
+          this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
         }
       }
     );
@@ -434,6 +441,43 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         this.summary.read++;
       } else {
         this.summary.unread++;
+      }
+    }
+  }
+
+  private startUserOnboardingTour() {
+    // HelpHero user-onboarding tour setup
+    let isProjectAdmin: boolean = this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
+    let isDiscussionEnabled: boolean = this.project.checkingConfig.usersSeeEachOthersResponses;
+    let isInvitingEnabled: boolean = this.project.checkingConfig.share.enabled;
+
+    this.helpHeroService.setProperty({
+      isAdmin: isProjectAdmin,
+      discussionEnabled: isDiscussionEnabled,
+      invitingEnabled: isInvitingEnabled
+    });
+
+    // Start the Community Checking tour
+    if (isProjectAdmin) {
+      this.helpHeroService.startTour('sLbG6FRjjVo', { skipIfAlreadySeen: true }); // start Admin tour
+    } else {
+      if (isDiscussionEnabled) {
+        this.helpHeroService.startTour('39HmnsRplaw', { skipIfAlreadySeen: true }); // start Reviewer tour w/ discussion
+        this.helpHeroService.on('tour_completed', (event: HEvent, info: HEventInfo) => {
+          if (isInvitingEnabled) {
+            this.helpHeroService.startTour('MexTla8sdju', { skipIfAlreadySeen: true }); // invite tour
+            this.helpHeroService.on('tour_completed', (event: HEvent, info: HEventInfo) => {
+              this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true }); // show end of Reviewer tour
+            });
+          } else {
+            this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true }); // show end of Reviewer tour
+          }
+        });
+      } else {
+        this.helpHeroService.startTour('1ikmHlDXktB', { skipIfAlreadySeen: true }); // start Reviewer tour (w/o discussion)
+        this.helpHeroService.on('tour_completed', (event: HEvent, info: HEventInfo) => {
+          this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true }); // show end of Reviewer tour
+        });
       }
     }
   }
