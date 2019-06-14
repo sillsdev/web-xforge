@@ -34,7 +34,7 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
     email: new FormControl('', [Validators.required, XFValidators.email]),
     mobilePhone: new FormControl(),
     contactMethod: new FormControl(),
-    birthday: new FormControl(),
+    birthday: new FormControl(null, [Validators.maxLength(10)]),
     gender: new FormControl()
   });
 
