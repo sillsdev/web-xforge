@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from 'xforge-common/auth.guard';
+import { ErrorComponent } from 'xforge-common/error/error.component';
 import { MyAccountComponent } from 'xforge-common/my-account/my-account.component';
 import { SystemAdminAuthGuard } from 'xforge-common/system-admin-auth.guard';
 import { SystemAdministrationComponent } from 'xforge-common/system-administration/system-administration.component';
@@ -14,6 +15,7 @@ import { SyncComponent } from './sync/sync.component';
 
 const routes: Routes = [
   { path: 'connect-project', component: ConnectProjectComponent, canActivate: [AuthGuard] },
+  { path: 'error', component: ErrorComponent },
   { path: 'my-account', component: MyAccountComponent, canActivate: [AuthGuard] },
   { path: 'projects/:projectId/settings', component: SettingsComponent, canActivate: [SFAdminAuthGuard] },
   { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SFAdminAuthGuard] },
