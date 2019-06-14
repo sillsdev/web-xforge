@@ -2,7 +2,7 @@ using System;
 using System.Text;
 using System.Web;
 
-namespace ShareDB.RichText
+namespace SIL.XForge.Realtime.RichText
 {
     internal static class TextUtil
     {
@@ -14,7 +14,7 @@ namespace ShareDB.RichText
         /// <param name="i1">start index of substring in text1</param>
         /// <param name="i2">start index of substring in text2</param>
         /// <returns>The number of characters common to the start of each string.</returns>
-        internal static int CommonPrefix(string text1, string text2, int i1= 0, int i2 = 0)
+        internal static int CommonPrefix(string text1, string text2, int i1 = 0, int i2 = 0)
         {
             var l1 = text1.Length - i1;
             var l2 = text2.Length - i2;
@@ -22,7 +22,7 @@ namespace ShareDB.RichText
             var n = Math.Min(l1, l2);
             for (var i = 0; i < n; i++)
             {
-                if (text1[i+i1] != text2[i+i2])
+                if (text1[i + i1] != text2[i + i2])
                 {
                     return i;
                 }
@@ -191,15 +191,15 @@ namespace ShareDB.RichText
         {
             var longtext = text1.Length > text2.Length ? text1 : text2;
             var shorttext = text1.Length > text2.Length ? text2 : text1;
-            if (longtext.Length < 4 || shorttext.Length*2 < longtext.Length)
+            if (longtext.Length < 4 || shorttext.Length * 2 < longtext.Length)
             {
                 return HalfMatchResult.Empty; // Pointless.
             }
 
             // First check if the second quarter is the seed for a half-match.
-            var hm1 = HalfMatchI(longtext, shorttext, (longtext.Length+3)/4);
+            var hm1 = HalfMatchI(longtext, shorttext, (longtext.Length + 3) / 4);
             // Check again based on the third quarter.
-            var hm2 = HalfMatchI(longtext, shorttext, (longtext.Length+1)/2);
+            var hm2 = HalfMatchI(longtext, shorttext, (longtext.Length + 1) / 2);
 
             if (hm1.IsEmpty && hm2.IsEmpty)
                 return hm1;

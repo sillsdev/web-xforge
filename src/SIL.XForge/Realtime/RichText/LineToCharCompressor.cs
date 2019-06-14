@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ShareDB.RichText
+namespace SIL.XForge.Realtime.RichText
 {
     internal class LineToCharCompressor
     {
@@ -23,7 +23,7 @@ namespace ShareDB.RichText
                 if (!_lineHash.ContainsKey(line))
                 {
                     _lineArray.Add(line);
-                     // "\u0000" is a valid character, but various debuggers don't like it.
+                    // "\u0000" is a valid character, but various debuggers don't like it.
                     // Therefore, add Count, not Count - 1
                     _lineHash.Add(line, _lineArray.Count);
                 }

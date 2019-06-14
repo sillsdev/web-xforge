@@ -35,7 +35,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ShareDB\ShareDB.csproj" />
     <ProjectReference Include="..\SIL.XForge\SIL.XForge.csproj" />
   </ItemGroup>
 

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ShareDB;
 
 namespace SIL.XForge.Realtime
 {

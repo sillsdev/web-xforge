@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace ShareDB.RichText
+namespace SIL.XForge.Realtime.RichText
 {
     internal static class DiffList
     {
@@ -172,7 +172,7 @@ namespace ShareDB.RichText
         {
             var pointer = 0;  // Cursor in text1
 
-            var tokens = delta.Split(new[] { "\t" },  StringSplitOptions.None);
+            var tokens = delta.Split(new[] { "\t" }, StringSplitOptions.None);
 
             foreach (var token in tokens)
             {
@@ -326,7 +326,7 @@ namespace ShareDB.RichText
             // e.g: A<ins>BA</ins>C -> <ins>AB</ins>AC
             var changes = false;
             // Intentionally ignore the first and last element (don't need checking).
-            for (var i = 1;  i < diffs.Count - 1; i++)
+            for (var i = 1; i < diffs.Count - 1; i++)
             {
                 var previous = diffs[i - 1];
                 var current = diffs[i];
@@ -343,7 +343,7 @@ namespace ShareDB.RichText
                         diffs.Splice(i - 1, 1);
                         changes = true;
                     }
-                    else if (current.Text.StartsWith(next.Text,StringComparison.Ordinal))
+                    else if (current.Text.StartsWith(next.Text, StringComparison.Ordinal))
                     {
                         // Shift the edit over the next equality.
                         diffs[i - 1] = previous.Replace(previous.Text + next.Text);
