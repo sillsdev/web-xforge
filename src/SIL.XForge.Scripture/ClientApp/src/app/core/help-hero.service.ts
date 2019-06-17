@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
+import { HelpHero, HEvent, HEventInfo, HEventKind } from 'help-hero';
 import initHelpHero from 'helphero';
-import { HelpHero, HEventKind, HEvent, HEventInfo } from 'help-hero';
 
 @Injectable({
   providedIn: 'root'
