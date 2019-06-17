@@ -30,7 +30,7 @@ import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
 import { HelpHeroService } from '../../core/help-hero.service';
-import { HEvent, HEventInfo } from 'src/typings/help-hero';
+import { HEvent, HEventInfo } from 'help-hero';
 import { SFProjectRoles } from '../../core/models/sfproject-roles';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;

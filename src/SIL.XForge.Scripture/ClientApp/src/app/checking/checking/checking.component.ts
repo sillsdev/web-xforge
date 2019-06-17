@@ -25,7 +25,7 @@ import { CommentAction } from './checking-answers/checking-comments/checking-com
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
 import { HelpHeroService } from '../../core/help-hero.service';
-import { HEvent, HEventInfo } from 'src/typings/help-hero';
+import { HEvent, HEventInfo } from 'help-hero';
 import { SFProjectRoles } from '../../core/models/sfproject-roles';
 
 interface Summary {
