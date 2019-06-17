@@ -162,9 +162,7 @@ describe('QuestionDialogComponent', () => {
     env.clickElement(env.scriptureStartInputIcon);
     flush();
     verify(env.dialogSpy.open(anything(), anything())).once();
-    const dataPassedToDialog = (capture(env.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>)
-      .data as ScriptureChooserDialogData;
-    expect(dataPassedToDialog.input).toEqual({
+    expect(env.dataPassedToDialog.input).toEqual({
       book: 'MAT',
       chapter: '3',
       verse: '4',
@@ -183,17 +181,20 @@ describe('QuestionDialogComponent', () => {
     env.clickElement(env.scriptureEndInputIcon);
     flush();
     verify(env.dialogSpy.open(anything(), anything())).once();
-    const dataPassedToDialog = (capture(env.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>)
-      .data as ScriptureChooserDialogData;
     // Dialog receives unhelpful input value that can be ignored.
-    expect(dataPassedToDialog.input).toEqual({
+    expect(env.dataPassedToDialog.input).toEqual({
       book: 'GEN',
       chapter: '5',
       verse: '6',
       versification: undefined
     });
     // rangeStart should have been passed in, and from scriptureStart value.
-    expect(dataPassedToDialog.rangeStart).toEqual({ book: 'LUK', chapter: '1', verse: '1', versification: undefined });
+    expect(env.dataPassedToDialog.rangeStart).toEqual({
+      book: 'LUK',
+      chapter: '1',
+      verse: '1',
+      versification: undefined
+    });
     flush();
     expect(env.component.scriptureEnd.value).toEqual('LUK 1:2');
   }));
@@ -206,18 +207,28 @@ describe('QuestionDialogComponent', () => {
     env.clickElement(env.scriptureStartInputIcon);
     flush();
     verify(env.dialogSpy.open(anything(), anything())).once();
-    const dataPassedToDialog = (capture(env.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>)
-      .data as ScriptureChooserDialogData;
-    expect(dataPassedToDialog.input).toEqual({
+    expect(env.dataPassedToDialog.input).toEqual({
       book: 'LUK',
       chapter: '1',
       verse: '1',
       versification: undefined
     });
     // rangeStart should not have been passed in.
-    expect(dataPassedToDialog.rangeStart).toBeUndefined();
+    expect(env.dataPassedToDialog.rangeStart).toBeUndefined();
     flush();
     expect(env.component.scriptureStart.value).toEqual('LUK 1:2');
+  }));
+
+  it('disables end-reference if start-reference is invalid', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    env.inputValue(env.scriptureStartInput, 'LUK 1:1');
+    expect(env.component.scriptureEnd.disabled).toBe(false);
+    env.inputValue(env.scriptureStartInput, 'LUK 99:1');
+    expect(env.component.scriptureEnd.disabled).toBe(true);
+    // Gets re-enabled
+    env.inputValue(env.scriptureStartInput, 'LUK 1:1');
+    expect(env.component.scriptureEnd.disabled).toBe(false);
   }));
 });
 
@@ -335,6 +346,10 @@ class TestEnvironment {
 
   get scriptureEndInput(): HTMLInputElement {
     return this.overlayContainerElement.querySelector('#scripture-end');
+  }
+
+  get dataPassedToDialog(): ScriptureChooserDialogData {
+    return (capture(this.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>).data;
   }
 
   get questionInput(): HTMLTextAreaElement {
