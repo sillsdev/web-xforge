@@ -23,11 +23,11 @@ import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
 import initHelpHero from 'helphero';
-import * as typings from '../typings';
+import * as helphero from 'src/typings/help-hero';
 
 export class HelpHeroService {
   static $inject: string[] = [];
-  helpHeroClient: typings.HelpHero;
+  helpHeroClient: helphero.HelpHero;
   constructor() {
     this.helpHeroClient = initHelpHero('9yZMlWWMsDS');
   }
@@ -40,7 +40,7 @@ export class HelpHeroService {
   startTour(tourId: string, options?: any) {
     this.helpHeroClient.startTour(tourId, options);
   }
-  on(eventName: typings.HEventKind, listenerFn: (event: typings.HEvent, info: typings.HEventInfo) => void) {
+  on(eventName: helphero.HEventKind, listenerFn: (event: helphero.HEvent, info: helphero.HEventInfo) => void) {
     this.helpHeroClient.on(eventName, listenerFn);
   }
 }
