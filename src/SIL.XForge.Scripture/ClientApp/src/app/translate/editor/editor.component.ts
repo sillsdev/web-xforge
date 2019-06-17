@@ -610,7 +610,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
 
   private startUserOnboardingTour() {
     // HelpHero user-onboarding tour setup
-    let isProjectAdmin: boolean = this.projectUser.role === SFProjectRoles.ParatextAdministrator;
+    const isProjectAdmin: boolean = this.projectUser.role === SFProjectRoles.ParatextAdministrator;
 
     this.helpHeroService.setProperty({
       isAdmin: isProjectAdmin
