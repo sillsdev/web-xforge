@@ -40,7 +40,7 @@
 <div class="answers-container">
   <ng-container *ngIf="!answerFormVisible && answers.length && (currentUserTotalAnswers || isAdministrator)">
     <h3>{{ totalAnswersHeading }}</h3>
-    <div class="answer" *ngFor="let answer of answers">
+    <div class="answer" *ngFor="let answer of answers" [ngClass]="{ 'answer-unread': !hasUserReadAnswer(answer) }">
       <div class="like">
         <mdc-icon id="like-answer" (click)="likeAnswer(answer)">thumb_up</mdc-icon
         ><span class="like-count">{{ answer.likes.length }}</span>

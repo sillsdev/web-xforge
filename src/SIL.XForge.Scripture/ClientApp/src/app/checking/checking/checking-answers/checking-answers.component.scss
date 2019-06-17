@@ -39,6 +39,21 @@
     padding: 10px 0;
     border-top: 1px solid $borderColor;
 
+    &.answer-unread {
+      animation-name: answer-unread;
+      animation-duration: 10s;
+      animation-fill-mode: forwards;
+
+      @keyframes answer-unread {
+        from {
+          background: $answerUnread;
+        }
+        to {
+          background: #fff;
+        }
+      }
+    }
+
     .like {
       display: flex;
       flex-direction: column;
@@ -56,6 +71,7 @@
     }
     .answer-detail {
       flex: 1;
+      padding-right: 15px;
       .actions {
         display: flex;
         justify-content: flex-end;

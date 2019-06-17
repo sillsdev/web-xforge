@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { clone } from '@orbit/utils';
 import { UserService } from 'xforge-common/user.service';
 import { Answer } from '../../../../core/models/answer';
 import { Comment } from '../../../../core/models/comment';
@@ -17,7 +18,7 @@ export interface CommentAction {
   templateUrl: './checking-comments.component.html',
   styleUrls: ['./checking-comments.component.scss']
 })
-export class CheckingCommentsComponent {
+export class CheckingCommentsComponent implements OnInit {
   @Input() projectCurrentUser: SFProjectUser;
   @Output() action: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
   @Input() comments: Comment[] = [];
@@ -27,11 +28,28 @@ export class CheckingCommentsComponent {
   commentFormVisible: boolean = false;
   maxCommentsToShow: number = 3;
   showAllComments: boolean = false;
+  private initUserCommentRefsRead: string[] = [];
 
   constructor(private userService: UserService) {}
 
   get isAdministrator(): boolean {
     return this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
+  }
+
+  get showMoreCommentsLabel(): string {
+    let label = 'Show ' + (this.comments.length - (this.maxCommentsToShow - 1)) + ' more comments';
+    let counter = 1;
+    let unread = 0;
+    for (const comment of this.comments) {
+      if (counter >= this.maxCommentsToShow) {
+        if (!this.hasUserReadComment(comment)) {
+          unread++;
+        }
+      }
+      counter++;
+    }
+    label += unread ? ' - ' + unread + ' unread' : '';
+    return label;
   }
 
   editComment(comment: Comment) {
@@ -55,12 +73,20 @@ export class CheckingCommentsComponent {
     return false;
   }
 
+  hasUserReadComment(comment: Comment): boolean {
+    return this.initUserCommentRefsRead.includes(comment.id) || this.projectCurrentUser.user.id === comment.ownerRef;
+  }
+
   hideCommentForm() {
     this.commentFormVisible = false;
     this.activeComment = undefined;
     this.action.emit({
       action: 'hide-form'
     });
+  }
+
+  ngOnInit(): void {
+    this.initUserCommentRefsRead = clone(this.projectCurrentUser.commentRefsRead);
   }
 
   showComments(): void {
