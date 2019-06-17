@@ -22,28 +22,6 @@ import { SharedModule } from './shared/shared.module';
 import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
-import initHelpHero from 'helphero';
-import * as helphero from 'src/typings/help-hero';
-
-export class HelpHeroService {
-  static $inject: string[] = [];
-  helpHeroClient: helphero.HelpHero;
-  constructor() {
-    this.helpHeroClient = initHelpHero('9yZMlWWMsDS');
-  }
-  setIdentity(id: string): void {
-    this.helpHeroClient.identify(id);
-  }
-  setProperty(jObj: any): void {
-    this.helpHeroClient.update(jObj);
-  }
-  startTour(tourId: string, options?: any) {
-    this.helpHeroClient.startTour(tourId, options);
-  }
-  on(eventName: helphero.HEventKind, listenerFn: (event: helphero.HEvent, info: helphero.HEventInfo) => void) {
-    this.helpHeroClient.on(eventName, listenerFn);
-  }
-}
 
 @NgModule({
   declarations: [

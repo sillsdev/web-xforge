@@ -29,8 +29,8 @@ import { TextService } from '../../core/text.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
-import { HelpHeroService } from 'src/app/app.module';
-import { HEvent, HEventInfo } from 'src/typings';
+import { HelpHeroService } from 'src/app/core/help-hero.service';
+import { HEvent, HEventInfo } from 'src/typings/help-hero';
 import { SFProjectRoles } from 'src/app/core/models/sfproject-roles';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;

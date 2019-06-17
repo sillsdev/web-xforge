@@ -4,7 +4,7 @@ import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import { clone } from '@orbit/utils';
 import { SplitComponent } from 'angular-split';
-import { switchMap, tap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof, objectId } from 'xforge-common/utils';
@@ -24,8 +24,8 @@ import { AnswerAction } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
-import { HelpHeroService } from 'src/app/app.module';
-import { HEvent, HEventInfo } from 'src/typings';
+import { HelpHeroService } from 'src/app/core/help-hero.service';
+import { HEvent, HEventInfo } from 'src/typings/help-hero';
 import { SFProjectRoles } from 'src/app/core/models/sfproject-roles';
 
 interface Summary {
