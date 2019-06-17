@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { clone } from '@orbit/utils';
 import { UserService } from 'xforge-common/user.service';
 import { Answer } from '../../../core/models/answer';
 import { Comment } from '../../../core/models/comment';
@@ -28,8 +29,9 @@ export class CheckingAnswersComponent {
       this.hideAnswerForm();
     }
     this._question = question;
+    this.initUserAnswerRefsRead = clone(this.projectCurrentUser.answerRefsRead);
   }
-  @Input() comments: Comment[] = [];
+  @Input() comments: Readonly<Comment[]> = [];
   @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
   @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
 
@@ -39,6 +41,7 @@ export class CheckingAnswersComponent {
   });
   answerFormVisible: boolean = false;
   private _question: Question;
+  private initUserAnswerRefsRead: string[] = [];
 
   constructor(private userService: UserService) {}
 
@@ -107,6 +110,10 @@ export class CheckingAnswersComponent {
       return true;
     }
     return false;
+  }
+
+  hasUserReadAnswer(answer: Answer): boolean {
+    return this.initUserAnswerRefsRead.includes(answer.id) || this.projectCurrentUser.user.id === answer.ownerRef;
   }
 
   hideAnswerForm() {

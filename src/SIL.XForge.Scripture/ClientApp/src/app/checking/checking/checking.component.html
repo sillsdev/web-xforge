@@ -26,6 +26,7 @@
                 (update)="questionUpdated($event)"
                 (changed)="questionChanged($event)"
                 [questions]="questions"
+                [comments]="comments"
                 [project]="project"
                 [projectCurrentUser]="projectCurrentUser"
               ></app-checking-questions>
@@ -44,10 +45,10 @@
                 <div #textNameAnchor mdcMenuSurfaceAnchor>
                   <h2 class="chapter-select" (click)="chapterMenu.open = !chapterMenu.open">
                     <span>{{ text?.name }}</span>
-                    <div>
+                    <span>
                       {{ chapter }} <mdc-icon *ngIf="!chapterMenu.open">keyboard_arrow_down</mdc-icon
                       ><mdc-icon *ngIf="chapterMenu.open">keyboard_arrow_up</mdc-icon>
-                    </div>
+                    </span>
                   </h2>
                   <mdc-menu
                     #chapterMenu

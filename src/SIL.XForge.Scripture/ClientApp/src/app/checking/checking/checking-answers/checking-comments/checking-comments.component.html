@@ -1,6 +1,7 @@
 <div *ngFor="let comment of comments; index as i">
   <div
     class="comment"
+    [ngClass]="{ 'comment-unread': !hasUserReadComment(comment) }"
     *ngIf="
       (!activeComment || (commentFormVisible && activeComment.id !== comment.id)) &&
       (i + 1 < maxCommentsToShow || comments.length == maxCommentsToShow || showAllComments)
@@ -40,7 +41,7 @@
   (click)="showComments()"
   class="show-all-comments"
 >
-  Show {{ comments.length - (maxCommentsToShow - 1) }} more comments
+  {{ showMoreCommentsLabel }}
 </button>
 <button
   *ngIf="!commentFormVisible && (comments.length <= maxCommentsToShow || showAllComments)"

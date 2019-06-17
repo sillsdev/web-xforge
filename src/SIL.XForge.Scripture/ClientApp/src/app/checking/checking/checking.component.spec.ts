@@ -107,8 +107,11 @@ describe('CheckingComponent', () => {
 
     it('question shows answers icon and total', fakeAsync(() => {
       env.setupAdminScenarioData();
-      const question = env.selectQuestion(6);
-      expect(question.query(By.css('.view-answers span')).nativeElement.textContent).toEqual('1');
+      const question = env.selectQuestion(6, false);
+      expect(env.getUnread(question)).toEqual(1);
+      tick(env.questionReadTimer);
+      env.fixture.detectChanges();
+      expect(env.getUnread(question)).toEqual(0);
     }));
   });
 
@@ -285,6 +288,18 @@ describe('CheckingComponent', () => {
         expect(env.getAnswerComments(0).length).toBe(4);
         expect(env.getShowAllCommentsButton(0)).toBeFalsy();
         expect(env.getAddCommentButton(0)).toBeTruthy();
+      }));
+
+      it('comments unread only mark as read when the show more button is clicked', fakeAsync(() => {
+        env.setupAdminScenarioData();
+        const question = env.selectQuestion(8, false);
+        expect(env.getUnread(question)).toEqual(4);
+        tick(env.questionReadTimer);
+        env.fixture.detectChanges();
+        expect(env.getUnread(question)).toEqual(2);
+        env.clickButton(env.getShowAllCommentsButton(0));
+        tick(1);
+        expect(env.getUnread(question)).toEqual(0);
       }));
     });
   });
@@ -478,6 +493,10 @@ class TestEnvironment {
     return this.getAnswer(answerIndex).query(By.css('.save-comment'));
   }
 
+  getUnread(question: DebugElement): number {
+    return parseInt(question.query(By.css('.view-answers span')).nativeElement.textContent, 10);
+  }
+
   getYourCommentField(answerIndex: number): DebugElement {
     return this.getAnswer(answerIndex).query(By.css('mdc-text-field[formControlName="commentText"]'));
   }
@@ -637,7 +656,7 @@ class TestEnvironment {
     for (let commentNumber = 1; commentNumber <= 4; commentNumber++) {
       commentData.push({
         id: 'c' + commentNumber + 'Id',
-        ownerRef: this.adminUser.id,
+        ownerRef: this.reviewerUser.id,
         projectRef: undefined,
         answerRef: 'a8Id',
         text: 'Comment ' + commentNumber + ' on question 8',

@@ -4,6 +4,7 @@ import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { Answer } from '../../../core/models/answer';
+import { Comment } from '../../../core/models/comment';
 import { Question } from '../../../core/models/question';
 import { SFProject } from '../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../core/models/sfproject-roles';
@@ -18,9 +19,10 @@ import { SFProjectUserService } from '../../../core/sfproject-user.service';
 export class CheckingQuestionsComponent extends SubscriptionDisposable {
   @Input() project: SFProject;
   @Input() projectCurrentUser: SFProjectUser;
+  @Input() comments: Readonly<Comment[]> = [];
   @Output() update: EventEmitter<Question> = new EventEmitter<Question>();
   @Output() changed: EventEmitter<Question> = new EventEmitter<Question>();
-  _questions: Question[] = [];
+  _questions: Readonly<Question[]> = [];
   activeQuestion: Question;
   activeQuestionSubject: Subject<Question> = new Subject<Question>();
 
@@ -28,8 +30,38 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     super();
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
     this.subscribe(this.activeQuestionSubject.pipe(debounceTime(2000)), question => {
-      if (!this.hasUserRead(question)) {
+      let updateRequired = false;
+      if (!this.hasUserReadQuestion(question)) {
         this.projectCurrentUser.questionRefsRead.push(question.id);
+        updateRequired = true;
+      }
+      if (this.hasUserAnswered(question) || this.isAdministrator) {
+        for (const answer of this.getAnswers(question)) {
+          if (!this.hasUserReadAnswer(answer)) {
+            this.projectCurrentUser.answerRefsRead.push(answer.id);
+            updateRequired = true;
+          }
+        }
+      }
+      for (const answer of this.getAnswers(question)) {
+        const comments = this.getAnswerComments(answer);
+        let readLimit = 3;
+        if (comments.length > 3) {
+          readLimit = 2;
+        }
+        let commentCount = 0;
+        for (const comment of comments) {
+          if (!this.hasUserReadComment(comment)) {
+            this.projectCurrentUser.commentRefsRead.push(comment.id);
+            updateRequired = true;
+          }
+          commentCount++;
+          if (commentCount === readLimit) {
+            break;
+          }
+        }
+      }
+      if (updateRequired) {
         this.projectUserService.update(this.projectCurrentUser).then(() => {
           this.update.emit(question);
         });
@@ -45,11 +77,11 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     return this.questions.findIndex(question => question.id === this.activeQuestion.id);
   }
 
-  get questions(): Question[] {
+  get questions(): Readonly<Question[]> {
     return this._questions;
   }
 
-  @Input() set questions(questions: Question[]) {
+  @Input() set questions(questions: Readonly<Question[]>) {
     if (questions.length) {
       this.activateQuestion(questions[Object.keys(questions)[0]]);
     } else {
@@ -66,12 +98,32 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     }
   }
 
+  getAnswerComments(answer: Answer): Comment[] {
+    return this.comments
+      .filter(comment => comment.answerRef === answer.id)
+      .sort((a: Comment, b: Comment) => {
+        return new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime();
+      });
+  }
+
   getUnreadAnswers(question: Question): number {
+    let unread = 0;
     if (!this.isAdministrator) {
-      return 0;
+      return unread;
     }
-    // TODO: (NW) Limit to unread answers and comments
-    return this.getAnswers(question).length;
+    for (const answer of this.getAnswers(question)) {
+      if (!this.hasUserReadAnswer(answer)) {
+        unread++;
+      }
+    }
+    for (const answer of this.getAnswers(question)) {
+      for (const comment of this.getAnswerComments(answer)) {
+        if (!this.hasUserReadComment(comment)) {
+          unread++;
+        }
+      }
+    }
+    return unread;
   }
 
   checkCanChangeQuestion(newIndex: number): boolean {
@@ -82,9 +134,23 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     return question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length > 0;
   }
 
-  hasUserRead(question: Question): boolean {
+  hasUserReadQuestion(question: Question): boolean {
     return this.projectCurrentUser.questionRefsRead
       ? this.projectCurrentUser.questionRefsRead.includes(question.id)
+      : false;
+  }
+
+  hasUserReadAnswer(answer: Answer): boolean {
+    return this.projectCurrentUser.answerRefsRead
+      ? this.projectCurrentUser.answerRefsRead.includes(answer.id) ||
+          this.projectCurrentUser.user.id === answer.ownerRef
+      : false;
+  }
+
+  hasUserReadComment(comment: Comment): boolean {
+    return this.projectCurrentUser.commentRefsRead
+      ? this.projectCurrentUser.commentRefsRead.includes(comment.id) ||
+          this.projectCurrentUser.user.id === comment.ownerRef
       : false;
   }
 

@@ -19,6 +19,7 @@ import { SFProjectUser } from '../../core/models/sfproject-user';
 import { Text } from '../../core/models/text';
 import { TextDataId } from '../../core/models/text-data';
 import { getTextJsonDataIdStr, TextJsonDataId } from '../../core/models/text-json-data-id';
+import { SFProjectUserService } from '../../core/sfproject-user.service';
 import { TextService } from '../../core/text.service';
 import { AnswerAction } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
@@ -79,7 +80,8 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     private activatedRoute: ActivatedRoute,
     private textService: TextService,
     private readonly userService: UserService,
-    private media: MediaObserver
+    private media: MediaObserver,
+    private projectUserService: SFProjectUserService
   ) {
     super();
   }
@@ -162,18 +164,17 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
             const bindCheckingDataPromises: Promise<void>[] = [];
             this.questions = [];
             for (const chapter of this.chapters) {
-              bindCheckingDataPromises.push(
-                this.bindCheckingData(new TextJsonDataId(this.text.id, chapter)).then(() => {
-                  this.questions = this.questions.concat(
-                    this.checkingData.questionData[getTextJsonDataIdStr(this.text.id, chapter)].data
-                  );
-                })
-              );
+              bindCheckingDataPromises.push(this.bindCheckingData(new TextJsonDataId(this.text.id, chapter)));
             }
             // Trigger the chapter setter to bind the relevant comments.
             await Promise.all(bindCheckingDataPromises);
             this._chapter = undefined;
             this.chapter = 1;
+            for (const chapter of this.chapters) {
+              this.questions = this.questions.concat(
+                this.checkingData.questionData[getTextJsonDataIdStr(this.text.id, chapter)].data
+              );
+            }
           }
         }
       }
@@ -255,6 +256,17 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       comment.text = commentAction.text;
       comment.dateModified = dateNow;
       this.saveComment(comment);
+    } else if (commentAction.action === 'show-comments') {
+      let updateRequired = false;
+      for (const comment of this.comments) {
+        if (!this.questionsPanel.hasUserReadComment(comment)) {
+          this.projectCurrentUser.commentRefsRead.push(comment.id);
+          updateRequired = true;
+        }
+      }
+      if (updateRequired) {
+        this.projectUserService.update(this.projectCurrentUser);
+      }
     } else if (commentAction.action === 'delete') {
       this.deleteComment(commentAction.comment);
     }
@@ -431,7 +443,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     for (const question of this.questions) {
       if (this.questionsPanel.hasUserAnswered(question)) {
         this.summary.answered++;
-      } else if (this.questionsPanel.hasUserRead(question)) {
+      } else if (this.questionsPanel.hasUserReadQuestion(question)) {
         this.summary.read++;
       } else {
         this.summary.unread++;

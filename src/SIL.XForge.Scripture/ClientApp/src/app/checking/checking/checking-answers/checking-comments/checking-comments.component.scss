@@ -6,6 +6,21 @@
   border-bottom: 1px solid $borderColor;
   padding: 10px 0;
 
+  &.comment-unread {
+    animation-name: comment-unread;
+    animation-duration: 10s;
+    animation-fill-mode: forwards;
+
+    @keyframes comment-unread {
+      from {
+        background: $commentUnread;
+      }
+      to {
+        background: #fff;
+      }
+    }
+  }
+
   .divider {
     padding: 0 10px;
   }
