@@ -10,6 +10,7 @@ import {
   ValidationErrors,
   Validators
 } from '@angular/forms';
+import { XFValidators } from 'xforge-common/xfvalidators';
 import { Question } from '../../core/models/question';
 import { ScrVers } from '../../core/models/scripture/scr-vers';
 import { VerseRef } from '../../core/models/scripture/verse-ref';
@@ -60,7 +61,7 @@ export class QuestionDialogComponent implements OnInit {
     {
       scriptureStart: new FormControl('', [Validators.required, SFValidators.verseStr(this.data.textsByBook)]),
       scriptureEnd: new FormControl('', [SFValidators.verseStr(this.data.textsByBook)]),
-      questionText: new FormControl('', [Validators.required])
+      questionText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])
     },
     this.validateVerseAfterStart
   );
