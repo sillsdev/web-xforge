@@ -29,9 +29,9 @@ import { TextService } from '../../core/text.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
-import { HelpHeroService } from 'src/app/core/help-hero.service';
+import { HelpHeroService } from '../../core/help-hero.service';
 import { HEvent, HEventInfo } from 'src/typings/help-hero';
-import { SFProjectRoles } from 'src/app/core/models/sfproject-roles';
+import { SFProjectRoles } from '../../core/models/sfproject-roles';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 export const CONFIDENCE_THRESHOLD_TIMEOUT = 500;
@@ -616,6 +616,9 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     this.helpHeroService.setProperty({
       isAdmin: isProjectAdmin
     });
+
+    // tell HelpHero to remember this user to make sure we won't show them the tour again later
+    this.helpHeroService.setIdentity(this.projectUser.id);
 
     // Start the Translate tour
     if (isProjectAdmin) {

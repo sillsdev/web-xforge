@@ -24,9 +24,9 @@ import { AnswerAction } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
-import { HelpHeroService } from 'src/app/core/help-hero.service';
+import { HelpHeroService } from '../../core/help-hero.service';
 import { HEvent, HEventInfo } from 'src/typings/help-hero';
-import { SFProjectRoles } from 'src/app/core/models/sfproject-roles';
+import { SFProjectRoles } from '../../core/models/sfproject-roles';
 
 interface Summary {
   unread: number;
@@ -162,7 +162,6 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
             .getManyIncluded<SFProjectUser>(this.project.users)
             .find(pu => (pu.user == null ? '' : pu.user.id) === this.userService.currentUserId);
           this.chapters = this.text.chapters.map(c => c.number);
-
           if (prevTextId !== this.text.id) {
             const bindCheckingDataPromises: Promise<void>[] = [];
             this.questions = [];
@@ -458,26 +457,36 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       invitingEnabled: isInvitingEnabled
     });
 
-    // Start the Community Checking tour
+    // tell HelpHero to remember this user to make sure we won't show them the tour again later
+    this.helpHeroService.setIdentity(this.projectCurrentUser.id);
+
+    // start the Community Checking tour
     if (isProjectAdmin) {
-      this.helpHeroService.startTour('sLbG6FRjjVo', { skipIfAlreadySeen: true }); // start Admin tour
+      // start Admin tour
+      this.helpHeroService.startTour('sLbG6FRjjVo', { skipIfAlreadySeen: true });
     } else {
       if (isDiscussionEnabled) {
-        this.helpHeroService.startTour('39HmnsRplaw', { skipIfAlreadySeen: true }); // start Reviewer tour w/ discussion
+        // start Reviewer tour w/ discussion
+        this.helpHeroService.startTour('39HmnsRplaw', { skipIfAlreadySeen: true });
         this.helpHeroService.on('tour_completed', (event: HEvent, info: HEventInfo) => {
           if (isInvitingEnabled) {
-            this.helpHeroService.startTour('MexTla8sdju', { skipIfAlreadySeen: true }); // invite tour
+            // run invite section of the tour
+            this.helpHeroService.startTour('MexTla8sdju', { skipIfAlreadySeen: true });
             this.helpHeroService.on('tour_completed', (event: HEvent, info: HEventInfo) => {
-              this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true }); // show end of Reviewer tour
+              // show end of Reviewer tour
+              this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true });
             });
           } else {
-            this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true }); // show end of Reviewer tour
+            // show end of Reviewer tour
+            this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true });
           }
         });
       } else {
-        this.helpHeroService.startTour('1ikmHlDXktB', { skipIfAlreadySeen: true }); // start Reviewer tour (w/o discussion)
+        // start Reviewer tour (w/o discussion)
+        this.helpHeroService.startTour('1ikmHlDXktB', { skipIfAlreadySeen: true });
         this.helpHeroService.on('tour_completed', (event: HEvent, info: HEventInfo) => {
-          this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true }); // show end of Reviewer tour
+          // show end of Reviewer tour
+          this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true });
         });
       }
     }

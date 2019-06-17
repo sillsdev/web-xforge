@@ -1,4 +1,15 @@
 /* HelpHero typings */
+
+// The following can be used for overriding the names from the node module, since Event is already a type.
+/*export type HEventKind = EventKind;
+export type HEvent = Event;
+export type HStep = Step;
+export type HTour = Tour;
+export type HEventInfo = EventInfo;
+export type HData = Data;*/
+
+// Since the node module doesn't export any of the HelpHero types,
+// the "exported" copies of all of them are included below anyway.
 export declare type HEventKind =
   | 'tour_started'
   | 'tour_completed'
@@ -45,4 +56,3 @@ export declare type HelpHero = {
   openLauncher: () => void;
   closeLauncher: () => void;
 };
-export {};
