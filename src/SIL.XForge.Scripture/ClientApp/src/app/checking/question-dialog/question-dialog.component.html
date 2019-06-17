@@ -14,6 +14,7 @@
                 formControlName="scriptureStart"
                 outlined
                 id="scripture-start"
+                (input)="this.scriptureStart.valid ? this.scriptureEnd.enable() : this.scriptureEnd.disable()"
               >
                 <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureStart)"
                   >expand_more</mdc-icon
