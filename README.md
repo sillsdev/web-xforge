@@ -32,9 +32,9 @@ For error reporting:
 
 Status of builds from our continuous integration (CI) [server](https://build.palaso.org):
 
-| Site               | Master Unit                                                                                                              | Master E2E          | QA                                                                                                                      | Live         |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Scripture Forge v2 | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:SFv2_ScriptureForgeMasterUnitTests)/statusIcon>) | not yet operational | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeQaBeta)/statusIcon>) | not yet live |
+| Site               | Master Unit                                                                                                              | Master E2E          | QA                                                                                                                        | Live         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Scripture Forge v2 | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:SFv2_ScriptureForgeMasterUnitTests)/statusIcon>) | not yet operational | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeV2qaBeta)/statusIcon>) | not yet live |
 
 Successful builds from our CI server deploy to:
 
