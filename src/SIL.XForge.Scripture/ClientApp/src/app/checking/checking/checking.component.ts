@@ -72,6 +72,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   textDataId: TextDataId;
   chapters: number[] = [];
   isExpanded: boolean = false;
+  resetAnswerPanelHeightOnFormHide: boolean = false;
 
   private _chapter: number;
   private _isDrawerPermanent: boolean = true;
@@ -190,28 +191,39 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   answerAction(answerAction: AnswerAction) {
-    if (answerAction.action === 'save') {
-      let answer: Answer = answerAction.answer;
-      const dateNow: string = new Date().toUTCString();
-      if (!answer) {
-        answer = {
-          id: objectId(),
-          ownerRef: this.userService.currentUserId,
-          text: '',
-          likes: [],
-          dateCreated: dateNow,
-          dateModified: dateNow
-        };
-      }
-      answer.text = answerAction.text;
-      answer.dateModified = dateNow;
-      this.saveAnswer(answer);
-    } else if (answerAction.action === 'delete') {
-      this.deleteAnswer(answerAction.answer);
-    } else if (answerAction.action === 'like') {
-      this.likeAnswer(answerAction.answer);
+    let useMaxAnswersPanelSize: boolean = true;
+    switch (answerAction.action) {
+      case 'save':
+        let answer: Answer = answerAction.answer;
+        const dateNow: string = new Date().toUTCString();
+        if (!answer) {
+          answer = {
+            id: objectId(),
+            ownerRef: this.userService.currentUserId,
+            text: '',
+            likes: [],
+            dateCreated: dateNow,
+            dateModified: dateNow
+          };
+        }
+        answer.text = answerAction.text;
+        answer.dateModified = dateNow;
+        this.saveAnswer(answer);
+        break;
+      case 'delete':
+        this.deleteAnswer(answerAction.answer);
+        break;
+      case 'like':
+        this.likeAnswer(answerAction.answer);
+        break;
+      case 'show-form':
+        this.resetAnswerPanelHeightOnFormHide = true;
+        break;
+      case 'hide-form':
+        useMaxAnswersPanelSize = false;
+        break;
     }
-    this.calculateScriptureSliderPosition(true);
+    this.calculateScriptureSliderPosition(useMaxAnswersPanelSize);
   }
 
   collapseDrawer() {
@@ -239,38 +251,49 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   commentAction(commentAction: CommentAction) {
-    if (commentAction.action === 'save') {
-      let comment: Comment = commentAction.comment;
-      const dateNow: string = new Date().toUTCString();
-      if (!comment) {
-        comment = {
-          id: objectId(),
-          ownerRef: this.userService.currentUserId,
-          projectRef: this.project.id,
-          answerRef: commentAction.answer.id,
-          text: '',
-          dateCreated: dateNow,
-          dateModified: dateNow
-        };
-      }
-      comment.text = commentAction.text;
-      comment.dateModified = dateNow;
-      this.saveComment(comment);
-    } else if (commentAction.action === 'show-comments') {
-      let updateRequired = false;
-      for (const comment of this.comments) {
-        if (!this.questionsPanel.hasUserReadComment(comment)) {
-          this.projectCurrentUser.commentRefsRead.push(comment.id);
-          updateRequired = true;
+    let useMaxAnswersPanelSize: boolean = true;
+    switch (commentAction.action) {
+      case 'save':
+        let comment: Comment = commentAction.comment;
+        const dateNow: string = new Date().toUTCString();
+        if (!comment) {
+          comment = {
+            id: objectId(),
+            ownerRef: this.userService.currentUserId,
+            projectRef: this.project.id,
+            answerRef: commentAction.answer.id,
+            text: '',
+            dateCreated: dateNow,
+            dateModified: dateNow
+          };
         }
-      }
-      if (updateRequired) {
-        this.projectUserService.update(this.projectCurrentUser);
-      }
-    } else if (commentAction.action === 'delete') {
-      this.deleteComment(commentAction.comment);
+        comment.text = commentAction.text;
+        comment.dateModified = dateNow;
+        this.saveComment(comment);
+        break;
+      case 'show-comments':
+        let updateRequired = false;
+        for (const comm of this.comments) {
+          if (!this.questionsPanel.hasUserReadComment(comm)) {
+            this.projectCurrentUser.commentRefsRead.push(comm.id);
+            updateRequired = true;
+          }
+        }
+        if (updateRequired) {
+          this.projectUserService.update(this.projectCurrentUser);
+        }
+        break;
+      case 'delete':
+        this.deleteComment(commentAction.comment);
+        break;
+      case 'show-form':
+        this.resetAnswerPanelHeightOnFormHide = true;
+        break;
+      case 'hide-form':
+        useMaxAnswersPanelSize = false;
+        break;
     }
-    this.calculateScriptureSliderPosition(true);
+    this.calculateScriptureSliderPosition(useMaxAnswersPanelSize);
   }
 
   checkSliderPosition(event: any) {
@@ -408,7 +431,16 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   private calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {
     // Wait while Angular updates visible DOM elements before we can calculate the height correctly
     setTimeout((): void => {
-      let answerPanelHeight = maximizeAnswerPanel ? this.maxAnswerPanelHeight : this.minAnswerPanelHeight;
+      let answerPanelHeight: number;
+      if (maximizeAnswerPanel) {
+        answerPanelHeight = this.maxAnswerPanelHeight;
+      } else if (this.resetAnswerPanelHeightOnFormHide) {
+        // Default the answers panel size to 50% so the scripture panel shows after answers and comments are added
+        answerPanelHeight = this.maxAnswerPanelHeight < 50 ? this.maxAnswerPanelHeight : 50;
+        this.resetAnswerPanelHeightOnFormHide = false;
+      } else {
+        answerPanelHeight = this.minAnswerPanelHeight;
+      }
       if (answerPanelHeight > 100) {
         answerPanelHeight = 100;
       }
