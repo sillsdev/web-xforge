@@ -104,7 +104,10 @@ namespace SIL.XForge.Controllers
             }
             UserEntity user = await _users.UpdateAsync(ResourceId, update =>
                 {
-                    update.Set(u => u.Name, (string)userProfile["name"]);
+                    string name = ((string)userProfile["name"]).IndexOf('@') > 0
+                        ? ((string)userProfile["name"]).Substring(0, ((string)userProfile["name"]).IndexOf('@'))
+                        : (string)userProfile["name"];
+                    update.Set(u => u.Name, name);
                     update.Set(u => u.Email, (string)userProfile["email"]);
                     update.Set(u => u.AvatarUrl, (string)userProfile["picture"]);
                     update.Set(u => u.Role, (string)userProfile["app_metadata"]["xf_role"]);
