@@ -68,6 +68,23 @@ namespace SIL.XForge.Controllers
         }
 
         [Test]
+        public async Task PushAuthUserProfile_NewUser_NameExtracted()
+        {
+            var env = new TestEnvironment();
+            env.SetUser("user03", "auth03");
+
+            JObject userProfile = env.CreateUserProfile("user03", "auth03", env.IssuedAt);
+            userProfile["name"] = "usernew@example.com";
+            await env.Controller.PushAuthUserProfile(userProfile);
+            UserEntity user = env.Users.Get("user03");
+            Assert.That(user.Name, Is.EqualTo("usernew"));
+            Assert.That(user.Email, Is.EqualTo("usernew@example.com"));
+            Assert.That(user.AvatarUrl, Is.EqualTo("http://example.com/new-avatar.png"));
+            Assert.That(user.ParatextId, Is.EqualTo("paratext01"));
+            Assert.That(user.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
+        }
+
+        [Test]
         public async Task LinkParatextAccount()
         {
             var env = new TestEnvironment();
