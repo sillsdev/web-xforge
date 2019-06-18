@@ -1,6 +1,7 @@
 import { AbstractControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 
 const EMAIL_REGEXP = /^[a-zA-Z0-9.+_-]{1,}@[a-zA-Z0-9.-]{1,}[.]{1}[a-zA-Z]{2,}$/;
+const DATE_REGEXP = /^\d{4}-\d{2}-\d{2}$/;
 
 export class XFValidators {
   static email(control: AbstractControl): ValidationErrors | null {
@@ -48,5 +49,12 @@ export class XFValidators {
 
       return null;
     };
+  }
+
+  static date(control: AbstractControl): ValidationErrors | null {
+    if (control.value == null || control.value.length === 0) {
+      return null;
+    }
+    return DATE_REGEXP.test(control.value) ? null : { date: true };
   }
 }

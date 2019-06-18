@@ -288,9 +288,28 @@ describe('MyAccountComponent', () => {
 
       // Expect specific error message
       expect(env.component.formGroup.get('email').hasError('required')).toBe(true);
-      expect((env.getHelperText(env.emailInput.parent).nativeElement as HTMLElement).innerText).toContain(
-        'must supply a valid email'
+      expect(env.getHelperText(env.emailInput.parent)).toContain('must supply a valid email');
+    }));
+
+    it('should not allow invalid date', fakeAsync(() => {
+      expect(env.component.formGroup.get('birthday').value).toBeNull();
+      env.setTextFieldValue(env.birthdayInput, '1989-08-30');
+      expect(env.component.formGroup.get('birthday').errors).toBeNull();
+      env.setTextFieldValue(env.birthdayInput, '0000-00-00');
+      expect(env.component.formGroup.get('birthday').value).toBe('');
+      env.verifyStates(
+        'birthday',
+        { state: env.component.elementState.Dirty, updateButtonEnabled: true, arrow: true, inputEnabled: true },
+        env.updateButton('birthday').nativeElement
       );
+      env.setTextFieldValue(env.birthdayInput, '20191-03-25');
+      expect(env.component.formGroup.get('birthday').errors['date']).not.toBeNull();
+      env.verifyStates(
+        'birthday',
+        { state: env.component.elementState.Invalid, updateButtonEnabled: false, arrow: true, inputEnabled: true },
+        env.updateButton('birthday').nativeElement
+      );
+      expect(env.getHelperText(env.birthdayInput.parent)).toContain('Please enter a valid birthday');
     }));
 
     describe('validate email pattern', () => {
@@ -594,6 +613,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#email-field'));
   }
 
+  get birthdayInput(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#birthday-field'));
+  }
+
   get genderSelect(): DebugElement {
     return this.fixture.debugElement.query(By.css('#gender-select'));
   }
@@ -674,8 +697,8 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css(`option[value="${value}"]`));
   }
 
-  getHelperText(formField: DebugElement): DebugElement {
-    return formField.query(By.css('mdc-helper-text'));
+  getHelperText(formField: DebugElement): string {
+    return (formField.query(By.css('mdc-helper-text')).nativeElement as HTMLElement).innerText;
   }
 
   setTextFieldValue(elem: DebugElement, value: string): void {
@@ -695,9 +718,7 @@ class TestEnvironment {
   expectEmailPatternIsBad(badEmail: string) {
     this.setTextFieldValue(this.emailInput, badEmail);
     expect(this.component.formGroup.get('email').hasError('email')).toBe(true);
-    expect((this.getHelperText(this.emailInput.parent).nativeElement as HTMLElement).innerText).toContain(
-      'valid email address'
-    );
+    expect(this.getHelperText(this.emailInput.parent)).toContain('valid email address');
     this.verifyStates(
       'email',
       {

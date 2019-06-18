@@ -139,7 +139,11 @@
           <div fxLayout="row" fxLayoutGap="1em">
             <div fxFlex id="birthday-div">
               <mdc-form-field>
-                <mdc-text-field type="date" label="Birthday" formControlName="birthday"> </mdc-text-field>
+                <mdc-text-field type="date" label="Birthday" formControlName="birthday" id="birthday-field">
+                </mdc-text-field>
+                <mdc-helper-text *ngIf="formGroup.get('birthday').errors" validation
+                  >Please enter a valid birthday.</mdc-helper-text
+                >
               </mdc-form-field>
             </div>
             <div>
@@ -159,7 +163,8 @@
                   id="birthday-button-icon"
                   *ngIf="
                     controlStates.get('birthday') === elementState.InSync ||
-                    controlStates.get('birthday') === elementState.Dirty
+                    controlStates.get('birthday') === elementState.Dirty ||
+                    controlStates.get('birthday') === elementState.Invalid
                   "
                   >send</mdc-icon
                 >
