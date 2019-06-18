@@ -34,6 +34,27 @@ describe('QuestionDialogComponent', () => {
     expect(env.scriptureStartValidationMsg.textContent).not.toContain('range');
   }));
 
+  it('does not accept just whitespace for a question', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+
+    env.inputValue(env.questionInput, 'Hello?');
+    expect(env.component.questionText.valid).toBe(true);
+    expect(env.component.questionText.errors).toBeNull();
+
+    env.inputValue(env.questionInput, '');
+    expect(env.component.questionText.valid).toBe(false);
+    expect(env.component.questionText.errors.required).toBeDefined();
+
+    env.inputValue(env.questionInput, ' ');
+    expect(env.component.questionText.valid).toBe(false);
+    expect(env.component.questionText.errors.someNonWhitespace).toBeDefined();
+
+    env.inputValue(env.questionInput, '\n');
+    expect(env.component.questionText.valid).toBe(false);
+    expect(env.component.questionText.errors.someNonWhitespace).toBeDefined();
+  }));
+
   it('should validate verse fields', fakeAsync(() => {
     const env = new TestEnvironment();
     flush();
@@ -316,8 +337,12 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector('#scripture-end');
   }
 
+  get questionInput(): HTMLTextAreaElement {
+    return this.overlayContainerElement.querySelector('#question-text');
+  }
+
   inputValue(element: HTMLElement, value: string) {
-    const inputElem = element.querySelector('input') as HTMLInputElement;
+    const inputElem = element.querySelector('input, textarea') as HTMLInputElement | HTMLTextAreaElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();

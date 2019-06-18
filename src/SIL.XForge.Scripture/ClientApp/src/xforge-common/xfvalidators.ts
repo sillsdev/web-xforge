@@ -16,6 +16,20 @@ export class XFValidators {
     return EMAIL_REGEXP.test(control.value) ? null : { email: true };
   }
 
+  /** Pass if control value contains any non-whitespace. Error otherwise. */
+  static someNonWhitespace(control: AbstractControl): ValidationErrors | null {
+    const error = { someNonWhitespace: true };
+    const someNonWhitespaceRegex = /\S+/;
+
+    if (control == null) {
+      return error;
+    }
+    if (someNonWhitespaceRegex.test(control.value)) {
+      return null;
+    }
+    return error;
+  }
+
   static requireOneWithValue(formGroupPaths: string[], value: any): ValidatorFn {
     return function validate(formGroup: FormGroup) {
       let checked = 0;

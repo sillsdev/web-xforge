@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { clone } from '@orbit/utils';
 import { UserService } from 'xforge-common/user.service';
+import { XFValidators } from 'xforge-common/xfvalidators';
 import { Answer } from '../../../core/models/answer';
 import { Comment } from '../../../core/models/comment';
 import { Question } from '../../../core/models/question';
@@ -37,7 +38,7 @@ export class CheckingAnswersComponent {
 
   activeAnswer: Answer;
   answerForm: FormGroup = new FormGroup({
-    answerText: new FormControl('', [Validators.required])
+    answerText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])
   });
   answerFormVisible: boolean = false;
   private _question: Question;

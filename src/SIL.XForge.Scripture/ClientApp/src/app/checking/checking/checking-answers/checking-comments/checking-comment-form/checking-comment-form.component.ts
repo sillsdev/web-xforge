@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { XFValidators } from 'xforge-common/xfvalidators';
 
 @Component({
   selector: 'app-checking-comment-form',
@@ -12,7 +13,7 @@ export class CheckingCommentFormComponent {
   @Output() cancel: EventEmitter<Boolean> = new EventEmitter<Boolean>();
 
   commentForm: FormGroup = new FormGroup({
-    commentText: new FormControl('', [Validators.required])
+    commentText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])
   });
   constructor() {}
 
