@@ -4,7 +4,6 @@ import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import { clone } from '@orbit/utils';
 import { SplitComponent } from 'angular-split';
-import { HEvent, HEventInfo } from 'help-hero';
 import { switchMap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
@@ -468,11 +467,11 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       if (isDiscussionEnabled) {
         // start Reviewer tour w/ discussion
         this.helpHeroService.startTour('39HmnsRplaw', { skipIfAlreadySeen: true });
-        this.helpHeroService.on('tour_completed', (event: HEvent, info: HEventInfo) => {
+        this.helpHeroService.on('tour_completed', (event: any, info: any) => {
           if (isInvitingEnabled) {
             // run invite section of the tour
             this.helpHeroService.startTour('MexTla8sdju', { skipIfAlreadySeen: true });
-            this.helpHeroService.on('tour_completed', (event: HEvent, info: HEventInfo) => {
+            this.helpHeroService.on('tour_completed', (event: any, info: any) => {
               // show end of Reviewer tour
               this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true });
             });
@@ -484,7 +483,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       } else {
         // start Reviewer tour (w/o discussion)
         this.helpHeroService.startTour('1ikmHlDXktB', { skipIfAlreadySeen: true });
-        this.helpHeroService.on('tour_completed', (event: HEvent, info: HEventInfo) => {
+        this.helpHeroService.on('tour_completed', (event: any, info: any) => {
           // show end of Reviewer tour
           this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true });
         });
