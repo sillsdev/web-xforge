@@ -13,6 +13,7 @@
     <UserSecretsId>4d0606c3-0fc7-4d76-b43b-236485004e81</UserSecretsId>
     <MachineVersion>2.1.0-34</MachineVersion>
     <RealtimeRoot>..\SIL.XForge\Realtime\</RealtimeRoot>
+    <AngularConfig>production</AngularConfig>
   </PropertyGroup>
 
   <ItemGroup>
@@ -58,8 +59,8 @@
     <!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
     <Exec WorkingDirectory="$(RealtimeRoot)" Command="npm install" />
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build -- --prod" />
-    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build:ssr -- --prod" Condition=" '$(BuildServerSideRenderer)' == 'true' " />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build -- --configuration=$(AngularConfig)" />
+    <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build:ssr -- --configuration=$(AngularConfig)" Condition=" '$(BuildServerSideRenderer)' == 'true' " />
 
     <!-- Include the newly-built files in the publish output -->
     <ItemGroup>
