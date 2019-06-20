@@ -23,7 +23,7 @@ namespace SIL.XForge.Scripture.Services
 
         protected override async Task<SyncJobEntity> InsertEntityAsync(SyncJobEntity entity)
         {
-            SyncJobEntity job = await _syncJobManager.StartAsync(entity);
+            SyncJobEntity job = await _syncJobManager.StartAsync(entity, false);
             if (job != null)
                 return job;
 

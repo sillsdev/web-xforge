@@ -78,7 +78,7 @@ namespace SIL.XForge.Scripture.Services
                 ProjectRef = entity.Id,
                 OwnerRef = UserId
             };
-            await _syncJobManager.StartAsync(job);
+            await _syncJobManager.StartAsync(job, true);
 
             return entity;
         }
@@ -127,7 +127,7 @@ namespace SIL.XForge.Scripture.Services
                     ProjectRef = id,
                     OwnerRef = UserId
                 };
-                await _syncJobManager.StartAsync(job);
+                await _syncJobManager.StartAsync(job, true);
             }
             return entity;
         }

@@ -21,7 +21,7 @@ namespace SIL.XForge.Scripture.Services
             _backgroundJobClient = backgroundJobClient;
         }
 
-        public async Task<SyncJobEntity> StartAsync(SyncJobEntity job)
+        public async Task<SyncJobEntity> StartAsync(SyncJobEntity job, bool trainEngine)
         {
             if (job.Id == null)
                 job.Id = ObjectId.GenerateNewId().ToString();
@@ -40,7 +40,8 @@ namespace SIL.XForge.Scripture.Services
                 await _projects.UpdateAsync(job.ProjectRef, u => u.Set(p => p.ActiveSyncJobRef, job.Id));
                 // new job, so enqueue the runner
                 string jobId = job.Id;
-                _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(null, null, job.OwnerRef, jobId));
+                _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(null, null, job.OwnerRef, jobId,
+                    trainEngine));
                 return job;
             }
             return null;

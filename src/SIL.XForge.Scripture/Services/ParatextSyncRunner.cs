@@ -148,7 +148,7 @@ namespace SIL.XForge.Scripture.Services
         private string WorkingDir => Path.Combine(_siteOptions.Value.SiteDir, "sync");
 
         public async Task RunAsync(PerformContext context, IJobCancellationToken cancellationToken, string userId,
-            string jobId)
+            string jobId, bool trainEngine)
         {
             _job = await _jobs.UpdateAsync(j => j.Id == jobId, u => u
                 .Set(j => j.BackgroundJobId, context.BackgroundJob.Id)
@@ -268,7 +268,7 @@ namespace SIL.XForge.Scripture.Services
                     // TODO: Properly handle job cancellation
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    if (translateEnabled)
+                    if (translateEnabled && trainEngine)
                     {
                         // start training Machine engine
                         await _engineService.StartBuildByProjectIdAsync(_job.ProjectRef);
