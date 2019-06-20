@@ -73,6 +73,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   chapters: number[] = [];
   isExpanded: boolean = false;
   resetAnswerPanelHeightOnFormHide: boolean = false;
+  hasUserAnsweredQuestions: boolean = false;
 
   private _chapter: number;
   private _isDrawerPermanent: boolean = true;
@@ -189,6 +190,31 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         }
       }
     );
+
+    this.subscribe(
+      this.userService.getProjects(this.userService.currentUserId, [
+        [nameof<SFProjectUser>('project'), nameof<SFProject>('texts')]
+      ]),
+      async results => {
+        const checkingProjects = results.data
+          .map(pu => results.getIncluded<SFProject>(pu.project))
+          .filter(project => project.checkingConfig.enabled === true);
+        let texts: Text[] = [];
+        for (const project of checkingProjects) {
+          texts = texts.concat(results.getManyIncluded(project.texts));
+        }
+        let questions: Question[] = [];
+        for (const text of texts) {
+          for (const chapter of text.chapters) {
+            const questionData = await this.textService.getQuestionData(new TextJsonDataId(text.id, chapter.number));
+            questions = questions.concat(questionData.data);
+          }
+        }
+        this.hasUserAnsweredQuestions =
+          questions.filter(q => q.answers.find(a => a.ownerRef === this.userService.currentUserId) != null).length > 0;
+      }
+    );
+
     this.subscribe(this.media.media$, (change: MediaChange) => {
       this.calculateScriptureSliderPosition();
       this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg', 'md', 'lt-md'].includes(change.mqAlias);

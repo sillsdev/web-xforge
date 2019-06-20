@@ -1,3 +1,4 @@
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -8,6 +9,7 @@ import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, when } from 'ts-mockito';
 import { MapQueryResults } from 'xforge-common/json-api.service';
+import { ProjectUser } from 'xforge-common/models/project-user';
 import { ShareLevel } from 'xforge-common/models/share-config';
 import { User } from 'xforge-common/models/user';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
@@ -19,12 +21,13 @@ import { Comment } from '../../core/models/comment';
 import { CommentsDoc } from '../../core/models/comments-doc';
 import { Question } from '../../core/models/question';
 import { QuestionsDoc } from '../../core/models/questions-doc';
-import { SFProjectUserRef } from '../../core/models/sfdomain-model.generated';
+import { SFProjectRef, SFProjectUserRef, TextRef } from '../../core/models/sfdomain-model.generated';
 import { SFProject } from '../../core/models/sfproject';
 import { SFProjectData } from '../../core/models/sfproject-data';
 import { SFProjectDataDoc } from '../../core/models/sfproject-data-doc';
 import { SFProjectRoles } from '../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../core/models/sfproject-user';
+import { Text } from '../../core/models/text';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
@@ -33,6 +36,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
+import { CheckingNameDialogComponent } from './checking-answers/checking-name-dialog/checking-name-dialog.component';
 import { CheckingOwnerComponent } from './checking-answers/checking-owner/checking-owner.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
@@ -323,6 +327,8 @@ class TestEnvironment {
   fixture: ComponentFixture<CheckingComponent>;
   questionReadTimer: number = 2000;
 
+  mockedCheckingNameDialog: MdcDialog;
+  mockedCheckingNameDialogRef: MdcDialogRef<CheckingNameDialogComponent>;
   mockedRealtimeOfflineStore: RealtimeOfflineStore;
   mockedUserService: UserService;
   mockedProjectUserService: SFProjectUserService;
@@ -330,7 +336,51 @@ class TestEnvironment {
   adminUser = this.createUser('01', SFProjectRoles.ParatextAdministrator);
   reviewerUser = this.createUser('02', SFProjectRoles.Reviewer);
 
+  private projectData: SFProjectData = {
+    id: 'text01',
+    bookId: 'JHN',
+    name: 'John',
+    hasSource: false,
+    chapters: [{ number: 1 }, { number: 2 }],
+    project: new SFProjectRef('project01')
+  };
+
+  private testAdminProjectUser: SFProjectUser = new SFProjectUser({
+    id: this.adminUser.id,
+    user: this.adminUser,
+    project: new SFProjectRef('project01'),
+    role: this.adminUser.role,
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: []
+  });
+
+  private testReviewerProjectUser: SFProjectUser = new SFProjectUser({
+    id: this.reviewerUser.id,
+    user: this.reviewerUser,
+    project: new SFProjectRef('project01'),
+    role: this.reviewerUser.role,
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: []
+  });
+
+  private testProject: SFProject = new SFProject({
+    id: 'project01',
+    projectName: 'Project 01',
+
+      usersSeeEachOthersResponses: true,
+      share: {
+        enabled: true,
+        level: ShareLevel.Anyone
+      },
+    texts: [new TextRef('text01')],
+    users: [new SFProjectUserRef(this.adminUser.id), new SFProjectUserRef(this.reviewerUser.id)]
+  });
+
   constructor() {
+    this.mockedCheckingNameDialog = mock(MdcDialog);
+    this.mockedCheckingNameDialogRef = mock(MdcDialogRef);
     this.mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
     this.mockedUserService = mock(UserService);
     this.mockedProjectUserService = mock(SFProjectUserService);
@@ -354,6 +404,7 @@ class TestEnvironment {
           provide: ActivatedRoute,
           useValue: { params: of({ projectId: 'project01', bookId: 'JHN' }) }
         },
+        { provide: MdcDialog, useFactory: () => instance(this.mockedCheckingNameDialog) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: SFProjectUserService, useFactory: () => instance(this.mockedProjectUserService) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
@@ -535,11 +586,13 @@ class TestEnvironment {
   }
 
   setupAdminScenarioData(): void {
+    when(this.mockedUserService.getCurrentUser()).thenReturn(of(this.adminUser));
     this.setupDefaultProjectData(this.adminUser);
     this.initComponentEnviroment();
   }
 
   setupReviewerScenarioData(): void {
+    when(this.mockedUserService.getCurrentUser()).thenReturn(of(this.reviewerUser));
     this.setupDefaultProjectData(this.reviewerUser);
     this.initComponentEnviroment();
   }
@@ -548,41 +601,18 @@ class TestEnvironment {
     when(this.mockedProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
       of(
         new MapQueryResults(
-          new SFProject({
-            id: 'project01',
-            projectName: 'Project 01',
-            usersSeeEachOthersResponses: true,
-            share: {
-              enabled: true,
-              level: ShareLevel.Anyone
-            },
-            users: [new SFProjectUserRef(this.adminUser.id), new SFProjectUserRef(this.reviewerUser.id)]
-          }),
+          this.testProject,
           undefined,
           [
-            new SFProjectUser({
-              id: this.adminUser.id,
-              user: this.adminUser,
-              role: this.adminUser.role,
-              questionRefsRead: [],
-              answerRefsRead: [],
-              commentRefsRead: []
-            }),
-            new SFProjectUser({
-              id: this.reviewerUser.id,
-              user: this.reviewerUser,
-              role: this.reviewerUser.role,
-              questionRefsRead: [],
-              answerRefsRead: [],
-              commentRefsRead: []
-            })
+            this.testAdminProjectUser,
+            this.testReviewerProjectUser
           ]
         )
+          undefined,
+          [
       )
     );
-    const projectData: SFProjectData = {
-      texts: [{ bookId: 'JHN', name: 'John', hasSource: false, chapters: [{ number: 1 }, { number: 2 }] }]
-    };
+
     const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', projectData);
     const projectDataDoc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
     when(this.mockedProjectService.getDataDoc('project01')).thenResolve(projectDataDoc);
@@ -677,7 +707,24 @@ class TestEnvironment {
     when(this.mockedUserService.currentUserId).thenReturn(user.id);
     when(this.mockedUserService.onlineGet(this.adminUser.id)).thenReturn(of(new MapQueryResults(this.adminUser)));
     when(this.mockedUserService.onlineGet(this.reviewerUser.id)).thenReturn(of(new MapQueryResults(this.reviewerUser)));
+    when(this.mockedUserService.onlineUpdateCurrentUserAttributes(anything())).thenResolve(null);
+    when(this.mockedUserService.getProjects(this.adminUser.id, anything())).thenReturn(
+      of(
+        new MapQueryResults<SFProjectUser[]>([this.testAdminProjectUser], undefined, [this.testProject, this.testText])
+      )
+    );
+    when(this.mockedUserService.getProjects(this.reviewerUser.id, anything())).thenReturn(
+      of(
+        new MapQueryResults<SFProjectUser[]>([this.testReviewerProjectUser], undefined, [
+          this.testProject,
+          this.testText
+        ])
+      )
+    );
     when(this.mockedProjectUserService.update(anything())).thenReturn(new Promise(() => {}));
+
+    when(this.mockedCheckingNameDialog.open(anything(), anything())).thenReturn(this.mockedCheckingNameDialogRef);
+    when(this.mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.name));
   }
 
   private initComponentEnviroment(): void {

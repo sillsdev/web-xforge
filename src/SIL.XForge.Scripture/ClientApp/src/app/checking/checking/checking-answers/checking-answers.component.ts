@@ -1,6 +1,9 @@
+import { MdcDialog } from '@angular-mdc/web';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { clone } from '@orbit/utils';
+import { User } from 'xforge-common/models/user';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { Answer } from '../../../core/models/answer';
@@ -10,6 +13,7 @@ import { SFProject } from '../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../../core/models/sfproject-user';
 import { CommentAction } from './checking-comments/checking-comments.component';
+import { CheckingNameDialogComponent } from './checking-name-dialog/checking-name-dialog.component';
 
 export interface AnswerAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'like';
@@ -22,7 +26,7 @@ export interface AnswerAction {
   templateUrl: './checking-answers.component.html',
   styleUrls: ['./checking-answers.component.scss']
 })
-export class CheckingAnswersComponent {
+export class CheckingAnswersComponent extends SubscriptionDisposable {
   @Input() project: SFProject;
   @Input() projectCurrentUser: SFProjectUser;
   @Input() set question(question: Question) {
@@ -33,6 +37,7 @@ export class CheckingAnswersComponent {
     this.initUserAnswerRefsRead = clone(this.projectCurrentUser.answerRefsRead);
   }
   @Input() comments: Readonly<Comment[]> = [];
+  @Input() answeredFirstQuestion: boolean = false;
   @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
   @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
 
@@ -41,10 +46,14 @@ export class CheckingAnswersComponent {
     answerText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])
   });
   answerFormVisible: boolean = false;
+  private user: User;
   private _question: Question;
   private initUserAnswerRefsRead: string[] = [];
 
-  constructor(private userService: UserService) {}
+  constructor(private readonly dialog: MdcDialog, private userService: UserService) {
+    super();
+    this.subscribe(this.userService.getCurrentUser(), u => (this.user = u));
+  }
 
   get answers(): Answer[] {
     if (this.canSeeOtherUserResponses || this.isAdministrator) {
@@ -144,12 +153,30 @@ export class CheckingAnswersComponent {
     if (this.answerForm.invalid) {
       return;
     }
-    this.action.emit({
-      action: 'save',
-      text: this.answerForm.get('answerText').value,
-      answer: this.activeAnswer
+    if (this.answeredFirstQuestion) {
+      this.action.emit({
+        action: 'save',
+        text: this.answerForm.get('answerText').value,
+        answer: this.activeAnswer
+      });
+      this.hideAnswerForm();
+      return;
+    }
+    const dialogRef = this.dialog.open(CheckingNameDialogComponent, {
+      data: { name: this.user.name },
+      escapeToClose: false,
+      clickOutsideToClose: false
     });
-    this.hideAnswerForm();
+    dialogRef.afterClosed().subscribe(async response => {
+      await this.userService.onlineUpdateCurrentUserAttributes({ name: response as string });
+      this.action.emit({
+        action: 'save',
+        text: this.answerForm.get('answerText').value,
+        answer: this.activeAnswer
+      });
+      this.hideAnswerForm();
+      this.answeredFirstQuestion = true;
+    });
   }
 
   submitCommentAction(action: CommentAction) {
