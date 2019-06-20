@@ -107,12 +107,12 @@ namespace SIL.XForge.Scripture.Services
             IDictionary<string, string> relationships)
         {
             SFProjectEntity entity = await base.UpdateEntityAsync(id, attrs, relationships);
-            if (entity.TranslateConfig.Enabled && attrs.TryGetValue("TranslateConfig", out object translateConfig) &&
-                ((TranslateConfig)translateConfig).SourceParatextId != null)
+            // if currently running sync job for project is found, cancel it
+            await _syncJobManager.CancelByProjectIdAsync(id);
+            bool trainEngine = false;
+            if (attrs.ContainsKey(nameof(SFProjectEntity.TranslateConfig)) && entity.TranslateConfig.Enabled
+                && entity.TranslateConfig.SourceParatextId != null)
             {
-                // if currently running sync job for project is found, cancel it
-                await _syncJobManager.CancelByProjectIdAsync(id);
-
                 await _engineService.RemoveProjectAsync(entity.Id);
                 var project = new Project
                 {
@@ -121,14 +121,14 @@ namespace SIL.XForge.Scripture.Services
                     TargetLanguageTag = entity.InputSystem.Tag
                 };
                 await _engineService.AddProjectAsync(project);
-
-                var job = new SyncJobEntity()
-                {
-                    ProjectRef = id,
-                    OwnerRef = UserId
-                };
-                await _syncJobManager.StartAsync(job, true);
+                trainEngine = true;
             }
+            var job = new SyncJobEntity()
+            {
+                ProjectRef = id,
+                OwnerRef = UserId
+            };
+            await _syncJobManager.StartAsync(job, trainEngine);
             return entity;
         }
     }

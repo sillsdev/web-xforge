@@ -10,6 +10,7 @@ using JsonApiDotNetCore.Models;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using NUnit.Framework;
+using SIL.Machine.WebApi.Models;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -80,7 +81,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task UpdateAsync_ChangeProject_SideEffects()
+        public async Task UpdateAsync_ChangeSourceProject_RecreateMachineProject()
         {
             using (var env = new TestEnvironment())
             {
@@ -113,11 +114,13 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(jobs.Count, Is.EqualTo(1));
                 env.BackgroundJobClient.Received(1).ChangeState("backgroundJob01", Arg.Any<Hangfire.States.IState>(),
                     Arg.Any<string>());
+                await env.EngineService.Received().RemoveProjectAsync(Arg.Any<string>());
+                await env.EngineService.Received().AddProjectAsync(Arg.Any<Project>());
             }
         }
 
         [Test]
-        public async Task UpdateAsync_EnableTranslate_NoSideEffects()
+        public async Task UpdateAsync_EnableTranslate_DoesNotRecreateMachineProject()
         {
             using (var env = new TestEnvironment())
             {
@@ -138,11 +141,13 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(updatedResource, Is.Not.Null);
                 Assert.That(updatedResource.TranslateConfig.Enabled, Is.True);
                 SyncJobEntity runningJob = await env.Jobs.GetAsync("job01");
-                Assert.That(runningJob, Is.Not.Null);
+                Assert.That(runningJob, Is.Null);
                 var jobs = await env.Jobs.GetAllAsync();
                 Assert.That(jobs.Count, Is.EqualTo(1));
-                env.BackgroundJobClient.DidNotReceive().ChangeState(Arg.Any<string>(),
+                env.BackgroundJobClient.Received().ChangeState("backgroundJob01",
                     Arg.Any<Hangfire.States.IState>(), Arg.Any<string>());
+                await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
+                await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Project>());
             }
         }
 
