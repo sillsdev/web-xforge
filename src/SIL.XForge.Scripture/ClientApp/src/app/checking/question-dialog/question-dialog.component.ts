@@ -131,6 +131,8 @@ export class QuestionDialogComponent implements OnInit {
     const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig);
     dialogRef.afterClosed().subscribe((result: VerseRefData) => {
       if (result !== 'close') {
+        control.markAsTouched();
+        control.markAsDirty();
         control.setValue(QuestionDialogComponent.verseRefDataToString(result));
       }
     });
