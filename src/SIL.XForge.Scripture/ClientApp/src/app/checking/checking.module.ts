@@ -10,6 +10,7 @@ import { CheckingRoutingModule } from './checking-routing.module';
 import { CheckingAnswersComponent } from './checking/checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking/checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking/checking-answers/checking-comments/checking-comments.component';
+import { CheckingNameDialogComponent } from './checking/checking-answers/checking-name-dialog/checking-name-dialog.component';
 import { CheckingOwnerComponent } from './checking/checking-answers/checking-owner/checking-owner.component';
 import { CheckingQuestionsComponent } from './checking/checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking/checking-text/checking-text.component';
@@ -28,7 +29,8 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     FontSizeComponent,
     CheckingOwnerComponent,
     CheckingCommentsComponent,
-    CheckingCommentFormComponent
+    CheckingCommentFormComponent,
+    CheckingNameDialogComponent
   ],
   imports: [
     CheckingRoutingModule,
@@ -38,6 +40,6 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     XForgeCommonModule,
     AngularSplitModule.forRoot()
   ],
-  entryComponents: [QuestionDialogComponent]
+  entryComponents: [QuestionDialogComponent, CheckingNameDialogComponent]
 })
 export class CheckingModule {}
