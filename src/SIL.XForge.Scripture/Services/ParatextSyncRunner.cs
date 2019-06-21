@@ -164,8 +164,6 @@ namespace SIL.XForge.Scripture.Services
                     if (!_fileSystemService.DirectoryExists(WorkingDir))
                         _fileSystemService.CreateDirectory(WorkingDir);
 
-                    bool translateEnabled = project.TranslateConfig.Enabled;
-                    bool checkingEnabled = project.CheckingConfig.Enabled;
                     using (IConnection conn = await _realtimeService.ConnectAsync())
                     {
                         IDocument<SFProjectData> projectDataDoc = conn.Get<SFProjectData>(RootDataTypes.Projects,
@@ -176,18 +174,18 @@ namespace SIL.XForge.Scripture.Services
                         var targetBooks = new HashSet<string>(await _paratextService.GetBooksAsync(user,
                             targetParatextId));
 
-                        string sourceParatextId = project.TranslateConfig.SourceParatextId;
-                        var sourceBooks = new HashSet<string>(translateEnabled
+                        string sourceParatextId = project.SourceParatextId;
+                        var sourceBooks = new HashSet<string>(project.TranslateEnabled
                             ? await _paratextService.GetBooksAsync(user, sourceParatextId)
                             : Enumerable.Empty<string>());
 
                         var booksToSync = new HashSet<string>(targetBooks);
-                        if (!checkingEnabled)
+                        if (!project.CheckingEnabled)
                             booksToSync.IntersectWith(sourceBooks);
 
                         var targetBooksToDelete = new HashSet<string>(GetBooksToDelete(project, TextType.Target,
                             booksToSync));
-                        var sourceBooksToDelete = new HashSet<string>(translateEnabled
+                        var sourceBooksToDelete = new HashSet<string>(project.TranslateEnabled
                             ? GetBooksToDelete(project, TextType.Source, booksToSync)
                             : Enumerable.Empty<string>());
 
@@ -268,7 +266,7 @@ namespace SIL.XForge.Scripture.Services
                     // TODO: Properly handle job cancellation
                     cancellationToken.ThrowIfCancellationRequested();
 
-                    if (translateEnabled && trainEngine)
+                    if (project.TranslateEnabled && trainEngine)
                     {
                         // start training Machine engine
                         await _engineService.StartBuildByProjectIdAsync(_job.ProjectRef);

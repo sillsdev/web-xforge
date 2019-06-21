@@ -45,7 +45,7 @@ export class SFProjectService extends ProjectService<SFProject> {
   }
 
   getShareConfig(id: string): Observable<ShareConfig> {
-    return this.get(id).pipe(map(r => (r.data == null ? null : r.data.checkingConfig.share)));
+    return this.get(id).pipe(map(r => (r.data == null ? null : r.data.share)));
   }
 
   createTranslationEngine(projectId: string): RemoteTranslationEngine {

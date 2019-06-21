@@ -113,9 +113,9 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
   }
 
   get sourceLabel(): string {
-    return this.project == null || this.project.translateConfig == null
+    return this.project == null || this.project.sourceInputSystem == null
       ? ''
-      : this.project.translateConfig.sourceInputSystem.languageName;
+      : this.project.sourceInputSystem.languageName;
   }
 
   get targetLabel(): string {

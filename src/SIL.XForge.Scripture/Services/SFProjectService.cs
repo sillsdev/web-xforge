@@ -61,12 +61,12 @@ namespace SIL.XForge.Scripture.Services
                 IDocument<SFProjectData> projectDataDoc = conn.Get<SFProjectData>(RootDataTypes.Projects, entity.Id);
                 await projectDataDoc.CreateAsync(new SFProjectData());
             }
-            if (entity.TranslateConfig.Enabled)
+            if (entity.TranslateEnabled)
             {
                 var project = new Project
                 {
                     Id = entity.Id,
-                    SourceLanguageTag = entity.TranslateConfig.SourceInputSystem.Tag,
+                    SourceLanguageTag = entity.SourceInputSystem.Tag,
                     TargetLanguageTag = entity.InputSystem.Tag
                 };
                 await _engineService.AddProjectAsync(project);
@@ -107,27 +107,47 @@ namespace SIL.XForge.Scripture.Services
             IDictionary<string, string> relationships)
         {
             SFProjectEntity entity = await base.UpdateEntityAsync(id, attrs, relationships);
-            if (entity.TranslateConfig.Enabled && attrs.TryGetValue("TranslateConfig", out object translateConfig) &&
-                ((TranslateConfig)translateConfig).SourceParatextId != null)
+            bool translateEnabledSet = attrs.ContainsKey(nameof(SFProjectResource.TranslateEnabled));
+            bool sourceParatextIdSet = attrs.ContainsKey(nameof(SFProjectResource.SourceParatextId));
+            bool checkingEnabledSet = attrs.ContainsKey(nameof(SFProjectResource.CheckingEnabled));
+            // check if a sync needs to be run
+            if (translateEnabledSet || sourceParatextIdSet || checkingEnabledSet)
             {
                 // if currently running sync job for project is found, cancel it
                 await _syncJobManager.CancelByProjectIdAsync(id);
 
-                await _engineService.RemoveProjectAsync(entity.Id);
-                var project = new Project
+                bool trainEngine = false;
+                if (translateEnabledSet || sourceParatextIdSet)
                 {
-                    Id = entity.Id,
-                    SourceLanguageTag = entity.TranslateConfig.SourceInputSystem.Tag,
-                    TargetLanguageTag = entity.InputSystem.Tag
-                };
-                await _engineService.AddProjectAsync(project);
+                    if (entity.TranslateEnabled && entity.SourceParatextId != null)
+                    {
+                        // translate task was enabled or source project changed
+
+                        // recreate Machine project only if source project changed
+                        if (!translateEnabledSet && sourceParatextIdSet)
+                            await _engineService.RemoveProjectAsync(entity.Id);
+                        var project = new Project
+                        {
+                            Id = entity.Id,
+                            SourceLanguageTag = entity.SourceInputSystem.Tag,
+                            TargetLanguageTag = entity.InputSystem.Tag
+                        };
+                        await _engineService.AddProjectAsync(project);
+                        trainEngine = true;
+                    }
+                    else
+                    {
+                        // translate task was disabled or source project set to null
+                        await _engineService.RemoveProjectAsync(entity.Id);
+                    }
+                }
 
                 var job = new SyncJobEntity()
                 {
                     ProjectRef = id,
                     OwnerRef = UserId
                 };
-                await _syncJobManager.StartAsync(job, true);
+                await _syncJobManager.StartAsync(job, trainEngine);
             }
             return entity;
         }

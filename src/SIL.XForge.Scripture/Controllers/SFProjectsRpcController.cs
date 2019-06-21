@@ -78,12 +78,12 @@ namespace SIL.XForge.Scripture.Controllers
 
         protected override bool TryGetShareConfig(SFProjectEntity project, out ShareConfig shareConfig)
         {
-            if (!project.CheckingConfig.Enabled)
+            if (!project.CheckingEnabled)
             {
                 shareConfig = null;
                 return false;
             }
-            shareConfig = project.CheckingConfig.Share;
+            shareConfig = project.Share;
             return true;
         }
     }

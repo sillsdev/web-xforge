@@ -239,18 +239,14 @@ describe('ConnectProjectComponent', () => {
         abbreviation: 'en',
         isRightToLeft: false
       },
-      checkingConfig: {
-        enabled: true
-      },
-      translateConfig: {
-        enabled: true,
-        sourceParatextId: 'pt02',
-        sourceInputSystem: {
-          languageName: 'Spanish',
-          tag: 'es',
-          isRightToLeft: false,
-          abbreviation: 'es'
-        }
+      checkingEnabled: true,
+      translateEnabled: true,
+      sourceParatextId: 'pt02',
+      sourceInputSystem: {
+        languageName: 'Spanish',
+        tag: 'es',
+        isRightToLeft: false,
+        abbreviation: 'es'
       }
     });
     verify(env.mockedSFProjectService.onlineCreate(deepEqual(project))).once();

@@ -138,8 +138,11 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject(
           new TestProject({
-            checkingConfig: { enabled: true, usersSeeEachOthersResponses: false, share: { enabled: false } },
-            translateConfig: { enabled: false, sourceParatextId: undefined }
+            checkingEnabled: true,
+            usersSeeEachOthersResponses: false,
+            share: { enabled: false },
+            translateEnabled: false,
+            sourceParatextId: undefined
           })
         );
         env.wait();
@@ -162,8 +165,11 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject(
           new TestProject({
-            checkingConfig: { enabled: true, usersSeeEachOthersResponses: false, share: { enabled: false } },
-            translateConfig: { enabled: false, sourceParatextId: undefined }
+            checkingEnabled: true,
+            usersSeeEachOthersResponses: false,
+            share: { enabled: false },
+            translateEnabled: false,
+            sourceParatextId: undefined
           })
         );
         env.wait();
@@ -181,8 +187,11 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject(
           new TestProject({
-            checkingConfig: { enabled: true, usersSeeEachOthersResponses: false, share: { enabled: false } },
-            translateConfig: { enabled: false, sourceParatextId: undefined }
+            checkingEnabled: true,
+            usersSeeEachOthersResponses: false,
+            share: { enabled: false },
+            translateEnabled: false,
+            sourceParatextId: undefined
           })
         );
         env.wait();
@@ -235,12 +244,11 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject(
           new TestProject({
-            checkingConfig: {
-              enabled: true,
-              usersSeeEachOthersResponses: false,
-              share: { enabled: true, level: ShareLevel.Anyone }
-            },
-            translateConfig: { enabled: false, sourceParatextId: undefined }
+            checkingEnabled: true,
+            usersSeeEachOthersResponses: false,
+            share: { enabled: true, level: ShareLevel.Anyone },
+            translateEnabled: false,
+            sourceParatextId: undefined
           })
         );
         env.wait();
@@ -343,8 +351,11 @@ class TestEnvironment {
       new MapQueryResults(
         new TestProject({
           id: 'project01',
-          checkingConfig: { enabled: false, usersSeeEachOthersResponses: false, share: { enabled: false } },
-          translateConfig: { enabled: true, sourceParatextId: 'paratextId01' }
+          checkingEnabled: false,
+          usersSeeEachOthersResponses: false,
+          share: { enabled: false },
+          translateEnabled: true,
+          sourceParatextId: 'paratextId01'
         })
       )
     );

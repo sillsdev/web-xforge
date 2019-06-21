@@ -275,20 +275,20 @@ class TestEnvironment {
           new SFProject({
             id: 'project01',
             projectName: 'project01',
-            translateConfig: { enabled: true },
-            checkingConfig: { enabled: true }
+            translateEnabled: true,
+            checkingEnabled: true
           }),
           new SFProject({
             id: 'project02',
             projectName: 'project02',
-            translateConfig: { enabled: false },
-            checkingConfig: { enabled: true }
+            translateEnabled: false,
+            checkingEnabled: true
           }),
           new SFProject({
             id: 'project03',
             projectName: 'project03',
-            translateConfig: { enabled: true },
-            checkingConfig: { enabled: true }
+            translateEnabled: true,
+            checkingEnabled: true
           })
         ]
       )

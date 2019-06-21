@@ -91,7 +91,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   getAnswers(question: Question): Answer[] {
-    if (this.project.checkingConfig.usersSeeEachOthersResponses || this.isAdministrator) {
+    if (this.project.usersSeeEachOthersResponses || this.isAdministrator) {
       return question.answers;
     } else {
       return question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);

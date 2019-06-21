@@ -151,13 +151,13 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
         projectName: project.name,
         paratextId: project.paratextId,
         inputSystem: ParatextService.getInputSystem(project),
-        checkingConfig: { enabled: values.tasks.checking },
-        translateConfig: { enabled: values.tasks.translate }
+        checkingEnabled: values.tasks.checking,
+        translateEnabled: values.tasks.translate
       });
       if (values.tasks.translate) {
         const translateSourceProject = this.projects.find(p => p.paratextId === values.tasks.sourceParatextId);
-        newProject.translateConfig.sourceParatextId = translateSourceProject.paratextId;
-        newProject.translateConfig.sourceInputSystem = ParatextService.getInputSystem(translateSourceProject);
+        newProject.sourceParatextId = translateSourceProject.paratextId;
+        newProject.sourceInputSystem = ParatextService.getInputSystem(translateSourceProject);
       }
 
       newProject = await this.projectService.onlineCreate(newProject);

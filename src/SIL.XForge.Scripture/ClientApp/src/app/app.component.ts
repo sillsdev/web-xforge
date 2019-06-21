@@ -132,12 +132,10 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   }
 
   get isTranslateEnabled(): boolean {
-    if (this.selectedProject == null || this.selectedProject.translateConfig == null) {
-      return false;
-    }
     return (
-      this.selectedProject.translateConfig.enabled &&
-      this.selectedProjectRole != null &&
+      this.selectedProject != null &&
+      this.selectedProject.translateEnabled != null &&
+      this.selectedProject.translateEnabled &&
       canTranslate(this.selectedProjectRole)
     );
   }
@@ -147,10 +145,11 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   }
 
   get isCheckingEnabled(): boolean {
-    if (this.selectedProject == null || this.selectedProject.checkingConfig == null) {
-      return false;
-    }
-    return this.selectedProject.checkingConfig.enabled;
+    return (
+      this.selectedProject != null &&
+      this.selectedProject.checkingEnabled != null &&
+      this.selectedProject.checkingEnabled
+    );
   }
 
   get checkingTexts(): TextInfo[] {
@@ -255,8 +254,8 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
           // properties we need yet for the below or template.
           if (
             this.selectedProject == null ||
-            this.selectedProject.translateConfig == null ||
-            this.selectedProject.checkingConfig == null ||
+            this.selectedProject.translateEnabled == null ||
+            this.selectedProject.checkingEnabled == null ||
             this.selectedProject.id == null ||
             this.selectedProject.projectName == null
           ) {
