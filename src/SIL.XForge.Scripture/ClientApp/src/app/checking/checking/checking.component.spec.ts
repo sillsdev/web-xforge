@@ -212,7 +212,7 @@ describe('CheckingComponent', () => {
 
     it('reviewer can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
       env.setupReviewerScenarioData();
-      env.component.project.checkingConfig.usersSeeEachOthersResponses = false;
+      env.component.project.usersSeeEachOthersResponses = false;
       env.fixture.detectChanges();
       env.selectQuestion(6);
       expect(env.answers.length).toBe(1);
@@ -551,12 +551,10 @@ class TestEnvironment {
           new SFProject({
             id: 'project01',
             projectName: 'Project 01',
-            checkingConfig: {
-              usersSeeEachOthersResponses: true,
-              share: {
-                enabled: true,
-                level: ShareLevel.Anyone
-              }
+            usersSeeEachOthersResponses: true,
+            share: {
+              enabled: true,
+              level: ShareLevel.Anyone
             },
             users: [new SFProjectUserRef(this.adminUser.id), new SFProjectUserRef(this.reviewerUser.id)]
           }),

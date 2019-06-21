@@ -157,8 +157,8 @@ class TestEnvironment {
         new MapQueryResults(
           new SFProject({
             id: 'project01',
-            translateConfig: { enabled: true },
-            checkingConfig: { enabled: true }
+            translateEnabled: true,
+            checkingEnabled: true
           })
         )
       )
@@ -177,8 +177,8 @@ class TestEnvironment {
         new MapQueryResults(
           new SFProject({
             id: 'project01',
-            translateConfig: { enabled: args.isTranslateEnabled == null || args.isTranslateEnabled },
-            checkingConfig: { enabled: true },
+            translateEnabled: args.isTranslateEnabled == null || args.isTranslateEnabled,
+            checkingEnabled: true,
             users: [new SFProjectUserRef('projectuser01')]
           }),
           undefined,
@@ -205,8 +205,8 @@ class TestEnvironment {
         new MapQueryResults(
           new SFProject({
             id: 'project01',
-            translateConfig: { enabled: true },
-            checkingConfig: { enabled: true },
+            translateEnabled: true,
+            checkingEnabled: true,
             users: [new SFProjectUserRef('projectuser01')]
           }),
           undefined,

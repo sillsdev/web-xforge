@@ -678,7 +678,8 @@ class TestEnvironment {
           id: 'project01',
           users: [new SFProjectUserRef('projectuser01')],
           inputSystem: { languageName: 'Target' },
-          translateConfig: { enabled: true, sourceInputSystem: { languageName: 'Source' } }
+          translateEnabled: true,
+          sourceInputSystem: { languageName: 'Source' }
         }),
         undefined,
         [

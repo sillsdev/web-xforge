@@ -7,13 +7,26 @@ namespace SIL.XForge.Scripture.Models
     {
         [Attr(isImmutable: true)]
         public string ParatextId { get; set; }
+
+        // Checking configuration
         [Attr]
-        public CheckingConfig CheckingConfig { get; set; }
+        public bool CheckingEnabled { get; set; }
         [Attr]
-        public TranslateConfig TranslateConfig { get; set; }
+        public bool UsersSeeEachOthersResponses { get; set; }
+        [Attr]
+        public bool DownloadAudioFiles { get; set; }
+        [Attr(isFilterable: false, isSortable: false)]
+        public ShareConfig Share { get; set; }
+
+        // Translate configuration
+        [Attr]
+        public bool TranslateEnabled { get; set; }
+        [Attr]
+        public string SourceParatextId { get; set; }
+        [Attr(isFilterable: false, isSortable: false)]
+        public InputSystem SourceInputSystem { get; set; } = new InputSystem();
 
         public string ActiveSyncJobRef { get; set; }
-
         [HasOne(withForeignKey: nameof(ActiveSyncJobRef))]
         public SyncJobResource ActiveSyncJob { get; set; }
     }

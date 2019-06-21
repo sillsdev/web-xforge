@@ -165,32 +165,29 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
   private onFormValueChanges(newValue: Settings): void {
     if (this.form.valid || this.isOnlyBasedOnInvalid) {
       let isUpdateNeeded: boolean = false;
-      const updatedProject = {
-        translateConfig: clone(this.project.translateConfig),
-        checkingConfig: clone(this.project.checkingConfig)
-      } as SFProject;
+      const updatedProject: Partial<SFProject> = {};
       const successHandlers: VoidFunc[] = [];
       const failStateHandlers: VoidFunc[] = [];
       // Set status and include values for changed form items
-      if (newValue.translate !== this.project.translateConfig.enabled && this.form.controls.translate.enabled) {
-        updatedProject.translateConfig.enabled = newValue.translate;
-        this.project.translateConfig.enabled = newValue.translate;
+      if (newValue.translate !== this.project.translateEnabled && this.form.controls.translate.enabled) {
+        updatedProject.translateEnabled = newValue.translate;
+        this.project.translateEnabled = newValue.translate;
         this.setValidators();
-        if (!newValue.translate || (this.form.valid && this.project.translateConfig.sourceParatextId)) {
+        if (!newValue.translate || (this.form.valid && this.project.sourceParatextId)) {
           this.updateControlState('translate', successHandlers, failStateHandlers);
           isUpdateNeeded = true;
         } else {
           this.controlStates.set('translate', ElementState.InSync);
         }
       }
-      if (newValue.sourceParatextId !== this.project.translateConfig.sourceParatextId) {
+      if (newValue.sourceParatextId !== this.project.sourceParatextId) {
         if (newValue.translate && newValue.sourceParatextId != null) {
-          updatedProject.translateConfig.sourceParatextId = newValue.sourceParatextId;
-          updatedProject.translateConfig.sourceInputSystem = ParatextService.getInputSystem(
+          updatedProject.sourceParatextId = newValue.sourceParatextId;
+          updatedProject.sourceInputSystem = ParatextService.getInputSystem(
             this.sourceProjects.find(project => project.paratextId === newValue.sourceParatextId)
           );
-          this.project.translateConfig.sourceParatextId = updatedProject.translateConfig.sourceParatextId;
-          this.project.translateConfig.sourceInputSystem = updatedProject.translateConfig.sourceInputSystem;
+          this.project.sourceParatextId = updatedProject.sourceParatextId;
+          this.project.sourceInputSystem = updatedProject.sourceInputSystem;
           this.updateControlState('sourceParatextId', successHandlers, failStateHandlers);
           if (this.previousFormValues.sourceParatextId == null) {
             this.updateControlState('translate', successHandlers, failStateHandlers);
@@ -198,27 +195,27 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
           isUpdateNeeded = true;
         }
       }
-      if (newValue.checking !== this.project.checkingConfig.enabled) {
-        updatedProject.checkingConfig.enabled = newValue.checking;
-        this.project.checkingConfig.enabled = newValue.checking;
+      if (newValue.checking !== this.project.checkingEnabled) {
+        updatedProject.checkingEnabled = newValue.checking;
+        this.project.checkingEnabled = newValue.checking;
         this.updateControlState('checking', successHandlers, failStateHandlers);
         isUpdateNeeded = true;
       }
-      if (newValue.seeOthersResponses !== this.project.checkingConfig.usersSeeEachOthersResponses) {
-        updatedProject.checkingConfig.usersSeeEachOthersResponses = newValue.seeOthersResponses;
-        this.project.checkingConfig.usersSeeEachOthersResponses = newValue.seeOthersResponses;
+      if (newValue.seeOthersResponses !== this.project.usersSeeEachOthersResponses) {
+        updatedProject.usersSeeEachOthersResponses = newValue.seeOthersResponses;
+        this.project.usersSeeEachOthersResponses = newValue.seeOthersResponses;
         this.updateControlState('seeOthersResponses', successHandlers, failStateHandlers);
         isUpdateNeeded = true;
       }
-      if (newValue.share !== this.project.checkingConfig.share.enabled) {
-        if (!updatedProject.checkingConfig.share) {
-          updatedProject.checkingConfig.share = {};
+      if (newValue.share !== this.project.share.enabled) {
+        if (!updatedProject.share) {
+          updatedProject.share = {};
         }
-        if (!this.project.checkingConfig.share) {
-          this.project.checkingConfig.share = {};
+        if (!this.project.share) {
+          this.project.share = {};
         }
-        updatedProject.checkingConfig.share.enabled = newValue.share;
-        this.project.checkingConfig.share.enabled = newValue.share;
+        updatedProject.share.enabled = newValue.share;
+        this.project.share.enabled = newValue.share;
         this.updateControlState('share', successHandlers, failStateHandlers);
         isUpdateNeeded = true;
         const shareLevelControl = this.form.controls.shareLevel;
@@ -230,17 +227,17 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
       }
       if (
         newValue.shareLevel != null &&
-        newValue.shareLevel !== this.project.checkingConfig.share.level &&
+        newValue.shareLevel !== this.project.share.level &&
         this.form.controls.shareLevel.enabled
       ) {
-        if (!updatedProject.checkingConfig.share) {
-          updatedProject.checkingConfig.share = {};
+        if (!updatedProject.share) {
+          updatedProject.share = {};
         }
-        if (!this.project.checkingConfig.share) {
-          this.project.checkingConfig.share = {};
+        if (!this.project.share) {
+          this.project.share = {};
         }
-        updatedProject.checkingConfig.share.level = newValue.shareLevel;
-        this.project.checkingConfig.share.level = newValue.shareLevel;
+        updatedProject.share.level = newValue.shareLevel;
+        this.project.share.level = newValue.shareLevel;
         this.updateControlState('shareLevel', successHandlers, failStateHandlers);
         isUpdateNeeded = true;
       }
@@ -268,26 +265,26 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
 
   private updateSettingsInfo() {
     this.previousFormValues = {
-      translate: this.project.translateConfig.enabled,
-      sourceParatextId: this.project.translateConfig.sourceParatextId,
-      checking: this.project.checkingConfig.enabled,
-      seeOthersResponses: this.project.checkingConfig.usersSeeEachOthersResponses,
-      share: this.project.checkingConfig.share.enabled,
-      shareLevel: this.project.checkingConfig.share.level
+      translate: this.project.translateEnabled,
+      sourceParatextId: this.project.sourceParatextId,
+      checking: this.project.checkingEnabled,
+      seeOthersResponses: this.project.usersSeeEachOthersResponses,
+      share: this.project.share.enabled,
+      shareLevel: this.project.share.level
     };
     this.setValidators();
     this.form.reset(this.previousFormValues);
     if (!this.isLoggedInToParatext) {
       this.form.controls.translate.disable();
     }
-    if (!this.project.checkingConfig.share.enabled) {
+    if (!this.project.share.enabled) {
       this.form.controls.shareLevel.disable();
     }
     this.setAllControlsToInSync();
   }
 
   private setValidators() {
-    this.project.translateConfig.enabled && this.isLoggedInToParatext
+    this.project.translateEnabled && this.isLoggedInToParatext
       ? this.form.controls.sourceParatextId.setValidators(Validators.required)
       : this.form.controls.sourceParatextId.setValidators(null);
   }

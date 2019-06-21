@@ -55,7 +55,7 @@ export class CheckingAnswersComponent {
   }
 
   get canSeeOtherUserResponses(): boolean {
-    return this.project.checkingConfig.usersSeeEachOthersResponses;
+    return this.project.usersSeeEachOthersResponses;
   }
 
   get currentUserTotalAnswers(): number {
