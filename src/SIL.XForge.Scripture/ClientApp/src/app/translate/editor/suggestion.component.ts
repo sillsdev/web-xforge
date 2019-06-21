@@ -65,13 +65,6 @@ export class SuggestionComponent extends SubscriptionDisposable implements After
     return Math.round(this.confidence * 100);
   }
 
-  get suggestionStyle(): any {
-    const maxOpacity = 1;
-    const minOpacity = 0.3;
-    const opacity = this.confidence * (maxOpacity - minOpacity) + minOpacity;
-    return { opacity };
-  }
-
   private get editor(): Quill {
     return this.text.editor;
   }
@@ -123,7 +116,7 @@ export class SuggestionComponent extends SubscriptionDisposable implements After
     const reference = this.editor.getBounds(selection.index, selection.length);
     const left = reference.left + 1;
     // root.scrollTop should be 0 if scrollContainer !== root
-    this.top = reference.bottom + this.editor.root.scrollTop + 1;
+    this.top = reference.bottom + this.editor.root.scrollTop + 5;
     this.root.style.left = left + 'px';
     this.root.style.top = this.top + 'px';
     this.root.classList.remove('flip');

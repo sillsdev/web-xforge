@@ -66,6 +66,7 @@
           [isReadOnly]="false"
           (updated)="onTargetUpdated($event.segment, $event.delta, $event.prevSegment)"
           (loaded)="onTextLoaded('target')"
+          [highlightSegment]="target.hasFocus"
         ></app-text>
         <app-suggestion
           [mdcElevation]="2"

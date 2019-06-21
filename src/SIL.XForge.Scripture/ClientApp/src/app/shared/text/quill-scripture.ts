@@ -80,7 +80,7 @@ export function registerScripture(): void {
     static create(value: Verse): Node {
       const node = super.create(value) as HTMLElement;
       // add a ZWSP before the verse number, so that it allows breaking
-      node.innerText = ZWSP + value.number;
+      node.innerText = ZWSP + NBSP + value.number + NBSP;
       setUsxValue(node, value);
       return node;
     }
@@ -134,7 +134,7 @@ export function registerScripture(): void {
     }
 
     format(name: string, value: any): void {
-      if (name === 'char') {
+      if (name === CharInline.blotName) {
         const usxStyle = value as UsxStyle;
         const elem = this.domNode as HTMLElement;
         elem.setAttribute(customAttributeName('style'), usxStyle.style);
@@ -163,7 +163,7 @@ export function registerScripture(): void {
     }
 
     format(name: string, value: any): void {
-      if (name === 'ref') {
+      if (name === RefInline.blotName) {
         const ref = value as Ref;
         const elem = this.domNode as HTMLElement;
         elem.setAttribute(customAttributeName('loc'), ref.loc);
@@ -268,13 +268,6 @@ export function registerScripture(): void {
     }
   }
 
-  Block.allowedChildren.push(VerseEmbed);
-  Block.allowedChildren.push(BlankEmbed);
-  Block.allowedChildren.push(NoteEmbed);
-  Block.allowedChildren.push(OptBreakEmbed);
-  Block.allowedChildren.push(FigureEmbed);
-  Block.allowedChildren.push(UnmatchedEmbed);
-
   class ParaBlock extends Block {
     static blotName = 'para';
     static tagName = 'usx-para';
@@ -294,7 +287,7 @@ export function registerScripture(): void {
     }
 
     format(name: string, value: any): void {
-      if (name === 'para') {
+      if (name === ParaBlock.blotName) {
         const usxStyle = value as UsxStyle;
         const elem = this.domNode as HTMLElement;
         elem.setAttribute(customAttributeName('style'), usxStyle.style);
@@ -303,6 +296,69 @@ export function registerScripture(): void {
       }
     }
   }
+
+  class ParaInline extends Inline {
+    static blotName = 'para-contents';
+    static tagName = 'usx-para-contents';
+
+    static value(_node: HTMLElement): boolean {
+      return true;
+    }
+
+    static formats(node: HTMLElement): boolean {
+      return ParaInline.value(node);
+    }
+
+    formatAt(index: number, length: number, name: string, value: any): void {
+      if (name === ParaInline.blotName) {
+        super.formatAt(index, length, name, value);
+      } else {
+        this.children.forEachAt(index, length, (child, offset, len) => {
+          child.formatAt(offset, len, name, value);
+        });
+      }
+    }
+  }
+
+  class SegmentInline extends Inline {
+    static blotName = 'segment';
+    static tagName = 'usx-segment';
+
+    static create(value: string): Node {
+      const node = super.create(value) as HTMLElement;
+      node.setAttribute(customAttributeName('segment'), value);
+      return node;
+    }
+
+    static formats(node: HTMLElement): string {
+      return SegmentInline.value(node);
+    }
+
+    static value(node: HTMLElement): string {
+      return node.getAttribute(customAttributeName('segment'));
+    }
+
+    format(name: string, value: any): void {
+      if (name === SegmentInline.blotName) {
+        const ref = value as string;
+        const elem = this.domNode as HTMLElement;
+        elem.setAttribute(customAttributeName('segment'), ref);
+      } else {
+        super.format(name, value);
+      }
+    }
+  }
+
+  ParaBlock.allowedChildren.push(ParaInline);
+  ParaBlock.allowedChildren.push(VerseEmbed);
+  ParaBlock.allowedChildren.push(BlankEmbed);
+  ParaBlock.allowedChildren.push(NoteEmbed);
+  ParaBlock.allowedChildren.push(OptBreakEmbed);
+  ParaBlock.allowedChildren.push(FigureEmbed);
+  ParaBlock.allowedChildren.push(UnmatchedEmbed);
+  ParaBlock.allowedChildren.push(SegmentInline);
+  (Inline as any).order.push('segment');
+  (Inline as any).order.push('para-contents');
 
   class ChapterEmbed extends BlockEmbed {
     static blotName = 'chapter';
@@ -324,12 +380,12 @@ export function registerScripture(): void {
   Scroll.allowedChildren.push(ParaBlock);
   Scroll.allowedChildren.push(ChapterEmbed);
 
-  const HighlightClass = new QuillParchment.Attributor.Class('highlight', 'highlight', {
+  const HighlightSegmentClass = new QuillParchment.Attributor.Class('highlight-segment', 'highlight-segment', {
     scope: Parchment.Scope.INLINE
   });
 
-  const SegmentClass = new QuillParchment.Attributor.Attribute('segment', 'data-segment', {
-    scope: Parchment.Scope.INLINE
+  const HighlightParaClass = new QuillParchment.Attributor.Class('highlight-para', 'highlight-para', {
+    scope: Parchment.Scope.BLOCK
   });
 
   class DisableHtmlClipboard extends QuillClipboard {
@@ -356,16 +412,18 @@ export function registerScripture(): void {
     }
   }
 
-  Quill.register('attributors/class/highlight', HighlightClass);
-  Quill.register('attributors/attribute/segment', SegmentClass);
-  Quill.register('formats/highlight', HighlightClass);
-  Quill.register('formats/segment', SegmentClass);
+  Quill.register('attributors/class/highlight-segment', HighlightSegmentClass);
+  Quill.register('formats/highlight-segment', HighlightSegmentClass);
+  Quill.register('attributors/class/highlight-para', HighlightParaClass);
+  Quill.register('formats/highlight-para', HighlightParaClass);
   Quill.register('blots/verse', VerseEmbed);
   Quill.register('blots/blank', BlankEmbed);
   Quill.register('blots/note', NoteEmbed);
   Quill.register('blots/char', CharInline);
   Quill.register('blots/ref', RefInline);
   Quill.register('blots/para', ParaBlock);
+  Quill.register('blots/para-contents', ParaInline);
+  Quill.register('blots/segment', SegmentInline);
   Quill.register('blots/chapter', ChapterEmbed);
   Quill.register('blots/figure', FigureEmbed);
   Quill.register('blots/optbreak', OptBreakEmbed);

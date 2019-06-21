@@ -1,14 +1,13 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, ViewEncapsulation } from '@angular/core';
 import { deepMerge, eq } from '@orbit/utils';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
-import { Subscription } from 'rxjs';
-import { Delta, TextDoc } from '../../core/models/text-doc';
+import { fromEvent } from 'rxjs';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectService } from '../../core/sfproject.service';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
-import { Segmenter } from './segmenter';
-import { UsxSegmenter } from './usx-segmenter';
+import { TextViewModel } from './text-view-model';
 
 const EDITORS = new Set<Quill>();
 
@@ -45,7 +44,7 @@ export interface TextUpdatedEvent {
   styleUrls: ['./text.component.scss', './usx-styles.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class TextComponent implements OnDestroy {
+export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Input() isReadOnly: boolean = true;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
@@ -82,18 +81,20 @@ export class TextComponent implements OnDestroy {
   private _id?: TextDocId;
   private _modules: any = this.DEFAULT_MODULES;
   private _editor?: Quill;
-  private remoteChangesSub?: Subscription;
-  private onCreateSub?: Subscription;
-  private textDoc?: TextDoc;
-  private segmenter?: Segmenter;
+  private viewModel?: TextViewModel;
   private _segment?: Segment;
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
   private initialSegmentChecksum?: number;
   private initialSegmentFocus?: boolean;
   private _highlightSegment: boolean = false;
+  private highlightMarker: HTMLElement;
+  private highlightMarkerTop: number;
+  private highlightMarkerHeight: number;
 
-  constructor(private readonly projectService: SFProjectService) {}
+  constructor(private readonly projectService: SFProjectService) {
+    super();
+  }
 
   get id(): TextDocId {
     return this._id;
@@ -109,7 +110,7 @@ export class TextComponent implements OnDestroy {
       this.initialSegmentFocus = undefined;
       this.initialTextFetched = false;
       if (this.editor != null) {
-        this.segmenter.reset();
+        this.highlightMarker.style.visibility = 'hidden';
         this.bindQuill();
       }
     }
@@ -133,7 +134,7 @@ export class TextComponent implements OnDestroy {
     if (this._highlightSegment !== value) {
       this._highlightSegment = value;
       if (this._segment != null) {
-        this.toggleHighlight(this._segment.range, value);
+        this.toggleHighlight(value);
       }
     }
   }
@@ -183,13 +184,19 @@ export class TextComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.unbindQuill();
+    super.ngOnDestroy();
+    if (this.viewModel != null) {
+      this.viewModel.unbind();
+    }
     EDITORS.delete(this._editor);
   }
 
   onEditorCreated(editor: Quill): void {
     this._editor = editor;
-    this.segmenter = new UsxSegmenter(this._editor);
+    this.highlightMarker = this._editor.addContainer('highlight-marker');
+    this.subscribe(fromEvent(this._editor.root, 'scroll'), () => this.updateHighlightMarkerVisibility());
+    this.subscribe(fromEvent(window, 'resize'), () => this.setHighlightMarkerPosition());
+    this.viewModel = new TextViewModel(this._editor);
     if (this.id != null) {
       this.bindQuill();
     }
@@ -224,25 +231,23 @@ export class TextComponent implements OnDestroy {
   }
 
   getSegmentRange(ref: string): RangeStatic {
-    return this.segmenter.getSegmentRange(ref);
+    return this.viewModel.getSegmentRange(ref);
   }
 
   getSegmentText(ref: string): string {
-    const range = this.segmenter.getSegmentRange(ref);
+    const range = this.viewModel.getSegmentRange(ref);
     return range == null ? '' : this._editor.getText(range.index, range.length);
   }
 
   onContentChanged(delta: DeltaStatic, source: Sources): void {
-    if (source === 'user') {
-      this.textDoc.submit(delta, this._editor);
+    this.viewModel.update(delta, source);
+    if (this.viewModel.isEmpty) {
+      this.setPlaceholderText('Book does not exist');
     }
-
     // skip updating when only formatting changes occurred
-    if (delta.ops.every(op => op.retain != null)) {
-      return;
+    if (delta.ops.some(op => op.insert != null || op.delete != null)) {
+      this.update(delta);
     }
-
-    this.update(delta);
   }
 
   onSelectionChanged(): void {
@@ -261,35 +266,16 @@ export class TextComponent implements OnDestroy {
   }
 
   private async bindQuill(): Promise<void> {
-    this.unbindQuill();
+    this.viewModel.unbind();
     if (this._id == null || this._editor == null) {
       return;
     }
-    // remove placeholder text while the document is opening
-    const editorElem = this._editor.container.getElementsByClassName('ql-editor')[0];
-    const placeholderText = editorElem.getAttribute('data-placeholder');
-    editorElem.setAttribute('data-placeholder', '');
-    this.textDoc = await this.projectService.getTextDoc(this._id);
-    this._editor.setContents(this.textDoc.data);
-    this._editor.history.clear();
-    this.remoteChangesSub = this.textDoc.remoteChanges().subscribe(ops => this._editor.updateContents(ops));
-    this.onCreateSub = this.textDoc.onCreate().subscribe(() => {
-      this._editor.setContents(this.textDoc.data);
-      this._editor.history.clear();
-    });
+    this.setPlaceholderText('Loading...');
+    const textDoc = await this.projectService.getTextDoc(this._id);
+    this.viewModel.bind(textDoc);
 
-    editorElem.setAttribute('data-placeholder', placeholderText);
     this.loaded.emit();
     this.applyEditorStyles();
-  }
-
-  private unbindQuill(): void {
-    if (this.textDoc == null) {
-      return;
-    }
-    this.remoteChangesSub.unsubscribe();
-    this.onCreateSub.unsubscribe();
-    this._editor.setText('', 'silent');
   }
 
   private isBackspaceAllowed(range: RangeStatic): boolean {
@@ -311,17 +297,13 @@ export class TextComponent implements OnDestroy {
   }
 
   private update(delta?: DeltaStatic): void {
-    this.segmenter.update(delta != null);
-
     let segmentRef: string;
     let checksum: number;
     let focus: boolean;
-    let updateUsxFormatForAllSegments = false;
     if (delta != null && !this.initialTextFetched) {
       segmentRef = this.initialSegmentRef;
       checksum = this.initialSegmentChecksum;
       focus = this.initialSegmentFocus;
-      updateUsxFormatForAllSegments = true;
       this.initialSegmentRef = undefined;
       this.initialSegmentChecksum = undefined;
       this.initialSegmentFocus = undefined;
@@ -330,10 +312,10 @@ export class TextComponent implements OnDestroy {
     }
 
     if (segmentRef == null) {
+      // get currently selected segment ref
       const selection = this._editor.getSelection();
       if (selection != null) {
-        // get currently selected segment ref
-        segmentRef = this.segmenter.getSegmentRef(selection);
+        segmentRef = this.viewModel.getSegmentRef(selection);
       }
     }
 
@@ -341,31 +323,16 @@ export class TextComponent implements OnDestroy {
     if (segmentRef != null) {
       // update/switch current segment
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
-        if (this.highlightSegment) {
-          this.toggleHighlight(this._segment.range, false);
-        }
         // the selection has not changed to a different segment, so update existing segment
         this.updateSegment();
-        if (this.highlightSegment) {
-          this.toggleHighlight(this._segment.range, true);
+        if (this._highlightSegment) {
+          // ensure that the currently selected segment is highlighted
+          if (!this.viewModel.isHighlighted(this._segment)) {
+            this.viewModel.toggleHighlight(this._segment, this._id.textType);
+          }
         }
       }
-    }
-
-    // ensure that segment format is correct
-    if (updateUsxFormatForAllSegments) {
-      for (const [ref, range] of this.segmenter.segments) {
-        this.updateUsxSegmentFormat(ref, range);
-      }
-    } else if (this._segment != null) {
-      if (this.updateUsxSegmentFormat(this._segment.ref, this._segment.range)) {
-        // if the segment is no longer blank, ensure that the selection is at the end of the segment.
-        // Sometimes after typing in a blank segment, the selection will be at the beginning. This seems to be a bug
-        // in Quill.
-        Promise.resolve().then(() =>
-          this.editor.setSelection(this._segment.range.index + this._segment.range.length, 0, 'user')
-        );
-      }
+      this.setHighlightMarkerPosition();
     }
 
     Promise.resolve().then(() => this.adjustSelection());
@@ -378,9 +345,9 @@ export class TextComponent implements OnDestroy {
       return false;
     }
 
-    if (!this.segmenter.hasSegmentRange(segmentRef)) {
+    if (!this.viewModel.hasSegmentRange(segmentRef)) {
       if (this._segment != null && this.highlightSegment) {
-        this.toggleHighlight(this._segment.range, false);
+        this.toggleHighlight(false);
       }
       this._segment = undefined;
       this.segmentRefChange.emit();
@@ -389,15 +356,15 @@ export class TextComponent implements OnDestroy {
 
     if (focus) {
       const selection = this._editor.getSelection();
-      const selectedSegmentRef = selection == null ? null : this.segmenter.getSegmentRef(selection);
+      const selectedSegmentRef = selection == null ? null : this.viewModel.getSegmentRef(selection);
       if (selectedSegmentRef !== segmentRef) {
-        const range = this.segmenter.getSegmentRange(segmentRef);
+        const range = this.viewModel.getSegmentRange(segmentRef);
         Promise.resolve().then(() => this._editor.setSelection(range.index + range.length, 0, 'user'));
       }
     }
 
     if (this._segment != null && this.highlightSegment) {
-      this.toggleHighlight(this._segment.range, false);
+      this.toggleHighlight(false);
     }
     this._segment = new Segment(this._id.bookId, segmentRef);
     if (checksum != null) {
@@ -406,13 +373,13 @@ export class TextComponent implements OnDestroy {
     this.updateSegment();
     this.segmentRefChange.emit(this.segmentRef);
     if (this.highlightSegment) {
-      this.toggleHighlight(this._segment.range, true);
+      this.toggleHighlight(true);
     }
     return true;
   }
 
   private updateSegment(): void {
-    const range = this.segmenter.getSegmentRange(this._segment.ref);
+    const range = this.viewModel.getSegmentRange(this._segment.ref);
     const text = this._editor.getText(range.index, range.length);
     this._segment.update(text, range);
   }
@@ -442,45 +409,50 @@ export class TextComponent implements OnDestroy {
     }
   }
 
-  private updateUsxSegmentFormat(ref: string, range: RangeStatic): boolean {
-    const text = this._editor.getText(range.index, range.length);
+  private toggleHighlight(value: boolean): void {
+    this.viewModel.toggleHighlight(this._segment, value ? this._id.textType : false);
 
-    if (text === '') {
-      if (range.length === 0) {
-        // insert blank
-        const type = ref.includes('/p') || ref.includes('/m') ? 'initial' : 'normal';
-        const delta = new Delta();
-        delta.retain(range.index);
-        delta.insert({ blank: type }, { segment: ref });
-        this._editor.updateContents(delta, 'user');
-      }
-    } else {
-      const segmentDelta = this._editor.getContents(range.index, range.length);
-      if (segmentDelta.ops.length > 1) {
-        const lastOp = segmentDelta.ops[segmentDelta.ops.length - 1];
-        if (lastOp.insert != null && lastOp.insert.blank != null) {
-          // delete blank
-          const delta = new Delta()
-            .retain(range.index)
-            .retain(range.length - 1, { segment: ref })
-            .delete(1);
-          this._editor.updateContents(delta, 'user');
-          return true;
-        } else if (segmentDelta.ops.some(op => op.attributes == null || op.attributes.segment == null)) {
-          // add segment format if missing
-          this._editor.formatText(range.index, range.length, 'segment', ref, 'user');
-        }
+    if (this._id.textType === 'target') {
+      if (value) {
+        this.highlightMarker.style.visibility = '';
+      } else {
+        this.highlightMarker.style.visibility = 'hidden';
       }
     }
-    return false;
   }
 
-  private toggleHighlight(range: RangeStatic, value: boolean): void {
-    if (range.length > 0) {
-      // this changes the underlying HTML, which can mess up some Quill events, so defer this call
-      Promise.resolve().then(() =>
-        this._editor.formatText(range.index, range.length, 'highlight', value ? this._id.textType : false, 'silent')
-      );
+  private setHighlightMarkerPosition(): void {
+    if (this._segment == null) {
+      return;
     }
+    const range = this._segment.range;
+    const bounds = this._editor.getBounds(range.index, range.length);
+    this.highlightMarkerTop = bounds.top + this.editor.root.scrollTop;
+    this.highlightMarkerHeight = bounds.height;
+    this.highlightMarker.style.top = this.highlightMarkerTop + 'px';
+    this.updateHighlightMarkerVisibility();
+  }
+
+  private updateHighlightMarkerVisibility(): void {
+    const marginTop = -this._editor.root.scrollTop;
+    const offsetTop = marginTop + this.highlightMarkerTop;
+    const offsetBottom = offsetTop + this.highlightMarkerHeight;
+    if (offsetTop < 0) {
+      this.highlightMarker.style.marginTop = -this.highlightMarkerTop + 'px';
+      const height = this.highlightMarkerHeight + offsetTop;
+      this.highlightMarker.style.height = Math.max(height, 0) + 'px';
+    } else if (offsetBottom > this._editor.scrollingContainer.clientHeight) {
+      this.highlightMarker.style.marginTop = marginTop + 'px';
+      const height = this._editor.scrollingContainer.clientHeight - offsetTop;
+      this.highlightMarker.style.height = Math.max(height, 0) + 'px';
+    } else {
+      this.highlightMarker.style.marginTop = marginTop + 'px';
+      this.highlightMarker.style.height = this.highlightMarkerHeight + 'px';
+    }
+  }
+
+  private setPlaceholderText(text: string): void {
+    const editorElem = this._editor.container.getElementsByClassName('ql-editor')[0];
+    editorElem.setAttribute('data-placeholder', text);
   }
 }
