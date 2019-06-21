@@ -1,16 +1,16 @@
 <div class="loading-indicator" *ngIf="isLoading"><span></span> <span></span> <span></span></div>
 <div *ngIf="!isLoading">
   <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="5px" class="ql-suggest">
-    <a id="words-link" [routerLink]="" (click)="selectAll($event)" [ngStyle]="suggestionStyle">{{ words.join(" ") }}</a>
+    <a id="words-link" [routerLink]="" (click)="selectAll($event)">{{ words.join(" ") }}</a>
     <span
       ><small class="text-muted">{{ confidencePercentage }}%</small></span
-    ><a class="help-icon" [routerLink]="" (click)="toggleHelp()"><mdc-icon>info</mdc-icon></a>
+    ><a class="help-icon text-muted" [routerLink]="" (click)="toggleHelp()"><mdc-icon>info</mdc-icon></a>
   </div>
   <div class="ql-suggest text-muted" *ngIf="showHelp">
     <small>Inserting suggestions:</small>
     <ul>
       <li>
-        <small><strong>Ctrl + 0</strong> or <strong>click</strong> to insert the entire phrase.</small>
+        <small><strong>ENTER</strong> or <strong>click</strong> to insert the entire phrase.</small>
       </li>
       <li>
         <small

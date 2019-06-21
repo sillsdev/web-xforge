@@ -1,5 +1,13 @@
 import { Operation, Query, QueryBuilder, QueryExpression, QueryTerm, Transform, TransformBuilder } from '@orbit/data';
-import Quill, { BoundsStatic, QuillOptionsStatic, RangeStatic, DeltaStatic, Sources, ClipboardStatic } from 'quill';
+import Quill, {
+  BoundsStatic,
+  QuillOptionsStatic,
+  RangeStatic,
+  DeltaStatic,
+  Sources,
+  ClipboardStatic,
+  DeltaOperation
+} from 'quill';
 
 /* SystemJS module definition */
 declare var module: NodeModule;
@@ -22,6 +30,10 @@ declare module '@orbit/data' {
 }
 
 declare module 'quill' {
+  export interface DeltaStatic {
+    push?(newOp: DeltaOperation): DeltaStatic;
+  }
+
   export interface History {
     clear(): void;
     undo(): void;

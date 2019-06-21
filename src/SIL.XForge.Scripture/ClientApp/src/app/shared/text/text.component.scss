@@ -6,19 +6,61 @@ quill-editor {
     line-height: 1.6;
     width: 100%;
     word-break: break-word;
+    padding: 15px 35px;
   }
 }
 
-.highlight-source {
+.highlight-segment-source {
   background-color: #ffffce;
+  padding: 0.45rem 0;
 }
 
-.template-editor .ql-container.ql-snow {
-  background-color: #ededed;
+.highlight-segment-target {
+  color: black;
 }
 
-.template-editor span[data-segment] {
-  background-color: white;
-  border-radius: 3px;
-  padding: 0px 2px;
+.highlight-para-target > usx-para-contents {
+  box-shadow: 2px 4px 4px -4px #bfb092;
+}
+
+.template-editor {
+  .ql-editor {
+    background-color: #f5f3ef;
+
+    *[contenteditable='false'] {
+      color: #7c7c7c;
+    }
+
+    usx-para {
+      margin-bottom: 1em;
+
+      > usx-para-contents {
+        padding: 0.45rem 0.3rem;
+        border-radius: 4px;
+        display: inline;
+        box-sizing: border-box;
+
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+
+        color: rgba(0, 0, 0, 0.8);
+        background-color: white;
+
+        usx-verse {
+          padding-top: 0.35rem;
+          background-color: #f5f3ef;
+          border-radius: 8px;
+        }
+      }
+    }
+  }
+}
+
+.highlight-marker {
+  width: 0;
+  height: 0;
+  border-left: 4px solid #a9ca25;
+  position: absolute;
+  top: 0px;
+  left: 16px;
 }
