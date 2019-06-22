@@ -144,11 +144,6 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     return this.texts.filter(t => t.hasSource);
   }
 
-  get canChangePassword(): boolean {
-    // ToDo: only true for credentialed accounts
-    return true;
-  }
-
   get isCheckingEnabled(): boolean {
     return (
       this.selectedProject != null &&
@@ -286,6 +281,10 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
       );
     }
     this.noticeService.loadingFinished();
+  }
+
+  canChangePassword(authType: string): boolean {
+    return authType != null && authType.includes('auth0');
   }
 
   changePassword(email: string): void {

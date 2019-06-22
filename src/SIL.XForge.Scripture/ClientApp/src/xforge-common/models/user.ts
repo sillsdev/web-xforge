@@ -15,6 +15,7 @@ export class User extends Resource {
   contactMethod?: 'email' | 'sms' | 'emailSms';
   birthday?: string;
   gender?: 'female' | 'male';
+  authType?: string;
   site?: Site;
 
   projects?: ProjectUserRef[];

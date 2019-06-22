@@ -60,7 +60,7 @@
                 <mdc-list-item
                   name="changePassword"
                   (click)="changePassword(currentUser.email)"
-                  *ngIf="canChangePassword"
+                  *ngIf="canChangePassword(currentUser.authType)"
                 >
                   Change password
                 </mdc-list-item>
