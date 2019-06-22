@@ -284,12 +284,12 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   }
 
   canChangePassword(authType: string): boolean {
-    return authType != null && authType.includes('auth0');
+    return authType != null && authType === 'account';
   }
 
   changePassword(email: string): void {
     this.authService.changePassword(email, (error, result) => {
-      let message: string = "Can't change password at this time. Try again later or contact the system administrator.";
+      let message: string = "Can't change password at this time. Try again later or report an issue in the Help menu.";
       if (!error) {
         // ToDo: review - passing the message from Auth0 might be an issue for localisation - IJH 2019-06
         message = result;
