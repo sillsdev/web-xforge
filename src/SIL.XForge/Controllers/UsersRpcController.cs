@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router;
 using EdjCase.JsonRpc.Router.Abstractions;
@@ -25,6 +26,7 @@ namespace SIL.XForge.Controllers
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IAuthService _authService;
         private readonly IHostingEnvironment _hostingEnv;
+        private const string EMAIL_PATTERN = "^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$";
 
         public UsersRpcController(IUserAccessor userAccessor, IHttpRequestAccessor httpRequestAccessor,
             IRepository<UserEntity> users, IOptions<SiteOptions> siteOptions, IAuthService authService,
@@ -102,9 +104,13 @@ namespace SIL.XForge.Controllers
                     RefreshToken = (string)ptIdentity["refresh_token"]
                 };
             }
+            Regex emailRegex = new Regex(EMAIL_PATTERN);
             UserEntity user = await _users.UpdateAsync(ResourceId, update =>
                 {
-                    update.Set(u => u.Name, (string)userProfile["name"]);
+                    string name = emailRegex.IsMatch((string)userProfile["name"])
+                        ? ((string)userProfile["name"]).Substring(0, ((string)userProfile["name"]).IndexOf('@'))
+                        : (string)userProfile["name"];
+                    update.Set(u => u.Name, name);
                     update.Set(u => u.Email, (string)userProfile["email"]);
                     update.Set(u => u.AvatarUrl, (string)userProfile["picture"]);
                     update.Set(u => u.Role, (string)userProfile["app_metadata"]["xf_role"]);
