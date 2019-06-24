@@ -27,6 +27,8 @@ namespace SIL.XForge.Models
         public DateTime? Birthday { get; set; }
         [Attr]
         public string Gender { get; set; }
+        [Attr(isImmutable: true)]
+        public string AuthType { get; set; }
         [Attr(isFilterable: false, isSortable: false)]
         public Site Site { get; set; }
 

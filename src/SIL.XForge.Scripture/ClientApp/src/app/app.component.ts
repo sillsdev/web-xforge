@@ -283,6 +283,22 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     this.noticeService.loadingFinished();
   }
 
+  canChangePassword(authType: string): boolean {
+    return authType != null && authType === 'account';
+  }
+
+  changePassword(email: string): void {
+    this.authService
+      .changePassword(email)
+      .then(result => {
+        this.noticeService.show(result);
+      })
+      .catch(() => {
+        const message = "Can't change password at this time. Try again later or report an issue in the Help menu.";
+        this.noticeService.show(message);
+      });
+  }
+
   logOut(): void {
     this.authService.logOut();
   }
