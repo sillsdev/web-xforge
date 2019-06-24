@@ -12,8 +12,8 @@ import { Question } from '../../../core/models/question';
 import { SFProject } from '../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../../core/models/sfproject-user';
+import { EditNameDialogComponent } from '../../../edit-name-dialog/edit-name-dialog.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
-import { CheckingNameDialogComponent } from './checking-name-dialog/checking-name-dialog.component';
 
 export interface AnswerAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'like';
@@ -154,26 +154,18 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
       return;
     }
     if (this.answeredFirstQuestion) {
-      this.action.emit({
-        action: 'save',
-        text: this.answerForm.get('answerText').value,
-        answer: this.activeAnswer
-      });
+      this.emitAnswerToSave();
       this.hideAnswerForm();
       return;
     }
-    const dialogRef = this.dialog.open(CheckingNameDialogComponent, {
+    const dialogRef = this.dialog.open(EditNameDialogComponent, {
       data: { name: this.user.name },
       escapeToClose: false,
       clickOutsideToClose: false
     });
     dialogRef.afterClosed().subscribe(async response => {
-      await this.userService.onlineUpdateCurrentUserAttributes({ name: response as string });
-      this.action.emit({
-        action: 'save',
-        text: this.answerForm.get('answerText').value,
-        answer: this.activeAnswer
-      });
+      await this.userService.updateCurrentUserAttributes({ name: response as string });
+      this.emitAnswerToSave();
       this.hideAnswerForm();
       this.answeredFirstQuestion = true;
     });
@@ -185,6 +177,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
       comment: action.comment,
       answer: action.answer,
       text: action.text
+    });
+  }
+
+  private emitAnswerToSave() {
+    this.action.emit({
+      action: 'save',
+      text: this.answerForm.get('answerText').value,
+      answer: this.activeAnswer
     });
   }
 }

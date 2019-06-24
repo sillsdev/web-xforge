@@ -153,20 +153,42 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
           const projectId = params['projectId'];
           const bookId = params['bookId'];
           return combineLatest(
+            this.projectService.getAll(),
+            // Params emits multiiple times, so we need the current project right away to prevent
+            // questions being loaded multiple times
             this.projectService.get(projectId, [[nameof<SFProject>('users')]]),
             from(this.projectService.getDataDoc(projectId)).pipe(
               map(projectData => projectData.data.texts.find(t => t.bookId === bookId))
             )
           );
         }),
-        filter(([projectResults, text]) => projectResults.data != null && text != null)
+        filter(
+          ([projectResults, currentProject, text]) =>
+            projectResults.data != null && currentProject != null && text != null
+        )
       ),
-      async ([projectResults, text]) => {
+      async ([userProjects, currentProject, text]) => {
         const prevProjectId = this.project == null ? '' : this.project.id;
         const prevBookId = this.text == null ? '' : this.text.bookId;
         this.text = text;
-        this.project = projectResults.data;
-        this.projectCurrentUser = projectResults
+        this.project = currentProject.data;
+        let questions: Question[] = [];
+        const checkingProjects = userProjects.data.filter(p => p.checkingEnabled);
+        for (const proj of checkingProjects) {
+          const textsInProject = (await this.projectService.getDataDoc(proj.id)).data.texts;
+          for (const t of textsInProject) {
+            for (const chapter of t.chapters) {
+              const questionsData = await this.projectService.getQuestionsDoc(
+                new TextDocId(proj.id, t.bookId, chapter.number)
+              );
+              questions = questions.concat(questionsData.data);
+            }
+          }
+        }
+        this.hasUserAnsweredQuestions =
+          questions.filter(q => q.answers.find(a => a.ownerRef === this.userService.currentUserId) != null).length > 0;
+
+        this.projectCurrentUser = currentProject
           .getManyIncluded<SFProjectUser>(this.project.users)
           .find(pu => (pu.user == null ? '' : pu.user.id) === this.userService.currentUserId);
         this.chapters = this.text.chapters.map(c => c.number);
@@ -188,30 +210,6 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
             );
           }
         }
-      }
-    );
-
-    this.subscribe(
-      this.userService.getProjects(this.userService.currentUserId, [
-        [nameof<SFProjectUser>('project'), nameof<SFProject>('texts')]
-      ]),
-      async results => {
-        const checkingProjects = results.data
-          .map(pu => results.getIncluded<SFProject>(pu.project))
-          .filter(project => project.checkingConfig.enabled === true);
-        let texts: Text[] = [];
-        for (const project of checkingProjects) {
-          texts = texts.concat(results.getManyIncluded(project.texts));
-        }
-        let questions: Question[] = [];
-        for (const text of texts) {
-          for (const chapter of text.chapters) {
-            const questionData = await this.textService.getQuestionData(new TextJsonDataId(text.id, chapter.number));
-            questions = questions.concat(questionData.data);
-          }
-        }
-        this.hasUserAnsweredQuestions =
-          questions.filter(q => q.answers.find(a => a.ownerRef === this.userService.currentUserId) != null).length > 0;
       }
     );
 

@@ -3,14 +3,14 @@ import { Component, Inject } from '@angular/core';
 import { FormControl } from '@angular/forms';
 
 @Component({
-  selector: 'app-checking-name-dialog',
-  templateUrl: './checking-name-dialog.component.html'
+  selector: 'app-edit-name-dialog',
+  templateUrl: './edit-name-dialog.component.html'
 })
-export class CheckingNameDialogComponent {
+export class EditNameDialogComponent {
   name: FormControl = new FormControl('');
 
   constructor(
-    public dialogRef: MdcDialogRef<CheckingNameDialogComponent>,
+    public dialogRef: MdcDialogRef<EditNameDialogComponent>,
     @Inject(MDC_DIALOG_DATA) public data: { name: string }
   ) {
     this.name.setValue(data.name);

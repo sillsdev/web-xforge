@@ -1,14 +1,13 @@
 import { MdcDialog } from '@angular-mdc/web';
 import { OverlayContainer } from '@angular-mdc/web/overlay';
-import { Component, NgModule, OnDestroy } from '@angular/core';
+import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Subscription } from 'rxjs';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { CheckingNameDialogComponent } from './checking-name-dialog.component';
+import { EditNameDialogComponent } from './edit-name-dialog.component';
 
 describe('CheckingNameDialogComponent', () => {
   let env: TestEnvironment;
-  afterEach(() => env.component.ngOnDestroy());
+
   it('should display name', () => {
     env = new TestEnvironment();
     env.openDialog();
@@ -76,9 +75,9 @@ class TestEnvironment {
 
 @NgModule({
   imports: [UICommonModule],
-  declarations: [CheckingNameDialogComponent],
-  entryComponents: [CheckingNameDialogComponent],
-  exports: [CheckingNameDialogComponent]
+  declarations: [EditNameDialogComponent],
+  entryComponents: [EditNameDialogComponent],
+  exports: [EditNameDialogComponent]
 })
 class DialogTestModule {}
 
@@ -87,19 +86,15 @@ class DialogTestModule {}
     <button (click)="openDialog()"></button>
   `
 })
-class DialogOpenerComponent implements OnDestroy {
-  subscription: Subscription;
+class DialogOpenerComponent {
   publicName: string = 'Simon Says';
   confirmedName: string;
 
   constructor(private readonly dialog: MdcDialog) {}
 
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
-  }
   openDialog() {
-    const dialogRef = this.dialog.open(CheckingNameDialogComponent, { data: { name: this.publicName } });
-    this.subscription = dialogRef.afterClosed().subscribe(response => {
+    const dialogRef = this.dialog.open(EditNameDialogComponent, { data: { name: this.publicName } });
+    dialogRef.afterClosed().subscribe(response => {
       this.confirmedName = response as string;
     });
   }
