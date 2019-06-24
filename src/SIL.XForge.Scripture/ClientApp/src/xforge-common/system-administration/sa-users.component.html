@@ -1,9 +1,14 @@
-<div fxLayout="column">
-  <div fxLayout="row">
-    <mat-form-field fxFlexAlign="start">
-      <input matInput placeholder="Filter users..." (keyup)="updateSearchTerm($event.target.value)" />
-    </mat-form-field>
+<div>
+  <div>
+    <mdc-form-field>
+      <mdc-text-field
+        label="Filter users..."
+        (keyup)="updateSearchTerm($event.target.value)"
+        id="user-filter"
+      ></mdc-text-field>
+    </mdc-form-field>
   </div>
+  <br />
   <div *ngIf="!isLoading; else loading">
     <div *ngIf="length > 0">
       <table mat-table fxFill id="users-table" [dataSource]="userRows">
@@ -24,7 +29,7 @@
           </td>
         </ng-container>
         <ng-container matColumnDef="projects">
-          <td fxHide.xs mat-cell *matCellDef="let userRow">
+          <td fxHide.lt-md mat-cell *matCellDef="let userRow">
             <span *ngIf="userRow.projects?.length > 0">
               {{ userRow.projects?.length }} Projects -
               <span class="projectsNames" *ngFor="let project of userRow.projects; last as isLast">
@@ -38,20 +43,20 @@
           <td mat-cell *matCellDef="let userRow" class="remove-cell">
             <button
               *ngIf="userRow.user.active"
-              mat-icon-button
+              mdc-icon-button
               class="remove-user"
               (click)="removeUser(userRow.user.id)"
             >
-              <mat-icon>clear</mat-icon>
+              <mdc-icon>clear</mdc-icon>
             </button>
 
             <!-- 2 buttons below are 1 button displayed mutually exclusively, different style on breakpoints -->
             <button
               *ngIf="!userRow.user.active"
               fxHide.lt-sm
-              fxHide.md
               fxShow
-              mat-stroked-button
+              mdc-button
+              outlined
               color="warn"
               class="cancel-invite"
               (click)="removeUser(userRow.user.id)"
@@ -62,13 +67,12 @@
               *ngIf="!userRow.user.active"
               fxHide
               fxShow.lt-sm
-              fxShow.md
-              mat-icon-button
+              mdc-icon-button
               color="warn"
               class="cancel-invite"
               (click)="removeUser(userRow.user.id)"
             >
-              <mat-icon>clear</mat-icon>
+              <mdc-icon>clear</mdc-icon>
             </button>
           </td>
         </ng-container>

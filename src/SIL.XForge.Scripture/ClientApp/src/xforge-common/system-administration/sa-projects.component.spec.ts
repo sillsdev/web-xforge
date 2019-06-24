@@ -176,6 +176,66 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
   }
 
+  get table(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#projects-table'));
+  }
+
+  get rows(): DebugElement[] {
+    // querying the debug table element doesn't seem to work, so we query the native element instead and convert back
+    // to debug elements
+    return Array.from(this.table.nativeElement.querySelectorAll('tr')).map(r => getDebugNode(r) as DebugElement);
+  }
+
+  get filterInput(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#project-filter'));
+  }
+
+  get paginator(): DebugElement {
+    return this.fixture.debugElement.query(By.css('mat-paginator'));
+  }
+
+  get nextButton(): DebugElement {
+    return this.paginator.query(By.css('.mat-paginator-navigation-next'));
+  }
+
+  cell(row: number, column: number): DebugElement {
+    return this.rows[row].children[column];
+  }
+
+  selectValue(select: DebugElement): string {
+    const trigger = select.query(By.css('.mat-select-trigger'));
+    this.fixture.detectChanges();
+    return trigger.nativeElement.textContent;
+  }
+
+  roleSelect(row: number): DebugElement {
+    return this.cell(row, 2).query(By.css('mat-select'));
+  }
+
+  changeSelectValue(select: DebugElement, option: number): void {
+    select.nativeElement.click();
+    this.fixture.detectChanges();
+    flush();
+    const options = select.queryAll(By.css('mat-option'));
+    options[option].nativeElement.click();
+    this.fixture.detectChanges();
+    flush();
+  }
+
+  setInputValue(input: DebugElement, value: string): void {
+    const inputElem = input.nativeElement as HTMLInputElement;
+    inputElem.value = value;
+    inputElem.dispatchEvent(new Event('keyup'));
+    this.fixture.detectChanges();
+    flush();
+  }
+
+  clickButton(button: DebugElement): void {
+    button.nativeElement.click();
+    this.fixture.detectChanges();
+    flush();
+  }
+
   setupProjectData(): void {
     when(this.mockedProjectService.onlineSearch(anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<GetAllParameters<TestProject>>) => {
@@ -235,65 +295,5 @@ class TestEnvironment {
       of(new MapQueryResults<TestProject[]>([], 0))
     );
     when(this.mockedUserService.onlineGetProjects('user01')).thenReturn(of(new MapQueryResults<TestProjectUser[]>([])));
-  }
-
-  get table(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#projects-table'));
-  }
-
-  get rows(): DebugElement[] {
-    // querying the debug table element doesn't seem to work, so we query the native element instead and convert back
-    // to debug elements
-    return Array.from(this.table.nativeElement.querySelectorAll('tr')).map(r => getDebugNode(r) as DebugElement);
-  }
-
-  get filterInput(): DebugElement {
-    return this.fixture.debugElement.query(By.css('input'));
-  }
-
-  get paginator(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mat-paginator'));
-  }
-
-  get nextButton(): DebugElement {
-    return this.paginator.query(By.css('.mat-paginator-navigation-next'));
-  }
-
-  cell(row: number, column: number): DebugElement {
-    return this.rows[row].children[column];
-  }
-
-  selectValue(select: DebugElement): string {
-    const trigger = select.query(By.css('.mat-select-trigger'));
-    this.fixture.detectChanges();
-    return trigger.nativeElement.textContent;
-  }
-
-  roleSelect(row: number): DebugElement {
-    return this.cell(row, 2).query(By.css('mat-select'));
-  }
-
-  changeSelectValue(select: DebugElement, option: number): void {
-    select.nativeElement.click();
-    this.fixture.detectChanges();
-    flush();
-    const options = select.queryAll(By.css('mat-option'));
-    options[option].nativeElement.click();
-    this.fixture.detectChanges();
-    flush();
-  }
-
-  setInputValue(input: DebugElement, value: string): void {
-    const inputElem = input.nativeElement as HTMLInputElement;
-    inputElem.value = value;
-    inputElem.dispatchEvent(new Event('keyup'));
-    this.fixture.detectChanges();
-    flush();
-  }
-
-  clickButton(button: DebugElement): void {
-    button.nativeElement.click();
-    this.fixture.detectChanges();
-    flush();
   }
 }

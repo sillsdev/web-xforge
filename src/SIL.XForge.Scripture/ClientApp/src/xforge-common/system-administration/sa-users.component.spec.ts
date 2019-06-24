@@ -198,39 +198,12 @@ class TestEnvironment {
     this.overlayContainer = TestBed.get(OverlayContainer);
   }
 
-  setupNullUserData(): void {
-    this.setupThisUserData(null);
-  }
-
-  setupEmptyUserData(): void {
-    this.setupThisUserData([]);
-  }
-
-  setupUserData(): void {
-    when(this.mockedUserService.onlineSearch(anything(), anything(), anything(), anything())).thenCall(
-      (term$: Observable<string>, parameters$: Observable<GetAllParameters<User>>, reload$: Observable<void>) => {
-        const results = [
-          // page 1
-          new MapQueryResults<User[]>(this.users, this.users.length, this.included),
-          // page 2
-          new MapQueryResults<User[]>([this.users[2]], 1, this.included)
-        ];
-
-        return combineLatest(term$, parameters$, reload$).pipe(map((_value, index) => results[index]));
-      }
-    );
-  }
-
   get loadingSpinner(): DebugElement {
     return this.fixture.debugElement.query(By.css('.loading-spinner'));
   }
 
   get noUsersLabel(): DebugElement {
     return this.fixture.debugElement.query(By.css('#no-users-label'));
-  }
-
-  get addUserButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#add-user-btn'));
   }
 
   get table(): DebugElement {
@@ -244,7 +217,7 @@ class TestEnvironment {
   }
 
   get filterInput(): DebugElement {
-    return this.fixture.debugElement.query(By.css('input'));
+    return this.fixture.debugElement.query(By.css('#user-filter'));
   }
 
   get paginator(): DebugElement {
@@ -263,10 +236,6 @@ class TestEnvironment {
   get deleteDialogNoButton(): HTMLButtonElement {
     const overlayContainerElement = this.overlayContainer.getContainerElement();
     return overlayContainerElement.querySelector('#confirm-button-no');
-  }
-
-  get addEditPanel(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#add-edit-panel'));
   }
 
   cell(row: number, column: number): DebugElement {
@@ -289,6 +258,29 @@ class TestEnvironment {
     element.click();
     this.fixture.detectChanges();
     flush();
+  }
+
+  setupNullUserData(): void {
+    this.setupThisUserData(null);
+  }
+
+  setupEmptyUserData(): void {
+    this.setupThisUserData([]);
+  }
+
+  setupUserData(): void {
+    when(this.mockedUserService.onlineSearch(anything(), anything(), anything(), anything())).thenCall(
+      (term$: Observable<string>, parameters$: Observable<GetAllParameters<User>>, reload$: Observable<void>) => {
+        const results = [
+          // page 1
+          new MapQueryResults<User[]>(this.users, this.users.length, this.included),
+          // page 2
+          new MapQueryResults<User[]>([this.users[2]], 1, this.included)
+        ];
+
+        return combineLatest(term$, parameters$, reload$).pipe(map((_value, index) => results[index]));
+      }
+    );
   }
 
   setInputValue(input: HTMLInputElement | DebugElement, value: string): void {
