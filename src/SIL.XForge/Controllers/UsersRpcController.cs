@@ -120,21 +120,7 @@ namespace SIL.XForge.Controllers
                         update.SetOnInsert(u => u.ParatextTokens, ptTokens);
                     string key = _siteOptions.Value.Id;
                     update.Set(u => u.Sites[key].LastLogin, DateTime.UtcNow);
-                    string authId = (string)userProfile["user_id"];
-                    update.SetOnInsert(u => u.AuthId, authId);
-                    if (authId.LastIndexOf('|') >= 0)
-                    {
-                        string authIdType = authId.Substring(0, authId.LastIndexOf('|'));
-                        string authType = null;
-                        if (authIdType.Contains("paratext"))
-                            authType = "paratext";
-                        else if (authIdType.Contains("google"))
-                            authType = "google";
-                        else if (authIdType.Contains("auth0"))
-                            authType = "account";
-                        if (authType != null)
-                            update.SetOnInsert(u => u.AuthType, authType);
-                    }
+                    update.SetOnInsert(u => u.AuthId, (string)userProfile["user_id"]);
                     update.SetOnInsert(u => u.Active, true);
                 }, true);
 

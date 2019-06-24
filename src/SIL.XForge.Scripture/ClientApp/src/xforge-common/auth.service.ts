@@ -73,8 +73,16 @@ export class AuthService {
     this.tryLogInPromise = this.tryLogIn();
   }
 
-  changePassword(email: string, callback: Auth0Callback<any> = () => {}): void {
-    this.auth0.changePassword({ connection: 'Username-Password-Authentication', email }, callback);
+  changePassword(email: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      this.auth0.changePassword({ connection: 'Username-Password-Authentication', email }, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      });
+    });
   }
 
   logIn(returnUrl: string): void {
