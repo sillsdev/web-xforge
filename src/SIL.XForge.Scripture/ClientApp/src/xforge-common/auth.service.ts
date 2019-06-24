@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { RecordIdentity } from '@orbit/data';
-import { AuthorizeOptions, WebAuth } from 'auth0-js';
+import { Auth0Callback, AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
 import { of, Subscription, timer } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
@@ -71,6 +71,10 @@ export class AuthService {
 
   init(): void {
     this.tryLogInPromise = this.tryLogIn();
+  }
+
+  changePassword(email: string, callback: Auth0Callback<any> = () => {}): void {
+    this.auth0.changePassword({ connection: 'Username-Password-Authentication', email }, callback);
   }
 
   logIn(returnUrl: string): void {
