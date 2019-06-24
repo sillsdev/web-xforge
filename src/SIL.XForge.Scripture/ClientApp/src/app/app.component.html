@@ -53,11 +53,17 @@
               </div>
               <mdc-list-divider></mdc-list-divider>
               <mdc-list>
-                <mdc-list-item *ngIf="isSystemAdmin" routerLink="/system-administration">
-                  System Administration
+                <ng-container *ngIf="isSystemAdmin">
+                  <mdc-list-item routerLink="/system-administration">System Administration</mdc-list-item>
+                  <mdc-list-item routerLink="/projects">My Projects</mdc-list-item>
+                </ng-container>
+                <mdc-list-item
+                  name="changePassword"
+                  (click)="changePassword(currentUser.email)"
+                  *ngIf="canChangePassword"
+                >
+                  Change password
                 </mdc-list-item>
-                <mdc-list-item name="myProjects" routerLink="/projects">My Projects</mdc-list-item>
-                <mdc-list-item name="myAccount" routerLink="/my-account">My Account</mdc-list-item>
                 <mdc-list-item name="logout" (click)="logOut()">Log out</mdc-list-item>
               </mdc-list>
             </mdc-list-group>
