@@ -4,21 +4,36 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { instance, mock } from 'ts-mockito';
-
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
+
+describe('DeleteDialogComponent', () => {
+  it('Confirm Yes button call', fakeAsync(() => {
+    const env = new TestDeleteDialogComponent();
+    spyOn(env.component, 'confirmDialog');
+    env.clickElement(env.yesButton);
+
+    expect(env.component.confirmDialog).toHaveBeenCalled();
+  }));
+
+  it('Confirm No button call', fakeAsync(() => {
+    const env = new TestDeleteDialogComponent();
+    spyOn(env.component, 'closeDialog');
+    env.clickElement(env.noButton);
+
+    expect(env.component.closeDialog).toHaveBeenCalled();
+  }));
+});
 
 class TestDeleteDialogComponent {
   dialog: MatDialog;
   component: SaDeleteDialogComponent;
   fixture: ComponentFixture<SaDeleteDialogComponent>;
 
-  mockedUserService: UserService;
+  mockedUserService: UserService = mock(UserService);
 
   constructor() {
-    this.mockedUserService = mock(UserService);
-
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, UICommonModule],
       declarations: [SaDeleteDialogComponent],
@@ -52,21 +67,3 @@ class TestDeleteDialogComponent {
     flush();
   }
 }
-
-describe('DeleteDialogComponent', () => {
-  it('Confirm Yes button call', fakeAsync(() => {
-    const env = new TestDeleteDialogComponent();
-    spyOn(env.component, 'confirmDialog');
-    env.clickElement(env.yesButton);
-
-    expect(env.component.confirmDialog).toHaveBeenCalled();
-  }));
-
-  it('Confirm No button call', fakeAsync(() => {
-    const env = new TestDeleteDialogComponent();
-    spyOn(env.component, 'closeDialog');
-    env.clickElement(env.noButton);
-
-    expect(env.component.closeDialog).toHaveBeenCalled();
-  }));
-});

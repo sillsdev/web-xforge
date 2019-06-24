@@ -1,6 +1,5 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-
 import { GetAllParameters } from '../json-api.service';
 import { Project } from '../models/project';
 import { NONE_ROLE, ProjectRole } from '../models/project-role';
@@ -29,11 +28,11 @@ class Row {
 }
 
 @Component({
-  selector: 'app-projects',
-  templateUrl: './projects.component.html',
-  styleUrls: ['./projects.component.scss']
+  selector: 'app-sa-projects',
+  templateUrl: './sa-projects.component.html',
+  styleUrls: ['./sa-projects.component.scss']
 })
-export class ProjectsComponent extends SubscriptionDisposable implements OnInit {
+export class SaProjectsComponent extends SubscriptionDisposable implements OnInit {
   @HostBinding('class') classes = 'flex-column';
 
   rows: Row[];

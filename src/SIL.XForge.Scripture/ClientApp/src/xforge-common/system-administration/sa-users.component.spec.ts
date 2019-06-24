@@ -7,7 +7,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-
 import { GetAllParameters, MapQueryResults } from '../json-api.service';
 import { Project, ProjectRef } from '../models/project';
 import { ProjectUser, ProjectUserRef } from '../models/project-user';
@@ -107,89 +106,6 @@ describe('SaUsersComponent', () => {
 
     expect(env.userRows.length).toEqual(1);
   }));
-
-  it('should display new user pane', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupEmptyUserData();
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-
-    env.clickElement(env.addUserButton);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeTruthy();
-
-    env.clickElement(env.addUserButton);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-  }));
-
-  it('should display account details pane', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupUserData();
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeTruthy();
-
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    env.clickElement(env.userRows[1]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeTruthy();
-
-    env.clickElement(env.userRows[1]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-  }));
-
-  it('should display account details or new user pane', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupUserData();
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    env.clickElement(env.addUserButton);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeTruthy();
-
-    env.clickElement(env.addUserButton);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-
-    env.clickElement(env.addUserButton);
-    env.fixture.detectChanges();
-    flush();
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeTruthy();
-
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-  }));
 });
 
 class TestProjectUser extends ProjectUser {
@@ -240,7 +156,7 @@ class TestEnvironment {
   component: SaUsersComponent;
   fixture: ComponentFixture<SaUsersComponent>;
 
-  mockedUserService: UserService;
+  mockedUserService: UserService = mock(UserService);
   overlayContainer: OverlayContainer;
 
   private readonly users: User[] = [
@@ -271,8 +187,6 @@ class TestEnvironment {
   ];
 
   constructor() {
-    this.mockedUserService = mock(UserService);
-
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, RouterTestingModule, UICommonModule, DialogTestModule],
       declarations: [SaUsersComponent],

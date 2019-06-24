@@ -1,7 +1,6 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material';
 import { BehaviorSubject } from 'rxjs';
-
 import { GetAllParameters } from '../json-api.service';
 import { Project } from '../models/project';
 import { ProjectUser } from '../models/project-user';
@@ -27,14 +26,10 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit {
   length: number = 0;
   pageIndex: number = 0;
   pageSize: number = 50;
-  showAddPanel: boolean = false;
-  showEditPanel: boolean = false;
 
   userRows: Row[];
 
-  private userId: string;
   private dialogRef: MatDialogRef<SaDeleteDialogComponent, string>;
-
   private readonly searchTerm$: BehaviorSubject<string>;
   private readonly parameters$: BehaviorSubject<GetAllParameters<User>>;
   private readonly reload$: BehaviorSubject<void>;
@@ -78,22 +73,6 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit {
     this.parameters$.next(this.getParameters());
   }
 
-  addUser(): void {
-    this.showEditPanel = false;
-    this.showAddPanel = !this.showAddPanel;
-    this.userId = '';
-  }
-
-  editUser(userId: string): void {
-    if (this.showAddPanel || this.userId !== userId) {
-      this.showEditPanel = true;
-      this.showAddPanel = false;
-    } else {
-      this.showEditPanel = !this.showEditPanel;
-    }
-    this.userId = userId;
-  }
-
   removeUser(userId: string): void {
     this.dialogRef = this.dialog.open(SaDeleteDialogComponent, {
       width: '350px',
@@ -102,16 +81,9 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit {
     });
     this.dialogRef.afterClosed().subscribe(confirmation => {
       if (confirmation.toLowerCase() === 'confirmed') {
-        this.showEditPanel = false;
         this.deleteUser(userId);
       }
     });
-  }
-
-  outputUserList(): void {
-    this.showEditPanel = false;
-    this.showAddPanel = false;
-    this.reload$.next(null);
   }
 
   private async deleteUser(userId: string) {
