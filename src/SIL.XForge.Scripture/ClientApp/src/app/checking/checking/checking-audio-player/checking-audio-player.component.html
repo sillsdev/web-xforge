@@ -1,0 +1,18 @@
+<div *ngIf="hasSource" class="player">
+  <button *ngIf="!isPlaying" mdc-icon-button icon="play_arrow" (click)="play()"></button>
+  <button *ngIf="isPlaying" mdc-icon-button icon="pause" (click)="pause()"></button>
+  <div class="duration">{{ duration | audioTime }}</div>
+  <input #slider class="slider" type="range" min="0" max="100" step="1" [value]="seek" />
+  <div class="current-time">{{ currentTime | audioTime }}</div>
+  <div *ngIf="canDownload" mdcMenuSurfaceAnchor #moreAnchor>
+    <button mdc-icon-button icon="more_vert" (click)="moreMenu.open = !moreMenu.open"></button>
+    <mdc-menu #moreMenu [anchorElement]="moreAnchor" anchorCorner="bottomStart">
+      <mdc-list>
+        <mdc-list-item (click)="download()">
+          <mdc-icon mdcListItemGraphic>cloud_download</mdc-icon>
+          Download
+        </mdc-list-item>
+      </mdc-list>
+    </mdc-menu>
+  </div>
+</div>

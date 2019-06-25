@@ -1,0 +1,17 @@
+<ng-container *ngIf="!hasAudioAttachment">
+  <button *ngIf="!isRecording" mdc-button primary (click)="startRecording()">
+    <mdc-icon>mic</mdc-icon>
+    Record Answer
+  </button>
+  <button *ngIf="isRecording" mdc-button (click)="stopRecording()">
+    <mdc-icon>stop</mdc-icon>
+    Stop Recording
+  </button>
+</ng-container>
+<ng-container *ngIf="hasAudioAttachment">
+  <button mdc-button (click)="resetRecording()">
+    <mdc-icon>refresh</mdc-icon>
+    Try Again
+  </button>
+</ng-container>
+<app-checking-audio-player [source]="audioUrl" [downloadable]="true"></app-checking-audio-player>
