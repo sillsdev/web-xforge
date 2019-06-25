@@ -20,7 +20,7 @@ import { Comment } from '../../core/models/comment';
 import { CommentsDoc } from '../../core/models/comments-doc';
 import { Question } from '../../core/models/question';
 import { QuestionsDoc } from '../../core/models/questions-doc';
-import { SFProjectRef, SFProjectUserRef } from '../../core/models/sfdomain-model.generated';
+import { SFProjectUserRef } from '../../core/models/sfdomain-model.generated';
 import { SFProject } from '../../core/models/sfproject';
 import { SFProjectData } from '../../core/models/sfproject-data';
 import { SFProjectDataDoc } from '../../core/models/sfproject-data-doc';
@@ -127,7 +127,6 @@ describe('CheckingComponent', () => {
     it('can answer a question', fakeAsync(() => {
       env.setupReviewerScenarioData(env.reviewerUser);
       const question = env.selectQuestion(2);
-      expect(env.component.hasUserAnsweredQuestions).toBe(true);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answer question 2');
@@ -136,13 +135,15 @@ describe('CheckingComponent', () => {
     it('opens dialog if answering a question for the first time', fakeAsync(() => {
       env.setupReviewerScenarioData(env.cleanReviewUser);
       env.selectQuestion(2);
-      expect(env.component.hasUserAnsweredQuestions).toBe(false);
       env.answerQuestion('Answering question 2 should pop up a dialog');
-      tick();
       verify(
         env.mockedMdcDialog.open(
           EditNameDialogComponent,
-          deepEqual({ data: { name: env.cleanReviewUser.name }, escapeToClose: false, clickOutsideToClose: false })
+          deepEqual({
+            data: { name: env.cleanReviewUser.name, isConfirmation: true },
+            escapeToClose: false,
+            clickOutsideToClose: false
+          })
         )
       ).once();
       verify(env.mockedUserService.updateCurrentUserAttributes(anything())).once();
@@ -351,7 +352,7 @@ class TestEnvironment {
   mockedProjectService: SFProjectService;
   adminUser = this.createUser('01', SFProjectRoles.ParatextAdministrator);
   reviewerUser = this.createUser('02', SFProjectRoles.Reviewer);
-  cleanReviewUser = this.createUser('03', SFProjectRoles.Reviewer);
+  cleanReviewUser = this.createUser('03', SFProjectRoles.Reviewer, false);
 
   private projectData: SFProjectData = {
     texts: [{ bookId: 'JHN', name: 'John', hasSource: false, chapters: [{ number: 1 }, { number: 2 }] }]
@@ -360,7 +361,6 @@ class TestEnvironment {
   private testAdminProjectUser: SFProjectUser = new SFProjectUser({
     id: this.adminUser.id,
     user: this.adminUser,
-    project: new SFProjectRef('project01'),
     role: this.adminUser.role,
     questionRefsRead: [],
     answerRefsRead: [],
@@ -370,7 +370,6 @@ class TestEnvironment {
   private testReviewerProjectUser: SFProjectUser = new SFProjectUser({
     id: this.reviewerUser.id,
     user: this.reviewerUser,
-    project: new SFProjectRef('project01'),
     role: this.reviewerUser.role,
     questionRefsRead: [],
     answerRefsRead: [],
@@ -380,7 +379,6 @@ class TestEnvironment {
   private testCleanReviewerProjectUser: SFProjectUser = new SFProjectUser({
     id: this.cleanReviewUser.id,
     user: this.cleanReviewUser,
-    project: new SFProjectRef('project01'),
     role: this.cleanReviewUser.role,
     questionRefsRead: [],
     answerRefsRead: [],
@@ -630,7 +628,6 @@ class TestEnvironment {
         ])
       )
     );
-    when(this.mockedProjectService.getAll()).thenReturn(of(new MapQueryResults([this.testProject])));
 
     const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', this.projectData);
     const projectDataDoc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
@@ -748,14 +745,15 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private createUser(id: string, role: string): User {
+  private createUser(id: string, role: string, nameConfirmed: boolean = true): User {
     return new User({
       id: 'user' + id,
       email: 'user' + id + '@example.com',
       name: 'User ' + id,
       role: role,
       active: true,
-      dateCreated: '2019-01-01T12:00:00.000Z'
+      dateCreated: '2019-01-01T12:00:00.000Z',
+      isNameConfirmed: nameConfirmed
     });
   }
 

@@ -37,7 +37,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     this.initUserAnswerRefsRead = clone(this.projectCurrentUser.answerRefsRead);
   }
   @Input() comments: Readonly<Comment[]> = [];
-  @Input() answeredFirstQuestion: boolean = false;
   @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
   @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
 
@@ -153,21 +152,20 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     if (this.answerForm.invalid) {
       return;
     }
-    if (this.answeredFirstQuestion) {
+    if (this.user.isNameConfirmed) {
       this.emitAnswerToSave();
       this.hideAnswerForm();
       return;
     }
     const dialogRef = this.dialog.open(EditNameDialogComponent, {
-      data: { name: this.user.name },
+      data: { name: this.user.name, isConfirmation: true },
       escapeToClose: false,
       clickOutsideToClose: false
     });
     dialogRef.afterClosed().subscribe(async response => {
-      await this.userService.updateCurrentUserAttributes({ name: response as string });
+      await this.userService.updateCurrentUserAttributes({ name: response as string, isNameConfirmed: true });
       this.emitAnswerToSave();
       this.hideAnswerForm();
-      this.answeredFirstQuestion = true;
     });
   }
 

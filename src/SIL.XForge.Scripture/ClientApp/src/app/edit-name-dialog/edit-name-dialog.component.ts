@@ -11,7 +11,7 @@ export class EditNameDialogComponent {
 
   constructor(
     public dialogRef: MdcDialogRef<EditNameDialogComponent>,
-    @Inject(MDC_DIALOG_DATA) public data: { name: string }
+    @Inject(MDC_DIALOG_DATA) public data: { name: string; isConfirmation: boolean }
   ) {
     this.name.setValue(data.name);
   }

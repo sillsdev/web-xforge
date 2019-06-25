@@ -1,9 +1,13 @@
 <mdc-dialog>
   <mdc-dialog-container>
     <mdc-dialog-surface>
-      <mdc-dialog-title>Confirm your name</mdc-dialog-title>
+      <mdc-dialog-title *ngIf="data.isConfirmation">Confirm your name</mdc-dialog-title>
+      <mdc-dialog-title *ngIf="!data.isConfirmation">Update your name</mdc-dialog-title>
       <mdc-dialog-content>
-        <p>Confirm the name that other people on this project will see when you post answers and comments</p>
+        <p *ngIf="data.isConfirmation">
+          Confirm the name that other people on this project will see when you post answers and comments
+        </p>
+        <p *ngIf="!data.isConfirmation">Please enter your name</p>
         <mdc-form-field fluid>
           <mdc-text-field [formControl]="name" id="name-input" label="Your name"></mdc-text-field>
         </mdc-form-field>

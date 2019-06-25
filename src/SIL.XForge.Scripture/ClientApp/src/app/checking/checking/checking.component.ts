@@ -73,7 +73,6 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   chapters: number[] = [];
   isExpanded: boolean = false;
   resetAnswerPanelHeightOnFormHide: boolean = false;
-  hasUserAnsweredQuestions: boolean = false;
 
   private _chapter: number;
   private _isDrawerPermanent: boolean = true;
@@ -153,42 +152,20 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
           const projectId = params['projectId'];
           const bookId = params['bookId'];
           return combineLatest(
-            this.projectService.getAll(),
-            // Params emits multiiple times, so we need the current project right away to prevent
-            // questions being loaded multiple times
             this.projectService.get(projectId, [[nameof<SFProject>('users')]]),
             from(this.projectService.getDataDoc(projectId)).pipe(
               map(projectData => projectData.data.texts.find(t => t.bookId === bookId))
             )
           );
         }),
-        filter(
-          ([projectResults, currentProject, text]) =>
-            projectResults.data != null && currentProject != null && text != null
-        )
+        filter(([projectResults, text]) => projectResults.data != null && text != null)
       ),
-      async ([userProjects, currentProject, text]) => {
+      async ([projectResults, text]) => {
         const prevProjectId = this.project == null ? '' : this.project.id;
         const prevBookId = this.text == null ? '' : this.text.bookId;
         this.text = text;
-        this.project = currentProject.data;
-        let questions: Question[] = [];
-        const checkingProjects = userProjects.data.filter(p => p.checkingEnabled);
-        for (const proj of checkingProjects) {
-          const textsInProject = (await this.projectService.getDataDoc(proj.id)).data.texts;
-          for (const t of textsInProject) {
-            for (const chapter of t.chapters) {
-              const questionsData = await this.projectService.getQuestionsDoc(
-                new TextDocId(proj.id, t.bookId, chapter.number)
-              );
-              questions = questions.concat(questionsData.data);
-            }
-          }
-        }
-        this.hasUserAnsweredQuestions =
-          questions.filter(q => q.answers.find(a => a.ownerRef === this.userService.currentUserId) != null).length > 0;
-
-        this.projectCurrentUser = currentProject
+        this.project = projectResults.data;
+        this.projectCurrentUser = projectResults
           .getManyIncluded<SFProjectUser>(this.project.users)
           .find(pu => (pu.user == null ? '' : pu.user.id) === this.userService.currentUserId);
         this.chapters = this.text.chapters.map(c => c.number);
@@ -212,7 +189,6 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         }
       }
     );
-
     this.subscribe(this.media.media$, (change: MediaChange) => {
       this.calculateScriptureSliderPosition();
       this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg', 'md', 'lt-md'].includes(change.mqAlias);
