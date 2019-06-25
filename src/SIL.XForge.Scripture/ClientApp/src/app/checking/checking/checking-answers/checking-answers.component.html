@@ -9,7 +9,7 @@
   <div class="question">{{ question.text }}</div>
   <div *ngIf="!answerFormVisible" class="actions">
     <button
-      *ngIf="!currentUserTotalAnswers && !isAdministrator"
+      *ngIf="!currentUserTotalAnswers && !!isAdministrator"
       mdc-button
       primary
       (click)="showAnswerForm()"
@@ -21,6 +21,7 @@
 </div>
 <div *ngIf="answerFormVisible">
   <form [formGroup]="answerForm" (ngSubmit)="submit()" autocomplete="off" id="answer-form">
+    <mdc-form-field fluid> <app-checking-audio-recorder></app-checking-audio-recorder> </mdc-form-field>
     <mdc-form-field fluid>
       <mdc-text-field
         label="Your Answer"

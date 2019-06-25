@@ -11,6 +11,11 @@ import { CheckingAnswersComponent } from './checking/checking-answers/checking-a
 import { CheckingCommentFormComponent } from './checking/checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking/checking-answers/checking-comments/checking-comments.component';
 import { CheckingOwnerComponent } from './checking/checking-answers/checking-owner/checking-owner.component';
+import {
+  AudioTimePipe,
+  CheckingAudioPlayerComponent
+} from './checking/checking-audio-player/checking-audio-player.component';
+import { CheckingAudioRecorderComponent } from './checking/checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingQuestionsComponent } from './checking/checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking/checking-text/checking-text.component';
 import { CheckingComponent } from './checking/checking.component';
@@ -28,7 +33,11 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     FontSizeComponent,
     CheckingOwnerComponent,
     CheckingCommentsComponent,
-    CheckingCommentFormComponent
+    CheckingCommentFormComponent,
+    CheckingAudioRecorderComponent,
+    CheckingAudioRecorderComponent,
+    CheckingAudioPlayerComponent,
+    AudioTimePipe
   ],
   imports: [
     CheckingRoutingModule,
