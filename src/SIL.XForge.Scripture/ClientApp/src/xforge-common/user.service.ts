@@ -77,6 +77,10 @@ export class UserService extends ResourceService {
     });
   }
 
+  updateCurrentUserAttributes(attrs: Partial<User>): Promise<User> {
+    return this.jsonApiService.updateAttributes<User>(this.identity(this.currentUserId), attrs);
+  }
+
   /**
    * Update the current user's attributes remotely and then locally.
    * Pass a Partial<User> specifying the attributes to update.

@@ -13,6 +13,7 @@ import { AppComponent } from './app.component';
 import { CheckingModule } from './checking/checking.module';
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
 import { CoreModule } from './core/core.module';
+import { EditNameDialogComponent } from './edit-name-dialog/edit-name-dialog.component';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { ProjectComponent } from './project/project.component';
 import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scripture-chooser-dialog.component';
@@ -28,6 +29,7 @@ import { TranslateModule } from './translate/translate.module';
     AppComponent,
     ConnectProjectComponent,
     DeleteProjectDialogComponent,
+    EditNameDialogComponent,
     ProjectComponent,
     ProjectDeletedDialogComponent,
     SettingsComponent,
@@ -52,6 +54,7 @@ import { TranslateModule } from './translate/translate.module';
   providers: [DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
   entryComponents: [
     DeleteProjectDialogComponent,
+    EditNameDialogComponent,
     ProjectDeletedDialogComponent,
     ScriptureChooserDialogComponent,
     ...xForgeCommonEntryComponents

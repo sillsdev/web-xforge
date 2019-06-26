@@ -11,6 +11,7 @@ export class User extends Resource {
   active?: boolean;
   avatarUrl?: string;
   role?: string;
+  isNameConfirmed?: boolean;
   mobilePhone?: string;
   contactMethod?: 'email' | 'sms' | 'emailSms';
   birthday?: string;

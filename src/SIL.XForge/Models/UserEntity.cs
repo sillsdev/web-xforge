@@ -13,6 +13,7 @@ namespace SIL.XForge.Models
         public string AvatarUrl { get; set; }
         public string ParatextId { get; set; }
         public Tokens ParatextTokens { get; set; }
+        public bool IsNameConfirmed { get; set; }
         public string MobilePhone { get; set; }
 
         /// <summary>

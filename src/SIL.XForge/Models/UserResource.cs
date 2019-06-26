@@ -20,6 +20,8 @@ namespace SIL.XForge.Models
         [Attr]
         public string AvatarUrl { get; set; }
         [Attr]
+        public bool? IsNameConfirmed { get; set; }
+        [Attr]
         public string MobilePhone { get; set; }
         [Attr]
         public string ContactMethod { get; set; }

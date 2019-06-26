@@ -1,3 +1,4 @@
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -6,7 +7,7 @@ import { AngularSplitModule } from 'angular-split';
 import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
-import { anything, deepEqual, instance, mock, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { MapQueryResults } from 'xforge-common/json-api.service';
 import { ShareLevel } from 'xforge-common/models/share-config';
 import { User } from 'xforge-common/models/user';
@@ -29,6 +30,7 @@ import { Delta, TextDoc } from '../../core/models/text-doc';
 import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
 import { SFProjectService } from '../../core/sfproject.service';
+import { EditNameDialogComponent } from '../../edit-name-dialog/edit-name-dialog.component';
 import { SharedModule } from '../../shared/shared.module';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
@@ -79,20 +81,20 @@ describe('CheckingComponent', () => {
 
   describe('Questions', () => {
     it('questions are displaying', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       expect(env.questions.length).toEqual(15);
       const question = env.selectQuestion(15);
       expect(env.getQuestionText(question)).toBe('Question relating to chapter 2');
     }));
 
     it('can select a question', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       const question = env.selectQuestion(1);
       expect(question.classes['mdc-list-item--activated']).toBeTruthy();
     }));
 
     it('question status change to read', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       let question = env.selectQuestion(2, false);
       expect(question.classes['question-read']).toBeFalsy();
       question = env.selectQuestion(3);
@@ -100,7 +102,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('question status change to answered', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(question.classes['question-answered']).toBeTruthy();
@@ -118,20 +120,39 @@ describe('CheckingComponent', () => {
 
   describe('Answers', () => {
     it('answer panel is initiated and shows the first question', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       expect(env.answerPanel).toBeDefined();
     }));
 
     it('can answer a question', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answer question 2');
     }));
 
+    it('opens dialog if answering a question for the first time', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.cleanReviewUser);
+      env.selectQuestion(2);
+      env.answerQuestion('Answering question 2 should pop up a dialog');
+      verify(
+        env.mockedMdcDialog.open(
+          EditNameDialogComponent,
+          deepEqual({
+            data: { name: env.cleanReviewUser.name, isConfirmation: true },
+            escapeToClose: false,
+            clickOutsideToClose: false
+          })
+        )
+      ).once();
+      verify(env.mockedUserService.updateCurrentUserAttributes(anything())).once();
+      expect(env.answers.length).toEqual(1);
+      expect(env.getAnswerText(0)).toBe('Answering question 2 should pop up a dialog');
+    }));
+
     it('inserts newer answer above older answers', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       env.selectQuestion(7);
       env.answerQuestion('Just added answer');
       expect(env.answers.length).toEqual(2);
@@ -140,7 +161,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       const question = env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       expect(env.yourAnswerField).toBeDefined();
@@ -151,7 +172,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('check answering validation', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       const question = env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
@@ -160,7 +181,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can edit an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       env.clickButton(env.answers[0].query(By.css('.answer-edit')));
@@ -171,7 +192,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can delete an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
@@ -181,7 +202,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('answers reset when changing questions', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
@@ -190,7 +211,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can like and unlike an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       env.selectQuestion(1);
       env.answerQuestion('Answer question to be liked');
       expect(env.likeTotal).toBe(0);
@@ -203,7 +224,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('do not show answers until current user has submitted an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       env.selectQuestion(7);
       expect(env.answers.length).toBe(0);
       env.answerQuestion('Answer from reviewer');
@@ -211,7 +232,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('reviewer can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
-      env.setupReviewerScenarioData();
+      env.setupReviewerScenarioData(env.reviewerUser);
       env.component.project.usersSeeEachOthersResponses = false;
       env.fixture.detectChanges();
       env.selectQuestion(6);
@@ -224,7 +245,7 @@ describe('CheckingComponent', () => {
 
     describe('Comments', () => {
       it('can comment on an answer', fakeAsync(() => {
-        env.setupReviewerScenarioData();
+        env.setupReviewerScenarioData(env.reviewerUser);
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -232,7 +253,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('can edit comment on an answer', fakeAsync(() => {
-        env.setupReviewerScenarioData();
+        env.setupReviewerScenarioData(env.reviewerUser);
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -245,7 +266,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('can delete comment on an answer', fakeAsync(() => {
-        env.setupReviewerScenarioData();
+        env.setupReviewerScenarioData(env.reviewerUser);
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -256,7 +277,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('comments only appear on the relevant answer', fakeAsync(() => {
-        env.setupReviewerScenarioData();
+        env.setupReviewerScenarioData(env.reviewerUser);
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'First comment');
@@ -323,14 +344,66 @@ class TestEnvironment {
   fixture: ComponentFixture<CheckingComponent>;
   questionReadTimer: number = 2000;
 
+  mockedMdcDialog: MdcDialog;
+  mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent>;
   mockedRealtimeOfflineStore: RealtimeOfflineStore;
   mockedUserService: UserService;
   mockedProjectUserService: SFProjectUserService;
   mockedProjectService: SFProjectService;
   adminUser = this.createUser('01', SFProjectRoles.ParatextAdministrator);
   reviewerUser = this.createUser('02', SFProjectRoles.Reviewer);
+  cleanReviewUser = this.createUser('03', SFProjectRoles.Reviewer, false);
+
+  private projectData: SFProjectData = {
+    texts: [{ bookId: 'JHN', name: 'John', hasSource: false, chapters: [{ number: 1 }, { number: 2 }] }]
+  };
+
+  private testAdminProjectUser: SFProjectUser = new SFProjectUser({
+    id: this.adminUser.id,
+    user: this.adminUser,
+    role: this.adminUser.role,
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: []
+  });
+
+  private testReviewerProjectUser: SFProjectUser = new SFProjectUser({
+    id: this.reviewerUser.id,
+    user: this.reviewerUser,
+    role: this.reviewerUser.role,
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: []
+  });
+
+  private testCleanReviewerProjectUser: SFProjectUser = new SFProjectUser({
+    id: this.cleanReviewUser.id,
+    user: this.cleanReviewUser,
+    role: this.cleanReviewUser.role,
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: []
+  });
+
+  private testProject: SFProject = new SFProject({
+    id: 'project01',
+    projectName: 'Project 01',
+    usersSeeEachOthersResponses: true,
+    checkingEnabled: true,
+    share: {
+      enabled: true,
+      level: ShareLevel.Anyone
+    },
+    users: [
+      new SFProjectUserRef(this.adminUser.id),
+      new SFProjectUserRef(this.reviewerUser.id),
+      new SFProjectUserRef(this.cleanReviewUser.id)
+    ]
+  });
 
   constructor() {
+    this.mockedMdcDialog = mock(MdcDialog);
+    this.mockedCheckingNameDialogRef = mock(MdcDialogRef);
     this.mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
     this.mockedUserService = mock(UserService);
     this.mockedProjectUserService = mock(SFProjectUserService);
@@ -354,6 +427,7 @@ class TestEnvironment {
           provide: ActivatedRoute,
           useValue: { params: of({ projectId: 'project01', bookId: 'JHN' }) }
         },
+        { provide: MdcDialog, useFactory: () => instance(this.mockedMdcDialog) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: SFProjectUserService, useFactory: () => instance(this.mockedProjectUserService) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
@@ -539,51 +613,23 @@ class TestEnvironment {
     this.initComponentEnviroment();
   }
 
-  setupReviewerScenarioData(): void {
-    this.setupDefaultProjectData(this.reviewerUser);
+  setupReviewerScenarioData(user: User): void {
+    this.setupDefaultProjectData(user);
     this.initComponentEnviroment();
   }
 
   private setupDefaultProjectData(user: User): void {
     when(this.mockedProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
       of(
-        new MapQueryResults(
-          new SFProject({
-            id: 'project01',
-            projectName: 'Project 01',
-            usersSeeEachOthersResponses: true,
-            share: {
-              enabled: true,
-              level: ShareLevel.Anyone
-            },
-            users: [new SFProjectUserRef(this.adminUser.id), new SFProjectUserRef(this.reviewerUser.id)]
-          }),
-          undefined,
-          [
-            new SFProjectUser({
-              id: this.adminUser.id,
-              user: this.adminUser,
-              role: this.adminUser.role,
-              questionRefsRead: [],
-              answerRefsRead: [],
-              commentRefsRead: []
-            }),
-            new SFProjectUser({
-              id: this.reviewerUser.id,
-              user: this.reviewerUser,
-              role: this.reviewerUser.role,
-              questionRefsRead: [],
-              answerRefsRead: [],
-              commentRefsRead: []
-            })
-          ]
-        )
+        new MapQueryResults(this.testProject, undefined, [
+          this.testAdminProjectUser,
+          this.testReviewerProjectUser,
+          this.testCleanReviewerProjectUser
+        ])
       )
     );
-    const projectData: SFProjectData = {
-      texts: [{ bookId: 'JHN', name: 'John', hasSource: false, chapters: [{ number: 1 }, { number: 2 }] }]
-    };
-    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', projectData);
+
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', this.projectData);
     const projectDataDoc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
     when(this.mockedProjectService.getDataDoc('project01')).thenResolve(projectDataDoc);
     when(this.mockedProjectService.getTextDoc(deepEqual(new TextDocId('project01', 'JHN', 1, 'target')))).thenResolve(
@@ -675,9 +721,17 @@ class TestEnvironment {
       this.createCommentsDoc(text1_2id, [])
     );
     when(this.mockedUserService.currentUserId).thenReturn(user.id);
+    when(this.mockedUserService.getCurrentUser()).thenReturn(of(user));
     when(this.mockedUserService.onlineGet(this.adminUser.id)).thenReturn(of(new MapQueryResults(this.adminUser)));
     when(this.mockedUserService.onlineGet(this.reviewerUser.id)).thenReturn(of(new MapQueryResults(this.reviewerUser)));
+    when(this.mockedUserService.onlineGet(this.cleanReviewUser.id)).thenReturn(
+      of(new MapQueryResults(this.cleanReviewUser))
+    );
+    when(this.mockedUserService.updateCurrentUserAttributes(anything())).thenResolve(user);
+
     when(this.mockedProjectUserService.update(anything())).thenReturn(new Promise(() => {}));
+    when(this.mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.name));
+    when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedCheckingNameDialogRef));
   }
 
   private initComponentEnviroment(): void {
@@ -691,14 +745,15 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private createUser(id: string, role: string): User {
+  private createUser(id: string, role: string, nameConfirmed: boolean = true): User {
     return new User({
       id: 'user' + id,
       email: 'user' + id + '@example.com',
       name: 'User ' + id,
       role: role,
       active: true,
-      dateCreated: '2019-01-01T12:00:00.000Z'
+      dateCreated: '2019-01-01T12:00:00.000Z',
+      isNameConfirmed: nameConfirmed
     });
   }
 
