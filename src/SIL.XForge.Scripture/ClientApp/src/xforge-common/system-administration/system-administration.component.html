@@ -1,5 +1,12 @@
-<h1>System Administration</h1>
-<mat-tab-group>
-  <mat-tab label="Users"> <app-sa-users></app-sa-users> </mat-tab>
-  <mat-tab label="Projects"> <br /><app-projects></app-projects> </mat-tab>
-</mat-tab-group>
+<div fxLayout="column" fxLayoutAlign="center start" class="body-content">
+  <h1>System Administration</h1>
+
+  <mdc-tab-bar #tabBarSysAdmin fixed="true">
+    <mdc-tab-scroller>
+      <mdc-tab label="Users"></mdc-tab>
+      <mdc-tab label="Projects"></mdc-tab>
+    </mdc-tab-scroller>
+  </mdc-tab-bar>
+  <app-sa-users [fxShow]="tabBarSysAdmin.activeTabIndex === 0"></app-sa-users>
+  <app-sa-projects [fxShow]="tabBarSysAdmin.activeTabIndex === 1"></app-sa-projects>
+</div>
