@@ -1,11 +1,16 @@
-<div class="body-content">
-  <div><button mat-raised-button color="primary" routerLink="/connect-project">Connect Project</button></div>
+<div>
   <div>
-    <mat-form-field class="filter-field">
-      <input matInput placeholder="Filter projects..." (keyup)="updateSearchTerm($event.target.value)" />
-    </mat-form-field>
+    <mdc-form-field fxFlex>
+      <mdc-text-field
+        label="Filter projects..."
+        (keyup)="updateSearchTerm($event.target.value)"
+        id="project-filter"
+      ></mdc-text-field>
+    </mdc-form-field>
+    <button mdc-button raised routerLink="/connect-project">Connect<span fxHide.xs>&nbsp;Project</span></button>
   </div>
-  <div *ngIf="!isLoading; else loading">
+  <br />
+  <div *ngIf="!isLoading">
     <div *ngIf="length > 0">
       <table mat-table fxFill id="projects-table" ngClass.gt-xs="fixed-layout-table" [dataSource]="rows">
         <ng-container matColumnDef="name">
@@ -50,7 +55,4 @@
     </div>
     <div *ngIf="length === 0" class="no-projects-label">No projects found</div>
   </div>
-  <ng-template #loading>
-    <mat-progress-spinner mode="indeterminate" diameter="50" class="loading-spinner"></mat-progress-spinner>
-  </ng-template>
 </div>
