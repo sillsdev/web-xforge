@@ -1,107 +1,85 @@
-<div fxLayout="row" fxLayout.lt-md="column-reverse">
-  <div fxFlex="50%">
-    <div fxLayout="row">
-      <mat-form-field fxFlexAlign="start">
-        <input matInput placeholder="Filter users..." (keyup)="updateSearchTerm($event.target.value)" />
-      </mat-form-field>
-      <span fxFlex="grow"></span>
-      <span fxFlex="auto" fxFlexAlign="center">
-        <button mat-raised-button (click)="addUser()" id="add-user-btn">Add user</button>
-      </span>
-      <span>&nbsp;&nbsp;&nbsp;</span>
-    </div>
-    <div *ngIf="!isLoading; else loading">
-      <div *ngIf="length > 0">
-        <table mat-table fxFill id="users-table" [dataSource]="userRows">
-          <ng-container matColumnDef="avatar">
-            <td mat-cell *matCellDef="let userRow; let i = index">
-              <div *ngIf="userRow.user.active">
-                <app-avatar [user]="userRow.user" size="32" [round]="false"> </app-avatar>
-              </div>
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="name">
-            <td mat-cell *matCellDef="let userRow">
-              <div *ngIf="userRow.user.active">
-                <strong>{{ userRow.user.name }}</strong>
-              </div>
-              <div *ngIf="!userRow.user.active">Awaiting response from</div>
-              {{ userRow.user.email }}
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="projects">
-            <td fxHide.xs fxShow.sm fxHide.md fxShow.gt-md mat-cell *matCellDef="let userRow">
-              <span *ngIf="userRow.projects?.length > 0">
-                {{ userRow.projects?.length }} Projects -
-                <span class="projectsNames" *ngFor="let project of userRow.projects; last as isLast">
-                  <a [routerLink]="['/projects', project.id]">{{ project.projectName }}</a>
-                  <span *ngIf="!isLast">, </span>
-                </span>
-              </span>
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="remove">
-            <td mat-cell *matCellDef="let userRow" class="remove-cell">
-              <button
-                *ngIf="userRow.user.active"
-                mat-icon-button
-                class="remove-user"
-                (click)="removeUser(userRow.user.id)"
-              >
-                <mat-icon>clear</mat-icon>
-              </button>
+<div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
+  <mdc-form-field>
+    <mdc-text-field
+      label="Filter users..."
+      (keyup)="updateSearchTerm($event.target.value)"
+      id="user-filter"
+    ></mdc-text-field>
+  </mdc-form-field>
+</div>
+<div *ngIf="!isLoading">
+  <div *ngIf="length > 0">
+    <table mat-table fxFill id="users-table" [dataSource]="userRows">
+      <ng-container matColumnDef="avatar">
+        <td mat-cell *matCellDef="let userRow; let i = index">
+          <div *ngIf="userRow.user.active">
+            <app-avatar [user]="userRow.user" size="32" [round]="false"> </app-avatar>
+          </div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="name">
+        <td mat-cell *matCellDef="let userRow">
+          <div *ngIf="userRow.user.active">
+            <strong>{{ userRow.user.name }}</strong>
+          </div>
+          <div *ngIf="!userRow.user.active">Awaiting response from</div>
+          {{ userRow.user.email }}
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="projects">
+        <td fxHide.lt-md mat-cell *matCellDef="let userRow">
+          <span *ngIf="userRow.projects?.length > 0">
+            {{ userRow.projects?.length }} Projects -
+            <span class="projectsNames" *ngFor="let project of userRow.projects; last as isLast">
+              <a [routerLink]="['/projects', project.id]">{{ project.projectName }}</a> <span *ngIf="!isLast">, </span>
+            </span>
+          </span>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="remove">
+        <td mat-cell *matCellDef="let userRow" class="remove-cell">
+          <button *ngIf="userRow.user.active" mdc-icon-button class="remove-user" (click)="removeUser(userRow.user)">
+            <mdc-icon>clear</mdc-icon>
+          </button>
 
-              <!-- 2 buttons below are 1 button displayed mutually exclusively, different style on breakpoints -->
-              <button
-                *ngIf="!userRow.user.active"
-                fxHide.lt-sm
-                fxHide.md
-                fxShow
-                mat-stroked-button
-                color="warn"
-                class="cancel-invite"
-                (click)="removeUser(userRow.user.id)"
-              >
-                Cancel invite
-              </button>
-              <button
-                *ngIf="!userRow.user.active"
-                fxHide
-                fxShow.lt-sm
-                fxShow.md
-                mat-icon-button
-                color="warn"
-                class="cancel-invite"
-                (click)="removeUser(userRow.user.id)"
-              >
-                <mat-icon>clear</mat-icon>
-              </button>
-            </td>
-          </ng-container>
+          <!-- 2 buttons below are 1 button displayed mutually exclusively, different style on breakpoints -->
+          <button
+            *ngIf="!userRow.user.active"
+            fxHide.lt-sm
+            fxShow
+            mdc-button
+            outlined
+            color="warn"
+            class="cancel-invite"
+            (click)="removeUser(userRow.user)"
+          >
+            Cancel invite
+          </button>
+          <button
+            *ngIf="!userRow.user.active"
+            fxHide
+            fxShow.lt-sm
+            mdc-icon-button
+            color="warn"
+            class="cancel-invite"
+            (click)="removeUser(userRow.user)"
+          >
+            <mdc-icon>clear</mdc-icon>
+          </button>
+        </td>
+      </ng-container>
 
-          <tr
-            mat-row
-            *matRowDef="let userRow; columns: ['avatar', 'name', 'projects', 'remove']"
-            (click)="editUser(userRow.user.id)"
-          ></tr>
-        </table>
+      <tr mat-row *matRowDef="let userRow; columns: ['avatar', 'name', 'projects', 'remove']"></tr>
+    </table>
 
-        <mat-paginator
-          [pageIndex]="pageIndex"
-          [length]="length"
-          [pageSize]="pageSize"
-          [pageSizeOptions]="[5, 10, 20, 50, 100]"
-          (page)="updatePage($event.pageIndex, $event.pageSize)"
-        >
-        </mat-paginator>
-      </div>
-      <div *ngIf="length === 0" id="no-users-label">No users found</div>
-    </div>
-    <ng-template #loading>
-      <mat-progress-spinner mode="indeterminate" diameter="50" class="loading-spinner"></mat-progress-spinner>
-    </ng-template>
+    <mat-paginator
+      [pageIndex]="pageIndex"
+      [length]="length"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="[5, 10, 20, 50, 100]"
+      (page)="updatePage($event.pageIndex, $event.pageSize)"
+    >
+    </mat-paginator>
   </div>
-  <div fxFlex="50%" *ngIf="showEditPanel || showAddPanel" id="add-edit-panel">
-    <app-sa-user-entry (outputUserList)="outputUserList($event)" [editUserId]="userId"></app-sa-user-entry>
-  </div>
+  <div *ngIf="length === 0" id="no-users-label">No users found</div>
 </div>
