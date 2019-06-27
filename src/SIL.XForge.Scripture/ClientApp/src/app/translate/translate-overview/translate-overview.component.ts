@@ -106,7 +106,7 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
   }
 
   private async calculateProgress(): Promise<void> {
-    this.texts = this.projectDataDoc.data.texts.map(t => new TextProgress(t));
+    this.texts = this.projectDataDoc.data.texts.filter(t => t.hasSource).map(t => new TextProgress(t));
     this.overallProgress = new Progress();
     const updateTextProgressPromises: Promise<void>[] = [];
     for (const textProgress of this.texts) {
