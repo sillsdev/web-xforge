@@ -152,9 +152,10 @@ class TestEnvironment {
   setupProjectData(): void {
     const projectData: SFProjectData = {
       texts: [
-        { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1 }, { number: 2 }] },
-        { bookId: 'MRK', name: 'Mark', chapters: [{ number: 1 }, { number: 2 }] },
-        { bookId: 'LUK', name: 'Luke', chapters: [{ number: 1 }, { number: 2 }] }
+        { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
+        { bookId: 'MRK', name: 'Mark', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
+        { bookId: 'LUK', name: 'Luke', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
+        { bookId: 'JHN', name: 'John', chapters: [{ number: 1 }, { number: 2 }], hasSource: false }
       ]
     };
     const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', projectData);
