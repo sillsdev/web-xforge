@@ -1,5 +1,4 @@
 import { Component } from '@angular/core';
-// import * as RecordRTC from "recordrtc";
 import RecordRTC from 'recordrtc';
 
 @Component({
@@ -10,7 +9,7 @@ import RecordRTC from 'recordrtc';
 export class CheckingAudioRecorderComponent {
   audioUrl: string = '';
   private stream: MediaStream;
-  private recordRTC: any;
+  private recordRTC: RecordRTC;
 
   get hasAudioAttachment(): boolean {
     return this.audioUrl !== '';
