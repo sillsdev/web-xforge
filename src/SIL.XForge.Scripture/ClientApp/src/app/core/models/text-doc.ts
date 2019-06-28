@@ -1,9 +1,9 @@
-import Quill, { DeltaStatic } from 'quill';
+import Quill, { DeltaOperation, DeltaStatic } from 'quill';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 import { RealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 
-export const Delta: new () => DeltaStatic = Quill.import('delta');
+export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
 /** Records in the text_data collection in the local or remote database are the content
  * of a chapter of a Scripture book. */
