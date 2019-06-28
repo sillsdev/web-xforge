@@ -9,11 +9,10 @@ import { AvatarComponent } from './avatar/avatar.component';
 import { ErrorComponent } from './error/error.component';
 import { DeleteAccountDialogComponent } from './my-account/delete-account-dialog/delete-account-dialog.component';
 import { MyAccountComponent } from './my-account/my-account.component';
-import { ProjectsComponent } from './projects/projects.component';
 import { ShareDialogComponent } from './share/share-dialog.component';
 import { ShareComponent } from './share/share.component';
 import { SaDeleteDialogComponent } from './system-administration/sa-delete-dialog.component';
-import { SaUserEntryComponent } from './system-administration/sa-user-entry.component';
+import { SaProjectsComponent } from './system-administration/sa-projects.component';
 import { SaUsersComponent } from './system-administration/sa-users.component';
 import { SystemAdministrationComponent } from './system-administration/system-administration.component';
 import { UICommonModule } from './ui-common.module';
@@ -27,9 +26,8 @@ const componentExports = [
   DeleteAccountDialogComponent,
   ErrorComponent,
   MyAccountComponent,
-  ProjectsComponent,
+  SaProjectsComponent,
   SaDeleteDialogComponent,
-  SaUserEntryComponent,
   SaUsersComponent,
   ShareComponent,
   ShareDialogComponent,

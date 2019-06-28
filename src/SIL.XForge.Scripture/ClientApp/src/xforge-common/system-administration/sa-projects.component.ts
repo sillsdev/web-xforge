@@ -1,6 +1,6 @@
-import { Component, HostBinding, OnInit } from '@angular/core';
+import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-
+import { NoticeService } from 'xforge-common/notice.service';
 import { GetAllParameters } from '../json-api.service';
 import { Project } from '../models/project';
 import { NONE_ROLE, ProjectRole } from '../models/project-role';
@@ -29,11 +29,11 @@ class Row {
 }
 
 @Component({
-  selector: 'app-projects',
-  templateUrl: './projects.component.html',
-  styleUrls: ['./projects.component.scss']
+  selector: 'app-sa-projects',
+  templateUrl: './sa-projects.component.html',
+  styleUrls: ['./sa-projects.component.scss']
 })
-export class ProjectsComponent extends SubscriptionDisposable implements OnInit {
+export class SaProjectsComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
   @HostBinding('class') classes = 'flex-column';
 
   rows: Row[];
@@ -49,6 +49,7 @@ export class ProjectsComponent extends SubscriptionDisposable implements OnInit 
   private readonly parameters$: BehaviorSubject<GetAllParameters<Project>>;
 
   constructor(
+    private readonly noticeService: NoticeService,
     private readonly projectService: ProjectService,
     private readonly userService: UserService,
     private readonly projectUserService: ProjectUserService
@@ -73,12 +74,19 @@ export class ProjectsComponent extends SubscriptionDisposable implements OnInit 
       this.generateRows();
     });
     this.subscribe(this.userService.onlineGetProjects(this.userService.currentUserId), projectUserResults => {
+      this.noticeService.loadingStarted();
       this.projectUsers = new Map<string, ProjectUser>();
       for (const projectUser of projectUserResults.data) {
         this.projectUsers.set(projectUser.project.id, projectUser);
       }
       this.generateRows();
+      this.noticeService.loadingFinished();
     });
+  }
+
+  ngOnDestroy(): void {
+    super.ngOnDestroy();
+    this.noticeService.loadingFinished();
   }
 
   updateSearchTerm(term: string): void {

@@ -1,13 +1,14 @@
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, getDebugNode, NgModule } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-
+import { NoticeService } from 'xforge-common/notice.service';
 import { GetAllParameters, MapQueryResults } from '../json-api.service';
 import { Project, ProjectRef } from '../models/project';
 import { ProjectUser, ProjectUserRef } from '../models/project-user';
@@ -19,13 +20,12 @@ import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
 import { SaUsersComponent } from './sa-users.component';
 
 describe('SaUsersComponent', () => {
-  it('should display spinner while loading', fakeAsync(() => {
+  it('should not display no-users label while loading', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupNullUserData();
     env.fixture.detectChanges();
     flush();
 
-    expect(env.loadingSpinner).not.toBeNull();
     expect(env.noUsersLabel).toBeNull();
   }));
 
@@ -36,7 +36,6 @@ describe('SaUsersComponent', () => {
     flush();
 
     expect(env.noUsersLabel).not.toBeNull();
-    expect(env.loadingSpinner).toBeNull();
   }));
 
   it('should display users', fakeAsync(() => {
@@ -45,7 +44,6 @@ describe('SaUsersComponent', () => {
     env.fixture.detectChanges();
     flush();
 
-    expect(env.loadingSpinner).toBeNull();
     expect(env.noUsersLabel).toBeNull();
     expect(env.userRows.length).toEqual(3);
 
@@ -66,20 +64,32 @@ describe('SaUsersComponent', () => {
     expect(env.cancelInviteButtonOnRow(2)).toBeTruthy();
   }));
 
-  it('should delete users', fakeAsync(() => {
+  it('should delete invited user', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupUserData();
+    when(env.mockedDeleteUserDialogRef.afterClosed()).thenReturn(of('confirmed'));
     env.fixture.detectChanges();
-    flush();
+    tick();
     verify(env.mockedUserService.onlineDelete(anything())).never();
 
     env.clickElement(env.cancelInviteButtonOnRow(2));
-    env.clickElement(env.deleteDialogYesButton);
+    verify(env.mockedMdcDialog.open(anything(), anything())).once();
     verify(env.mockedUserService.onlineDelete(anything())).once();
 
+    expect().nothing();
+  }));
+
+  it('should delete user', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupUserData();
+    when(env.mockedDeleteUserDialogRef.afterClosed()).thenReturn(of('confirmed'));
+    env.fixture.detectChanges();
+    tick();
+    verify(env.mockedUserService.onlineDelete(anything())).never();
+
     env.clickElement(env.removeUserButtonOnRow(1));
-    env.clickElement(env.deleteDialogYesButton);
-    verify(env.mockedUserService.onlineDelete(anything())).twice();
+    verify(env.mockedMdcDialog.open(anything(), anything())).once();
+    verify(env.mockedUserService.onlineDelete(anything())).once();
 
     expect().nothing();
   }));
@@ -106,89 +116,6 @@ describe('SaUsersComponent', () => {
     env.clickElement(env.nextPageButton);
 
     expect(env.userRows.length).toEqual(1);
-  }));
-
-  it('should display new user pane', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupEmptyUserData();
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-
-    env.clickElement(env.addUserButton);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeTruthy();
-
-    env.clickElement(env.addUserButton);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-  }));
-
-  it('should display account details pane', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupUserData();
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeTruthy();
-
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    env.clickElement(env.userRows[1]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeTruthy();
-
-    env.clickElement(env.userRows[1]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-  }));
-
-  it('should display account details or new user pane', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupUserData();
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    env.clickElement(env.addUserButton);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeTruthy();
-
-    env.clickElement(env.addUserButton);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
-
-    env.clickElement(env.addUserButton);
-    env.fixture.detectChanges();
-    flush();
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeTruthy();
-
-    env.clickElement(env.userRows[0]);
-    env.fixture.detectChanges();
-    flush();
-    expect(env.addEditPanel).toBeFalsy();
   }));
 });
 
@@ -230,6 +157,7 @@ class TestProjectRef extends ProjectRef {
 
 @NgModule({
   imports: [NoopAnimationsModule, UICommonModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   exports: [SaDeleteDialogComponent],
   declarations: [SaDeleteDialogComponent],
   entryComponents: [SaDeleteDialogComponent]
@@ -239,9 +167,12 @@ class DialogTestModule {}
 class TestEnvironment {
   component: SaUsersComponent;
   fixture: ComponentFixture<SaUsersComponent>;
-
-  mockedUserService: UserService;
   overlayContainer: OverlayContainer;
+
+  mockedMdcDialog: MdcDialog = mock(MdcDialog);
+  mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
+  mockedNoticeService: NoticeService = mock(NoticeService);
+  mockedUserService: UserService = mock(UserService);
 
   private readonly users: User[] = [
     new User({
@@ -271,17 +202,78 @@ class TestEnvironment {
   ];
 
   constructor() {
-    this.mockedUserService = mock(UserService);
-
+    when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, RouterTestingModule, UICommonModule, DialogTestModule],
       declarations: [SaUsersComponent],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      providers: [{ provide: UserService, useFactory: () => instance(this.mockedUserService) }]
+      providers: [
+        { provide: MdcDialog, useFactory: () => instance(this.mockedMdcDialog) },
+        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
+      ]
     });
     this.fixture = TestBed.createComponent(SaUsersComponent);
     this.component = this.fixture.componentInstance;
     this.overlayContainer = TestBed.get(OverlayContainer);
+  }
+
+  get noUsersLabel(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#no-users-label'));
+  }
+
+  get table(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#users-table'));
+  }
+
+  get userRows(): DebugElement[] {
+    // querying the debug table element doesn't seem to work, so we query the native element instead and convert back
+    // to debug elements
+    return Array.from(this.table.nativeElement.querySelectorAll('tr')).map(r => getDebugNode(r) as DebugElement);
+  }
+
+  get filterInput(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#user-filter'));
+  }
+
+  get paginator(): DebugElement {
+    return this.fixture.debugElement.query(By.css('mat-paginator'));
+  }
+
+  get nextPageButton(): DebugElement {
+    return this.paginator.query(By.css('.mat-paginator-navigation-next'));
+  }
+
+  get deleteDialogDeleteButton(): HTMLButtonElement {
+    const oce = this.overlayContainer.getContainerElement();
+    return oce.querySelector('#confirm-button-yes');
+  }
+
+  get deleteDialogCancelButton(): HTMLButtonElement {
+    const oce = this.overlayContainer.getContainerElement();
+    return oce.querySelector('#confirm-button-no');
+  }
+
+  cell(row: number, column: number): DebugElement {
+    return this.userRows[row].children[column];
+  }
+
+  removeUserButtonOnRow(row: number): DebugElement {
+    return this.userRows[row].query(By.css('button.remove-user'));
+  }
+
+  cancelInviteButtonOnRow(row: number): DebugElement {
+    return this.userRows[row].query(By.css('button.cancel-invite'));
+  }
+
+  clickElement(element: HTMLElement | DebugElement): void {
+    if (element instanceof DebugElement) {
+      element = (element as DebugElement).nativeElement as HTMLElement;
+    }
+
+    element.click();
+    this.fixture.detectChanges();
+    tick(1000);
   }
 
   setupNullUserData(): void {
@@ -305,76 +297,6 @@ class TestEnvironment {
         return combineLatest(term$, parameters$, reload$).pipe(map((_value, index) => results[index]));
       }
     );
-  }
-
-  get loadingSpinner(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.loading-spinner'));
-  }
-
-  get noUsersLabel(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#no-users-label'));
-  }
-
-  get addUserButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#add-user-btn'));
-  }
-
-  get table(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#users-table'));
-  }
-
-  get userRows(): DebugElement[] {
-    // querying the debug table element doesn't seem to work, so we query the native element instead and convert back
-    // to debug elements
-    return Array.from(this.table.nativeElement.querySelectorAll('tr')).map(r => getDebugNode(r) as DebugElement);
-  }
-
-  get filterInput(): DebugElement {
-    return this.fixture.debugElement.query(By.css('input'));
-  }
-
-  get paginator(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mat-paginator'));
-  }
-
-  get nextPageButton(): DebugElement {
-    return this.paginator.query(By.css('.mat-paginator-navigation-next'));
-  }
-
-  get deleteDialogYesButton(): HTMLButtonElement {
-    const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#confirm-button-yes');
-  }
-
-  get deleteDialogNoButton(): HTMLButtonElement {
-    const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#confirm-button-no');
-  }
-
-  get addEditPanel(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#add-edit-panel'));
-  }
-
-  cell(row: number, column: number): DebugElement {
-    return this.userRows[row].children[column];
-  }
-
-  removeUserButtonOnRow(row: number): DebugElement {
-    return this.userRows[row].query(By.css('button.remove-user'));
-  }
-
-  cancelInviteButtonOnRow(row: number): DebugElement {
-    return this.userRows[row].query(By.css('button.cancel-invite'));
-  }
-
-  clickElement(element: HTMLElement | DebugElement): void {
-    if (element instanceof DebugElement) {
-      element = (element as DebugElement).nativeElement as HTMLElement;
-    }
-
-    element.click();
-    this.fixture.detectChanges();
-    flush();
   }
 
   setInputValue(input: HTMLInputElement | DebugElement, value: string): void {

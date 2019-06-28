@@ -6,12 +6,10 @@ import {
   MdcDialogRef,
   OverlayContainer
 } from '@angular-mdc/web';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { fakeAsync, flush } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatSnackBarModule } from '@angular/material';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -406,16 +404,7 @@ describe('ScriptureChooserDialog', () => {
   }
 
   @NgModule({
-    imports: [
-      BrowserModule,
-      FormsModule,
-      HttpClientModule,
-      MatSnackBarModule,
-      ReactiveFormsModule,
-      RouterTestingModule,
-      UICommonModule,
-      MdcDialogModule
-    ],
+    imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, MdcDialogModule],
     declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
     exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
     entryComponents: [ChildViewContainerComponent, ScriptureChooserDialogComponent]

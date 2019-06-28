@@ -1,9 +1,5 @@
-.body-content {
-  max-width: 800px;
-  width: 100%;
-  align-self: center;
-  display: flex;
-  flex-direction: column;
+.projects-controls {
+  margin: 32px 0;
 }
 
 mat-form-field {
@@ -12,11 +8,6 @@ mat-form-field {
 
 .no-projects-label {
   padding-top: 14px;
-}
-
-.loading-spinner {
-  align-self: center;
-  margin: 30px 0px;
 }
 
 .fixed-layout-table {
