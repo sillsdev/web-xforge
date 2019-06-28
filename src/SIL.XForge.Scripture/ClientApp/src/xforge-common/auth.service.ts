@@ -103,17 +103,17 @@ export class AuthService {
   }
 
   private async tryLogIn(): Promise<boolean> {
-    let authResult = await this.parseHash();
-    if (!(await this.handleAuth(authResult))) {
-      this.clearState();
-      try {
+    try {
+      let authResult = await this.parseHash();
+      if (!(await this.handleAuth(authResult))) {
+        this.clearState();
         authResult = await this.checkSession();
         if (!(await this.handleAuth(authResult))) {
           return false;
         }
-      } catch (err) {
-        return false;
       }
+    } catch (err) {
+      return false;
     }
     return true;
   }
