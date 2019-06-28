@@ -32,7 +32,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
       this.adapter.idle(),
       this.adapter.onCreate()
     ).subscribe(() => this.updateOfflineData());
-    this.onDeleteSub = this.adapter.onDelete().subscribe(() => this.store.delete(this.id));
+    this.onDeleteSub = this.adapter.onDelete().subscribe(() => this.store.delete(this.identity));
   }
 
   get id(): string {
@@ -43,6 +43,10 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
     return this.adapter.data;
   }
 
+  private get identity(): RecordIdentity {
+    return { type: this.type, id: this.id };
+  }
+
   /**
    * Subscribes to remote changes for the realtime data.
    * For this record, update the RealtimeDoc cache, if any, from IndexedDB.
@@ -50,7 +54,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
    * @returns {Promise<void>} Resolves when succesfully subscribed to remote changes.
    */
   async subscribe(): Promise<void> {
-    const offlineData = await this.store.getItem(this.id);
+    const offlineData = await this.store.getItem(this.identity);
     if (offlineData != null) {
       if (offlineData.pendingOps.length > 0) {
         await this.adapter.fetch();
@@ -118,7 +122,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
       },
       pendingOps
     };
-    this.store.setItem(this.id, offlineData);
+    this.store.setItem(this.identity, offlineData);
   }
 
   /**

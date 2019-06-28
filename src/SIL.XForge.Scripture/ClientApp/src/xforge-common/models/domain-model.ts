@@ -14,28 +14,36 @@ export interface DomainModelConfig {
  * included in the configuration. This class should be registered with the Angular DI container.
  */
 export class DomainModel {
-  private readonly resourceTypes: Map<string, ResourceConstructor>;
-  private readonly resourceRefTypes = new Map<string, ResourceRefConstructor>();
-  private readonly realtimeDocTypes = new Map<string, RealtimeDocConstructor>();
+  private readonly _resourceTypes: Map<string, ResourceConstructor>;
+  private readonly _resourceRefTypes = new Map<string, ResourceRefConstructor>();
+  private readonly _realtimeDocTypes = new Map<string, RealtimeDocConstructor>();
 
   constructor(settings: DomainModelConfig) {
-    this.resourceTypes = this.createMap(settings.resourceTypes);
-    this.resourceTypes.set(User.TYPE, User);
-    this.resourceRefTypes = this.createMap(settings.resourceRefTypes);
-    this.resourceRefTypes.set(UserRef.TYPE, UserRef);
-    this.realtimeDocTypes = this.createMap(settings.realtimeDocTypes);
+    this._resourceTypes = this.createMap(settings.resourceTypes);
+    this._resourceTypes.set(User.TYPE, User);
+    this._resourceRefTypes = this.createMap(settings.resourceRefTypes);
+    this._resourceRefTypes.set(UserRef.TYPE, UserRef);
+    this._realtimeDocTypes = this.createMap(settings.realtimeDocTypes);
+  }
+
+  get resourceTypes(): IterableIterator<string> {
+    return this._resourceTypes.keys();
+  }
+
+  get realtimeDocTypes(): IterableIterator<string> {
+    return this._realtimeDocTypes.keys();
   }
 
   getResourceType(recordType: string): ResourceConstructor {
-    return this.resourceTypes.get(recordType);
+    return this._resourceTypes.get(recordType);
   }
 
   getResourceRefType(recordType: string): ResourceRefConstructor {
-    return this.resourceRefTypes.get(recordType);
+    return this._resourceRefTypes.get(recordType);
   }
 
   getRealtimeDocType(recordType: string): RealtimeDocConstructor {
-    return this.realtimeDocTypes.get(recordType);
+    return this._realtimeDocTypes.get(recordType);
   }
 
   private createMap(models: any[]): Map<string, any> {
