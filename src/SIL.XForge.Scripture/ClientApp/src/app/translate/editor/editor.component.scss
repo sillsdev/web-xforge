@@ -33,10 +33,6 @@
   width: 0;
 }
 
-.suggestions-control {
-  margin: 8px;
-}
-
 .mdc-icon-button.mdc-icon-button--activated::before {
   transition-duration: 12ms;
   opacity: mdc-states-opacity(black, activated);

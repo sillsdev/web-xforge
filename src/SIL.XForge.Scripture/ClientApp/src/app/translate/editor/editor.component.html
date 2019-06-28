@@ -3,9 +3,15 @@
   <div class="toolbar" fxLayout="row wrap" fxLayoutAlign="start center">
     <app-chapter-nav [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
     <div class="toolbar-separator">&nbsp;</div>
-    <div class="suggestions-control" title="Enable/disable suggestions">
-      <mdc-switch id="suggestions-toggle" [(ngModel)]="isSuggestionsEnabled"></mdc-switch>
-    </div>
+    <button
+      mdcIconButton
+      title="Enable/disable suggestions"
+      [on]="isSuggestionsEnabled"
+      (change)="isSuggestionsEnabled = !$event.value"
+    >
+      <mdc-icon mdcIconOn>speaker_notes</mdc-icon>
+      <mdc-icon>speaker_notes_off</mdc-icon>
+    </button>
     <div mdcMenuSurfaceAnchor #suggestionsAnchor>
       <button
         #suggestionsMenuButton
@@ -70,7 +76,7 @@
         ></app-text>
         <app-suggestion
           [mdcElevation]="2"
-          [show]="showSuggestion && isSuggestionsEnabled !== false"
+          [show]="showSuggestion && isSuggestionsEnabled"
           [words]="suggestionWords"
           [confidence]="suggestionConfidence"
           [text]="target"
