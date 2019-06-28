@@ -241,7 +241,7 @@ export class MyAccountComponent extends SubscriptionDisposable implements OnInit
 
   async onAccountDelete(userId: string): Promise<void> {
     await this.userService.onlineDelete(userId);
-    this.authService.logOut();
+    await this.authService.logOut();
   }
 
   async uploadPicture(): Promise<void> {

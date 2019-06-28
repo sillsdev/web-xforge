@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { RecordIdentity } from '@orbit/data';
-import { Auth0Callback, AuthorizeOptions, WebAuth } from 'auth0-js';
+import { AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
-import { of, Subscription, timer } from 'rxjs';
-import { mergeMap } from 'rxjs/operators';
+import { fromEvent, of, Subscription, timer } from 'rxjs';
+import { filter, mergeMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { JsonApiService } from './json-api.service';
 import { LocationService } from './location.service';
@@ -43,7 +43,13 @@ export class AuthService {
     private readonly locationService: LocationService,
     private readonly jsonApiService: JsonApiService,
     private readonly router: Router
-  ) {}
+  ) {
+    // listen for changes to the auth state
+    // this indicates that a user has logged in/out on a different tab/window
+    fromEvent<StorageEvent>(window, 'storage')
+      .pipe(filter(event => event.key === 'user_id'))
+      .subscribe(() => this.locationService.go('/'));
+  }
 
   get currentUserId(): string {
     return localStorage.getItem('user_id');
@@ -97,7 +103,8 @@ export class AuthService {
     this.auth0.authorize(options);
   }
 
-  logOut(): void {
+  async logOut(): Promise<void> {
+    await Promise.all([this.orbitService.deleteStore(), this.realtimeService.deleteStore()]);
     this.clearState();
     this.auth0.logout({ returnTo: this.locationService.origin + '/' });
   }
@@ -123,6 +130,7 @@ export class AuthService {
       return false;
     }
 
+    const prevUserId = this.currentUserId;
     const state: AuthState = JSON.parse(authResult.state);
     let secondaryId: string;
     if (state.linking != null && state.linking) {
@@ -134,8 +142,11 @@ export class AuthService {
       this.localLogIn(authResult);
     }
     this.scheduleRenewal();
-    await this.orbitService.init(this.accessToken);
-    await this.realtimeService.init(this.accessToken);
+    const isNewUser = prevUserId != null && prevUserId !== this.currentUserId;
+    await Promise.all([
+      this.orbitService.init(this.accessToken, isNewUser),
+      this.realtimeService.init(this.accessToken, isNewUser)
+    ]);
     const userIdentity: RecordIdentity = { type: User.TYPE, id: this.currentUserId };
     if (secondaryId != null) {
       await this.jsonApiService.onlineInvoke(userIdentity, 'linkParatextAccount', { authId: secondaryId });
@@ -190,7 +201,7 @@ export class AuthService {
         this.realtimeService.setAccessToken(this.accessToken);
       }
     } catch (err) {
-      this.logOut();
+      await this.logOut();
     }
   }
 

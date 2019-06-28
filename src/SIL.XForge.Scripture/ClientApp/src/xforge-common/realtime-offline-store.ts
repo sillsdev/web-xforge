@@ -1,4 +1,8 @@
+import { ModelDefinition, Record, RecordIdentity, Schema } from '@orbit/data';
+import { Dict } from '@orbit/utils';
 import { Snapshot } from 'sharedb/lib/client';
+import { XForgeIndexedDBSource } from './indexeddb/xforge-indexeddb-source';
+import { DomainModel } from './models/domain-model';
 
 /** Structure of a record in the xforge-realtime IndexedDB database. */
 export interface RealtimeOfflineData {
@@ -7,26 +11,58 @@ export interface RealtimeOfflineData {
 }
 
 /**
- * This class is an abstraction for the offline storage of realtime documents. Each instance is used to store documents
- * for a particular type. This implemenation is based on LocalForage/IndexedDB. This abstraction can be mocked for
- * easier unit testing.
+ * This class is an abstraction for the offline storage of realtime documents. The implementation uses the Orbit
+ * IndexedDB source. This abstraction can be mocked for easier unit testing.
  */
 export class RealtimeOfflineStore {
-  constructor(private readonly store: LocalForage) {}
+  private readonly source: XForgeIndexedDBSource;
 
-  keys(): Promise<string[]> {
-    return this.store.keys();
+  constructor(domainModel: DomainModel) {
+    const models: Dict<ModelDefinition> = {};
+    for (const docType of domainModel.realtimeDocTypes) {
+      models[docType] = {
+        attributes: {
+          snapshot: { type: 'object' },
+          pendingOps: { type: 'array' }
+        }
+      };
+    }
+    const schema = new Schema({ models });
+    this.source = new XForgeIndexedDBSource({ schema, namespace: 'xforge-realtime' });
   }
 
-  getItem(id: string): Promise<RealtimeOfflineData> {
-    return this.store.getItem(id);
+  async keys(type: string): Promise<RecordIdentity[]> {
+    await this.source.openDB();
+    return await this.source.getRecords(type);
   }
 
-  setItem(id: string, offlineData: RealtimeOfflineData): Promise<RealtimeOfflineData> {
-    return this.store.setItem(id, offlineData);
+  async getItem(identity: RecordIdentity): Promise<RealtimeOfflineData> {
+    await this.source.openDB();
+    try {
+      const record = await this.source.getRecord(identity);
+      return record.attributes as RealtimeOfflineData;
+    } catch (err) {
+      return null;
+    }
   }
 
-  delete(id: string): Promise<void> {
-    return this.store.removeItem(id);
+  async setItem(identity: RecordIdentity, offlineData: RealtimeOfflineData): Promise<RealtimeOfflineData> {
+    await this.source.openDB();
+    const record: Record = {
+      type: identity.type,
+      id: identity.id,
+      attributes: offlineData
+    };
+    await this.source.putRecord(record);
+    return offlineData;
+  }
+
+  async delete(identity: RecordIdentity): Promise<void> {
+    await this.source.openDB();
+    await this.source.removeRecord(identity);
+  }
+
+  deleteDB(): Promise<void> {
+    return this.source.deleteDB();
   }
 }

@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { RecordIdentity } from '@orbit/data';
 import { underscore } from '@orbit/utils';
-import * as localforage from 'localforage';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { Connection } from 'sharedb/lib/client';
 import { environment } from '../environments/environment';
@@ -27,16 +26,26 @@ export class RealtimeService {
   private ws: ReconnectingWebSocket;
   private connection: Connection;
   private readonly docs = new Map<string, Promise<RealtimeDoc>>();
-  private readonly stores = new Map<string, RealtimeOfflineStore>();
   private resetPromise: Promise<void> = Promise.resolve();
+  private store: RealtimeOfflineStore;
   private accessToken: string;
 
   constructor(private readonly domainModel: DomainModel, private readonly locationService: LocationService) {}
 
-  init(accessToken: string): void {
+  async init(accessToken: string, deleteStore: boolean): Promise<void> {
+    this.store = new RealtimeOfflineStore(this.domainModel);
+    if (deleteStore) {
+      await this.deleteStore();
+    }
     this.accessToken = accessToken;
     this.ws = new ReconnectingWebSocket(() => this.getUrl());
     this.connection = new Connection(this.ws);
+  }
+
+  async deleteStore(): Promise<void> {
+    if (this.store != null) {
+      await this.store.deleteDB();
+    }
   }
 
   setAccessToken(accessToken: string): void {
@@ -78,12 +87,10 @@ export class RealtimeService {
    * @returns {Promise<void>} Resolves when the data has been deleted.
    */
   async localDeleteProjectDocs(type: string, projectId: string): Promise<void> {
-    const store = this.getStore(type);
-
     const tasks: Promise<void>[] = [];
-    for (const id of await store.keys()) {
-      if (id.startsWith(projectId)) {
-        tasks.push(store.delete(id));
+    for (const identity of await this.store.keys(type)) {
+      if (identity.id.startsWith(projectId)) {
+        tasks.push(this.store.delete(identity));
       }
     }
     await Promise.all(tasks);
@@ -99,25 +106,14 @@ export class RealtimeService {
     return url;
   }
 
-  private getStore(type: string): RealtimeOfflineStore {
-    if (!this.stores.has(type)) {
-      this.stores.set(
-        type,
-        new RealtimeOfflineStore(localforage.createInstance({ name: 'xforge-realtime', storeName: type }))
-      );
-    }
-    return this.stores.get(type);
-  }
-
   private async createDoc(identity: RecordIdentity): Promise<RealtimeDoc> {
     let collection = underscore(identity.type) + '_data';
     if (identity.type === 'project') {
       collection = environment.prefix + '_' + collection;
     }
     const sharedbDoc = this.connection.get(collection, identity.id);
-    const store = this.getStore(identity.type);
     const RealtimeDocType = this.domainModel.getRealtimeDocType(identity.type);
-    const realtimeDoc = new RealtimeDocType(new SharedbRealtimeDocAdapter(sharedbDoc), store);
+    const realtimeDoc = new RealtimeDocType(new SharedbRealtimeDocAdapter(sharedbDoc), this.store);
     await realtimeDoc.subscribe();
     return realtimeDoc;
   }
