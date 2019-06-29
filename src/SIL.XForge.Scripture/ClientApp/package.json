@@ -95,7 +95,7 @@
     "karma-jasmine-html-reporter": "^1.4.2",
     "karma-teamcity-reporter": "^1.1.0",
     "lint-staged": "^8.1.6",
-    "npm": "6.4.1",
+    "npm": "6.9.2",
     "prettier": "1.15.3",
     "protractor": "^5.4.2",
     "ts-mockito": "^2.3.1",
