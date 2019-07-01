@@ -113,9 +113,6 @@ namespace SIL.XForge.Scripture.Services
             // check if a sync needs to be run
             if (translateEnabledSet || sourceParatextIdSet || checkingEnabledSet)
             {
-                // if currently running sync job for project is found, cancel it
-                await _syncJobManager.CancelByProjectIdAsync(id);
-
                 bool trainEngine = false;
                 if (translateEnabledSet || sourceParatextIdSet)
                 {

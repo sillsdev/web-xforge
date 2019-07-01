@@ -140,6 +140,12 @@ namespace SIL.XForge.Scripture
                 routes.MapRoute(name: "default", template: "{controller=Default}/{action=Index}/{id?}");
             });
 
+            app.UseRealtimeServer();
+
+            app.UseMachine();
+
+            app.UseSFDataAccess();
+
             app.UseSpa(spa =>
             {
                 // To learn more about options for serving an Angular SPA from ASP.NET Core,
@@ -157,12 +163,6 @@ namespace SIL.XForge.Scripture
                         break;
                 }
             });
-
-            app.UseRealtimeServer();
-
-            app.UseMachine();
-
-            app.UseSFDataAccess();
 
             appLifetime.ApplicationStopped.Register(() => ApplicationContainer.Dispose());
         }

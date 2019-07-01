@@ -7,12 +7,12 @@ namespace SIL.XForge.Scripture.Models
         public const string PendingState = "PENDING";
         public const string SyncingState = "SYNCING";
         public const string IdleState = "IDLE";
-        public const string HoldState = "HOLD";
+        public const string ErrorState = "ERROR";
+        public const string CanceledState = "CANCELED";
         public static string[] ActiveStates = { PendingState, SyncingState };
 
         public string BackgroundJobId { get; set; }
-        public string State { get; set; }
+        public string State { get; set; } = PendingState;
         public double PercentCompleted { get; set; }
-        public int StartCount { get; set; }
     }
 }
