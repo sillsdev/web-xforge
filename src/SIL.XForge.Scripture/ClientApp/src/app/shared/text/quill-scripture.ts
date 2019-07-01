@@ -399,7 +399,9 @@ export function registerScripture(): void {
       this.container.focus();
       this.quill.selection.update('silent');
 
-      const text = e.clipboardData.getData('text/plain');
+      let text = e.clipboardData.getData('text/plain');
+      // do not allow pasting new lines
+      text = text.replace(/(?:\r?\n)+/, ' ');
       setTimeout(() => {
         this.container.innerHTML = text;
         delta = delta.concat(this.convert()).delete(range.length);
