@@ -1,7 +1,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Hangfire;
-using MongoDB.Bson;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Scripture.Models;
 
@@ -21,35 +20,16 @@ namespace SIL.XForge.Scripture.Services
             _backgroundJobClient = backgroundJobClient;
         }
 
-        public async Task<SyncJobEntity> StartAsync(SyncJobEntity job, bool trainEngine)
+        public async Task StartAsync(SyncJobEntity job, bool trainEngine)
         {
-            if (job.Id == null)
-                job.Id = ObjectId.GenerateNewId().ToString();
-
-            job = await _jobs.UpdateAsync(
-                j => j.ProjectRef == job.ProjectRef && SyncJobEntity.ActiveStates.Contains(j.State),
-                u => u
-                    .SetOnInsert(j => j.Id, job.Id)
-                    .SetOnInsert(j => j.ProjectRef, job.ProjectRef)
-                    .SetOnInsert(j => j.State, SyncJobEntity.PendingState)
-                    .SetOnInsert(j => j.OwnerRef, job.OwnerRef)
-                    .Inc(j => j.StartCount, 1),
-                true);
-            if (job.StartCount == 1)
-            {
-                await _projects.UpdateAsync(job.ProjectRef, u => u.Set(p => p.ActiveSyncJobRef, job.Id));
-                // new job, so enqueue the runner
-                string jobId = job.Id;
-                _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(null, null, job.OwnerRef, jobId,
-                    trainEngine));
-                return job;
-            }
-            return null;
+            await _jobs.InsertAsync(job);
+            _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(null, null, job.OwnerRef,
+                job.ProjectRef, job.Id, trainEngine));
         }
 
         public async Task<bool> CancelAsync(string id)
         {
-            SyncJobEntity job = await _jobs.DeleteAsync(
+            SyncJobEntity job = await _jobs.Query().FirstOrDefaultAsync(
                 j => j.Id == id && SyncJobEntity.ActiveStates.Contains(j.State));
             if (job != null)
             {
@@ -62,7 +42,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task<bool> CancelByProjectIdAsync(string projectId)
         {
-            SyncJobEntity job = await _jobs.DeleteAsync(
+            SyncJobEntity job = await _jobs.Query().FirstOrDefaultAsync(
                 j => j.ProjectRef == projectId && SyncJobEntity.ActiveStates.Contains(j.State));
             if (job != null)
             {

@@ -1,13 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { distanceInWordsToNow } from 'date-fns';
-import { BehaviorSubject, combineLatest, Observable, Subscription } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, timer } from 'rxjs';
+import { expand, filter, map, startWith, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProject } from '../core/models/sfproject';
-import { SyncJob } from '../core/models/sync-job';
+import { SyncJobState } from '../core/models/sync-job';
 import { SFProjectService } from '../core/sfproject.service';
 import { SyncJobService } from '../core/sync-job.service';
 
@@ -16,8 +16,8 @@ import { SyncJobService } from '../core/sync-job.service';
   templateUrl: './sync.component.html',
   styleUrls: ['./sync.component.scss']
 })
-export class SyncComponent extends SubscriptionDisposable implements OnInit {
-  readonly projectReload$ = new BehaviorSubject<void>(null);
+export class SyncComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
+  readonly projectReload$ = new Subject<void>();
   syncJobActive: boolean = false;
   project: SFProject;
   percentComplete: number;
@@ -25,8 +25,8 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit {
   private isFirstLoad: boolean = true;
   private paratextUsername: string;
   private projectId: string;
-  private syncInProgress$: Observable<SyncJob>;
   private syncInProgressSub: Subscription;
+  private activeSyncJobId: string;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -78,25 +78,27 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit {
           this.projectId = params['projectId'];
         }),
         switchMap(() =>
-          combineLatest(
-            this.projectReload$.pipe(
-              switchMap(() => this.projectService.onlineGet(this.projectId).pipe(map(r => r.data)))
-            ),
-            this.paratextService.getParatextUsername()
+          this.projectReload$.pipe(
+            // emit when first subscribed, so that the project is retrieved on startup
+            startWith(null),
+            // retrieve the project every 5s unless there is an active sync job
+            switchMap(() =>
+              this.getProject().pipe(
+                expand(project =>
+                  project.activeSyncJob == null && !this.syncJobActive
+                    ? timer(5000).pipe(switchMap(() => this.getProject()))
+                    : EMPTY
+                )
+              )
+            )
           )
-        )
+        ),
+        withLatestFrom(this.paratextService.getParatextUsername())
       ),
       ([project, paratextUsername]) => {
-        if (project != null) {
-          const prevActiveSyncJob = this.project != null ? this.project.activeSyncJob : null;
-          this.project = project;
-          if (
-            this.project.activeSyncJob != null &&
-            (prevActiveSyncJob == null || prevActiveSyncJob.id !== this.project.activeSyncJob.id)
-          ) {
-            this.syncJobActive = true;
-            this.listenAndProcessSync(this.project.activeSyncJob.id);
-          }
+        this.project = project;
+        if (this.project.activeSyncJob != null) {
+          this.listenAndProcessSync(this.project.activeSyncJob.id);
         }
         if (paratextUsername != null) {
           this.paratextUsername = paratextUsername;
@@ -105,6 +107,13 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit {
         this.noticeService.loadingFinished();
       }
     );
+  }
+
+  ngOnDestroy(): void {
+    super.ngOnDestroy();
+    if (this.syncInProgressSub != null) {
+      this.syncInProgressSub.unsubscribe();
+    }
   }
 
   logInWithParatext(): void {
@@ -118,26 +127,43 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit {
     this.listenAndProcessSync(jobId);
   }
 
+  private getProject(): Observable<SFProject> {
+    return this.projectService.onlineGet(this.projectId).pipe(
+      map(r => r.data),
+      filter(p => p != null)
+    );
+  }
+
   private listenAndProcessSync(jobId: string): void {
+    if (this.activeSyncJobId === jobId) {
+      return;
+    }
+    this.syncJobActive = true;
+    this.activeSyncJobId = jobId;
     if (this.syncInProgressSub != null) {
       this.syncInProgressSub.unsubscribe();
     }
-    this.syncInProgress$ = this.syncJobService.listen(jobId);
-    this.syncInProgressSub = this.subscribe(this.syncInProgress$, job => {
+    this.syncInProgressSub = this.syncJobService.listen(jobId).subscribe(job => {
       this.percentComplete = job.percentCompleted;
       if (!job.isActive) {
         this.percentComplete = undefined;
-        this.syncInProgressSub.unsubscribe();
         this.syncJobActive = false;
-        if (job.isIdle) {
-          this.projectReload$.next(null);
-          this.noticeService.show('Sucessfully synchronized ' + this.project.projectName + ' with Paratext.');
-        } else {
-          this.noticeService.show(
-            'Something went wrong while synchronizing the ' +
-              this.project.projectName +
-              ' with Paratext. Please try again.'
-          );
+        this.activeSyncJobId = undefined;
+        this.projectReload$.next();
+        switch (job.state) {
+          case SyncJobState.IDLE:
+            this.noticeService.show('Successfully synchronized ' + this.project.projectName + ' with Paratext.');
+            break;
+          case SyncJobState.CANCELED:
+            this.noticeService.show('Synchronization was canceled.');
+            break;
+          default:
+            this.noticeService.show(
+              'Something went wrong while synchronizing the ' +
+                this.project.projectName +
+                ' with Paratext. Please try again.'
+            );
+            break;
         }
       }
     });

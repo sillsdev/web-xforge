@@ -4,7 +4,8 @@ export enum SyncJobState {
   PENDING = 'PENDING',
   SYNCING = 'SYNCING',
   IDLE = 'IDLE',
-  HOLD = 'HOLD'
+  ERROR = 'ERROR',
+  CANCELED = 'CANCELED'
 }
 
 export class SyncJob extends SyncJobBase {
@@ -16,10 +17,6 @@ export class SyncJob extends SyncJobBase {
 
   get isActive(): boolean {
     return this.state === SyncJobState.PENDING || this.state === SyncJobState.SYNCING;
-  }
-
-  get isIdle(): boolean {
-    return this.state === SyncJobState.IDLE;
   }
 }
 

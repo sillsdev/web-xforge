@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
 using AutoMapper;
-using JsonApiDotNetCore.Internal;
 using JsonApiDotNetCore.Services;
-using Microsoft.AspNetCore.Http;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
@@ -23,12 +21,8 @@ namespace SIL.XForge.Scripture.Services
 
         protected override async Task<SyncJobEntity> InsertEntityAsync(SyncJobEntity entity)
         {
-            SyncJobEntity job = await _syncJobManager.StartAsync(entity, false);
-            if (job != null)
-                return job;
-
-            throw new JsonApiException(StatusCodes.Status409Conflict,
-                "There is already an active send/receive job for this project.");
+            await _syncJobManager.StartAsync(entity, false);
+            return await Entities.GetAsync(entity.Id);
         }
 
         protected override Task<bool> DeleteEntityAsync(string id)

@@ -147,8 +147,11 @@ namespace SIL.XForge.Scripture.Services
 
         private string WorkingDir => Path.Combine(_siteOptions.Value.SiteDir, "sync");
 
+        // Do not allow multiple sync jobs to run in parallel on the same project by creating a mutex on the projectId
+        // parameter, i.e. "{3}"
+        [Mutex("{3}")]
         public async Task RunAsync(PerformContext context, IJobCancellationToken cancellationToken, string userId,
-            string jobId, bool trainEngine)
+            string projectId, string jobId, bool trainEngine)
         {
             _job = await _jobs.UpdateAsync(j => j.Id == jobId, u => u
                 .Set(j => j.BackgroundJobId, context.BackgroundJob.Id)
@@ -156,10 +159,11 @@ namespace SIL.XForge.Scripture.Services
             if (_job == null)
                 return;
 
+            SFProjectEntity project = await _projects.UpdateAsync(_job.ProjectRef,
+                u => u.Set(p => p.ActiveSyncJobRef, _job.Id));
             try
             {
-                if ((await _users.TryGetAsync(userId)).TryResult(out UserEntity user)
-                    && (await _projects.TryGetAsync(_job.ProjectRef)).TryResult(out SFProjectEntity project))
+                if (project != null && (await _users.TryGetAsync(userId)).TryResult(out UserEntity user))
                 {
                     if (!_fileSystemService.DirectoryExists(WorkingDir))
                         _fileSystemService.CreateDirectory(WorkingDir);
@@ -287,13 +291,17 @@ namespace SIL.XForge.Scripture.Services
             catch (OperationCanceledException)
             {
                 _logger.LogInformation("The Paratext sync job '{Job}' was cancelled.", _job.Id);
+                await _projects.UpdateAsync(_job.ProjectRef, u => u.Unset(p => p.ActiveSyncJobRef));
+                _job = await _jobs.UpdateAsync(_job, u => u
+                    .Set(j => j.State, SyncJobEntity.CanceledState)
+                    .Unset(j => j.BackgroundJobId));
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error occurred while executing Paratext sync job '{Job}'", _job.Id);
                 await _projects.UpdateAsync(_job.ProjectRef, u => u.Unset(p => p.ActiveSyncJobRef));
                 await _jobs.UpdateAsync(_job, u => u
-                    .Set(j => j.State, SyncJobEntity.HoldState)
+                    .Set(j => j.State, SyncJobEntity.ErrorState)
                     .Unset(j => j.BackgroundJobId));
             }
         }
