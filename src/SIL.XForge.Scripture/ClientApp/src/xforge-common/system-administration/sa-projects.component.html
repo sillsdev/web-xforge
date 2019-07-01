@@ -1,13 +1,19 @@
-<div fxLayout="row" fxLayoutAlign="start center" class="projects-controls">
-  <mdc-form-field fxFlex>
+<div
+  fxLayout="row"
+  fxLayout.xs="column-reverse"
+  fxLayoutAlign="start center"
+  fxLayoutGap.xs="16px"
+  class="projects-controls"
+>
+  <mdc-form-field fxFlex fxFlexAlign="start">
     <mdc-text-field
       label="Filter projects..."
       (keyup)="updateSearchTerm($event.target.value)"
       id="project-filter"
     ></mdc-text-field>
   </mdc-form-field>
-  <button mdc-button raised routerLink="/connect-project" fxFlexAlign="end">
-    Connect<span fxHide.xs>&nbsp;Project</span>
+  <button mdc-button raised routerLink="/connect-project" fxFlexAlign="end" fxFlexAlign.xs="start">
+    <mdc-icon>add</mdc-icon>Connect Project
   </button>
 </div>
 <div *ngIf="!isLoading">
