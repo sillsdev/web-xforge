@@ -1,3 +1,13 @@
 .mdc-list-item {
   cursor: pointer;
+  mdc-icon {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+.no-overflow-ellipsis {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }

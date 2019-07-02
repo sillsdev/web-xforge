@@ -1,85 +1,80 @@
-<div fxLayout="column" fxLayoutAlign="space-around">
-  <div fxLayout="row wrap" fxLayoutAlign="start center">
-    <h2 fxFlex fxLayoutAlign="start center"><mdc-icon>notes</mdc-icon> Texts with Questions</h2>
-    <div fxLayoutAlign="end center" *ngIf="(isProjectAdmin$ | async)">
-      <div>
-        <button mdc-button (click)="questionDialog()" [disabled]="isLoading" id="add-question-button">
-          <mdc-icon>note_add</mdc-icon> <span fxHide.xs>Add question</span>
-        </button>
-      </div>
-    </div>
+<div fxLayout="row" fxLayoutAlign="start center">
+  <mdc-icon fxFlex="32px">library_books</mdc-icon>
+  <h2 fxFlex>Texts with Questions</h2>
+  <div fxFlexAlign="center" *ngIf="(isProjectAdmin$ | async)">
+    <button mdc-button (click)="questionDialog()" [disabled]="isLoading" id="add-question-button">
+      <mdc-icon>note_add</mdc-icon> <span fxHide.xs>Add question</span>
+    </button>
   </div>
+</div>
 
-  <div fxLayout="row wrap" fxLayoutAlign="start center">
-    <div fxFlex *ngIf="(isProjectAdmin$ | async)">
-      <mdc-list dense id="text-with-questions-list">
-        <ng-container *ngFor="let text of texts">
+<div fxLayout="column" fxLayoutAlign="apace-around" *ngIf="(isProjectAdmin$ | async)">
+  <mdc-list dense id="text-with-questions-list">
+    <ng-container *ngFor="let text of texts">
+      <mdc-list-item
+        *ngIf="allQuestionsCount(text) > 0"
+        (selectionChange)="itemVisible[text.bookId] = !itemVisible[text.bookId]"
+      >
+        <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+          <mdc-icon fxFlex="24px" mdcListItemMeta>
+            keyboard_arrow_{{ itemVisible[text.bookId] ? "down" : "right" }}
+          </mdc-icon>
+          <span fxFlex>{{ text?.name }}</span>
+          <span fxFlex="80px" fxLayoutAlign="end center">{{ questionCountLabel(allQuestionsCount(text)) }}</span>
+          <span fxFlex="80px" fxLayoutAlign="end center">{{ answerCountLabel(allAnswersCount(text)) }}</span>
+          <span fxFlex="64px" fxLayoutAlign="end center">&nbsp;</span>
+        </div>
+      </mdc-list-item>
+      <ng-container *ngIf="itemVisible[text.bookId]">
+        <ng-container *ngFor="let chapter of text.chapters">
           <mdc-list-item
-            *ngIf="allQuestionsCount(text) > 0"
-            (selectionChange)="itemVisible[text.bookId] = !itemVisible[text.bookId]"
+            *ngIf="questionCount(text.bookId, chapter.number) > 0"
+            (selectionChange)="
+              itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)] = !itemVisible[
+                getTextJsonDocIdStr(text.bookId, chapter.number)
+              ]
+            "
           >
-            <div fxFlex fxLayout="row" fxLayoutAlign="start center">
-              <span fxLayoutAlign="start center">
-                <mdc-icon mdcListItemMeta>keyboard_arrow_{{ itemVisible[text.bookId] ? "down" : "right" }} </mdc-icon>
-                {{ text?.name }}
+            <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+              <span fxFlex="16px" class="indent"></span>
+              <mdc-icon fxFlex="24px" mdcListItemMeta>
+                keyboard_arrow_{{ itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)] ? "down" : "right" }}
+              </mdc-icon>
+              <span fxFlex>{{ text?.name + " " + chapter?.number }}</span>
+              <span fxFlex="80px" fxLayoutAlign="end center">
+                {{ questionCountLabel(questionCount(text.bookId, chapter.number)) }}
               </span>
-              <span fxFlex fxLayoutAlign="end center">{{ questionCountLabel(allQuestionsCount(text)) }}</span>
-              <span fxFlex="5rem" fxLayoutAlign="end center">{{ answerCountLabel(allAnswersCount(text)) }}</span>
+              <span fxFlex="80px" fxLayoutAlign="end center">
+                {{ answerCountLabel(chapterAnswerCount(text.bookId, chapter.number)) }}
+              </span>
+              <span fxFlex="64px" fxLayoutAlign="end center">&nbsp;</span>
             </div>
           </mdc-list-item>
-          <ng-container *ngIf="itemVisible[text.bookId]">
-            <ng-container *ngFor="let chapter of text.chapters">
-              <mdc-list-item
-                *ngIf="questionCount(text.bookId, chapter.number) > 0"
-                (selectionChange)="
-                  itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)] = !itemVisible[
-                    getTextJsonDocIdStr(text.bookId, chapter.number)
-                  ]
-                "
-              >
-                <div fxFlex fxLayout="row" fxLayoutAlign="start center">
-                  <span fxFlex="1rem" class="indent"></span>
-                  <span fxLayoutAlign="start center">
-                    <mdc-icon mdcListItemMeta
-                      >keyboard_arrow_{{
-                        itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)] ? "down" : "right"
-                      }}
-                    </mdc-icon>
-                    {{ text?.name + " " + chapter?.number }}
-                  </span>
-                  <span fxFlex fxLayoutAlign="end center">
-                    {{ questionCountLabel(questionCount(text.bookId, chapter.number)) }}
-                  </span>
-                  <span fxFlex="5rem" fxLayoutAlign="end center">
-                    {{ answerCountLabel(chapterAnswerCount(text.bookId, chapter.number)) }}
-                  </span>
-                </div>
-              </mdc-list-item>
-              <ng-container *ngIf="itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)]">
-                <mdc-list-item
-                  *ngFor="
-                    let question of questions[getTextJsonDocIdStr(text.bookId, chapter.number)].data;
-                    let i = index
-                  "
-                >
-                  <div fxFlex fxLayout="row" fxLayoutAlign="start center">
-                    <span fxFlex="1rem" class="indent"></span>
-                    <span fxFlex>
-                      <button mdc-button (click)="questionDialog(true, text.bookId, chapter.number, i)">
-                        <mdc-icon>edit</mdc-icon>
-                      </button>
-                      {{ question?.text }}
-                    </span>
-                    <span fxFlex="5rem" fxLayoutAlign="end center">{{
-                      answerCountLabel(answerCount(text.bookId, chapter.number, i))
-                    }}</span>
-                  </div>
-                </mdc-list-item>
-              </ng-container>
-            </ng-container>
+          <ng-container *ngIf="itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)]">
+            <mdc-list-item
+              *ngFor="let question of questions[getTextJsonDocIdStr(text.bookId, chapter.number)].data; let i = index"
+            >
+              <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+                <span fxFlex="16px" class="indent"></span>
+                <button fxFlex="64px" mdc-button (click)="questionDialog(true, text.bookId, chapter.number, i)">
+                  <mdc-icon>edit</mdc-icon>
+                </button>
+                <span fxFlex class="no-overflow-ellipsis">
+                  v{{ question?.scriptureStart?.verse }} - {{ question?.text }}
+                </span>
+                <span fxFlex="80px" fxLayoutAlign="end center">
+                  {{ answerCountLabel(answerCount(text.bookId, chapter.number, i)) }}
+                </span>
+                <span fxFlex="64px" fxLayoutAlign="end center">
+                  <!-- <button mdc-button (click)="archiveQuestion(text.bookId, chapter.number, i)">
+                    <mdc-icon>archive</mdc-icon>
+                  </button> -->
+                </span>
+              </div>
+            </mdc-list-item>
           </ng-container>
         </ng-container>
-      </mdc-list>
-    </div>
-  </div>
+      </ng-container>
+    </ng-container>
+  </mdc-list>
 </div>
