@@ -137,10 +137,10 @@ export class TextViewModel {
       }
     }
 
-    const fixDelta = this.updateSegments();
-    if (fixDelta.ops.length > 0) {
+    const updateDelta = this.updateSegments();
+    if (updateDelta.ops.length > 0) {
       // defer the update, since it might cause the segment ranges to be out-of-sync with the view model
-      Promise.resolve().then(() => this.editor.updateContents(fixDelta, 'user'));
+      Promise.resolve().then(() => this.editor.updateContents(updateDelta, 'user'));
     }
   }
 
@@ -203,7 +203,9 @@ export class TextViewModel {
   }
 
   private updateSegments(): DeltaStatic {
+    const convertDelta = new Delta();
     let fixDelta = new Delta();
+    let fixOffset = 0;
     const delta = this.editor.getContents();
     this._segments.clear();
     const nextIds = new Map<string, number>();
@@ -215,7 +217,7 @@ export class TextViewModel {
       const attrs: StringMap = {};
       const len = typeof op.insert === 'string' ? op.insert.length : 1;
       if (op.insert === '\n' || (op.attributes != null && op.attributes.para != null)) {
-        const style = op.attributes == null ? null : (op.attributes.para.style as string);
+        const style = op.attributes == null || op.attributes.para == null ? null : (op.attributes.para.style as string);
         if (style == null || isParagraphStyle(style)) {
           // paragraph
           for (const _ch of op.insert) {
@@ -230,7 +232,7 @@ export class TextViewModel {
                 paraSegment.ref = getParagraphRef(nextIds, paraSegment.ref, paraSegment.ref + '/' + style);
               }
 
-              fixDelta = this.fixSegment(paraSegment, fixDelta);
+              [fixDelta, fixOffset] = this.fixSegment(paraSegment, fixDelta, fixOffset);
               this._segments.set(paraSegment.ref, { index: paraSegment.index, length: paraSegment.length });
             }
             paraSegments = [];
@@ -242,7 +244,7 @@ export class TextViewModel {
             curSegment = new SegmentInfo('', curIndex);
           }
           curSegment.ref = getParagraphRef(nextIds, style, style);
-          fixDelta = this.fixSegment(curSegment, fixDelta);
+          [fixDelta, fixOffset] = this.fixSegment(curSegment, fixDelta, fixOffset);
           this._segments.set(curSegment.ref, { index: curSegment.index, length: curSegment.length });
           paraSegments = [];
           curIndex += curSegment.length + len;
@@ -281,33 +283,42 @@ export class TextViewModel {
           curSegment.containsBlank = true;
         }
       }
-      fixDelta.retain(len, attrs);
+      convertDelta.retain(len, attrs);
     }
-    return fixDelta.chop();
+    return convertDelta.compose(fixDelta).chop();
   }
 
-  private fixSegment(segment: SegmentInfo, fixDelta: DeltaStatic): DeltaStatic {
+  private fixSegment(segment: SegmentInfo, fixDelta: DeltaStatic, fixOffset: number): [DeltaStatic, number] {
     if (segment.length === 0) {
       // insert blank
       const type = segment.ref.includes('/p') || segment.ref.includes('/m') ? 'initial' : 'normal';
       const delta = new Delta();
-      delta.retain(segment.index);
+      delta.retain(segment.index + fixOffset);
       delta.insert({ blank: type }, { segment: segment.index, 'para-contents': true });
       fixDelta = fixDelta.compose(delta);
+      fixOffset++;
     } else if (segment.containsBlank && segment.length > 1) {
       // delete blank
       const delta = new Delta()
-        .retain(segment.index)
+        .retain(segment.index + fixOffset)
         .retain(segment.length - 1, { segment: segment.ref, 'para-contents': true })
         .delete(1);
       fixDelta = fixDelta.compose(delta);
+      fixOffset--;
+      const sel = this.editor.getSelection();
+      if (sel != null && sel.index === segment.index && sel.length === 0) {
+        // if the segment is no longer blank, ensure that the selection is at the end of the segment.
+        // Sometimes after typing in a blank segment, the selection will be at the beginning. This seems to be a bug
+        // in Quill.
+        Promise.resolve().then(() => this.editor.setSelection(segment.index + segment.length, 0, 'user'));
+      }
     } else if (segment.ref !== segment.origRef) {
       // fix segment ref
       const delta = new Delta()
-        .retain(segment.index)
+        .retain(segment.index + fixOffset)
         .retain(segment.length, { segment: segment.ref, 'para-contents': true });
       fixDelta = fixDelta.compose(delta);
     }
-    return fixDelta;
+    return [fixDelta, fixOffset];
   }
 }

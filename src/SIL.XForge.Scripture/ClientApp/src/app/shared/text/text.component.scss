@@ -31,7 +31,8 @@ quill-editor {
       color: #7c7c7c;
     }
 
-    usx-para {
+    usx-para,
+    p {
       margin-bottom: 1em;
 
       > usx-para-contents {
