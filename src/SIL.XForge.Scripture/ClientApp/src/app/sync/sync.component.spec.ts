@@ -23,6 +23,7 @@ describe('SyncComponent', () => {
     expect(env.logInButton.nativeElement.textContent).toContain('Log in to Paratext');
     expect(env.syncButton).toBeNull();
     expect(env.lastSyncDate).toBeNull();
+    env.dispose();
   }));
 
   it('should redirect the user to log in to paratext', fakeAsync(() => {
@@ -30,6 +31,7 @@ describe('SyncComponent', () => {
     env.clickElement(env.logInButton);
     verify(env.mockedParatextService.linkParatext(anything())).once();
     expect().nothing();
+    env.dispose();
   }));
 
   it('should display sync project', fakeAsync(() => {
@@ -38,6 +40,7 @@ describe('SyncComponent', () => {
     expect(env.logInButton).toBeNull();
     expect(env.syncButton.nativeElement.textContent).toContain('Synchronize');
     expect(env.lastSyncDate.textContent).toContain(' 2 months ago');
+    env.dispose();
   }));
 
   it('should sync project when the button is clicked', fakeAsync(() => {
@@ -64,6 +67,7 @@ describe('SyncComponent', () => {
     expect(env.component.syncJobActive).toBe(false);
     expect(env.component.projectReload$.next).toHaveBeenCalledTimes(1);
     verify(env.mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.'));
+    env.dispose();
   }));
 
   it('should report error if sync has a problem', fakeAsync(() => {
@@ -77,20 +81,22 @@ describe('SyncComponent', () => {
     expect(env.component.syncJobActive).toBe(true);
     expect(env.progressBar).toBeDefined();
     // Simulate sync on hold
-    env.emitSyncJob(SyncJobState.HOLD);
+    env.emitSyncJob(SyncJobState.ERROR);
     expect(env.component.syncJobActive).toBe(false);
-    expect(env.component.projectReload$.next).not.toHaveBeenCalled();
+    expect(env.component.projectReload$.next).toHaveBeenCalledTimes(1);
     verify(
       env.mockedNoticeService.show(
         'Something went wrong while synchronizing the Sync Test Project with Paratext. Please try again.'
       )
     );
+    env.dispose();
   }));
 
   it('should show progress if in-progress when loaded', fakeAsync(() => {
     const env = new TestEnvironment(true, true);
     expect(env.component.syncJobActive).toBe(true);
     expect(env.progressBar).toBeDefined();
+    env.dispose();
   }));
 });
 
@@ -190,5 +196,9 @@ class TestEnvironment {
     this.syncJob.percentCompleted = percentComplete;
     this.subject.next(this.syncJob);
     this.fixture.detectChanges();
+  }
+
+  dispose(): void {
+    this.component.ngOnDestroy();
   }
 }

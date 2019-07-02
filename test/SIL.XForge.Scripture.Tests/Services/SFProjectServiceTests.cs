@@ -117,12 +117,9 @@ namespace SIL.XForge.Scripture.Services
 
                 Assert.That(updatedResource, Is.Not.Null);
                 Assert.That(updatedResource.SourceParatextId, Is.EqualTo("changedId"));
-                SyncJobEntity runningJob = await env.Jobs.GetAsync("job01");
-                Assert.That(runningJob, Is.Null);
                 jobs = await env.Jobs.GetAllAsync();
-                Assert.That(jobs.Count, Is.EqualTo(2));
+                Assert.That(jobs.Count, Is.EqualTo(3));
 
-                env.BackgroundJobClient.Received().ChangeState("backgroundJob01", Arg.Any<IState>(), Arg.Any<string>());
                 await env.EngineService.Received().RemoveProjectAsync(Arg.Any<string>());
                 await env.EngineService.Received().AddProjectAsync(Arg.Any<Project>());
                 env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
@@ -155,11 +152,8 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(updatedResource, Is.Not.Null);
                 Assert.That(updatedResource.TranslateEnabled, Is.True);
                 Assert.That(updatedResource.SourceParatextId, Is.EqualTo("changedId"));
-                SyncJobEntity runningJob = await env.Jobs.GetAsync("job02");
-                Assert.That(runningJob, Is.Null);
                 jobs = await env.Jobs.GetAllAsync();
-                Assert.That(jobs.Count, Is.EqualTo(2));
-                env.BackgroundJobClient.Received().ChangeState("backgroundJob02", Arg.Any<IState>(), Arg.Any<string>());
+                Assert.That(jobs.Count, Is.EqualTo(3));
                 await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
                 await env.EngineService.Received().AddProjectAsync(Arg.Any<Project>());
                 env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
@@ -189,12 +183,9 @@ namespace SIL.XForge.Scripture.Services
 
                 Assert.That(updatedResource, Is.Not.Null);
                 Assert.That(updatedResource.CheckingEnabled, Is.True);
-                SyncJobEntity runningJob = await env.Jobs.GetAsync("job01");
-                Assert.That(runningJob, Is.Null);
                 jobs = await env.Jobs.GetAllAsync();
-                Assert.That(jobs.Count, Is.EqualTo(2));
+                Assert.That(jobs.Count, Is.EqualTo(3));
 
-                env.BackgroundJobClient.Received().ChangeState("backgroundJob01", Arg.Any<IState>(), Arg.Any<string>());
                 await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
                 await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Project>());
                 env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
@@ -272,8 +263,7 @@ namespace SIL.XForge.Scripture.Services
                             ProjectRef = "project01",
                             OwnerRef = "user01",
                             State = SyncJobEntity.SyncingState,
-                            BackgroundJobId = "backgroundJob01",
-                            StartCount = 1
+                            BackgroundJobId = "backgroundJob01"
                         },
                         new SyncJobEntity
                         {
@@ -281,8 +271,7 @@ namespace SIL.XForge.Scripture.Services
                             ProjectRef = "project02",
                             OwnerRef = "user02",
                             State = SyncJobEntity.SyncingState,
-                            BackgroundJobId = "backgroundJob02",
-                            StartCount = 1
+                            BackgroundJobId = "backgroundJob02"
                         },
                     });
                 EngineService = Substitute.For<IEngineService>();
