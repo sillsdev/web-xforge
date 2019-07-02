@@ -2,8 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import Coordinator, { LogTruncationStrategy } from '@orbit/coordinator';
 import { Schema, SchemaSettings } from '@orbit/data';
-import IndexedDBSource from '@orbit/indexeddb';
-import IndexedDBBucket from '@orbit/indexeddb-bucket';
+import { XForgeIndexedDBBucket } from './indexeddb/xforge-indexeddb-bucket';
+import { XForgeIndexedDBSource } from './indexeddb/xforge-indexeddb-source';
 import { XForgeJSONAPISource } from './jsonapi/xforge-jsonapi-source';
 import { LocationService } from './location.service';
 import { XForgeStore } from './store/xforge-store';
@@ -33,9 +33,9 @@ export class OrbitService {
 
   private _store: XForgeStore;
 
-  private bucket: IndexedDBBucket;
+  private bucket: XForgeIndexedDBBucket;
   private remote: XForgeJSONAPISource;
-  private backup: IndexedDBSource;
+  private backup: XForgeIndexedDBSource;
   private coordinator: Coordinator;
 
   constructor(private readonly http: HttpClient, private readonly locationService: LocationService) {}
@@ -53,14 +53,14 @@ export class OrbitService {
    *
    * @param {string} accessToken The user's current access token.
    */
-  async init(accessToken: string): Promise<void> {
+  async init(accessToken: string, deleteStore: boolean): Promise<void> {
     const schemaDef = await this.http
       .get<SchemaSettings>(`${NAMESPACE}/schema`, { headers: { 'Content-Type': 'application/json' } })
       .toPromise();
     schemaDef.generateId = () => objectId();
     this._schema = new Schema(schemaDef);
 
-    this.bucket = new IndexedDBBucket({
+    this.bucket = new XForgeIndexedDBBucket({
       namespace: 'xforge-state'
     });
 
@@ -77,12 +77,16 @@ export class OrbitService {
       namespace: NAMESPACE
     });
 
-    this.backup = new IndexedDBSource({
+    this.backup = new XForgeIndexedDBSource({
       schema: this._schema,
       bucket: this.bucket,
       name: BACKUP,
       namespace: 'xforge'
     });
+
+    if (deleteStore) {
+      await this.deleteStore();
+    }
 
     this.coordinator = new Coordinator({
       sources: [this._store, this.remote, this.backup],
@@ -127,5 +131,14 @@ export class OrbitService {
       url = url.substring(this.locationService.origin.length + 1);
     }
     return url;
+  }
+
+  async deleteStore(): Promise<void> {
+    if (this.bucket != null) {
+      await this.bucket.deleteDB();
+    }
+    if (this.backup != null) {
+      await this.backup.deleteDB();
+    }
   }
 }

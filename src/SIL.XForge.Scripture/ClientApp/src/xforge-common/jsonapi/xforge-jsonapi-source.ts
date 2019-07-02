@@ -5,10 +5,6 @@ import { getRequestType } from '../request-type';
 import { QueryOperator, QueryOperators } from './query-operators';
 
 export class XForgeJSONAPISource extends JSONAPISource {
-  constructor(settings = {}) {
-    super(settings);
-  }
-
   async _push(transform: Transform): Promise<Transform[]> {
     const transforms = await super._push(transform);
     for (const t of transforms) {
