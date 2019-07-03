@@ -35,28 +35,17 @@ namespace SIL.XForge.Controllers
                 "The user should be forbidden from inviting other users");
         }
 
-
         [Test]
-        public async Task CheckLinkSharing_LinkSharingDisabled_ForbiddenError()
-        {
-            var env = new TestEnvironment();
-            env.SetUser(User02, SystemRoles.User);
-            env.SetProject(Project03);
-            RpcMethodErrorResult result = await env.Controller.CheckLinkSharing() as RpcMethodErrorResult;
-            Assert.That(result.ErrorCode, Is.EqualTo((int)RpcErrorCode.InvalidRequest),
-                "The user should be forbidden to join the project");
-        }
-
-        [Test]
-        public async Task CheckLinkSharing_LinkSharingEnabled_UserJoined()
+        public async Task CheckLinkSharing_Unimplemented_Forbidden()
         {
             var env = new TestEnvironment();
             env.SetUser(User02, SystemRoles.User);
             env.SetProject(Project02);
-            RpcMethodSuccessResult result = await env.Controller.CheckLinkSharing() as RpcMethodSuccessResult;
-            Assert.That(result, Is.Not.Null);
-            TestProjectEntity project = env.Projects.Get(Project02);
-            Assert.That(project.Users.Any(pu => pu.UserRef == User02), Is.True);
+            RpcMethodErrorResult result = await env.Controller.CheckLinkSharing() as RpcMethodErrorResult;
+            Assert.That(result.ErrorCode, Is.EqualTo((int)RpcErrorCode.InvalidRequest),
+                "The user should be forbidden to join the project");
+            var project = env.Projects.Get(Project02);
+            Assert.That(project.Users.Any(pu => pu.UserRef == User02), Is.False);
         }
 
         private class TestEnvironment
