@@ -24,40 +24,17 @@ namespace SIL.XForge.Controllers
         private const string User02 = "user02";
 
         [Test]
-        public async Task Invite_ProjectAdminSharingDisabled_UserInvited()
-        {
-            var env = new TestEnvironment();
-            env.SetUser(User01, SystemRoles.User);
-            env.SetProject(Project01);
-            const string email = "newuser@example.com";
-            RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
-            Assert.That(result, Is.Not.Null);
-        }
-
-        [Test]
-        public async Task Invite_LinkSharingEnabled_UserInvited()
+        public async Task Invite_Unimplemented_Forbidden()
         {
             var env = new TestEnvironment();
             env.SetUser(User01, SystemRoles.User);
             env.SetProject(Project02);
             const string email = "newuser@example.com";
-            RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
-            Assert.That(result, Is.Not.Null);
-            await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
-                Arg.Is<string>(body => body.Contains($"http://localhost/projects/{Project02}?sharing=true")));
-        }
-
-        [Test]
-        public async Task Invite_SharingDisabled_ForbiddenError()
-        {
-            var env = new TestEnvironment();
-            env.SetUser(User02, SystemRoles.User);
-            env.SetProject(Project01);
-            const string email = "newuser@example.com";
             RpcMethodErrorResult result = await env.Controller.Invite(email) as RpcMethodErrorResult;
             Assert.That(result.ErrorCode, Is.EqualTo((int)RpcErrorCode.InvalidRequest),
                 "The user should be forbidden from inviting other users");
         }
+
 
         [Test]
         public async Task CheckLinkSharing_LinkSharingDisabled_ForbiddenError()

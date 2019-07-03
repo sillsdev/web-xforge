@@ -103,13 +103,13 @@ namespace SIL.XForge.Controllers
                                 Id = "projectuser01",
                                 UserRef = User01,
                                 ProjectRef = Project01,
-                                Role = TestProjectRoles.Administrator
+                                Role = SFProjectRoles.Administrator
                             },
                             new TestProjectUserEntity {
                                 Id = "projectuser02",
                                 UserRef = User02,
                                 ProjectRef = Project01,
-                                Role = TestProjectRoles.Reviewer
+                                Role = SFProjectRoles.SFReviewer
                             }
                         },
                         CheckingEnabled = true,
@@ -129,7 +129,7 @@ namespace SIL.XForge.Controllers
                                 Id = "projectuser03",
                                 UserRef = User01,
                                 ProjectRef = Project02,
-                                Role = TestProjectRoles.Administrator
+                                Role = SFProjectRoles.Administrator
                             }
                         },
                         CheckingEnabled = true,
@@ -149,7 +149,7 @@ namespace SIL.XForge.Controllers
                                 Id = "projectuser05",
                                 UserRef = User01,
                                 ProjectRef = Project02,
-                                Role = TestProjectRoles.Administrator
+                                Role = SFProjectRoles.Administrator
                             }
                         },
                         CheckingEnabled = true,
