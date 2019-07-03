@@ -7,6 +7,7 @@ namespace SIL.XForge.Scripture.Models
         public string Id { get; set; }
         public string OwnerRef { get; set; }
         public string ProjectRef { get; set; }
+        public string SyncUserRef { get; set; }
         public string AnswerRef { get; set; }
         public VerseRefData ScriptureStart { get; set; }
         public VerseRefData ScriptureEnd { get; set; }

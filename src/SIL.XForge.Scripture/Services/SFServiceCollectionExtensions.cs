@@ -12,6 +12,8 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddCommonServices();
             services.AddSingleton<ISyncService, SyncService>();
             services.AddSingleton<IParatextService, ParatextService>();
+            services.AddTransient<IDeltaUsxMapper, DeltaUsxMapper>();
+            services.AddTransient<IParatextNotesMapper, ParatextNotesMapper>();
             return services;
         }
     }
