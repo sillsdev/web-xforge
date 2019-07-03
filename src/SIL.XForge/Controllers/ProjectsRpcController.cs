@@ -14,8 +14,8 @@ namespace SIL.XForge.Controllers
     /// </summary>
     public abstract class ProjectsRpcController<TEntity> : RpcControllerBase where TEntity : ProjectEntity
     {
-        private readonly IEmailService _emailService;
-        private readonly IOptions<SiteOptions> _siteOptions;
+        protected readonly IEmailService _emailService;
+        protected readonly IOptions<SiteOptions> _siteOptions;
 
         protected ProjectsRpcController(IUserAccessor userAccessor, IHttpRequestAccessor httpRequestAccessor,
             IRepository<TEntity> projects, IRepository<UserEntity> users, IEmailService emailService,
@@ -34,42 +34,10 @@ namespace SIL.XForge.Controllers
 
         protected abstract string ProjectAdminRole { get; }
 
-        public async Task<IRpcMethodResult> Invite(string email)
+        public virtual async Task<IRpcMethodResult> Invite(string email)
         {
-            TEntity project = await Projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
-            if (project == null)
-                return InvalidParamsError();
+            return ForbiddenError();
 
-            if (!TryGetShareConfig(project, out ShareConfig shareConfig))
-                return ForbiddenError();
-
-            SiteOptions siteOptions = _siteOptions.Value;
-            string url;
-            if (shareConfig.Enabled && shareConfig.Level == ShareLevel.Anyone)
-            {
-                url = $"{siteOptions.Origin}projects/{ResourceId}?sharing=true";
-            }
-            else if (shareConfig.Enabled || IsUserProjectAdmin(project))
-            {
-                // TODO: handle inviting a specific person here
-                url = null;
-            }
-            else
-            {
-                return ForbiddenError();
-            }
-
-            UserEntity inviter = await Users.GetAsync(User.UserId);
-            string subject = $"You've been invited to the project {project.ProjectName} on {siteOptions.Name}";
-            string body = "<p>Hello </p><p></p>" +
-                $"<p>{inviter.Name} invites you to join the {project.ProjectName} project on {siteOptions.Name}." +
-                "</p><p></p>" +
-                "<p>You're almost ready to start. Just click the link below to complete your signup and " +
-                "then you will be ready to get started.</p><p></p>" +
-                $"<p>To join, go to {url}</p><p></p>" +
-                $"<p>Regards</p><p>    The {siteOptions.Name} team</p>";
-            await _emailService.SendEmailAsync(email, subject, body);
-            return Ok();
         }
 
         public async Task<IRpcMethodResult> CheckLinkSharing()
@@ -102,7 +70,7 @@ namespace SIL.XForge.Controllers
             return updatedProject != null ? entity.Id : null;
         }
 
-        private bool IsUserProjectAdmin(TEntity project)
+        protected bool IsUserProjectAdmin(TEntity project)
         {
             // Is the user part of the project
             ProjectUserEntity projectUser = project.Users.FirstOrDefault(u => u.UserRef == User.UserId);
