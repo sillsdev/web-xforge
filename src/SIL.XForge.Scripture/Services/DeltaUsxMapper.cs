@@ -8,7 +8,7 @@ using SIL.XForge.Realtime.RichText;
 
 namespace SIL.XForge.Scripture.Services
 {
-    public class DeltaUsxMapper
+    public class DeltaUsxMapper : IDeltaUsxMapper
     {
         private static readonly HashSet<string> ParagraphStyles = new HashSet<string>
         {

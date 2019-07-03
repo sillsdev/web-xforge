@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
@@ -7,18 +8,19 @@ namespace SIL.XForge.Scripture.Models
     {
         public override ProjectRoles Roles => SFProjectRoles.Instance;
         public string ParatextId { get; set; }
+        /// <summary>
+        /// Keeps track of all Paratext usernames that have been used to sync notes with Paratext
+        /// </summary>
+        public List<SyncUser> SyncUsers { get; set; } = new List<SyncUser>();
 
-        // Checking configuration
+        // checking
         public bool CheckingEnabled { get; set; }
         public bool UsersSeeEachOthersResponses { get; set; } = true;
         public bool DownloadAudioFiles { get; set; } = true;
 
-        // Translate configuration
+        // translate
         public bool TranslateEnabled { get; set; }
         public string SourceParatextId { get; set; }
         public InputSystem SourceInputSystem { get; set; } = new InputSystem();
-
-        public string ActiveSyncJobRef { get; set; }
-        public DateTime LastSyncedDate { get; set; } = DateTimeOffset.FromUnixTimeSeconds(0).UtcDateTime;
     }
 }
