@@ -121,7 +121,7 @@ class TestEnvironment {
       id: 'testproject01',
       projectName: 'Sync Test Project',
       paratextId: 'pt01',
-      lastSyncedDate: date.toUTCString()
+      lastSyncedDate: date.toJSON()
     });
     if (isInProgress) {
       project.activeSyncJob = new SyncJobRef('syncjob01');

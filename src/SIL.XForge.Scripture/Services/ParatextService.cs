@@ -145,6 +145,8 @@ namespace SIL.XForge.Scripture.Services
 
         public string GetParatextUsername(UserEntity user)
         {
+            if (user.ParatextTokens == null)
+                return null;
             var accessToken = new JwtSecurityToken(user.ParatextTokens.AccessToken);
             Claim usernameClaim = accessToken.Claims.FirstOrDefault(c => c.Type == "username");
             return usernameClaim?.Value;
@@ -169,6 +171,16 @@ namespace SIL.XForge.Scripture.Services
         {
             return CallApiAsync(_dataAccessClient, user, HttpMethod.Post, $"text/{projectId}/{revision}/{bookId}",
                 usxText);
+        }
+
+        public Task<string> GetNotesAsync(UserEntity user, string projectId, string bookId)
+        {
+            return CallApiAsync(_dataAccessClient, user, HttpMethod.Get, $"notes/{projectId}/{bookId}");
+        }
+
+        public Task<string> UpdateNotesAsync(UserEntity user, string projectId, string notesText)
+        {
+            return CallApiAsync(_dataAccessClient, user, HttpMethod.Post, $"notes/{projectId}", notesText);
         }
 
         private async Task RefreshAccessTokenAsync(UserEntity user)

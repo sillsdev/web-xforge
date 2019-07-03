@@ -15,5 +15,7 @@ namespace SIL.XForge.Scripture.Services
         Task<string> GetBookTextAsync(UserEntity user, string projectId, string bookId);
         Task<string> UpdateBookTextAsync(UserEntity user, string projectId, string bookId, string revision,
            string usxText);
+        Task<string> GetNotesAsync(UserEntity user, string projectId, string bookId);
+        Task<string> UpdateNotesAsync(UserEntity user, string projectId, string notesText);
     }
 }

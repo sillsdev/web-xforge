@@ -4,6 +4,7 @@ export interface Comment {
   id: string;
   ownerRef: string;
   projectRef: string;
+  syncUserRef?: string;
   answerRef?: string;
   scriptureStart?: VerseRefData;
   scriptureEnd?: VerseRefData;
