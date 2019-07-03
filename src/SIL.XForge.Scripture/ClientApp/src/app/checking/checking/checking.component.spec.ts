@@ -289,7 +289,7 @@ describe('CheckingComponent', () => {
         expect(env.getAnswerComments(0).length).toBe(1);
         expect(env.getAnswerCommentText(0, 0)).toBe('Third comment');
         env.selectQuestion(1);
-        expect(env.getAnswerCommentText(0, 1)).toBe('First comment');
+        expect(env.getAnswerCommentText(0, 0)).toBe('First comment');
       }));
 
       it('comments display show more button', fakeAsync(() => {
@@ -638,7 +638,7 @@ class TestEnvironment {
     );
     const text1_1id = new TextDocId('project01', 'JHN', 1);
     const text1_2id = new TextDocId('project01', 'JHN', 2);
-    const dateNow: string = new Date().toUTCString();
+    const dateNow: string = new Date().toJSON();
     const questionData1: Question[] = [];
     const questionData2: Question[] = [];
     for (let questionNumber = 1; questionNumber <= 14; questionNumber++) {

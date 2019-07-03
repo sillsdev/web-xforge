@@ -11,22 +11,20 @@ namespace SIL.XForge.Scripture.Models
 
     public class TextInfo
     {
-        public static string GetTextDocId(string projectId, string bookId, int chapter, TextType? textType = null)
+        public static string GetTextDocId(string projectId, string bookId, int chapter,
+            TextType textType = TextType.Target)
         {
-            string textTypeStr = "target";
-            if (textType != null)
+            string textTypeStr;
+            switch (textType)
             {
-                switch (textType)
-                {
-                    case TextType.Source:
-                        textTypeStr = "source";
-                        break;
-                    case TextType.Target:
-                        textTypeStr = "target";
-                        break;
-                    default:
-                        throw new InvalidEnumArgumentException(nameof(textType), (int)textType, typeof(TextType));
-                }
+                case TextType.Source:
+                    textTypeStr = "source";
+                    break;
+                case TextType.Target:
+                    textTypeStr = "target";
+                    break;
+                default:
+                    throw new InvalidEnumArgumentException(nameof(textType), (int)textType, typeof(TextType));
             }
             return $"{projectId}:{bookId}:{chapter}:{textTypeStr}";
         }

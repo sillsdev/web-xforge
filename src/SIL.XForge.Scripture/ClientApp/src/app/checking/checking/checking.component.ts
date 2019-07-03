@@ -204,7 +204,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     switch (answerAction.action) {
       case 'save':
         let answer: Answer = answerAction.answer;
-        const dateNow: string = new Date().toUTCString();
+        const dateNow: string = new Date().toJSON();
         if (!answer) {
           answer = {
             id: objectId(),
@@ -264,7 +264,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     switch (commentAction.action) {
       case 'save':
         let comment: Comment = commentAction.comment;
-        const dateNow: string = new Date().toUTCString();
+        const dateNow: string = new Date().toJSON();
         if (!comment) {
           comment = {
             id: objectId(),

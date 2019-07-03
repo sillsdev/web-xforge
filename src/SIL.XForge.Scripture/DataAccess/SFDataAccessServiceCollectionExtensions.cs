@@ -17,6 +17,12 @@ namespace Microsoft.Extensions.DependencyInjection
 
             DataAccessClassMap.RegisterConcreteClass<ProjectUserEntity, SFProjectUserEntity>();
 
+            DataAccessClassMap.RegisterClass<SyncUser>(cm =>
+                {
+                    cm.SetIdMember(null);
+                    cm.MapProperty(su => su.Id).SetSerializer(new StringSerializer(BsonType.ObjectId));
+                });
+
             services.AddMongoRepository<SFProjectEntity>(RootDataTypes.Projects,
                 indexSetup: indexes =>
                 {

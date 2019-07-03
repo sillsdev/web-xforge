@@ -9,11 +9,6 @@ namespace SIL.XForge.Realtime.Json0
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class Json0Op
     {
-        public static List<Json0Op> New()
-        {
-            return new List<Json0Op>();
-        }
-
         [JsonProperty("p")]
         public List<object> Path { get; set; } = new List<object>();
 
