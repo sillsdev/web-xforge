@@ -75,6 +75,22 @@ namespace SIL.XForge.Scripture.Controllers
             return Ok();
         }
 
+        public override async Task<IRpcMethodResult> CheckLinkSharing()
+        {
+            SFProjectEntity project = await Projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
+            if (project == null)
+                return InvalidParamsError();
+
+            ShareConfig shareConfig = project.Share;
+            if (shareConfig == null || !shareConfig.Enabled
+                || shareConfig.Level != ShareLevel.Anyone)
+            {
+                return ForbiddenError();
+            }
+
+            await AddUserToProject(project);
+            return Ok();
+        }
 
 
         public async Task<IRpcMethodResult> AddTranslateMetrics(TranslateMetrics metrics)

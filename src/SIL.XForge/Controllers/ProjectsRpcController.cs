@@ -37,23 +37,11 @@ namespace SIL.XForge.Controllers
         public virtual async Task<IRpcMethodResult> Invite(string email)
         {
             return ForbiddenError();
-
         }
 
-        public async Task<IRpcMethodResult> CheckLinkSharing()
+        public virtual async Task<IRpcMethodResult> CheckLinkSharing()
         {
-            TEntity project = await Projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
-            if (project == null)
-                return InvalidParamsError();
-
-            if (!TryGetShareConfig(project, out ShareConfig shareConfig) || !shareConfig.Enabled
-                || shareConfig.Level != ShareLevel.Anyone)
-            {
-                return ForbiddenError();
-            }
-
-            await AddUserToProject(project);
-            return Ok();
+            return ForbiddenError();
         }
 
         protected Task<bool> IsAuthorizedAsync()
