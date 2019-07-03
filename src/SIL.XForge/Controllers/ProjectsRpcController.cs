@@ -71,6 +71,5 @@ namespace SIL.XForge.Controllers
         }
 
         protected abstract ProjectUserEntity CreateProjectUser(string userId);
-        protected abstract bool TryGetShareConfig(TEntity project, out ShareConfig shareConfig);
     }
 }
