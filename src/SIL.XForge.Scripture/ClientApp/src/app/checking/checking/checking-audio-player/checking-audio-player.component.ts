@@ -23,8 +23,13 @@ export class CheckingAudioPlayerComponent {
           // Reset back to the start of the audio file after the event has triggered
           this.audio.currentTime = 0;
           this.enabled = true;
+        } else {
+          if (this.isPlaying) {
+            this.seek = (this.currentTime / this.duration) * 100;
+          } else if (this.currentTime === this.duration) {
+            this.seek = 100;
+          }
         }
-        this.seek = (this.currentTime / this.duration) * 100;
       });
       this._duration = this.audio.duration;
       this.seek = 0;
@@ -69,11 +74,16 @@ export class CheckingAudioPlayerComponent {
     setTimeout(() => {
       this.slider.nativeElement.addEventListener('mousemove', (event: MouseEvent) => {
         if (this._seeking) {
-          this.seek = event.clientX - this.slider.nativeElement.offsetLeft;
+          this.seeking(
+            ((event.clientX - this.slider.nativeElement.offsetLeft) / this.slider.nativeElement.offsetWidth) * 100
+          );
         }
       });
-      this.slider.nativeElement.addEventListener('mousedown', () => {
+      this.slider.nativeElement.addEventListener('mousedown', (event: MouseEvent) => {
         this._seeking = true;
+        this.seeking(
+          ((event.clientX - this.slider.nativeElement.offsetLeft) / this.slider.nativeElement.offsetWidth) * 100
+        );
       });
       this.slider.nativeElement.addEventListener('mouseup', () => {
         this._seeking = false;
@@ -95,15 +105,10 @@ export class CheckingAudioPlayerComponent {
 
   set seek(value: number) {
     this._seek = value;
-    if (!this.isPlaying) {
-      this.audio.currentTime = this.seek > 0 ? this.duration * (this.seek / 100) : 0;
-      console.log(this.duration, this.seek);
-      this._currentTime = this.audio.currentTime;
-    }
   }
 
   private get checkIsPlaying(): boolean {
-    return !this.audio.paused && !this.audio.ended && this.audio.currentTime > 0 && this.audio.readyState > 2;
+    return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
   }
 
   download() {
@@ -118,6 +123,17 @@ export class CheckingAudioPlayerComponent {
 
   play() {
     this.audio.play();
+  }
+
+  private seeking(value: number) {
+    if (value < 0) {
+      value = 0;
+    } else if (value > 100) {
+      value = 100;
+    }
+    this.seek = value;
+    this.audio.currentTime = this.seek > 0 ? this.duration * (this.seek / 100) : 0;
+    this._currentTime = this.audio.currentTime;
   }
 }
 

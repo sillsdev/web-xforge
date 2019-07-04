@@ -1,5 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import RecordRTC from 'recordrtc';
+
+export interface AudioRecorderStatus {
+  status: string;
+  url?: string;
+  fileName?: string;
+  blob?: Blob;
+}
 
 @Component({
   selector: 'app-checking-audio-recorder',
@@ -7,6 +14,7 @@ import RecordRTC from 'recordrtc';
   styleUrls: ['./checking-audio-recorder.component.scss']
 })
 export class CheckingAudioRecorderComponent {
+  @Output() status: EventEmitter<AudioRecorderStatus> = new EventEmitter<AudioRecorderStatus>();
   audioUrl: string = '';
   private stream: MediaStream;
   private recordRTC: RecordRTC;
@@ -23,13 +31,25 @@ export class CheckingAudioRecorderComponent {
     // handle error here
   }
 
+  getFileName(url: string): string {
+    // TODO: (NW) Make this actually do something
+    return 'temp.webm';
+  }
+
   processAudio(audioVideoWebMURL: string) {
     this.audioUrl = audioVideoWebMURL;
     this.recordRTC.getDataURL(() => {});
+    this.status.emit({
+      url: audioVideoWebMURL,
+      status: 'processed',
+      blob: this.recordRTC.getBlob(),
+      fileName: this.getFileName(this.audioUrl)
+    });
   }
 
   resetRecording(): void {
     this.audioUrl = '';
+    this.status.emit({ status: 'reset' });
   }
 
   startRecording() {
@@ -39,11 +59,13 @@ export class CheckingAudioRecorderComponent {
     navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then(this.successCallback.bind(this), this.errorCallback.bind(this));
+    this.status.emit({ status: 'recoding' });
   }
 
   stopRecording() {
     this.recordRTC.stopRecording(this.processAudio.bind(this));
     this.stream.getAudioTracks().forEach(track => track.stop());
+    this.status.emit({ status: 'stopped' });
   }
 
   successCallback(stream: MediaStream) {

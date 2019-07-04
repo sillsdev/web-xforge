@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
 import { Observable } from 'rxjs';
@@ -27,9 +28,10 @@ export class SFProjectService extends ProjectService<SFProject> {
   constructor(
     jsonApiService: JsonApiService,
     private readonly machineHttp: MachineHttpClient,
-    private readonly realtimeService: RealtimeService
+    private readonly realtimeService: RealtimeService,
+    readonly http: HttpClient
   ) {
-    super(SFProject.TYPE, jsonApiService, SFProjectService.ROLES);
+    super(SFProject.TYPE, jsonApiService, SFProjectService.ROLES, http);
   }
 
   init(): void {

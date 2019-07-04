@@ -1,0 +1,10 @@
+.buttons {
+  margin: 0 0 15px;
+  button:not(:last-child) {
+    margin-right: 30px;
+  }
+}
+app-checking-audio-player {
+  margin-bottom: 15px;
+  display: block;
+}

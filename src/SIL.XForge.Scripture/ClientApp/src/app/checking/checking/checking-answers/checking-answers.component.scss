@@ -31,9 +31,19 @@
   app-checking-audio-recorder {
     margin-bottom: 19px;
   }
-  .form-actions {
+  .form-controls {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    &.audio-control-visible {
+      flex-direction: column;
+    }
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+  mdc-text-field[type='hidden'] {
+    display: none;
   }
 }
 .answers-container {
