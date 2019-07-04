@@ -6,7 +6,7 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Services
 {
-    public interface IProjectService : IResourceService<ProjectResource, string>
+    public interface IProjectService<T> : IResourceService<T, string> where T : ProjectResource
     {
         Task<Uri> SaveAudioAsync(string id, string name, Stream inputStream);
     }

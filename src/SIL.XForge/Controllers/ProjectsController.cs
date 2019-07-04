@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel.Design;
 using System.IO;
 using System.Threading.Tasks;
 using JsonApiDotNetCore.Services;
@@ -11,12 +10,11 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Controllers
 {
-    [Route(RootDataTypes.Projects)]
-    public class ProjectsController : JsonApiControllerBase<ProjectResource>
+    public abstract class ProjectsController<T> : JsonApiControllerBase<T> where T : ProjectResource
     {
-        private readonly IProjectService _projectService;
+        private readonly IProjectService<T> _projectService;
 
-        public ProjectsController(IJsonApiContext jsonApiContext, IProjectService projectService,
+        public ProjectsController(IJsonApiContext jsonApiContext, IProjectService<T> projectService,
             ILoggerFactory loggerFactory) : base(jsonApiContext, projectService, loggerFactory)
         {
             _projectService = projectService;

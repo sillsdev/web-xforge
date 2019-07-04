@@ -9,11 +9,10 @@ using SIL.XForge.Services;
 namespace SIL.XForge.Scripture.Controllers
 {
     [Route(RootDataTypes.Projects)]
-    public class SFProjectsController : ProjectsController
+    public class SFProjectsController : ProjectsController<SFProjectResource>
     {
-        public SFProjectsController(IJsonApiContext jsonApiContext,
-            IResourceService<SFProjectResource, string> resourceService, ILoggerFactory loggerFactory, IProjectService projectService)
-            : base(jsonApiContext, projectService, loggerFactory)
+        public SFProjectsController(IJsonApiContext jsonApiContext, IProjectService<SFProjectResource> projectService,
+            ILoggerFactory loggerFactory) : base(jsonApiContext, projectService, loggerFactory)
         {
         }
     }

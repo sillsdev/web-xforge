@@ -16,7 +16,7 @@ using SIL.XForge.Utils;
 namespace SIL.XForge.Services
 {
     public abstract class ProjectService<TResource, TEntity> : RepositoryResourceServiceBase<TResource, TEntity>,
-        IResourceMapper<ProjectResource, ProjectEntity>
+        IResourceMapper<ProjectResource, ProjectEntity>, IProjectService<TResource>
         where TResource : ProjectResource
         where TEntity : ProjectEntity
     {
@@ -111,7 +111,7 @@ namespace SIL.XForge.Services
             return await MapMatchingAsync(included, resources, ExpressionHelper.ChangePredicateType<TEntity>(predicate));
         }
 
-        public async Task<Uri> SaveAvatarAsync(string id, string name, Stream inputStream)
+        public async Task<Uri> SaveAudioAsync(string id, string name, Stream inputStream)
         {
             await CheckCanUpdateDeleteAsync(id);
 
