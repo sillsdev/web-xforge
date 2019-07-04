@@ -34,6 +34,7 @@ namespace SIL.XForge.Scripture.Controllers
 
         protected override string ProjectAdminRole => SFProjectRoles.Administrator;
 
+        /// <summary>Send an email to invite someone to work on the project</summary>
         public override async Task<IRpcMethodResult> Invite(string email)
         {
             SFProjectEntity project = await Projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
@@ -54,8 +55,9 @@ namespace SIL.XForge.Scripture.Controllers
             }
             else if (shareConfig.Enabled || IsUserProjectAdmin(project))
             {
-                // TODO: handle inviting a specific person here
-                url = null;
+                // Invite a specific person
+                url = $"{siteOptions.Origin}projects/{ResourceId}?sharing=true&shareKey=bigsecret";
+                await Projects.UpdateAsync(p => p.Id == ResourceId, update => update.Set(p => p.ShareKeys["bigsecret"], email));
             }
             else
             {
@@ -75,15 +77,40 @@ namespace SIL.XForge.Scripture.Controllers
             return Ok();
         }
 
-        public override async Task<IRpcMethodResult> CheckLinkSharing()
+        /// <summary>Add user to project, if sharing, optionally by a specific shareKey code from an email.</summary>
+        public override async Task<IRpcMethodResult> CheckLinkSharing(string shareKey = null)
         {
+            // TODO simplify detecting and returning ForbiddenError here and in above method.
+
             SFProjectEntity project = await Projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
             if (project == null)
                 return InvalidParamsError();
 
             ShareConfig shareConfig = project.Share;
-            if (shareConfig == null || !shareConfig.Enabled
-                || shareConfig.Level != ShareLevel.Anyone)
+            if (shareConfig == null || !shareConfig.Enabled)
+            {
+                return ForbiddenError();
+            }
+            if (shareConfig.Level == ShareLevel.Specific)
+            {
+                if (project.ShareKeys == null)
+                {
+                    return ForbiddenError();
+                }
+                if (!project.ShareKeys.ContainsKey(shareKey))
+                {
+                    return ForbiddenError();
+                }
+                var currentUserEmail = (await Users.GetAsync(User.UserId)).Email;
+                if (project.ShareKeys[shareKey] == currentUserEmail)
+                {
+                    await AddUserToProject(project);
+                    await Projects.UpdateAsync(p => p.Id == ResourceId, update => update.Unset(p => p.ShareKeys[shareKey]));
+                    return Ok();
+                }
+            }
+
+            if (shareConfig.Level != ShareLevel.Anyone && shareConfig.Level != ShareLevel.Specific)
             {
                 return ForbiddenError();
             }
@@ -91,7 +118,6 @@ namespace SIL.XForge.Scripture.Controllers
             await AddUserToProject(project);
             return Ok();
         }
-
 
         public async Task<IRpcMethodResult> AddTranslateMetrics(TranslateMetrics metrics)
         {

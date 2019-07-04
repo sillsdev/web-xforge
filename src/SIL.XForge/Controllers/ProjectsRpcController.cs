@@ -28,7 +28,7 @@ namespace SIL.XForge.Controllers
             _siteOptions = siteOptions;
         }
 
-        protected IRepository<TEntity> Projects { get; }
+        public IRepository<TEntity> Projects { get; }
 
         protected IRepository<UserEntity> Users { get; }
 
@@ -39,7 +39,7 @@ namespace SIL.XForge.Controllers
             return ForbiddenError();
         }
 
-        public virtual async Task<IRpcMethodResult> CheckLinkSharing()
+        public virtual async Task<IRpcMethodResult> CheckLinkSharing(string shareKey = null)
         {
             return ForbiddenError();
         }

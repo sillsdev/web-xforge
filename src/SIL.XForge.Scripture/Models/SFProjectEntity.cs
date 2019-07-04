@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
@@ -13,6 +14,9 @@ namespace SIL.XForge.Scripture.Models
         public bool UsersSeeEachOthersResponses { get; set; } = true;
         public bool DownloadAudioFiles { get; set; } = true;
         public ShareConfig Share { get; set; } = new ShareConfig();
+        /// <summary>Outstanding project access shares to specific people, represented by a code and email address pair.</summary>
+        public Dictionary<string, string> ShareKeys { get; set; } = new Dictionary<string, string>();
+
 
         // Translate configuration
         public bool TranslateEnabled { get; set; }

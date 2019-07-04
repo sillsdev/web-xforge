@@ -37,6 +37,24 @@ namespace SIL.XForge.Controllers
         }
 
         [Test]
+        public async Task Invite_SpecificSharingEnabled_UserInvited()
+        {
+            var env = new TestEnvironment();
+            env.SetUser(User01, SystemRoles.User);
+            env.SetProject(Project03);
+            const string email = "newuser@example.com";
+            RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
+            Assert.That(result, Is.Not.Null);
+            await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
+                Arg.Is<string>(body => body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=bigsecret")));
+
+            // Code was recorded in database
+            SFProjectEntity project = env.Projects.Get(Project03);
+            Assert.That(project.ShareKeys.ContainsKey("bigsecret"));
+            Assert.That(project.ShareKeys["bigsecret"], Is.EqualTo("newuser@example.com"));
+        }
+
+        [Test]
         public async Task Invite_LinkSharingEnabled_UserInvited()
         {
             var env = new TestEnvironment();
@@ -66,7 +84,7 @@ namespace SIL.XForge.Controllers
         {
             var env = new TestEnvironment();
             env.SetUser(User02, SystemRoles.User);
-            env.SetProject(Project03);
+            env.SetProject(Project01);
             RpcMethodErrorResult result = await env.Controller.CheckLinkSharing() as RpcMethodErrorResult;
             Assert.That(result.ErrorCode, Is.EqualTo((int)RpcErrorCode.InvalidRequest),
                 "The user should be forbidden to join the project");
@@ -78,10 +96,43 @@ namespace SIL.XForge.Controllers
             var env = new TestEnvironment();
             env.SetUser(User02, SystemRoles.User);
             env.SetProject(Project02);
+            SFProjectEntity project = env.Projects.Get(Project02);
+            Assert.That(project.Users.Any(pu => pu.UserRef == User02), Is.False);
             RpcMethodSuccessResult result = await env.Controller.CheckLinkSharing() as RpcMethodSuccessResult;
             Assert.That(result, Is.Not.Null);
-            SFProjectEntity project = env.Projects.Get(Project02);
+            project = env.Projects.Get(Project02);
             Assert.That(project.Users.Any(pu => pu.UserRef == User02), Is.True);
+        }
+
+        [Test]
+        public async Task CheckLinkSharing_SpecificSharingAndWrongKey_ForbiddenError()
+        {
+            var env = new TestEnvironment();
+            env.SetUser(User02, SystemRoles.User);
+            env.SetProject(Project03);
+            RpcMethodErrorResult result = await env.Controller.CheckLinkSharing("badkey") as RpcMethodErrorResult;
+            Assert.That(result.ErrorCode, Is.EqualTo((int)RpcErrorCode.InvalidRequest),
+                "The user should be forbidden to join the project");
+        }
+
+        [Test]
+        public async Task CheckLinkSharing_SpecificSharing_UserJoined()
+        {
+            var env = new TestEnvironment();
+            env.SetUser(User02, SystemRoles.User);
+            env.SetProject(Project03);
+            SFProjectEntity project = env.Projects.Get(Project03);
+
+            Assert.That(project.Users.Any(pu => pu.UserRef == User02), Is.False, "setup");
+            Assert.That(project.ShareKeys.ContainsKey("key1234"), Is.True, "setup");
+            Assert.That(project.ShareKeys.Count, Is.EqualTo(3), "setup");
+
+            RpcMethodSuccessResult result = await env.Controller.CheckLinkSharing("key1234") as RpcMethodSuccessResult;
+
+            Assert.That(result, Is.Not.Null);
+            project = env.Projects.Get(Project03);
+            Assert.That(project.Users.Any(pu => pu.UserRef == User02), Is.True, "User should have been added to project");
+            Assert.That(project.ShareKeys.ContainsKey("key1234"), Is.False, "Share key should have been removed from project");
         }
 
         private class TestEnvironment
@@ -91,6 +142,9 @@ namespace SIL.XForge.Controllers
                 UserAccessor = Substitute.For<IUserAccessor>();
                 UserAccessor.Name.Returns("User 01");
                 HttpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
+
+                var project03ShareKeys = new System.Collections.Generic.Dictionary<string, string> { { "key1111", "bob@example.com" }, { "key1234", "user02@example.com" }, { "key2222", "bill@example.com" } };
+
 
                 Projects = new MemoryRepository<SFProjectEntity>(new SFProjectEntity[]
                 {
@@ -157,7 +211,8 @@ namespace SIL.XForge.Controllers
                             {
                                 Enabled = true,
                                 Level = ShareLevel.Specific
-                            }
+                            },
+                            ShareKeys=project03ShareKeys
 
                     }
                 });
