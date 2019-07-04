@@ -1,3 +1,4 @@
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Record } from '@orbit/data';
 import { clone } from '@orbit/utils';
 import { combineLatest, Observable } from 'rxjs';
@@ -14,8 +15,9 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
   private static readonly SEARCH_FILTER = 'search';
 
   readonly roles: Map<string, ProjectRole>;
+  readonly _http: HttpClient;
 
-  constructor(type: string, jsonApiService: JsonApiService, roles: ProjectRole[]) {
+  constructor(type: string, jsonApiService: JsonApiService, roles: ProjectRole[], http: HttpClient) {
     super(type, jsonApiService);
 
     registerCustomFilter(this.type, ProjectService.SEARCH_FILTER, (r, v) => this.searchProjects(r, v));
@@ -24,6 +26,7 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
       this.roles.set(role.role, role);
     }
     this.roles.set(NONE_ROLE.role, NONE_ROLE);
+    this._http = http;
   }
 
   getAll(parameters?: GetAllParameters<T>, include?: string[][]): QueryObservable<T[]> {
@@ -88,6 +91,18 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
 
   localDelete(id: string): Promise<void> {
     return this.jsonApiService.localDelete(this.identity(id));
+  }
+
+  async uploadAudio(id: string, file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await this._http
+      .post<HttpResponse<string>>(`json-api/projects/${id}/audio`, formData, {
+        headers: { Accept: 'application/json' },
+        observe: 'response'
+      })
+      .toPromise();
+    return response.headers.get('Location');
   }
 
   protected isSearchMatch(record: Record, value: string): boolean {

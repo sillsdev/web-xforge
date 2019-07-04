@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AutoMapper;
 using JsonApiDotNetCore.Internal.Query;
 using JsonApiDotNetCore.Services;
+using Microsoft.Extensions.Options;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Utils;
@@ -17,10 +20,14 @@ namespace SIL.XForge.Services
         where TResource : ProjectResource
         where TEntity : ProjectEntity
     {
+
+        private readonly IOptions<SiteOptions> _siteOptions;
+
         public ProjectService(IJsonApiContext jsonApiContext, IMapper mapper, IUserAccessor userAccessor,
-            IRepository<TEntity> projects)
+            IRepository<TEntity> projects, IOptions<SiteOptions> siteOptions)
             : base(jsonApiContext, mapper, userAccessor, projects)
         {
+            _siteOptions = siteOptions;
         }
 
         public IResourceMapper<ProjectUserResource, ProjectUserEntity> ProjectUserMapper { get; set; }
@@ -102,6 +109,23 @@ namespace SIL.XForge.Services
             Expression<Func<ProjectEntity, bool>> predicate)
         {
             return await MapMatchingAsync(included, resources, ExpressionHelper.ChangePredicateType<TEntity>(predicate));
+        }
+
+        public async Task<Uri> SaveAvatarAsync(string id, string name, Stream inputStream)
+        {
+            await CheckCanUpdateDeleteAsync(id);
+
+            string audioDir = Path.Combine(_siteOptions.Value.SharedDir, "audio");
+            if (!Directory.Exists(audioDir))
+                Directory.CreateDirectory(audioDir);
+            string fileName = id + Path.GetExtension(name);
+            string path = Path.Combine(audioDir, fileName);
+            using (var fileStream = new FileStream(path, FileMode.Create))
+                await inputStream.CopyToAsync(fileStream);
+            var uri = new Uri(_siteOptions.Value.Origin,
+                $"/assets/audio/{fileName}");
+            // await Entities.UpdateAsync(id, update => update.Set(u => u.AudioUrl, uri.PathAndQuery));
+            return uri;
         }
     }
 }

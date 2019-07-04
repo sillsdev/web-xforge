@@ -21,7 +21,6 @@
 </div>
 <div *ngIf="answerFormVisible">
   <form [formGroup]="answerForm" (ngSubmit)="submit()" autocomplete="off" id="answer-form">
-    <mdc-form-field fluid> <app-checking-audio-recorder></app-checking-audio-recorder> </mdc-form-field>
     <mdc-form-field fluid>
       <mdc-text-field
         label="Your Answer"
@@ -31,10 +30,22 @@
         [value]="activeAnswer?.text"
       ></mdc-text-field>
       <mdc-helper-text validation>You need to enter your answer before saving</mdc-helper-text>
+      <mdc-text-field type="hidden" formControlName="audioUrl"></mdc-text-field>
     </mdc-form-field>
-    <div class="form-actions">
-      <button mdc-button (click)="hideAnswerForm()" id="cancel-answer">Cancel</button>
-      <button mdc-button primary form="answer-form" id="save-answer">Save Answer</button>
+    <div class="form-controls" [ngClass]="{ 'audio-control-visible': audioControlVisible }">
+      <div class="audio">
+        <button *ngIf="!audioControlVisible" mdc-button (click)="showAudioControl()" id="audio-answer">
+          Record or upload audio
+        </button>
+        <app-checking-audio-recorder
+          *ngIf="audioControlVisible"
+          (status)="recorderStatus($event)"
+        ></app-checking-audio-recorder>
+      </div>
+      <div class="form-actions">
+        <button mdc-button (click)="hideAnswerForm()" id="cancel-answer">Cancel</button>
+        <button mdc-button primary form="answer-form" id="save-answer">Save Answer</button>
+      </div>
     </div>
   </form>
 </div>

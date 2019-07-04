@@ -13,12 +13,16 @@ import { SFProject } from '../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../../core/models/sfproject-user';
 import { EditNameDialogComponent } from '../../../edit-name-dialog/edit-name-dialog.component';
+import { AudioRecorderStatus } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 
 export interface AnswerAction {
-  action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'like';
+  action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'like' | 'recorder';
   answer?: Answer;
   text?: string;
+  audioUrl?: string;
+  audioFileName?: string;
+  audioBlob?: Blob;
 }
 
 @Component({
@@ -41,13 +45,21 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
 
   activeAnswer: Answer;
-  answerForm: FormGroup = new FormGroup({
-    answerText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])
-  });
+  answerForm: FormGroup = new FormGroup(
+    {
+      answerText: new FormControl(undefined, [Validators.required]),
+      audioUrl: new FormControl()
+    }
+    // XFValidators.requireOneWithValue(['answerText', 'audioUrl'], true)
+  );
   answerFormVisible: boolean = false;
+  audioControlVisible: boolean = false;
   private user: User;
   private _question: Question;
   private initUserAnswerRefsRead: string[] = [];
+  private audioUrl: string;
+  private audioBlob: Blob;
+  private audioFileName: string;
 
   constructor(private readonly dialog: MdcDialog, private userService: UserService) {
     super();
@@ -126,6 +138,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   }
 
   hideAnswerForm() {
+    this.audioControlVisible = false;
     this.answerFormVisible = false;
     this.activeAnswer = undefined;
     this.answerForm.reset();
@@ -141,11 +154,29 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     });
   }
 
+  recorderStatus(status: AudioRecorderStatus): void {
+    switch (status.status) {
+      case 'reset':
+        this.answerForm.get('audioUrl').setValue('');
+        break;
+      case 'processed':
+        this.audioUrl = status.url;
+        this.audioBlob = status.blob;
+        this.audioFileName = status.fileName;
+        break;
+    }
+    this.action.emit({ action: 'recorder' });
+  }
+
   showAnswerForm() {
     this.answerFormVisible = true;
     this.action.emit({
       action: 'show-form'
     });
+  }
+
+  showAudioControl() {
+    this.audioControlVisible = true;
   }
 
   submit(): void {
@@ -182,7 +213,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     this.action.emit({
       action: 'save',
       text: this.answerForm.get('answerText').value,
-      answer: this.activeAnswer
+      answer: this.activeAnswer,
+      audioUrl: this.audioUrl,
+      audioBlob: this.audioBlob,
+      audioFileName: this.audioFileName
     });
   }
 }

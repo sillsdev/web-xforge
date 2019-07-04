@@ -10,5 +10,6 @@ declare module 'recordrtc' {
     stopRecording(callback: Function): void;
     save(fileName: string): void;
     getDataURL(callback: Function): void;
+    getBlob(): Blob;
   }
 }
