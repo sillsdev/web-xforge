@@ -162,8 +162,9 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
 export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly pendingOps: any[] = [];
   version: number = 1;
-  private readonly onCreateSubject = new Subject<void>();
-  private readonly onDeleteSubject = new Subject<void>();
+  private readonly remoteChanges$ = new Subject<any>();
+  private readonly onCreate$ = new Subject<void>();
+  private readonly onDelete$ = new Subject<void>();
 
   constructor(public readonly type: OTType, public readonly id: string, public data: any) {}
 
@@ -193,26 +194,30 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   }
 
   remoteChanges(): Observable<any> {
-    return of();
+    return this.remoteChanges$;
   }
 
   onCreate(): Observable<void> {
-    return this.onCreateSubject;
+    return this.onCreate$;
   }
 
   onDelete(): Observable<void> {
-    return this.onDeleteSubject;
+    return this.onDelete$;
   }
 
   destroy(): Promise<void> {
     return Promise.resolve();
   }
 
-  fireCreate(): void {
-    this.onCreateSubject.next();
+  emitRemoteChange(op?: any): void {
+    this.remoteChanges$.next(op);
   }
 
-  fireDelete(): void {
-    this.onDeleteSubject.next();
+  emitCreate(): void {
+    this.onCreate$.next();
+  }
+
+  emitDelete(): void {
+    this.onDelete$.next();
   }
 }

@@ -23,9 +23,5 @@ namespace SIL.XForge.Scripture.Models
         public string SourceParatextId { get; set; }
         [Attr(isFilterable: false, isSortable: false)]
         public InputSystem SourceInputSystem { get; set; } = new InputSystem();
-
-        public string ActiveSyncJobRef { get; set; }
-        [HasOne(withForeignKey: nameof(ActiveSyncJobRef))]
-        public SyncJobResource ActiveSyncJob { get; set; }
     }
 }

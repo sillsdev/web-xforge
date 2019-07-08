@@ -20,30 +20,18 @@ namespace SIL.XForge.Scripture.Services
     {
         private readonly IEngineService _engineService;
         private readonly IOptions<SiteOptions> _siteOptions;
-        private readonly SyncJobManager _syncJobManager;
+        private readonly ISyncService _syncService;
         private readonly IRealtimeService _realtimeService;
 
         public SFProjectService(IJsonApiContext jsonApiContext, IMapper mapper, IUserAccessor userAccessor,
             IRepository<SFProjectEntity> projects, IEngineService engineService, IOptions<SiteOptions> siteOptions,
-            SyncJobManager syncJobManager, IRealtimeService realtimeService)
+            ISyncService syncService, IRealtimeService realtimeService)
             : base(jsonApiContext, mapper, userAccessor, projects)
         {
             _engineService = engineService;
             _siteOptions = siteOptions;
-            _syncJobManager = syncJobManager;
+            _syncService = syncService;
             _realtimeService = realtimeService;
-        }
-
-        public IProjectDataMapper<SyncJobResource, SyncJobEntity> SyncJobMapper { get; set; }
-
-        protected override IRelationship<SFProjectEntity> GetRelationship(string relationshipName)
-        {
-            switch (relationshipName)
-            {
-                case nameof(SFProjectResource.ActiveSyncJob):
-                    return HasOne(SyncJobMapper, p => p.ActiveSyncJobRef);
-            }
-            return base.GetRelationship(relationshipName);
         }
 
         protected override async Task<SFProjectEntity> InsertEntityAsync(SFProjectEntity entity)
@@ -72,13 +60,7 @@ namespace SIL.XForge.Scripture.Services
                 await _engineService.AddProjectAsync(project);
             }
 
-            var job = new SyncJobEntity()
-            {
-                Id = entity.ActiveSyncJobRef,
-                ProjectRef = entity.Id,
-                OwnerRef = UserId
-            };
-            await _syncJobManager.StartAsync(job, true);
+            await _syncService.SyncAsync(entity.Id, UserId, true);
 
             return entity;
         }
@@ -88,8 +70,6 @@ namespace SIL.XForge.Scripture.Services
             bool result = await base.DeleteEntityAsync(id);
             if (result)
             {
-                await SyncJobMapper.DeleteAllAsync(id);
-
                 await _realtimeService.DeleteProjectDocsAsync(SFRootDataTypes.Texts, id);
                 await _realtimeService.DeleteProjectDocsAsync(SFRootDataTypes.Questions, id);
                 await _realtimeService.DeleteProjectDocsAsync(SFRootDataTypes.Comments, id);
@@ -139,12 +119,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                var job = new SyncJobEntity()
-                {
-                    ProjectRef = id,
-                    OwnerRef = UserId
-                };
-                await _syncJobManager.StartAsync(job, trainEngine);
+                await _syncService.SyncAsync(id, UserId, trainEngine);
             }
             return entity;
         }

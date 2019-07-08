@@ -3,9 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Hangfire;
-using Hangfire.Common;
-using Hangfire.States;
 using JsonApiDotNetCore.Internal;
 using JsonApiDotNetCore.Internal.Query;
 using JsonApiDotNetCore.Models;
@@ -14,7 +11,6 @@ using NSubstitute;
 using NUnit.Framework;
 using SIL.Machine.WebApi.Models;
 using SIL.Machine.WebApi.Services;
-using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -55,11 +51,9 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(updatedResource, Is.Not.Null);
                 Assert.That(updatedResource.ProjectName, Is.EqualTo("new"));
 
-                env.BackgroundJobClient.DidNotReceive().ChangeState(Arg.Any<string>(), Arg.Any<IState>(),
-                    Arg.Any<string>());
                 await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
                 await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Project>());
-                env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+                await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
             }
         }
 
@@ -86,11 +80,9 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(updatedResource, Is.Not.Null);
                 Assert.That(updatedResource.ProjectName, Is.EqualTo("new"));
 
-                env.BackgroundJobClient.DidNotReceive().ChangeState(Arg.Any<string>(), Arg.Any<IState>(),
-                    Arg.Any<string>());
                 await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
                 await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Project>());
-                env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+                await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
             }
         }
 
@@ -110,19 +102,15 @@ namespace SIL.XForge.Scripture.Services
                     Id = "project01",
                     SourceParatextId = "changedId"
                 };
-                var jobs = await env.Jobs.GetAllAsync();
-                Assert.That(jobs.Count, Is.EqualTo(2));
 
                 SFProjectResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
 
                 Assert.That(updatedResource, Is.Not.Null);
                 Assert.That(updatedResource.SourceParatextId, Is.EqualTo("changedId"));
-                jobs = await env.Jobs.GetAllAsync();
-                Assert.That(jobs.Count, Is.EqualTo(3));
 
                 await env.EngineService.Received().RemoveProjectAsync(Arg.Any<string>());
                 await env.EngineService.Received().AddProjectAsync(Arg.Any<Project>());
-                env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
+                await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
             }
         }
 
@@ -144,19 +132,15 @@ namespace SIL.XForge.Scripture.Services
                     TranslateEnabled = true,
                     SourceParatextId = "changedId"
                 };
-                var jobs = await env.Jobs.GetAllAsync();
-                Assert.That(jobs.Count, Is.EqualTo(2));
 
                 SFProjectResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
 
                 Assert.That(updatedResource, Is.Not.Null);
                 Assert.That(updatedResource.TranslateEnabled, Is.True);
                 Assert.That(updatedResource.SourceParatextId, Is.EqualTo("changedId"));
-                jobs = await env.Jobs.GetAllAsync();
-                Assert.That(jobs.Count, Is.EqualTo(3));
                 await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
                 await env.EngineService.Received().AddProjectAsync(Arg.Any<Project>());
-                env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
+                await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
             }
         }
 
@@ -176,19 +160,15 @@ namespace SIL.XForge.Scripture.Services
                     Id = "project01",
                     CheckingEnabled = true
                 };
-                var jobs = await env.Jobs.GetAllAsync();
-                Assert.That(jobs.Count, Is.EqualTo(2));
 
                 SFProjectResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
 
                 Assert.That(updatedResource, Is.Not.Null);
                 Assert.That(updatedResource.CheckingEnabled, Is.True);
-                jobs = await env.Jobs.GetAllAsync();
-                Assert.That(jobs.Count, Is.EqualTo(3));
 
                 await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
                 await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Project>());
-                env.BackgroundJobClient.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
+                await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
             }
         }
 
@@ -240,7 +220,6 @@ namespace SIL.XForge.Scripture.Services
 
                 Assert.That(result, Is.True);
                 Assert.That(env.Entities.Contains("project01"), Is.False);
-                await env.SyncJobMapper.Received().DeleteAllAsync("project01");
                 await env.EngineService.Received().RemoveProjectAsync("project01");
                 await env.RealtimeService.Received().DeleteProjectDocsAsync(SFRootDataTypes.Texts, "project01");
                 await env.RealtimeService.Received().DeleteProjectDocsAsync(SFRootDataTypes.Questions, "project01");
@@ -255,28 +234,10 @@ namespace SIL.XForge.Scripture.Services
             public TestEnvironment()
                 : base("projects")
             {
-                Jobs = new MemoryRepository<SyncJobEntity>(new[]
-                    {
-                        new SyncJobEntity
-                        {
-                            Id = "job01",
-                            ProjectRef = "project01",
-                            OwnerRef = "user01",
-                            State = SyncJobEntity.SyncingState,
-                            BackgroundJobId = "backgroundJob01"
-                        },
-                        new SyncJobEntity
-                        {
-                            Id = "job02",
-                            ProjectRef = "project02",
-                            OwnerRef = "user02",
-                            State = SyncJobEntity.SyncingState,
-                            BackgroundJobId = "backgroundJob02"
-                        },
-                    });
                 EngineService = Substitute.For<IEngineService>();
-                BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
-                SyncJobMapper = Substitute.For<IProjectDataMapper<SyncJobResource, SyncJobEntity>>();
+                SyncService = Substitute.For<ISyncService>();
+                SyncService.SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+                    .Returns(Task.CompletedTask);
                 RealtimeService = Substitute.For<IRealtimeService>();
                 var projectDataDoc = Substitute.For<IDocument<SFProjectData>>();
                 projectDataDoc.Data.Returns(new SFProjectData
@@ -305,17 +266,12 @@ namespace SIL.XForge.Scripture.Services
                 conn.Get<SFProjectData>(RootDataTypes.Projects, "project01").Returns(projectDataDoc);
                 RealtimeService.ConnectAsync().Returns(Task.FromResult(conn));
                 Service = new SFProjectService(JsonApiContext, Mapper, UserAccessor, Entities, EngineService,
-                    SiteOptions, new SyncJobManager(Jobs, Entities, BackgroundJobClient), RealtimeService)
-                {
-                    SyncJobMapper = SyncJobMapper
-                };
+                    SiteOptions, SyncService, RealtimeService);
             }
 
             public SFProjectService Service { get; }
-            public IRepository<SyncJobEntity> Jobs { get; }
             public IEngineService EngineService { get; }
-            public IBackgroundJobClient BackgroundJobClient { get; }
-            public IProjectDataMapper<SyncJobResource, SyncJobEntity> SyncJobMapper { get; }
+            public ISyncService SyncService { get; }
             public IRealtimeService RealtimeService { get; }
 
             protected override IEnumerable<SFProjectEntity> GetInitialData()
