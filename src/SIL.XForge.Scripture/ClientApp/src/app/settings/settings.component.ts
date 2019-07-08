@@ -2,12 +2,11 @@ import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { clone } from '@orbit/utils';
 import { combineLatest } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { ElementState } from 'xforge-common/models/element-state';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
-import { ShareLevel } from 'xforge-common/models/share-config';
+import { SharingLevel } from 'xforge-common/models/sharing-level';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -25,7 +24,7 @@ interface Settings {
   checking?: boolean;
   seeOthersResponses?: boolean;
   share?: boolean;
-  shareLevel?: ShareLevel;
+  shareLevel?: SharingLevel;
 }
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
@@ -207,15 +206,9 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
         this.updateControlState('seeOthersResponses', successHandlers, failStateHandlers);
         isUpdateNeeded = true;
       }
-      if (newValue.share !== this.project.share.enabled) {
-        if (!updatedProject.share) {
-          updatedProject.share = {};
-        }
-        if (!this.project.share) {
-          this.project.share = {};
-        }
-        updatedProject.share.enabled = newValue.share;
-        this.project.share.enabled = newValue.share;
+      if (newValue.share !== this.project.shareEnabled) {
+        updatedProject.shareEnabled = newValue.share;
+        this.project.shareEnabled = newValue.share;
         this.updateControlState('share', successHandlers, failStateHandlers);
         isUpdateNeeded = true;
         const shareLevelControl = this.form.controls.shareLevel;
@@ -227,17 +220,11 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
       }
       if (
         newValue.shareLevel != null &&
-        newValue.shareLevel !== this.project.share.level &&
+        newValue.shareLevel !== this.project.shareLevel &&
         this.form.controls.shareLevel.enabled
       ) {
-        if (!updatedProject.share) {
-          updatedProject.share = {};
-        }
-        if (!this.project.share) {
-          this.project.share = {};
-        }
-        updatedProject.share.level = newValue.shareLevel;
-        this.project.share.level = newValue.shareLevel;
+        updatedProject.shareLevel = newValue.shareLevel;
+        this.project.shareLevel = newValue.shareLevel;
         this.updateControlState('shareLevel', successHandlers, failStateHandlers);
         isUpdateNeeded = true;
       }
@@ -269,15 +256,15 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
       sourceParatextId: this.project.sourceParatextId,
       checking: this.project.checkingEnabled,
       seeOthersResponses: this.project.usersSeeEachOthersResponses,
-      share: this.project.share.enabled,
-      shareLevel: this.project.share.level
+      share: this.project.shareEnabled,
+      shareLevel: this.project.shareLevel
     };
     this.setValidators();
     this.form.reset(this.previousFormValues);
     if (!this.isLoggedInToParatext) {
       this.form.controls.translate.disable();
     }
-    if (!this.project.share.enabled) {
+    if (!this.project.shareEnabled) {
       this.form.controls.shareLevel.disable();
     }
     this.setAllControlsToInSync();

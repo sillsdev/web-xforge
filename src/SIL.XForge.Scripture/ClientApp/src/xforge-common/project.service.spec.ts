@@ -5,7 +5,6 @@ import { Observable, of } from 'rxjs';
 import { instance, mock } from 'ts-mockito';
 import { JsonApiService } from './json-api.service';
 import { Project } from './models/project';
-import { ShareConfig } from './models/share-config';
 import { ProjectService } from './project.service';
 
 class TestProject extends Project {
@@ -24,10 +23,6 @@ class TestProject extends Project {
 class TestProjectService extends ProjectService<TestProject> {
   constructor(jsonApiService: JsonApiService) {
     super(TestProject.TYPE, jsonApiService, []);
-  }
-
-  getShareConfig(id: string): Observable<ShareConfig> {
-    return of(null);
   }
 }
 

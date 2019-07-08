@@ -7,7 +7,6 @@ import { GetAllParameters, JsonApiService, QueryObservable } from './json-api.se
 import { InputSystem } from './models/input-system';
 import { Project } from './models/project';
 import { NONE_ROLE, ProjectRole } from './models/project-role';
-import { ShareConfig } from './models/share-config';
 import { ResourceService } from './resource.service';
 import { nameof } from './utils';
 
@@ -34,8 +33,6 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
   get(id: string, include?: string[][]): QueryObservable<T> {
     return this.jsonApiService.get<T>(this.identity(id), include);
   }
-
-  abstract getShareConfig(id: string): Observable<ShareConfig>;
 
   onlineUpdateAttributes(id: string, attrs: Partial<T>): Promise<T> {
     return this.jsonApiService.onlineUpdateAttributes(this.identity(id), attrs);

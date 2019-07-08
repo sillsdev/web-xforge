@@ -2,7 +2,7 @@ import { MdcDialog } from '@angular-mdc/web';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { filter, map, switchMap } from 'rxjs/operators';
-import { ShareConfig, ShareLevel } from '../models/share-config';
+import { SharingLevel } from '../models/sharing-level';
 import { ProjectService } from '../project.service';
 import { ShareDialogComponent, ShareDialogData } from './share-dialog.component';
 
@@ -13,7 +13,8 @@ import { ShareDialogComponent, ShareDialogData } from './share-dialog.component'
 })
 export class ShareComponent implements OnInit {
   private projectId: string;
-  private shareConfig: ShareConfig;
+  private shareEnabled: boolean;
+  private shareLevel: SharingLevel;
 
   constructor(
     private readonly dialog: MdcDialog,
@@ -22,7 +23,7 @@ export class ShareComponent implements OnInit {
   ) {}
 
   get isSharingEnabled(): boolean {
-    return this.shareConfig != null && this.shareConfig.enabled;
+    return this.shareEnabled;
   }
 
   ngOnInit(): void {
@@ -30,13 +31,12 @@ export class ShareComponent implements OnInit {
       .pipe(
         map(params => params['projectId'] as string),
         filter(projectId => projectId != null),
-        switchMap(projectId =>
-          this.projectService.getShareConfig(projectId).pipe(map(shareConfig => ({ projectId, shareConfig })))
-        )
+        switchMap(projectId => this.projectService.get(projectId))
       )
       .subscribe(results => {
-        this.projectId = results.projectId;
-        this.shareConfig = results.shareConfig;
+        this.projectId = results.data.id;
+        this.shareEnabled = results.data.shareEnabled;
+        this.shareLevel = results.data.shareLevel;
       });
   }
 
@@ -44,7 +44,7 @@ export class ShareComponent implements OnInit {
     this.dialog.open(ShareDialogComponent, {
       data: {
         projectId: this.projectId,
-        isLinkSharingEnabled: this.shareConfig.level === ShareLevel.Anyone
+        isLinkSharingEnabled: this.shareLevel === SharingLevel.Anyone
       } as ShareDialogData
     });
   }
