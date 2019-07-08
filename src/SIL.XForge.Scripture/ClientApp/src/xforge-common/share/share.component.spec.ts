@@ -4,10 +4,12 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { MapQueryResults } from 'xforge-common/json-api.service';
 import { LocationService } from 'xforge-common/location.service';
-import { ShareConfig, ShareLevel } from '../models/share-config';
+import { Project } from 'xforge-common/models/project';
+import { SharingLevel } from '../models/sharing-level';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { UICommonModule } from '../ui-common.module';
@@ -17,7 +19,7 @@ import { ShareComponent } from './share.component';
 describe('ShareComponent', () => {
   it('share button should be hidden when sharing is disabled', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setShareConfig({ enabled: false, level: ShareLevel.Anyone });
+    env.setShareConfig(false, SharingLevel.Anyone);
     env.fixture.detectChanges();
 
     expect(env.shareButton).toBeNull();
@@ -79,7 +81,7 @@ describe('ShareComponent', () => {
 
   it('share link should be hidden if link sharing is turned off', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setShareConfig({ enabled: true, level: ShareLevel.Specific });
+    env.setShareConfig(true, SharingLevel.Specific);
     env.fixture.detectChanges();
 
     env.clickElement(env.shareButton);
@@ -98,12 +100,6 @@ describe('ShareComponent', () => {
   }));
 });
 
-class TestProjectService extends ProjectService {
-  getShareConfig(_id: string): Observable<ShareConfig> {
-    throw new Error('Method not implemented.');
-  }
-}
-
 @NgModule({
   imports: [FormsModule, MdcDialogModule, ReactiveFormsModule, NoopAnimationsModule, UICommonModule],
   exports: [ShareDialogComponent],
@@ -117,18 +113,22 @@ class TestEnvironment {
   fixture: ComponentFixture<ShareComponent>;
 
   mockedMdcDialogRef: MdcDialogRef<ShareDialogComponent> = mock(MdcDialogRef);
-  mockedProjectService = mock(TestProjectService);
+  mockedProjectService = mock(ProjectService);
   mockedNoticeService = mock(NoticeService);
   mockedActivatedRoute = mock(ActivatedRoute);
   mockedLocationService = mock(LocationService);
   overlayContainer: OverlayContainer;
+  mockedProject = mock(Project);
 
   constructor() {
     when(this.mockedProjectService.onlineInvite('project01', anything())).thenResolve();
     when(this.mockedNoticeService.show(anything())).thenResolve();
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
-    this.setShareConfig({ enabled: true, level: ShareLevel.Anyone });
+    this.setShareConfig(true, SharingLevel.Anyone);
+    const project = instance(this.mockedProject);
+    project.id = 'project01';
+    when(this.mockedProjectService.get('project01')).thenReturn(of(new MapQueryResults(project)));
 
     TestBed.configureTestingModule({
       imports: [DialogTestModule],
@@ -190,7 +190,8 @@ class TestEnvironment {
     tick();
   }
 
-  setShareConfig(config: ShareConfig): void {
-    when(this.mockedProjectService.getShareConfig('project01')).thenReturn(of(config));
+  setShareConfig(shareEnabled: boolean, shareLevel: SharingLevel): void {
+    when(this.mockedProject.shareEnabled).thenReturn(shareEnabled);
+    when(this.mockedProject.shareLevel).thenReturn(shareLevel);
   }
 }
