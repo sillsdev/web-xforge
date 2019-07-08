@@ -55,10 +55,10 @@ namespace SIL.XForge.Controllers
         /// </summary>
         public async Task<IRpcMethodResult> PullAuthUserProfile()
         {
-            if (ResourceId != User.UserId || !_hostingEnv.IsDevelopment())
+            if (ResourceId != UserId || !_hostingEnv.IsDevelopment())
                 return ForbiddenError();
 
-            JObject userProfile = await _authService.GetUserAsync(User.AuthId);
+            JObject userProfile = await _authService.GetUserAsync(AuthId);
             await UpdateUserFromProfile(userProfile);
             return Ok();
         }
@@ -68,11 +68,11 @@ namespace SIL.XForge.Controllers
         /// </summary>
         public async Task<IRpcMethodResult> LinkParatextAccount(string authId)
         {
-            if (ResourceId != User.UserId)
+            if (ResourceId != UserId)
                 return ForbiddenError();
 
-            await _authService.LinkAccounts(User.AuthId, authId);
-            JObject userProfile = await _authService.GetUserAsync(User.AuthId);
+            await _authService.LinkAccounts(AuthId, authId);
+            JObject userProfile = await _authService.GetUserAsync(AuthId);
             var identities = (JArray)userProfile["identities"];
             JObject ptIdentity = identities.OfType<JObject>()
                 .First(i => (string)i["connection"] == "paratext");

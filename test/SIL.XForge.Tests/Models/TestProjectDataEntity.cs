@@ -1,7 +1,7 @@
 namespace SIL.XForge.Models
 {
-    public class TestProjectDataEntity : ProjectDataEntity
+    public class TestProjectDataEntity : Entity
     {
-        public string Str { get; set; }
+        public string ProjectRef { get; set; }
     }
 }

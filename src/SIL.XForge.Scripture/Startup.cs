@@ -71,7 +71,7 @@ namespace SIL.XForge.Scripture
 
             services.AddExceptionLogging();
 
-            services.AddCommonServices();
+            services.AddSFServices();
 
             services.AddXFAuthentication(Configuration);
 

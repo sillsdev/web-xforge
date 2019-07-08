@@ -1,15 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { distanceInWordsToNow } from 'date-fns';
-import { EMPTY, Observable, Subject, Subscription, timer } from 'rxjs';
-import { expand, filter, map, startWith, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { filter, map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProject } from '../core/models/sfproject';
-import { SyncJobState } from '../core/models/sync-job';
+import { SFProjectDataDoc } from '../core/models/sfproject-data-doc';
 import { SFProjectService } from '../core/sfproject.service';
-import { SyncJobService } from '../core/sync-job.service';
 
 @Component({
   selector: 'app-sync',
@@ -17,93 +16,83 @@ import { SyncJobService } from '../core/sync-job.service';
   styleUrls: ['./sync.component.scss']
 })
 export class SyncComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
-  readonly projectReload$ = new Subject<void>();
-  syncJobActive: boolean = false;
-  project: SFProject;
-  percentComplete: number;
+  syncActive: boolean = false;
 
-  private isFirstLoad: boolean = true;
+  private project: SFProject;
+  private projectDataDoc: SFProjectDataDoc;
   private paratextUsername: string;
-  private projectId: string;
-  private syncInProgressSub: Subscription;
-  private activeSyncJobId: string;
+  private projectDataSub: Subscription;
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly noticeService: NoticeService,
     private readonly paratextService: ParatextService,
-    private readonly projectService: SFProjectService,
-    private readonly syncJobService: SyncJobService
+    private readonly projectService: SFProjectService
   ) {
     super();
   }
 
   get isLoading(): boolean {
-    return this.isFirstLoad || this.noticeService.isLoading;
+    return this.noticeService.isLoading;
   }
 
   get isLoggedIntoParatext(): boolean {
     return this.paratextUsername && this.paratextUsername.length > 0;
   }
 
+  get percentComplete(): number {
+    return this.projectDataDoc == null ? undefined : this.projectDataDoc.data.sync.percentCompleted;
+  }
+
   get isProgressDeterminate(): boolean {
-    return !!this.percentComplete && this.percentComplete > 0;
+    return this.percentComplete != null;
   }
 
   get lastSyncNotice(): string {
-    if (!this.project) {
+    if (this.projectDataDoc == null) {
       return '';
     }
-    if (
-      this.project.lastSyncedDate == null ||
-      this.project.lastSyncedDate === '' ||
-      Date.parse(this.project.lastSyncedDate) <= 0
-    ) {
+    const dateLastSynced = this.projectDataDoc.data.sync.dateLastSuccessfulSync;
+    if (dateLastSynced == null || dateLastSynced === '' || Date.parse(dateLastSynced) <= 0) {
       return 'Never been synced';
     } else {
-      return 'Last sync was ' + distanceInWordsToNow(this.project.lastSyncedDate) + ' ago';
+      return 'Last sync was ' + distanceInWordsToNow(dateLastSynced) + ' ago';
     }
   }
 
   get lastSyncDate() {
-    const date = new Date(this.project.lastSyncedDate);
+    if (this.projectDataDoc == null) {
+      return '';
+    }
+    const date = new Date(this.projectDataDoc.data.sync.dateLastSuccessfulSync);
     return date.toLocaleString();
+  }
+
+  get projectName(): string {
+    return this.project == null ? '' : this.project.projectName;
   }
 
   ngOnInit() {
     this.subscribe(
       this.route.params.pipe(
-        tap(params => {
-          this.noticeService.loadingStarted();
-          this.projectId = params['projectId'];
-        }),
-        switchMap(() =>
-          this.projectReload$.pipe(
-            // emit when first subscribed, so that the project is retrieved on startup
-            startWith(null),
-            // retrieve the project every 5s unless there is an active sync job
-            switchMap(() =>
-              this.getProject().pipe(
-                expand(project =>
-                  project.activeSyncJob == null && !this.syncJobActive
-                    ? timer(5000).pipe(switchMap(() => this.getProject()))
-                    : EMPTY
-                )
-              )
-            )
-          )
-        ),
+        tap(() => this.noticeService.loadingStarted()),
+        map(params => params['projectId']),
+        switchMap(projectId => this.projectService.onlineGet(projectId)),
+        map(results => results.data),
+        filter(project => project != null),
         withLatestFrom(this.paratextService.getParatextUsername())
       ),
-      ([project, paratextUsername]) => {
+      async ([project, paratextUsername]) => {
         this.project = project;
-        if (this.project.activeSyncJob != null) {
-          this.listenAndProcessSync(this.project.activeSyncJob.id);
-        }
         if (paratextUsername != null) {
           this.paratextUsername = paratextUsername;
         }
-        this.isFirstLoad = false;
+        this.projectDataDoc = await this.projectService.getDataDoc(this.project.id);
+        this.checkSyncStatus();
+        if (this.projectDataSub != null) {
+          this.projectDataSub.unsubscribe();
+        }
+        this.projectDataSub = this.projectDataDoc.remoteChanges().subscribe(() => this.checkSyncStatus());
         this.noticeService.loadingFinished();
       }
     );
@@ -111,61 +100,34 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit, OnD
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.syncInProgressSub != null) {
-      this.syncInProgressSub.unsubscribe();
+    if (this.projectDataSub != null) {
+      this.projectDataSub.unsubscribe();
     }
+    this.noticeService.loadingFinished();
   }
 
   logInWithParatext(): void {
-    const url = '/projects/' + this.projectId + '/sync';
+    const url = '/projects/' + this.project.id + '/sync';
     this.paratextService.linkParatext(url);
   }
 
-  async syncProject(): Promise<void> {
-    this.syncJobActive = true;
-    const jobId = await this.syncJobService.start(this.projectId);
-    this.listenAndProcessSync(jobId);
+  syncProject(): Promise<void> {
+    this.syncActive = true;
+    return this.projectService.sync(this.project.id);
   }
 
-  private getProject(): Observable<SFProject> {
-    return this.projectService.onlineGet(this.projectId).pipe(
-      map(r => r.data),
-      filter(p => p != null)
-    );
-  }
-
-  private listenAndProcessSync(jobId: string): void {
-    if (this.activeSyncJobId === jobId) {
-      return;
-    }
-    this.syncJobActive = true;
-    this.activeSyncJobId = jobId;
-    if (this.syncInProgressSub != null) {
-      this.syncInProgressSub.unsubscribe();
-    }
-    this.syncInProgressSub = this.syncJobService.listen(jobId).subscribe(job => {
-      this.percentComplete = job.percentCompleted;
-      if (!job.isActive) {
-        this.percentComplete = undefined;
-        this.syncJobActive = false;
-        this.activeSyncJobId = undefined;
-        this.projectReload$.next();
-        switch (job.state) {
-          case SyncJobState.IDLE:
-            this.noticeService.show('Successfully synchronized ' + this.project.projectName + ' with Paratext.');
-            break;
-          case SyncJobState.CANCELED:
-            this.noticeService.show('Synchronization was canceled.');
-            break;
-          default:
-            this.noticeService.show(
-              'Something went wrong while synchronizing the ' +
-                this.project.projectName +
-                ' with Paratext. Please try again.'
-            );
-            break;
-        }
+  private checkSyncStatus(): void {
+    if (this.projectDataDoc.data.sync.queuedCount > 0) {
+      this.syncActive = true;
+    } else if (this.syncActive) {
+      this.syncActive = false;
+      if (this.projectDataDoc.data.sync.lastSyncSuccessful) {
+        this.noticeService.show(`Successfully synchronized ${this.projectName} with Paratext.`);
+      } else {
+        this.noticeService.show(
+          `Something went wrong while synchronizing the ${this.projectName} with Paratext. Please try again.`
+        );
       }
-    });
+    }
   }
 }

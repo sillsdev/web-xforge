@@ -6,20 +6,22 @@ import { AbstractControl } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
-import { cold, getTestScheduler } from 'jasmine-marbles';
+import * as OTJson0 from 'ot-json0';
 import { defer, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProject } from '../core/models/sfproject';
+import { SFProjectData } from '../core/models/sfproject-data';
+import { SFProjectDataDoc } from '../core/models/sfproject-data-doc';
 import { SFProjectUser } from '../core/models/sfproject-user';
-import { SyncJob, SyncJobRef, SyncJobState } from '../core/models/sync-job';
 import { SFProjectUserService } from '../core/sfproject-user.service';
 import { SFProjectService } from '../core/sfproject.service';
-import { SyncJobService } from '../core/sync-job.service';
 import { ConnectProjectComponent } from './connect-project.component';
 
 describe('ConnectProjectComponent', () => {
@@ -225,10 +227,17 @@ describe('ConnectProjectComponent', () => {
     env.changeSelectValue(env.sourceProjectSelect, 'pt02');
     expect(env.component.connectProjectForm.valid).toBe(true);
     env.clickElement(env.submitButton);
-    getTestScheduler().flush();
     tick();
 
     expect(env.component.state).toEqual('connecting');
+    expect(env.progressBar).toBeDefined();
+    expect(env.component.connectPending).toEqual(true);
+
+    env.emitSyncProgress(0);
+    expect(env.component.connectPending).toEqual(false);
+    env.emitSyncProgress(0.5);
+    env.emitSyncProgress(1);
+    env.emitSyncComplete();
 
     const project = new SFProject({
       projectName: 'Target',
@@ -289,36 +298,35 @@ class TestEnvironment {
 
   readonly mockedParatextService = mock(ParatextService);
   readonly mockedRouter = mock(Router);
-  readonly mockedSyncJobService = mock(SyncJobService);
   readonly mockedSFProjectUserService = mock(SFProjectUserService);
   readonly mockedSFProjectService = mock(SFProjectService);
   readonly mockedUserService = mock(UserService);
   readonly mockedNoticeService = mock(NoticeService);
+  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+
+  private readonly projectData: SFProjectData;
+  private readonly projectDataDocAdapter: MemoryRealtimeDocAdapter;
 
   constructor() {
-    const a = new SyncJob({
-      id: 'job01',
-      percentCompleted: 0,
-      state: SyncJobState.PENDING
-    });
-    const b = new SyncJob(a);
-    b.state = SyncJobState.SYNCING;
-    const c = new SyncJob(b);
-    c.percentCompleted = 0.5;
-    const d = new SyncJob(c);
-    d.percentCompleted = 1.0;
-    d.state = SyncJobState.IDLE;
-    when(this.mockedSyncJobService.listen('job01')).thenReturn(cold('-a-b-c-d|', { a, b, c, d }));
     when(this.mockedSFProjectUserService.onlineCreate(anything(), anything())).thenResolve(
       new SFProjectUser({ id: 'projectuser01' })
     );
     when(this.mockedSFProjectService.onlineCreate(anything())).thenCall((project: SFProject) => {
       const newProject = new SFProject(project);
       newProject.id = 'project01';
-      newProject.activeSyncJob = new SyncJobRef('job01');
       return Promise.resolve(newProject);
     });
     when(this.mockedUserService.currentUserId).thenReturn('user01');
+
+    this.projectData = {
+      sync: {
+        queuedCount: 1
+      }
+    };
+    this.projectDataDocAdapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', this.projectData);
+    when(this.mockedSFProjectService.getDataDoc('project01')).thenResolve(
+      new SFProjectDataDoc(this.projectDataDocAdapter, instance(this.mockedRealtimeOfflineStore))
+    );
 
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule, NoopAnimationsModule, UICommonModule],
@@ -326,7 +334,6 @@ class TestEnvironment {
       providers: [
         { provide: ParatextService, useFactory: () => instance(this.mockedParatextService) },
         { provide: Router, useFactory: () => instance(this.mockedRouter) },
-        { provide: SyncJobService, useFactory: () => instance(this.mockedSyncJobService) },
         { provide: SFProjectUserService, useFactory: () => instance(this.mockedSFProjectUserService) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
@@ -385,6 +392,10 @@ class TestEnvironment {
     return this.component.connectProjectForm.get('tasks.sourceParatextId');
   }
 
+  get progressBar(): DebugElement {
+    return this.fixture.debugElement.query(By.css('mdc-linear-progress'));
+  }
+
   changeSelectValue(select: DebugElement, value: string): void {
     const mdcSelect: MdcSelect = select.componentInstance;
     mdcSelect.value = value;
@@ -411,5 +422,21 @@ class TestEnvironment {
 
   inputElement(element: DebugElement): HTMLInputElement {
     return element.nativeElement.querySelector('input') as HTMLInputElement;
+  }
+
+  emitSyncProgress(percentCompleted: number): void {
+    this.projectData.sync.queuedCount = 1;
+    this.projectData.sync.percentCompleted = percentCompleted;
+    this.projectDataDocAdapter.emitRemoteChange();
+    this.fixture.detectChanges();
+  }
+
+  emitSyncComplete(): void {
+    this.projectData.sync.queuedCount = 0;
+    this.projectData.sync.percentCompleted = undefined;
+    this.projectData.sync.lastSyncSuccessful = true;
+    this.projectData.sync.dateLastSuccessfulSync = new Date().toJSON();
+    this.projectDataDocAdapter.emitRemoteChange();
+    this.fixture.detectChanges();
   }
 }

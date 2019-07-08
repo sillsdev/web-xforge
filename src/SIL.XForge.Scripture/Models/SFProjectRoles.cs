@@ -37,11 +37,7 @@ namespace SIL.XForge.Scripture.Models
 
             var translatorRights = new HashSet<Right>(sfReviewerRights)
             {
-                new Right(SFDomain.Texts, Operation.Edit),
-
-                new Right(SFDomain.SyncJobs, Operation.View),
-                new Right(SFDomain.SyncJobs, Operation.Create),
-                new Right(SFDomain.SyncJobs, Operation.Delete)
+                new Right(SFDomain.Texts, Operation.Edit)
             };
             Rights[Translator] = translatorRights;
 
