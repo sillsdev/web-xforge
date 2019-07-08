@@ -15,8 +15,6 @@ namespace SIL.XForge.Scripture.Models
         public bool UsersSeeEachOthersResponses { get; set; }
         [Attr]
         public bool DownloadAudioFiles { get; set; }
-        [Attr(isFilterable: false, isSortable: false)]
-        public ShareConfig Share { get; set; }
 
         // Translate configuration
         [Attr]

@@ -28,16 +28,5 @@ namespace SIL.XForge.Controllers
         }
 
         protected override string ProjectAdminRole => TestProjectRoles.Administrator;
-
-        protected override bool TryGetShareConfig(TestProjectEntity project, out ShareConfig shareConfig)
-        {
-            if (!project.CheckingConfig.Enabled)
-            {
-                shareConfig = null;
-                return false;
-            }
-            shareConfig = project.CheckingConfig.Share;
-            return true;
-        }
     }
 }

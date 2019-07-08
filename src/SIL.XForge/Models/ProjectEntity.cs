@@ -13,6 +13,9 @@ namespace SIL.XForge.Models
         public Dictionary<string, object> ExtraElements { get; set; }
 
         public abstract ProjectRoles Roles { get; }
+        public bool ShareEnabled { get; set; } = true;
+        public string ShareLevel { get; set; } = SharingLevel.Specific;
+
 
         public bool TryGetRole(string userId, out string role)
         {

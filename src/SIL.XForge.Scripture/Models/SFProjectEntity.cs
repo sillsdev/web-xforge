@@ -12,7 +12,6 @@ namespace SIL.XForge.Scripture.Models
         public bool CheckingEnabled { get; set; }
         public bool UsersSeeEachOthersResponses { get; set; } = true;
         public bool DownloadAudioFiles { get; set; } = true;
-        public ShareConfig Share { get; set; } = new ShareConfig();
 
         // Translate configuration
         public bool TranslateEnabled { get; set; }

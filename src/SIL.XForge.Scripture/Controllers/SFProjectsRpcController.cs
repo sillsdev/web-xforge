@@ -75,16 +75,5 @@ namespace SIL.XForge.Scripture.Controllers
                 Role = SFProjectRoles.SFReviewer
             };
         }
-
-        protected override bool TryGetShareConfig(SFProjectEntity project, out ShareConfig shareConfig)
-        {
-            if (!project.CheckingEnabled)
-            {
-                shareConfig = null;
-                return false;
-            }
-            shareConfig = project.Share;
-            return true;
-        }
     }
 }
