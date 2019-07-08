@@ -114,22 +114,21 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser("user01", SystemRoles.User);
-                var newConfig = new TranslateProjectUserConfig { SelectedBookId = "text02" };
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
-                        { env.GetAttribute("translate-config"), newConfig }
+                        { env.GetAttribute("selected-book-id"), "text02" }
                     });
                 env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
 
                 var projectUser = new SFProjectUserResource
                 {
                     Id = "projectuser01",
-                    TranslateConfig = newConfig
+                    SelectedBookId = "text02"
                 };
                 SFProjectUserResource updatedProjectUser = await env.Service.UpdateAsync(projectUser.Id, projectUser);
 
                 Assert.That(updatedProjectUser, Is.Not.Null);
-                Assert.That(updatedProjectUser.TranslateConfig.SelectedBookId, Is.EqualTo("text02"));
+                Assert.That(updatedProjectUser.SelectedBookId, Is.EqualTo("text02"));
             }
         }
 
@@ -139,17 +138,16 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser("user02", SystemRoles.User);
-                var newConfig = new TranslateProjectUserConfig { SelectedBookId = "text02" };
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
-                        { env.GetAttribute("translate-config"), newConfig }
+                        { env.GetAttribute("selected-book-id"), "text02" }
                     });
                 env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
 
                 var projectUser = new SFProjectUserResource
                 {
                     Id = "projectuser01",
-                    TranslateConfig = newConfig
+                    SelectedBookId = "text02"
                 };
                 var ex = Assert.ThrowsAsync<JsonApiException>(async () =>
                     {
@@ -166,22 +164,21 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser("user02", SystemRoles.SystemAdmin);
-                var newConfig = new TranslateProjectUserConfig { SelectedBookId = "text02" };
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
-                        { env.GetAttribute("translate-config"), newConfig }
+                        { env.GetAttribute("selected-book-id"), "text02" }
                     });
                 env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
 
                 var projectUser = new SFProjectUserResource
                 {
                     Id = "projectuser01",
-                    TranslateConfig = newConfig
+                    SelectedBookId = "text02"
                 };
                 SFProjectUserResource updatedProjectUser = await env.Service.UpdateAsync(projectUser.Id, projectUser);
 
                 Assert.That(updatedProjectUser, Is.Not.Null);
-                Assert.That(updatedProjectUser.TranslateConfig.SelectedBookId, Is.EqualTo("text02"));
+                Assert.That(updatedProjectUser.SelectedBookId, Is.EqualTo("text02"));
             }
         }
 
@@ -305,7 +302,7 @@ namespace SIL.XForge.Scripture.Services
                                 Id = "projectuser01",
                                 UserRef = "user01",
                                 Role = SFProjectRoles.Translator,
-                                TranslateConfig = new TranslateProjectUserConfig { SelectedBookId = "text01" }
+                                SelectedBookId = "text01"
                             }
                         }
                     },

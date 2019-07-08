@@ -56,16 +56,7 @@ export class ProjectComponent extends SubscriptionDisposable implements OnInit {
         // navigate to last location
         if (projectUser.selectedTask != null && projectUser.selectedTask !== '') {
           // the user has previously navigated to a location in a task
-          let bookId: string;
-          switch (projectUser.selectedTask) {
-            case 'translate':
-              bookId = projectUser.translateConfig.selectedBookId;
-              break;
-
-            case 'checking':
-              // TODO: get last selected text
-              break;
-          }
+          const bookId = projectUser.selectedBookId;
           if (bookId != null) {
             this.router.navigate(['./', projectUser.selectedTask, bookId], {
               relativeTo: this.route,

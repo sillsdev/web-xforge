@@ -189,7 +189,7 @@ class TestEnvironment {
               project: new SFProjectRef('project01'),
               role: args.role == null ? SFProjectRoles.ParatextTranslator : args.role,
               selectedTask: args.selectedTask,
-              translateConfig: { selectedBookId: args.selectedTask == null ? undefined : 'text02' }
+              selectedBookId: args.selectedTask == null ? undefined : 'text02'
             })
           ]
         )
@@ -213,10 +213,7 @@ class TestEnvironment {
           [
             new SFProjectUser({
               id: 'projectuser01',
-              user: undefined,
-              project: new SFProjectRef('project01'),
-              selectedTask: null,
-              translateConfig: undefined
+              project: new SFProjectRef('project01')
             })
           ]
         )

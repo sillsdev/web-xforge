@@ -17,6 +17,6 @@ public class SFBuildHandler : BuildHandler
     public override Task OnCompleted(BuildContext context)
     {
         return _projects.UpdateAsync(context.Engine.Projects.First(), u => u
-            .Unset(p => ((SFProjectUserEntity)p.Users[ArrayPosition.All]).TranslateConfig.SelectedSegmentChecksum));
+            .Unset(p => ((SFProjectUserEntity)p.Users[ArrayPosition.All]).SelectedSegmentChecksum));
     }
 }
