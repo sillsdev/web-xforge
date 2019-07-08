@@ -158,10 +158,6 @@ namespace SIL.XForge.Scripture.Services
                         SiteDir = "/tmp/ResourceServiceTests/site"
                     });
                 var users = new MemoryRepository<UserEntity>();
-                Jobs = new MemoryRepository<SyncJobEntity>(new[]
-                    {
-                        new SyncJobEntity { Id = "1234" }
-                    });
                 Projects = new MemoryRepository<SFProjectEntity>(new[]
                     {
                         new SFProjectEntity
@@ -197,16 +193,14 @@ namespace SIL.XForge.Scripture.Services
                 FileSystemService = Substitute.For<IFileSystemService>();
                 var logger = Substitute.For<ILogger<ParatextSyncRunner>>();
 
-                Runner = new ParatextSyncRunner(siteOptions, users, Jobs, Projects, engineService, ParatextService,
+                Runner = new ParatextSyncRunner(siteOptions, users, Projects, engineService, ParatextService,
                     realtimeService, FileSystemService, logger);
-                Runner._job = Jobs.Get("1234");
             }
 
             public IConnection Connection { get; }
             public IDocument<Delta> Document { get; }
             public IDocument<Delta> EmptyDocument { get; }
             public ParatextSyncRunner Runner { get; }
-            public MemoryRepository<SyncJobEntity> Jobs { get; }
             public MemoryRepository<SFProjectEntity> Projects { get; }
             public IParatextService ParatextService { get; }
             public IFileSystemService FileSystemService { get; }

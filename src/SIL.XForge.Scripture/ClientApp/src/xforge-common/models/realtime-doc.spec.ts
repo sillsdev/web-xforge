@@ -11,8 +11,8 @@ describe('RealtimeDoc', () => {
       callbackCount++;
     };
     realtimeDoc.onCreate().subscribe(callback);
-    adapter.fireCreate();
-    adapter.fireCreate();
+    adapter.emitCreate();
+    adapter.emitCreate();
 
     expect(callbackCount).toEqual(2);
   }));

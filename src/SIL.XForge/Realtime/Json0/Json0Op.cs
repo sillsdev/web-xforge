@@ -31,5 +31,8 @@ namespace SIL.XForge.Realtime.Json0
 
         [JsonProperty("od")]
         public object DeleteProp { get; set; }
+
+        [JsonProperty("na")]
+        public int? Add { get; set; }
     }
 }

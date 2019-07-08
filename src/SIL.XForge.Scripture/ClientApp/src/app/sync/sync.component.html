@@ -1,5 +1,5 @@
 <div fxLayout="column" class="base-container">
-  <h2 id="title">Synchronize {{ project?.projectName }} with Paratext</h2>
+  <h2 id="title">Synchronize {{ projectName }} with Paratext</h2>
   <mdc-card outlined class="sync-card">
     <div fxLayout="column" class="card-content">
       <button
@@ -13,7 +13,7 @@
       </button>
       <ng-container *ngIf="isLoggedIntoParatext || isLoading">
         <button
-          *ngIf="!syncJobActive"
+          *ngIf="!syncActive"
           class="action-button"
           mdc-button
           primary
@@ -24,20 +24,15 @@
           <mdc-icon>sync</mdc-icon>
           Synchronize
         </button>
-        <span *ngIf="syncJobActive" id="sync-message" class="sync-info">Your project is being synchronized...</span>
+        <span *ngIf="syncActive" id="sync-message" class="sync-info">Your project is being synchronized...</span>
         <mdc-linear-progress
-          *ngIf="syncJobActive"
+          *ngIf="syncActive"
           class="progress-bar"
           [secondary]="true"
           [determinate]="isProgressDeterminate"
           [progress]="percentComplete"
         ></mdc-linear-progress>
-        <span
-          *ngIf="isLoggedIntoParatext && !syncJobActive"
-          [title]="lastSyncDate"
-          id="date-last-sync"
-          class="sync-info"
-        >
+        <span *ngIf="isLoggedIntoParatext && !syncActive" [title]="lastSyncDate" id="date-last-sync" class="sync-info">
           {{ lastSyncNotice }}
         </span>
       </ng-container>

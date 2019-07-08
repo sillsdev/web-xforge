@@ -25,7 +25,6 @@ namespace Microsoft.Extensions.DependencyInjection
                         new CreateIndexOptions { Unique = true }));
                     indexes.CreateOrUpdate(new CreateIndexModel<SFProjectEntity>(builder.Ascending("Users.UserRef")));
                 });
-            services.AddMongoRepository<SyncJobEntity>(SFRootDataTypes.SyncJobs);
             services.AddMongoRepository<TranslateMetrics>(SFRootDataTypes.TranslateMetrics,
                 cm => cm.MapProperty(m => m.SessionId).SetSerializer(new StringSerializer(BsonType.ObjectId)));
 

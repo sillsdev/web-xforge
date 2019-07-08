@@ -6,11 +6,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Hangfire;
-using Hangfire.Server;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SIL.Machine.WebApi.Services;
+using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -113,9 +112,11 @@ namespace SIL.XForge.Scripture.Services
             { "MAN", "The Prayer of Manasseh" }
         };
 
+        private static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
+            SequenceEqualityComparer.Create(new ChapterEqualityComparer());
+
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IRepository<UserEntity> _users;
-        private readonly IRepository<SyncJobEntity> _jobs;
         private readonly IRepository<SFProjectEntity> _projects;
         private readonly IEngineService _engineService;
         private readonly IParatextService _paratextService;
@@ -124,18 +125,16 @@ namespace SIL.XForge.Scripture.Services
         private readonly IFileSystemService _fileSystemService;
         private readonly ILogger<ParatextSyncRunner> _logger;
 
-        internal SyncJobEntity _job;
+        private IDocument<SFProjectData> _projectDataDoc;
         private int _stepCount;
         private int _step;
 
         public ParatextSyncRunner(IOptions<SiteOptions> siteOptions, IRepository<UserEntity> users,
-            IRepository<SyncJobEntity> jobs, IRepository<SFProjectEntity> projects, IEngineService engineService,
-            IParatextService paratextService, IRealtimeService realtimeService, IFileSystemService fileSystemService,
-            ILogger<ParatextSyncRunner> logger)
+            IRepository<SFProjectEntity> projects, IEngineService engineService, IParatextService paratextService,
+            IRealtimeService realtimeService, IFileSystemService fileSystemService, ILogger<ParatextSyncRunner> logger)
         {
             _siteOptions = siteOptions;
             _users = users;
-            _jobs = jobs;
             _projects = projects;
             _engineService = engineService;
             _paratextService = paratextService;
@@ -148,161 +147,133 @@ namespace SIL.XForge.Scripture.Services
         private string WorkingDir => Path.Combine(_siteOptions.Value.SiteDir, "sync");
 
         // Do not allow multiple sync jobs to run in parallel on the same project by creating a mutex on the projectId
-        // parameter, i.e. "{3}"
-        [Mutex("{3}")]
-        public async Task RunAsync(PerformContext context, IJobCancellationToken cancellationToken, string userId,
-            string projectId, string jobId, bool trainEngine)
+        // parameter, i.e. "{0}"
+        [Mutex("{0}")]
+        public async Task RunAsync(string projectId, string userId, bool trainEngine)
         {
-            _job = await _jobs.UpdateAsync(j => j.Id == jobId, u => u
-                .Set(j => j.BackgroundJobId, context.BackgroundJob.Id)
-                .Set(j => j.State, SyncJobEntity.SyncingState));
-            if (_job == null)
-                return;
-
-            SFProjectEntity project = await _projects.UpdateAsync(_job.ProjectRef,
-                u => u.Set(p => p.ActiveSyncJobRef, _job.Id));
-            try
+            using (IConnection conn = await _realtimeService.ConnectAsync())
             {
-                if (project != null && (await _users.TryGetAsync(userId)).TryResult(out UserEntity user))
+                _projectDataDoc = conn.Get<SFProjectData>(RootDataTypes.Projects, projectId);
+                await _projectDataDoc.FetchAsync();
+                try
                 {
+                    if (!(await _projects.TryGetAsync(projectId)).TryResult(out SFProjectEntity project)
+                        || !(await _users.TryGetAsync(userId)).TryResult(out UserEntity user))
+                    {
+                        return;
+                    }
+
+                    await _projectDataDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, 0));
+
                     if (!_fileSystemService.DirectoryExists(WorkingDir))
                         _fileSystemService.CreateDirectory(WorkingDir);
 
-                    using (IConnection conn = await _realtimeService.ConnectAsync())
+                    string targetParatextId = project.ParatextId;
+                    var targetBooks = new HashSet<string>(await _paratextService.GetBooksAsync(user,
+                        targetParatextId));
+
+                    string sourceParatextId = project.SourceParatextId;
+                    var sourceBooks = new HashSet<string>(project.TranslateEnabled
+                        ? await _paratextService.GetBooksAsync(user, sourceParatextId)
+                        : Enumerable.Empty<string>());
+
+                    var booksToSync = new HashSet<string>(targetBooks);
+                    if (!project.CheckingEnabled)
+                        booksToSync.IntersectWith(sourceBooks);
+
+                    var targetBooksToDelete = new HashSet<string>(GetBooksToDelete(project, TextType.Target,
+                        booksToSync));
+                    var sourceBooksToDelete = new HashSet<string>(project.TranslateEnabled
+                        ? GetBooksToDelete(project, TextType.Source, booksToSync)
+                        : Enumerable.Empty<string>());
+
+                    _step = 0;
+                    _stepCount = (booksToSync.Count * 2) + (sourceBooks.Intersect(booksToSync).Count() * 2);
+                    if (targetBooksToDelete.Count > 0 || sourceBooksToDelete.Count > 0)
                     {
-                        IDocument<SFProjectData> projectDataDoc = conn.Get<SFProjectData>(RootDataTypes.Projects,
-                            project.Id);
-                        await projectDataDoc.FetchAsync();
+                        _stepCount += 1;
 
-                        string targetParatextId = project.ParatextId;
-                        var targetBooks = new HashSet<string>(await _paratextService.GetBooksAsync(user,
-                            targetParatextId));
-
-                        string sourceParatextId = project.SourceParatextId;
-                        var sourceBooks = new HashSet<string>(project.TranslateEnabled
-                            ? await _paratextService.GetBooksAsync(user, sourceParatextId)
-                            : Enumerable.Empty<string>());
-
-                        var booksToSync = new HashSet<string>(targetBooks);
-                        if (!project.CheckingEnabled)
-                            booksToSync.IntersectWith(sourceBooks);
-
-                        var targetBooksToDelete = new HashSet<string>(GetBooksToDelete(project, TextType.Target,
-                            booksToSync));
-                        var sourceBooksToDelete = new HashSet<string>(project.TranslateEnabled
-                            ? GetBooksToDelete(project, TextType.Source, booksToSync)
-                            : Enumerable.Empty<string>());
-
-                        _step = 0;
-                        _stepCount = (booksToSync.Count * 2) + (sourceBooks.Intersect(booksToSync).Count() * 2);
-                        if (targetBooksToDelete.Count > 0 || sourceBooksToDelete.Count > 0)
+                        // delete source books
+                        foreach (string bookId in sourceBooksToDelete)
                         {
-                            _stepCount += 1;
-
-                            // delete source books
-                            foreach (string bookId in sourceBooksToDelete)
-                            {
-                                TextInfo text = projectDataDoc.Data.Texts.First(t => t.BookId == bookId);
-                                await DeleteBookUsxAsync(conn, project, text, TextType.Source);
-                            }
-                            // delete target books
-                            foreach (string bookId in targetBooksToDelete)
-                            {
-                                int textIndex = projectDataDoc.Data.Texts.FindIndex(t => t.BookId == bookId);
-                                TextInfo text = projectDataDoc.Data.Texts[textIndex];
-                                List<Json0Op> op = Json0Op.New().ListDelete(
-                                    new object[] { nameof(SFProjectData.Texts), textIndex }, text);
-                                await projectDataDoc.SubmitOpAsync(op);
-
-                                await DeleteBookUsxAsync(conn, project, text, TextType.Target);
-                                await DeleteNotesData(conn, project, text);
-                            }
-                            await UpdateProgress();
+                            TextInfo text = _projectDataDoc.Data.Texts.First(t => t.BookId == bookId);
+                            await DeleteBookUsxAsync(conn, project, text, TextType.Source);
                         }
-
-                        // sync source and target books
-                        foreach (string bookId in booksToSync)
+                        // delete target books
+                        foreach (string bookId in targetBooksToDelete)
                         {
-                            if (!BookNames.TryGetValue(bookId, out string name))
-                                name = bookId;
+                            int textIndex = _projectDataDoc.Data.Texts.FindIndex(t => t.BookId == bookId);
+                            TextInfo text = _projectDataDoc.Data.Texts[textIndex];
+                            await _projectDataDoc.SubmitJson0OpAsync(op => op.Remove(pd => pd.Texts, textIndex));
 
-                            bool hasSource = sourceBooks.Contains(bookId);
-                            int textIndex = projectDataDoc.Data.Texts.FindIndex(t => t.BookId == bookId);
-                            TextInfo text;
-                            if (textIndex == -1)
-                                text = new TextInfo { BookId = bookId, Name = name, HasSource = hasSource };
-                            else
-                                text = projectDataDoc.Data.Texts[textIndex];
-
-                            List<Chapter> newChapters = await SyncOrCloneBookUsxAsync(user, conn, project, text,
-                                TextType.Target, targetParatextId, false);
-                            if (hasSource)
-                            {
-                                var chaptersToInclude = new HashSet<int>(newChapters.Select(c => c.Number));
-                                await SyncOrCloneBookUsxAsync(user, conn, project, text, TextType.Source,
-                                    sourceParatextId, true, chaptersToInclude);
-                            }
-                            await UpdateNotesData(conn, project, text, newChapters);
-                            List<Json0Op> op = Json0Op.New();
-                            if (textIndex == -1)
-                            {
-                                // insert text info for new text
-                                text.Chapters = newChapters;
-                                op.ListInsert(new object[]
-                                    { nameof(SFProjectData.Texts), projectDataDoc.Data.Texts.Count },
-                                    text);
-                            }
-                            else
-                            {
-                                // update text info
-                                op
-                                    .ObjectReplace(new object[]
-                                        { nameof(SFProjectData.Texts), textIndex, nameof(TextInfo.Chapters) },
-                                        text.Chapters, newChapters)
-                                    .ObjectReplace(new object[]
-                                        { nameof(SFProjectData.Texts), textIndex, nameof(TextInfo.HasSource) },
-                                        text.HasSource, hasSource);
-                            }
-                            await projectDataDoc.SubmitOpAsync(op);
+                            await DeleteBookUsxAsync(conn, project, text, TextType.Target);
+                            await DeleteNotesData(conn, project, text);
                         }
+                        await UpdateProgress();
                     }
 
-                    // TODO: Properly handle job cancellation
-                    cancellationToken.ThrowIfCancellationRequested();
+                    // sync source and target books
+                    foreach (string bookId in booksToSync)
+                    {
+                        if (!BookNames.TryGetValue(bookId, out string name))
+                            name = bookId;
+
+                        bool hasSource = sourceBooks.Contains(bookId);
+                        int textIndex = _projectDataDoc.Data.Texts.FindIndex(t => t.BookId == bookId);
+                        TextInfo text;
+                        if (textIndex == -1)
+                            text = new TextInfo { BookId = bookId, Name = name, HasSource = hasSource };
+                        else
+                            text = _projectDataDoc.Data.Texts[textIndex];
+
+                        List<Chapter> newChapters = await SyncOrCloneBookUsxAsync(user, conn, project, text,
+                            TextType.Target, targetParatextId, false);
+                        if (hasSource)
+                        {
+                            var chaptersToInclude = new HashSet<int>(newChapters.Select(c => c.Number));
+                            await SyncOrCloneBookUsxAsync(user, conn, project, text, TextType.Source,
+                                sourceParatextId, true, chaptersToInclude);
+                        }
+                        await UpdateNotesData(conn, project, text, newChapters);
+                        await _projectDataDoc.SubmitJson0OpAsync(op =>
+                            {
+                                if (textIndex == -1)
+                                {
+                                    // insert text info for new text
+                                    text.Chapters = newChapters;
+                                    op.Add(pd => pd.Texts, text);
+                                }
+                                else
+                                {
+                                    // update text info
+                                    op.Set(pd => pd.Texts[textIndex].Chapters, newChapters,
+                                        ChapterListEqualityComparer);
+                                    op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
+                                }
+                            });
+                    }
 
                     if (project.TranslateEnabled && trainEngine)
                     {
                         // start training Machine engine
-                        await _engineService.StartBuildByProjectIdAsync(_job.ProjectRef);
+                        await _engineService.StartBuildByProjectIdAsync(projectId);
                     }
 
-                    await _projects.UpdateAsync(_job.ProjectRef, u => u
-                        .Set(p => p.LastSyncedDate, DateTime.UtcNow)
-                        .Unset(p => p.ActiveSyncJobRef));
+                    await _projectDataDoc.SubmitJson0OpAsync(op => op
+                        .Inc(pd => pd.Sync.QueuedCount, -1)
+                        .Unset(pd => pd.Sync.PercentCompleted)
+                        .Set(pd => pd.Sync.LastSyncSuccessful, true)
+                        .Set(pd => pd.Sync.DateLastSuccessfulSync, DateTime.UtcNow));
                 }
-                else
+                catch (Exception e)
                 {
-                    await _projects.UpdateAsync(_job.ProjectRef, u => u.Unset(p => p.ActiveSyncJobRef));
+                    _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'",
+                        projectId);
+                    await _projectDataDoc.SubmitJson0OpAsync(op => op
+                        .Inc(pd => pd.Sync.QueuedCount, -1)
+                        .Unset(pd => pd.Sync.PercentCompleted)
+                        .Set(pd => pd.Sync.LastSyncSuccessful, false));
                 }
-                _job = await _jobs.UpdateAsync(_job, u => u
-                    .Set(j => j.State, SyncJobEntity.IdleState)
-                    .Unset(j => j.BackgroundJobId));
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogInformation("The Paratext sync job '{Job}' was cancelled.", _job.Id);
-                await _projects.UpdateAsync(_job.ProjectRef, u => u.Unset(p => p.ActiveSyncJobRef));
-                _job = await _jobs.UpdateAsync(_job, u => u
-                    .Set(j => j.State, SyncJobEntity.CanceledState)
-                    .Unset(j => j.BackgroundJobId));
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error occurred while executing Paratext sync job '{Job}'", _job.Id);
-                await _projects.UpdateAsync(_job.ProjectRef, u => u.Unset(p => p.ActiveSyncJobRef));
-                await _jobs.UpdateAsync(_job, u => u
-                    .Set(j => j.State, SyncJobEntity.ErrorState)
-                    .Unset(j => j.BackgroundJobId));
             }
         }
 
@@ -624,10 +595,27 @@ namespace SIL.XForge.Scripture.Services
 
         private async Task UpdateProgress()
         {
+            if (_projectDataDoc == null)
+                return;
             _step++;
-            double percentCompleted = (double)_step / _stepCount;
-            _job = await _jobs.UpdateAsync(_job, u => u
-                .Set(j => j.PercentCompleted, percentCompleted));
+            double percentCompleted = Math.Round((double)_step / _stepCount, 2, MidpointRounding.AwayFromZero);
+            await _projectDataDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted));
+        }
+
+        private class ChapterEqualityComparer : IEqualityComparer<Chapter>
+        {
+            public bool Equals(Chapter x, Chapter y)
+            {
+                return x.Number == y.Number && x.LastVerse == y.LastVerse;
+            }
+
+            public int GetHashCode(Chapter obj)
+            {
+                int code = 23;
+                code = code * 31 + obj.Number.GetHashCode();
+                code = code * 31 + obj.LastVerse.GetHashCode();
+                return code;
+            }
         }
     }
 }

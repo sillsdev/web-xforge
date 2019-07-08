@@ -8,10 +8,9 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProject } from '../core/models/sfproject';
-import { SyncJob } from '../core/models/sync-job';
+import { SFProjectDataDoc } from '../core/models/sfproject-data-doc';
 import { SFProjectUserService } from '../core/sfproject-user.service';
 import { SFProjectService } from '../core/sfproject.service';
-import { SyncJobService } from '../core/sync-job.service';
 
 interface ConnectProjectFormValues {
   paratextId: string;
@@ -41,14 +40,13 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
   state: 'connecting' | 'loading' | 'input' | 'login';
   connectProjectName: string;
 
+  private projectDataDoc: SFProjectDataDoc;
   private targetProjects: ParatextProject[];
-  private job: SyncJob;
 
   constructor(
     private readonly paratextService: ParatextService,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
-    private readonly syncJobService: SyncJobService,
     private readonly projectUserService: SFProjectUserService,
     private readonly router: Router,
     private readonly noticeService: NoticeService
@@ -58,11 +56,11 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
   }
 
   get connectProgress(): number {
-    return this.job != null ? this.job.percentCompleted : 0;
+    return this.projectDataDoc == null ? undefined : this.projectDataDoc.data.sync.percentCompleted;
   }
 
   get connectPending(): boolean {
-    return this.connectProgress === 0;
+    return this.connectProgress == null;
   }
 
   get hasConnectableProjects(): boolean {
@@ -161,15 +159,18 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
       }
 
       newProject = await this.projectService.onlineCreate(newProject);
-      this.subscribe(this.syncJobService.listen(newProject.activeSyncJob.id), async job => {
-        this.job = job;
-        if (!job.isActive) {
-          this.router.navigate(['/projects', newProject.id]);
-        }
-      });
+      this.projectDataDoc = await this.projectService.getDataDoc(newProject.id);
+      this.checkSyncStatus();
+      this.subscribe(this.projectDataDoc.remoteChanges(), () => this.checkSyncStatus());
     } else {
       await this.projectUserService.onlineCreate(project.projectId, this.userService.currentUserId);
       this.router.navigate(['/projects', project.projectId]);
+    }
+  }
+
+  private checkSyncStatus(): void {
+    if (this.projectDataDoc.data.sync.queuedCount === 0) {
+      this.router.navigate(['/projects', this.projectDataDoc.id]);
     }
   }
 }

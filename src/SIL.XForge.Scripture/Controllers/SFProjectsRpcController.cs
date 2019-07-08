@@ -21,15 +21,17 @@ namespace SIL.XForge.Scripture.Controllers
     {
         private readonly IRepository<TranslateMetrics> _translateMetrics;
         private readonly IParatextService _paratextService;
+        private readonly ISyncService _syncService;
 
         public SFProjectsRpcController(IUserAccessor userAccessor, IHttpRequestAccessor httpRequestAccessor,
             IRepository<SFProjectEntity> projects, IRepository<UserEntity> users, IEmailService emailService,
             IOptions<SiteOptions> siteOptions, IRepository<TranslateMetrics> translateMetrics,
-            IParatextService paratextService)
+            IParatextService paratextService, ISyncService syncService)
             : base(userAccessor, httpRequestAccessor, projects, users, emailService, siteOptions)
         {
             _translateMetrics = translateMetrics;
             _paratextService = paratextService;
+            _syncService = syncService;
         }
 
         protected override string ProjectAdminRole => SFProjectRoles.Administrator;
@@ -39,9 +41,20 @@ namespace SIL.XForge.Scripture.Controllers
             if (!await IsAuthorizedAsync())
                 return Error((int)RpcErrorCode.InvalidRequest, "Forbidden");
 
-            metrics.UserRef = User.UserId;
+            metrics.UserRef = UserId;
             metrics.ProjectRef = ResourceId;
             await _translateMetrics.ReplaceAsync(metrics, true);
+            return Ok();
+        }
+
+        public async Task<IRpcMethodResult> Sync()
+        {
+            bool authorized = await Projects.Query().AnyAsync(p => p.Id == ResourceId
+                && p.Users.Any(pu => pu.UserRef == UserId && pu.Role == SFProjectRoles.Administrator));
+            if (!authorized)
+                return Error((int)RpcErrorCode.InvalidRequest, "Forbidden");
+
+            await _syncService.SyncAsync(ResourceId, UserId, false);
             return Ok();
         }
 
@@ -53,7 +66,7 @@ namespace SIL.XForge.Scripture.Controllers
 
             // check if the user is a Paratext user
             // if so, set the user's project role from the Paratext project
-            UserEntity user = await Users.GetAsync(User.UserId);
+            UserEntity user = await Users.GetAsync(UserId);
             if (user.ParatextId != null)
             {
                 Attempt<string> attempt = await _paratextService.TryGetProjectRoleAsync(user, project.ParatextId);

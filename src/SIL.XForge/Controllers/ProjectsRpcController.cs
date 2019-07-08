@@ -56,7 +56,7 @@ namespace SIL.XForge.Controllers
                 return ForbiddenError();
             }
 
-            UserEntity inviter = await Users.GetAsync(User.UserId);
+            UserEntity inviter = await Users.GetAsync(UserId);
             string subject = $"You've been invited to the project {project.ProjectName} on {siteOptions.Name}";
             string body = "<p>Hello </p><p></p>" +
                 $"<p>{inviter.Name} invites you to join the {project.ProjectName} project on {siteOptions.Name}." +
@@ -86,14 +86,14 @@ namespace SIL.XForge.Controllers
 
         protected Task<bool> IsAuthorizedAsync()
         {
-            return Projects.Query().AnyAsync(p => p.Id == ResourceId && p.Users.Any(pu => pu.UserRef == User.UserId));
+            return Projects.Query().AnyAsync(p => p.Id == ResourceId && p.Users.Any(pu => pu.UserRef == UserId));
         }
 
         protected virtual async Task<string> AddUserToProject(TEntity project)
         {
-            ProjectUserEntity entity = CreateProjectUser(User.UserId);
+            ProjectUserEntity entity = CreateProjectUser(UserId);
             TEntity updatedProject = await Projects.UpdateAsync(
-                p => p.Id == project.Id && !p.Users.Any(pu => pu.UserRef == User.UserId),
+                p => p.Id == project.Id && !p.Users.Any(pu => pu.UserRef == UserId),
                 update => update.Add(p => p.Users, entity));
             return updatedProject != null ? entity.Id : null;
         }
@@ -101,7 +101,7 @@ namespace SIL.XForge.Controllers
         private bool IsUserProjectAdmin(TEntity project)
         {
             // Is the user part of the project
-            ProjectUserEntity projectUser = project.Users.FirstOrDefault(u => u.UserRef == User.UserId);
+            ProjectUserEntity projectUser = project.Users.FirstOrDefault(u => u.UserRef == UserId);
             if (projectUser != null)
             {
                 if (projectUser.Role == ProjectAdminRole)

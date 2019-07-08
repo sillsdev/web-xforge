@@ -41,8 +41,6 @@ namespace SIL.XForge.Scripture.CodeGenerator
             HandWrittenBaseClasses["ProjectResourceRef"] = "xforge-common/models/project";
             HandWrittenBaseClasses["ProjectUserResource"] = "xforge-common/models/project-user";
             HandWrittenBaseClasses["ProjectUserResourceRef"] = "xforge-common/models/project-user";
-            HandWrittenBaseClasses["ProjectDataResource"] = "xforge-common/models/project-data";
-            HandWrittenBaseClasses["ProjectDataResourceRef"] = "xforge-common/models/project-data";
 
             TypeScriptInterfaces = new List<string>
             {

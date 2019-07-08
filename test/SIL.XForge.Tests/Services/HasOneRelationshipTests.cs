@@ -23,9 +23,9 @@ namespace SIL.XForge.Services
             projectResourceMapper.MapMatchingAsync(null, null, null)
                 .ReturnsForAnyArgs(Task.FromResult(projectResources));
 
-            var rel = new HasOneRelationship<ProjectDataEntity, TestProjectResource, TestProjectEntity>(
+            var rel = new HasOneRelationship<TestProjectDataEntity, TestProjectResource, TestProjectEntity>(
                 projectResourceMapper, e => e.ProjectRef);
-            var entity = new ProjectDataEntity
+            var entity = new TestProjectDataEntity
             {
                 Id = "entity1",
                 ProjectRef = "project1"

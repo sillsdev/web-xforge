@@ -13,9 +13,6 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 mapConfig.AddProfile<SFMapperProfile>();
             });
-
-            services.AddSingleton<IParatextService, ParatextService>();
-            services.AddSingleton<SyncJobManager>();
             return services;
         }
     }

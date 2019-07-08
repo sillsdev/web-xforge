@@ -9,7 +9,6 @@ namespace Microsoft.AspNetCore.Builder
             app.UseDataAccess();
 
             app.InitRepository<SFProjectEntity>();
-            app.InitRepository<SyncJobEntity>();
         }
     }
 }
