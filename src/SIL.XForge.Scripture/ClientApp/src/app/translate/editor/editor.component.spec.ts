@@ -1,10 +1,11 @@
-import { MdcIconButton, MdcSlider } from '@angular-mdc/web';
+import { MdcSlider } from '@angular-mdc/web';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { merge } from '@orbit/utils';
 import {
   createRange,
   InteractiveTranslationSession,
@@ -29,7 +30,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { SFProject, SFProjectRef } from '../../core/models/sfproject';
-import { SFProjectUser, SFProjectUserRef, TranslateProjectUserConfig } from '../../core/models/sfproject-user';
+import { SFProjectUser, SFProjectUserRef } from '../../core/models/sfproject-user';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
@@ -41,7 +42,7 @@ import { SuggestionComponent } from './suggestion.component';
 describe('EditorComponent', () => {
   it('start with no previous selection', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({});
+    env.setProjectUser();
     env.waitForSuggestion();
     expect(env.component.textName).toBe('Book 1');
     expect(env.component.chapter).toBe(1);
@@ -55,7 +56,7 @@ describe('EditorComponent', () => {
 
   it('start with previously selected segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 2, selectedSegment: 'verse_2_1' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 2, selectedSegment: 'verse_2_1' });
     env.waitForSuggestion();
     expect(env.component.textName).toBe('Book 1');
     expect(env.component.chapter).toBe(2);
@@ -73,7 +74,7 @@ describe('EditorComponent', () => {
     const sourceId = new TextDocId('project01', 'text01', 1, 'source');
     let resolve: (value?: TextDoc) => void;
     when(env.mockedSFProjectService.getTextDoc(deepEqual(sourceId))).thenReturn(new Promise(r => (resolve = r)));
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_2' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_2' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_2');
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
@@ -90,7 +91,7 @@ describe('EditorComponent', () => {
 
   it('select non-blank segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
@@ -104,7 +105,7 @@ describe('EditorComponent', () => {
     const selection = env.component.target.editor.getSelection();
     expect(selection.index).toBe(32);
     expect(selection.length).toBe(0);
-    expect(env.component.translateUserConfig.selectedSegment).toBe('verse_1_3');
+    expect(env.component.projectUser.selectedSegment).toBe('verse_1_3');
     verify(env.mockedSFProjectUserService.update(anything())).once();
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
     expect(env.component.showSuggestion).toBe(false);
@@ -114,7 +115,7 @@ describe('EditorComponent', () => {
 
   it('select blank segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_1');
 
@@ -126,7 +127,7 @@ describe('EditorComponent', () => {
     const selection = env.component.target.editor.getSelection();
     expect(selection.index).toBe(30);
     expect(selection.length).toBe(0);
-    expect(env.component.translateUserConfig.selectedSegment).toBe('verse_1_2');
+    expect(env.component.projectUser.selectedSegment).toBe('verse_1_2');
     verify(env.mockedSFProjectUserService.update(anything())).once();
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
     expect(env.component.showSuggestion).toBe(true);
@@ -137,7 +138,7 @@ describe('EditorComponent', () => {
 
   it('selection not at end of incomplete segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({});
+    env.setProjectUser();
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('');
 
@@ -153,7 +154,7 @@ describe('EditorComponent', () => {
 
   it('selection at end of incomplete segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({});
+    env.setProjectUser();
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('');
 
@@ -170,7 +171,7 @@ describe('EditorComponent', () => {
 
   it('insert suggestion in non-blank segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -184,7 +185,7 @@ describe('EditorComponent', () => {
 
   it('insert space when typing character after inserting a suggestion', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -205,7 +206,7 @@ describe('EditorComponent', () => {
 
   it('insert space when inserting a suggestion after inserting a previous suggestion', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -228,7 +229,7 @@ describe('EditorComponent', () => {
 
   it('do not insert space when typing punctuation after inserting a suggestion', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -249,7 +250,7 @@ describe('EditorComponent', () => {
 
   it('train a modified segment after selecting a different segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -268,7 +269,7 @@ describe('EditorComponent', () => {
 
   it('do not train an unmodified segment after selecting a different segment', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_5');
     expect(env.component.showSuggestion).toBe(true);
@@ -292,7 +293,7 @@ describe('EditorComponent', () => {
 
   it('change texts', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.textName).toBe('Book 1');
     expect(env.component.target.segmentRef).toBe('verse_1_1');
@@ -317,7 +318,7 @@ describe('EditorComponent', () => {
 
   it('change chapters', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.chapter).toBe(1);
     expect(env.component.target.segmentRef).toBe('verse_1_1');
@@ -342,14 +343,14 @@ describe('EditorComponent', () => {
 
   it('local and remote selected segment are different', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.chapter).toBe(1);
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
 
     resetCalls(env.mockedRemoteTranslationEngine);
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_2' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_2' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_2');
     verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
@@ -359,7 +360,7 @@ describe('EditorComponent', () => {
 
   it('selected segment checksum unset on server', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({
+    env.setProjectUser({
       selectedBookId: 'text01',
       selectedChapter: 1,
       selectedSegment: 'verse_1_1',
@@ -370,7 +371,7 @@ describe('EditorComponent', () => {
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     expect(env.component.target.segment.initialChecksum).toBe(0);
 
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     expect(env.component.target.segment.initialChecksum).not.toBe(0);
@@ -380,7 +381,7 @@ describe('EditorComponent', () => {
 
   it('update confidence threshold', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({
+    env.setProjectUser({
       selectedBookId: 'text01',
       selectedChapter: 1,
       selectedSegment: 'verse_1_2',
@@ -409,7 +410,7 @@ describe('EditorComponent', () => {
 
   it('training status', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     expect(env.component.showTrainingProgress).toBe(false);
@@ -442,7 +443,7 @@ describe('EditorComponent', () => {
 
   it('close training status', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setTranslateConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+    env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_1');
     expect(env.component.showTrainingProgress).toBe(false);
@@ -625,7 +626,7 @@ class TestEnvironment {
     return this.trainingProgress.query(By.css('#training-close-button'));
   }
 
-  setTranslateConfig(userTranslateConfig: TranslateProjectUserConfig): void {
+  setProjectUser(projectUser: Partial<SFProjectUser> = {}): void {
     this.project$.next(
       new MapQueryResults(
         new SFProject({
@@ -637,12 +638,16 @@ class TestEnvironment {
         }),
         undefined,
         [
-          new SFProjectUser({
-            id: 'projectuser01',
-            user: new UserRef('user01'),
-            project: new SFProjectRef('project01'),
-            translateConfig: userTranslateConfig
-          })
+          new SFProjectUser(
+            merge(
+              {
+                id: 'projectuser01',
+                user: new UserRef('user01'),
+                project: new SFProjectRef('project01')
+              },
+              projectUser
+            )
+          )
         ]
       )
     );
