@@ -334,7 +334,13 @@ The VS Code extension [Azure Cosmos DB](https://marketplace.visualstudio.com/ite
 
 ## Debugging
 
-In Visual Studio Code, in the debug sidebar, choose **Full App (SF)** to debug the front-end and back-end at the same time, or **Launch Chrome (SF)** or **.NET Core (SF)** to just debug the front-end or back-end.
+In Visual Studio Code, navigate to the debug sidebar and start one of the following launch configurations:
+
+1. **.NET Core - npm start (SF)**: Debug the ASP.NET Core back-end. This configuration also launches the Angular development server.
+2. **.NET Core (SF)**: Debug the ASP.NET Core backend. In this configuration, the Angular development server will need to be launched separately. You can launch the Angular development server by executing `ng serve` in the terminal or running the **npm start (SF)** task in VS Code. This configuration allows you to restart the ASP.NET Core backend without having to restart the Angular development server.
+3. **Chrome (SF)**: Debug the Angular front-end. The back-end will need to be launched separately. You can launch the back-end by executing `dotnet run` in the terminal.
+4. **Node**: Debug the Node.js real-time back-end. The back-end will need to be started prior to launching this configuration.
+5. **Full App (SF)**: Debug both the front-end and the back-end.
 
 ## Code Generator
 
