@@ -3,7 +3,6 @@ import { RemoteTranslationEngine } from '@sillsdev/machine';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { JsonApiService } from 'xforge-common/json-api.service';
-import { ShareConfig } from 'xforge-common/models/share-config';
 import { ProjectService } from 'xforge-common/project.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { objectId } from 'xforge-common/utils';
@@ -42,10 +41,6 @@ export class SFProjectService extends ProjectService<SFProject> {
       this.realtimeService.localDeleteProjectDocs(CommentsDoc.TYPE, project.id);
       this.realtimeService.localDeleteProjectDocs(SFProjectDataDoc.TYPE, project.id);
     });
-  }
-
-  getShareConfig(id: string): Observable<ShareConfig> {
-    return this.get(id).pipe(map(r => (r.data == null ? null : r.data.share)));
   }
 
   createTranslationEngine(projectId: string): RemoteTranslationEngine {

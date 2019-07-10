@@ -9,7 +9,7 @@ import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { MapQueryResults } from 'xforge-common/json-api.service';
-import { ShareLevel } from 'xforge-common/models/share-config';
+import { SharingLevel } from 'xforge-common/models/sharing-level';
 import { User } from 'xforge-common/models/user';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
@@ -390,10 +390,8 @@ class TestEnvironment {
     projectName: 'Project 01',
     usersSeeEachOthersResponses: true,
     checkingEnabled: true,
-    share: {
-      enabled: true,
-      level: ShareLevel.Anyone
-    },
+    shareEnabled: true,
+    shareLevel: SharingLevel.Anyone,
     users: [
       new SFProjectUserRef(this.adminUser.id),
       new SFProjectUserRef(this.reviewerUser.id),

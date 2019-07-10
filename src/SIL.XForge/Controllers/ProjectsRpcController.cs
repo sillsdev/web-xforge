@@ -40,16 +40,13 @@ namespace SIL.XForge.Controllers
             if (project == null)
                 return InvalidParamsError();
 
-            if (!TryGetShareConfig(project, out ShareConfig shareConfig))
-                return ForbiddenError();
-
             SiteOptions siteOptions = _siteOptions.Value;
             string url;
-            if (shareConfig.Enabled && shareConfig.Level == ShareLevel.Anyone)
+            if (project.ShareEnabled && project.ShareLevel == SharingLevel.Anyone)
             {
                 url = $"{siteOptions.Origin}projects/{ResourceId}?sharing=true";
             }
-            else if (shareConfig.Enabled || IsUserProjectAdmin(project))
+            else if (project.ShareEnabled || IsUserProjectAdmin(project))
             {
                 // TODO: handle inviting a specific person here
                 url = null;
@@ -78,8 +75,7 @@ namespace SIL.XForge.Controllers
             if (project == null)
                 return InvalidParamsError();
 
-            if (!TryGetShareConfig(project, out ShareConfig shareConfig) || !shareConfig.Enabled
-                || shareConfig.Level != ShareLevel.Anyone)
+            if (!project.ShareEnabled || project.ShareLevel != SharingLevel.Anyone)
             {
                 return ForbiddenError();
             }
@@ -115,6 +111,5 @@ namespace SIL.XForge.Controllers
         }
 
         protected abstract ProjectUserEntity CreateProjectUser(string userId);
-        protected abstract bool TryGetShareConfig(TEntity project, out ShareConfig shareConfig);
     }
 }

@@ -110,13 +110,7 @@ namespace SIL.XForge.Controllers
                                 Role = TestProjectRoles.Reviewer
                             }
                         },
-                        CheckingConfig = new TestCheckingConfig {
-                            Enabled = true,
-                            Share = new ShareConfig
-                            {
-                                Enabled = false
-                            }
-                        }
+                        ShareEnabled = false
                     },
                     new TestProjectEntity
                     {
@@ -130,14 +124,8 @@ namespace SIL.XForge.Controllers
                                 Role = TestProjectRoles.Administrator
                             }
                         },
-                        CheckingConfig = new TestCheckingConfig {
-                            Enabled = true,
-                            Share = new ShareConfig
-                            {
-                                Enabled = true,
-                                Level = ShareLevel.Anyone
-                            }
-                        }
+                        ShareEnabled = true,
+                        ShareLevel = SharingLevel.Anyone
                     },
                     new TestProjectEntity
                     {
@@ -151,14 +139,8 @@ namespace SIL.XForge.Controllers
                                 Role = TestProjectRoles.Administrator
                             }
                         },
-                        CheckingConfig = new TestCheckingConfig {
-                            Enabled = true,
-                            Share = new ShareConfig
-                            {
-                                Enabled = true,
-                                Level = ShareLevel.Specific
-                            }
-                        }
+                        ShareEnabled = true,
+                        ShareLevel = SharingLevel.Specific
                     }
                 });
 

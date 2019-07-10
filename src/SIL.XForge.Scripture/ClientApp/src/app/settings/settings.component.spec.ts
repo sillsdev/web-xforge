@@ -9,7 +9,7 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { MapQueryResults } from 'xforge-common/json-api.service';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
-import { ShareLevel } from 'xforge-common/models/share-config';
+import { SharingLevel } from 'xforge-common/models/sharing-level';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -140,7 +140,7 @@ describe('SettingsComponent', () => {
           new TestProject({
             checkingEnabled: true,
             usersSeeEachOthersResponses: false,
-            share: { enabled: false },
+            shareEnabled: false,
             translateEnabled: false,
             sourceParatextId: undefined
           })
@@ -167,7 +167,7 @@ describe('SettingsComponent', () => {
           new TestProject({
             checkingEnabled: true,
             usersSeeEachOthersResponses: false,
-            share: { enabled: false },
+            shareEnabled: false,
             translateEnabled: false,
             sourceParatextId: undefined
           })
@@ -189,7 +189,7 @@ describe('SettingsComponent', () => {
           new TestProject({
             checkingEnabled: true,
             usersSeeEachOthersResponses: false,
-            share: { enabled: false },
+            shareEnabled: false,
             translateEnabled: false,
             sourceParatextId: undefined
           })
@@ -246,7 +246,8 @@ describe('SettingsComponent', () => {
           new TestProject({
             checkingEnabled: true,
             usersSeeEachOthersResponses: false,
-            share: { enabled: true, level: ShareLevel.Anyone },
+            shareEnabled: true,
+            shareLevel: SharingLevel.Anyone,
             translateEnabled: false,
             sourceParatextId: undefined
           })
@@ -353,7 +354,7 @@ class TestEnvironment {
           id: 'project01',
           checkingEnabled: false,
           usersSeeEachOthersResponses: false,
-          share: { enabled: false },
+          shareEnabled: false,
           translateEnabled: true,
           sourceParatextId: 'paratextId01'
         })
