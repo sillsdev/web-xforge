@@ -328,13 +328,15 @@ ng serve
 
 When files change on the backend it will compile the changes automatically and now `ng serve` won't re-start every time.
 
-## Database
-
-The VS Code extension [Azure Cosmos DB](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-cosmosdb) can be used to inspect our Mongo DB.
+See the [Debugging](#debugging) section below for how to do this in **VS Code**.
 
 ## Debugging
 
 In Visual Studio Code, in the debug sidebar, choose **Full App (SF)** to debug the front-end and back-end at the same time, or **Launch Chrome (SF)** or **.NET Core (SF)** to just debug the front-end or back-end.
+
+## Database
+
+The VS Code extension [Azure Cosmos DB](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-cosmosdb) can be used to inspect our Mongo DB.
 
 ## Code Generator
 

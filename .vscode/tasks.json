@@ -21,7 +21,37 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "Run SF",
+      "label": "npm start (SF)",
+      "command": "npm start",
+      "type": "shell",
+      "isBackground": true,
+      "presentation": {
+        "focus": true,
+        "panel": "dedicated"
+      },
+      "options": {
+        "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp/"
+      },
+      "group": "build",
+      "problemMatcher": {
+        "owner": "typescript",
+        "source": "ts",
+        "applyTo": "closedDocuments",
+        "fileLocation": ["relative", "${cwd}"],
+        "pattern": "$tsc",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": {
+            "regexp": "(.*?)"
+          },
+          "endsPattern": {
+            "regexp": "Compiled |Failed to compile."
+          }
+        }
+      }
+    },
+    {
+      "label": "Run (SF)",
       "command": "dotnet run",
       "type": "shell",
       "options": {
