@@ -3,20 +3,21 @@
   "compounds": [
     {
       "name": "Full App (SF)",
-      "configurations": [".NET Core (SF)", "Launch Chrome (SF)"]
+      "configurations": [".NET Core (SF)", "Chrome (SF)"]
     }
   ],
   "configurations": [
     {
       "type": "node",
       "request": "attach",
-      "name": "Node debugger",
+      "name": "ShareDB",
       "port": 9229
     },
     {
       "type": "chrome",
       "request": "launch",
-      "name": "Launch Chrome (SF)",
+      "preLaunchTask": "npm start (SF)",
+      "name": "Chrome (SF)",
       "url": "http://localhost:5000",
       "webRoot": "${workspaceRoot}/src/SIL.XForge.Scripture/ClientApp",
       "linux": {
@@ -24,11 +25,18 @@
       }
     },
     {
-      "type": "chrome",
-      "request": "attach",
-      "name": "Attach to Chrome",
-      "port": 9222,
-      "webRoot": "${workspaceRoot}"
+      "name": ".NET Core - npm start (SF)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "dotnet build",
+      "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/netcoreapp2.1/SIL.XForge.Scripture.dll",
+      "args": ["--start-ng-serve=yes"],
+      "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
     },
     {
       "name": ".NET Core (SF)",
@@ -36,7 +44,7 @@
       "request": "launch",
       "preLaunchTask": "dotnet build",
       "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/netcoreapp2.1/SIL.XForge.Scripture.dll",
-      "args": [],
+      "args": ["--start-ng-serve=listen"],
       "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/",
       "stopAtEntry": false,
       "console": "integratedTerminal",
