@@ -14,6 +14,9 @@ export class CheckingAudioPlayerComponent {
   @Input() set source(source: string) {
     this.audio = new Audio();
     if (source !== '') {
+      if (source.indexOf('://') < 0) {
+        source = '/assets/audio/' + source;
+      }
       this.audio.src = source;
       this.audio.addEventListener('timeupdate', () => {
         this._isPlaying = this.checkIsPlaying;
@@ -113,7 +116,7 @@ export class CheckingAudioPlayerComponent {
 
   download() {
     if (this.canDownload) {
-      saveAs(this.audio.src);
+      saveAs(this.audio.src, this.audio.src.split('-').pop());
     }
   }
 

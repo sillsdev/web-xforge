@@ -20,32 +20,37 @@
   </div>
 </div>
 <div *ngIf="answerFormVisible">
-  <form [formGroup]="answerForm" (ngSubmit)="submit()" autocomplete="off" id="answer-form">
-    <mdc-form-field fluid>
-      <mdc-text-field
-        label="Your Answer"
-        type="text"
-        formControlName="answerText"
-        outlined
-        [value]="activeAnswer?.text"
-      ></mdc-text-field>
-      <mdc-helper-text validation>You need to enter your answer before saving</mdc-helper-text>
-      <mdc-text-field type="hidden" formControlName="audioUrl"></mdc-text-field>
-    </mdc-form-field>
-    <div class="form-controls" [ngClass]="{ 'audio-control-visible': audioControlVisible }">
-      <div class="audio">
-        <button *ngIf="!audioControlVisible" mdc-button (click)="showAudioControl()" id="audio-answer">
-          Record or upload audio
-        </button>
-        <app-checking-audio-recorder
-          *ngIf="audioControlVisible"
-          (status)="recorderStatus($event)"
-        ></app-checking-audio-recorder>
-      </div>
-      <div class="form-actions">
-        <button mdc-button (click)="hideAnswerForm()" id="cancel-answer">Cancel</button>
-        <button mdc-button primary form="answer-form" id="save-answer">Save Answer</button>
-      </div>
+  <form [formGroup]="answerForm" autocomplete="off" id="answer-form">
+    <mdc-tab-bar #answerTabs fixed>
+      <mdc-tab-scroller>
+        <mdc-tab icon="title" label="Answer"></mdc-tab>
+        <mdc-tab icon="mic" label="Record"></mdc-tab>
+        <mdc-tab icon="cloud_upload" label="Upload" disabled></mdc-tab>
+        <mdc-tab icon="text_rotation_none" label="Select Text" disabled></mdc-tab>
+      </mdc-tab-scroller>
+    </mdc-tab-bar>
+    <div *ngIf="answerTabs.activeTabIndex === 0" class="answer-tab answer-text">
+      <mdc-form-field>
+        <mdc-text-field
+          label="Your Answer"
+          type="text"
+          formControlName="answerText"
+          outlined
+          [value]="activeAnswer?.text"
+        ></mdc-text-field>
+      </mdc-form-field>
+    </div>
+    <div *ngIf="answerTabs.activeTabIndex === 1" class="answer-tab answer-record">
+      <app-checking-audio-recorder (status)="recorderStatus($event)"></app-checking-audio-recorder>
+    </div>
+    <div *ngIf="answerTabs.activeTabIndex === 2" class="answer-tab answer-upload">Coming soon</div>
+    <div *ngIf="answerTabs.activeTabIndex === 3" class="answer-tab answer-upload">Coming soon</div>
+    <div *ngIf="answerFormSubmitAttempted && answerForm.invalid" class="form-helper-text">
+      You need to enter your answer or record your answer before saving
+    </div>
+    <div class="form-actions">
+      <button mdc-button (click)="hideAnswerForm()" id="cancel-answer">Cancel</button>
+      <button mdc-button primary form="answer-form" id="save-answer" (click)="submit()">Save Answer</button>
     </div>
   </form>
 </div>
@@ -58,9 +63,12 @@
         ><span class="like-count">{{ answer.likes.length }}</span>
       </div>
       <div class="answer-detail">
-        <div class="scripture-reference"></div>
-        <div class="answer-text">{{ answer.text }}</div>
-        <div class="audio-control"></div>
+        <div *ngIf="answer.text" class="answer-text">{{ answer.text }}</div>
+        <app-checking-audio-player
+          *ngIf="answer.audioUrl"
+          [source]="answer.audioUrl"
+          [downloadable]="canDownloadAudioFiles"
+        ></app-checking-audio-player>
         <div class="answer-footer">
           <div class="actions">
             <button *ngIf="hasPermission(answer, 'edit')" mdc-button (click)="editAnswer(answer)" class="answer-edit">
