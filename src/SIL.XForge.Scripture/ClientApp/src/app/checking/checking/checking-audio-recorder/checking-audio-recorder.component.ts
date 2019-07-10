@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import RecordRTC from 'recordrtc';
 
-export interface AudioRecorderStatus {
-  status: string;
+export interface AudioAttachment {
+  status?: string;
   url?: string;
   fileName?: string;
   blob?: Blob;
@@ -14,7 +14,7 @@ export interface AudioRecorderStatus {
   styleUrls: ['./checking-audio-recorder.component.scss']
 })
 export class CheckingAudioRecorderComponent {
-  @Output() status: EventEmitter<AudioRecorderStatus> = new EventEmitter<AudioRecorderStatus>();
+  @Output() status: EventEmitter<AudioAttachment> = new EventEmitter<AudioAttachment>();
   audioUrl: string = '';
   private stream: MediaStream;
   private recordRTC: RecordRTC;
@@ -31,11 +31,6 @@ export class CheckingAudioRecorderComponent {
     // handle error here
   }
 
-  getFileName(url: string): string {
-    // TODO: (NW) Make this actually do something
-    return 'temp.webm';
-  }
-
   processAudio(audioVideoWebMURL: string) {
     this.audioUrl = audioVideoWebMURL;
     this.recordRTC.getDataURL(() => {});
@@ -43,7 +38,7 @@ export class CheckingAudioRecorderComponent {
       url: audioVideoWebMURL,
       status: 'processed',
       blob: this.recordRTC.getBlob(),
-      fileName: this.getFileName(this.audioUrl)
+      fileName: audioVideoWebMURL
     });
   }
 

@@ -1,21 +1,18 @@
-<div *ngIf="!hasAudioAttachment" class="buttons">
-  <button *ngIf="!isRecording" mdc-button primary (click)="startRecording()">
+<ng-container *ngIf="!hasAudioAttachment">
+  <button *ngIf="!isRecording" mdc-button primary (click)="startRecording()" class="record">
     <mdc-icon>mic</mdc-icon>
     Record
   </button>
-  <button *ngIf="!isRecording" mdc-button secondary disabled>
-    <mdc-icon>cloud_upload</mdc-icon>
-    Upload
-  </button>
-  <button *ngIf="isRecording" mdc-button (click)="stopRecording()">
+  <button *ngIf="isRecording" mdc-button (click)="stopRecording()" class="stop-recording">
     <mdc-icon>stop</mdc-icon>
     Stop Recording
   </button>
-</div>
-<div *ngIf="hasAudioAttachment" class="buttons">
-  <button mdc-button (click)="resetRecording()">
+</ng-container>
+<div *ngIf="hasAudioAttachment" class="has-attachment">
+  <button mdc-button fxHide.xs (click)="resetRecording()" class="try-again">
     <mdc-icon>refresh</mdc-icon>
     Try Again
   </button>
+  <button mdc-icon-button fxHide.gt-xs (click)="resetRecording()" icon="refresh" class="try-again"></button>
+  <app-checking-audio-player [source]="audioUrl"></app-checking-audio-player>
 </div>
-<app-checking-audio-player [source]="audioUrl" [downloadable]="true"></app-checking-audio-player>

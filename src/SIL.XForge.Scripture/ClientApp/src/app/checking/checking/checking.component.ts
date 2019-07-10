@@ -222,12 +222,20 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         }
         answer.text = answerAction.text;
         answer.dateModified = dateNow;
-        this.saveAnswer(answer);
-        const uri = this.projectService.uploadAudio(
-          this.project.id,
-          new File([answerAction.audioBlob], answerAction.audioFileName)
-        );
-        console.log(uri);
+        if (answerAction.audio.fileName) {
+          this.projectService
+            .uploadAudio(
+              this.project.id,
+              new File([answerAction.audio.blob], answer.id + '-' + answerAction.audio.fileName)
+            )
+            .then((response: string) => {
+              // Get the amended filename and save it against the answer
+              answer.audioUrl = response.split('/').pop();
+              this.saveAnswer(answer);
+            });
+        } else {
+          this.saveAnswer(answer);
+        }
         break;
       case 'delete':
         this.deleteAnswer(answerAction.answer);
@@ -362,6 +370,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       for (const answerComment of answerComments) {
         this.deleteComment(answerComment);
       }
+      // TODO: Need to physically delete any audio file as well on the backend
       this.checkingData.questionsDocs[this.textJsonDocId].deleteFromList(
         this.questionsPanel.activeQuestion.answers[answerIndex],
         [this.activeChapterQuestionIndex, 'answers', answerIndex]

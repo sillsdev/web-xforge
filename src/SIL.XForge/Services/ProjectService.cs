@@ -111,20 +111,22 @@ namespace SIL.XForge.Services
             return await MapMatchingAsync(included, resources, ExpressionHelper.ChangePredicateType<TEntity>(predicate));
         }
 
-        public async Task<Uri> SaveAudioAsync(string id, string name, Stream inputStream)
+        public async Task<Uri> SaveAudioAsync(string projectId, string fileName, Stream inputStream)
         {
-            await CheckCanUpdateDeleteAsync(id);
+            await CheckCanUpdateDeleteAsync(projectId);
 
             string audioDir = Path.Combine(_siteOptions.Value.SharedDir, "audio");
             if (!Directory.Exists(audioDir))
                 Directory.CreateDirectory(audioDir);
-            string fileName = id + Path.GetExtension(name);
             string path = Path.Combine(audioDir, fileName);
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
             var uri = new Uri(_siteOptions.Value.Origin,
                 $"/assets/audio/{fileName}");
-            // await Entities.UpdateAsync(id, update => update.Set(u => u.AudioUrl, uri.PathAndQuery));
             return uri;
         }
     }
