@@ -34,6 +34,8 @@ namespace SIL.XForge.Scripture.Services
             _realtimeService = realtimeService;
         }
 
+        protected override string ProjectAdministratorRole => SFProjectRoles.Administrator;
+
         protected override async Task<SFProjectEntity> InsertEntityAsync(SFProjectEntity entity)
         {
             var projectUser = new SFProjectUserEntity

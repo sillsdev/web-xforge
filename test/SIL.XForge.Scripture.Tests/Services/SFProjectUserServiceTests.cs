@@ -21,12 +21,16 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class SFProjectUserServiceTests
     {
+        private const string User01Id = "user01";
+        private const string User02Id = "user02";
+        private const string User03Id = "user03";
+
         [Test]
         public async Task CreateAsync_UserRoleSameUser()
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user02", SystemRoles.User);
+                env.SetUser(User02Id, SystemRoles.User);
                 env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
                     .Returns(Task.FromResult(Attempt.Success(SFProjectRoles.Administrator)));
 
@@ -37,15 +41,15 @@ namespace SIL.XForge.Scripture.Services
                     Id = "projectusernew",
                     ProjectRef = "project01",
                     Project = new SFProjectResource { Id = "project01" },
-                    UserRef = "user02",
-                    User = new UserResource { Id = "user02" }
+                    UserRef = User02Id,
+                    User = new UserResource { Id = User02Id }
                 };
                 SFProjectUserResource newProjectUser = await env.Service.CreateAsync(projectUser);
 
                 Assert.That(newProjectUser, Is.Not.Null);
                 Assert.That(newProjectUser.Id, Is.EqualTo("projectusernew"));
                 Assert.That(newProjectUser.ProjectRef, Is.EqualTo("project01"));
-                Assert.That(newProjectUser.UserRef, Is.EqualTo("user02"));
+                Assert.That(newProjectUser.UserRef, Is.EqualTo(User02Id));
                 Assert.That(env.ContainsProjectUser("projectusernew"), Is.True);
             }
         }
@@ -55,7 +59,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user02", SystemRoles.User);
+                env.SetUser(User02Id, SystemRoles.User);
                 env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
                     .Returns(Task.FromResult(Attempt.Success(SFProjectRoles.Administrator)));
 
@@ -66,8 +70,8 @@ namespace SIL.XForge.Scripture.Services
                     Id = "projectusernew",
                     ProjectRef = "project01",
                     Project = new SFProjectResource { Id = "project01" },
-                    UserRef = "user03",
-                    User = new UserResource { Id = "user03" }
+                    UserRef = User03Id,
+                    User = new UserResource { Id = User03Id }
                 };
                 var ex = Assert.ThrowsAsync<JsonApiException>(async () =>
                     {
@@ -83,7 +87,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user02", SystemRoles.SystemAdmin);
+                env.SetUser(User02Id, SystemRoles.SystemAdmin);
                 env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
                     .Returns(Task.FromResult(Attempt.Success(SFProjectRoles.Administrator)));
 
@@ -94,15 +98,15 @@ namespace SIL.XForge.Scripture.Services
                     Id = "projectusernew",
                     ProjectRef = "project01",
                     Project = new SFProjectResource { Id = "project01" },
-                    UserRef = "user03",
-                    User = new UserResource { Id = "user03" }
+                    UserRef = User03Id,
+                    User = new UserResource { Id = User03Id }
                 };
                 SFProjectUserResource newProjectUser = await env.Service.CreateAsync(projectUser);
 
                 Assert.That(newProjectUser, Is.Not.Null);
                 Assert.That(newProjectUser.Id, Is.EqualTo("projectusernew"));
                 Assert.That(newProjectUser.ProjectRef, Is.EqualTo("project01"));
-                Assert.That(newProjectUser.UserRef, Is.EqualTo("user03"));
+                Assert.That(newProjectUser.UserRef, Is.EqualTo(User03Id));
                 Assert.That(env.ContainsProjectUser("projectusernew"), Is.True);
             }
         }
@@ -112,7 +116,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.User);
+                env.SetUser(User01Id, SystemRoles.User);
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("selected-book-id"), "text02" }
@@ -136,7 +140,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user02", SystemRoles.User);
+                env.SetUser(User02Id, SystemRoles.User);
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("selected-book-id"), "text02" }
@@ -162,7 +166,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user02", SystemRoles.SystemAdmin);
+                env.SetUser(User02Id, SystemRoles.SystemAdmin);
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("selected-book-id"), "text02" }
@@ -186,7 +190,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.User);
+                env.SetUser(User01Id, SystemRoles.User);
 
                 Assert.That(await env.Service.DeleteAsync("projectuser01"), Is.True);
 
@@ -195,11 +199,24 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task DeleteAsync_ProjectAdmin()
+        {
+            using (var env = new TestEnvironment())
+            {
+                env.SetUser(User02Id, SystemRoles.User);
+
+                Assert.That(await env.Service.DeleteAsync("projectuser04"), Is.True);
+
+                Assert.That(env.ContainsProjectUser("projectuser04"), Is.False);
+            }
+        }
+
+        [Test]
         public void UpdateRelationshipsAsync_NotAllowed()
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.User);
+                env.SetUser(User01Id, SystemRoles.User);
 
                 var ex = Assert.ThrowsAsync<JsonApiException>(async () =>
                     {
@@ -212,11 +229,11 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetAsync()
+        public async Task GetAsync_NonProjectAdmin()
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.User);
+                env.SetUser(User01Id, SystemRoles.User);
                 env.JsonApiContext.QuerySet.Returns(new QuerySet
                 {
                     SortParameters = { new SortQuery(SortDirection.Ascending, "role") }
@@ -225,9 +242,34 @@ namespace SIL.XForge.Scripture.Services
 
                 SFProjectUserResource[] results = (await env.Service.GetAsync()).ToArray();
 
-                Assert.That(results.Length, Is.EqualTo(2));
+                Assert.That(results.Length, Is.EqualTo(3));
                 Assert.That(results[0].ProjectRef, Is.EqualTo("project03"));
                 Assert.That(results[1].ProjectRef, Is.EqualTo("project01"));
+                Assert.That(results[2].ProjectRef, Is.EqualTo("project04"));
+            }
+        }
+
+        [Test]
+        public async Task GetAsync_ProjectAdmin()
+        {
+            using (var env = new TestEnvironment())
+            {
+                env.SetUser(User02Id, SystemRoles.User);
+                env.JsonApiContext.QuerySet.Returns(new QuerySet
+                {
+                    SortParameters = { new SortQuery(SortDirection.Ascending, "role") }
+                });
+                env.JsonApiContext.PageManager.Returns(new PageManager());
+
+                SFProjectUserResource[] results = (await env.Service.GetAsync()).ToArray();
+
+                Assert.That(results.Length, Is.EqualTo(3));
+                Assert.That(results[0].ProjectRef, Is.EqualTo("project02"));
+                Assert.That(results[1].ProjectRef, Is.EqualTo("project04"));
+                Assert.That(results[2].ProjectRef, Is.EqualTo("project04"));
+                Assert.That(results[0].UserRef, Is.EqualTo(User02Id));
+                Assert.That(results[1].UserRef, Is.EqualTo(User02Id));
+                Assert.That(results[2].UserRef, Is.EqualTo(User01Id));
             }
         }
 
@@ -236,7 +278,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.User);
+                env.SetUser(User01Id, SystemRoles.User);
                 env.JsonApiContext.QuerySet.Returns(new QuerySet
                 {
                     SortParameters = { new SortQuery(SortDirection.Ascending, "role") }
@@ -257,9 +299,9 @@ namespace SIL.XForge.Scripture.Services
             {
                 Users = new MemoryRepository<UserEntity>(new[]
                     {
-                        new UserEntity { Id = "user01" },
-                        new UserEntity { Id = "user02" },
-                        new UserEntity { Id = "user03" }
+                        new UserEntity { Id = User01Id },
+                        new UserEntity { Id = User02Id },
+                        new UserEntity { Id = User03Id }
                     });
                 ParatextService = Substitute.For<IParatextService>();
                 var engineService = Substitute.For<IEngineService>();
@@ -297,7 +339,7 @@ namespace SIL.XForge.Scripture.Services
                             new SFProjectUserEntity
                             {
                                 Id = "projectuser01",
-                                UserRef = "user01",
+                                UserRef = User01Id,
                                 Role = SFProjectRoles.Translator,
                                 SelectedBookId = "text01"
                             }
@@ -312,7 +354,7 @@ namespace SIL.XForge.Scripture.Services
                             new SFProjectUserEntity
                             {
                                 Id = "projectuser02",
-                                UserRef = "user02",
+                                UserRef = User02Id,
                                 Role = SFProjectRoles.Administrator
                             }
                         }
@@ -326,7 +368,27 @@ namespace SIL.XForge.Scripture.Services
                             new SFProjectUserEntity
                             {
                                 Id = "projectuser03",
-                                UserRef = "user01",
+                                UserRef = User01Id,
+                                Role = SFProjectRoles.Administrator
+                            }
+                        }
+                    },
+                    new SFProjectEntity
+                    {
+                        Id = "project04",
+                        ProjectName = "project04",
+                        Users =
+                        {
+                            new SFProjectUserEntity
+                            {
+                                Id = "projectuser04",
+                                UserRef = User01Id,
+                                Role = SFProjectRoles.Translator
+                            },
+                            new SFProjectUserEntity
+                            {
+                                Id = "projectuser05",
+                                UserRef = User02Id,
                                 Role = SFProjectRoles.Administrator
                             }
                         }

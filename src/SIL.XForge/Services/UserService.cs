@@ -25,6 +25,7 @@ namespace SIL.XForge.Services
         }
 
         public IResourceMapper<ProjectUserResource, ProjectUserEntity> ProjectUserMapper { get; set; }
+        public IProjectAdminFilter<ProjectEntity> ProjectAdminFilter { get; set; }
 
         protected override IRelationship<UserEntity> GetRelationship(string relationshipName)
         {
@@ -145,7 +146,11 @@ namespace SIL.XForge.Services
         protected override Task<IQueryable<UserEntity>> ApplyPermissionFilterAsync(IQueryable<UserEntity> query)
         {
             if (SystemRole == SystemRoles.User)
-                query = query.Where(u => u.Id == UserId);
+            {
+                List<string> adminProjectUserRefs = ProjectAdminFilter.AdministratorAccessibleProjectUsers(UserId)
+                    .Select(pu => pu.UserRef).ToList();
+                query = query.Where(u => adminProjectUserRefs.Contains(u.Id) || u.Id == UserId);
+            }
             return Task.FromResult(query);
         }
 

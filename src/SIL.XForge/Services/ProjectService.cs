@@ -16,7 +16,7 @@ using SIL.XForge.Utils;
 namespace SIL.XForge.Services
 {
     public abstract class ProjectService<TResource, TEntity> : RepositoryResourceServiceBase<TResource, TEntity>,
-        IResourceMapper<ProjectResource, ProjectEntity>, IProjectService<TResource>
+        IResourceMapper<ProjectResource, ProjectEntity>, IProjectService<TResource>, IProjectAdminFilter<ProjectEntity>
         where TResource : ProjectResource
         where TEntity : ProjectEntity
     {
@@ -31,6 +31,8 @@ namespace SIL.XForge.Services
         }
 
         public IResourceMapper<ProjectUserResource, ProjectUserEntity> ProjectUserMapper { get; set; }
+
+        protected abstract string ProjectAdministratorRole { get; }
 
         protected override IRelationship<TEntity> GetRelationship(string relationshipName)
         {
@@ -66,7 +68,9 @@ namespace SIL.XForge.Services
         protected override Task<IQueryable<TEntity>> ApplyPermissionFilterAsync(IQueryable<TEntity> query)
         {
             if (SystemRole == SystemRoles.User)
-                query = query.Where(p => p.Users.Any(u => u.UserRef == UserId));
+            {
+                query = query.Where(p => p.Users.Any(pu => pu.UserRef == UserId));
+            }
             return Task.FromResult(query);
         }
 
@@ -128,6 +132,15 @@ namespace SIL.XForge.Services
             var uri = new Uri(_siteOptions.Value.Origin,
                 $"/assets/audio/{fileName}");
             return uri;
+        }
+
+        public List<ProjectUserEntity> AdministratorAccessibleProjectUsers(string adminUserId)
+        {
+            // projects where the adminUserId is the project Administrator then select project users
+            return Entities.Query()
+                .Where(p => p.Users.Any(pu => pu.UserRef == adminUserId && pu.Role == ProjectAdministratorRole))
+                .SelectMany(p => p.Users).Select(pu => pu)
+                .ToList();
         }
     }
 }
