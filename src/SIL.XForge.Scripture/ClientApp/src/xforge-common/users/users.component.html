@@ -6,4 +6,4 @@
     <!--mdc-tab label="Send Message"></mdc-tab-->
   </mdc-tab-scroller>
 </mdc-tab-bar>
-<app-collaborators *ngIf="tabBar.activeTabIndex == 0"></app-collaborators>
+<app-collaborators [fxShow]="tabBar.activeTabIndex == 0"></app-collaborators>
