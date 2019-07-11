@@ -28,18 +28,38 @@ module.exports = function(config) {
       reports: ['html', 'lcovonly'],
       fixWebpackSourcePaths: true
     },
+    files: [
+      { pattern: 'app/checking/checking/checking-audio-player/test-audio-player.webm', watched: false, included: false }
+    ],
+    proxies: {
+      '/assets/audio/': '/base/app/checking/checking/checking-audio-player/'
+    },
     reporters: isTC ? ['teamcity', 'coverage-istanbul'] : ['progress', 'kjhtml'],
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
     captureTimeout: 120000, // compile needs to finished otherwise first capture fails
-    browsers: isTC ? ['ChromiumHeadless'] : ['Chrome'],
+    browsers: isTC ? ['ChromiumHeadless'] : ['xForgeChrome'],
     browserDisconnectTimeout: 10000,
     browserNoActivityTimeout: 60000,
-    flags: isTC
-      ? ['--no-sandbox', '--headless', '--disable-gpu', '--disable-translate', '--disable-extensions']
-      : config.flags,
+    customLaunchers: {
+      ChromiumHeadless: {
+        base: 'Chrome',
+        flags: [
+          '--no-sandbox',
+          '--headless',
+          '--disable-gpu',
+          '--disable-translate',
+          '--disable-extensions',
+          '--use-fake-ui-for-media-stream'
+        ]
+      },
+      xForgeChrome: {
+        base: 'Chrome',
+        flags: ['--use-fake-ui-for-media-stream', '--autoplay-policy=no-user-gesture-required']
+      }
+    },
     singleRun: false
   });
 };

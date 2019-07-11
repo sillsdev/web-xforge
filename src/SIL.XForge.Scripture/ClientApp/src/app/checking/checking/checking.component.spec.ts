@@ -164,11 +164,21 @@ describe('CheckingComponent', () => {
       env.setupReviewerScenarioData(env.reviewerUser);
       const question = env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
+      env.waitForSliderUpdate();
       expect(env.yourAnswerField).toBeDefined();
       env.clickButton(env.cancelAnswerButton);
       env.waitForSliderUpdate();
       expect(env.yourAnswerField).toBeNull();
       expect(env.addAnswerButton).toBeDefined();
+    }));
+
+    it('can change answering tabs', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.reviewerUser);
+      const question = env.selectQuestion(2);
+      env.clickButton(env.addAnswerButton);
+      env.waitForSliderUpdate();
+      env.clickButton(env.recordTab);
+      expect(env.recordButton).toBeDefined();
     }));
 
     it('check answering validation', fakeAsync(() => {
@@ -496,6 +506,14 @@ class TestEnvironment {
 
   get quillEditor(): HTMLElement {
     return <HTMLElement>document.getElementsByClassName('ql-container')[0];
+  }
+
+  get recordTab(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(2)'));
+  }
+
+  get recordButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#answer-form button.record'));
   }
 
   get increaseFontSizeButton(): DebugElement {

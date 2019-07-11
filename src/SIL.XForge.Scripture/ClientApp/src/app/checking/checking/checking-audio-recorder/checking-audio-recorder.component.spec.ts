@@ -14,31 +14,22 @@ describe('CheckingAudioRecorderComponent', () => {
   });
 
   it('can record', async () => {
-    // spyOn(navigator.mediaDevices, 'getUserMedia').and.callFake(function(
-    //   constraints: MediaStreamConstraints
-    // ): Promise<MediaStream> {
-    //   return new Promise<MediaStream>(resolve => new MediaStream());
-    // });
     expect(env.recordButton).toBeTruthy();
     expect(env.stopRecordingButton).toBeFalsy();
     env.clickButton(env.recordButton);
     await env.waitForRecorder(1000);
-    env.fixture.detectChanges();
     expect(env.recordButton).toBeFalsy();
     expect(env.stopRecordingButton).toBeTruthy();
     env.clickButton(env.stopRecordingButton);
     await env.waitForRecorder(100);
-    env.fixture.detectChanges();
-    expect(env.stopRecordingButton).toBeFalsy();
-    expect(env.tryAgainButton).toBeTruthy();
-    env.clickButton(env.tryAgainButton);
-    expect(env.recordButton).toBeTruthy();
-    expect(env.tryAgainButton).toBeFalsy();
+    expect(env.component.hasAudioAttachment).toBe(true);
   });
 
-  it('can restart', () => {
+  it('can restart', async () => {
     env.clickButton(env.recordButton);
+    await env.waitForRecorder(1000);
     env.clickButton(env.stopRecordingButton);
+    await env.waitForRecorder(100);
     env.clickButton(env.tryAgainButton);
     expect(env.recordButton).toBeTruthy();
   });
@@ -77,5 +68,6 @@ class TestEnvironment {
 
   async waitForRecorder(ms: number) {
     await new Promise(resolve => setTimeout(resolve, ms));
+    this.fixture.detectChanges();
   }
 }
