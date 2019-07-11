@@ -16,7 +16,8 @@ using SIL.XForge.Utils;
 namespace SIL.XForge.Services
 {
     public abstract class ProjectUserService<TResource, TEntity, TProjectEntity>
-        : ResourceServiceBase<TResource, TEntity>, IResourceMapper<ProjectUserResource, ProjectUserEntity>
+        : ResourceServiceBase<TResource, TEntity>, IResourceMapper<ProjectUserResource, ProjectUserEntity>,
+            IProjectAdminFilter<ProjectEntity>
         where TResource : ProjectUserResource
         where TEntity : ProjectUserEntity
         where TProjectEntity : ProjectEntity
@@ -51,7 +52,11 @@ namespace SIL.XForge.Services
         protected override Task<IQueryable<TEntity>> ApplyPermissionFilterAsync(IQueryable<TEntity> query)
         {
             if (SystemRole == SystemRoles.User)
-                query = query.Where(u => u.UserRef == UserId);
+            {
+                List<string> adminProjectUserIds =
+                    AdministratorAccessibleProjectUsers(UserId).Select(pu => pu.Id).ToList();
+                query = query.Where(pu => adminProjectUserIds.Contains(pu.Id) || pu.UserRef == UserId);
+            }
             return Task.FromResult(query);
         }
 
@@ -162,7 +167,9 @@ namespace SIL.XForge.Services
             {
                 ProjectUserEntity projectUser = await Projects.Query().SelectMany(p => p.Users)
                     .SingleOrDefaultAsync(u => u.Id == id);
-                if (projectUser.UserRef != UserId)
+                List<string> adminProjectUserIds =
+                    AdministratorAccessibleProjectUsers(UserId).Select(pu => pu.Id).ToList();
+                if (!adminProjectUserIds.Contains(projectUser.Id) && projectUser.UserRef != UserId)
                     throw ForbiddenException();
             }
         }
@@ -194,5 +201,7 @@ namespace SIL.XForge.Services
         {
             return await MapMatchingAsync(included, resources, ExpressionHelper.ChangePredicateType<TEntity>(predicate));
         }
+
+        public abstract List<ProjectUserEntity> AdministratorAccessibleProjectUsers(string adminUserId);
     }
 }

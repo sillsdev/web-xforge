@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -12,7 +13,8 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
-    public class SFProjectUserService : ProjectUserService<SFProjectUserResource, SFProjectUserEntity, SFProjectEntity>
+    public class SFProjectUserService : ProjectUserService<SFProjectUserResource, SFProjectUserEntity, SFProjectEntity>,
+        IProjectAdminFilter<ProjectEntity>
     {
         private readonly IRepository<UserEntity> _users;
         private readonly IParatextService _paratextService;
@@ -46,6 +48,15 @@ namespace SIL.XForge.Scripture.Services
             }
 
             return await base.InsertEntityAsync(entity);
+        }
+
+        public override List<ProjectUserEntity> AdministratorAccessibleProjectUsers(string adminUserId)
+        {
+            // projects where the adminUserId is the project Administrator then select project users
+            return Projects.Query()
+                .Where(p => p.Users.Any(pu => pu.UserRef == adminUserId && pu.Role == SFProjectRoles.Administrator))
+                .SelectMany(p => p.Users).Select(pu => pu)
+                .ToList();
         }
     }
 }

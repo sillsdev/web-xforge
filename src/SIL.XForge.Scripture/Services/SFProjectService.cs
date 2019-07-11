@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using JsonApiDotNetCore.Services;
@@ -122,6 +123,15 @@ namespace SIL.XForge.Scripture.Services
                 await _syncService.SyncAsync(id, UserId, trainEngine);
             }
             return entity;
+        }
+
+        public override List<ProjectUserEntity> AdministratorAccessibleProjectUsers(string adminUserId)
+        {
+            // projects where the adminUserId is the project Administrator then select project users
+            return Entities.Query()
+                .Where(p => p.Users.Any(pu => pu.UserRef == adminUserId && pu.Role == SFProjectRoles.Administrator))
+                .SelectMany(p => p.Users).Select(pu => pu)
+                .ToList();
         }
     }
 }

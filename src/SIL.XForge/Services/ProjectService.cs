@@ -13,7 +13,7 @@ using SIL.XForge.Utils;
 namespace SIL.XForge.Services
 {
     public abstract class ProjectService<TResource, TEntity> : RepositoryResourceServiceBase<TResource, TEntity>,
-        IResourceMapper<ProjectResource, ProjectEntity>
+        IResourceMapper<ProjectResource, ProjectEntity>, IProjectAdminFilter<ProjectEntity>
         where TResource : ProjectResource
         where TEntity : ProjectEntity
     {
@@ -59,7 +59,12 @@ namespace SIL.XForge.Services
         protected override Task<IQueryable<TEntity>> ApplyPermissionFilterAsync(IQueryable<TEntity> query)
         {
             if (SystemRole == SystemRoles.User)
-                query = query.Where(p => p.Users.Any(u => u.UserRef == UserId));
+            {
+                List<string> adminProjectUserIds =
+                    AdministratorAccessibleProjectUsers(UserId).Select(pu => pu.Id).ToList();
+                query = query
+                    .Where(p => p.Users.Any(pu => adminProjectUserIds.Contains(pu.Id) || pu.UserRef == UserId));
+            }
             return Task.FromResult(query);
         }
 
@@ -103,5 +108,7 @@ namespace SIL.XForge.Services
         {
             return await MapMatchingAsync(included, resources, ExpressionHelper.ChangePredicateType<TEntity>(predicate));
         }
+
+        public abstract List<ProjectUserEntity> AdministratorAccessibleProjectUsers(string adminUserId);
     }
 }
