@@ -2,7 +2,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
 import RecordRTC from 'recordrtc';
 
 export interface AudioAttachment {
-  status?: string;
+  status?: 'denied' | 'processed' | 'recoding' | 'reset' | 'stopped';
   url?: string;
   fileName?: string;
   blob?: Blob;
@@ -16,6 +16,7 @@ export interface AudioAttachment {
 export class CheckingAudioRecorderComponent {
   @Output() status: EventEmitter<AudioAttachment> = new EventEmitter<AudioAttachment>();
   audioUrl: string = '';
+  microphonePermission: boolean;
   private stream: MediaStream;
   private recordRTC: RecordRTC;
 
@@ -28,7 +29,8 @@ export class CheckingAudioRecorderComponent {
   }
 
   errorCallback() {
-    // handle error here
+    this.microphonePermission = false;
+    this.status.emit({ status: 'denied' });
   }
 
   processAudio(audioVideoWebMURL: string) {
@@ -65,7 +67,9 @@ export class CheckingAudioRecorderComponent {
 
   successCallback(stream: MediaStream) {
     const options = {
-      type: 'audio/webm'
+      disableLogs: true,
+      type: 'audio',
+      mimeType: 'audio/webm'
     };
     this.stream = stream;
     this.recordRTC = RecordRTC(stream, options);

@@ -7,7 +7,28 @@ import { saveAs } from 'file-saver';
   styleUrls: ['./checking-audio-player.component.scss']
 })
 export class CheckingAudioPlayerComponent {
-  @ViewChild('slider') slider: ElementRef;
+  @ViewChild('slider', { read: ElementRef }) set sliderElement(slider: ElementRef) {
+    if (!slider) {
+      return;
+    }
+    this.slider = slider;
+    this.slider.nativeElement.addEventListener('mousemove', (event: MouseEvent) => {
+      if (this._seeking) {
+        this.seeking(
+          ((event.clientX - this.slider.nativeElement.offsetLeft) / this.slider.nativeElement.offsetWidth) * 100
+        );
+      }
+    });
+    this.slider.nativeElement.addEventListener('mousedown', (event: MouseEvent) => {
+      this._seeking = true;
+      this.seeking(
+        ((event.clientX - this.slider.nativeElement.offsetLeft) / this.slider.nativeElement.offsetWidth) * 100
+      );
+    });
+    this.slider.nativeElement.addEventListener('mouseup', () => {
+      this._seeking = false;
+    });
+  }
   @Input() set downloadable(downloadable: boolean) {
     this._isDownloadable = downloadable;
   }
@@ -52,6 +73,7 @@ export class CheckingAudioPlayerComponent {
   private _isPlaying: boolean = false;
   private _seek: number = 0;
   private _seeking: boolean = false;
+  private slider: ElementRef;
   private audio: HTMLAudioElement = new Audio();
 
   get duration(): number {
@@ -73,25 +95,6 @@ export class CheckingAudioPlayerComponent {
   set enabled(enable: boolean) {
     this._enabled = enable;
     this.seek = 0;
-    // Bind events after DOM has updated
-    setTimeout(() => {
-      this.slider.nativeElement.addEventListener('mousemove', (event: MouseEvent) => {
-        if (this._seeking) {
-          this.seeking(
-            ((event.clientX - this.slider.nativeElement.offsetLeft) / this.slider.nativeElement.offsetWidth) * 100
-          );
-        }
-      });
-      this.slider.nativeElement.addEventListener('mousedown', (event: MouseEvent) => {
-        this._seeking = true;
-        this.seeking(
-          ((event.clientX - this.slider.nativeElement.offsetLeft) / this.slider.nativeElement.offsetWidth) * 100
-        );
-      });
-      this.slider.nativeElement.addEventListener('mouseup', () => {
-        this._seeking = false;
-      });
-    }, 1);
   }
 
   get hasSource(): boolean {
@@ -125,7 +128,9 @@ export class CheckingAudioPlayerComponent {
   }
 
   play() {
-    this.audio.play();
+    this.audio.play().catch(error => {
+      console.log(error);
+    });
   }
 
   private seeking(value: number) {

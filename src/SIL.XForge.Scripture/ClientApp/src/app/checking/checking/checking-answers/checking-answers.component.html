@@ -9,7 +9,7 @@
   <div class="question">{{ question.text }}</div>
   <div *ngIf="!answerFormVisible" class="actions">
     <button
-      *ngIf="!currentUserTotalAnswers && !!isAdministrator"
+      *ngIf="!currentUserTotalAnswers && !isAdministrator"
       mdc-button
       primary
       (click)="showAnswerForm()"
