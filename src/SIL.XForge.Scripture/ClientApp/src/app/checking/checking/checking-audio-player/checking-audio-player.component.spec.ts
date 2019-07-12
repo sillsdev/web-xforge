@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement, ViewChild } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player.component';
@@ -27,8 +27,6 @@ describe('CheckingAudioPlayerComponent', () => {
       audioFile +
       '" [downloadable]="true"></app-checking-audio-player>';
     await env.createHostComponent(template);
-    // env.clickButton(env.moreMenuButton);
-    // await env.waitForPlayer(1500);
     env.clickButton(env.playButton);
     await env.waitForPlayer(1500);
     env.fixture.detectChanges();
