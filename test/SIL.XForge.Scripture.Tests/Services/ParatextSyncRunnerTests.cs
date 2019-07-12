@@ -271,7 +271,7 @@ namespace SIL.XForge.Scripture.Services
             await env.GetTextDoc("MAT", 3, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
             await env.GetTextDoc("MRK", 2, TextType.Target).Received().DeleteAsync();
 
-            await env.GetTextDoc("MAT", 3, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
+            await env.GetTextDoc("MAT", 3, TextType.Source).Received().CreateAsync(Arg.Any<Delta>());
             await env.GetTextDoc("MRK", 2, TextType.Source).Received().DeleteAsync();
 
             await env.GetQuestionsDoc("MAT", 3).Received().CreateAsync(Arg.Any<List<Question>>());
