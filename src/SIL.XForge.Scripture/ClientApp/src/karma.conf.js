@@ -3,7 +3,7 @@
 
 module.exports = function(config) {
   const isTC =
-    config.browsers && config.browsers.length === 1 && config.browsers[0] === 'ChromiumHeadless' && !config.watch;
+    config.browsers && config.browsers.length === 1 && config.browsers[0] === 'ChromeHeadless' && !config.watch;
 
   config.set({
     basePath: '',
@@ -40,12 +40,12 @@ module.exports = function(config) {
     logLevel: config.LOG_INFO,
     autoWatch: true,
     captureTimeout: 120000, // compile needs to finished otherwise first capture fails
-    browsers: isTC ? ['ChromiumHeadless'] : ['xForgeChrome'],
+    browsers: isTC ? ['ChromeHeadless'] : ['xForgeChrome'],
     browserDisconnectTimeout: 10000,
     browserNoActivityTimeout: 60000,
     customLaunchers: {
-      ChromiumHeadless: {
-        base: 'Chrome',
+      ChromeHeadless: {
+        base: 'ChromiumHeadless',
         flags: [
           '--no-sandbox',
           '--headless',
