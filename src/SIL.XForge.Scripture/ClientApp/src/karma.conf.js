@@ -52,7 +52,8 @@ module.exports = function(config) {
           '--disable-gpu',
           '--disable-translate',
           '--disable-extensions',
-          '--use-fake-ui-for-media-stream'
+          '--use-fake-ui-for-media-stream',
+          '--autoplay-policy=no-user-gesture-required'
         ]
       },
       xForgeChrome: {
