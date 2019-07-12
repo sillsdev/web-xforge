@@ -19,7 +19,9 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import XRegExp from 'xregexp';
+import { HelpHeroService } from '../../core/help-hero.service';
 import { SFProject } from '../../core/models/sfproject';
+import { SFProjectRoles } from '../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../core/models/sfproject-user';
 import { Delta } from '../../core/models/text-doc';
 import { TextDocId, TextType } from '../../core/models/text-doc-id';
@@ -83,7 +85,8 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     private readonly projectUserService: SFProjectUserService,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private readonly helpHeroService: HelpHeroService
   ) {
     super();
     const wordTokenizer = new LatinWordTokenizer();
@@ -291,6 +294,8 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
             this.targetWordTokenizer
           );
         }
+
+        this.startUserOnboardingTour(); // start HelpHero tour for the Translate feature
       }
     );
   }
@@ -603,5 +608,24 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     const otherRange = this.source.segment.range;
     const otherBounds = this.source.editor.selection.getBounds(otherRange.index);
     this.source.editor.scrollingContainer.scrollTop += otherBounds.top - thisBounds.top;
+  }
+
+  private startUserOnboardingTour() {
+    // HelpHero user-onboarding tour setup
+    const isProjectAdmin: boolean = this.projectUser.role === SFProjectRoles.ParatextAdministrator;
+
+    this.helpHeroService.setProperty({
+      isAdmin: isProjectAdmin
+    });
+
+    // tell HelpHero to remember this user to make sure we won't show them the tour again later
+    this.helpHeroService.setIdentity(this.projectUser.id);
+
+    // Start the Translate tour
+    if (isProjectAdmin) {
+      this.helpHeroService.startTour('YjhplnLK8XH', { skipIfAlreadySeen: true }); // start Admin tour
+    } else {
+      this.helpHeroService.startTour('EbFyorsmloj', { skipIfAlreadySeen: true }); // start Translator tour
+    }
   }
 }
