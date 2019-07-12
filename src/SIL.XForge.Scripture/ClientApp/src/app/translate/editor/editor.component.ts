@@ -22,7 +22,7 @@ import XRegExp from 'xregexp';
 import { HelpHeroService } from '../../core/help-hero.service';
 import { SFProject } from '../../core/models/sfproject';
 import { SFProjectRoles } from '../../core/models/sfproject-roles';
-import { SFProjectUser, TranslateProjectUserConfig } from '../../core/models/sfproject-user';
+import { SFProjectUser } from '../../core/models/sfproject-user';
 import { Delta } from '../../core/models/text-doc';
 import { TextDocId, TextType } from '../../core/models/text-doc-id';
 import { TextInfo } from '../../core/models/text-info';
