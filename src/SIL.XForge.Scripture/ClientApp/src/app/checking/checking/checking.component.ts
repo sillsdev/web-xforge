@@ -9,6 +9,7 @@ import { filter, map, switchMap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof, objectId } from 'xforge-common/utils';
+import { HelpHeroService } from '../../core/help-hero.service';
 import { Answer } from '../../core/models/answer';
 import { Comment } from '../../core/models/comment';
 import { CommentsDoc } from '../../core/models/comments-doc';
@@ -16,6 +17,7 @@ import { Like } from '../../core/models/like';
 import { Question } from '../../core/models/question';
 import { QuestionsDoc } from '../../core/models/questions-doc';
 import { SFProject } from '../../core/models/sfproject';
+import { SFProjectRoles } from '../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../core/models/sfproject-user';
 import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { TextInfo } from '../../core/models/text-info';
@@ -81,6 +83,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     private readonly activatedRoute: ActivatedRoute,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
+    private readonly helpHeroService: HelpHeroService,
     private readonly media: MediaObserver,
     private projectUserService: SFProjectUserService
   ) {
@@ -186,6 +189,8 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
               this.checkingData.questionsDocs[getTextDocIdStr(this.project.id, this.text.bookId, chapter)].data
             );
           }
+
+          this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
         }
       }
     );
@@ -489,6 +494,51 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       } else {
         this.summary.unread++;
       }
+    }
+  }
+
+  private startUserOnboardingTour() {
+    // HelpHero user-onboarding tour setup
+    const isProjectAdmin: boolean = this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
+    const isDiscussionEnabled: boolean = this.project.usersSeeEachOthersResponses;
+    const isInvitingEnabled: boolean = this.project.shareEnabled;
+
+    this.helpHeroService.setProperty({
+      isAdmin: isProjectAdmin,
+      discussionEnabled: isDiscussionEnabled,
+      invitingEnabled: isInvitingEnabled
+    });
+
+    // tell HelpHero to remember this user to make sure we won't show them the tour again later
+    this.helpHeroService.setIdentity(this.projectCurrentUser.id);
+
+    // start the Community Checking tour
+    if (isProjectAdmin) {
+      // start Admin tour
+      this.helpHeroService.startTour('sLbG6FRjjVo', { skipIfAlreadySeen: true });
+    } else if (isDiscussionEnabled) {
+      // start Reviewer tour w/ discussion
+      this.helpHeroService.startTour('39HmnsRplaw', { skipIfAlreadySeen: true });
+      this.helpHeroService.on('tour_completed', () => {
+        if (isInvitingEnabled) {
+          // run invite section of the tour
+          this.helpHeroService.startTour('MexTla8sdju', { skipIfAlreadySeen: true });
+          this.helpHeroService.on('tour_completed', () => {
+            // show end of Reviewer tour
+            this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true });
+          });
+        } else {
+          // show end of Reviewer tour
+          this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true });
+        }
+      });
+    } else {
+      // start Reviewer tour (w/o discussion)
+      this.helpHeroService.startTour('1ikmHlDXktB', { skipIfAlreadySeen: true });
+      this.helpHeroService.on('tour_completed', () => {
+        // show end of Reviewer tour
+        this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true });
+      });
     }
   }
 }
