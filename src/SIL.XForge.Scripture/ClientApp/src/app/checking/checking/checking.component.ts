@@ -501,7 +501,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     // HelpHero user-onboarding tour setup
     const isProjectAdmin: boolean = this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
     const isDiscussionEnabled: boolean = this.project.usersSeeEachOthersResponses;
-    const isInvitingEnabled: boolean = this.project.shareEnabled;
+    const isInvitingEnabled: boolean = this.project.share.enabled;
 
     this.helpHeroService.setProperty({
       isAdmin: isProjectAdmin,
