@@ -40,7 +40,7 @@ run() {
   echo -e "\033[1;34m${LEFT_POINTING_MAGNIFYING_GLASS}  Checking against spec\033[0m"
   date +"%F %T"
   cd "$ROOT_PATH" &&
-    /usr/bin/time --quiet -f 'Duration %E' ng test --browsers ChromiumHeadless --watch false --sourceMap=true |&
+    /usr/bin/time --quiet -f 'Duration %E' ng test --browsers ChromeHeadless --watch false --sourceMap=true |&
       # Slim the output
       grep -v '^.#' |
       grep -v '^Headless.*LOG' |
