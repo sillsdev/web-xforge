@@ -92,9 +92,9 @@ class RealtimeServer {
       server: this.httpServer,
       verifyClient: (info, done) => this.verifyToken(info, done)
     });
-    wss.on('connection', ws => {
+    wss.on('connection', (ws, req) => {
       const stream = new WebSocketJSONStream(ws);
-      this.backend.listen(stream, ws.upgradeReq);
+      this.backend.listen(stream, req);
     });
   }
 
