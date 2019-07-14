@@ -126,7 +126,7 @@ namespace SIL.XForge.Services
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
             var uri = new Uri(_siteOptions.Value.Origin,
-                $"/assets/audio/{fileName}");
+                Path.Combine("assets", "audio", fileName));
             return uri;
         }
     }

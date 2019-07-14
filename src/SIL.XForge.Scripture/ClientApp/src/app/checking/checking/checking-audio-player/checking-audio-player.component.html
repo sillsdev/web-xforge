@@ -2,7 +2,7 @@
   <button *ngIf="!isPlaying" mdc-icon-button icon="play_arrow" (click)="play()" class="play"></button>
   <button *ngIf="isPlaying" mdc-icon-button icon="pause" (click)="pause()" class="pause"></button>
   <div class="duration">{{ duration | audioTime }}</div>
-  <input #slider class="slider" type="range" min="0" max="100" step="1" [value]="seek" />
+  <mdc-slider class="slider" min="0" max="100" step="1" [value]="seek" (input)="seeking($event)"></mdc-slider>
   <div class="current-time">{{ currentTime | audioTime }}</div>
   <div *ngIf="canDownload" mdcMenuSurfaceAnchor #moreAnchor>
     <button mdc-icon-button icon="more_vert" (click)="moreMenu.open = !moreMenu.open" class="more-menu"></button>
