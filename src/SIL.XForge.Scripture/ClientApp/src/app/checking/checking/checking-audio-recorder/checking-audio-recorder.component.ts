@@ -28,11 +28,6 @@ export class CheckingAudioRecorderComponent {
     return this.recordRTC && this.recordRTC.state === 'recording';
   }
 
-  errorCallback() {
-    this.microphonePermission = false;
-    this.status.emit({ status: 'denied' });
-  }
-
   processAudio(audioVideoWebMURL: string) {
     this.audioUrl = audioVideoWebMURL;
     this.recordRTC.getDataURL(() => {});
@@ -65,7 +60,12 @@ export class CheckingAudioRecorderComponent {
     this.status.emit({ status: 'stopped' });
   }
 
-  successCallback(stream: MediaStream) {
+  private errorCallback() {
+    this.microphonePermission = false;
+    this.status.emit({ status: 'denied' });
+  }
+
+  private successCallback(stream: MediaStream) {
     const options = {
       disableLogs: true,
       type: 'audio',

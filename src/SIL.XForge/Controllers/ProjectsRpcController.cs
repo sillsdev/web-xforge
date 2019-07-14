@@ -6,7 +6,6 @@ using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Services;
-using System.IO;
 
 namespace SIL.XForge.Controllers
 {

@@ -15,9 +15,8 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
   private static readonly SEARCH_FILTER = 'search';
 
   readonly roles: Map<string, ProjectRole>;
-  readonly _http: HttpClient;
 
-  constructor(type: string, jsonApiService: JsonApiService, roles: ProjectRole[], http: HttpClient) {
+  constructor(type: string, jsonApiService: JsonApiService, roles: ProjectRole[], private readonly http: HttpClient) {
     super(type, jsonApiService);
 
     registerCustomFilter(this.type, ProjectService.SEARCH_FILTER, (r, v) => this.searchProjects(r, v));
@@ -26,7 +25,6 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
       this.roles.set(role.role, role);
     }
     this.roles.set(NONE_ROLE.role, NONE_ROLE);
-    this._http = http;
   }
 
   getAll(parameters?: GetAllParameters<T>, include?: string[][]): QueryObservable<T[]> {
@@ -96,7 +94,7 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
   async uploadAudio(id: string, file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await this._http
+    const response = await this.http
       .post<HttpResponse<string>>(`json-api/projects/${id}/audio`, formData, {
         headers: { Accept: 'application/json' },
         observe: 'response'

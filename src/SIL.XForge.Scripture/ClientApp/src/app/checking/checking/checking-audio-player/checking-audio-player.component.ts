@@ -1,4 +1,5 @@
-import { Component, ElementRef, Input, Pipe, PipeTransform, ViewChild } from '@angular/core';
+import { MdcSliderChange } from '@angular-mdc/web';
+import { Component, Input, Pipe, PipeTransform } from '@angular/core';
 import { saveAs } from 'file-saver';
 
 @Component({
@@ -7,35 +8,52 @@ import { saveAs } from 'file-saver';
   styleUrls: ['./checking-audio-player.component.scss']
 })
 export class CheckingAudioPlayerComponent {
-  @ViewChild('slider', { read: ElementRef }) set sliderElement(slider: ElementRef) {
-    if (!slider) {
-      return;
-    }
-    this.slider = slider;
-    this.slider.nativeElement.addEventListener('mousemove', (event: MouseEvent) => {
-      if (this._seeking) {
-        this.seeking(
-          ((event.clientX - this.slider.nativeElement.offsetLeft) / this.slider.nativeElement.offsetWidth) * 100
-        );
-      }
-    });
-    this.slider.nativeElement.addEventListener('mousedown', (event: MouseEvent) => {
-      this._seeking = true;
-      this.seeking(
-        ((event.clientX - this.slider.nativeElement.offsetLeft) / this.slider.nativeElement.offsetWidth) * 100
-      );
-    });
-    this.slider.nativeElement.addEventListener('mouseup', () => {
-      this._seeking = false;
-    });
+  seek: number = 0;
+
+  private _currentTime: number = 0;
+  private _duration: number = 0;
+  private _enabled: boolean = false;
+  private _isDownloadable: boolean = false;
+  private _isPlaying: boolean = false;
+  private audio: HTMLAudioElement = new Audio();
+
+  get canDownload(): boolean {
+    return this._isDownloadable;
   }
+
+  get currentTime(): number {
+    return this._currentTime;
+  }
+
   @Input() set downloadable(downloadable: boolean) {
     this._isDownloadable = downloadable;
   }
+
+  get duration(): number {
+    return this._duration;
+  }
+
+  get enabled(): boolean {
+    return this._enabled;
+  }
+
+  set enabled(enable: boolean) {
+    this._enabled = enable;
+    this.seek = 0;
+  }
+
+  get hasSource(): boolean {
+    return !!this.audio.src && this.enabled;
+  }
+
+  get isPlaying(): boolean {
+    return this._isPlaying;
+  }
+
   @Input() set source(source: string) {
     this.audio = new Audio();
     if (source !== '') {
-      if (source.indexOf('://') < 0) {
+      if (!source.includes('://')) {
         source = '/assets/audio/' + source;
       }
       this.audio.src = source;
@@ -66,52 +84,6 @@ export class CheckingAudioPlayerComponent {
       }
     }
   }
-  private _currentTime: number = 0;
-  private _duration: number = 0;
-  private _enabled: boolean = false;
-  private _isDownloadable: boolean = false;
-  private _isPlaying: boolean = false;
-  private _seek: number = 0;
-  private _seeking: boolean = false;
-  private slider: ElementRef;
-  private audio: HTMLAudioElement = new Audio();
-
-  get duration(): number {
-    return this._duration;
-  }
-
-  get currentTime(): number {
-    return this._currentTime;
-  }
-
-  get canDownload(): boolean {
-    return this._isDownloadable;
-  }
-
-  get enabled(): boolean {
-    return this._enabled;
-  }
-
-  set enabled(enable: boolean) {
-    this._enabled = enable;
-    this.seek = 0;
-  }
-
-  get hasSource(): boolean {
-    return !!this.audio.src && this.enabled;
-  }
-
-  get isPlaying(): boolean {
-    return this._isPlaying;
-  }
-
-  get seek(): number {
-    return this._seek;
-  }
-
-  set seek(value: number) {
-    this._seek = value;
-  }
 
   private get checkIsPlaying(): boolean {
     return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
@@ -128,18 +100,11 @@ export class CheckingAudioPlayerComponent {
   }
 
   play() {
-    this.audio.play().catch(error => {
-      console.log(error);
-    });
+    this.audio.play();
   }
 
-  private seeking(value: number) {
-    if (value < 0) {
-      value = 0;
-    } else if (value > 100) {
-      value = 100;
-    }
-    this.seek = value;
+  seeking(event: MdcSliderChange) {
+    this.seek = event.value;
     this.audio.currentTime = this.seek > 0 ? this.duration * (this.seek / 100) : 0;
     this._currentTime = this.audio.currentTime;
   }

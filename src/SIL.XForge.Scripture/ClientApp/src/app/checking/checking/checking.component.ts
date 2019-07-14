@@ -204,7 +204,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.scripturePanel.applyFontChange(fontSize);
   }
 
-  answerAction(answerAction: AnswerAction) {
+  async answerAction(answerAction: AnswerAction) {
     let useMaxAnswersPanelSize: boolean = true;
     switch (answerAction.action) {
       case 'save':
@@ -223,19 +223,14 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         answer.text = answerAction.text;
         answer.dateModified = dateNow;
         if (answerAction.audio.fileName) {
-          this.projectService
-            .uploadAudio(
-              this.project.id,
-              new File([answerAction.audio.blob], answer.id + '-' + answerAction.audio.fileName)
-            )
-            .then((response: string) => {
-              // Get the amended filename and save it against the answer
-              answer.audioUrl = response.split('/').pop();
-              this.saveAnswer(answer);
-            });
-        } else {
-          this.saveAnswer(answer);
+          const response = await this.projectService.uploadAudio(
+            this.project.id,
+            new File([answerAction.audio.blob], answer.id + '-' + answerAction.audio.fileName)
+          );
+          // Get the amended filename and save it against the answer
+          answer.audioUrl = response.split('/').pop();
         }
+        this.saveAnswer(answer);
         break;
       case 'delete':
         this.deleteAnswer(answerAction.answer);
