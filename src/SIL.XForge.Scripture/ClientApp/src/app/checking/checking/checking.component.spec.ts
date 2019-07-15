@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialogRef } from '@angular-mdc/web';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -13,6 +13,8 @@ import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-nam
 import { MapQueryResults } from 'xforge-common/json-api.service';
 import { SharingLevel } from 'xforge-common/models/sharing-level';
 import { User } from 'xforge-common/models/user';
+import { UserDoc } from 'xforge-common/models/user-doc';
+import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -136,8 +138,7 @@ describe('CheckingComponent', () => {
       env.setupReviewerScenarioData(env.cleanReviewUser);
       env.selectQuestion(2);
       env.answerQuestion('Answering question 2 should pop up a dialog');
-      verify(env.mockedAccountService.openNameDialog(env.cleanReviewUser.name, true)).once();
-      verify(env.mockedUserService.updateCurrentUserAttributes(anything())).once();
+      verify(env.mockedAccountService.openNameDialog(env.cleanReviewUser.user.name, true)).once();
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answering question 2 should pop up a dialog');
     }));
@@ -358,6 +359,12 @@ describe('CheckingComponent', () => {
   });
 });
 
+interface UserInfo {
+  id: string;
+  user: User;
+  role: string;
+}
+
 class TestEnvironment {
   component: CheckingComponent;
   fixture: ComponentFixture<CheckingComponent>;
@@ -379,7 +386,7 @@ class TestEnvironment {
 
   private testAdminProjectUser: SFProjectUser = new SFProjectUser({
     id: this.adminUser.id,
-    user: this.adminUser,
+    userRef: this.adminUser.id,
     role: this.adminUser.role,
     questionRefsRead: [],
     answerRefsRead: [],
@@ -388,7 +395,7 @@ class TestEnvironment {
 
   private testReviewerProjectUser: SFProjectUser = new SFProjectUser({
     id: this.reviewerUser.id,
-    user: this.reviewerUser,
+    userRef: this.reviewerUser.id,
     role: this.reviewerUser.role,
     questionRefsRead: [],
     answerRefsRead: [],
@@ -397,7 +404,7 @@ class TestEnvironment {
 
   private testCleanReviewerProjectUser: SFProjectUser = new SFProjectUser({
     id: this.cleanReviewUser.id,
-    user: this.cleanReviewUser,
+    userRef: this.cleanReviewUser.id,
     role: this.cleanReviewUser.role,
     questionRefsRead: [],
     answerRefsRead: [],
@@ -728,12 +735,12 @@ class TestEnvironment {
     this.initComponentEnviroment();
   }
 
-  setupReviewerScenarioData(user: User): void {
+  setupReviewerScenarioData(user: UserInfo): void {
     this.setupDefaultProjectData(user);
     this.initComponentEnviroment();
   }
 
-  private setupDefaultProjectData(user: User): void {
+  private setupDefaultProjectData(user: UserInfo): void {
     when(this.mockedProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
       of(
         new MapQueryResults(this.testProject, undefined, [
@@ -836,19 +843,20 @@ class TestEnvironment {
       this.createCommentsDoc(text1_2id, [])
     );
     when(this.mockedUserService.currentUserId).thenReturn(user.id);
-    when(this.mockedUserService.getCurrentUser()).thenReturn(of(user));
-    when(this.mockedUserService.onlineGet(this.adminUser.id)).thenReturn(of(new MapQueryResults(this.adminUser)));
-    when(this.mockedUserService.onlineGet(this.reviewerUser.id)).thenReturn(of(new MapQueryResults(this.reviewerUser)));
-    when(this.mockedUserService.onlineGet(this.cleanReviewUser.id)).thenReturn(
-      of(new MapQueryResults(this.cleanReviewUser))
+    when(this.mockedUserService.getCurrentUser()).thenResolve(this.createUserDoc(user));
+    when(this.mockedUserService.getProfile(this.adminUser.id)).thenResolve(this.createUserProfileDoc(this.adminUser));
+    when(this.mockedUserService.getProfile(this.reviewerUser.id)).thenResolve(
+      this.createUserProfileDoc(this.reviewerUser)
     );
-    when(this.mockedUserService.updateCurrentUserAttributes(anything())).thenResolve(user);
+    when(this.mockedUserService.getProfile(this.cleanReviewUser.id)).thenResolve(
+      this.createUserProfileDoc(this.cleanReviewUser)
+    );
     when(this.mockedAccountService.openNameDialog(anything(), anything())).thenReturn(
       instance(this.mockedCheckingNameDialogRef)
     );
 
     when(this.mockedProjectUserService.update(anything())).thenReturn(new Promise(() => {}));
-    when(this.mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.name));
+    when(this.mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.user.name));
   }
 
   private initComponentEnviroment(): void {
@@ -862,16 +870,29 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private createUser(id: string, role: string, nameConfirmed: boolean = true): User {
-    return new User({
+  private createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {
+    return {
       id: 'user' + id,
-      email: 'user' + id + '@example.com',
-      name: 'User ' + id,
-      role: role,
-      active: true,
-      dateCreated: '2019-01-01T12:00:00.000Z',
-      isNameConfirmed: nameConfirmed
-    });
+      user: {
+        name: 'User ' + id,
+        isNameConfirmed: nameConfirmed
+      },
+      role
+    };
+  }
+
+  private createUserDoc(user: UserInfo): UserDoc {
+    return new UserDoc(
+      new MemoryRealtimeDocAdapter(OTJson0.type, user.id, user.user),
+      instance(this.mockedRealtimeOfflineStore)
+    );
+  }
+
+  private createUserProfileDoc(user: UserInfo): UserProfileDoc {
+    return new UserProfileDoc(
+      new MemoryRealtimeDocAdapter(OTJson0.type, user.id, user.user),
+      instance(this.mockedRealtimeOfflineStore)
+    );
   }
 
   private createQuestionsDoc(id: TextDocId, data: Question[]): QuestionsDoc {

@@ -8,7 +8,7 @@ export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => 
 /** Records in the text_data collection in the local or remote database are the content
  * of a chapter of a Scripture book. */
 export class TextDoc extends RealtimeDoc<DeltaStatic, DeltaStatic> {
-  static readonly TYPE = 'text';
+  static readonly TYPE = 'texts';
 
   constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
     super(TextDoc.TYPE, adapter, store);

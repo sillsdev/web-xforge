@@ -143,14 +143,14 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   hasUserReadAnswer(answer: Answer): boolean {
     return this.projectCurrentUser.answerRefsRead
       ? this.projectCurrentUser.answerRefsRead.includes(answer.id) ||
-          this.projectCurrentUser.user.id === answer.ownerRef
+          this.projectCurrentUser.userRef === answer.ownerRef
       : false;
   }
 
   hasUserReadComment(comment: Comment): boolean {
     return this.projectCurrentUser.commentRefsRead
       ? this.projectCurrentUser.commentRefsRead.includes(comment.id) ||
-          this.projectCurrentUser.user.id === comment.ownerRef
+          this.projectCurrentUser.userRef === comment.ownerRef
       : false;
   }
 

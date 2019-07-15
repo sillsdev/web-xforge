@@ -9,5 +9,6 @@ export const environment = {
   authClientId: 'tY2wXn40fsL5VsPM4uIHNtU6ZUEXGeFn',
   audience: 'https://scriptureforge.org/',
   scope: 'sf_data',
-  prefix: 'sf'
+  prefix: 'sf',
+  siteId: 'sf'
 };

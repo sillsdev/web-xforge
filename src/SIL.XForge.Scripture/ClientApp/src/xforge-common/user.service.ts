@@ -1,15 +1,14 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Record } from '@orbit/data';
-import { clone } from '@orbit/utils';
-import { combineLatest, Observable, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map, shareReplay, switchMap } from 'rxjs/operators';
+import { combineLatest, from, Observable, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
-import { registerCustomFilter } from './custom-filter-specifier';
-import { GetAllParameters, JsonApiService, QueryObservable } from './json-api.service';
+import { JsonApiService, QueryObservable } from './json-api.service';
+import { JsonRpcService } from './json-rpc.service';
 import { ProjectUser } from './models/project-user';
-import { User } from './models/user';
-import { ResourceService } from './resource.service';
+import { UserDoc } from './models/user-doc';
+import { UserProfileDoc } from './models/user-profile-doc';
+import { QueryParameters, RealtimeQueryResults, RealtimeService } from './realtime.service';
 import { nameof } from './utils';
 
 /**
@@ -18,20 +17,14 @@ import { nameof } from './utils';
 @Injectable({
   providedIn: 'root'
 })
-export class UserService extends ResourceService {
-  private static readonly SEARCH_FILTER = 'search';
-
-  private currentUser$: Observable<User>;
-
+export class UserService {
   constructor(
-    jsonApiService: JsonApiService,
+    private readonly realtimeService: RealtimeService,
     private readonly authService: AuthService,
-    private readonly http: HttpClient
-  ) {
-    super(User.TYPE, jsonApiService);
-
-    registerCustomFilter(this.type, UserService.SEARCH_FILTER, (r, v) => this.searchUsers(r, v));
-  }
+    private readonly http: HttpClient,
+    private readonly jsonApiService: JsonApiService,
+    private readonly jsonRpcService: JsonRpcService
+  ) {}
 
   get currentUserId(): string {
     return this.authService.currentUserId;
@@ -56,91 +49,59 @@ export class UserService extends ResourceService {
   }
 
   /** Get currently-logged in user. */
-  getCurrentUser(): Observable<User> {
-    if (this.currentUser$ == null) {
-      this.currentUser$ = this.jsonApiService.get<User>(this.identity(this.currentUserId)).pipe(
-        map(r => r.data),
-        filter(u => u != null),
-        shareReplay(1)
-      );
-    }
-    return this.currentUser$;
+  getCurrentUser(): Promise<UserDoc> {
+    return this.get(this.currentUserId);
+  }
+
+  get(id: string): Promise<UserDoc> {
+    return this.realtimeService.get({ type: UserDoc.TYPE, id });
+  }
+
+  getProfile(id: string): Promise<UserProfileDoc> {
+    return this.realtimeService.get({ type: UserProfileDoc.TYPE, id });
+  }
+
+  onlineGetProjects(id: string, include?: string[][]): QueryObservable<ProjectUser[]> {
+    return this.jsonApiService.onlineGetAll(
+      ProjectUser.TYPE,
+      {
+        filters: [{ op: 'equal', name: nameof<ProjectUser>('userRef'), value: id }]
+      },
+      include
+    );
   }
 
   getProjects(id: string, include?: string[][]): QueryObservable<ProjectUser[]> {
-    return this.jsonApiService.getAllRelated(this.identity(id), nameof<User>('projects'), include);
-  }
-
-  async updateCurrentProjectId(projectId: string = null): Promise<User> {
-    return this.jsonApiService.updateAttributes<User>(this.identity(this.currentUserId), {
-      site: { currentProjectId: projectId }
-    });
-  }
-
-  updateCurrentUserAttributes(attrs: Partial<User>): Promise<User> {
-    return this.jsonApiService.updateAttributes<User>(this.identity(this.currentUserId), attrs);
-  }
-
-  /**
-   * Update the current user's attributes remotely and then locally.
-   * Pass a Partial<User> specifying the attributes to update.
-   */
-  onlineUpdateCurrentUserAttributes(attrs: Partial<User>): Promise<User> {
-    return this.jsonApiService.onlineUpdateAttributes<User>(this.identity(this.currentUserId), attrs, true);
-  }
-
-  async onlineChangePassword(newPassword: string): Promise<void> {
-    const attrs = { password: newPassword } as Partial<User>;
-    await this.jsonApiService.onlineUpdateAttributes<User>(this.identity(this.currentUserId), attrs);
-  }
-
-  onlineGetProjects(id: string): QueryObservable<ProjectUser[]> {
-    return this.jsonApiService.onlineGetAllRelated(this.identity(id), nameof<User>('projects'));
-  }
-
-  async onlineUnlinkParatextAccount(): Promise<void> {
-    const attrs: Partial<User> = { paratextId: null };
-    await this.jsonApiService.onlineUpdateAttributes(this.identity(this.currentUserId), attrs, true);
+    return this.jsonApiService.getAll(
+      ProjectUser.TYPE,
+      {
+        filters: [{ op: 'equal', name: nameof<ProjectUser>('userRef'), value: id }]
+      },
+      include
+    );
   }
 
   async onlineDelete(id: string): Promise<void> {
-    await this.jsonApiService.onlineDelete(this.identity(id));
-  }
-
-  async onlineCreate(init: Partial<User>): Promise<User> {
-    return await this.jsonApiService.onlineCreate<User>(new User(init));
-  }
-
-  async onlineUpdateAttributes(id: string, attrs: Partial<User>): Promise<User> {
-    return await this.jsonApiService.onlineUpdateAttributes<User>(this.identity(id), attrs);
-  }
-
-  onlineGet(id: string): QueryObservable<User> {
-    return this.jsonApiService.onlineGet(this.identity(id));
+    const userCommandsUrl = `json-api/users/${id}/commands`;
+    await this.jsonRpcService.invoke(userCommandsUrl, 'delete');
   }
 
   onlineSearch(
     term$: Observable<string>,
-    parameters$: Observable<GetAllParameters<User>>,
-    reload$: Observable<void>,
-    include?: string[][]
-  ): QueryObservable<User[]> {
+    queryParameters$: Observable<QueryParameters>,
+    reload$: Observable<void>
+  ): Observable<RealtimeQueryResults<UserDoc>> {
     const debouncedTerm$ = term$.pipe(
       debounceTime(400),
       distinctUntilChanged()
     );
 
-    return combineLatest(debouncedTerm$, parameters$, reload$).pipe(
-      switchMap(([term, parameters]) => {
-        let currentParameters = parameters;
-        if (term != null && term !== '') {
-          currentParameters = clone(parameters);
-          if (currentParameters.filters == null) {
-            currentParameters.filters = [];
-          }
-          currentParameters.filters.push({ name: UserService.SEARCH_FILTER, value: term });
-        }
-        return this.jsonApiService.onlineGetAll<User>(this.type, currentParameters, include);
+    return combineLatest(debouncedTerm$, queryParameters$, reload$).pipe(
+      switchMap(([term, queryParameters]) => {
+        const query: any = {
+          name: { $regex: `.*${term}.*`, $options: 'i' }
+        };
+        return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.TYPE, query, queryParameters));
       })
     );
   }
@@ -151,38 +112,13 @@ export class UserService extends ResourceService {
    * @param {File} file The file to upload.
    * @returns {Promise<string>} The relative url to the uploaded avatar file.
    */
-  async uploadCurrentUserAvatar(file: File): Promise<User> {
+  async uploadCurrentUserAvatar(file: File): Promise<void> {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await this.http
+    await this.http
       .post<HttpResponse<string>>(`json-api/users/${this.currentUserId}/avatar`, formData, {
-        headers: { Accept: 'application/json' },
-        observe: 'response'
+        headers: { Accept: 'application/json' }
       })
       .toPromise();
-    const attrs = { avatarUrl: response.headers.get('Location') } as Partial<User>;
-    return await this.jsonApiService.localUpdateAttributes<User>(this.identity(this.currentUserId), attrs);
-  }
-
-  protected isSearchMatch(record: Record, value: string): boolean {
-    if (record.attributes == null) {
-      return false;
-    }
-
-    const userName = record.attributes[nameof<User>('name')] as string;
-    const userEmail = record.attributes[nameof<User>('email')] as string;
-    if (
-      (userName != null && userName.toLowerCase().includes(value)) ||
-      (userEmail != null && userEmail.toLowerCase().includes(value))
-    ) {
-      return true;
-    }
-
-    return false;
-  }
-
-  private searchUsers(records: Record[], value: string): Record[] {
-    const valueLower = value.toLowerCase();
-    return records.filter(record => this.isSearchMatch(record, valueLower));
   }
 }

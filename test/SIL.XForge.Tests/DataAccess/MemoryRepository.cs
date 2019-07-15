@@ -10,7 +10,7 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.DataAccess
 {
-    public class MemoryRepository<T> : IRepository<T> where T : Entity, new()
+    public class MemoryRepository<T> : IRepository<T> where T : IEntity, new()
     {
         private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
@@ -73,7 +73,7 @@ namespace SIL.XForge.DataAccess
         {
             if (_entities.TryGetValue(entity.Id, out string existingStr))
             {
-                T existing = JsonConvert.DeserializeObject<T>(existingStr, Settings);
+                T existing = DeserializeEntity(entity.Id, existingStr);
                 Remove(existing);
             }
             Add(entity);
@@ -86,12 +86,12 @@ namespace SIL.XForge.DataAccess
 
         public T Get(string id)
         {
-            return JsonConvert.DeserializeObject<T>(_entities[id], Settings);
+            return DeserializeEntity(id, _entities[id]);
         }
 
         public IQueryable<T> Query()
         {
-            return _entities.Values.Select(e => JsonConvert.DeserializeObject<T>(e, Settings)).AsQueryable();
+            return _entities.Select(kvp => DeserializeEntity(kvp.Key, kvp.Value)).AsQueryable();
         }
 
         public Task InsertAsync(T entity)
@@ -102,9 +102,13 @@ namespace SIL.XForge.DataAccess
             if (_entities.ContainsKey(entity.Id) || CheckDuplicateKeys(entity))
                 throw new DuplicateKeyException();
 
-            var now = DateTime.UtcNow;
-            entity.DateModified = now;
-            entity.DateCreated = now;
+            var entityObj = entity as Entity;
+            if (entityObj != null)
+            {
+                var now = DateTime.UtcNow;
+                entityObj.DateModified = now;
+                entityObj.DateCreated = now;
+            }
 
             Add(entity);
             return Task.FromResult(true);
@@ -117,10 +121,14 @@ namespace SIL.XForge.DataAccess
 
             if (_entities.ContainsKey(entity.Id) || upsert)
             {
-                var now = DateTime.UtcNow;
-                entity.DateModified = now;
-                if (entity.DateCreated == DateTime.MinValue)
-                    entity.DateCreated = now;
+                var entityObj = entity as Entity;
+                if (entityObj != null)
+                {
+                    var now = DateTime.UtcNow;
+                    entityObj.DateModified = now;
+                    if (entityObj.DateCreated == DateTime.MinValue)
+                        entityObj.DateCreated = now;
+                }
 
                 Replace(entity);
                 return Task.FromResult(true);
@@ -134,7 +142,7 @@ namespace SIL.XForge.DataAccess
             T entity = Query().FirstOrDefault(filter);
             if (entity != null || upsert)
             {
-                T original = null;
+                T original = default(T);
                 bool isInsert = entity == null;
                 if (isInsert)
                 {
@@ -187,7 +195,7 @@ namespace SIL.XForge.DataAccess
         /// true if there is any existing entity, other than the original, that shares any keys with the new or updated
         /// entity
         /// </returns>
-        private bool CheckDuplicateKeys(T entity, T original = null)
+        private bool CheckDuplicateKeys(T entity, T original = default(T))
         {
             for (int i = 0; i < _uniqueKeySelectors.Length; i++)
             {
@@ -202,6 +210,14 @@ namespace SIL.XForge.DataAccess
                 }
             }
             return false;
+        }
+
+        private static T DeserializeEntity(string id, string json)
+        {
+            var entity = JsonConvert.DeserializeObject<T>(json, Settings);
+            if (entity.Id == null)
+                entity.Id = id;
+            return entity;
         }
     }
 }

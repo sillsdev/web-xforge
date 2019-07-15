@@ -10,7 +10,7 @@ namespace SIL.XForge.Controllers
     public class TestProjectsRpcController : ProjectsRpcController<TestProjectEntity>
     {
         public TestProjectsRpcController(IUserAccessor userAccessor, IHttpRequestAccessor httpRequestAccessor,
-            IRepository<TestProjectEntity> projects, IRepository<UserEntity> users, IEmailService emailService,
+            IRepository<TestProjectEntity> projects, IReadOnlyRepository<User> users, IEmailService emailService,
             IOptions<SiteOptions> siteOptions)
             : base(userAccessor, httpRequestAccessor, projects, users, emailService, siteOptions)
         {

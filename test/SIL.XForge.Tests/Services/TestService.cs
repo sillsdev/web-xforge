@@ -15,14 +15,14 @@ namespace SIL.XForge.Services
         {
         }
 
-        public IResourceMapper<UserResource, UserEntity> UserMapper { get; set; }
+        public IResourceMapper<TestProjectResource, TestProjectEntity> ProjectMapper { get; set; }
 
         protected override IRelationship<TestEntity> GetRelationship(string propertyName)
         {
             switch (propertyName)
             {
-                case nameof(TestResource.User):
-                    return HasOne(UserMapper, e => e.UserRef);
+                case nameof(TestResource.Project):
+                    return HasOne(ProjectMapper, e => e.ProjectRef);
             }
             return base.GetRelationship(propertyName);
         }

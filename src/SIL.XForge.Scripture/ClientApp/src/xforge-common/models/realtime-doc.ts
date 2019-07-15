@@ -17,23 +17,16 @@ export interface RealtimeDocConstructor {
  * @template Ops The operations data type.
  */
 export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity {
-  private readonly updateOfflineDataSub: Subscription;
-  private readonly onDeleteSub: Subscription;
-
+  private updateOfflineDataSub: Subscription;
+  private onDeleteSub: Subscription;
   private offlineSnapshotVersion: number;
+  private subscribePromise: Promise<void>;
 
   constructor(
     public readonly type: string,
     private readonly adapter: RealtimeDocAdapter,
     private readonly store: RealtimeOfflineStore
-  ) {
-    this.updateOfflineDataSub = merge(
-      this.adapter.remoteChanges(),
-      this.adapter.idle(),
-      this.adapter.onCreate()
-    ).subscribe(() => this.updateOfflineData());
-    this.onDeleteSub = this.adapter.onDelete().subscribe(() => this.store.delete(this.identity));
-  }
+  ) {}
 
   get id(): string {
     return this.adapter.id;
@@ -41,6 +34,10 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
 
   get data(): Readonly<T> {
     return this.adapter.data;
+  }
+
+  get subscribed(): boolean {
+    return this.adapter.subscribed;
   }
 
   private get identity(): RecordIdentity {
@@ -51,20 +48,13 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
    * Subscribes to remote changes for the realtime data.
    * For this record, update the RealtimeDoc cache, if any, from IndexedDB.
    *
-   * @returns {Promise<void>} Resolves when succesfully subscribed to remote changes.
+   * @returns {Promise<void>} Resolves when successfully subscribed to remote changes.
    */
   async subscribe(): Promise<void> {
-    const offlineData = await this.store.getItem(this.identity);
-    if (offlineData != null) {
-      if (offlineData.pendingOps.length > 0) {
-        await this.adapter.fetch();
-        await Promise.all(offlineData.pendingOps.map(op => this.adapter.submitOp(op)));
-      } else {
-        await this.adapter.ingestSnapshot(offlineData.snapshot);
-        this.offlineSnapshotVersion = this.adapter.version;
-      }
+    if (this.subscribePromise == null) {
+      this.subscribePromise = this.subscribeToChanges();
     }
-    await this.adapter.subscribe();
+    return this.subscribePromise;
   }
 
   /** Fires when underlying data is recreated. */
@@ -102,7 +92,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
    * Updates offline storage with the current state of the realtime data.
    */
   updateOfflineData(): void {
-    if (this.adapter.type == null) {
+    if (this.adapter.type == null || !this.adapter.subscribed) {
       return;
     }
 
@@ -130,13 +120,54 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
    *
    * @returns {Promise<void>} Resolves when the data has been successfully disposed.
    */
-  dispose(): Promise<void> {
-    this.updateOfflineDataSub.unsubscribe();
-    this.onDeleteSub.unsubscribe();
-    return this.adapter.destroy();
+  async dispose(): Promise<void> {
+    if (this.subscribePromise != null) {
+      await this.subscribePromise;
+      if (this.updateOfflineData != null) {
+        this.updateOfflineDataSub.unsubscribe();
+      }
+      if (this.onDeleteSub != null) {
+        this.onDeleteSub.unsubscribe();
+      }
+    }
+    await this.adapter.destroy();
   }
 
   protected prepareDataForStore(data: T): any {
     return data;
+  }
+
+  private async subscribeToChanges(): Promise<void> {
+    this.updateOfflineDataSub = merge(
+      this.adapter.remoteChanges(),
+      this.adapter.idle(),
+      this.adapter.onCreate()
+    ).subscribe(() => this.updateOfflineData());
+    this.onDeleteSub = this.adapter.onDelete().subscribe(() => this.store.delete(this.identity));
+    await this.loadFromStore();
+    const promise = this.adapter.subscribe();
+    if (this.adapter.type == null) {
+      await promise;
+      if (this.adapter.type == null) {
+        // the doc has been deleted, so remove it from the offline store
+        this.store.delete(this.identity);
+      }
+    }
+  }
+
+  private async loadFromStore(): Promise<void> {
+    if (this.adapter.type != null) {
+      return;
+    }
+    const offlineData = await this.store.getItem(this.identity);
+    if (offlineData != null) {
+      if (offlineData.pendingOps.length > 0) {
+        await this.adapter.fetch();
+        await Promise.all(offlineData.pendingOps.map(op => this.adapter.submitOp(op)));
+      } else {
+        await this.adapter.ingestSnapshot(offlineData.snapshot);
+        this.offlineSnapshotVersion = this.adapter.version;
+      }
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA, MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -74,7 +74,7 @@ class TestEnvironment {
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     const config: MdcDialogConfig<SaDeleteUserDialogData> = {
       viewContainerRef,
-      data: { user: { id: '', type: '', name: 'Billy T James', email: 'w.j.t.w.taitoko@example.com' } }
+      data: { user: { name: 'Billy T James' } }
     };
     this.dialogRef = TestBed.get(MdcDialog).open(SaDeleteDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');

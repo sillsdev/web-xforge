@@ -9,8 +9,8 @@ namespace SIL.XForge.Models
         [Attr("num")]
         public int Num { get; set; }
 
-        [HasOne("user", withForeignKey: nameof(UserRef))]
-        public UserResource User { get; set; }
-        public string UserRef { get; set; }
+        [HasOne("project", withForeignKey: nameof(ProjectRef))]
+        public TestProjectResource Project { get; set; }
+        public string ProjectRef { get; set; }
     }
 }

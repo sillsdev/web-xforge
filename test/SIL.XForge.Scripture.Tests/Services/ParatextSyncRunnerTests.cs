@@ -44,7 +44,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user02", false);
 
             await env.RealtimeService.Received().ConnectAsync();
-            await env.ParatextService.DidNotReceive().GetBooksAsync(Arg.Any<UserEntity>(), "project01");
+            await env.ParatextService.DidNotReceive().GetBooksAsync(Arg.Any<UserSecret>(), "project01");
             await env.ProjectDataDoc.Received(1).SubmitOpAsync(Arg.Any<object>());
         }
 
@@ -56,7 +56,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, books);
             env.SetupPTData(books);
             env.ParatextService
-                .When(p => p.GetBooksAsync(Arg.Any<UserEntity>(), "target"))
+                .When(p => p.GetBooksAsync(Arg.Any<UserSecret>(), "target"))
                 .Do(x => throw new Exception());
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -176,14 +176,14 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserEntity>(), "target", "MAT",
+            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT",
                 Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserEntity>(), "target", "MRK",
+            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK",
                 Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserEntity>(), "source", "MAT",
+            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT",
                 Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserEntity>(), "source", "MRK",
+            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK",
                 Arg.Any<string>(), Arg.Any<string>());
 
             await env.GetQuestionsDoc("MAT", 1).DidNotReceive().SubmitOpAsync(Arg.Any<object>());
@@ -196,7 +196,7 @@ namespace SIL.XForge.Scripture.Services
             await env.GetCommentsDoc("MRK", 1).DidNotReceive().SubmitOpAsync(Arg.Any<object>());
             await env.GetCommentsDoc("MRK", 2).DidNotReceive().SubmitOpAsync(Arg.Any<object>());
 
-            await env.ParatextService.DidNotReceive().UpdateNotesAsync(Arg.Any<UserEntity>(), "target",
+            await env.ParatextService.DidNotReceive().UpdateNotesAsync(Arg.Any<UserSecret>(), "target",
                 Arg.Any<string>());
 
             Assert.That(env.Project.SyncUsers.Count, Is.EqualTo(0));
@@ -214,17 +214,17 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserEntity>(), "target", "MAT",
+            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT",
                 Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserEntity>(), "target", "MRK",
-                Arg.Any<string>(), Arg.Any<string>());
-
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserEntity>(), "source", "MAT",
-                Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserEntity>(), "source", "MRK",
+            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK",
                 Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService.Received(2).UpdateNotesAsync(Arg.Any<UserEntity>(), "target", Arg.Any<string>());
+            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT",
+                Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK",
+                Arg.Any<string>(), Arg.Any<string>());
+
+            await env.ParatextService.Received(2).UpdateNotesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
             Assert.That(env.Project.SyncUsers.Count, Is.EqualTo(1));
 
@@ -241,17 +241,17 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserEntity>(), "target", "MAT",
+            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MAT",
                 Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserEntity>(), "target", "MRK",
-                Arg.Any<string>(), Arg.Any<string>());
-
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserEntity>(), "source", "MAT",
-                Arg.Any<string>(), Arg.Any<string>());
-            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserEntity>(), "source", "MRK",
+            await env.ParatextService.Received().UpdateBookTextAsync(Arg.Any<UserSecret>(), "target", "MRK",
                 Arg.Any<string>(), Arg.Any<string>());
 
-            await env.ParatextService.DidNotReceive().UpdateNotesAsync(Arg.Any<UserEntity>(), "target",
+            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MAT",
+                Arg.Any<string>(), Arg.Any<string>());
+            await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK",
+                Arg.Any<string>(), Arg.Any<string>());
+
+            await env.ParatextService.DidNotReceive().UpdateNotesAsync(Arg.Any<UserSecret>(), "target",
                 Arg.Any<string>());
 
             Assert.That(env.Project.SyncUsers.Count, Is.EqualTo(1));
@@ -369,9 +369,9 @@ namespace SIL.XForge.Scripture.Services
                     {
                         SiteDir = "scriptureforge"
                     });
-                var users = new MemoryRepository<UserEntity>(new[]
+                var userSecrets = new MemoryRepository<UserSecret>(new[]
                     {
-                        new UserEntity
+                        new UserSecret
                         {
                             Id = "user01"
                         }
@@ -387,7 +387,7 @@ namespace SIL.XForge.Scripture.Services
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
                 var logger = Substitute.For<ILogger<ParatextSyncRunner>>();
 
-                Runner = new ParatextSyncRunner(siteOptions, users, _projects, EngineService, ParatextService,
+                Runner = new ParatextSyncRunner(siteOptions, userSecrets, _projects, EngineService, ParatextService,
                     RealtimeService, FileSystemService, _deltaUsxMapper, _notesMapper, logger);
             }
 
@@ -492,9 +492,9 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupPTData(params Book[] books)
             {
-                ParatextService.GetBooksAsync(Arg.Any<UserEntity>(), "target")
+                ParatextService.GetBooksAsync(Arg.Any<UserSecret>(), "target")
                     .Returns(books.Select(b => b.Id).ToArray());
-                ParatextService.GetBooksAsync(Arg.Any<UserEntity>(), "source")
+                ParatextService.GetBooksAsync(Arg.Any<UserSecret>(), "source")
                     .Returns(books.Where(b => b.SourceChapterCount > 0).Select(b => b.Id).ToArray());
                 foreach (Book book in books)
                 {
@@ -519,9 +519,9 @@ namespace SIL.XForge.Scripture.Services
                 string paratextProject = GetParatextProject(textType);
 
                 string bookText = GetBookText(textType, bookId, 3);
-                ParatextService.GetBookTextAsync(Arg.Any<UserEntity>(), paratextProject, bookId)
+                ParatextService.GetBookTextAsync(Arg.Any<UserSecret>(), paratextProject, bookId)
                     .Returns(Task.FromResult(bookText));
-                ParatextService.UpdateBookTextAsync(Arg.Any<UserEntity>(), paratextProject, bookId,
+                ParatextService.UpdateBookTextAsync(Arg.Any<UserSecret>(), paratextProject, bookId,
                     Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(bookText));
                 FileSystemService.CreateFile(GetUsxFileName(textType, bookId)).Returns(new MemoryStream());
                 Func<XElement, bool> predicate = e => (string)e?.Element("book")?.Attribute("code") == bookId

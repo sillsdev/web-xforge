@@ -1,15 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { RecordIdentity } from '@orbit/data';
 import { AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
 import { fromEvent, of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
-import { JsonApiService } from './json-api.service';
+import { JsonRpcService } from './json-rpc.service';
 import { LocationService } from './location.service';
 import { SystemRole } from './models/system-role';
-import { User } from './models/user';
 import { OrbitService } from './orbit-service';
 import { RealtimeService } from './realtime.service';
 
@@ -41,7 +39,7 @@ export class AuthService {
     private readonly orbitService: OrbitService,
     private readonly realtimeService: RealtimeService,
     private readonly locationService: LocationService,
-    private readonly jsonApiService: JsonApiService,
+    private readonly jsonRpcService: JsonRpcService,
     private readonly router: Router
   ) {
     // listen for changes to the auth state
@@ -147,12 +145,12 @@ export class AuthService {
       this.orbitService.init(this.accessToken, isNewUser),
       this.realtimeService.init(this.accessToken, isNewUser)
     ]);
-    const userIdentity: RecordIdentity = { type: User.TYPE, id: this.currentUserId };
+    const userCommandsUrl = `json-api/users/${this.currentUserId}/commands`;
     if (secondaryId != null) {
-      await this.jsonApiService.onlineInvoke(userIdentity, 'linkParatextAccount', { authId: secondaryId });
+      await this.jsonRpcService.invoke(userCommandsUrl, 'linkParatextAccount', { authId: secondaryId });
     } else if (!environment.production) {
       try {
-        await this.jsonApiService.onlineInvoke(userIdentity, 'pullAuthUserProfile');
+        await this.jsonRpcService.invoke(userCommandsUrl, 'pullAuthUserProfile');
       } catch (err) {
         console.error(err);
         return false;

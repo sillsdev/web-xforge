@@ -7,12 +7,10 @@ namespace SIL.XForge.Models
     {
         [Attr]
         public string Role { get; set; }
-
+        [Attr]
         public string UserRef { get; set; }
-        public string ProjectRef { get; set; }
 
-        [HasOne(withForeignKey: nameof(UserRef))]
-        public UserResource User { get; set; }
+        public string ProjectRef { get; set; }
 
         [HasOne(withForeignKey: nameof(ProjectRef))]
         public ProjectResource Project { get; set; }

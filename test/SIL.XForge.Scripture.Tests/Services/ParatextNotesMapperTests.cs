@@ -218,26 +218,24 @@ namespace SIL.XForge.Scripture.Services
         {
             public TestEnvironment()
             {
-                Users = new MemoryRepository<UserEntity>(new[]
-                    {
-                        new UserEntity { Id = "user01", ParatextId = "paratextuser01" },
-                        new UserEntity { Id = "user02" },
-                        new UserEntity { Id = "user03", ParatextId = "paratextuser03" },
-                        new UserEntity { Id = "user04" }
-                    });
+                UserSecrets = new MemoryRepository<UserSecret>(new[]
+                {
+                    new UserSecret { Id = "user01" },
+                    new UserSecret { Id = "user03" }
+                });
 
                 var paratextService = Substitute.For<IParatextService>();
-                paratextService.GetParatextUsername(Arg.Is<UserEntity>(u => u.Id == "user01")).Returns("PT User 1");
-                paratextService.GetParatextUsername(Arg.Is<UserEntity>(u => u.Id == "user03")).Returns("PT User 3");
-                Mapper = new ParatextNotesMapper(Users, paratextService);
+                paratextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("PT User 1");
+                paratextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user03")).Returns("PT User 3");
+                Mapper = new ParatextNotesMapper(UserSecrets, paratextService);
             }
 
             public ParatextNotesMapper Mapper { get; }
-            public MemoryRepository<UserEntity> Users { get; }
+            public MemoryRepository<UserSecret> UserSecrets { get; }
 
             public void InitMapper(bool includeSyncUsers)
             {
-                Mapper.Init(Users.Get("user01"), Project(includeSyncUsers));
+                Mapper.Init(UserSecrets.Get("user01"), Project(includeSyncUsers));
             }
 
             private static SFProjectEntity Project(bool includeSyncUsers)

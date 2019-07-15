@@ -8,6 +8,7 @@ using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Controllers
 {
@@ -16,14 +17,14 @@ namespace SIL.XForge.Scripture.Controllers
     [Authorize]
     public class ParatextController : ControllerBase
     {
-        private readonly IRepository<UserEntity> _users;
+        private readonly IRepository<UserSecret> _userSecrets;
         private readonly IParatextService _paratextService;
         private readonly IUserAccessor _userAccessor;
 
-        public ParatextController(IRepository<UserEntity> users, IParatextService paratextService,
+        public ParatextController(IRepository<UserSecret> userSecrets, IParatextService paratextService,
             IUserAccessor userAccessor)
         {
-            _users = users;
+            _userSecrets = userSecrets;
             _paratextService = paratextService;
             _userAccessor = userAccessor;
         }
@@ -31,13 +32,13 @@ namespace SIL.XForge.Scripture.Controllers
         [HttpGet("projects")]
         public async Task<ActionResult<IEnumerable<ParatextProject>>> GetAsync()
         {
-            UserEntity user = await _users.GetAsync(_userAccessor.UserId);
-            if (user.ParatextTokens == null)
+            Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+            if (!attempt.TryResult(out UserSecret userSecret))
                 return NoContent();
 
             try
             {
-                IReadOnlyList<ParatextProject> projects = await _paratextService.GetProjectsAsync(user);
+                IReadOnlyList<ParatextProject> projects = await _paratextService.GetProjectsAsync(userSecret);
                 return Ok(projects);
             }
             catch (SecurityException)
@@ -49,10 +50,10 @@ namespace SIL.XForge.Scripture.Controllers
         [HttpGet("username")]
         public async Task<ActionResult<string>> UsernameAsync()
         {
-            UserEntity user = await _users.GetAsync(_userAccessor.UserId);
-            if (user.ParatextTokens == null)
+            Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+            if (!attempt.TryResult(out UserSecret userSecret))
                 return NoContent();
-            string username = _paratextService.GetParatextUsername(user);
+            string username = _paratextService.GetParatextUsername(userSecret);
             return Ok(username);
         }
     }

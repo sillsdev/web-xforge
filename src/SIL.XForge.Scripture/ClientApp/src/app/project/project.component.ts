@@ -49,7 +49,7 @@ export class ProjectComponent extends SubscriptionDisposable implements OnInit {
         }
         const projectUser = r
           .getManyIncluded<SFProjectUser>(project.users)
-          .find(pu => pu.user != null && pu.user.id === this.userService.currentUserId);
+          .find(pu => pu.userRef === this.userService.currentUserId);
         if (projectUser == null) {
           return;
         }

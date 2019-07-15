@@ -151,7 +151,8 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     const dialogRef = this.dialog.open(DeleteProjectDialogComponent, config);
     dialogRef.afterClosed().subscribe(async result => {
       if (result === 'accept') {
-        await this.userService.updateCurrentProjectId();
+        const userDoc = await this.userService.getCurrentUser();
+        await userDoc.submitJson0Op(op => op.unset(u => u.sites['sf'].currentProjectId));
         await this.projectService.onlineDelete(this.projectId);
       }
     });

@@ -6,6 +6,7 @@ import { Project } from 'xforge-common/models/project';
 import { ProjectUser } from 'xforge-common/models/project-user';
 import { User } from 'xforge-common/models/user';
 import { ProjectUserService } from 'xforge-common/project-user.service';
+import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { NoticeService } from '../../notice.service';
@@ -13,8 +14,10 @@ import { ProjectService } from '../../project.service';
 import { SubscriptionDisposable } from '../../subscription-disposable';
 
 interface Row {
+  readonly id: string;
   readonly user: User;
   readonly roleName: string;
+  readonly active: boolean;
 }
 
 @Component({
@@ -38,7 +41,8 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
     private readonly activatedRoute: ActivatedRoute,
     private readonly noticeService: NoticeService,
     private readonly projectService: ProjectService,
-    private readonly projectUserService: ProjectUserService
+    private readonly projectUserService: ProjectUserService,
+    private readonly userService: UserService
   ) {
     super();
     this.noticeService.loadingStarted();
@@ -71,7 +75,6 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
             return (
               userRow.user &&
               ((userRow.user.name && userRow.user.name.includes(this.term)) ||
-                (userRow.user.email && userRow.user.email.includes(this.term)) ||
                 (userRow.roleName && userRow.roleName.includes(this.term)))
             );
           })
@@ -87,24 +90,32 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
         map(params => params['projectId'] as string),
         distinctUntilChanged(),
         filter(projectId => projectId != null),
-        switchMap(projectId =>
-          this.projectService.get(projectId, [[nameof<Project>('users'), nameof<ProjectUser>('user')]])
-        )
+        switchMap(projectId => this.projectService.get(projectId, [[nameof<Project>('users')]]))
       ),
       r => {
-        this.noticeService.loadingStarted();
         const project = r.data;
         if (project == null) {
           return;
         }
+        this.noticeService.loadingStarted();
         this.projectUsers = r.getManyIncluded<ProjectUser>(project.users);
-        this._userRows = r.getManyIncluded<ProjectUser>(project.users).map(pu => {
-          const user = r.getIncluded<User>(pu.user);
-          const role = this.projectService.roles.get(pu.role);
+        const userRows: Row[] = new Array(this.projectUsers.length);
+        const tasks: Promise<any>[] = [];
+        for (let i = 0; i < this.projectUsers.length; i++) {
+          const projectUser = this.projectUsers[i];
+          const index = i;
+          const role = this.projectService.roles.get(projectUser.role);
           const roleName = role ? role.displayName : '';
-          return { user, roleName };
+          tasks.push(
+            this.userService
+              .getProfile(projectUser.userRef)
+              .then(userDoc => (userRows[index] = { id: userDoc.id, user: userDoc.data, roleName, active: true }))
+          );
+        }
+        Promise.all(tasks).then(() => {
+          this._userRows = userRows;
+          this.noticeService.loadingFinished();
         });
-        this.noticeService.loadingFinished();
       }
     );
   }
@@ -123,8 +134,8 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
     this.pageSize = pageSize;
   }
 
-  removeProjectUser(user: User): void {
-    const projectUser = this.projectUsers.find(pu => pu.user != null && pu.user.id === user.id);
+  removeProjectUser(userId: string): void {
+    const projectUser = this.projectUsers.find(pu => pu.userRef === userId);
     if (projectUser == null) {
       return;
     }

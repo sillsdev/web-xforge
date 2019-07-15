@@ -7,7 +7,7 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.DataAccess
 {
-    public class MongoUpdateBuilder<T> : IUpdateBuilder<T> where T : Entity
+    public class MongoUpdateBuilder<T> : IUpdateBuilder<T> where T : IEntity
     {
         private readonly UpdateDefinitionBuilder<T> _builder;
         private readonly List<UpdateDefinition<T>> _defs;

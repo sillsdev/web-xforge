@@ -3,9 +3,11 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import * as OTJson0 from 'ot-json0';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { LocationService } from 'xforge-common/location.service';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { ShareComponent } from 'xforge-common/share/share.component';
 import { MockAvatarModule } from '../../avatar/mock-avatar.module';
 import { MapQueryResults } from '../../json-api.service';
@@ -13,11 +15,14 @@ import { Project, ProjectRef } from '../../models/project';
 import { NONE_ROLE, ProjectRole } from '../../models/project-role';
 import { ProjectUser, ProjectUserRef } from '../../models/project-user';
 import { Resource } from '../../models/resource';
-import { User, UserRef } from '../../models/user';
+import { User } from '../../models/user';
+import { UserProfileDoc } from '../../models/user-profile-doc';
 import { NoticeService } from '../../notice.service';
 import { ProjectUserService } from '../../project-user.service';
 import { ProjectService } from '../../project.service';
+import { MemoryRealtimeDocAdapter } from '../../realtime-doc-adapter';
 import { UICommonModule } from '../../ui-common.module';
+import { UserService } from '../../user.service';
 import { CollaboratorsComponent } from './collaborators.component';
 
 describe('CollaboratorsComponent', () => {
@@ -26,6 +31,7 @@ describe('CollaboratorsComponent', () => {
     env.setupNullProjectData();
     env.fixture.detectChanges();
     tick();
+    env.fixture.detectChanges();
 
     expect(env.noUsersLabel).toBeNull();
   }));
@@ -35,6 +41,7 @@ describe('CollaboratorsComponent', () => {
     env.setupEmptyProjectData();
     env.fixture.detectChanges();
     tick();
+    env.fixture.detectChanges();
 
     expect(env.noUsersLabel).not.toBeNull();
   }));
@@ -44,6 +51,7 @@ describe('CollaboratorsComponent', () => {
     env.setupProjectData();
     env.fixture.detectChanges();
     tick();
+    env.fixture.detectChanges();
 
     expect(env.noUsersLabel).toBeNull();
     expect(env.userRows.length).toEqual(3);
@@ -58,11 +66,10 @@ describe('CollaboratorsComponent', () => {
     expect(env.removeUserButtonOnRow(1)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(1)).toBeFalsy();
 
-    expect(env.cell(2, 1).nativeElement.innerText).toContain('Awaiting response from');
-    expect(env.cell(2, 1).nativeElement.innerText).toContain('user03@example.com');
+    expect(env.cell(2, 1).query(By.css('strong')).nativeElement.innerText).toEqual('User 03');
     expect(env.cell(2, 2).query(By.css('em')).nativeElement.innerText).toEqual('User');
-    expect(env.removeUserButtonOnRow(2)).toBeFalsy();
-    expect(env.cancelInviteButtonOnRow(2)).toBeTruthy();
+    expect(env.removeUserButtonOnRow(2)).toBeTruthy();
+    expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
   }));
 
   it('should delete user', fakeAsync(() => {
@@ -70,6 +77,7 @@ describe('CollaboratorsComponent', () => {
     env.setupProjectData();
     env.fixture.detectChanges();
     tick();
+    env.fixture.detectChanges();
 
     env.clickElement(env.removeUserButtonOnRow(1));
     verify(env.mockedProjectUserService.onlineDelete(anything())).once();
@@ -82,6 +90,7 @@ describe('CollaboratorsComponent', () => {
     env.setupProjectData();
     env.fixture.detectChanges();
     tick();
+    env.fixture.detectChanges();
 
     expect(env.userRows.length).toEqual(3);
     env.setInputValue(env.filterInput, '02');
@@ -95,6 +104,7 @@ describe('CollaboratorsComponent', () => {
     env.component.pageSize = 2;
     env.fixture.detectChanges();
     tick();
+    env.fixture.detectChanges();
 
     env.clickElement(env.nextPageButton);
 
@@ -103,88 +113,46 @@ describe('CollaboratorsComponent', () => {
 });
 
 class TestProject extends Project {
-  static readonly TYPE = 'project';
-
-  constructor(init?: Partial<Project>) {
-    super(TestProject.TYPE, init);
-  }
-
   get taskNames(): string[] {
     return [];
   }
 }
-
-class TestProjectUser extends ProjectUser {
-  static readonly TYPE = 'projectUser';
-
-  constructor(init?: Partial<TestProjectUser>) {
-    super(TestProjectUser.TYPE, init);
-  }
-}
-
-class TestProjectUserRef extends ProjectUserRef {
-  static readonly TYPE = TestProjectUser.TYPE;
-
-  constructor(id?: string) {
-    super(TestProjectUserRef.TYPE, id);
-  }
-}
-
-class TestProjectRef extends ProjectRef {
-  static readonly TYPE = TestProject.TYPE;
-
-  constructor(id?: string) {
-    super(TestProjectRef.TYPE, id);
-  }
-}
+class TestProjectUser extends ProjectUser {}
+class TestProjectUserRef extends ProjectUserRef {}
+class TestProjectRef extends ProjectRef {}
 
 class TestEnvironment {
-  fixture: ComponentFixture<CollaboratorsComponent>;
-  component: CollaboratorsComponent;
+  readonly fixture: ComponentFixture<CollaboratorsComponent>;
+  readonly component: CollaboratorsComponent;
 
-  mockedActivatedRoute = mock(ActivatedRoute);
-  mockedLocationService = mock(LocationService);
-  mockedNoticeService = mock(NoticeService);
-  mockedProjectService = mock(ProjectService);
-  mockedProjectUserService = mock(ProjectUserService);
+  readonly mockedActivatedRoute = mock(ActivatedRoute);
+  readonly mockedLocationService = mock(LocationService);
+  readonly mockedNoticeService = mock(NoticeService);
+  readonly mockedProjectService = mock(ProjectService);
+  readonly mockedProjectUserService = mock(ProjectUserService);
+  readonly mockedUserService = mock(UserService);
+  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
   private readonly included: Resource[] = [
     new TestProjectUser({
       id: 'projectuser01',
       role: 'admin',
-      user: new UserRef('user01'),
+      userRef: 'user01',
       project: new TestProjectRef('project01')
     }),
     new TestProjectUser({
       id: 'projectuser02',
       role: 'user',
-      user: new UserRef('user02'),
+      userRef: 'user02',
       project: new TestProjectRef('project01')
     }),
     new TestProjectUser({
       id: 'projectuser03',
       role: 'user',
-      user: new UserRef('user03'),
+      userRef: 'user03',
       project: new TestProjectRef('project01')
     }),
-    new TestProject({ id: 'project01', projectName: 'Project 01' }),
-    new User({
-      id: 'user01',
-      name: 'User 01',
-      email: 'user01@example.com',
-      active: true
-    }),
-    new User({
-      id: 'user02',
-      name: 'User 02',
-      email: 'user02@example.com',
-      active: true
-    }),
-    new User({
-      id: 'user03',
-      email: 'user03@example.com',
-      active: false
-    })
+    new TestProject({ id: 'project01', projectName: 'Project 01' })
   ];
   private readonly project$: BehaviorSubject<MapQueryResults<Project>> = new BehaviorSubject<MapQueryResults<Project>>(
     new MapQueryResults(
@@ -215,6 +183,9 @@ class TestEnvironment {
     when(this.mockedProjectService.onlineInvite('project01', anything())).thenResolve();
     when(this.mockedNoticeService.show(anything())).thenResolve();
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
+    this.addUserProfile('user01', { name: 'User 01' });
+    this.addUserProfile('user02', { name: 'User 02' });
+    this.addUserProfile('user03', { name: 'User 03' });
     TestBed.configureTestingModule({
       declarations: [CollaboratorsComponent, ShareComponent],
       imports: [NoopAnimationsModule, MockAvatarModule, UICommonModule],
@@ -223,7 +194,8 @@ class TestEnvironment {
         { provide: LocationService, useFactory: () => instance(this.mockedLocationService) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
         { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
-        { provide: ProjectUserService, useFactory: () => instance(this.mockedProjectUserService) }
+        { provide: ProjectUserService, useFactory: () => instance(this.mockedProjectUserService) },
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
       ]
     });
 
@@ -315,12 +287,27 @@ class TestEnvironment {
   }
 
   setupEmptyProjectData(): void {
-    this.setupThisProjectData([]);
+    this.setupThisProjectData(
+      new TestProject({
+        id: 'project01',
+        projectName: 'Project 01',
+        users: []
+      })
+    );
   }
 
-  private setupThisProjectData(projects: Project[] = []): void {
+  private addUserProfile(id: string, user: User): void {
+    when(this.mockedUserService.getProfile(id)).thenResolve(
+      new UserProfileDoc(
+        new MemoryRealtimeDocAdapter(OTJson0.type, id, user),
+        instance(this.mockedRealtimeOfflineStore)
+      )
+    );
+  }
+
+  private setupThisProjectData(project: Project): void {
     when(this.mockedProjectService.get(anything(), anything())).thenReturn(
-      of(new MapQueryResults<Project[]>(projects, 0, this.included))
+      of(new MapQueryResults<Project>(project, 0, this.included))
     );
   }
 }

@@ -4,7 +4,7 @@ import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { Comment } from './comment';
 
 export class CommentsDoc extends JsonRealtimeDoc<Comment[]> {
-  static readonly TYPE = 'comment';
+  static readonly TYPE = 'comments';
 
   constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
     super(CommentsDoc.TYPE, adapter, store);

@@ -4,14 +4,18 @@ import { DebugElement, NgModule, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import * as OTJson0 from 'ot-json0';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { MapQueryResults } from 'xforge-common/json-api.service';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { SharingLevel } from 'xforge-common/models/sharing-level';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
@@ -286,7 +290,7 @@ describe('SettingsComponent', () => {
       env.clickElement(env.deleteProjectButton);
       expect(env.deleteDialog).toBeDefined();
       env.confirmDialog(true);
-      verify(env.mockedUserService.updateCurrentProjectId()).once();
+      expect(env.currentProjectId).toBeUndefined();
       verify(env.mockedSFProjectService.onlineDelete(anything())).once();
     }));
 
@@ -295,7 +299,7 @@ describe('SettingsComponent', () => {
       env.clickElement(env.deleteProjectButton);
       expect(env.deleteDialog).toBeDefined();
       env.confirmDialog(false);
-      verify(env.mockedUserService.updateCurrentProjectId()).never();
+      expect(env.currentProjectId).toEqual('project01');
       verify(env.mockedSFProjectService.onlineDelete(anything())).never();
     }));
   });
@@ -311,20 +315,22 @@ class TestProject extends SFProject {
 }
 
 class TestEnvironment {
-  component: SettingsComponent;
-  fixture: ComponentFixture<SettingsComponent>;
-  overlayContainer: OverlayContainer;
+  readonly component: SettingsComponent;
+  readonly fixture: ComponentFixture<SettingsComponent>;
+  readonly overlayContainer: OverlayContainer;
 
   isLoading: boolean = false;
-  mockedActivatedRoute: ActivatedRoute = mock(ActivatedRoute);
-  mockedAuthService: AuthService = mock(AuthService);
-  mockedNoticeService: NoticeService = mock(NoticeService);
-  mockedParatextService: ParatextService = mock(ParatextService);
-  mockedSFProjectService: SFProjectService = mock(SFProjectService);
-  mockedUserService: UserService = mock(UserService);
+  readonly mockedActivatedRoute: ActivatedRoute = mock(ActivatedRoute);
+  readonly mockedAuthService: AuthService = mock(AuthService);
+  readonly mockedNoticeService: NoticeService = mock(NoticeService);
+  readonly mockedParatextService: ParatextService = mock(ParatextService);
+  readonly mockedSFProjectService: SFProjectService = mock(SFProjectService);
+  readonly mockedUserService: UserService = mock(UserService);
+  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
   private readonly project$: BehaviorSubject<MapQueryResults<SFProject>>;
   private readonly paratectProjects$: BehaviorSubject<ParatextProject[]>;
+  private readonly currentUserDoc: UserDoc;
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
@@ -363,7 +369,11 @@ class TestEnvironment {
     when(this.mockedSFProjectService.onlineGet(anything())).thenReturn(this.project$);
     when(this.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).thenResolve();
     when(this.mockedSFProjectService.onlineDelete(anything())).thenResolve();
-    when(this.mockedUserService.updateCurrentProjectId(anything())).thenResolve();
+    this.currentUserDoc = new UserDoc(
+      new MemoryRealtimeDocAdapter(OTJson0.type, 'user01', { sites: { sf: { currentProjectId: 'project01' } } }),
+      instance(this.mockedRealtimeOfflineStore)
+    );
+    when(this.mockedUserService.getCurrentUser()).thenResolve(this.currentUserDoc);
     TestBed.configureTestingModule({
       imports: [DialogTestModule, HttpClientTestingModule, UICommonModule, XForgeCommonModule],
       declarations: [SettingsComponent],
@@ -383,6 +393,10 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
     this.overlayContainer = TestBed.get(OverlayContainer);
+  }
+
+  get currentProjectId(): string {
+    return this.currentUserDoc.data.sites.sf.currentProjectId;
   }
 
   get atLeastOneError(): DebugElement {
