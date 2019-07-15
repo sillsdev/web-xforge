@@ -14,14 +14,14 @@ namespace SIL.XForge.Scripture.Services
 {
     public class SFProjectUserService : ProjectUserService<SFProjectUserResource, SFProjectUserEntity, SFProjectEntity>
     {
-        private readonly IRepository<UserEntity> _users;
+        private readonly IRepository<UserSecret> _userSecrets;
         private readonly IParatextService _paratextService;
 
         public SFProjectUserService(IJsonApiContext jsonApiContext, IMapper mapper, IUserAccessor userAccessor,
-            IRepository<SFProjectEntity> projects, IRepository<UserEntity> users, IParatextService paratextService)
-            : base(jsonApiContext, mapper, userAccessor, projects)
+            IRepository<SFProjectEntity> projects, IRepository<UserSecret> userSecrets,
+            IParatextService paratextService) : base(jsonApiContext, mapper, userAccessor, projects)
         {
-            _users = users;
+            _userSecrets = userSecrets;
             _paratextService = paratextService;
         }
 
@@ -29,7 +29,6 @@ namespace SIL.XForge.Scripture.Services
 
         protected override async Task<SFProjectUserEntity> InsertEntityAsync(SFProjectUserEntity entity)
         {
-            UserEntity user = await _users.GetAsync(UserId);
             if (SystemRole == SystemRoles.User || entity.Role == null)
             {
                 // get role from Paratext project
@@ -40,7 +39,8 @@ namespace SIL.XForge.Scripture.Services
                     throw new JsonApiException(StatusCodes.Status400BadRequest,
                         "The specified project could not be found.");
                 }
-                Attempt<string> attempt = await _paratextService.TryGetProjectRoleAsync(user, paratextId);
+                UserSecret userSecret = await _userSecrets.GetAsync(UserId);
+                Attempt<string> attempt = await _paratextService.TryGetProjectRoleAsync(userSecret, paratextId);
                 if (attempt.TryResult(out string role))
                     entity.Role = role;
                 else

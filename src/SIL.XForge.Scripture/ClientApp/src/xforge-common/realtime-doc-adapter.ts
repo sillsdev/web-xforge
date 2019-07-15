@@ -16,6 +16,7 @@ export interface RealtimeDocAdapter {
   readonly version: number;
   readonly type: OTType;
   readonly pendingOps: any[];
+  readonly subscribed: boolean;
 
   idle(): Observable<void>;
   fetch(): Promise<void>;
@@ -54,6 +55,10 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
 
   get type(): OTType {
     return this.doc.type;
+  }
+
+  get subscribed(): boolean {
+    return this.doc.subscribed;
   }
 
   get pendingOps(): any[] {
@@ -162,6 +167,7 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
 export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly pendingOps: any[] = [];
   version: number = 1;
+  subscribed: boolean = false;
   private readonly remoteChanges$ = new Subject<any>();
   private readonly onCreate$ = new Subject<void>();
   private readonly onDelete$ = new Subject<void>();
@@ -181,6 +187,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   }
 
   subscribe(): Promise<void> {
+    this.subscribed = true;
     return Promise.resolve();
   }
 

@@ -1,12 +1,12 @@
 import { Component, DebugElement, ViewChild } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router } from '@angular/router';
 import { AvatarService } from 'ngx-avatar';
-import { of } from 'rxjs';
+import * as OTJson0 from 'ot-json0';
 import { instance, mock, when } from 'ts-mockito';
-import { MapQueryResults } from 'xforge-common/json-api.service';
-import { User } from 'xforge-common/models/user';
+import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
@@ -24,11 +24,13 @@ describe('CheckingOwnerComponent', () => {
     expect(env.fixture.componentInstance).toBeTruthy();
   });
 
-  it('displays owner name', () => {
+  it('displays owner name', fakeAsync(() => {
     const template = '<app-checking-owner ownerRef="user01"></app-checking-owner>';
     env.createHostComponent(template);
+    tick();
+    env.fixture.detectChanges();
     expect(env.userName).toBe('User 01');
-  });
+  }));
 
   it('displays avatar', () => {
     const template =
@@ -71,25 +73,19 @@ class HostComponent {
 }
 
 class TestEnvironment {
-  component: CheckingOwnerComponent;
   fixture: ComponentFixture<HostComponent>;
 
-  mockedRouter: Router;
-  mockedUserService: UserService;
-  mockedAvatarService: AvatarService;
-  testUser = new User({
-    id: 'user01',
-    email: 'user01@example.com',
-    name: 'User 01',
-    role: 'user',
-    active: true,
-    dateCreated: '2019-01-01T12:00:00.000Z'
-  });
+  readonly mockedUserService = mock(UserService);
+  readonly mockedAvatarService = mock(AvatarService);
+  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
   constructor() {
-    this.mockedUserService = mock(UserService);
-    this.mockedAvatarService = mock(AvatarService);
-
+    when(this.mockedUserService.getProfile('user01')).thenResolve(
+      new UserProfileDoc(
+        new MemoryRealtimeDocAdapter(OTJson0.type, 'user01', { name: 'User 01', role: 'user' }),
+        instance(this.mockedRealtimeOfflineStore)
+      )
+    );
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingOwnerComponent],
       imports: [UICommonModule, XForgeCommonModule],
@@ -98,8 +94,6 @@ class TestEnvironment {
         { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) }
       ]
     });
-
-    when(this.mockedUserService.onlineGet('user01')).thenReturn(of(new MapQueryResults(this.testUser)));
   }
 
   createHostComponent(template: string): void {

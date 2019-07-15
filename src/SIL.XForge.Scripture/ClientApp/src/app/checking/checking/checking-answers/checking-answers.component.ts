@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { clone } from '@orbit/utils';
 import { AccountService } from 'xforge-common/account.service';
-import { User } from 'xforge-common/models/user';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { Answer } from '../../../core/models/answer';
 import { Comment } from '../../../core/models/comment';
@@ -26,7 +25,7 @@ export interface AnswerAction {
   templateUrl: './checking-answers.component.html',
   styleUrls: ['./checking-answers.component.scss']
 })
-export class CheckingAnswersComponent extends SubscriptionDisposable {
+export class CheckingAnswersComponent implements OnInit {
   @Input() project: SFProject;
   @Input() projectCurrentUser: SFProjectUser;
   @Input() set question(question: Question) {
@@ -49,15 +48,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   uploadAudioFile: File;
   uploadAudioFileUrl: string = '';
 
-  private user: User;
+  private user: UserDoc;
   private _question: Question;
   private initUserAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
 
-  constructor(private accountService: AccountService, private userService: UserService) {
-    super();
-    this.subscribe(this.userService.getCurrentUser(), u => (this.user = u));
-  }
+  constructor(private accountService: AccountService, private userService: UserService) {}
 
   get answers(): Answer[] {
     if (this.canSeeOtherUserResponses || this.isAdministrator) {
@@ -80,7 +76,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   }
 
   get hasUserRead(): boolean {
-    return this.projectCurrentUser.questionRefsRead
+    return this.projectCurrentUser != null && this.projectCurrentUser.questionRefsRead
       ? this.projectCurrentUser.questionRefsRead.includes(this.question.id)
       : false;
   }
@@ -109,6 +105,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     }
   }
 
+  ngOnInit(): void {
+    this.userService.getCurrentUser().then(u => (this.user = u));
+  }
+
   deleteAnswer(answer: Answer) {
     this.action.emit({
       action: 'delete',
@@ -122,7 +122,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   }
 
   generateAudioFileName(): string {
-    return this.user.name + '.webm';
+    return this.user.data.name + '.webm';
   }
 
   getComments(answer: Answer): Comment[] {
@@ -143,7 +143,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   }
 
   hasUserReadAnswer(answer: Answer): boolean {
-    return this.initUserAnswerRefsRead.includes(answer.id) || this.projectCurrentUser.user.id === answer.ownerRef;
+    return this.initUserAnswerRefsRead.includes(answer.id) || this.projectCurrentUser.userRef === answer.ownerRef;
   }
 
   hideAnswerForm() {
@@ -208,14 +208,17 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     if (this.answerForm.invalid) {
       return;
     }
-    if (this.user.isNameConfirmed) {
+    if (this.user.data.isNameConfirmed) {
       this.emitAnswerToSave();
       this.hideAnswerForm();
       return;
     }
-    const dialogRef = this.accountService.openNameDialog(this.user.name, true);
+    const dialogRef = this.accountService.openNameDialog(this.user.data.name, true);
     dialogRef.afterClosed().subscribe(async response => {
-      await this.userService.updateCurrentUserAttributes({ name: response as string, isNameConfirmed: true });
+      await this.user.submitJson0Op(op => {
+        op.set(u => u.name, response as string);
+        op.set<boolean>(u => u.isNameConfirmed, true);
+      });
       this.emitAnswerToSave();
       this.hideAnswerForm();
     });

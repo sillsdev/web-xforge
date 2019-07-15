@@ -15,22 +15,20 @@ namespace SIL.XForge.Controllers
     public abstract class ProjectsRpcController<TEntity> : RpcControllerBase where TEntity : ProjectEntity
     {
         private readonly IEmailService _emailService;
+        private readonly IReadOnlyRepository<User> _users;
         private readonly IOptions<SiteOptions> _siteOptions;
 
         protected ProjectsRpcController(IUserAccessor userAccessor, IHttpRequestAccessor httpRequestAccessor,
-            IRepository<TEntity> projects, IRepository<UserEntity> users, IEmailService emailService,
-            IOptions<SiteOptions> siteOptions)
-            : base(userAccessor, httpRequestAccessor)
+            IRepository<TEntity> projects, IReadOnlyRepository<User> users, IEmailService emailService,
+            IOptions<SiteOptions> siteOptions) : base(userAccessor, httpRequestAccessor)
         {
             Projects = projects;
-            Users = users;
+            _users = users;
             _emailService = emailService;
             _siteOptions = siteOptions;
         }
 
         protected IRepository<TEntity> Projects { get; }
-
-        protected IRepository<UserEntity> Users { get; }
 
         protected abstract string ProjectAdminRole { get; }
 
@@ -56,7 +54,7 @@ namespace SIL.XForge.Controllers
                 return ForbiddenError();
             }
 
-            UserEntity inviter = await Users.GetAsync(UserId);
+            User inviter = await _users.GetAsync(UserId);
             string subject = $"You've been invited to the project {project.ProjectName} on {siteOptions.Name}";
             string body = "<p>Hello </p><p></p>" +
                 $"<p>{inviter.Name} invites you to join the {project.ProjectName} project on {siteOptions.Name}." +

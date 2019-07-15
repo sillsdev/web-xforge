@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Hangfire;
 using Hangfire.Mongo;
 using Humanizer;
@@ -9,7 +8,6 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Bson.Serialization.IdGenerators;
-using MongoDB.Bson.Serialization.Options;
 using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 using SIL.XForge.Configuration;
@@ -36,7 +34,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
             DataAccessClassMap.RegisterConventions("SIL.XForge",
                 new CamelCaseElementNameConvention(),
-                new ObjectRefConvention(),
                 new EnumRepresentationConvention(BsonType.String),
                 new IgnoreIfNullConvention(true));
 
@@ -44,7 +41,13 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 cm.MapIdProperty(e => e.Id)
                     .SetIdGenerator(StringObjectIdGenerator.Instance)
-                    .SetSerializer(new StringSerializer(BsonType.ObjectId));
+                    .SetSerializer(new StringSerializer());
+            });
+
+            DataAccessClassMap.RegisterClass<RealtimeDocEntity>(cm =>
+            {
+                cm.MapIdProperty(e => e.Id)
+                    .SetSerializer(new StringSerializer());
             });
 
             DataAccessClassMap.RegisterClass<ProjectUserEntity>(cm =>
@@ -58,32 +61,36 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IMongoDatabase>(
                 sp => sp.GetService<IMongoClient>().GetDatabase(options.MongoDatabaseName));
 
-            services.AddMongoRepository<UserEntity>(RootDataTypes.Users,
-                mapSetup: cm =>
-                {
-                    var customSitesSerializer =
-                        new DictionaryInterfaceImplementerSerializer<Dictionary<string, Site>>(
-                            DictionaryRepresentation.Document, new StringSerializer(),
-                            BsonSerializer.SerializerRegistry.GetSerializer<Site>());
-                    cm.GetMemberMap(u => u.Sites).SetSerializer(customSitesSerializer);
-                });
+            services.AddMongoRepository<UserSecret>(RootDataTypes.UserSecrets);
+            services.AddMongoReadOnlyRepository<User>(RootDataTypes.Users);
 
             return services;
         }
 
         public static void AddMongoRepository<T>(this IServiceCollection services, string type,
-            Action<BsonClassMap<T>> mapSetup = null, Action<IMongoIndexManager<T>> indexSetup = null) where T : Entity
+            Action<BsonClassMap<T>> mapSetup = null, Action<IMongoIndexManager<T>> indexSetup = null) where T : IEntity
         {
             DataAccessClassMap.RegisterClass(mapSetup);
-            services.AddSingleton<IRepository<T>>(sp =>
-                {
-                    var options = sp.GetService<IOptions<DataAccessOptions>>();
-                    string collection = type.Underscore();
-                    if (type == RootDataTypes.Projects)
-                        collection = $"{options.Value.Prefix}_{collection}";
-                    return new MongoRepository<T>(sp.GetService<IMongoDatabase>().GetCollection<T>(collection),
-                        c => indexSetup?.Invoke(c.Indexes));
-                });
+            services.AddSingleton<IRepository<T>>(sp => CreateMongoRepository(sp, type, indexSetup));
+            services.AddSingleton<IReadOnlyRepository<T>>(sp => sp.GetService<IRepository<T>>());
+        }
+
+        public static void AddMongoReadOnlyRepository<T>(this IServiceCollection services, string type,
+            Action<BsonClassMap<T>> mapSetup = null, Action<IMongoIndexManager<T>> indexSetup = null) where T : IEntity
+        {
+            DataAccessClassMap.RegisterClass(mapSetup);
+            services.AddSingleton<IReadOnlyRepository<T>>(sp => CreateMongoRepository(sp, type, indexSetup));
+        }
+
+        private static MongoRepository<T> CreateMongoRepository<T>(IServiceProvider sp, string type,
+            Action<IMongoIndexManager<T>> indexSetup) where T : IEntity
+        {
+            var options = sp.GetService<IOptions<DataAccessOptions>>();
+            string collection = type.Underscore();
+            if (type == RootDataTypes.Projects)
+                collection = $"{options.Value.Prefix}_{collection}";
+            return new MongoRepository<T>(sp.GetService<IMongoDatabase>().GetCollection<T>(collection),
+                c => indexSetup?.Invoke(c.Indexes));
         }
     }
 }

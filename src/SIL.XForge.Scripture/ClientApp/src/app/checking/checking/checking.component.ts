@@ -170,7 +170,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         this.project = projectResults.data;
         this.projectCurrentUser = projectResults
           .getManyIncluded<SFProjectUser>(this.project.users)
-          .find(pu => (pu.user == null ? '' : pu.user.id) === this.userService.currentUserId);
+          .find(pu => pu.userRef === this.userService.currentUserId);
         this.chapters = this.text.chapters.map(c => c.number);
         if (prevProjectId !== this.project.id || prevBookId !== this.text.bookId) {
           const bindCheckingDataPromises: Promise<void>[] = [];

@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { User } from 'xforge-common/models/user';
+import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { UserService } from 'xforge-common/user.service';
 
 @Component({
@@ -12,7 +13,7 @@ export class CheckingOwnerComponent implements OnInit {
   @Input() includeAvatar: boolean = false;
   @Input() dateTime: string = '';
   @Input() layoutStacked: boolean = false;
-  owner: User = new User();
+  private ownerDoc: UserProfileDoc;
 
   constructor(private userService: UserService) {}
 
@@ -21,12 +22,17 @@ export class CheckingOwnerComponent implements OnInit {
   }
 
   get name(): string {
-    return this.userService.currentUserId === this.owner.id ? 'Me' : this.owner.name;
+    if (this.ownerDoc == null) {
+      return '';
+    }
+    return this.userService.currentUserId === this.ownerDoc.id ? 'Me' : this.ownerDoc.data.name;
   }
 
-  ngOnInit() {
-    this.userService.onlineGet(this.ownerRef).subscribe(userData => {
-      this.owner = userData.data;
-    });
+  get owner(): User {
+    return this.ownerDoc == null ? undefined : this.ownerDoc.data;
+  }
+
+  ngOnInit(): void {
+    this.userService.getProfile(this.ownerRef).then(u => (this.ownerDoc = u));
   }
 }

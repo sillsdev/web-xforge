@@ -81,10 +81,9 @@ namespace SIL.XForge.Realtime
 
         public string GetCollectionName(string type)
         {
-            string collection = type.Singularize().Underscore() + "_data";
             if (type == RootDataTypes.Projects)
-                collection = _dataAccessOptions.Value.Prefix + "_" + collection;
-            return collection;
+                return $"{_dataAccessOptions.Value.Prefix}_project_data";
+            return type.Underscore();
         }
 
         public async Task DeleteProjectDocsAsync(string type, string projectId)
@@ -107,8 +106,16 @@ namespace SIL.XForge.Realtime
 
         internal string GetOTTypeName(string type)
         {
-            RealtimeDocConfig docConfig = _realtimeOptions.Value.Docs.First(dc => dc.Type == type);
-            return docConfig.OTTypeName;
+            switch (type)
+            {
+                case RootDataTypes.Users:
+                case RootDataTypes.Projects:
+                    return OTType.Json0;
+
+                default:
+                    RealtimeDocConfig docConfig = _realtimeOptions.Value.ProjectDataDocs.First(dc => dc.Type == type);
+                    return docConfig.OTTypeName;
+            }
         }
 
         protected override void DisposeManagedResources()
@@ -124,10 +131,12 @@ namespace SIL.XForge.Realtime
                 ConnectionString = mongo,
                 Port = _realtimeOptions.Value.Port,
                 Authority = $"https://{_authOptions.Value.Domain}/",
-                ProjectsCollectionName =
-                    $"{_dataAccessOptions.Value.Prefix}_{RootDataTypes.Projects.Underscore()}",
+                ProjectsCollectionName = $"{_dataAccessOptions.Value.Prefix}_{RootDataTypes.Projects.Underscore()}",
+                UsersCollection = CreateCollectionConfig(_realtimeOptions.Value.UserDoc),
+                UserProfilesCollectionName = GetCollectionName(RootDataTypes.UserProfiles),
                 ProjectRoles = CreateProjectRoles(_realtimeOptions.Value.ProjectRoles),
-                Collections = _realtimeOptions.Value.Docs.Select(c => CreateCollectionConfig(c)).ToArray(),
+                ProjectDataCollections = _realtimeOptions.Value.ProjectDataDocs
+                    .Select(c => CreateCollectionConfig(c)).ToArray(),
                 Audience = _authOptions.Value.Audience,
                 Scope = _authOptions.Value.Scope
             };
@@ -148,11 +157,21 @@ namespace SIL.XForge.Realtime
             {
                 Name = GetCollectionName(docConfig.Type),
                 OTTypeName = docConfig.OTTypeName,
-                Models = docConfig.Models
-                    .OrderByDescending(t => t.Path.Count)
-                    .Select(t => new { Domain = t.Domain, Path = t.Path.Select(s => s.ToCamelCase()).ToArray() })
+                Domains = docConfig.Domains
+                    .OrderByDescending(d => d.PathTemplate?.Items?.Count ?? 0)
+                    .Select(d => new { Domain = d.Domain, PathTemplate = CreateJson0PathTemplate(d.PathTemplate) })
+                    .ToArray(),
+                ImmutableProps = docConfig.ImmutableProperties
+                    .Select(ip => CreateJson0PathTemplate(ip))
                     .ToArray()
             };
+        }
+
+        private static object[] CreateJson0PathTemplate(ObjectPath path)
+        {
+            if (path == null)
+                return new object[0];
+            return path.Items.Select(i => (i is string str) ? str.ToCamelCase() : i).ToArray();
         }
     }
 }

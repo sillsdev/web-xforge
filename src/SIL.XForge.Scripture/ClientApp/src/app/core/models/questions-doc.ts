@@ -4,7 +4,7 @@ import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { Question } from './question';
 
 export class QuestionsDoc extends JsonRealtimeDoc<Question[]> {
-  static readonly TYPE = 'question';
+  static readonly TYPE = 'questions';
 
   constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
     super(QuestionsDoc.TYPE, adapter, store);

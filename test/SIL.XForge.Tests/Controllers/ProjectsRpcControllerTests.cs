@@ -144,20 +144,17 @@ namespace SIL.XForge.Controllers
                     }
                 });
 
-                Users = new MemoryRepository<UserEntity>(
-                    entities: new[]
+                Users = new MemoryRepository<User>(new[]
+                {
+                    new User
                     {
-                        new UserEntity
-                        {
-                            Id = User01,
-                            Email = "user01@example.com"
-                        },
-                        new UserEntity
-                        {
-                            Id = User02,
-                            Email = "user02@example.com"
-                        }
-                    });
+                        Id = User01
+                    },
+                    new User
+                    {
+                        Id = User02
+                    }
+                });
                 var options = Substitute.For<IOptions<SiteOptions>>();
                 options.Value.Returns(new SiteOptions
                 {
@@ -187,7 +184,7 @@ namespace SIL.XForge.Controllers
 
             public TestProjectsRpcController Controller { get; }
             public MemoryRepository<TestProjectEntity> Projects { get; }
-            public MemoryRepository<UserEntity> Users { get; }
+            public MemoryRepository<User> Users { get; }
             public IEmailService EmailService { get; }
             public IUserAccessor UserAccessor { get; }
             public IHttpRequestAccessor HttpRequestAccessor { get; }

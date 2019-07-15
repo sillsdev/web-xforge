@@ -74,7 +74,7 @@ export class CheckingCommentsComponent implements OnInit {
   }
 
   hasUserReadComment(comment: Comment): boolean {
-    return this.initUserCommentRefsRead.includes(comment.id) || this.projectCurrentUser.user.id === comment.ownerRef;
+    return this.initUserCommentRefsRead.includes(comment.id) || this.projectCurrentUser.userRef === comment.ownerRef;
   }
 
   hideCommentForm() {

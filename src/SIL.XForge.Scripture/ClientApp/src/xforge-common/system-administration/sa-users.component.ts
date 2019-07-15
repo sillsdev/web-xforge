@@ -2,17 +2,19 @@ import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { NoticeService } from 'xforge-common/notice.service';
-import { GetAllParameters } from '../json-api.service';
 import { Project } from '../models/project';
 import { ProjectUser } from '../models/project-user';
 import { User } from '../models/user';
+import { QueryParameters } from '../realtime.service';
 import { SubscriptionDisposable } from '../subscription-disposable';
 import { UserService } from '../user.service';
 import { nameof } from '../utils';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
 
 interface Row {
+  readonly id: string;
   readonly user: User;
+  readonly active: boolean;
   readonly projects: Project[];
 }
 
@@ -32,7 +34,7 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit, 
 
   private dialogRef: MdcDialogRef<SaDeleteDialogComponent>;
   private readonly searchTerm$: BehaviorSubject<string>;
-  private readonly parameters$: BehaviorSubject<GetAllParameters<User>>;
+  private readonly queryParameters$: BehaviorSubject<QueryParameters>;
   private readonly reload$: BehaviorSubject<void>;
 
   constructor(
@@ -41,9 +43,8 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit, 
     private readonly userService: UserService
   ) {
     super();
-    this.noticeService.loadingStarted();
     this.searchTerm$ = new BehaviorSubject<string>('');
-    this.parameters$ = new BehaviorSubject<GetAllParameters<User>>(this.getParameters());
+    this.queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
     this.reload$ = new BehaviorSubject<void>(null);
   }
 
@@ -52,21 +53,36 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit, 
   }
 
   ngOnInit() {
-    const include = [[nameof<User>('projects'), nameof<ProjectUser>('project')]];
+    this.noticeService.loadingStarted();
     this.subscribe(
-      this.userService.onlineSearch(this.searchTerm$, this.parameters$, this.reload$, include),
+      this.userService.onlineSearch(this.searchTerm$, this.queryParameters$, this.reload$),
       searchResults => {
         this.noticeService.loadingStarted();
-        if (searchResults && searchResults.data) {
-          this.userRows = searchResults.data.map(user => {
-            const projects = searchResults
-              .getManyIncluded<ProjectUser>(user.projects)
-              .map(pu => searchResults.getIncluded<Project>(pu.project));
-            return { user, projects };
-          });
-          this.length = searchResults.totalPagedCount;
+        const userRows: Row[] = new Array(searchResults.docs.length);
+        this.length = searchResults.totalPagedCount;
+        const tasks: Promise<any>[] = [];
+        for (let i = 0; i < searchResults.docs.length; i++) {
+          const userDoc = searchResults.docs[i];
+          const index = i;
+          tasks.push(
+            this.userService
+              .onlineGetProjects(userDoc.id, [[nameof<ProjectUser>('project')]])
+              .toPromise()
+              .then(
+                qr =>
+                  (userRows[index] = {
+                    id: userDoc.id,
+                    user: userDoc.data,
+                    active: true,
+                    projects: qr.data.map(pu => qr.getIncluded(pu.project))
+                  })
+              )
+          );
         }
-        this.noticeService.loadingFinished();
+        Promise.all(tasks).then(() => {
+          this.userRows = userRows;
+          this.noticeService.loadingFinished();
+        });
       }
     );
   }
@@ -83,10 +99,10 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit, 
   updatePage(pageIndex: number, pageSize: number): void {
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
-    this.parameters$.next(this.getParameters());
+    this.queryParameters$.next(this.getQueryParameters());
   }
 
-  removeUser(user: User): void {
+  removeUser(userId: string, user: User): void {
     const dialogConfig: MdcDialogConfig<SaDeleteUserDialogData> = {
       data: {
         user
@@ -95,7 +111,7 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit, 
     this.dialogRef = this.dialog.open(SaDeleteDialogComponent, dialogConfig);
     this.dialogRef.afterClosed().subscribe(confirmation => {
       if (confirmation.toLowerCase() === 'confirmed') {
-        this.deleteUser(user.id);
+        this.deleteUser(userId);
       }
     });
   }
@@ -105,10 +121,11 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit, 
     this.reload$.next(null);
   }
 
-  private getParameters(): GetAllParameters<User> {
+  private getQueryParameters(): QueryParameters {
     return {
-      sort: [{ name: 'active', order: 'descending' }, { name: 'name', order: 'ascending' }],
-      pagination: { index: this.pageIndex, size: this.pageSize }
+      sort: { name: 1 },
+      skip: this.pageIndex * this.pageSize,
+      limit: this.pageSize
     };
   }
 }

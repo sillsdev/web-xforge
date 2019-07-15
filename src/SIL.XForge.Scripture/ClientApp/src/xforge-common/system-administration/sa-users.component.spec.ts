@@ -1,19 +1,25 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, getDebugNode, NgModule } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
+import * as OTJson0 from 'ot-json0';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { GetAllParameters, MapQueryResults } from '../json-api.service';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
+import { QueryParameters, RealtimeQueryResults } from 'xforge-common/realtime.service';
+import { nameof } from 'xforge-common/utils';
+import { MapQueryResults } from '../json-api.service';
 import { Project, ProjectRef } from '../models/project';
-import { ProjectUser, ProjectUserRef } from '../models/project-user';
+import { ProjectUser } from '../models/project-user';
 import { Resource } from '../models/resource';
-import { User, UserRef } from '../models/user';
+import { User } from '../models/user';
+import { MemoryRealtimeDocAdapter } from '../realtime-doc-adapter';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
@@ -22,18 +28,19 @@ import { SaUsersComponent } from './sa-users.component';
 describe('SaUsersComponent', () => {
   it('should not display no-users label while loading', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupNullUserData();
+    env.setupEmptyUserData();
     env.fixture.detectChanges();
-    flush();
 
     expect(env.noUsersLabel).toBeNull();
+    tick();
   }));
 
   it('should display message when there are no users', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupEmptyUserData();
     env.fixture.detectChanges();
-    flush();
+    tick();
+    env.fixture.detectChanges();
 
     expect(env.noUsersLabel).not.toBeNull();
   }));
@@ -42,7 +49,8 @@ describe('SaUsersComponent', () => {
     const env = new TestEnvironment();
     env.setupUserData();
     env.fixture.detectChanges();
-    flush();
+    tick();
+    env.fixture.detectChanges();
 
     expect(env.noUsersLabel).toBeNull();
     expect(env.userRows.length).toEqual(3);
@@ -57,26 +65,10 @@ describe('SaUsersComponent', () => {
     expect(env.removeUserButtonOnRow(1)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(1)).toBeFalsy();
 
-    expect(env.cell(2, 1).nativeElement.innerText).toContain('Awaiting response from');
-    expect(env.cell(2, 1).nativeElement.innerText).toContain('user03@example.com');
+    expect(env.cell(2, 1).query(By.css('strong')).nativeElement.innerText).toEqual('User 03');
     expect(env.cell(2, 2).query(By.css('a')).nativeElement.text).toEqual('Project 01');
-    expect(env.removeUserButtonOnRow(2)).toBeFalsy();
-    expect(env.cancelInviteButtonOnRow(2)).toBeTruthy();
-  }));
-
-  it('should delete invited user', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupUserData();
-    when(env.mockedDeleteUserDialogRef.afterClosed()).thenReturn(of('confirmed'));
-    env.fixture.detectChanges();
-    tick();
-    verify(env.mockedUserService.onlineDelete(anything())).never();
-
-    env.clickElement(env.cancelInviteButtonOnRow(2));
-    verify(env.mockedMdcDialog.open(anything(), anything())).once();
-    verify(env.mockedUserService.onlineDelete(anything())).once();
-
-    expect().nothing();
+    expect(env.removeUserButtonOnRow(2)).toBeTruthy();
+    expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
   }));
 
   it('should delete user', fakeAsync(() => {
@@ -85,6 +77,7 @@ describe('SaUsersComponent', () => {
     when(env.mockedDeleteUserDialogRef.afterClosed()).thenReturn(of('confirmed'));
     env.fixture.detectChanges();
     tick();
+    env.fixture.detectChanges();
     verify(env.mockedUserService.onlineDelete(anything())).never();
 
     env.clickElement(env.removeUserButtonOnRow(1));
@@ -98,7 +91,8 @@ describe('SaUsersComponent', () => {
     const env = new TestEnvironment();
     env.setupUserData();
     env.fixture.detectChanges();
-    flush();
+    tick();
+    env.fixture.detectChanges();
 
     expect(env.userRows.length).toEqual(3);
     env.setInputValue(env.filterInput, 'test');
@@ -111,7 +105,8 @@ describe('SaUsersComponent', () => {
     env.setupUserData();
     env.component.pageSize = 2;
     env.fixture.detectChanges();
-    flush();
+    tick();
+    env.fixture.detectChanges();
 
     env.clickElement(env.nextPageButton);
 
@@ -119,41 +114,13 @@ describe('SaUsersComponent', () => {
   }));
 });
 
-class TestProjectUser extends ProjectUser {
-  static readonly TYPE = 'projectUser';
-
-  constructor(init?: Partial<TestProjectUser>) {
-    super(TestProjectUser.TYPE, init);
-  }
-}
-
-class TestProjectUserRef extends ProjectUserRef {
-  static readonly TYPE = TestProjectUser.TYPE;
-
-  constructor(id?: string) {
-    super(TestProjectUserRef.TYPE, id);
-  }
-}
-
+class TestProjectUser extends ProjectUser {}
 class TestProject extends Project {
-  static readonly TYPE = 'project';
-
-  constructor(init?: Partial<TestProject>) {
-    super(TestProject.TYPE, init);
-  }
-
   get taskNames(): string[] {
     return [];
   }
 }
-
-class TestProjectRef extends ProjectRef {
-  static readonly TYPE = TestProject.TYPE;
-
-  constructor(id?: string) {
-    super(TestProjectRef.TYPE, id);
-  }
-}
+class TestProjectRef extends ProjectRef {}
 
 @NgModule({
   imports: [NoopAnimationsModule, UICommonModule],
@@ -165,40 +132,20 @@ class TestProjectRef extends ProjectRef {
 class DialogTestModule {}
 
 class TestEnvironment {
-  component: SaUsersComponent;
-  fixture: ComponentFixture<SaUsersComponent>;
-  overlayContainer: OverlayContainer;
+  readonly component: SaUsersComponent;
+  readonly fixture: ComponentFixture<SaUsersComponent>;
+  readonly overlayContainer: OverlayContainer;
 
-  mockedMdcDialog: MdcDialog = mock(MdcDialog);
-  mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
-  mockedNoticeService: NoticeService = mock(NoticeService);
-  mockedUserService: UserService = mock(UserService);
+  readonly mockedMdcDialog = mock(MdcDialog);
+  readonly mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
+  readonly mockedNoticeService = mock(NoticeService);
+  readonly mockedUserService = mock(UserService);
+  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
-  private readonly users: User[] = [
-    new User({
-      id: 'user01',
-      name: 'User 01',
-      email: 'user01@example.com',
-      projects: [new TestProjectUserRef('projectuser01')],
-      active: true
-    }),
-    new User({
-      id: 'user02',
-      name: 'User 02',
-      email: 'user02@example.com',
-      active: true
-    }),
-    new User({
-      id: 'user03',
-      email: 'user03@example.com',
-      projects: [new TestProjectUserRef('projectuser03')],
-      active: false
-    })
-  ];
-  private readonly included: Resource[] = [
-    new TestProjectUser({ id: 'projectuser01', user: new UserRef('user01'), project: new TestProjectRef('project01') }),
-    new TestProjectUser({ id: 'projectuser03', user: new UserRef('user03'), project: new TestProjectRef('project01') }),
-    new TestProject({ id: 'project01', projectName: 'Project 01' })
+  private readonly userDocs: UserDoc[] = [
+    this.createUserDoc('user01', { name: 'User 01' }),
+    this.createUserDoc('user02', { name: 'User 02' }),
+    this.createUserDoc('user03', { name: 'User 03' })
   ];
 
   constructor() {
@@ -274,28 +221,40 @@ class TestEnvironment {
     element.click();
     this.fixture.detectChanges();
     tick(1000);
-  }
-
-  setupNullUserData(): void {
-    this.setupThisUserData(null);
+    this.fixture.detectChanges();
   }
 
   setupEmptyUserData(): void {
-    this.setupThisUserData([]);
+    when(this.mockedUserService.onlineSearch(anything(), anything(), anything())).thenReturn(
+      of({ docs: [], totalPagedCount: 0 })
+    );
   }
 
   setupUserData(): void {
-    when(this.mockedUserService.onlineSearch(anything(), anything(), anything(), anything())).thenCall(
-      (term$: Observable<string>, parameters$: Observable<GetAllParameters<User>>, reload$: Observable<void>) => {
-        const results = [
+    when(this.mockedUserService.onlineSearch(anything(), anything(), anything())).thenCall(
+      (term$: Observable<string>, parameters$: Observable<QueryParameters>, reload$: Observable<void>) => {
+        const results: RealtimeQueryResults<UserDoc>[] = [
           // page 1
-          new MapQueryResults<User[]>(this.users, this.users.length, this.included),
+          { docs: this.userDocs, totalPagedCount: this.userDocs.length },
           // page 2
-          new MapQueryResults<User[]>([this.users[2]], 1, this.included)
+          { docs: [this.userDocs[2]], totalPagedCount: 1 }
         ];
 
         return combineLatest(term$, parameters$, reload$).pipe(map((_value, index) => results[index]));
       }
+    );
+
+    const project = new TestProject({ id: 'project01', projectName: 'Project 01' });
+    this.addProjectUser(
+      'user01',
+      [new TestProjectUser({ id: 'projectuser01', userRef: 'user01', project: new TestProjectRef('project01') })],
+      [project]
+    );
+    this.addProjectUser('user02', []);
+    this.addProjectUser(
+      'user03',
+      [new TestProjectUser({ id: 'projectuser03', userRef: 'user03', project: new TestProjectRef('project01') })],
+      [project]
     );
   }
 
@@ -307,12 +266,17 @@ class TestEnvironment {
     input.value = value;
     input.dispatchEvent(new Event('keyup'));
     this.fixture.detectChanges();
-    flush();
+    tick();
+    this.fixture.detectChanges();
   }
 
-  private setupThisUserData(users: User[] = []): void {
-    when(this.mockedUserService.onlineSearch(anything(), anything(), anything(), anything())).thenReturn(
-      of(new MapQueryResults<User[]>(users, 0, this.included))
+  private createUserDoc(id: string, user: User): UserDoc {
+    return new UserDoc(new MemoryRealtimeDocAdapter(OTJson0.type, id, user), instance(this.mockedRealtimeOfflineStore));
+  }
+
+  private addProjectUser(userId: string, data: TestProjectUser[], included?: Resource[]): void {
+    when(this.mockedUserService.onlineGetProjects(userId, deepEqual([[nameof<ProjectUser>('project')]]))).thenReturn(
+      of(new MapQueryResults(data, undefined, included))
     );
   }
 }

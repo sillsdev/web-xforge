@@ -7,7 +7,6 @@ const ShareDBMongo = require('sharedb-mongo');
 const WebSocketJSONStream = require('websocket-json-stream');
 const WebSocket = require('ws');
 const MongoClient = require('mongodb').MongoClient;
-const ObjectId = require('mongodb').ObjectId;
 const jwt = require('jsonwebtoken');
 const jwks = require('jwks-rsa');
 const shareDBAccess = require('sharedb-access');
@@ -16,6 +15,11 @@ ShareDB.types.register(richText.type);
 ShareDB.types.register(otJson0.type);
 
 const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
+const XF_ROLE_CLAIM = 'http://xforge.org/role';
+
+const SYSTEM_ADMIN_ROLE = 'system_admin';
+
+const USER_PROFILE_FIELDS = { name: true, avatarUrl: true };
 
 // This should stay in sync with the corresponding enum in "Models/Operation.cs".
 const Operation = {
@@ -76,6 +80,7 @@ class RealtimeServer {
       disableDocAction: true,
       disableSpaceDelimitedActions: true
     });
+    this.backend.addProjection(options.userProfilesCollectionName, options.usersCollection.name, USER_PROFILE_FIELDS);
     this.backend.use('connect', (request, done) => {
       this.setConnectSession(request)
         .then(() => done())
@@ -83,8 +88,12 @@ class RealtimeServer {
     });
 
     shareDBAccess(this.backend);
-    for (const collectionConfig of options.collections) {
-      this.addDataAccessRules(collectionConfig);
+    // users access control
+    this.addUsersAccessRules(options.usersCollection);
+
+    // project data access control
+    for (const collectionConfig of options.projectDataCollections) {
+      this.addProjectDataAccessRules(collectionConfig);
     }
 
     // Connect any incoming WebSocket connection to ShareDB
@@ -180,11 +189,11 @@ class RealtimeServer {
 
   async updateUserProjectRoles(session) {
     const coll = this.database.collection(this.projectsCollectionName);
-    const projects = await coll.find({ 'users.userRef': new ObjectId(session.userId) }).toArray();
+    const projects = await coll.find({ 'users.userRef': session.userId }).toArray();
     const projectRoles = new Map();
     for (const project of projects) {
-      const projectUser = project.users.find(pu => pu.userRef.equals(session.userId));
-      projectRoles.set(project._id.toHexString(), projectUser.role);
+      const projectUser = project.users.find(pu => pu.userRef === session.userId);
+      projectRoles.set(project._id, projectUser.role);
     }
     session.projectRoles = projectRoles;
   }
@@ -194,7 +203,8 @@ class RealtimeServer {
       request.agent.connectSession = { isServer: true };
     } else {
       const userId = request.req.user[XF_USER_ID_CLAIM];
-      const session = { userId, isServer: false };
+      const role = request.req.user[XF_ROLE_CLAIM];
+      const session = { userId, role, isServer: false };
       await this.updateUserProjectRoles(session);
       request.agent.connectSession = session;
     }
@@ -209,7 +219,47 @@ class RealtimeServer {
     return projectRole;
   }
 
-  addDataAccessRules(collectionConfig) {
+  addUsersAccessRules(collectionConfig) {
+    this.backend.allowCreate(collectionConfig.name, (_docId, _doc, session) => {
+      return session.isServer;
+    });
+    this.backend.allowDelete(collectionConfig.name, (_docId, _doc, session) => {
+      return session.isServer;
+    });
+    this.backend.allowRead(collectionConfig.name, (docId, doc, session) => {
+      if (session.isServer || session.role === SYSTEM_ADMIN_ROLE) {
+        return true;
+      }
+      if (docId === session.userId) {
+        return true;
+      }
+
+      for (const key of Object.keys(doc)) {
+        if (!USER_PROFILE_FIELDS.hasOwnProperty(key)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+    this.backend.allowUpdate(collectionConfig.name, (docId, _oldDoc, _newDoc, ops, session) => {
+      if (session.isServer || session.role === SYSTEM_ADMIN_ROLE) {
+        return true;
+      }
+      if (docId !== session.userId) {
+        return false;
+      }
+
+      for (const op of ops) {
+        if (this.getMatchingPathTemplate(collectionConfig.immutableProps, op.p) !== -1) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  addProjectDataAccessRules(collectionConfig) {
     this.backend.allowCreate(collectionConfig.name, (_docId, _doc, session) => {
       return session.isServer;
     });
@@ -230,8 +280,8 @@ class RealtimeServer {
         return false;
       }
 
-      for (const model of collectionConfig.models) {
-        if (!this.hasRight(role, model.domain, Operation.View)) {
+      for (const domainConfig of collectionConfig.domains) {
+        if (!this.hasRight(role, domainConfig.domain, Operation.View)) {
           return false;
         }
       }
@@ -250,41 +300,47 @@ class RealtimeServer {
 
       switch (collectionConfig.otTypeName) {
         case richText.type.name:
-          if (!this.hasRight(role, collectionConfig.models[0].domain, Operation.Edit)) {
+          if (!this.hasRight(role, collectionConfig.domains[0].domain, Operation.Edit)) {
             return false;
           }
           break;
 
         case otJson0.type.name:
           for (const op of ops) {
-            const modelConfig = this.getMatchingModelConfig(collectionConfig, op.p);
-            if (modelConfig == null) {
+            const index = this.getMatchingPathTemplate(collectionConfig.domains.map(dc => dc.pathTemplate), op.p);
+            if (index === -1) {
               return false;
             }
+            const domainConfig = collectionConfig.domains[index];
 
-            if (modelConfig.path.length < op.p.length) {
+            if (domainConfig.pathTemplate.length < op.p.length) {
               // property update
-              const entityPath = op.p.slice(0, modelConfig.path.length);
+              const entityPath = op.p.slice(0, domainConfig.pathTemplate.length);
               const oldEntity = deepGet(entityPath, oldDoc);
               const newEntity = deepGet(entityPath, newDoc);
-              if (!this.checkJsonEditRight(session.userId, role, modelConfig, oldEntity, newEntity)) {
+              if (!this.checkJsonEditRight(session.userId, role, domainConfig, oldEntity, newEntity)) {
                 return false;
               }
             } else if (op.li != null && op.ld != null) {
               // replace
-              if (!this.checkJsonEditRight(session.userId, role, modelConfig, op.ld, op.li)) {
+              if (!this.checkJsonEditRight(session.userId, role, domainConfig, op.ld, op.li)) {
                 return false;
               }
             } else if (op.li != null) {
               // create
-              if (!this.checkJsonCreateRight(session.userId, role, modelConfig, op.li)) {
+              if (!this.checkJsonCreateRight(session.userId, role, domainConfig, op.li)) {
                 return false;
               }
             } else if (op.ld != null) {
               // delete
-              if (!this.checkJsonDeleteRight(session.userId, role, modelConfig, op.ld)) {
+              if (!this.checkJsonDeleteRight(session.userId, role, domainConfig, op.ld)) {
                 return false;
               }
+            }
+
+            // check if trying to update an immutable property
+            if (this.getMatchingPathTemplate(collectionConfig.immutableProps, op.p) !== -1) {
+              return false;
             }
           }
           break;
@@ -322,29 +378,30 @@ class RealtimeServer {
     return this.hasRight(role, type.domain, Operation.DeleteOwn) && oldEntity.ownerRef === userId;
   }
 
-  getMatchingModelConfig(collectionConfig, path) {
-    for (const modelConfig of collectionConfig.models) {
-      if (path.length < modelConfig.path.length) {
+  getMatchingPathTemplate(templates, path) {
+    for (let i = 0; i < templates.length; i++) {
+      const template = templates[i];
+      if (path.length < template.length) {
         continue;
       }
 
       let match = true;
-      for (let i = 0; i < modelConfig.path.length; i++) {
-        if (modelConfig.path[i] === '$') {
+      for (let i = 0; i < template.length; i++) {
+        if (template[i] === -1) {
           if (typeof path[i] != 'number') {
             match = false;
             break;
           }
-        } else if (modelConfig.path[i] !== path[i]) {
+        } else if (template[i] !== path[i]) {
           match = false;
           break;
         }
       }
       if (match) {
-        return modelConfig;
+        return i;
       }
     }
-    return null;
+    return -1;
   }
 }
 

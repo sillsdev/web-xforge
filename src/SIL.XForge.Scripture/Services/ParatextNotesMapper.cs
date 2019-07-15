@@ -9,6 +9,7 @@ using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -21,28 +22,28 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class ParatextNotesMapper : IParatextNotesMapper
     {
-        private readonly IRepository<UserEntity> _users;
+        private readonly IRepository<UserSecret> _userSecrets;
         private readonly IParatextService _paratextService;
         private readonly Dictionary<string, SyncUser> _idToSyncUser = new Dictionary<string, SyncUser>();
         private readonly Dictionary<string, SyncUser> _usernameToSyncUser = new Dictionary<string, SyncUser>();
         private readonly Dictionary<string, string> _userIdToUsername = new Dictionary<string, string>();
 
-        private UserEntity _currentUser;
+        private UserSecret _currentUserSecret;
         private string _currentParatextUsername;
         private SFProjectEntity _project;
 
-        public ParatextNotesMapper(IRepository<UserEntity> users, IParatextService paratextService)
+        public ParatextNotesMapper(IRepository<UserSecret> userSecrets, IParatextService paratextService)
         {
-            _users = users;
+            _userSecrets = userSecrets;
             _paratextService = paratextService;
         }
 
         public List<SyncUser> NewSyncUsers { get; } = new List<SyncUser>();
 
-        public void Init(UserEntity currentUser, SFProjectEntity project)
+        public void Init(UserSecret currentUserSecret, SFProjectEntity project)
         {
-            _currentUser = currentUser;
-            _currentParatextUsername = _paratextService.GetParatextUsername(currentUser);
+            _currentUserSecret = currentUserSecret;
+            _currentParatextUsername = _paratextService.GetParatextUsername(currentUserSecret);
             _project = project;
             _idToSyncUser.Clear();
             _usernameToSyncUser.Clear();
@@ -81,7 +82,7 @@ namespace SIL.XForge.Scripture.Services
                                 new XAttribute("startPos", 0),
                                 new XAttribute("selectedText", "")));
                         string answerSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
-                            answer.OwnerRef, answer.SyncUserRef, answer.DateCreated,
+                            answer.OwnerRef, answer.SyncUserRef, (DateTime)answer.DateCreated,
                             new XElement("span", new XAttribute("style", "italic"), question.Text), answer.Text);
                         if (answer.SyncUserRef == null)
                             answerSyncUserIds.Add((i, j, answerSyncUserId));
@@ -89,7 +90,8 @@ namespace SIL.XForge.Scripture.Services
                         foreach (var c in commentsLookup[answer.Id])
                         {
                             string commentSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
-                                c.Comment.OwnerRef, c.Comment.SyncUserRef, c.Comment.DateCreated, c.Comment.Text);
+                                c.Comment.OwnerRef, c.Comment.SyncUserRef, (DateTime)c.Comment.DateCreated,
+                                c.Comment.Text);
                             if (c.Comment.SyncUserRef == null)
                                 commentSyncUserIds.Add((c.Index, commentSyncUserId));
                         }
@@ -199,9 +201,9 @@ namespace SIL.XForge.Scripture.Services
             // if the owner is a PT user, then get the PT username
             if (!_userIdToUsername.TryGetValue(ownerRef, out string paratextUsername))
             {
-                UserEntity user = await _users.GetAsync(ownerRef);
-                if (user.ParatextId != null)
-                    paratextUsername = _paratextService.GetParatextUsername(user);
+                Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(ownerRef);
+                if (attempt.TryResult(out UserSecret userSecret))
+                    paratextUsername = _paratextService.GetParatextUsername(userSecret);
                 // cache the results
                 _userIdToUsername[ownerRef] = paratextUsername;
             }

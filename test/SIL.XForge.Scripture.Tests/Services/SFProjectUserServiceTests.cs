@@ -31,7 +31,7 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser(User02Id, SystemRoles.User);
-                env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
+                env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), "pt01")
                     .Returns(Task.FromResult(Attempt.Success(SFProjectRoles.Administrator)));
 
                 Assert.That(env.ContainsProjectUser("projectusernew"), Is.False);
@@ -41,8 +41,7 @@ namespace SIL.XForge.Scripture.Services
                     Id = "projectusernew",
                     ProjectRef = "project01",
                     Project = new SFProjectResource { Id = "project01" },
-                    UserRef = User02Id,
-                    User = new UserResource { Id = User02Id }
+                    UserRef = User02Id
                 };
                 SFProjectUserResource newProjectUser = await env.Service.CreateAsync(projectUser);
 
@@ -60,7 +59,7 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser(User02Id, SystemRoles.User);
-                env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
+                env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), "pt01")
                     .Returns(Task.FromResult(Attempt.Success(SFProjectRoles.Administrator)));
 
                 Assert.That(env.ContainsProjectUser("projectusernew"), Is.False);
@@ -70,8 +69,7 @@ namespace SIL.XForge.Scripture.Services
                     Id = "projectusernew",
                     ProjectRef = "project01",
                     Project = new SFProjectResource { Id = "project01" },
-                    UserRef = User03Id,
-                    User = new UserResource { Id = User03Id }
+                    UserRef = User03Id
                 };
                 var ex = Assert.ThrowsAsync<JsonApiException>(async () =>
                     {
@@ -88,7 +86,7 @@ namespace SIL.XForge.Scripture.Services
             using (var env = new TestEnvironment())
             {
                 env.SetUser(User02Id, SystemRoles.SystemAdmin);
-                env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserEntity>(), "pt01")
+                env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), "pt01")
                     .Returns(Task.FromResult(Attempt.Success(SFProjectRoles.Administrator)));
 
                 Assert.That(env.ContainsProjectUser("projectusernew"), Is.False);
@@ -98,8 +96,7 @@ namespace SIL.XForge.Scripture.Services
                     Id = "projectusernew",
                     ProjectRef = "project01",
                     Project = new SFProjectResource { Id = "project01" },
-                    UserRef = User03Id,
-                    User = new UserResource { Id = User03Id }
+                    UserRef = User03Id
                 };
                 SFProjectUserResource newProjectUser = await env.Service.CreateAsync(projectUser);
 
@@ -297,26 +294,25 @@ namespace SIL.XForge.Scripture.Services
             public TestEnvironment()
                 : base("project-users")
             {
-                Users = new MemoryRepository<UserEntity>(new[]
-                    {
-                        new UserEntity { Id = User01Id },
-                        new UserEntity { Id = User02Id },
-                        new UserEntity { Id = User03Id }
-                    });
+                UserSecrets = new MemoryRepository<UserSecret>(new[]
+                {
+                    new UserSecret { Id = User01Id },
+                    new UserSecret { Id = User02Id },
+                    new UserSecret { Id = User03Id }
+                });
                 ParatextService = Substitute.For<IParatextService>();
                 var engineService = Substitute.For<IEngineService>();
                 var syncService = Substitute.For<ISyncService>();
                 var realtimeService = Substitute.For<IRealtimeService>();
-                Service = new SFProjectUserService(JsonApiContext, Mapper, UserAccessor, Entities, Users,
+                Service = new SFProjectUserService(JsonApiContext, Mapper, UserAccessor, Entities, UserSecrets,
                     ParatextService)
                 {
                     ProjectMapper = new SFProjectService(JsonApiContext, Mapper, UserAccessor, Entities,
-                        engineService, SiteOptions, syncService, realtimeService),
-                    UserMapper = new UserService(JsonApiContext, Mapper, UserAccessor, Users, SiteOptions)
+                        engineService, SiteOptions, syncService, realtimeService)
                 };
             }
 
-            public MemoryRepository<UserEntity> Users { get; }
+            public MemoryRepository<UserSecret> UserSecrets { get; }
             public IParatextService ParatextService { get; }
             public SFProjectUserService Service { get; }
 

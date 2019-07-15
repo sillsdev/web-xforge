@@ -15,5 +15,6 @@ export const environment = {
   authClientId: 'aoAGb9Yx1H5WIsvCW6JJCteJhSa37ftH',
   audience: 'https://scriptureforge.org/',
   scope: 'sf_data',
-  prefix: 'sf'
+  prefix: 'sf',
+  siteId: 'sf'
 };

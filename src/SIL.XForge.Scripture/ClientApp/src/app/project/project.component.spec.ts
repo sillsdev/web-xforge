@@ -4,7 +4,6 @@ import * as OTJson0 from 'ot-json0';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { MapQueryResults } from 'xforge-common/json-api.service';
-import { UserRef } from 'xforge-common/models/user';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -185,7 +184,7 @@ class TestEnvironment {
           [
             new SFProjectUser({
               id: 'projectuser01',
-              user: new UserRef('user01'),
+              userRef: 'user01',
               project: new SFProjectRef('project01'),
               role: args.role == null ? SFProjectRoles.ParatextTranslator : args.role,
               selectedTask: args.selectedTask,

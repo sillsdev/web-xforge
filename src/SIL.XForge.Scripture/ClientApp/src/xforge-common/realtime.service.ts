@@ -1,17 +1,29 @@
 import { Injectable } from '@angular/core';
 import { RecordIdentity } from '@orbit/data';
-import { underscore } from '@orbit/utils';
+import { clone } from '@orbit/utils';
 import ReconnectingWebSocket from 'reconnecting-websocket';
-import { Connection } from 'sharedb/lib/client';
+import { Connection, Query } from 'sharedb/lib/client';
 import { environment } from '../environments/environment';
 import { LocationService } from './location.service';
 import { DomainModel } from './models/domain-model';
 import { RealtimeDoc } from './models/realtime-doc';
 import { SharedbRealtimeDocAdapter } from './realtime-doc-adapter';
 import { RealtimeOfflineStore } from './realtime-offline-store';
+import { getCollectionName } from './utils';
 
 function serializeRecordIdentity(identity: RecordIdentity): string {
   return `${identity.type}:${identity.id}`;
+}
+
+export interface RealtimeQueryResults<T extends RealtimeDoc> {
+  docs: T[];
+  totalPagedCount?: number;
+}
+
+export interface QueryParameters {
+  sort?: any;
+  skip?: number;
+  limit?: number;
 }
 
 /**
@@ -25,8 +37,7 @@ function serializeRecordIdentity(identity: RecordIdentity): string {
 export class RealtimeService {
   private ws: ReconnectingWebSocket;
   private connection: Connection;
-  private readonly docs = new Map<string, Promise<RealtimeDoc>>();
-  private resetPromise: Promise<void> = Promise.resolve();
+  private readonly docs = new Map<string, RealtimeDoc>();
   private store: RealtimeOfflineStore;
   private accessToken: string;
 
@@ -59,24 +70,50 @@ export class RealtimeService {
    * @returns {Promise<T>} The realtime data.
    */
   async get<T extends RealtimeDoc>(identity: RecordIdentity): Promise<T> {
-    // wait for pending reset to complete before getting data
-    await this.resetPromise;
     const key = serializeRecordIdentity(identity);
-    let dataPromise = this.docs.get(key);
-    if (dataPromise == null) {
-      dataPromise = this.createDoc(identity);
-      this.docs.set(key, dataPromise);
+    let doc = this.docs.get(key);
+    if (doc == null) {
+      doc = this.createDoc(identity);
+      this.docs.set(key, doc);
     }
-    return await (dataPromise as Promise<T>);
+    await doc.subscribe();
+    return doc as T;
   }
 
-  /**
-   * Resets the realtime data cache.
-   */
-  reset(): void {
-    if (this.docs.size > 0) {
-      this.resetPromise = this.clearDataMap();
+  async onlineQuery<T extends RealtimeDoc>(
+    type: string,
+    query: any,
+    parameters: QueryParameters = {}
+  ): Promise<RealtimeQueryResults<T>> {
+    const collection = getCollectionName(type);
+    const resultsQuery = clone(query);
+    if (parameters.sort != null) {
+      resultsQuery.$sort = parameters.sort;
     }
+    if (parameters.skip != null) {
+      resultsQuery.$skip = parameters.skip;
+    }
+    if (parameters.limit != null) {
+      resultsQuery.$limit = parameters.limit;
+    }
+    const countQuery = clone(query);
+    countQuery.$count = { applySkipLimit: false };
+    const [countQueryObj, resultsQueryObj] = await Promise.all([
+      this.createFetchQuery(collection, countQuery),
+      this.createFetchQuery(collection, resultsQuery)
+    ]);
+    const RealtimeDocType = this.domainModel.getRealtimeDocType(type);
+    const docs: T[] = [];
+    for (const shareDoc of resultsQueryObj.results) {
+      const key = serializeRecordIdentity({ type, id: shareDoc.id });
+      let doc = this.docs.get(key);
+      if (doc == null) {
+        doc = new RealtimeDocType(new SharedbRealtimeDocAdapter(shareDoc), this.store);
+        this.docs.set(key, doc);
+      }
+      docs.push(doc as T);
+    }
+    return { docs, totalPagedCount: countQueryObj.extra };
   }
 
   /**
@@ -106,29 +143,22 @@ export class RealtimeService {
     return url;
   }
 
-  private async createDoc(identity: RecordIdentity): Promise<RealtimeDoc> {
-    let collection = underscore(identity.type) + '_data';
-    if (identity.type === 'project') {
-      collection = environment.prefix + '_' + collection;
-    }
+  private createDoc(identity: RecordIdentity): RealtimeDoc {
+    const collection = getCollectionName(identity.type);
     const sharedbDoc = this.connection.get(collection, identity.id);
     const RealtimeDocType = this.domainModel.getRealtimeDocType(identity.type);
-    const realtimeDoc = new RealtimeDocType(new SharedbRealtimeDocAdapter(sharedbDoc), this.store);
-    await realtimeDoc.subscribe();
-    return realtimeDoc;
+    return new RealtimeDocType(new SharedbRealtimeDocAdapter(sharedbDoc), this.store);
   }
 
-  private async clearDataMap(): Promise<void> {
-    const disposePromises: Promise<void>[] = [];
-    for (const dataPromise of this.docs.values()) {
-      disposePromises.push(this.disposeData(dataPromise));
-    }
-    this.docs.clear();
-    await Promise.all(disposePromises);
-  }
-
-  private async disposeData(dataPromise: Promise<RealtimeDoc>): Promise<void> {
-    const data = await dataPromise;
-    await data.dispose();
+  private createFetchQuery(collection: string, query: any): Promise<Query> {
+    return new Promise<Query>((resolve, reject) => {
+      const queryObj = this.connection.createFetchQuery(collection, query, {}, (err, results) => {
+        if (err != null) {
+          reject(err);
+        } else {
+          resolve(queryObj);
+        }
+      });
+    });
   }
 }

@@ -8,8 +8,6 @@ import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
 import { EditNameDialogComponent } from './edit-name-dialog/edit-name-dialog.component';
 import { ErrorComponent } from './error/error.component';
-import { DeleteAccountDialogComponent } from './my-account/delete-account-dialog/delete-account-dialog.component';
-import { MyAccountComponent } from './my-account/my-account.component';
 import { ShareDialogComponent } from './share/share-dialog.component';
 import { ShareComponent } from './share/share.component';
 import { SaDeleteDialogComponent } from './system-administration/sa-delete-dialog.component';
@@ -24,10 +22,8 @@ import { WriteStatusComponent } from './write-status/write-status.component';
 const componentExports = [
   AvatarComponent,
   CollaboratorsComponent,
-  DeleteAccountDialogComponent,
   EditNameDialogComponent,
   ErrorComponent,
-  MyAccountComponent,
   SaProjectsComponent,
   SaDeleteDialogComponent,
   SaUsersComponent,
@@ -51,7 +47,6 @@ export const xForgeCommonEntryComponents = [EditNameDialogComponent, ShareDialog
   ],
   declarations: componentExports,
   exports: componentExports,
-  providers: [{ provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true }],
-  entryComponents: [DeleteAccountDialogComponent]
+  providers: [{ provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true }]
 })
 export class XForgeCommonModule {}

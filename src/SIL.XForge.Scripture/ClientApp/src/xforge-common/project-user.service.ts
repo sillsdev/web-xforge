@@ -1,6 +1,5 @@
 import { JsonApiService } from './json-api.service';
 import { ProjectUser } from './models/project-user';
-import { UserRef } from './models/user';
 import { ResourceService } from './resource.service';
 
 export abstract class ProjectUserService<T extends ProjectUser = ProjectUser> extends ResourceService {
@@ -11,7 +10,7 @@ export abstract class ProjectUserService<T extends ProjectUser = ProjectUser> ex
   onlineCreate(projectId: string, userId: string, role?: string): Promise<T> {
     const init: Partial<ProjectUser> = {
       project: this.jsonApiService.newResourceRef({ type: this.projectType, id: projectId }),
-      user: new UserRef(userId),
+      userRef: userId,
       role
     };
     return this.jsonApiService.onlineCreate(this.jsonApiService.newResource(this.type, init) as T);

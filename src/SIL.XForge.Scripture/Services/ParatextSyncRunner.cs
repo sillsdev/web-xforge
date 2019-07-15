@@ -128,7 +128,7 @@ namespace SIL.XForge.Scripture.Services
             SequenceEqualityComparer.Create(new ChapterEqualityComparer());
 
         private readonly IOptions<SiteOptions> _siteOptions;
-        private readonly IRepository<UserEntity> _users;
+        private readonly IRepository<UserSecret> _userSecrets;
         private readonly IRepository<SFProjectEntity> _projects;
         private readonly IEngineService _engineService;
         private readonly IParatextService _paratextService;
@@ -140,18 +140,18 @@ namespace SIL.XForge.Scripture.Services
 
         private IConnection _conn;
         private SFProjectEntity _project;
-        private UserEntity _user;
+        private UserSecret _userSecret;
         private IDocument<SFProjectData> _projectDataDoc;
         private int _stepCount;
         private int _step;
 
-        public ParatextSyncRunner(IOptions<SiteOptions> siteOptions, IRepository<UserEntity> users,
+        public ParatextSyncRunner(IOptions<SiteOptions> siteOptions, IRepository<UserSecret> userSecrets,
             IRepository<SFProjectEntity> projects, IEngineService engineService, IParatextService paratextService,
             IRealtimeService realtimeService, IFileSystemService fileSystemService, IDeltaUsxMapper deltaUsxMapper,
             IParatextNotesMapper notesMapper, ILogger<ParatextSyncRunner> logger)
         {
             _siteOptions = siteOptions;
-            _users = users;
+            _userSecrets = userSecrets;
             _projects = projects;
             _engineService = engineService;
             _paratextService = paratextService;
@@ -178,11 +178,12 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 string targetParatextId = _project.ParatextId;
-                var targetBooks = new HashSet<string>(await _paratextService.GetBooksAsync(_user, targetParatextId));
+                var targetBooks = new HashSet<string>(await _paratextService.GetBooksAsync(_userSecret,
+                    targetParatextId));
 
                 string sourceParatextId = _project.SourceParatextId;
                 var sourceBooks = new HashSet<string>(_project.TranslateEnabled
-                    ? await _paratextService.GetBooksAsync(_user, sourceParatextId)
+                    ? await _paratextService.GetBooksAsync(_userSecret, sourceParatextId)
                     : Enumerable.Empty<string>());
 
                 var booksToSync = new HashSet<string>(targetBooks);
@@ -289,10 +290,10 @@ namespace SIL.XForge.Scripture.Services
             if (!_projectDataDoc.IsLoaded)
                 return false;
 
-            if (!(await _users.TryGetAsync(userId)).TryResult(out _user))
+            if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
                 return false;
 
-            _notesMapper.Init(_user, _project);
+            _notesMapper.Init(_userSecret, _project);
 
             await _projectDataDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, 0));
 
@@ -325,7 +326,7 @@ namespace SIL.XForge.Scripture.Services
             string bookText;
             if (isReadOnly)
             {
-                bookText = await _paratextService.GetBookTextAsync(_user, paratextId, text.BookId);
+                bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, text.BookId);
             }
             else
             {
@@ -344,12 +345,12 @@ namespace SIL.XForge.Scripture.Services
 
                 if (XNode.DeepEquals(oldUsxElem, newUsxElem))
                 {
-                    bookText = await _paratextService.GetBookTextAsync(_user, paratextId, text.BookId);
+                    bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, text.BookId);
                 }
                 else
                 {
-                    bookText = await _paratextService.UpdateBookTextAsync(_user, paratextId, text.BookId, revision,
-                        newUsxElem.ToString());
+                    bookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, text.BookId,
+                        revision, newUsxElem.ToString());
                 }
             }
             await UpdateProgress();
@@ -410,7 +411,7 @@ namespace SIL.XForge.Scripture.Services
             // Remove any stale text_data records that may be in the way.
             await DeleteAllTextDocsForBookAsync(text, textType);
 
-            string bookText = await _paratextService.GetBookTextAsync(_user, paratextId, text.BookId);
+            string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, text.BookId);
             var bookTextElem = XElement.Parse(bookText);
 
             await SaveXmlFileAsync(bookTextElem, fileName);
@@ -463,7 +464,8 @@ namespace SIL.XForge.Scripture.Services
             if (_project.CheckingEnabled)
             {
                 XElement oldNotesElem;
-                string oldNotesText = await _paratextService.GetNotesAsync(_user, _project.ParatextId, text.BookId);
+                string oldNotesText = await _paratextService.GetNotesAsync(_userSecret, _project.ParatextId,
+                    text.BookId);
                 if (oldNotesText != "")
                     oldNotesElem = XElement.Parse(oldNotesText);
                 else
@@ -473,7 +475,7 @@ namespace SIL.XForge.Scripture.Services
                     commentsDocs.Values);
 
                 if (notesElem.Elements("thread").Any())
-                    await _paratextService.UpdateNotesAsync(_user, _project.ParatextId, notesElem.ToString());
+                    await _paratextService.UpdateNotesAsync(_userSecret, _project.ParatextId, notesElem.ToString());
 
                 await UpdateProgress();
             }
