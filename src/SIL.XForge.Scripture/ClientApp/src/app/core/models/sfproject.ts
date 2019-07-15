@@ -2,9 +2,6 @@ import { InputSystem } from 'xforge-common/models/input-system';
 import { Project, ProjectRef } from 'xforge-common/models/project';
 
 export class SFProject extends Project {
-  /** type identifier string for domain type mapping */
-  static readonly TYPE: string = 'project';
-
   paratextId?: string;
   checkingEnabled?: boolean;
   usersSeeEachOthersResponses?: boolean;
@@ -14,7 +11,7 @@ export class SFProject extends Project {
   sourceInputSystem?: InputSystem;
 
   constructor(init?: Partial<SFProject>) {
-    super(SFProject.TYPE, init);
+    super(init);
   }
 
   get taskNames(): string[] {
@@ -29,10 +26,4 @@ export class SFProject extends Project {
   }
 }
 
-export class SFProjectRef extends ProjectRef {
-  static readonly TYPE: string = SFProject.TYPE;
-
-  constructor(id: string) {
-    super(SFProjectRef.TYPE, id);
-  }
-}
+export class SFProjectRef extends ProjectRef {}

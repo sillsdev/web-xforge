@@ -3,6 +3,7 @@ import { Dict } from '@orbit/utils';
 import { Snapshot } from 'sharedb/lib/client';
 import { XForgeIndexedDBSource } from './indexeddb/xforge-indexeddb-source';
 import { DomainModel } from './models/domain-model';
+import { getCollectionName } from './utils';
 
 /** Structure of a record in the xforge-realtime IndexedDB database. */
 export interface RealtimeOfflineData {
@@ -20,7 +21,7 @@ export class RealtimeOfflineStore {
   constructor(domainModel: DomainModel) {
     const models: Dict<ModelDefinition> = {};
     for (const docType of domainModel.realtimeDocTypes) {
-      models[docType] = {
+      models[getCollectionName(docType)] = {
         attributes: {
           snapshot: { type: 'object' },
           pendingOps: { type: 'array' }
@@ -33,13 +34,13 @@ export class RealtimeOfflineStore {
 
   async keys(type: string): Promise<RecordIdentity[]> {
     await this.source.openDB();
-    return await this.source.getRecords(type);
+    return await this.source.getRecords(getCollectionName(type));
   }
 
   async getItem(identity: RecordIdentity): Promise<RealtimeOfflineData> {
     await this.source.openDB();
     try {
-      const record = await this.source.getRecord(identity);
+      const record = await this.source.getRecord({ type: getCollectionName(identity.type), id: identity.id });
       return record.attributes as RealtimeOfflineData;
     } catch (err) {
       return null;
@@ -49,7 +50,7 @@ export class RealtimeOfflineStore {
   async setItem(identity: RecordIdentity, offlineData: RealtimeOfflineData): Promise<RealtimeOfflineData> {
     await this.source.openDB();
     const record: Record = {
-      type: identity.type,
+      type: getCollectionName(identity.type),
       id: identity.id,
       attributes: offlineData
     };
@@ -59,7 +60,7 @@ export class RealtimeOfflineStore {
 
   async delete(identity: RecordIdentity): Promise<void> {
     await this.source.openDB();
-    await this.source.removeRecord(identity);
+    await this.source.removeRecord({ type: getCollectionName(identity.type), id: identity.id });
   }
 
   deleteDB(): Promise<void> {

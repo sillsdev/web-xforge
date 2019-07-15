@@ -22,7 +22,6 @@ import { SFProjectData } from 'src/app/core/models/sfproject-data';
 import { SFProjectDataDoc } from 'src/app/core/models/sfproject-data-doc';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { MapQueryResults, QueryResults } from 'xforge-common/json-api.service';
-import { UserRef } from 'xforge-common/models/user';
 import { NoticeService } from 'xforge-common/notice.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
@@ -642,7 +641,7 @@ class TestEnvironment {
             merge(
               {
                 id: 'projectuser01',
-                user: new UserRef('user01'),
+                userRef: 'user01',
                 project: new SFProjectRef('project01')
               },
               projectUser

@@ -19,7 +19,7 @@ namespace SIL.XForge.Utils
             return e.Visit(lambda.Body);
         }
 
-        public static IEnumerable<Expression> Flatten<T, TField>(Expression<Func<T, TField>> field)
+        public static IEnumerable<Expression> Flatten(LambdaExpression field)
         {
             var flattener = new FieldExpressionFlattener();
             flattener.Visit(field);

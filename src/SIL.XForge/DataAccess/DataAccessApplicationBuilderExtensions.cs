@@ -12,12 +12,13 @@ namespace Microsoft.AspNetCore.Builder
             app.UseHangfireServer();
             app.UseHangfireDashboard();
 
-            app.InitRepository<UserEntity>();
+            app.InitRepository<User>();
+            app.InitRepository<UserSecret>();
         }
 
-        public static void InitRepository<T>(this IApplicationBuilder app) where T : Entity
+        public static void InitRepository<T>(this IApplicationBuilder app) where T : IEntity
         {
-            app.ApplicationServices.GetService<IRepository<T>>().Init();
+            app.ApplicationServices.GetService<IReadOnlyRepository<T>>().Init();
         }
     }
 }

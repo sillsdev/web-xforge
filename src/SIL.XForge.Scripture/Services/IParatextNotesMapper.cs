@@ -11,7 +11,7 @@ namespace SIL.XForge.Scripture.Services
     {
         List<SyncUser> NewSyncUsers { get; }
 
-        void Init(UserEntity currentUser, SFProjectEntity project);
+        void Init(UserSecret currentUserSecret, SFProjectEntity project);
         Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem,
             IEnumerable<IDocument<List<Question>>> chapterQuestionsDocs,
             IEnumerable<IDocument<List<Comment>>> chapterCommentsDocs);

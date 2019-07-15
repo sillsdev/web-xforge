@@ -1,12 +1,33 @@
+using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using SIL.XForge.Models;
+using SIL.XForge.Realtime;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Configuration
 {
     public class RealtimeOptions
     {
-        public int Port { get; set; }
+        private static readonly RealtimeDocConfig DefaultUserDocConfig = new RealtimeDocConfig(RootDataTypes.Users)
+        {
+            ImmutableProperties =
+            {
+                UserPath(u => u.AuthId),
+                UserPath(u => u.ParatextId),
+                UserPath(u => u.Role),
+                UserPath(u => u.AvatarUrl)
+            }
+        };
+
+        private static ObjectPath UserPath<TField>(Expression<Func<User, TField>> field)
+        {
+            return new ObjectPath(field);
+        }
+
+        public int Port { get; set; } = 5003;
+        public RealtimeDocConfig UserDoc { get; set; } = DefaultUserDocConfig;
         public ProjectRoles ProjectRoles { get; set; }
-        public IList<RealtimeDocConfig> Docs { get; set; } = new List<RealtimeDocConfig>();
+        public IList<RealtimeDocConfig> ProjectDataDocs { get; set; } = new List<RealtimeDocConfig>();
     }
 }

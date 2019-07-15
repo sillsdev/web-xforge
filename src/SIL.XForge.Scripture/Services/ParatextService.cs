@@ -10,6 +10,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using IdentityModel;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
@@ -27,17 +28,17 @@ namespace SIL.XForge.Scripture.Services
     public class ParatextService : DisposableBase, IParatextService
     {
         private readonly IOptions<ParatextOptions> _options;
-        private readonly IRepository<UserEntity> _users;
+        private readonly IRepository<UserSecret> _userSecret;
         private readonly IRepository<SFProjectEntity> _projects;
         private readonly HttpClientHandler _httpClientHandler;
         private readonly HttpClient _dataAccessClient;
         private readonly HttpClient _registryClient;
 
         public ParatextService(IHostingEnvironment env, IOptions<ParatextOptions> options,
-            IRepository<UserEntity> users, IRepository<SFProjectEntity> projects)
+            IRepository<UserSecret> userSecret, IRepository<SFProjectEntity> projects)
         {
             _options = options;
-            _users = users;
+            _userSecret = userSecret;
             _projects = projects;
 
             _httpClientHandler = new HttpClientHandler();
@@ -58,12 +59,12 @@ namespace SIL.XForge.Scripture.Services
             _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserEntity user)
+        public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
-            var accessToken = new JwtSecurityToken(user.ParatextTokens.AccessToken);
+            var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim usernameClaim = accessToken.Claims.FirstOrDefault(c => c.Type == "username");
             string username = usernameClaim?.Value;
-            string response = await CallApiAsync(_dataAccessClient, user, HttpMethod.Get, "projects");
+            string response = await CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Get, "projects");
             var reposElem = XElement.Parse(response);
             var repos = new Dictionary<string, string>();
             foreach (XElement repoElem in reposElem.Elements("repo"))
@@ -77,7 +78,7 @@ namespace SIL.XForge.Scripture.Services
                 .Where(p => repos.Keys.Contains(p.ParatextId))
                 .ToListAsync())
                 .ToDictionary(p => p.ParatextId);
-            response = await CallApiAsync(_registryClient, user, HttpMethod.Get, "projects");
+            response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get, "projects");
             var projectArray = JArray.Parse(response);
             var projects = new List<ParatextProject>();
             foreach (JToken projectObj in projectArray)
@@ -99,7 +100,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     projectId = project.Id;
                     isConnected = true;
-                    isConnectable = !project.Users.Any(u => u.UserRef == user.Id);
+                    isConnectable = !project.Users.Any(u => u.UserRef == userSecret.Id);
                 }
                 else if (role == SFProjectRoles.Administrator)
                 {
@@ -128,12 +129,14 @@ namespace SIL.XForge.Scripture.Services
             return projects;
         }
 
-        public async Task<Attempt<string>> TryGetProjectRoleAsync(UserEntity user, string paratextId)
+        public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
         {
             try
             {
-                string response = await CallApiAsync(_registryClient, user, HttpMethod.Get,
-                    $"projects/{paratextId}/members/{user.ParatextId}");
+                var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
+                Claim subClaim = accessToken.Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject);
+                string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
+                    $"projects/{paratextId}/members/{subClaim.Value}");
                 var memberObj = JObject.Parse(response);
                 return Attempt.Success((string)memberObj["role"]);
             }
@@ -143,47 +146,47 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public string GetParatextUsername(UserEntity user)
+        public string GetParatextUsername(UserSecret userSecret)
         {
-            if (user.ParatextTokens == null)
+            if (userSecret.ParatextTokens == null)
                 return null;
-            var accessToken = new JwtSecurityToken(user.ParatextTokens.AccessToken);
+            var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim usernameClaim = accessToken.Claims.FirstOrDefault(c => c.Type == "username");
             return usernameClaim?.Value;
         }
 
-        public async Task<IReadOnlyList<string>> GetBooksAsync(UserEntity user, string projectId)
+        public async Task<IReadOnlyList<string>> GetBooksAsync(UserSecret userSecret, string projectId)
         {
-            string response = await CallApiAsync(_dataAccessClient, user, HttpMethod.Get, $"books/{projectId}");
+            string response = await CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Get, $"books/{projectId}");
             var books = XElement.Parse(response);
             string[] bookIds = books.Elements("Book").Select(b => (string)b.Attribute("id")).ToArray();
             return bookIds;
         }
 
-        public Task<string> GetBookTextAsync(UserEntity user, string projectId, string bookId)
+        public Task<string> GetBookTextAsync(UserSecret userSecret, string projectId, string bookId)
         {
-            return CallApiAsync(_dataAccessClient, user, HttpMethod.Get, $"text/{projectId}/{bookId}");
+            return CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Get, $"text/{projectId}/{bookId}");
         }
 
         /// <summary>Update cloud with new edits in usxText and return the combined result.</summary>
-        public Task<string> UpdateBookTextAsync(UserEntity user, string projectId, string bookId, string revision,
-            string usxText)
+        public Task<string> UpdateBookTextAsync(UserSecret userSecret, string projectId, string bookId,
+            string revision, string usxText)
         {
-            return CallApiAsync(_dataAccessClient, user, HttpMethod.Post, $"text/{projectId}/{revision}/{bookId}",
-                usxText);
+            return CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Post,
+                $"text/{projectId}/{revision}/{bookId}", usxText);
         }
 
-        public Task<string> GetNotesAsync(UserEntity user, string projectId, string bookId)
+        public Task<string> GetNotesAsync(UserSecret userSecret, string projectId, string bookId)
         {
-            return CallApiAsync(_dataAccessClient, user, HttpMethod.Get, $"notes/{projectId}/{bookId}");
+            return CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Get, $"notes/{projectId}/{bookId}");
         }
 
-        public Task<string> UpdateNotesAsync(UserEntity user, string projectId, string notesText)
+        public Task<string> UpdateNotesAsync(UserSecret userSecret, string projectId, string notesText)
         {
-            return CallApiAsync(_dataAccessClient, user, HttpMethod.Post, $"notes/{projectId}", notesText);
+            return CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Post, $"notes/{projectId}", notesText);
         }
 
-        private async Task RefreshAccessTokenAsync(UserEntity user)
+        private async Task RefreshAccessTokenAsync(UserSecret userSecret)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, "api8/token");
 
@@ -192,40 +195,40 @@ namespace SIL.XForge.Scripture.Services
                 new JProperty("grant_type", "refresh_token"),
                 new JProperty("client_id", options.ClientId),
                 new JProperty("client_secret", options.ClientSecret),
-                new JProperty("refresh_token", user.ParatextTokens.RefreshToken));
+                new JProperty("refresh_token", userSecret.ParatextTokens.RefreshToken));
             request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
             HttpResponseMessage response = await _registryClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
 
             string responseJson = await response.Content.ReadAsStringAsync();
             var responseObj = JObject.Parse(responseJson);
-            user.ParatextTokens = new Tokens
+            userSecret.ParatextTokens = new Tokens
             {
                 AccessToken = (string)responseObj["access_token"],
                 RefreshToken = (string)responseObj["refresh_token"],
             };
-            await _users.UpdateAsync(user, b => b.Set(u => u.ParatextTokens, user.ParatextTokens));
+            await _userSecret.UpdateAsync(userSecret, b => b.Set(u => u.ParatextTokens, userSecret.ParatextTokens));
         }
 
-        private async Task<string> CallApiAsync(HttpClient client, UserEntity user, HttpMethod method,
+        private async Task<string> CallApiAsync(HttpClient client, UserSecret userSecret, HttpMethod method,
             string url, string content = null)
         {
-            if (user.ParatextTokens?.AccessToken == null)
+            if (userSecret == null)
                 throw new SecurityException("The current user is not signed into Paratext.");
 
-            bool expired = !user.ParatextTokens.ValidateLifetime();
+            bool expired = !userSecret.ParatextTokens.ValidateLifetime();
             bool refreshed = false;
             while (!refreshed)
             {
                 if (expired)
                 {
-                    await RefreshAccessTokenAsync(user);
+                    await RefreshAccessTokenAsync(userSecret);
                     refreshed = true;
                 }
 
                 var request = new HttpRequestMessage(method, $"api8/{url}");
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
-                    user.ParatextTokens.AccessToken);
+                    userSecret.ParatextTokens.AccessToken);
                 if (content != null)
                     request.Content = new StringContent(content);
                 HttpResponseMessage response = await client.SendAsync(request);
