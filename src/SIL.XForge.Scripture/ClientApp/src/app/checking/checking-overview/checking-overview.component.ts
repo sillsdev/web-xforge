@@ -230,7 +230,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
         newQuestion.text = result.text;
 
         if (editMode) {
-          this.questions[id.toString()].replaceInList(question, newQuestion, [questionIndex]);
+          this.questions[id.toString()].submitJson0Op(op => op.replace(qs => qs, questionIndex, newQuestion));
         } else {
           id = new TextDocId(this.projectId, this.textFromBook(verseStart.book).bookId, verseStart.chapterNum);
           const questionsDoc = await this.projectService.getQuestionsDoc(id);
@@ -238,7 +238,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
           newQuestion.ownerRef = this.userService.currentUserId;
           newQuestion.source = QuestionSource.Created;
           newQuestion.answers = [];
-          questionsDoc.insertInList(newQuestion);
+          questionsDoc.submitJson0Op(op => op.insert(qs => qs, 0, newQuestion));
         }
       }
     });
