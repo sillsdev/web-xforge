@@ -366,9 +366,8 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         this.deleteComment(answerComment);
       }
       // TODO: Need to physically delete any audio file as well on the backend
-      this.checkingData.questionsDocs[this.textJsonDocId].deleteFromList(
-        this.questionsPanel.activeQuestion.answers[answerIndex],
-        [this.activeChapterQuestionIndex, 'answers', answerIndex]
+      this.checkingData.questionsDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.remove(qs => qs[this.activeChapterQuestionIndex].answers, answerIndex)
       );
       this.refreshSummary();
     }
@@ -386,20 +385,20 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   private updateQuestionAnswers(answers: Answer[], answerIndex: number) {
-    const questionWithAnswer = clone(this.questionsPanel.activeQuestion);
+    const questionWithAnswer = clone(this.questionsPanel.activeQuestion) as Question;
     questionWithAnswer.answers = answers;
     if (answerIndex >= 0) {
-      this.checkingData.questionsDocs[this.textJsonDocId].replaceInList(
-        this.questionsPanel.activeQuestion.answers[answerIndex],
-        questionWithAnswer.answers[answerIndex],
-        [this.activeChapterQuestionIndex, nameof<Question>('answers'), answerIndex]
+      this.checkingData.questionsDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.replace(
+          qs => qs[this.activeChapterQuestionIndex].answers,
+          answerIndex,
+          questionWithAnswer.answers[answerIndex]
+        )
       );
     } else {
-      this.checkingData.questionsDocs[this.textJsonDocId].insertInList(questionWithAnswer.answers[0], [
-        this.activeChapterQuestionIndex,
-        nameof<Question>('answers'),
-        0
-      ]);
+      this.checkingData.questionsDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.insert(qs => qs[this.activeChapterQuestionIndex].answers, 0, questionWithAnswer.answers[0])
+      );
     }
     this.refreshSummary();
   }
@@ -414,16 +413,18 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     const comments = <Comment[]>clone(this.comments);
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
-      this.checkingData.commentsDocs[this.textJsonDocId].replaceInList(comments[commentIndex], comment, [commentIndex]);
+      this.checkingData.commentsDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.replace(cs => cs, commentIndex, comment)
+      );
     } else {
-      this.checkingData.commentsDocs[this.textJsonDocId].insertInList(comment);
+      this.checkingData.commentsDocs[this.textJsonDocId].submitJson0Op(op => op.insert(cs => cs, 0, comment));
     }
   }
 
   private deleteComment(comment: Comment) {
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
-      this.checkingData.commentsDocs[this.textJsonDocId].deleteFromList(comment, [commentIndex]);
+      this.checkingData.commentsDocs[this.textJsonDocId].submitJson0Op(op => op.remove(cs => cs, commentIndex));
     }
   }
 
@@ -433,21 +434,13 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     const answerIndex = this.getAnswerIndex(answer);
 
     if (likeIndex >= 0) {
-      this.checkingData.questionsDocs[this.textJsonDocId].deleteFromList(answer.likes[likeIndex], [
-        this.activeChapterQuestionIndex,
-        nameof<Question>('answers'),
-        answerIndex,
-        nameof<Answer>('likes'),
-        likeIndex
-      ]);
+      this.checkingData.questionsDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.remove(qs => qs[this.activeChapterQuestionIndex].answers[answerIndex].likes, likeIndex)
+      );
     } else {
-      this.checkingData.questionsDocs[this.textJsonDocId].insertInList({ ownerRef: currentUserId } as Like, [
-        this.activeChapterQuestionIndex,
-        nameof<Question>('answers'),
-        answerIndex,
-        nameof<Answer>('likes'),
-        0
-      ]);
+      this.checkingData.questionsDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.insert(qs => qs[this.activeChapterQuestionIndex].answers[answerIndex].likes, 0, { ownerRef: currentUserId })
+      );
     }
   }
 

@@ -107,7 +107,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   }
 
   editAnswer(answer: Answer) {
-    this.activeAnswer = answer;
+    this.activeAnswer = clone(answer);
     this.showAnswerForm();
   }
 

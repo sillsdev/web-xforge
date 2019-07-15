@@ -53,7 +53,7 @@ export class CheckingCommentsComponent implements OnInit {
   }
 
   editComment(comment: Comment) {
-    this.activeComment = comment;
+    this.activeComment = clone(comment);
     this.showCommentForm();
   }
 
