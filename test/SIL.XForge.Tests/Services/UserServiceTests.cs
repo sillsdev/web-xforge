@@ -286,6 +286,7 @@ namespace SIL.XForge.Services
                 env.JsonApiContext.PageManager.Returns(new PageManager());
 
                 UserResource resource = await env.Service.GetAsync(User02Id);
+
                 IEnumerable<PropertyInfo> nonNullProperties =
                     resource.GetType().GetProperties().Where(p => p.GetValue(resource) != null);
                 Assert.That(nonNullProperties.Select(p => p.Name).ToArray(), Is.EquivalentTo(new[] {
@@ -294,11 +295,25 @@ namespace SIL.XForge.Services
                     nameof(UserResource.Name),
                     nameof(UserResource.AvatarUrl)
                 }));
-
                 Assert.That(resource.Id, Is.EqualTo(User02Id));
                 Assert.That(resource.StringId, Is.EqualTo(User02Id));
                 Assert.That(resource.Name, Is.EqualTo(User02Name));
                 Assert.That(resource.AvatarUrl, Is.EqualTo("user02avatarurl"));
+            }
+        }
+
+        [Test]
+        public async Task GetAsync_ProjectAdminRole()
+        {
+            using (var env = new TestEnvironment())
+            {
+                env.SetUser(User02Id, SystemRoles.User);
+                env.JsonApiContext.QuerySet.Returns(new QuerySet());
+                env.JsonApiContext.PageManager.Returns(new PageManager());
+
+                UserResource[] resources = (await env.Service.GetAsync()).ToArray();
+
+                Assert.That(resources.Select(r => r.Id), Is.EquivalentTo(new[] { User01Id, User02Id }));
             }
         }
 
@@ -406,7 +421,10 @@ namespace SIL.XForge.Services
 
                 Assert.That(resources, Is.Not.Null);
                 var projectResources = (IEnumerable<IResource>)resources;
-                Assert.That(projectResources.Select(p => p.Id), Is.EqualTo(new[] { "projectuser01", "projectuser02" }));
+                Assert.That(projectResources.Select(p => p.Id), Is.EqualTo(new[]
+                    {
+                        "projectuser01", "projectuser02", "projectuser04"
+                    }));
             }
         }
 
@@ -442,12 +460,31 @@ namespace SIL.XForge.Services
                                     Role = TestProjectRoles.Manager
                                 }
                             }
+                        },
+                        new TestProjectEntity
+                        {
+                            Id = "project03",
+                            Users =
+                            {
+                                new TestProjectUserEntity
+                                {
+                                    Id = "projectuser03",
+                                    UserRef = User02Id,
+                                    Role = TestProjectRoles.Manager
+                                },
+                                new TestProjectUserEntity
+                                {
+                                    Id = "projectuser04",
+                                    UserRef = User01Id,
+                                    Role = TestProjectRoles.Reviewer
+                                }
+                            }
                         }
                     });
 
                 Service = new UserService(JsonApiContext, Mapper, UserAccessor, Entities, SiteOptions)
                 {
-                    ProjectUserMapper = new TestProjectUserService(JsonApiContext, Mapper, UserAccessor, projects)
+                    ProjectUserMapper = new TestProjectUserService(JsonApiContext, Mapper, UserAccessor, projects),
                 };
             }
 

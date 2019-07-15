@@ -25,6 +25,8 @@ namespace SIL.XForge.Scripture.Services
             _paratextService = paratextService;
         }
 
+        protected override string ProjectAdministratorRole => SFProjectRoles.Administrator;
+
         protected override async Task<SFProjectUserEntity> InsertEntityAsync(SFProjectUserEntity entity)
         {
             UserEntity user = await _users.GetAsync(UserId);
