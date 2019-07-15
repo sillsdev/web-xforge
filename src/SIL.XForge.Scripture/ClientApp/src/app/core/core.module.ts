@@ -4,7 +4,7 @@ import { NgModule } from '@angular/core';
 import { DomainModel } from 'xforge-common/models/domain-model';
 import { ProjectUserService } from 'xforge-common/project-user.service';
 import { ProjectService } from 'xforge-common/project.service';
-import { SFDOMAIN_MODEL_CONFIG } from './models/sfdomain-model-config.generated';
+import { SFDOMAIN_MODEL_CONFIG } from './models/sfdomain-model-config';
 import { SFProjectUserService } from './sfproject-user.service';
 import { SFProjectService } from './sfproject.service';
 

@@ -1,6 +1,22 @@
-import { SFProjectBase } from './sfdomain-model.generated';
+import { InputSystem } from 'xforge-common/models/input-system';
+import { Project, ProjectRef } from 'xforge-common/models/project';
 
-export class SFProject extends SFProjectBase {
+export class SFProject extends Project {
+  /** type identifier string for domain type mapping */
+  static readonly TYPE: string = 'project';
+
+  paratextId?: string;
+  checkingEnabled?: boolean;
+  usersSeeEachOthersResponses?: boolean;
+  downloadAudioFiles?: boolean;
+  translateEnabled?: boolean;
+  sourceParatextId?: string;
+  sourceInputSystem?: InputSystem;
+
+  constructor(init?: Partial<SFProject>) {
+    super(SFProject.TYPE, init);
+  }
+
   get taskNames(): string[] {
     const names: string[] = [];
     if (this.checkingEnabled != null && this.checkingEnabled) {
@@ -13,4 +29,10 @@ export class SFProject extends SFProjectBase {
   }
 }
 
-export { SFProjectRef } from './sfdomain-model.generated';
+export class SFProjectRef extends ProjectRef {
+  static readonly TYPE: string = SFProject.TYPE;
+
+  constructor(id: string) {
+    super(SFProjectRef.TYPE, id);
+  }
+}

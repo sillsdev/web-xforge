@@ -58,27 +58,6 @@
         "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture"
       },
       "problemMatcher": "$msCompile"
-    },
-    {
-      "label": "Generate SF model",
-      "command": "dotnet",
-      "type": "shell",
-      "options": {
-        "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/CodeGenerator"
-      },
-      "args": [
-        "run",
-        "--",
-        "-s",
-        "./sfmodel.json",
-        "-t",
-        "../ClientApp/src/app/core/models/sfdomain-model.generated.ts",
-        "-m",
-        "SIL.XForge.Scripture.Models.SFProjectResource",
-        "-j",
-        "../ClientApp/src/app/core/models/sfdomain-model-config.generated.ts"
-      ],
-      "problemMatcher": "$msCompile"
     }
   ]
 }
