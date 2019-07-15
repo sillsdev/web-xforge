@@ -44,7 +44,7 @@ export class ShareDialogComponent {
 
   copyShareLink(): void {
     this.shareLinkField.focus();
-    document.execCommand('selectall');
+    this.shareLinkField._input.nativeElement.select();
     document.execCommand('copy');
     this.noticeService.show('Link copied to clipboard');
   }
