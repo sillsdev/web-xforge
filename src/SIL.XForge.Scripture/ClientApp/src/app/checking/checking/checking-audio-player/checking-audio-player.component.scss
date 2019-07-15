@@ -1,0 +1,17 @@
+@import '../checking-global';
+
+.player {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid $borderColor;
+  .duration,
+  .current-time {
+    padding: 0 10px;
+  }
+  .slider {
+    flex: 1;
+    width: 100%;
+  }
+}

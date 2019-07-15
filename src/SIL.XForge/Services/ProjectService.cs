@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AutoMapper;
 using JsonApiDotNetCore.Internal.Query;
 using JsonApiDotNetCore.Services;
+using Microsoft.Extensions.Options;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Utils;
@@ -13,14 +16,18 @@ using SIL.XForge.Utils;
 namespace SIL.XForge.Services
 {
     public abstract class ProjectService<TResource, TEntity> : RepositoryResourceServiceBase<TResource, TEntity>,
-        IResourceMapper<ProjectResource, ProjectEntity>
+        IResourceMapper<ProjectResource, ProjectEntity>, IProjectService<TResource>
         where TResource : ProjectResource
         where TEntity : ProjectEntity
     {
+
+        private readonly IOptions<SiteOptions> _siteOptions;
+
         public ProjectService(IJsonApiContext jsonApiContext, IMapper mapper, IUserAccessor userAccessor,
-            IRepository<TEntity> projects)
+            IRepository<TEntity> projects, IOptions<SiteOptions> siteOptions)
             : base(jsonApiContext, mapper, userAccessor, projects)
         {
+            _siteOptions = siteOptions;
         }
 
         public IResourceMapper<ProjectUserResource, ProjectUserEntity> ProjectUserMapper { get; set; }
@@ -102,6 +109,25 @@ namespace SIL.XForge.Services
             Expression<Func<ProjectEntity, bool>> predicate)
         {
             return await MapMatchingAsync(included, resources, ExpressionHelper.ChangePredicateType<TEntity>(predicate));
+        }
+
+        public async Task<Uri> SaveAudioAsync(string projectId, string fileName, Stream inputStream)
+        {
+            await CheckCanUpdateDeleteAsync(projectId);
+
+            string audioDir = Path.Combine(_siteOptions.Value.SharedDir, "audio");
+            if (!Directory.Exists(audioDir))
+                Directory.CreateDirectory(audioDir);
+            string path = Path.Combine(audioDir, fileName);
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+            using (var fileStream = new FileStream(path, FileMode.Create))
+                await inputStream.CopyToAsync(fileStream);
+            var uri = new Uri(_siteOptions.Value.Origin,
+                $"/assets/audio/{fileName}");
+            return uri;
         }
     }
 }

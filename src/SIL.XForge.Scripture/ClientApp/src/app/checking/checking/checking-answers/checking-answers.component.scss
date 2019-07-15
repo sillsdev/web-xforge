@@ -28,6 +28,28 @@
   }
 }
 #answer-form {
+  .answer-tab {
+    min-height: 80px;
+    padding: 10px 0;
+    display: flex;
+    align-items: center;
+  }
+  mdc-form-field {
+    width: 100%;
+    mdc-text-field {
+      width: 100%;
+    }
+  }
+  app-checking-audio-recorder {
+    flex: 1;
+  }
+  .form-helper-text {
+    color: var(--mdc-theme-error);
+    font-size: 0.75em;
+    padding-left: 15px;
+    font-weight: 400;
+    letter-spacing: 0.03333333em;
+  }
   .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -82,13 +104,20 @@
       }
 
       .answer-text {
+        & + app-checking-audio-player {
+          margin-top: 10px;
+        }
+      }
+
+      app-checking-audio-player {
+        display: block;
       }
 
       .answer-footer {
         display: flex;
         justify-content: space-between;
         border-bottom: 1px solid $borderColor;
-        padding-bottom: 10px;
+        padding: 10px 0;
         @include media-breakpoint-down(sm) {
           flex-direction: column-reverse;
         }

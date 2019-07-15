@@ -204,7 +204,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.scripturePanel.applyFontChange(fontSize);
   }
 
-  answerAction(answerAction: AnswerAction) {
+  async answerAction(answerAction: AnswerAction) {
     let useMaxAnswersPanelSize: boolean = true;
     switch (answerAction.action) {
       case 'save':
@@ -222,6 +222,14 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         }
         answer.text = answerAction.text;
         answer.dateModified = dateNow;
+        if (answerAction.audio.fileName) {
+          const response = await this.projectService.uploadAudio(
+            this.project.id,
+            new File([answerAction.audio.blob], answer.id + '-' + answerAction.audio.fileName)
+          );
+          // Get the amended filename and save it against the answer
+          answer.audioUrl = response.split('/').pop();
+        }
         this.saveAnswer(answer);
         break;
       case 'delete':
@@ -357,6 +365,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       for (const answerComment of answerComments) {
         this.deleteComment(answerComment);
       }
+      // TODO: Need to physically delete any audio file as well on the backend
       this.checkingData.questionsDocs[this.textJsonDocId].deleteFromList(
         this.questionsPanel.activeQuestion.answers[answerIndex],
         [this.activeChapterQuestionIndex, 'answers', answerIndex]

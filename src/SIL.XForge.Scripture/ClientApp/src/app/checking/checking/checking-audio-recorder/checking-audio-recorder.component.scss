@@ -1,0 +1,10 @@
+.has-attachment {
+  display: flex;
+  align-items: center;
+  button {
+    margin-right: 15px;
+  }
+  app-checking-audio-player {
+    flex: 1;
+  }
+}

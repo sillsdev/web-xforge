@@ -125,6 +125,11 @@ namespace SIL.XForge.Scripture
                 FileProvider = new PhysicalFileProvider(Path.Combine(siteOptions.Value.SharedDir, "avatars")),
                 RequestPath = "/assets/avatars"
             });
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new PhysicalFileProvider(Path.Combine(siteOptions.Value.SharedDir, "audio")),
+                RequestPath = "/assets/audio"
+            });
 
             if (SpaDevServerStartup == SpaDevServerStartup.None)
                 app.UseSpaStaticFiles();

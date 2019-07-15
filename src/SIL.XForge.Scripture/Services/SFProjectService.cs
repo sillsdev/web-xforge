@@ -26,7 +26,7 @@ namespace SIL.XForge.Scripture.Services
         public SFProjectService(IJsonApiContext jsonApiContext, IMapper mapper, IUserAccessor userAccessor,
             IRepository<SFProjectEntity> projects, IEngineService engineService, IOptions<SiteOptions> siteOptions,
             ISyncService syncService, IRealtimeService realtimeService)
-            : base(jsonApiContext, mapper, userAccessor, projects)
+            : base(jsonApiContext, mapper, userAccessor, projects, siteOptions)
         {
             _engineService = engineService;
             _siteOptions = siteOptions;

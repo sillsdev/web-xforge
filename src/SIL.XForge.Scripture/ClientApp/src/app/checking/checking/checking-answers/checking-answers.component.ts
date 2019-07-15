@@ -5,7 +5,6 @@ import { clone } from '@orbit/utils';
 import { User } from 'xforge-common/models/user';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
-import { XFValidators } from 'xforge-common/xfvalidators';
 import { Answer } from '../../../core/models/answer';
 import { Comment } from '../../../core/models/comment';
 import { Question } from '../../../core/models/question';
@@ -13,12 +12,14 @@ import { SFProject } from '../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../../core/models/sfproject-user';
 import { EditNameDialogComponent } from '../../../edit-name-dialog/edit-name-dialog.component';
+import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 
 export interface AnswerAction {
-  action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'like';
+  action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'like' | 'recorder';
   answer?: Answer;
   text?: string;
+  audio?: AudioAttachment;
 }
 
 @Component({
@@ -42,12 +43,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
 
   activeAnswer: Answer;
   answerForm: FormGroup = new FormGroup({
-    answerText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])
+    answerText: new FormControl()
   });
   answerFormVisible: boolean = false;
+  answerFormSubmitAttempted: boolean = false;
   private user: User;
   private _question: Question;
   private initUserAnswerRefsRead: string[] = [];
+  private audio: AudioAttachment = {};
 
   constructor(private readonly dialog: MdcDialog, private userService: UserService) {
     super();
@@ -60,6 +63,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     } else {
       return this.question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
     }
+  }
+
+  get canDownloadAudioFiles(): boolean {
+    return this.project.downloadAudioFiles;
   }
 
   get canSeeOtherUserResponses(): boolean {
@@ -104,6 +111,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     this.showAnswerForm();
   }
 
+  generateAudioFileName(): string {
+    return this.user.name + '.webm';
+  }
+
   getComments(answer: Answer): Comment[] {
     return this.comments
       .filter(comment => comment.answerRef === answer.id)
@@ -127,7 +138,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
 
   hideAnswerForm() {
     this.answerFormVisible = false;
+    this.answerFormSubmitAttempted = false;
     this.activeAnswer = undefined;
+    this.audio = {};
     this.answerForm.reset();
     this.action.emit({
       action: 'hide-form'
@@ -141,6 +154,21 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     });
   }
 
+  recorderStatus(status: AudioAttachment): void {
+    switch (status.status) {
+      case 'reset':
+        this.audio = {};
+        break;
+      case 'processed':
+        this.audio.url = status.url;
+        this.audio.blob = status.blob;
+        this.audio.fileName = this.generateAudioFileName();
+        break;
+    }
+    this.setValidationRules();
+    this.action.emit({ action: 'recorder' });
+  }
+
   showAnswerForm() {
     this.answerFormVisible = true;
     this.action.emit({
@@ -149,6 +177,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   }
 
   submit(): void {
+    this.setValidationRules();
+    this.answerFormSubmitAttempted = true;
     if (this.answerForm.invalid) {
       return;
     }
@@ -182,7 +212,17 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     this.action.emit({
       action: 'save',
       text: this.answerForm.get('answerText').value,
-      answer: this.activeAnswer
+      answer: this.activeAnswer,
+      audio: this.audio
     });
+  }
+
+  private setValidationRules(): void {
+    if (this.audio.url) {
+      this.answerForm.get('answerText').clearValidators();
+    } else {
+      this.answerForm.get('answerText').setValidators(Validators.required);
+    }
+    this.answerForm.get('answerText').updateValueAndValidity();
   }
 }

@@ -1,7 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { JsonApiService } from 'xforge-common/json-api.service';
 import { ProjectService } from 'xforge-common/project.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -27,9 +26,10 @@ export class SFProjectService extends ProjectService<SFProject> {
   constructor(
     jsonApiService: JsonApiService,
     private readonly machineHttp: MachineHttpClient,
-    private readonly realtimeService: RealtimeService
+    private readonly realtimeService: RealtimeService,
+    http: HttpClient
   ) {
-    super(SFProject.TYPE, jsonApiService, SFProjectService.ROLES);
+    super(SFProject.TYPE, jsonApiService, SFProjectService.ROLES, http);
   }
 
   init(): void {
