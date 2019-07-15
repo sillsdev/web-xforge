@@ -11,7 +11,6 @@ import { GetAllParameters, MapQueryResults } from '../json-api.service';
 import { Project, ProjectRef } from '../models/project';
 import { NONE_ROLE, ProjectRole } from '../models/project-role';
 import { ProjectUser } from '../models/project-user';
-import { UserRef } from '../models/user';
 import { ProjectUserService } from '../project-user.service';
 import { ProjectService } from '../project.service';
 import { UICommonModule } from '../ui-common.module';
@@ -67,7 +66,7 @@ describe('SaProjectsComponent', () => {
         id: 'projectusernew',
         role: 'admin',
         project: new TestProjectRef('project02'),
-        user: new UserRef('user01')
+        userRef: 'user01'
       })
     );
     env.fixture.detectChanges();
@@ -121,30 +120,12 @@ describe('SaProjectsComponent', () => {
 });
 
 class TestProject extends Project {
-  static readonly TYPE = 'project';
-
-  constructor(init?: Partial<Project>) {
-    super(TestProject.TYPE, init);
-  }
-
   get taskNames(): string[] {
     return ['Task1', 'Task2'];
   }
 }
-class TestProjectUser extends ProjectUser {
-  static readonly TYPE = 'projectUser';
-
-  constructor(init?: Partial<ProjectUser>) {
-    super(TestProjectUser.TYPE, init);
-  }
-}
-class TestProjectRef extends ProjectRef {
-  static readonly TYPE = TestProject.TYPE;
-
-  constructor(id: string) {
-    super(TestProjectRef.TYPE, id);
-  }
-}
+class TestProjectUser extends ProjectUser {}
+class TestProjectRef extends ProjectRef {}
 
 class TestEnvironment {
   component: SaProjectsComponent;

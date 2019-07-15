@@ -40,6 +40,18 @@ declare module 'sharedb/lib/client' {
 
   export interface Connection {
     get(collection: string, id: string): Doc;
+    createFetchQuery(
+      collection: string,
+      query: any,
+      options: any,
+      callback: (err: Error, results: Doc[]) => void
+    ): Query;
+    createSubscribeQuery(
+      collection: string,
+      query: any,
+      options: any,
+      callback: (err: Error, results: Doc[]) => void
+    ): Query;
     close(): void;
   }
 
@@ -95,5 +107,45 @@ declare module 'sharedb/lib/client' {
     whenNothingPending(callback: Callback): void;
     hasWritePending(): boolean;
     flush(): void;
+  }
+
+  export interface Query extends EventEmitter {
+    readonly ready: boolean;
+    readonly results: Doc[];
+    readonly extra: any;
+
+    on(event: 'ready', callback: () => void): this;
+    on(event: 'error', callback: Callback): this;
+    on(event: 'changed', callback: (results: Doc[]) => void): this;
+    on(event: 'insert', callback: (docs: Doc[], atIndex: number) => void): this;
+    on(event: 'move', callback: (docs: Doc[], from: number, to: number) => void): this;
+    on(event: 'remove', callback: (docs: Doc[], atIndex: number) => void): this;
+    on(event: 'extra', callback: () => void): this;
+
+    off(event: 'ready', callback: () => void): this;
+    off(event: 'error', callback: Callback): this;
+    off(event: 'changed', callback: (results: Doc[]) => void): this;
+    off(event: 'insert', callback: (docs: Doc[], atIndex: number) => void): this;
+    off(event: 'move', callback: (docs: Doc[], from: number, to: number) => void): this;
+    off(event: 'remove', callback: (docs: Doc[], atIndex: number) => void): this;
+    off(event: 'extra', callback: () => void): this;
+
+    addListener(event: 'ready', callback: () => void): this;
+    addListener(event: 'error', callback: Callback): this;
+    addListener(event: 'changed', callback: (results: Doc[]) => void): this;
+    addListener(event: 'insert', callback: (docs: Doc[], atIndex: number) => void): this;
+    addListener(event: 'move', callback: (docs: Doc[], from: number, to: number) => void): this;
+    addListener(event: 'remove', callback: (docs: Doc[], atIndex: number) => void): this;
+    addListener(event: 'extra', callback: () => void): this;
+
+    removeListener(event: 'ready', callback: () => void): this;
+    removeListener(event: 'error', callback: Callback): this;
+    removeListener(event: 'changed', callback: (results: Doc[]) => void): this;
+    removeListener(event: 'insert', callback: (docs: Doc[], atIndex: number) => void): this;
+    removeListener(event: 'move', callback: (docs: Doc[], from: number, to: number) => void): this;
+    removeListener(event: 'remove', callback: (docs: Doc[], atIndex: number) => void): this;
+    removeListener(event: 'extra', callback: () => void): this;
+
+    destroy(): void;
   }
 }

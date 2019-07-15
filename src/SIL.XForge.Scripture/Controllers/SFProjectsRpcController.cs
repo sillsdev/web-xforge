@@ -19,16 +19,18 @@ namespace SIL.XForge.Scripture.Controllers
     [RpcRoute(RootDataTypes.Projects)]
     public class SFProjectsRpcController : ProjectsRpcController<SFProjectEntity>
     {
+        private readonly IRepository<UserSecret> _userSecrets;
         private readonly IRepository<TranslateMetrics> _translateMetrics;
         private readonly IParatextService _paratextService;
         private readonly ISyncService _syncService;
 
         public SFProjectsRpcController(IUserAccessor userAccessor, IHttpRequestAccessor httpRequestAccessor,
-            IRepository<SFProjectEntity> projects, IRepository<UserEntity> users, IEmailService emailService,
-            IOptions<SiteOptions> siteOptions, IRepository<TranslateMetrics> translateMetrics,
-            IParatextService paratextService, ISyncService syncService)
+            IRepository<SFProjectEntity> projects, IReadOnlyRepository<User> users, IEmailService emailService,
+            IOptions<SiteOptions> siteOptions, IRepository<UserSecret> userSecrets,
+            IRepository<TranslateMetrics> translateMetrics, IParatextService paratextService, ISyncService syncService)
             : base(userAccessor, httpRequestAccessor, projects, users, emailService, siteOptions)
         {
+            _userSecrets = userSecrets;
             _translateMetrics = translateMetrics;
             _paratextService = paratextService;
             _syncService = syncService;
@@ -66,11 +68,12 @@ namespace SIL.XForge.Scripture.Controllers
 
             // check if the user is a Paratext user
             // if so, set the user's project role from the Paratext project
-            UserEntity user = await Users.GetAsync(UserId);
-            if (user.ParatextId != null)
+            Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(UserId);
+            if (userSecretAttempt.TryResult(out UserSecret userSecret))
             {
-                Attempt<string> attempt = await _paratextService.TryGetProjectRoleAsync(user, project.ParatextId);
-                if (attempt.TryResult(out string role))
+                Attempt<string> roleAttempt = await _paratextService.TryGetProjectRoleAsync(userSecret,
+                    project.ParatextId);
+                if (roleAttempt.TryResult(out string role))
                 {
                     await Projects.UpdateAsync(p => p.Users.Any(pu => pu.Id == projectUserId),
                         update => update.Set(p => p.Users[ArrayPosition.FirstMatching].Role, role));

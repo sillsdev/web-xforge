@@ -28,7 +28,6 @@ namespace SIL.XForge.Services
             Projects = projects;
         }
 
-        public IResourceMapper<UserResource, UserEntity> UserMapper { get; set; }
         public IResourceMapper<ProjectResource, ProjectEntity> ProjectMapper { get; set; }
 
         protected IRepository<TProjectEntity> Projects { get; }
@@ -39,9 +38,6 @@ namespace SIL.XForge.Services
         {
             switch (relAttr.InternalRelationshipName)
             {
-                case nameof(ProjectUserResource.User):
-                    return (await UserMapper.MapMatchingAsync(included, resources, u => u.Id == entity.UserRef))
-                        .SingleOrDefault();
                 case nameof(ProjectUserResource.Project):
                     return (await ProjectMapper.MapMatchingAsync(included, resources, p => p.Id == entity.ProjectRef))
                         .SingleOrDefault();

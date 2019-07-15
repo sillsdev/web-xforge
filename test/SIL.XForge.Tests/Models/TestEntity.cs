@@ -4,6 +4,6 @@ namespace SIL.XForge.Models
     {
         public string Str { get; set; }
         public int Num { get; set; }
-        public string UserRef { get; set; }
+        public string ProjectRef { get; set; }
     }
 }

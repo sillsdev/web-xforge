@@ -1,7 +1,7 @@
 import { MdcDialogRef, MdcList, OverlayContainer } from '@angular-mdc/web';
 import { CommonModule, Location } from '@angular/common';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, DebugElement, NgModule } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -12,7 +12,7 @@ import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { MapQueryResults, QueryResults } from 'xforge-common/json-api.service';
 import { LocationService } from 'xforge-common/location.service';
-import { User, UserRef } from 'xforge-common/models/user';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
@@ -39,7 +39,7 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     expect(env.menuLength).toEqual(5);
-    verify(env.mockedUserService.updateCurrentProjectId(anything())).never();
+    expect(env.currentProjectId).toEqual('project01');
   }));
 
   it('navigate to different project', fakeAsync(() => {
@@ -52,7 +52,7 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(4);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
-    verify(env.mockedUserService.updateCurrentProjectId('project02')).once();
+    expect(env.currentProjectId).toEqual('project02');
   }));
 
   it('hide translate task for reviewers', fakeAsync(() => {
@@ -65,7 +65,7 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(4);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
-    verify(env.mockedUserService.updateCurrentProjectId('project03')).once();
+    expect(env.currentProjectId).toEqual('project03');
   }));
 
   it('expand/collapse task', fakeAsync(() => {
@@ -92,7 +92,7 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project02');
     expect(env.location.path()).toEqual('/projects/project02');
-    verify(env.mockedUserService.updateCurrentProjectId('project02')).once();
+    expect(env.currentProjectId).toEqual('project02');
   }));
 
   it('connect project', fakeAsync(() => {
@@ -125,7 +125,7 @@ describe('AppComponent', () => {
     expect(env.selectedProjectId).toEqual('project01');
     env.deleteProject(false);
     expect(env.projectDeletedDialog).toBeDefined();
-    verify(env.mockedUserService.updateCurrentProjectId()).once();
+    expect(env.currentProjectId).toBeUndefined();
     env.confirmDialog();
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.location.path()).toEqual('/projects');
@@ -140,7 +140,7 @@ describe('AppComponent', () => {
     env.init();
 
     expect(env.isDrawerVisible).toEqual(false);
-    verify(env.mockedUserService.updateCurrentProjectId()).once();
+    expect(env.currentProjectId).toBeUndefined();
     expect(env.location.path()).toEqual('/projects');
   }));
 
@@ -179,7 +179,7 @@ describe('AppComponent', () => {
           new SFProjectUser({
             id: 'projectuser01',
             project: new SFProjectRef('project01'),
-            user: new UserRef('user01')
+            userRef: 'user01'
           })
         ],
         undefined,
@@ -198,11 +198,11 @@ describe('AppComponent', () => {
   describe('User menu', () => {
     it('updates user with name', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.fixture.detectChanges();
+      env.init();
       env.updateName('Updated Name');
+      tick();
       verify(env.mockedAccountService.openNameDialog(anything(), anything()));
-      verify(env.mockedUserService.updateCurrentUserAttributes(deepEqual({ name: 'Updated Name' }))).once();
-      expect().nothing();
+      expect(env.currentUserName).toEqual('Updated Name');
     }));
   });
 });
@@ -253,14 +253,17 @@ class TestEnvironment {
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
   readonly mockedNameDialogRef = mock(MdcDialogRef);
 
-  private readonly currentUser: User;
+  private readonly currentUserDoc: UserDoc;
   private readonly projects$: BehaviorSubject<QueryResults<SFProjectUser[]>>;
 
   constructor() {
-    this.currentUser = new User({
-      id: 'user01',
-      site: { currentProjectId: 'project01', lastLogin: this.lastLogin }
-    });
+    this.currentUserDoc = new UserDoc(
+      new MemoryRealtimeDocAdapter(OTJson0.type, 'user01', {
+        name: 'User 01',
+        sites: { sf: { currentProjectId: 'project01', lastLogin: this.lastLogin } }
+      }),
+      instance(this.mockedRealtimeOfflineStore)
+    );
 
     this.projects$ = new BehaviorSubject<QueryResults<SFProjectUser[]>>(
       new MapQueryResults(
@@ -268,19 +271,19 @@ class TestEnvironment {
           new SFProjectUser({
             id: 'projectuser01',
             project: new SFProjectRef('project01'),
-            user: new UserRef('user01'),
+            userRef: 'user01',
             role: SFProjectRoles.ParatextTranslator
           }),
           new SFProjectUser({
             id: 'projectuser02',
             project: new SFProjectRef('project02'),
-            user: new UserRef('user01'),
+            userRef: 'user01',
             role: SFProjectRoles.Reviewer
           }),
           new SFProjectUser({
             id: 'projectuser03',
             project: new SFProjectRef('project03'),
-            user: new UserRef('user01'),
+            userRef: 'user01',
             role: SFProjectRoles.Reviewer
           })
         ],
@@ -328,12 +331,11 @@ class TestEnvironment {
 
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedAuthService.isLoggedIn).thenResolve(true);
-    when(this.mockedUserService.getCurrentUser()).thenReturn(of(this.currentUser));
+    when(this.mockedUserService.getCurrentUser()).thenResolve(this.currentUserDoc);
     when(this.mockedUserService.getProjects('user01', deepEqual([[nameof<SFProjectUser>('project')]]))).thenReturn(
       this.projects$
     );
     when(this.mockedAccountService.openNameDialog(anything(), false)).thenReturn(instance(this.mockedNameDialogRef));
-    when(this.mockedUserService.updateCurrentProjectId(anything())).thenResolve();
     when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
 
     TestBed.configureTestingModule({
@@ -402,6 +404,14 @@ class TestEnvironment {
     return oce.querySelector('#ok-button');
   }
 
+  get currentProjectId(): string {
+    return this.currentUserDoc.data.sites.sf.currentProjectId;
+  }
+
+  get currentUserName(): string {
+    return this.currentUserDoc.data.name;
+  }
+
   init(): void {
     this.component.openDrawer();
     this.wait();
@@ -435,7 +445,7 @@ class TestEnvironment {
 
   deleteProject(isLocal: boolean): void {
     if (isLocal) {
-      this.currentUser.site.currentProjectId = null;
+      this.currentUserDoc.data.sites.sf.currentProjectId = null;
     }
     this.projects$.next(new MapQueryResults<SFProjectUser[]>([]));
     this.wait();

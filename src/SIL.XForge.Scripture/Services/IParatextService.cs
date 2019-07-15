@@ -8,14 +8,14 @@ namespace SIL.XForge.Scripture.Services
 {
     public interface IParatextService
     {
-        Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserEntity user);
-        string GetParatextUsername(UserEntity user);
-        Task<Attempt<string>> TryGetProjectRoleAsync(UserEntity user, string paratextId);
-        Task<IReadOnlyList<string>> GetBooksAsync(UserEntity user, string projectId);
-        Task<string> GetBookTextAsync(UserEntity user, string projectId, string bookId);
-        Task<string> UpdateBookTextAsync(UserEntity user, string projectId, string bookId, string revision,
-           string usxText);
-        Task<string> GetNotesAsync(UserEntity user, string projectId, string bookId);
-        Task<string> UpdateNotesAsync(UserEntity user, string projectId, string notesText);
+        Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret);
+        string GetParatextUsername(UserSecret userSecret);
+        Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId);
+        Task<IReadOnlyList<string>> GetBooksAsync(UserSecret userSecret, string projectId);
+        Task<string> GetBookTextAsync(UserSecret userSecret, string projectId, string bookId);
+        Task<string> UpdateBookTextAsync(UserSecret userSecret, string projectId, string bookId,
+            string revision, string usxText);
+        Task<string> GetNotesAsync(UserSecret userSecret, string projectId, string bookId);
+        Task<string> UpdateNotesAsync(UserSecret userSecret, string projectId, string notesText);
     }
 }

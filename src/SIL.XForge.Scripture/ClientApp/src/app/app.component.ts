@@ -7,10 +7,11 @@ import { distinctUntilChanged, filter, map, startWith, switchMap, tap, withLates
 import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { LocationService } from 'xforge-common/location.service';
+import { Site } from 'xforge-common/models/site.js';
 import { SystemRole } from 'xforge-common/models/system-role';
-import { User } from 'xforge-common/models/user';
+import { AuthType, getAuthType, User } from 'xforge-common/models/user';
+import { UserDoc } from 'xforge-common/models/user-doc.js';
 import { NoticeService } from 'xforge-common/notice.service';
-import { RealtimeService } from 'xforge-common/realtime.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
@@ -41,9 +42,9 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   checkingVisible: boolean = false;
 
   projects: SFProject[];
-  currentUser$: Observable<User>;
   isProjectAdmin$: Observable<boolean>;
 
+  private currentUserDoc: UserDoc;
   private _projectSelect: MdcSelect;
   private projectDeletedDialogRef: any;
   private _topAppBar: MdcTopAppBar;
@@ -62,7 +63,6 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     private readonly noticeService: NoticeService,
     media: MediaObserver,
     private readonly projectService: SFProjectService,
-    private readonly realtimeService: RealtimeService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog
@@ -160,8 +160,16 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     return this.texts;
   }
 
+  get currentUser(): User {
+    return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
+  }
+
   private get texts(): TextInfo[] {
     return this.projectDataDoc == null || this.projectDataDoc.data == null ? [] : this.projectDataDoc.data.texts;
+  }
+
+  private get site(): Site {
+    return this.currentUser == null ? undefined : this.currentUser.sites['sf'];
   }
 
   async ngOnInit(): Promise<void> {
@@ -169,7 +177,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     this.authService.init();
     if (await this.isLoggedIn) {
       this.projectService.init();
-      this.currentUser$ = this.userService.getCurrentUser();
+      this.currentUserDoc = await this.userService.getCurrentUser();
 
       // retrieve the projectId from the current route. Since the nav menu is outside of the router outlet, it cannot
       // use ActivatedRoute to get the params. Instead the nav menu, listens to router events and traverses the route
@@ -205,7 +213,6 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
           if (projectId == null) {
             this.projectDeletedDialogRef = null;
           }
-          this.realtimeService.reset();
         })
       );
 
@@ -216,10 +223,9 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
             this.userService
               .getProjects(this.userService.currentUserId, [[nameof<SFProjectUser>('project')]])
               .pipe(map(r => ({ results: r, projectId })))
-          ),
-          withLatestFrom(this.userService.getCurrentUser())
+          )
         ),
-        ([resultsAndProjectId, user]) => {
+        resultsAndProjectId => {
           const results = resultsAndProjectId.results;
           const projectId = resultsAndProjectId.projectId;
           this.projects = results.data.map(pu => results.getIncluded<SFProject>(pu.project)).filter(p => p != null);
@@ -232,9 +238,9 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
           // check if the currently selected project has been deleted
           if (selectedProject == null && projectId != null) {
             if (this.selectedProject != null && projectId === this.selectedProject.id) {
-              if (user.site != null && user.site.currentProjectId != null) {
+              if (this.site != null && this.site.currentProjectId != null) {
                 // the project was deleted remotely, so notify the user
-                this.showProjectDeletedDialog(user.site.currentProjectId);
+                this.showProjectDeletedDialog(this.site.currentProjectId);
               } else {
                 // the project was deleted locally, so navigate to the start view
                 this.navigateToStart();
@@ -278,8 +284,10 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
             this._projectSelect.value = this.selectedProject.id;
           }
 
-          if (user.site == null || user.site.currentProjectId !== this.selectedProject.id) {
-            this.userService.updateCurrentProjectId(this.selectedProject.id);
+          if (this.site == null || this.site.currentProjectId !== this.selectedProject.id) {
+            this.currentUserDoc.submitJson0Op(op =>
+              op.set(u => u.sites['sf'].currentProjectId, this.selectedProject.id)
+            );
           }
         }
       );
@@ -289,8 +297,8 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     this.noticeService.loadingFinished();
   }
 
-  canChangePassword(authType: string): boolean {
-    return authType != null && authType === 'account';
+  canChangePassword(authId: string): boolean {
+    return getAuthType(authId) === AuthType.Account;
   }
 
   changePassword(email: string): void {
@@ -308,7 +316,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   editName(currentName: string): void {
     const dialogRef = this.accountService.openNameDialog(currentName, false);
     dialogRef.afterClosed().subscribe(response => {
-      this.userService.updateCurrentUserAttributes({ name: response as string });
+      this.currentUserDoc.submitJson0Op(op => op.set(u => u.name, response as string));
     });
   }
 
@@ -355,13 +363,13 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
 
   private async checkProjectExists(projectId: string): Promise<void> {
     if (!(await this.projectService.onlineExists(projectId))) {
-      await this.userService.updateCurrentProjectId();
+      await this.currentUserDoc.submitJson0Op(op => op.unset(u => u.sites['sf'].currentProjectId));
       this.navigateToStart();
     }
   }
 
   private async showProjectDeletedDialog(projectId: string): Promise<void> {
-    await this.userService.updateCurrentProjectId();
+    await this.currentUserDoc.submitJson0Op(op => op.unset(u => u.sites['sf'].currentProjectId));
     this.projectDeletedDialogRef = this.dialog.open(ProjectDeletedDialogComponent);
     this.projectDeletedDialogRef.afterClosed().subscribe(() => {
       this.projectService.localDelete(projectId);
