@@ -1,5 +1,30 @@
-import { SFProjectUserBase } from './sfdomain-model.generated';
+import { ProjectUser, ProjectUserRef } from 'xforge-common/models/project-user';
 
-export class SFProjectUser extends SFProjectUserBase {}
+export class SFProjectUser extends ProjectUser {
+  /** type identifier string for domain type mapping */
+  static readonly TYPE: string = 'projectUser';
 
-export { SFProjectUserRef } from './sfdomain-model.generated';
+  selectedTask?: string;
+  selectedBookId?: string;
+  selectedChapter?: number;
+  isTargetTextRight?: boolean;
+  confidenceThreshold?: number;
+  isSuggestionsEnabled?: boolean;
+  selectedSegment?: string;
+  selectedSegmentChecksum?: number;
+  questionRefsRead?: string[];
+  answerRefsRead?: string[];
+  commentRefsRead?: string[];
+
+  constructor(init?: Partial<SFProjectUser>) {
+    super(SFProjectUser.TYPE, init);
+  }
+}
+
+export class SFProjectUserRef extends ProjectUserRef {
+  static readonly TYPE: string = SFProjectUser.TYPE;
+
+  constructor(id: string) {
+    super(SFProjectUserRef.TYPE, id);
+  }
+}

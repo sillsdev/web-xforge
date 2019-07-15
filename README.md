@@ -337,9 +337,3 @@ In Visual Studio Code, in the debug sidebar, choose **Full App (SF)** to debug t
 ## Database
 
 The VS Code extension [Azure Cosmos DB](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-cosmosdb) can be used to inspect our Mongo DB.
-
-## Code Generator
-
-In Visual Studio Code, ensure `dotnet` is not running, then click **Terminal** > **Run Task** > **Generate SF model**.
-
-On the command line, change to the `/src/SIL.XForge.Scripture/CodeGenerator` folder and run `dotnet run -s ./sfmodel.json -t ../ClientApp/src/app/core/models/sfdomain-model.generated.ts -m SIL.XForge.Scripture.Models.SFProjectResource -j ../ClientApp/src/app/core/models/sfdomain-model-config.generated.ts`
