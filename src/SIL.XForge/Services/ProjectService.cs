@@ -16,7 +16,7 @@ using SIL.XForge.Utils;
 namespace SIL.XForge.Services
 {
     public abstract class ProjectService<TResource, TEntity> : RepositoryResourceServiceBase<TResource, TEntity>,
-        IResourceMapper<ProjectResource, ProjectEntity>, IProjectService<TResource>, IProjectAdminFilter<ProjectEntity>
+        IResourceMapper<ProjectResource, ProjectEntity>, IProjectService<TResource>
         where TResource : ProjectResource
         where TEntity : ProjectEntity
     {
@@ -31,8 +31,6 @@ namespace SIL.XForge.Services
         }
 
         public IResourceMapper<ProjectUserResource, ProjectUserEntity> ProjectUserMapper { get; set; }
-
-        protected abstract string ProjectAdministratorRole { get; }
 
         protected override IRelationship<TEntity> GetRelationship(string relationshipName)
         {
@@ -132,15 +130,6 @@ namespace SIL.XForge.Services
             var uri = new Uri(_siteOptions.Value.Origin,
                 $"/assets/audio/{fileName}");
             return uri;
-        }
-
-        public List<ProjectUserEntity> AdministratorAccessibleProjectUsers(string adminUserId)
-        {
-            // projects where the adminUserId is the project Administrator then select project users
-            return Entities.Query()
-                .Where(p => p.Users.Any(pu => pu.UserRef == adminUserId && pu.Role == ProjectAdministratorRole))
-                .SelectMany(p => p.Users).Select(pu => pu)
-                .ToList();
         }
     }
 }

@@ -421,7 +421,10 @@ namespace SIL.XForge.Services
 
                 Assert.That(resources, Is.Not.Null);
                 var projectResources = (IEnumerable<IResource>)resources;
-                Assert.That(projectResources.Select(p => p.Id), Is.EqualTo(new[] { "projectuser01", "projectuser02" }));
+                Assert.That(projectResources.Select(p => p.Id), Is.EqualTo(new[]
+                    {
+                        "projectuser01", "projectuser02", "projectuser04"
+                    }));
             }
         }
 
@@ -457,13 +460,31 @@ namespace SIL.XForge.Services
                                     Role = TestProjectRoles.Manager
                                 }
                             }
+                        },
+                        new TestProjectEntity
+                        {
+                            Id = "project03",
+                            Users =
+                            {
+                                new TestProjectUserEntity
+                                {
+                                    Id = "projectuser03",
+                                    UserRef = User02Id,
+                                    Role = TestProjectRoles.Manager
+                                },
+                                new TestProjectUserEntity
+                                {
+                                    Id = "projectuser04",
+                                    UserRef = User01Id,
+                                    Role = TestProjectRoles.Reviewer
+                                }
+                            }
                         }
                     });
 
                 Service = new UserService(JsonApiContext, Mapper, UserAccessor, Entities, SiteOptions)
                 {
                     ProjectUserMapper = new TestProjectUserService(JsonApiContext, Mapper, UserAccessor, projects),
-                    ProjectAdminFilter = new TestProjectService()
                 };
             }
 

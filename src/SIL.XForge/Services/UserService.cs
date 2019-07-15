@@ -24,8 +24,7 @@ namespace SIL.XForge.Services
             _siteOptions = siteOptions;
         }
 
-        public IResourceMapper<ProjectUserResource, ProjectUserEntity> ProjectUserMapper { get; set; }
-        public IProjectAdminFilter<ProjectEntity> ProjectAdminFilter { get; set; }
+        public IProjectUserFilter<ProjectUserResource, ProjectUserEntity, ProjectEntity> ProjectUserMapper { get; set; }
 
         protected override IRelationship<UserEntity> GetRelationship(string relationshipName)
         {
@@ -147,7 +146,7 @@ namespace SIL.XForge.Services
         {
             if (SystemRole == SystemRoles.User)
             {
-                List<string> adminProjectUserRefs = ProjectAdminFilter.AdministratorAccessibleProjectUsers(UserId)
+                List<string> adminProjectUserRefs = ProjectUserMapper.AdministratorAccessibleProjectUsers(UserId)
                     .Select(pu => pu.UserRef).ToList();
                 query = query.Where(u => adminProjectUserRefs.Contains(u.Id) || u.Id == UserId);
             }

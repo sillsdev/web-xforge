@@ -16,7 +16,7 @@ using SIL.XForge.Utils;
 namespace SIL.XForge.Services
 {
     public abstract class ProjectUserService<TResource, TEntity, TProjectEntity>
-        : ResourceServiceBase<TResource, TEntity>, IResourceMapper<ProjectUserResource, ProjectUserEntity>
+        : ResourceServiceBase<TResource, TEntity>, IProjectUserFilter<ProjectUserResource, ProjectUserEntity, ProjectEntity>
         where TResource : ProjectUserResource
         where TEntity : ProjectUserEntity
         where TProjectEntity : ProjectEntity
@@ -202,7 +202,7 @@ namespace SIL.XForge.Services
             return await MapMatchingAsync(included, resources, ExpressionHelper.ChangePredicateType<TEntity>(predicate));
         }
 
-        protected List<ProjectUserEntity> AdministratorAccessibleProjectUsers(string adminUserId)
+        public List<ProjectUserEntity> AdministratorAccessibleProjectUsers(string adminUserId)
         {
             // projects where the adminUserId is the project Administrator then select project users
             return Projects.Query()
