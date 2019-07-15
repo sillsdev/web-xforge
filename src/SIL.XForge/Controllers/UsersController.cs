@@ -1,23 +1,25 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using JsonApiDotNetCore.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using SIL.XForge.Models;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Controllers
 {
-    [Route(RootDataTypes.Users)]
-    public class UsersController : JsonApiControllerBase<UserResource>
+    [Authorize]
+    [Route(XForgeConstants.JsonApiNamespace + "/" + RootDataTypes.Users)]
+    [ApiController]
+    public class UsersController : ControllerBase
     {
+        private readonly IUserAccessor _userAccessor;
         private readonly IUserService _userService;
 
-        public UsersController(IJsonApiContext jsonApiContext, IUserService userService,
-            ILoggerFactory loggerFactory) : base(jsonApiContext, userService, loggerFactory)
+        public UsersController(IUserAccessor userAccessor, IUserService userService)
         {
+            _userAccessor = userAccessor;
             _userService = userService;
         }
 
@@ -25,6 +27,9 @@ namespace SIL.XForge.Controllers
         [RequestSizeLimit(100_000_000)]
         public async Task<IActionResult> UploadAvatarAsync(string id, [FromForm] IFormFile file)
         {
+            if (_userAccessor.Role == SystemRoles.User && id != _userAccessor.UserId)
+                return Forbid();
+
             using (Stream stream = file.OpenReadStream())
             {
                 Uri uri = await _userService.SaveAvatarAsync(id, file.FileName, stream);

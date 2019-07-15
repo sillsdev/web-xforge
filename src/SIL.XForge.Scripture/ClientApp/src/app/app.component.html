@@ -14,7 +14,7 @@
           >Scripture Forge
         </mdc-top-app-bar-title>
       </mdc-top-app-bar-section>
-      <mdc-top-app-bar-section align="end" *ngIf="(currentUser$ | async) as currentUser">
+      <mdc-top-app-bar-section align="end" *ngIf="currentUser">
         <mdc-icon mdcTopAppBarActionItem title="Notifications">notifications</mdc-icon>
         <div mdcMenuSurfaceAnchor #helpMenuAnchor>
           <mdc-icon mdcTopAppBarActionItem title="Help" (click)="helpMenu.open = !helpMenu.open">help</mdc-icon>
@@ -61,12 +61,7 @@
                   System Administration
                 </mdc-list-item>
                 <mdc-list-item routerLink="/projects">My Projects</mdc-list-item>
-                <mdc-list-item
-                  *ngIf="canChangePassword(currentUser.authType)"
-                  (click)="changePassword(currentUser.email)"
-                >
-                  Change password
-                </mdc-list-item>
+                <mdc-list-item *ngIf="canChangePassword" (click)="changePassword()"> Change password </mdc-list-item>
                 <mdc-list-item name="logout" (click)="logOut()">Log out</mdc-list-item>
               </mdc-list>
             </mdc-list-group>

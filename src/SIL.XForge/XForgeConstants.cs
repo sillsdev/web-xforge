@@ -2,7 +2,7 @@ namespace SIL.XForge
 {
     public static class XForgeConstants
     {
-        public static readonly string JsonApiNamespace = "json-api";
-        public static readonly string CommandsEndpoint = "commands";
+        public const string JsonApiNamespace = "json-api";
+        public const string CommandsEndpoint = "commands";
     }
 }

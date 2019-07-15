@@ -1,6 +1,7 @@
 import { RealtimeDocConstructor } from './realtime-doc';
 import { ResourceConstructor, ResourceRefConstructor } from './resource';
-import { User, UserRef } from './user';
+import { UserDoc } from './user-doc';
+import { UserProfileDoc } from './user-profile-doc';
 
 export interface DomainModelConfig {
   resourceTypes: ResourceConstructor[];
@@ -20,10 +21,10 @@ export class DomainModel {
 
   constructor(settings: DomainModelConfig) {
     this._resourceTypes = this.createMap(settings.resourceTypes);
-    this._resourceTypes.set(User.TYPE, User);
     this._resourceRefTypes = this.createMap(settings.resourceRefTypes);
-    this._resourceRefTypes.set(UserRef.TYPE, UserRef);
     this._realtimeDocTypes = this.createMap(settings.realtimeDocTypes);
+    this._realtimeDocTypes.set(UserDoc.TYPE, UserDoc);
+    this._realtimeDocTypes.set(UserProfileDoc.TYPE, UserProfileDoc);
   }
 
   get resourceTypes(): IterableIterator<string> {

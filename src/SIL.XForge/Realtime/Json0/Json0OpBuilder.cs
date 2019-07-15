@@ -1,9 +1,8 @@
-using System.Linq.Expressions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using SIL.XForge.Utils;
-using System;
-using System.Reflection;
 
 namespace SIL.XForge.Realtime.Json0
 {
@@ -20,35 +19,41 @@ namespace SIL.XForge.Realtime.Json0
 
         public Json0OpBuilder<T> Insert<TItem>(Expression<Func<T, List<TItem>>> field, int index, TItem item)
         {
-            (_, _, List<object> path) = GetFieldInfo(field);
+            var objectPath = new ObjectPath(field);
+            List<object> path = objectPath.Items.ToList();
             path.Add(index);
-            Op.Add(new Json0Op { Path = CreatePath(path), InsertItem = item });
+            Op.Add(new Json0Op { Path = CreateJson0Path(path), InsertItem = item });
             return this;
         }
 
         public Json0OpBuilder<T> Add<TItem>(Expression<Func<T, List<TItem>>> field, TItem item)
         {
-            (object owner, PropertyInfo propInfo, List<object> path) = GetFieldInfo(field);
-            var list = (List<TItem>)propInfo.GetValue(owner);
+            var objectPath = new ObjectPath(field);
+            if (!objectPath.TryGetValue(_data, out List<TItem> list) || list == null)
+                throw new InvalidOperationException("The specified list does not exist.");
+            List<object> path = objectPath.Items.ToList();
             path.Add(list.Count);
-            Op.Add(new Json0Op { Path = CreatePath(path), InsertItem = item });
+            Op.Add(new Json0Op { Path = CreateJson0Path(path), InsertItem = item });
             return this;
         }
 
         public Json0OpBuilder<T> Remove<TItem>(Expression<Func<T, List<TItem>>> field, int index)
         {
-            (object owner, PropertyInfo propInfo, List<object> path) = GetFieldInfo(field);
-            var list = (List<TItem>)propInfo.GetValue(owner);
+            var objectPath = new ObjectPath(field);
+            if (!objectPath.TryGetValue(_data, out List<TItem> list) || list == null)
+                throw new InvalidOperationException("The specified list does not exist.");
+            List<object> path = objectPath.Items.ToList();
             path.Add(index);
-            Op.Add(new Json0Op { Path = CreatePath(path), DeleteItem = list[index] });
+            Op.Add(new Json0Op { Path = CreateJson0Path(path), DeleteItem = list[index] });
             return this;
         }
 
         public Json0OpBuilder<T> Remove<TItem>(Expression<Func<T, List<TItem>>> field, int index, TItem item)
         {
-            (_, _, List<object> path) = GetFieldInfo(field);
+            var objectPath = new ObjectPath(field);
+            List<object> path = objectPath.Items.ToList();
             path.Add(index);
-            Op.Add(new Json0Op { Path = CreatePath(path), DeleteItem = item });
+            Op.Add(new Json0Op { Path = CreateJson0Path(path), DeleteItem = item });
             return this;
         }
 
@@ -60,13 +65,15 @@ namespace SIL.XForge.Realtime.Json0
         public Json0OpBuilder<T> Replace<TItem>(Expression<Func<T, List<TItem>>> field, int index, TItem newItem,
             IEqualityComparer<TItem> equalityComparer)
         {
-            (object owner, PropertyInfo propInfo, List<object> path) = GetFieldInfo(field);
-            var list = (List<TItem>)propInfo.GetValue(owner);
+            var objectPath = new ObjectPath(field);
+            if (!objectPath.TryGetValue(_data, out List<TItem> list) || list == null)
+                throw new InvalidOperationException("The specified list does not exist.");
             TItem oldItem = list[index];
             if (!equalityComparer.Equals(oldItem, newItem))
             {
+                List<object> path = objectPath.Items.ToList();
                 path.Add(index);
-                Op.Add(new Json0Op { Path = CreatePath(path), DeleteItem = oldItem, InsertItem = newItem });
+                Op.Add(new Json0Op { Path = CreateJson0Path(path), DeleteItem = oldItem, InsertItem = newItem });
             }
             return this;
         }
@@ -82,9 +89,10 @@ namespace SIL.XForge.Realtime.Json0
         {
             if (!equalityComparer.Equals(oldItem, newItem))
             {
-                (_, _, List<object> path) = GetFieldInfo(field);
+                var objectPath = new ObjectPath(field);
+                List<object> path = objectPath.Items.ToList();
                 path.Add(index);
-                Op.Add(new Json0Op { Path = CreatePath(path), DeleteItem = oldItem, InsertItem = newItem });
+                Op.Add(new Json0Op { Path = CreateJson0Path(path), DeleteItem = oldItem, InsertItem = newItem });
             }
             return this;
         }
@@ -97,10 +105,17 @@ namespace SIL.XForge.Realtime.Json0
         public Json0OpBuilder<T> Set<TField>(Expression<Func<T, TField>> field, TField value,
             IEqualityComparer<TField> equalityComparer)
         {
-            (object owner, PropertyInfo propInfo, List<object> path) = GetFieldInfo(field);
-            var oldValue = (TField)propInfo.GetValue(owner);
-            if (!equalityComparer.Equals(value, oldValue))
-                Op.Add(new Json0Op { Path = CreatePath(path), DeleteProp = oldValue, InsertProp = value });
+            var objectPath = new ObjectPath(field);
+            bool hasOldValue = objectPath.TryGetValue(_data, out TField oldValue);
+            if (!hasOldValue || !equalityComparer.Equals(value, oldValue))
+            {
+                Op.Add(new Json0Op
+                {
+                    Path = CreateJson0Path(objectPath.Items),
+                    DeleteProp = hasOldValue ? (object)oldValue : null,
+                    InsertProp = value
+                });
+            }
             return this;
         }
 
@@ -115,99 +130,42 @@ namespace SIL.XForge.Realtime.Json0
         {
             if (!equalityComparer.Equals(newValue, oldValue))
             {
-                (_, _, List<object> path) = GetFieldInfo(field);
-                Op.Add(new Json0Op { Path = CreatePath(path), DeleteProp = oldValue, InsertProp = newValue });
+                var objectPath = new ObjectPath(field);
+                Op.Add(new Json0Op
+                {
+                    Path = CreateJson0Path(objectPath.Items),
+                    DeleteProp = oldValue,
+                    InsertProp = newValue
+                });
             }
             return this;
         }
 
         public Json0OpBuilder<T> Unset<TField>(Expression<Func<T, TField>> field)
         {
-            (object owner, PropertyInfo propInfo, List<object> path) = GetFieldInfo(field);
-            object value = propInfo.GetValue(owner);
-            Op.Add(new Json0Op { Path = CreatePath(path), DeleteProp = value });
+            var objectPath = new ObjectPath(field);
+            if (objectPath.TryGetValue<T, TField>(_data, out TField value))
+                Op.Add(new Json0Op { Path = CreateJson0Path(objectPath.Items), DeleteProp = value });
             return this;
         }
 
         public Json0OpBuilder<T> Unset<TField>(Expression<Func<T, TField>> field, TField value)
         {
-            (_, _, List<object> path) = GetFieldInfo(field);
-            Op.Add(new Json0Op { Path = CreatePath(path), DeleteProp = value });
+            var objectPath = new ObjectPath(field);
+            Op.Add(new Json0Op { Path = CreateJson0Path(objectPath.Items), DeleteProp = value });
             return this;
         }
 
         public Json0OpBuilder<T> Inc(Expression<Func<T, int>> field, int n = 1)
         {
-            (_, _, List<object> path) = GetFieldInfo(field);
-            Op.Add(new Json0Op { Path = CreatePath(path), Add = n });
+            var objectPath = new ObjectPath(field);
+            Op.Add(new Json0Op { Path = CreateJson0Path(objectPath.Items), Add = n });
             return this;
         }
 
-        private static List<object> CreatePath(IEnumerable<object> path)
+        private static List<object> CreateJson0Path(IEnumerable<object> path)
         {
-            return path.Select(i =>
-                {
-                    var str = i as string;
-                    if (str != null)
-                        return str.ToCamelCase();
-                    return i;
-                }).ToList();
-        }
-
-        private (object Owner, PropertyInfo Property, List<object> Path) GetFieldInfo<TField>(
-            Expression<Func<T, TField>> field)
-        {
-            var path = new List<object>();
-            object owner = null;
-            MemberInfo member = null;
-            object index = null;
-            foreach (Expression node in ExpressionHelper.Flatten(field))
-            {
-                object newOwner = null;
-                if (owner == null)
-                {
-                    if (_data != null)
-                        newOwner = _data;
-                }
-                else
-                {
-                    switch (member)
-                    {
-                        case MethodInfo method:
-                            newOwner = method.Invoke(owner, new object[] { index });
-                            break;
-
-                        case PropertyInfo prop:
-                            newOwner = prop.GetValue(owner);
-                            break;
-                    }
-                }
-                owner = newOwner;
-
-                switch (node)
-                {
-                    case MemberExpression memberExpr:
-                        member = memberExpr.Member;
-                        path.Add(member.Name);
-                        index = null;
-                        break;
-
-                    case MethodCallExpression methodExpr:
-                        member = methodExpr.Method;
-                        if (member.Name != "get_Item")
-                            throw new ArgumentException("Invalid method call in field expression.", nameof(field));
-
-                        Expression argExpr = methodExpr.Arguments[0];
-                        index = ExpressionHelper.FindConstantValue(argExpr);
-                        path.Add(index);
-                        break;
-                }
-            }
-
-            PropertyInfo property = member as PropertyInfo;
-            if (property == null && index != null)
-                property = member.DeclaringType.GetProperty("Item");
-            return (owner, property, path);
+            return path.Select(i => (i is string str) ? str.ToCamelCase() : i).ToList();
         }
     }
 }

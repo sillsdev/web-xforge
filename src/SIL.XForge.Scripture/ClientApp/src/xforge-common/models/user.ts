@@ -1,14 +1,34 @@
-import { ProjectUserRef } from './project-user';
-import { Resource, ResourceRef } from './resource';
 import { Site } from './site';
 
-export class User extends Resource {
-  static readonly TYPE: string = 'user';
+export enum AuthType {
+  Unknown,
+  Paratext,
+  Google,
+  Account
+}
 
+export function getAuthType(authId: string): AuthType {
+  if (authId == null || !authId.includes('|')) {
+    return AuthType.Unknown;
+  }
+
+  const authIdType = authId.substr(0, authId.lastIndexOf('|'));
+  if (authIdType.includes('paratext')) {
+    return AuthType.Paratext;
+  }
+  if (authIdType.includes('google')) {
+    return AuthType.Google;
+  }
+  if (authIdType.includes('auth0')) {
+    return AuthType.Account;
+  }
+  return AuthType.Unknown;
+}
+
+export interface User {
   name?: string;
   email?: string;
   paratextId?: string;
-  active?: boolean;
   avatarUrl?: string;
   role?: string;
   isNameConfirmed?: boolean;
@@ -16,20 +36,6 @@ export class User extends Resource {
   contactMethod?: 'email' | 'sms' | 'emailSms';
   birthday?: string;
   gender?: 'female' | 'male';
-  authType?: 'paratext' | 'google' | 'account';
-  site?: Site;
-
-  projects?: ProjectUserRef[];
-
-  constructor(init?: Partial<User>) {
-    super(User.TYPE, init);
-  }
-}
-
-export class UserRef extends ResourceRef {
-  static readonly TYPE: string = User.TYPE;
-
-  constructor(id: string) {
-    super(UserRef.TYPE, id);
-  }
+  authId?: string;
+  sites?: { [key: string]: Site };
 }

@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { iif, of } from 'rxjs';
+import { from, of } from 'rxjs';
 import { filter, map, switchMap } from 'rxjs/operators';
-
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 
@@ -22,14 +21,14 @@ export class StartComponent extends SubscriptionDisposable implements OnInit {
 
   ngOnInit(): void {
     this.subscribe(
-      this.userService.getCurrentUser().pipe(
-        filter(user => user != null),
-        switchMap(user => {
-          if (user.site != null && user.site.currentProjectId != null) {
-            return of(user.site.currentProjectId);
+      from(this.userService.getCurrentUser()).pipe(
+        filter(userDoc => userDoc.data != null),
+        switchMap(userDoc => {
+          if (userDoc.data.sites['sf'] != null && userDoc.data.sites['sf'].currentProjectId != null) {
+            return of(userDoc.data.sites['sf'].currentProjectId);
           }
           return this.userService
-            .getProjects(user.id)
+            .getProjects(userDoc.id)
             .pipe(map(r => (r.data.length > 0 ? r.data[0].project.id : null)));
         }),
         filter(projectId => projectId != null)

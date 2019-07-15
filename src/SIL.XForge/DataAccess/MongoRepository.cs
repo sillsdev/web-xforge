@@ -7,7 +7,7 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.DataAccess
 {
-    public class MongoRepository<T> : IRepository<T> where T : Entity
+    public class MongoRepository<T> : IRepository<T> where T : IEntity
     {
         private readonly IMongoCollection<T> _collection;
         private readonly Action<IMongoCollection<T>> _init;
@@ -32,9 +32,13 @@ namespace SIL.XForge.DataAccess
         {
             try
             {
-                var now = DateTime.UtcNow;
-                entity.DateModified = now;
-                entity.DateCreated = now;
+                var entityObj = entity as Entity;
+                if (entityObj != null)
+                {
+                    var now = DateTime.UtcNow;
+                    entityObj.DateModified = now;
+                    entityObj.DateCreated = now;
+                }
                 await _collection.InsertOneAsync(entity);
             }
             catch (MongoWriteException e)
@@ -49,10 +53,14 @@ namespace SIL.XForge.DataAccess
         {
             try
             {
-                var now = DateTime.UtcNow;
-                entity.DateModified = now;
-                if (entity.DateCreated == DateTime.MinValue)
-                    entity.DateCreated = now;
+                var entityObj = entity as Entity;
+                if (entityObj != null)
+                {
+                    var now = DateTime.UtcNow;
+                    entityObj.DateModified = now;
+                    if (entityObj.DateCreated == DateTime.MinValue)
+                        entityObj.DateCreated = now;
+                }
                 ReplaceOneResult result = await _collection.ReplaceOneAsync(e => e.Id == entity.Id, entity,
                     new UpdateOptions { IsUpsert = upsert });
                 if (result.IsAcknowledged)
@@ -72,12 +80,16 @@ namespace SIL.XForge.DataAccess
         {
             try
             {
-                var now = DateTime.UtcNow;
                 var updateBuilder = new MongoUpdateBuilder<T>();
                 update(updateBuilder);
-                UpdateDefinition<T> updateDef = updateBuilder.Build()
-                    .Set(e => e.DateModified, now)
-                    .SetOnInsert(e => e.DateCreated, now);
+                UpdateDefinition<T> updateDef = updateBuilder.Build();
+                if (typeof(Entity).IsAssignableFrom(typeof(T)))
+                {
+                    var now = DateTime.UtcNow;
+                    updateDef = updateDef
+                        .Set(e => ((Entity)(object)e).DateModified, now)
+                        .SetOnInsert(e => ((Entity)(object)e).DateCreated, now);
+                }
                 return await _collection.FindOneAndUpdateAsync(filter, updateDef,
                     new FindOneAndUpdateOptions<T>
                     {
