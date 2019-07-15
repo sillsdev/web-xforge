@@ -1,11 +1,14 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using EdjCase.JsonRpc.Core;
 using EdjCase.JsonRpc.Router.Abstractions;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Services;
+using SIL.XForge.Utils;
+
 
 namespace SIL.XForge.Controllers
 {
@@ -26,6 +29,7 @@ namespace SIL.XForge.Controllers
             Users = users;
             _emailService = emailService;
             _siteOptions = siteOptions;
+            SecurityUtils = new SecurityUtils();
         }
 
         protected IRepository<TEntity> Projects { get; }
@@ -33,12 +37,24 @@ namespace SIL.XForge.Controllers
         protected IRepository<UserEntity> Users { get; }
 
         protected abstract string ProjectAdminRole { get; }
+        internal ISecurityUtils SecurityUtils { get; set; }
 
+        /// <summary>Send an email to invite someone to work on the project</summary>
         public async Task<IRpcMethodResult> Invite(string email)
         {
             TEntity project = await Projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
             if (project == null)
+            {
                 return InvalidParamsError();
+            }
+
+            // Does a current project-user already have this email?
+            if ((await Projects.GetAsync(ResourceId)).Users
+                .Select(pu => Users.GetAsync(pu.UserRef).Result.Email)
+                .Any(puem => puem == email))
+            {
+                return Error((int)RpcErrorCode.InvalidParams, "Not inviting user who is already a member of this project");
+            }
 
             SiteOptions siteOptions = _siteOptions.Value;
             string url;
@@ -48,8 +64,13 @@ namespace SIL.XForge.Controllers
             }
             else if (project.ShareEnabled || IsUserProjectAdmin(project))
             {
-                // TODO: handle inviting a specific person here
-                url = null;
+                // Invite a specific person
+                // Reuse prior key, if any
+                var key = (await Projects.GetAsync(ResourceId))
+                    .ShareKeys.Where(sk => sk.Value == email).FirstOrDefault().Key
+                    ?? SecurityUtils.GenerateKey();
+                url = $"{siteOptions.Origin}projects/{ResourceId}?sharing=true&shareKey={key}";
+                await Projects.UpdateAsync(p => p.Id == ResourceId, update => update.Set(p => p.ShareKeys[key], email));
             }
             else
             {
@@ -63,21 +84,45 @@ namespace SIL.XForge.Controllers
                 "</p><p></p>" +
                 "<p>You're almost ready to start. Just click the link below to complete your signup and " +
                 "then you will be ready to get started.</p><p></p>" +
-                $"<p>To join, go to {url}</p><p></p>" +
-                $"<p>Regards</p><p>    The {siteOptions.Name} team</p>";
+                $"<p>To join, go to {url}<br />" +
+                $"This link will only work for this email address.</p><p></p>" +
+                $"<p>Regards,</p><p>The {siteOptions.Name} team</p>";
             await _emailService.SendEmailAsync(email, subject, body);
             return Ok();
         }
 
-        public async Task<IRpcMethodResult> CheckLinkSharing()
+        /// <summary>Add user to project, if sharing, optionally by a specific shareKey code that was sent to the user by email.</summary>
+        public async Task<IRpcMethodResult> CheckLinkSharing(string shareKey = null)
         {
             TEntity project = await Projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
             if (project == null)
+            {
                 return InvalidParamsError();
+            }
 
-            if (!project.ShareEnabled || project.ShareLevel != SharingLevel.Anyone)
+            if (!project.ShareEnabled)
             {
                 return ForbiddenError();
+            }
+
+            if (project.ShareLevel != SharingLevel.Anyone && project.ShareLevel != SharingLevel.Specific)
+            {
+                return ForbiddenError();
+            }
+
+            if (project.ShareLevel == SharingLevel.Specific)
+            {
+                if (project.ShareKeys == null || !project.ShareKeys.ContainsKey(shareKey))
+                {
+                    return ForbiddenError();
+                }
+                var currentUserEmail = (await Users.GetAsync(UserId)).Email;
+                if (project.ShareKeys[shareKey] == currentUserEmail)
+                {
+                    await AddUserToProject(project);
+                    await Projects.UpdateAsync(p => p.Id == ResourceId, update => update.Unset(p => p.ShareKeys[shareKey]));
+                    return Ok();
+                }
             }
 
             await AddUserToProject(project);
