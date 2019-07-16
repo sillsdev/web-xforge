@@ -6,6 +6,7 @@ import { ngfModule } from 'angular-file';
 import { AvatarModule } from 'ngx-avatar';
 import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
+import { EditNameDialogComponent } from './edit-name-dialog/edit-name-dialog.component';
 import { ErrorComponent } from './error/error.component';
 import { DeleteAccountDialogComponent } from './my-account/delete-account-dialog/delete-account-dialog.component';
 import { MyAccountComponent } from './my-account/my-account.component';
@@ -24,6 +25,7 @@ const componentExports = [
   AvatarComponent,
   CollaboratorsComponent,
   DeleteAccountDialogComponent,
+  EditNameDialogComponent,
   ErrorComponent,
   MyAccountComponent,
   SaProjectsComponent,
@@ -36,7 +38,7 @@ const componentExports = [
   WriteStatusComponent
 ];
 
-export const xForgeCommonEntryComponents = [ShareDialogComponent, SaDeleteDialogComponent];
+export const xForgeCommonEntryComponents = [EditNameDialogComponent, ShareDialogComponent, SaDeleteDialogComponent];
 
 @NgModule({
   imports: [

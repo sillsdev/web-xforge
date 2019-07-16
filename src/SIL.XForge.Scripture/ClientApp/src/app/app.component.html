@@ -49,6 +49,9 @@
                 Logged in as
                 <div>
                   <strong>{{ currentUser.name }}</strong>
+                  <button id="edit-name-btn" mdcIconButton (click)="editName(currentUser.name)">
+                    <mdc-icon>edit</mdc-icon>
+                  </button>
                 </div>
               </div>
               <mdc-list-divider></mdc-list-divider>
