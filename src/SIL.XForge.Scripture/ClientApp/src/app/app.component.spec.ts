@@ -1,5 +1,5 @@
-import { MdcList, OverlayContainer } from '@angular-mdc/web';
-import { Location } from '@angular/common';
+import { MdcDialogRef, MdcList, OverlayContainer } from '@angular-mdc/web';
+import { CommonModule, Location } from '@angular/common';
 import { Component, CUSTOM_ELEMENTS_SCHEMA, DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -193,6 +193,17 @@ describe('AppComponent', () => {
 
     expect(() => env.init()).not.toThrow();
   }));
+
+  describe('User menu', () => {
+    it('updates user with name', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.updateName('Updated Name');
+      verify(env.mockedUserService.openNameDialog(anything(), anything()));
+      verify(env.mockedUserService.updateCurrentUserAttributes(deepEqual({ name: 'Updated Name' }))).once();
+      expect().nothing();
+    }));
+  });
 });
 
 @Component({
@@ -215,7 +226,7 @@ const ROUTES: Route[] = [
 ];
 
 @NgModule({
-  imports: [UICommonModule],
+  imports: [UICommonModule, CommonModule],
   declarations: [ProjectDeletedDialogComponent],
   entryComponents: [ProjectDeletedDialogComponent],
   exports: [ProjectDeletedDialogComponent]
@@ -238,6 +249,7 @@ class TestEnvironment {
   readonly mockedLocationService = mock(LocationService);
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+  readonly mockedNameDialogRef = mock(MdcDialogRef);
 
   private readonly currentUser: User;
   private readonly projects$: BehaviorSubject<QueryResults<SFProjectUser[]>>;
@@ -318,6 +330,7 @@ class TestEnvironment {
     when(this.mockedUserService.getProjects('user01', deepEqual([[nameof<SFProjectUser>('project')]]))).thenReturn(
       this.projects$
     );
+    when(this.mockedUserService.openNameDialog(anything(), false)).thenReturn(instance(this.mockedNameDialogRef));
     when(this.mockedUserService.updateCurrentProjectId(anything())).thenResolve();
     when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
 
@@ -428,6 +441,11 @@ class TestEnvironment {
   confirmDialog(): void {
     this.okButton.click();
     this.wait();
+  }
+
+  updateName(name: string) {
+    when(this.mockedNameDialogRef.afterClosed()).thenReturn(of(name));
+    this.component.editName('User 01');
   }
 
   setProjects(results: MapQueryResults<SFProjectUser[]>): void {

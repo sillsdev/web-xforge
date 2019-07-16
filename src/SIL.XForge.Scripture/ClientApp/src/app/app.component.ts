@@ -2,7 +2,7 @@ import { MdcDialog, MdcSelect, MdcTopAppBar } from '@angular-mdc/web';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -50,6 +50,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   private _isDrawerPermanent: boolean = true;
   private projectDataDoc: SFProjectDataDoc;
   private selectedProjectRole: SFProjectRoles;
+  private afterCloseSubscription: Subscription;
 
   constructor(
     private readonly router: Router,
@@ -301,6 +302,14 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
         const message = "Can't change password at this time. Try again later or report an issue in the Help menu.";
         this.noticeService.show(message);
       });
+  }
+
+  editName(currentName: string): void {
+    const dialogRef = this.userService.openNameDialog(currentName, false);
+    this.afterCloseSubscription = dialogRef.afterClosed().subscribe(async response => {
+      await this.userService.updateCurrentUserAttributes({ name: response as string });
+      this.afterCloseSubscription.unsubscribe();
+    });
   }
 
   logOut(): void {

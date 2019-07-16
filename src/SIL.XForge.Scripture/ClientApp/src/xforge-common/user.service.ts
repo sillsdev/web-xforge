@@ -1,3 +1,4 @@
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Record } from '@orbit/data';
@@ -6,6 +7,7 @@ import { combineLatest, Observable, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, shareReplay, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { registerCustomFilter } from './custom-filter-specifier';
+import { EditNameDialogComponent } from './edit-name-dialog/edit-name-dialog.component';
 import { GetAllParameters, JsonApiService, QueryObservable } from './json-api.service';
 import { ProjectUser } from './models/project-user';
 import { User } from './models/user';
@@ -26,7 +28,8 @@ export class UserService extends ResourceService {
   constructor(
     jsonApiService: JsonApiService,
     private readonly authService: AuthService,
-    private readonly http: HttpClient
+    private readonly http: HttpClient,
+    private readonly dialog: MdcDialog
   ) {
     super(User.TYPE, jsonApiService);
 
@@ -143,6 +146,19 @@ export class UserService extends ResourceService {
         return this.jsonApiService.onlineGetAll<User>(this.type, currentParameters, include);
       })
     );
+  }
+
+  openNameDialog(
+    currentName: string,
+    nameConfirmation: boolean,
+    escToClose = false,
+    outsideToClose = false
+  ): MdcDialogRef<EditNameDialogComponent> {
+    return this.dialog.open(EditNameDialogComponent, {
+      data: { name: currentName, isConfirmation: nameConfirmation },
+      escapeToClose: escToClose,
+      clickOutsideToClose: outsideToClose
+    });
   }
 
   /**

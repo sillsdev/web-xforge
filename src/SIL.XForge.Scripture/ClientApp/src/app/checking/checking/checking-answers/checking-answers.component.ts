@@ -11,7 +11,6 @@ import { Question } from '../../../core/models/question';
 import { SFProject } from '../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../../core/models/sfproject-user';
-import { EditNameDialogComponent } from '../../../edit-name-dialog/edit-name-dialog.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 
@@ -187,11 +186,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
       this.hideAnswerForm();
       return;
     }
-    const dialogRef = this.dialog.open(EditNameDialogComponent, {
-      data: { name: this.user.name, isConfirmation: true },
-      escapeToClose: false,
-      clickOutsideToClose: false
-    });
+    const dialogRef = this.userService.openNameDialog(this.user.name, true);
     dialogRef.afterClosed().subscribe(async response => {
       await this.userService.updateCurrentUserAttributes({ name: response as string, isNameConfirmed: true });
       this.emitAnswerToSave();
