@@ -10,6 +10,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "jwks-rsa": "^1.6.0",
+    "lodash": ">=4.17.14",
     "mongodb": "^2.2.36",
     "ot-json0": "^1.1.0",
     "rich-text": "^3.1.0",
