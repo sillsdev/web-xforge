@@ -16,7 +16,7 @@ using SIL.XForge.Utils;
 namespace SIL.XForge.Services
 {
     public abstract class ProjectUserService<TResource, TEntity, TProjectEntity>
-        : ResourceServiceBase<TResource, TEntity>, IResourceMapper<ProjectUserResource, ProjectUserEntity>
+        : ResourceServiceBase<TResource, TEntity>, IProjectUserFilter
         where TResource : ProjectUserResource
         where TEntity : ProjectUserEntity
         where TProjectEntity : ProjectEntity
@@ -28,10 +28,11 @@ namespace SIL.XForge.Services
             Projects = projects;
         }
 
-        protected IRepository<TProjectEntity> Projects { get; }
-
         public IResourceMapper<UserResource, UserEntity> UserMapper { get; set; }
         public IResourceMapper<ProjectResource, ProjectEntity> ProjectMapper { get; set; }
+
+        protected IRepository<TProjectEntity> Projects { get; }
+        protected abstract string ProjectAdministratorRole { get; }
 
         protected override async Task<object> GetRelationshipResourcesAsync(RelationshipAttribute relAttr,
             IEnumerable<string> included, Dictionary<string, IResource> resources, TEntity entity)
@@ -51,7 +52,11 @@ namespace SIL.XForge.Services
         protected override Task<IQueryable<TEntity>> ApplyPermissionFilterAsync(IQueryable<TEntity> query)
         {
             if (SystemRole == SystemRoles.User)
-                query = query.Where(u => u.UserRef == UserId);
+            {
+                List<string> adminProjectUserIds =
+                    AdministratorAccessibleProjectUsers(UserId).Select(pu => pu.Id).ToList();
+                query = query.Where(pu => adminProjectUserIds.Contains(pu.Id) || pu.UserRef == UserId);
+            }
             return Task.FromResult(query);
         }
 
@@ -162,7 +167,9 @@ namespace SIL.XForge.Services
             {
                 ProjectUserEntity projectUser = await Projects.Query().SelectMany(p => p.Users)
                     .SingleOrDefaultAsync(u => u.Id == id);
-                if (projectUser.UserRef != UserId)
+                List<string> adminProjectUserIds =
+                    AdministratorAccessibleProjectUsers(UserId).Select(pu => pu.Id).ToList();
+                if (!adminProjectUserIds.Contains(projectUser.Id) && projectUser.UserRef != UserId)
                     throw ForbiddenException();
             }
         }
@@ -193,6 +200,15 @@ namespace SIL.XForge.Services
             Expression<Func<ProjectUserEntity, bool>> predicate)
         {
             return await MapMatchingAsync(included, resources, ExpressionHelper.ChangePredicateType<TEntity>(predicate));
+        }
+
+        public List<ProjectUserEntity> AdministratorAccessibleProjectUsers(string adminUserId)
+        {
+            // projects where the adminUserId is the project Administrator then select project users
+            return Projects.Query()
+                .Where(p => p.Users.Any(pu => pu.UserRef == adminUserId && pu.Role == ProjectAdministratorRole))
+                .SelectMany(p => p.Users).Select(pu => pu)
+                .ToList();
         }
     }
 }

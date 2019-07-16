@@ -21,12 +21,15 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class SFProjectServiceTests
     {
+        private const string User01Id = "user01";
+        private const string User02Id = "user02";
+
         [Test]
         public async Task UpdateAsync_UserRole()
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.User);
+                env.SetUser(User01Id, SystemRoles.User);
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("project-name"), "new" }
@@ -62,7 +65,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.SystemAdmin);
+                env.SetUser(User01Id, SystemRoles.SystemAdmin);
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("project-name"), "new" }
@@ -91,7 +94,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.User);
+                env.SetUser(User01Id, SystemRoles.User);
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("source-paratext-id"), "changedId" }
@@ -119,7 +122,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user02", SystemRoles.User);
+                env.SetUser(User02Id, SystemRoles.User);
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("translate-enabled"), true },
@@ -149,7 +152,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.User);
+                env.SetUser(User01Id, SystemRoles.User);
                 env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
                     {
                         { env.GetAttribute("checking-enabled"), true }
@@ -177,7 +180,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.User);
+                env.SetUser(User01Id, SystemRoles.User);
                 env.JsonApiContext.QuerySet.Returns(new QuerySet());
                 env.JsonApiContext.PageManager.Returns(new PageManager());
 
@@ -192,7 +195,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.SystemAdmin);
+                env.SetUser(User01Id, SystemRoles.SystemAdmin);
                 env.JsonApiContext.QuerySet.Returns(new QuerySet());
                 env.JsonApiContext.PageManager.Returns(new PageManager());
 
@@ -212,7 +215,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (var env = new TestEnvironment())
             {
-                env.SetUser("user01", SystemRoles.User);
+                env.SetUser(User01Id, SystemRoles.User);
                 env.CreateSiteDir();
                 string syncDir = Path.Combine(TestEnvironment.SiteDir, "sync", "project01");
                 Directory.CreateDirectory(syncDir);
@@ -289,7 +292,7 @@ namespace SIL.XForge.Scripture.Services
                             new SFProjectUserEntity
                             {
                                 Id = "projectuser01",
-                                UserRef = "user01",
+                                UserRef = User01Id,
                                 Role = SFProjectRoles.Administrator
                             }
                         }
@@ -302,8 +305,8 @@ namespace SIL.XForge.Scripture.Services
                         {
                             new SFProjectUserEntity
                             {
-                                Id = "projectuser02",
-                                UserRef = "user02",
+                                Id = "projectuser03",
+                                UserRef = User02Id,
                                 Role = SFProjectRoles.Administrator
                             }
                         }
@@ -316,9 +319,15 @@ namespace SIL.XForge.Scripture.Services
                         {
                             new SFProjectUserEntity
                             {
-                                Id = "projectuser03",
-                                UserRef = "user01",
+                                Id = "projectuser04",
+                                UserRef = User01Id,
                                 Role = SFProjectRoles.Administrator
+                            },
+                            new SFProjectUserEntity
+                            {
+                                Id = "projectuser05",
+                                UserRef = User02Id,
+                                Role = SFProjectRoles.Translator
                             }
                         }
                     }

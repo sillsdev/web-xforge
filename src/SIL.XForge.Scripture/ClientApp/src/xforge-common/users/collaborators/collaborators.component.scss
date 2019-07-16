@@ -1,17 +1,46 @@
 .invite-user {
-  padding-top: 1rem;
-  max-width: 27rem;
+  padding-top: 16px;
+  max-width: 800px;
 }
 
 mdc-text-field {
-  min-width: 17rem;
+  min-width: 272px;
 }
 
 .invite-user-btn {
-  margin: 0.6rem;
-  bottom: 0.6rem;
+  margin: 10px;
+  bottom: 10px;
+}
+
+.helper-text {
+  color: var(--mdc-theme-text-hint-on-background);
 }
 
 .text-entry {
-  margin-bottom: 0.6rem;
+  margin-bottom: 10px;
+}
+
+.users-controls {
+  margin: 32px 0;
+}
+
+.mat-column-avatar {
+  width: 65px !important;
+}
+
+.mat-column-name {
+  padding-right: 0.5em;
+  word-break: break-word;
+}
+
+.mat-column-projects {
+  word-break: break-word;
+}
+
+.no-users-label {
+  padding-top: 14px;
+}
+
+.remove-cell {
+  text-align: right;
 }

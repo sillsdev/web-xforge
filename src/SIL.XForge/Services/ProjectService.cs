@@ -66,7 +66,9 @@ namespace SIL.XForge.Services
         protected override Task<IQueryable<TEntity>> ApplyPermissionFilterAsync(IQueryable<TEntity> query)
         {
             if (SystemRole == SystemRoles.User)
-                query = query.Where(p => p.Users.Any(u => u.UserRef == UserId));
+            {
+                query = query.Where(p => p.Users.Any(pu => pu.UserRef == UserId));
+            }
             return Task.FromResult(query);
         }
 

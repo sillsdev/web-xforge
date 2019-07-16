@@ -9,7 +9,7 @@ import { CommentsDoc } from './models/comments-doc';
 import { QuestionsDoc } from './models/questions-doc';
 import { SFProject } from './models/sfproject';
 import { SFProjectDataDoc } from './models/sfproject-data-doc';
-import { ProjectRole, SFProjectRoles } from './models/sfproject-roles';
+import { SF_PROJECT_ROLES } from './models/sfproject-roles';
 import { TextDoc } from './models/text-doc';
 import { TextDocId } from './models/text-doc-id';
 import { TranslateMetrics } from './models/translate-metrics';
@@ -18,18 +18,13 @@ import { TranslateMetrics } from './models/translate-metrics';
   providedIn: 'root'
 })
 export class SFProjectService extends ProjectService<SFProject> {
-  private static readonly ROLES: ProjectRole[] = [
-    { role: SFProjectRoles.ParatextAdministrator, displayName: 'Administrator' },
-    { role: SFProjectRoles.ParatextTranslator, displayName: 'Translator' }
-  ];
-
   constructor(
     jsonApiService: JsonApiService,
     private readonly machineHttp: MachineHttpClient,
     private readonly realtimeService: RealtimeService,
     http: HttpClient
   ) {
-    super(SFProject.TYPE, jsonApiService, SFProjectService.ROLES, http);
+    super(SFProject.TYPE, jsonApiService, SF_PROJECT_ROLES, http);
   }
 
   init(): void {
