@@ -15,6 +15,7 @@ import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
+import { HelpHeroService } from './core/help-hero.service.js';
 import { SFProject } from './core/models/sfproject';
 import { SFProjectDataDoc } from './core/models/sfproject-data-doc.js';
 import { canTranslate, SFProjectRoles } from './core/models/sfproject-roles.js';
@@ -54,6 +55,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     private readonly router: Router,
     private readonly authService: AuthService,
     private readonly locationService: LocationService,
+    private readonly helpHeroService: HelpHeroService,
     private readonly userService: UserService,
     private readonly noticeService: NoticeService,
     media: MediaObserver,
@@ -279,6 +281,8 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
           }
         }
       );
+      // tell HelpHero to remember this user to make sure we won't show them an identical tour again later
+      this.helpHeroService.setIdentity(this.userService.currentUserId);
     }
     this.noticeService.loadingFinished();
   }
