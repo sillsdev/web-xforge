@@ -498,9 +498,6 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   private startUserOnboardingTour() {
-    // tell HelpHero to remember this user to make sure we won't show them the tour again later
-    this.helpHeroService.setIdentity(this.projectCurrentUser.id);
-
     // HelpHero user-onboarding tour setup
     const isProjectAdmin: boolean = this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
     const isDiscussionEnabled: boolean = this.project.usersSeeEachOthersResponses;
@@ -508,37 +505,8 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
 
     this.helpHeroService.setProperty({
       isAdmin: isProjectAdmin,
-      discussionEnabled: isDiscussionEnabled,
-      invitingEnabled: isInvitingEnabled
+      isDiscussionEnabled,
+      isInvitingEnabled
     });
-
-    // start the Community Checking tour
-    if (isProjectAdmin) {
-      // start Admin tour
-      this.helpHeroService.startTour('sLbG6FRjjVo', { skipIfAlreadySeen: true });
-    } else if (isDiscussionEnabled) {
-      // start Reviewer tour w/ discussion
-      this.helpHeroService.startTour('39HmnsRplaw', { skipIfAlreadySeen: true });
-      this.helpHeroService.on('tour_completed', () => {
-        if (isInvitingEnabled) {
-          // run invite section of the tour
-          this.helpHeroService.startTour('MexTla8sdju', { skipIfAlreadySeen: true });
-          this.helpHeroService.on('tour_completed', () => {
-            // show end of Reviewer tour
-            this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true });
-          });
-        } else {
-          // show end of Reviewer tour
-          this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true });
-        }
-      });
-    } else {
-      // start Reviewer tour (w/o discussion)
-      this.helpHeroService.startTour('1ikmHlDXktB', { skipIfAlreadySeen: true });
-      this.helpHeroService.on('tour_completed', () => {
-        // show end of Reviewer tour
-        this.helpHeroService.startTour('dUubb24GYZs', { skipIfAlreadySeen: true });
-      });
-    }
   }
 }
