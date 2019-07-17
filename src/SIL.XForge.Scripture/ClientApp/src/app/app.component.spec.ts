@@ -8,6 +8,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import * as OTJson0 from 'ot-json0';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { MapQueryResults, QueryResults } from 'xforge-common/json-api.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -199,7 +200,7 @@ describe('AppComponent', () => {
       const env = new TestEnvironment();
       env.fixture.detectChanges();
       env.updateName('Updated Name');
-      verify(env.mockedUserService.openNameDialog(anything(), anything()));
+      verify(env.mockedAccountService.openNameDialog(anything(), anything()));
       verify(env.mockedUserService.updateCurrentUserAttributes(deepEqual({ name: 'Updated Name' }))).once();
       expect().nothing();
     }));
@@ -241,6 +242,7 @@ class TestEnvironment {
   readonly overlayContainer: OverlayContainer;
   readonly lastLogin: string = '2019-02-01T12:00:00.000Z';
 
+  readonly mockedAccountService = mock(AccountService);
   readonly mockedAuthService = mock(AuthService);
   readonly mockedUserService = mock(UserService);
   readonly mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
@@ -330,7 +332,7 @@ class TestEnvironment {
     when(this.mockedUserService.getProjects('user01', deepEqual([[nameof<SFProjectUser>('project')]]))).thenReturn(
       this.projects$
     );
-    when(this.mockedUserService.openNameDialog(anything(), false)).thenReturn(instance(this.mockedNameDialogRef));
+    when(this.mockedAccountService.openNameDialog(anything(), false)).thenReturn(instance(this.mockedNameDialogRef));
     when(this.mockedUserService.updateCurrentProjectId(anything())).thenResolve();
     when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
 
@@ -339,6 +341,7 @@ class TestEnvironment {
       imports: [UICommonModule, DialogTestModule, RouterTestingModule.withRoutes(ROUTES)],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       providers: [
+        { provide: AccountService, useFactory: () => instance(this.mockedAccountService) },
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: SFAdminAuthGuard, useFactory: () => instance(this.mockedSFAdminAuthGuard) },

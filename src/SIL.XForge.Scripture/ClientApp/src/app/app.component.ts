@@ -2,8 +2,9 @@ import { MdcDialog, MdcSelect, MdcTopAppBar } from '@angular-mdc/web';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { Observable, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { LocationService } from 'xforge-common/location.service';
 import { SystemRole } from 'xforge-common/models/system-role';
@@ -50,10 +51,10 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   private _isDrawerPermanent: boolean = true;
   private projectDataDoc: SFProjectDataDoc;
   private selectedProjectRole: SFProjectRoles;
-  private afterCloseSubscription: Subscription;
 
   constructor(
     private readonly router: Router,
+    private readonly accountService: AccountService,
     private readonly authService: AuthService,
     private readonly locationService: LocationService,
     private readonly helpHeroService: HelpHeroService,
@@ -305,10 +306,9 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   }
 
   editName(currentName: string): void {
-    const dialogRef = this.userService.openNameDialog(currentName, false);
-    this.afterCloseSubscription = dialogRef.afterClosed().subscribe(async response => {
-      await this.userService.updateCurrentUserAttributes({ name: response as string });
-      this.afterCloseSubscription.unsubscribe();
+    const dialogRef = this.accountService.openNameDialog(currentName, false);
+    dialogRef.afterClosed().subscribe(response => {
+      this.userService.updateCurrentUserAttributes({ name: response as string });
     });
   }
 

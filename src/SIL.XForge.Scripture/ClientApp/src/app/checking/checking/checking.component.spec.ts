@@ -8,6 +8,7 @@ import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { AccountService } from 'xforge-common/account.service';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
 import { MapQueryResults } from 'xforge-common/json-api.service';
 import { SharingLevel } from 'xforge-common/models/sharing-level';
@@ -135,7 +136,7 @@ describe('CheckingComponent', () => {
       env.setupReviewerScenarioData(env.cleanReviewUser);
       env.selectQuestion(2);
       env.answerQuestion('Answering question 2 should pop up a dialog');
-      verify(env.mockedUserService.openNameDialog(env.cleanReviewUser.name, true)).once();
+      verify(env.mockedAccountService.openNameDialog(env.cleanReviewUser.name, true)).once();
       verify(env.mockedUserService.updateCurrentUserAttributes(anything())).once();
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answering question 2 should pop up a dialog');
@@ -345,6 +346,7 @@ class TestEnvironment {
   questionReadTimer: number = 2000;
 
   mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent>;
+  mockedAccountService: AccountService;
   mockedRealtimeOfflineStore: RealtimeOfflineStore;
   mockedUserService: UserService;
   mockedProjectUserService: SFProjectUserService;
@@ -400,6 +402,7 @@ class TestEnvironment {
 
   constructor() {
     this.mockedCheckingNameDialogRef = mock(MdcDialogRef);
+    this.mockedAccountService = mock(AccountService);
     this.mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
     this.mockedUserService = mock(UserService);
     this.mockedProjectUserService = mock(SFProjectUserService);
@@ -423,6 +426,7 @@ class TestEnvironment {
           provide: ActivatedRoute,
           useValue: { params: of({ projectId: 'project01', bookId: 'JHN' }) }
         },
+        { provide: AccountService, useFactory: () => instance(this.mockedAccountService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: SFProjectUserService, useFactory: () => instance(this.mockedProjectUserService) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
@@ -731,7 +735,7 @@ class TestEnvironment {
       of(new MapQueryResults(this.cleanReviewUser))
     );
     when(this.mockedUserService.updateCurrentUserAttributes(anything())).thenResolve(user);
-    when(this.mockedUserService.openNameDialog(anything(), anything())).thenReturn(
+    when(this.mockedAccountService.openNameDialog(anything(), anything())).thenReturn(
       instance(this.mockedCheckingNameDialogRef)
     );
 

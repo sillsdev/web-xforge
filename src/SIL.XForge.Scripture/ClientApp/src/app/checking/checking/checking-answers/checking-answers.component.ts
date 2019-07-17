@@ -1,7 +1,7 @@
-import { MdcDialog } from '@angular-mdc/web';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { clone } from '@orbit/utils';
+import { AccountService } from 'xforge-common/account.service';
 import { User } from 'xforge-common/models/user';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
@@ -51,7 +51,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   private initUserAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
 
-  constructor(private readonly dialog: MdcDialog, private userService: UserService) {
+  constructor(private accountService: AccountService, private userService: UserService) {
     super();
     this.subscribe(this.userService.getCurrentUser(), u => (this.user = u));
   }
@@ -186,7 +186,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
       this.hideAnswerForm();
       return;
     }
-    const dialogRef = this.userService.openNameDialog(this.user.name, true);
+    const dialogRef = this.accountService.openNameDialog(this.user.name, true);
     dialogRef.afterClosed().subscribe(async response => {
       await this.userService.updateCurrentUserAttributes({ name: response as string, isNameConfirmed: true });
       this.emitAnswerToSave();
