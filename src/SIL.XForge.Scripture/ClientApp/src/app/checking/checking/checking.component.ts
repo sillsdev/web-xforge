@@ -498,6 +498,9 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   private startUserOnboardingTour() {
+    // tell HelpHero to remember this user to make sure we won't show them the tour again later
+    this.helpHeroService.setIdentity(this.projectCurrentUser.id);
+
     // HelpHero user-onboarding tour setup
     const isProjectAdmin: boolean = this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
     const isDiscussionEnabled: boolean = this.project.usersSeeEachOthersResponses;
@@ -508,9 +511,6 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       discussionEnabled: isDiscussionEnabled,
       invitingEnabled: isInvitingEnabled
     });
-
-    // tell HelpHero to remember this user to make sure we won't show them the tour again later
-    this.helpHeroService.setIdentity(this.projectCurrentUser.id);
 
     // start the Community Checking tour
     if (isProjectAdmin) {
