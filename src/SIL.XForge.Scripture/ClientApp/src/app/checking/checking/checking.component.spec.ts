@@ -118,6 +118,14 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.getUnread(question)).toEqual(0);
     }));
+
+    it('unread questions badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.reviewerUser);
+      expect(env.getUnread(env.questions[6])).toEqual(4);
+      env.component.project.usersSeeEachOthersResponses = false;
+      env.fixture.detectChanges();
+      expect(env.getUnread(env.questions[6])).toEqual(0);
+    }));
   });
 
   describe('Answers', () => {
