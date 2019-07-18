@@ -108,7 +108,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
 
   getUnreadAnswers(question: Question): number {
     let unread = 0;
-    if (!this.isAdministrator) {
+    if (!this.isAdministrator && !this.project.usersSeeEachOthersResponses) {
       return unread;
     }
     for (const answer of this.getAnswers(question)) {

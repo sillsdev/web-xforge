@@ -98,7 +98,6 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     if (this._chapter !== value) {
       this._chapter = value;
       this.textDocId = new TextDocId(this.project.id, this.text.bookId, this.chapter, 'target');
-      this.comments = this.checkingData.commentsDocs[this.textJsonDocId].data;
     }
   }
 
@@ -189,6 +188,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
               this.checkingData.questionsDocs[getTextDocIdStr(this.project.id, this.text.bookId, chapter)].data
             );
           }
+          this.refreshComments();
 
           this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
         }
@@ -418,12 +418,23 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     } else {
       this.checkingData.commentsDocs[this.textJsonDocId].submitJson0Op(op => op.insert(cs => cs, 0, comment));
     }
+    this.refreshComments();
   }
 
   private deleteComment(comment: Comment) {
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
       this.checkingData.commentsDocs[this.textJsonDocId].submitJson0Op(op => op.remove(cs => cs, commentIndex));
+    }
+    this.refreshComments();
+  }
+
+  private refreshComments() {
+    this.comments = [];
+    for (const chapter of this.chapters) {
+      this.comments = this.comments.concat(
+        this.checkingData.commentsDocs[getTextDocIdStr(this.project.id, this.text.bookId, chapter)].data
+      );
     }
   }
 
