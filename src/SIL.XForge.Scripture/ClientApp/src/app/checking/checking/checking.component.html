@@ -84,6 +84,7 @@
               <as-split-area size="0">
                 <div *ngIf="questionsPanel.activeQuestion" id="answer-panel" #answerPanelContainer>
                   <app-checking-answers
+                    #answersPanel
                     [project]="project"
                     [question]="questionsPanel.activeQuestion"
                     [comments]="comments"

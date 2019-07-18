@@ -22,7 +22,7 @@ import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { TextInfo } from '../../core/models/text-info';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
 import { SFProjectService } from '../../core/sfproject.service';
-import { AnswerAction } from './checking-answers/checking-answers.component';
+import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
@@ -51,6 +51,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   @HostBinding('class') classes = 'flex-max';
+  @ViewChild(CheckingAnswersComponent) answersPanel: CheckingAnswersComponent;
   @ViewChild(CheckingTextComponent) scripturePanel: CheckingTextComponent;
   @ViewChild(CheckingQuestionsComponent) questionsPanel: CheckingQuestionsComponent;
   @ViewChild(SplitComponent) splitComponent: SplitComponent;
