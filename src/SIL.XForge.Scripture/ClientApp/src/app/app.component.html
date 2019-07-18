@@ -21,6 +21,10 @@
           <mdc-menu #helpMenu [anchorCorner]="'bottomStart'" [anchorElement]="helpMenuAnchor">
             <mdc-list-group>
               <mdc-list>
+                <div class="mdc-list-group__subheader">
+                  <small>Product version: v{{ version }}</small>
+                </div>
+                <mdc-list-divider></mdc-list-divider>
                 <mdc-list-item name="issues">
                   <a target="_blank" [href]="issueMailTo" mdcListItemMeta>
                     <mdc-list-item-text>
@@ -32,10 +36,6 @@
                   </a>
                 </mdc-list-item>
               </mdc-list>
-              <mdc-list-divider></mdc-list-divider>
-              <div class="mdc-list-group__subheader">
-                <small>Product version: v{{ version }}</small>
-              </div>
             </mdc-list-group>
           </mdc-menu>
         </div>
@@ -47,11 +47,12 @@
             <mdc-list-group>
               <div class="mdc-list-group__subheader">
                 Logged in as
-                <div>
-                  <strong>{{ currentUser.name }}</strong>
+                <div fxLayout="row" fxLayoutAlign="start center">
+                  <span fxFlex>&nbsp;</span>
                   <button id="edit-name-btn" mdcIconButton (click)="editName(currentUser.name)">
                     <mdc-icon>edit</mdc-icon>
                   </button>
+                  <strong class="user-menu-name">{{ currentUser.name }}</strong>
                 </div>
               </div>
               <mdc-list-divider></mdc-list-divider>
