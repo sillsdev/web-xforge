@@ -90,6 +90,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     return this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
   }
 
+  get isRecorderActive(): boolean {
+    return this.audio.status && this.audio.status !== 'denied' && this.audio.status !== 'reset';
+  }
+
+  get isUploaderActive(): boolean {
+    return this.uploadAudioFileUrl !== '';
+  }
+
   get question(): Question {
     return this._question;
   }
@@ -167,6 +175,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   }
 
   recorderStatus(status: AudioAttachment): void {
+    this.audio.status = status.status;
     switch (status.status) {
       case 'reset':
         this.audio = {};
@@ -175,7 +184,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
         this.audio.url = status.url;
         this.audio.blob = status.blob;
         this.audio.fileName = this.generateAudioFileName();
-        this.resetAudioFileUpload();
         break;
     }
     this.setValidationRules();
@@ -185,6 +193,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   resetAudioFileUpload() {
     this.uploadAudioFile = null;
     this.uploadAudioFileUrl = '';
+    this.audio = {};
   }
 
   showAnswerForm() {
