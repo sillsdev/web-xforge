@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { LocationService } from 'xforge-common/location.service';
-import { ShareComponent } from 'xforge-common/share/share.component';
+import { ShareControlComponent } from 'xforge-common/share/share-control.component';
 import { MockAvatarModule } from '../../avatar/mock-avatar.module';
 import { MapQueryResults } from '../../json-api.service';
 import { Project, ProjectRef } from '../../models/project';
@@ -139,14 +139,14 @@ class TestProjectRef extends ProjectRef {
 }
 
 class TestEnvironment {
-  fixture: ComponentFixture<CollaboratorsComponent>;
-  component: CollaboratorsComponent;
+  readonly fixture: ComponentFixture<CollaboratorsComponent>;
+  readonly component: CollaboratorsComponent;
 
-  mockedActivatedRoute = mock(ActivatedRoute);
-  mockedLocationService = mock(LocationService);
-  mockedNoticeService = mock(NoticeService);
-  mockedProjectService = mock(ProjectService);
-  mockedProjectUserService = mock(ProjectUserService);
+  readonly mockedActivatedRoute = mock(ActivatedRoute);
+  readonly mockedLocationService = mock(LocationService);
+  readonly mockedNoticeService = mock(NoticeService);
+  readonly mockedProjectService = mock(ProjectService);
+  readonly mockedProjectUserService = mock(ProjectUserService);
 
   private readonly included: Resource[] = [
     new TestProjectUser({
@@ -216,7 +216,7 @@ class TestEnvironment {
     when(this.mockedNoticeService.show(anything())).thenResolve();
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
     TestBed.configureTestingModule({
-      declarations: [CollaboratorsComponent, ShareComponent],
+      declarations: [CollaboratorsComponent, ShareControlComponent],
       imports: [NoopAnimationsModule, MockAvatarModule, UICommonModule],
       providers: [
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
