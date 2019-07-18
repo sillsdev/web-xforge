@@ -168,7 +168,7 @@ describe('CheckingComponent', () => {
       const question = env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.waitForSliderUpdate();
-      env.clickButton(env.recordTab);
+      env.clickButton(env.audioTab);
       expect(env.recordButton).toBeDefined();
     }));
 
@@ -249,7 +249,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.waitForSliderUpdate();
-      env.clickButton(env.uploadTab);
+      env.clickButton(env.audioTab);
       expect(env.uploadAudioButton).toBeTruthy();
       expect(env.component.answersPanel.uploadAudioFileUrl).toBe('');
       env.component.answersPanel.uploadAudioFile = new File([env.createAudioBlob()], 'test.wav');
@@ -525,7 +525,7 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#answer-form .remove-audio-file'));
   }
 
-  get recordTab(): DebugElement {
+  get audioTab(): DebugElement {
     return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(2)'));
   }
 
@@ -535,14 +535,6 @@ class TestEnvironment {
 
   get uploadAudioButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#answer-form .upload-audio-file'));
-  }
-
-  get uploadAudioControl(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#answer-form .answer-upload app-checking-audio-player'));
-  }
-
-  get uploadTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(3)'));
   }
 
   get yourAnswerField(): DebugElement {
@@ -647,8 +639,7 @@ class TestEnvironment {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'audio/wav' });
-    return blob;
+    return new Blob([byteArray], { type: 'audio/wav' });
   }
 
   getAnswer(index: number): DebugElement {
@@ -682,10 +673,6 @@ class TestEnvironment {
 
   getEditCommentButton(answerIndex: number, commentIndex: number): DebugElement {
     return this.getAnswerComments(answerIndex)[commentIndex].query(By.css('.comment-edit'));
-  }
-
-  getFileBlob(uri: string): Promise<Blob> {
-    return fetch(uri).then(response => response.blob());
   }
 
   getQuestionText(question: DebugElement): string {

@@ -33,12 +33,23 @@
     padding: 10px 0;
     display: flex;
     align-items: center;
-    &.answer-upload {
+    &.answer-record-upload {
       button {
         margin-right: 15px;
       }
-      app-checking-audio-player {
-        flex: 1;
+      &.recorder-active {
+        app-checking-audio-recorder {
+          flex: 1;
+        }
+      }
+      &.recorder-active,
+      &.uploader-active {
+        app-checking-audio-player {
+          flex: 1;
+        }
+      }
+      .upload-audio-file {
+        margin-left: 10px;
       }
     }
   }
@@ -47,9 +58,6 @@
     mdc-text-field {
       width: 100%;
     }
-  }
-  app-checking-audio-recorder {
-    flex: 1;
   }
   .form-helper-text {
     color: var(--mdc-theme-error);
