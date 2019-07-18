@@ -8,6 +8,8 @@ import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { AccountService } from 'xforge-common/account.service';
+import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
 import { MapQueryResults } from 'xforge-common/json-api.service';
 import { SharingLevel } from 'xforge-common/models/sharing-level';
 import { User } from 'xforge-common/models/user';
@@ -29,7 +31,6 @@ import { Delta, TextDoc } from '../../core/models/text-doc';
 import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
 import { SFProjectService } from '../../core/sfproject.service';
-import { EditNameDialogComponent } from '../../edit-name-dialog/edit-name-dialog.component';
 import { SharedModule } from '../../shared/shared.module';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
@@ -135,16 +136,7 @@ describe('CheckingComponent', () => {
       env.setupReviewerScenarioData(env.cleanReviewUser);
       env.selectQuestion(2);
       env.answerQuestion('Answering question 2 should pop up a dialog');
-      verify(
-        env.mockedMdcDialog.open(
-          EditNameDialogComponent,
-          deepEqual({
-            data: { name: env.cleanReviewUser.name, isConfirmation: true },
-            escapeToClose: false,
-            clickOutsideToClose: false
-          })
-        )
-      ).once();
+      verify(env.mockedAccountService.openNameDialog(env.cleanReviewUser.name, true)).once();
       verify(env.mockedUserService.updateCurrentUserAttributes(anything())).once();
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answering question 2 should pop up a dialog');
@@ -353,8 +345,8 @@ class TestEnvironment {
   fixture: ComponentFixture<CheckingComponent>;
   questionReadTimer: number = 2000;
 
-  mockedMdcDialog: MdcDialog;
   mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent>;
+  mockedAccountService: AccountService;
   mockedRealtimeOfflineStore: RealtimeOfflineStore;
   mockedUserService: UserService;
   mockedProjectUserService: SFProjectUserService;
@@ -409,8 +401,8 @@ class TestEnvironment {
   });
 
   constructor() {
-    this.mockedMdcDialog = mock(MdcDialog);
     this.mockedCheckingNameDialogRef = mock(MdcDialogRef);
+    this.mockedAccountService = mock(AccountService);
     this.mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
     this.mockedUserService = mock(UserService);
     this.mockedProjectUserService = mock(SFProjectUserService);
@@ -434,7 +426,7 @@ class TestEnvironment {
           provide: ActivatedRoute,
           useValue: { params: of({ projectId: 'project01', bookId: 'JHN' }) }
         },
-        { provide: MdcDialog, useFactory: () => instance(this.mockedMdcDialog) },
+        { provide: AccountService, useFactory: () => instance(this.mockedAccountService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: SFProjectUserService, useFactory: () => instance(this.mockedProjectUserService) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
@@ -743,10 +735,12 @@ class TestEnvironment {
       of(new MapQueryResults(this.cleanReviewUser))
     );
     when(this.mockedUserService.updateCurrentUserAttributes(anything())).thenResolve(user);
+    when(this.mockedAccountService.openNameDialog(anything(), anything())).thenReturn(
+      instance(this.mockedCheckingNameDialogRef)
+    );
 
     when(this.mockedProjectUserService.update(anything())).thenReturn(new Promise(() => {}));
     when(this.mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.name));
-    when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedCheckingNameDialogRef));
   }
 
   private initComponentEnviroment(): void {

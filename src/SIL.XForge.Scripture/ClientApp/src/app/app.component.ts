@@ -4,6 +4,7 @@ import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { LocationService } from 'xforge-common/location.service';
 import { SystemRole } from 'xforge-common/models/system-role';
@@ -53,6 +54,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
 
   constructor(
     private readonly router: Router,
+    private readonly accountService: AccountService,
     private readonly authService: AuthService,
     private readonly locationService: LocationService,
     private readonly helpHeroService: HelpHeroService,
@@ -301,6 +303,13 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
         const message = "Can't change password at this time. Try again later or report an issue in the Help menu.";
         this.noticeService.show(message);
       });
+  }
+
+  editName(currentName: string): void {
+    const dialogRef = this.accountService.openNameDialog(currentName, false);
+    dialogRef.afterClosed().subscribe(response => {
+      this.userService.updateCurrentUserAttributes({ name: response as string });
+    });
   }
 
   logOut(): void {

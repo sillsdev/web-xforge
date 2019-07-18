@@ -3,7 +3,6 @@ import { Component, Inject } from '@angular/core';
 import { FormControl } from '@angular/forms';
 
 @Component({
-  selector: 'app-edit-name-dialog',
   templateUrl: './edit-name-dialog.component.html'
 })
 export class EditNameDialogComponent {

@@ -1,7 +1,7 @@
-import { MdcDialog } from '@angular-mdc/web';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { clone } from '@orbit/utils';
+import { AccountService } from 'xforge-common/account.service';
 import { User } from 'xforge-common/models/user';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
@@ -11,7 +11,6 @@ import { Question } from '../../../core/models/question';
 import { SFProject } from '../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../../core/models/sfproject-user';
-import { EditNameDialogComponent } from '../../../edit-name-dialog/edit-name-dialog.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 
@@ -52,7 +51,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   private initUserAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
 
-  constructor(private readonly dialog: MdcDialog, private userService: UserService) {
+  constructor(private accountService: AccountService, private userService: UserService) {
     super();
     this.subscribe(this.userService.getCurrentUser(), u => (this.user = u));
   }
@@ -187,11 +186,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
       this.hideAnswerForm();
       return;
     }
-    const dialogRef = this.dialog.open(EditNameDialogComponent, {
-      data: { name: this.user.name, isConfirmation: true },
-      escapeToClose: false,
-      clickOutsideToClose: false
-    });
+    const dialogRef = this.accountService.openNameDialog(this.user.name, true);
     dialogRef.afterClosed().subscribe(async response => {
       await this.userService.updateCurrentUserAttributes({ name: response as string, isNameConfirmed: true });
       this.emitAnswerToSave();
