@@ -46,6 +46,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   });
   answerFormVisible: boolean = false;
   answerFormSubmitAttempted: boolean = false;
+  uploadAudioFile: File;
+  uploadAudioFileUrl: string = '';
+
   private user: User;
   private _question: Question;
   private initUserAnswerRefsRead: string[] = [];
@@ -153,6 +156,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     });
   }
 
+  prepareAudioFileUpload() {
+    if (this.uploadAudioFile) {
+      this.uploadAudioFileUrl = URL.createObjectURL(this.uploadAudioFile);
+      this.audio.url = this.uploadAudioFileUrl;
+      this.audio.blob = this.uploadAudioFile;
+      this.audio.fileName = this.uploadAudioFile.name;
+    }
+  }
+
   recorderStatus(status: AudioAttachment): void {
     switch (status.status) {
       case 'reset':
@@ -162,10 +174,16 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
         this.audio.url = status.url;
         this.audio.blob = status.blob;
         this.audio.fileName = this.generateAudioFileName();
+        this.resetAudioFileUpload();
         break;
     }
     this.setValidationRules();
     this.action.emit({ action: 'recorder' });
+  }
+
+  resetAudioFileUpload() {
+    this.uploadAudioFile = null;
+    this.uploadAudioFileUrl = '';
   }
 
   showAnswerForm() {
@@ -210,6 +228,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
       answer: this.activeAnswer,
       audio: this.audio
     });
+    this.resetAudioFileUpload();
   }
 
   private setValidationRules(): void {
