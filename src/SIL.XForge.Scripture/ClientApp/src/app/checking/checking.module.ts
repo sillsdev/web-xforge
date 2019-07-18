@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 
+import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
@@ -45,7 +46,8 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     SharedModule,
     UICommonModule,
     XForgeCommonModule,
-    AngularSplitModule.forRoot()
+    AngularSplitModule.forRoot(),
+    ngfModule
   ],
   entryComponents: [QuestionDialogComponent]
 })

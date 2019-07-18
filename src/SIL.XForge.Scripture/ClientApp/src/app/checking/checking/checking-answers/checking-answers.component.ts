@@ -46,6 +46,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
   });
   answerFormVisible: boolean = false;
   answerFormSubmitAttempted: boolean = false;
+  uploadAudioFile: File;
+  uploadAudioFileUrl: string = '';
+
   private user: User;
   private _question: Question;
   private initUserAnswerRefsRead: string[] = [];
@@ -84,6 +87,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
 
   get isAdministrator(): boolean {
     return this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
+  }
+
+  get isRecorderActive(): boolean {
+    return this.audio.status && this.audio.status !== 'denied' && this.audio.status !== 'reset';
+  }
+
+  get isUploaderActive(): boolean {
+    return this.uploadAudioFileUrl !== '';
   }
 
   get question(): Question {
@@ -153,7 +164,17 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     });
   }
 
+  prepareAudioFileUpload() {
+    if (this.uploadAudioFile) {
+      this.uploadAudioFileUrl = URL.createObjectURL(this.uploadAudioFile);
+      this.audio.url = this.uploadAudioFileUrl;
+      this.audio.blob = this.uploadAudioFile;
+      this.audio.fileName = this.uploadAudioFile.name;
+    }
+  }
+
   recorderStatus(status: AudioAttachment): void {
+    this.audio.status = status.status;
     switch (status.status) {
       case 'reset':
         this.audio = {};
@@ -166,6 +187,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
     }
     this.setValidationRules();
     this.action.emit({ action: 'recorder' });
+  }
+
+  resetAudioFileUpload() {
+    this.uploadAudioFile = null;
+    this.uploadAudioFileUrl = '';
+    this.audio = {};
   }
 
   showAnswerForm() {
@@ -210,6 +237,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable {
       answer: this.activeAnswer,
       audio: this.audio
     });
+    this.resetAudioFileUpload();
   }
 
   private setValidationRules(): void {

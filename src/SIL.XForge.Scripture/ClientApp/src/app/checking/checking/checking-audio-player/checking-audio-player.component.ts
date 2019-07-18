@@ -56,6 +56,7 @@ export class CheckingAudioPlayerComponent {
       if (!source.includes('://')) {
         source = '/assets/audio/' + source;
       }
+      this.enabled = false;
       this.audio.src = source;
       this.audio.addEventListener('timeupdate', () => {
         this._isPlaying = this.checkIsPlaying;
