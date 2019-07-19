@@ -1,5 +1,6 @@
 using System.Linq;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -217,8 +218,37 @@ namespace SIL.XForge.Services
                 File.Delete(path);
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
-            var uri = new Uri(SiteOptions.Value.Origin, $"{projectId}/{fileName}");
+            string mp3Path = ConvertToMp3(path);
+            var uri = new Uri(SiteOptions.Value.Origin, $"{projectId}/{mp3Path}");
             return uri;
+        }
+
+        private string ConvertToMp3(string filePath)
+        {
+            if (Path.GetExtension(filePath) == ".mp3")
+            {
+                return filePath;
+            }
+            string mp3FilePath = Path.ChangeExtension(filePath, ".mp3");
+            if (File.Exists(mp3FilePath))
+            {
+                File.Delete(mp3FilePath);
+            }
+            var process = new Process()
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "/bin/bash",
+                    Arguments = $"-c \"/usr/local/bin/ffmpeg -i {filePath} {mp3FilePath}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            process.WaitForExit();
+            File.Delete(filePath);
+            return mp3FilePath;
         }
 
         /// <summary>Encode the input so it is easier to use as a JSON object
