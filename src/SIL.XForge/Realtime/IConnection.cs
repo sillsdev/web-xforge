@@ -1,11 +1,10 @@
 using System;
-using System.Threading.Tasks;
+using SIL.XForge.Models;
 
 namespace SIL.XForge.Realtime
 {
     public interface IConnection : IDisposable
     {
-        Task StartAsync();
-        IDocument<TData> Get<TData>(string type, string id);
+        IDocument<T> Get<T>(string type, string id) where T : IIdentifiable;
     }
 }

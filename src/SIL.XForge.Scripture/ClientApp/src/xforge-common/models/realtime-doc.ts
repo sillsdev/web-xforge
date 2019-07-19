@@ -1,5 +1,5 @@
 import { RecordIdentity } from '@orbit/data';
-import { merge, Observable, Subscription } from 'rxjs';
+import { merge, Observable, Subject, Subscription } from 'rxjs';
 import { RealtimeDocAdapter } from '../realtime-doc-adapter';
 import { RealtimeOfflineData, RealtimeOfflineStore } from '../realtime-offline-store';
 
@@ -21,12 +21,16 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
   private onDeleteSub: Subscription;
   private offlineSnapshotVersion: number;
   private subscribePromise: Promise<void>;
+  private localDelete$ = new Subject<void>();
+  private _delete$: Observable<void>;
 
   constructor(
     public readonly type: string,
     private readonly adapter: RealtimeDocAdapter,
-    private readonly store: RealtimeOfflineStore
-  ) {}
+    protected readonly store: RealtimeOfflineStore
+  ) {
+    this._delete$ = merge(this.localDelete$, this.adapter.delete$);
+  }
 
   get id(): string {
     return this.adapter.id;
@@ -36,8 +40,26 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
     return this.adapter.data;
   }
 
-  get subscribed(): boolean {
-    return this.adapter.subscribed;
+  get isLoaded(): boolean {
+    return this.adapter.type != null;
+  }
+
+  /** Fires when underlying data is recreated. */
+  get create$(): Observable<void> {
+    return this.adapter.create$;
+  }
+
+  get delete$(): Observable<void> {
+    return this._delete$;
+  }
+
+  /**
+   * Returns an observable that emits whenever any remote changes occur.
+   *
+   * @returns {Observable<Ops>} The remote changes observable.
+   */
+  get remoteChanges$(): Observable<Ops> {
+    return this.adapter.remoteChanges$;
   }
 
   private get identity(): RecordIdentity {
@@ -55,20 +77,6 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
       this.subscribePromise = this.subscribeToChanges();
     }
     return this.subscribePromise;
-  }
-
-  /** Fires when underlying data is recreated. */
-  onCreate(): Observable<void> {
-    return this.adapter.onCreate();
-  }
-
-  /**
-   * Returns an observable that emits whenever any remote changes occur.
-   *
-   * @returns {Observable<Ops>} The remote changes observable.
-   */
-  remoteChanges(): Observable<Ops> {
-    return this.adapter.remoteChanges();
   }
 
   /**
@@ -92,7 +100,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
    * Updates offline storage with the current state of the realtime data.
    */
   updateOfflineData(): void {
-    if (this.adapter.type == null || !this.adapter.subscribed) {
+    if (!this.isLoaded || !this.adapter.subscribed) {
       return;
     }
 
@@ -137,26 +145,32 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
     return data;
   }
 
+  protected onDelete(): void {
+    this.store.delete(this.identity);
+  }
+
   private async subscribeToChanges(): Promise<void> {
-    this.updateOfflineDataSub = merge(
-      this.adapter.remoteChanges(),
-      this.adapter.idle(),
-      this.adapter.onCreate()
-    ).subscribe(() => this.updateOfflineData());
-    this.onDeleteSub = this.adapter.onDelete().subscribe(() => this.store.delete(this.identity));
+    this.updateOfflineDataSub = merge(this.adapter.remoteChanges$, this.adapter.idle$, this.adapter.create$).subscribe(
+      () => this.updateOfflineData()
+    );
+    this.onDeleteSub = this.adapter.delete$.subscribe(() => this.onDelete());
     await this.loadFromStore();
     const promise = this.adapter.subscribe();
     if (this.adapter.type == null) {
       await promise;
-      if (this.adapter.type == null) {
-        // the doc has been deleted, so remove it from the offline store
-        this.store.delete(this.identity);
-      }
+    } else {
+      this.adapter.exists().then(exists => {
+        if (!exists) {
+          // the doc has been deleted remotely, so remove it
+          this.onDelete();
+          this.localDelete$.next();
+        }
+      });
     }
   }
 
   private async loadFromStore(): Promise<void> {
-    if (this.adapter.type != null) {
+    if (this.isLoaded) {
       return;
     }
     const offlineData = await this.store.getItem(this.identity);

@@ -2,7 +2,7 @@ import { ClientError } from '@orbit/data';
 import { underscore } from '@orbit/utils';
 import { ObjectId } from 'bson';
 import { environment } from '../environments/environment';
-import { Project } from './models/project';
+import { ProjectDoc } from './models/project-doc';
 
 export function nameof<T>(name: Extract<keyof T, string>): string {
   return name;
@@ -21,8 +21,8 @@ export function objectId(): string {
 }
 
 export function getCollectionName(type: string): string {
-  if (type === Project.TYPE) {
-    return `${environment.prefix}_project_data`;
+  if (type === ProjectDoc.TYPE) {
+    return `${environment.prefix}_${type}`;
   }
   return underscore(type);
 }

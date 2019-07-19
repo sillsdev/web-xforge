@@ -1,30 +1,32 @@
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { NoticeService } from 'xforge-common/notice.service';
-import { GetAllParameters } from '../json-api.service';
-import { Project } from '../models/project';
+import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRole } from '../models/project-role';
-import { ProjectUser } from '../models/project-user';
-import { ProjectUserService } from '../project-user.service';
 import { ProjectService } from '../project.service';
+import { QueryParameters } from '../realtime.service';
 import { SubscriptionDisposable } from '../subscription-disposable';
 import { UserService } from '../user.service';
 
 class Row {
   isUpdatingRole: boolean = false;
 
-  constructor(public readonly project: Project, public projectUser: ProjectUser, public projectRole: ProjectRole) {}
+  constructor(public readonly projectDoc: ProjectDoc, public projectRole: ProjectRole) {}
+
+  get id(): string {
+    return this.projectDoc.id;
+  }
 
   get isMember(): boolean {
-    return this.projectUser != null;
+    return this.projectRole !== NONE_ROLE;
   }
 
   get name(): string {
-    return this.project.projectName;
+    return this.projectDoc.data.projectName;
   }
 
   get tasks(): string {
-    return this.project.taskNames.join(', ');
+    return this.projectDoc.taskNames.join(', ');
   }
 }
 
@@ -42,25 +44,23 @@ export class SaProjectsComponent extends SubscriptionDisposable implements OnIni
   pageIndex: number = 0;
   pageSize: number = 50;
 
-  private projects: Project[];
-  private projectUsers: Map<string, ProjectUser>;
+  private projectDocs: ProjectDoc[];
 
   private readonly searchTerm$: BehaviorSubject<string>;
-  private readonly parameters$: BehaviorSubject<GetAllParameters<Project>>;
+  private readonly queryParameters$: BehaviorSubject<QueryParameters>;
 
   constructor(
     private readonly noticeService: NoticeService,
     private readonly projectService: ProjectService,
-    private readonly userService: UserService,
-    private readonly projectUserService: ProjectUserService
+    private readonly userService: UserService
   ) {
     super();
     this.searchTerm$ = new BehaviorSubject<string>('');
-    this.parameters$ = new BehaviorSubject<GetAllParameters<Project>>(this.getParameters());
+    this.queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
   }
 
   get isLoading(): boolean {
-    return this.projects == null || this.projectUsers == null;
+    return this.projectDocs == null;
   }
 
   get projectRoles(): ProjectRole[] {
@@ -68,17 +68,11 @@ export class SaProjectsComponent extends SubscriptionDisposable implements OnIni
   }
 
   ngOnInit() {
-    this.subscribe(this.projectService.onlineSearch(this.searchTerm$, this.parameters$), searchResults => {
-      this.projects = searchResults.data;
-      this.length = searchResults.totalPagedCount;
-      this.generateRows();
-    });
-    this.subscribe(this.userService.onlineGetProjects(this.userService.currentUserId), projectUserResults => {
+    this.noticeService.loadingStarted();
+    this.subscribe(this.projectService.onlineSearch(this.searchTerm$, this.queryParameters$), searchResults => {
       this.noticeService.loadingStarted();
-      this.projectUsers = new Map<string, ProjectUser>();
-      for (const projectUser of projectUserResults.data) {
-        this.projectUsers.set(projectUser.project.id, projectUser);
-      }
+      this.projectDocs = searchResults.docs;
+      this.length = searchResults.totalPagedCount;
       this.generateRows();
       this.noticeService.loadingFinished();
     });
@@ -96,29 +90,22 @@ export class SaProjectsComponent extends SubscriptionDisposable implements OnIni
   updatePage(pageIndex: number, pageSize: number): void {
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
-    this.parameters$.next(this.getParameters());
+    this.queryParameters$.next(this.getQueryParameters());
   }
 
   async updateRole(row: Row, projectRole: ProjectRole): Promise<void> {
     row.isUpdatingRole = true;
-    if (row.projectUser == null) {
+    if (row.projectRole === NONE_ROLE) {
       // add user to project
-      const projectUser = await this.projectUserService.onlineCreate(
-        row.project.id,
-        this.userService.currentUserId,
-        projectRole.role
-      );
-      this.projectUsers.set(projectUser.id, projectUser);
-      row.projectUser = projectUser;
+      await this.projectService.onlineAddCurrentUser(row.id, projectRole.role);
     } else if (projectRole === NONE_ROLE) {
       // remove user from project
-      await this.projectUserService.onlineDelete(row.projectUser.id);
-      this.projectUsers.delete(row.projectUser.id);
-      row.projectUser = null;
+      await this.projectService.onlineRemoveUser(row.id, this.userService.currentUserId);
     } else {
       // update role in project
-      await this.projectUserService.onlineUpdateRole(row.projectUser.id, projectRole.role);
-      row.projectUser.role = projectRole.role;
+      await row.projectDoc.submitJson0Op(op =>
+        op.set(p => p.userRoles[this.userService.currentUserId], projectRole.role)
+      );
     }
     row.projectRole = projectRole;
     row.isUpdatingRole = false;
@@ -130,21 +117,21 @@ export class SaProjectsComponent extends SubscriptionDisposable implements OnIni
     }
 
     const rows: Row[] = [];
-    for (const project of this.projects) {
-      const projectUser = this.projectUsers.get(project.id);
+    for (const projectDoc of this.projectDocs) {
       let projectRole = NONE_ROLE;
-      if (projectUser != null) {
-        projectRole = this.projectService.roles.get(projectUser.role);
+      if (this.userService.currentUserId in projectDoc.data.userRoles) {
+        projectRole = this.projectService.roles.get(projectDoc.data.userRoles[this.userService.currentUserId]);
       }
-      rows.push(new Row(project, projectUser, projectRole));
+      rows.push(new Row(projectDoc, projectRole));
     }
     this.rows = rows;
   }
 
-  private getParameters(): GetAllParameters<Project> {
+  private getQueryParameters(): QueryParameters {
     return {
-      sort: [{ name: 'projectName', order: 'ascending' }],
-      pagination: { index: this.pageIndex, size: this.pageSize }
+      sort: { projectName: 1 },
+      skip: this.pageIndex * this.pageSize,
+      limit: this.pageSize
     };
   }
 }

@@ -1,15 +1,12 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { combineLatest, from, Observable, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { combineLatest, from, Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
-import { JsonApiService, QueryObservable } from './json-api.service';
 import { JsonRpcService } from './json-rpc.service';
-import { ProjectUser } from './models/project-user';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
-import { QueryParameters, RealtimeQueryResults, RealtimeService } from './realtime.service';
-import { nameof } from './utils';
+import { QueryParameters, QueryResults, RealtimeService } from './realtime.service';
 
 /**
  * Provides operations on user objects.
@@ -22,30 +19,11 @@ export class UserService {
     private readonly realtimeService: RealtimeService,
     private readonly authService: AuthService,
     private readonly http: HttpClient,
-    private readonly jsonApiService: JsonApiService,
     private readonly jsonRpcService: JsonRpcService
   ) {}
 
   get currentUserId(): string {
     return this.authService.currentUserId;
-  }
-
-  hasCurrentUserProjectRole(projectId: string, role: string): Observable<boolean> {
-    if (!projectId) {
-      return of(false);
-    }
-
-    return this.getProjects(this.currentUserId).pipe(
-      map(projectUserResults => {
-        for (const projectUser of projectUserResults.data) {
-          if (projectUser && projectUser.project.id === projectId) {
-            return projectUser.role === role;
-          }
-        }
-
-        return false;
-      })
-    );
   }
 
   /** Get currently-logged in user. */
@@ -61,36 +39,15 @@ export class UserService {
     return this.realtimeService.get({ type: UserProfileDoc.TYPE, id });
   }
 
-  onlineGetProjects(id: string, include?: string[][]): QueryObservable<ProjectUser[]> {
-    return this.jsonApiService.onlineGetAll(
-      ProjectUser.TYPE,
-      {
-        filters: [{ op: 'equal', name: nameof<ProjectUser>('userRef'), value: id }]
-      },
-      include
-    );
-  }
-
-  getProjects(id: string, include?: string[][]): QueryObservable<ProjectUser[]> {
-    return this.jsonApiService.getAll(
-      ProjectUser.TYPE,
-      {
-        filters: [{ op: 'equal', name: nameof<ProjectUser>('userRef'), value: id }]
-      },
-      include
-    );
-  }
-
   async onlineDelete(id: string): Promise<void> {
-    const userCommandsUrl = `json-api/users/${id}/commands`;
-    await this.jsonRpcService.invoke(userCommandsUrl, 'delete');
+    await this.jsonRpcService.invoke({ type: UserDoc.TYPE, id }, 'delete');
   }
 
   onlineSearch(
     term$: Observable<string>,
     queryParameters$: Observable<QueryParameters>,
     reload$: Observable<void>
-  ): Observable<RealtimeQueryResults<UserDoc>> {
+  ): Observable<QueryResults<UserDoc>> {
     const debouncedTerm$ = term$.pipe(
       debounceTime(400),
       distinctUntilChanged()
@@ -116,7 +73,7 @@ export class UserService {
     const formData = new FormData();
     formData.append('file', file);
     await this.http
-      .post<HttpResponse<string>>(`json-api/users/${this.currentUserId}/avatar`, formData, {
+      .post<HttpResponse<string>>(`command-api/users/${this.currentUserId}/avatar`, formData, {
         headers: { Accept: 'application/json' }
       })
       .toPromise();

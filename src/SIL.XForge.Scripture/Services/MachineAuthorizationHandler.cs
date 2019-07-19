@@ -3,8 +3,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using SIL.Machine.WebApi.Models;
-using SIL.XForge.DataAccess;
-using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
@@ -14,11 +12,11 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class MachineAuthorizationHandler : IAuthorizationHandler
     {
-        private readonly IRepository<SFProjectEntity> _projects;
+        private readonly ISFProjectService _projectService;
 
-        public MachineAuthorizationHandler(IRepository<SFProjectEntity> projects)
+        public MachineAuthorizationHandler(ISFProjectService projectService)
         {
-            _projects = projects;
+            _projectService = projectService;
         }
 
         public async Task HandleAsync(AuthorizationHandlerContext context)
@@ -36,7 +34,7 @@ namespace SIL.XForge.Scripture.Services
             if (projectId != null)
             {
                 string userId = context.User.FindFirst(XFClaimTypes.UserId)?.Value;
-                if (await _projects.Query().AnyAsync(p => p.Id == projectId && p.Users.Any(pu => pu.UserRef == userId)))
+                if (await _projectService.IsAuthorizedAsync(projectId, userId))
                 {
                     List<IAuthorizationRequirement> pendingRequirements = context.PendingRequirements.ToList();
                     foreach (IAuthorizationRequirement requirement in pendingRequirements)

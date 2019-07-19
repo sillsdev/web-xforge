@@ -395,7 +395,7 @@ class TestEnvironment {
   }
 
   private addTextDoc(id: TextDocId): void {
-    when(this.mockedSFProjectService.getTextDoc(deepEqual(id))).thenResolve(this.createTextDoc(id));
+    when(this.mockedSFProjectService.getText(deepEqual(id))).thenResolve(this.createTextDoc(id));
   }
 
   private createTextDoc(id: TextDocId): TextDoc {

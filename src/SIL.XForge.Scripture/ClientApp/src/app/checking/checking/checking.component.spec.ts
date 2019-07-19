@@ -21,14 +21,14 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { Comment } from '../../core/models/comment';
-import { CommentsDoc } from '../../core/models/comments-doc';
+import { CommentListDoc } from '../../core/models/comment-list-doc';
 import { Question } from '../../core/models/question';
-import { QuestionsDoc } from '../../core/models/questions-doc';
+import { QuestionListDoc } from '../../core/models/question-list-doc';
 import { SFProject } from '../../core/models/sfproject';
 import { SFProjectData } from '../../core/models/sfproject-data';
-import { SFProjectDataDoc } from '../../core/models/sfproject-data-doc';
+import { SFProjectDataDoc } from '../../core/models/sfproject-doc';
 import { SFProjectRoles } from '../../core/models/sfproject-roles';
-import { SFProjectUser, SFProjectUserRef } from '../../core/models/sfproject-user';
+import { SFProjectUser, SFProjectUserRef } from '../../core/models/sfproject-user-config';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
@@ -243,7 +243,7 @@ describe('CheckingComponent', () => {
 
     it('reviewer can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
       env.setupReviewerScenarioData(env.reviewerUser);
-      env.component.project.usersSeeEachOthersResponses = false;
+      env.component.projectDoc.usersSeeEachOthersResponses = false;
       env.fixture.detectChanges();
       env.selectQuestion(6);
       expect(env.answers.length).toBe(1);
@@ -654,10 +654,10 @@ class TestEnvironment {
     const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', this.projectData);
     const projectDataDoc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
     when(this.mockedProjectService.getDataDoc('project01')).thenResolve(projectDataDoc);
-    when(this.mockedProjectService.getTextDoc(deepEqual(new TextDocId('project01', 'JHN', 1, 'target')))).thenResolve(
+    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 'JHN', 1, 'target')))).thenResolve(
       this.createTextDoc()
     );
-    when(this.mockedProjectService.getTextDoc(deepEqual(new TextDocId('project01', 'JHN', 2, 'target')))).thenResolve(
+    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 'JHN', 2, 'target')))).thenResolve(
       this.createTextDoc()
     );
     const text1_1id = new TextDocId('project01', 'JHN', 1);
@@ -730,17 +730,17 @@ class TestEnvironment {
         dateModified: dateNow
       });
     }
-    when(this.mockedProjectService.getQuestionsDoc(deepEqual(text1_1id))).thenResolve(
-      this.createQuestionsDoc(text1_1id, questionData1)
+    when(this.mockedProjectService.getQuestionList(deepEqual(text1_1id))).thenResolve(
+      this.createQuestionListDoc(text1_1id, questionData1)
     );
-    when(this.mockedProjectService.getCommentsDoc(deepEqual(text1_1id))).thenResolve(
-      this.createCommentsDoc(text1_1id, commentData)
+    when(this.mockedProjectService.getCommentList(deepEqual(text1_1id))).thenResolve(
+      this.createCommentListDoc(text1_1id, commentData)
     );
-    when(this.mockedProjectService.getQuestionsDoc(deepEqual(text1_2id))).thenResolve(
-      this.createQuestionsDoc(text1_2id, questionData2)
+    when(this.mockedProjectService.getQuestionList(deepEqual(text1_2id))).thenResolve(
+      this.createQuestionListDoc(text1_2id, questionData2)
     );
-    when(this.mockedProjectService.getCommentsDoc(deepEqual(text1_2id))).thenResolve(
-      this.createCommentsDoc(text1_2id, [])
+    when(this.mockedProjectService.getCommentList(deepEqual(text1_2id))).thenResolve(
+      this.createCommentListDoc(text1_2id, [])
     );
     when(this.mockedUserService.currentUserId).thenReturn(user.id);
     when(this.mockedUserService.getCurrentUser()).thenResolve(this.createUserDoc(user));
@@ -795,14 +795,14 @@ class TestEnvironment {
     );
   }
 
-  private createQuestionsDoc(id: TextDocId, data: Question[]): QuestionsDoc {
+  private createQuestionListDoc(id: TextDocId, data: Question[]): QuestionListDoc {
     const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, id.toString(), data);
-    return new QuestionsDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    return new QuestionListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 
-  private createCommentsDoc(id: TextDocId, data: Comment[]): CommentsDoc {
+  private createCommentListDoc(id: TextDocId, data: Comment[]): CommentListDoc {
     const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, id.toString(), data);
-    return new CommentsDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    return new CommentListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 
   private createTextDoc(): TextDoc {

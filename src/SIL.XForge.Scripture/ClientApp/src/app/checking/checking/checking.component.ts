@@ -4,23 +4,20 @@ import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import { clone } from '@orbit/utils';
 import { SplitComponent } from 'angular-split';
-import { combineLatest, from } from 'rxjs';
-import { filter, map, switchMap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
-import { nameof, objectId } from 'xforge-common/utils';
+import { objectId } from 'xforge-common/utils';
 import { HelpHeroService } from '../../core/help-hero.service';
 import { Answer } from '../../core/models/answer';
 import { Comment } from '../../core/models/comment';
-import { CommentsDoc } from '../../core/models/comments-doc';
+import { CommentListDoc } from '../../core/models/comment-list-doc';
 import { Question } from '../../core/models/question';
-import { QuestionsDoc } from '../../core/models/questions-doc';
-import { SFProject } from '../../core/models/sfproject';
+import { QuestionListDoc } from '../../core/models/question-list-doc';
+import { SFProjectDoc } from '../../core/models/sfproject-doc';
 import { SFProjectRoles } from '../../core/models/sfproject-roles';
-import { SFProjectUser } from '../../core/models/sfproject-user';
+import { SFProjectUserConfigDoc } from '../../core/models/sfproject-user-config-doc';
 import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { TextInfo } from '../../core/models/text-info';
-import { SFProjectUserService } from '../../core/sfproject-user.service';
 import { SFProjectService } from '../../core/sfproject.service';
 import { CheckingUtils } from '../checking.utils';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
@@ -35,8 +32,8 @@ interface Summary {
 }
 
 interface CheckingData {
-  questionsDocs: { [docId: string]: QuestionsDoc };
-  commentsDocs: { [docId: string]: CommentsDoc };
+  questionListDocs: { [docId: string]: QuestionListDoc };
+  commentListDocs: { [docId: string]: CommentListDoc };
 }
 
 @Component({
@@ -61,10 +58,10 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   @ViewChild('chapterMenuList') chapterMenuList: MdcList;
 
   chapters: number[] = [];
-  checkingData: CheckingData = { questionsDocs: {}, commentsDocs: {} };
-  comments: Readonly<Comment[]> = [];
+  checkingData: CheckingData = { questionListDocs: {}, commentListDocs: {} };
+  comments: Comment[] = [];
   isExpanded: boolean = false;
-  questions: Readonly<Question[]> = [];
+  questions: Question[] = [];
   resetAnswerPanelHeightOnFormHide: boolean = false;
   summary: Summary = {
     read: 0,
@@ -73,8 +70,8 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   };
 
   answersPanelContainerElement: ElementRef;
-  project: SFProject;
-  projectCurrentUser: SFProjectUser;
+  projectDoc: SFProjectDoc;
+  projectUserConfigDoc: SFProjectUserConfigDoc;
   projectId: string;
   text: TextInfo;
   textDocId: TextDocId;
@@ -87,8 +84,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly helpHeroService: HelpHeroService,
-    private readonly media: MediaObserver,
-    private projectUserService: SFProjectUserService
+    private readonly media: MediaObserver
   ) {
     super();
   }
@@ -100,7 +96,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   set chapter(value: number) {
     if (this._chapter !== value) {
       this._chapter = value;
-      this.textDocId = new TextDocId(this.project.id, this.text.bookId, this.chapter, 'target');
+      this.textDocId = new TextDocId(this.projectDoc.id, this.text.bookId, this.chapter, 'target');
     }
   }
 
@@ -134,7 +130,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   private get textJsonDocId(): string {
-    return getTextDocIdStr(this.project.id, this.text.bookId, this.chapter);
+    return getTextDocIdStr(this.projectDoc.id, this.text.bookId, this.chapter);
   }
 
   private get minAnswerPanelHeight(): number {
@@ -151,52 +147,38 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   ngOnInit(): void {
-    this.subscribe(
-      this.activatedRoute.params.pipe(
-        switchMap(params => {
-          this.projectId = params['projectId'];
-          const bookId = params['bookId'];
-          return combineLatest(
-            this.projectService.get(this.projectId, [[nameof<SFProject>('users')]]),
-            from(this.projectService.getDataDoc(this.projectId)).pipe(
-              map(projectData => projectData.data.texts.find(t => t.bookId === bookId))
-            )
+    this.subscribe(this.activatedRoute.params, async params => {
+      const projectId = params['projectId'];
+      const bookId = params['bookId'];
+      const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
+      const prevBookId = this.text == null ? '' : this.text.bookId;
+      this.projectDoc = await this.projectService.get(projectId);
+      this.text = this.projectDoc.data.texts.find(t => t.bookId === bookId);
+      this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+      this.chapters = this.text.chapters.map(c => c.number);
+      if (prevProjectId !== this.projectDoc.id || prevBookId !== this.text.bookId) {
+        const bindCheckingDataPromises: Promise<void>[] = [];
+        this.questions = [];
+        for (const chapter of this.chapters) {
+          bindCheckingDataPromises.push(
+            this.bindCheckingData(new TextDocId(this.projectDoc.id, this.text.bookId, chapter))
           );
-        }),
-        filter(([projectResults, text]) => projectResults.data != null && text != null)
-      ),
-      async ([projectResults, text]) => {
-        const prevProjectId = this.project == null ? '' : this.project.id;
-        const prevBookId = this.text == null ? '' : this.text.bookId;
-        this.text = text;
-        this.project = projectResults.data;
-        this.projectCurrentUser = projectResults
-          .getManyIncluded<SFProjectUser>(this.project.users)
-          .find(pu => pu.userRef === this.userService.currentUserId);
-        this.chapters = this.text.chapters.map(c => c.number);
-        if (prevProjectId !== this.project.id || prevBookId !== this.text.bookId) {
-          const bindCheckingDataPromises: Promise<void>[] = [];
-          this.questions = [];
-          for (const chapter of this.chapters) {
-            bindCheckingDataPromises.push(
-              this.bindCheckingData(new TextDocId(this.project.id, this.text.bookId, chapter))
-            );
-          }
-          // Trigger the chapter setter to bind the relevant comments.
-          await Promise.all(bindCheckingDataPromises);
-          this._chapter = undefined;
-          this.chapter = 1;
-          for (const chapter of this.chapters) {
-            this.questions = this.questions.concat(
-              this.checkingData.questionsDocs[getTextDocIdStr(this.project.id, this.text.bookId, chapter)].data
-            );
-          }
-          this.refreshComments();
-
-          this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
         }
+        // Trigger the chapter setter to bind the relevant comments.
+        await Promise.all(bindCheckingDataPromises);
+        this._chapter = undefined;
+        this.chapter = 1;
+        for (const chapter of this.chapters) {
+          this.questions = this.questions.concat(
+            this.checkingData.questionListDocs[getTextDocIdStr(this.projectDoc.id, this.text.bookId, chapter)].data
+              .questions
+          );
+        }
+        this.refreshComments();
+
+        this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
       }
-    );
+    });
     this.subscribe(this.media.media$, (change: MediaChange) => {
       this.calculateScriptureSliderPosition();
       this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg', 'md', 'lt-md'].includes(change.mqAlias);
@@ -227,7 +209,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         answer.dateModified = dateNow;
         if (answerAction.audio.fileName) {
           const response = await this.projectService.uploadAudio(
-            this.project.id,
+            this.projectDoc.id,
             new File([answerAction.audio.blob], answer.id + '~' + answerAction.audio.fileName)
           );
           // Get the amended filename and save it against the answer
@@ -287,7 +269,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
           comment = {
             id: objectId(),
             ownerRef: this.userService.currentUserId,
-            projectRef: this.project.id,
+            projectRef: this.projectDoc.id,
             answerRef: commentAction.answer.id,
             text: '',
             dateCreated: dateNow,
@@ -299,16 +281,13 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         this.saveComment(comment);
         break;
       case 'show-comments':
-        let updateRequired = false;
-        for (const comm of this.comments) {
-          if (!this.questionsPanel.hasUserReadComment(comm)) {
-            this.projectCurrentUser.commentRefsRead.push(comm.id);
-            updateRequired = true;
+        this.projectUserConfigDoc.submitJson0Op(op => {
+          for (const comm of this.comments) {
+            if (!this.questionsPanel.hasUserReadComment(comm)) {
+              op.add(puc => puc.commentRefsRead, comm.id);
+            }
           }
-        }
-        if (updateRequired) {
-          this.projectUserService.update(this.projectCurrentUser);
-        }
+        });
         break;
       case 'delete':
         this.deleteComment(commentAction.comment);
@@ -371,8 +350,8 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         this.deleteComment(answerComment);
       }
       // TODO: Need to physically delete any audio file as well on the backend
-      this.checkingData.questionsDocs[this.textJsonDocId].submitJson0Op(op =>
-        op.remove(qs => qs[this.activeChapterQuestionIndex].answers, answerIndex)
+      this.checkingData.questionListDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.remove(ql => ql.questions[this.activeChapterQuestionIndex].answers, answerIndex)
       );
       this.refreshSummary();
     }
@@ -393,23 +372,23 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     const questionWithAnswer: Question = clone(this.questionsPanel.activeQuestion);
     questionWithAnswer.answers = answers;
     if (answerIndex >= 0) {
-      this.checkingData.questionsDocs[this.textJsonDocId].submitJson0Op(op =>
+      this.checkingData.questionListDocs[this.textJsonDocId].submitJson0Op(op =>
         op.replace(
-          qs => qs[this.activeChapterQuestionIndex].answers,
+          ql => ql.questions[this.activeChapterQuestionIndex].answers,
           answerIndex,
           questionWithAnswer.answers[answerIndex]
         )
       );
     } else {
-      this.checkingData.questionsDocs[this.textJsonDocId].submitJson0Op(op =>
-        op.insert(qs => qs[this.activeChapterQuestionIndex].answers, 0, questionWithAnswer.answers[0])
+      this.checkingData.questionListDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.insert(ql => ql.questions[this.activeChapterQuestionIndex].answers, 0, questionWithAnswer.answers[0])
       );
     }
     this.refreshSummary();
   }
 
   get activeChapterQuestionIndex(): number {
-    return this.checkingData.questionsDocs[this.textJsonDocId].data.findIndex(
+    return this.checkingData.questionListDocs[this.textJsonDocId].data.questions.findIndex(
       question => question.id === this.questionsPanel.activeQuestion.id
     );
   }
@@ -417,11 +396,13 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   private saveComment(comment: Comment) {
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
-      this.checkingData.commentsDocs[this.textJsonDocId].submitJson0Op(op =>
-        op.replace(cs => cs, commentIndex, comment)
+      this.checkingData.commentListDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.replace(cl => cl.comments, commentIndex, comment)
       );
     } else {
-      this.checkingData.commentsDocs[this.textJsonDocId].submitJson0Op(op => op.insert(cs => cs, 0, comment));
+      this.checkingData.commentListDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.insert(cl => cl.comments, 0, comment)
+      );
     }
     this.refreshComments();
   }
@@ -429,7 +410,9 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   private deleteComment(comment: Comment) {
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
-      this.checkingData.commentsDocs[this.textJsonDocId].submitJson0Op(op => op.remove(cs => cs, commentIndex));
+      this.checkingData.commentListDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.remove(cl => cl.comments, commentIndex)
+      );
     }
     this.refreshComments();
   }
@@ -438,7 +421,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.comments = [];
     for (const chapter of this.chapters) {
       this.comments = this.comments.concat(
-        this.checkingData.commentsDocs[getTextDocIdStr(this.project.id, this.text.bookId, chapter)].data
+        this.checkingData.commentListDocs[getTextDocIdStr(this.projectDoc.id, this.text.bookId, chapter)].data.comments
       );
     }
   }
@@ -449,12 +432,14 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     const answerIndex = this.getAnswerIndex(answer);
 
     if (likeIndex >= 0) {
-      this.checkingData.questionsDocs[this.textJsonDocId].submitJson0Op(op =>
-        op.remove(qs => qs[this.activeChapterQuestionIndex].answers[answerIndex].likes, likeIndex)
+      this.checkingData.questionListDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.remove(ql => ql.questions[this.activeChapterQuestionIndex].answers[answerIndex].likes, likeIndex)
       );
     } else {
-      this.checkingData.questionsDocs[this.textJsonDocId].submitJson0Op(op =>
-        op.insert(qs => qs[this.activeChapterQuestionIndex].answers[answerIndex].likes, 0, { ownerRef: currentUserId })
+      this.checkingData.questionListDocs[this.textJsonDocId].submitJson0Op(op =>
+        op.insert(ql => ql.questions[this.activeChapterQuestionIndex].answers[answerIndex].likes, 0, {
+          ownerRef: currentUserId
+        })
       );
     }
   }
@@ -486,17 +471,17 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     }
 
     this.unbindCheckingData(id);
-    this.checkingData.questionsDocs[id.toString()] = await this.projectService.getQuestionsDoc(id);
-    this.checkingData.commentsDocs[id.toString()] = await this.projectService.getCommentsDoc(id);
+    this.checkingData.questionListDocs[id.toString()] = await this.projectService.getQuestionList(id);
+    this.checkingData.commentListDocs[id.toString()] = await this.projectService.getCommentList(id);
   }
 
   private unbindCheckingData(id: TextDocId): void {
-    if (!(id.toString() in this.checkingData.questionsDocs)) {
+    if (!(id.toString() in this.checkingData.questionListDocs)) {
       return;
     }
 
-    delete this.checkingData.questionsDocs[id.toString()];
-    delete this.checkingData.commentsDocs[id.toString()];
+    delete this.checkingData.questionListDocs[id.toString()];
+    delete this.checkingData.commentListDocs[id.toString()];
   }
 
   private refreshSummary() {
@@ -506,7 +491,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     for (const question of this.questions) {
       if (CheckingUtils.hasUserAnswered(question, this.userService.currentUserId)) {
         this.summary.answered++;
-      } else if (CheckingUtils.hasUserReadQuestion(question, this.projectCurrentUser)) {
+      } else if (CheckingUtils.hasUserReadQuestion(question, this.projectUserConfigDoc.data)) {
         this.summary.read++;
       } else {
         this.summary.unread++;
@@ -516,9 +501,10 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
 
   private startUserOnboardingTour() {
     // HelpHero user-onboarding tour setup
-    const isProjectAdmin: boolean = this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
-    const isDiscussionEnabled: boolean = this.project.usersSeeEachOthersResponses;
-    const isInvitingEnabled: boolean = this.project.shareEnabled;
+    const isProjectAdmin: boolean =
+      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRoles.ParatextAdministrator;
+    const isDiscussionEnabled: boolean = this.projectDoc.data.usersSeeEachOthersResponses;
+    const isInvitingEnabled: boolean = this.projectDoc.data.shareEnabled;
 
     this.helpHeroService.setProperty({
       isAdmin: isProjectAdmin,

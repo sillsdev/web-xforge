@@ -31,7 +31,7 @@ namespace SIL.XForge.Controllers
             {
                 string path = _httpRequestAccessor.Path.Value;
                 // find beginning of the ID
-                int index = path.IndexOf('/', $"/{XForgeConstants.JsonApiNamespace}".Length + 1);
+                int index = path.IndexOf('/', $"/{XForgeConstants.CommandApiNamespace}".Length + 1);
                 if (index < 0)
                     return null;
                 index++;
@@ -46,7 +46,7 @@ namespace SIL.XForge.Controllers
         protected IRpcMethodResult ForbiddenError()
         {
             return Error((int)RpcErrorCode.InvalidRequest,
-                "The specified user does not have permission to perform this operation"
+                "The user does not have permission to perform this operation."
             );
         }
 

@@ -19,7 +19,7 @@ import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, of, Subject } from 'rxjs';
 import { SFProjectData } from 'src/app/core/models/sfproject-data';
-import { SFProjectDataDoc } from 'src/app/core/models/sfproject-data-doc';
+import { SFProjectDataDoc } from 'src/app/core/models/sfproject-doc';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { MapQueryResults, QueryResults } from 'xforge-common/json-api.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -29,7 +29,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { SFProject, SFProjectRef } from '../../core/models/sfproject';
-import { SFProjectUser, SFProjectUserRef } from '../../core/models/sfproject-user';
+import { SFProjectUser, SFProjectUserRef } from '../../core/models/sfproject-user-config';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
@@ -72,7 +72,7 @@ describe('EditorComponent', () => {
     const env = new TestEnvironment();
     const sourceId = new TextDocId('project01', 'text01', 1, 'source');
     let resolve: (value?: TextDoc) => void;
-    when(env.mockedSFProjectService.getTextDoc(deepEqual(sourceId))).thenReturn(new Promise(r => (resolve = r)));
+    when(env.mockedSFProjectService.getText(deepEqual(sourceId))).thenReturn(new Promise(r => (resolve = r)));
     env.setProjectUser({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_2' });
     env.waitForSuggestion();
     expect(env.component.target.segmentRef).toBe('verse_1_2');
@@ -764,6 +764,6 @@ class TestEnvironment {
   }
 
   private addTextDoc(id: TextDocId): void {
-    when(this.mockedSFProjectService.getTextDoc(deepEqual(id))).thenResolve(this.createTextDoc(id));
+    when(this.mockedSFProjectService.getText(deepEqual(id))).thenResolve(this.createTextDoc(id));
   }
 }

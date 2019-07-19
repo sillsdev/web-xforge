@@ -13,6 +13,8 @@ namespace SIL.XForge.Models
 
         public static TestProjectRoles Instance { get; } = new TestProjectRoles();
 
+        public override string AdminRole => Administrator;
+
         private TestProjectRoles()
         {
             var contributorRights = new HashSet<Right>

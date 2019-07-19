@@ -13,28 +13,28 @@ namespace SIL.XForge.DataAccess
     public static class DataAccessExtensions
     {
         public static Task<T> UpdateAsync<T>(this IRepository<T> repo, string id, Action<IUpdateBuilder<T>> update,
-            bool upsert = false) where T : IEntity
+            bool upsert = false) where T : IIdentifiable
         {
             return repo.UpdateAsync(e => e.Id == id, update, upsert);
         }
 
         public static Task<T> UpdateAsync<T>(this IRepository<T> repo, T entity, Action<IUpdateBuilder<T>> update,
-            bool upsert = false) where T : IEntity
+            bool upsert = false) where T : IIdentifiable
         {
             return repo.UpdateAsync(entity.Id, update, upsert);
         }
 
-        public static async Task<T> DeleteAsync<T>(this IRepository<T> repo, string id) where T : IEntity
+        public static async Task<T> DeleteAsync<T>(this IRepository<T> repo, string id) where T : IIdentifiable
         {
             return await repo.DeleteAsync(e => e.Id == id);
         }
 
-        public static async Task<bool> DeleteAsync<T>(this IRepository<T> repo, T entity) where T : IEntity
+        public static async Task<bool> DeleteAsync<T>(this IRepository<T> repo, T entity) where T : IIdentifiable
         {
             return (await repo.DeleteAsync(e => e.Id == entity.Id)) != null;
         }
 
-        public static async Task<T> GetAsync<T>(this IReadOnlyRepository<T> repo, string id) where T : IEntity
+        public static async Task<T> GetAsync<T>(this IRepository<T> repo, string id) where T : IIdentifiable
         {
             Attempt<T> attempt = await repo.TryGetAsync(id);
             if (attempt.Success)
@@ -42,13 +42,13 @@ namespace SIL.XForge.DataAccess
             return default(T);
         }
 
-        public static async Task<IReadOnlyList<T>> GetAllAsync<T>(this IReadOnlyRepository<T> repo) where T : IEntity
+        public static async Task<IReadOnlyList<T>> GetAllAsync<T>(this IRepository<T> repo) where T : IIdentifiable
         {
             return await repo.Query().ToListAsync();
         }
 
-        public static async Task<Attempt<T>> TryGetAsync<T>(this IReadOnlyRepository<T> repo, string id)
-            where T : IEntity
+        public static async Task<Attempt<T>> TryGetAsync<T>(this IRepository<T> repo, string id)
+            where T : IIdentifiable
         {
             T entity = await repo.Query().Where(e => e.Id == id).FirstOrDefaultAsync();
             return new Attempt<T>(entity != null, entity);

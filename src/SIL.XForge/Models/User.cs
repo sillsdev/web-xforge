@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SIL.XForge.Models
 {
-    public class User : RealtimeDocEntity
+    public class User : Json0Snapshot
     {
         public string Name { get; set; }
         public string Email { get; set; }

@@ -3,8 +3,9 @@ import { clone } from '@orbit/utils';
 import { UserService } from 'xforge-common/user.service';
 import { Answer } from '../../../../core/models/answer';
 import { Comment } from '../../../../core/models/comment';
+import { SFProject } from '../../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../../core/models/sfproject-roles';
-import { SFProjectUser } from '../../../../core/models/sfproject-user';
+import { SFProjectUserConfigDoc } from '../../../../core/models/sfproject-user-config-doc';
 
 export interface CommentAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'show-comments';
@@ -19,7 +20,8 @@ export interface CommentAction {
   styleUrls: ['./checking-comments.component.scss']
 })
 export class CheckingCommentsComponent implements OnInit {
-  @Input() projectCurrentUser: SFProjectUser;
+  @Input() project: SFProject;
+  @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
   @Output() action: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
   @Input() comments: Comment[] = [];
   @Input() answer: Answer;
@@ -33,7 +35,7 @@ export class CheckingCommentsComponent implements OnInit {
   constructor(private userService: UserService) {}
 
   get isAdministrator(): boolean {
-    return this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
+    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRoles.ParatextAdministrator;
   }
 
   get showMoreCommentsLabel(): string {
@@ -74,7 +76,9 @@ export class CheckingCommentsComponent implements OnInit {
   }
 
   hasUserReadComment(comment: Comment): boolean {
-    return this.initUserCommentRefsRead.includes(comment.id) || this.projectCurrentUser.userRef === comment.ownerRef;
+    return (
+      this.initUserCommentRefsRead.includes(comment.id) || this.projectUserConfigDoc.data.ownerRef === comment.ownerRef
+    );
   }
 
   hideCommentForm() {
@@ -86,7 +90,7 @@ export class CheckingCommentsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.initUserCommentRefsRead = clone(this.projectCurrentUser.commentRefsRead);
+    this.initUserCommentRefsRead = clone(this.projectUserConfigDoc.data.commentRefsRead);
   }
 
   showComments(): void {

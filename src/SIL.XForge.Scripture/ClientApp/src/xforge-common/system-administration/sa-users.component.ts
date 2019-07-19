@@ -2,20 +2,20 @@ import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { NoticeService } from 'xforge-common/notice.service';
-import { Project } from '../models/project';
-import { ProjectUser } from '../models/project-user';
+import { environment } from '../../environments/environment';
+import { ProjectDoc } from '../models/project-doc';
 import { User } from '../models/user';
+import { ProjectService } from '../project.service';
 import { QueryParameters } from '../realtime.service';
 import { SubscriptionDisposable } from '../subscription-disposable';
 import { UserService } from '../user.service';
-import { nameof } from '../utils';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
 
 interface Row {
   readonly id: string;
   readonly user: User;
   readonly active: boolean;
-  readonly projects: Project[];
+  readonly projectDocs: ProjectDoc[];
 }
 
 @Component({
@@ -40,7 +40,8 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit, 
   constructor(
     private readonly dialog: MdcDialog,
     private readonly noticeService: NoticeService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly projectService: ProjectService
   ) {
     super();
     this.searchTerm$ = new BehaviorSubject<string>('');
@@ -56,33 +57,29 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit, 
     this.noticeService.loadingStarted();
     this.subscribe(
       this.userService.onlineSearch(this.searchTerm$, this.queryParameters$, this.reload$),
-      searchResults => {
+      async searchResults => {
         this.noticeService.loadingStarted();
-        const userRows: Row[] = new Array(searchResults.docs.length);
-        this.length = searchResults.totalPagedCount;
-        const tasks: Promise<any>[] = [];
-        for (let i = 0; i < searchResults.docs.length; i++) {
-          const userDoc = searchResults.docs[i];
-          const index = i;
-          tasks.push(
-            this.userService
-              .onlineGetProjects(userDoc.id, [[nameof<ProjectUser>('project')]])
-              .toPromise()
-              .then(
-                qr =>
-                  (userRows[index] = {
-                    id: userDoc.id,
-                    user: userDoc.data,
-                    active: true,
-                    projects: qr.data.map(pu => qr.getIncluded(pu.project))
-                  })
-              )
-          );
+        const projectDocs = new Map<string, ProjectDoc>();
+        for (const userDoc of searchResults.docs) {
+          for (const projectId of userDoc.data.sites[environment.siteId].projects) {
+            projectDocs.set(projectId, null);
+          }
         }
-        Promise.all(tasks).then(() => {
-          this.userRows = userRows;
-          this.noticeService.loadingFinished();
-        });
+        const projectDocArray = await this.projectService.onlineGetMany(Array.from(projectDocs.keys()));
+        for (const projectDoc of projectDocArray) {
+          projectDocs.set(projectDoc.id, projectDoc);
+        }
+        this.userRows = searchResults.docs.map(
+          userDoc =>
+            ({
+              id: userDoc.id,
+              user: userDoc.data,
+              active: true,
+              projectDocs: userDoc.data.sites[environment.siteId].projects.map(id => projectDocs.get(id))
+            } as Row)
+        );
+        this.length = searchResults.totalPagedCount;
+        this.noticeService.loadingFinished();
       }
     );
   }

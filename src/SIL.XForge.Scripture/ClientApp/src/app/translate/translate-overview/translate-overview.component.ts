@@ -3,9 +3,9 @@ import { ActivatedRoute } from '@angular/router';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
 import { Subscription } from 'rxjs';
 import { filter, map, repeat, tap } from 'rxjs/operators';
-import { SFProjectDataDoc } from 'src/app/core/models/sfproject-data-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { SFProjectDoc } from '../../core/models/sfproject-doc';
 import { TextDocId } from '../../core/models/text-doc-id';
 import { TextInfo } from '../../core/models/text-info';
 import { SFProjectService } from '../../core/sfproject.service';
@@ -48,7 +48,7 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
 
   private trainingSub: Subscription;
   private translationEngine: RemoteTranslationEngine;
-  private projectDataDoc: SFProjectDataDoc;
+  private projectDoc: SFProjectDoc;
   private projectDataChangesSub: Subscription;
 
   constructor(
@@ -68,7 +68,7 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
       this.noticeService.loadingStarted();
       try {
         this.createTranslationEngine(projectId);
-        this.projectDataDoc = await this.projectService.getDataDoc(projectId);
+        this.projectDoc = await this.projectService.get(projectId);
         await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
       } finally {
         this.noticeService.loadingFinished();
@@ -77,7 +77,7 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
       if (this.projectDataChangesSub != null) {
         this.projectDataChangesSub.unsubscribe();
       }
-      this.projectDataChangesSub = this.projectDataDoc.remoteChanges().subscribe(async () => {
+      this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(async () => {
         this.noticeService.loadingStarted();
         try {
           await this.calculateProgress();
@@ -106,7 +106,7 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
   }
 
   private async calculateProgress(): Promise<void> {
-    this.texts = this.projectDataDoc.data.texts.filter(t => t.hasSource).map(t => new TextProgress(t));
+    this.texts = this.projectDoc.data.texts.filter(t => t.hasSource).map(t => new TextProgress(t));
     this.overallProgress = new Progress();
     const updateTextProgressPromises: Promise<void>[] = [];
     for (const textProgress of this.texts) {
@@ -117,8 +117,8 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
 
   private async updateTextProgress(textProgress: TextProgress): Promise<void> {
     for (const chapter of textProgress.text.chapters) {
-      const textDocId = new TextDocId(this.projectDataDoc.id, textProgress.text.bookId, chapter.number, 'target');
-      const chapterText = await this.projectService.getTextDoc(textDocId);
+      const textDocId = new TextDocId(this.projectDoc.id, textProgress.text.bookId, chapter.number, 'target');
+      const chapterText = await this.projectService.getText(textDocId);
       const { translated, blank } = chapterText.getSegmentCount();
       textProgress.translated += translated;
       textProgress.blank += blank;

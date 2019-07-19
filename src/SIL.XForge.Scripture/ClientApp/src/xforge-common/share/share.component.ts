@@ -1,7 +1,7 @@
 import { MdcDialog } from '@angular-mdc/web';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { filter, map, switchMap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { SharingLevel } from '../models/sharing-level';
 import { ProjectService } from '../project.service';
 import { ShareDialogComponent, ShareDialogData } from './share-dialog.component';
@@ -27,17 +27,12 @@ export class ShareComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.activatedRoute.params
-      .pipe(
-        map(params => params['projectId'] as string),
-        filter(projectId => projectId != null),
-        switchMap(projectId => this.projectService.get(projectId))
-      )
-      .subscribe(results => {
-        this.projectId = results.data.id;
-        this.shareEnabled = results.data.shareEnabled;
-        this.shareLevel = results.data.shareLevel;
-      });
+    this.activatedRoute.params.pipe(map(params => params['projectId'] as string)).subscribe(async projectId => {
+      this.projectId = projectId;
+      const projectDoc = await this.projectService.get(projectId);
+      this.shareEnabled = projectDoc.data.shareEnabled;
+      this.shareLevel = projectDoc.data.shareLevel;
+    });
   }
 
   openDialog() {

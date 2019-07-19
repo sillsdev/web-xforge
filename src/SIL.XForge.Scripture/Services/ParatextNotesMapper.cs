@@ -30,7 +30,7 @@ namespace SIL.XForge.Scripture.Services
 
         private UserSecret _currentUserSecret;
         private string _currentParatextUsername;
-        private SFProjectEntity _project;
+        private SFProjectSecret _projectSecret;
 
         public ParatextNotesMapper(IRepository<UserSecret> userSecrets, IParatextService paratextService)
         {
@@ -40,14 +40,14 @@ namespace SIL.XForge.Scripture.Services
 
         public List<SyncUser> NewSyncUsers { get; } = new List<SyncUser>();
 
-        public void Init(UserSecret currentUserSecret, SFProjectEntity project)
+        public void Init(UserSecret currentUserSecret, SFProjectSecret projectSecret)
         {
             _currentUserSecret = currentUserSecret;
             _currentParatextUsername = _paratextService.GetParatextUsername(currentUserSecret);
-            _project = project;
+            _projectSecret = projectSecret;
             _idToSyncUser.Clear();
             _usernameToSyncUser.Clear();
-            foreach (SyncUser syncUser in project.SyncUsers)
+            foreach (SyncUser syncUser in projectSecret.SyncUsers)
             {
                 _idToSyncUser[syncUser.Id] = syncUser;
                 _usernameToSyncUser[syncUser.ParatextUsername] = syncUser;
@@ -55,23 +55,23 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public async Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem,
-            IEnumerable<IDocument<List<Question>>> chapterQuestionsDocs,
-            IEnumerable<IDocument<List<Comment>>> chapterCommentsDocs)
+            IEnumerable<IDocument<QuestionList>> chapterQuestionsDocs,
+            IEnumerable<IDocument<CommentList>> chapterCommentsDocs)
         {
             var version = (string)oldNotesElem.Attribute("version");
             Dictionary<string, XElement> oldCommentElems = GetOldCommentElements(oldNotesElem);
 
             var notesElem = new XElement("notes", new XAttribute("version", version));
             var chapterDocs = chapterQuestionsDocs.Zip(chapterCommentsDocs, (qs, cs) => (qs, cs));
-            foreach ((IDocument<List<Question>> questionsDoc, IDocument<List<Comment>> commentsDoc) in chapterDocs)
+            foreach ((IDocument<QuestionList> questionsDoc, IDocument<CommentList> commentsDoc) in chapterDocs)
             {
                 var answerSyncUserIds = new List<(int, int, string)>();
                 var commentSyncUserIds = new List<(int, string)>();
-                var commentsLookup = commentsDoc.Data.Select((c, i) => new { Comment = c, Index = i })
+                var commentsLookup = commentsDoc.Data.Comments.Select((c, i) => new { Comment = c, Index = i })
                     .ToLookup(c => c.Comment.AnswerRef);
-                for (int i = 0; i < questionsDoc.Data.Count; i++)
+                for (int i = 0; i < questionsDoc.Data.Questions.Count; i++)
                 {
-                    Question question = questionsDoc.Data[i];
+                    Question question = questionsDoc.Data.Questions[i];
                     for (int j = 0; j < question.Answers.Count; j++)
                     {
                         Answer answer = question.Answers[j];
@@ -103,12 +103,12 @@ namespace SIL.XForge.Scripture.Services
                 await questionsDoc.SubmitJson0OpAsync(op =>
                     {
                         foreach ((int questionIndex, int answerIndex, string syncUserId) in answerSyncUserIds)
-                            op.Set(questions => questions[questionIndex].Answers[answerIndex].SyncUserRef, syncUserId);
+                            op.Set(cq => cq.Questions[questionIndex].Answers[answerIndex].SyncUserRef, syncUserId);
                     });
                 await commentsDoc.SubmitJson0OpAsync(op =>
                     {
                         foreach ((int commentIndex, string syncUserId) in commentSyncUserIds)
-                            op.Set(comments => comments[commentIndex].SyncUserRef, syncUserId);
+                            op.Set(cc => cc.Comments[commentIndex].SyncUserRef, syncUserId);
                     });
             }
 

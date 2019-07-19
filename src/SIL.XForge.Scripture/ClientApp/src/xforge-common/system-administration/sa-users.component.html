@@ -26,10 +26,11 @@
       </ng-container>
       <ng-container matColumnDef="projects">
         <td fxHide.lt-md mat-cell *matCellDef="let userRow">
-          <span *ngIf="userRow.projects?.length > 0">
-            {{ userRow.projects?.length }} Projects -
-            <span class="projectsNames" *ngFor="let project of userRow.projects; last as isLast">
-              <a [routerLink]="['/projects', project.id]">{{ project.projectName }}</a> <span *ngIf="!isLast">, </span>
+          <span *ngIf="userRow.projectDocs?.length > 0">
+            {{ userRow.projectDocs?.length }} Projects -
+            <span class="projectsNames" *ngFor="let projectDoc of userRow.projectDocs; last as isLast">
+              <a [routerLink]="['/projects', projectDoc.id]">{{ projectDoc.data.projectName }}</a>
+              <span *ngIf="!isLast">, </span>
             </span>
           </span>
         </td>

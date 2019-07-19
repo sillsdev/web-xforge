@@ -15,10 +15,17 @@ namespace SIL.XForge.Scripture.Models
 
         public static SFProjectRoles Instance { get; } = new SFProjectRoles();
 
+        public override string AdminRole => Administrator;
+
         private SFProjectRoles()
         {
             var observerRights = new HashSet<Right>
             {
+                new Right(SFDomain.ProjectUserConfigs, Operation.Create),
+                new Right(SFDomain.ProjectUserConfigs, Operation.ViewOwn),
+                new Right(SFDomain.ProjectUserConfigs, Operation.EditOwn),
+                new Right(SFDomain.ProjectUserConfigs, Operation.DeleteOwn),
+
                 new Right(SFDomain.Texts, Operation.View),
 
                 new Right(SFDomain.Questions, Operation.View),

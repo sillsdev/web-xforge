@@ -8,7 +8,7 @@ import { environment } from '../environments/environment';
 import { JsonRpcService } from './json-rpc.service';
 import { LocationService } from './location.service';
 import { SystemRole } from './models/system-role';
-import { OrbitService } from './orbit-service';
+import { UserDoc } from './models/user-doc';
 import { RealtimeService } from './realtime.service';
 
 const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
@@ -36,7 +36,6 @@ export class AuthService {
   });
 
   constructor(
-    private readonly orbitService: OrbitService,
     private readonly realtimeService: RealtimeService,
     private readonly locationService: LocationService,
     private readonly jsonRpcService: JsonRpcService,
@@ -102,7 +101,7 @@ export class AuthService {
   }
 
   async logOut(): Promise<void> {
-    await Promise.all([this.orbitService.deleteStore(), this.realtimeService.deleteStore()]);
+    await this.realtimeService.deleteStore();
     this.clearState();
     this.auth0.logout({ returnTo: this.locationService.origin + '/' });
   }
@@ -141,16 +140,14 @@ export class AuthService {
     }
     this.scheduleRenewal();
     const isNewUser = prevUserId != null && prevUserId !== this.currentUserId;
-    await Promise.all([
-      this.orbitService.init(this.accessToken, isNewUser),
-      this.realtimeService.init(this.accessToken, isNewUser)
-    ]);
-    const userCommandsUrl = `json-api/users/${this.currentUserId}/commands`;
+    await this.realtimeService.init(this.accessToken, isNewUser);
     if (secondaryId != null) {
-      await this.jsonRpcService.invoke(userCommandsUrl, 'linkParatextAccount', { authId: secondaryId });
+      await this.jsonRpcService.invoke({ type: UserDoc.TYPE, id: this.currentUserId }, 'linkParatextAccount', {
+        authId: secondaryId
+      });
     } else if (!environment.production) {
       try {
-        await this.jsonRpcService.invoke(userCommandsUrl, 'pullAuthUserProfile');
+        await this.jsonRpcService.invoke({ type: UserDoc.TYPE, id: this.currentUserId }, 'pullAuthUserProfile');
       } catch (err) {
         console.error(err);
         return false;
@@ -195,7 +192,6 @@ export class AuthService {
       const authResult = await this.checkSession();
       if (authResult != null && authResult.accessToken != null && authResult.idToken != null) {
         this.localLogIn(authResult);
-        this.orbitService.setAccessToken(this.accessToken);
         this.realtimeService.setAccessToken(this.accessToken);
       }
     } catch (err) {

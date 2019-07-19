@@ -1,10 +1,8 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Humanizer;
-using Microsoft.AspNetCore.NodeServices;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -21,48 +19,36 @@ namespace SIL.XForge.Realtime
     /// </summary>
     public class RealtimeService : DisposableBase, IRealtimeService
     {
-        private readonly INodeServices _nodeServices;
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IOptions<DataAccessOptions> _dataAccessOptions;
         private readonly IOptions<RealtimeOptions> _realtimeOptions;
         private readonly IOptions<AuthOptions> _authOptions;
         private readonly IMongoDatabase _database;
-        private readonly string _modulePath;
-        private bool _started;
 
-        public RealtimeService(INodeServices nodeServices, IOptions<SiteOptions> siteOptions,
+        public RealtimeService(RealtimeServer server, IOptions<SiteOptions> siteOptions,
             IOptions<DataAccessOptions> dataAccessOptions, IOptions<RealtimeOptions> realtimeOptions,
             IOptions<AuthOptions> authOptions, IMongoClient mongoClient)
         {
-            _nodeServices = nodeServices;
+            Server = server;
             _siteOptions = siteOptions;
             _dataAccessOptions = dataAccessOptions;
             _realtimeOptions = realtimeOptions;
             _authOptions = authOptions;
             _database = mongoClient.GetDatabase(_dataAccessOptions.Value.MongoDatabaseName);
-            _modulePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Realtime",
-                "realtime-server");
         }
+
+        internal RealtimeServer Server { get; }
 
         public void StartServer()
         {
-            if (_started)
-                return;
-
             object options = CreateOptions();
-            InvokeExportAsync<object>("start", options).GetAwaiter().GetResult();
-            _started = true;
+            Server.Start(options);
         }
 
         public void StopServer()
         {
-            if (!_started)
-                return;
-
-            InvokeExportAsync<object>("stop").GetAwaiter().GetResult();
-            _started = false;
+            Server.Stop();
         }
-
 
         public async Task<IConnection> ConnectAsync()
         {
@@ -82,26 +68,33 @@ namespace SIL.XForge.Realtime
         public string GetCollectionName(string type)
         {
             if (type == RootDataTypes.Projects)
-                return $"{_dataAccessOptions.Value.Prefix}_project_data";
+                return $"{_dataAccessOptions.Value.Prefix}_{type.Underscore()}";
             return type.Underscore();
         }
 
-        public async Task DeleteProjectDocsAsync(string type, string projectId)
+        public async Task DeleteProjectAsync(string projectId)
         {
-            string collectionName = GetCollectionName(type);
+            var tasks = new List<Task>();
+            foreach (RealtimeDocConfig docConfig in _realtimeOptions.Value.ProjectDataDocs)
+                tasks.Add(DeleteProjectDocsAsync(docConfig.Type, projectId));
+            await Task.WhenAll(tasks);
+
+            string collectionName = GetCollectionName(RootDataTypes.Projects);
 
             IMongoCollection<BsonDocument> snapshotCollection = _database.GetCollection<BsonDocument>(collectionName);
-            FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Regex("_id", $"^{projectId}");
+            FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Regex("_id", projectId);
             await snapshotCollection.DeleteManyAsync(idFilter);
 
             IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>("o_" + collectionName);
-            FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", $"^{projectId}");
+            FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", projectId);
             await opsCollection.DeleteManyAsync(dFilter);
         }
 
-        internal Task<T> InvokeExportAsync<T>(string exportedFunctionName, params object[] args)
+        public IQueryable<T> QuerySnapshots<T>(string type) where T : IIdentifiable
         {
-            return _nodeServices.InvokeExportAsync<T>(_modulePath, exportedFunctionName, args);
+            string collectionName = GetCollectionName(type);
+            IMongoCollection<T> collection = _database.GetCollection<T>(collectionName);
+            return collection.AsQueryable();
         }
 
         internal string GetOTTypeName(string type)
@@ -123,6 +116,19 @@ namespace SIL.XForge.Realtime
             StopServer();
         }
 
+        private async Task DeleteProjectDocsAsync(string type, string projectId)
+        {
+            string collectionName = GetCollectionName(type);
+
+            IMongoCollection<BsonDocument> snapshotCollection = _database.GetCollection<BsonDocument>(collectionName);
+            FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Regex("_id", $"^{projectId}");
+            await snapshotCollection.DeleteManyAsync(idFilter);
+
+            IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>("o_" + collectionName);
+            FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", $"^{projectId}");
+            await opsCollection.DeleteManyAsync(dFilter);
+        }
+
         private object CreateOptions()
         {
             string mongo = $"{_dataAccessOptions.Value.ConnectionString}/{_dataAccessOptions.Value.MongoDatabaseName}";
@@ -131,10 +137,11 @@ namespace SIL.XForge.Realtime
                 ConnectionString = mongo,
                 Port = _realtimeOptions.Value.Port,
                 Authority = $"https://{_authOptions.Value.Domain}/",
-                ProjectsCollectionName = $"{_dataAccessOptions.Value.Prefix}_{RootDataTypes.Projects.Underscore()}",
                 UsersCollection = CreateCollectionConfig(_realtimeOptions.Value.UserDoc),
+                ProjectsCollection = CreateCollectionConfig(_realtimeOptions.Value.ProjectDoc),
                 UserProfilesCollectionName = GetCollectionName(RootDataTypes.UserProfiles),
                 ProjectRoles = CreateProjectRoles(_realtimeOptions.Value.ProjectRoles),
+                ProjectAdminRole = _realtimeOptions.Value.ProjectRoles.AdminRole,
                 ProjectDataCollections = _realtimeOptions.Value.ProjectDataDocs
                     .Select(c => CreateCollectionConfig(c)).ToArray(),
                 Audience = _authOptions.Value.Audience,
@@ -158,20 +165,25 @@ namespace SIL.XForge.Realtime
                 Name = GetCollectionName(docConfig.Type),
                 OTTypeName = docConfig.OTTypeName,
                 Domains = docConfig.Domains
-                    .OrderByDescending(d => d.PathTemplate?.Items?.Count ?? 0)
-                    .Select(d => new { Domain = d.Domain, PathTemplate = CreateJson0PathTemplate(d.PathTemplate) })
+                    .OrderByDescending(d => d.PathTemplate?.Template?.Items?.Count ?? 0)
+                    .Select(d => new { Domain = d.Domain, PathTemplate = CreatePathTemplateConfig(d.PathTemplate) })
                     .ToArray(),
                 ImmutableProps = docConfig.ImmutableProperties
-                    .Select(ip => CreateJson0PathTemplate(ip))
+                    .Select(ip => CreatePathTemplateConfig(ip))
                     .ToArray()
             };
         }
 
-        private static object[] CreateJson0PathTemplate(ObjectPath path)
+        private static object CreatePathTemplateConfig(PathTemplateConfig pathTemplateConfig)
         {
-            if (path == null)
-                return new object[0];
-            return path.Items.Select(i => (i is string str) ? str.ToCamelCase() : i).ToArray();
+            if (pathTemplateConfig == null)
+                return new { Template = new object[0], Inherit = true };
+            return new
+            {
+                Template = pathTemplateConfig.Template.Items.Select(i => (i is string str) ? str.ToCamelCase() : i)
+                    .ToArray(),
+                Inherit = pathTemplateConfig.Inherit
+            };
         }
     }
 }

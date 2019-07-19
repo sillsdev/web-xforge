@@ -55,9 +55,10 @@ class RealtimeServer {
   constructor(options) {
     this.connectionString = options.connectionString;
     this.port = options.port;
-    this.projectsCollectionName = options.projectsCollectionName;
+    this.projectsCollectionName = options.projectsCollection.name;
     this.audience = options.audience;
     this.scope = options.scope;
+    this.projectAdminRole = options.projectAdminRole;
     this.projectRoles = new Map();
     for (const role of options.projectRoles) {
       this.projectRoles.set(role.name, new Set(role.rights));
@@ -90,6 +91,8 @@ class RealtimeServer {
     shareDBAccess(this.backend);
     // users access control
     this.addUsersAccessRules(options.usersCollection);
+
+    this.addProjectsAccessRules(options.projectsCollection);
 
     // project data access control
     for (const collectionConfig of options.projectDataCollections) {
@@ -189,11 +192,11 @@ class RealtimeServer {
 
   async updateUserProjectRoles(session) {
     const coll = this.database.collection(this.projectsCollectionName);
-    const projects = await coll.find({ 'users.userRef': session.userId }).toArray();
+    const projects = await coll.find({ ['userRoles.' + session.userId]: { $exists: true } }).toArray();
     const projectRoles = new Map();
     for (const project of projects) {
-      const projectUser = project.users.find(pu => pu.userRef === session.userId);
-      projectRoles.set(project._id, projectUser.role);
+      const role = project.userRoles[session.userId];
+      projectRoles.set(project._id, role);
     }
     session.projectRoles = projectRoles;
   }
@@ -259,6 +262,39 @@ class RealtimeServer {
     });
   }
 
+  addProjectsAccessRules(collectionConfig) {
+    this.backend.allowCreate(collectionConfig.name, (_docId, _doc, session) => {
+      return session.isServer;
+    });
+    this.backend.allowDelete(collectionConfig.name, (_docId, _doc, session) => {
+      return session.isServer;
+    });
+    this.backend.allowRead(collectionConfig.name, (_docId, doc, session) => {
+      if (session.isServer || session.role === SYSTEM_ADMIN_ROLE || Object.keys(doc).length === 0) {
+        return true;
+      }
+
+      return session.userId in doc.userRoles;
+    });
+    this.backend.allowUpdate(collectionConfig.name, (_docId, _oldDoc, newDoc, ops, session) => {
+      if (session.isServer || session.role === SYSTEM_ADMIN_ROLE) {
+        return true;
+      }
+
+      const projectRole = newDoc.userRoles[session.userId];
+      if (projectRole !== this.projectAdminRole) {
+        return false;
+      }
+
+      for (const op of ops) {
+        if (this.getMatchingPathTemplate(collectionConfig.immutableProps, op.p) !== -1) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
   addProjectDataAccessRules(collectionConfig) {
     this.backend.allowCreate(collectionConfig.name, (_docId, _doc, session) => {
       return session.isServer;
@@ -266,8 +302,8 @@ class RealtimeServer {
     this.backend.allowDelete(collectionConfig.name, (_docId, _doc, session) => {
       return session.isServer;
     });
-    this.backend.allowRead(collectionConfig.name, async (docId, _doc, session) => {
-      if (session.isServer) {
+    this.backend.allowRead(collectionConfig.name, async (docId, doc, session) => {
+      if (session.isServer || Object.keys(doc).length === 0) {
         return true;
       }
 
@@ -281,7 +317,10 @@ class RealtimeServer {
       }
 
       for (const domainConfig of collectionConfig.domains) {
-        if (!this.hasRight(role, domainConfig.domain, Operation.View)) {
+        if (
+          !this.hasRight(role, domainConfig.domain, Operation.View) &&
+          (doc.ownerRef !== session.userId || !this.hasRight(role, domainConfig.domain, Operation.ViewOwn))
+        ) {
           return false;
         }
       }
@@ -313,9 +352,9 @@ class RealtimeServer {
             }
             const domainConfig = collectionConfig.domains[index];
 
-            if (domainConfig.pathTemplate.length < op.p.length) {
+            if (domainConfig.pathTemplate.template.length < op.p.length) {
               // property update
-              const entityPath = op.p.slice(0, domainConfig.pathTemplate.length);
+              const entityPath = op.p.slice(0, domainConfig.pathTemplate.template.length);
               const oldEntity = deepGet(entityPath, oldDoc);
               const newEntity = deepGet(entityPath, newDoc);
               if (!this.checkJsonEditRight(session.userId, role, domainConfig, oldEntity, newEntity)) {
@@ -378,10 +417,11 @@ class RealtimeServer {
     return this.hasRight(role, type.domain, Operation.DeleteOwn) && oldEntity.ownerRef === userId;
   }
 
-  getMatchingPathTemplate(templates, path) {
-    for (let i = 0; i < templates.length; i++) {
-      const template = templates[i];
-      if (path.length < template.length) {
+  getMatchingPathTemplate(pathTemplateConfigs, path) {
+    for (let i = 0; i < pathTemplateConfigs.length; i++) {
+      const template = pathTemplateConfigs[i].template;
+      const inherit = pathTemplateConfigs[i].inherit;
+      if ((inherit && path.length < template.length) || (!inherit && path.length !== template.length)) {
         continue;
       }
 
@@ -392,7 +432,7 @@ class RealtimeServer {
             match = false;
             break;
           }
-        } else if (template[i] !== path[i]) {
+        } else if (template[i] !== '*' && template[i] !== path[i]) {
           match = false;
           break;
         }
@@ -436,9 +476,9 @@ module.exports = {
     callback(null);
   },
 
-  createDoc: (callback, handle, collection, id, data, type) => {
+  createDoc: (callback, handle, collection, id, data, typeName) => {
     const doc = server.getDoc(handle, collection, id);
-    doc.create(data, type, err => callback(err, createSnapshot(doc)));
+    doc.create(data, typeName, err => callback(err, createSnapshot(doc)));
   },
 
   fetchDoc: (callback, handle, collection, id) => {
@@ -454,5 +494,14 @@ module.exports = {
   deleteDoc: (callback, handle, collection, id) => {
     const doc = server.getDoc(handle, collection, id);
     doc.del(err => callback(err));
+  },
+
+  applyOp: (callback, typeName, data, op) => {
+    const type = ShareDB.types.map[typeName];
+    if (op != null && type.normalize != null) {
+      op = type.normalize(op);
+    }
+    data = type.apply(data, op);
+    callback(null, data);
   }
 };

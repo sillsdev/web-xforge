@@ -475,7 +475,7 @@ class TestEnvironment {
     const oce = this.overlayContainer.getContainerElement();
     if (confirm) {
       const projectInput: HTMLInputElement = oce.querySelector('#project-entry').querySelector('input');
-      projectInput.value = this.component.project.projectName;
+      projectInput.value = this.component.projectDoc.projectName;
       projectInput.dispatchEvent(new Event('input'));
       button = this.confirmDeleteBtn;
     } else {

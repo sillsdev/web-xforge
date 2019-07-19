@@ -13,12 +13,14 @@ export abstract class JsonRealtimeDoc<T = any> extends RealtimeDoc<T, OtJson0Op[
    * @param {(op: Json0OpBuilder<T>) => void} build The function to build the operation.
    * @param {*} [source] The source.
    */
-  async submitJson0Op(build: (op: Json0OpBuilder<T>) => void, source?: any): Promise<void> {
+  async submitJson0Op(build: (op: Json0OpBuilder<T>) => void, source?: any): Promise<boolean> {
     const builder = new Json0OpBuilder(this.data);
     build(builder);
     if (builder.op.length > 0) {
       await this.submit(builder.op, source);
+      return true;
     }
+    return false;
   }
 }
 
@@ -127,7 +129,9 @@ export class Json0OpBuilder<T> {
     if (value === undefined) {
       value = get(this.data, field);
     }
-    this.op.push({ p: path, od: value });
+    if (value !== undefined) {
+      this.op.push({ p: path, od: value });
+    }
     return this;
   }
 

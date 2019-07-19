@@ -144,7 +144,7 @@ namespace SIL.XForge.Realtime.Json0
         public Json0OpBuilder<T> Unset<TField>(Expression<Func<T, TField>> field)
         {
             var objectPath = new ObjectPath(field);
-            if (objectPath.TryGetValue<T, TField>(_data, out TField value))
+            if (objectPath.TryGetValue<T, TField>(_data, out TField value) && value != null)
                 Op.Add(new Json0Op { Path = CreateJson0Path(objectPath.Items), DeleteProp = value });
             return this;
         }

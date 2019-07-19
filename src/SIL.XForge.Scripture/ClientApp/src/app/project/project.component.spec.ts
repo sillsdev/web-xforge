@@ -11,9 +11,9 @@ import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { SFProject, SFProjectRef } from '../core/models/sfproject';
 import { SFProjectData } from '../core/models/sfproject-data';
-import { SFProjectDataDoc } from '../core/models/sfproject-data-doc';
+import { SFProjectDataDoc } from '../core/models/sfproject-doc';
 import { SFProjectRoles } from '../core/models/sfproject-roles';
-import { SFProjectUser, SFProjectUserRef } from '../core/models/sfproject-user';
+import { SFProjectUser, SFProjectUserRef } from '../core/models/sfproject-user-config';
 import { SFProjectService } from '../core/sfproject.service';
 import { ProjectComponent } from './project.component';
 

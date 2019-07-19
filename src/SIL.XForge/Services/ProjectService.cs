@@ -1,135 +1,265 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
+using System;
+using System.IO;
 using System.Threading.Tasks;
-using AutoMapper;
-using JsonApiDotNetCore.Internal.Query;
-using JsonApiDotNetCore.Services;
 using Microsoft.Extensions.Options;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
+using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Utils;
 
 namespace SIL.XForge.Services
 {
-    public abstract class ProjectService<TResource, TEntity> : RepositoryResourceServiceBase<TResource, TEntity>,
-        IResourceMapper<ProjectResource, ProjectEntity>, IProjectService<TResource>
-        where TResource : ProjectResource
-        where TEntity : ProjectEntity
+    public abstract class ProjectService<TModel, TSecret> : IProjectService<TModel> where TModel : Project, new()
+        where TSecret : ProjectSecret
     {
+        private readonly IEmailService _emailService;
+        private readonly ISecurityService _securityService;
 
-        private readonly IOptions<SiteOptions> _siteOptions;
-
-        public ProjectService(IJsonApiContext jsonApiContext, IMapper mapper, IUserAccessor userAccessor,
-            IRepository<TEntity> projects, IOptions<SiteOptions> siteOptions)
-            : base(jsonApiContext, mapper, userAccessor, projects)
+        public ProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
+            IEmailService emailService, IRepository<TSecret> projectSecrets, ISecurityService securityService)
         {
-            _siteOptions = siteOptions;
+            RealtimeService = realtimeService;
+            SiteOptions = siteOptions;
+            _emailService = emailService;
+            ProjectSecrets = projectSecrets;
+            _securityService = securityService;
         }
 
-        public IResourceMapper<ProjectUserResource, ProjectUserEntity> ProjectUserMapper { get; set; }
+        protected IRealtimeService RealtimeService { get; }
+        protected IOptions<SiteOptions> SiteOptions { get; }
+        protected IRepository<TSecret> ProjectSecrets { get; }
+        protected abstract string ProjectAdminRole { get; }
 
-        protected override IRelationship<TEntity> GetRelationship(string relationshipName)
+        public abstract Task<string> CreateProjectAsync(string userId, TModel newProject);
+
+        public abstract Task DeleteProjectAsync(string userId, string projectId);
+
+        public async Task AddUserAsync(string userId, string projectId, string projectRole = null)
         {
-            switch (relationshipName)
+            using (IConnection conn = await RealtimeService.ConnectAsync())
             {
-                case nameof(ProjectResource.Users):
-                    return HasMany(ProjectUserMapper, u => u.ProjectRef);
-            }
-            return base.GetRelationship(relationshipName);
-        }
+                IDocument<TModel> projectDoc = conn.Get<TModel>(RootDataTypes.Projects, projectId);
+                await projectDoc.FetchAsync();
+                if (!projectDoc.IsLoaded)
+                    throw new DataNotFoundException("The project does not exist.");
 
-        protected override Task CheckCanCreateAsync(TResource resource)
-        {
-            return Task.CompletedTask;
-        }
+                IDocument<User> userDoc = conn.Get<User>(RootDataTypes.Users, userId);
+                await userDoc.FetchAsync();
+                if (!userDoc.IsLoaded)
+                    throw new DataNotFoundException("The user does not exist.");
 
-        protected override Task CheckCanUpdateAsync(string id, IDictionary<string, object> attrs,
-            IDictionary<string, string> relationships)
-        {
-            return CheckCanUpdateDeleteAsync(id);
-        }
-
-        protected override Task CheckCanUpdateRelationshipAsync(string id)
-        {
-            return CheckCanUpdateDeleteAsync(id);
-        }
-
-        protected override Task CheckCanDeleteAsync(string id)
-        {
-            return CheckCanUpdateDeleteAsync(id);
-        }
-
-        protected override Task<IQueryable<TEntity>> ApplyPermissionFilterAsync(IQueryable<TEntity> query)
-        {
-            if (SystemRole == SystemRoles.User)
-            {
-                query = query.Where(p => p.Users.Any(pu => pu.UserRef == UserId));
-            }
-            return Task.FromResult(query);
-        }
-
-        protected override IQueryable<TEntity> ApplyFilter(IQueryable<TEntity> entities, FilterQuery filter)
-        {
-            if (filter.Attribute == "search")
-            {
-                string value = filter.Value.ToLowerInvariant();
-                return entities.Where(p => p.ProjectName.ToLowerInvariant().Contains(value)
-                    || p.InputSystem.LanguageName.ToLowerInvariant().Contains(value));
-            }
-            return base.ApplyFilter(entities, filter);
-        }
-
-        private async Task CheckCanUpdateDeleteAsync(string id)
-        {
-            if (SystemRole == SystemRoles.User)
-            {
-                Attempt<TEntity> attempt = await Entities.TryGetAsync(id);
-                if (attempt.TryResult(out TEntity project))
+                if (userDoc.Data.Role == SystemRoles.User || projectRole == null)
                 {
-                    if (!project.Users.Any(u => u.UserRef == UserId))
-                        throw ForbiddenException();
+                    Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, userId);
+                    if (!attempt.TryResult(out projectRole))
+                        throw new ForbiddenException();
+                }
+
+                await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
+            }
+        }
+
+        public async Task RemoveUserAsync(string userId, string projectId, string projectUserId)
+        {
+            using (IConnection conn = await RealtimeService.ConnectAsync())
+            {
+                IDocument<TModel> projectDoc = conn.Get<TModel>(RootDataTypes.Projects, projectId);
+                await projectDoc.FetchAsync();
+                if (!projectDoc.IsLoaded)
+                    throw new DataNotFoundException("The project does not exist.");
+
+                if (userId != projectUserId && !IsProjectAdmin(projectDoc.Data, userId))
+                    throw new ForbiddenException();
+
+                IDocument<User> userDoc = conn.Get<User>(RootDataTypes.Users, projectUserId);
+                await userDoc.FetchAsync();
+                if (!userDoc.IsLoaded)
+                    throw new DataNotFoundException("The user does not exist.");
+
+                await RemoveUserFromProjectAsync(conn, projectDoc, userDoc);
+            }
+        }
+
+        public async Task<bool> InviteAsync(string userId, string projectId, string email)
+        {
+            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(RootDataTypes.Projects,
+                projectId);
+            if (!projectAttempt.TryResult(out TModel project))
+                throw new DataNotFoundException("The project does not exist.");
+            if (await RealtimeService.QuerySnapshots<User>(RootDataTypes.Users)
+                .AnyAsync(u => project.UserRoles.Keys.Contains(u.Id) && u.Email == email))
+            {
+                return false;
+            }
+            SiteOptions siteOptions = SiteOptions.Value;
+            string url;
+            string additionalMessage = null;
+            if (project.ShareEnabled && project.ShareLevel == SharingLevel.Anyone)
+            {
+                url = $"{siteOptions.Origin}projects/{projectId}?sharing=true";
+                additionalMessage = "This link can be shared with others so they can join the project too.";
+            }
+            else if ((project.ShareEnabled && project.ShareLevel == SharingLevel.Specific)
+                || IsProjectAdmin(project, userId))
+            {
+                // Invite a specific person
+                // Reuse prior code, if any
+                string encodedEmail = EncodeJsonName(email);
+                TSecret projectSecret = await ProjectSecrets.UpdateAsync(
+                    p => p.Id == projectId && !p.ShareKeys.ContainsKey(encodedEmail),
+                    update => update.Set(p => p.ShareKeys[encodedEmail], _securityService.GenerateKey()));
+                if (projectSecret == null)
+                    projectSecret = await ProjectSecrets.GetAsync(projectId);
+                string code = projectSecret.ShareKeys[encodedEmail];
+                url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={code}";
+                additionalMessage = "This link will only work for this email address.";
+            }
+            else
+            {
+                throw new ForbiddenException();
+            }
+
+            User inviter = await RealtimeService.GetSnapshotAsync<User>(RootDataTypes.Users, userId);
+            string subject = $"You've been invited to the project {project.ProjectName} on {siteOptions.Name}";
+            string body = "<p>Hello </p><p></p>" +
+                $"<p>{inviter.Name} invites you to join the {project.ProjectName} project on {siteOptions.Name}." +
+                "</p><p></p>" +
+                "<p>You're almost ready to start. Just click the link below to complete your signup and " +
+                "then you will be ready to get started.</p><p></p>" +
+                $"<p>To join, go to {url}</p><p></p>" +
+                $"<p>{additionalMessage}</p><p></p>" +
+                $"<p>Regards,</p><p>The {siteOptions.Name} team</p>";
+            await _emailService.SendEmailAsync(email, subject, body);
+            return true;
+        }
+
+        /// <summary>Is there already a pending invitation to the project for the specified email address?</summary>
+        public async Task<bool> IsAlreadyInvitedAsync(string userId, string projectId, string email)
+        {
+            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(RootDataTypes.Projects,
+                projectId);
+            if (!projectAttempt.TryResult(out TModel project))
+                throw new DataNotFoundException("The project does not exist.");
+            if (!IsProjectAdmin(project, userId))
+                throw new ForbiddenException();
+
+            if (email == null)
+                return false;
+            TSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
+            return projectSecret.ShareKeys.ContainsKey(EncodeJsonName(email));
+        }
+
+        public async Task CheckLinkSharingAsync(string userId, string projectId, string shareKey = null)
+        {
+            using (IConnection conn = await RealtimeService.ConnectAsync())
+            {
+                IDocument<TModel> projectDoc = conn.Get<TModel>(RootDataTypes.Projects, projectId);
+                await projectDoc.FetchAsync();
+                if (!projectDoc.IsLoaded)
+                    throw new DataNotFoundException("The project does not exist.");
+
+                if (!projectDoc.Data.ShareEnabled)
+                    throw new ForbiddenException();
+
+                if (projectDoc.Data.ShareLevel != SharingLevel.Anyone
+                    && projectDoc.Data.ShareLevel != SharingLevel.Specific)
+                {
+                    throw new ForbiddenException();
+                }
+
+                if (projectDoc.Data.UserRoles.ContainsKey(userId))
+                    return;
+
+                IDocument<User> userDoc = conn.Get<User>(RootDataTypes.Users, userId);
+                await userDoc.FetchAsync();
+                Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, userId);
+                string projectRole = attempt.Result;
+                if (projectDoc.Data.ShareLevel == SharingLevel.Specific)
+                {
+                    string currentUserEmail = EncodeJsonName(userDoc.Data.Email);
+                    TSecret projectSecret = await ProjectSecrets.UpdateAsync(
+                        p => p.Id == projectId && p.ShareKeys[currentUserEmail] == shareKey,
+                        update => update.Unset(p => p.ShareKeys[currentUserEmail]));
+                    if (projectSecret != null)
+                        await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
+                    else
+                        throw new ForbiddenException();
                 }
                 else
                 {
-                    throw NotFoundException();
+                    await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
                 }
             }
         }
 
-        async Task<ProjectResource> IResourceMapper<ProjectResource, ProjectEntity>.MapAsync(
-            IEnumerable<string> included, Dictionary<string, IResource> resources, ProjectEntity entity)
+        public Task<bool> IsAuthorizedAsync(string projectId, string userId)
         {
-            return await MapAsync(included, resources, (TEntity)entity);
-        }
-
-        async Task<IEnumerable<ProjectResource>> IResourceMapper<ProjectResource, ProjectEntity>.MapMatchingAsync(
-            IEnumerable<string> included, Dictionary<string, IResource> resources,
-            Expression<Func<ProjectEntity, bool>> predicate)
-        {
-            return await MapMatchingAsync(included, resources, ExpressionHelper.ChangePredicateType<TEntity>(predicate));
+            return RealtimeService.QuerySnapshots<TModel>(RootDataTypes.Projects)
+                .AnyAsync(p => p.Id == projectId && p.UserRoles.ContainsKey(userId));
         }
 
         public async Task<Uri> SaveAudioAsync(string projectId, string fileName, Stream inputStream)
         {
-            await CheckCanUpdateDeleteAsync(projectId);
-
-            string audioDir = Path.Combine(_siteOptions.Value.SiteDir, "audio", projectId);
+            string audioDir = Path.Combine(SiteOptions.Value.SiteDir, "audio", projectId);
             if (!Directory.Exists(audioDir))
                 Directory.CreateDirectory(audioDir);
             string path = Path.Combine(audioDir, fileName);
             if (File.Exists(path))
-            {
                 File.Delete(path);
-            }
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
-            var uri = new Uri(_siteOptions.Value.Origin,
-                $"{projectId}/{fileName}");
+            var uri = new Uri(SiteOptions.Value.Origin, $"{projectId}/{fileName}");
             return uri;
         }
+
+        /// <summary>Encode the input so it is easier to use as a JSON object
+        /// name using our libraries. Replaces dot characters. A proper encoder
+        /// would do much more (https://json.org/).</summary>
+        internal static string EncodeJsonName(string name)
+        {
+            if (name == null)
+            {
+                return null;
+            }
+            return name.Replace(".", "[dot]");
+        }
+
+        /// <summary>Decode a string that was previously given by
+        /// EncodeJsonName().</summary>
+        internal static string DecodeJsonName(string encodedName)
+        {
+            if (encodedName == null)
+            {
+                return null;
+            }
+            return encodedName.Replace("[dot]", ".");
+        }
+
+        protected virtual async Task AddUserToProjectAsync(IConnection conn, IDocument<TModel> projectDoc,
+            IDocument<User> userDoc, string projectRole)
+        {
+            await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[userDoc.Id], projectRole));
+            string siteId = SiteOptions.Value.Id;
+            await userDoc.SubmitJson0OpAsync(op => op.Add(u => u.Sites[siteId].Projects, projectDoc.Id));
+        }
+
+        protected virtual async Task RemoveUserFromProjectAsync(IConnection conn, IDocument<TModel> projectDoc,
+            IDocument<User> userDoc)
+        {
+            await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserRoles[userDoc.Id]));
+            string siteId = SiteOptions.Value.Id;
+            int index = userDoc.Data.Sites[siteId].Projects.IndexOf(projectDoc.Id);
+            await userDoc.SubmitJson0OpAsync(op => op.Remove(u => u.Sites[siteId].Projects, index));
+        }
+
+        protected bool IsProjectAdmin(TModel project, string userId)
+        {
+            return project.UserRoles.TryGetValue(userId, out string role) && role == ProjectAdminRole;
+        }
+
+        protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);
     }
 }

@@ -20,12 +20,12 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { Comment } from '../../core/models/comment';
-import { CommentsDoc } from '../../core/models/comments-doc';
+import { CommentListDoc } from '../../core/models/comment-list-doc';
 import { Question } from '../../core/models/question';
-import { QuestionsDoc } from '../../core/models/questions-doc';
+import { QuestionListDoc } from '../../core/models/question-list-doc';
 import { SFProject } from '../../core/models/sfproject';
 import { SFProjectData } from '../../core/models/sfproject-data';
-import { SFProjectDataDoc } from '../../core/models/sfproject-data-doc';
+import { SFProjectDataDoc } from '../../core/models/sfproject-doc';
 import { SFProjectRoles } from '../../core/models/sfproject-roles';
 import { SFProjectUser, SFProjectUserRef } from '../../core/models/sfproject-user';
 import { TextDocId } from '../../core/models/text-doc-id';
@@ -71,12 +71,12 @@ describe('CheckingOverviewComponent', () => {
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
       env.waitForQuestions();
       expect(env.addQuestionButton.nativeElement.disabled).toBe(false);
-      verify(env.mockedProjectService.getQuestionsDoc(anything())).twice();
+      verify(env.mockedProjectService.getQuestionList(anything())).twice();
 
       resetCalls(env.mockedProjectService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedProjectService.getQuestionsDoc(anything())).never();
+      verify(env.mockedProjectService.getQuestionList(anything())).never();
     }));
 
     it('should add a question if requested', fakeAsync(() => {
@@ -91,12 +91,12 @@ describe('CheckingOverviewComponent', () => {
       );
       env.waitForQuestions();
       expect(env.addQuestionButton.nativeElement.disabled).toBe(false);
-      verify(env.mockedProjectService.getQuestionsDoc(anything())).twice();
+      verify(env.mockedProjectService.getQuestionList(anything())).twice();
 
       resetCalls(env.mockedProjectService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedProjectService.getQuestionsDoc(anything())).once();
+      verify(env.mockedProjectService.getQuestionList(anything())).once();
     }));
   });
 
@@ -108,7 +108,7 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(2);
       expect(env.questionEdits.length).toEqual(0);
       expect(env.component.itemVisible[id.toString()]).toBeFalsy();
-      expect(env.component.questionsDocs[id.toString()].data.length).toBeGreaterThan(0);
+      expect(env.component.questionListDocs[id.toString()].data.length).toBeGreaterThan(0);
       expect(env.component.questionCount(id.bookId, id.chapter)).toBeGreaterThan(0);
 
       env.simulateRowClick(0);
@@ -140,12 +140,12 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(5);
       expect(env.questionEdits.length).toEqual(2);
-      verify(env.mockedProjectService.getQuestionsDoc(anything())).twice();
+      verify(env.mockedProjectService.getQuestionList(anything())).twice();
 
       resetCalls(env.mockedProjectService);
       env.clickElement(env.questionEdits[0]);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedProjectService.getQuestionsDoc(anything())).never();
+      verify(env.mockedProjectService.getQuestionList(anything())).never();
     }));
   });
 
@@ -272,18 +272,18 @@ class TestEnvironment {
     );
 
     const text1_1id = new TextDocId('project01', 'MAT', 1);
-    when(this.mockedProjectService.getQuestionsDoc(deepEqual(text1_1id))).thenResolve(
+    when(this.mockedProjectService.getQuestionList(deepEqual(text1_1id))).thenResolve(
       this.createQuestionsDoc(text1_1id, [
         { id: 'q1Id', ownerRef: undefined, text: 'Book 1, Q1 text' },
         { id: 'q2Id', ownerRef: undefined, text: 'Book 1, Q2 text' }
       ])
     );
     const text1_3id = new TextDocId('project01', 'MAT', 3);
-    when(this.mockedProjectService.getQuestionsDoc(deepEqual(text1_3id))).thenResolve(
+    when(this.mockedProjectService.getQuestionList(deepEqual(text1_3id))).thenResolve(
       this.createQuestionsDoc(text1_3id, [])
     );
     const text2_1id = new TextDocId('project01', 'LUK', 1);
-    when(this.mockedProjectService.getQuestionsDoc(deepEqual(text2_1id))).thenResolve(
+    when(this.mockedProjectService.getQuestionList(deepEqual(text2_1id))).thenResolve(
       this.createQuestionsDoc(text2_1id, [{ id: 'q3Id', ownerRef: undefined, text: 'Book 2, Q3 text' }])
     );
     this.setCurrentUser(this.adminUser);
@@ -365,7 +365,7 @@ class TestEnvironment {
     const anotherUserId = 'anotherUserId';
     const ownerRef = this.adminUser.id;
     const textId = new TextDocId(projectId, bookId, chapterNumber);
-    this.component.questionsDocs[textId.toString()] = this.createQuestionsDoc(textId, [
+    this.component.questionListDocs[textId.toString()] = this.createQuestionsDoc(textId, [
       {
         id: 'q1Id',
         ownerRef,
@@ -412,7 +412,7 @@ class TestEnvironment {
       { id: 'q5Id', ownerRef, text: 'Book 1, Q5 text' },
       { id: 'q6Id', ownerRef, text: 'Book 1, Q6 text' }
     ]);
-    this.component.commentsDocs[textId.toString()] = this.createCommentsDoc(textId, [
+    this.component.commentListDocs[textId.toString()] = this.createCommentsDoc(textId, [
       { id: 'c1Id', ownerRef: currentUserId, projectRef: projectId, dateCreated: '', dateModified: '' },
       { id: 'c2Id', ownerRef: currentUserId, projectRef: projectId, dateCreated: '', dateModified: '' },
       { id: 'c3Id', ownerRef: anotherUserId, projectRef: projectId, dateCreated: '', dateModified: '' }
@@ -421,14 +421,14 @@ class TestEnvironment {
     return { bookId, chapters: [{ number: chapterNumber }] };
   }
 
-  private createQuestionsDoc(id: TextDocId, data: Question[]): QuestionsDoc {
+  private createQuestionsDoc(id: TextDocId, data: Question[]): QuestionListDoc {
     const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, id.toString(), data);
-    return new QuestionsDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    return new QuestionListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 
-  private createCommentsDoc(id: TextDocId, data: Comment[]): CommentsDoc {
+  private createCommentsDoc(id: TextDocId, data: Comment[]): CommentListDoc {
     const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, id.toString(), data);
-    return new CommentsDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    return new CommentListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 
   private createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {

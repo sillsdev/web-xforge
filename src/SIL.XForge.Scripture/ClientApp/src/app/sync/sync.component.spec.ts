@@ -14,7 +14,7 @@ import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProject } from '../core/models/sfproject';
 import { SFProjectData } from '../core/models/sfproject-data';
-import { SFProjectDataDoc } from '../core/models/sfproject-data-doc';
+import { SFProjectDataDoc } from '../core/models/sfproject-doc';
 import { SFProjectService } from '../core/sfproject.service';
 import { SyncComponent } from './sync.component';
 

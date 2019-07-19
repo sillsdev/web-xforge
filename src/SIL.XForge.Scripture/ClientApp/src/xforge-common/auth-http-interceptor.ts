@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
 
-const AUTH_APIS = ['paratext-api', 'machine-api', 'json-api'];
+const AUTH_APIS = ['paratext-api', 'machine-api', 'command-api'];
 
 @Injectable()
 export class AuthHttpInterceptor implements HttpInterceptor {

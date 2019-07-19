@@ -68,7 +68,7 @@
           <ng-container *ngIf="itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)]">
             <mdc-list-item
               *ngFor="
-                let question of questionsDocs[getTextJsonDocIdStr(text.bookId, chapter.number)].data;
+                let question of questionListDocs[getTextJsonDocIdStr(text.bookId, chapter.number)].data.questions;
                 let i = index
               "
             >

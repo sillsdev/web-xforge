@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { from, of } from 'rxjs';
-import { filter, map, switchMap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-start',
@@ -20,20 +19,20 @@ export class StartComponent extends SubscriptionDisposable implements OnInit {
   }
 
   ngOnInit(): void {
-    this.subscribe(
-      from(this.userService.getCurrentUser()).pipe(
-        filter(userDoc => userDoc.data != null),
-        switchMap(userDoc => {
-          if (userDoc.data.sites['sf'] != null && userDoc.data.sites['sf'].currentProjectId != null) {
-            return of(userDoc.data.sites['sf'].currentProjectId);
-          }
-          return this.userService
-            .getProjects(userDoc.id)
-            .pipe(map(r => (r.data.length > 0 ? r.data[0].project.id : null)));
-        }),
-        filter(projectId => projectId != null)
-      ),
-      projectId => this.router.navigate(['./', projectId], { relativeTo: this.route, replaceUrl: true })
-    );
+    this.navigateToProject();
+  }
+
+  private async navigateToProject(): Promise<void> {
+    const userDoc = await this.userService.getCurrentUser();
+    const site = userDoc.data.sites[environment.siteId];
+    let projectId: string;
+    if (site != null && site.currentProjectId != null) {
+      projectId = site.currentProjectId;
+    } else if (site.projects.length > 0) {
+      projectId = site.projects[0];
+    }
+    if (projectId != null) {
+      this.router.navigate(['./', projectId], { relativeTo: this.route, replaceUrl: true });
+    }
   }
 }

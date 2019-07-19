@@ -21,7 +21,7 @@ namespace SIL.XForge.Services
     {
         private Dictionary<RpcPath, List<IRpcMethodProvider>> _routeCache;
 
-        public RpcPath BaseRequestPath => $"/{XForgeConstants.JsonApiNamespace}";
+        public RpcPath BaseRequestPath => $"/{XForgeConstants.CommandApiNamespace}";
 
         public List<IRpcMethodProvider> GetMethodsByPath(RpcPath path)
         {

@@ -1,5 +1,3 @@
-using SIL.XForge.Utils;
-
 namespace SIL.XForge.Configuration
 {
     public class RealtimeDomainConfig
@@ -11,6 +9,6 @@ namespace SIL.XForge.Configuration
 
         public int Domain { get; }
 
-        public ObjectPath PathTemplate { get; set; }
+        public PathTemplateConfig PathTemplate { get; set; }
     }
 }

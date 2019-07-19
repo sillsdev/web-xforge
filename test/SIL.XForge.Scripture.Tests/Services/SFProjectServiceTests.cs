@@ -1,19 +1,17 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using AutoMapper;
-using JsonApiDotNetCore.Internal;
-using JsonApiDotNetCore.Internal.Query;
-using JsonApiDotNetCore.Models;
-using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
-using SIL.Machine.WebApi.Models;
 using SIL.Machine.WebApi.Services;
+using SIL.XForge.Configuration;
+using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
@@ -21,322 +19,213 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class SFProjectServiceTests
     {
-        private const string User01Id = "user01";
-        private const string User02Id = "user02";
+        private const string Project01 = "project01";
+        private const string Project02 = "project02";
+        private const string Project03 = "project03";
+        private const string User01 = "user01";
+        private const string User02 = "user02";
+        private const string SiteId = "xf";
 
         [Test]
-        public async Task UpdateAsync_UserRole()
+        public async Task UpdateTasksAsync_ChangeSourceProject_RecreateMachineProjectAndSync()
         {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.User);
-                env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
-                    {
-                        { env.GetAttribute("project-name"), "new" }
-                    });
-                env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
+            var env = new TestEnvironment();
 
-                var resource = new SFProjectResource
-                {
-                    Id = "project02",
-                    ProjectName = "new"
-                };
-                var ex = Assert.ThrowsAsync<JsonApiException>(async () =>
-                    {
-                        await env.Service.UpdateAsync(resource.Id, resource);
-                    });
+            await env.Service.UpdateTasksAsync(User01, Project01,
+                new UpdateTasksParams { SourceParatextId = "changedId" });
 
-                Assert.That(ex.GetStatusCode(), Is.EqualTo(StatusCodes.Status403Forbidden));
+            SFProject project = env.GetProject("project01");
+            Assert.That(project.SourceParatextId, Is.EqualTo("changedId"));
 
-                resource.Id = "project01";
-                SFProjectResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
-
-                Assert.That(updatedResource, Is.Not.Null);
-                Assert.That(updatedResource.ProjectName, Is.EqualTo("new"));
-
-                await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
-                await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Project>());
-                await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
-            }
+            await env.EngineService.Received().RemoveProjectAsync(Arg.Any<string>());
+            await env.EngineService.Received().AddProjectAsync(Arg.Any<Machine.WebApi.Models.Project>());
+            await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
         [Test]
-        public async Task UpdateAsync_SystemAdminRole()
+        public async Task UpdateTasksAsync_EnableTranslate_CreateMachineProjectAndSync()
         {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.SystemAdmin);
-                env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
-                    {
-                        { env.GetAttribute("project-name"), "new" }
-                    });
-                env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
+            var env = new TestEnvironment();
 
-                var resource = new SFProjectResource
-                {
-                    Id = "project02",
-                    ProjectName = "new"
-                };
+            await env.Service.UpdateTasksAsync(User01, Project01,
+                new UpdateTasksParams { TranslateEnabled = true, SourceParatextId = "changedId" });
 
-                SFProjectResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
+            SFProject project = env.GetProject(Project01);
+            Assert.That(project.TranslateEnabled, Is.True);
+            Assert.That(project.SourceParatextId, Is.EqualTo("changedId"));
 
-                Assert.That(updatedResource, Is.Not.Null);
-                Assert.That(updatedResource.ProjectName, Is.EqualTo("new"));
-
-                await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
-                await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Project>());
-                await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
-            }
+            await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
+            await env.EngineService.Received().AddProjectAsync(Arg.Any<Machine.WebApi.Models.Project>());
+            await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
         [Test]
-        public async Task UpdateAsync_ChangeSourceProject_RecreateMachineProjectAndSync()
+        public async Task UpdateTasksAsync_EnableChecking_Sync()
         {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.User);
-                env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
-                    {
-                        { env.GetAttribute("source-paratext-id"), "changedId" }
-                    });
-                env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
-                var resource = new SFProjectResource
-                {
-                    Id = "project01",
-                    SourceParatextId = "changedId"
-                };
+            var env = new TestEnvironment();
 
-                SFProjectResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
+            await env.Service.UpdateTasksAsync(User01, Project01, new UpdateTasksParams { CheckingEnabled = true });
 
-                Assert.That(updatedResource, Is.Not.Null);
-                Assert.That(updatedResource.SourceParatextId, Is.EqualTo("changedId"));
+            SFProject project = env.GetProject(Project01);
+            Assert.That(project.CheckingEnabled, Is.True);
 
-                await env.EngineService.Received().RemoveProjectAsync(Arg.Any<string>());
-                await env.EngineService.Received().AddProjectAsync(Arg.Any<Project>());
-                await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
-            }
-        }
-
-        [Test]
-        public async Task UpdateAsync_EnableTranslate_CreateMachineProjectAndSync()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User02Id, SystemRoles.User);
-                env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
-                    {
-                        { env.GetAttribute("translate-enabled"), true },
-                        { env.GetAttribute("source-paratext-id"), "changedId" }
-                    });
-                env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
-                var resource = new SFProjectResource
-                {
-                    Id = "project02",
-                    TranslateEnabled = true,
-                    SourceParatextId = "changedId"
-                };
-
-                SFProjectResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
-
-                Assert.That(updatedResource, Is.Not.Null);
-                Assert.That(updatedResource.TranslateEnabled, Is.True);
-                Assert.That(updatedResource.SourceParatextId, Is.EqualTo("changedId"));
-                await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
-                await env.EngineService.Received().AddProjectAsync(Arg.Any<Project>());
-                await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
-            }
-        }
-
-        [Test]
-        public async Task UpdateAsync_EnableChecking_Sync()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.User);
-                env.JsonApiContext.AttributesToUpdate.Returns(new Dictionary<AttrAttribute, object>
-                    {
-                        { env.GetAttribute("checking-enabled"), true }
-                    });
-                env.JsonApiContext.RelationshipsToUpdate.Returns(new Dictionary<RelationshipAttribute, object>());
-                var resource = new SFProjectResource
-                {
-                    Id = "project01",
-                    CheckingEnabled = true
-                };
-
-                SFProjectResource updatedResource = await env.Service.UpdateAsync(resource.Id, resource);
-
-                Assert.That(updatedResource, Is.Not.Null);
-                Assert.That(updatedResource.CheckingEnabled, Is.True);
-
-                await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
-                await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Project>());
-                await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
-            }
-        }
-
-        [Test]
-        public async Task GetAsync_UserRole()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.User);
-                env.JsonApiContext.QuerySet.Returns(new QuerySet());
-                env.JsonApiContext.PageManager.Returns(new PageManager());
-
-                SFProjectResource[] resources = (await env.Service.GetAsync()).ToArray();
-
-                Assert.That(resources.Select(r => r.Id), Is.EquivalentTo(new[] { "project01", "project03" }));
-            }
-        }
-
-        [Test]
-        public async Task GetAsync_SystemAdminRole()
-        {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.SystemAdmin);
-                env.JsonApiContext.QuerySet.Returns(new QuerySet());
-                env.JsonApiContext.PageManager.Returns(new PageManager());
-
-                SFProjectResource[] resources = (await env.Service.GetAsync()).ToArray();
-
-                Assert.That(resources.Select(r => r.Id), Is.EquivalentTo(new[]
-                    {
-                        "project01",
-                        "project02",
-                        "project03"
-                    }));
-            }
+            await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
+            await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Machine.WebApi.Models.Project>());
+            await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
         [Test]
         public async Task DeleteAsync()
         {
-            using (var env = new TestEnvironment())
-            {
-                env.SetUser(User01Id, SystemRoles.User);
-                env.CreateSiteDir();
-                string syncDir = Path.Combine(TestEnvironment.SiteDir, "sync", "project01");
-                Directory.CreateDirectory(syncDir);
-                bool result = await env.Service.DeleteAsync("project01");
+            var env = new TestEnvironment();
+            string syncDir = Path.Combine("xforge", "sync", Project01);
+            env.FileSystemService.DirectoryExists(syncDir).Returns(true);
+            await env.Service.DeleteProjectAsync(User01, Project01);
 
-                Assert.That(result, Is.True);
-                Assert.That(env.Entities.Contains("project01"), Is.False);
-                await env.EngineService.Received().RemoveProjectAsync("project01");
-                await env.RealtimeService.Received().DeleteProjectDocsAsync(SFRootDataTypes.Texts, "project01");
-                await env.RealtimeService.Received().DeleteProjectDocsAsync(SFRootDataTypes.Questions, "project01");
-                await env.RealtimeService.Received().DeleteProjectDocsAsync(SFRootDataTypes.Comments, "project01");
-                await env.RealtimeService.Received().DeleteProjectDocsAsync(RootDataTypes.Projects, "project01");
-                Assert.That(Directory.Exists(syncDir), Is.False);
-            }
+            Assert.That(env.ContainsProject(Project01), Is.False);
+            User user = env.GetUser(User01);
+            Assert.That(user.Sites[SiteId].Projects, Does.Not.Contain(Project01));
+            await env.EngineService.Received().RemoveProjectAsync(Project01);
+            env.FileSystemService.Received().DeleteDirectory(syncDir);
         }
 
-        class TestEnvironment : ResourceServiceTestEnvironmentBase<SFProjectResource, SFProjectEntity>
+        private class TestEnvironment
         {
             public TestEnvironment()
-                : base("projects")
             {
+                RealtimeService = new SFMemoryRealtimeService();
+                RealtimeService.AddRepository(RootDataTypes.Users, OTType.Json0, new MemoryRepository<User>(new[]
+                {
+                    new User
+                    {
+                        Id = User01,
+                        Sites = new Dictionary<string, Site>
+                        {
+                            { SiteId, new Site { Projects = { Project01, Project03 } } }
+                        }
+                    },
+                    new User
+                    {
+                        Id = User02,
+                        Sites = new Dictionary<string, Site>
+                        {
+                            { SiteId, new Site { Projects = { Project02, Project03 } } }
+                        }
+                    }
+                }));
+                RealtimeService.AddRepository(RootDataTypes.Projects, OTType.Json0, new MemoryRepository<SFProject>(
+                    new[]
+                    {
+                        new SFProject
+                        {
+                            Id = Project01,
+                            ProjectName = "project01",
+                            TranslateEnabled = true,
+                            SourceParatextId = "paratextId",
+                            UserRoles = new Dictionary<string, string>
+                            {
+                                { User01, SFProjectRoles.Administrator }
+                            },
+                            Texts =
+                            {
+                                new TextInfo
+                                {
+                                    BookId = "MAT",
+                                    Name = "Matthew",
+                                    Chapters = { new Chapter { Number = 1, LastVerse = 3 } }
+                                },
+                                new TextInfo
+                                {
+                                    BookId = "MRK",
+                                    Name = "Mark",
+                                    Chapters =
+                                    {
+                                        new Chapter { Number = 1, LastVerse = 3 },
+                                        new Chapter { Number = 2, LastVerse = 3 }
+                                    }
+                                }
+                            }
+                        },
+                        new SFProject
+                        {
+                            Id = Project02,
+                            ProjectName = "project02",
+                            UserRoles =
+                            {
+                                { User02, SFProjectRoles.Administrator }
+                            }
+                        },
+                        new SFProject
+                        {
+                            Id = Project03,
+                            ProjectName = "project03",
+                            UserRoles =
+                            {
+                                { User01, SFProjectRoles.Administrator },
+                                { User02, SFProjectRoles.Translator }
+                            }
+                        }
+                    }));
+                RealtimeService.AddRepository(SFRootDataTypes.ProjectUserConfigs, OTType.Json0,
+                    new MemoryRepository<SFProjectUserConfig>(new[]
+                    {
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User01) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) }
+                    }));
+                var siteOptions = Substitute.For<IOptions<SiteOptions>>();
+                siteOptions.Value.Returns(new SiteOptions
+                {
+                    Id = SiteId,
+                    Name = "xForge",
+                    Origin = new Uri("http://localhost"),
+                    SiteDir = "xforge"
+                });
+                var emailService = Substitute.For<IEmailService>();
+                var projectSecrets = new MemoryRepository<SFProjectSecret>(new[]
+                {
+                    new SFProjectSecret { Id = Project01 },
+                    new SFProjectSecret { Id = Project02 },
+                    new SFProjectSecret { Id = Project03 },
+                });
+                var securityService = Substitute.For<ISecurityService>();
                 EngineService = Substitute.For<IEngineService>();
                 SyncService = Substitute.For<ISyncService>();
                 SyncService.SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
                     .Returns(Task.CompletedTask);
-                RealtimeService = Substitute.For<IRealtimeService>();
-                var projectDataDoc = Substitute.For<IDocument<SFProjectData>>();
-                projectDataDoc.Data.Returns(new SFProjectData
+                var paratextService = Substitute.For<IParatextService>();
+                var userSecrets = new MemoryRepository<UserSecret>(new[]
                 {
-                    Texts =
-                        {
-                            new TextInfo
-                            {
-                                BookId = "MAT",
-                                Name = "Matthew",
-                                Chapters = { new Chapter { Number = 1, LastVerse = 3 } }
-                            },
-                            new TextInfo
-                            {
-                                BookId = "MRK",
-                                Name = "Mark",
-                                Chapters =
-                                {
-                                    new Chapter { Number = 1, LastVerse = 3 },
-                                    new Chapter { Number = 2, LastVerse = 3 }
-                                }
-                            }
-                        }
+                    new UserSecret { Id = User01 },
+                    new UserSecret { Id = User02 }
                 });
-                var conn = Substitute.For<IConnection>();
-                conn.Get<SFProjectData>(RootDataTypes.Projects, "project01").Returns(projectDataDoc);
-                RealtimeService.ConnectAsync().Returns(Task.FromResult(conn));
-                Service = new SFProjectService(JsonApiContext, Mapper, UserAccessor, Entities, EngineService,
-                    SiteOptions, SyncService, RealtimeService);
+                var translateMetrics = new MemoryRepository<TranslateMetrics>();
+                FileSystemService = Substitute.For<IFileSystemService>();
+                Service = new SFProjectService(RealtimeService, siteOptions, emailService, projectSecrets,
+                    securityService, EngineService, SyncService, paratextService, userSecrets, translateMetrics,
+                    FileSystemService);
             }
 
             public SFProjectService Service { get; }
             public IEngineService EngineService { get; }
             public ISyncService SyncService { get; }
-            public IRealtimeService RealtimeService { get; }
+            public SFMemoryRealtimeService RealtimeService { get; }
+            public IFileSystemService FileSystemService { get; }
 
-            protected override IEnumerable<SFProjectEntity> GetInitialData()
+            public SFProject GetProject(string id)
             {
-                return new[]
-                {
-                    new SFProjectEntity
-                    {
-                        Id = "project01",
-                        ProjectName = "project01",
-                        TranslateEnabled = true,
-                        SourceParatextId = "paratextId",
-                        Users =
-                        {
-                            new SFProjectUserEntity
-                            {
-                                Id = "projectuser01",
-                                UserRef = User01Id,
-                                Role = SFProjectRoles.Administrator
-                            }
-                        }
-                    },
-                    new SFProjectEntity
-                    {
-                        Id = "project02",
-                        ProjectName = "project02",
-                        Users =
-                        {
-                            new SFProjectUserEntity
-                            {
-                                Id = "projectuser03",
-                                UserRef = User02Id,
-                                Role = SFProjectRoles.Administrator
-                            }
-                        }
-                    },
-                    new SFProjectEntity
-                    {
-                        Id = "project03",
-                        ProjectName = "project03",
-                        Users =
-                        {
-                            new SFProjectUserEntity
-                            {
-                                Id = "projectuser04",
-                                UserRef = User01Id,
-                                Role = SFProjectRoles.Administrator
-                            },
-                            new SFProjectUserEntity
-                            {
-                                Id = "projectuser05",
-                                UserRef = User02Id,
-                                Role = SFProjectRoles.Translator
-                            }
-                        }
-                    }
-                };
+                return RealtimeService.GetRepository<SFProject>(RootDataTypes.Projects).Get(id);
             }
 
-            protected override void SetupMapper(IMapperConfigurationExpression config)
+            public bool ContainsProject(string id)
             {
-                config.AddProfile<SFMapperProfile>();
+                return RealtimeService.GetRepository<SFProject>(RootDataTypes.Projects).Contains(id);
+            }
+
+            public User GetUser(string id)
+            {
+                return RealtimeService.GetRepository<User>(RootDataTypes.Users).Get(id);
             }
         }
     }

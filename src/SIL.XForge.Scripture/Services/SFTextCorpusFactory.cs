@@ -55,24 +55,19 @@ namespace SIL.XForge.Scripture.Services
                         throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextType));
                 }
 
-                using (IConnection conn = await _realtimeService.ConnectAsync())
-                {
-                    IDocument<SFProjectData> projectDataDoc = conn.Get<SFProjectData>(RootDataTypes.Projects,
-                        projectId);
-                    await projectDataDoc.FetchAsync();
+                var project = await _realtimeService.GetSnapshotAsync<SFProject>(RootDataTypes.Projects, projectId);
 
-                    foreach (TextInfo text in projectDataDoc.Data.Texts)
+                foreach (TextInfo text in project.Texts)
+                {
+                    foreach (Chapter chapter in text.Chapters)
                     {
-                        foreach (Chapter chapter in text.Chapters)
+                        string id = TextInfo.GetTextDocId(projectId, text.BookId, chapter.Number, textType);
+                        FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", id);
+                        BsonDocument doc = await textDataColl.Find(filter).FirstOrDefaultAsync();
+                        if (doc != null)
                         {
-                            string id = TextInfo.GetTextDocId(projectId, text.BookId, chapter.Number, textType);
-                            FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", id);
-                            BsonDocument doc = await textDataColl.Find(filter).FirstOrDefaultAsync();
-                            if (doc != null)
-                            {
-                                texts.Add(new SFScriptureText(wordTokenizer, projectId, text.BookId, chapter.Number,
-                                    doc));
-                            }
+                            texts.Add(new SFScriptureText(wordTokenizer, projectId, text.BookId, chapter.Number,
+                                doc));
                         }
                     }
                 }

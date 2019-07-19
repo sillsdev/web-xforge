@@ -15,9 +15,9 @@ function serializeRecordIdentity(identity: RecordIdentity): string {
   return `${identity.type}:${identity.id}`;
 }
 
-export interface RealtimeQueryResults<T extends RealtimeDoc> {
+export interface QueryResults<T extends RealtimeDoc> {
   docs: T[];
-  totalPagedCount?: number;
+  totalPagedCount: number;
 }
 
 export interface QueryParameters {
@@ -84,36 +84,42 @@ export class RealtimeService {
     type: string,
     query: any,
     parameters: QueryParameters = {}
-  ): Promise<RealtimeQueryResults<T>> {
+  ): Promise<QueryResults<T>> {
     const collection = getCollectionName(type);
-    const resultsQuery = clone(query);
+    const resultsQueryParams = clone(query);
     if (parameters.sort != null) {
-      resultsQuery.$sort = parameters.sort;
+      resultsQueryParams.$sort = parameters.sort;
     }
+    let getCount = false;
     if (parameters.skip != null) {
-      resultsQuery.$skip = parameters.skip;
+      resultsQueryParams.$skip = parameters.skip;
+      getCount = true;
     }
     if (parameters.limit != null) {
-      resultsQuery.$limit = parameters.limit;
+      resultsQueryParams.$limit = parameters.limit;
+      getCount = true;
     }
-    const countQuery = clone(query);
-    countQuery.$count = { applySkipLimit: false };
-    const [countQueryObj, resultsQueryObj] = await Promise.all([
-      this.createFetchQuery(collection, countQuery),
-      this.createFetchQuery(collection, resultsQuery)
-    ]);
+    const queryPromises: Promise<Query>[] = [];
+    queryPromises.push(this.createFetchQuery(collection, resultsQueryParams));
+    if (getCount) {
+      const countQueryParams = clone(query);
+      countQueryParams.$count = { applySkipLimit: false };
+      queryPromises.push(this.createFetchQuery(collection, countQueryParams));
+    }
+    const queries = await Promise.all(queryPromises);
+    const resultsQuery = queries[0];
     const RealtimeDocType = this.domainModel.getRealtimeDocType(type);
     const docs: T[] = [];
-    for (const shareDoc of resultsQueryObj.results) {
+    for (const shareDoc of resultsQuery.results) {
       const key = serializeRecordIdentity({ type, id: shareDoc.id });
       let doc = this.docs.get(key);
       if (doc == null) {
-        doc = new RealtimeDocType(new SharedbRealtimeDocAdapter(shareDoc), this.store);
+        doc = new RealtimeDocType(new SharedbRealtimeDocAdapter(this.connection, collection, shareDoc), this.store);
         this.docs.set(key, doc);
       }
       docs.push(doc as T);
     }
-    return { docs, totalPagedCount: countQueryObj.extra };
+    return { docs, totalPagedCount: queries.length === 2 ? queries[1].extra : docs.length };
   }
 
   /**
@@ -147,12 +153,12 @@ export class RealtimeService {
     const collection = getCollectionName(identity.type);
     const sharedbDoc = this.connection.get(collection, identity.id);
     const RealtimeDocType = this.domainModel.getRealtimeDocType(identity.type);
-    return new RealtimeDocType(new SharedbRealtimeDocAdapter(sharedbDoc), this.store);
+    return new RealtimeDocType(new SharedbRealtimeDocAdapter(this.connection, collection, sharedbDoc), this.store);
   }
 
   private createFetchQuery(collection: string, query: any): Promise<Query> {
     return new Promise<Query>((resolve, reject) => {
-      const queryObj = this.connection.createFetchQuery(collection, query, {}, (err, results) => {
+      const queryObj = this.connection.createFetchQuery(collection, query, {}, err => {
         if (err != null) {
           reject(err);
         } else {

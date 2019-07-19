@@ -8,7 +8,7 @@ import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { SFProjectData } from 'src/app/core/models/sfproject-data';
-import { SFProjectDataDoc } from 'src/app/core/models/sfproject-data-doc';
+import { SFProjectDataDoc } from 'src/app/core/models/sfproject-doc';
 import { deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
@@ -189,7 +189,7 @@ class TestEnvironment {
   }
 
   private addTextDoc(id: TextDocId): void {
-    when(this.mockedSFProjectService.getTextDoc(deepEqual(id))).thenResolve(this.createTextDoc(id));
+    when(this.mockedSFProjectService.getText(deepEqual(id))).thenResolve(this.createTextDoc(id));
   }
 
   private createTextDoc(id: TextDocId): TextDoc {

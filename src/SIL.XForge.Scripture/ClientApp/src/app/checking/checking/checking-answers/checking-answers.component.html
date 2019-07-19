@@ -97,7 +97,8 @@
           ></app-checking-owner>
         </div>
         <app-checking-comments
-          [projectCurrentUser]="projectCurrentUser"
+          [project]="project"
+          [projectUserConfigDoc]="projectUserConfigDoc"
           (action)="submitCommentAction($event)"
           [comments]="getComments(answer)"
           [answer]="answer"

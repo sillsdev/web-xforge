@@ -9,7 +9,7 @@ import { Comment } from '../../../core/models/comment';
 import { Question } from '../../../core/models/question';
 import { SFProject } from '../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../core/models/sfproject-roles';
-import { SFProjectUser } from '../../../core/models/sfproject-user';
+import { SFProjectUserConfigDoc } from '../../../core/models/sfproject-user-config-doc';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 
@@ -27,13 +27,13 @@ export interface AnswerAction {
 })
 export class CheckingAnswersComponent implements OnInit {
   @Input() project: SFProject;
-  @Input() projectCurrentUser: SFProjectUser;
+  @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
   @Input() set question(question: Question) {
     if (question !== this._question) {
       this.hideAnswerForm();
     }
     this._question = question;
-    this.initUserAnswerRefsRead = clone(this.projectCurrentUser.answerRefsRead);
+    this.initUserAnswerRefsRead = clone(this.projectUserConfigDoc.data.answerRefsRead);
   }
   @Input() comments: Readonly<Comment[]> = [];
   @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
@@ -74,13 +74,13 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   get hasUserRead(): boolean {
-    return this.projectCurrentUser != null && this.projectCurrentUser.questionRefsRead
-      ? this.projectCurrentUser.questionRefsRead.includes(this.question.id)
+    return this.projectUserConfigDoc != null && this.projectUserConfigDoc.data.questionRefsRead
+      ? this.projectUserConfigDoc.data.questionRefsRead.includes(this.question.id)
       : false;
   }
 
   get isAdministrator(): boolean {
-    return this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
+    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRoles.ParatextAdministrator;
   }
 
   get question(): Question {
@@ -130,7 +130,9 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   hasUserReadAnswer(answer: Answer): boolean {
-    return this.initUserAnswerRefsRead.includes(answer.id) || this.projectCurrentUser.userRef === answer.ownerRef;
+    return (
+      this.initUserAnswerRefsRead.includes(answer.id) || this.projectUserConfigDoc.data.ownerRef === answer.ownerRef
+    );
   }
 
   hideAnswerForm() {

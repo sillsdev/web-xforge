@@ -12,7 +12,7 @@ import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
-import { QueryParameters, RealtimeQueryResults } from 'xforge-common/realtime.service';
+import { QueryParameters, QueryResults } from 'xforge-common/realtime.service';
 import { nameof } from 'xforge-common/utils';
 import { MapQueryResults } from '../json-api.service';
 import { Project, ProjectRef } from '../models/project';
@@ -233,7 +233,7 @@ class TestEnvironment {
   setupUserData(): void {
     when(this.mockedUserService.onlineSearch(anything(), anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>, reload$: Observable<void>) => {
-        const results: RealtimeQueryResults<UserDoc>[] = [
+        const results: QueryResults<UserDoc>[] = [
           // page 1
           { docs: this.userDocs, totalPagedCount: this.userDocs.length },
           // page 2

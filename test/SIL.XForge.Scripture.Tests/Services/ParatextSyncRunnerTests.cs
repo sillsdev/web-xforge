@@ -17,6 +17,7 @@ using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
@@ -30,9 +31,6 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
 
             await env.Runner.RunAsync("project02", "user01", false);
-
-            await env.RealtimeService.DidNotReceive().ConnectAsync();
-            await env.ProjectDataDoc.DidNotReceive().SubmitOpAsync(Arg.Any<object>());
         }
 
         [Test]
@@ -43,9 +41,10 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user02", false);
 
-            await env.RealtimeService.Received().ConnectAsync();
             await env.ParatextService.DidNotReceive().GetBooksAsync(Arg.Any<UserSecret>(), "project01");
-            await env.ProjectDataDoc.Received(1).SubmitOpAsync(Arg.Any<object>());
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.False);
         }
 
         [Test]
@@ -61,7 +60,9 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.ProjectDataDoc.Received(2).SubmitOpAsync(Arg.Any<object>());
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.False);
         }
 
         [Test]
@@ -73,29 +74,31 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", true);
 
-            await env.GetTextDoc("MAT", 1, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MAT", 2, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 1, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 2, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
+            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.True);
 
-            await env.GetTextDoc("MAT", 1, TextType.Source).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MAT", 2, TextType.Source).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 1, TextType.Source).DidNotReceive().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 2, TextType.Source).DidNotReceive().CreateAsync(Arg.Any<Delta>());
+            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.True);
+            Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
 
-            await env.GetQuestionsDoc("MAT", 1).Received().CreateAsync(Arg.Any<List<Question>>());
-            await env.GetQuestionsDoc("MAT", 2).Received().CreateAsync(Arg.Any<List<Question>>());
-            await env.GetQuestionsDoc("MRK", 1).Received().CreateAsync(Arg.Any<List<Question>>());
-            await env.GetQuestionsDoc("MRK", 2).Received().CreateAsync(Arg.Any<List<Question>>());
+            Assert.That(env.ContainsQuestionList("MAT", 1), Is.True);
+            Assert.That(env.ContainsQuestionList("MAT", 2), Is.True);
+            Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
+            Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
 
-            await env.GetCommentsDoc("MAT", 1).Received().CreateAsync(Arg.Any<List<Comment>>());
-            await env.GetCommentsDoc("MAT", 2).Received().CreateAsync(Arg.Any<List<Comment>>());
-            await env.GetCommentsDoc("MRK", 1).Received().CreateAsync(Arg.Any<List<Comment>>());
-            await env.GetCommentsDoc("MRK", 2).Received().CreateAsync(Arg.Any<List<Comment>>());
+            Assert.That(env.ContainsCommentList("MAT", 1), Is.True);
+            Assert.That(env.ContainsCommentList("MAT", 2), Is.True);
+            Assert.That(env.ContainsCommentList("MRK", 1), Is.True);
+            Assert.That(env.ContainsCommentList("MRK", 2), Is.True);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
 
-            await env.ProjectDataDoc.Received(12).SubmitOpAsync(Arg.Any<object>());
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
         [Test]
@@ -107,29 +110,31 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", true);
 
-            await env.GetTextDoc("MAT", 1, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MAT", 2, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 1, TextType.Target).DidNotReceive().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 2, TextType.Target).DidNotReceive().CreateAsync(Arg.Any<Delta>());
+            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.False);
 
-            await env.GetTextDoc("MAT", 1, TextType.Source).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MAT", 2, TextType.Source).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 1, TextType.Source).DidNotReceive().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 2, TextType.Source).DidNotReceive().CreateAsync(Arg.Any<Delta>());
+            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.True);
+            Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
 
-            await env.GetQuestionsDoc("MAT", 1).Received().CreateAsync(Arg.Any<List<Question>>());
-            await env.GetQuestionsDoc("MAT", 2).Received().CreateAsync(Arg.Any<List<Question>>());
-            await env.GetQuestionsDoc("MRK", 1).DidNotReceive().CreateAsync(Arg.Any<List<Question>>());
-            await env.GetQuestionsDoc("MRK", 2).DidNotReceive().CreateAsync(Arg.Any<List<Question>>());
+            Assert.That(env.ContainsQuestionList("MAT", 1), Is.True);
+            Assert.That(env.ContainsQuestionList("MAT", 2), Is.True);
+            Assert.That(env.ContainsQuestionList("MRK", 1), Is.False);
+            Assert.That(env.ContainsQuestionList("MRK", 2), Is.False);
 
-            await env.GetCommentsDoc("MAT", 1).Received().CreateAsync(Arg.Any<List<Comment>>());
-            await env.GetCommentsDoc("MAT", 2).Received().CreateAsync(Arg.Any<List<Comment>>());
-            await env.GetCommentsDoc("MRK", 1).DidNotReceive().CreateAsync(Arg.Any<List<Comment>>());
-            await env.GetCommentsDoc("MRK", 2).DidNotReceive().CreateAsync(Arg.Any<List<Comment>>());
+            Assert.That(env.ContainsCommentList("MAT", 1), Is.True);
+            Assert.That(env.ContainsCommentList("MAT", 2), Is.True);
+            Assert.That(env.ContainsCommentList("MRK", 1), Is.False);
+            Assert.That(env.ContainsCommentList("MRK", 2), Is.False);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
 
-            await env.ProjectDataDoc.Received(7).SubmitOpAsync(Arg.Any<object>());
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
         [Test]
@@ -141,29 +146,31 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", true);
 
-            await env.GetTextDoc("MAT", 1, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MAT", 2, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 1, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 2, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
+            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.True);
 
-            await env.GetTextDoc("MAT", 1, TextType.Source).DidNotReceive().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MAT", 2, TextType.Source).DidNotReceive().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 1, TextType.Source).DidNotReceive().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 2, TextType.Source).DidNotReceive().CreateAsync(Arg.Any<Delta>());
+            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
 
-            await env.GetQuestionsDoc("MAT", 1).Received().CreateAsync(Arg.Any<List<Question>>());
-            await env.GetQuestionsDoc("MAT", 2).Received().CreateAsync(Arg.Any<List<Question>>());
-            await env.GetQuestionsDoc("MRK", 1).Received().CreateAsync(Arg.Any<List<Question>>());
-            await env.GetQuestionsDoc("MRK", 2).Received().CreateAsync(Arg.Any<List<Question>>());
+            Assert.That(env.ContainsQuestionList("MAT", 1), Is.True);
+            Assert.That(env.ContainsQuestionList("MAT", 2), Is.True);
+            Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
+            Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
 
-            await env.GetCommentsDoc("MAT", 1).Received().CreateAsync(Arg.Any<List<Comment>>());
-            await env.GetCommentsDoc("MAT", 2).Received().CreateAsync(Arg.Any<List<Comment>>());
-            await env.GetCommentsDoc("MRK", 1).Received().CreateAsync(Arg.Any<List<Comment>>());
-            await env.GetCommentsDoc("MRK", 2).Received().CreateAsync(Arg.Any<List<Comment>>());
+            Assert.That(env.ContainsCommentList("MAT", 1), Is.True);
+            Assert.That(env.ContainsCommentList("MAT", 2), Is.True);
+            Assert.That(env.ContainsCommentList("MRK", 1), Is.True);
+            Assert.That(env.ContainsCommentList("MRK", 2), Is.True);
 
             await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
 
-            await env.ProjectDataDoc.Received(10).SubmitOpAsync(Arg.Any<object>());
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
         [Test]
@@ -186,22 +193,26 @@ namespace SIL.XForge.Scripture.Services
             await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK",
                 Arg.Any<string>(), Arg.Any<string>());
 
-            await env.GetQuestionsDoc("MAT", 1).DidNotReceive().SubmitOpAsync(Arg.Any<object>());
-            await env.GetQuestionsDoc("MAT", 2).DidNotReceive().SubmitOpAsync(Arg.Any<object>());
-            await env.GetQuestionsDoc("MRK", 1).DidNotReceive().SubmitOpAsync(Arg.Any<object>());
-            await env.GetQuestionsDoc("MRK", 2).DidNotReceive().SubmitOpAsync(Arg.Any<object>());
+            var delta = Delta.New().InsertText("text");
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 1, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 2, TextType.Target).DeepEquals(delta), Is.True);
 
-            await env.GetCommentsDoc("MAT", 1).DidNotReceive().SubmitOpAsync(Arg.Any<object>());
-            await env.GetCommentsDoc("MAT", 2).DidNotReceive().SubmitOpAsync(Arg.Any<object>());
-            await env.GetCommentsDoc("MRK", 1).DidNotReceive().SubmitOpAsync(Arg.Any<object>());
-            await env.GetCommentsDoc("MRK", 2).DidNotReceive().SubmitOpAsync(Arg.Any<object>());
+            Assert.That(env.GetText("MAT", 1, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 1, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 2, TextType.Source).DeepEquals(delta), Is.True);
 
             await env.ParatextService.DidNotReceive().UpdateNotesAsync(Arg.Any<UserSecret>(), "target",
                 Arg.Any<string>());
 
-            Assert.That(env.Project.SyncUsers.Count, Is.EqualTo(0));
+            SFProjectSecret projectSecret = env.GetProjectSecret();
+            Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(0));
 
-            await env.ProjectDataDoc.Received(14).SubmitOpAsync(Arg.Any<object>());
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
         [Test]
@@ -224,15 +235,29 @@ namespace SIL.XForge.Scripture.Services
             await env.ParatextService.DidNotReceive().UpdateBookTextAsync(Arg.Any<UserSecret>(), "source", "MRK",
                 Arg.Any<string>(), Arg.Any<string>());
 
+            var delta = Delta.New().InsertText("text");
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 1, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 2, TextType.Target).DeepEquals(delta), Is.True);
+
+            Assert.That(env.GetText("MAT", 1, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 1, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 2, TextType.Source).DeepEquals(delta), Is.True);
+
             await env.ParatextService.Received(2).UpdateNotesAsync(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
-            Assert.That(env.Project.SyncUsers.Count, Is.EqualTo(1));
+            SFProjectSecret projectSecret = env.GetProjectSecret();
+            Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(1));
 
-            await env.ProjectDataDoc.Received(14).SubmitOpAsync(Arg.Any<object>());
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
         [Test]
-        public async Task SyncAsync_DataChangedOnlyTranslateEnabled()
+        public async Task SyncAsync_DataChangedTranslateEnabledCheckingDisabled()
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
@@ -254,9 +279,23 @@ namespace SIL.XForge.Scripture.Services
             await env.ParatextService.DidNotReceive().UpdateNotesAsync(Arg.Any<UserSecret>(), "target",
                 Arg.Any<string>());
 
-            Assert.That(env.Project.SyncUsers.Count, Is.EqualTo(1));
+            var delta = Delta.New().InsertText("text");
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 1, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 2, TextType.Target).DeepEquals(delta), Is.True);
 
-            await env.ProjectDataDoc.Received(12).SubmitOpAsync(Arg.Any<object>());
+            Assert.That(env.GetText("MAT", 1, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 1, TextType.Source).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 2, TextType.Source).DeepEquals(delta), Is.True);
+
+            SFProjectSecret projectSecret = env.GetProjectSecret();
+            Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(1));
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
         [Test]
@@ -268,19 +307,21 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.GetTextDoc("MAT", 3, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 2, TextType.Target).Received().DeleteAsync();
+            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.False);
 
-            await env.GetTextDoc("MAT", 3, TextType.Source).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MRK", 2, TextType.Source).Received().DeleteAsync();
+            Assert.That(env.ContainsText("MAT", 3, TextType.Source), Is.True);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
 
-            await env.GetQuestionsDoc("MAT", 3).Received().CreateAsync(Arg.Any<List<Question>>());
-            await env.GetQuestionsDoc("MRK", 2).Received().DeleteAsync();
+            Assert.That(env.ContainsQuestionList("MAT", 3), Is.True);
+            Assert.That(env.ContainsQuestionList("MRK", 2), Is.False);
 
-            await env.GetCommentsDoc("MAT", 3).Received().CreateAsync(Arg.Any<List<Comment>>());
-            await env.GetCommentsDoc("MRK", 2).Received().DeleteAsync();
+            Assert.That(env.ContainsCommentList("MAT", 3), Is.True);
+            Assert.That(env.ContainsCommentList("MRK", 2), Is.False);
 
-            await env.ProjectDataDoc.Received(14).SubmitOpAsync(Arg.Any<object>());
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
         [Test]
@@ -292,27 +333,29 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.GetTextDoc("MRK", 1, TextType.Target).Received().DeleteAsync();
-            await env.GetTextDoc("MRK", 2, TextType.Target).Received().DeleteAsync();
-            await env.GetTextDoc("LUK", 1, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("LUK", 2, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
+            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("LUK", 1, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("LUK", 2, TextType.Target), Is.True);
 
-            await env.GetTextDoc("MRK", 1, TextType.Source).Received().DeleteAsync();
-            await env.GetTextDoc("MRK", 2, TextType.Source).Received().DeleteAsync();
-            await env.GetTextDoc("LUK", 1, TextType.Source).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("LUK", 2, TextType.Source).Received().CreateAsync(Arg.Any<Delta>());
+            Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("LUK", 1, TextType.Source), Is.True);
+            Assert.That(env.ContainsText("LUK", 2, TextType.Source), Is.True);
 
-            await env.GetQuestionsDoc("MRK", 1).Received().DeleteAsync();
-            await env.GetQuestionsDoc("MRK", 2).Received().DeleteAsync();
-            await env.GetQuestionsDoc("LUK", 1).Received().CreateAsync(Arg.Any<List<Question>>());
-            await env.GetQuestionsDoc("LUK", 2).Received().CreateAsync(Arg.Any<List<Question>>());
+            Assert.That(env.ContainsQuestionList("MRK", 1), Is.False);
+            Assert.That(env.ContainsQuestionList("MRK", 2), Is.False);
+            Assert.That(env.ContainsQuestionList("LUK", 1), Is.True);
+            Assert.That(env.ContainsQuestionList("LUK", 2), Is.True);
 
-            await env.GetCommentsDoc("MRK", 1).Received().DeleteAsync();
-            await env.GetCommentsDoc("MRK", 2).Received().DeleteAsync();
-            await env.GetCommentsDoc("LUK", 1).Received().CreateAsync(Arg.Any<List<Comment>>());
-            await env.GetCommentsDoc("LUK", 2).Received().CreateAsync(Arg.Any<List<Comment>>());
+            Assert.That(env.ContainsCommentList("MRK", 1), Is.False);
+            Assert.That(env.ContainsCommentList("MRK", 2), Is.False);
+            Assert.That(env.ContainsCommentList("LUK", 1), Is.True);
+            Assert.That(env.ContainsCommentList("LUK", 2), Is.True);
 
-            await env.ProjectDataDoc.Received(16).SubmitOpAsync(Arg.Any<object>());
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
         [Test]
@@ -320,7 +363,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(false, true, false, books);
+            env.SetupSFData(false, true, true, books);
             env.FileSystemService.FileExists(TestEnvironment.GetUsxFileName(TextType.Target, "MAT")).Returns(false);
             env.FileSystemService.EnumerateFiles(TestEnvironment.GetProjectPath(TextType.Target))
                 .Returns(new[] { "MRK.xml" });
@@ -328,12 +371,13 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            await env.GetTextDoc("MAT", 1, TextType.Target).Received().DeleteAsync();
-            await env.GetTextDoc("MAT", 2, TextType.Target).Received().DeleteAsync();
-            await env.GetTextDoc("MAT", 1, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
-            await env.GetTextDoc("MAT", 2, TextType.Target).Received().CreateAsync(Arg.Any<Delta>());
+            var delta = Delta.New().InsertText("text");
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(delta), Is.True);
 
-            await env.ProjectDataDoc.Received(8).SubmitOpAsync(Arg.Any<object>());
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
         private class Book
@@ -357,8 +401,7 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
-            private readonly MemoryRepository<SFProjectEntity> _projects;
-            private readonly IConnection _conn;
+            private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
             private readonly IDeltaUsxMapper _deltaUsxMapper;
             private readonly IParatextNotesMapper _notesMapper;
 
@@ -370,93 +413,108 @@ namespace SIL.XForge.Scripture.Services
                         SiteDir = "scriptureforge"
                     });
                 var userSecrets = new MemoryRepository<UserSecret>(new[]
-                    {
-                        new UserSecret
-                        {
-                            Id = "user01"
-                        }
-                    });
-                _projects = new MemoryRepository<SFProjectEntity>();
+                {
+                    new UserSecret { Id = "user01" }
+                });
+                _projectSecrets = new MemoryRepository<SFProjectSecret>(new[]
+                {
+                    new SFProjectSecret { Id = "project01" }
+                });
                 EngineService = Substitute.For<IEngineService>();
                 ParatextService = Substitute.For<IParatextService>();
-                _conn = Substitute.For<IConnection>();
-                RealtimeService = Substitute.For<IRealtimeService>();
-                RealtimeService.ConnectAsync().Returns(Task.FromResult(_conn));
+                RealtimeService = new SFMemoryRealtimeService();
                 FileSystemService = Substitute.For<IFileSystemService>();
                 _deltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
                 var logger = Substitute.For<ILogger<ParatextSyncRunner>>();
 
-                Runner = new ParatextSyncRunner(siteOptions, userSecrets, _projects, EngineService, ParatextService,
-                    RealtimeService, FileSystemService, _deltaUsxMapper, _notesMapper, logger);
+                Runner = new ParatextSyncRunner(siteOptions, userSecrets, _projectSecrets, EngineService,
+                    ParatextService, RealtimeService, FileSystemService, _deltaUsxMapper, _notesMapper, logger);
             }
 
             public ParatextSyncRunner Runner { get; }
             public IEngineService EngineService { get; }
             public IParatextService ParatextService { get; }
-            public IRealtimeService RealtimeService { get; }
+            public SFMemoryRealtimeService RealtimeService { get; }
             public IFileSystemService FileSystemService { get; }
-            public SFProjectEntity Project => _projects.Get("project01");
-            public IDocument<SFProjectData> ProjectDataDoc => _conn.Get<SFProjectData>(RootDataTypes.Projects,
-                "project01");
 
-            public IDocument<Delta> GetTextDoc(string bookId, int chapter, TextType textType)
+            public SFProject GetProject()
             {
-                return _conn.Get<Delta>(SFRootDataTypes.Texts,
-                    TextInfo.GetTextDocId("project01", bookId, chapter, textType));
+                return RealtimeService.GetRepository<SFProject>(RootDataTypes.Projects).Get("project01");
             }
 
-            public IDocument<List<Question>> GetQuestionsDoc(string bookId, int chapter)
+            public SFProjectSecret GetProjectSecret()
             {
-                return _conn.Get<List<Question>>(SFRootDataTypes.Questions,
-                    TextInfo.GetTextDocId("project01", bookId, chapter));
+                return _projectSecrets.Get("project01");
             }
 
-            public IDocument<List<Comment>> GetCommentsDoc(string bookId, int chapter)
+            public bool ContainsText(string bookId, int chapter, TextType textType)
             {
-                return _conn.Get<List<Comment>>(SFRootDataTypes.Comments,
-                    TextInfo.GetTextDocId("project01", bookId, chapter));
+                return RealtimeService.GetRepository<TextData>(SFRootDataTypes.Texts)
+                    .Contains(TextInfo.GetTextDocId("project01", bookId, chapter, textType));
+            }
+
+            public TextData GetText(string bookId, int chapter, TextType textType)
+            {
+                return RealtimeService.GetRepository<TextData>(SFRootDataTypes.Texts)
+                    .Get(TextInfo.GetTextDocId("project01", bookId, chapter, textType));
+            }
+
+            public bool ContainsQuestionList(string bookId, int chapter)
+            {
+                return RealtimeService.GetRepository<QuestionList>(SFRootDataTypes.Questions)
+                    .Contains(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
+            }
+
+            public QuestionList GetQuestionList(string bookId, int chapter)
+            {
+                return RealtimeService.GetRepository<QuestionList>(SFRootDataTypes.Questions)
+                    .Get(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
+            }
+
+            public bool ContainsCommentList(string bookId, int chapter)
+            {
+                return RealtimeService.GetRepository<CommentList>(SFRootDataTypes.Comments)
+                    .Contains(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
+            }
+
+            public CommentList GetCommentList(string bookId, int chapter)
+            {
+                return RealtimeService.GetRepository<CommentList>(SFRootDataTypes.Comments)
+                    .Get(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
             }
 
             public void SetupSFData(bool translateEnabled, bool checkingEnabled, bool changed, params Book[] books)
             {
-                _projects.Add(new SFProjectEntity
-                {
-                    Id = "project01",
-                    ProjectName = "project01",
-                    Users =
-                        {
-                            new SFProjectUserEntity
-                            {
-                                Id = "projectuser01",
-                                UserRef = "user01",
-                                Role = SFProjectRoles.Administrator
-                            }
-                        },
-                    ParatextId = "target",
-                    SourceParatextId = "source",
-                    TranslateEnabled = translateEnabled,
-                    CheckingEnabled = checkingEnabled
-                });
-
-                var projectDataDoc = Substitute.For<IDocument<SFProjectData>>();
-                projectDataDoc.Id.Returns("project01");
-                projectDataDoc.IsLoaded.Returns(true);
-                projectDataDoc.Data.Returns(new SFProjectData
-                {
-                    Texts = books.Select(b =>
-                        new TextInfo
-                        {
-                            BookId = b.Id,
-                            Chapters = Enumerable.Range(1, b.TargetChapterCount)
-                                .Select(c => new Chapter { Number = c, LastVerse = 10 }).ToList()
-                        }).ToList(),
-                    Sync = new Sync
+                RealtimeService.AddRepository(RootDataTypes.Projects, OTType.Json0, new MemoryRepository<SFProject>(
+                    new[]
                     {
-                        QueuedCount = 1
-                    }
-                });
-                _conn.Get<SFProjectData>(RootDataTypes.Projects, "project01").Returns(projectDataDoc);
+                        new SFProject
+                        {
+                            Id = "project01",
+                            ProjectName = "project01",
+                            UserRoles = new Dictionary<string, string>
+                            {
+                                { "user01", SFProjectRoles.Administrator }
+                            },
+                            ParatextId = "target",
+                            SourceParatextId = "source",
+                            TranslateEnabled = translateEnabled,
+                            CheckingEnabled = checkingEnabled,
+                            Texts = books.Select(b =>
+                                new TextInfo
+                                {
+                                    BookId = b.Id,
+                                    Chapters = Enumerable.Range(1, b.TargetChapterCount)
+                                        .Select(c => new Chapter { Number = c, LastVerse = 10 }).ToList(),
+                                    HasSource = b.SourceChapterCount > 0
+                                }).ToList(),
+                            Sync = new Sync
+                            {
+                                QueuedCount = 1
+                            }
+                        }
+                    }));
 
                 if (books.Length > 0)
                 {
@@ -469,6 +527,11 @@ namespace SIL.XForge.Scripture.Services
                         .Returns(books.Where(b => b.SourceChapterCount > 0).Select(b => $"{b.Id}.xml"));
                 }
 
+                RealtimeService.AddRepository(SFRootDataTypes.Texts, OTType.RichText, new MemoryRepository<TextData>());
+                RealtimeService.AddRepository(SFRootDataTypes.Questions, OTType.Json0,
+                    new MemoryRepository<QuestionList>());
+                RealtimeService.AddRepository(SFRootDataTypes.Comments, OTType.Json0,
+                    new MemoryRepository<CommentList>());
                 foreach (Book book in books)
                 {
                     AddSFBook(book.Id, book.TargetChapterCount, TextType.Target, changed);
@@ -485,8 +548,8 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 _notesMapper.GetNotesChangelistAsync(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<List<Question>>>>(),
-                    Arg.Any<IEnumerable<IDocument<List<Comment>>>>()).Returns(Task.FromResult(notesElem));
+                    Arg.Any<IEnumerable<IDocument<QuestionList>>>(),
+                    Arg.Any<IEnumerable<IDocument<CommentList>>>()).Returns(Task.FromResult(notesElem));
                 _notesMapper.NewSyncUsers.Returns(newSyncUsers);
             }
 
@@ -526,7 +589,8 @@ namespace SIL.XForge.Scripture.Services
                 FileSystemService.CreateFile(GetUsxFileName(textType, bookId)).Returns(new MemoryStream());
                 Func<XElement, bool> predicate = e => (string)e?.Element("book")?.Attribute("code") == bookId
                         && (string)e?.Element("book") == paratextProject;
-                var chapterDeltas = Enumerable.Range(1, chapterCount).ToDictionary(c => c, c => (new Delta(), 10));
+                var chapterDeltas = Enumerable.Range(1, chapterCount)
+                    .ToDictionary(c => c, c => (Delta.New().InsertText("text"), 10));
                 _deltaUsxMapper.ToChapterDeltas(Arg.Is<XElement>(e => predicate(e))).Returns(chapterDeltas);
             }
 
@@ -544,21 +608,12 @@ namespace SIL.XForge.Scripture.Services
                 for (int c = 1; c <= chapterCount; c++)
                 {
                     string id = TextInfo.GetTextDocId("project01", bookId, c, textType);
-                    var textDoc = Substitute.For<IDocument<Delta>>();
-                    textDoc.Id.Returns(id);
-                    textDoc.IsLoaded.Returns(true);
-                    textDoc.Data.Returns(new Delta());
-                    _conn.Get<Delta>(SFRootDataTypes.Texts, id).Returns(textDoc);
-                    var questionsDoc = Substitute.For<IDocument<List<Question>>>();
-                    questionsDoc.Id.Returns(id);
-                    questionsDoc.IsLoaded.Returns(true);
-                    questionsDoc.Data.Returns(new List<Question>());
-                    _conn.Get<List<Question>>(SFRootDataTypes.Questions, id).Returns(questionsDoc);
-                    var commentsDoc = Substitute.For<IDocument<List<Comment>>>();
-                    commentsDoc.Id.Returns(id);
-                    commentsDoc.IsLoaded.Returns(true);
-                    commentsDoc.Data.Returns(new List<Comment>());
-                    _conn.Get<List<Comment>>(SFRootDataTypes.Comments, id).Returns(commentsDoc);
+                    RealtimeService.GetRepository<TextData>(SFRootDataTypes.Texts)
+                        .Add(new TextData(Delta.New().InsertText(changed ? "changed" : "text")) { Id = id });
+                    RealtimeService.GetRepository<QuestionList>(SFRootDataTypes.Questions)
+                        .Add(new QuestionList { Id = id });
+                    RealtimeService.GetRepository<CommentList>(SFRootDataTypes.Comments)
+                        .Add(new CommentList { Id = id });
                 }
             }
 

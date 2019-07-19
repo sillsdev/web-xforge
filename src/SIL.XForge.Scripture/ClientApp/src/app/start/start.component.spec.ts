@@ -11,7 +11,7 @@ import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectRef } from '../core/models/sfproject';
-import { SFProjectUser } from '../core/models/sfproject-user';
+import { SFProjectUser } from '../core/models/sfproject-user-config';
 import { StartComponent } from './start.component';
 
 describe('StartComponent', () => {

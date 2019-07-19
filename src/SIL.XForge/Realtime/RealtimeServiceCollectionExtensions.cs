@@ -1,9 +1,7 @@
 using System;
 using Microsoft.Extensions.Configuration;
 using SIL.XForge.Configuration;
-using SIL.XForge.Models;
 using SIL.XForge.Realtime;
-using SIL.XForge.Utils;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -18,13 +16,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 options.WatchFileExtensions = new string[0];
             });
 
-            var siteOptions = configuration.GetOptions<SiteOptions>();
-            services.Configure<RealtimeOptions>(options =>
-            {
-                options.UserDoc.ImmutableProperties.Add(
-                    ObjectPath<User>.Create(u => u.Sites[siteOptions.Id].LastLogin));
-            });
             services.Configure(configureOptions);
+            services.AddSingleton<RealtimeServer>();
             services.AddSingleton<IRealtimeService, RealtimeService>();
             return services;
         }

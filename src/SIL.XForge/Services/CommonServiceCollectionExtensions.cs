@@ -14,6 +14,8 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient<IEmailService, EmailService>();
             services.AddTransient<IFileSystemService, FileSystemService>();
             services.AddSingleton<IAuthService, AuthService>();
+            services.AddSingleton<IUserService, UserService>();
+            services.AddSingleton<ISecurityService, SecurityService>();
             return services;
         }
     }
