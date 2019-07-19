@@ -30,11 +30,11 @@ namespace SIL.XForge.Scripture.Services
         private readonly IFileSystemService _fileSystemService;
 
         public SFProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IEmailService emailService, IRepository<SFProjectSecret> projectSecrets, ISecurityService securityService,
-            IEngineService engineService, ISyncService syncService, IParatextService paratextService,
-            IRepository<UserSecret> userSecrets, IRepository<TranslateMetrics> translateMetrics,
-            IFileSystemService fileSystemService)
-            : base(realtimeService, siteOptions, emailService, projectSecrets, securityService)
+            IOptions<AudioOptions> audioOptions, IEmailService emailService, IRepository<SFProjectSecret> projectSecrets,
+            ISecurityService securityService, IEngineService engineService, ISyncService syncService,
+            IParatextService paratextService, IRepository<UserSecret> userSecrets,
+            IRepository<TranslateMetrics> translateMetrics, IFileSystemService fileSystemService)
+            : base(realtimeService, siteOptions, audioOptions, emailService, projectSecrets, securityService)
         {
             _engineService = engineService;
             _syncService = syncService;

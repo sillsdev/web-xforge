@@ -22,10 +22,12 @@ namespace SIL.XForge.Services
         private readonly ISecurityService _securityService;
 
         public ProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IEmailService emailService, IRepository<TSecret> projectSecrets, ISecurityService securityService)
+            IOptions<AudioOptions> audioOptions, IEmailService emailService, IRepository<TSecret> projectSecrets,
+            ISecurityService securityService)
         {
             RealtimeService = realtimeService;
             SiteOptions = siteOptions;
+            AudioOptions = audioOptions;
             _emailService = emailService;
             ProjectSecrets = projectSecrets;
             _securityService = securityService;
@@ -33,6 +35,7 @@ namespace SIL.XForge.Services
 
         protected IRealtimeService RealtimeService { get; }
         protected IOptions<SiteOptions> SiteOptions { get; }
+        protected IOptions<AudioOptions> AudioOptions { get; }
         protected IRepository<TSecret> ProjectSecrets { get; }
         protected abstract string ProjectAdminRole { get; }
 
@@ -217,7 +220,20 @@ namespace SIL.XForge.Services
                 File.Delete(path);
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
-            var uri = new Uri(SiteOptions.Value.Origin, $"{projectId}/{fileName}");
+            string ext = Path.GetExtension(path);
+            string outputFileName;
+            if (string.Equals(ext, ".mp3", StringComparison.InvariantCultureIgnoreCase)
+                || string.Equals(ext, ".webm", StringComparison.InvariantCultureIgnoreCase))
+            {
+                outputFileName = Path.GetFileName(path);
+            }
+            else
+            {
+                string mp3FilePath = await AudioUtils.ConvertToMp3Async(path, AudioOptions.Value.FfmpegPath);
+                outputFileName = Path.GetFileName(mp3FilePath);
+            }
+            var uri = new Uri(SiteOptions.Value.Origin,
+                $"{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}");
             return uri;
         }
 
