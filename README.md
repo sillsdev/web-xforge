@@ -76,6 +76,7 @@ Our recommended development environment for web development is Ubuntu 16.04.
 
 - [Vagrant GUI Setup](#vagrant-gui-setup). A Vagrant box with xForge already installed is downloaded and set up on your machine. This is the easiest and cleanest to setup.
 - [Local Linux Development Setup](#local-linux-development-setup). Everything is installed directly on your machine, which needs to be running Ubuntu 16.04. This is the fastest method because development is not done in a virtual machine.
+- [Manual Setup](#manual-setup) This setup is specifically written for **Windows** but the steps could be used for any OS.
 
 #### Vagrant GUI Setup
 
@@ -129,6 +130,30 @@ cd web-xforge/deploy
 ansible-playbook -i hosts playbook_create_config.yml --limit localhost -K
 ansible-playbook playbook_xenial.yml --limit localhost -K
 ```
+
+#### Manual Setup
+
+Although this setup is specifically written for **Windows**, the steps could be used for any OS and only step 3 is a Windows specific link. The order below is not particulalry important.
+
+1. Install `git`, e.g. [Git Kraken](https://www.gitkraken.com/download)
+2. Clone the repo from the command line including recursing submodules (feel free to clone with SSH instead of HTTPS):
+
+   `git clone --recurse-submodules https://github.com/sillsdev/web-xforge`.
+
+3. Install [MongoDB v4](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/) as a service
+4. Install [.Net Core SDK-2.1](https://dotnet.microsoft.com/download/dotnet-core/2.1)
+5. Install [Node v10](https://nodejs.org/en/download/)
+6. Install a developer editor, [VS Code](https://code.visualstudio.com/download) is recommended (the repo includes VS Code settings)
+7. Create folders owned by you. Check in the Ansible `deploy/dependencies.yml` for the valid list of folders. As of writing they were:
+
+   - `/var/lib/scriptureforge/sync/`
+   - `/var/lib/scriptureforge/audio/`
+   - `/var/lib/xforge/avatars/`
+
+   On Windows, just put these off your root drive, e.g. `C:\var\lib\...`
+
+8. Add developer secrets. Ask another developer how to get these.
+9. In `src/SIL.XForge.Scripture/`, run `dotnet run`. Browse to `http://localhost:5000`.
 
 ### Development Process
 
