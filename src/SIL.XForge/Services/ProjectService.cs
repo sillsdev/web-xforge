@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -127,9 +128,38 @@ namespace SIL.XForge.Services
             }
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
+            string mp3Path = ConvertToMp3(path);
             var uri = new Uri(_siteOptions.Value.Origin,
-                $"{projectId}/{fileName}");
+                $"{projectId}/{mp3Path}");
             return uri;
+        }
+
+        private string ConvertToMp3(string filePath)
+        {
+            if (Path.GetExtension(filePath) == ".mp3")
+            {
+                return filePath;
+            }
+            string mp3FilePath = Path.ChangeExtension(filePath, ".mp3");
+            if (File.Exists(mp3FilePath))
+            {
+                File.Delete(mp3FilePath);
+            }
+            var process = new Process()
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "/bin/bash",
+                    Arguments = $"-c \"/usr/local/bin/ffmpeg -i {filePath} {mp3FilePath}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            process.WaitForExit();
+            File.Delete(filePath);
+            return mp3FilePath;
         }
     }
 }
