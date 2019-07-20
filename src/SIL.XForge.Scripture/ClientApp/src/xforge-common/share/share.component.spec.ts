@@ -13,6 +13,7 @@ import { SharingLevel } from '../models/sharing-level';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { UICommonModule } from '../ui-common.module';
+import { ShareControlComponent } from './share-control.component';
 import { ShareDialogComponent } from './share-dialog.component';
 import { ShareComponent } from './share.component';
 
@@ -102,23 +103,23 @@ describe('ShareComponent', () => {
 
 @NgModule({
   imports: [FormsModule, MdcDialogModule, ReactiveFormsModule, NoopAnimationsModule, UICommonModule],
-  exports: [ShareDialogComponent],
-  declarations: [ShareDialogComponent],
-  entryComponents: [ShareDialogComponent]
+  exports: [ShareDialogComponent, ShareControlComponent],
+  declarations: [ShareDialogComponent, ShareControlComponent],
+  entryComponents: [ShareDialogComponent, ShareControlComponent]
 })
 class DialogTestModule {}
 
 class TestEnvironment {
-  component: ShareComponent;
-  fixture: ComponentFixture<ShareComponent>;
+  readonly component: ShareComponent;
+  readonly fixture: ComponentFixture<ShareComponent>;
+  readonly overlayContainer: OverlayContainer;
 
-  mockedMdcDialogRef: MdcDialogRef<ShareDialogComponent> = mock(MdcDialogRef);
-  mockedProjectService = mock(ProjectService);
-  mockedNoticeService = mock(NoticeService);
-  mockedActivatedRoute = mock(ActivatedRoute);
-  mockedLocationService = mock(LocationService);
-  overlayContainer: OverlayContainer;
-  mockedProject = mock(Project);
+  readonly mockedMdcDialogRef: MdcDialogRef<ShareDialogComponent> = mock(MdcDialogRef);
+  readonly mockedProjectService = mock(ProjectService);
+  readonly mockedNoticeService = mock(NoticeService);
+  readonly mockedActivatedRoute = mock(ActivatedRoute);
+  readonly mockedLocationService = mock(LocationService);
+  readonly mockedProject = mock(Project);
 
   constructor() {
     when(this.mockedProjectService.onlineInvite('project01', anything())).thenResolve();
@@ -133,7 +134,6 @@ class TestEnvironment {
     TestBed.configureTestingModule({
       imports: [DialogTestModule],
       declarations: [ShareComponent],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA],
       providers: [
         { provide: MdcDialogRef, useFactory: () => instance(this.mockedMdcDialogRef) },
         { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },

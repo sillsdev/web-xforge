@@ -1,0 +1,28 @@
+<div fxLayout="column" fxLayoutGap="20px">
+  <div *ngIf="isLinkSharingEnabled">
+    <div mdcSubtitle1>Link sharing</div>
+    <mdc-text-field id="share-link" #shareLinkField outlined [value]="shareLink" [readonly]="true">
+      <mdc-icon
+        id="share-link-copy-icon"
+        mdcTextFieldIcon
+        trailing
+        clickable
+        (click)="copyShareLink()"
+        title="Copy link"
+        >file_copy
+      </mdc-icon>
+    </mdc-text-field>
+  </div>
+  <div>
+    <div mdcSubtitle1>Invite people</div>
+    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="10px">
+      <mdc-form-field fxFlex="fill" [formGroup]="sendInviteForm" id="send-invite-form">
+        <mdc-text-field id="email" label="Email" type="email" formControlName="email"></mdc-text-field>
+        <mdc-helper-text validation>
+          <span *ngIf="email.hasError('pattern') || email.hasError('email')">Email address is invalid</span>
+        </mdc-helper-text>
+      </mdc-form-field>
+      <button id="send-btn" mdc-button (click)="sendEmail()" [disabled]="isSubmitted">Send</button>
+    </div>
+  </div>
+</div>
