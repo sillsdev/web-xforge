@@ -1,4 +1,9 @@
 <div class="invite-user">
+  <h3>Share with others</h3>
+  <app-share-control [projectId]="projectId" [isLinkSharingEnabled]="isLinkSharingEnabled"></app-share-control>
+
+  <mdc-list-divider></mdc-list-divider>
+
   <div fxLayout="row" fxLayoutAlign="start center">
     <p class="helper-text">
       User's roles and permissions can <strong>only</strong> be changed in <strong>Paratext</strong>. Open the project
@@ -15,7 +20,6 @@
         id="project-user-filter"
       ></mdc-text-field>
     </mdc-form-field>
-    <app-share></app-share>
   </div>
   <div *ngIf="!isLoading">
     <div *ngIf="totalUsers > 0">

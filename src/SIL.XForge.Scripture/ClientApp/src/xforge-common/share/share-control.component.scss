@@ -1,0 +1,13 @@
+mdc-text-field {
+  width: 100%;
+}
+
+.mdc-typography--subtitle1 {
+  // the color is already this in a dialog, this ensures it when used outside of a dialog
+  color: rgba(0, 0, 0, 0.6);
+}
+
+#send-btn {
+  // add margin that is same height as the text field helper text, so the button is centered properly
+  margin-bottom: 19px;
+}

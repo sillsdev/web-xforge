@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
 import { Project } from 'xforge-common/models/project';
 import { ProjectUser } from 'xforge-common/models/project-user';
+import { SharingLevel } from 'xforge-common/models/sharing-level';
 import { User } from 'xforge-common/models/user';
 import { ProjectUserService } from 'xforge-common/project-user.service';
 import { UserService } from 'xforge-common/user.service';
@@ -33,6 +34,7 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
   pageSize: number = 50;
 
   private inviteButtonClicked = false;
+  private project: Project;
   private projectUsers: ProjectUser[];
   private term: string;
   private _userRows: Row[];
@@ -56,8 +58,16 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
     return this.userInviteForm.controls.email.hasError('email');
   }
 
+  get isLinkSharingEnabled(): boolean {
+    return this.project && this.project.shareEnabled && this.project.shareLevel === SharingLevel.Anyone;
+  }
+
   get isLoading(): boolean {
     return this._userRows == null;
+  }
+
+  get projectId(): string {
+    return this.project ? this.project.id : '';
   }
 
   get totalUsers(): number {
@@ -93,12 +103,12 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
         switchMap(projectId => this.projectService.get(projectId, [[nameof<Project>('users')]]))
       ),
       r => {
-        const project = r.data;
-        if (project == null) {
+        this.project = r.data;
+        if (this.project == null) {
           return;
         }
         this.noticeService.loadingStarted();
-        this.projectUsers = r.getManyIncluded<ProjectUser>(project.users);
+        this.projectUsers = r.getManyIncluded<ProjectUser>(this.project.users);
         const userRows: Row[] = new Array(this.projectUsers.length);
         const tasks: Promise<any>[] = [];
         for (let i = 0; i < this.projectUsers.length; i++) {

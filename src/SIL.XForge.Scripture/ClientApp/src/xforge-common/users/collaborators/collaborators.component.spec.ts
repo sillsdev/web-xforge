@@ -8,7 +8,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { LocationService } from 'xforge-common/location.service';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
-import { ShareComponent } from 'xforge-common/share/share.component';
+import { ShareControlComponent } from 'xforge-common/share/share-control.component';
 import { MockAvatarModule } from '../../avatar/mock-avatar.module';
 import { MapQueryResults } from '../../json-api.service';
 import { Project, ProjectRef } from '../../models/project';
@@ -187,7 +187,7 @@ class TestEnvironment {
     this.addUserProfile('user02', { name: 'User 02' });
     this.addUserProfile('user03', { name: 'User 03' });
     TestBed.configureTestingModule({
-      declarations: [CollaboratorsComponent, ShareComponent],
+      declarations: [CollaboratorsComponent, ShareControlComponent],
       imports: [NoopAnimationsModule, MockAvatarModule, UICommonModule],
       providers: [
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },

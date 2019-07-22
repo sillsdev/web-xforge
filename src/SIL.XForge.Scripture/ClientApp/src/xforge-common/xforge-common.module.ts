@@ -8,6 +8,7 @@ import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
 import { EditNameDialogComponent } from './edit-name-dialog/edit-name-dialog.component';
 import { ErrorComponent } from './error/error.component';
+import { ShareControlComponent } from './share/share-control.component';
 import { ShareDialogComponent } from './share/share-dialog.component';
 import { ShareComponent } from './share/share.component';
 import { SaDeleteDialogComponent } from './system-administration/sa-delete-dialog.component';
@@ -28,6 +29,7 @@ const componentExports = [
   SaDeleteDialogComponent,
   SaUsersComponent,
   ShareComponent,
+  ShareControlComponent,
   ShareDialogComponent,
   SystemAdministrationComponent,
   UsersComponent,
