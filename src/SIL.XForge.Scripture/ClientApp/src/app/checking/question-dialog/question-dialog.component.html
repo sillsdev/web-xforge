@@ -5,7 +5,7 @@
         <i class="material-icons">live_help</i> {{ modeLabel }} Question
       </mdc-dialog-title>
       <mdc-dialog-content class="content-padding">
-        <form [formGroup]="questionForm" (ngSubmit)="submit()" autocomplete="off" id="question-form">
+        <form [formGroup]="questionForm" autocomplete="off" id="question-form">
           <div fxLayout="row wrap" fxLayoutAlign="space-around start" fxLayoutGap.gt-xs="1em">
             <mdc-form-field>
               <mdc-text-field
@@ -59,11 +59,55 @@
             ></mdc-textarea>
             <mdc-helper-text #questionHelper validation>*Required</mdc-helper-text>
           </mdc-form-field>
+          <div
+            class="question-record-upload"
+            [ngClass]="{
+              'recorder-active': isRecorderActive,
+              'uploader-active': isUploaderActive
+            }"
+          >
+            <ng-container *ngIf="!isUploaderActive">
+              <app-checking-audio-recorder (status)="recorderStatus($event)"></app-checking-audio-recorder>
+            </ng-container>
+            <ng-container class="audio-uploader" *ngIf="!isRecorderActive">
+              <button
+                *ngIf="!uploadAudioFileUrl"
+                mdc-button
+                ngfSelect
+                [(file)]="uploadAudioFile"
+                (fileChange)="prepareAudioFileUpload()"
+                accept="audio/*"
+                class="upload-audio-file"
+              >
+                <mdc-icon>cloud_upload</mdc-icon>
+                Upload Audio File
+              </button>
+              <button
+                *ngIf="uploadAudioFileUrl"
+                fxHide.xs
+                mdc-button
+                (click)="resetAudioFileUpload()"
+                class="remove-audio-file"
+              >
+                <mdc-icon>delete</mdc-icon>
+                Remove Audio File
+              </button>
+              <button
+                *ngIf="uploadAudioFileUrl"
+                mdc-icon-button
+                fxHide.gt-xs
+                (click)="resetAudioFileUpload()"
+                icon="delete"
+                class="remove-audio-file"
+              ></button>
+              <app-checking-audio-player [source]="uploadAudioFileUrl"></app-checking-audio-player>
+            </ng-container>
+          </div>
         </form>
       </mdc-dialog-content>
       <mdc-dialog-actions>
         <button mdcDialogButton mdcDialogAction="close" id="question-cancel-btn">Cancel</button>
-        <button mdc-button primary form="question-form" id="question-save-btn">Save</button>
+        <button mdc-button primary form="question-form" id="question-save-btn" (click)="submit()">Save</button>
       </mdc-dialog-actions>
     </mdc-dialog-surface>
   </mdc-dialog-container>

@@ -348,7 +348,7 @@ describe('CheckingComponent', () => {
         env.fixture.detectChanges();
         expect(env.getUnread(question)).toEqual(2);
         env.clickButton(env.getShowAllCommentsButton(0));
-        tick(1);
+        env.waitForSliderUpdate();
         expect(env.getUnread(question)).toEqual(0);
       }));
     });
@@ -734,7 +734,7 @@ class TestEnvironment {
   }
 
   waitForSliderUpdate(): void {
-    tick(1);
+    tick(100);
     this.fixture.detectChanges();
   }
 

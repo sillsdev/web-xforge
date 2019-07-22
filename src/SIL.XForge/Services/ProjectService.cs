@@ -117,7 +117,7 @@ namespace SIL.XForge.Services
         {
             await CheckCanUpdateDeleteAsync(projectId);
 
-            string audioDir = Path.Combine(_siteOptions.Value.SharedDir, "audio");
+            string audioDir = Path.Combine(_siteOptions.Value.SiteDir, "audio", projectId);
             if (!Directory.Exists(audioDir))
                 Directory.CreateDirectory(audioDir);
             string path = Path.Combine(audioDir, fileName);
@@ -128,7 +128,7 @@ namespace SIL.XForge.Services
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
             var uri = new Uri(_siteOptions.Value.Origin,
-                $"/assets/audio/{fileName}");
+                $"{projectId}/{fileName}");
             return uri;
         }
     }

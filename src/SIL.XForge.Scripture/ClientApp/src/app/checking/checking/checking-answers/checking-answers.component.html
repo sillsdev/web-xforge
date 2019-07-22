@@ -6,7 +6,12 @@
     'question-answered': currentUserTotalAnswers
   }"
 >
-  <div class="question">{{ question.text }}</div>
+  <div class="question">
+    <div class="question-text">{{ question.text }}</div>
+    <div *ngIf="question.audioUrl" class="question-audio">
+      <app-checking-audio-player [source]="question.audioUrl"></app-checking-audio-player>
+    </div>
+  </div>
   <div *ngIf="!answerFormVisible" class="actions">
     <button
       *ngIf="!currentUserTotalAnswers && !isAdministrator"
@@ -28,7 +33,7 @@
         <mdc-tab icon="text_rotation_none" label="Select Text" disabled></mdc-tab>
       </mdc-tab-scroller>
     </mdc-tab-bar>
-    <div *ngIf="answerTabs.activeTabIndex === 0" class="answer-tab answer-text">
+    <div [fxShow]="answerTabs.activeTabIndex === 0" class="answer-tab answer-text">
       <mdc-form-field>
         <mdc-text-field
           label="Your Answer"
@@ -40,7 +45,7 @@
       </mdc-form-field>
     </div>
     <div
-      *ngIf="answerTabs.activeTabIndex === 1"
+      [fxShow]="answerTabs.activeTabIndex === 1"
       class="answer-tab answer-record-upload"
       [ngClass]="{
         'recorder-active': isRecorderActive,
@@ -84,7 +89,7 @@
         <app-checking-audio-player [source]="uploadAudioFileUrl"></app-checking-audio-player>
       </ng-container>
     </div>
-    <div *ngIf="answerTabs.activeTabIndex === 2" class="answer-tab answer-upload">Coming soon</div>
+    <div [fxShow]="answerTabs.activeTabIndex === 2" class="answer-tab answer-upload">Coming soon</div>
     <div *ngIf="answerFormSubmitAttempted && answerForm.invalid" class="form-helper-text">
       You need to enter your answer or record your answer before saving
     </div>

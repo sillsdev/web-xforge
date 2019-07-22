@@ -225,10 +225,12 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         if (answerAction.audio.fileName) {
           const response = await this.projectService.uploadAudio(
             this.project.id,
-            new File([answerAction.audio.blob], answer.id + '-' + answerAction.audio.fileName)
+            new File([answerAction.audio.blob], answer.id + '~' + answerAction.audio.fileName)
           );
           // Get the amended filename and save it against the answer
-          answer.audioUrl = response.split('/').pop();
+          answer.audioUrl = response;
+        } else if (answerAction.audio.status === 'reset') {
+          answer.audioUrl = '';
         }
         this.saveAnswer(answer);
         break;
@@ -472,7 +474,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       }
       const scripturePanelHeight = 100 - answerPanelHeight;
       this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
-    }, 1);
+    }, 100);
   }
 
   private async bindCheckingData(id: TextDocId): Promise<void> {

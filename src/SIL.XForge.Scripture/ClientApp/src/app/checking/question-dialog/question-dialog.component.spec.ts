@@ -3,16 +3,22 @@ import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import * as OTJson0 from 'ot-json0';
 import { of } from 'rxjs';
 import { anything, capture, instance, mock, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { Question } from '../../core/models/question';
 import { VerseRefData } from '../../core/models/verse-ref-data';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
+import { CheckingModule } from '../checking.module';
 import { QuestionDialogComponent } from './question-dialog.component';
 
 describe('QuestionDialogComponent', () => {
@@ -255,6 +261,21 @@ describe('QuestionDialogComponent', () => {
     env.inputValue(env.scriptureStartInput, 'LUK 1:1');
     expect(env.component.scriptureEnd.disabled).toBe(false);
   }));
+
+  it('can upload an audio file to an answer', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    expect(env.uploadAudioButton).toBeTruthy();
+    expect(env.component.uploadAudioFileUrl).toBe('');
+    env.component.uploadAudioFile = new File([env.createAudioBlob()], 'test.wav');
+    env.component.prepareAudioFileUpload();
+    env.fixture.detectChanges();
+    expect(env.component.uploadAudioFileUrl).toContain('blob:http');
+    expect(env.removeAudioButton).toBeTruthy();
+    env.clickElement(env.removeAudioButton);
+    expect(env.component.uploadAudioFileUrl).toBe('');
+    expect(env.uploadAudioButton).toBeTruthy();
+  }));
 });
 
 @Directive({
@@ -279,25 +300,16 @@ class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [CommonModule, UICommonModule],
-  declarations: [
-    ViewContainerDirective,
-    ChildViewContainerComponent,
-    QuestionDialogComponent,
-    ScriptureChooserDialogComponent
-  ],
-  exports: [
-    ViewContainerDirective,
-    ChildViewContainerComponent,
-    QuestionDialogComponent,
-    ScriptureChooserDialogComponent
-  ],
+  imports: [CommonModule, UICommonModule, CheckingModule],
+  declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
+  exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
   entryComponents: [ChildViewContainerComponent, QuestionDialogComponent, ScriptureChooserDialogComponent]
 })
 class DialogTestModule {}
 
 class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;
+  currentUserDoc: UserDoc;
   component: QuestionDialogComponent;
   dialogRef: MdcDialogRef<QuestionDialogComponent>;
   overlayContainerElement: HTMLElement;
@@ -305,12 +317,17 @@ class TestEnvironment {
 
   mockedAuthService: AuthService = mock(AuthService);
   mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
+  mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+  mockedUserService: UserService = mock(UserService);
   dialogSpy: MdcDialog;
 
   constructor() {
     TestBed.configureTestingModule({
       imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
-      providers: [{ provide: AuthService, useFactory: () => instance(this.mockedAuthService) }]
+      providers: [
+        { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
+      ]
     });
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
@@ -341,16 +358,41 @@ class TestEnvironment {
     when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult: VerseRefData = { book: 'LUK', chapter: '1', verse: '2' };
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
+    this.currentUserDoc = new UserDoc(
+      new MemoryRealtimeDocAdapter(OTJson0.type, 'user01', { name: 'user' }),
+      instance(this.mockedRealtimeOfflineStore)
+    );
+    when(this.mockedUserService.getCurrentUser()).thenResolve(this.currentUserDoc);
 
     this.fixture.detectChanges();
+  }
+
+  get cancelButton(): HTMLButtonElement {
+    return this.overlayContainerElement.querySelector('#question-cancel-btn');
+  }
+
+  get dataPassedToDialog(): ScriptureChooserDialogData {
+    return (capture(this.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>).data;
+  }
+
+  get questionInput(): HTMLTextAreaElement {
+    return this.overlayContainerElement.querySelector('#question-text');
+  }
+
+  get removeAudioButton(): HTMLElement {
+    return this.overlayContainerElement.querySelector('.question-record-upload .remove-audio-file');
   }
 
   get saveButton(): HTMLButtonElement {
     return this.overlayContainerElement.querySelector('#question-save-btn');
   }
 
-  get cancelButton(): HTMLButtonElement {
-    return this.overlayContainerElement.querySelector('#question-cancel-btn');
+  get scriptureEndInput(): HTMLInputElement {
+    return this.overlayContainerElement.querySelector('#scripture-end');
+  }
+
+  get scriptureEndInputIcon(): HTMLInputElement {
+    return this.scriptureEndInput.querySelector('mdc-icon');
   }
 
   get scriptureStartInput(): HTMLInputElement {
@@ -361,24 +403,12 @@ class TestEnvironment {
     return this.scriptureStartInput.querySelector('mdc-icon');
   }
 
-  get scriptureEndInputIcon(): HTMLInputElement {
-    return this.scriptureEndInput.querySelector('mdc-icon');
-  }
-
   get scriptureStartValidationMsg(): HTMLElement {
     return this.overlayContainerElement.querySelector('#question-scripture-start-helper-text > div');
   }
 
-  get scriptureEndInput(): HTMLInputElement {
-    return this.overlayContainerElement.querySelector('#scripture-end');
-  }
-
-  get dataPassedToDialog(): ScriptureChooserDialogData {
-    return (capture(this.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>).data;
-  }
-
-  get questionInput(): HTMLTextAreaElement {
-    return this.overlayContainerElement.querySelector('#question-text');
+  get uploadAudioButton(): HTMLElement {
+    return this.overlayContainerElement.querySelector('.question-record-upload .upload-audio-file');
   }
 
   inputValue(element: HTMLElement, value: string) {
@@ -393,5 +423,87 @@ class TestEnvironment {
     element.click();
     this.fixture.detectChanges();
     tick();
+  }
+
+  createAudioBlob(): Blob {
+    const base64 =
+      'UklGRlgAAFdBVkVmbXQgEAAAAAEAAQBAHwAAPgAAAgAQAGRhdGFYAAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg' +
+      'ACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACA' +
+      'AIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIA' +
+      'AgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgA' +
+      'CAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAA' +
+      'IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAA' +
+      'gACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAC' +
+      'AAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAI' +
+      'AAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg' +
+      'ACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACA' +
+      'AIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIA' +
+      'AgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgA' +
+      'CAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAA' +
+      'IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAA' +
+      'gACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAC' +
+      'AAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAI' +
+      'AAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg' +
+      'ACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACA' +
+      'AIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIA' +
+      'AgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgA' +
+      'CAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAA' +
+      'IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAA' +
+      'gACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAC' +
+      'AAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAI' +
+      'AAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg' +
+      'ACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACA' +
+      'AIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIA' +
+      'AgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgA' +
+      'CAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAA' +
+      'IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAA' +
+      'gACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAC' +
+      'AAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAI' +
+      'AAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg' +
+      'ACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACA' +
+      'AIAAgACAAIAAgACAAIAAgAGAAIAAgACAAIAAgACAAIAAgACAAIACgAKAA4AAgACAA4AEgACAAIAAgACAABGAAgYFADUAIBUAM4A' +
+      'QF4AEgoGAAIOGgAeAAoAFgAKFgIAAAoACgASAAYAAgACAAACAAoAHgACABYaBgAOAAoABgASABIAAgACAAIABgACABIAFgACAAI' +
+      'AAgAGAAIACgAOAAIABgACAAIAGgAOAAIABgAGAAoABgAOAAoABgACAAoABgACAAIAAgACABIACgACAAIABgAOAA4ACgACAAIAAg' +
+      'AGAAYABgACAAIAAgACAAYABgAGAAYAAgACABIADgAGAA4ACgAGAAIAAgAGAAoAAgAKABIADgAKAA4SAB4AAB4ACgAKAA4AABIAF' +
+      'gAKABIAEgAAABYABgASABoAFhoeEgAAHgAaAAYAAAAAHgAOAAYABg4AFgBAAAASAAIAGgACAAYSAB4AHgAeABoACgAGABIAABYA' +
+      'RACEAJIYAEwAwFIAAAYAQgBAQF4AWhYAAIEKEAEFBRACgIDIAUCSFAoAAFIQEAIKAEQAwJQAgEBEAIwAlACAXACAQAoAEgBAjAD' +
+      'AggAWDgYeCgAeAB4AGgYOAAIAGgAOAAAGAEYAQB4eAAAAHgYABgACAAIABgAaAAAACgAOAAAAAAYAHg4ADgAaDgoCAAICEgYAEg' +
+      'ASAAoAAgACABIADgAKAAYABgAKAAIAGg4AAAoAEgAeAAASABYAAgAOAA4ADgAOAAYABgACAAIACgAKAAYAAgAGAAIAAgACAAIAB' +
+      'gAGAAYAAgAGAAIABgAKAA4ACgAGAAIABgAGAAYABgAKAAIAAgACAAIAAgACAAIAAgAGAAYABgAGAAYAAgAGAAYABgACAAIAAgAC' +
+      'AAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAI' +
+      'AAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg' +
+      'ACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACA' +
+      'AIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIA' +
+      'AgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgA' +
+      'CAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAA' +
+      'IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAA' +
+      'gACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAC' +
+      'AAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAI' +
+      'AAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg' +
+      'ACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACA' +
+      'AIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIA' +
+      'AgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgA' +
+      'CAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAA' +
+      'IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAA' +
+      'gACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAC' +
+      'AAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAI' +
+      'AAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg' +
+      'ACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACA' +
+      'AIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIA' +
+      'AgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgA' +
+      'CAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAA' +
+      'IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAA' +
+      'gACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAC' +
+      'AAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIABgACAAYAAgACAAY' +
+      'ABgACAAIABgACAAYACgACAAoAAgASAAACABIABgACABIABgACABYAAAIACh4AABIeAAIACgACAAIACgAWAAIABgAWGgAABg4AAB' +
+      'oAFhYAAAIAAhoADgAeAAIATgoAAAIAGhYACgACAA4AGgAOABoAGgASABoACgAeEgAKAAAWFgAABACKAFYAHgAGDgAAHgACABYAB' +
+      'gACABAQCAMQA1wAhADB2A=';
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: 'audio/wav' });
   }
 }

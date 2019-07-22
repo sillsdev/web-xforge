@@ -49,6 +49,7 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     AngularSplitModule.forRoot(),
     ngfModule
   ],
+  exports: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent],
   entryComponents: [QuestionDialogComponent]
 })
 export class CheckingModule {}

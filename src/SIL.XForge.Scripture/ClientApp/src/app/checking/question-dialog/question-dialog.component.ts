@@ -10,6 +10,7 @@ import {
   ValidationErrors,
   Validators
 } from '@angular/forms';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { Question } from '../../core/models/question';
 import { ScrVers } from '../../core/models/scripture/scr-vers';
@@ -21,6 +22,7 @@ import {
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { SFValidators } from '../../shared/sfvalidators';
+import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
 export interface QuestionDialogData {
   editMode: boolean;
@@ -32,13 +34,14 @@ export interface QuestionDialogResult {
   scriptureStart?: string;
   scriptureEnd?: string;
   text?: string;
+  audio?: AudioAttachment;
 }
 
 @Component({
   templateUrl: './question-dialog.component.html',
   styleUrls: ['./question-dialog.component.scss']
 })
-export class QuestionDialogComponent implements OnInit {
+export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit {
   private static verseRefDataToString(verseRefData: VerseRefData): string {
     let result: string = verseRefData.book ? verseRefData.book : '';
     result += verseRefData.chapter ? ' ' + verseRefData.chapter : '';
@@ -65,12 +68,26 @@ export class QuestionDialogComponent implements OnInit {
     },
     this.validateVerseAfterStart
   );
+  uploadAudioFile: File;
+  uploadAudioFileUrl: string = '';
+
+  private audio: AudioAttachment = {};
 
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
     @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData,
     readonly dialog: MdcDialog
-  ) {}
+  ) {
+    super();
+  }
+
+  get isRecorderActive(): boolean {
+    return this.audio.status && this.audio.status !== 'denied' && this.audio.status !== 'reset';
+  }
+
+  get isUploaderActive(): boolean {
+    return this.uploadAudioFileUrl !== '';
+  }
 
   get scriptureStart(): AbstractControl {
     return this.questionForm.controls.scriptureStart;
@@ -96,6 +113,9 @@ export class QuestionDialogComponent implements OnInit {
       if (question.text) {
         this.questionText.setValue(question.text);
       }
+      if (question.audioUrl) {
+        this.uploadAudioFileUrl = question.audioUrl;
+      }
     }
   }
 
@@ -107,7 +127,8 @@ export class QuestionDialogComponent implements OnInit {
     this.dialogRef.close({
       scriptureStart: this.scriptureStart.value,
       scriptureEnd: this.scriptureEnd.value,
-      text: this.questionText.value
+      text: this.questionText.value,
+      audio: this.audio
     });
   }
 
@@ -136,6 +157,36 @@ export class QuestionDialogComponent implements OnInit {
         control.setValue(QuestionDialogComponent.verseRefDataToString(result));
       }
     });
+  }
+
+  prepareAudioFileUpload() {
+    if (this.uploadAudioFile) {
+      this.uploadAudioFileUrl = URL.createObjectURL(this.uploadAudioFile);
+      this.audio.url = this.uploadAudioFileUrl;
+      this.audio.blob = this.uploadAudioFile;
+      this.audio.fileName = this.uploadAudioFile.name;
+    }
+  }
+
+  recorderStatus(status: AudioAttachment): void {
+    this.audio.status = status.status;
+    switch (status.status) {
+      case 'reset':
+        this.audio = {};
+        break;
+      case 'processed':
+        this.audio.url = status.url;
+        this.audio.blob = status.blob;
+        this.audio.fileName = status.fileName;
+        break;
+    }
+    // this.setValidationRules();
+  }
+
+  resetAudioFileUpload() {
+    this.uploadAudioFile = null;
+    this.uploadAudioFileUrl = '';
+    this.audio = { status: 'reset' };
   }
 
   private validateVerseAfterStart(group: FormGroup): ValidationErrors | null {

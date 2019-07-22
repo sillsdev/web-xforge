@@ -82,9 +82,9 @@
       with_items:
         - "/var/lib/scriptureforge"
         - "/var/lib/scriptureforge/sync"
+        - "/var/lib/scriptureforge/audio"
         - "/var/lib/xforge"
         - "/var/lib/xforge/avatars"
-        - "/var/lib/xforge/audio"
 
     - name: add localhost to dnsmasq
       lineinfile:
