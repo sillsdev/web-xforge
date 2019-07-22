@@ -50,10 +50,6 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
     this.noticeService.loadingStarted();
   }
 
-  get inviteDisabled(): boolean {
-    return this.userInviteForm.invalid || !this.userInviteForm.value.email || this.inviteButtonClicked;
-  }
-
   get hasEmailError(): boolean {
     return this.userInviteForm.controls.email.hasError('email');
   }
@@ -133,6 +129,10 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
   ngOnDestroy(): void {
     super.ngOnDestroy();
     this.noticeService.loadingFinished();
+  }
+
+  isCurrentUser(userRow: Row): boolean {
+    return userRow.id === this.userService.currentUserId;
   }
 
   updateSearchTerm(term: string): void {
