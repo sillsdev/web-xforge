@@ -137,21 +137,19 @@
             class="next-question"
             icon="chevron_right"
           ></button>
-          <div>
-            <div id="project-summary">
-              <canvas
-                baseChart
-                width="36"
-                height="36"
-                chartType="doughnut"
-                [legend]="false"
-                [labels]="['Unread', 'Read', 'Answered']"
-                [data]="[summary.unread, summary.read, summary.answered]"
-                [colors]="[{ backgroundColor: ['#3a3a3a', '#fff', '#B8D332'] }]"
-                [options]="{ events: [] }"
-              ></canvas>
-            </div>
-          </div>
+          <a [routerLink]="['/projects', projectId, 'checking']" id="project-summary">
+            <canvas
+              baseChart
+              width="36"
+              height="36"
+              chartType="doughnut"
+              [legend]="false"
+              [labels]="['Unread', 'Read', 'Answered']"
+              [data]="[summary.unread, summary.read, summary.answered]"
+              [colors]="[{ backgroundColor: ['#3a3a3a', '#fff', '#B8D332'] }]"
+              [options]="{ events: [] }"
+            ></canvas>
+          </a>
         </div>
       </div>
     </div>

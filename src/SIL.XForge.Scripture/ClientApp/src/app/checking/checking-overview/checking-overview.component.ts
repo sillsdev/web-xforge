@@ -3,21 +3,24 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { clone } from '@orbit/utils';
 import { Observable, Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { filter, switchMap } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
-import { objectId } from 'xforge-common/utils';
+import { nameof, objectId } from 'xforge-common/utils';
 import { Question, QuestionSource } from '../../core/models/question';
 import { QuestionsDoc } from '../../core/models/questions-doc';
 import { ScrVers } from '../../core/models/scripture/scr-vers';
 import { VerseRef } from '../../core/models/scripture/verse-ref';
 import { ScrVersType } from '../../core/models/scripture/versification';
+import { SFProject } from '../../core/models/sfproject';
 import { SFProjectDataDoc } from '../../core/models/sfproject-data-doc';
+import { SFProjectUser } from '../../core/models/sfproject-user';
 import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { TextInfo, TextsByBook } from '../../core/models/text-info';
 import { SFProjectService } from '../../core/sfproject.service';
 import { SFAdminAuthGuard } from '../../shared/sfadmin-auth.guard';
+import { CheckingUtils } from '../checking.utils';
 import {
   QuestionDialogComponent,
   QuestionDialogData,
@@ -31,15 +34,16 @@ import {
 })
 export class CheckingOverviewComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
   isLoading = true;
-  itemVisible: { [bookId: string]: boolean } = {};
-  questions: { [bookId: string]: QuestionsDoc } = {};
+  itemVisible: { [bookIdOrTextDocId: string]: boolean } = {};
+  questions: { [textDocId: string]: QuestionsDoc } = {};
+  texts: TextInfo[] = [];
   isProjectAdmin$: Observable<boolean>;
-  texts: TextInfo[];
+  projectId: string;
   textsByBook: TextsByBook;
 
-  private projectId: string;
   private projectDataDoc: SFProjectDataDoc;
   private projectDataChangesSub: Subscription;
+  private projectCurrentUser: SFProjectUser;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -53,33 +57,45 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
   }
 
   ngOnInit(): void {
-    this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
-      this.projectId = projectId;
-      this.isProjectAdmin$ = this.adminAuthGuard.allowTransition(this.projectId);
-      this.isLoading = true;
-      this.noticeService.loadingStarted();
-      try {
-        this.projectDataDoc = await this.projectService.getDataDoc(this.projectId);
-        await this.initTexts();
-      } finally {
-        this.isLoading = false;
-        this.noticeService.loadingFinished();
-      }
-
-      if (this.projectDataChangesSub != null) {
-        this.projectDataChangesSub.unsubscribe();
-      }
-      this.projectDataChangesSub = this.projectDataDoc.remoteChanges().subscribe(async () => {
+    this.subscribe(
+      this.activatedRoute.params.pipe(
+        switchMap(params => {
+          this.projectId = params['projectId'];
+          return this.projectService.get(this.projectId, [[nameof<SFProject>('users')]]);
+        }),
+        filter(projectResults => projectResults.data != null)
+      ),
+      async projectResults => {
+        this.isProjectAdmin$ = this.adminAuthGuard.allowTransition(this.projectId);
         this.isLoading = true;
         this.noticeService.loadingStarted();
+        const project = projectResults.data;
+        this.projectCurrentUser = projectResults
+          .getManyIncluded<SFProjectUser>(project.users)
+          .find(pu => pu.userRef === this.userService.currentUserId);
         try {
+          this.projectDataDoc = await this.projectService.getDataDoc(this.projectId);
           await this.initTexts();
         } finally {
-          this.noticeService.loadingFinished();
           this.isLoading = false;
+          this.noticeService.loadingFinished();
         }
-      });
-    });
+
+        if (this.projectDataChangesSub != null) {
+          this.projectDataChangesSub.unsubscribe();
+        }
+        this.projectDataChangesSub = this.projectDataDoc.remoteChanges().subscribe(async () => {
+          this.isLoading = true;
+          this.noticeService.loadingStarted();
+          try {
+            await this.initTexts();
+          } finally {
+            this.noticeService.loadingFinished();
+            this.isLoading = false;
+          }
+        });
+      }
+    );
   }
 
   ngOnDestroy(): void {
@@ -175,6 +191,44 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
 
   answerCountLabel(count: number): string {
     return count ? count + ' answers' : '';
+  }
+
+  overallProgress(): number[] {
+    let totalUnread: number = 0;
+    let totalRead: number = 0;
+    let totalAnswered: number = 0;
+    for (const text of this.texts) {
+      const [unread, read, answered] = this.bookProgress(text);
+      totalUnread += unread;
+      totalRead += read;
+      totalAnswered += answered;
+    }
+
+    return [totalUnread, totalRead, totalAnswered];
+  }
+
+  bookProgress(text: TextInfo): number[] {
+    let unread: number = 0;
+    let read: number = 0;
+    let answered: number = 0;
+    for (const chapter of text.chapters) {
+      const id = new TextDocId(this.projectId, text.bookId, chapter.number);
+      if (!(id.toString() in this.questions)) {
+        continue;
+      }
+
+      for (const question of this.questions[id.toString()].data) {
+        if (CheckingUtils.hasUserAnswered(question, this.userService.currentUserId)) {
+          answered++;
+        } else if (CheckingUtils.hasUserReadQuestion(question, this.projectCurrentUser)) {
+          read++;
+        } else {
+          unread++;
+        }
+      }
+    }
+
+    return [unread, read, answered];
   }
 
   archiveQuestion(bookId?: string, chapterNumber?: number, questionIndex: number = 0): void {
