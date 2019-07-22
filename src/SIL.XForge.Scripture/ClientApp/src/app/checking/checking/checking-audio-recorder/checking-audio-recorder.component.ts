@@ -1,5 +1,7 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import RecordRTC from 'recordrtc';
+import { UserDoc } from 'xforge-common/models/user-doc';
+import { UserService } from 'xforge-common/user.service';
 
 export interface AudioAttachment {
   status?: 'denied' | 'processed' | 'recoding' | 'reset' | 'stopped';
@@ -13,12 +15,15 @@ export interface AudioAttachment {
   templateUrl: './checking-audio-recorder.component.html',
   styleUrls: ['./checking-audio-recorder.component.scss']
 })
-export class CheckingAudioRecorderComponent {
+export class CheckingAudioRecorderComponent implements OnInit {
   @Output() status: EventEmitter<AudioAttachment> = new EventEmitter<AudioAttachment>();
   audioUrl: string = '';
   microphonePermission: boolean;
   private stream: MediaStream;
   private recordRTC: RecordRTC;
+  private user: UserDoc;
+
+  constructor(private userService: UserService) {}
 
   get hasAudioAttachment(): boolean {
     return this.audioUrl !== '';
@@ -28,6 +33,14 @@ export class CheckingAudioRecorderComponent {
     return this.recordRTC && this.recordRTC.state === 'recording';
   }
 
+  generateRecodingFileName(): string {
+    return this.user.data.name + '.webm';
+  }
+
+  ngOnInit(): void {
+    this.userService.getCurrentUser().then(u => (this.user = u));
+  }
+
   processAudio(audioVideoWebMURL: string) {
     this.audioUrl = audioVideoWebMURL;
     this.recordRTC.getDataURL(() => {});
@@ -35,7 +48,7 @@ export class CheckingAudioRecorderComponent {
       url: audioVideoWebMURL,
       status: 'processed',
       blob: this.recordRTC.getBlob(),
-      fileName: audioVideoWebMURL
+      fileName: this.generateRecodingFileName()
     });
   }
 

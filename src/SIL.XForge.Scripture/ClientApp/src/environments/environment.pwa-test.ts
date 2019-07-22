@@ -10,5 +10,8 @@ export const environment = {
   audience: 'https://scriptureforge.org/',
   scope: 'sf_data',
   prefix: 'sf',
-  siteId: 'sf'
+  siteId: 'sf',
+  assets: {
+    audio: '/assets/audio/'
+  }
 };

@@ -5,6 +5,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import { ngfModule } from 'angular-file';
 import * as OTJson0 from 'ot-json0';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
@@ -21,6 +22,7 @@ import { SFProjectDataDoc } from '../../core/models/sfproject-data-doc';
 import { TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectService } from '../../core/sfproject.service';
 import { SFAdminAuthGuard } from '../../shared/sfadmin-auth.guard';
+import { CheckingModule } from '../checking.module';
 import { QuestionDialogComponent } from '../question-dialog/question-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview.component';
 
@@ -72,7 +74,8 @@ describe('CheckingOverviewComponent', () => {
         of({
           scriptureStart: 'MAT 3:3',
           scriptureEnd: '',
-          text: ''
+          text: '',
+          audio: { fileName: '' }
         })
       );
       env.fixture.detectChanges();
@@ -119,7 +122,8 @@ describe('CheckingOverviewComponent', () => {
         of({
           scriptureStart: 'MAT 3:3',
           scriptureEnd: '',
-          text: ''
+          text: '',
+          audio: { fileName: '' }
         })
       );
       env.waitForQuestions();
@@ -138,9 +142,15 @@ describe('CheckingOverviewComponent', () => {
 });
 
 @NgModule({
-  imports: [FormsModule, MdcDialogModule, ReactiveFormsModule, NoopAnimationsModule, UICommonModule],
-  exports: [QuestionDialogComponent],
-  declarations: [QuestionDialogComponent],
+  imports: [
+    FormsModule,
+    MdcDialogModule,
+    ReactiveFormsModule,
+    NoopAnimationsModule,
+    UICommonModule,
+    ngfModule,
+    CheckingModule
+  ],
   entryComponents: [QuestionDialogComponent]
 })
 class DialogTestModule {}
@@ -192,7 +202,6 @@ class TestEnvironment {
 
     TestBed.configureTestingModule({
       imports: [DialogTestModule],
-      declarations: [CheckingOverviewComponent],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       providers: [
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },

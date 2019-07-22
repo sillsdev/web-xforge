@@ -127,7 +127,7 @@ namespace SIL.XForge.Scripture
             });
             app.UseStaticFiles(new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(Path.Combine(siteOptions.Value.SharedDir, "audio")),
+                FileProvider = new PhysicalFileProvider(Path.Combine(siteOptions.Value.SiteDir, "audio")),
                 RequestPath = "/assets/audio"
             });
 
