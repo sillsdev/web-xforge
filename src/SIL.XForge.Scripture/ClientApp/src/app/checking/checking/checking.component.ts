@@ -22,6 +22,7 @@ import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { TextInfo } from '../../core/models/text-info';
 import { SFProjectUserService } from '../../core/sfproject-user.service';
 import { SFProjectService } from '../../core/sfproject.service';
+import { CheckingUtils } from '../checking.utils';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
@@ -59,25 +60,27 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement: ElementRef;
   @ViewChild('chapterMenuList') chapterMenuList: MdcList;
 
-  project: SFProject;
-  projectCurrentUser: SFProjectUser;
-  text: TextInfo;
-  questions: Readonly<Question[]> = [];
+  chapters: number[] = [];
   checkingData: CheckingData = { questionsDocs: {}, commentsDocs: {} };
   comments: Readonly<Comment[]> = [];
+  isExpanded: boolean = false;
+  questions: Readonly<Question[]> = [];
+  resetAnswerPanelHeightOnFormHide: boolean = false;
   summary: Summary = {
     read: 0,
     unread: 0,
     answered: 0
   };
-  answersPanelContainerElement: ElementRef;
-  textDocId: TextDocId;
-  chapters: number[] = [];
-  isExpanded: boolean = false;
-  resetAnswerPanelHeightOnFormHide: boolean = false;
 
-  private _chapter: number;
+  answersPanelContainerElement: ElementRef;
+  project: SFProject;
+  projectCurrentUser: SFProjectUser;
+  projectId: string;
+  text: TextInfo;
+  textDocId: TextDocId;
+
   private _isDrawerPermanent: boolean = true;
+  private _chapter: number;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -151,11 +154,11 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.subscribe(
       this.activatedRoute.params.pipe(
         switchMap(params => {
-          const projectId = params['projectId'];
+          this.projectId = params['projectId'];
           const bookId = params['bookId'];
           return combineLatest(
-            this.projectService.get(projectId, [[nameof<SFProject>('users')]]),
-            from(this.projectService.getDataDoc(projectId)).pipe(
+            this.projectService.get(this.projectId, [[nameof<SFProject>('users')]]),
+            from(this.projectService.getDataDoc(this.projectId)).pipe(
               map(projectData => projectData.data.texts.find(t => t.bookId === bookId))
             )
           );
@@ -501,9 +504,9 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.summary.read = 0;
     this.summary.unread = 0;
     for (const question of this.questions) {
-      if (this.questionsPanel.hasUserAnswered(question)) {
+      if (CheckingUtils.hasUserAnswered(question, this.userService.currentUserId)) {
         this.summary.answered++;
-      } else if (this.questionsPanel.hasUserReadQuestion(question)) {
+      } else if (CheckingUtils.hasUserReadQuestion(question, this.projectCurrentUser)) {
         this.summary.read++;
       } else {
         this.summary.unread++;
