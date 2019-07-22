@@ -13,3 +13,30 @@ mdc-text-field {
 mdc-dialog-actions {
   text-align: end;
 }
+
+.question-record-upload {
+  min-height: 80px;
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  button {
+    margin-right: 15px;
+  }
+
+  &.recorder-active {
+    app-checking-audio-recorder {
+      flex: 1;
+    }
+  }
+
+  &.recorder-active,
+  &.uploader-active {
+    app-checking-audio-player {
+      flex: 1;
+    }
+  }
+
+  .upload-audio-file {
+    margin-left: 10px;
+  }
+}

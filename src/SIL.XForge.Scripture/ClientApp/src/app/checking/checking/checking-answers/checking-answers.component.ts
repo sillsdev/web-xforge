@@ -118,11 +118,9 @@ export class CheckingAnswersComponent implements OnInit {
 
   editAnswer(answer: Answer) {
     this.activeAnswer = clone(answer);
+    this.audio.url = this.activeAnswer.audioUrl;
+    this.uploadAudioFileUrl = this.activeAnswer.audioUrl;
     this.showAnswerForm();
-  }
-
-  generateAudioFileName(): string {
-    return this.user.data.name + '.webm';
   }
 
   getComments(answer: Answer): Comment[] {
@@ -182,7 +180,7 @@ export class CheckingAnswersComponent implements OnInit {
       case 'processed':
         this.audio.url = status.url;
         this.audio.blob = status.blob;
-        this.audio.fileName = this.generateAudioFileName();
+        this.audio.fileName = status.fileName;
         break;
     }
     this.setValidationRules();
@@ -192,7 +190,7 @@ export class CheckingAnswersComponent implements OnInit {
   resetAudioFileUpload() {
     this.uploadAudioFile = null;
     this.uploadAudioFileUrl = '';
-    this.audio = {};
+    this.audio = { status: 'reset' };
   }
 
   showAnswerForm() {
