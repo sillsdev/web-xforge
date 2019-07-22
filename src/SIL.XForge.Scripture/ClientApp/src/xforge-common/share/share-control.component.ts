@@ -6,20 +6,22 @@ import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { XFValidators } from '../xfvalidators';
 
+/** UI to share project access with new users, such as by sending an invitation email. */
 @Component({
   selector: 'app-share-control',
   templateUrl: './share-control.component.html',
   styleUrls: ['./share-control.component.scss']
 })
 export class ShareControlComponent {
-  @Input() readonly projectId: string;
-  @Input() readonly isLinkSharingEnabled: boolean;
+  @Input() projectId: string;
+  @Input() isLinkSharingEnabled: boolean;
   @ViewChild('shareLinkField') shareLinkField: MdcTextField;
 
   sendInviteForm: FormGroup = new FormGroup({
     email: new FormControl('', [XFValidators.email])
   });
   isSubmitted: boolean = false;
+  isAlreadyInvited: boolean;
 
   constructor(
     private readonly noticeService: NoticeService,
@@ -42,15 +44,24 @@ export class ShareControlComponent {
     this.noticeService.show('Link copied to clipboard');
   }
 
+  async onEmailInput(newValue: string): Promise<void> {
+    if (this.sendInviteForm.get('email').invalid) {
+      return;
+    }
+    this.isAlreadyInvited = await this.projectService.onlineIsAlreadyInvited(this.projectId, newValue);
+  }
+
   async sendEmail(): Promise<void> {
     if (this.email.value === '' || !this.sendInviteForm.valid) {
       return;
     }
 
     this.isSubmitted = true;
-    await this.projectService.onlineInvite(this.projectId, this.sendInviteForm.value.email);
+    const response = await this.projectService.onlineInvite(this.projectId, this.sendInviteForm.value.email);
     this.isSubmitted = false;
-    this.noticeService.show('An invitation email has been sent to ' + this.sendInviteForm.value.email);
+    this.isAlreadyInvited = false;
+    const message = response ? response : 'An invitation email has been sent to ' + this.sendInviteForm.value.email;
+    this.noticeService.show(message);
     this.sendInviteForm.reset();
   }
 }
