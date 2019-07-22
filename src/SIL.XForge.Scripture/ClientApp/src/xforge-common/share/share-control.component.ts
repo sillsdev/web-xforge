@@ -6,6 +6,7 @@ import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { XFValidators } from '../xfvalidators';
 
+/** UI to share project access with new users, such as by sending an invitation email. */
 @Component({
   selector: 'app-share-control',
   templateUrl: './share-control.component.html',
@@ -20,6 +21,8 @@ export class ShareControlComponent {
     email: new FormControl('', [XFValidators.email])
   });
   isSubmitted: boolean = false;
+  isAlreadyInvited: boolean;
+  readonly alreadyProjectMemberResponse: string = 'alreadyProjectMember';
 
   constructor(
     private readonly noticeService: NoticeService,
@@ -42,15 +45,30 @@ export class ShareControlComponent {
     this.noticeService.show('Link copied to clipboard');
   }
 
+  async onEmailInput(newValue: string): Promise<void> {
+    if (this.sendInviteForm.get('email').invalid) {
+      return;
+    }
+    this.isAlreadyInvited = await this.projectService.onlineIsAlreadyInvited(this.projectId, newValue);
+  }
+
   async sendEmail(): Promise<void> {
     if (this.email.value === '' || !this.sendInviteForm.valid) {
       return;
     }
 
     this.isSubmitted = true;
-    await this.projectService.onlineInvite(this.projectId, this.sendInviteForm.value.email);
+    const response = await this.projectService.onlineInvite(this.projectId, this.sendInviteForm.value.email);
     this.isSubmitted = false;
-    this.noticeService.show('An invitation email has been sent to ' + this.sendInviteForm.value.email);
+    this.isAlreadyInvited = false;
+    let message = '';
+    if (response === this.alreadyProjectMemberResponse) {
+      message = 'Not inviting: User is already a member of this project';
+    } else {
+      message = 'An invitation email has been sent to ' + this.sendInviteForm.value.email;
+    }
+
+    this.noticeService.show(message);
     this.sendInviteForm.reset();
   }
 }

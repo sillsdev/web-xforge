@@ -329,13 +329,13 @@ class TestEnvironment {
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
   private readonly project$: BehaviorSubject<MapQueryResults<SFProject>>;
-  private readonly paratectProjects$: BehaviorSubject<ParatextProject[]>;
+  private readonly paratextProjects$: BehaviorSubject<ParatextProject[]>;
   private readonly currentUserDoc: UserDoc;
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(this.mockedNoticeService.isLoading).thenCall(() => this.isLoading);
-    this.paratectProjects$ = new BehaviorSubject<ParatextProject[]>([
+    this.paratextProjects$ = new BehaviorSubject<ParatextProject[]>([
       {
         paratextId: 'paratextId01',
         name: 'ParatextP1',
@@ -353,7 +353,7 @@ class TestEnvironment {
         isConnected: false
       }
     ]);
-    when(this.mockedParatextService.getProjects()).thenReturn(this.paratectProjects$);
+    when(this.mockedParatextService.getProjects()).thenReturn(this.paratextProjects$);
     this.project$ = new BehaviorSubject<MapQueryResults<SFProject>>(
       new MapQueryResults(
         new TestProject({
@@ -529,7 +529,7 @@ class TestEnvironment {
   }
 
   setupParatextProjects(paratextProjects: ParatextProject[]) {
-    this.paratectProjects$.next(paratextProjects);
+    this.paratextProjects$.next(paratextProjects);
   }
 }
 
