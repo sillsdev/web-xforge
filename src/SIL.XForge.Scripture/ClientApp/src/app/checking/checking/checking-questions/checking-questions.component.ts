@@ -10,6 +10,7 @@ import { SFProject } from '../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../../core/models/sfproject-user';
 import { SFProjectUserService } from '../../../core/sfproject-user.service';
+import { CheckingUtils } from '../../checking.utils';
 
 @Component({
   selector: 'app-checking-questions',
@@ -131,13 +132,11 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   hasUserAnswered(question: Question): boolean {
-    return question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length > 0;
+    return CheckingUtils.hasUserAnswered(question, this.userService.currentUserId);
   }
 
   hasUserReadQuestion(question: Question): boolean {
-    return this.projectCurrentUser.questionRefsRead
-      ? this.projectCurrentUser.questionRefsRead.includes(question.id)
-      : false;
+    return CheckingUtils.hasUserReadQuestion(question, this.projectCurrentUser);
   }
 
   hasUserReadAnswer(answer: Answer): boolean {
