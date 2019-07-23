@@ -35,7 +35,7 @@ namespace SIL.XForge.Controllers
             const string email = "newuser@example.com";
             RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
             Assert.That(result, Is.Not.Null);
-            await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
+            await env.EmailService.Received(1).SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
                 Arg.Is<string>(body => body.Contains($"http://localhost/projects/{Project01}?sharing=true&shareKey=1234abc")
                 && body.Contains("link will only work for this email address")));
         }
@@ -47,16 +47,17 @@ namespace SIL.XForge.Controllers
             env.SetUser(User01, SystemRoles.User);
             env.SetProject(Project03);
             const string email = "newuser@example.com";
+            const string encodedEmail = "newuser@example[dot]com";
             RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
             Assert.That(result, Is.Not.Null);
-            await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
+            await env.EmailService.Received(1).SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
                 Arg.Is<string>(body => body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=1234abc")
                 && body.Contains("link will only work for this email address")));
 
-            // Code was recorded in database
+            // Code was recorded in database and email address was encoded in ShareKeys.
             var project = env.Projects.Get(Project03);
             Assert.That(project.ShareKeys.ContainsValue("1234abc"));
-            Assert.That(project.ShareKeys[email], Is.EqualTo("1234abc"));
+            Assert.That(project.ShareKeys[encodedEmail], Is.EqualTo("1234abc"));
         }
 
         [Test]
@@ -66,6 +67,7 @@ namespace SIL.XForge.Controllers
             env.SetUser(User01, SystemRoles.User);
             env.SetProject(Project03);
             const string email = "newuser@example.com";
+            const string encodedEmail = "newuser@example[dot]com";
 
             var project = env.Projects.Get(Project03);
             Assert.That(project.ShareKeys.ContainsKey(email), Is.False, "setup");
@@ -73,20 +75,20 @@ namespace SIL.XForge.Controllers
             env.SecurityUtils.GenerateKey().Returns("1111", "3333");
             RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
             Assert.That(result, Is.Not.Null);
-            await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
+            await env.EmailService.Received(1).SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
                 Arg.Is<string>(body => body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=1111")));
 
             // Code was recorded in database
             project = env.Projects.Get(Project03);
-            Assert.That(project.ShareKeys.ContainsKey(email), Is.True);
+            Assert.That(project.ShareKeys.ContainsKey(encodedEmail), Is.True);
 
             result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
             Assert.That(result, Is.Not.Null);
             // Invitation email was sent again, but with first code
-            await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
+            await env.EmailService.Received(2).SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
                 Arg.Is<string>(body => body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=1111")));
 
-            Assert.That(project.ShareKeys[email], Is.EqualTo("1111"), "Code should not have been changed");
+            Assert.That(project.ShareKeys[encodedEmail], Is.EqualTo("1111"), "Code should not have been changed");
         }
 
         [Test]
@@ -98,7 +100,7 @@ namespace SIL.XForge.Controllers
             const string email = "newuser@example.com";
             RpcMethodSuccessResult result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
             Assert.That(result, Is.Not.Null);
-            await env.EmailService.Received().SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
+            await env.EmailService.Received(1).SendEmailAsync(Arg.Is(email), Arg.Any<string>(),
                 Arg.Is<string>(body => body.Contains($"http://localhost/projects/{Project02}?sharing=true")
                 && body.Contains("link can be shared with others")));
         }
@@ -123,6 +125,7 @@ namespace SIL.XForge.Controllers
             env.SetUser(User01, SystemRoles.User);
             env.SetProject(Project03);
             const string email = "user01@example.com";
+            const string encodedEmail = "user01@example[dot]com";
             var project = env.Projects.Get(Project03);
 
             Assert.That(project.Users.Any(pu => pu.UserRef == User01), Is.True, "setup - user should already be a project user");
@@ -132,7 +135,7 @@ namespace SIL.XForge.Controllers
             project = env.Projects.Get(Project03);
             Assert.That(project.Users.Any(pu => pu.UserRef == User01), Is.True, "user should still be a project user");
 
-            Assert.That(project.ShareKeys.ContainsKey(email), Is.False, "no sharekey should have been added");
+            Assert.That(project.ShareKeys.ContainsKey(encodedEmail), Is.False, "no sharekey should have been added");
 
             // Email should not have been sent
             await env.EmailService.DidNotReceiveWithAnyArgs().SendEmailAsync(default, default, default);
@@ -189,7 +192,7 @@ namespace SIL.XForge.Controllers
             var project = env.Projects.Get(Project03);
 
             Assert.That(project.Users.Any(pu => pu.UserRef == User02), Is.False, "setup");
-            Assert.That(project.ShareKeys.ContainsKey("user02@example.com"), Is.True, "setup");
+            Assert.That(project.ShareKeys.ContainsKey("user02@example[dot]com"), Is.True, "setup");
 
             RpcMethodErrorResult result = await env.Controller.CheckLinkSharing("badcode") as RpcMethodErrorResult;
             Assert.That(result.ErrorCode, Is.EqualTo((int)RpcErrorCode.InvalidRequest),
@@ -214,6 +217,60 @@ namespace SIL.XForge.Controllers
             project = env.Projects.Get(Project03);
             Assert.That(project.Users.Any(pu => pu.UserRef == User02), Is.True, "User should have been added to project");
             Assert.That(project.ShareKeys.ContainsValue("key1234"), Is.False, "Code should have been removed from project");
+        }
+
+        [Test]
+        public async Task EncodeJsonName_RetainsNondots()
+        {
+            foreach (var input in new string[] { "abc", "ABCabc123-_~!@#$%^&",
+                "bob@localhost", null, "", " " })
+            {
+                Assert.That(TestProjectsRpcController.EncodeJsonName(input),
+                    Is.EqualTo(input));
+            }
+        }
+
+        [Test]
+        public async Task EncodeJsonName_ReplacesDots()
+        {
+
+            Assert.That(TestProjectsRpcController.EncodeJsonName("."),
+                Is.EqualTo("[dot]"));
+            Assert.That(TestProjectsRpcController.EncodeJsonName("a.a"),
+                Is.EqualTo("a[dot]a"));
+            Assert.That(TestProjectsRpcController
+                .EncodeJsonName("bob.smith@my.example.com"),
+                Is.EqualTo("bob[dot]smith@my[dot]example[dot]com"));
+            Assert.That(TestProjectsRpcController
+                .EncodeJsonName("\"bob..smith\"@example.com"),
+                Is.EqualTo("\"bob[dot][dot]smith\"@example[dot]com"));
+        }
+
+        [Test]
+        public async Task DecodeJsonName_NonspecialIsUnmodified()
+        {
+            foreach (var input in new string[] { "abc", "ABCabc123-_~!@#$%^&",
+                "bob@localhost", null, "", " ", "a[dot", "dot]a", "a[ dot]a" })
+            {
+                Assert.That(TestProjectsRpcController.DecodeJsonName(input),
+                    Is.EqualTo(input));
+            }
+        }
+
+        [Test]
+        public async Task DecodeJsonName_ReplacesToken()
+        {
+
+            Assert.That(TestProjectsRpcController.DecodeJsonName("[dot]"),
+                Is.EqualTo("."));
+            Assert.That(TestProjectsRpcController.DecodeJsonName("a[dot]a"),
+                Is.EqualTo("a.a"));
+            Assert.That(TestProjectsRpcController
+                .DecodeJsonName("bob[dot]smith@my[dot]example[dot]com"),
+                Is.EqualTo("bob.smith@my.example.com"));
+            Assert.That(TestProjectsRpcController
+                .DecodeJsonName("\"bob[dot][dot]smith\"@example[dot]com"),
+                Is.EqualTo("\"bob..smith\"@example.com"));
         }
 
         private class TestEnvironment
@@ -280,9 +337,9 @@ namespace SIL.XForge.Controllers
                         ShareEnabled = true,
                         ShareLevel = SharingLevel.Specific,
                         ShareKeys = new Dictionary<string, string> {
-                            { "bob@example.com", "key1111" },
-                            { "user02@example.com", "key1234" },
-                            { "bill@example.com", "key2222" }
+                            { "bob@example[dot]com", "key1111" },
+                            { "user02@example[dot]com", "key1234" },
+                            { "bill@example[dot]com", "key2222" }
                         }
                     }
                 });
