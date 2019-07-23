@@ -13,7 +13,7 @@ command -v inotifywait >/dev/null || {
 }
 
 echo -n "Press CTRL-C to stop automatically running tests when files are saved. "
-echo "If that fails, in another terminal first run killall ng; sleep 1s; killall -9 ng"
+echo "If that fails, in another terminal first run pkill 'ng test'; sleep 1s; pkill -9 'ng test'"
 
 "$ROOT_PATH"/test-headless.sh "$@"
 while inotifywait -qre close_write --format "" "$ROOT_PATH"; do
