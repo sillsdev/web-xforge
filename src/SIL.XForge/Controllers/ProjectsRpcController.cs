@@ -37,6 +37,29 @@ namespace SIL.XForge.Controllers
         protected abstract string ProjectAdminRole { get; }
         internal ISecurityUtils SecurityUtils { get; set; }
 
+        /// <summary>Encode the input so it is easier to use as a JSON object
+        /// name using our libraries. Replaces dot characters. A proper encoder
+        /// would do much more (https://json.org/).</summary>
+        public static string EncodeJsonName(string name)
+        {
+            if (name == null)
+            {
+                return null;
+            }
+            return name.Replace(".", "[dot]");
+        }
+
+        /// <summary>Decode a string that was previously given by
+        /// EncodeJsonName().</summary>
+        public static string DecodeJsonName(string encodedName)
+        {
+            if (encodedName == null)
+            {
+                return null;
+            }
+            return encodedName.Replace("[dot]", ".");
+        }
+
         /// <summary>Send an email to invite someone to work on the project</summary>
         public async Task<IRpcMethodResult> Invite(string email)
         {
@@ -63,10 +86,11 @@ namespace SIL.XForge.Controllers
             {
                 // Invite a specific person
                 // Reuse prior code, if any
-                project.ShareKeys.TryGetValue(email, out string code);
+                var encodedEmail = EncodeJsonName(email);
+                project.ShareKeys.TryGetValue(encodedEmail, out string code);
                 code = code ?? SecurityUtils.GenerateKey();
                 url = $"{siteOptions.Origin}projects/{ResourceId}?sharing=true&shareKey={code}";
-                await Projects.UpdateAsync(p => p.Id == ResourceId, update => update.Set(p => p.ShareKeys[email], code));
+                await Projects.UpdateAsync(p => p.Id == ResourceId, update => update.Set(p => p.ShareKeys[encodedEmail], code));
                 additionalMessage = "This link will only work for this email address.";
             }
             else
@@ -111,7 +135,7 @@ namespace SIL.XForge.Controllers
                 {
                     return ForbiddenError();
                 }
-                var currentUserEmail = (await _users.GetAsync(UserId)).Email;
+                var currentUserEmail = EncodeJsonName((await _users.GetAsync(UserId)).Email);
                 if (project.ShareKeys[currentUserEmail] == shareKey)
                 {
                     await AddUserToProject(project);
