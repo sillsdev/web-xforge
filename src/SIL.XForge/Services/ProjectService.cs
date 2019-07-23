@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -8,7 +9,6 @@ using AutoMapper;
 using JsonApiDotNetCore.Internal.Query;
 using JsonApiDotNetCore.Services;
 using Microsoft.Extensions.Options;
-using Xabe.FFmpeg;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -128,13 +128,13 @@ namespace SIL.XForge.Services
             }
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
-            string mp3Path = await ConvertToMp3Async(path);
+            string mp3Path = ConvertToMp3Async(path);
             var uri = new Uri(_siteOptions.Value.Origin,
                 $"/assets/audio/{mp3Path}");
             return uri;
         }
 
-        private async Task<string> ConvertToMp3Async(string filePath)
+        private string ConvertToMp3Async(string filePath)
         {
             if (Path.GetExtension(filePath) == ".mp3")
             {
@@ -145,7 +145,18 @@ namespace SIL.XForge.Services
             {
                 File.Delete(mp3FilePath);
             }
-            var result = await Conversion.Convert(filePath, mp3FilePath).Start();
+            var process = new Process()
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "ffmpeg",
+                    Arguments = $"-i \"{filePath}\" \"{mp3FilePath}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+            process.Start();
+            process.WaitForExit();
             File.Delete(filePath);
             return mp3FilePath;
         }

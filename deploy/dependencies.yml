@@ -42,6 +42,8 @@
           'mongodb-org',
           'nodejs',
           'npm',
+          'libmp3lame0',
+          'ffmpeg'
         ]
         update_cache: yes
       tags: ["packages"]
