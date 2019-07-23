@@ -26,13 +26,14 @@
       <table mat-table fxFill id="project-users-table" [dataSource]="userRows">
         <ng-container matColumnDef="avatar">
           <td mat-cell *matCellDef="let userRow; let i = index">
-            <div *ngIf="userRow.active"><app-avatar [user]="userRow.user" size="32" [round]="false"> </app-avatar></div>
+            <div *ngIf="userRow.active"><app-avatar [user]="userRow.user" size="32" [round]="false"></app-avatar></div>
           </td>
         </ng-container>
         <ng-container matColumnDef="name">
           <td mat-cell *matCellDef="let userRow">
             <div *ngIf="userRow.active">
               <strong>{{ userRow.user?.name }}</strong>
+              <span *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;me</span>
             </div>
             <div *ngIf="!userRow.active">Awaiting response from</div>
             {{ userRow.user?.email }}
@@ -45,9 +46,14 @@
         </ng-container>
         <ng-container matColumnDef="remove">
           <td mat-cell *matCellDef="let userRow" class="remove-cell">
-            <button *ngIf="userRow.active" mdc-icon-button class="remove-user" (click)="removeProjectUser(userRow.id)">
-              <mdc-icon>clear</mdc-icon>
-            </button>
+            <button
+              mdc-icon-button
+              icon="clear"
+              class="remove-user"
+              *ngIf="userRow.active && !isCurrentUser(userRow)"
+              (click)="removeProjectUser(userRow.id)"
+              title="Remove from project"
+            ></button>
 
             <!-- 2 buttons below are 1 button displayed mutually exclusively, different style on breakpoints -->
             <button
@@ -63,16 +69,16 @@
               Cancel invite
             </button>
             <button
+              mdc-icon-button
+              icon="clear"
+              color="warn"
+              class="cancel-invite"
               *ngIf="!userRow.active"
               fxHide
               fxShow.lt-sm
-              mdc-icon-button
-              color="warn"
-              class="cancel-invite"
               (click)="removeProjectUser(userRow.id)"
-            >
-              <mdc-icon>clear</mdc-icon>
-            </button>
+              title="Cancel invite"
+            ></button>
           </td>
         </ng-container>
 

@@ -47,6 +47,10 @@ mdc-text-field {
   word-break: break-word;
 }
 
+.current-user-label {
+  color: var(--mdc-theme-secondary);
+}
+
 .no-users-label {
   padding-top: 14px;
 }
