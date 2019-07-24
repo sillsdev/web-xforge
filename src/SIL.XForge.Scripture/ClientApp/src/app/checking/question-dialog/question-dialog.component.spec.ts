@@ -6,13 +6,17 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { anything, capture, instance, mock, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { Question } from '../../core/models/question';
 import { VerseRefData } from '../../core/models/verse-ref-data';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
+import { CheckingModule } from '../checking.module';
 import { QuestionDialogComponent } from './question-dialog.component';
 
 describe('QuestionDialogComponent', () => {
@@ -279,25 +283,16 @@ class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [CommonModule, UICommonModule],
-  declarations: [
-    ViewContainerDirective,
-    ChildViewContainerComponent,
-    QuestionDialogComponent,
-    ScriptureChooserDialogComponent
-  ],
-  exports: [
-    ViewContainerDirective,
-    ChildViewContainerComponent,
-    QuestionDialogComponent,
-    ScriptureChooserDialogComponent
-  ],
+  imports: [CommonModule, UICommonModule, CheckingModule],
+  declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
+  exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
   entryComponents: [ChildViewContainerComponent, QuestionDialogComponent, ScriptureChooserDialogComponent]
 })
 class DialogTestModule {}
 
 class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;
+  currentUserDoc: UserDoc;
   component: QuestionDialogComponent;
   dialogRef: MdcDialogRef<QuestionDialogComponent>;
   overlayContainerElement: HTMLElement;
@@ -305,12 +300,17 @@ class TestEnvironment {
 
   mockedAuthService: AuthService = mock(AuthService);
   mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
+  mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+  mockedUserService: UserService = mock(UserService);
   dialogSpy: MdcDialog;
 
   constructor() {
     TestBed.configureTestingModule({
       imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
-      providers: [{ provide: AuthService, useFactory: () => instance(this.mockedAuthService) }]
+      providers: [
+        { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
+      ]
     });
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
@@ -341,16 +341,31 @@ class TestEnvironment {
     when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult: VerseRefData = { book: 'LUK', chapter: '1', verse: '2' };
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
-
     this.fixture.detectChanges();
+  }
+
+  get cancelButton(): HTMLButtonElement {
+    return this.overlayContainerElement.querySelector('#question-cancel-btn');
+  }
+
+  get dataPassedToDialog(): ScriptureChooserDialogData {
+    return (capture(this.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>).data;
+  }
+
+  get questionInput(): HTMLTextAreaElement {
+    return this.overlayContainerElement.querySelector('#question-text');
   }
 
   get saveButton(): HTMLButtonElement {
     return this.overlayContainerElement.querySelector('#question-save-btn');
   }
 
-  get cancelButton(): HTMLButtonElement {
-    return this.overlayContainerElement.querySelector('#question-cancel-btn');
+  get scriptureEndInput(): HTMLInputElement {
+    return this.overlayContainerElement.querySelector('#scripture-end');
+  }
+
+  get scriptureEndInputIcon(): HTMLInputElement {
+    return this.scriptureEndInput.querySelector('mdc-icon');
   }
 
   get scriptureStartInput(): HTMLInputElement {
@@ -361,24 +376,8 @@ class TestEnvironment {
     return this.scriptureStartInput.querySelector('mdc-icon');
   }
 
-  get scriptureEndInputIcon(): HTMLInputElement {
-    return this.scriptureEndInput.querySelector('mdc-icon');
-  }
-
   get scriptureStartValidationMsg(): HTMLElement {
     return this.overlayContainerElement.querySelector('#question-scripture-start-helper-text > div');
-  }
-
-  get scriptureEndInput(): HTMLInputElement {
-    return this.overlayContainerElement.querySelector('#scripture-end');
-  }
-
-  get dataPassedToDialog(): ScriptureChooserDialogData {
-    return (capture(this.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>).data;
-  }
-
-  get questionInput(): HTMLTextAreaElement {
-    return this.overlayContainerElement.querySelector('#question-text');
   }
 
   inputValue(element: HTMLElement, value: string) {

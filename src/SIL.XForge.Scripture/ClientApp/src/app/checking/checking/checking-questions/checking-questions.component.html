@@ -6,9 +6,9 @@
       'question-read': hasUserReadQuestion(question),
       'question-unread': !hasUserReadQuestion(question),
       'question-answered': hasUserAnswered(question),
-      'question-has-answers': getUnreadAnswers(question),
-      'mdc-list-item--activated': activeQuestion && activeQuestion.id === question.id
+      'question-has-answers': getUnreadAnswers(question)
     }"
+    [activated]="activeQuestion && activeQuestion.id === question.id"
   >
     <div class="question-title">{{ question.text }}</div>
     <a class="view-answers" mdcListItemMeta title="View Answers">

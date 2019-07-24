@@ -215,6 +215,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
         const verseStart = VerseRef.fromStr(result.scriptureStart, ScrVers.English);
         const verseEnd = VerseRef.fromStr(result.scriptureEnd, ScrVers.English);
         const versification: string = ScrVersType[ScrVersType.English];
+        const newQuestionId = editMode ? newQuestion.id : objectId();
         newQuestion.scriptureStart = {
           book: verseStart.book,
           chapter: verseStart.chapter,
@@ -228,13 +229,23 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
           versification
         };
         newQuestion.text = result.text;
+        if (result.audio.fileName) {
+          const response = await this.projectService.uploadAudio(
+            this.projectId,
+            new File([result.audio.blob], newQuestionId + '~' + result.audio.fileName)
+          );
+          // Get the amended filename and save it against the answer
+          newQuestion.audioUrl = response;
+        } else if (result.audio.status === 'reset') {
+          newQuestion.audioUrl = '';
+        }
 
         if (editMode) {
           this.questions[id.toString()].submitJson0Op(op => op.replace(qs => qs, questionIndex, newQuestion));
         } else {
           id = new TextDocId(this.projectId, this.textFromBook(verseStart.book).bookId, verseStart.chapterNum);
           const questionsDoc = await this.projectService.getQuestionsDoc(id);
-          newQuestion.id = objectId();
+          newQuestion.id = newQuestionId;
           newQuestion.ownerRef = this.userService.currentUserId;
           newQuestion.source = QuestionSource.Created;
           newQuestion.answers = [];

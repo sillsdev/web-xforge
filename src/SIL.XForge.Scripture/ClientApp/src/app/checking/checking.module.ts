@@ -12,6 +12,7 @@ import { CheckingAnswersComponent } from './checking/checking-answers/checking-a
 import { CheckingCommentFormComponent } from './checking/checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking/checking-answers/checking-comments/checking-comments.component';
 import { CheckingOwnerComponent } from './checking/checking-answers/checking-owner/checking-owner.component';
+import { CheckingAudioCombinedComponent } from './checking/checking-audio-combined/checking-audio-combined.component';
 import {
   AudioTimePipe,
   CheckingAudioPlayerComponent
@@ -38,7 +39,8 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     CheckingAudioRecorderComponent,
     CheckingAudioRecorderComponent,
     CheckingAudioPlayerComponent,
-    AudioTimePipe
+    AudioTimePipe,
+    CheckingAudioCombinedComponent
   ],
   imports: [
     CheckingRoutingModule,
@@ -49,6 +51,7 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     AngularSplitModule.forRoot(),
     ngfModule
   ],
+  exports: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent],
   entryComponents: [QuestionDialogComponent]
 })
 export class CheckingModule {}

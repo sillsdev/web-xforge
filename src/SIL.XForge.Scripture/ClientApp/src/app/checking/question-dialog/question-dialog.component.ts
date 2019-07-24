@@ -21,6 +21,7 @@ import {
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { SFValidators } from '../../shared/sfvalidators';
+import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
 export interface QuestionDialogData {
   editMode: boolean;
@@ -32,6 +33,7 @@ export interface QuestionDialogResult {
   scriptureStart?: string;
   scriptureEnd?: string;
   text?: string;
+  audio?: AudioAttachment;
 }
 
 @Component({
@@ -66,6 +68,8 @@ export class QuestionDialogComponent implements OnInit {
     this.validateVerseAfterStart
   );
 
+  private audio: AudioAttachment = {};
+
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
     @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData,
@@ -96,6 +100,9 @@ export class QuestionDialogComponent implements OnInit {
       if (question.text) {
         this.questionText.setValue(question.text);
       }
+      if (question.audioUrl) {
+        this.audio.url = question.audioUrl;
+      }
     }
   }
 
@@ -107,7 +114,8 @@ export class QuestionDialogComponent implements OnInit {
     this.dialogRef.close({
       scriptureStart: this.scriptureStart.value,
       scriptureEnd: this.scriptureEnd.value,
-      text: this.questionText.value
+      text: this.questionText.value,
+      audio: this.audio
     });
   }
 
@@ -136,6 +144,10 @@ export class QuestionDialogComponent implements OnInit {
         control.setValue(QuestionDialogComponent.verseRefDataToString(result));
       }
     });
+  }
+
+  processAudio(audio: AudioAttachment) {
+    this.audio = audio;
   }
 
   private validateVerseAfterStart(group: FormGroup): ValidationErrors | null {

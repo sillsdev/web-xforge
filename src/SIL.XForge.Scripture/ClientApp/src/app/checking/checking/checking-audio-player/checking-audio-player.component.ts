@@ -1,6 +1,7 @@
 import { MdcSliderChange } from '@angular-mdc/web';
 import { Component, Input, Pipe, PipeTransform } from '@angular/core';
 import { saveAs } from 'file-saver';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-checking-audio-player',
@@ -52,9 +53,9 @@ export class CheckingAudioPlayerComponent {
 
   @Input() set source(source: string) {
     this.audio = new Audio();
-    if (source !== '') {
+    if (source && source !== '') {
       if (!source.includes('://')) {
-        source = '/assets/audio/' + source;
+        source = environment.assets.audio + source;
       }
       this.enabled = false;
       this.audio.src = source;
@@ -92,7 +93,7 @@ export class CheckingAudioPlayerComponent {
 
   download() {
     if (this.canDownload) {
-      saveAs(this.audio.src, this.audio.src.split('-').pop());
+      saveAs(this.audio.src, this.audio.src.split('~').pop());
     }
   }
 

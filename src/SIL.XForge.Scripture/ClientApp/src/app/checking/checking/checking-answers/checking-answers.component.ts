@@ -45,8 +45,6 @@ export class CheckingAnswersComponent implements OnInit {
   });
   answerFormVisible: boolean = false;
   answerFormSubmitAttempted: boolean = false;
-  uploadAudioFile: File;
-  uploadAudioFileUrl: string = '';
 
   private user: UserDoc;
   private _question: Question;
@@ -85,14 +83,6 @@ export class CheckingAnswersComponent implements OnInit {
     return this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
   }
 
-  get isRecorderActive(): boolean {
-    return this.audio.status && this.audio.status !== 'denied' && this.audio.status !== 'reset';
-  }
-
-  get isUploaderActive(): boolean {
-    return this.uploadAudioFileUrl !== '';
-  }
-
   get question(): Question {
     return this._question;
   }
@@ -118,11 +108,8 @@ export class CheckingAnswersComponent implements OnInit {
 
   editAnswer(answer: Answer) {
     this.activeAnswer = clone(answer);
+    this.audio.url = this.activeAnswer.audioUrl;
     this.showAnswerForm();
-  }
-
-  generateAudioFileName(): string {
-    return this.user.data.name + '.webm';
   }
 
   getComments(answer: Answer): Comment[] {
@@ -164,35 +151,8 @@ export class CheckingAnswersComponent implements OnInit {
     });
   }
 
-  prepareAudioFileUpload() {
-    if (this.uploadAudioFile) {
-      this.uploadAudioFileUrl = URL.createObjectURL(this.uploadAudioFile);
-      this.audio.url = this.uploadAudioFileUrl;
-      this.audio.blob = this.uploadAudioFile;
-      this.audio.fileName = this.uploadAudioFile.name;
-    }
-  }
-
-  recorderStatus(status: AudioAttachment): void {
-    this.audio.status = status.status;
-    switch (status.status) {
-      case 'reset':
-        this.audio = {};
-        break;
-      case 'processed':
-        this.audio.url = status.url;
-        this.audio.blob = status.blob;
-        this.audio.fileName = this.generateAudioFileName();
-        break;
-    }
-    this.setValidationRules();
-    this.action.emit({ action: 'recorder' });
-  }
-
-  resetAudioFileUpload() {
-    this.uploadAudioFile = null;
-    this.uploadAudioFileUrl = '';
-    this.audio = {};
+  processAudio(audio: AudioAttachment) {
+    this.audio = audio;
   }
 
   showAnswerForm() {
@@ -240,7 +200,6 @@ export class CheckingAnswersComponent implements OnInit {
       answer: this.activeAnswer,
       audio: this.audio
     });
-    this.resetAudioFileUpload();
   }
 
   private setValidationRules(): void {
