@@ -4,7 +4,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 
 export interface AudioAttachment {
-  status?: 'denied' | 'processed' | 'recoding' | 'reset' | 'stopped';
+  status?: 'denied' | 'processed' | 'recoding' | 'reset' | 'stopped' | 'uploaded';
   url?: string;
   fileName?: string;
   blob?: Blob;
@@ -33,12 +33,12 @@ export class CheckingAudioRecorderComponent implements OnInit {
     return this.recordRTC && this.recordRTC.state === 'recording';
   }
 
-  generateRecodingFileName(): string {
+  get recodingFileName(): string {
     return this.user.data.name + '.webm';
   }
 
-  ngOnInit(): void {
-    this.userService.getCurrentUser().then(u => (this.user = u));
+  async ngOnInit() {
+    this.user = await this.userService.getCurrentUser();
   }
 
   processAudio(audioVideoWebMURL: string) {
@@ -48,7 +48,7 @@ export class CheckingAudioRecorderComponent implements OnInit {
       url: audioVideoWebMURL,
       status: 'processed',
       blob: this.recordRTC.getBlob(),
-      fileName: this.generateRecodingFileName()
+      fileName: this.recodingFileName
     });
   }
 

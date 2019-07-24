@@ -59,50 +59,10 @@
             ></mdc-textarea>
             <mdc-helper-text #questionHelper validation>*Required</mdc-helper-text>
           </mdc-form-field>
-          <div
-            class="question-record-upload"
-            [ngClass]="{
-              'recorder-active': isRecorderActive,
-              'uploader-active': isUploaderActive
-            }"
-          >
-            <ng-container *ngIf="!isUploaderActive">
-              <app-checking-audio-recorder (status)="recorderStatus($event)"></app-checking-audio-recorder>
-            </ng-container>
-            <ng-container class="audio-uploader" *ngIf="!isRecorderActive">
-              <button
-                *ngIf="!uploadAudioFileUrl"
-                mdc-button
-                ngfSelect
-                [(file)]="uploadAudioFile"
-                (fileChange)="prepareAudioFileUpload()"
-                accept="audio/*"
-                class="upload-audio-file"
-              >
-                <mdc-icon>cloud_upload</mdc-icon>
-                Upload Audio File
-              </button>
-              <button
-                *ngIf="uploadAudioFileUrl"
-                fxHide.xs
-                mdc-button
-                (click)="resetAudioFileUpload()"
-                class="remove-audio-file"
-              >
-                <mdc-icon>delete</mdc-icon>
-                Remove Audio File
-              </button>
-              <button
-                *ngIf="uploadAudioFileUrl"
-                mdc-icon-button
-                fxHide.gt-xs
-                (click)="resetAudioFileUpload()"
-                icon="delete"
-                class="remove-audio-file"
-              ></button>
-              <app-checking-audio-player [source]="uploadAudioFileUrl"></app-checking-audio-player>
-            </ng-container>
-          </div>
+          <app-checking-audio-combined
+            [source]="audio.url"
+            (update)="processAudio($event)"
+          ></app-checking-audio-combined>
         </form>
       </mdc-dialog-content>
       <mdc-dialog-actions>

@@ -10,7 +10,6 @@ import {
   ValidationErrors,
   Validators
 } from '@angular/forms';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { Question } from '../../core/models/question';
 import { ScrVers } from '../../core/models/scripture/scr-vers';
@@ -41,7 +40,7 @@ export interface QuestionDialogResult {
   templateUrl: './question-dialog.component.html',
   styleUrls: ['./question-dialog.component.scss']
 })
-export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit {
+export class QuestionDialogComponent implements OnInit {
   private static verseRefDataToString(verseRefData: VerseRefData): string {
     let result: string = verseRefData.book ? verseRefData.book : '';
     result += verseRefData.chapter ? ' ' + verseRefData.chapter : '';
@@ -68,8 +67,6 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     },
     this.validateVerseAfterStart
   );
-  uploadAudioFile: File;
-  uploadAudioFileUrl: string = '';
 
   private audio: AudioAttachment = {};
 
@@ -77,17 +74,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
     @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData,
     readonly dialog: MdcDialog
-  ) {
-    super();
-  }
-
-  get isRecorderActive(): boolean {
-    return this.audio.status && this.audio.status !== 'denied' && this.audio.status !== 'reset';
-  }
-
-  get isUploaderActive(): boolean {
-    return this.uploadAudioFileUrl !== '';
-  }
+  ) {}
 
   get scriptureStart(): AbstractControl {
     return this.questionForm.controls.scriptureStart;
@@ -114,7 +101,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
         this.questionText.setValue(question.text);
       }
       if (question.audioUrl) {
-        this.uploadAudioFileUrl = question.audioUrl;
+        this.audio.url = question.audioUrl;
       }
     }
   }
@@ -159,34 +146,8 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     });
   }
 
-  prepareAudioFileUpload() {
-    if (this.uploadAudioFile) {
-      this.uploadAudioFileUrl = URL.createObjectURL(this.uploadAudioFile);
-      this.audio.url = this.uploadAudioFileUrl;
-      this.audio.blob = this.uploadAudioFile;
-      this.audio.fileName = this.uploadAudioFile.name;
-    }
-  }
-
-  recorderStatus(status: AudioAttachment): void {
-    this.audio.status = status.status;
-    switch (status.status) {
-      case 'reset':
-        this.audio = {};
-        break;
-      case 'processed':
-        this.audio.url = status.url;
-        this.audio.blob = status.blob;
-        this.audio.fileName = status.fileName;
-        break;
-    }
-    // this.setValidationRules();
-  }
-
-  resetAudioFileUpload() {
-    this.uploadAudioFile = null;
-    this.uploadAudioFileUrl = '';
-    this.audio = { status: 'reset' };
+  processAudio(audio: AudioAttachment) {
+    this.audio = audio;
   }
 
   private validateVerseAfterStart(group: FormGroup): ValidationErrors | null {
