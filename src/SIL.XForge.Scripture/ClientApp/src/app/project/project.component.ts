@@ -35,7 +35,14 @@ export class ProjectComponent extends SubscriptionDisposable implements OnInit {
           // if the link has sharing turned on, check if the current user needs to be added to the project
           const sharing = this.route.snapshot.queryParams['sharing'] as string;
           if (sharing === 'true') {
-            return from(this.projectService.onlineCheckLinkSharing(projectId)).pipe(map(() => projectId));
+            const shareKey = this.route.snapshot.queryParams['shareKey'] as string;
+            let linkSharing: Promise<void>;
+            if (!!shareKey) {
+              linkSharing = this.projectService.onlineCheckLinkSharing(projectId, shareKey);
+            } else {
+              linkSharing = this.projectService.onlineCheckLinkSharing(projectId);
+            }
+            return from(linkSharing).pipe(map(() => projectId));
           } else {
             return of(projectId);
           }
