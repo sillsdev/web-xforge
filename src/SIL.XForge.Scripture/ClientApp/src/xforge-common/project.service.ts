@@ -68,8 +68,9 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
     return this.jsonApiService.onlineInvoke(this.identity(id), 'invite', { email });
   }
 
-  onlineCheckLinkSharing(id: string): Promise<void> {
-    return this.jsonApiService.onlineInvoke(this.identity(id), 'checkLinkSharing');
+  /** Get added into project, with optionally specified shareKey code. */
+  onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
+    return this.jsonApiService.onlineInvoke(this.identity(id), 'checkLinkSharing', { shareKey });
   }
 
   onlineGet(id: string, include?: string[][]): QueryObservable<T> {
