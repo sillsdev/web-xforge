@@ -53,7 +53,7 @@ export class CheckingAudioPlayerComponent {
 
   @Input() set source(source: string) {
     this.audio = new Audio();
-    if (source !== '') {
+    if (source && source !== '') {
       if (!source.includes('://')) {
         source = environment.assets.audio + source;
       }
