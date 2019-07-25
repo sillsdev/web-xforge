@@ -1,7 +1,7 @@
-<div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !(isProjectAdmin$ | async) }">
+<div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !isProjectAdmin }">
   <mdc-icon fxFlex="32px">library_books</mdc-icon>
   <h2 fxFlex>Texts with Questions</h2>
-  <div fxFlexAlign="center" *ngIf="(isProjectAdmin$ | async); else overallProgressChart">
+  <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart">
     <button mdc-button (click)="questionDialog()" [disabled]="isLoading" id="add-question-button">
       <mdc-icon>note_add</mdc-icon> <span fxHide.xs>Add question</span>
     </button>
@@ -23,11 +23,11 @@
   </ng-template>
 </div>
 
-<div fxLayout="column" fxLayoutAlign="space-around" *ngIf="(isProjectAdmin$ | async); else reviewerQuestionPanel">
+<div fxLayout="column" fxLayoutAlign="space-around" *ngIf="isProjectAdmin; else reviewerQuestionPanel">
   <mdc-list dense id="text-with-questions-list">
     <ng-container *ngFor="let text of texts">
       <mdc-list-item
-        *ngIf="allQuestionsCount(text) > 0"
+        *ngIf="bookQuestionCount(text) > 0"
         (selectionChange)="itemVisible[text.bookId] = !itemVisible[text.bookId]"
       >
         <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
@@ -35,8 +35,8 @@
             keyboard_arrow_{{ itemVisible[text.bookId] ? "down" : "right" }}
           </mdc-icon>
           <span fxFlex>{{ text?.name }}</span>
-          <span fxFlex="80px" fxLayoutAlign="end center">{{ questionCountLabel(allQuestionsCount(text)) }}</span>
-          <span fxFlex="80px" fxLayoutAlign="end center">{{ answerCountLabel(allAnswersCount(text)) }}</span>
+          <span fxFlex="80px" fxLayoutAlign="end center">{{ questionCountLabel(bookQuestionCount(text)) }}</span>
+          <span fxFlex="80px" fxLayoutAlign="end center">{{ answerCountLabel(bookAnswerCount(text)) }}</span>
           <span fxFlex="64px" fxLayoutAlign="end center">&nbsp;</span>
         </div>
       </mdc-list-item>
@@ -67,7 +67,10 @@
           </mdc-list-item>
           <ng-container *ngIf="itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)]">
             <mdc-list-item
-              *ngFor="let question of questions[getTextJsonDocIdStr(text.bookId, chapter.number)].data; let i = index"
+              *ngFor="
+                let question of questionsDocs[getTextJsonDocIdStr(text.bookId, chapter.number)].data;
+                let i = index
+              "
             >
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="16px" class="indent"></span>
@@ -99,7 +102,7 @@
     <mdc-list dense id="reviewer-questions-list">
       <ng-container *ngFor="let text of texts">
         <mdc-list-item
-          *ngIf="allQuestionsCount(text) > 0"
+          *ngIf="bookQuestionCount(text) > 0"
           [routerLink]="['/projects', projectId, 'checking', text.bookId]"
         >
           <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
@@ -123,3 +126,42 @@
     </mdc-list>
   </div>
 </ng-template>
+
+<div fxLayout="row wrap" fxLayoutAlign="space-between" class="reviewer-panels stat-panels">
+  <mdc-card class="card" outlined>
+    <div class="card-content-question">
+      <span fxFlex>
+        <div class="stat-total">{{ allQuestionsCount }}</div>
+        <div class="stat-label">Questions</div>
+      </span>
+      <span fxLayoutAlign="start center"> <mdc-icon>help</mdc-icon> </span>
+    </div>
+  </mdc-card>
+  <mdc-card class="card" outlined>
+    <div class="card-content-answer">
+      <span fxFlex>
+        <div class="stat-total">{{ myAnswerCount }}</div>
+        <div class="stat-label">Answers</div>
+      </span>
+      <span fxLayoutAlign="start center"> <mdc-icon>question_answer</mdc-icon> </span>
+    </div>
+  </mdc-card>
+  <mdc-card class="card" outlined>
+    <div class="card-content-comment">
+      <span fxFlex>
+        <div class="stat-total">{{ myCommentCount }}</div>
+        <div class="stat-label">Comments</div>
+      </span>
+      <span fxLayoutAlign="start center"> <mdc-icon>comment</mdc-icon> </span>
+    </div>
+  </mdc-card>
+  <mdc-card class="card" outlined>
+    <div class="card-content-like">
+      <span fxFlex>
+        <div class="stat-total">{{ myLikeCount }}</div>
+        <div class="stat-label">Likes</div>
+      </span>
+      <span fxLayoutAlign="start center"> <mdc-icon>thumb_up</mdc-icon> </span>
+    </div>
+  </mdc-card>
+</div>
