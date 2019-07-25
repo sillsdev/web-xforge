@@ -21,7 +21,7 @@ export class CheckingAudioCombinedComponent {
   }
 
   get isUploaderActive(): boolean {
-    return this.audio.status === 'uploaded' || (this.source && this.source !== '');
+    return this.audio.status === 'uploaded' || (this.source && this.source !== '' && this.audio.status !== 'processed');
   }
 
   prepareAudioFileUpload() {
@@ -39,18 +39,19 @@ export class CheckingAudioCombinedComponent {
     this.audio.status = status.status;
     switch (status.status) {
       case 'reset':
-        this.audio = { status: 'reset' };
+        this.resetAudioAttachment();
         break;
       case 'processed':
         this.audio.url = status.url;
         this.audio.blob = status.blob;
         this.audio.fileName = status.fileName;
+        this.source = this.audio.url;
         break;
     }
     this.update.emit(this.audio);
   }
 
-  resetAudioFileUpload() {
+  resetAudioAttachment() {
     this.uploadAudioFile = null;
     this.source = '';
     this.audio = { status: 'reset' };

@@ -21,7 +21,7 @@ describe('CheckingAudioCombinedComponent', () => {
     env = new TestEnvironment();
   });
 
-  it('can upload an audio file', () => {
+  it('can upload an audio file and correct buttons show', () => {
     expect(env.uploadAudioButton).toBeTruthy();
     expect(env.component.source).toBe('');
     env.component.uploadAudioFile = new File([env.audioBlob], 'test.wav');
@@ -33,9 +33,37 @@ describe('CheckingAudioCombinedComponent', () => {
     expect(env.component.source).toBe('');
     expect(env.uploadAudioButton).toBeTruthy();
   });
+
+  it('correct buttons appear throughout recording process', async () => {
+    expect(env.recordButton).toBeTruthy();
+    expect(env.uploadAudioButton).toBeTruthy();
+    expect(env.removeAudioButton).toBeFalsy();
+    expect(env.stopRecordingButton).toBeFalsy();
+    env.clickButton(env.recordButton);
+    await env.waitForRecorder(1000);
+    expect(env.recordButton).toBeFalsy();
+    expect(env.uploadAudioButton).toBeFalsy();
+    expect(env.stopRecordingButton).toBeTruthy();
+    env.clickButton(env.stopRecordingButton);
+    await env.waitForRecorder(100);
+    expect(env.tryAgainButton).toBeTruthy();
+    env.clickButton(env.tryAgainButton);
+    expect(env.recordButton).toBeTruthy();
+    expect(env.uploadAudioButton).toBeTruthy();
+  });
+
+  it('correct buttons appear when source is already set', async () => {
+    expect(env.recordButton).toBeTruthy();
+    expect(env.uploadAudioButton).toBeTruthy();
+    env.setAudioSource();
+    expect(env.recordButton).toBeFalsy();
+    expect(env.uploadAudioButton).toBeFalsy();
+    expect(env.removeAudioButton).toBeTruthy();
+  });
 });
 
 class TestEnvironment {
+  audioFile: string = 'test-audio-player.webm';
   component: CheckingAudioCombinedComponent;
   fixture: ComponentFixture<CheckingAudioCombinedComponent>;
   mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
@@ -145,8 +173,19 @@ class TestEnvironment {
     return new Blob([byteArray], { type: 'audio/wav' });
   }
 
+  get recordButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.record'));
+  }
+
   get removeAudioButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('.remove-audio-file'));
+  }
+  get stopRecordingButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.stop-recording'));
+  }
+
+  get tryAgainButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.try-again'));
   }
 
   get uploadAudioButton(): DebugElement {
@@ -155,6 +194,16 @@ class TestEnvironment {
 
   clickButton(button: DebugElement): void {
     button.nativeElement.click();
+    this.fixture.detectChanges();
+  }
+
+  setAudioSource() {
+    this.component.source = this.audioFile;
+    this.fixture.detectChanges();
+  }
+
+  async waitForRecorder(ms: number) {
+    await new Promise(resolve => setTimeout(resolve, ms));
     this.fixture.detectChanges();
   }
 }
