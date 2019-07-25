@@ -109,6 +109,16 @@ describe('ProjectComponent', () => {
     verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'text02']), anything())).once();
     expect().nothing();
   }));
+
+  it('check sharing link passes shareKey', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setProjectData({ selectedTask: 'translate' });
+    env.setLinkSharing(true, 'secret123');
+    env.fixture.detectChanges();
+    tick();
+
+    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01', 'secret123')).once();
+  }));
 });
 
 class TestEnvironment {
@@ -128,6 +138,7 @@ class TestEnvironment {
     when(this.mockedActivatedRoute.snapshot).thenReturn(snapshot);
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedSFProjectService.onlineCheckLinkSharing('project01')).thenResolve();
+    when(this.mockedSFProjectService.onlineCheckLinkSharing('project01', anything())).thenResolve();
     this.setLinkSharing(false);
 
     TestBed.configureTestingModule({
@@ -221,9 +232,9 @@ class TestEnvironment {
     this.setProjectDataDoc();
   }
 
-  setLinkSharing(enabled: boolean): void {
+  setLinkSharing(enabled: boolean, shareKey?: string): void {
     const snapshot = new ActivatedRouteSnapshot();
-    snapshot.queryParams = { sharing: enabled ? 'true' : undefined };
+    snapshot.queryParams = { sharing: enabled ? 'true' : undefined, shareKey: shareKey ? shareKey : undefined };
     when(this.mockedActivatedRoute.snapshot).thenReturn(snapshot);
   }
 
