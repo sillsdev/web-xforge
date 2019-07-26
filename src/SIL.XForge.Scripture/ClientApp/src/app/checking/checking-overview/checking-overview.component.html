@@ -1,14 +1,29 @@
-<div fxLayout="row" fxLayoutAlign="start center">
+<div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !(isProjectAdmin$ | async) }">
   <mdc-icon fxFlex="32px">library_books</mdc-icon>
   <h2 fxFlex>Texts with Questions</h2>
-  <div fxFlexAlign="center" *ngIf="(isProjectAdmin$ | async)">
+  <div fxFlexAlign="center" *ngIf="(isProjectAdmin$ | async); else overallProgressChart">
     <button mdc-button (click)="questionDialog()" [disabled]="isLoading" id="add-question-button">
       <mdc-icon>note_add</mdc-icon> <span fxHide.xs>Add question</span>
     </button>
   </div>
+  <ng-template #overallProgressChart>
+    <div id="overall-progress-chart">
+      <canvas
+        baseChart
+        width="36"
+        height="36"
+        chartType="doughnut"
+        [legend]="false"
+        [labels]="['Unread', 'Read', 'Answered']"
+        [data]="overallProgress()"
+        [colors]="[{ backgroundColor: ['#3a3a3a', '#edecec', '#B8D332'] }]"
+        [options]="{ events: [] }"
+      ></canvas>
+    </div>
+  </ng-template>
 </div>
 
-<div fxLayout="column" fxLayoutAlign="apace-around" *ngIf="(isProjectAdmin$ | async)">
+<div fxLayout="column" fxLayoutAlign="space-around" *ngIf="(isProjectAdmin$ | async); else reviewerQuestionPanel">
   <mdc-list dense id="text-with-questions-list">
     <ng-container *ngFor="let text of texts">
       <mdc-list-item
@@ -78,3 +93,33 @@
     </ng-container>
   </mdc-list>
 </div>
+
+<ng-template #reviewerQuestionPanel>
+  <div fxLayout="column" fxLayoutAlign="space-around" class="reviewer-panels" id="reviewer-question-panel">
+    <mdc-list dense id="reviewer-questions-list">
+      <ng-container *ngFor="let text of texts">
+        <mdc-list-item
+          *ngIf="allQuestionsCount(text) > 0"
+          [routerLink]="['/projects', projectId, 'checking', text.bookId]"
+        >
+          <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+            <span fxFlex>{{ text?.name }}</span>
+            <span>
+              <canvas
+                baseChart
+                width="36"
+                height="36"
+                chartType="doughnut"
+                [legend]="false"
+                [labels]="['Unread', 'Read', 'Answered']"
+                [data]="bookProgress(text)"
+                [colors]="[{ backgroundColor: ['#3a3a3a', '#edecec', '#B8D332'] }]"
+                [options]="{ events: [] }"
+              ></canvas>
+            </span>
+          </div>
+        </mdc-list-item>
+      </ng-container>
+    </mdc-list>
+  </div>
+</ng-template>

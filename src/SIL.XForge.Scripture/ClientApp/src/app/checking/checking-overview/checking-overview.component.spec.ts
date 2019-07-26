@@ -1,5 +1,5 @@
 import { MdcDialog, MdcDialogModule, MdcDialogRef, OverlayContainer } from '@angular-mdc/web';
-import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, NgModule } from '@angular/core';
+import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -10,16 +10,24 @@ import * as OTJson0 from 'ot-json0';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { MapQueryResults } from 'xforge-common/json-api.service';
+import { SharingLevel } from 'xforge-common/models/sharing-level';
+import { User } from 'xforge-common/models/user';
 import { NoticeService } from 'xforge-common/notice.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { nameof } from 'xforge-common/utils';
 import { Question } from '../../core/models/question';
 import { QuestionsDoc } from '../../core/models/questions-doc';
+import { SFProject } from '../../core/models/sfproject';
 import { SFProjectData } from '../../core/models/sfproject-data';
 import { SFProjectDataDoc } from '../../core/models/sfproject-data-doc';
+import { SFProjectRoles } from '../../core/models/sfproject-roles';
+import { SFProjectUser, SFProjectUserRef } from '../../core/models/sfproject-user';
 import { TextDocId } from '../../core/models/text-doc-id';
+import { TextInfo } from '../../core/models/text-info';
 import { SFProjectService } from '../../core/sfproject.service';
 import { SFAdminAuthGuard } from '../../shared/sfadmin-auth.guard';
 import { CheckingModule } from '../checking.module';
@@ -28,12 +36,18 @@ import { CheckingOverviewComponent } from './checking-overview.component';
 
 describe('CheckingOverviewComponent', () => {
   describe('Add Question', () => {
-    it('should only display "Add question" button for admin', fakeAsync(() => {
+    it('should not display "Add question" button for Reviewer', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.makeUserAProjectAdmin(false);
+      env.setCurrentUser(env.reviewerUser);
+      env.waitForQuestions();
       expect(env.addQuestionButton).toBeNull();
-      env.makeUserAProjectAdmin();
-      expect(env.addQuestionButton).toBeDefined();
+    }));
+
+    it('should only display "Add question" button for project admin', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser(env.adminUser);
+      env.waitForQuestions();
+      expect(env.addQuestionButton).not.toBeNull();
     }));
 
     it('should disable "Add question" button when loading', fakeAsync(() => {
@@ -45,9 +59,7 @@ describe('CheckingOverviewComponent', () => {
     it('should open dialog when "Add question" button is clicked', fakeAsync(() => {
       const env = new TestEnvironment();
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
-      env.fixture.detectChanges();
-      flush();
-      env.fixture.detectChanges();
+      env.waitForQuestions();
       expect(env.addQuestionButton.nativeElement.disabled).toBe(false);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
@@ -56,9 +68,7 @@ describe('CheckingOverviewComponent', () => {
     it('should not add a question if cancelled', fakeAsync(() => {
       const env = new TestEnvironment();
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
-      env.fixture.detectChanges();
-      flush();
-      env.fixture.detectChanges();
+      env.waitForQuestions();
       expect(env.addQuestionButton.nativeElement.disabled).toBe(false);
       verify(env.mockedProjectService.getQuestionsDoc(anything())).twice();
 
@@ -78,9 +88,7 @@ describe('CheckingOverviewComponent', () => {
           audio: { fileName: '' }
         })
       );
-      env.fixture.detectChanges();
-      flush();
-      env.fixture.detectChanges();
+      env.waitForQuestions();
       expect(env.addQuestionButton.nativeElement.disabled).toBe(false);
       verify(env.mockedProjectService.getQuestionsDoc(anything())).twice();
 
@@ -139,6 +147,35 @@ describe('CheckingOverviewComponent', () => {
       verify(env.mockedProjectService.getQuestionsDoc(anything())).never();
     }));
   });
+
+  describe('for Reviewer', () => {
+    it('should not display progress for project admin', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser(env.adminUser);
+      env.waitForQuestions();
+      expect(env.overallProgressChart).toBeNull();
+      expect(env.reviewerQuestionPanel).toBeNull();
+    }));
+
+    it('should display progress', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser(env.reviewerUser);
+      env.waitForQuestions();
+      expect(env.overallProgressChart).not.toBeNull();
+      expect(env.reviewerQuestionPanel).not.toBeNull();
+    }));
+
+    it('should calculate the right progress proportions', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser(env.reviewerUser);
+      const text = env.setupReviewerQuestions();
+      env.waitForQuestions();
+      const [unread, read, answered] = env.component.bookProgress(text);
+      expect(unread).toBe(3);
+      expect(read).toBe(2);
+      expect(answered).toBe(1);
+    }));
+  });
 });
 
 @NgModule({
@@ -155,6 +192,12 @@ describe('CheckingOverviewComponent', () => {
 })
 class DialogTestModule {}
 
+interface UserInfo {
+  id: string;
+  user: User;
+  role: string;
+}
+
 class TestEnvironment {
   component: CheckingOverviewComponent;
   fixture: ComponentFixture<CheckingOverviewComponent>;
@@ -168,7 +211,34 @@ class TestEnvironment {
   mockedUserService: UserService = mock(UserService);
   mockedAuthService: AuthService = mock(AuthService);
   mockedRealtimeOfflineStore: RealtimeOfflineStore = mock(RealtimeOfflineStore);
-  overlayContainer: OverlayContainer;
+  adminUser = this.createUser('01', SFProjectRoles.ParatextAdministrator);
+  reviewerUser = this.createUser('02', SFProjectRoles.Reviewer);
+
+  private testAdminProjectUser: SFProjectUser = new SFProjectUser({
+    id: this.adminUser.id,
+    userRef: this.adminUser.id,
+    role: this.adminUser.role,
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: []
+  });
+  private testReviewerProjectUser: SFProjectUser = new SFProjectUser({
+    id: this.reviewerUser.id,
+    userRef: this.reviewerUser.id,
+    role: this.reviewerUser.role,
+    questionRefsRead: ['q1Id', 'q2Id', 'q3Id'],
+    answerRefsRead: [],
+    commentRefsRead: []
+  });
+  private testProject: SFProject = new SFProject({
+    id: 'project01',
+    projectName: 'Project 01',
+    usersSeeEachOthersResponses: true,
+    checkingEnabled: true,
+    shareEnabled: true,
+    shareLevel: SharingLevel.Anyone,
+    users: [new SFProjectUserRef(this.adminUser.id), new SFProjectUserRef(this.reviewerUser.id)]
+  });
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
@@ -183,6 +253,9 @@ class TestEnvironment {
     const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', projectData);
     const projectDataDoc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
     when(this.mockedProjectService.getDataDoc('project01')).thenResolve(projectDataDoc);
+    when(this.mockedProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
+      of(new MapQueryResults(this.testProject, undefined, [this.testAdminProjectUser, this.testReviewerProjectUser]))
+    );
 
     const text1_1id = new TextDocId('project01', 'MAT', 1);
     when(this.mockedProjectService.getQuestionsDoc(deepEqual(text1_1id))).thenResolve(
@@ -202,7 +275,6 @@ class TestEnvironment {
 
     TestBed.configureTestingModule({
       imports: [DialogTestModule],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA],
       providers: [
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
         { provide: SFAdminAuthGuard, useFactory: () => instance(this.mockedSFAdminAuthGuard) },
@@ -215,7 +287,6 @@ class TestEnvironment {
     });
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);
     this.component = this.fixture.componentInstance;
-    this.overlayContainer = TestBed.get(OverlayContainer);
   }
 
   get addQuestionButton(): DebugElement {
@@ -230,6 +301,14 @@ class TestEnvironment {
     return this.fixture.debugElement.queryAll(By.css('mdc-list-item button'));
   }
 
+  get overallProgressChart(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#overall-progress-chart'));
+  }
+
+  get reviewerQuestionPanel(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#reviewer-question-panel'));
+  }
+
   waitForQuestions(): void {
     this.fixture.detectChanges();
     tick();
@@ -237,7 +316,7 @@ class TestEnvironment {
   }
 
   /**
-   * simulate row click since actually clicking on the row deosn't fire the selectionChange event
+   * simulate row click since actually clicking on the row doesn't fire the selectionChange event
    */
   simulateRowClick(index: number, id?: TextDocId): void {
     let idStr: string;
@@ -260,12 +339,50 @@ class TestEnvironment {
     flush();
   }
 
-  makeUserAProjectAdmin(isProjectAdmin: boolean = true) {
-    this.component.isProjectAdmin$ = of(isProjectAdmin);
+  setCurrentUser(currentUser: UserInfo): void {
+    when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(
+      of(currentUser.role === SFProjectRoles.ParatextAdministrator)
+    );
+  }
+
+  setupReviewerQuestions(): TextInfo {
+    const projectId = 'project01';
+    const bookId = 'BK1';
+    const chapterNumber = 1;
+    const currentUserId = this.reviewerUser.id;
+    const ownerRef = this.adminUser.id;
+    const textId = new TextDocId(projectId, bookId, chapterNumber);
+    this.component.questions[textId.toString()] = this.createQuestionsDoc(textId, [
+      {
+        id: 'q1Id',
+        ownerRef,
+        text: 'Book 1, Q1 text',
+        answers: [{ id: 'a1Id', ownerRef: currentUserId, likes: [], dateCreated: '', dateModified: '' }]
+      },
+      { id: 'q2Id', ownerRef, text: 'Book 1, Q2 text' },
+      { id: 'q3Id', ownerRef, text: 'Book 1, Q3 text' },
+      { id: 'q4Id', ownerRef, text: 'Book 1, Q4 text' },
+      { id: 'q5Id', ownerRef, text: 'Book 1, Q5 text' },
+      { id: 'q6Id', ownerRef, text: 'Book 1, Q6 text' }
+    ]);
+    when(this.mockedUserService.currentUserId).thenReturn(currentUserId);
+
+    return { bookId, chapters: [{ number: chapterNumber }] };
   }
 
   private createQuestionsDoc(id: TextDocId, data: Question[]): QuestionsDoc {
     const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, id.toString(), data);
     return new QuestionsDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+  }
+
+  private createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {
+    return {
+      id: 'user' + id,
+      user: {
+        name: 'User ' + id,
+        isNameConfirmed: nameConfirmed
+      },
+      role
+    };
   }
 }
