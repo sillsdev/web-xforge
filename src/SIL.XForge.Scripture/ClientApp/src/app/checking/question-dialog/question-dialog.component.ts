@@ -67,8 +67,7 @@ export class QuestionDialogComponent implements OnInit {
     },
     this.validateVerseAfterStart
   );
-
-  private audio: AudioAttachment = {};
+  audio: AudioAttachment = {};
 
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
