@@ -128,9 +128,9 @@ namespace SIL.XForge.Services
             }
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
-            string mp3Path = ConvertToMp3Async(path);
+            string mp3FileName = ConvertToMp3Async(path);
             var uri = new Uri(_siteOptions.Value.Origin,
-                $"{projectId}/{mp3Path}");
+                $"{projectId}/{mp3FileName}");
             return uri;
         }
 
@@ -158,7 +158,7 @@ namespace SIL.XForge.Services
             process.Start();
             process.WaitForExit();
             File.Delete(filePath);
-            return mp3FilePath;
+            return Path.GetFileName(mp3FilePath);
         }
     }
 }
