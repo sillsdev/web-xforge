@@ -143,8 +143,10 @@ Although this setup is specifically written for **Windows**, the steps could be 
 3. Install [MongoDB v4](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/) as a service
 4. Install [.Net Core SDK-2.1](https://dotnet.microsoft.com/download/dotnet-core/2.1)
 5. Install [Node v10](https://nodejs.org/en/download/)
-6. Install a developer editor, [VS Code](https://code.visualstudio.com/download) is recommended (the repo includes VS Code settings)
-7. Create folders owned by you. Check in the Ansible `deploy/dependencies.yml` for the valid list of folders. As of writing they were:
+6. Install [Lame v3](http://lame.sourceforge.net/download.php)
+7. Install [FFmpeg v4](https://ffmpeg.org/download.html) after installing Lame mp3 encoder
+8. Install a developer editor, [VS Code](https://code.visualstudio.com/download) is recommended (the repo includes VS Code settings)
+9. Create folders owned by you. Check in the Ansible `deploy/dependencies.yml` for the valid list of folders. As of writing they were:
 
    - `/var/lib/scriptureforge/sync/`
    - `/var/lib/scriptureforge/audio/`
@@ -152,8 +154,8 @@ Although this setup is specifically written for **Windows**, the steps could be 
 
    On Windows, just put these off your root drive, e.g. `C:\var\lib\...`
 
-8. Add developer secrets. Ask another developer how to get these.
-9. In `src/SIL.XForge.Scripture/`, run `dotnet run`. Browse to `http://localhost:5000`.
+10. Add developer secrets. Ask another developer how to get these.
+11. In `src/SIL.XForge.Scripture/`, run `dotnet run`. Browse to `http://localhost:5000`.
 
 ### Development Process
 
