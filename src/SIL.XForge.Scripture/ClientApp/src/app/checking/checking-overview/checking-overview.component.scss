@@ -15,3 +15,55 @@
 .reviewer-panels {
   max-width: 800px;
 }
+
+.stat-panels {
+  margin: 16px 0;
+}
+
+.card {
+  margin: 8px 0;
+}
+
+.card-content-question,
+.card-content-answer,
+.card-content-comment,
+.card-content-like {
+  padding: 16px;
+  width: 130px;
+}
+
+.stat-total {
+  font-size: x-large;
+}
+
+.stat-label {
+  font-size: small;
+}
+
+.card-content-question {
+  .stat-total,
+  mdc-icon {
+    color: rgb(48, 209, 250);
+  }
+}
+
+.card-content-answer {
+  .stat-total,
+  mdc-icon {
+    color: var(--mdc-theme-secondary);
+  }
+}
+
+.card-content-comment {
+  .stat-total,
+  mdc-icon {
+    color: rgb(255, 115, 0);
+  }
+}
+
+.card-content-like {
+  .stat-total,
+  mdc-icon {
+    color: rgb(255, 208, 0);
+  }
+}

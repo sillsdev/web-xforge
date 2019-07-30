@@ -2,12 +2,13 @@ import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { clone } from '@orbit/utils';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { filter, switchMap } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof, objectId } from 'xforge-common/utils';
+import { CommentsDoc } from '../../core/models/comments-doc';
 import { Question, QuestionSource } from '../../core/models/question';
 import { QuestionsDoc } from '../../core/models/questions-doc';
 import { ScrVers } from '../../core/models/scripture/scr-vers';
@@ -15,11 +16,11 @@ import { VerseRef } from '../../core/models/scripture/verse-ref';
 import { ScrVersType } from '../../core/models/scripture/versification';
 import { SFProject } from '../../core/models/sfproject';
 import { SFProjectDataDoc } from '../../core/models/sfproject-data-doc';
+import { SFProjectRoles } from '../../core/models/sfproject-roles';
 import { SFProjectUser } from '../../core/models/sfproject-user';
 import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { TextInfo, TextsByBook } from '../../core/models/text-info';
 import { SFProjectService } from '../../core/sfproject.service';
-import { SFAdminAuthGuard } from '../../shared/sfadmin-auth.guard';
 import { CheckingUtils } from '../checking.utils';
 import {
   QuestionDialogComponent,
@@ -34,10 +35,10 @@ import {
 })
 export class CheckingOverviewComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
   isLoading = true;
-  itemVisible: { [bookIdOrTextDocId: string]: boolean } = {};
-  questions: { [textDocId: string]: QuestionsDoc } = {};
+  itemVisible: { [bookIdOrDocId: string]: boolean } = {};
+  commentsDocs: { [docId: string]: CommentsDoc } = {};
+  questionsDocs: { [docId: string]: QuestionsDoc } = {};
   texts: TextInfo[] = [];
-  isProjectAdmin$: Observable<boolean>;
   projectId: string;
   textsByBook: TextsByBook;
 
@@ -47,13 +48,99 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
-    private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService
   ) {
     super();
+  }
+
+  get allQuestionsCount(): string {
+    if (this.questionsDocs == null) {
+      return '-';
+    }
+
+    let count: number = 0;
+    for (const questionsDoc of Object.values(this.questionsDocs)) {
+      count += questionsDoc.data.length;
+    }
+
+    return '' + count;
+  }
+
+  get myAnswerCount(): string {
+    if (this.questionsDocs == null) {
+      return '-';
+    }
+
+    let count: number = 0;
+    for (const questionsDoc of Object.values(this.questionsDocs)) {
+      for (const question of questionsDoc.data) {
+        if (question.answers == null) {
+          continue;
+        }
+        if (this.isProjectAdmin) {
+          count += question.answers.length;
+        } else {
+          count += question.answers.filter(a => a.ownerRef === this.projectCurrentUser.userRef).length;
+        }
+      }
+    }
+
+    return '' + count;
+  }
+
+  get myLikeCount(): string {
+    if (this.questionsDocs == null) {
+      return '-';
+    }
+
+    let count: number = 0;
+    for (const questionsDoc of Object.values(this.questionsDocs)) {
+      for (const question of questionsDoc.data) {
+        if (question.answers == null) {
+          continue;
+        }
+        for (const answer of question.answers) {
+          if (answer.likes == null) {
+            continue;
+          }
+          if (this.isProjectAdmin) {
+            count += answer.likes.length;
+          } else {
+            count += answer.likes.filter(a => a.ownerRef === this.projectCurrentUser.userRef).length;
+          }
+        }
+      }
+    }
+
+    return '' + count;
+  }
+
+  get myCommentCount(): string {
+    if (this.commentsDocs == null) {
+      return '-';
+    }
+
+    let count: number = 0;
+    for (const commentsDoc of Object.values(this.commentsDocs)) {
+      if (commentsDoc == null) {
+        continue;
+      }
+
+      if (this.isProjectAdmin) {
+        count += commentsDoc.data.length;
+      } else {
+        count += commentsDoc.data.filter(c => c.ownerRef === this.projectCurrentUser.userRef).length;
+      }
+    }
+
+    return '' + count;
+  }
+
+  get isProjectAdmin(): boolean {
+    return this.projectCurrentUser && this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
   }
 
   ngOnInit(): void {
@@ -66,7 +153,6 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
         filter(projectResults => projectResults.data != null)
       ),
       async projectResults => {
-        this.isProjectAdmin$ = this.adminAuthGuard.allowTransition(this.projectId);
         this.isLoading = true;
         this.noticeService.loadingStarted();
         const project = projectResults.data;
@@ -110,7 +196,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     return getTextDocIdStr(this.projectId, bookId, chapter);
   }
 
-  allQuestionsCount(text: TextInfo): number {
+  bookQuestionCount(text: TextInfo): number {
     let count: number;
     for (const chapter of text.chapters) {
       const questionCount = this.questionCount(text.bookId, chapter.number);
@@ -126,18 +212,18 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
 
   questionCount(bookId: string, chapterNumber: number): number {
     const id = new TextDocId(this.projectId, bookId, chapterNumber);
-    if (!(id.toString() in this.questions)) {
+    if (!(id.toString() in this.questionsDocs)) {
       return undefined;
     }
 
-    return this.questions[id.toString()].data.length;
+    return this.questionsDocs[id.toString()].data.length;
   }
 
   questionCountLabel(count: number): string {
     return count ? count + ' questions' : '';
   }
 
-  allAnswersCount(text: TextInfo): number {
+  bookAnswerCount(text: TextInfo): number {
     let count: number;
     for (const chapter of text.chapters) {
       const answerCount = this.chapterAnswerCount(text.bookId, chapter.number);
@@ -153,12 +239,12 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
 
   chapterAnswerCount(bookId: string, chapterNumber: number): number {
     const id = new TextDocId(this.projectId, bookId, chapterNumber);
-    if (!(id.toString() in this.questions)) {
+    if (!(id.toString() in this.questionsDocs)) {
       return undefined;
     }
 
     let count: number;
-    for (const index of Object.keys(this.questions[id.toString()].data)) {
+    for (const index of Object.keys(this.questionsDocs[id.toString()].data)) {
       const answerCount = this.answerCount(bookId, chapterNumber, +index);
       if (answerCount) {
         if (!count) {
@@ -173,12 +259,12 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
 
   answerCount(bookId: string, chapterNumber: number, questionIndex: number = 0): number {
     const id = new TextDocId(this.projectId, bookId, chapterNumber);
-    if (!(id.toString() in this.questions)) {
+    if (!(id.toString() in this.questionsDocs)) {
       return undefined;
     }
 
     let count: number;
-    const question = this.questions[id.toString()].data[questionIndex];
+    const question = this.questionsDocs[id.toString()].data[questionIndex];
     if (question.answers) {
       if (!count) {
         count = 0;
@@ -213,11 +299,11 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     let answered: number = 0;
     for (const chapter of text.chapters) {
       const id = new TextDocId(this.projectId, text.bookId, chapter.number);
-      if (!(id.toString() in this.questions)) {
+      if (!(id.toString() in this.questionsDocs)) {
         continue;
       }
 
-      for (const question of this.questions[id.toString()].data) {
+      for (const question of this.questionsDocs[id.toString()].data) {
         if (CheckingUtils.hasUserAnswered(question, this.userService.currentUserId)) {
           answered++;
         } else if (CheckingUtils.hasUserReadQuestion(question, this.projectCurrentUser)) {
@@ -252,7 +338,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
       }
 
       id = new TextDocId(this.projectId, bookId, chapterNumber);
-      question = this.questions[id.toString()].data[questionIndex];
+      question = this.questionsDocs[id.toString()].data[questionIndex];
       newQuestion = clone(question);
     }
     const dialogConfig: MdcDialogConfig<QuestionDialogData> = {
@@ -295,7 +381,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
         }
 
         if (editMode) {
-          this.questions[id.toString()].submitJson0Op(op => op.replace(qs => qs, questionIndex, newQuestion));
+          this.questionsDocs[id.toString()].submitJson0Op(op => op.replace(qs => qs, questionIndex, newQuestion));
         } else {
           id = new TextDocId(this.projectId, this.textFromBook(verseStart.book).bookId, verseStart.chapterNum);
           const questionsDoc = await this.projectService.getQuestionsDoc(id);
@@ -316,27 +402,28 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
       this.textsByBook[text.bookId] = text;
       this.texts.push(text);
       for (const chapter of text.chapters) {
-        await this.bindQuestionsDoc(new TextDocId(this.projectId, text.bookId, chapter.number));
+        await this.bindForumDocs(new TextDocId(this.projectId, text.bookId, chapter.number));
       }
     }
   }
 
-  private async bindQuestionsDoc(id: TextDocId): Promise<void> {
+  private async bindForumDocs(id: TextDocId): Promise<void> {
     if (id == null) {
       return;
     }
 
-    this.unbindQuestionsDoc(id);
-    const questionsDoc: QuestionsDoc = await this.projectService.getQuestionsDoc(id);
-    this.questions[id.toString()] = questionsDoc;
+    this.unbindForumDocs(id);
+    this.questionsDocs[id.toString()] = await this.projectService.getQuestionsDoc(id);
+    this.commentsDocs[id.toString()] = await this.projectService.getCommentsDoc(id);
   }
 
-  private unbindQuestionsDoc(id: TextDocId): void {
-    if (!(id.toString() in this.questions)) {
+  private unbindForumDocs(id: TextDocId): void {
+    if (!(id.toString() in this.questionsDocs)) {
       return;
     }
 
-    delete this.questions[id.toString()];
+    delete this.questionsDocs[id.toString()];
+    delete this.commentsDocs[id.toString()];
   }
 
   private textFromBook(bookId: string): TextInfo {

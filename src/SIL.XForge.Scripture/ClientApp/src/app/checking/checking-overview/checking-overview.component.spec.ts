@@ -19,6 +19,8 @@ import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
+import { Comment } from '../../core/models/comment';
+import { CommentsDoc } from '../../core/models/comments-doc';
 import { Question } from '../../core/models/question';
 import { QuestionsDoc } from '../../core/models/questions-doc';
 import { SFProject } from '../../core/models/sfproject';
@@ -29,7 +31,6 @@ import { SFProjectUser, SFProjectUserRef } from '../../core/models/sfproject-use
 import { TextDocId } from '../../core/models/text-doc-id';
 import { TextInfo } from '../../core/models/text-info';
 import { SFProjectService } from '../../core/sfproject.service';
-import { SFAdminAuthGuard } from '../../shared/sfadmin-auth.guard';
 import { CheckingModule } from '../checking.module';
 import { QuestionDialogComponent } from '../question-dialog/question-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview.component';
@@ -107,7 +108,7 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(2);
       expect(env.questionEdits.length).toEqual(0);
       expect(env.component.itemVisible[id.toString()]).toBeFalsy();
-      expect(env.component.questions[id.toString()].data.length).toBeGreaterThan(0);
+      expect(env.component.questionsDocs[id.toString()].data.length).toBeGreaterThan(0);
       expect(env.component.questionCount(id.bookId, id.chapter)).toBeGreaterThan(0);
 
       env.simulateRowClick(0);
@@ -165,15 +166,30 @@ describe('CheckingOverviewComponent', () => {
       expect(env.reviewerQuestionPanel).not.toBeNull();
     }));
 
-    it('should calculate the right progress proportions', fakeAsync(() => {
+    it('should calculate the right progress proportions and stats', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser(env.reviewerUser);
-      const text = env.setupReviewerQuestions();
+      const text = env.setupReviewerForum();
       env.waitForQuestions();
       const [unread, read, answered] = env.component.bookProgress(text);
       expect(unread).toBe(3);
       expect(read).toBe(2);
       expect(answered).toBe(1);
+      expect(env.component.allQuestionsCount).toBe('9');
+      expect(env.component.myAnswerCount).toBe('1');
+      expect(env.component.myCommentCount).toBe('2');
+      expect(env.component.myLikeCount).toBe('3');
+    }));
+
+    it('should calculate the right stats for project admin', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser(env.adminUser);
+      env.setupReviewerForum();
+      env.waitForQuestions();
+      expect(env.component.allQuestionsCount).toBe('9');
+      expect(env.component.myAnswerCount).toBe('3');
+      expect(env.component.myCommentCount).toBe('3');
+      expect(env.component.myLikeCount).toBe('4');
     }));
   });
 });
@@ -203,7 +219,6 @@ class TestEnvironment {
   fixture: ComponentFixture<CheckingOverviewComponent>;
 
   mockedActivatedRoute: ActivatedRoute = mock(ActivatedRoute);
-  mockedSFAdminAuthGuard: SFAdminAuthGuard = mock(SFAdminAuthGuard);
   mockedMdcDialog: MdcDialog = mock(MdcDialog);
   mockedQuestionDialogRef: MdcDialogRef<QuestionDialogComponent> = mock(MdcDialogRef);
   mockedNoticeService = mock(NoticeService);
@@ -243,7 +258,6 @@ class TestEnvironment {
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedQuestionDialogRef));
-    when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
     const projectData: SFProjectData = {
       texts: [
         { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1, lastVerse: 25 }] },
@@ -272,12 +286,12 @@ class TestEnvironment {
     when(this.mockedProjectService.getQuestionsDoc(deepEqual(text2_1id))).thenResolve(
       this.createQuestionsDoc(text2_1id, [{ id: 'q3Id', ownerRef: undefined, text: 'Book 2, Q3 text' }])
     );
+    this.setCurrentUser(this.adminUser);
 
     TestBed.configureTestingModule({
       imports: [DialogTestModule],
       providers: [
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
-        { provide: SFAdminAuthGuard, useFactory: () => instance(this.mockedSFAdminAuthGuard) },
         { provide: MdcDialog, useFactory: () => instance(this.mockedMdcDialog) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) },
@@ -340,32 +354,69 @@ class TestEnvironment {
   }
 
   setCurrentUser(currentUser: UserInfo): void {
-    when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(
-      of(currentUser.role === SFProjectRoles.ParatextAdministrator)
-    );
+    when(this.mockedUserService.currentUserId).thenReturn(currentUser.id);
   }
 
-  setupReviewerQuestions(): TextInfo {
+  setupReviewerForum(): TextInfo {
     const projectId = 'project01';
     const bookId = 'BK1';
     const chapterNumber = 1;
     const currentUserId = this.reviewerUser.id;
+    const anotherUserId = 'anotherUserId';
     const ownerRef = this.adminUser.id;
     const textId = new TextDocId(projectId, bookId, chapterNumber);
-    this.component.questions[textId.toString()] = this.createQuestionsDoc(textId, [
+    this.component.questionsDocs[textId.toString()] = this.createQuestionsDoc(textId, [
       {
         id: 'q1Id',
         ownerRef,
         text: 'Book 1, Q1 text',
-        answers: [{ id: 'a1Id', ownerRef: currentUserId, likes: [], dateCreated: '', dateModified: '' }]
+        answers: [
+          {
+            id: 'a1Id',
+            ownerRef: currentUserId,
+            likes: [{ ownerRef: currentUserId }, { ownerRef: anotherUserId }],
+            dateCreated: '',
+            dateModified: ''
+          }
+        ]
       },
-      { id: 'q2Id', ownerRef, text: 'Book 1, Q2 text' },
-      { id: 'q3Id', ownerRef, text: 'Book 1, Q3 text' },
+      {
+        id: 'q2Id',
+        ownerRef,
+        text: 'Book 1, Q2 text',
+        answers: [
+          {
+            id: 'a2Id',
+            ownerRef: anotherUserId,
+            likes: [{ ownerRef: currentUserId }],
+            dateCreated: '',
+            dateModified: ''
+          }
+        ]
+      },
+      {
+        id: 'q3Id',
+        ownerRef,
+        text: 'Book 1, Q3 text',
+        answers: [
+          {
+            id: 'a2Id',
+            ownerRef: anotherUserId,
+            likes: [{ ownerRef: currentUserId }],
+            dateCreated: '',
+            dateModified: ''
+          }
+        ]
+      },
       { id: 'q4Id', ownerRef, text: 'Book 1, Q4 text' },
       { id: 'q5Id', ownerRef, text: 'Book 1, Q5 text' },
       { id: 'q6Id', ownerRef, text: 'Book 1, Q6 text' }
     ]);
-    when(this.mockedUserService.currentUserId).thenReturn(currentUserId);
+    this.component.commentsDocs[textId.toString()] = this.createCommentsDoc(textId, [
+      { id: 'c1Id', ownerRef: currentUserId, projectRef: projectId, dateCreated: '', dateModified: '' },
+      { id: 'c2Id', ownerRef: currentUserId, projectRef: projectId, dateCreated: '', dateModified: '' },
+      { id: 'c3Id', ownerRef: anotherUserId, projectRef: projectId, dateCreated: '', dateModified: '' }
+    ]);
 
     return { bookId, chapters: [{ number: chapterNumber }] };
   }
@@ -373,6 +424,11 @@ class TestEnvironment {
   private createQuestionsDoc(id: TextDocId, data: Question[]): QuestionsDoc {
     const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, id.toString(), data);
     return new QuestionsDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+  }
+
+  private createCommentsDoc(id: TextDocId, data: Comment[]): CommentsDoc {
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, id.toString(), data);
+    return new CommentsDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 
   private createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {
