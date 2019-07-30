@@ -237,7 +237,7 @@ namespace SIL.XForge.Services
         {
             if (Path.GetExtension(filePath) == ".mp3")
             {
-                return filePath;
+                return Path.GetFileName(filePath);
             }
             string mp3FilePath = Path.ChangeExtension(filePath, ".mp3");
             if (File.Exists(mp3FilePath))
