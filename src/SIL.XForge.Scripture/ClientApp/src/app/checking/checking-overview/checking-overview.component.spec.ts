@@ -106,7 +106,7 @@ describe('CheckingOverviewComponent', () => {
       const id = new TextDocId('project01', 'MAT', 1);
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
-      expect(env.questionEdits.length).toEqual(0);
+      expect(env.questionEditButtons.length).toEqual(0);
       expect(env.component.itemVisible[id.toString()]).toBeFalsy();
       expect(env.component.questionListDocs[id.toString()].data.questions.length).toBeGreaterThan(0);
       expect(env.component.questionCount(id.bookId, id.chapter)).toBeGreaterThan(0);
@@ -115,11 +115,11 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(3);
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(5);
-      expect(env.questionEdits.length).toEqual(2);
+      expect(env.questionEditButtons.length).toEqual(2);
 
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(3);
-      expect(env.questionEdits.length).toEqual(0);
+      expect(env.questionEditButtons.length).toEqual(0);
       env.simulateRowClick(0);
       expect(env.textRows.length).toEqual(2);
     }));
@@ -139,11 +139,11 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(0);
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(5);
-      expect(env.questionEdits.length).toEqual(2);
+      expect(env.questionEditButtons.length).toEqual(2);
       verify(env.mockedProjectService.getQuestionList(anything())).twice();
 
       resetCalls(env.mockedProjectService);
-      env.clickElement(env.questionEdits[0]);
+      env.clickElement(env.questionEditButtons[0]);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
       verify(env.mockedProjectService.getQuestionList(anything())).never();
     }));
@@ -190,6 +190,33 @@ describe('CheckingOverviewComponent', () => {
       expect(env.component.myAnswerCount).toBe('3');
       expect(env.component.myCommentCount).toBe('3');
       expect(env.component.myLikeCount).toBe('4');
+    }));
+  });
+
+  describe('Archive Question', () => {
+    it('archives and-republishes a question', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const id = new TextDocId('project01', 'MAT', 1);
+      env.waitForQuestions();
+      expect(env.textRows.length).toEqual(2);
+      expect(env.textArchivedRows.length).toEqual(0);
+      env.simulateRowClick(0);
+      env.simulateRowClick(1, id);
+      expect(env.textRows.length).toEqual(5);
+      expect(env.questionArchiveButtons.length).toEqual(2);
+      env.clickElement(env.questionArchiveButtons[0]);
+      expect(env.textArchivedRows.length).toEqual(1);
+      expect(env.textRows.length).toEqual(4);
+
+      // Re-publish a question that has been archived
+      env.simulateRowClick(0, undefined, true);
+      env.simulateRowClick(1, id, true);
+      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toBe('1 questions');
+      const archivedQuestion: HTMLElement = env.questionDateArchived[0].nativeElement;
+      expect(archivedQuestion.textContent).toBe('Archived less than a minute ago');
+      env.clickElement(env.questionPublishButtons[0]);
+      expect(env.textArchivedRows.length).toEqual(0);
+      expect(env.textRows.length).toEqual(5);
     }));
   });
 });
@@ -306,12 +333,44 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#add-question-button'));
   }
 
-  get textRows(): DebugElement[] {
-    return this.fixture.debugElement.queryAll(By.css('mdc-list-item'));
+  get archivedQuestions(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#text-with-archived-questions'));
   }
 
-  get questionEdits(): DebugElement[] {
-    return this.fixture.debugElement.queryAll(By.css('mdc-list-item button'));
+  get textRows(): DebugElement[] {
+    return this.questions.queryAll(By.css('mdc-list-item'));
+  }
+
+  get textArchivedRows(): DebugElement[] {
+    return this.archivedQuestions.queryAll(By.css('mdc-list-item'));
+  }
+
+  get questions(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#text-with-questions-list'));
+  }
+
+  get questionEditButtons(): DebugElement[] {
+    return this.fixture.debugElement.queryAll(By.css('mdc-list-item .edit-btn'));
+  }
+
+  get questionArchiveButtons(): DebugElement[] {
+    return this.fixture.debugElement.queryAll(By.css('mdc-list-item .archive-btn'));
+  }
+
+  get questionPublishButtons(): DebugElement[] {
+    return this.archivedQuestions.queryAll(By.css('mdc-list-item .publish-btn'));
+  }
+
+  get questionDateArchived(): DebugElement[] {
+    return this.archivedQuestions.queryAll(By.css('mdc-list-item .date-archived'));
+  }
+
+  getArchiveQuestionButton(question: DebugElement): DebugElement {
+    return question.query(By.css('button'));
+  }
+
+  getArchivedQuestionsCountByRow(row: number): DebugElement {
+    return this.archivedQuestions.queryAll(By.css('mdc-list-item .archived-questions-count'))[row];
   }
 
   get overallProgressChart(): DebugElement {
@@ -331,14 +390,18 @@ class TestEnvironment {
   /**
    * simulate row click since actually clicking on the row doesn't fire the selectionChange event
    */
-  simulateRowClick(index: number, id?: TextDocId): void {
+  simulateRowClick(index: number, id?: TextDocId, fromArchives?: boolean): void {
     let idStr: string;
     if (id) {
       idStr = id.toString();
     } else {
       idStr = this.component.texts[index].bookId;
     }
-    this.component.itemVisible[idStr] = !this.component.itemVisible[idStr];
+    if (fromArchives) {
+      this.component.itemVisibleArchived[idStr] = !this.component.itemVisibleArchived[idStr];
+    } else {
+      this.component.itemVisible[idStr] = !this.component.itemVisible[idStr];
+    }
     this.fixture.detectChanges();
     flush();
   }
