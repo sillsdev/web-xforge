@@ -672,6 +672,14 @@ class TestEnvironment {
       scriptureEnd: { book: 'JHN', chapter: '2', verse: '2', versification: 'English' },
       answers: []
     });
+    questionData2.push({
+      id: 'q16Id',
+      ownerRef: undefined,
+      text: 'This question is archived',
+      scriptureStart: { book: 'JHN', chapter: '2', verse: '2', versification: 'English' },
+      answers: [],
+      isArchived: true
+    });
     questionData1[5].answers.push({
       id: 'a6Id',
       ownerRef: this.reviewerUser.id,

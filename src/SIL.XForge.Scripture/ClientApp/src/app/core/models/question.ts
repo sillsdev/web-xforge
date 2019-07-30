@@ -13,6 +13,8 @@ export interface Question {
   audioUrl?: string;
   modelAnswer?: string;
   answers?: Answer[];
+  isArchived?: boolean;
+  dateArchived?: string;
 }
 
 export enum QuestionSource {
