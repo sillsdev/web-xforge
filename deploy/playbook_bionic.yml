@@ -1,5 +1,5 @@
 ---
-- name: Linux Xenial local webserver for xForge v2 developers
+- name: Linux Bionic or Xenial local webserver for xForge v2 developers
   hosts: all
   become: yes
   tasks: []
@@ -7,5 +7,3 @@
 - import_playbook: dependencies.yml
   vars:
     config: palaso
-
-- import_playbook: mongodb_reset.yml

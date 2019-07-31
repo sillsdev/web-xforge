@@ -6,7 +6,6 @@
 .settings
 .vagrant/
 deploy/**/*.retry
-deploy/ansible.cfg
 deploy/callback_plugins/*.pyc
 deploy/site_files/
 deploy/site_info/

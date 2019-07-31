@@ -118,18 +118,21 @@ git clone --recurse-submodules https://github.com/sillsdev/web-xforge
 
 The `--recurse-submodules` is used to fetch many of the Ansible roles used by the Ansible playbooks in the deploy folder. If you've already cloned the repo without `--recurse-submodules`, run `git submodule update --init --recursive` to pull and initialize them.
 
-Change the variable `mongo_path: /var/lib/mongodb` in `deploy/vars_palaso.yml`. Set it to a location where MongoDB should store its databases.
+Change the variable `mongo_path: /var/lib/mongodb` in `deploy/vars/config_palaso.yml`. Set it to a location where MongoDB should store its databases.
 
-- **Vagrant VM Setup**: uncomment line 6 and comment line 5
-- **Local Linux Development Setup**: uncomment line 5 and comment line 6 (or whatever is appropriate on your system, its best to have Mongo store databases on your HDD rather than SSD). Make sure the `mongodb` user has permission to read and write to the path you specify.
+- **Vagrant VM Setup**: uncomment line 5 and comment line 4
+- **Local Linux Development Setup**: uncomment line 4 and comment line 5 (or whatever is appropriate on your system, its best to have Mongo store databases on your HDD rather than SSD). Make sure the `mongodb` user has permission to read and write to the path you specify.
 
-Run the following Ansible playbooks to configure Ansible and run both sites.
+Run the following Ansible playbook (works on Ubuntu Xenial and Bionic).
 
 ```bash
 cd web-xforge/deploy
-ansible-playbook -i hosts playbook_create_config.yml --limit localhost -K
-ansible-playbook playbook_xenial.yml --limit localhost -K
+ansible-playbook playbook_bionic.yml --limit localhost -K
 ```
+
+Add developer secrets. Ask another developer how to get these.
+
+In `src/SIL.XForge.Scripture/`, run `dotnet run`. Browse to `http://localhost:5000`.
 
 #### Manual Setup
 
