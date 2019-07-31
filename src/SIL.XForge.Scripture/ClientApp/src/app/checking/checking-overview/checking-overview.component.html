@@ -86,7 +86,7 @@
                 <span fxFlex="64px" fxLayoutAlign="end center">
                   <button
                     mdc-button
-                    (click)="archiveQuestion(question.id, text.bookId, chapter.number)"
+                    (click)="setQuestionArchiveStatus(question.id, true, text.bookId, chapter.number)"
                     title="Archive"
                     class="archive-btn"
                   >
@@ -227,7 +227,7 @@
                 <span fxFlex="64px" fxLayoutAlign="end center">
                   <button
                     mdc-button
-                    (click)="archiveQuestion(question.id, text.bookId, chapter.number)"
+                    (click)="setQuestionArchiveStatus(question.id, false, text.bookId, chapter.number)"
                     title="Republish"
                     class="publish-btn"
                   >
