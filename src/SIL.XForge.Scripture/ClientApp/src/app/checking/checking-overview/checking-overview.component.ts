@@ -57,17 +57,20 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     super();
   }
 
+  get allPublicQuestions(): Question[] {
+    let questions: Readonly<Question[]> = [];
+    for (const questionsDoc of Object.values(this.questionsDocs)) {
+      questions = questions.concat(questionsDoc.data);
+    }
+    return questions.filter(q => q.isArchived !== true);
+  }
+
   get allQuestionsCount(): string {
     if (this.questionListDocs == null) {
       return '-';
     }
 
-    let count: number = 0;
-    for (const questionListDoc of Object.values(this.questionListDocs)) {
-      count += questionListDoc.data.questions.length;
-    }
-
-    return '' + count;
+    return '' + this.allPublicQuestions.length;
   }
 
   get myAnswerCount(): string {
@@ -76,16 +79,14 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     }
 
     let count: number = 0;
-    for (const questionListDoc of Object.values(this.questionListDocs)) {
-      for (const question of questionListDoc.data.questions) {
-        if (question.answers == null) {
-          continue;
-        }
-        if (this.isProjectAdmin) {
-          count += question.answers.length;
-        } else {
-          count += question.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
-        }
+    for (const question of this.allPublicQuestions) {
+      if (question.answers == null) {
+        continue;
+      }
+      if (this.isProjectAdmin) {
+        count += question.answers.length;
+      } else {
+        count += question.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
       }
     }
 
@@ -98,20 +99,18 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     }
 
     let count: number = 0;
-    for (const questionListDoc of Object.values(this.questionListDocs)) {
-      for (const question of questionListDoc.data.questions) {
-        if (question.answers == null) {
+    for (const question of this.allPublicQuestions) {
+      if (question.answers == null) {
+        continue;
+      }
+      for (const answer of question.answers) {
+        if (answer.likes == null) {
           continue;
         }
-        for (const answer of question.answers) {
-          if (answer.likes == null) {
-            continue;
-          }
-          if (this.isProjectAdmin) {
-            count += answer.likes.length;
-          } else {
-            count += answer.likes.filter(a => a.ownerRef === this.userService.currentUserId).length;
-          }
+        if (this.isProjectAdmin) {
+          count += answer.likes.length;
+        } else {
+          count += answer.likes.filter(l => l.ownerRef === this.projectCurrentUser.userRef).length;
         }
       }
     }
@@ -129,11 +128,13 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
       if (commentListDoc == null) {
         continue;
       }
-
+      const publicComments = commentListDoc.data.comments.filter(
+        c => this.allPublicQuestions.find(q => q.answers && q.answers.map(a => a.id).includes(c.answerRef)) != null
+      );
       if (this.isProjectAdmin) {
-        count += commentListDoc.data.comments.length;
+        count += publicComments.length;
       } else {
-        count += commentListDoc.data.comments.filter(c => c.ownerRef === this.userService.currentUserId).length;
+        count += publicComments.filter(c => c.ownerRef === this.userService.currentUserId).length;
       }
     }
 
@@ -190,15 +191,15 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     return getTextDocIdStr(this.projectDoc.id, bookId, chapter);
   }
 
-  getQuestions(id: TextDocId, fromArchive = false): Question[] {
+  getQuestions(textDocId: TextDocId, fromArchive = false): Question[] {
     if (fromArchive) {
-      return this.questionsDocs[id.toString()].data.filter(q => q.isArchived === true);
+      return this.questionListDocs[textDocId.toString()].data.questions.filter(q => q.isArchived === true);
     }
-    return this.questionsDocs[id.toString()].data.filter(q => q.isArchived !== true);
+    return this.questionListDocs[textDocId.toString()].data.questions.filter(q => q.isArchived !== true);
   }
 
-  getQuestionIndex(id: string, textDocId: TextDocId): number {
-    return this.questionsDocs[textDocId.toString()].data.findIndex(q => q.id === id);
+  getQuestionIndex(questionId: string, textDocId: TextDocId): number {
+    return this.questionListDocs[textDocId.toString()].data.questions.findIndex(q => q.id === questionId);
   }
 
   bookQuestionCount(text: TextInfo, fromArchive = false): number {
@@ -290,14 +291,14 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     return count ? count + ' answers' : '';
   }
 
-  archiveQuestion(questionId: string, bookId?: string, chapterNumber?: number) {
+  setQuestionArchiveStatus(questionId: string, archiveStatus: boolean, bookId: string, chapterNumber: number) {
     const id = new TextDocId(this.projectId, bookId, chapterNumber);
     const questionIndex = this.questionsDocs[id.toString()].data.findIndex(q => q.id === questionId);
     const question = this.questionsDocs[id.toString()].data[questionIndex];
-    const archivedQuestion: Question = clone(question);
-    archivedQuestion.isArchived = !question.isArchived;
-    archivedQuestion.dateArchived = new Date().toISOString();
-    this.questionsDocs[id.toString()].submitJson0Op(op => op.replace(q => q, questionIndex, archivedQuestion));
+    const updatedQuestion: Question = clone(question);
+    updatedQuestion.isArchived = archiveStatus;
+    updatedQuestion.dateArchived = archiveStatus ? new Date().toISOString() : null;
+    this.questionsDocs[id.toString()].submitJson0Op(op => op.replace(q => q, questionIndex, updatedQuestion));
   }
 
   overallProgress(): number[] {
@@ -324,7 +325,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
         continue;
       }
 
-      for (const question of this.questionListDocs[id.toString()].data.questions) {
+      for (const question of this.getQuestions(id)) {
         if (CheckingUtils.hasUserAnswered(question, this.userService.currentUserId)) {
           answered++;
         } else if (CheckingUtils.hasUserReadQuestion(question, this.projectUserConfigDoc.data)) {

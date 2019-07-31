@@ -175,6 +175,7 @@ describe('CheckingOverviewComponent', () => {
       expect(unread).toBe(3);
       expect(read).toBe(2);
       expect(answered).toBe(1);
+      // A tenth question is archived
       expect(env.component.allQuestionsCount).toBe('9');
       expect(env.component.myAnswerCount).toBe('1');
       expect(env.component.myCommentCount).toBe('2');
@@ -186,6 +187,7 @@ describe('CheckingOverviewComponent', () => {
       env.setCurrentUser(env.adminUser);
       env.setupReviewerForum();
       env.waitForQuestions();
+      // A tenth question is archived
       expect(env.component.allQuestionsCount).toBe('9');
       expect(env.component.myAnswerCount).toBe('3');
       expect(env.component.myCommentCount).toBe('3');
@@ -212,7 +214,7 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(0, undefined, true);
       env.simulateRowClick(1, id, true);
       expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toBe('1 questions');
-      const archivedQuestion: HTMLElement = env.questionDateArchived[0].nativeElement;
+      const archivedQuestion: HTMLElement = env.archivedQuestionDates[0].nativeElement;
       expect(archivedQuestion.textContent).toBe('Archived less than a minute ago');
       env.clickElement(env.questionPublishButtons[0]);
       expect(env.textArchivedRows.length).toEqual(0);
@@ -361,12 +363,8 @@ class TestEnvironment {
     return this.archivedQuestions.queryAll(By.css('mdc-list-item .publish-btn'));
   }
 
-  get questionDateArchived(): DebugElement[] {
+  get archivedQuestionDates(): DebugElement[] {
     return this.archivedQuestions.queryAll(By.css('mdc-list-item .date-archived'));
-  }
-
-  getArchiveQuestionButton(question: DebugElement): DebugElement {
-    return question.query(By.css('button'));
   }
 
   getArchivedQuestionsCountByRow(row: number): DebugElement {
@@ -462,7 +460,7 @@ class TestEnvironment {
         text: 'Book 1, Q3 text',
         answers: [
           {
-            id: 'a2Id',
+            id: 'a3Id',
             ownerRef: anotherUserId,
             likes: [{ ownerRef: currentUserId }],
             dateCreated: '',
@@ -472,12 +470,41 @@ class TestEnvironment {
       },
       { id: 'q4Id', ownerRef, text: 'Book 1, Q4 text' },
       { id: 'q5Id', ownerRef, text: 'Book 1, Q5 text' },
-      { id: 'q6Id', ownerRef, text: 'Book 1, Q6 text' }
+      { id: 'q6Id', ownerRef, text: 'Book 1, Q6 text' },
+
+      {
+        id: 'q7Id',
+        ownerRef,
+        text: 'Book 1, Q7 text',
+        isArchived: true,
+        dateArchived: '2019-07-30T12:00:00.000Z'
+      }
     ]);
     this.component.commentListDocs[textId.toString()] = this.createCommentsDoc(textId, [
-      { id: 'c1Id', ownerRef: currentUserId, dateCreated: '', dateModified: '' },
-      { id: 'c2Id', ownerRef: currentUserId, dateCreated: '', dateModified: '' },
-      { id: 'c3Id', ownerRef: anotherUserId, dateCreated: '', dateModified: '' }
+      {
+        id: 'c1Id',
+        ownerRef: currentUserId,
+        projectRef: projectId,
+        dateCreated: '',
+        dateModified: '',
+        answerRef: 'a1Id'
+      },
+      {
+        id: 'c2Id',
+        ownerRef: currentUserId,
+        projectRef: projectId,
+        dateCreated: '',
+        dateModified: '',
+        answerRef: 'a2Id'
+      },
+      {
+        id: 'c3Id',
+        ownerRef: anotherUserId,
+        projectRef: projectId,
+        dateCreated: '',
+        dateModified: '',
+        answerRef: 'a3Id'
+      }
     ]);
 
     return { bookId, chapters: [{ number: chapterNumber }] };

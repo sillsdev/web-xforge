@@ -81,6 +81,7 @@ describe('CheckingComponent', () => {
   describe('Questions', () => {
     it('questions are displaying', fakeAsync(() => {
       env.setupReviewerScenarioData(env.reviewerUser);
+      // A sixteenth question is archived
       expect(env.questions.length).toEqual(15);
       const question = env.selectQuestion(15);
       expect(env.getQuestionText(question)).toBe('Question relating to chapter 2');
@@ -672,6 +673,7 @@ class TestEnvironment {
       scriptureEnd: { book: 'JHN', chapter: '2', verse: '2', versification: 'English' },
       answers: []
     });
+    // An archived questions (which must not appear in the list of questions)
     questionData2.push({
       id: 'q16Id',
       ownerRef: undefined,
