@@ -32,8 +32,9 @@ namespace SIL.XForge.Controllers
             SecurityUtils = new SecurityUtils();
         }
 
+        /// <summary>Indication that the user is already a member of this project, and so will not be sent an email to be invited.</summary>
+        public static string AlreadyProjectMemberResponse => "alreadyProjectMember";
         protected IRepository<TEntity> Projects { get; }
-
         protected abstract string ProjectAdminRole { get; }
         internal ISecurityUtils SecurityUtils { get; set; }
 
@@ -71,7 +72,7 @@ namespace SIL.XForge.Controllers
             if (project.Users.Select(pu => _users.GetAsync(pu.UserRef).Result.Email)
                 .Any(puem => puem == email))
             {
-                return Ok();
+                return Ok(AlreadyProjectMemberResponse);
             }
 
             SiteOptions siteOptions = _siteOptions.Value;
@@ -115,7 +116,7 @@ namespace SIL.XForge.Controllers
         /// <summary>Add user to project, if sharing, optionally by a specific shareKey code that was sent to the user by email.</summary>
         public async Task<IRpcMethodResult> CheckLinkSharing(string shareKey = null)
         {
-            TEntity project = await Projects.Query().FirstOrDefaultAsync(p => p.Id == ResourceId);
+            TEntity project = await Projects.GetAsync(ResourceId);
             if (project == null)
                 return InvalidParamsError();
 
@@ -146,6 +147,17 @@ namespace SIL.XForge.Controllers
 
             await AddUserToProject(project);
             return Ok();
+        }
+
+        /// <summary>Is there already a pending invitation to the project for the specified email address?</summary>
+        public async Task<IRpcMethodResult> IsAlreadyInvited(string email)
+        {
+            if (email == null)
+            {
+                return Ok(false);
+            }
+            var project = await Projects.GetAsync(ResourceId);
+            return Ok(project.ShareKeys.ContainsKey(EncodeJsonName(email)));
         }
 
         protected Task<bool> IsAuthorizedAsync()

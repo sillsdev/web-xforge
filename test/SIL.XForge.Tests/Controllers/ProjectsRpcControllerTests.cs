@@ -132,6 +132,7 @@ namespace SIL.XForge.Controllers
 
             var result = await env.Controller.Invite(email) as RpcMethodSuccessResult;
             Assert.That(result, Is.Not.Null);
+            Assert.That(result.ReturnObject as string, Is.EqualTo(TestProjectsRpcController.AlreadyProjectMemberResponse), "report should be given");
             project = env.Projects.Get(Project03);
             Assert.That(project.Users.Any(pu => pu.UserRef == User01), Is.True, "user should still be a project user");
 
@@ -140,7 +141,6 @@ namespace SIL.XForge.Controllers
             // Email should not have been sent
             await env.EmailService.DidNotReceiveWithAnyArgs().SendEmailAsync(default, default, default);
         }
-
 
         [Test]
         public async Task CheckLinkSharing_LinkSharingDisabled_ForbiddenError()
@@ -217,6 +217,58 @@ namespace SIL.XForge.Controllers
             project = env.Projects.Get(Project03);
             Assert.That(project.Users.Any(pu => pu.UserRef == User02), Is.True, "User should have been added to project");
             Assert.That(project.ShareKeys.ContainsValue("key1234"), Is.False, "Code should have been removed from project");
+        }
+
+        [Test]
+        public async Task IsAlreadyInvited_BadInput_False()
+        {
+            var env = new TestEnvironment();
+            env.SetUser(User01, SystemRoles.User);
+            env.SetProject(Project03);
+            var result = await env.Controller.IsAlreadyInvited(null) as RpcMethodSuccessResult;
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.ReturnObject, Is.False);
+
+            result = await env.Controller.IsAlreadyInvited("") as RpcMethodSuccessResult;
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.ReturnObject, Is.False);
+
+            result = await env.Controller.IsAlreadyInvited("junk") as RpcMethodSuccessResult;
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.ReturnObject, Is.False);
+        }
+
+        [Test]
+        public async Task IsAlreadyInvited_IsInvited_True()
+        {
+            var env = new TestEnvironment();
+            env.SetUser(User01, SystemRoles.User);
+            env.SetProject(Project03);
+            var result = await env.Controller.IsAlreadyInvited("bob@example.com") as RpcMethodSuccessResult;
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.ReturnObject, Is.True);
+        }
+
+        [Test]
+        public async Task IsAlreadyInvited_NotInvitedButOnProject_False()
+        {
+            var env = new TestEnvironment();
+            env.SetUser(User01, SystemRoles.User);
+            env.SetProject(Project03);
+            var result = await env.Controller.IsAlreadyInvited("user01@example.com") as RpcMethodSuccessResult;
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.ReturnObject, Is.False);
+        }
+
+        [Test]
+        public async Task IsAlreadyInvited_NotInvitedOrOnProject_False()
+        {
+            var env = new TestEnvironment();
+            env.SetUser(User01, SystemRoles.User);
+            env.SetProject(Project03);
+            var result = await env.Controller.IsAlreadyInvited("unheardof@example.com") as RpcMethodSuccessResult;
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.ReturnObject, Is.False);
         }
 
         [Test]

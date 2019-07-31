@@ -64,13 +64,17 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
     );
   }
 
-  onlineInvite(id: string, email: string): Promise<void> {
+  onlineInvite(id: string, email: string): Promise<string> {
     return this.jsonApiService.onlineInvoke(this.identity(id), 'invite', { email });
   }
 
   /** Get added into project, with optionally specified shareKey code. */
   onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
     return this.jsonApiService.onlineInvoke(this.identity(id), 'checkLinkSharing', { shareKey });
+  }
+
+  onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
+    return this.jsonApiService.onlineInvoke(this.identity(id), 'isAlreadyInvited', { email });
   }
 
   onlineGet(id: string, include?: string[][]): QueryObservable<T> {
