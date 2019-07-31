@@ -11,6 +11,7 @@
       - "vars/os_defaults.yml"
   vars:
     node_version: 8.11.4
+    mongodb_version: 4.0
     repo_path: "{{playbook_dir}}/.."
   pre_tasks:
     - name: "Add .NET Core | add source"
@@ -27,11 +28,11 @@
     - name: add Mongo apt key
       apt_key:
         keyserver: keyserver.ubuntu.com
-        id: 2930ADAE8CAF5059EE73BB4B58712A2291FA4AD5
-    - name: add Mongo 3.6 repository
+        id: 9DA31620334BD75D9DCB49F368818C72E52529D4
+    - name: add Mongo {{mongodb_version}} repository
       apt_repository:
-        repo: "deb [arch=amd64] https://repo.mongodb.org/apt/ubuntu {{base_distribution_release}}/mongodb-org/3.6 multiverse"
-        filename: mongodb-org-3.6
+        repo: "deb [arch=amd64] http://repo.mongodb.org/apt/ubuntu {{base_distribution_release}}/mongodb-org/{{mongodb_version}} multiverse"
+        filename: mongodb-org
         update_cache: yes
       when: base_distribution == 'ubuntu' and (base_distribution_release == 'xenial' or base_distribution_release == 'bionic')
   tasks:
@@ -102,7 +103,7 @@
       with_items:
         - "address=/localhost/127.0.0.1"
         - "address=/localhost/::1"
-      when: inventory_hostname == "localhost"
+      when: inventory_hostname == "localhost" and base_distribution_release == 'xenial'
       notify: restart network
       tags: ["network"]
 
@@ -111,6 +112,7 @@
       file:
         path: "{{lookup('env','HOME')}}/bin"
         state: directory
+      when: inventory_hostname == "localhost"
     - name: Enable convenient access to ng from commandline | symlink
       become: no
       file:
@@ -119,6 +121,7 @@
         state: link
         force: yes
         follow: no
+      when: inventory_hostname == "localhost"
     - name: Enable convenient access to npm from commandline | symlink
       become: no
       file:
@@ -127,6 +130,7 @@
         state: link
         force: yes
         follow: no
+      when: inventory_hostname == "localhost"
 
     - name: Use chromium for unit tests
       become: no
