@@ -194,7 +194,7 @@ describe('CheckingComponent', () => {
       env.setupReviewerScenarioData(env.reviewerUser);
       env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
-      env.clickButton(env.answers[0].query(By.css('.answer-edit')));
+      env.clickButton(env.getAnswerEditButton(0));
       env.setTextFieldValue(env.yourAnswerField, 'Edited question 2 answer');
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
@@ -251,6 +251,34 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toBe(0);
       env.answerQuestion('Answer from reviewer');
       expect(env.answers.length).toBe(1);
+    }));
+
+    it('can add scripture to an answer', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.reviewerUser);
+      env.selectQuestion(1);
+      env.clickButton(env.addAnswerButton);
+      env.setTextFieldValue(env.yourAnswerField, 'Answer question');
+      env.clickButton(env.selectTextTab);
+      expect(env.scriptureText).toBe(null);
+      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:3');
+      expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
+      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:4');
+      expect(env.scriptureText).toBe('target: chapter 1, verse 3. target: chapter 1, verse 4.');
+      env.clickButton(env.saveAnswerButton);
+      env.waitForSliderUpdate();
+      expect(env.getAnswerScriptureText(0)).toBe('target: chapter 1, verse 3. target: chapter 1, verse 4.(JHN 1:3-4)');
+    }));
+
+    it('can remove scripture from an answer', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.reviewerUser);
+      env.selectQuestion(6);
+      expect(env.getAnswerScriptureText(0)).toBe('Quoted scripture(JHN 1:1)');
+      env.clickButton(env.getAnswerEditButton(0));
+      env.clickButton(env.selectTextTab);
+      env.setTextFieldValue(env.scriptureTextField, '');
+      env.clickButton(env.saveAnswerButton);
+      env.waitForSliderUpdate();
+      expect(env.getAnswerScripture(0)).toBeFalsy();
     }));
 
     describe('Comments', () => {
@@ -371,7 +399,14 @@ class TestEnvironment {
   cleanReviewUser = this.createUser('03', SFProjectRoles.Reviewer, false);
 
   private projectData: SFProjectData = {
-    texts: [{ bookId: 'JHN', name: 'John', hasSource: false, chapters: [{ number: 1 }, { number: 2 }] }]
+    texts: [
+      {
+        bookId: 'JHN',
+        name: 'John',
+        hasSource: false,
+        chapters: [{ number: 1, lastVerse: 18 }, { number: 2, lastVerse: 25 }]
+      }
+    ]
   };
 
   private testAdminProjectUser: SFProjectUser = new SFProjectUser({
@@ -530,6 +565,26 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('mdc-text-field[formControlName="answerText"]'));
   }
 
+  get scriptureStartField(): DebugElement {
+    return this.fixture.debugElement.query(By.css('mdc-text-field[formControlName="scriptureStart"]'));
+  }
+
+  get scriptureEndField(): DebugElement {
+    return this.fixture.debugElement.query(By.css('mdc-text-field[formControlName="scriptureEnd"]'));
+  }
+
+  get scriptureTextField(): DebugElement {
+    return this.fixture.debugElement.query(By.css('mdc-text-field[formControlName="scriptureText"]'));
+  }
+
+  get scriptureText(): string {
+    return this.component.answersPanel.scriptureText.value;
+  }
+
+  get selectTextTab(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(3)'));
+  }
+
   answerQuestion(answer: string): void {
     this.clickButton(this.addAnswerButton);
     this.setTextFieldValue(this.yourAnswerField, answer);
@@ -553,8 +608,20 @@ class TestEnvironment {
     return this.answers[index];
   }
 
+  getAnswerEditButton(index: number): DebugElement {
+    return this.getAnswer(index).query(By.css('.answer-edit'));
+  }
+
   getAnswerText(index: number): string {
     return this.getAnswer(index).query(By.css('.answer-text')).nativeElement.textContent;
+  }
+
+  getAnswerScripture(index: number): DebugElement {
+    return this.getAnswer(index).query(By.css('.answer-scripture'));
+  }
+
+  getAnswerScriptureText(index: number): string {
+    return this.getAnswerScripture(index).nativeElement.textContent;
   }
 
   getAddCommentButton(answerIndex: number): DebugElement {
@@ -617,6 +684,7 @@ class TestEnvironment {
     const inputElem = input.nativeElement as HTMLInputElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
+    inputElem.dispatchEvent(new Event('change'));
     this.fixture.detectChanges();
     tick();
   }
@@ -687,6 +755,9 @@ class TestEnvironment {
       id: 'a6Id',
       ownerRef: this.reviewerUser.id,
       text: 'Answer 6 on question',
+      scriptureStart: { chapter: '1', verse: '1', book: 'JHN', versification: 'English' },
+      scriptureEnd: { chapter: '1', verse: '1', book: 'JHN', versification: 'English' },
+      scriptureText: 'Quoted scripture',
       likes: [],
       dateCreated: dateNow,
       dateModified: dateNow

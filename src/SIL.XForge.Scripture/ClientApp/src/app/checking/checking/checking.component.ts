@@ -224,6 +224,9 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
           };
         }
         answer.text = answerAction.text;
+        answer.scriptureText = answerAction.scriptureText;
+        answer.scriptureStart = answerAction.scriptureStart;
+        answer.scriptureEnd = answerAction.scriptureEnd;
         answer.dateModified = dateNow;
         if (answerAction.audio.fileName) {
           const response = await this.projectService.uploadAudio(
