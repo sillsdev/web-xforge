@@ -46,8 +46,14 @@
         update_cache: yes
       tags: ["packages"]
 
+    - name: Get npm prefix
+      command: "npm config get prefix"
+      register: npm_prefix
+      changed_when: False
+
     - name: Set npm prefix
-      shell: "npm config set prefix /usr/local"
+      command: "npm config set prefix /usr/local"
+      when: npm_prefix.stdout != "/usr/local"
 
     - name: install n
       npm:
@@ -128,6 +134,9 @@
         path: "{{lookup('env','HOME')}}/.pam_environment"
         line: 'CHROME_BIN=chromium-browser'
         create: yes
+
+    - name: Install/update reportgenerator
+      shell: dotnet tool install -g dotnet-reportgenerator-globaltool || dotnet tool update -g dotnet-reportgenerator-globaltool
 
   handlers:
     - name: restart mongod
