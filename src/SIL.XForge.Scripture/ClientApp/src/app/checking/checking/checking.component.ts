@@ -268,7 +268,6 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
           comment = {
             id: objectId(),
             ownerRef: this.userService.currentUserId,
-            projectRef: this.projectDoc.id,
             answerRef: commentAction.answer.id,
             text: '',
             dateCreated: dateNow,

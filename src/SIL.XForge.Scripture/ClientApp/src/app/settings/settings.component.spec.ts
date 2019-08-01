@@ -381,7 +381,7 @@ class TestEnvironment {
     when(this.mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(this.mockedSFProjectService.updateTasks('project01', anything())).thenResolve();
     this.currentUserDoc = new UserDoc(
-      new MemoryRealtimeDocAdapter(OTJson0.type, 'user01', { sites: { sf: { currentProjectId: 'project01' } } }),
+      new MemoryRealtimeDocAdapter('user01', OTJson0.type, { sites: { sf: { currentProjectId: 'project01' } } }),
       instance(this.mockedRealtimeOfflineStore)
     );
     when(this.mockedUserService.getCurrentUser()).thenResolve(this.currentUserDoc);
@@ -544,7 +544,7 @@ class TestEnvironment {
     }
   ) {
     this.projectDoc = new SFProjectDoc(
-      new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', project),
+      new MemoryRealtimeDocAdapter('project01', OTJson0.type, project),
       instance(this.mockedRealtimeOfflineStore)
     );
     when(this.mockedSFProjectService.get('project01')).thenResolve(this.projectDoc);

@@ -406,7 +406,7 @@ class TestEnvironment {
     delta.insert({ verse: { number: '2', style: 'v' } });
     delta.insert(`${id.textType}: chapter ${id.chapter}, verse 2.`, { segment: `verse_${id.chapter}_2` });
     delta.insert('\n', { para: { style: 'p' } });
-    const adapter = new MemoryRealtimeDocAdapter(RichText.type, id.toString(), delta);
+    const adapter = new MemoryRealtimeDocAdapter(id.toString(), RichText.type, delta);
     return new TextDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 }

@@ -67,6 +67,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
   private insertSuggestionEnd: number = -1;
   private projectDoc: SFProjectDoc;
   private projectUserConfigDoc: SFProjectUserConfigDoc;
+  private projectUserConfigChangesSub: Subscription;
   private text: TextInfo;
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
@@ -199,26 +200,18 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
       if (projectId !== prevProjectId) {
         this.projectDoc = await this.projectService.get(projectId);
         this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+
+        if (this.projectUserConfigChangesSub != null) {
+          this.projectUserConfigChangesSub.unsubscribe();
+        }
+        this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(() =>
+          this.loadProjectUserConfig()
+        );
       }
       this.text = this.projectDoc.data.texts.find(t => t.bookId === bookId);
       this.chapters = this.text.chapters.map(c => c.number);
 
-      if (this.projectUserConfigDoc.data.confidenceThreshold != null) {
-        const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
-        this.translationSuggester.confidenceThreshold = pcnt / 100;
-        this.confidenceThreshold$.next(pcnt);
-      }
-      let chapter = 1;
-      if (this.projectUserConfigDoc.data.selectedBookId === this.text.bookId) {
-        if (
-          this.projectUserConfigDoc.data.selectedChapter != null &&
-          this.projectUserConfigDoc.data.selectedChapter !== 0
-        ) {
-          chapter = this.projectUserConfigDoc.data.selectedChapter;
-        }
-      }
-      this._chapter = chapter;
-      this.changeText();
+      this.loadProjectUserConfig();
 
       if (this.projectDoc.id !== prevProjectId) {
         if (this.trainingSubscription != null) {
@@ -286,6 +279,9 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
+    if (this.projectUserConfigChangesSub != null) {
+      this.projectUserConfigChangesSub.unsubscribe();
+    }
     this.noticeService.loadingFinished();
     this.metricsSession.dispose();
   }
@@ -572,6 +568,25 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
 
   private canTrainSegment(segment: Segment): boolean {
     return segment != null && segment.range.length > 0 && segment.text !== '' && segment.isChanged;
+  }
+
+  private loadProjectUserConfig() {
+    if (this.projectUserConfigDoc.data.confidenceThreshold != null) {
+      const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
+      this.translationSuggester.confidenceThreshold = pcnt / 100;
+      this.confidenceThreshold$.next(pcnt);
+    }
+    let chapter = 1;
+    if (this.projectUserConfigDoc.data.selectedBookId === this.text.bookId) {
+      if (
+        this.projectUserConfigDoc.data.selectedChapter != null &&
+        this.projectUserConfigDoc.data.selectedChapter !== 0
+      ) {
+        chapter = this.projectUserConfigDoc.data.selectedChapter;
+      }
+    }
+    this._chapter = chapter;
+    this.changeText();
   }
 
   private syncScroll(): void {

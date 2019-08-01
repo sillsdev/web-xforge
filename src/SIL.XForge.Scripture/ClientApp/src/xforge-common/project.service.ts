@@ -32,7 +32,7 @@ export abstract class ProjectService<
   }
 
   onlineCreate(project: TProj): Promise<string> {
-    return this.jsonRpcService.invoke(ProjectDoc.TYPE, 'create', { project });
+    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, 'create', { project });
   }
 
   onlineSearch(
@@ -61,28 +61,32 @@ export abstract class ProjectService<
   }
 
   onlineAddCurrentUser(id: string, projectRole?: string): Promise<void> {
-    return this.jsonRpcService.invoke(this.identity(id), 'addUser', { projectRole });
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'addUser', { projectRole });
   }
 
   onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
-    return this.jsonRpcService.invoke(this.identity(id), 'isAlreadyInvited', { email });
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'isAlreadyInvited', { email });
   }
 
   /** Get added into project, with optionally specified shareKey code. */
   onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
-    return this.jsonRpcService.invoke(this.identity(id), 'checkLinkSharing', { shareKey });
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'checkLinkSharing', { shareKey });
   }
 
   onlineRemoveUser(id: string, userId: string): Promise<void> {
-    return this.jsonRpcService.invoke(this.identity(id), 'removeUser', { projectUserId: userId });
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'removeUser', { projectUserId: userId });
+  }
+
+  onlineUpdateCurrentUserRole(id: string, projectRole: string): Promise<void> {
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'updateRole', { projectRole });
   }
 
   onlineInvite(id: string, email: string): Promise<string> {
-    return this.jsonRpcService.invoke(this.identity(id), 'invite', { email });
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'invite', { email });
   }
 
   onlineDelete(id: string): Promise<void> {
-    return this.jsonRpcService.invoke(this.identity(id), 'delete');
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'delete');
   }
 
   async uploadAudio(id: string, file: File): Promise<string> {

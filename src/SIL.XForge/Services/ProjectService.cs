@@ -83,6 +83,19 @@ namespace SIL.XForge.Services
             }
         }
 
+        public async Task UpdateRoleAsync(string userId, string projectId, string projectRole)
+        {
+            using (IConnection conn = await RealtimeService.ConnectAsync())
+            {
+                IDocument<TModel> projectDoc = conn.Get<TModel>(RootDataTypes.Projects, projectId);
+                await projectDoc.FetchAsync();
+                if (!projectDoc.IsLoaded)
+                    throw new DataNotFoundException("The project does not exist.");
+
+                await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[userId], projectRole));
+            }
+        }
+
         public async Task<bool> InviteAsync(string userId, string projectId, string email)
         {
             Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(RootDataTypes.Projects,

@@ -40,7 +40,7 @@ export class UserService {
   }
 
   async onlineDelete(id: string): Promise<void> {
-    await this.jsonRpcService.invoke({ type: UserDoc.TYPE, id }, 'delete');
+    await this.jsonRpcService.onlineInvoke({ type: UserDoc.TYPE, id }, 'delete');
   }
 
   onlineSearch(

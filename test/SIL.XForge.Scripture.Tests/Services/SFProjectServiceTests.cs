@@ -87,6 +87,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(user.Sites[SiteId].Projects, Does.Not.Contain(Project01));
             await env.EngineService.Received().RemoveProjectAsync(Project01);
             env.FileSystemService.Received().DeleteDirectory(syncDir);
+            Assert.That(env.ProjectSecrets.Contains(Project01), Is.False);
         }
 
         private class TestEnvironment
@@ -183,7 +184,7 @@ namespace SIL.XForge.Scripture.Services
                     SiteDir = "xforge"
                 });
                 var emailService = Substitute.For<IEmailService>();
-                var projectSecrets = new MemoryRepository<SFProjectSecret>(new[]
+                ProjectSecrets = new MemoryRepository<SFProjectSecret>(new[]
                 {
                     new SFProjectSecret { Id = Project01 },
                     new SFProjectSecret { Id = Project02 },
@@ -202,7 +203,7 @@ namespace SIL.XForge.Scripture.Services
                 });
                 var translateMetrics = new MemoryRepository<TranslateMetrics>();
                 FileSystemService = Substitute.For<IFileSystemService>();
-                Service = new SFProjectService(RealtimeService, siteOptions, emailService, projectSecrets,
+                Service = new SFProjectService(RealtimeService, siteOptions, emailService, ProjectSecrets,
                     securityService, EngineService, SyncService, paratextService, userSecrets, translateMetrics,
                     FileSystemService);
             }
@@ -212,6 +213,7 @@ namespace SIL.XForge.Scripture.Services
             public ISyncService SyncService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
             public IFileSystemService FileSystemService { get; }
+            public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
 
             public SFProject GetProject(string id)
             {

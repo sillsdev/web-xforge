@@ -1,8 +1,8 @@
 namespace SIL.XForge.Configuration
 {
-    public class RealtimeDomainConfig
+    public class DomainConfig
     {
-        public RealtimeDomainConfig(int domain)
+        public DomainConfig(int domain)
         {
             Domain = domain;
         }

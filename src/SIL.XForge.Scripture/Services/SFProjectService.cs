@@ -100,6 +100,7 @@ namespace SIL.XForge.Scripture.Services
                 await projectDoc.DeleteAsync();
             }
 
+            await ProjectSecrets.DeleteAsync(projectId);
             await RealtimeService.DeleteProjectAsync(projectId);
             await _engineService.RemoveProjectAsync(projectId);
             string syncDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", projectId);

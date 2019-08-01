@@ -234,6 +234,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
           this.currentUserDoc
             .submitJson0Op(op => op.unset(u => u.sites[environment.siteId].currentProjectId))
             .then(() => this.navigateToStart());
+          return;
         }
 
         if (this.selectedProjectDeleteSub != null) {
@@ -268,7 +269,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
           this._projectSelect.value = this.selectedProjectDoc.id;
         }
 
-        if (this.site == null || this.site.currentProjectId !== this.selectedProjectDoc.id) {
+        if (this.site.currentProjectId !== this.selectedProjectDoc.id) {
           this.currentUserDoc.submitJson0Op(op =>
             op.set(u => u.sites[environment.siteId].currentProjectId, this.selectedProjectDoc.id)
           );

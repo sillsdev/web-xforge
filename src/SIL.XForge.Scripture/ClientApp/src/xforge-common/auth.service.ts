@@ -142,12 +142,12 @@ export class AuthService {
     const isNewUser = prevUserId != null && prevUserId !== this.currentUserId;
     await this.realtimeService.init(this.accessToken, isNewUser);
     if (secondaryId != null) {
-      await this.jsonRpcService.invoke({ type: UserDoc.TYPE, id: this.currentUserId }, 'linkParatextAccount', {
+      await this.jsonRpcService.onlineInvoke({ type: UserDoc.TYPE, id: this.currentUserId }, 'linkParatextAccount', {
         authId: secondaryId
       });
     } else if (!environment.production) {
       try {
-        await this.jsonRpcService.invoke({ type: UserDoc.TYPE, id: this.currentUserId }, 'pullAuthUserProfile');
+        await this.jsonRpcService.onlineInvoke({ type: UserDoc.TYPE, id: this.currentUserId }, 'pullAuthUserProfile');
       } catch (err) {
         console.error(err);
         return false;

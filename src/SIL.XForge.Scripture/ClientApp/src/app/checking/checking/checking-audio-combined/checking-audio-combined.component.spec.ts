@@ -84,7 +84,7 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
 
     const currentUserDoc = new UserDoc(
-      new MemoryRealtimeDocAdapter(OTJson0.type, 'user01', { name: 'user' }),
+      new MemoryRealtimeDocAdapter('user01', OTJson0.type, { name: 'user' }),
       instance(this.mockedRealtimeOfflineStore)
     );
     when(this.mockedUserService.getCurrentUser()).thenResolve(currentUserDoc);

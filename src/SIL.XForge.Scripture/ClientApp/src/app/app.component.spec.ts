@@ -6,12 +6,12 @@ import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import * as OTJson0 from 'ot-json0';
-import { BehaviorSubject, of } from 'rxjs';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { of } from 'rxjs';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
-import { MapQueryResults, QueryResults } from 'xforge-common/json-api.service';
 import { LocationService } from 'xforge-common/location.service';
+import { User } from 'xforge-common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
@@ -19,13 +19,10 @@ import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { nameof } from 'xforge-common/utils';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
-import { SFProject, SFProjectRef } from './core/models/sfproject';
-import { SFProjectData } from './core/models/sfproject-data';
-import { SFProjectDataDoc } from './core/models/sfproject-doc';
+import { SFProject } from './core/models/sfproject';
+import { SFProjectDoc } from './core/models/sfproject-doc';
 import { SFProjectRoles } from './core/models/sfproject-roles';
-import { SFProjectUser } from './core/models/sfproject-user-config';
 import { SFProjectService } from './core/sfproject.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
@@ -113,29 +110,27 @@ describe('AppComponent', () => {
     env.init();
 
     expect(env.isDrawerVisible).toEqual(false);
-    expect(env.component.selectedProjectDoc).toBeUndefined();
+    expect(env.component.selectedProjectId).toBeUndefined();
   }));
 
-  it('reponse to remote project deletion', fakeAsync(() => {
+  it('response to remote project deletion', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project01']);
     env.init();
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
-    env.deleteProject(false);
+    env.deleteProject01(false);
     expect(env.projectDeletedDialog).toBeDefined();
     expect(env.currentProjectId).toBeUndefined();
     env.confirmDialog();
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.location.path()).toEqual('/projects');
-    verify(env.mockedSFProjectService.localDelete('project01')).once();
   }));
 
-  it('reponse to remote project deletion when no project selected', fakeAsync(() => {
+  it('response to remote project deletion when no project selected', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedSFProjectService.onlineExists('project01')).thenResolve(false);
-    env.deleteProject(false);
+    env.deleteProject01(false);
     env.navigate(['/projects', 'project01']);
     env.init();
 
@@ -151,7 +146,7 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
-    env.deleteProject(true);
+    env.deleteProject01(true);
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.location.path()).toEqual('/projects');
   }));
@@ -166,33 +161,6 @@ describe('AppComponent', () => {
     expect(env.syncItem).toBeDefined();
     expect(env.settingsItem).toBeDefined();
     expect(env.usersItem).toBeDefined();
-  }));
-
-  it('partial data does not throw', fakeAsync(() => {
-    // SF-229 The project properties may only be partiually available
-    // the first time we hear back from the observable. Don't prevent
-    // it from trying again by crashing in the fixture or component code.
-    const env = new TestEnvironment();
-    env.setProjects(
-      new MapQueryResults(
-        [
-          new SFProjectUser({
-            id: 'projectuser01',
-            project: new SFProjectRef('project01'),
-            userRef: 'user01'
-          })
-        ],
-        undefined,
-        [
-          new SFProject({
-            id: 'project01'
-          })
-        ]
-      )
-    );
-    env.navigate(['/projects', 'project01']);
-
-    expect(() => env.init()).not.toThrow();
   }));
 
   describe('User menu', () => {
@@ -241,6 +209,7 @@ class TestEnvironment {
   readonly location: Location;
   readonly overlayContainer: OverlayContainer;
   readonly lastLogin: string = '2019-02-01T12:00:00.000Z';
+  readonly project01DocAdapter: MemoryRealtimeDocAdapter;
 
   readonly mockedAccountService = mock(AccountService);
   readonly mockedAuthService = mock(AuthService);
@@ -254,75 +223,47 @@ class TestEnvironment {
   readonly mockedNameDialogRef = mock(MdcDialogRef);
 
   private readonly currentUserDoc: UserDoc;
-  private readonly projects$: BehaviorSubject<QueryResults<SFProjectUser[]>>;
 
   constructor() {
     this.currentUserDoc = new UserDoc(
-      new MemoryRealtimeDocAdapter(OTJson0.type, 'user01', {
+      new MemoryRealtimeDocAdapter('user01', OTJson0.type, {
         name: 'User 01',
-        sites: { sf: { currentProjectId: 'project01', lastLogin: this.lastLogin } }
-      }),
+        sites: {
+          sf: {
+            currentProjectId: 'project01',
+            lastLogin: this.lastLogin,
+            projects: ['project01', 'project02', 'project03']
+          }
+        }
+      } as User),
       instance(this.mockedRealtimeOfflineStore)
     );
 
-    this.projects$ = new BehaviorSubject<QueryResults<SFProjectUser[]>>(
-      new MapQueryResults(
-        [
-          new SFProjectUser({
-            id: 'projectuser01',
-            project: new SFProjectRef('project01'),
-            userRef: 'user01',
-            role: SFProjectRoles.ParatextTranslator
-          }),
-          new SFProjectUser({
-            id: 'projectuser02',
-            project: new SFProjectRef('project02'),
-            userRef: 'user01',
-            role: SFProjectRoles.Reviewer
-          }),
-          new SFProjectUser({
-            id: 'projectuser03',
-            project: new SFProjectRef('project03'),
-            userRef: 'user01',
-            role: SFProjectRoles.Reviewer
-          })
-        ],
-        undefined,
-        [
-          new SFProject({
-            id: 'project01',
-            projectName: 'project01',
-            translateEnabled: true,
-            checkingEnabled: true
-          }),
-          new SFProject({
-            id: 'project02',
-            projectName: 'project02',
-            translateEnabled: false,
-            checkingEnabled: true
-          }),
-          new SFProject({
-            id: 'project03',
-            projectName: 'project03',
-            translateEnabled: true,
-            checkingEnabled: true
-          })
-        ]
-      )
-    );
-    this.addProjectDataDoc('project01', {
+    this.project01DocAdapter = this.addProject('project01', {
+      projectName: 'project01',
+      translateEnabled: true,
+      checkingEnabled: true,
+      userRoles: { user01: SFProjectRoles.ParatextTranslator },
       texts: [
         { bookId: 'text01', name: 'Book 1', hasSource: true },
         { bookId: 'text02', name: 'Book 2', hasSource: false }
       ]
     });
-    this.addProjectDataDoc('project02', {
+    this.addProject('project02', {
+      projectName: 'project02',
+      translateEnabled: false,
+      checkingEnabled: true,
+      userRoles: { user01: SFProjectRoles.Reviewer },
       texts: [
         { bookId: 'text03', name: 'Book 3', hasSource: false },
         { bookId: 'text04', name: 'Book 4', hasSource: false }
       ]
     });
-    this.addProjectDataDoc('project03', {
+    this.addProject('project03', {
+      projectName: 'project03',
+      translateEnabled: true,
+      checkingEnabled: true,
+      userRoles: { user01: SFProjectRoles.Reviewer },
       texts: [
         { bookId: 'text05', name: 'Book 5', hasSource: true },
         { bookId: 'text06', name: 'Book 6', hasSource: true }
@@ -332,9 +273,6 @@ class TestEnvironment {
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedAuthService.isLoggedIn).thenResolve(true);
     when(this.mockedUserService.getCurrentUser()).thenResolve(this.currentUserDoc);
-    when(this.mockedUserService.getProjects('user01', deepEqual([[nameof<SFProjectUser>('project')]]))).thenReturn(
-      this.projects$
-    );
     when(this.mockedAccountService.openNameDialog(anything(), false)).thenReturn(instance(this.mockedNameDialogRef));
     when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
 
@@ -438,16 +376,16 @@ class TestEnvironment {
 
   wait(): void {
     this.fixture.detectChanges();
-    flush(40);
+    flush(50);
     this.fixture.detectChanges();
-    flush(40);
+    flush(50);
   }
 
-  deleteProject(isLocal: boolean): void {
+  deleteProject01(isLocal: boolean): void {
     if (isLocal) {
       this.currentUserDoc.data.sites.sf.currentProjectId = null;
     }
-    this.projects$.next(new MapQueryResults<SFProjectUser[]>([]));
+    this.project01DocAdapter.delete();
     this.wait();
   }
 
@@ -461,13 +399,10 @@ class TestEnvironment {
     this.component.editName('User 01');
   }
 
-  setProjects(results: MapQueryResults<SFProjectUser[]>): void {
-    this.projects$.next(results);
-  }
-
-  private addProjectDataDoc(projectId: string, projectData: SFProjectData): void {
-    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, projectId, projectData);
-    const doc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
-    when(this.mockedSFProjectService.getDataDoc(projectId)).thenResolve(doc);
+  private addProject(projectId: string, project: SFProject): MemoryRealtimeDocAdapter {
+    const adapter = new MemoryRealtimeDocAdapter(projectId, OTJson0.type, project);
+    const doc = new SFProjectDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    when(this.mockedSFProjectService.get(projectId)).thenResolve(doc);
+    return adapter;
   }
 }

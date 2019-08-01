@@ -56,7 +56,7 @@ namespace SIL.XForge.Realtime
 
         public Task DeleteDocAsync(int handle, string collection, string id)
         {
-            return InvokeExportAsync<object>("deleteDoc", collection, id);
+            return InvokeExportAsync<object>("deleteDoc", handle, collection, id);
         }
 
         public void Disconnect(int handle)

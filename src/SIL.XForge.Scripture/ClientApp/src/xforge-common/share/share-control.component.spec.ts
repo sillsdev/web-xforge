@@ -60,6 +60,7 @@ describe('ShareControlComponent', () => {
     verify(env.mockedProjectService.onlineIsAlreadyInvited(anything(), anything())).never();
     env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
     verify(env.mockedProjectService.onlineIsAlreadyInvited(anything(), anything())).once();
+    expect().nothing();
   }));
 
   it('Message shown for not-yet-known invitee', fakeAsync(() => {
@@ -135,7 +136,7 @@ describe('ShareControlComponent', () => {
         isLinkSharingEnabled === undefined ? false : isLinkSharingEnabled;
 
       const projectDoc = new TestProjectDoc(
-        new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', {}),
+        new MemoryRealtimeDocAdapter('project01', OTJson0.type, {}),
         instance(this.mockedRealtimeOfflineStore)
       );
       when(this.mockedProjectService.get(anything())).thenResolve(projectDoc);

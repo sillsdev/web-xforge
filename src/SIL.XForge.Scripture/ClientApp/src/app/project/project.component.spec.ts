@@ -3,17 +3,15 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router'
 import * as OTJson0 from 'ot-json0';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-import { MapQueryResults } from 'xforge-common/json-api.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { nameof } from 'xforge-common/utils';
-import { SFProject, SFProjectRef } from '../core/models/sfproject';
-import { SFProjectData } from '../core/models/sfproject-data';
-import { SFProjectDataDoc } from '../core/models/sfproject-doc';
+import { SFProject } from '../core/models/sfproject';
+import { SFProjectDoc } from '../core/models/sfproject-doc';
 import { SFProjectRoles } from '../core/models/sfproject-roles';
-import { SFProjectUser, SFProjectUserRef } from '../core/models/sfproject-user-config';
+import { SFProjectUserConfig } from '../core/models/sfproject-user-config';
+import { SFProjectUserConfigDoc } from '../core/models/sfproject-user-config-doc';
 import { SFProjectService } from '../core/sfproject.service';
 import { ProjectComponent } from './project.component';
 
@@ -62,37 +60,12 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
-  it('do not navigate when project is null', fakeAsync(() => {
+  it('do not navigate when project does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setNoProjectData();
     env.fixture.detectChanges();
     tick();
 
-    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(anything(), anything())).never();
-    expect().nothing();
-  }));
-
-  it('do not navigate when projectUser is null', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setNoProjectUserData();
-    env.fixture.detectChanges();
-    tick();
-
-    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(anything(), anything())).never();
-    expect().nothing();
-  }));
-
-  it('handle partial data', fakeAsync(() => {
-    // Similar to SF-229
-    const env = new TestEnvironment();
-    env.setLimitedProjectUserData();
-
-    expect(() => {
-      env.fixture.detectChanges();
-      tick();
-    }).not.toThrow();
     verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(env.mockedRouter.navigate(anything(), anything())).never();
     expect().nothing();
@@ -105,7 +78,7 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).once();
+    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).once();
     verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'text02']), anything())).once();
     expect().nothing();
   }));
@@ -118,6 +91,7 @@ describe('ProjectComponent', () => {
     tick();
 
     verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01', 'secret123')).once();
+    expect().nothing();
   }));
 });
 
@@ -156,24 +130,16 @@ class TestEnvironment {
   }
 
   setNoProjectData(): void {
-    when(this.mockedSFProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
-      of(new MapQueryResults(null))
+    const projectUserConfigDoc = new SFProjectUserConfigDoc(
+      new MemoryRealtimeDocAdapter('project01:user01'),
+      instance(this.mockedRealtimeOfflineStore)
     );
-  }
-
-  setNoProjectUserData(): void {
-    when(this.mockedSFProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
-      of(
-        new MapQueryResults(
-          new SFProject({
-            id: 'project01',
-            translateEnabled: true,
-            checkingEnabled: true
-          })
-        )
-      )
+    when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenResolve(projectUserConfigDoc);
+    const projectDoc = new SFProjectDoc(
+      new MemoryRealtimeDocAdapter('project01'),
+      instance(this.mockedRealtimeOfflineStore)
     );
-    this.setProjectDataDoc();
+    when(this.mockedSFProjectService.get('project01')).thenResolve(projectDoc);
   }
 
   setProjectData(args: {
@@ -182,68 +148,32 @@ class TestEnvironment {
     selectedTask?: string;
     role?: SFProjectRoles;
   }): void {
-    when(this.mockedSFProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
-      of(
-        new MapQueryResults(
-          new SFProject({
-            id: 'project01',
-            translateEnabled: args.isTranslateEnabled == null || args.isTranslateEnabled,
-            checkingEnabled: true,
-            users: [new SFProjectUserRef('projectuser01')]
-          }),
-          undefined,
-          [
-            new SFProjectUser({
-              id: 'projectuser01',
-              userRef: 'user01',
-              project: new SFProjectRef('project01'),
-              role: args.role == null ? SFProjectRoles.ParatextTranslator : args.role,
-              selectedTask: args.selectedTask,
-              selectedBookId: args.selectedTask == null ? undefined : 'text02'
-            })
-          ]
-        )
-      )
+    const projectUserConfig: SFProjectUserConfig = {
+      ownerRef: 'user01',
+      selectedTask: args.selectedTask,
+      selectedBookId: args.selectedTask == null ? undefined : 'text02'
+    };
+    const projectUserConfigDoc = new SFProjectUserConfigDoc(
+      new MemoryRealtimeDocAdapter('project01:user01', OTJson0.type, projectUserConfig),
+      instance(this.mockedRealtimeOfflineStore)
     );
-    this.setProjectDataDoc(args.hasTexts == null || args.hasTexts);
-  }
-
-  // Such as from an incomplete offline storage
-  setLimitedProjectUserData(): void {
-    when(this.mockedSFProjectService.get('project01', deepEqual([[nameof<SFProject>('users')]]))).thenReturn(
-      of(
-        new MapQueryResults(
-          new SFProject({
-            id: 'project01',
-            translateEnabled: true,
-            checkingEnabled: true,
-            users: [new SFProjectUserRef('projectuser01')]
-          }),
-          undefined,
-          [
-            new SFProjectUser({
-              id: 'projectuser01',
-              project: new SFProjectRef('project01')
-            })
-          ]
-        )
-      )
+    when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenResolve(projectUserConfigDoc);
+    const project: SFProject = {
+      translateEnabled: args.isTranslateEnabled == null || args.isTranslateEnabled,
+      checkingEnabled: true,
+      texts: args.hasTexts == null || args.hasTexts ? [{ bookId: 'text01' }, { bookId: 'text02' }] : undefined,
+      userRoles: { user01: args.role == null ? SFProjectRoles.ParatextTranslator : args.role }
+    };
+    const projectDoc = new SFProjectDoc(
+      new MemoryRealtimeDocAdapter('project01', OTJson0.type, project),
+      instance(this.mockedRealtimeOfflineStore)
     );
-    this.setProjectDataDoc();
+    when(this.mockedSFProjectService.get('project01')).thenResolve(projectDoc);
   }
 
   setLinkSharing(enabled: boolean, shareKey?: string): void {
     const snapshot = new ActivatedRouteSnapshot();
     snapshot.queryParams = { sharing: enabled ? 'true' : undefined, shareKey: shareKey ? shareKey : undefined };
     when(this.mockedActivatedRoute.snapshot).thenReturn(snapshot);
-  }
-
-  private setProjectDataDoc(hasTexts: boolean = true): void {
-    const projectData: SFProjectData = {
-      texts: hasTexts ? [{ bookId: 'text01' }, { bookId: 'text02' }] : undefined
-    };
-    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', projectData);
-    const doc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
-    when(this.mockedSFProjectService.getDataDoc('project01')).thenResolve(doc);
   }
 }

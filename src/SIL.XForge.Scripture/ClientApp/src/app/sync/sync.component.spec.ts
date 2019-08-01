@@ -124,7 +124,7 @@ class TestEnvironment {
         dateLastSuccessfulSync: date.toJSON()
       }
     };
-    this.projectDocAdapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'testproject01', this.project);
+    this.projectDocAdapter = new MemoryRealtimeDocAdapter('testproject01', OTJson0.type, this.project);
     when(this.mockedProjectService.get('testproject01')).thenResolve(
       new SFProjectDoc(this.projectDocAdapter, instance(this.mockedRealtimeOfflineStore))
     );

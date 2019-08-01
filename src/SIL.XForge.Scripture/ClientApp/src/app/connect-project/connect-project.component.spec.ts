@@ -6,6 +6,7 @@ import { AbstractControl } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
+import { clone } from '@orbit/utils';
 import * as OTJson0 from 'ot-json0';
 import { defer, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -17,10 +18,7 @@ import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProject } from '../core/models/sfproject';
-import { SFProjectData } from '../core/models/sfproject-data';
-import { SFProjectDataDoc } from '../core/models/sfproject-doc';
-import { SFProjectUser } from '../core/models/sfproject-user-config';
-import { SFProjectUserService } from '../core/sfproject-user.service';
+import { SFProjectDoc } from '../core/models/sfproject-doc';
 import { SFProjectService } from '../core/sfproject.service';
 import { ConnectProjectComponent } from './connect-project.component';
 
@@ -55,7 +53,7 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.submitButton);
 
     verify(env.mockedSFProjectService.onlineCreate(anything())).never();
-    verify(env.mockedSFProjectUserService.onlineCreate(anything(), anything())).never();
+    verify(env.mockedSFProjectService.onlineAddCurrentUser(anything(), anything())).never();
     verify(env.mockedRouter.navigate(anything())).never();
   }));
 
@@ -102,7 +100,7 @@ describe('ConnectProjectComponent', () => {
 
     env.clickElement(env.submitButton);
 
-    verify(env.mockedSFProjectUserService.onlineCreate('project01', 'user01')).once();
+    verify(env.mockedSFProjectService.onlineAddCurrentUser('project01')).once();
     verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
@@ -239,7 +237,7 @@ describe('ConnectProjectComponent', () => {
     env.emitSyncProgress(1);
     env.emitSyncComplete();
 
-    const project = new SFProject({
+    const project: SFProject = {
       projectName: 'Target',
       paratextId: 'pt01',
       inputSystem: {
@@ -257,9 +255,8 @@ describe('ConnectProjectComponent', () => {
         isRightToLeft: false,
         abbreviation: 'es'
       }
-    });
+    };
     verify(env.mockedSFProjectService.onlineCreate(deepEqual(project))).once();
-
     verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
@@ -287,7 +284,7 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.submitButton);
 
     verify(env.mockedSFProjectService.onlineCreate(anything())).never();
-    verify(env.mockedSFProjectUserService.onlineCreate(anything(), anything())).never();
+    verify(env.mockedSFProjectService.onlineAddCurrentUser(anything(), anything())).never();
     verify(env.mockedRouter.navigate(anything())).never();
   }));
 });
@@ -298,35 +295,27 @@ class TestEnvironment {
 
   readonly mockedParatextService = mock(ParatextService);
   readonly mockedRouter = mock(Router);
-  readonly mockedSFProjectUserService = mock(SFProjectUserService);
   readonly mockedSFProjectService = mock(SFProjectService);
   readonly mockedUserService = mock(UserService);
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
-  private readonly projectData: SFProjectData;
-  private readonly projectDataDocAdapter: MemoryRealtimeDocAdapter;
+  private projectDoc: SFProjectDoc;
 
   constructor() {
-    when(this.mockedSFProjectUserService.onlineCreate(anything(), anything())).thenResolve(
-      new SFProjectUser({ id: 'projectuser01' })
-    );
     when(this.mockedSFProjectService.onlineCreate(anything())).thenCall((project: SFProject) => {
-      const newProject = new SFProject(project);
-      newProject.id = 'project01';
-      return Promise.resolve(newProject);
-    });
-    when(this.mockedUserService.currentUserId).thenReturn('user01');
+      const newProject: SFProject = clone(project);
+      newProject.sync = { queuedCount: 1 };
 
-    this.projectData = {
-      sync: {
-        queuedCount: 1
-      }
-    };
-    this.projectDataDocAdapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', this.projectData);
-    when(this.mockedSFProjectService.getDataDoc('project01')).thenResolve(
-      new SFProjectDataDoc(this.projectDataDocAdapter, instance(this.mockedRealtimeOfflineStore))
-    );
+      this.projectDoc = new SFProjectDoc(
+        new MemoryRealtimeDocAdapter('project01', OTJson0.type, newProject),
+        instance(this.mockedRealtimeOfflineStore)
+      );
+      when(this.mockedSFProjectService.get('project01')).thenResolve(this.projectDoc);
+      return Promise.resolve('project01');
+    });
+    when(this.mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
+    when(this.mockedUserService.currentUserId).thenReturn('user01');
 
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule, NoopAnimationsModule, UICommonModule],
@@ -334,7 +323,6 @@ class TestEnvironment {
       providers: [
         { provide: ParatextService, useFactory: () => instance(this.mockedParatextService) },
         { provide: Router, useFactory: () => instance(this.mockedRouter) },
-        { provide: SFProjectUserService, useFactory: () => instance(this.mockedSFProjectUserService) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
@@ -425,18 +413,18 @@ class TestEnvironment {
   }
 
   emitSyncProgress(percentCompleted: number): void {
-    this.projectData.sync.queuedCount = 1;
-    this.projectData.sync.percentCompleted = percentCompleted;
-    this.projectDataDocAdapter.emitRemoteChange();
+    this.projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.percentCompleted, percentCompleted), false);
+    tick();
     this.fixture.detectChanges();
   }
 
   emitSyncComplete(): void {
-    this.projectData.sync.queuedCount = 0;
-    this.projectData.sync.percentCompleted = undefined;
-    this.projectData.sync.lastSyncSuccessful = true;
-    this.projectData.sync.dateLastSuccessfulSync = new Date().toJSON();
-    this.projectDataDocAdapter.emitRemoteChange();
+    this.projectDoc.submitJson0Op(op => {
+      op.set<number>(p => p.sync.queuedCount, 0);
+      op.unset(p => p.sync.percentCompleted);
+      op.set<boolean>(p => p.sync.lastSyncSuccessful, true);
+      op.set(p => p.sync.dateLastSuccessfulSync, new Date().toJSON());
+    }, false);
     this.fixture.detectChanges();
   }
 }

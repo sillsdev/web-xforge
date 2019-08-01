@@ -76,7 +76,7 @@ namespace SIL.XForge.Scripture
 
             services.AddSFDataAccess(Configuration);
 
-            IMvcBuilder mvcBuilder = services.AddMvc()
+            services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
             services.AddXFJsonRpc();

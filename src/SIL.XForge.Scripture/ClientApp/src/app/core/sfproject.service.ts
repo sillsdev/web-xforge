@@ -38,7 +38,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   addTranslateMetrics(id: string, metrics: TranslateMetrics): Promise<void> {
-    return this.jsonRpcService.invoke(this.identity(id), 'addTranslateMetrics', { metrics });
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'addTranslateMetrics', { metrics });
   }
 
   getText(id: TextDocId): Promise<TextDoc> {
@@ -54,10 +54,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   sync(id: string): Promise<void> {
-    return this.jsonRpcService.invoke(this.identity(id), 'sync');
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'sync');
   }
 
   updateTasks(id: string, parameters: UpdateTasksParams): Promise<void> {
-    return this.jsonRpcService.invoke(this.identity(id), 'updateTasks', { parameters });
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'updateTasks', { parameters });
   }
 }

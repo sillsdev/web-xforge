@@ -67,7 +67,7 @@ class TestEnvironment {
 
   setCurrentUserProjectData(projectId?: string, projects: string[] = ['project01', 'project02']): void {
     const currentUserDoc = new UserDoc(
-      new MemoryRealtimeDocAdapter(OTJson0.type, 'user01', {
+      new MemoryRealtimeDocAdapter('user01', OTJson0.type, {
         sites: { sf: { currentProjectId: projectId == null ? undefined : projectId, projects } }
       }),
       instance(this.mockedRealtimeOfflineStore)

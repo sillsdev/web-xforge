@@ -86,6 +86,22 @@ namespace SIL.XForge.Controllers
             }
         }
 
+        public async Task<IRpcMethodResult> UpdateRole(string projectRole)
+        {
+            if (SystemRole != SystemRoles.SystemAdmin)
+                return ForbiddenError();
+
+            try
+            {
+                await ProjectService.UpdateRoleAsync(UserId, ResourceId, projectRole);
+                return Ok();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+        }
+
         public async Task<IRpcMethodResult> Invite(string email)
         {
             try

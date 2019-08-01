@@ -3,9 +3,9 @@ using SIL.XForge.Realtime;
 
 namespace SIL.XForge.Configuration
 {
-    public class RealtimeDocConfig
+    public class DocConfig
     {
-        public RealtimeDocConfig(string type, string otTypeName = OTType.Json0)
+        public DocConfig(string type, string otTypeName = OTType.Json0)
         {
             Type = type;
             OTTypeName = otTypeName;
@@ -14,7 +14,7 @@ namespace SIL.XForge.Configuration
         public string Type { get; }
         public string OTTypeName { get; }
 
-        public List<RealtimeDomainConfig> Domains { get; } = new List<RealtimeDomainConfig>();
+        public List<DomainConfig> Domains { get; } = new List<DomainConfig>();
 
         public List<PathTemplateConfig> ImmutableProperties { get; } = new List<PathTemplateConfig>();
     }

@@ -103,9 +103,7 @@ export class SaProjectsComponent extends SubscriptionDisposable implements OnIni
       await this.projectService.onlineRemoveUser(row.id, this.userService.currentUserId);
     } else {
       // update role in project
-      await row.projectDoc.submitJson0Op(op =>
-        op.set(p => p.userRoles[this.userService.currentUserId], projectRole.role)
-      );
+      await this.projectService.onlineUpdateCurrentUserRole(row.id, projectRole.role);
     }
     row.projectRole = projectRole;
     row.isUpdatingRole = false;

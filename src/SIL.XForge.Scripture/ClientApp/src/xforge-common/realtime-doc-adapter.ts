@@ -12,9 +12,9 @@ types.register(RichText.type);
  */
 export interface RealtimeDocAdapter {
   readonly id: string;
-  readonly data: any;
+  readonly data?: any;
   readonly version: number;
-  readonly type: OTType;
+  readonly type?: OTType;
   readonly pendingOps: any[];
   readonly subscribed: boolean;
 
@@ -189,14 +189,16 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
  */
 export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly pendingOps: any[] = [];
-  version: number = 1;
+  version: number;
   subscribed: boolean = false;
   readonly remoteChanges$ = new Subject<any>();
   readonly create$ = new Subject<void>();
   readonly delete$ = new Subject<void>();
   readonly idle$ = EMPTY;
 
-  constructor(public readonly type: OTType, public readonly id: string, public data: any) {}
+  constructor(public readonly id: string, public type?: OTType, public data?: any) {
+    this.version = this.type == null ? -1 : 0;
+  }
 
   fetch(): Promise<void> {
     return Promise.resolve();
@@ -211,12 +213,15 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     return Promise.resolve();
   }
 
-  submitOp(op: any, _source?: any): Promise<void> {
+  submitOp(op: any, source?: any): Promise<void> {
     if (op != null && this.type.normalize != null) {
       op = this.type.normalize(op);
     }
     this.data = this.type.apply(this.data, op);
     this.version++;
+    if (!source) {
+      this.emitRemoteChange(op);
+    }
     return Promise.resolve();
   }
 
@@ -225,6 +230,10 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   }
 
   delete(): Promise<void> {
+    this.data = undefined;
+    this.version = -1;
+    this.type = undefined;
+    this.emitDelete();
     return Promise.resolve();
   }
 

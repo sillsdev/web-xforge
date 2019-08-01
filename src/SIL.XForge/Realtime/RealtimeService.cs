@@ -75,7 +75,7 @@ namespace SIL.XForge.Realtime
         public async Task DeleteProjectAsync(string projectId)
         {
             var tasks = new List<Task>();
-            foreach (RealtimeDocConfig docConfig in _realtimeOptions.Value.ProjectDataDocs)
+            foreach (DocConfig docConfig in _realtimeOptions.Value.ProjectDataDocs)
                 tasks.Add(DeleteProjectDocsAsync(docConfig.Type, projectId));
             await Task.WhenAll(tasks);
 
@@ -106,7 +106,7 @@ namespace SIL.XForge.Realtime
                     return OTType.Json0;
 
                 default:
-                    RealtimeDocConfig docConfig = _realtimeOptions.Value.ProjectDataDocs.First(dc => dc.Type == type);
+                    DocConfig docConfig = _realtimeOptions.Value.ProjectDataDocs.First(dc => dc.Type == type);
                     return docConfig.OTTypeName;
             }
         }
@@ -158,7 +158,7 @@ namespace SIL.XForge.Realtime
             }).ToArray();
         }
 
-        private object CreateCollectionConfig(RealtimeDocConfig docConfig)
+        private object CreateCollectionConfig(DocConfig docConfig)
         {
             return new
             {

@@ -256,7 +256,7 @@ class TestEnvironment {
   private addUserProfile(id: string, user: User): void {
     when(this.mockedUserService.getProfile(id)).thenResolve(
       new UserProfileDoc(
-        new MemoryRealtimeDocAdapter(OTJson0.type, id, user),
+        new MemoryRealtimeDocAdapter(id, OTJson0.type, user),
         instance(this.mockedRealtimeOfflineStore)
       )
     );
@@ -264,7 +264,7 @@ class TestEnvironment {
 
   private setupThisProjectData(projectId: string, project: Project): void {
     const projectDoc = new TestProjectDoc(
-      new MemoryRealtimeDocAdapter(OTJson0.type, projectId, project),
+      new MemoryRealtimeDocAdapter(projectId, OTJson0.type, project),
       instance(this.mockedRealtimeOfflineStore)
     );
     when(this.mockedProjectService.get(projectId)).thenResolve(projectDoc);

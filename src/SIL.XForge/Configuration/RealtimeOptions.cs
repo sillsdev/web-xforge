@@ -5,7 +5,7 @@ namespace SIL.XForge.Configuration
 {
     public class RealtimeOptions
     {
-        private static readonly RealtimeDocConfig DefaultUserDocConfig = new RealtimeDocConfig(RootDataTypes.Users)
+        private static readonly DocConfig DefaultUserDocConfig = new DocConfig(RootDataTypes.Users)
         {
             ImmutableProperties =
             {
@@ -21,8 +21,7 @@ namespace SIL.XForge.Configuration
             }
         };
 
-        private static readonly RealtimeDocConfig DefaultProjectDocConfig = new RealtimeDocConfig(
-            RootDataTypes.Projects)
+        private static readonly DocConfig DefaultProjectDocConfig = new DocConfig(RootDataTypes.Projects)
         {
             ImmutableProperties =
             {
@@ -31,9 +30,9 @@ namespace SIL.XForge.Configuration
         };
 
         public int Port { get; set; } = 5003;
-        public RealtimeDocConfig UserDoc { get; set; } = DefaultUserDocConfig;
-        public RealtimeDocConfig ProjectDoc { get; set; } = DefaultProjectDocConfig;
+        public DocConfig UserDoc { get; set; } = DefaultUserDocConfig;
+        public DocConfig ProjectDoc { get; set; } = DefaultProjectDocConfig;
         public ProjectRoles ProjectRoles { get; set; }
-        public IList<RealtimeDocConfig> ProjectDataDocs { get; set; } = new List<RealtimeDocConfig>();
+        public IList<DocConfig> ProjectDataDocs { get; set; } = new List<DocConfig>();
     }
 }

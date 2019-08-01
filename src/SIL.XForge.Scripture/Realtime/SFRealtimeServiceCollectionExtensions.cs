@@ -26,27 +26,27 @@ namespace Microsoft.Extensions.DependencyInjection
                     o.ProjectRoles = SFProjectRoles.Instance;
                     o.ProjectDataDocs = new[]
                     {
-                        new RealtimeDocConfig(SFRootDataTypes.ProjectUserConfigs, OTType.Json0)
+                        new DocConfig(SFRootDataTypes.ProjectUserConfigs, OTType.Json0)
                         {
-                            Domains = { new RealtimeDomainConfig(SFDomain.ProjectUserConfigs) }
+                            Domains = { new DomainConfig(SFDomain.ProjectUserConfigs) }
                         },
-                        new RealtimeDocConfig(SFRootDataTypes.Texts, OTType.RichText)
+                        new DocConfig(SFRootDataTypes.Texts, OTType.RichText)
                         {
-                            Domains = { new RealtimeDomainConfig(SFDomain.Texts) }
+                            Domains = { new DomainConfig(SFDomain.Texts) }
                         },
-                        new RealtimeDocConfig(SFRootDataTypes.Questions)
+                        new DocConfig(SFRootDataTypes.Questions)
                         {
                             Domains =
                             {
-                                new RealtimeDomainConfig(SFDomain.Questions)
+                                new DomainConfig(SFDomain.Questions)
                                 {
                                     PathTemplate = PathTemplateConfig<QuestionList>.Create(ql => ql.Questions[-1])
                                 },
-                                new RealtimeDomainConfig(SFDomain.Answers)
+                                new DomainConfig(SFDomain.Answers)
                                 {
                                     PathTemplate = PathTemplateConfig<QuestionList>.Create(ql => ql.Questions[-1].Answers[-1])
                                 },
-                                new RealtimeDomainConfig(SFDomain.Likes)
+                                new DomainConfig(SFDomain.Likes)
                                 {
                                     PathTemplate = PathTemplateConfig<QuestionList>.Create(
                                         ql => ql.Questions[-1].Answers[-1].Likes[-1])
@@ -57,11 +57,11 @@ namespace Microsoft.Extensions.DependencyInjection
                                 PathTemplateConfig<QuestionList>.Create(ql => ql.Questions[-1].Answers[-1].SyncUserRef)
                             }
                         },
-                        new RealtimeDocConfig(SFRootDataTypes.Comments)
+                        new DocConfig(SFRootDataTypes.Comments)
                         {
                             Domains =
                             {
-                                new RealtimeDomainConfig(SFDomain.Comments)
+                                new DomainConfig(SFDomain.Comments)
                                 {
                                     PathTemplate = PathTemplateConfig<CommentList>.Create(cl => cl.Comments[-1])
                                 }

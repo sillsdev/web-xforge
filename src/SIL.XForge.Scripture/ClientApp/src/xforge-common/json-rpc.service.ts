@@ -30,7 +30,7 @@ export class JsonRpcError {
 /**
  * This service is used to invoke JSON-RPC methods.
  *
- * @example jsonRpcService.invoke('json-rpc/endpoint', 'method', { param1: 'value1', param2: 'value2' });
+ * @example jsonRpcService.onlineInvoke(identity, 'method', { param1: 'value1', param2: 'value2' });
  */
 @Injectable({
   providedIn: 'root'
@@ -38,7 +38,7 @@ export class JsonRpcError {
 export class JsonRpcService {
   constructor(private readonly http: HttpClient) {}
 
-  async invoke<T>(identityOrType: RecordIdentity | string, method: string, params: any = {}): Promise<T> {
+  async onlineInvoke<T>(identityOrType: RecordIdentity | string, method: string, params: any = {}): Promise<T> {
     let url = 'command-api/';
     if (typeof identityOrType === 'string') {
       url += `${identityOrType}/`;

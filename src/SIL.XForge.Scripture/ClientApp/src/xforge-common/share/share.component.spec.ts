@@ -211,7 +211,7 @@ class TestEnvironment {
 
   setShareConfig(shareEnabled: boolean, shareLevel: SharingLevel): void {
     const projectDoc = new TestProjectDoc(
-      new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', { shareEnabled, shareLevel }),
+      new MemoryRealtimeDocAdapter('project01', OTJson0.type, { shareEnabled, shareLevel }),
       instance(this.mockedRealtimeOfflineStore)
     );
     when(this.mockedProjectService.get(anything())).thenResolve(projectDoc);

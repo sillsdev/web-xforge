@@ -1,5 +1,5 @@
 export interface Site {
-  currentProjectId: string;
+  currentProjectId?: string;
   lastLogin?: string;
   projects: string[];
 }

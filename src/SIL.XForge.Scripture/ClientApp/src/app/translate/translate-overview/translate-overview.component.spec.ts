@@ -158,7 +158,7 @@ class TestEnvironment {
         { bookId: 'JHN', name: 'John', chapters: [{ number: 1 }, { number: 2 }], hasSource: false }
       ]
     };
-    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', project);
+    const adapter = new MemoryRealtimeDocAdapter('project01', OTJson0.type, project);
     const doc = new SFProjectDoc(adapter, instance(this.mockedRealtimeOfflineStore));
     when(this.mockedSFProjectService.get('project01')).thenResolve(doc);
 
@@ -216,7 +216,7 @@ class TestEnvironment {
     delta.insert({ verse: { number: '10', style: 'v' } });
     delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapter}_10` });
     delta.insert('\n', { para: { style: 'p' } });
-    const adapter = new MemoryRealtimeDocAdapter(RichText.type, id.toString(), delta);
+    const adapter = new MemoryRealtimeDocAdapter(id.toString(), RichText.type, delta);
     return new TextDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 }
