@@ -78,14 +78,16 @@
             >
               <as-split-area size="100">
                 <div class="panel-content" #scripturePanelContainer>
-                  <app-checking-text [id]="textDocId"></app-checking-text>
+                  <app-checking-text #textPanel [id]="textDocId"></app-checking-text>
                 </div>
               </as-split-area>
               <as-split-area size="0">
                 <div *ngIf="questionsPanel.activeQuestion" id="answer-panel" #answerPanelContainer>
                   <app-checking-answers
                     #answersPanel
+                    [checkingTextComponent]="textPanel"
                     [project]="projectDoc?.data"
+                    [projectText]="text"
                     [question]="questionsPanel.activeQuestion"
                     [comments]="comments"
                     [projectUserConfigDoc]="projectUserConfigDoc"
