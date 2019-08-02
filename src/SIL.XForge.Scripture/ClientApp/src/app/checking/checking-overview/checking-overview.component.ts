@@ -57,14 +57,6 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     super();
   }
 
-  get allPublicQuestions(): Question[] {
-    let questions: Readonly<Question[]> = [];
-    for (const questionsDoc of Object.values(this.questionsDocs)) {
-      questions = questions.concat(questionsDoc.data);
-    }
-    return questions.filter(q => q.isArchived !== true);
-  }
-
   get allQuestionsCount(): string {
     if (this.questionListDocs == null) {
       return '-';
@@ -110,7 +102,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
         if (this.isProjectAdmin) {
           count += answer.likes.length;
         } else {
-          count += answer.likes.filter(l => l.ownerRef === this.projectCurrentUser.userRef).length;
+          count += answer.likes.filter(l => l.ownerRef === this.userService.currentUserId).length;
         }
       }
     }
@@ -147,6 +139,14 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
       this.projectDoc.data != null &&
       this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRoles.ParatextAdministrator
     );
+  }
+
+  private get allPublicQuestions(): Question[] {
+    let questions: Readonly<Question[]> = [];
+    for (const doc of Object.values(this.questionListDocs)) {
+      questions = questions.concat(doc.data.questions);
+    }
+    return questions.filter(q => q.isArchived !== true);
   }
 
   ngOnInit(): void {
@@ -293,12 +293,14 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
 
   setQuestionArchiveStatus(questionId: string, archiveStatus: boolean, bookId: string, chapterNumber: number) {
     const id = new TextDocId(this.projectId, bookId, chapterNumber);
-    const questionIndex = this.questionsDocs[id.toString()].data.findIndex(q => q.id === questionId);
-    const question = this.questionsDocs[id.toString()].data[questionIndex];
+    const questionIndex = this.getQuestionIndex(questionId, id);
+    const question = this.questionListDocs[id.toString()].data.questions[questionIndex];
     const updatedQuestion: Question = clone(question);
     updatedQuestion.isArchived = archiveStatus;
     updatedQuestion.dateArchived = archiveStatus ? new Date().toISOString() : null;
-    this.questionsDocs[id.toString()].submitJson0Op(op => op.replace(q => q, questionIndex, updatedQuestion));
+    this.questionListDocs[id.toString()].submitJson0Op(op =>
+      op.replace(q => q.questions, questionIndex, updatedQuestion)
+    );
   }
 
   overallProgress(): number[] {
