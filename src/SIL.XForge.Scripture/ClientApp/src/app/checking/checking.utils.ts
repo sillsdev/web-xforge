@@ -1,5 +1,5 @@
 import { Question } from '../core/models/question';
-import { SFProjectUser } from '../core/models/sfproject-user';
+import { SFProjectUserConfig } from '../core/models/sfproject-user-config';
 
 export class CheckingUtils {
   static hasUserAnswered(question: Question, userId: string): boolean {
@@ -9,7 +9,9 @@ export class CheckingUtils {
     return question.answers.filter(answer => answer.ownerRef === userId).length > 0;
   }
 
-  static hasUserReadQuestion(question: Question, projectUser: SFProjectUser): boolean {
-    return projectUser && projectUser.questionRefsRead ? projectUser.questionRefsRead.includes(question.id) : false;
+  static hasUserReadQuestion(question: Question, projectUserConfig: SFProjectUserConfig): boolean {
+    return projectUserConfig && projectUserConfig.questionRefsRead
+      ? projectUserConfig.questionRefsRead.includes(question.id)
+      : false;
   }
 }

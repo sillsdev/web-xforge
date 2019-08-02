@@ -12,21 +12,19 @@ import {
   TranslationSuggester
 } from '@sillsdev/machine';
 import { DeltaStatic, RangeStatic } from 'quill';
-import { BehaviorSubject, combineLatest, from, fromEvent, Subject, Subscription } from 'rxjs';
-import { debounceTime, filter, map, repeat, skip, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, fromEvent, Subject, Subscription } from 'rxjs';
+import { debounceTime, filter, map, repeat, skip, tap } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
-import { nameof } from 'xforge-common/utils';
 import XRegExp from 'xregexp';
 import { HelpHeroService } from '../../core/help-hero.service';
-import { SFProject } from '../../core/models/sfproject';
+import { SFProjectDoc } from '../../core/models/sfproject-doc';
 import { SFProjectRoles } from '../../core/models/sfproject-roles';
-import { SFProjectUser } from '../../core/models/sfproject-user';
+import { SFProjectUserConfigDoc } from '../../core/models/sfproject-user-config-doc';
 import { Delta } from '../../core/models/text-doc';
 import { TextDocId, TextType } from '../../core/models/text-doc-id';
 import { TextInfo } from '../../core/models/text-info';
-import { SFProjectUserService } from '../../core/sfproject-user.service';
 import { SFProjectService } from '../../core/sfproject.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
@@ -54,7 +52,6 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
   trainingMessage: string;
   showTrainingProgress: boolean = false;
   textHeight: string = '';
-  projectUser: SFProjectUser;
 
   @ViewChild('targetContainer') targetContainer: ElementRef;
   @ViewChild('source') source: TextComponent;
@@ -68,7 +65,9 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
   private translationSession?: InteractiveTranslationSession;
   private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester();
   private insertSuggestionEnd: number = -1;
-  private project: SFProject;
+  private projectDoc: SFProjectDoc;
+  private projectUserConfigDoc: SFProjectUserConfigDoc;
+  private projectUserConfigChangesSub: Subscription;
   private text: TextInfo;
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
@@ -84,7 +83,6 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     private readonly activatedRoute: ActivatedRoute,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
-    private readonly projectUserService: SFProjectUserService,
     private readonly noticeService: NoticeService,
     private readonly helpHeroService: HelpHeroService
   ) {
@@ -106,8 +104,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
       threshold => {
         this.translationSuggester.confidenceThreshold = threshold;
         this.updateSuggestions();
-        this.projectUser.confidenceThreshold = threshold;
-        this.updateProjectUser();
+        this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold));
       }
     );
 
@@ -116,36 +113,36 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
   }
 
   get sourceLabel(): string {
-    return this.project == null || this.project.sourceInputSystem == null
+    return this.projectDoc == null || this.projectDoc.data.sourceInputSystem == null
       ? ''
-      : this.project.sourceInputSystem.languageName;
+      : this.projectDoc.data.sourceInputSystem.languageName;
   }
 
   get targetLabel(): string {
-    return this.project == null || this.project.inputSystem == null ? '' : this.project.inputSystem.languageName;
+    return this.projectDoc == null || this.projectDoc.data.inputSystem == null
+      ? ''
+      : this.projectDoc.data.inputSystem.languageName;
   }
 
   get isTargetTextRight(): boolean {
-    return this.projectUser == null ? true : this.projectUser.isTargetTextRight;
+    return this.projectUserConfigDoc == null ? true : this.projectUserConfigDoc.data.isTargetTextRight;
   }
 
   set isTargetTextRight(value: boolean) {
     if (this.isTargetTextRight !== value) {
-      this.projectUser.isTargetTextRight = value;
-      this.updateProjectUser();
+      this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.isTargetTextRight, value));
     }
   }
 
   get isSuggestionsEnabled(): boolean {
-    return this.projectUser == null || this.projectUser.isSuggestionsEnabled == null
+    return this.projectUserConfigDoc == null || this.projectUserConfigDoc.data.isSuggestionsEnabled == null
       ? true
-      : this.projectUser.isSuggestionsEnabled;
+      : this.projectUserConfigDoc.data.isSuggestionsEnabled;
   }
 
   set isSuggestionsEnabled(value: boolean) {
     if (this.isSuggestionsEnabled !== value) {
-      this.projectUser.isSuggestionsEnabled = value;
-      this.updateProjectUser();
+      this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.isSuggestionsEnabled, value));
     }
   }
 
@@ -191,113 +188,89 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
 
   ngOnInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => this.setTextHeight());
-    this.subscribe(
-      this.activatedRoute.params.pipe(
-        tap(() => {
-          this.showSuggestion = false;
-          this.sourceLoaded = false;
-          this.targetLoaded = false;
-          this.noticeService.loadingStarted();
-        }),
-        switchMap(params => {
-          const projectId = params['projectId'];
-          const bookId = params['bookId'];
-          return combineLatest(
-            this.projectService.get(projectId, [[nameof<SFProject>('users')]]),
-            from(this.projectService.getDataDoc(projectId)).pipe(
-              map(projectData => projectData.data.texts.find(t => t.bookId === bookId))
-            )
-          );
-        }),
-        filter(([projectResults, text]) => projectResults.data != null && text != null)
-      ),
-      ([projectResults, text]) => {
-        const prevProjectId = this.project == null ? '' : this.project.id;
-        this.project = projectResults.data;
-        this.text = text;
-        this.projectUser = projectResults
-          .getManyIncluded<SFProjectUser>(this.project.users)
-          .find(pu => pu.userRef === this.userService.currentUserId);
-        this.chapters = this.text.chapters.map(c => c.number);
+    this.subscribe(this.activatedRoute.params, async params => {
+      this.showSuggestion = false;
+      this.sourceLoaded = false;
+      this.targetLoaded = false;
+      this.noticeService.loadingStarted();
+      const projectId = params['projectId'];
+      const bookId = params['bookId'];
 
-        if (this.projectUser != null) {
-          if (this.projectUser.isTargetTextRight == null) {
-            this.projectUser.isTargetTextRight = true;
-          }
-          if (this.projectUser.confidenceThreshold != null) {
-            const pcnt = Math.round(this.projectUser.confidenceThreshold * 100);
-            this.translationSuggester.confidenceThreshold = pcnt / 100;
-            this.confidenceThreshold$.next(pcnt);
-          }
-          let chapter = 1;
-          if (this.projectUser.selectedBookId === this.text.bookId) {
-            if (this.projectUser.selectedChapter != null && this.projectUser.selectedChapter !== 0) {
-              chapter = this.projectUser.selectedChapter;
-            }
-          }
-          this._chapter = chapter;
+      const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
+      if (projectId !== prevProjectId) {
+        this.projectDoc = await this.projectService.get(projectId);
+        this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+
+        if (this.projectUserConfigChangesSub != null) {
+          this.projectUserConfigChangesSub.unsubscribe();
         }
-        this.changeText();
-
-        if (this.project.id !== prevProjectId) {
-          if (this.trainingSubscription != null) {
-            this.trainingSubscription.unsubscribe();
-          }
-          this.translationEngine = this.projectService.createTranslationEngine(this.project.id);
-          this.trainingSubscription = this.subscribe(
-            this.translationEngine.listenForTrainingStatus().pipe(
-              tap(undefined, undefined, async () => {
-                // training completed successfully
-                if (this.trainingProgressClosed) {
-                  this.noticeService.show('Training completed successfully');
-                  this.trainingProgressClosed = false;
-                } else {
-                  this.trainingMessage = 'Completed successfully';
-                  this.trainingCompletedTimeout = setTimeout(() => {
-                    this.showTrainingProgress = false;
-                    this.trainingCompletedTimeout = undefined;
-                  }, 5000);
-                }
-
-                // ensure that any changes to the segment will be trained
-                if (this.target.segment != null) {
-                  this.target.segment.acceptChanges();
-                }
-                // re-translate current segment
-                this.onStartTranslating();
-                try {
-                  await this.translateSegment();
-                } finally {
-                  this.onFinishTranslating();
-                }
-              }),
-              repeat(),
-              filter(progress => progress.percentCompleted > 0)
-            ),
-            progress => {
-              if (!this.trainingProgressClosed) {
-                this.showTrainingProgress = true;
-              }
-              if (this.trainingCompletedTimeout != null) {
-                clearTimeout(this.trainingCompletedTimeout);
-                this.trainingCompletedTimeout = undefined;
-              }
-              this.trainingPercentage = Math.round(progress.percentCompleted * 100);
-              this.trainingMessage = progress.message;
-            }
-          );
-          this.metricsSession.start(
-            this.project.id,
-            this.source,
-            this.target,
-            this.sourceWordTokenizer,
-            this.targetWordTokenizer
-          );
-        }
-
-        this.startUserOnboardingTour(); // start HelpHero tour for the Translate feature
+        this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(() =>
+          this.loadProjectUserConfig()
+        );
       }
-    );
+      this.text = this.projectDoc.data.texts.find(t => t.bookId === bookId);
+      this.chapters = this.text.chapters.map(c => c.number);
+
+      this.loadProjectUserConfig();
+
+      if (this.projectDoc.id !== prevProjectId) {
+        if (this.trainingSubscription != null) {
+          this.trainingSubscription.unsubscribe();
+        }
+        this.translationEngine = this.projectService.createTranslationEngine(this.projectDoc.id);
+        this.trainingSubscription = this.subscribe(
+          this.translationEngine.listenForTrainingStatus().pipe(
+            tap(undefined, undefined, async () => {
+              // training completed successfully
+              if (this.trainingProgressClosed) {
+                this.noticeService.show('Training completed successfully');
+                this.trainingProgressClosed = false;
+              } else {
+                this.trainingMessage = 'Completed successfully';
+                this.trainingCompletedTimeout = setTimeout(() => {
+                  this.showTrainingProgress = false;
+                  this.trainingCompletedTimeout = undefined;
+                }, 5000);
+              }
+
+              // ensure that any changes to the segment will be trained
+              if (this.target.segment != null) {
+                this.target.segment.acceptChanges();
+              }
+              // re-translate current segment
+              this.onStartTranslating();
+              try {
+                await this.translateSegment();
+              } finally {
+                this.onFinishTranslating();
+              }
+            }),
+            repeat(),
+            filter(progress => progress.percentCompleted > 0)
+          ),
+          progress => {
+            if (!this.trainingProgressClosed) {
+              this.showTrainingProgress = true;
+            }
+            if (this.trainingCompletedTimeout != null) {
+              clearTimeout(this.trainingCompletedTimeout);
+              this.trainingCompletedTimeout = undefined;
+            }
+            this.trainingPercentage = Math.round(progress.percentCompleted * 100);
+            this.trainingMessage = progress.message;
+          }
+        );
+        this.metricsSession.start(
+          this.projectDoc.id,
+          this.source,
+          this.target,
+          this.sourceWordTokenizer,
+          this.targetWordTokenizer
+        );
+      }
+
+      this.startUserOnboardingTour(); // start HelpHero tour for the Translate feature
+    });
   }
 
   ngAfterViewInit(): void {
@@ -306,6 +279,9 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
+    if (this.projectUserConfigChangesSub != null) {
+      this.projectUserConfigChangesSub.unsubscribe();
+    }
     this.noticeService.loadingFinished();
     this.metricsSession.dispose();
   }
@@ -339,18 +315,19 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
       this.onStartTranslating();
       try {
         if (
-          this.projectUser != null &&
+          this.projectUserConfigDoc != null &&
           this.target.segmentRef !== '' &&
-          (this.projectUser.selectedBookId !== this.text.bookId ||
-            this.projectUser.selectedChapter !== this._chapter ||
-            this.projectUser.selectedSegment !== this.target.segmentRef)
+          (this.projectUserConfigDoc.data.selectedBookId !== this.text.bookId ||
+            this.projectUserConfigDoc.data.selectedChapter !== this._chapter ||
+            this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
-          this.projectUser.selectedTask = 'translate';
-          this.projectUser.selectedBookId = this.text.bookId;
-          this.projectUser.selectedChapter = this._chapter;
-          this.projectUser.selectedSegment = this.target.segmentRef;
-          this.projectUser.selectedSegmentChecksum = this.target.segmentChecksum;
-          await this.updateProjectUser();
+          await this.projectUserConfigDoc.submitJson0Op(op => {
+            op.set<string>(puc => puc.selectedTask, 'translate');
+            op.set(puc => puc.selectedBookId, this.text.bookId);
+            op.set(puc => puc.selectedChapter, this._chapter);
+            op.set(puc => puc.selectedSegment, this.target.segmentRef);
+            op.set(puc => puc.selectedSegmentChecksum, this.target.segmentChecksum);
+          });
         }
         await this.trainSegment(prevSegment);
         await this.translateSegment();
@@ -471,16 +448,16 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     let selectedSegment: string;
     let selectedSegmentChecksum: number;
     if (
-      this.projectUser != null &&
-      this.projectUser.selectedBookId === this.text.bookId &&
-      this.projectUser.selectedChapter === this._chapter &&
-      this.projectUser.selectedSegment !== ''
+      this.projectUserConfigDoc != null &&
+      this.projectUserConfigDoc.data.selectedBookId === this.text.bookId &&
+      this.projectUserConfigDoc.data.selectedChapter === this._chapter &&
+      this.projectUserConfigDoc.data.selectedSegment !== ''
     ) {
-      selectedSegment = this.projectUser.selectedSegment;
-      selectedSegmentChecksum = this.projectUser.selectedSegmentChecksum;
+      selectedSegment = this.projectUserConfigDoc.data.selectedSegment;
+      selectedSegmentChecksum = this.projectUserConfigDoc.data.selectedSegmentChecksum;
     }
-    const sourceId = new TextDocId(this.project.id, this.text.bookId, this._chapter, 'source');
-    const targetId = new TextDocId(this.project.id, this.text.bookId, this._chapter, 'target');
+    const sourceId = new TextDocId(this.projectDoc.id, this.text.bookId, this._chapter, 'source');
+    const targetId = new TextDocId(this.projectDoc.id, this.text.bookId, this._chapter, 'target');
     if (!eq(targetId, this.target.id)) {
       // blur the target before switching so that scrolling is reset to the top
       this.target.blur();
@@ -593,8 +570,23 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     return segment != null && segment.range.length > 0 && segment.text !== '' && segment.isChanged;
   }
 
-  private async updateProjectUser(): Promise<void> {
-    await this.projectUserService.update(this.projectUser);
+  private loadProjectUserConfig() {
+    if (this.projectUserConfigDoc.data.confidenceThreshold != null) {
+      const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
+      this.translationSuggester.confidenceThreshold = pcnt / 100;
+      this.confidenceThreshold$.next(pcnt);
+    }
+    let chapter = 1;
+    if (this.projectUserConfigDoc.data.selectedBookId === this.text.bookId) {
+      if (
+        this.projectUserConfigDoc.data.selectedChapter != null &&
+        this.projectUserConfigDoc.data.selectedChapter !== 0
+      ) {
+        chapter = this.projectUserConfigDoc.data.selectedChapter;
+      }
+    }
+    this._chapter = chapter;
+    this.changeText();
   }
 
   private syncScroll(): void {
@@ -612,7 +604,8 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
 
   private startUserOnboardingTour() {
     // HelpHero user-onboarding tour setup
-    const isProjectAdmin: boolean = this.projectUser.role === SFProjectRoles.ParatextAdministrator;
+    const isProjectAdmin: boolean =
+      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRoles.ParatextAdministrator;
 
     this.helpHeroService.setProperty({
       isAdmin: isProjectAdmin

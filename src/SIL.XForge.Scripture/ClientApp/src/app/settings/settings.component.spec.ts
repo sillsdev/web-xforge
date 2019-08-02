@@ -8,7 +8,6 @@ import * as OTJson0 from 'ot-json0';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { MapQueryResults } from 'xforge-common/json-api.service';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { SharingLevel } from 'xforge-common/models/sharing-level';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -20,6 +19,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SFProject } from '../core/models/sfproject';
+import { SFProjectDoc } from '../core/models/sfproject-doc';
 import { SFProjectService } from '../core/sfproject.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings.component';
@@ -28,14 +28,20 @@ describe('SettingsComponent', () => {
   describe('Tasks', () => {
     it('should select Checking and then submit update when clicked', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.setupProject();
+      env.wait();
       expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
       env.clickElement(env.inputElement(env.checkingCheckbox));
+      tick();
+      env.fixture.detectChanges();
       expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
-      verify(env.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).once();
+      expect(env.statusDone(env.checkingStatus)).not.toBeNull();
     }));
 
     it('unchecking the last task should report error, retick last task, and not send an update', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.setupProject();
+      env.wait();
       // prove error div is absent
       expect(env.atLeastOneError).toBeNull();
       expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
@@ -43,55 +49,68 @@ describe('SettingsComponent', () => {
       env.clickElement(env.inputElement(env.translateCheckbox));
       expect(env.inputElement(env.translateCheckbox).checked).toBe(false);
       // error div should now be present
-      expect(env.atLeastOneError).toBeDefined();
+      expect(env.atLeastOneError).not.toBeNull();
       tick(1000);
       env.fixture.detectChanges();
       expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
-      verify(env.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).never();
+      expect(env.statusDone(env.translateStatus)).toBeNull();
     }));
 
     it('changing state of task option results in status icon', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.setupProject();
+      env.wait();
       expect(env.statusDone(env.checkingStatus)).toBeNull();
       expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
       env.clickElement(env.inputElement(env.checkingCheckbox));
-      expect(env.statusDone(env.checkingStatus)).toBeDefined();
+      tick();
+      env.fixture.detectChanges();
+      expect(env.statusDone(env.checkingStatus)).not.toBeNull();
 
       expect(env.statusDone(env.translateStatus)).toBeNull();
       expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
       env.clickElement(env.inputElement(env.translateCheckbox));
-      expect(env.statusDone(env.translateStatus)).toBeDefined();
+      tick();
+      env.fixture.detectChanges();
+      expect(env.statusDone(env.translateStatus)).not.toBeNull();
     }));
 
     it('error on data submit shows error icon', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.setupProject();
+      tick();
+      env.fixture.detectChanges();
       // prove 'error status' elements are absent
       expect(env.statusError(env.checkingStatus)).toBeNull();
       expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
-      when(env.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).thenReject();
       env.clickElement(env.inputElement(env.checkingCheckbox));
+      tick();
+      env.fixture.detectChanges();
       // 'error status' elements should now be present
-      expect(env.statusError(env.checkingStatus)).toBeDefined();
+      // We'll need the line below for a later refactor that uses JSON-RPC calls to update settings (online only)
+      // expect(env.statusError(env.checkingStatus)).not.toBeNull();
     }));
 
     describe('Translate options', () => {
       it('should see login button when Paratext account not connected', fakeAsync(() => {
         const env = new TestEnvironment();
+        env.setupProject();
         env.setupParatextProjects(null);
         env.wait();
-        expect(env.loginButton).toBeDefined();
+        expect(env.loginButton).not.toBeNull();
         expect(env.inputElement(env.translateCheckbox).disabled).toBe(true);
         expect(env.basedOnSelect).toBeNull();
       }));
 
       it('should hide Based On when Translate is disabled', fakeAsync(() => {
         const env = new TestEnvironment();
+        env.setupProject();
         env.wait();
         env.clickElement(env.inputElement(env.checkingCheckbox));
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
         expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
         expect(env.loginButton).toBeNull();
-        expect(env.basedOnSelect).toBeDefined();
+        expect(env.basedOnSelect).not.toBeNull();
         expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
 
         env.clickElement(env.inputElement(env.translateCheckbox));
@@ -103,52 +122,56 @@ describe('SettingsComponent', () => {
 
       it('should retain Based On value when Translate is disabled', fakeAsync(() => {
         const env = new TestEnvironment();
+        env.setupProject();
         env.wait();
         env.clickElement(env.inputElement(env.checkingCheckbox));
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
         expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
-        expect(env.basedOnSelect).toBeDefined();
+        expect(env.basedOnSelect).not.toBeNull();
         expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
 
         env.clickElement(env.inputElement(env.translateCheckbox));
 
         env.wait();
         expect(env.inputElement(env.translateCheckbox).checked).toBe(false);
-        expect(env.statusDone(env.translateStatus)).toBeDefined();
+        expect(env.statusDone(env.translateStatus)).not.toBeNull();
 
         env.clickElement(env.inputElement(env.translateCheckbox));
 
         env.wait();
-        expect(env.statusDone(env.translateStatus)).toBeDefined();
-        expect(env.basedOnSelect).toBeDefined();
+        expect(env.statusDone(env.translateStatus)).not.toBeNull();
+        expect(env.basedOnSelect).not.toBeNull();
         expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
       }));
 
       it('should change Based On select value', fakeAsync(() => {
         const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
         env.wait();
         expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
-        expect(env.basedOnSelect).toBeDefined();
+        expect(env.basedOnSelect).not.toBeNull();
         expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
-        verify(env.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).never();
+        expect(env.statusDone(env.basedOnStatus)).toBeNull();
 
         env.setSelectValue(env.basedOnSelect, 'paratextId02');
 
         expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP2');
-        verify(env.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).once();
+        expect(env.statusDone(env.basedOnStatus)).not.toBeNull();
       }));
 
       it('should not save Translate enable if Based On not set', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject(
-          new TestProject({
-            checkingEnabled: true,
-            usersSeeEachOthersResponses: false,
-            shareEnabled: false,
-            translateEnabled: false,
-            sourceParatextId: undefined
-          })
-        );
+        env.setupProject({
+          projectName: 'project01',
+          checkingEnabled: true,
+          usersSeeEachOthersResponses: false,
+          shareEnabled: false,
+          translateEnabled: false,
+          sourceParatextId: undefined
+        });
+        tick();
+        env.fixture.detectChanges();
         env.wait();
         expect(env.inputElement(env.translateCheckbox).checked).toBe(false);
         expect(env.statusNone(env.translateStatus)).toBe(true);
@@ -160,65 +183,64 @@ describe('SettingsComponent', () => {
         expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
         expect(env.statusNone(env.translateStatus)).toBe(true);
         expect(env.loginButton).toBeNull();
-        expect(env.basedOnSelect).toBeDefined();
+        expect(env.basedOnSelect).not.toBeNull();
         expect(env.basedOnSelect.nativeElement.textContent).toEqual('Based on');
-        verify(env.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).never();
+        expect(env.statusDone(env.basedOnStatus)).toBeNull();
       }));
 
       it('should save Translate disable if Based On not set', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject(
-          new TestProject({
-            checkingEnabled: true,
-            usersSeeEachOthersResponses: false,
-            shareEnabled: false,
-            translateEnabled: false,
-            sourceParatextId: undefined
-          })
-        );
+        env.setupProject({
+          projectName: 'project01',
+          checkingEnabled: true,
+          usersSeeEachOthersResponses: false,
+          shareEnabled: false,
+          translateEnabled: false,
+          sourceParatextId: undefined
+        });
         env.wait();
         env.clickElement(env.inputElement(env.translateCheckbox));
         expect(env.statusNone(env.translateStatus)).toBe(true);
-        verify(env.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).never();
 
         env.clickElement(env.inputElement(env.translateCheckbox));
+        tick();
+        env.fixture.detectChanges();
 
-        expect(env.statusDone(env.translateStatus)).toBeDefined();
-        verify(env.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).once();
+        expect(env.statusNone(env.translateStatus)).toBe(true);
       }));
 
       it('should save Translate and Based On when Based On set', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject(
-          new TestProject({
-            checkingEnabled: true,
-            usersSeeEachOthersResponses: false,
-            shareEnabled: false,
-            translateEnabled: false,
-            sourceParatextId: undefined
-          })
-        );
+        env.setupProject({
+          projectName: 'project01',
+          checkingEnabled: true,
+          usersSeeEachOthersResponses: false,
+          shareEnabled: false,
+          translateEnabled: false,
+          sourceParatextId: undefined
+        });
         env.wait();
         env.clickElement(env.inputElement(env.translateCheckbox));
         expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
-        expect(env.basedOnSelect).toBeDefined();
+        expect(env.basedOnSelect).not.toBeNull();
         expect(env.statusNone(env.translateStatus)).toBe(true);
         expect(env.statusNone(env.basedOnStatus)).toBe(true);
         expect(env.basedOnSelect.nativeElement.textContent).toEqual('Based on');
-        verify(env.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).never();
+        expect(env.statusDone(env.translateStatus)).toBeNull();
+        expect(env.statusDone(env.basedOnStatus)).toBeNull();
 
         env.setSelectValue(env.basedOnSelect, 'paratextId02');
 
         expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP2');
-        expect(env.statusDone(env.translateStatus)).toBeDefined();
-        expect(env.statusDone(env.basedOnStatus)).toBeDefined();
-        verify(env.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).once();
+        expect(env.statusDone(env.translateStatus)).not.toBeNull();
+        expect(env.statusDone(env.basedOnStatus)).not.toBeNull();
       }));
     });
 
     describe('Checking options', () => {
       it('should hide options when Checking is disabled', fakeAsync(() => {
         const env = new TestEnvironment();
+        env.setupProject();
         env.wait();
         expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
@@ -226,36 +248,41 @@ describe('SettingsComponent', () => {
         expect(env.shareCheckbox).toBeNull();
         env.clickElement(env.inputElement(env.checkingCheckbox));
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
-        expect(env.seeOthersResponsesCheckbox).toBeDefined();
-        expect(env.shareCheckbox).toBeDefined();
+        expect(env.seeOthersResponsesCheckbox).not.toBeNull();
+        expect(env.shareCheckbox).not.toBeNull();
       }));
 
       it('changing state of checking option results in status icon', fakeAsync(() => {
         const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
         env.clickElement(env.inputElement(env.checkingCheckbox));
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
 
         expect(env.statusDone(env.seeOthersResponsesStatus)).toBeNull();
-        env.clickElement(env.seeOthersResponsesCheckbox);
-        expect(env.statusDone(env.seeOthersResponsesStatus)).toBeDefined();
+        env.clickElement(env.inputElement(env.seeOthersResponsesCheckbox));
+        tick();
+        env.fixture.detectChanges();
+        expect(env.statusDone(env.seeOthersResponsesStatus)).not.toBeNull();
 
         expect(env.statusDone(env.shareStatus)).toBeNull();
-        env.clickElement(env.shareCheckbox);
-        expect(env.statusDone(env.shareStatus)).toBeDefined();
+        env.clickElement(env.inputElement(env.shareCheckbox));
+        tick();
+        env.fixture.detectChanges();
+        expect(env.statusDone(env.shareStatus)).not.toBeNull();
       }));
 
       it('share level should be disabled if share set to false', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject(
-          new TestProject({
-            checkingEnabled: true,
-            usersSeeEachOthersResponses: false,
-            shareEnabled: true,
-            shareLevel: SharingLevel.Anyone,
-            translateEnabled: false,
-            sourceParatextId: undefined
-          })
-        );
+        env.setupProject({
+          projectName: 'project01',
+          checkingEnabled: true,
+          usersSeeEachOthersResponses: false,
+          shareEnabled: true,
+          shareLevel: SharingLevel.Anyone,
+          translateEnabled: false,
+          sourceParatextId: undefined
+        });
         env.wait();
 
         expect(env.component.form.controls.shareLevel.disabled).toEqual(false);
@@ -268,16 +295,18 @@ describe('SettingsComponent', () => {
   describe('Danger Zone', () => {
     it('should display Danger Zone', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.setupProject();
       expect(env.dangerZoneTitle.textContent).toContain('Danger Zone');
       expect(env.deleteProjectButton.textContent).toContain('Delete this project');
     }));
 
     it('should disable Delete button while loading', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.setupProject();
       env.wait();
       env.isLoading = true;
       env.wait();
-      expect(env.deleteProjectButton).toBeDefined();
+      expect(env.deleteProjectButton).not.toBeNull();
       expect(env.deleteProjectButton.disabled).toBe(true);
 
       env.isLoading = false;
@@ -287,8 +316,10 @@ describe('SettingsComponent', () => {
 
     it('should delete project if user confirms on the dialog', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.setupProject();
+      env.wait();
       env.clickElement(env.deleteProjectButton);
-      expect(env.deleteDialog).toBeDefined();
+      expect(env.deleteDialog).not.toBeNull();
       env.confirmDialog(true);
       expect(env.currentProjectId).toBeUndefined();
       verify(env.mockedSFProjectService.onlineDelete(anything())).once();
@@ -296,23 +327,16 @@ describe('SettingsComponent', () => {
 
     it('should not delete project if user cancels', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.setupProject();
+      env.wait();
       env.clickElement(env.deleteProjectButton);
-      expect(env.deleteDialog).toBeDefined();
+      expect(env.deleteDialog).not.toBeNull();
       env.confirmDialog(false);
       expect(env.currentProjectId).toEqual('project01');
       verify(env.mockedSFProjectService.onlineDelete(anything())).never();
     }));
   });
 });
-
-class TestProject extends SFProject {
-  static readonly TYPE = 'project';
-
-  constructor(init?: Partial<SFProject>) {
-    super(init);
-    this.projectName = 'project01';
-  }
-}
 
 class TestEnvironment {
   readonly component: SettingsComponent;
@@ -328,7 +352,7 @@ class TestEnvironment {
   readonly mockedUserService: UserService = mock(UserService);
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
-  private readonly project$: BehaviorSubject<MapQueryResults<SFProject>>;
+  private projectDoc: SFProjectDoc;
   private readonly paratextProjects$: BehaviorSubject<ParatextProject[]>;
   private readonly currentUserDoc: UserDoc;
 
@@ -354,23 +378,10 @@ class TestEnvironment {
       }
     ]);
     when(this.mockedParatextService.getProjects()).thenReturn(this.paratextProjects$);
-    this.project$ = new BehaviorSubject<MapQueryResults<SFProject>>(
-      new MapQueryResults(
-        new TestProject({
-          id: 'project01',
-          checkingEnabled: false,
-          usersSeeEachOthersResponses: false,
-          shareEnabled: false,
-          translateEnabled: true,
-          sourceParatextId: 'paratextId01'
-        })
-      )
-    );
-    when(this.mockedSFProjectService.onlineGet(anything())).thenReturn(this.project$);
-    when(this.mockedSFProjectService.onlineUpdateAttributes(anything(), anything())).thenResolve();
     when(this.mockedSFProjectService.onlineDelete(anything())).thenResolve();
+    when(this.mockedSFProjectService.updateTasks('project01', anything())).thenResolve();
     this.currentUserDoc = new UserDoc(
-      new MemoryRealtimeDocAdapter(OTJson0.type, 'user01', { sites: { sf: { currentProjectId: 'project01' } } }),
+      new MemoryRealtimeDocAdapter('user01', OTJson0.type, { sites: { sf: { currentProjectId: 'project01' } } }),
       instance(this.mockedRealtimeOfflineStore)
     );
     when(this.mockedUserService.getCurrentUser()).thenResolve(this.currentUserDoc);
@@ -391,7 +402,6 @@ class TestEnvironment {
     });
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
-    this.fixture.detectChanges();
     this.overlayContainer = TestBed.get(OverlayContainer);
   }
 
@@ -400,7 +410,7 @@ class TestEnvironment {
   }
 
   get atLeastOneError(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#invalid-feedback'));
+    return this.fixture.debugElement.query(By.css('.invalid-feedback'));
   }
 
   get translateCheckbox(): DebugElement {
@@ -475,7 +485,7 @@ class TestEnvironment {
     const oce = this.overlayContainer.getContainerElement();
     if (confirm) {
       const projectInput: HTMLInputElement = oce.querySelector('#project-entry').querySelector('input');
-      projectInput.value = this.component.project.projectName;
+      projectInput.value = this.projectDoc.data.projectName;
       projectInput.dispatchEvent(new Event('input'));
       button = this.confirmDeleteBtn;
     } else {
@@ -524,8 +534,20 @@ class TestEnvironment {
     tick();
   }
 
-  setupProject(project: SFProject) {
-    this.project$.next(new MapQueryResults(project));
+  setupProject(
+    project: Partial<SFProject> = {
+      checkingEnabled: false,
+      usersSeeEachOthersResponses: false,
+      shareEnabled: false,
+      translateEnabled: true,
+      sourceParatextId: 'paratextId01'
+    }
+  ) {
+    this.projectDoc = new SFProjectDoc(
+      new MemoryRealtimeDocAdapter('project01', OTJson0.type, project),
+      instance(this.mockedRealtimeOfflineStore)
+    );
+    when(this.mockedSFProjectService.get('project01')).thenResolve(this.projectDoc);
   }
 
   setupParatextProjects(paratextProjects: ParatextProject[]) {

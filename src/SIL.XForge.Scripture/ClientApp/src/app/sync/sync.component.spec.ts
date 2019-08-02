@@ -6,15 +6,13 @@ import { ActivatedRoute } from '@angular/router';
 import * as OTJson0 from 'ot-json0';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { MapQueryResults } from 'xforge-common/json-api.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProject } from '../core/models/sfproject';
-import { SFProjectData } from '../core/models/sfproject-data';
-import { SFProjectDataDoc } from '../core/models/sfproject-data-doc';
+import { SFProjectDoc } from '../core/models/sfproject-doc';
 import { SFProjectService } from '../core/sfproject.service';
 import { SyncComponent } from './sync.component';
 
@@ -44,7 +42,7 @@ describe('SyncComponent', () => {
 
   it('should sync project when the button is clicked', fakeAsync(() => {
     const env = new TestEnvironment(true);
-    verify(env.mockedProjectService.onlineGet('testproject01')).once();
+    verify(env.mockedProjectService.get('testproject01')).once();
     env.clickElement(env.syncButton);
     verify(env.mockedProjectService.sync('testproject01')).once();
     expect(env.component.syncActive).toBe(true);
@@ -67,7 +65,7 @@ describe('SyncComponent', () => {
 
   it('should report error if sync has a problem', fakeAsync(() => {
     const env = new TestEnvironment(true);
-    verify(env.mockedProjectService.onlineGet('testproject01')).once();
+    verify(env.mockedProjectService.get('testproject01')).once();
     env.clickElement(env.syncButton);
     verify(env.mockedProjectService.sync('testproject01')).once();
     expect(env.component.syncActive).toBe(true);
@@ -101,18 +99,12 @@ class TestEnvironment {
   readonly mockedProjectService = mock(SFProjectService);
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
-  private readonly projectData: SFProjectData;
-  private readonly projectDataDocAdapter: MemoryRealtimeDocAdapter;
+  private readonly project: SFProject;
+  private readonly projectDocAdapter: MemoryRealtimeDocAdapter;
   private isLoading: boolean = false;
 
   constructor(isParatextAccountConnected: boolean = false, isInProgress: boolean = false) {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'testproject01' }));
-    const project = new SFProject({
-      id: 'testproject01',
-      projectName: 'Sync Test Project',
-      paratextId: 'pt01'
-    });
-    when(this.mockedProjectService.onlineGet('testproject01')).thenReturn(of(new MapQueryResults(project)));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(this.mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
     when(this.mockedProjectService.sync('testproject01')).thenResolve();
@@ -122,7 +114,9 @@ class TestEnvironment {
 
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
-    this.projectData = {
+    this.project = {
+      projectName: 'Sync Test Project',
+      paratextId: 'pt01',
       sync: {
         queuedCount: isInProgress ? 1 : 0,
         percentCompleted: isInProgress ? 0.1 : undefined,
@@ -130,9 +124,9 @@ class TestEnvironment {
         dateLastSuccessfulSync: date.toJSON()
       }
     };
-    this.projectDataDocAdapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'testproject01', this.projectData);
-    when(this.mockedProjectService.getDataDoc('testproject01')).thenResolve(
-      new SFProjectDataDoc(this.projectDataDocAdapter, instance(this.mockedRealtimeOfflineStore))
+    this.projectDocAdapter = new MemoryRealtimeDocAdapter('testproject01', OTJson0.type, this.project);
+    when(this.mockedProjectService.get('testproject01')).thenResolve(
+      new SFProjectDoc(this.projectDocAdapter, instance(this.mockedRealtimeOfflineStore))
     );
 
     TestBed.configureTestingModule({
@@ -187,20 +181,20 @@ class TestEnvironment {
   }
 
   emitSyncProgress(percentCompleted: number): void {
-    this.projectData.sync.queuedCount = 1;
-    this.projectData.sync.percentCompleted = percentCompleted;
-    this.projectDataDocAdapter.emitRemoteChange();
+    this.project.sync.queuedCount = 1;
+    this.project.sync.percentCompleted = percentCompleted;
+    this.projectDocAdapter.emitRemoteChange();
     this.fixture.detectChanges();
   }
 
   emitSyncComplete(successful: boolean): void {
-    this.projectData.sync.queuedCount = 0;
-    this.projectData.sync.percentCompleted = undefined;
-    this.projectData.sync.lastSyncSuccessful = successful;
+    this.project.sync.queuedCount = 0;
+    this.project.sync.percentCompleted = undefined;
+    this.project.sync.lastSyncSuccessful = successful;
     if (successful) {
-      this.projectData.sync.dateLastSuccessfulSync = new Date().toJSON();
+      this.project.sync.dateLastSuccessfulSync = new Date().toJSON();
     }
-    this.projectDataDocAdapter.emitRemoteChange();
+    this.projectDocAdapter.emitRemoteChange();
     this.fixture.detectChanges();
   }
 }

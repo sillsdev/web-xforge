@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SIL.XForge.Models
 {
-    public class ProjectRoles
+    public abstract class ProjectRoles
     {
         public const string None = "none";
 
@@ -13,6 +13,8 @@ namespace SIL.XForge.Models
         }
 
         public IDictionary<string, ISet<Right>> Rights { get; }
+
+        public abstract string AdminRole { get; }
 
         protected static IEnumerable<Right> AllRights(int domain)
         {

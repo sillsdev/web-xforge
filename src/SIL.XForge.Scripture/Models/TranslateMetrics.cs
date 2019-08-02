@@ -1,15 +1,18 @@
+using System;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
 {
-    public class TranslateMetrics : Entity
+    public class TranslateMetrics : IIdentifiable
     {
+        public string Id { get; set; }
         public string Type { get; set; }
         public string SessionId { get; set; }
         public string UserRef { get; set; }
         public string ProjectRef { get; set; }
         public string BookId { get; set; }
         public int Chapter { get; set; }
+        public DateTime Timestamp { get; set; }
 
         // editing metrics
         public string Segment { get; set; }

@@ -1,17 +1,18 @@
 using System.Threading.Tasks;
+using SIL.XForge.Models;
 
 namespace SIL.XForge.Realtime
 {
-    public interface IDocument<TData>
+    public interface IDocument<T> where T : IIdentifiable
     {
         string Collection { get; }
         string Id { get; }
         int Version { get; }
         string OTTypeName { get; }
-        TData Data { get; }
+        T Data { get; }
         bool IsLoaded { get; }
 
-        Task CreateAsync(TData data);
+        Task CreateAsync(T data);
 
         Task FetchAsync();
 

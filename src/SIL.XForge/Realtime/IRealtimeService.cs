@@ -1,4 +1,6 @@
+using System.Linq;
 using System.Threading.Tasks;
+using SIL.XForge.Models;
 
 namespace SIL.XForge.Realtime
 {
@@ -11,6 +13,8 @@ namespace SIL.XForge.Realtime
 
         string GetCollectionName(string type);
 
-        Task DeleteProjectDocsAsync(string type, string projectId);
+        IQueryable<T> QuerySnapshots<T>(string type) where T : IIdentifiable;
+
+        Task DeleteProjectAsync(string projectId);
     }
 }

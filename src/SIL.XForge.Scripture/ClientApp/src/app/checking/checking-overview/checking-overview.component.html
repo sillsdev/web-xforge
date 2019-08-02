@@ -2,7 +2,7 @@
   <mdc-icon fxFlex="32px">library_books</mdc-icon>
   <h2 fxFlex>Texts with Questions</h2>
   <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart">
-    <button mdc-button (click)="questionDialog()" [disabled]="isLoading" id="add-question-button">
+    <button *ngIf="!isLoading" mdc-button (click)="questionDialog()" id="add-question-button">
       <mdc-icon>note_add</mdc-icon> <span fxHide.xs>Add question</span>
     </button>
   </div>
@@ -68,7 +68,7 @@
           <ng-container *ngIf="itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)]">
             <mdc-list-item
               *ngFor="
-                let question of questionsDocs[getTextJsonDocIdStr(text.bookId, chapter.number)].data;
+                let question of questionListDocs[getTextJsonDocIdStr(text.bookId, chapter.number)].data.questions;
                 let i = index
               "
             >

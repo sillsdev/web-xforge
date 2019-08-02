@@ -1,6 +1,6 @@
 import { eq } from '@orbit/utils';
 import { OtJson0Op } from 'ot-json0';
-import { get, getPath, ObjProxyArg } from 'ts-object-path';
+import { getPath, ObjProxyArg } from 'ts-object-path';
 import { RealtimeDoc } from './realtime-doc';
 
 /** See https://github.com/ottypes/json0 */
@@ -13,13 +13,19 @@ export abstract class JsonRealtimeDoc<T = any> extends RealtimeDoc<T, OtJson0Op[
    * @param {(op: Json0OpBuilder<T>) => void} build The function to build the operation.
    * @param {*} [source] The source.
    */
-  async submitJson0Op(build: (op: Json0OpBuilder<T>) => void, source?: any): Promise<void> {
+  async submitJson0Op(build: (op: Json0OpBuilder<T>) => void, source: any = true): Promise<boolean> {
     const builder = new Json0OpBuilder(this.data);
     build(builder);
     if (builder.op.length > 0) {
       await this.submit(builder.op, source);
+      return true;
     }
+    return false;
   }
+}
+
+function get<TRoot, T>(object: TRoot, proxy: ObjProxyArg<TRoot, T>, defaultValue?: T | null | undefined) {
+  return getPath(proxy).reduce((o, key) => (o != null && o[key] != null ? o[key] : defaultValue), object as any) as T;
 }
 
 export class Json0OpBuilder<T> {
@@ -127,7 +133,9 @@ export class Json0OpBuilder<T> {
     if (value === undefined) {
       value = get(this.data, field);
     }
-    this.op.push({ p: path, od: value });
+    if (value !== undefined) {
+      this.op.push({ p: path, od: value });
+    }
     return this;
   }
 

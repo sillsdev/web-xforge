@@ -271,7 +271,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       return;
     }
     this.setPlaceholderText('Loading...');
-    const textDoc = await this.projectService.getTextDoc(this._id);
+    const textDoc = await this.projectService.getText(this._id);
     this.viewModel.bind(textDoc);
 
     this.loaded.emit();

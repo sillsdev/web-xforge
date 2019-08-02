@@ -8,17 +8,16 @@ import { RouterTestingModule } from '@angular/router/testing';
 import * as OTJson0 from 'ot-json0';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
-import { QueryParameters, RealtimeQueryResults } from 'xforge-common/realtime.service';
-import { nameof } from 'xforge-common/utils';
-import { MapQueryResults } from '../json-api.service';
-import { Project, ProjectRef } from '../models/project';
-import { ProjectUser } from '../models/project-user';
-import { Resource } from '../models/resource';
+import { QueryParameters, QueryResults } from 'xforge-common/realtime.service';
+import { environment } from '../../environments/environment';
+import { Project } from '../models/project';
+import { ProjectDoc } from '../models/project-doc';
 import { User } from '../models/user';
+import { ProjectService } from '../project.service';
 import { MemoryRealtimeDocAdapter } from '../realtime-doc-adapter';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
@@ -114,13 +113,9 @@ describe('SaUsersComponent', () => {
   }));
 });
 
-class TestProjectUser extends ProjectUser {}
-class TestProject extends Project {
-  get taskNames(): string[] {
-    return [];
-  }
+class TestProjectDoc extends ProjectDoc {
+  taskNames: string[];
 }
-class TestProjectRef extends ProjectRef {}
 
 @NgModule({
   imports: [NoopAnimationsModule, UICommonModule],
@@ -141,11 +136,12 @@ class TestEnvironment {
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedUserService = mock(UserService);
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+  readonly mockedProjectService = mock(ProjectService);
 
   private readonly userDocs: UserDoc[] = [
-    this.createUserDoc('user01', { name: 'User 01' }),
-    this.createUserDoc('user02', { name: 'User 02' }),
-    this.createUserDoc('user03', { name: 'User 03' })
+    this.createUserDoc('user01', { name: 'User 01', sites: { [environment.siteId]: { projects: ['project01'] } } }),
+    this.createUserDoc('user02', { name: 'User 02', sites: { [environment.siteId]: { projects: [] } } }),
+    this.createUserDoc('user03', { name: 'User 03', sites: { [environment.siteId]: { projects: ['project01'] } } })
   ];
 
   constructor() {
@@ -157,7 +153,8 @@ class TestEnvironment {
       providers: [
         { provide: MdcDialog, useFactory: () => instance(this.mockedMdcDialog) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
+        { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) }
       ]
     });
     this.fixture = TestBed.createComponent(SaUsersComponent);
@@ -228,12 +225,13 @@ class TestEnvironment {
     when(this.mockedUserService.onlineSearch(anything(), anything(), anything())).thenReturn(
       of({ docs: [], totalPagedCount: 0 })
     );
+    when(this.mockedProjectService.onlineGetMany(anything())).thenResolve([]);
   }
 
   setupUserData(): void {
     when(this.mockedUserService.onlineSearch(anything(), anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>, reload$: Observable<void>) => {
-        const results: RealtimeQueryResults<UserDoc>[] = [
+        const results: QueryResults<UserDoc>[] = [
           // page 1
           { docs: this.userDocs, totalPagedCount: this.userDocs.length },
           // page 2
@@ -244,18 +242,9 @@ class TestEnvironment {
       }
     );
 
-    const project = new TestProject({ id: 'project01', projectName: 'Project 01' });
-    this.addProjectUser(
-      'user01',
-      [new TestProjectUser({ id: 'projectuser01', userRef: 'user01', project: new TestProjectRef('project01') })],
-      [project]
-    );
-    this.addProjectUser('user02', []);
-    this.addProjectUser(
-      'user03',
-      [new TestProjectUser({ id: 'projectuser03', userRef: 'user03', project: new TestProjectRef('project01') })],
-      [project]
-    );
+    when(this.mockedProjectService.onlineGetMany(anything())).thenResolve([
+      this.createProjectDoc('project01', { projectName: 'Project 01', userRoles: { user01: 'admin', user03: 'user' } })
+    ]);
   }
 
   setInputValue(input: HTMLInputElement | DebugElement, value: string): void {
@@ -271,12 +260,13 @@ class TestEnvironment {
   }
 
   private createUserDoc(id: string, user: User): UserDoc {
-    return new UserDoc(new MemoryRealtimeDocAdapter(OTJson0.type, id, user), instance(this.mockedRealtimeOfflineStore));
+    return new UserDoc(new MemoryRealtimeDocAdapter(id, OTJson0.type, user), instance(this.mockedRealtimeOfflineStore));
   }
 
-  private addProjectUser(userId: string, data: TestProjectUser[], included?: Resource[]): void {
-    when(this.mockedUserService.onlineGetProjects(userId, deepEqual([[nameof<ProjectUser>('project')]]))).thenReturn(
-      of(new MapQueryResults(data, undefined, included))
+  private createProjectDoc(id: string, project: Project): ProjectDoc {
+    return new TestProjectDoc(
+      new MemoryRealtimeDocAdapter(id, OTJson0.type, project),
+      instance(this.mockedRealtimeOfflineStore)
     );
   }
 }

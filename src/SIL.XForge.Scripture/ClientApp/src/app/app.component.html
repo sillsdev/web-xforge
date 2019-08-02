@@ -4,7 +4,7 @@
   <mdc-top-app-bar #topAppBar [scrollTarget]="appContent">
     <mdc-top-app-bar-row>
       <mdc-top-app-bar-section align="start">
-        <a *ngIf="!this.isDrawerPermanent && this.selectedProject != null" (click)="toggleDrawer()">
+        <a *ngIf="!this.isDrawerPermanent && this.selectedProjectId != null" (click)="toggleDrawer()">
           <mdc-icon mdcTopAppBarNavIcon>menu</mdc-icon>
         </a>
         <a (click)="goHome()">
@@ -73,17 +73,19 @@
 </header>
 <mdc-drawer
   id="menu-drawer"
-  *ngIf="selectedProject != null"
+  *ngIf="selectedProjectId != null"
   [drawer]="isDrawerPermanent ? 'permanent' : 'modal'"
   [open]="isExpanded"
   (closed)="drawerCollapsed()"
 >
   <mdc-drawer-header>
     <div [class.mdc-top-app-bar--short-fixed-adjust]="isDrawerPermanent"></div>
-    <mdc-select *ngIf="projects != null" class="project-select" (valueChange)="projectChanged($event.value)">
+    <mdc-select *ngIf="projectDocs != null" class="project-select" (valueChange)="projectChanged($event.value)">
       <mdc-menu>
         <mdc-list>
-          <mdc-list-item *ngFor="let project of projects" [value]="project.id">{{ project.projectName }}</mdc-list-item>
+          <mdc-list-item *ngFor="let projectDoc of projectDocs" [value]="projectDoc.id">{{
+            projectDoc.data?.projectName
+          }}</mdc-list-item>
           <mdc-list-divider></mdc-list-divider>
           <mdc-list-item value="*connect-project*">
             <mdc-icon mdcListItemGraphic>add</mdc-icon>
@@ -104,9 +106,9 @@
         Translate
         <mdc-icon mdcListItemMeta>keyboard_arrow_{{ translateVisible ? "down" : "right" }}</mdc-icon>
       </mdc-list-item>
-      <div *ngIf="translateVisible">
+      <div *ngIf="isTranslateEnabled && translateVisible">
         <mdc-list-item
-          [routerLink]="['/projects', selectedProject.id, 'translate']"
+          [routerLink]="['/projects', selectedProjectId, 'translate']"
           [activated]="rlaTranslateOverview.isActive"
           routerLinkActive
           [routerLinkActiveOptions]="{ exact: true }"
@@ -118,7 +120,7 @@
         </mdc-list-item>
         <mdc-list-item
           *ngFor="let text of translateTexts"
-          [routerLink]="['/projects', selectedProject.id, 'translate', text.bookId]"
+          [routerLink]="['/projects', selectedProjectId, 'translate', text.bookId]"
           [activated]="rla.isActive"
           routerLinkActive
           #rla="routerLinkActive"
@@ -138,9 +140,9 @@
         Community Checking
         <mdc-icon mdcListItemMeta>keyboard_arrow_{{ checkingVisible ? "down" : "right" }}</mdc-icon>
       </mdc-list-item>
-      <div *ngIf="checkingVisible">
+      <div *ngIf="isCheckingEnabled && checkingVisible">
         <mdc-list-item
-          [routerLink]="['/projects', selectedProject.id, 'checking']"
+          [routerLink]="['/projects', selectedProjectId, 'checking']"
           [activated]="rlaCheckingOverview.isActive"
           routerLinkActive
           [routerLinkActiveOptions]="{ exact: true }"
@@ -152,7 +154,7 @@
         </mdc-list-item>
         <mdc-list-item
           *ngFor="let text of checkingTexts"
-          [routerLink]="['/projects', selectedProject.id, 'checking', text.bookId]"
+          [routerLink]="['/projects', selectedProjectId, 'checking', text.bookId]"
           [activated]="rla.isActive"
           routerLinkActive
           #rla="routerLinkActive"
@@ -165,7 +167,7 @@
       <div *ngIf="(isProjectAdmin$ | async)">
         <mdc-list-divider *ngIf="isCheckingEnabled"></mdc-list-divider>
         <mdc-list-item
-          [routerLink]="['/projects', selectedProject.id, 'sync']"
+          [routerLink]="['/projects', selectedProjectId, 'sync']"
           [activated]="rlaSync.isActive"
           routerLinkActive
           #rlaSync="routerLinkActive"
@@ -176,7 +178,7 @@
           Synchronize
         </mdc-list-item>
         <mdc-list-item
-          [routerLink]="['/projects', selectedProject.id, 'settings']"
+          [routerLink]="['/projects', selectedProjectId, 'settings']"
           [activated]="rlaSettings.isActive"
           routerLinkActive
           #rlaSettings="routerLinkActive"
@@ -187,7 +189,7 @@
           Settings
         </mdc-list-item>
         <mdc-list-item
-          [routerLink]="['/projects', selectedProject.id, 'users']"
+          [routerLink]="['/projects', selectedProjectId, 'users']"
           [activated]="rlaUsers.isActive"
           routerLinkActive
           #rlaUsers="routerLinkActive"

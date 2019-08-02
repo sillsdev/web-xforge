@@ -10,7 +10,7 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.DataAccess
 {
-    public class MemoryRepository<T> : IRepository<T> where T : IEntity, new()
+    public class MemoryRepository<T> : IRepository<T> where T : IIdentifiable
     {
         private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {
@@ -102,14 +102,6 @@ namespace SIL.XForge.DataAccess
             if (_entities.ContainsKey(entity.Id) || CheckDuplicateKeys(entity))
                 throw new DuplicateKeyException();
 
-            var entityObj = entity as Entity;
-            if (entityObj != null)
-            {
-                var now = DateTime.UtcNow;
-                entityObj.DateModified = now;
-                entityObj.DateCreated = now;
-            }
-
             Add(entity);
             return Task.FromResult(true);
         }
@@ -121,15 +113,6 @@ namespace SIL.XForge.DataAccess
 
             if (_entities.ContainsKey(entity.Id) || upsert)
             {
-                var entityObj = entity as Entity;
-                if (entityObj != null)
-                {
-                    var now = DateTime.UtcNow;
-                    entityObj.DateModified = now;
-                    if (entityObj.DateCreated == DateTime.MinValue)
-                        entityObj.DateCreated = now;
-                }
-
                 Replace(entity);
                 return Task.FromResult(true);
             }
@@ -139,14 +122,25 @@ namespace SIL.XForge.DataAccess
         public Task<T> UpdateAsync(Expression<Func<T, bool>> filter, Action<IUpdateBuilder<T>> update,
             bool upsert = false)
         {
-            T entity = Query().FirstOrDefault(filter);
+            Func<T, bool> filterFunc = filter.Compile();
+            T entity = Query().AsEnumerable().FirstOrDefault(e =>
+            {
+                try
+                {
+                    return filterFunc(e);
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            });
             if (entity != null || upsert)
             {
                 T original = default(T);
                 bool isInsert = entity == null;
                 if (isInsert)
                 {
-                    entity = new T();
+                    entity = (T)Activator.CreateInstance(typeof(T));
                     string id = ObjectId.GenerateNewId().ToString();
                     var binaryExpr = filter.Body as BinaryExpression;
                     if (binaryExpr != null)

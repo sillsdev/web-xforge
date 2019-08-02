@@ -1,7 +1,7 @@
 import * as RichText from 'rich-text';
-import { fromEvent, Observable, of, Subject } from 'rxjs';
+import { EMPTY, fromEvent, Observable, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { Doc, OTType, Snapshot, types } from 'sharedb/lib/client';
+import { Connection, Doc, OTType, Snapshot, types } from 'sharedb/lib/client';
 
 types.register(RichText.type);
 
@@ -12,25 +12,25 @@ types.register(RichText.type);
  */
 export interface RealtimeDocAdapter {
   readonly id: string;
-  readonly data: any;
+  readonly data?: any;
   readonly version: number;
-  readonly type: OTType;
+  readonly type?: OTType;
   readonly pendingOps: any[];
   readonly subscribed: boolean;
 
-  idle(): Observable<void>;
+  readonly idle$: Observable<void>;
+  /** Fires when underlying data is recreated. */
+  readonly create$: Observable<void>;
+  readonly delete$: Observable<void>;
+  /** Fires when there are changes to underlying data. */
+  readonly remoteChanges$: Observable<any>;
+
   fetch(): Promise<void>;
   ingestSnapshot(snapshot: Snapshot): Promise<void>;
   subscribe(): Promise<void>;
   submitOp(op: any, source?: any): Promise<void>;
-
-  /** Fires when underlying data is recreated. */
-  onCreate(): Observable<void>;
-
-  onDelete(): Observable<void>;
-
-  /** Fires when there are changes to underlying data. */
-  remoteChanges(): Observable<any>;
+  exists(): Promise<boolean>;
+  delete(): Promise<void>;
 
   destroy(): Promise<void>;
 }
@@ -39,7 +39,20 @@ export interface RealtimeDocAdapter {
  * This is a ShareDB implementation of the real-time document adapter interface.
  */
 export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
-  constructor(private readonly doc: Doc) {}
+  readonly idle$: Observable<void>;
+  readonly create$: Observable<void>;
+  readonly delete$: Observable<void>;
+  readonly remoteChanges$: Observable<any>;
+
+  constructor(private readonly conn: Connection, private readonly collection: string, private readonly doc: Doc) {
+    this.idle$ = fromEvent(this.doc, 'no write pending');
+    this.create$ = fromEvent(this.doc, 'create');
+    this.delete$ = fromEvent(this.doc, 'del');
+    this.remoteChanges$ = fromEvent<[any, any]>(this.doc, 'op').pipe(
+      filter(([, source]) => !source),
+      map(([ops]) => ops)
+    );
+  }
 
   get id(): string {
     return this.doc.id;
@@ -75,18 +88,6 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
       }
     }
     return pendingOps;
-  }
-
-  idle(): Observable<void> {
-    return fromEvent(this.doc, 'no write pending');
-  }
-
-  onCreate(): Observable<void> {
-    return fromEvent(this.doc, 'create');
-  }
-
-  onDelete(): Observable<void> {
-    return fromEvent(this.doc, 'del');
   }
 
   fetch(): Promise<void> {
@@ -141,11 +142,33 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
     });
   }
 
-  remoteChanges(): Observable<any> {
-    return fromEvent<[any, any]>(this.doc, 'op').pipe(
-      filter(([, source]) => !source),
-      map(([ops]) => ops)
-    );
+  exists(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const query = this.conn.createFetchQuery(
+        this.collection,
+        { _id: this.id, $limit: 1, $count: { applySkipLimit: true } },
+        {},
+        err => {
+          if (err != null) {
+            reject(err);
+          } else {
+            resolve(query.extra === 1);
+          }
+        }
+      );
+    });
+  }
+
+  delete(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.doc.del({}, err => {
+        if (err != null) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 
   destroy(): Promise<void> {
@@ -166,16 +189,15 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
  */
 export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   readonly pendingOps: any[] = [];
-  version: number = 1;
+  version: number;
   subscribed: boolean = false;
-  private readonly remoteChanges$ = new Subject<any>();
-  private readonly onCreate$ = new Subject<void>();
-  private readonly onDelete$ = new Subject<void>();
+  readonly remoteChanges$ = new Subject<any>();
+  readonly create$ = new Subject<void>();
+  readonly delete$ = new Subject<void>();
+  readonly idle$ = EMPTY;
 
-  constructor(public readonly type: OTType, public readonly id: string, public data: any) {}
-
-  idle(): Observable<void> {
-    return of();
+  constructor(public readonly id: string, public type?: OTType, public data?: any) {
+    this.version = this.type == null ? -1 : 0;
   }
 
   fetch(): Promise<void> {
@@ -191,25 +213,28 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     return Promise.resolve();
   }
 
-  submitOp(op: any, _source?: any): Promise<void> {
+  submitOp(op: any, source?: any): Promise<void> {
     if (op != null && this.type.normalize != null) {
       op = this.type.normalize(op);
     }
     this.data = this.type.apply(this.data, op);
     this.version++;
+    if (!source) {
+      this.emitRemoteChange(op);
+    }
     return Promise.resolve();
   }
 
-  remoteChanges(): Observable<any> {
-    return this.remoteChanges$;
+  exists(): Promise<boolean> {
+    return Promise.resolve(true);
   }
 
-  onCreate(): Observable<void> {
-    return this.onCreate$;
-  }
-
-  onDelete(): Observable<void> {
-    return this.onDelete$;
+  delete(): Promise<void> {
+    this.data = undefined;
+    this.version = -1;
+    this.type = undefined;
+    this.emitDelete();
+    return Promise.resolve();
   }
 
   destroy(): Promise<void> {
@@ -221,10 +246,10 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   }
 
   emitCreate(): void {
-    this.onCreate$.next();
+    this.create$.next();
   }
 
   emitDelete(): void {
-    this.onDelete$.next();
+    this.delete$.next();
   }
 }

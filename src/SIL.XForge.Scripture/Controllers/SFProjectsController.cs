@@ -1,18 +1,14 @@
-using JsonApiDotNetCore.Services;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using SIL.XForge.Controllers;
-using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Controllers
 {
-    [Route(RootDataTypes.Projects)]
-    public class SFProjectsController : ProjectsController<SFProjectResource>
+    public class SFProjectsController : ProjectsController<SFProject>
     {
-        public SFProjectsController(IJsonApiContext jsonApiContext, IProjectService<SFProjectResource> projectService,
-            ILoggerFactory loggerFactory) : base(jsonApiContext, projectService, loggerFactory)
+        public SFProjectsController(IUserAccessor userAccessor, ISFProjectService projectService)
+            : base(userAccessor, projectService)
         {
         }
     }

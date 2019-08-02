@@ -1,11 +1,8 @@
 import { RealtimeDocConstructor } from './realtime-doc';
-import { ResourceConstructor, ResourceRefConstructor } from './resource';
 import { UserDoc } from './user-doc';
 import { UserProfileDoc } from './user-profile-doc';
 
 export interface DomainModelConfig {
-  resourceTypes: ResourceConstructor[];
-  resourceRefTypes: ResourceRefConstructor[];
   realtimeDocTypes: RealtimeDocConstructor[];
 }
 
@@ -15,32 +12,16 @@ export interface DomainModelConfig {
  * included in the configuration. This class should be registered with the Angular DI container.
  */
 export class DomainModel {
-  private readonly _resourceTypes: Map<string, ResourceConstructor>;
-  private readonly _resourceRefTypes = new Map<string, ResourceRefConstructor>();
   private readonly _realtimeDocTypes = new Map<string, RealtimeDocConstructor>();
 
   constructor(settings: DomainModelConfig) {
-    this._resourceTypes = this.createMap(settings.resourceTypes);
-    this._resourceRefTypes = this.createMap(settings.resourceRefTypes);
     this._realtimeDocTypes = this.createMap(settings.realtimeDocTypes);
     this._realtimeDocTypes.set(UserDoc.TYPE, UserDoc);
     this._realtimeDocTypes.set(UserProfileDoc.TYPE, UserProfileDoc);
   }
 
-  get resourceTypes(): IterableIterator<string> {
-    return this._resourceTypes.keys();
-  }
-
   get realtimeDocTypes(): IterableIterator<string> {
     return this._realtimeDocTypes.keys();
-  }
-
-  getResourceType(recordType: string): ResourceConstructor {
-    return this._resourceTypes.get(recordType);
-  }
-
-  getResourceRefType(recordType: string): ResourceRefConstructor {
-    return this._resourceRefTypes.get(recordType);
   }
 
   getRealtimeDocType(recordType: string): RealtimeDocConstructor {

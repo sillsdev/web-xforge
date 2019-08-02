@@ -22,9 +22,9 @@ namespace SIL.XForge.Scripture.Services
         {
             using (IConnection conn = await _realtimeService.ConnectAsync())
             {
-                IDocument<SFProjectData> projectDataDoc = conn.Get<SFProjectData>(RootDataTypes.Projects, projectId);
-                await projectDataDoc.FetchAsync();
-                await projectDataDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
+                IDocument<SFProject> projectDoc = conn.Get<SFProject>(RootDataTypes.Projects, projectId);
+                await projectDoc.FetchAsync();
+                await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
             }
             _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(projectId, userId, trainEngine));
         }

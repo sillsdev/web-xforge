@@ -1,9 +1,9 @@
 import { MdcDialog, MdcSelect, MdcTopAppBar } from '@angular-mdc/web';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
 import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -14,14 +14,11 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
-import { nameof } from 'xforge-common/utils';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
-import { SFProject } from './core/models/sfproject';
-import { SFProjectDataDoc } from './core/models/sfproject-data-doc';
+import { SFProjectDoc } from './core/models/sfproject-doc';
 import { canTranslate, SFProjectRoles } from './core/models/sfproject-roles';
-import { SFProjectUser } from './core/models/sfproject-user';
 import { TextInfo } from './core/models/text-info';
 import { SFProjectService } from './core/sfproject.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
@@ -34,14 +31,14 @@ export const CONNECT_PROJECT_OPTION = '*connect-project*';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent extends SubscriptionDisposable implements OnInit {
+export class AppComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
   version: string = version;
   issueEmail: string = environment.issueEmail;
   isExpanded: boolean = false;
   translateVisible: boolean = false;
   checkingVisible: boolean = false;
 
-  projects: SFProject[];
+  projectDocs: SFProjectDoc[];
   isProjectAdmin$: Observable<boolean>;
 
   private currentUserDoc: UserDoc;
@@ -49,9 +46,9 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
   private _projectSelect: MdcSelect;
   private projectDeletedDialogRef: any;
   private _topAppBar: MdcTopAppBar;
-  private _selectedProject: SFProject;
+  private selectedProjectDoc: SFProjectDoc;
+  private selectedProjectDeleteSub: Subscription;
   private _isDrawerPermanent: boolean = true;
-  private projectDataDoc: SFProjectDataDoc;
   private selectedProjectRole: SFProjectRoles;
 
   constructor(
@@ -93,21 +90,12 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     this._projectSelect = value;
     if (this._projectSelect != null) {
       setTimeout(() => {
-        if (this.selectedProject != null) {
+        if (this.selectedProjectDoc != null) {
           this._projectSelect.reset();
-          this._projectSelect.value = this.selectedProject.id;
+          this._projectSelect.value = this.selectedProjectDoc.id;
         }
       });
     }
-  }
-
-  get selectedProject(): SFProject {
-    return this._selectedProject;
-  }
-
-  set selectedProject(value: SFProject) {
-    this._selectedProject = value;
-    this.setTopAppBarVariant();
   }
 
   get isDrawerPermanent(): boolean {
@@ -138,9 +126,10 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
 
   get isTranslateEnabled(): boolean {
     return (
-      this.selectedProject != null &&
-      this.selectedProject.translateEnabled != null &&
-      this.selectedProject.translateEnabled &&
+      this.selectedProjectDoc != null &&
+      this.selectedProjectDoc.isLoaded &&
+      this.selectedProjectDoc.data.translateEnabled != null &&
+      this.selectedProjectDoc.data.translateEnabled &&
       canTranslate(this.selectedProjectRole)
     );
   }
@@ -151,9 +140,10 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
 
   get isCheckingEnabled(): boolean {
     return (
-      this.selectedProject != null &&
-      this.selectedProject.checkingEnabled != null &&
-      this.selectedProject.checkingEnabled
+      this.selectedProjectDoc != null &&
+      this.selectedProjectDoc.isLoaded &&
+      this.selectedProjectDoc.data.checkingEnabled != null &&
+      this.selectedProjectDoc.data.checkingEnabled
     );
   }
 
@@ -169,8 +159,16 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     return this.currentUserAuthType === AuthType.Account;
   }
 
+  get selectedProjectId(): string {
+    return this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
+      ? undefined
+      : this.selectedProjectDoc.id;
+  }
+
   private get texts(): TextInfo[] {
-    return this.projectDataDoc == null || this.projectDataDoc.data == null ? [] : this.projectDataDoc.data.texts;
+    return this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
+      ? []
+      : this.selectedProjectDoc.data.texts;
   }
 
   private get site(): Site {
@@ -181,9 +179,10 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     this.noticeService.loadingStarted();
     this.authService.init();
     if (await this.isLoggedIn) {
-      this.projectService.init();
       this.currentUserDoc = await this.userService.getCurrentUser();
       this.currentUserAuthType = getAuthType(this.currentUserDoc.data.authId);
+      await this.getProjectDocs();
+      this.subscribe(this.currentUserDoc.remoteChanges$, () => this.getProjectDocs());
 
       // retrieve the projectId from the current route. Since the nav menu is outside of the router outlet, it cannot
       // use ActivatedRoute to get the params. Instead the nav menu, listens to router events and traverses the route
@@ -222,85 +221,71 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
         })
       );
 
-      // populate the projects dropdown and select the current project
-      this.subscribe(
-        projectId$.pipe(
-          switchMap(projectId =>
-            this.userService
-              .getProjects(this.userService.currentUserId, [[nameof<SFProjectUser>('project')]])
-              .pipe(map(r => ({ results: r, projectId })))
-          )
-        ),
-        resultsAndProjectId => {
-          const results = resultsAndProjectId.results;
-          const projectId = resultsAndProjectId.projectId;
-          this.projects = results.data.map(pu => results.getIncluded<SFProject>(pu.project)).filter(p => p != null);
-          // if the project deleted dialog is displayed, don't do anything
-          if (this.projectDeletedDialogRef != null) {
-            return;
-          }
-          const selectedProject = projectId == null ? undefined : this.projects.find(p => p.id === projectId);
-
-          // check if the currently selected project has been deleted
-          if (selectedProject == null && projectId != null) {
-            if (this.selectedProject != null && projectId === this.selectedProject.id) {
-              if (this.site != null && this.site.currentProjectId != null) {
-                // the project was deleted remotely, so notify the user
-                this.showProjectDeletedDialog(this.site.currentProjectId);
-              } else {
-                // the project was deleted locally, so navigate to the start view
-                this.navigateToStart();
-              }
-              return;
-            } else {
-              // the current project does not exist locally.
-              // Check if the project exists online. If it doesn't, navigate to the start component.
-              // If we don't check, we could be waiting forever.
-              this.checkProjectExists(projectId);
-            }
-          }
-
-          this.selectedProject = selectedProject;
-          this.selectedProjectRole =
-            this.selectedProject == null
-              ? undefined
-              : (results.data.find(pu => pu.project.id === this.selectedProject.id).role as SFProjectRoles);
-
-          // Return early if 'Connect project' was clicked, or if we don't have all the
-          // properties we need yet for the below or template.
-          if (
-            this.selectedProject == null ||
-            this.selectedProject.translateEnabled == null ||
-            this.selectedProject.checkingEnabled == null ||
-            this.selectedProject.id == null ||
-            this.selectedProject.projectName == null
-          ) {
-            return;
-          }
-
-          this.projectService.getDataDoc(this.selectedProject.id).then(doc => (this.projectDataDoc = doc));
-          if (!this.isTranslateEnabled) {
-            this.translateVisible = false;
-          }
-          if (!this.isCheckingEnabled) {
-            this.checkingVisible = false;
-          }
-          if (this._projectSelect != null) {
-            this._projectSelect.reset();
-            this._projectSelect.value = this.selectedProject.id;
-          }
-
-          if (this.site == null || this.site.currentProjectId !== this.selectedProject.id) {
-            this.currentUserDoc.submitJson0Op(op =>
-              op.set(u => u.sites[environment.siteId].currentProjectId, this.selectedProject.id)
-            );
-          }
+      // select the current project
+      this.subscribe(projectId$, projectId => {
+        // if the project deleted dialog is displayed, don't do anything
+        if (this.projectDeletedDialogRef != null) {
+          return;
         }
-      );
+        const selectedProjectDoc = projectId == null ? undefined : this.projectDocs.find(p => p.id === projectId);
+
+        // check if the currently selected project has been deleted
+        if (projectId != null && (selectedProjectDoc == null || !selectedProjectDoc.isLoaded)) {
+          this.currentUserDoc
+            .submitJson0Op(op => op.unset(u => u.sites[environment.siteId].currentProjectId))
+            .then(() => this.navigateToStart());
+          return;
+        }
+
+        if (this.selectedProjectDeleteSub != null) {
+          this.selectedProjectDeleteSub.unsubscribe();
+        }
+        this.selectedProjectDoc = selectedProjectDoc;
+        this.setTopAppBarVariant();
+        this.selectedProjectRole =
+          this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
+            ? undefined
+            : (this.selectedProjectDoc.data.userRoles[this.currentUserDoc.id] as SFProjectRoles);
+        if (this.selectedProjectDoc == null) {
+          return;
+        }
+
+        this.selectedProjectDeleteSub = this.selectedProjectDoc.delete$.subscribe(() => {
+          if (this.currentUserDoc.data.sites[environment.siteId].currentProjectId != null) {
+            this.showProjectDeletedDialog();
+          } else {
+            this.navigateToStart();
+          }
+        });
+
+        if (!this.isTranslateEnabled) {
+          this.translateVisible = false;
+        }
+        if (!this.isCheckingEnabled) {
+          this.checkingVisible = false;
+        }
+        if (this._projectSelect != null) {
+          this._projectSelect.reset();
+          this._projectSelect.value = this.selectedProjectDoc.id;
+        }
+
+        if (this.site.currentProjectId !== this.selectedProjectDoc.id) {
+          this.currentUserDoc.submitJson0Op(op =>
+            op.set(u => u.sites[environment.siteId].currentProjectId, this.selectedProjectDoc.id)
+          );
+        }
+      });
       // tell HelpHero to remember this user to make sure we won't show them an identical tour again later
       this.helpHeroService.setIdentity(this.userService.currentUserId);
     }
     this.noticeService.loadingFinished();
+  }
+
+  ngOnDestroy(): void {
+    super.ngOnDestroy();
+    if (this.selectedProjectDeleteSub != null) {
+      this.selectedProjectDeleteSub.unsubscribe();
+    }
   }
 
   changePassword(): void {
@@ -336,7 +321,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
         this.collapseDrawer();
       }
       this.router.navigateByUrl('/connect-project');
-    } else if (value !== '' && this.selectedProject != null && value !== this.selectedProject.id) {
+    } else if (value !== '' && this.selectedProjectDoc != null && value !== this.selectedProjectDoc.id) {
       this.router.navigate(['/projects', value]);
     }
   }
@@ -363,20 +348,21 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
     this.isExpanded = false;
   }
 
-  private async checkProjectExists(projectId: string): Promise<void> {
-    if (!(await this.projectService.onlineExists(projectId))) {
-      await this.currentUserDoc.submitJson0Op(op => op.unset(u => u.sites[environment.siteId].currentProjectId));
-      this.navigateToStart();
+  private async getProjectDocs(): Promise<void> {
+    const projectDocs: SFProjectDoc[] = new Array(this.site.projects.length);
+    const promises: Promise<any>[] = [];
+    for (let i = 0; i < this.site.projects.length; i++) {
+      const index = i;
+      promises.push(this.projectService.get(this.site.projects[index]).then(p => (projectDocs[index] = p)));
     }
+    await Promise.all(promises);
+    this.projectDocs = projectDocs;
   }
 
-  private async showProjectDeletedDialog(projectId: string): Promise<void> {
+  private async showProjectDeletedDialog(): Promise<void> {
     await this.currentUserDoc.submitJson0Op(op => op.unset(u => u.sites[environment.siteId].currentProjectId));
     this.projectDeletedDialogRef = this.dialog.open(ProjectDeletedDialogComponent);
-    this.projectDeletedDialogRef.afterClosed().subscribe(() => {
-      this.projectService.localDelete(projectId);
-      this.navigateToStart();
-    });
+    this.projectDeletedDialogRef.afterClosed().subscribe(() => this.navigateToStart());
   }
 
   private navigateToStart(): void {
@@ -388,7 +374,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit {
       return;
     }
 
-    const isShort = this._isDrawerPermanent && this._selectedProject != null;
+    const isShort = this._isDrawerPermanent && this.selectedProjectDoc != null;
     if (isShort !== this._topAppBar.short) {
       this._topAppBar.setShort(isShort, true);
     }

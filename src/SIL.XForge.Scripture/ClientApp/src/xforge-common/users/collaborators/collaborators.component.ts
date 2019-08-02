@@ -1,15 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
-import { Project } from 'xforge-common/models/project';
-import { ProjectUser } from 'xforge-common/models/project-user';
+import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { SharingLevel } from 'xforge-common/models/sharing-level';
 import { User } from 'xforge-common/models/user';
-import { ProjectUserService } from 'xforge-common/project-user.service';
 import { UserService } from 'xforge-common/user.service';
-import { nameof } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { ProjectDoc } from '../../models/project-doc';
 import { NoticeService } from '../../notice.service';
 import { ProjectService } from '../../project.service';
 import { SubscriptionDisposable } from '../../subscription-disposable';
@@ -34,8 +31,7 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
   pageSize: number = 50;
 
   private inviteButtonClicked = false;
-  private project: Project;
-  private projectUsers: ProjectUser[];
+  private projectDoc: ProjectDoc;
   private term: string;
   private _userRows: Row[];
 
@@ -43,7 +39,6 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
     private readonly activatedRoute: ActivatedRoute,
     private readonly noticeService: NoticeService,
     private readonly projectService: ProjectService,
-    private readonly projectUserService: ProjectUserService,
     private readonly userService: UserService
   ) {
     super();
@@ -55,7 +50,12 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
   }
 
   get isLinkSharingEnabled(): boolean {
-    return this.project && this.project.shareEnabled && this.project.shareLevel === SharingLevel.Anyone;
+    return (
+      this.projectDoc &&
+      this.projectDoc.data &&
+      this.projectDoc.data.shareEnabled &&
+      this.projectDoc.data.shareLevel === SharingLevel.Anyone
+    );
   }
 
   get isLoading(): boolean {
@@ -63,7 +63,7 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
   }
 
   get projectId(): string {
-    return this.project ? this.project.id : '';
+    return this.projectDoc ? this.projectDoc.id : '';
   }
 
   get totalUsers(): number {
@@ -90,38 +90,25 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
   }
 
   ngOnInit() {
-    this.noticeService.loadingStarted();
     this.subscribe(
       this.activatedRoute.params.pipe(
         map(params => params['projectId'] as string),
         distinctUntilChanged(),
-        filter(projectId => projectId != null),
-        switchMap(projectId => this.projectService.get(projectId, [[nameof<Project>('users')]]))
+        filter(projectId => projectId != null)
       ),
-      r => {
-        this.project = r.data;
-        if (this.project == null) {
-          return;
-        }
+      async projectId => {
         this.noticeService.loadingStarted();
-        this.projectUsers = r.getManyIncluded<ProjectUser>(this.project.users);
-        const userRows: Row[] = new Array(this.projectUsers.length);
-        const tasks: Promise<any>[] = [];
-        for (let i = 0; i < this.projectUsers.length; i++) {
-          const projectUser = this.projectUsers[i];
-          const index = i;
-          const role = this.projectService.roles.get(projectUser.role);
-          const roleName = role ? role.displayName : '';
-          tasks.push(
-            this.userService
-              .getProfile(projectUser.userRef)
-              .then(userDoc => (userRows[index] = { id: userDoc.id, user: userDoc.data, roleName, active: true }))
-          );
-        }
-        Promise.all(tasks).then(() => {
-          this._userRows = userRows;
-          this.noticeService.loadingFinished();
+        this.projectDoc = await this.projectService.get(projectId);
+        this.loadUsers();
+        this.subscribe(this.projectDoc.remoteChanges$, async () => {
+          this.noticeService.loadingStarted();
+          try {
+            await this.loadUsers();
+          } finally {
+            this.noticeService.loadingFinished();
+          }
         });
+        this.noticeService.loadingFinished();
       }
     );
   }
@@ -145,15 +132,34 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
   }
 
   removeProjectUser(userId: string): void {
-    const projectUser = this.projectUsers.find(pu => pu.userRef === userId);
-    if (projectUser == null) {
-      return;
-    }
-    this.projectUserService.onlineDelete(projectUser.id);
+    this.projectService.onlineRemoveUser(this.projectId, userId);
   }
 
   private page(rows: Row[]): Row[] {
     const start = this.pageSize * this.pageIndex;
     return rows.slice(start, start + this.pageSize);
+  }
+
+  private async loadUsers(): Promise<void> {
+    if (this.projectDoc == null || this.projectDoc.data == null || this.projectDoc.data.userRoles == null) {
+      return;
+    }
+
+    const users = Object.keys(this.projectDoc.data.userRoles);
+    const userRows: Row[] = new Array(users.length);
+    const tasks: Promise<any>[] = [];
+    for (let i = 0; i < users.length; i++) {
+      const userId = users[i];
+      const index = i;
+      const role = this.projectService.roles.get(this.projectDoc.data.userRoles[userId]);
+      const roleName = role ? role.displayName : '';
+      tasks.push(
+        this.userService
+          .getProfile(userId)
+          .then(userDoc => (userRows[index] = { id: userDoc.id, user: userDoc.data, roleName, active: true }))
+      );
+    }
+    await Promise.all(tasks);
+    this._userRows = userRows;
   }
 }

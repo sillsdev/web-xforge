@@ -5,7 +5,7 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.DataAccess
 {
-    public interface IUpdateBuilder<T> where T : IEntity
+    public interface IUpdateBuilder<T> where T : IIdentifiable
     {
         IUpdateBuilder<T> Set<TField>(Expression<Func<T, TField>> field, TField value);
 

@@ -8,8 +8,7 @@ import { Comment } from '../../../core/models/comment';
 import { Question } from '../../../core/models/question';
 import { SFProject } from '../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../core/models/sfproject-roles';
-import { SFProjectUser } from '../../../core/models/sfproject-user';
-import { SFProjectUserService } from '../../../core/sfproject-user.service';
+import { SFProjectUserConfigDoc } from '../../../core/models/sfproject-user-config-doc';
 import { CheckingUtils } from '../../checking.utils';
 
 @Component({
@@ -19,7 +18,7 @@ import { CheckingUtils } from '../../checking.utils';
 })
 export class CheckingQuestionsComponent extends SubscriptionDisposable {
   @Input() project: SFProject;
-  @Input() projectCurrentUser: SFProjectUser;
+  @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
   @Input() comments: Readonly<Comment[]> = [];
   @Output() update: EventEmitter<Question> = new EventEmitter<Question>();
   @Output() changed: EventEmitter<Question> = new EventEmitter<Question>();
@@ -27,46 +26,45 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   activeQuestion: Question;
   activeQuestionSubject: Subject<Question> = new Subject<Question>();
 
-  constructor(private userService: UserService, private projectUserService: SFProjectUserService) {
+  constructor(private userService: UserService) {
     super();
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
     this.subscribe(this.activeQuestionSubject.pipe(debounceTime(2000)), question => {
-      let updateRequired = false;
-      if (!this.hasUserReadQuestion(question)) {
-        this.projectCurrentUser.questionRefsRead.push(question.id);
-        updateRequired = true;
-      }
-      if (this.hasUserAnswered(question) || this.isAdministrator) {
-        for (const answer of this.getAnswers(question)) {
-          if (!this.hasUserReadAnswer(answer)) {
-            this.projectCurrentUser.answerRefsRead.push(answer.id);
-            updateRequired = true;
+      this.projectUserConfigDoc
+        .submitJson0Op(op => {
+          if (!this.hasUserReadQuestion(question)) {
+            op.add(puc => puc.questionRefsRead, question.id);
           }
-        }
-      }
-      for (const answer of this.getAnswers(question)) {
-        const comments = this.getAnswerComments(answer);
-        let readLimit = 3;
-        if (comments.length > 3) {
-          readLimit = 2;
-        }
-        let commentCount = 0;
-        for (const comment of comments) {
-          if (!this.hasUserReadComment(comment)) {
-            this.projectCurrentUser.commentRefsRead.push(comment.id);
-            updateRequired = true;
+          if (this.hasUserAnswered(question) || this.isAdministrator) {
+            for (const answer of this.getAnswers(question)) {
+              if (!this.hasUserReadAnswer(answer)) {
+                op.add(puc => puc.answerRefsRead, answer.id);
+              }
+            }
           }
-          commentCount++;
-          if (commentCount === readLimit) {
-            break;
+          for (const answer of this.getAnswers(question)) {
+            const comments = this.getAnswerComments(answer);
+            let readLimit = 3;
+            if (comments.length > 3) {
+              readLimit = 2;
+            }
+            let commentCount = 0;
+            for (const comment of comments) {
+              if (!this.hasUserReadComment(comment)) {
+                op.add(puc => puc.commentRefsRead, comment.id);
+              }
+              commentCount++;
+              if (commentCount === readLimit) {
+                break;
+              }
+            }
           }
-        }
-      }
-      if (updateRequired) {
-        this.projectUserService.update(this.projectCurrentUser).then(() => {
-          this.update.emit(question);
+        })
+        .then(updated => {
+          if (updated) {
+            this.update.emit(question);
+          }
         });
-      }
     });
   }
 
@@ -136,25 +134,25 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   hasUserReadQuestion(question: Question): boolean {
-    return CheckingUtils.hasUserReadQuestion(question, this.projectCurrentUser);
+    return CheckingUtils.hasUserReadQuestion(question, this.projectUserConfigDoc.data);
   }
 
   hasUserReadAnswer(answer: Answer): boolean {
-    return this.projectCurrentUser.answerRefsRead
-      ? this.projectCurrentUser.answerRefsRead.includes(answer.id) ||
-          this.projectCurrentUser.userRef === answer.ownerRef
+    return this.projectUserConfigDoc.data.answerRefsRead
+      ? this.projectUserConfigDoc.data.answerRefsRead.includes(answer.id) ||
+          this.projectUserConfigDoc.data.ownerRef === answer.ownerRef
       : false;
   }
 
   hasUserReadComment(comment: Comment): boolean {
-    return this.projectCurrentUser.commentRefsRead
-      ? this.projectCurrentUser.commentRefsRead.includes(comment.id) ||
-          this.projectCurrentUser.userRef === comment.ownerRef
+    return this.projectUserConfigDoc.data.commentRefsRead
+      ? this.projectUserConfigDoc.data.commentRefsRead.includes(comment.id) ||
+          this.projectUserConfigDoc.data.ownerRef === comment.ownerRef
       : false;
   }
 
   get isAdministrator(): boolean {
-    return this.projectCurrentUser.role === SFProjectRoles.ParatextAdministrator;
+    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRoles.ParatextAdministrator;
   }
 
   nextQuestion(): void {

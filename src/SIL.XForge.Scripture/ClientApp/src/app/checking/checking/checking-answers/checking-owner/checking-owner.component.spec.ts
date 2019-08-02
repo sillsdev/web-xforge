@@ -82,7 +82,7 @@ class TestEnvironment {
   constructor() {
     when(this.mockedUserService.getProfile('user01')).thenResolve(
       new UserProfileDoc(
-        new MemoryRealtimeDocAdapter(OTJson0.type, 'user01', { name: 'User 01', role: 'user' }),
+        new MemoryRealtimeDocAdapter('user01', OTJson0.type, { name: 'User 01', role: 'user' }),
         instance(this.mockedRealtimeOfflineStore)
       )
     );

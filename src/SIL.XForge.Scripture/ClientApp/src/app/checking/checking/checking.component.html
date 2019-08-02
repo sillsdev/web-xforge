@@ -27,8 +27,8 @@
                 (changed)="questionChanged($event)"
                 [questions]="questions"
                 [comments]="comments"
-                [project]="project"
-                [projectCurrentUser]="projectCurrentUser"
+                [project]="projectDoc?.data"
+                [projectUserConfigDoc]="projectUserConfigDoc"
               ></app-checking-questions>
             </div>
           </div>
@@ -85,10 +85,10 @@
                 <div *ngIf="questionsPanel.activeQuestion" id="answer-panel" #answerPanelContainer>
                   <app-checking-answers
                     #answersPanel
-                    [project]="project"
+                    [project]="projectDoc?.data"
                     [question]="questionsPanel.activeQuestion"
                     [comments]="comments"
-                    [projectCurrentUser]="projectCurrentUser"
+                    [projectUserConfigDoc]="projectUserConfigDoc"
                     (action)="answerAction($event)"
                     (commentAction)="commentAction($event)"
                   ></app-checking-answers>
@@ -137,7 +137,7 @@
             class="next-question"
             icon="chevron_right"
           ></button>
-          <a [routerLink]="['/projects', projectId, 'checking']" id="project-summary">
+          <a [routerLink]="['/projects', projectDoc?.id, 'checking']" id="project-summary">
             <canvas
               baseChart
               width="36"

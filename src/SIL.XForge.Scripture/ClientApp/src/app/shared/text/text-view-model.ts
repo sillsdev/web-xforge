@@ -101,8 +101,8 @@ export class TextViewModel {
     this.textDoc = textDoc;
     this.editor.setContents(this.textDoc.data);
     this.editor.history.clear();
-    this.remoteChangesSub = this.textDoc.remoteChanges().subscribe(ops => this.editor.updateContents(ops));
-    this.onCreateSub = this.textDoc.onCreate().subscribe(() => {
+    this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => this.editor.updateContents(ops));
+    this.onCreateSub = this.textDoc.create$.subscribe(() => {
       this.editor.setContents(this.textDoc.data);
       this.editor.history.clear();
     });

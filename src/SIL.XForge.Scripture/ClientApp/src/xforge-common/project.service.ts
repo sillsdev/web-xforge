@@ -1,25 +1,25 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Record } from '@orbit/data';
-import { clone } from '@orbit/utils';
+import { RecordIdentity } from '@orbit/data';
 import { combineLatest, Observable } from 'rxjs';
-import { debounceTime, distinctUntilChanged, first, switchMap } from 'rxjs/operators';
-import { registerCustomFilter } from './custom-filter-specifier';
-import { GetAllParameters, JsonApiService, QueryObservable } from './json-api.service';
-import { InputSystem } from './models/input-system';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { JsonRpcService } from './json-rpc.service';
 import { Project } from './models/project';
+import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRole } from './models/project-role';
-import { ResourceService } from './resource.service';
-import { nameof } from './utils';
+import { QueryParameters, QueryResults, RealtimeService } from './realtime.service';
 
-export abstract class ProjectService<T extends Project = Project> extends ResourceService {
-  private static readonly SEARCH_FILTER = 'search';
-
+export abstract class ProjectService<
+  TProj extends Project = Project,
+  TDoc extends ProjectDoc<TProj> = ProjectDoc<TProj>
+> {
   readonly roles: Map<string, ProjectRole>;
 
-  constructor(type: string, jsonApiService: JsonApiService, roles: ProjectRole[], private readonly http: HttpClient) {
-    super(type, jsonApiService);
-
-    registerCustomFilter(this.type, ProjectService.SEARCH_FILTER, (r, v) => this.searchProjects(r, v));
+  constructor(
+    protected readonly realtimeService: RealtimeService,
+    protected readonly jsonRpcService: JsonRpcService,
+    roles: ProjectRole[],
+    private readonly http: HttpClient
+  ) {
     this.roles = new Map<string, ProjectRole>();
     for (const role of roles) {
       this.roles.set(role.role, role);
@@ -27,80 +27,73 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
     this.roles.set(NONE_ROLE.role, NONE_ROLE);
   }
 
-  getAll(parameters?: GetAllParameters<T>, include?: string[][]): QueryObservable<T[]> {
-    return this.jsonApiService.getAll(this.type, parameters, include);
+  get(id: string): Promise<TDoc> {
+    return this.realtimeService.get(this.identity(id));
   }
 
-  get(id: string, include?: string[][]): QueryObservable<T> {
-    return this.jsonApiService.get<T>(this.identity(id), include);
+  onlineCreate(project: TProj): Promise<string> {
+    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, 'create', { project });
   }
 
-  onlineUpdateAttributes(id: string, attrs: Partial<T>): Promise<T> {
-    return this.jsonApiService.onlineUpdateAttributes(this.identity(id), attrs);
-  }
-
-  onlineCreate(project: T): Promise<T> {
-    return this.jsonApiService.onlineCreate(project);
-  }
-
-  onlineSearch(term$: Observable<string>, parameters$: Observable<GetAllParameters<T>>): QueryObservable<T[]> {
+  onlineSearch(
+    term$: Observable<string>,
+    queryParameters$: Observable<QueryParameters>
+  ): Observable<QueryResults<TDoc>> {
     const debouncedTerm$ = term$.pipe(
       debounceTime(400),
       distinctUntilChanged()
     );
 
-    return combineLatest(debouncedTerm$, parameters$).pipe(
+    return combineLatest(debouncedTerm$, queryParameters$).pipe(
       switchMap(([term, parameters]) => {
-        let currentParameters = parameters;
-        if (term != null && term !== '') {
-          currentParameters = clone(parameters);
-          if (currentParameters.filters == null) {
-            currentParameters.filters = [];
-          }
-          currentParameters.filters.push({ name: ProjectService.SEARCH_FILTER, value: term });
-        }
-        return this.jsonApiService.onlineGetAll(this.type, currentParameters);
+        const query: any = {
+          projectName: { $regex: `.*${term}.*`, $options: 'i' },
+          'inputSystem.languageName': { $regex: `.*${term}.*`, $options: 'i' }
+        };
+        return this.realtimeService.onlineQuery(ProjectDoc.TYPE, query, parameters);
       })
     );
   }
 
-  onlineInvite(id: string, email: string): Promise<string> {
-    return this.jsonApiService.onlineInvoke(this.identity(id), 'invite', { email });
+  async onlineGetMany(projectIds: string[]): Promise<TDoc[]> {
+    const results = await this.realtimeService.onlineQuery(ProjectDoc.TYPE, { _id: { $in: projectIds } });
+    return results.docs as TDoc[];
+  }
+
+  onlineAddCurrentUser(id: string, projectRole?: string): Promise<void> {
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'addUser', { projectRole });
+  }
+
+  onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'isAlreadyInvited', { email });
   }
 
   /** Get added into project, with optionally specified shareKey code. */
   onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
-    return this.jsonApiService.onlineInvoke(this.identity(id), 'checkLinkSharing', { shareKey });
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'checkLinkSharing', { shareKey });
   }
 
-  onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
-    return this.jsonApiService.onlineInvoke(this.identity(id), 'isAlreadyInvited', { email });
+  onlineRemoveUser(id: string, userId: string): Promise<void> {
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'removeUser', { projectUserId: userId });
   }
 
-  onlineGet(id: string, include?: string[][]): QueryObservable<T> {
-    return this.jsonApiService.onlineGet<T>(this.identity(id), include, true);
+  onlineUpdateCurrentUserRole(id: string, projectRole: string): Promise<void> {
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'updateRole', { projectRole });
+  }
+
+  onlineInvite(id: string, email: string): Promise<string> {
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'invite', { email });
   }
 
   onlineDelete(id: string): Promise<void> {
-    return this.jsonApiService.onlineDelete(this.identity(id));
-  }
-
-  async onlineExists(id: string): Promise<boolean> {
-    const project = await this.onlineGet(id)
-      .pipe(first())
-      .toPromise();
-    return project.data != null;
-  }
-
-  localDelete(id: string): Promise<void> {
-    return this.jsonApiService.localDelete(this.identity(id));
+    return this.jsonRpcService.onlineInvoke(this.identity(id), 'delete');
   }
 
   async uploadAudio(id: string, file: File): Promise<string> {
     const formData = new FormData();
     formData.append('file', file);
     const response = await this.http
-      .post<HttpResponse<string>>(`json-api/projects/${id}/audio`, formData, {
+      .post<HttpResponse<string>>(`command-api/projects/${id}/audio`, formData, {
         headers: { Accept: 'application/json' },
         observe: 'response'
       })
@@ -108,26 +101,7 @@ export abstract class ProjectService<T extends Project = Project> extends Resour
     return response.headers.get('Location');
   }
 
-  protected isSearchMatch(record: Record, value: string): boolean {
-    if (record.attributes == null) {
-      return false;
-    }
-
-    const projectName = record.attributes[nameof<Project>('projectName')] as string;
-    if (projectName != null && projectName.toLowerCase().includes(value)) {
-      return true;
-    }
-
-    const inputSystem = record.attributes[nameof<Project>('inputSystem')] as InputSystem;
-    if (inputSystem != null && inputSystem.languageName.toLowerCase().includes(value)) {
-      return true;
-    }
-
-    return false;
-  }
-
-  private searchProjects(records: Record[], value: string): Record[] {
-    const valueLower = value.toLowerCase();
-    return records.filter(record => this.isSearchMatch(record, valueLower));
+  protected identity(id: string): RecordIdentity {
+    return { type: ProjectDoc.TYPE, id };
   }
 }

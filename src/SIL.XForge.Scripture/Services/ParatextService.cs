@@ -19,6 +19,7 @@ using SIL.WritingSystems;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
 
@@ -29,17 +30,17 @@ namespace SIL.XForge.Scripture.Services
     {
         private readonly IOptions<ParatextOptions> _options;
         private readonly IRepository<UserSecret> _userSecret;
-        private readonly IRepository<SFProjectEntity> _projects;
+        private readonly IRealtimeService _realtimeService;
         private readonly HttpClientHandler _httpClientHandler;
         private readonly HttpClient _dataAccessClient;
         private readonly HttpClient _registryClient;
 
         public ParatextService(IHostingEnvironment env, IOptions<ParatextOptions> options,
-            IRepository<UserSecret> userSecret, IRepository<SFProjectEntity> projects)
+            IRepository<UserSecret> userSecret, IRealtimeService realtimeService)
         {
             _options = options;
             _userSecret = userSecret;
-            _projects = projects;
+            _realtimeService = realtimeService;
 
             _httpClientHandler = new HttpClientHandler();
             _dataAccessClient = new HttpClient(_httpClientHandler);
@@ -74,10 +75,10 @@ namespace SIL.XForge.Scripture.Services
                     ?.FirstOrDefault(ue => (string)ue.Element("name") == username);
                 repos[projId] = (string)userElem?.Element("role");
             }
-            Dictionary<string, SFProjectEntity> existingProjects = (await _projects.Query()
+            Dictionary<string, SFProject> existingProjects = (await _realtimeService
+                .QuerySnapshots<SFProject>(RootDataTypes.Projects)
                 .Where(p => repos.Keys.Contains(p.ParatextId))
-                .ToListAsync())
-                .ToDictionary(p => p.ParatextId);
+                .ToListAsync()).ToDictionary(p => p.ParatextId);
             response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get, "projects");
             var projectArray = JArray.Parse(response);
             var projects = new List<ParatextProject>();
@@ -96,11 +97,11 @@ namespace SIL.XForge.Scripture.Services
                 bool isConnectable;
                 bool isConnected = false;
                 string projectId = null;
-                if (existingProjects.TryGetValue(paratextId, out SFProjectEntity project))
+                if (existingProjects.TryGetValue(paratextId, out SFProject project))
                 {
                     projectId = project.Id;
                     isConnected = true;
-                    isConnectable = !project.Users.Any(u => u.UserRef == userSecret.Id);
+                    isConnectable = !project.UserRoles.ContainsKey(userSecret.Id);
                 }
                 else if (role == SFProjectRoles.Administrator)
                 {
@@ -131,6 +132,8 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
         {
+            if (userSecret.ParatextTokens == null)
+                return Attempt.Failure((string)null);
             try
             {
                 var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);

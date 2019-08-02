@@ -3,16 +3,18 @@ import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testi
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
+import * as OTJson0 from 'ot-json0';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
-import { GetAllParameters, MapQueryResults } from '../json-api.service';
-import { Project, ProjectRef } from '../models/project';
+import { Project } from '../models/project';
+import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRole } from '../models/project-role';
-import { ProjectUser } from '../models/project-user';
-import { ProjectUserService } from '../project-user.service';
 import { ProjectService } from '../project.service';
+import { MemoryRealtimeDocAdapter } from '../realtime-doc-adapter';
+import { RealtimeOfflineStore } from '../realtime-offline-store';
+import { QueryParameters, QueryResults } from '../realtime.service';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaProjectsComponent } from './sa-projects.component';
@@ -45,7 +47,6 @@ describe('SaProjectsComponent', () => {
   it('should update role', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
-    when(env.mockedProjectUserService.onlineUpdateRole('projectuser01', 'user')).thenResolve();
     env.fixture.detectChanges();
     flush();
 
@@ -54,21 +55,13 @@ describe('SaProjectsComponent', () => {
     env.changeSelectValue(roleSelect, 1);
     expect(env.selectValue(roleSelect)).toEqual('User');
 
-    verify(env.mockedProjectUserService.onlineUpdateRole('projectuser01', 'user')).once();
-    expect(env.component.rows[0].projectUser.role).toEqual('user');
+    verify(env.mockedProjectService.onlineUpdateCurrentUserRole('project01', 'user')).once();
+    expect(env.component.rows[0].projectRole.role).toEqual('user');
   }));
 
   it('should add user to project', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
-    when(env.mockedProjectUserService.onlineCreate('project02', 'user01', 'admin')).thenResolve(
-      new TestProjectUser({
-        id: 'projectusernew',
-        role: 'admin',
-        project: new TestProjectRef('project02'),
-        userRef: 'user01'
-      })
-    );
     env.fixture.detectChanges();
     flush();
 
@@ -77,13 +70,12 @@ describe('SaProjectsComponent', () => {
     env.changeSelectValue(roleSelect, 0);
     expect(env.selectValue(roleSelect)).toEqual('Administrator');
 
-    verify(env.mockedProjectUserService.onlineCreate('project02', 'user01', 'admin')).once();
+    verify(env.mockedProjectService.onlineAddCurrentUser('project02', 'admin')).once();
   }));
 
   it('should remove user from project', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
-    when(env.mockedProjectUserService.onlineDelete('projectuser01')).thenResolve();
     env.fixture.detectChanges();
     flush();
 
@@ -92,7 +84,7 @@ describe('SaProjectsComponent', () => {
     env.changeSelectValue(roleSelect, 2);
     expect(env.selectValue(roleSelect)).toEqual('None');
 
-    verify(env.mockedProjectUserService.onlineDelete('projectuser01')).once();
+    verify(env.mockedProjectService.onlineRemoveUser('project01', 'user01')).once();
   }));
 
   it('should filter projects', fakeAsync(() => {
@@ -119,22 +111,18 @@ describe('SaProjectsComponent', () => {
   }));
 });
 
-class TestProject extends Project {
-  get taskNames(): string[] {
-    return ['Task1', 'Task2'];
-  }
+class TestProjectDoc extends ProjectDoc {
+  readonly taskNames: string[] = ['Task1', 'Task2'];
 }
-class TestProjectUser extends ProjectUser {}
-class TestProjectRef extends ProjectRef {}
 
 class TestEnvironment {
-  component: SaProjectsComponent;
-  fixture: ComponentFixture<SaProjectsComponent>;
+  readonly component: SaProjectsComponent;
+  readonly fixture: ComponentFixture<SaProjectsComponent>;
 
-  mockedNoticeService: NoticeService = mock(NoticeService);
-  mockedProjectUserService: ProjectUserService = mock(ProjectUserService);
-  mockedProjectService: ProjectService = mock(ProjectService);
-  mockedUserService: UserService = mock(UserService);
+  readonly mockedNoticeService = mock(NoticeService);
+  readonly mockedProjectService = mock(ProjectService);
+  readonly mockedUserService = mock(UserService);
+  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
   constructor() {
     when(this.mockedUserService.currentUserId).thenReturn('user01');
@@ -145,13 +133,15 @@ class TestEnvironment {
         [NONE_ROLE.role, NONE_ROLE]
       ])
     );
+    when(this.mockedProjectService.onlineAddCurrentUser(anything(), anything())).thenResolve();
+    when(this.mockedProjectService.onlineRemoveUser(anything(), 'user01')).thenResolve();
+    when(this.mockedProjectService.onlineUpdateCurrentUserRole(anything(), anything())).thenResolve();
 
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, RouterTestingModule, UICommonModule],
       declarations: [SaProjectsComponent],
       providers: [
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: ProjectUserService, useFactory: () => instance(this.mockedProjectUserService) },
         { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) }
       ]
@@ -222,62 +212,41 @@ class TestEnvironment {
 
   setupProjectData(): void {
     when(this.mockedProjectService.onlineSearch(anything(), anything())).thenCall(
-      (term$: Observable<string>, parameters$: Observable<GetAllParameters<TestProject>>) => {
-        const results = [
-          new MapQueryResults<TestProject[]>(
-            [
-              new TestProject({
-                id: 'project01',
-                projectName: 'Project 01'
-              }),
-              new TestProject({
-                id: 'project02',
-                projectName: 'Project 02'
-              }),
-              new TestProject({
-                id: 'project03',
-                projectName: 'Project 03'
-              })
+      (term$: Observable<string>, parameters$: Observable<QueryParameters>) => {
+        const project03Doc = this.createProjectDoc('project03', {
+          projectName: 'Project 03',
+          userRoles: { user01: 'user' }
+        });
+        const results: QueryResults<ProjectDoc>[] = [
+          {
+            docs: [
+              this.createProjectDoc('project01', { projectName: 'Project 01', userRoles: { user01: 'admin' } }),
+              this.createProjectDoc('project02', { projectName: 'Project 02', userRoles: {} }),
+              project03Doc
             ],
-            3
-          ),
-          new MapQueryResults<TestProject[]>(
-            [
-              new TestProject({
-                id: 'project03',
-                projectName: 'Project 03'
-              })
-            ],
-            1
-          )
+            totalPagedCount: 3
+          },
+          {
+            docs: [project03Doc],
+            totalPagedCount: 1
+          }
         ];
 
         return combineLatest(term$, parameters$).pipe(map((_value, index) => results[index]));
       }
     );
-
-    when(this.mockedUserService.onlineGetProjects('user01')).thenReturn(
-      of(
-        new MapQueryResults<TestProjectUser[]>([
-          new TestProjectUser({
-            id: 'projectuser01',
-            role: 'admin',
-            project: new TestProjectRef('project01')
-          }),
-          new TestProjectUser({
-            id: 'projectuser02',
-            role: 'user',
-            project: new TestProjectRef('project03')
-          })
-        ])
-      )
-    );
   }
 
   setupEmptyProjectData(): void {
     when(this.mockedProjectService.onlineSearch(anything(), anything())).thenReturn(
-      of(new MapQueryResults<TestProject[]>([], 0))
+      of({ docs: [], totalPagedCount: 0 } as QueryResults<ProjectDoc>)
     );
-    when(this.mockedUserService.onlineGetProjects('user01')).thenReturn(of(new MapQueryResults<TestProjectUser[]>([])));
+  }
+
+  private createProjectDoc(id: string, project: Project): ProjectDoc {
+    return new TestProjectDoc(
+      new MemoryRealtimeDocAdapter(id, OTJson0.type, project),
+      instance(this.mockedRealtimeOfflineStore)
+    );
   }
 }

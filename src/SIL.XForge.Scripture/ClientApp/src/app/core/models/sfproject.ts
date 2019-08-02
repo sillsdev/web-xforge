@@ -1,7 +1,9 @@
 import { InputSystem } from 'xforge-common/models/input-system';
-import { Project, ProjectRef } from 'xforge-common/models/project';
+import { Project } from 'xforge-common/models/project';
+import { Sync } from './sync';
+import { TextInfo } from './text-info';
 
-export class SFProject extends Project {
+export interface SFProject extends Project {
   paratextId?: string;
   checkingEnabled?: boolean;
   usersSeeEachOthersResponses?: boolean;
@@ -10,20 +12,6 @@ export class SFProject extends Project {
   sourceParatextId?: string;
   sourceInputSystem?: InputSystem;
 
-  constructor(init?: Partial<SFProject>) {
-    super(init);
-  }
-
-  get taskNames(): string[] {
-    const names: string[] = [];
-    if (this.checkingEnabled != null && this.checkingEnabled) {
-      names.push('Community Checking');
-    }
-    if (this.translateEnabled != null && this.translateEnabled) {
-      names.push('Translate');
-    }
-    return names;
-  }
+  texts?: TextInfo[];
+  sync?: Sync;
 }
-
-export class SFProjectRef extends ProjectRef {}

@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { RecordIdentity } from '@orbit/data';
 import { merge, uuid } from '@orbit/utils';
 
 interface JsonRpcRequest {
@@ -29,7 +30,7 @@ export class JsonRpcError {
 /**
  * This service is used to invoke JSON-RPC methods.
  *
- * @example jsonRpcService.invoke('json-rpc/endpoint', 'method', { param1: 'value1', param2: 'value2' });
+ * @example jsonRpcService.onlineInvoke(identity, 'method', { param1: 'value1', param2: 'value2' });
  */
 @Injectable({
   providedIn: 'root'
@@ -37,7 +38,14 @@ export class JsonRpcError {
 export class JsonRpcService {
   constructor(private readonly http: HttpClient) {}
 
-  async invoke<T>(url: string, method: string, params: any = {}): Promise<T> {
+  async onlineInvoke<T>(identityOrType: RecordIdentity | string, method: string, params: any = {}): Promise<T> {
+    let url = 'command-api/';
+    if (typeof identityOrType === 'string') {
+      url += `${identityOrType}/`;
+    } else {
+      url += `${identityOrType.type}/${identityOrType.id}/`;
+    }
+    url += 'commands';
     const request: JsonRpcRequest = {
       jsonrpc: '2.0',
       method,

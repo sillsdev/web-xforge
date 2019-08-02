@@ -1,22 +1,25 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using JsonApiDotNetCore.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using SIL.XForge.Models;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Controllers
 {
-    public abstract class ProjectsController<T> : JsonApiControllerBase<T> where T : ProjectResource
+    [Authorize]
+    [Route(XForgeConstants.CommandApiNamespace + "/" + RootDataTypes.Projects)]
+    [ApiController]
+    public abstract class ProjectsController<T> : ControllerBase where T : Project
     {
+        private readonly IUserAccessor _userAccessor;
         private readonly IProjectService<T> _projectService;
 
-        public ProjectsController(IJsonApiContext jsonApiContext, IProjectService<T> projectService,
-            ILoggerFactory loggerFactory) : base(jsonApiContext, projectService, loggerFactory)
+        public ProjectsController(IUserAccessor userAccessor, IProjectService<T> projectService)
         {
+            _userAccessor = userAccessor;
             _projectService = projectService;
         }
 
@@ -24,6 +27,9 @@ namespace SIL.XForge.Controllers
         [RequestSizeLimit(100_000_000)]
         public async Task<IActionResult> UploadAudioAsync(string id, [FromForm] IFormFile file)
         {
+            if (!await _projectService.IsAuthorizedAsync(id, _userAccessor.UserId))
+                return Forbid();
+
             using (Stream stream = file.OpenReadStream())
             {
                 Uri uri = await _projectService.SaveAudioAsync(id, file.FileName, stream);

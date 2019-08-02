@@ -10,7 +10,7 @@ using SIL.XForge.Services;
 namespace SIL.XForge.Controllers
 {
     [Authorize]
-    [Route(XForgeConstants.JsonApiNamespace + "/" + RootDataTypes.Users)]
+    [Route(XForgeConstants.CommandApiNamespace + "/" + RootDataTypes.Users)]
     [ApiController]
     public class UsersController : ControllerBase
     {

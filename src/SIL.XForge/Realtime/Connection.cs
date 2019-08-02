@@ -1,7 +1,7 @@
-using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using SIL.ObjectModel;
+using SIL.XForge.Models;
 
 namespace SIL.XForge.Realtime
 {
@@ -10,46 +10,34 @@ namespace SIL.XForge.Realtime
         private readonly RealtimeService _realtimeService;
         private int _handle;
 
-        private readonly Dictionary<string, Dictionary<string, object>> _documents;
+        private readonly ConcurrentDictionary<(string, string), object> _documents;
 
         internal Connection(RealtimeService realtimeService)
         {
             _realtimeService = realtimeService;
-            _documents = new Dictionary<string, Dictionary<string, object>>();
+            _documents = new ConcurrentDictionary<(string, string), object>();
         }
 
         public async Task StartAsync()
         {
-            _handle = await _realtimeService.InvokeExportAsync<int>("connect");
+            _handle = await _realtimeService.Server.ConnectAsync();
         }
 
-        public IDocument<TData> Get<TData>(string type, string id)
+        public IDocument<T> Get<T>(string type, string id) where T : IIdentifiable
         {
             string collection = _realtimeService.GetCollectionName(type);
 
-            if (!_documents.TryGetValue(collection, out Dictionary<string, object> docs))
-            {
-                docs = new Dictionary<string, object>();
-                _documents[collection] = docs;
-            }
-
-            if (!docs.TryGetValue(id, out object doc))
+            object doc = _documents.GetOrAdd((type, id), key =>
             {
                 string otTypeName = _realtimeService.GetOTTypeName(type);
-                doc = new Document<TData>(this, otTypeName, collection, id);
-                docs[id] = doc;
-            }
-            return (Document<TData>)doc;
-        }
-
-        internal Task<T> InvokeExportAsync<T>(string functionName, params object[] args)
-        {
-            return _realtimeService.InvokeExportAsync<T>(functionName, new object[] { _handle }.Concat(args).ToArray());
+                return new Document<T>(_realtimeService.Server, _handle, otTypeName, collection, id);
+            });
+            return (Document<T>)doc;
         }
 
         protected override void DisposeManagedResources()
         {
-            InvokeExportAsync<object>("disconnect").GetAwaiter().GetResult();
+            _realtimeService.Server.Disconnect(_handle);
         }
     }
 }

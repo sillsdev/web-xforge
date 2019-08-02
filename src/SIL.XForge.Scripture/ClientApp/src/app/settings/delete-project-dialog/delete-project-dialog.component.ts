@@ -11,6 +11,9 @@ export class DeleteProjectDialogComponent {
   constructor(@Inject(MDC_DIALOG_DATA) public data: { name: string }) {}
 
   get deleteDisabled() {
-    return this.data.name.toLowerCase() !== this.projectNameEntry.value.toLowerCase();
+    return !(
+      this.data.name == null ||
+      (this.data.name != null && this.data.name.toLowerCase() === this.projectNameEntry.value.toLowerCase())
+    );
   }
 }

@@ -8,8 +8,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProject } from '../core/models/sfproject';
-import { SFProjectDataDoc } from '../core/models/sfproject-data-doc';
-import { SFProjectUserService } from '../core/sfproject-user.service';
+import { SFProjectDoc } from '../core/models/sfproject-doc';
 import { SFProjectService } from '../core/sfproject.service';
 
 interface ConnectProjectFormValues {
@@ -40,14 +39,13 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
   state: 'connecting' | 'loading' | 'input' | 'login';
   connectProjectName: string;
 
-  private projectDataDoc: SFProjectDataDoc;
+  private projectDoc: SFProjectDoc;
   private targetProjects: ParatextProject[];
 
   constructor(
     private readonly paratextService: ParatextService,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
-    private readonly projectUserService: SFProjectUserService,
     private readonly router: Router,
     private readonly noticeService: NoticeService
   ) {
@@ -56,7 +54,7 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
   }
 
   get connectProgress(): number {
-    return this.projectDataDoc == null ? undefined : this.projectDataDoc.data.sync.percentCompleted;
+    return this.projectDoc == null ? undefined : this.projectDoc.data.sync.percentCompleted;
   }
 
   get connectPending(): boolean {
@@ -145,32 +143,32 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
     if (project != null && project.projectId == null) {
       this.state = 'connecting';
       this.connectProjectName = project.name;
-      let newProject = new SFProject({
+      const newProject: SFProject = {
         projectName: project.name,
         paratextId: project.paratextId,
         inputSystem: ParatextService.getInputSystem(project),
         checkingEnabled: values.tasks.checking,
         translateEnabled: values.tasks.translate
-      });
+      };
       if (values.tasks.translate) {
         const translateSourceProject = this.projects.find(p => p.paratextId === values.tasks.sourceParatextId);
         newProject.sourceParatextId = translateSourceProject.paratextId;
         newProject.sourceInputSystem = ParatextService.getInputSystem(translateSourceProject);
       }
 
-      newProject = await this.projectService.onlineCreate(newProject);
-      this.projectDataDoc = await this.projectService.getDataDoc(newProject.id);
+      const projectId = await this.projectService.onlineCreate(newProject);
+      this.projectDoc = await this.projectService.get(projectId);
       this.checkSyncStatus();
-      this.subscribe(this.projectDataDoc.remoteChanges(), () => this.checkSyncStatus());
+      this.subscribe(this.projectDoc.remoteChanges$, () => this.checkSyncStatus());
     } else {
-      await this.projectUserService.onlineCreate(project.projectId, this.userService.currentUserId);
+      await this.projectService.onlineAddCurrentUser(project.projectId);
       this.router.navigate(['/projects', project.projectId]);
     }
   }
 
   private checkSyncStatus(): void {
-    if (this.projectDataDoc.data.sync.queuedCount === 0) {
-      this.router.navigate(['/projects', this.projectDataDoc.id]);
+    if (this.projectDoc.data.sync.queuedCount === 0) {
+      this.router.navigate(['/projects', this.projectDoc.id]);
     }
   }
 }

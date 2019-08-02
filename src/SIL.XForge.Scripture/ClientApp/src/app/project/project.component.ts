@@ -1,13 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { from, of } from 'rxjs';
-import { distinctUntilChanged, filter, map, switchMap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
-import { nameof } from 'xforge-common/utils';
-import { SFProject } from '../core/models/sfproject';
 import { canTranslate } from '../core/models/sfproject-roles';
-import { SFProjectUser } from '../core/models/sfproject-user';
 import { SFProjectService } from '../core/sfproject.service';
 
 @Component({
@@ -30,58 +26,45 @@ export class ProjectComponent extends SubscriptionDisposable implements OnInit {
       this.route.params.pipe(
         map(params => params['projectId'] as string),
         distinctUntilChanged(),
-        filter(projectId => projectId != null),
-        switchMap(projectId => {
-          // if the link has sharing turned on, check if the current user needs to be added to the project
-          const sharing = this.route.snapshot.queryParams['sharing'] as string;
-          if (sharing === 'true') {
-            const shareKey = this.route.snapshot.queryParams['shareKey'] as string;
-            let linkSharing: Promise<void>;
-            if (!!shareKey) {
-              linkSharing = this.projectService.onlineCheckLinkSharing(projectId, shareKey);
-            } else {
-              linkSharing = this.projectService.onlineCheckLinkSharing(projectId);
-            }
-            return from(linkSharing).pipe(map(() => projectId));
-          } else {
-            return of(projectId);
-          }
-        }),
-        switchMap(projectId => this.projectService.get(projectId, [[nameof<SFProject>('users')]]))
+        filter(projectId => projectId != null)
       ),
-      async r => {
-        const project = r.data;
-        if (project == null) {
-          return;
+      async projectId => {
+        // if the link has sharing turned on, check if the current user needs to be added to the project
+        const sharing = this.route.snapshot.queryParams['sharing'] as string;
+        if (sharing === 'true') {
+          const shareKey = this.route.snapshot.queryParams['shareKey'] as string;
+          await this.projectService.onlineCheckLinkSharing(projectId, shareKey);
         }
-        const projectUser = r
-          .getManyIncluded<SFProjectUser>(project.users)
-          .find(pu => pu.userRef === this.userService.currentUserId);
-        if (projectUser == null) {
-          return;
-        }
+        const projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+        const projectUserConfig = projectUserConfigDoc.data;
         // navigate to last location
-        if (projectUser.selectedTask != null && projectUser.selectedTask !== '') {
+        if (
+          projectUserConfig != null &&
+          projectUserConfig.selectedTask != null &&
+          projectUserConfig.selectedTask !== ''
+        ) {
           // the user has previously navigated to a location in a task
-          const bookId = projectUser.selectedBookId;
+          const bookId = projectUserConfig.selectedBookId;
           if (bookId != null) {
-            this.router.navigate(['./', projectUser.selectedTask, bookId], {
+            this.router.navigate(['./', projectUserConfig.selectedTask, bookId], {
               relativeTo: this.route,
               replaceUrl: true
             });
           }
         } else {
-          const projectDataDoc = await this.projectService.getDataDoc(project.id);
-          if (projectDataDoc.data.texts != null && projectDataDoc.data.texts.length > 0) {
+          const projectDoc = await this.projectService.get(projectId);
+          const project = projectDoc.data;
+          if (project != null && project.texts != null && project.texts.length > 0) {
+            const projectRole = project.userRoles[this.userService.currentUserId];
             // the user has not navigated anywhere before, so navigate to the default location in the first enabled task
             let task: string;
-            if (project.translateEnabled != null && project.translateEnabled && canTranslate(projectUser.role)) {
+            if (project.translateEnabled != null && project.translateEnabled && canTranslate(projectRole)) {
               task = 'translate';
             } else if (project.checkingEnabled != null && project.checkingEnabled) {
               task = 'checking';
             }
             if (task != null) {
-              this.router.navigate(['./', task, projectDataDoc.data.texts[0].bookId], {
+              this.router.navigate(['./', task, project.texts[0].bookId], {
                 relativeTo: this.route,
                 replaceUrl: true
               });

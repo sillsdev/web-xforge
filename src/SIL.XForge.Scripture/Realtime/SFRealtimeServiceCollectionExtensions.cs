@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 using Microsoft.Extensions.Configuration;
 using SIL.XForge.Configuration;
-using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
-using SIL.XForge.Utils;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -17,63 +12,68 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddRealtimeServer(configuration, o =>
                 {
+                    o.ProjectDoc.ImmutableProperties.AddRange(new[]
+                    {
+                        PathTemplateConfig<SFProject>.Create(p => p.SourceParatextId),
+                        PathTemplateConfig<SFProject>.Create(p => p.SourceInputSystem),
+                        PathTemplateConfig<SFProject>.Create(p => p.Sync),
+                        PathTemplateConfig<SFProject>.Create(p => p.InputSystem),
+                        PathTemplateConfig<SFProject>.Create(p => p.ParatextId),
+                        PathTemplateConfig<SFProject>.Create(p => p.Texts),
+                        PathTemplateConfig<SFProject>.Create(p => p.CheckingEnabled),
+                        PathTemplateConfig<SFProject>.Create(p => p.TranslateEnabled)
+                    });
                     o.ProjectRoles = SFProjectRoles.Instance;
                     o.ProjectDataDocs = new[]
                     {
-                        new RealtimeDocConfig(RootDataTypes.Projects),
-                        new RealtimeDocConfig(SFRootDataTypes.Texts, OTType.RichText)
+                        new DocConfig(SFRootDataTypes.ProjectUserConfigs, OTType.Json0)
                         {
-                            Domains = { new RealtimeDomainConfig(SFDomain.Texts) }
+                            Domains = { new DomainConfig(SFDomain.ProjectUserConfigs) }
                         },
-                        new RealtimeDocConfig(SFRootDataTypes.Questions)
+                        new DocConfig(SFRootDataTypes.Texts, OTType.RichText)
+                        {
+                            Domains = { new DomainConfig(SFDomain.Texts) }
+                        },
+                        new DocConfig(SFRootDataTypes.Questions)
                         {
                             Domains =
                             {
-                                new RealtimeDomainConfig(SFDomain.Questions)
+                                new DomainConfig(SFDomain.Questions)
                                 {
-                                    PathTemplate = QuestionsPath(qs => qs[-1])
+                                    PathTemplate = PathTemplateConfig<QuestionList>.Create(ql => ql.Questions[-1])
                                 },
-                                new RealtimeDomainConfig(SFDomain.Answers)
+                                new DomainConfig(SFDomain.Answers)
                                 {
-                                    PathTemplate = QuestionsPath(qs => qs[-1].Answers[-1])
+                                    PathTemplate = PathTemplateConfig<QuestionList>.Create(ql => ql.Questions[-1].Answers[-1])
                                 },
-                                new RealtimeDomainConfig(SFDomain.Likes)
+                                new DomainConfig(SFDomain.Likes)
                                 {
-                                    PathTemplate = QuestionsPath(qs => qs[-1].Answers[-1].Likes[-1])
+                                    PathTemplate = PathTemplateConfig<QuestionList>.Create(
+                                        ql => ql.Questions[-1].Answers[-1].Likes[-1])
                                 }
                             },
                             ImmutableProperties =
                             {
-                                QuestionsPath(qs => qs[-1].Answers[-1].SyncUserRef)
+                                PathTemplateConfig<QuestionList>.Create(ql => ql.Questions[-1].Answers[-1].SyncUserRef)
                             }
                         },
-                        new RealtimeDocConfig(SFRootDataTypes.Comments)
+                        new DocConfig(SFRootDataTypes.Comments)
                         {
                             Domains =
                             {
-                                new RealtimeDomainConfig(SFDomain.Comments)
+                                new DomainConfig(SFDomain.Comments)
                                 {
-                                    PathTemplate = CommentsPath(cs => cs[-1])
+                                    PathTemplate = PathTemplateConfig<CommentList>.Create(cl => cl.Comments[-1])
                                 }
                             },
                             ImmutableProperties =
                             {
-                                CommentsPath(cs => cs[-1].SyncUserRef)
+                                PathTemplateConfig<CommentList>.Create(cl => cl.Comments[-1].SyncUserRef)
                             }
                         }
                     };
                 }, launchWithDebugging);
             return services;
-        }
-
-        private static ObjectPath QuestionsPath<TField>(Expression<Func<List<Question>, TField>> field)
-        {
-            return new ObjectPath(field);
-        }
-
-        private static ObjectPath CommentsPath<TField>(Expression<Func<List<Comment>, TField>> field)
-        {
-            return new ObjectPath(field);
         }
     }
 }

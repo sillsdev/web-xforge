@@ -9,7 +9,7 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.DataAccess
 {
-    public class MemoryUpdateBuilder<T> : IUpdateBuilder<T> where T : IEntity, new()
+    public class MemoryUpdateBuilder<T> : IUpdateBuilder<T> where T : IIdentifiable
     {
         private readonly Expression<Func<T, bool>> _filter;
         private readonly T _entity;

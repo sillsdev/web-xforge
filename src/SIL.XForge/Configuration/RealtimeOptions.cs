@@ -1,34 +1,38 @@
-using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using SIL.XForge.Models;
-using SIL.XForge.Realtime;
-using SIL.XForge.Utils;
 
 namespace SIL.XForge.Configuration
 {
     public class RealtimeOptions
     {
-        private static readonly RealtimeDocConfig DefaultUserDocConfig = new RealtimeDocConfig(RootDataTypes.Users)
+        private static readonly DocConfig DefaultUserDocConfig = new DocConfig(RootDataTypes.Users)
         {
             ImmutableProperties =
             {
-                UserPath(u => u.AuthId),
-                UserPath(u => u.ParatextId),
-                UserPath(u => u.Role),
-                UserPath(u => u.AvatarUrl),
-                UserPath(u => u.Email)
+                PathTemplateConfig<User>.Create(u => u.AuthId),
+                PathTemplateConfig<User>.Create(u => u.ParatextId),
+                PathTemplateConfig<User>.Create(u => u.Role),
+                PathTemplateConfig<User>.Create(u => u.AvatarUrl),
+                PathTemplateConfig<User>.Create(u => u.Email),
+                PathTemplateConfig<User>.Create(u => u.Sites, false),
+                PathTemplateConfig<User>.Create(u => u.Sites["*"], false),
+                PathTemplateConfig<User>.Create(u => u.Sites["*"].LastLogin),
+                PathTemplateConfig<User>.Create(u => u.Sites["*"].Projects)
             }
         };
 
-        private static ObjectPath UserPath<TField>(Expression<Func<User, TField>> field)
+        private static readonly DocConfig DefaultProjectDocConfig = new DocConfig(RootDataTypes.Projects)
         {
-            return new ObjectPath(field);
-        }
+            ImmutableProperties =
+            {
+                PathTemplateConfig<Project>.Create(p => p.UserRoles)
+            }
+        };
 
         public int Port { get; set; } = 5003;
-        public RealtimeDocConfig UserDoc { get; set; } = DefaultUserDocConfig;
+        public DocConfig UserDoc { get; set; } = DefaultUserDocConfig;
+        public DocConfig ProjectDoc { get; set; } = DefaultProjectDocConfig;
         public ProjectRoles ProjectRoles { get; set; }
-        public IList<RealtimeDocConfig> ProjectDataDocs { get; set; } = new List<RealtimeDocConfig>();
+        public IList<DocConfig> ProjectDataDocs { get; set; } = new List<DocConfig>();
     }
 }

@@ -1,9 +1,5 @@
 using Microsoft.Extensions.Configuration;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Serializers;
-using MongoDB.Driver;
 using SIL.XForge.DataAccess;
-using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -15,24 +11,10 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddDataAccess(configuration);
 
-            DataAccessClassMap.RegisterConcreteClass<ProjectUserEntity, SFProjectUserEntity>();
+            DataAccessClassMap.RegisterClass<SyncUser>(cm => cm.SetIdMember(null));
 
-            DataAccessClassMap.RegisterClass<SyncUser>(cm =>
-                {
-                    cm.SetIdMember(null);
-                    cm.MapProperty(su => su.Id).SetSerializer(new StringSerializer(BsonType.ObjectId));
-                });
-
-            services.AddMongoRepository<SFProjectEntity>(RootDataTypes.Projects,
-                indexSetup: indexes =>
-                {
-                    IndexKeysDefinitionBuilder<SFProjectEntity> builder = Builders<SFProjectEntity>.IndexKeys;
-                    indexes.CreateOrUpdate(new CreateIndexModel<SFProjectEntity>(builder.Ascending("Users.Id"),
-                        new CreateIndexOptions { Unique = true }));
-                    indexes.CreateOrUpdate(new CreateIndexModel<SFProjectEntity>(builder.Ascending("Users.UserRef")));
-                });
-            services.AddMongoRepository<TranslateMetrics>(SFRootDataTypes.TranslateMetrics,
-                cm => cm.MapProperty(m => m.SessionId).SetSerializer(new StringSerializer(BsonType.ObjectId)));
+            services.AddMongoRepository<TranslateMetrics>("translate_metrics", cm => cm.MapIdProperty(tm => tm.Id));
+            services.AddMongoRepository<SFProjectSecret>("sf_project_secrets");
 
             return services;
         }

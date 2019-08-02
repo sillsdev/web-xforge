@@ -4,11 +4,13 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import * as OTJson0 from 'ot-json0';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { MapQueryResults } from 'xforge-common/json-api.service';
 import { LocationService } from 'xforge-common/location.service';
-import { Project } from 'xforge-common/models/project';
+import { ProjectDoc } from 'xforge-common/models/project-doc';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { SharingLevel } from '../models/sharing-level';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
@@ -22,12 +24,16 @@ describe('ShareComponent', () => {
     const env = new TestEnvironment();
     env.setShareConfig(false, SharingLevel.Anyone);
     env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
 
     expect(env.shareButton).toBeNull();
   }));
 
   it('dialog should open when sharing is enabled', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    tick();
     env.fixture.detectChanges();
 
     env.clickElement(env.shareButton);
@@ -39,6 +45,8 @@ describe('ShareComponent', () => {
 
   it('dialog should not send when email is invalid', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    tick();
     env.fixture.detectChanges();
 
     env.clickElement(env.shareButton);
@@ -53,6 +61,8 @@ describe('ShareComponent', () => {
 
   it('dialog should not send when email is empty', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    tick();
     env.fixture.detectChanges();
 
     env.clickElement(env.shareButton);
@@ -70,6 +80,8 @@ describe('ShareComponent', () => {
     const emailAddress = 'me@example.com';
     const env = new TestEnvironment();
     env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
 
     env.clickElement(env.shareButton);
     env.setInputValue(env.emailInput, emailAddress);
@@ -84,6 +96,8 @@ describe('ShareComponent', () => {
     const env = new TestEnvironment();
     env.setShareConfig(true, SharingLevel.Specific);
     env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
 
     env.clickElement(env.shareButton);
     expect(env.shareLink).toBeNull();
@@ -91,6 +105,8 @@ describe('ShareComponent', () => {
 
   it('clicking copy link icon should copy link to clipboard', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    tick();
     env.fixture.detectChanges();
 
     env.clickElement(env.shareButton);
@@ -109,6 +125,12 @@ describe('ShareComponent', () => {
 })
 class DialogTestModule {}
 
+class TestProjectDoc extends ProjectDoc {
+  get taskNames(): string[] {
+    return [];
+  }
+}
+
 class TestEnvironment {
   readonly component: ShareComponent;
   readonly fixture: ComponentFixture<ShareComponent>;
@@ -119,7 +141,7 @@ class TestEnvironment {
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedLocationService = mock(LocationService);
-  readonly mockedProject = mock(Project);
+  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
   constructor() {
     when(this.mockedProjectService.onlineInvite('project01', anything())).thenResolve();
@@ -127,9 +149,6 @@ class TestEnvironment {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
     this.setShareConfig(true, SharingLevel.Anyone);
-    const project = instance(this.mockedProject);
-    project.id = 'project01';
-    when(this.mockedProjectService.get('project01')).thenReturn(of(new MapQueryResults(project)));
 
     TestBed.configureTestingModule({
       imports: [DialogTestModule],
@@ -191,7 +210,10 @@ class TestEnvironment {
   }
 
   setShareConfig(shareEnabled: boolean, shareLevel: SharingLevel): void {
-    when(this.mockedProject.shareEnabled).thenReturn(shareEnabled);
-    when(this.mockedProject.shareLevel).thenReturn(shareLevel);
+    const projectDoc = new TestProjectDoc(
+      new MemoryRealtimeDocAdapter('project01', OTJson0.type, { shareEnabled, shareLevel }),
+      instance(this.mockedRealtimeOfflineStore)
+    );
+    when(this.mockedProjectService.get(anything())).thenResolve(projectDoc);
   }
 }

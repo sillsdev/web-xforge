@@ -3,7 +3,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { combineLatest } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { ElementState } from 'xforge-common/models/element-state';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { SharingLevel } from 'xforge-common/models/sharing-level';
@@ -12,11 +12,12 @@ import { ParatextService } from 'xforge-common/paratext.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { environment } from '../../environments/environment';
 import { SFProject } from '../core/models/sfproject';
+import { SFProjectDoc } from '../core/models/sfproject-doc';
+import { UpdateTasksParams } from '../core/models/update-tasks-params';
 import { SFProjectService } from '../core/sfproject.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
-
-type VoidFunc = (() => void);
 
 interface Settings {
   translate?: boolean;
@@ -45,10 +46,9 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     },
     XFValidators.requireOneWithValue(['translate', 'checking'], true)
   );
-  projectId: string;
-  project: SFProject;
   sourceProjects: ParatextProject[];
 
+  private projectDoc: SFProjectDoc;
   /** Elements in this component and their states. */
   private controlStates = new Map<string, ElementState>();
   // ensures `get isLoading()` marks the initial load of data in the component since `noticeService.isLoading` is slow
@@ -85,6 +85,10 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     return this.form.controls.checking.value;
   }
 
+  get projectId(): string {
+    return this.projectDoc == null ? '' : this.projectDoc.id;
+  }
+
   private get isOnlyBasedOnInvalid(): boolean {
     let invalidCount = 0;
     const controls = this.form.controls;
@@ -102,31 +106,25 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     this.form.setErrors({ required: true });
     this.form.valueChanges.subscribe(value => this.onFormValueChanges(value));
     this.setAllControlsToInSync();
+    const projectId$ = this.route.params.pipe(
+      tap(() => {
+        this.noticeService.loadingStarted();
+        this.form.disable();
+      }),
+      map(params => params['projectId'] as string)
+    );
     this.subscribe(
-      this.route.params.pipe(
-        tap(params => {
-          this.noticeService.loadingStarted();
-          this.projectId = params['projectId'];
-          this.form.disable();
-        }),
-        switchMap(() =>
-          combineLatest(
-            this.projectService.onlineGet(this.projectId).pipe(map(r => r.data)),
-            this.paratextService.getProjects()
-          )
-        )
-      ),
-      ([project, paratextProjects]) => {
+      combineLatest(projectId$, this.paratextService.getProjects()),
+      async ([projectId, paratextProjects]) => {
+        this.noticeService.loadingStarted();
         this.form.enable();
         this.paratextProjects = paratextProjects;
         if (paratextProjects != null) {
-          this.sourceProjects = paratextProjects.filter(p => p.projectId !== this.projectId);
+          this.sourceProjects = paratextProjects.filter(p => p.projectId !== projectId);
         }
-        if (project != null) {
-          this.project = project;
-          if (this.project) {
-            this.updateSettingsInfo();
-          }
+        this.projectDoc = await this.projectService.get(projectId);
+        if (this.projectDoc) {
+          this.updateSettingsInfo();
         }
         this.isFirstLoad = false;
         this.noticeService.loadingFinished();
@@ -140,20 +138,20 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
   }
 
   logInWithParatext(): void {
-    const url = '/projects/' + this.projectId + '/settings';
+    const url = '/projects/' + this.projectDoc.id + '/settings';
     this.paratextService.linkParatext(url);
   }
 
   openDeleteProjectDialog(): void {
     const config: MdcDialogConfig = {
-      data: { name: this.project.projectName }
+      data: { name: this.projectDoc.data.projectName }
     };
     const dialogRef = this.dialog.open(DeleteProjectDialogComponent, config);
     dialogRef.afterClosed().subscribe(async result => {
       if (result === 'accept') {
         const userDoc = await this.userService.getCurrentUser();
-        await userDoc.submitJson0Op(op => op.unset(u => u.sites['sf'].currentProjectId));
-        await this.projectService.onlineDelete(this.projectId);
+        await userDoc.submitJson0Op(op => op.unset(u => u.sites[environment.siteId].currentProjectId));
+        await this.projectService.onlineDelete(this.projectDoc.id);
       }
     });
   }
@@ -163,55 +161,70 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
   }
 
   private onFormValueChanges(newValue: Settings): void {
+    if (this.projectDoc == null) {
+      return;
+    }
+
     if (this.form.valid || this.isOnlyBasedOnInvalid) {
-      let isUpdateNeeded: boolean = false;
       const updatedProject: Partial<SFProject> = {};
-      const successHandlers: VoidFunc[] = [];
-      const failStateHandlers: VoidFunc[] = [];
       // Set status and include values for changed form items
-      if (newValue.translate !== this.project.translateEnabled && this.form.controls.translate.enabled) {
+      if (newValue.translate !== this.projectDoc.data.translateEnabled && this.form.controls.translate.enabled) {
         updatedProject.translateEnabled = newValue.translate;
-        this.project.translateEnabled = newValue.translate;
         this.setValidators();
-        if (!newValue.translate || (this.form.valid && this.project.sourceParatextId)) {
-          this.updateControlState('translate', successHandlers, failStateHandlers);
-          isUpdateNeeded = true;
+        if (!newValue.translate || (this.form.valid && this.projectDoc.data.sourceParatextId)) {
+          this.previousFormValues = newValue;
+          this.checkUpdateStatus(
+            'translate',
+            this.projectService.updateTasks(this.projectDoc.id, { translateEnabled: newValue.translate })
+          );
         } else {
           this.controlStates.set('translate', ElementState.InSync);
         }
       }
-      if (newValue.sourceParatextId !== this.project.sourceParatextId) {
+      if (newValue.sourceParatextId !== this.projectDoc.data.sourceParatextId) {
         if (newValue.translate && newValue.sourceParatextId != null) {
           updatedProject.sourceParatextId = newValue.sourceParatextId;
           updatedProject.sourceInputSystem = ParatextService.getInputSystem(
             this.sourceProjects.find(project => project.paratextId === newValue.sourceParatextId)
           );
-          this.project.sourceParatextId = updatedProject.sourceParatextId;
-          this.project.sourceInputSystem = updatedProject.sourceInputSystem;
-          this.updateControlState('sourceParatextId', successHandlers, failStateHandlers);
+          const parameters: UpdateTasksParams = {
+            sourceParatextId: updatedProject.sourceParatextId,
+            sourceInputSystem: updatedProject.sourceInputSystem
+          };
           if (this.previousFormValues.sourceParatextId == null) {
-            this.updateControlState('translate', successHandlers, failStateHandlers);
+            parameters.translateEnabled = true;
           }
-          isUpdateNeeded = true;
+          const updateTaskPromise = this.projectService.updateTasks(this.projectDoc.id, parameters);
+          this.checkUpdateStatus('sourceParatextId', updateTaskPromise);
+          if (this.previousFormValues.sourceParatextId == null) {
+            this.checkUpdateStatus('translate', updateTaskPromise);
+          }
+          this.previousFormValues = newValue;
         }
       }
-      if (newValue.checking !== this.project.checkingEnabled) {
+      if (newValue.checking !== this.projectDoc.data.checkingEnabled) {
         updatedProject.checkingEnabled = newValue.checking;
-        this.project.checkingEnabled = newValue.checking;
-        this.updateControlState('checking', successHandlers, failStateHandlers);
-        isUpdateNeeded = true;
+        this.previousFormValues = newValue;
+        this.checkUpdateStatus(
+          'checking',
+          this.projectService.updateTasks(this.projectDoc.id, { checkingEnabled: newValue.checking })
+        );
       }
-      if (newValue.seeOthersResponses !== this.project.usersSeeEachOthersResponses) {
+      if (newValue.seeOthersResponses !== this.projectDoc.data.usersSeeEachOthersResponses) {
         updatedProject.usersSeeEachOthersResponses = newValue.seeOthersResponses;
-        this.project.usersSeeEachOthersResponses = newValue.seeOthersResponses;
-        this.updateControlState('seeOthersResponses', successHandlers, failStateHandlers);
-        isUpdateNeeded = true;
+        this.previousFormValues = newValue;
+        this.checkUpdateStatus(
+          'seeOthersResponses',
+          this.projectDoc.submitJson0Op(op => op.set(p => p.usersSeeEachOthersResponses, newValue.seeOthersResponses))
+        );
       }
-      if (newValue.share !== this.project.shareEnabled) {
+      if (newValue.share !== this.projectDoc.data.shareEnabled) {
         updatedProject.shareEnabled = newValue.share;
-        this.project.shareEnabled = newValue.share;
-        this.updateControlState('share', successHandlers, failStateHandlers);
-        isUpdateNeeded = true;
+        this.previousFormValues = newValue;
+        this.checkUpdateStatus(
+          'share',
+          this.projectDoc.submitJson0Op(op => op.set(p => p.shareEnabled, newValue.share))
+        );
         const shareLevelControl = this.form.controls.shareLevel;
         if (newValue.share) {
           shareLevelControl.enable();
@@ -221,58 +234,51 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
       }
       if (
         newValue.shareLevel != null &&
-        newValue.shareLevel !== this.project.shareLevel &&
+        newValue.shareLevel !== this.projectDoc.data.shareLevel &&
         this.form.controls.shareLevel.enabled
       ) {
         updatedProject.shareLevel = newValue.shareLevel;
-        this.project.shareLevel = newValue.shareLevel;
-        this.updateControlState('shareLevel', successHandlers, failStateHandlers);
-        isUpdateNeeded = true;
+        this.previousFormValues = newValue;
+        this.checkUpdateStatus(
+          'shareLevel',
+          this.projectDoc.submitJson0Op(op => op.set(p => p.shareLevel, newValue.shareLevel))
+        );
       }
-      if (!isUpdateNeeded) {
-        return;
-      }
-      this.previousFormValues = newValue;
-      this.projectService
-        .onlineUpdateAttributes(this.project.id, updatedProject)
-        .then(() => {
-          while (successHandlers.length) {
-            successHandlers.pop().call(this);
-          }
-        })
-        .catch(() => {
-          while (failStateHandlers.length) {
-            failStateHandlers.pop().call(this);
-          }
-        });
     } else if (this.previousFormValues && this.form.errors && this.form.errors.requireAtLeastOneWithValue) {
       // reset invalid form value
       setTimeout(() => this.form.patchValue(this.previousFormValues), 1000);
     }
   }
 
+  private checkUpdateStatus(formControl: string, updatePromise: Promise<any>): void {
+    this.controlStates.set(formControl, ElementState.Submitting);
+    updatePromise
+      .then(() => this.controlStates.set(formControl, ElementState.Submitted))
+      .catch(() => this.controlStates.set(formControl, ElementState.Error));
+  }
+
   private updateSettingsInfo() {
     this.previousFormValues = {
-      translate: this.project.translateEnabled,
-      sourceParatextId: this.project.sourceParatextId,
-      checking: this.project.checkingEnabled,
-      seeOthersResponses: this.project.usersSeeEachOthersResponses,
-      share: this.project.shareEnabled,
-      shareLevel: this.project.shareLevel
+      translate: this.projectDoc.data.translateEnabled,
+      sourceParatextId: this.projectDoc.data.sourceParatextId,
+      checking: this.projectDoc.data.checkingEnabled,
+      seeOthersResponses: this.projectDoc.data.usersSeeEachOthersResponses,
+      share: this.projectDoc.data.shareEnabled,
+      shareLevel: this.projectDoc.data.shareLevel
     };
     this.setValidators();
     this.form.reset(this.previousFormValues);
     if (!this.isLoggedInToParatext) {
       this.form.controls.translate.disable();
     }
-    if (!this.project.shareEnabled) {
+    if (!this.projectDoc.data.shareEnabled) {
       this.form.controls.shareLevel.disable();
     }
     this.setAllControlsToInSync();
   }
 
   private setValidators() {
-    this.project.translateEnabled && this.isLoggedInToParatext
+    this.projectDoc.data.translateEnabled && this.isLoggedInToParatext
       ? this.form.controls.sourceParatextId.setValidators(Validators.required)
       : this.form.controls.sourceParatextId.setValidators(null);
   }
@@ -284,12 +290,5 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     this.controlStates.set('seeOthersResponses', ElementState.InSync);
     this.controlStates.set('share', ElementState.InSync);
     this.controlStates.set('shareLevel', ElementState.InSync);
-  }
-
-  // Update the controlStates for handling submitting a settings change (used to show spinner and success checkmark)
-  private updateControlState(formControl: string, successHandlers: VoidFunc[], failureHandlers: VoidFunc[]) {
-    this.controlStates.set(formControl, ElementState.Submitting);
-    successHandlers.push(() => this.controlStates.set(formControl, ElementState.Submitted));
-    failureHandlers.push(() => this.controlStates.set(formControl, ElementState.Error));
   }
 }

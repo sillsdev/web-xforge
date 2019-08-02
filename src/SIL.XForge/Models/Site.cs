@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace SIL.XForge.Models
@@ -8,5 +9,6 @@ namespace SIL.XForge.Models
     {
         public string CurrentProjectId { get; set; }
         public DateTime? LastLogin { get; set; }
+        public List<string> Projects { get; set; } = new List<string>();
     }
 }

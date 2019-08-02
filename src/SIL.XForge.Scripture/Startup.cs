@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using JsonApiDotNetCore.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -77,10 +76,8 @@ namespace SIL.XForge.Scripture
 
             services.AddSFDataAccess(Configuration);
 
-            IMvcBuilder mvcBuilder = services.AddMvc()
+            services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-
-            services.AddSFJsonApi(mvcBuilder, containerBuilder, Configuration);
 
             services.AddXFJsonRpc();
 
@@ -135,8 +132,6 @@ namespace SIL.XForge.Scripture
                 app.UseSpaStaticFiles();
 
             app.UseAuthentication();
-
-            app.UseJsonApi();
 
             app.UseXFJsonRpc();
 

@@ -1,22 +1,43 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using SIL.Machine.WebApi.Models;
 using SIL.Machine.WebApi.Services;
-using SIL.XForge.DataAccess;
+using SIL.XForge.Models;
+using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 
 public class SFBuildHandler : BuildHandler
 {
-    private readonly IRepository<SFProjectEntity> _projects;
+    private readonly IRealtimeService _realtimeService;
 
-    public SFBuildHandler(IRepository<SFProjectEntity> projects)
+    public SFBuildHandler(IRealtimeService realtimeService)
     {
-        _projects = projects;
+        _realtimeService = realtimeService;
     }
 
-    public override Task OnCompleted(BuildContext context)
+    public override async Task OnCompleted(BuildContext context)
     {
-        return _projects.UpdateAsync(context.Engine.Projects.First(), u => u
-            .Unset(p => ((SFProjectUserEntity)p.Users[ArrayPosition.All]).SelectedSegmentChecksum));
+        using (IConnection conn = await _realtimeService.ConnectAsync())
+        {
+            IDocument<SFProject> project = conn.Get<SFProject>(RootDataTypes.Projects, context.Engine.Projects.First());
+            await project.FetchAsync();
+            if (!project.IsLoaded)
+                return;
+
+            var tasks = new List<Task>();
+            foreach (string userId in project.Data.UserRoles.Keys)
+                tasks.Add(ClearSelectedSegmentChecksum(conn, project.Id, userId));
+            await Task.WhenAll(tasks);
+        }
+    }
+
+    private async Task ClearSelectedSegmentChecksum(IConnection conn, string projectId, string userId)
+    {
+        IDocument<SFProjectUserConfig> config = conn.Get<SFProjectUserConfig>(SFRootDataTypes.ProjectUserConfigs,
+            SFProjectUserConfig.GetDocId(projectId, userId));
+        await config.FetchAsync();
+        await config.SubmitJson0OpAsync(op => op.Unset(puc => puc.SelectedSegmentChecksum));
     }
 }

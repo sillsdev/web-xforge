@@ -2,23 +2,18 @@ import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testi
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import * as OTJson0 from 'ot-json0';
-import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-import { MapQueryResults } from 'xforge-common/json-api.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectRef } from '../core/models/sfproject';
-import { SFProjectUser } from '../core/models/sfproject-user';
 import { StartComponent } from './start.component';
 
 describe('StartComponent', () => {
   it('navigate to last project', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setCurrentProjectId('project02');
-    env.setProjectData();
+    env.setCurrentUserProjectData('project02');
     env.fixture.detectChanges();
     flush();
 
@@ -28,8 +23,7 @@ describe('StartComponent', () => {
 
   it('navigate to first project when no last project set', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setCurrentProjectId();
-    env.setProjectData();
+    env.setCurrentUserProjectData();
     env.fixture.detectChanges();
     flush();
 
@@ -39,8 +33,7 @@ describe('StartComponent', () => {
 
   it('do not navigate when there are no projects', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setCurrentProjectId();
-    env.setNoProjectData();
+    env.setCurrentUserProjectData(undefined, []);
     env.fixture.detectChanges();
     flush();
 
@@ -72,34 +65,13 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
   }
 
-  setCurrentProjectId(projectId?: string): void {
+  setCurrentUserProjectData(projectId?: string, projects: string[] = ['project01', 'project02']): void {
     const currentUserDoc = new UserDoc(
-      new MemoryRealtimeDocAdapter(OTJson0.type, 'user01', {
-        sites: { sf: { currentProjectId: projectId == null ? undefined : projectId } }
+      new MemoryRealtimeDocAdapter('user01', OTJson0.type, {
+        sites: { sf: { currentProjectId: projectId == null ? undefined : projectId, projects } }
       }),
       instance(this.mockedRealtimeOfflineStore)
     );
     when(this.mockedUserService.getCurrentUser()).thenResolve(currentUserDoc);
-  }
-
-  setProjectData(): void {
-    when(this.mockedUserService.getProjects('user01')).thenReturn(
-      of(
-        new MapQueryResults([
-          new SFProjectUser({
-            id: 'projectuser01',
-            project: new SFProjectRef('project01')
-          }),
-          new SFProjectUser({
-            id: 'projectuser02',
-            project: new SFProjectRef('project02')
-          })
-        ])
-      )
-    );
-  }
-
-  setNoProjectData(): void {
-    when(this.mockedUserService.getProjects('user01')).thenReturn(of(new MapQueryResults<SFProjectUser[]>([])));
   }
 }

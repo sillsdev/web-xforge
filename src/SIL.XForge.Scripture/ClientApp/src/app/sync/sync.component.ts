@@ -1,13 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { distanceInWordsToNow } from 'date-fns';
-import { Subscription } from 'rxjs';
-import { filter, map, switchMap, tap, withLatestFrom } from 'rxjs/operators';
+import { combineLatest, Subscription } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { SFProject } from '../core/models/sfproject';
-import { SFProjectDataDoc } from '../core/models/sfproject-data-doc';
+import { SFProjectDoc } from '../core/models/sfproject-doc';
 import { SFProjectService } from '../core/sfproject.service';
 
 @Component({
@@ -18,8 +17,7 @@ import { SFProjectService } from '../core/sfproject.service';
 export class SyncComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
   syncActive: boolean = false;
 
-  private project: SFProject;
-  private projectDataDoc: SFProjectDataDoc;
+  private projectDoc: SFProjectDoc;
   private paratextUsername: string;
   private projectDataSub: Subscription;
 
@@ -41,7 +39,7 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit, OnD
   }
 
   get percentComplete(): number {
-    return this.projectDataDoc == null ? undefined : this.projectDataDoc.data.sync.percentCompleted;
+    return this.projectDoc == null ? undefined : this.projectDoc.data.sync.percentCompleted;
   }
 
   get isProgressDeterminate(): boolean {
@@ -49,10 +47,10 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit, OnD
   }
 
   get lastSyncNotice(): string {
-    if (this.projectDataDoc == null) {
+    if (this.projectDoc == null) {
       return '';
     }
-    const dateLastSynced = this.projectDataDoc.data.sync.dateLastSuccessfulSync;
+    const dateLastSynced = this.projectDoc.data.sync.dateLastSuccessfulSync;
     if (dateLastSynced == null || dateLastSynced === '' || Date.parse(dateLastSynced) <= 0) {
       return 'Never been synced';
     } else {
@@ -61,38 +59,35 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit, OnD
   }
 
   get lastSyncDate() {
-    if (this.projectDataDoc == null) {
+    if (this.projectDoc == null) {
       return '';
     }
-    const date = new Date(this.projectDataDoc.data.sync.dateLastSuccessfulSync);
+    const date = new Date(this.projectDoc.data.sync.dateLastSuccessfulSync);
     return date.toLocaleString();
   }
 
   get projectName(): string {
-    return this.project == null ? '' : this.project.projectName;
+    return this.projectDoc == null ? '' : this.projectDoc.data.projectName;
   }
 
   ngOnInit() {
+    const projectId$ = this.route.params.pipe(
+      tap(() => this.noticeService.loadingStarted()),
+      map(params => params['projectId'] as string)
+    );
+
     this.subscribe(
-      this.route.params.pipe(
-        tap(() => this.noticeService.loadingStarted()),
-        map(params => params['projectId']),
-        switchMap(projectId => this.projectService.onlineGet(projectId)),
-        map(results => results.data),
-        filter(project => project != null),
-        withLatestFrom(this.paratextService.getParatextUsername())
-      ),
-      async ([project, paratextUsername]) => {
-        this.project = project;
+      combineLatest(projectId$, this.paratextService.getParatextUsername()),
+      async ([projectId, paratextUsername]) => {
+        this.projectDoc = await this.projectService.get(projectId);
         if (paratextUsername != null) {
           this.paratextUsername = paratextUsername;
         }
-        this.projectDataDoc = await this.projectService.getDataDoc(this.project.id);
         this.checkSyncStatus();
         if (this.projectDataSub != null) {
           this.projectDataSub.unsubscribe();
         }
-        this.projectDataSub = this.projectDataDoc.remoteChanges().subscribe(() => this.checkSyncStatus());
+        this.projectDataSub = this.projectDoc.remoteChanges$.subscribe(() => this.checkSyncStatus());
         this.noticeService.loadingFinished();
       }
     );
@@ -107,21 +102,21 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit, OnD
   }
 
   logInWithParatext(): void {
-    const url = '/projects/' + this.project.id + '/sync';
+    const url = '/projects/' + this.projectDoc.id + '/sync';
     this.paratextService.linkParatext(url);
   }
 
   syncProject(): Promise<void> {
     this.syncActive = true;
-    return this.projectService.sync(this.project.id);
+    return this.projectService.sync(this.projectDoc.id);
   }
 
   private checkSyncStatus(): void {
-    if (this.projectDataDoc.data.sync.queuedCount > 0) {
+    if (this.projectDoc.data.sync.queuedCount > 0) {
       this.syncActive = true;
     } else if (this.syncActive) {
       this.syncActive = false;
-      if (this.projectDataDoc.data.sync.lastSyncSuccessful) {
+      if (this.projectDoc.data.sync.lastSyncSuccessful) {
         this.noticeService.show(`Successfully synchronized ${this.projectName} with Paratext.`);
       } else {
         this.noticeService.show(

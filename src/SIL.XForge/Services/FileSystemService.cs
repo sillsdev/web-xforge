@@ -35,6 +35,11 @@ namespace SIL.XForge.Services
             return Directory.Exists(path);
         }
 
+        public void DeleteDirectory(string path)
+        {
+            Directory.Delete(path, true);
+        }
+
         public IEnumerable<string> EnumerateFiles(string path)
         {
             return Directory.EnumerateFiles(path);
