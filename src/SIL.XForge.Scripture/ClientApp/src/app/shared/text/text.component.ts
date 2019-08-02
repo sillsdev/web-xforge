@@ -258,7 +258,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (this._editor != null) {
       const container = this._editor.container as HTMLElement;
       for (const style in this.editorStyles) {
-        if (container.style.hasOwnProperty(style)) {
+        if (style in container.style) {
           container.style[style] = this.editorStyles[style];
         }
       }

@@ -10,9 +10,11 @@
     @include mdc-icon-button-size(24px, 24px, 8px);
   }
   #font-menu-surface {
-    display: flex;
     right: unset !important;
     left: -50%;
     overflow: hidden;
+    .buttons-group {
+      display: flex;
+    }
   }
 }
