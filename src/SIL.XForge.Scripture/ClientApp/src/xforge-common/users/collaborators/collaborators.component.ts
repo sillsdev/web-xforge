@@ -51,7 +51,10 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
 
   get isLinkSharingEnabled(): boolean {
     return (
-      this.projectDoc && this.projectDoc.data.shareEnabled && this.projectDoc.data.shareLevel === SharingLevel.Anyone
+      this.projectDoc &&
+      this.projectDoc.data &&
+      this.projectDoc.data.shareEnabled &&
+      this.projectDoc.data.shareLevel === SharingLevel.Anyone
     );
   }
 
@@ -138,6 +141,10 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
   }
 
   private async loadUsers(): Promise<void> {
+    if (this.projectDoc == null || this.projectDoc.data == null || this.projectDoc.data.userRoles == null) {
+      return;
+    }
+
     const users = Object.keys(this.projectDoc.data.userRoles);
     const userRows: Row[] = new Array(users.length);
     const tasks: Promise<any>[] = [];

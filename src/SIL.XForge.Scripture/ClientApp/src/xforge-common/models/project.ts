@@ -6,5 +6,5 @@ export interface Project {
   inputSystem?: InputSystem;
   shareEnabled?: boolean;
   shareLevel?: SharingLevel;
-  userRoles?: { [key: string]: string };
+  userRoles?: { [userRef: string]: string };
 }

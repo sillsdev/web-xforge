@@ -141,6 +141,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
   get isProjectAdmin(): boolean {
     return (
       this.projectDoc != null &&
+      this.projectDoc.data != null &&
       this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRoles.ParatextAdministrator
     );
   }
@@ -149,6 +150,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
       this.isLoading = true;
       this.noticeService.loadingStarted();
+      this.projectId = projectId;
       try {
         this.projectDoc = await this.projectService.get(projectId);
         this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
@@ -388,6 +390,10 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
   }
 
   private async initTexts(): Promise<void> {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
+      return;
+    }
+
     this.textsByBook = {};
     this.texts = [];
     for (const text of this.projectDoc.data.texts) {

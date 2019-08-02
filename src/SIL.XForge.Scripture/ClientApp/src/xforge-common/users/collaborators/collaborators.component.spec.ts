@@ -4,21 +4,18 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import * as OTJson0 from 'ot-json0';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { LocationService } from 'xforge-common/location.service';
+import { ProjectDoc } from 'xforge-common/models/project-doc';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { ShareControlComponent } from 'xforge-common/share/share-control.component';
 import { MockAvatarModule } from '../../avatar/mock-avatar.module';
-import { MapQueryResults } from '../../json-api.service';
-import { Project, ProjectRef } from '../../models/project';
+import { Project } from '../../models/project';
 import { NONE_ROLE, ProjectRole } from '../../models/project-role';
-import { ProjectUser, ProjectUserRef } from '../../models/project-user';
-import { Resource } from '../../models/resource';
 import { User } from '../../models/user';
 import { UserProfileDoc } from '../../models/user-profile-doc';
 import { NoticeService } from '../../notice.service';
-import { ProjectUserService } from '../../project-user.service';
 import { ProjectService } from '../../project.service';
 import { MemoryRealtimeDocAdapter } from '../../realtime-doc-adapter';
 import { UICommonModule } from '../../ui-common.module';
@@ -38,7 +35,7 @@ describe('CollaboratorsComponent', () => {
 
   it('should display message when there are no users', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupEmptyProjectData();
+    env.setupProjectDataWithNoUsers();
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
@@ -72,7 +69,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
   }));
 
-  it('should delete user', fakeAsync(() => {
+  it('should remove user from project', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
@@ -80,7 +77,7 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
 
     env.clickElement(env.removeUserButtonOnRow(1));
-    verify(env.mockedProjectUserService.onlineDelete(anything())).once();
+    verify(env.mockedProjectService.onlineRemoveUser(anything(), anything())).once();
 
     expect().nothing();
   }));
@@ -112,14 +109,11 @@ describe('CollaboratorsComponent', () => {
   }));
 });
 
-class TestProject extends Project {
+class TestProjectDoc extends ProjectDoc {
   get taskNames(): string[] {
     return [];
   }
 }
-class TestProjectUser extends ProjectUser {}
-class TestProjectUserRef extends ProjectUserRef {}
-class TestProjectRef extends ProjectRef {}
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<CollaboratorsComponent>;
@@ -129,46 +123,8 @@ class TestEnvironment {
   readonly mockedLocationService = mock(LocationService);
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedProjectService = mock(ProjectService);
-  readonly mockedProjectUserService = mock(ProjectUserService);
   readonly mockedUserService = mock(UserService);
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
-
-  private readonly included: Resource[] = [
-    new TestProjectUser({
-      id: 'projectuser01',
-      role: 'admin',
-      userRef: 'user01',
-      project: new TestProjectRef('project01')
-    }),
-    new TestProjectUser({
-      id: 'projectuser02',
-      role: 'user',
-      userRef: 'user02',
-      project: new TestProjectRef('project01')
-    }),
-    new TestProjectUser({
-      id: 'projectuser03',
-      role: 'user',
-      userRef: 'user03',
-      project: new TestProjectRef('project01')
-    }),
-    new TestProject({ id: 'project01', projectName: 'Project 01' })
-  ];
-  private readonly project$: BehaviorSubject<MapQueryResults<Project>> = new BehaviorSubject<MapQueryResults<Project>>(
-    new MapQueryResults(
-      new TestProject({
-        id: 'project01',
-        projectName: 'Project 01',
-        users: [
-          new TestProjectUserRef('projectuser01'),
-          new TestProjectUserRef('projectuser02'),
-          new TestProjectUserRef('projectuser03')
-        ]
-      }),
-      1,
-      this.included
-    )
-  );
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
@@ -179,7 +135,6 @@ class TestEnvironment {
         [NONE_ROLE.role, NONE_ROLE]
       ])
     );
-    when(this.mockedProjectService.get('project01')).thenReturn(this.project$);
     when(this.mockedProjectService.onlineInvite('project01', anything())).thenResolve();
     when(this.mockedNoticeService.show(anything())).thenResolve();
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
@@ -194,7 +149,6 @@ class TestEnvironment {
         { provide: LocationService, useFactory: () => instance(this.mockedLocationService) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
         { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
-        { provide: ProjectUserService, useFactory: () => instance(this.mockedProjectUserService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) }
       ]
     });
@@ -279,21 +233,24 @@ class TestEnvironment {
   }
 
   setupProjectData(): void {
-    when(this.mockedProjectService.get(anything(), anything())).thenReturn(this.project$);
+    const project: Project = {
+      projectName: 'Project 01',
+      userRoles: {
+        user01: 'admin',
+        user02: 'user',
+        user03: 'user'
+      }
+    };
+
+    this.setupThisProjectData('project01', project);
   }
 
   setupNullProjectData(): void {
-    this.setupThisProjectData(null);
+    this.setupThisProjectData('project01', null);
   }
 
-  setupEmptyProjectData(): void {
-    this.setupThisProjectData(
-      new TestProject({
-        id: 'project01',
-        projectName: 'Project 01',
-        users: []
-      })
-    );
+  setupProjectDataWithNoUsers(): void {
+    this.setupThisProjectData('project01', { projectName: 'Project 01', userRoles: {} });
   }
 
   private addUserProfile(id: string, user: User): void {
@@ -305,9 +262,11 @@ class TestEnvironment {
     );
   }
 
-  private setupThisProjectData(project: Project): void {
-    when(this.mockedProjectService.get(anything(), anything())).thenReturn(
-      of(new MapQueryResults<Project>(project, 0, this.included))
+  private setupThisProjectData(projectId: string, project: Project): void {
+    const projectDoc = new TestProjectDoc(
+      new MemoryRealtimeDocAdapter(OTJson0.type, projectId, project),
+      instance(this.mockedRealtimeOfflineStore)
     );
+    when(this.mockedProjectService.get(projectId)).thenResolve(projectDoc);
   }
 }

@@ -4,13 +4,14 @@ import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
-import { BehaviorSubject } from 'rxjs';
+import * as OTJson0 from 'ot-json0';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
-import { MapQueryResults } from 'xforge-common/json-api.service';
 import { DomainModel } from 'xforge-common/models/domain-model';
-import { Project } from 'xforge-common/models/project';
+import { ProjectDoc } from 'xforge-common/models/project-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ProjectService } from 'xforge-common/project.service';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
+import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ShareControlComponent } from './share-control.component';
 
@@ -91,11 +92,7 @@ describe('ShareControlComponent', () => {
   })
   class TestModule {}
 
-  class TestProject extends Project {
-    constructor(init?: Partial<Project>) {
-      super(init);
-    }
-
+  class TestProjectDoc extends ProjectDoc {
     get taskNames(): string[] {
       return [];
     }
@@ -112,21 +109,12 @@ describe('ShareControlComponent', () => {
   }
 
   class TestEnvironment {
-    fixture: ComponentFixture<TestHostComponent>;
-    component: ShareControlComponent;
+    readonly fixture: ComponentFixture<TestHostComponent>;
+    readonly component: ShareControlComponent;
 
-    mockedProjectService = mock(ProjectService);
-    mockedNoticeService = mock(NoticeService);
-
-    private readonly project$: BehaviorSubject<MapQueryResults<Project>> = new BehaviorSubject<
-      MapQueryResults<Project>
-    >(
-      new MapQueryResults(
-        new TestProject({
-          id: 'project01'
-        })
-      )
-    );
+    readonly mockedProjectService = mock(ProjectService);
+    readonly mockedNoticeService = mock(NoticeService);
+    readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
     constructor(isLinkSharingEnabled?: boolean, projectId?: string) {
       TestBed.configureTestingModule({
@@ -146,8 +134,11 @@ describe('ShareControlComponent', () => {
       this.fixture.componentInstance.isLinkSharingEnabled =
         isLinkSharingEnabled === undefined ? false : isLinkSharingEnabled;
 
-      when(this.mockedProjectService.get(anything())).thenReturn(this.project$);
-      when(this.mockedProjectService.get(anything(), anything())).thenReturn(this.project$);
+      const projectDoc = new TestProjectDoc(
+        new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', {}),
+        instance(this.mockedRealtimeOfflineStore)
+      );
+      when(this.mockedProjectService.get(anything())).thenResolve(projectDoc);
       when(this.mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com')).thenResolve(null);
       when(this.mockedProjectService.onlineInvite(anything(), 'already-project-member@example.com')).thenResolve(
         this.component.alreadyProjectMemberResponse

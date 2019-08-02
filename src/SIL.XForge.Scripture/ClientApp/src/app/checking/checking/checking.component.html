@@ -137,7 +137,7 @@
             class="next-question"
             icon="chevron_right"
           ></button>
-          <a [routerLink]="['/projects', projectId, 'checking']" id="project-summary">
+          <a [routerLink]="['/projects', projectDoc?.id, 'checking']" id="project-summary">
             <canvas
               baseChart
               width="36"

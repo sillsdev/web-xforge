@@ -72,7 +72,6 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   answersPanelContainerElement: ElementRef;
   projectDoc: SFProjectDoc;
   projectUserConfigDoc: SFProjectUserConfigDoc;
-  projectId: string;
   text: TextInfo;
   textDocId: TextDocId;
 

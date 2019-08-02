@@ -116,6 +116,8 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     this.subscribe(
       combineLatest(projectId$, this.paratextService.getProjects()),
       async ([projectId, paratextProjects]) => {
+        this.noticeService.loadingStarted();
+        this.form.enable();
         this.paratextProjects = paratextProjects;
         if (paratextProjects != null) {
           this.sourceProjects = paratextProjects.filter(p => p.projectId !== projectId);
@@ -126,7 +128,6 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
         }
         this.isFirstLoad = false;
         this.noticeService.loadingFinished();
-        this.form.enable();
       }
     );
   }
@@ -160,6 +161,10 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
   }
 
   private onFormValueChanges(newValue: Settings): void {
+    if (this.projectDoc == null) {
+      return;
+    }
+
     if (this.form.valid || this.isOnlyBasedOnInvalid) {
       const updatedProject: Partial<SFProject> = {};
       // Set status and include values for changed form items
@@ -189,8 +194,12 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
           if (this.previousFormValues.sourceParatextId == null) {
             parameters.translateEnabled = true;
           }
+          const updateTaskPromise = this.projectService.updateTasks(this.projectDoc.id, parameters);
+          this.checkUpdateStatus('sourceParatextId', updateTaskPromise);
+          if (this.previousFormValues.sourceParatextId == null) {
+            this.checkUpdateStatus('translate', updateTaskPromise);
+          }
           this.previousFormValues = newValue;
-          this.checkUpdateStatus('sourceParatextId', this.projectService.updateTasks(this.projectDoc.id, parameters));
         }
       }
       if (newValue.checking !== this.projectDoc.data.checkingEnabled) {

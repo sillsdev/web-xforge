@@ -7,13 +7,13 @@ import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
 import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
-import { SFProjectData } from 'src/app/core/models/sfproject-data';
-import { SFProjectDataDoc } from 'src/app/core/models/sfproject-doc';
 import { deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFProject } from '../../core/models/sfproject';
+import { SFProjectDoc } from '../../core/models/sfproject-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectService } from '../../core/sfproject.service';
@@ -150,7 +150,7 @@ class TestEnvironment {
   }
 
   setupProjectData(): void {
-    const projectData: SFProjectData = {
+    const project: SFProject = {
       texts: [
         { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
         { bookId: 'MRK', name: 'Mark', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
@@ -158,9 +158,9 @@ class TestEnvironment {
         { bookId: 'JHN', name: 'John', chapters: [{ number: 1 }, { number: 2 }], hasSource: false }
       ]
     };
-    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', projectData);
-    const doc = new SFProjectDataDoc(adapter, instance(this.mockedRealtimeOfflineStore));
-    when(this.mockedSFProjectService.getDataDoc('project01')).thenResolve(doc);
+    const adapter = new MemoryRealtimeDocAdapter(OTJson0.type, 'project01', project);
+    const doc = new SFProjectDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    when(this.mockedSFProjectService.get('project01')).thenResolve(doc);
 
     this.addTextDoc(new TextDocId('project01', 'MAT', 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 'MAT', 2, 'target'));
