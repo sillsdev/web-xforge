@@ -673,7 +673,7 @@ class TestEnvironment {
       scriptureEnd: { book: 'JHN', chapter: '2', verse: '2', versification: 'English' },
       answers: []
     });
-    // An archived questions (which must not appear in the list of questions)
+    // An archived question (which must not appear in the list of questions)
     questionData2.push({
       id: 'q16Id',
       ownerRef: undefined,

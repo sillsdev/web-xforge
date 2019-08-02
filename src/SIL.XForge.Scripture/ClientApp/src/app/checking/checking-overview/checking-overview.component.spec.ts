@@ -484,7 +484,6 @@ class TestEnvironment {
       {
         id: 'c1Id',
         ownerRef: currentUserId,
-        projectRef: projectId,
         dateCreated: '',
         dateModified: '',
         answerRef: 'a1Id'
@@ -492,7 +491,6 @@ class TestEnvironment {
       {
         id: 'c2Id',
         ownerRef: currentUserId,
-        projectRef: projectId,
         dateCreated: '',
         dateModified: '',
         answerRef: 'a2Id'
@@ -500,7 +498,6 @@ class TestEnvironment {
       {
         id: 'c3Id',
         ownerRef: anotherUserId,
-        projectRef: projectId,
         dateCreated: '',
         dateModified: '',
         answerRef: 'a3Id'
