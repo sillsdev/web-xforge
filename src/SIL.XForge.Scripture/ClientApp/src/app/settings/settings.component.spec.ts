@@ -1,9 +1,10 @@
 import { OverlayContainer } from '@angular-mdc/web';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { DebugElement, NgModule, NO_ERRORS_SCHEMA } from '@angular/core';
+import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import * as OTJson0 from 'ot-json0';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -17,7 +18,7 @@ import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { SFProject } from '../core/models/sfproject';
 import { SFProjectDoc } from '../core/models/sfproject-doc';
 import { SFProjectService } from '../core/sfproject.service';
@@ -386,8 +387,8 @@ class TestEnvironment {
     );
     when(this.mockedUserService.getCurrentUser()).thenResolve(this.currentUserDoc);
     TestBed.configureTestingModule({
-      imports: [DialogTestModule, HttpClientTestingModule, UICommonModule, XForgeCommonModule],
-      declarations: [SettingsComponent],
+      imports: [DialogTestModule, HttpClientTestingModule, RouterTestingModule, UICommonModule],
+      declarations: [SettingsComponent, WriteStatusComponent],
       providers: [
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
@@ -395,10 +396,7 @@ class TestEnvironment {
         { provide: ParatextService, useFactory: () => instance(this.mockedParatextService) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) }
-      ],
-      // The RouterTestingModule is needed to test routerLink in the html, but this is causing an
-      // error with RouterLinkWithHref, so this allows us to skip using the RouterTestingModule.
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     });
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;

@@ -10,7 +10,7 @@ import { LocationService } from 'xforge-common/location.service';
 import { ProjectDoc } from 'xforge-common/models/project-doc';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { ShareControlComponent } from 'xforge-common/share/share-control.component';
-import { MockAvatarModule } from '../../avatar/mock-avatar.module';
+import { AvatarTestingModule } from '../../avatar/avatar-testing.module';
 import { Project } from '../../models/project';
 import { NONE_ROLE, ProjectRole } from '../../models/project-role';
 import { User } from '../../models/user';
@@ -143,7 +143,7 @@ class TestEnvironment {
     this.addUserProfile('user03', { name: 'User 03' });
     TestBed.configureTestingModule({
       declarations: [CollaboratorsComponent, ShareControlComponent],
-      imports: [NoopAnimationsModule, MockAvatarModule, UICommonModule],
+      imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
       providers: [
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
         { provide: LocationService, useFactory: () => instance(this.mockedLocationService) },

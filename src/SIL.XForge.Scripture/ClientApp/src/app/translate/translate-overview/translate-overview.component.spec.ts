@@ -1,8 +1,9 @@
 import { MdcLinearProgress } from '@angular-mdc/web';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
 import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
@@ -95,13 +96,12 @@ class TestEnvironment {
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     TestBed.configureTestingModule({
       declarations: [TranslateOverviewComponent],
-      imports: [UICommonModule],
+      imports: [RouterTestingModule, UICommonModule],
       providers: [
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
-      ],
-      schemas: [NO_ERRORS_SCHEMA]
+      ]
     });
 
     this.fixture = TestBed.createComponent(TranslateOverviewComponent);
