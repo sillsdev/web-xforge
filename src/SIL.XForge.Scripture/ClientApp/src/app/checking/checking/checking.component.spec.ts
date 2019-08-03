@@ -1,21 +1,29 @@
 import { MdcDialogRef } from '@angular-mdc/web';
-import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
+import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
 import { SharingLevel } from 'xforge-common/models/sharing-level';
 import { User } from 'xforge-common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
+import { ProjectService } from 'xforge-common/project.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
+import { ShareControlComponent } from 'xforge-common/share/share-control.component';
+import { ShareDialogComponent } from 'xforge-common/share/share-dialog.component';
+import { ShareComponent } from 'xforge-common/share/share.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { Comment } from '../../core/models/comment';
@@ -35,6 +43,9 @@ import { CheckingAnswersComponent } from './checking-answers/checking-answers.co
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingOwnerComponent } from './checking-answers/checking-owner/checking-owner.component';
+import { CheckingAudioCombinedComponent } from './checking-audio-combined/checking-audio-combined.component';
+import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
+import { CheckingAudioRecorderComponent } from './checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
 import { CheckingComponent } from './checking.component';
@@ -388,11 +399,12 @@ class TestEnvironment {
   fixture: ComponentFixture<CheckingComponent>;
   questionReadTimer: number = 2000;
 
-  mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent>;
-  mockedAccountService: AccountService;
-  mockedRealtimeOfflineStore: RealtimeOfflineStore;
-  mockedUserService: UserService;
-  mockedProjectService: SFProjectService;
+  readonly mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent> = mock(MdcDialogRef);
+  readonly mockedAccountService = mock(AccountService);
+  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+  readonly mockedUserService = mock(UserService);
+  readonly mockedProjectService = mock(SFProjectService);
+
   adminUser = this.createUser('01', SFProjectRoles.ParatextAdministrator);
   reviewerUser = this.createUser('02', SFProjectRoles.Reviewer);
   cleanReviewUser = this.createUser('03', SFProjectRoles.Reviewer, false);
@@ -440,25 +452,33 @@ class TestEnvironment {
   };
 
   constructor() {
-    this.mockedCheckingNameDialogRef = mock(MdcDialogRef);
-    this.mockedAccountService = mock(AccountService);
-    this.mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
-    this.mockedUserService = mock(UserService);
-    this.mockedProjectService = mock(SFProjectService);
-
     TestBed.configureTestingModule({
       declarations: [
+        AudioTimePipe,
         CheckingAnswersComponent,
+        CheckingAudioCombinedComponent,
+        CheckingAudioPlayerComponent,
+        CheckingAudioRecorderComponent,
         CheckingCommentFormComponent,
         CheckingCommentsComponent,
         CheckingComponent,
         CheckingOwnerComponent,
         CheckingQuestionsComponent,
         CheckingTextComponent,
-        FontSizeComponent
+        FontSizeComponent,
+        ShareComponent,
+        ShareControlComponent,
+        ShareDialogComponent
       ],
-      schemas: [NO_ERRORS_SCHEMA],
-      imports: [UICommonModule, AngularSplitModule.forRoot(), SharedModule],
+      imports: [
+        AngularSplitModule.forRoot(),
+        ngfModule,
+        NoopAnimationsModule,
+        RouterTestingModule,
+        AvatarTestingModule,
+        SharedModule,
+        UICommonModule
+      ],
       providers: [
         {
           provide: ActivatedRoute,
@@ -466,6 +486,7 @@ class TestEnvironment {
         },
         { provide: AccountService, useFactory: () => instance(this.mockedAccountService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
+        { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
       ]
     });

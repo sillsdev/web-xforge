@@ -1,7 +1,6 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-
 import { ngfModule } from 'angular-file';
 import * as OTJson0 from 'ot-json0';
 import { instance, mock, when } from 'ts-mockito';

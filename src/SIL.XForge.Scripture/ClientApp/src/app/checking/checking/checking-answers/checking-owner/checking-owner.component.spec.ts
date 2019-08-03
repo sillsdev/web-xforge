@@ -4,12 +4,12 @@ import { By } from '@angular/platform-browser';
 import { AvatarService } from 'ngx-avatar';
 import * as OTJson0 from 'ot-json0';
 import { instance, mock, when } from 'ts-mockito';
+import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { CheckingOwnerComponent } from './checking-owner.component';
 
 describe('CheckingOwnerComponent', () => {
@@ -88,7 +88,7 @@ class TestEnvironment {
     );
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingOwnerComponent],
-      imports: [UICommonModule, XForgeCommonModule],
+      imports: [AvatarTestingModule, UICommonModule],
       providers: [
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) }

@@ -1,6 +1,6 @@
 import { MdcDialogRef, MdcList, OverlayContainer } from '@angular-mdc/web';
 import { CommonModule, Location } from '@angular/common';
-import { Component, CUSTOM_ELEMENTS_SCHEMA, DebugElement, NgModule } from '@angular/core';
+import { Component, DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
@@ -10,6 +10,7 @@ import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { LocationService } from 'xforge-common/location.service';
 import { User } from 'xforge-common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -195,7 +196,7 @@ const ROUTES: Route[] = [
 ];
 
 @NgModule({
-  imports: [UICommonModule, CommonModule],
+  imports: [CommonModule, UICommonModule],
   declarations: [ProjectDeletedDialogComponent],
   entryComponents: [ProjectDeletedDialogComponent],
   exports: [ProjectDeletedDialogComponent]
@@ -278,8 +279,7 @@ class TestEnvironment {
 
     TestBed.configureTestingModule({
       declarations: [AppComponent, MockComponent],
-      imports: [UICommonModule, DialogTestModule, RouterTestingModule.withRoutes(ROUTES)],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA],
+      imports: [AvatarTestingModule, DialogTestModule, UICommonModule, RouterTestingModule.withRoutes(ROUTES)],
       providers: [
         { provide: AccountService, useFactory: () => instance(this.mockedAccountService) },
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
@@ -370,7 +370,9 @@ class TestEnvironment {
   }
 
   selectProject(projectId: string): void {
-    this.component.projectSelect.setSelectionByValue(projectId);
+    this.fixture.ngZone.run(() => {
+      this.component.projectSelect.setSelectionByValue(projectId);
+    });
     this.wait();
   }
 
@@ -385,7 +387,9 @@ class TestEnvironment {
     if (isLocal) {
       this.currentUserDoc.data.sites.sf.currentProjectId = null;
     }
-    this.project01DocAdapter.delete();
+    this.fixture.ngZone.run(() => {
+      this.project01DocAdapter.delete();
+    });
     this.wait();
   }
 

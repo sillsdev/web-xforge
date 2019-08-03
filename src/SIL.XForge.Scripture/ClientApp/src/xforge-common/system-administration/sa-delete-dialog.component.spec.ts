@@ -1,16 +1,9 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { CommonModule } from '@angular/common';
-import {
-  Component,
-  CUSTOM_ELEMENTS_SCHEMA,
-  DebugElement,
-  Directive,
-  NgModule,
-  ViewChild,
-  ViewContainerRef
-} from '@angular/core';
+import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { AvatarTestingModule } from '../avatar/avatar-testing.module';
 import { UICommonModule } from '../ui-common.module';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
 
@@ -52,8 +45,7 @@ class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [CommonModule, UICommonModule],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  imports: [AvatarTestingModule, CommonModule, UICommonModule],
   declarations: [ViewContainerDirective, ChildViewContainerComponent, SaDeleteDialogComponent],
   exports: [ViewContainerDirective, ChildViewContainerComponent, SaDeleteDialogComponent],
   entryComponents: [ChildViewContainerComponent, SaDeleteDialogComponent]
