@@ -1,5 +1,5 @@
 import { ErrorStateMatcher, MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import cloneDeep from 'lodash/cloneDeep';
 import { AccountService } from 'xforge-common/account.service';
@@ -20,6 +20,7 @@ import {
   ScriptureChooserDialogData
 } from '../../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { SFValidators } from '../../../shared/sfvalidators';
+import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
@@ -56,6 +57,7 @@ export class CheckingAnswersComponent implements OnInit {
     return refData;
   }
 
+  @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent: CheckingAudioCombinedComponent;
   @Input() project: SFProject;
   @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
   @Input() projectText: TextInfo;
@@ -312,7 +314,10 @@ export class CheckingAnswersComponent implements OnInit {
     });
   }
 
-  submit(): void {
+  async submit() {
+    if (this.audio.status === 'recording') {
+      await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
+    }
     this.setValidationRules();
     this.answerFormSubmitAttempted = true;
     if (this.answerForm.invalid) {

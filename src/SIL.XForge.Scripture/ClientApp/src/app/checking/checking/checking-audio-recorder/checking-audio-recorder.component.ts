@@ -1,10 +1,10 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import RecordRTC from 'recordrtc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 
 export interface AudioAttachment {
-  status?: 'denied' | 'processed' | 'recoding' | 'reset' | 'stopped' | 'uploaded';
+  status?: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded';
   url?: string;
   fileName?: string;
   blob?: Blob;
@@ -15,7 +15,7 @@ export interface AudioAttachment {
   templateUrl: './checking-audio-recorder.component.html',
   styleUrls: ['./checking-audio-recorder.component.scss']
 })
-export class CheckingAudioRecorderComponent implements OnInit {
+export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   @Output() status: EventEmitter<AudioAttachment> = new EventEmitter<AudioAttachment>();
   audioUrl: string = '';
   microphonePermission: boolean;
@@ -35,6 +35,12 @@ export class CheckingAudioRecorderComponent implements OnInit {
 
   get recodingFileName(): string {
     return this.user.data.name + '.webm';
+  }
+
+  ngOnDestroy(): void {
+    if (this.isRecording) {
+      this.stopRecording();
+    }
   }
 
   async ngOnInit() {
@@ -64,13 +70,22 @@ export class CheckingAudioRecorderComponent implements OnInit {
     navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then(this.successCallback.bind(this), this.errorCallback.bind(this));
-    this.status.emit({ status: 'recoding' });
+    this.status.emit({ status: 'recording' });
   }
 
-  stopRecording() {
+  async stopRecording() {
     this.recordRTC.stopRecording(this.processAudio.bind(this));
     this.stream.getAudioTracks().forEach(track => track.stop());
     this.status.emit({ status: 'stopped' });
+    // Additional promise for when the audio has been processed and is available
+    await new Promise(resolve => {
+      const statusPromise = this.status.subscribe((status: AudioAttachment) => {
+        if (status.status === 'processed') {
+          resolve();
+          statusPromise.unsubscribe();
+        }
+      });
+    });
   }
 
   private errorCallback() {

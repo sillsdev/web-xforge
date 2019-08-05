@@ -1,6 +1,6 @@
 import { ErrorStateMatcher, MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -21,6 +21,7 @@ import {
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { SFValidators } from '../../shared/sfvalidators';
+import { CheckingAudioCombinedComponent } from '../checking/checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
 export interface QuestionDialogData {
@@ -57,6 +58,7 @@ export class QuestionDialogComponent implements OnInit {
     return refData;
   }
 
+  @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent: CheckingAudioCombinedComponent;
   modeLabel = this.data && this.data.editMode ? 'Edit' : 'New';
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   questionForm: FormGroup = new FormGroup(
@@ -105,7 +107,10 @@ export class QuestionDialogComponent implements OnInit {
     }
   }
 
-  submit(): void {
+  async submit() {
+    if (this.audio.status === 'recording') {
+      await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
+    }
     if (this.questionForm.invalid) {
       return;
     }
