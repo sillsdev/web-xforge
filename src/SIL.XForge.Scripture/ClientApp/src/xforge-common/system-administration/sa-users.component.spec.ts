@@ -1,6 +1,6 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, getDebugNode, NgModule } from '@angular/core';
+import { DebugElement, getDebugNode, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -9,16 +9,17 @@ import * as OTJson0 from 'ot-json0';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { UserDoc } from 'xforge-common/models/user-doc';
-import { NoticeService } from 'xforge-common/notice.service';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
-import { QueryParameters, QueryResults } from 'xforge-common/realtime.service';
 import { environment } from '../../environments/environment';
+import { AvatarTestingModule } from '../avatar/avatar-testing.module';
 import { Project } from '../models/project';
 import { ProjectDoc } from '../models/project-doc';
 import { User } from '../models/user';
+import { UserDoc } from '../models/user-doc';
+import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { MemoryRealtimeDocAdapter } from '../realtime-doc-adapter';
+import { RealtimeOfflineStore } from '../realtime-offline-store';
+import { QueryParameters, QueryResults } from '../realtime.service';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
@@ -118,8 +119,7 @@ class TestProjectDoc extends ProjectDoc {
 }
 
 @NgModule({
-  imports: [NoopAnimationsModule, UICommonModule],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
   exports: [SaDeleteDialogComponent],
   declarations: [SaDeleteDialogComponent],
   entryComponents: [SaDeleteDialogComponent]
@@ -147,9 +147,8 @@ class TestEnvironment {
   constructor() {
     when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));
     TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, RouterTestingModule, UICommonModule, DialogTestModule],
+      imports: [NoopAnimationsModule, RouterTestingModule, AvatarTestingModule, UICommonModule, DialogTestModule],
       declarations: [SaUsersComponent],
-      schemas: [CUSTOM_ELEMENTS_SCHEMA],
       providers: [
         { provide: MdcDialog, useFactory: () => instance(this.mockedMdcDialog) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
