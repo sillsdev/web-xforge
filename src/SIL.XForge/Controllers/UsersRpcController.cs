@@ -86,11 +86,11 @@ namespace SIL.XForge.Controllers
                 AccessToken = (string)ptIdentity["access_token"],
                 RefreshToken = (string)ptIdentity["refresh_token"]
             };
-            await _userSecrets.UpdateAsync(UserId, update => update.Set(us => us.ParatextTokens, ptTokens), true);
+            await _userSecrets.UpdateAsync(ResourceId, update => update.Set(us => us.ParatextTokens, ptTokens), true);
 
             using (IConnection conn = await _realtimeService.ConnectAsync())
             {
-                IDocument<User> userDoc = conn.Get<User>(RootDataTypes.Users, UserId);
+                IDocument<User> userDoc = conn.Get<User>(RootDataTypes.Users, ResourceId);
                 await userDoc.FetchAsync();
                 await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, ptId.Split('|')[1]));
             }
@@ -158,13 +158,13 @@ namespace SIL.XForge.Controllers
                     AccessToken = (string)ptIdentity["access_token"],
                     RefreshToken = (string)ptIdentity["refresh_token"]
                 };
-                UserSecret userSecret = await _userSecrets.UpdateAsync(UserId, update => update
+                UserSecret userSecret = await _userSecrets.UpdateAsync(ResourceId, update => update
                     .SetOnInsert(put => put.ParatextTokens, newPTTokens), true);
 
                 // only update the PT tokens if they are newer
                 if (newPTTokens.IssuedAt > userSecret.ParatextTokens.IssuedAt)
                 {
-                    await _userSecrets.UpdateAsync(UserId,
+                    await _userSecrets.UpdateAsync(ResourceId,
                         update => update.Set(put => put.ParatextTokens, newPTTokens));
                 }
             }
