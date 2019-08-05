@@ -6,19 +6,21 @@
     id="font-size-toggle"
   ></button>
   <mdc-menu-surface #fontSizeSurface [anchorElement]="fontSizeAnchor" anchorCorner="bottomEnd" id="font-menu-surface">
-    <button
-      (click)="decreaseFontSize()"
-      [disabled]="fontSize === min"
-      mdc-icon-button
-      icon="remove"
-      title="Decrease font size"
-    ></button>
-    <button
-      mdc-icon-button
-      (click)="increaseFontSize()"
-      [disabled]="fontSize === max"
-      icon="add"
-      title="Increase font size"
-    ></button>
+    <div class="buttons-group">
+      <button
+        (click)="decreaseFontSize()"
+        [disabled]="fontSize === min"
+        mdc-icon-button
+        icon="remove"
+        title="Decrease font size"
+      ></button>
+      <button
+        mdc-icon-button
+        (click)="increaseFontSize()"
+        [disabled]="fontSize === max"
+        icon="add"
+        title="Increase font size"
+      ></button>
+    </div>
   </mdc-menu-surface>
 </div>
