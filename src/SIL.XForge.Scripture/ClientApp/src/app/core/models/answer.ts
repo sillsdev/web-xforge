@@ -7,6 +7,7 @@ export interface Answer {
   syncUserRef?: string;
   scriptureStart?: VerseRefData;
   scriptureEnd?: VerseRefData;
+  scriptureText?: string;
   text?: string;
   audioUrl?: string;
   likes: Like[];

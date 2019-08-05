@@ -33,13 +33,33 @@
 }
 #answer-form {
   .answer-tab {
-    min-height: 80px;
+    min-height: 100px;
     padding: 10px 0;
     display: flex;
     align-items: center;
     &.answer-record-upload {
       app-checking-audio-combined {
         flex: 1;
+      }
+    }
+    &.answer-select-text {
+      align-items: flex-start;
+      .scripture-start {
+        margin-right: 15px;
+      }
+      @include media-breakpoint-up(lg) {
+        .scripture-start,
+        .scripture-end {
+          max-width: 175px;
+        }
+      }
+      mdc-text-field {
+        mdc-icon {
+          background: #fff;
+        }
+      }
+      .scripture-text {
+        margin-left: 15px;
       }
     }
   }
@@ -110,8 +130,21 @@
       }
 
       .answer-text {
+        & + .answer-scripture,
         & + app-checking-audio-player {
           margin-top: 10px;
+        }
+      }
+      .answer-scripture {
+        color: var(--mdc-theme-secondary);
+        & + app-checking-audio-player {
+          margin-top: 10px;
+        }
+        .answer-scripture-verse {
+          font-size: 0.8em;
+          padding-left: 5px;
+          display: inline-block;
+          font-style: italic;
         }
       }
 
