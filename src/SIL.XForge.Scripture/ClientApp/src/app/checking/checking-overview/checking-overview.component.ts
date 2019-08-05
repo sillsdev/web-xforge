@@ -2,6 +2,7 @@ import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { clone } from '@orbit/utils';
+import { distanceInWordsToNow } from 'date-fns';
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -35,6 +36,7 @@ import {
 export class CheckingOverviewComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
   isLoading = true;
   itemVisible: { [bookIdOrDocId: string]: boolean } = {};
+  itemVisibleArchived: { [bookIdOrDocId: string]: boolean } = {};
   commentListDocs: { [docId: string]: CommentListDoc } = {};
   questionListDocs: { [docId: string]: QuestionListDoc } = {};
   texts: TextInfo[] = [];
@@ -60,12 +62,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
       return '-';
     }
 
-    let count: number = 0;
-    for (const questionListDoc of Object.values(this.questionListDocs)) {
-      count += questionListDoc.data.questions.length;
-    }
-
-    return '' + count;
+    return '' + this.allPublicQuestions.length;
   }
 
   get myAnswerCount(): string {
@@ -74,16 +71,14 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     }
 
     let count: number = 0;
-    for (const questionListDoc of Object.values(this.questionListDocs)) {
-      for (const question of questionListDoc.data.questions) {
-        if (question.answers == null) {
-          continue;
-        }
-        if (this.isProjectAdmin) {
-          count += question.answers.length;
-        } else {
-          count += question.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
-        }
+    for (const question of this.allPublicQuestions) {
+      if (question.answers == null) {
+        continue;
+      }
+      if (this.isProjectAdmin) {
+        count += question.answers.length;
+      } else {
+        count += question.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
       }
     }
 
@@ -96,20 +91,18 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     }
 
     let count: number = 0;
-    for (const questionListDoc of Object.values(this.questionListDocs)) {
-      for (const question of questionListDoc.data.questions) {
-        if (question.answers == null) {
+    for (const question of this.allPublicQuestions) {
+      if (question.answers == null) {
+        continue;
+      }
+      for (const answer of question.answers) {
+        if (answer.likes == null) {
           continue;
         }
-        for (const answer of question.answers) {
-          if (answer.likes == null) {
-            continue;
-          }
-          if (this.isProjectAdmin) {
-            count += answer.likes.length;
-          } else {
-            count += answer.likes.filter(a => a.ownerRef === this.userService.currentUserId).length;
-          }
+        if (this.isProjectAdmin) {
+          count += answer.likes.length;
+        } else {
+          count += answer.likes.filter(l => l.ownerRef === this.userService.currentUserId).length;
         }
       }
     }
@@ -127,11 +120,13 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
       if (commentListDoc == null) {
         continue;
       }
-
+      const publicComments = commentListDoc.data.comments.filter(
+        c => this.allPublicQuestions.find(q => q.answers && q.answers.map(a => a.id).includes(c.answerRef)) != null
+      );
       if (this.isProjectAdmin) {
-        count += commentListDoc.data.comments.length;
+        count += publicComments.length;
       } else {
-        count += commentListDoc.data.comments.filter(c => c.ownerRef === this.userService.currentUserId).length;
+        count += publicComments.filter(c => c.ownerRef === this.userService.currentUserId).length;
       }
     }
 
@@ -144,6 +139,14 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
       this.projectDoc.data != null &&
       this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRoles.ParatextAdministrator
     );
+  }
+
+  private get allPublicQuestions(): Question[] {
+    let questions: Readonly<Question[]> = [];
+    for (const doc of Object.values(this.questionListDocs)) {
+      questions = questions.concat(doc.data.questions);
+    }
+    return questions.filter(q => q.isArchived !== true);
   }
 
   ngOnInit(): void {
@@ -188,10 +191,21 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     return getTextDocIdStr(this.projectDoc.id, bookId, chapter);
   }
 
-  bookQuestionCount(text: TextInfo): number {
+  getQuestions(textDocId: TextDocId, fromArchive = false): Question[] {
+    if (fromArchive) {
+      return this.questionListDocs[textDocId.toString()].data.questions.filter(q => q.isArchived === true);
+    }
+    return this.questionListDocs[textDocId.toString()].data.questions.filter(q => q.isArchived !== true);
+  }
+
+  getQuestionIndex(questionId: string, textDocId: TextDocId): number {
+    return this.questionListDocs[textDocId.toString()].data.questions.findIndex(q => q.id === questionId);
+  }
+
+  bookQuestionCount(text: TextInfo, fromArchive = false): number {
     let count: number;
     for (const chapter of text.chapters) {
-      const questionCount = this.questionCount(text.bookId, chapter.number);
+      const questionCount = this.questionCount(text.bookId, chapter.number, fromArchive);
       if (questionCount) {
         if (!count) {
           count = 0;
@@ -202,13 +216,19 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     return count;
   }
 
-  questionCount(bookId: string, chapterNumber: number): number {
+  dateInWords(date: string): string {
+    return distanceInWordsToNow(new Date(date));
+  }
+
+  questionCount(bookId: string, chapterNumber: number, fromArchive = false): number {
     const id = new TextDocId(this.projectDoc.id, bookId, chapterNumber);
     if (!(id.toString() in this.questionListDocs)) {
       return undefined;
     }
-
-    return this.questionListDocs[id.toString()].data.questions.length;
+    if (fromArchive) {
+      return this.questionListDocs[id.toString()].data.questions.filter(q => q.isArchived === true).length;
+    }
+    return this.questionListDocs[id.toString()].data.questions.filter(q => q.isArchived !== true).length;
   }
 
   questionCountLabel(count: number): string {
@@ -236,8 +256,8 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     }
 
     let count: number;
-    for (const index of Object.keys(this.questionListDocs[id.toString()].data.questions)) {
-      const answerCount = this.answerCount(bookId, chapterNumber, +index);
+    for (const q of this.getQuestions(id)) {
+      const answerCount = this.answerCount(bookId, chapterNumber, q.id);
       if (answerCount) {
         if (!count) {
           count = 0;
@@ -249,14 +269,14 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     return count;
   }
 
-  answerCount(bookId: string, chapterNumber: number, questionIndex: number = 0): number {
+  answerCount(bookId: string, chapterNumber: number, questionId: string): number {
     const id = new TextDocId(this.projectDoc.id, bookId, chapterNumber);
     if (!(id.toString() in this.questionListDocs)) {
       return undefined;
     }
 
     let count: number;
-    const question = this.questionListDocs[id.toString()].data.questions[questionIndex];
+    const question = this.questionListDocs[id.toString()].data.questions[this.getQuestionIndex(questionId, id)];
     if (question.answers) {
       if (!count) {
         count = 0;
@@ -269,6 +289,18 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
 
   answerCountLabel(count: number): string {
     return count ? count + ' answers' : '';
+  }
+
+  setQuestionArchiveStatus(questionId: string, archiveStatus: boolean, bookId: string, chapterNumber: number) {
+    const id = new TextDocId(this.projectId, bookId, chapterNumber);
+    const questionIndex = this.getQuestionIndex(questionId, id);
+    const question = this.questionListDocs[id.toString()].data.questions[questionIndex];
+    const updatedQuestion: Question = clone(question);
+    updatedQuestion.isArchived = archiveStatus;
+    updatedQuestion.dateArchived = archiveStatus ? new Date().toISOString() : null;
+    this.questionListDocs[id.toString()].submitJson0Op(op =>
+      op.replace(q => q.questions, questionIndex, updatedQuestion)
+    );
   }
 
   overallProgress(): number[] {
@@ -295,7 +327,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
         continue;
       }
 
-      for (const question of this.questionListDocs[id.toString()].data.questions) {
+      for (const question of this.getQuestions(id)) {
         if (CheckingUtils.hasUserAnswered(question, this.userService.currentUserId)) {
           answered++;
         } else if (CheckingUtils.hasUserReadQuestion(question, this.projectUserConfigDoc.data)) {
@@ -309,27 +341,18 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     return [unread, read, answered];
   }
 
-  archiveQuestion(bookId?: string, chapterNumber?: number, questionIndex: number = 0): void {
-    console.log('archiveQuestion not yet implemented', bookId, chapterNumber, questionIndex);
-  }
-
-  questionDialog(editMode = false, bookId?: string, chapterNumber?: number, questionIndex: number = 0): void {
+  questionDialog(editMode = false, bookId?: string, chapterNumber?: number, questionId?: string): void {
     let newQuestion: Question = { id: undefined, ownerRef: undefined };
     let id: TextDocId;
     let question: Question;
+    let questionIndex: number;
     if (editMode) {
-      if (
-        bookId == null ||
-        bookId === '' ||
-        chapterNumber == null ||
-        chapterNumber < 0 ||
-        questionIndex == null ||
-        questionIndex < 0
-      ) {
-        throw new Error('Must supply valid bookId, chapterNumber and questionIndex in editMode');
+      if (bookId == null || bookId === '' || chapterNumber == null || chapterNumber < 0 || questionId == null) {
+        throw new Error('Must supply valid bookId, chapterNumber and questionId in editMode');
       }
 
       id = new TextDocId(this.projectDoc.id, bookId, chapterNumber);
+      questionIndex = this.getQuestionIndex(questionId, id);
       question = this.questionListDocs[id.toString()].data.questions[questionIndex];
       newQuestion = clone(question);
     }

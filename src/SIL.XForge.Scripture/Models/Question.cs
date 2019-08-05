@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace SIL.XForge.Scripture.Models
@@ -15,5 +16,7 @@ namespace SIL.XForge.Scripture.Models
         public string AudioUrl { get; set; }
         public string ModelAnswer { get; set; }
         public List<Answer> Answers { get; set; } = new List<Answer>();
+        public bool IsArchived { get; set; }
+        public DateTime DateArchived { get; set; }
     }
 }

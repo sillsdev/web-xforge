@@ -61,7 +61,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   checkingData: CheckingData = { questionListDocs: {}, commentListDocs: {} };
   comments: Comment[] = [];
   isExpanded: boolean = false;
-  questions: Question[] = [];
+  publicQuestions: Readonly<Question[]> = [];
   resetAnswerPanelHeightOnFormHide: boolean = false;
   summary: Summary = {
     read: 0,
@@ -77,6 +77,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
 
   private _isDrawerPermanent: boolean = true;
   private _chapter: number;
+  private _questions: Readonly<Question[]> = [];
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -157,7 +158,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
       this.chapters = this.text.chapters.map(c => c.number);
       if (prevProjectId !== this.projectDoc.id || prevBookId !== this.text.bookId) {
         const bindCheckingDataPromises: Promise<void>[] = [];
-        this.questions = [];
+        this._questions = [];
         for (const chapter of this.chapters) {
           bindCheckingDataPromises.push(
             this.bindCheckingData(new TextDocId(this.projectDoc.id, this.text.bookId, chapter))
@@ -168,11 +169,12 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         this._chapter = undefined;
         this.chapter = 1;
         for (const chapter of this.chapters) {
-          this.questions = this.questions.concat(
+          this._questions = this._questions.concat(
             this.checkingData.questionListDocs[getTextDocIdStr(this.projectDoc.id, this.text.bookId, chapter)].data
               .questions
           );
         }
+        this.publicQuestions = this._questions.filter(q => q.isArchived !== true);
         this.refreshComments();
 
         this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
@@ -329,7 +331,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   totalQuestions() {
-    return this.questions.length;
+    return this.publicQuestions.length;
   }
 
   private getAnswerIndex(answer: Answer) {
@@ -486,7 +488,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     this.summary.answered = 0;
     this.summary.read = 0;
     this.summary.unread = 0;
-    for (const question of this.questions) {
+    for (const question of this.publicQuestions) {
       if (CheckingUtils.hasUserAnswered(question, this.userService.currentUserId)) {
         this.summary.answered++;
       } else if (CheckingUtils.hasUserReadQuestion(question, this.projectUserConfigDoc.data)) {

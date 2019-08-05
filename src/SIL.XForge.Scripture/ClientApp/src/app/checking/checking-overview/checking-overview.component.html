@@ -66,27 +66,32 @@
             </div>
           </mdc-list-item>
           <ng-container *ngIf="itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)]">
-            <mdc-list-item
-              *ngFor="
-                let question of questionListDocs[getTextJsonDocIdStr(text.bookId, chapter.number)].data.questions;
-                let i = index
-              "
-            >
+            <mdc-list-item *ngFor="let question of getQuestions(getTextJsonDocIdStr(text.bookId, chapter.number))">
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="16px" class="indent"></span>
-                <button fxFlex="64px" mdc-button (click)="questionDialog(true, text.bookId, chapter.number, i)">
+                <button
+                  fxFlex="64px"
+                  mdc-button
+                  (click)="questionDialog(true, text.bookId, chapter.number, question.id)"
+                  class="edit-btn"
+                >
                   <mdc-icon>edit</mdc-icon>
                 </button>
                 <span fxFlex class="no-overflow-ellipsis">
                   v{{ question?.scriptureStart?.verse }} - {{ question?.text }}
                 </span>
                 <span fxFlex="80px" fxLayoutAlign="end center">
-                  {{ answerCountLabel(answerCount(text.bookId, chapter.number, i)) }}
+                  {{ answerCountLabel(answerCount(text.bookId, chapter.number, question.id)) }}
                 </span>
                 <span fxFlex="64px" fxLayoutAlign="end center">
-                  <!-- <button mdc-button (click)="archiveQuestion(text.bookId, chapter.number, i)">
+                  <button
+                    mdc-button
+                    (click)="setQuestionArchiveStatus(question.id, true, text.bookId, chapter.number)"
+                    title="Archive"
+                    class="archive-btn"
+                  >
                     <mdc-icon>archive</mdc-icon>
-                  </button> -->
+                  </button>
                 </span>
               </div>
             </mdc-list-item>
@@ -164,4 +169,76 @@
       <span fxLayoutAlign="start center"> <mdc-icon>thumb_up</mdc-icon> </span>
     </div>
   </mdc-card>
+</div>
+
+<div fxLayout="row" fxLayoutAlign="start center" *ngIf="isProjectAdmin">
+  <mdc-icon fxFlex="32px">archive</mdc-icon>
+  <h2 fxFlex>Archived Questions</h2>
+</div>
+
+<div fxLayout="column" *ngIf="isProjectAdmin">
+  <mdc-list dense id="text-with-archived-questions">
+    <ng-container *ngFor="let text of texts">
+      <mdc-list-item
+        *ngIf="bookQuestionCount(text, true) > 0"
+        (selectionChange)="itemVisibleArchived[text.bookId] = !itemVisibleArchived[text.bookId]"
+      >
+        <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+          <mdc-icon fxFlex="24px" mdcListItemMeta
+            >keyboard_arrow_{{ itemVisibleArchived[bookId] ? "down" : "right" }}</mdc-icon
+          ><span fxFlex>{{ text?.name }}</span>
+          <span fxFlex="80px" fxLayoutAlign="end center" class="archived-questions-count">{{
+            questionCountLabel(bookQuestionCount(text, true))
+          }}</span>
+          <span fxFlex="64px" fxLayoutAlign="end center">&nbsp;</span>
+        </div>
+      </mdc-list-item>
+      <ng-container *ngIf="itemVisibleArchived[text.bookId]">
+        <ng-container *ngFor="let chapter of text.chapters">
+          <mdc-list-item
+            *ngIf="questionCount(text.bookId, chapter.number, true) > 0"
+            (selectionChange)="
+              itemVisibleArchived[getTextJsonDocIdStr(text.bookId, chapter.number)] = !itemVisibleArchived[
+                getTextJsonDocIdStr(text.bookId, chapter.number)
+              ]
+            "
+            ><div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+              <span fxFlex="16px" class="indent"></span>
+              <mdc-icon fxFlex="24px" mdcListItemMeta
+                >keyboard_arrow_{{
+                  itemVisibleArchived[getTextJsonDocIdStr(text.bookId, chapter.number)] ? "down" : "right"
+                }}</mdc-icon
+              >
+              <span fxFlex>{{ text?.name + " " + chapter?.number }}</span>
+            </div>
+          </mdc-list-item>
+          <ng-container *ngIf="itemVisibleArchived[getTextJsonDocIdStr(text.bookId, chapter.number)]">
+            <mdc-list-item
+              *ngFor="let question of getQuestions(getTextJsonDocIdStr(text.bookId, chapter.number), true)"
+            >
+              <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+                <span fxFlex="40px" class="indent"></span>
+                <span fxFlex class="no-overflow-ellipsis"
+                  >v{{ question?.scriptureStart?.verse }} - {{ question?.text }}</span
+                >
+                <span fxFlex="200px" fxLayoutAlign="end center" class="date-archived"
+                  >Archived {{ dateInWords(question?.dateArchived) }} ago</span
+                >
+                <span fxFlex="64px" fxLayoutAlign="end center">
+                  <button
+                    mdc-button
+                    (click)="setQuestionArchiveStatus(question.id, false, text.bookId, chapter.number)"
+                    title="Republish"
+                    class="publish-btn"
+                  >
+                    <mdc-icon>public</mdc-icon>
+                  </button>
+                </span>
+              </div>
+            </mdc-list-item>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+    </ng-container>
+  </mdc-list>
 </div>
