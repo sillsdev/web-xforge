@@ -6,7 +6,7 @@ import { AbstractControl } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
-import { clone } from '@orbit/utils';
+import cloneDeep from 'lodash/cloneDeep';
 import * as OTJson0 from 'ot-json0';
 import { defer, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -304,7 +304,7 @@ class TestEnvironment {
 
   constructor() {
     when(this.mockedSFProjectService.onlineCreate(anything())).thenCall((project: SFProject) => {
-      const newProject: SFProject = clone(project);
+      const newProject: SFProject = cloneDeep(project);
       newProject.sync = { queuedCount: 1 };
 
       this.projectDoc = new SFProjectDoc(

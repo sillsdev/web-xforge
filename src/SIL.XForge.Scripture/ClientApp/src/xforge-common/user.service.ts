@@ -1,4 +1,3 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { combineLatest, from, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
@@ -18,7 +17,6 @@ export class UserService {
   constructor(
     private readonly realtimeService: RealtimeService,
     private readonly authService: AuthService,
-    private readonly http: HttpClient,
     private readonly jsonRpcService: JsonRpcService
   ) {}
 
@@ -32,15 +30,15 @@ export class UserService {
   }
 
   get(id: string): Promise<UserDoc> {
-    return this.realtimeService.get({ type: UserDoc.TYPE, id });
+    return this.realtimeService.get(UserDoc.TYPE, id);
   }
 
   getProfile(id: string): Promise<UserProfileDoc> {
-    return this.realtimeService.get({ type: UserProfileDoc.TYPE, id });
+    return this.realtimeService.get(UserProfileDoc.TYPE, id);
   }
 
   async onlineDelete(id: string): Promise<void> {
-    await this.jsonRpcService.onlineInvoke({ type: UserDoc.TYPE, id }, 'delete');
+    await this.jsonRpcService.onlineInvoke(UserDoc.TYPE, id, 'delete');
   }
 
   onlineSearch(
@@ -61,21 +59,5 @@ export class UserService {
         return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.TYPE, query, queryParameters));
       })
     );
-  }
-
-  /**
-   * Uploads the specified image file as the current user's avatar.
-   *
-   * @param {File} file The file to upload.
-   * @returns {Promise<string>} The relative url to the uploaded avatar file.
-   */
-  async uploadCurrentUserAvatar(file: File): Promise<void> {
-    const formData = new FormData();
-    formData.append('file', file);
-    await this.http
-      .post<HttpResponse<string>>(`command-api/users/${this.currentUserId}/avatar`, formData, {
-        headers: { Accept: 'application/json' }
-      })
-      .toPromise();
   }
 }

@@ -1,7 +1,7 @@
 import { ErrorStateMatcher, MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
-import { clone } from '@orbit/utils';
+import cloneDeep from 'lodash/cloneDeep';
 import { AccountService } from 'xforge-common/account.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
@@ -64,7 +64,7 @@ export class CheckingAnswersComponent implements OnInit {
       this.hideAnswerForm();
     }
     this._question = question;
-    this.initUserAnswerRefsRead = clone(this.projectUserConfigDoc.data.answerRefsRead);
+    this.initUserAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
   }
   @Input() checkingTextComponent: CheckingTextComponent;
   @Input() comments: Readonly<Comment[]> = [];
@@ -194,7 +194,7 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   editAnswer(answer: Answer) {
-    this.activeAnswer = clone(answer);
+    this.activeAnswer = cloneDeep(answer);
     this.audio.url = this.activeAnswer.audioUrl;
     this.scriptureStart.setValue(CheckingAnswersComponent.verseRefDataToString(this.activeAnswer.scriptureStart));
     this.scriptureEnd.setValue(CheckingAnswersComponent.verseRefDataToString(this.activeAnswer.scriptureEnd));

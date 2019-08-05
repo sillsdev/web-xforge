@@ -2,8 +2,8 @@ import { MdcList, MdcMenuSelectedEvent } from '@angular-mdc/web';
 import { Component, ElementRef, HostBinding, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
-import { clone } from '@orbit/utils';
 import { SplitComponent } from 'angular-split';
+import cloneDeep from 'lodash/cloneDeep';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -361,7 +361,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   private saveAnswer(answer: Answer) {
-    const answers = clone(this.questionsPanel.activeQuestion.answers);
+    const answers = cloneDeep(this.questionsPanel.activeQuestion.answers);
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
       answers[answerIndex] = answer;
@@ -372,7 +372,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
   }
 
   private updateQuestionAnswers(answers: Answer[], answerIndex: number) {
-    const questionWithAnswer: Question = clone(this.questionsPanel.activeQuestion);
+    const questionWithAnswer: Question = cloneDeep(this.questionsPanel.activeQuestion);
     questionWithAnswer.answers = answers;
     if (answerIndex >= 0) {
       this.checkingData.questionListDocs[this.textJsonDocId].submitJson0Op(op =>

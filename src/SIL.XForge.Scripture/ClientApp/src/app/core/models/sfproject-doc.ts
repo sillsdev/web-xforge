@@ -27,9 +27,9 @@ export class SFProjectDoc extends ProjectDoc<SFProject> {
 
   private async deleteProjectDocs(type: string): Promise<void> {
     const tasks: Promise<void>[] = [];
-    for (const identity of await this.store.keys(type)) {
-      if (identity.id.startsWith(this.id)) {
-        tasks.push(this.store.delete(identity));
+    for (const id of await this.store.getAllIds(type)) {
+      if (id.startsWith(this.id)) {
+        tasks.push(this.store.delete(type, id));
       }
     }
     await Promise.all(tasks);
