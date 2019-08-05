@@ -137,13 +137,16 @@ namespace SIL.XForge.Services
 
             User inviter = await RealtimeService.GetSnapshotAsync<User>(RootDataTypes.Users, userId);
             string subject = $"You've been invited to the project {project.ProjectName} on {siteOptions.Name}";
-            string body = "<p>Hello </p><p></p>" +
+            string body = "<p>Hello,</p><p></p>" +
                 $"<p>{inviter.Name} invites you to join the {project.ProjectName} project on {siteOptions.Name}." +
                 "</p><p></p>" +
-                "<p>You're almost ready to start. Just click the link below to complete your signup and " +
-                "then you will be ready to get started.</p><p></p>" +
-                $"<p>To join, go to {url}</p><p></p>" +
+                "<p>Just click the link below, choose how to log in, and you will be ready to start.</p><p></p>" +
+                $"<p>To join, go to <a href=\"{url}\">{url}</a></p><p></p>" +
                 $"<p>{additionalMessage}</p><p></p>" +
+                $"<p>If you are not already a {siteOptions.Name} user, then after clicking the link, click <b>Sign Up</b> and do one of the following:" +
+                $"<ul><li>Click <b>Sign up with Paratext</b> and follow the instructions to access {siteOptions.Name} using an existing Paratext account, or</li>" +
+                $"<li>Click <b>Sign up with Google</b> and follow the instructions to access {siteOptions.Name} using an existing Google account (such as a Gmail account), or</li>" +
+                $"<li>Enter your email address and a new password for your {siteOptions.Name} account and click Sign up.</li></ul></p><p></p>" +
                 $"<p>Regards,</p><p>The {siteOptions.Name} team</p>";
             await _emailService.SendEmailAsync(email, subject, body);
             return true;
