@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { combineLatest, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-import { JsonRpcService } from './json-rpc.service';
+import { CommandService } from './command.service';
 import { Project } from './models/project';
 import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRole } from './models/project-role';
@@ -15,7 +15,7 @@ export abstract class ProjectService<
 
   constructor(
     protected readonly realtimeService: RealtimeService,
-    protected readonly jsonRpcService: JsonRpcService,
+    protected readonly commandService: CommandService,
     roles: ProjectRole[],
     private readonly http: HttpClient
   ) {
@@ -31,7 +31,7 @@ export abstract class ProjectService<
   }
 
   onlineCreate(project: TProj): Promise<string> {
-    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, undefined, 'create', { project });
+    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'create', { project });
   }
 
   onlineSearch(
@@ -60,39 +60,40 @@ export abstract class ProjectService<
   }
 
   onlineAddCurrentUser(id: string, projectRole?: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'addUser', { projectRole });
+    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'addUser', { projectId: id, projectRole });
   }
 
   onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
-    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'isAlreadyInvited', { email });
+    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'isAlreadyInvited', { projectId: id, email });
   }
 
   /** Get added into project, with optionally specified shareKey code. */
   onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'checkLinkSharing', { shareKey });
+    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'checkLinkSharing', { projectId: id, shareKey });
   }
 
   onlineRemoveUser(id: string, userId: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'removeUser', { projectUserId: userId });
+    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'removeUser', { projectId: id, projectUserId: userId });
   }
 
   onlineUpdateCurrentUserRole(id: string, projectRole: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'updateRole', { projectRole });
+    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'updateRole', { projectId: id, projectRole });
   }
 
   onlineInvite(id: string, email: string): Promise<string> {
-    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'invite', { email });
+    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'invite', { projectId: id, email });
   }
 
   onlineDelete(id: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'delete');
+    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'delete', { projectId: id });
   }
 
   async uploadAudio(id: string, file: File): Promise<string> {
     const formData = new FormData();
+    formData.append('id', id);
     formData.append('file', file);
     const response = await this.http
-      .post<HttpResponse<string>>(`command-api/projects/${id}/audio`, formData, {
+      .post<HttpResponse<string>>(`command-api/projects/audio`, formData, {
         headers: { Accept: 'application/json' },
         observe: 'response'
       })

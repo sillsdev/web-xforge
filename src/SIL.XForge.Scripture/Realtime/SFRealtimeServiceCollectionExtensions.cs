@@ -5,6 +5,9 @@ using SIL.XForge.Scripture.Models;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+    /// <summary>
+    /// This class is used to add the SF real-time server to the DI container.
+    /// </summary>
     public static class SFRealtimeServiceCollectionExtensions
     {
         public static IServiceCollection AddSFRealtimeServer(this IServiceCollection services,
@@ -12,6 +15,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.AddRealtimeServer(configuration, o =>
                 {
+                    o.ProjectDoc.Type = typeof(SFProject);
                     o.ProjectDoc.ImmutableProperties.AddRange(new[]
                     {
                         PathTemplateConfig<SFProject>.Create(p => p.SourceParatextId),
@@ -30,14 +34,17 @@ namespace Microsoft.Extensions.DependencyInjection
                     {
                         new DocConfig(SFRootDataTypes.ProjectUserConfigs, OTType.Json0)
                         {
+                            Type = typeof(SFProjectUserConfig),
                             Domains = { new DomainConfig(SFDomain.ProjectUserConfigs) }
                         },
                         new DocConfig(SFRootDataTypes.Texts, OTType.RichText)
                         {
+                            Type = typeof(TextData),
                             Domains = { new DomainConfig(SFDomain.Texts) }
                         },
                         new DocConfig(SFRootDataTypes.Questions)
                         {
+                            Type = typeof(QuestionList),
                             Domains =
                             {
                                 new DomainConfig(SFDomain.Questions)
@@ -61,6 +68,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         },
                         new DocConfig(SFRootDataTypes.Comments)
                         {
+                            Type = typeof(CommentList),
                             Domains =
                             {
                                 new DomainConfig(SFDomain.Comments)

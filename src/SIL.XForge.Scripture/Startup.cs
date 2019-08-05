@@ -133,7 +133,7 @@ namespace SIL.XForge.Scripture
 
             app.UseAuthentication();
 
-            app.UseXFJsonRpc();
+            app.UseSFJsonRpc();
 
             app.UseMvc(routes =>
             {

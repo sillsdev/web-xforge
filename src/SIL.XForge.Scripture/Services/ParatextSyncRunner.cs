@@ -282,8 +282,7 @@ namespace SIL.XForge.Scripture.Services
         private async Task<bool> InitAsync(string projectId, string userId)
         {
             _conn = await _realtimeService.ConnectAsync();
-            _projectDoc = _conn.Get<SFProject>(RootDataTypes.Projects, projectId);
-            await _projectDoc.FetchAsync();
+            _projectDoc = await _conn.FetchAsync<SFProject>(projectId);
             if (!_projectDoc.IsLoaded)
                 return false;
 
@@ -391,7 +390,8 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Fetches all text docs from the database for a book.
         /// </summary>
-        private async Task<SortedList<int, IDocument<Models.TextData>>> FetchTextDocsAsync(TextInfo text, TextType textType)
+        private async Task<SortedList<int, IDocument<Models.TextData>>> FetchTextDocsAsync(TextInfo text,
+            TextType textType)
         {
             var textDocs = new SortedList<int, IDocument<Models.TextData>>();
             var tasks = new List<Task>();
@@ -623,20 +623,17 @@ namespace SIL.XForge.Scripture.Services
 
         private IDocument<Models.TextData> GetTextDoc(TextInfo text, int chapter, TextType textType)
         {
-            return _conn.Get<Models.TextData>(SFRootDataTypes.Texts,
-                TextInfo.GetTextDocId(_projectDoc.Id, text.BookId, chapter, textType));
+            return _conn.Get<Models.TextData>(TextInfo.GetTextDocId(_projectDoc.Id, text.BookId, chapter, textType));
         }
 
         private IDocument<QuestionList> GetQuestionsDoc(TextInfo text, int chapter)
         {
-            return _conn.Get<QuestionList>(SFRootDataTypes.Questions,
-                TextInfo.GetTextDocId(_projectDoc.Id, text.BookId, chapter));
+            return _conn.Get<QuestionList>(TextInfo.GetTextDocId(_projectDoc.Id, text.BookId, chapter));
         }
 
         private IDocument<CommentList> GetCommentsDoc(TextInfo text, int chapter)
         {
-            return _conn.Get<CommentList>(SFRootDataTypes.Comments,
-                TextInfo.GetTextDocId(_projectDoc.Id, text.BookId, chapter));
+            return _conn.Get<CommentList>(TextInfo.GetTextDocId(_projectDoc.Id, text.BookId, chapter));
         }
 
         private async Task CreateQuestionsDocAsync(TextInfo text, int chapter)

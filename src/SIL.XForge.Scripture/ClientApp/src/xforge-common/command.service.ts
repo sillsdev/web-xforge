@@ -23,22 +23,18 @@ export interface JsonRpcError {
 }
 
 /**
- * This service is used to invoke JSON-RPC methods.
+ * This service is used to invoke JSON-RPC commands.
  *
- * @example jsonRpcService.onlineInvoke(type, id, 'method', { param1: 'value1', param2: 'value2' });
+ * @example commandService.onlineInvoke(type, 'method', { param1: 'value1', param2: 'value2' });
  */
 @Injectable({
   providedIn: 'root'
 })
-export class JsonRpcService {
+export class CommandService {
   constructor(private readonly http: HttpClient) {}
 
-  async onlineInvoke<T>(type: string, id: string, method: string, params: any = {}): Promise<T> {
-    let url = `command-api/${type}/`;
-    if (id != null) {
-      url += `${id}/`;
-    }
-    url += 'commands';
+  async onlineInvoke<T>(type: string, method: string, params: any = {}): Promise<T> {
+    const url = `command-api/${type}`;
     const request: JsonRpcRequest = {
       jsonrpc: '2.0',
       method,

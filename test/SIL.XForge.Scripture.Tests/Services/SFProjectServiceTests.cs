@@ -233,17 +233,17 @@ namespace SIL.XForge.Scripture.Services
 
             public SFProject GetProject(string id)
             {
-                return RealtimeService.GetRepository<SFProject>(RootDataTypes.Projects).Get(id);
+                return RealtimeService.GetRepository<SFProject>().Get(id);
             }
 
             public bool ContainsProject(string id)
             {
-                return RealtimeService.GetRepository<SFProject>(RootDataTypes.Projects).Contains(id);
+                return RealtimeService.GetRepository<SFProject>().Contains(id);
             }
 
             public User GetUser(string id)
             {
-                return RealtimeService.GetRepository<User>(RootDataTypes.Users).Get(id);
+                return RealtimeService.GetRepository<User>().Get(id);
             }
         }
     }

@@ -2,10 +2,7 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using EdjCase.JsonRpc.Router.Defaults;
 using IdentityModel;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
@@ -15,52 +12,46 @@ using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
-using SIL.XForge.Services;
 
-namespace SIL.XForge.Controllers
+namespace SIL.XForge.Services
 {
     [TestFixture]
-    public class UsersRpcControllerTests
+    public class UserServiceTests
     {
         [Test]
-        public async Task PushAuthUserProfile_ExistingUser_OldParatextTokens()
+        public async Task UpdateUserFromProfileAsync_ExistingUser_OldParatextTokens()
         {
             var env = new TestEnvironment();
-            env.SetUser("user01", "auth01");
 
             JObject userProfile = env.CreateUserProfile("user01", "auth01", env.IssuedAt - TimeSpan.FromMinutes(5));
-            await env.Controller.PushAuthUserProfile(userProfile);
-            IDocument<User> userDoc1 = env.GetUserDoc("user01");
-            await userDoc1.Received().SubmitOpAsync(Arg.Any<object>());
+            await env.Service.UpdateUserFromProfileAsync("user01", userProfile);
+            User user1 = env.GetUser("user01");
+            Assert.That(user1.Sites["xf"].LastLogin, Is.Not.Null);
             UserSecret userSecret = env.UserSecrets.Get("user01");
             Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("refresh_token"));
         }
 
         [Test]
-        public async Task PushAuthUserProfile_ExistingUser_NewParatextTokens()
+        public async Task UpdateUserFromProfileAsync_ExistingUser_NewParatextTokens()
         {
             var env = new TestEnvironment();
-            env.SetUser("user01", "auth01");
 
             JObject userProfile = env.CreateUserProfile("user01", "auth01", env.IssuedAt + TimeSpan.FromMinutes(5));
-            await env.Controller.PushAuthUserProfile(userProfile);
-            IDocument<User> userDoc1 = env.GetUserDoc("user01");
-            await userDoc1.Received().SubmitOpAsync(Arg.Any<object>());
+            await env.Service.UpdateUserFromProfileAsync("user01", userProfile);
+            User user1 = env.GetUser("user01");
+            Assert.That(user1.Sites["xf"].LastLogin, Is.Not.Null);
             UserSecret userSecret = env.UserSecrets.Get("user01");
             Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
         }
 
         [Test]
-        public async Task PushAuthUserProfile_NewUser()
+        public async Task UpdateUserFromProfileAsync_NewUser()
         {
             var env = new TestEnvironment();
-            env.SetUser("user03", "auth03");
 
             JObject userProfile = env.CreateUserProfile("user03", "auth03", env.IssuedAt);
-            await env.Controller.PushAuthUserProfile(userProfile);
-            IDocument<User> userDoc3 = env.GetUserDoc("user03");
-            await userDoc3.Received().CreateAsync(Arg.Any<User>());
-            await userDoc3.Received().SubmitOpAsync(Arg.Any<object>());
+            await env.Service.UpdateUserFromProfileAsync("user03", userProfile);
+            Assert.That(env.ContainsUser("user03"), Is.True);
             UserSecret userSecret = env.UserSecrets.Get("user03");
             Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
         }
@@ -69,44 +60,35 @@ namespace SIL.XForge.Controllers
         public async Task PushAuthUserProfile_NewUser_NameExtracted()
         {
             var env = new TestEnvironment();
-            env.SetUser("user03", "auth03");
 
             JObject userProfile = env.CreateUserProfile("user03", "auth03", env.IssuedAt);
             userProfile["name"] = "usernew@example.com";
-            await env.Controller.PushAuthUserProfile(userProfile);
-            IDocument<User> userDoc3 = env.GetUserDoc("user03");
-            await userDoc3.Received().CreateAsync(Arg.Any<User>());
-            await userDoc3.Received().SubmitOpAsync(Arg.Any<object>());
+            await env.Service.UpdateUserFromProfileAsync("user03", userProfile);
+            User user3 = env.GetUser("user03");
+            Assert.That(user3.Name, Is.EqualTo("usernew"));
             UserSecret userSecret = env.UserSecrets.Get("user03");
             Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
         }
 
         [Test]
-        public async Task LinkParatextAccount()
+        public async Task LinkParatextAccountAsync()
         {
             var env = new TestEnvironment();
-            env.SetUser("user02", "auth02");
             env.AuthService.LinkAccounts("auth02", "auth03").Returns(Task.CompletedTask);
             JObject userProfile = env.CreateUserProfile("user02", "auth02", env.IssuedAt);
             env.AuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile));
 
-            var result = await env.Controller.LinkParatextAccount("auth03") as RpcMethodSuccessResult;
-            Assert.That(result, Is.Not.Null);
-            IDocument<User> userDoc2 = env.GetUserDoc("user02");
-            await userDoc2.Received().SubmitOpAsync(Arg.Any<object>());
+            await env.Service.LinkParatextAccountAsync("user02", "auth02", "auth03");
+            User user2 = env.GetUser("user02");
+            Assert.That(user2.ParatextId, Is.EqualTo("paratext01"));
             UserSecret userSecret = env.UserSecrets.Get("user02");
             Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
         }
 
         private class TestEnvironment
         {
-            private readonly IConnection _conn;
-
             public TestEnvironment()
             {
-                UserAccessor = Substitute.For<IUserAccessor>();
-                HttpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
-
                 UserSecrets = new MemoryRepository<UserSecret>(new[]
                 {
                     new UserSecret
@@ -119,36 +101,24 @@ namespace SIL.XForge.Controllers
                         }
                     }
                 });
-                _conn = Substitute.For<IConnection>();
-                var userDoc1 = Substitute.For<IDocument<User>>();
-                userDoc1.Id.Returns("user01");
-                userDoc1.IsLoaded.Returns(true);
-                userDoc1.Data.Returns(new User
+
+                RealtimeService = new MemoryRealtimeService();
+                RealtimeService.AddRepository(RootDataTypes.Users, OTType.Json0, new MemoryRepository<User>(new[]
                 {
-                    AvatarUrl = "http://example.com/avatar.png",
-                    AuthId = "auth01",
-                    ParatextId = "paratext01"
-                });
-                _conn.Get<User>(RootDataTypes.Users, "user01").Returns(userDoc1);
-                var userDoc2 = Substitute.For<IDocument<User>>();
-                userDoc2.Id.Returns("user02");
-                userDoc2.IsLoaded.Returns(true);
-                userDoc2.Data.Returns(new User
-                {
-                    AvatarUrl = "http://example.com/avatar2.png",
-                    AuthId = "auth02"
-                });
-                _conn.Get<User>(RootDataTypes.Users, "user02").Returns(userDoc2);
-                var userDoc3 = Substitute.For<IDocument<User>>();
-                userDoc3.Id.Returns("user03");
-                userDoc3.When(x => x.CreateAsync(Arg.Any<User>())).Do(x =>
-                {
-                    userDoc3.IsLoaded.Returns(true);
-                    userDoc3.Data.Returns(new User());
-                });
-                _conn.Get<User>(RootDataTypes.Users, "user03").Returns(userDoc3);
-                RealtimeService = Substitute.For<IRealtimeService>();
-                RealtimeService.ConnectAsync().Returns(Task.FromResult(_conn));
+                    new User
+                    {
+                        Id = "user01",
+                        AvatarUrl = "http://example.com/avatar.png",
+                        AuthId = "auth01",
+                        ParatextId = "paratext01"
+                    },
+                    new User
+                    {
+                        Id = "user02",
+                        AvatarUrl = "http://example.com/avatar2.png",
+                        AuthId = "auth02"
+                    }
+                }));
 
                 var options = Substitute.For<IOptions<SiteOptions>>();
                 options.Value.Returns(new SiteOptions
@@ -160,23 +130,23 @@ namespace SIL.XForge.Controllers
 
                 AuthService = Substitute.For<IAuthService>();
 
-                var hostingEnv = Substitute.For<IHostingEnvironment>();
-
-                Controller = new UsersRpcController(UserAccessor, HttpRequestAccessor, UserSecrets, RealtimeService,
-                    options, AuthService, hostingEnv);
+                Service = new UserService(RealtimeService, options, UserSecrets, AuthService);
             }
 
-            public UsersRpcController Controller { get; }
-            public IUserAccessor UserAccessor { get; }
-            public IHttpRequestAccessor HttpRequestAccessor { get; }
+            public UserService Service { get; }
             public MemoryRepository<UserSecret> UserSecrets { get; }
-            public IRealtimeService RealtimeService { get; }
+            public MemoryRealtimeService RealtimeService { get; }
             public IAuthService AuthService { get; }
             public DateTime IssuedAt => DateTime.UtcNow;
 
-            public IDocument<User> GetUserDoc(string id)
+            public User GetUser(string id)
             {
-                return _conn.Get<User>(RootDataTypes.Users, id);
+                return RealtimeService.GetRepository<User>().Get(id);
+            }
+
+            public bool ContainsUser(string id)
+            {
+                return RealtimeService.GetRepository<User>().Contains(id);
             }
 
             public JObject CreateUserProfile(string userId, string authId, DateTime issuedAt)
@@ -195,14 +165,6 @@ namespace SIL.XForge.Controllers
                             new JProperty("user_id", "paratext|paratext01"),
                             new JProperty("access_token", CreateAccessToken(issuedAt)),
                             new JProperty("refresh_token", "new_refresh_token")))));
-            }
-
-            public void SetUser(string userId, string authId)
-            {
-                UserAccessor.UserId.Returns(userId);
-                UserAccessor.AuthId.Returns(authId);
-                PathString path = "/json-api/users/" + userId + "/commands";
-                HttpRequestAccessor.Path.Returns(path);
             }
 
             private string CreateAccessToken(DateTime issuedAt)

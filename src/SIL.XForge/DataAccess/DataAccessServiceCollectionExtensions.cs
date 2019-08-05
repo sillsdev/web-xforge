@@ -1,7 +1,6 @@
 using System;
 using Hangfire;
 using Hangfire.Mongo;
-using Humanizer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -47,21 +46,18 @@ namespace Microsoft.Extensions.DependencyInjection
             return services;
         }
 
-        public static void AddMongoRepository<T>(this IServiceCollection services, string type,
+        public static void AddMongoRepository<T>(this IServiceCollection services, string collection,
             Action<BsonClassMap<T>> mapSetup = null, Action<IMongoIndexManager<T>> indexSetup = null)
             where T : IIdentifiable
         {
             DataAccessClassMap.RegisterClass(mapSetup);
-            services.AddSingleton<IRepository<T>>(sp => CreateMongoRepository(sp, type, indexSetup));
+            services.AddSingleton<IRepository<T>>(sp => CreateMongoRepository(sp, collection, indexSetup));
         }
 
-        private static MongoRepository<T> CreateMongoRepository<T>(IServiceProvider sp, string type,
+        private static MongoRepository<T> CreateMongoRepository<T>(IServiceProvider sp, string collection,
             Action<IMongoIndexManager<T>> indexSetup) where T : IIdentifiable
         {
             var options = sp.GetService<IOptions<DataAccessOptions>>();
-            string collection = type.Underscore();
-            if (type == RootDataTypes.Projects)
-                collection = $"{options.Value.Prefix}_{collection}";
             return new MongoRepository<T>(sp.GetService<IMongoDatabase>().GetCollection<T>(collection),
                 c => indexSetup?.Invoke(c.Indexes));
         }

@@ -1,27 +1,50 @@
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
 using SIL.XForge.Controllers;
+using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Controllers
 {
-    public class SFProjectsRpcController : ProjectsRpcController<SFProject>
+    /// <summary>
+    /// This controller contains project-related JSON-RPC commands.
+    ///
+    /// Many of the commands in this class could be moved to an abstract base class defined in <see cref="SIL.XForge"/>
+    /// assembly. Unfortunately, the <see cref="EdjCase.JsonRpc.Router"/> library does not support methods defined in
+    /// base classes.
+    /// </summary>
+    public class SFProjectsRpcController : RpcControllerBase
     {
+        internal const string AlreadyProjectMemberResponse = "alreadyProjectMember";
+
         private readonly ISFProjectService _projectService;
 
-        public SFProjectsRpcController(IUserAccessor userAccessor, IHttpRequestAccessor httpRequestAccessor,
-            ISFProjectService projectService) : base(userAccessor, httpRequestAccessor, projectService)
+        public SFProjectsRpcController(IUserAccessor userAccessor, ISFProjectService projectService)
+            : base(userAccessor)
         {
             _projectService = projectService;
         }
 
-        public async Task<IRpcMethodResult> UpdateSettings(SFProjectSettings settings)
+        public async Task<IRpcMethodResult> Create(SFProject project)
         {
             try
             {
-                await _projectService.UpdateSettingsAsync(UserId, ResourceId, settings);
+                string projectId = await _projectService.CreateProjectAsync(UserId, project);
+                return Ok(projectId);
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+        }
+
+        public async Task<IRpcMethodResult> Delete(string projectId)
+        {
+            try
+            {
+                await _projectService.DeleteProjectAsync(UserId, projectId);
                 return Ok();
             }
             catch (ForbiddenException)
@@ -34,11 +57,11 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        public async Task<IRpcMethodResult> AddTranslateMetrics(TranslateMetrics metrics)
+        public async Task<IRpcMethodResult> UpdateSettings(string projectId, SFProjectSettings settings)
         {
             try
             {
-                await _projectService.AddTranslateMetricsAsync(UserId, ResourceId, metrics);
+                await _projectService.UpdateSettingsAsync(UserId, projectId, settings);
                 return Ok();
             }
             catch (ForbiddenException)
@@ -51,11 +74,129 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        public async Task<IRpcMethodResult> Sync()
+        public async Task<IRpcMethodResult> AddUser(string projectId, string projectRole)
         {
             try
             {
-                await _projectService.SyncAsync(UserId, ResourceId);
+                await _projectService.AddUserAsync(UserId, projectId, projectRole);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+        }
+
+        public async Task<IRpcMethodResult> RemoveUser(string projectId, string projectUserId)
+        {
+            try
+            {
+                await _projectService.RemoveUserAsync(UserId, projectId, projectUserId);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+        }
+
+        public async Task<IRpcMethodResult> UpdateRole(string projectId, string projectRole)
+        {
+            if (SystemRole != SystemRoles.SystemAdmin)
+                return ForbiddenError();
+
+            try
+            {
+                await _projectService.UpdateRoleAsync(UserId, projectId, projectRole);
+                return Ok();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+        }
+
+        public async Task<IRpcMethodResult> Invite(string projectId, string email)
+        {
+            try
+            {
+                if (await _projectService.InviteAsync(UserId, projectId, email))
+                    return Ok();
+                return Ok(AlreadyProjectMemberResponse);
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+        }
+
+        public async Task<IRpcMethodResult> IsAlreadyInvited(string projectId, string email)
+        {
+            try
+            {
+                return Ok(await _projectService.IsAlreadyInvitedAsync(UserId, projectId, email));
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+        }
+
+        public async Task<IRpcMethodResult> CheckLinkSharing(string projectId, string shareKey = null)
+        {
+            try
+            {
+                await _projectService.CheckLinkSharingAsync(UserId, projectId, shareKey);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+        }
+
+        public async Task<IRpcMethodResult> AddTranslateMetrics(string projectId, TranslateMetrics metrics)
+        {
+            try
+            {
+                await _projectService.AddTranslateMetricsAsync(UserId, projectId, metrics);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+        }
+
+        public async Task<IRpcMethodResult> Sync(string projectId)
+        {
+            try
+            {
+                await _projectService.SyncAsync(UserId, projectId);
                 return Ok();
             }
             catch (ForbiddenException)

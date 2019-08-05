@@ -1,9 +1,13 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Realtime
 {
+    /// <summary>
+    /// This class represents a real-time document.
+    /// </summary>
     public class Document<T> : IDocument<T> where T : IIdentifiable
     {
         private readonly RealtimeServer _server;
@@ -33,28 +37,68 @@ namespace SIL.XForge.Realtime
 
         public async Task CreateAsync(T data)
         {
-            Snapshot<T> snapshot = await _server.CreateDocAsync(_connHandle, Collection, Id, data, OTTypeName);
-            await UpdateFromSnapshotAsync(snapshot);
+            await _lock.WaitAsync();
+            try
+            {
+                Snapshot<T> snapshot = await _server.CreateDocAsync(_connHandle, Collection, Id, data, OTTypeName);
+                UpdateFromSnapshot(snapshot);
+            }
+            finally
+            {
+                _lock.Release();
+            }
         }
 
         public async Task FetchAsync()
         {
-            Snapshot<T> snapshot = await _server.FetchDocAsync<T>(_connHandle, Collection, Id);
-            await UpdateFromSnapshotAsync(snapshot);
+            await _lock.WaitAsync();
+            try
+            {
+                Snapshot<T> snapshot = await _server.FetchDocAsync<T>(_connHandle, Collection, Id);
+                UpdateFromSnapshot(snapshot);
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
+        public async Task FetchOrCreateAsync(Func<T> createData)
+        {
+            await _lock.WaitAsync();
+            try
+            {
+                Snapshot<T> snapshot = await _server.FetchDocAsync<T>(_connHandle, Collection, Id);
+                if (snapshot.Data == null)
+                    snapshot = await _server.CreateDocAsync(_connHandle, Collection, Id, createData(), OTTypeName);
+                UpdateFromSnapshot(snapshot);
+            }
+            finally
+            {
+                _lock.Release();
+            }
         }
 
         public async Task SubmitOpAsync(object op)
         {
-            Snapshot<T> snapshot = await _server.SubmitOpAsync<T>(_connHandle, Collection, Id, op);
-            await UpdateFromSnapshotAsync(snapshot);
+            await _lock.WaitAsync();
+            try
+            {
+                Snapshot<T> snapshot = await _server.SubmitOpAsync<T>(_connHandle, Collection, Id, op);
+                UpdateFromSnapshot(snapshot);
+            }
+            finally
+            {
+                _lock.Release();
+            }
         }
 
         public async Task DeleteAsync()
         {
-            await _server.DeleteDocAsync(_connHandle, Collection, Id);
             await _lock.WaitAsync();
             try
             {
+                await _server.DeleteDocAsync(_connHandle, Collection, Id);
                 Version = -1;
                 Data = default(T);
             }
@@ -64,20 +108,12 @@ namespace SIL.XForge.Realtime
             }
         }
 
-        private async Task UpdateFromSnapshotAsync(Snapshot<T> snapshot)
+        private void UpdateFromSnapshot(Snapshot<T> snapshot)
         {
-            await _lock.WaitAsync();
-            try
-            {
-                Version = snapshot.Version;
-                Data = snapshot.Data;
-                if (Data != null)
-                    Data.Id = Id;
-            }
-            finally
-            {
-                _lock.Release();
-            }
+            Version = snapshot.Version;
+            Data = snapshot.Data;
+            if (Data != null)
+                Data.Id = Id;
         }
     }
 }
