@@ -1,4 +1,4 @@
-import { eq } from '@orbit/utils';
+import isEqual from 'lodash/isEqual';
 import { OtJson0Op } from 'ot-json0';
 import { getPath, ObjProxyArg } from 'ts-object-path';
 import { RealtimeDoc } from './realtime-doc';
@@ -95,7 +95,7 @@ export class Json0OpBuilder<T> {
       const list = get(this.data, field);
       oldItem = list[index];
     }
-    if (!eq(oldItem, newItem)) {
+    if (!isEqual(oldItem, newItem)) {
       path.push(index);
       this.op.push({ p: path, li: newItem, ld: oldItem });
     }
@@ -115,7 +115,7 @@ export class Json0OpBuilder<T> {
     if (oldValue === undefined) {
       oldValue = get(this.data, field);
     }
-    if (!eq(newValue, oldValue)) {
+    if (!isEqual(newValue, oldValue)) {
       this.op.push({ p: path, oi: newValue, od: oldValue });
     }
     return this;

@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { RecordIdentity } from '@orbit/data';
-import { merge, uuid } from '@orbit/utils';
+import uuidv1 from 'uuid/v1';
 
 interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -17,20 +16,16 @@ interface JsonRpcResponse<T> {
   id: string;
 }
 
-export class JsonRpcError {
+export interface JsonRpcError {
   code: number;
   message: string;
   data?: any;
-
-  constructor(error: JsonRpcError) {
-    merge(this, error);
-  }
 }
 
 /**
  * This service is used to invoke JSON-RPC methods.
  *
- * @example jsonRpcService.onlineInvoke(identity, 'method', { param1: 'value1', param2: 'value2' });
+ * @example jsonRpcService.onlineInvoke(type, id, 'method', { param1: 'value1', param2: 'value2' });
  */
 @Injectable({
   providedIn: 'root'
@@ -38,25 +33,23 @@ export class JsonRpcError {
 export class JsonRpcService {
   constructor(private readonly http: HttpClient) {}
 
-  async onlineInvoke<T>(identityOrType: RecordIdentity | string, method: string, params: any = {}): Promise<T> {
-    let url = 'command-api/';
-    if (typeof identityOrType === 'string') {
-      url += `${identityOrType}/`;
-    } else {
-      url += `${identityOrType.type}/${identityOrType.id}/`;
+  async onlineInvoke<T>(type: string, id: string, method: string, params: any = {}): Promise<T> {
+    let url = `command-api/${type}/`;
+    if (id != null) {
+      url += `${id}/`;
     }
     url += 'commands';
     const request: JsonRpcRequest = {
       jsonrpc: '2.0',
       method,
       params,
-      id: uuid()
+      id: uuidv1()
     };
     const response = await this.http
       .post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
       .toPromise();
     if (response.error != null) {
-      throw new JsonRpcError(response.error);
+      throw response.error;
     }
     return response.result;
   }

@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, ViewEncapsulation } from '@angular/core';
-import { deepMerge, eq } from '@orbit/utils';
+import isEqual from 'lodash/isEqual';
+import merge from 'lodash/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import { fromEvent } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -102,7 +103,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   @Input()
   set id(value: TextDocId) {
-    if (!eq(this._id, value)) {
+    if (!isEqual(this._id, value)) {
       this._id = value;
       this._segment = undefined;
       this.initialSegmentRef = undefined;
@@ -122,7 +123,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   @Input()
   set modules(value: any) {
-    this._modules = deepMerge(value, this.DEFAULT_MODULES);
+    this._modules = merge(value, this.DEFAULT_MODULES);
   }
 
   get highlightSegment(): boolean {

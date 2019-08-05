@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { clone } from '@orbit/utils';
+import cloneDeep from 'lodash/cloneDeep';
 import { AccountService } from 'xforge-common/account.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
@@ -33,7 +33,7 @@ export class CheckingAnswersComponent implements OnInit {
       this.hideAnswerForm();
     }
     this._question = question;
-    this.initUserAnswerRefsRead = clone(this.projectUserConfigDoc.data.answerRefsRead);
+    this.initUserAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
   }
   @Input() comments: Readonly<Comment[]> = [];
   @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
@@ -107,7 +107,7 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   editAnswer(answer: Answer) {
-    this.activeAnswer = clone(answer);
+    this.activeAnswer = cloneDeep(answer);
     this.audio.url = this.activeAnswer.audioUrl;
     this.showAnswerForm();
   }

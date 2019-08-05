@@ -1,5 +1,6 @@
-import { clone, eq } from '@orbit/utils';
 import { Tokenizer } from '@sillsdev/machine';
+import cloneDeep from 'lodash/cloneDeep';
+import isEqual from 'lodash/isEqual';
 import { fromEvent, interval, merge, Subject } from 'rxjs';
 import { buffer, debounceTime, filter, map, tap } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -217,8 +218,8 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       this.metrics.sourceWordCount = this.sourceWordTokenizer.tokenize(sourceText).length;
       this.metrics.targetWordCount = this.targetWordTokenizer.tokenize(segment.text).length;
     }
-    if (!this.isMetricsEmpty && !eq(this.prevMetrics, this.metrics)) {
-      this.prevMetrics = clone(this.metrics);
+    if (!this.isMetricsEmpty && !isEqual(this.prevMetrics, this.metrics)) {
+      this.prevMetrics = cloneDeep(this.metrics);
       await this.projectService.addTranslateMetrics(this.projectId, this.metrics);
     }
   }

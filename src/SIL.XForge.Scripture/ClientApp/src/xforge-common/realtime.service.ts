@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { RecordIdentity } from '@orbit/data';
-import { clone } from '@orbit/utils';
+import cloneDeep from 'lodash/cloneDeep';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { Connection, Query } from 'sharedb/lib/client';
 import { environment } from '../environments/environment';
@@ -11,8 +10,8 @@ import { SharedbRealtimeDocAdapter } from './realtime-doc-adapter';
 import { RealtimeOfflineStore } from './realtime-offline-store';
 import { getCollectionName } from './utils';
 
-function serializeRecordIdentity(identity: RecordIdentity): string {
-  return `${identity.type}:${identity.id}`;
+function getDocKey(type: string, id: string): string {
+  return `${type}:${id}`;
 }
 
 export interface QueryResults<T extends RealtimeDoc> {
@@ -69,11 +68,11 @@ export class RealtimeService {
    * @param {RecordIdentity} identity The data identity.
    * @returns {Promise<T>} The realtime data.
    */
-  async get<T extends RealtimeDoc>(identity: RecordIdentity): Promise<T> {
-    const key = serializeRecordIdentity(identity);
+  async get<T extends RealtimeDoc>(type: string, id: string): Promise<T> {
+    const key = getDocKey(type, id);
     let doc = this.docs.get(key);
     if (doc == null) {
-      doc = this.createDoc(identity);
+      doc = this.createDoc(type, id);
       this.docs.set(key, doc);
     }
     await doc.subscribe();
@@ -86,7 +85,7 @@ export class RealtimeService {
     parameters: QueryParameters = {}
   ): Promise<QueryResults<T>> {
     const collection = getCollectionName(type);
-    const resultsQueryParams = clone(query);
+    const resultsQueryParams = cloneDeep(query);
     if (parameters.sort != null) {
       resultsQueryParams.$sort = parameters.sort;
     }
@@ -102,7 +101,7 @@ export class RealtimeService {
     const queryPromises: Promise<Query>[] = [];
     queryPromises.push(this.createFetchQuery(collection, resultsQueryParams));
     if (getCount) {
-      const countQueryParams = clone(query);
+      const countQueryParams = cloneDeep(query);
       countQueryParams.$count = { applySkipLimit: false };
       queryPromises.push(this.createFetchQuery(collection, countQueryParams));
     }
@@ -111,7 +110,7 @@ export class RealtimeService {
     const RealtimeDocType = this.domainModel.getRealtimeDocType(type);
     const docs: T[] = [];
     for (const shareDoc of resultsQuery.results) {
-      const key = serializeRecordIdentity({ type, id: shareDoc.id });
+      const key = getDocKey(type, shareDoc.id);
       let doc = this.docs.get(key);
       if (doc == null) {
         doc = new RealtimeDocType(new SharedbRealtimeDocAdapter(this.connection, collection, shareDoc), this.store);
@@ -120,23 +119,6 @@ export class RealtimeService {
       docs.push(doc as T);
     }
     return { docs, totalPagedCount: queries.length === 2 ? queries[1].extra : docs.length };
-  }
-
-  /**
-   * Deletes all real-time docs from local storage for a specified type and project.
-   *
-   * @param {string} type The doc type.
-   * @param {string} projectId The project id.
-   * @returns {Promise<void>} Resolves when the data has been deleted.
-   */
-  async localDeleteProjectDocs(type: string, projectId: string): Promise<void> {
-    const tasks: Promise<void>[] = [];
-    for (const identity of await this.store.keys(type)) {
-      if (identity.id.startsWith(projectId)) {
-        tasks.push(this.store.delete(identity));
-      }
-    }
-    await Promise.all(tasks);
   }
 
   private getUrl(): string {
@@ -149,10 +131,10 @@ export class RealtimeService {
     return url;
   }
 
-  private createDoc(identity: RecordIdentity): RealtimeDoc {
-    const collection = getCollectionName(identity.type);
-    const sharedbDoc = this.connection.get(collection, identity.id);
-    const RealtimeDocType = this.domainModel.getRealtimeDocType(identity.type);
+  private createDoc(type: string, id: string): RealtimeDoc {
+    const collection = getCollectionName(type);
+    const sharedbDoc = this.connection.get(collection, id);
+    const RealtimeDocType = this.domainModel.getRealtimeDocType(type);
     return new RealtimeDocType(new SharedbRealtimeDocAdapter(this.connection, collection, sharedbDoc), this.store);
   }
 
