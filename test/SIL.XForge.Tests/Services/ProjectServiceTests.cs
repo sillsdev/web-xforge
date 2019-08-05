@@ -389,12 +389,12 @@ namespace SIL.XForge.Services
 
             public TestProject GetProject(string id)
             {
-                return RealtimeService.GetRepository<TestProject>(RootDataTypes.Projects).Get(id);
+                return RealtimeService.GetRepository<TestProject>().Get(id);
             }
 
             public User GetUser(string id)
             {
-                return RealtimeService.GetRepository<User>(RootDataTypes.Users).Get(id);
+                return RealtimeService.GetRepository<User>().Get(id);
             }
         }
     }

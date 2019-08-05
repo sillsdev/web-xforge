@@ -1,10 +1,14 @@
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using SIL.ObjectModel;
+using SIL.XForge.Configuration;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Realtime
 {
+    /// <summary>
+    /// This class represents a connection with the real-time server.
+    /// </summary>
     public class Connection : DisposableBase, IConnection
     {
         private readonly RealtimeService _realtimeService;
@@ -18,21 +22,21 @@ namespace SIL.XForge.Realtime
             _documents = new ConcurrentDictionary<(string, string), object>();
         }
 
-        public async Task StartAsync()
+        public IDocument<T> Get<T>(string id) where T : IIdentifiable
         {
-            _handle = await _realtimeService.Server.ConnectAsync();
-        }
-
-        public IDocument<T> Get<T>(string type, string id) where T : IIdentifiable
-        {
-            string collection = _realtimeService.GetCollectionName(type);
-
-            object doc = _documents.GetOrAdd((type, id), key =>
+            DocConfig docConfig = _realtimeService.GetDocConfig<T>();
+            string collection = _realtimeService.GetCollectionName(docConfig.RootDataType);
+            object doc = _documents.GetOrAdd((collection, id), key =>
             {
-                string otTypeName = _realtimeService.GetOTTypeName(type);
+                string otTypeName = docConfig.OTTypeName;
                 return new Document<T>(_realtimeService.Server, _handle, otTypeName, collection, id);
             });
             return (Document<T>)doc;
+        }
+
+        internal async Task StartAsync()
+        {
+            _handle = await _realtimeService.Server.ConnectAsync();
         }
 
         protected override void DisposeManagedResources()

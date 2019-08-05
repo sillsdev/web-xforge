@@ -440,7 +440,7 @@ namespace SIL.XForge.Scripture.Services
 
             public SFProject GetProject()
             {
-                return RealtimeService.GetRepository<SFProject>(RootDataTypes.Projects).Get("project01");
+                return RealtimeService.GetRepository<SFProject>().Get("project01");
             }
 
             public SFProjectSecret GetProjectSecret()
@@ -450,37 +450,37 @@ namespace SIL.XForge.Scripture.Services
 
             public bool ContainsText(string bookId, int chapter, TextType textType)
             {
-                return RealtimeService.GetRepository<TextData>(SFRootDataTypes.Texts)
+                return RealtimeService.GetRepository<TextData>()
                     .Contains(TextInfo.GetTextDocId("project01", bookId, chapter, textType));
             }
 
             public TextData GetText(string bookId, int chapter, TextType textType)
             {
-                return RealtimeService.GetRepository<TextData>(SFRootDataTypes.Texts)
+                return RealtimeService.GetRepository<TextData>()
                     .Get(TextInfo.GetTextDocId("project01", bookId, chapter, textType));
             }
 
             public bool ContainsQuestionList(string bookId, int chapter)
             {
-                return RealtimeService.GetRepository<QuestionList>(SFRootDataTypes.Questions)
+                return RealtimeService.GetRepository<QuestionList>()
                     .Contains(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
             }
 
             public QuestionList GetQuestionList(string bookId, int chapter)
             {
-                return RealtimeService.GetRepository<QuestionList>(SFRootDataTypes.Questions)
+                return RealtimeService.GetRepository<QuestionList>()
                     .Get(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
             }
 
             public bool ContainsCommentList(string bookId, int chapter)
             {
-                return RealtimeService.GetRepository<CommentList>(SFRootDataTypes.Comments)
+                return RealtimeService.GetRepository<CommentList>()
                     .Contains(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
             }
 
             public CommentList GetCommentList(string bookId, int chapter)
             {
-                return RealtimeService.GetRepository<CommentList>(SFRootDataTypes.Comments)
+                return RealtimeService.GetRepository<CommentList>()
                     .Get(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
             }
 
@@ -608,12 +608,10 @@ namespace SIL.XForge.Scripture.Services
                 for (int c = 1; c <= chapterCount; c++)
                 {
                     string id = TextInfo.GetTextDocId("project01", bookId, c, textType);
-                    RealtimeService.GetRepository<TextData>(SFRootDataTypes.Texts)
+                    RealtimeService.GetRepository<TextData>()
                         .Add(new TextData(Delta.New().InsertText(changed ? "changed" : "text")) { Id = id });
-                    RealtimeService.GetRepository<QuestionList>(SFRootDataTypes.Questions)
-                        .Add(new QuestionList { Id = id });
-                    RealtimeService.GetRepository<CommentList>(SFRootDataTypes.Comments)
-                        .Add(new CommentList { Id = id });
+                    RealtimeService.GetRepository<QuestionList>().Add(new QuestionList { Id = id });
+                    RealtimeService.GetRepository<CommentList>().Add(new CommentList { Id = id });
                 }
             }
 

@@ -25,7 +25,9 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
-    /// <summary>Exchanges data with PT projects in the cloud.</summary>
+    /// <summary>
+    /// This class contains methods for interacting with the Paratext web service APIs.
+    /// </summary>
     public class ParatextService : DisposableBase, IParatextService
     {
         private readonly IOptions<ParatextOptions> _options;
@@ -75,8 +77,7 @@ namespace SIL.XForge.Scripture.Services
                     ?.FirstOrDefault(ue => (string)ue.Element("name") == username);
                 repos[projId] = (string)userElem?.Element("role");
             }
-            Dictionary<string, SFProject> existingProjects = (await _realtimeService
-                .QuerySnapshots<SFProject>(RootDataTypes.Projects)
+            Dictionary<string, SFProject> existingProjects = (await _realtimeService.QuerySnapshots<SFProject>()
                 .Where(p => repos.Keys.Contains(p.ParatextId))
                 .ToListAsync()).ToDictionary(p => p.ParatextId);
             response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get, "projects");

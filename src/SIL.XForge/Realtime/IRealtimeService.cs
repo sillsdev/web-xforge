@@ -11,9 +11,9 @@ namespace SIL.XForge.Realtime
 
         Task<IConnection> ConnectAsync();
 
-        string GetCollectionName(string type);
+        string GetCollectionName<T>() where T : IIdentifiable;
 
-        IQueryable<T> QuerySnapshots<T>(string type) where T : IIdentifiable;
+        IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable;
 
         Task DeleteProjectAsync(string projectId);
     }

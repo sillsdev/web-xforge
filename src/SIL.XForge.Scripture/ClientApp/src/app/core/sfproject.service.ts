@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
-import { JsonRpcService } from 'xforge-common/json-rpc.service';
+import { CommandService } from 'xforge-common/command.service';
 import { ProjectService } from 'xforge-common/project.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { MachineHttpClient } from './machine-http-client';
@@ -22,11 +22,11 @@ import { TranslateMetrics } from './models/translate-metrics';
 export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   constructor(
     realtimeService: RealtimeService,
-    jsonRpcService: JsonRpcService,
+    commandService: CommandService,
     http: HttpClient,
     private readonly machineHttp: MachineHttpClient
   ) {
-    super(realtimeService, jsonRpcService, SF_PROJECT_ROLES, http);
+    super(realtimeService, commandService, SF_PROJECT_ROLES, http);
   }
 
   getUserConfig(id: string, userId: string): Promise<SFProjectUserConfigDoc> {
@@ -38,7 +38,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   onlineAddTranslateMetrics(id: string, metrics: TranslateMetrics): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(SFProjectDoc.TYPE, id, 'addTranslateMetrics', { metrics });
+    return this.commandService.onlineInvoke(SFProjectDoc.TYPE, 'addTranslateMetrics', { projectId: id, metrics });
   }
 
   getText(id: TextDocId): Promise<TextDoc> {
@@ -54,10 +54,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   onlineSync(id: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(SFProjectDoc.TYPE, id, 'sync');
+    return this.commandService.onlineInvoke(SFProjectDoc.TYPE, 'sync', { projectId: id });
   }
 
   onlineUpdateSettings(id: string, settings: SFProjectSettings): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(SFProjectDoc.TYPE, id, 'updateSettings', { settings });
+    return this.commandService.onlineInvoke(SFProjectDoc.TYPE, 'updateSettings', { projectId: id, settings });
   }
 }

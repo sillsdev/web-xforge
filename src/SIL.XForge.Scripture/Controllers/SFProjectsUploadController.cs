@@ -5,26 +5,30 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SIL.XForge.Models;
+using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
-namespace SIL.XForge.Controllers
+namespace SIL.XForge.Scripture.Controllers
 {
+    /// <summary>
+    /// This controller contains upload endpoints.
+    /// </summary>
     [Authorize]
-    [Route(XForgeConstants.CommandApiNamespace + "/" + RootDataTypes.Projects)]
-    public abstract class ProjectsController<T> : ControllerBase where T : Project
+    [Route(ControllerConstants.CommandApiNamespace + "/" + RootDataTypes.Projects)]
+    public class SFProjectsUploadController : ControllerBase
     {
         private readonly IUserAccessor _userAccessor;
-        private readonly IProjectService<T> _projectService;
+        private readonly ISFProjectService _projectService;
 
-        public ProjectsController(IUserAccessor userAccessor, IProjectService<T> projectService)
+        public SFProjectsUploadController(IUserAccessor userAccessor, ISFProjectService projectService)
         {
             _userAccessor = userAccessor;
             _projectService = projectService;
         }
 
-        [HttpPost("{id}/audio")]
+        [HttpPost("audio")]
         [RequestSizeLimit(100_000_000)]
-        public async Task<IActionResult> UploadAudioAsync(string id, [FromForm] IFormFile file)
+        public async Task<IActionResult> UploadAudioAsync([FromForm] string id, [FromForm] IFormFile file)
         {
             if (!await _projectService.IsAuthorizedAsync(id, _userAccessor.UserId))
                 return Forbid();

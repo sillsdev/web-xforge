@@ -1,45 +1,130 @@
 using System;
-using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using SIL.XForge.Configuration;
+using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 
 namespace SIL.XForge.Services
 {
+    /// <summary>
+    /// This class manages xForge users.
+    /// </summary>
     public class UserService : IUserService
     {
+        private const string EMAIL_PATTERN = "^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$";
+
         private readonly IRealtimeService _realtimeService;
         private readonly IOptions<SiteOptions> _siteOptions;
+        private readonly IRepository<UserSecret> _userSecrets;
+        private readonly IAuthService _authService;
 
-        public UserService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions)
+        public UserService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
+            IRepository<UserSecret> userSecrets, IAuthService authService)
         {
             _realtimeService = realtimeService;
             _siteOptions = siteOptions;
+            _userSecrets = userSecrets;
+            _authService = authService;
         }
 
-        public async Task<Uri> SaveAvatarAsync(string id, string name, Stream inputStream)
+        public async Task UpdateUserFromProfileAsync(string userId, JObject userProfile)
         {
-            string avatarsDir = Path.Combine(_siteOptions.Value.SharedDir, "avatars");
-            if (!Directory.Exists(avatarsDir))
-                Directory.CreateDirectory(avatarsDir);
-            string fileName = id + Path.GetExtension(name);
-            string path = Path.Combine(avatarsDir, fileName);
-            using (var fileStream = new FileStream(path, FileMode.Create))
-                await inputStream.CopyToAsync(fileStream);
-            // add a timestamp to the query part of the URL, this forces the browser to NOT use the previously cached
-            // image when a new avatar image is uploaded
-            var uri = new Uri(_siteOptions.Value.Origin,
-                $"/assets/avatars/{fileName}?t={DateTime.UtcNow.ToFileTime()}");
+            var identities = (JArray)userProfile["identities"];
+            JObject ptIdentity = identities.OfType<JObject>()
+                .FirstOrDefault(i => (string)i["connection"] == "paratext");
+            Regex emailRegex = new Regex(EMAIL_PATTERN);
             using (IConnection conn = await _realtimeService.ConnectAsync())
             {
-                IDocument<User> userDoc = conn.Get<User>(RootDataTypes.Users, id);
-                await userDoc.FetchAsync();
-                await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.AvatarUrl, uri.PathAndQuery));
+                DateTime now = DateTime.UtcNow;
+                IDocument<User> userDoc = await conn.FetchOrCreateAsync<User>(userId,
+                    () => new User { AuthId = (string)userProfile["user_id"] });
+                await userDoc.SubmitJson0OpAsync(op =>
+                    {
+                        string name = emailRegex.IsMatch((string)userProfile["name"])
+                            ? ((string)userProfile["name"]).Substring(0, ((string)userProfile["name"]).IndexOf('@'))
+                            : (string)userProfile["name"];
+                        op.Set(u => u.Name, name);
+                        op.Set(u => u.Email, (string)userProfile["email"]);
+                        op.Set(u => u.AvatarUrl, (string)userProfile["picture"]);
+                        op.Set(u => u.Role, (string)userProfile["app_metadata"]["xf_role"]);
+                        if (ptIdentity != null)
+                        {
+                            var ptId = (string)ptIdentity["user_id"];
+                            op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId));
+                        }
+                        string key = _siteOptions.Value.Id;
+                        if (userDoc.Data.Sites.ContainsKey(key))
+                            op.Set(u => u.Sites[key].LastLogin, now);
+                        else
+                            op.Set(u => u.Sites[key], new Site { LastLogin = now });
+                    });
             }
-            return uri;
+
+            if (ptIdentity != null)
+            {
+                var newPTTokens = new Tokens
+                {
+                    AccessToken = (string)ptIdentity["access_token"],
+                    RefreshToken = (string)ptIdentity["refresh_token"]
+                };
+                UserSecret userSecret = await _userSecrets.UpdateAsync(userId, update => update
+                    .SetOnInsert(put => put.ParatextTokens, newPTTokens), true);
+
+                // only update the PT tokens if they are newer
+                if (newPTTokens.IssuedAt > userSecret.ParatextTokens.IssuedAt)
+                {
+                    await _userSecrets.UpdateAsync(userId,
+                        update => update.Set(put => put.ParatextTokens, newPTTokens));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Links the secondary Auth0 account (Paratext account) to the primary Auth0 account for the specified user.
+        /// </summary>
+        public async Task LinkParatextAccountAsync(string userId, string primaryAuthId, string secondaryAuthId)
+        {
+            await _authService.LinkAccounts(primaryAuthId, secondaryAuthId);
+            JObject userProfile = await _authService.GetUserAsync(primaryAuthId);
+            var identities = (JArray)userProfile["identities"];
+            JObject ptIdentity = identities.OfType<JObject>()
+                .First(i => (string)i["connection"] == "paratext");
+            var ptId = (string)ptIdentity["user_id"];
+            var ptTokens = new Tokens
+            {
+                AccessToken = (string)ptIdentity["access_token"],
+                RefreshToken = (string)ptIdentity["refresh_token"]
+            };
+            await _userSecrets.UpdateAsync(userId, update => update.Set(us => us.ParatextTokens, ptTokens), true);
+
+            using (IConnection conn = await _realtimeService.ConnectAsync())
+            {
+                IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
+                await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId)));
+            }
+        }
+
+        public async Task DeleteAsync(string userId)
+        {
+            using (IConnection conn = await _realtimeService.ConnectAsync())
+            {
+                IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
+                await userDoc.DeleteAsync();
+            }
+        }
+
+        /// <summary>
+        /// Gets the identity provider ID from the specified Auth0 ID.
+        /// </summary>
+        private static string GetIdpIdFromAuthId(string authId)
+        {
+            return authId.Split('|')[1];
         }
     }
 }

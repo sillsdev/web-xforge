@@ -24,6 +24,7 @@ namespace SIL.XForge.Realtime
         private readonly IOptions<RealtimeOptions> _realtimeOptions;
         private readonly IOptions<AuthOptions> _authOptions;
         private readonly IMongoDatabase _database;
+        private readonly Dictionary<Type, DocConfig> _docConfigs;
 
         public RealtimeService(RealtimeServer server, IOptions<SiteOptions> siteOptions,
             IOptions<DataAccessOptions> dataAccessOptions, IOptions<RealtimeOptions> realtimeOptions,
@@ -35,6 +36,13 @@ namespace SIL.XForge.Realtime
             _realtimeOptions = realtimeOptions;
             _authOptions = authOptions;
             _database = mongoClient.GetDatabase(_dataAccessOptions.Value.MongoDatabaseName);
+
+            RealtimeOptions options = _realtimeOptions.Value;
+            _docConfigs = new Dictionary<Type, DocConfig>();
+            AddDocConfig(options.UserDoc);
+            AddDocConfig(options.ProjectDoc);
+            foreach (DocConfig projectDataDoc in options.ProjectDataDocs)
+                AddDocConfig(projectDataDoc);
         }
 
         internal RealtimeServer Server { get; }
@@ -65,18 +73,17 @@ namespace SIL.XForge.Realtime
             }
         }
 
-        public string GetCollectionName(string type)
+        public string GetCollectionName<T>() where T : IIdentifiable
         {
-            if (type == RootDataTypes.Projects)
-                return $"{_dataAccessOptions.Value.Prefix}_{type.Underscore()}";
-            return type.Underscore();
+            DocConfig docConfig = GetDocConfig<T>();
+            return GetCollectionName(docConfig.RootDataType);
         }
 
         public async Task DeleteProjectAsync(string projectId)
         {
             var tasks = new List<Task>();
             foreach (DocConfig docConfig in _realtimeOptions.Value.ProjectDataDocs)
-                tasks.Add(DeleteProjectDocsAsync(docConfig.Type, projectId));
+                tasks.Add(DeleteProjectDocsAsync(docConfig.RootDataType, projectId));
             await Task.WhenAll(tasks);
 
             string collectionName = GetCollectionName(RootDataTypes.Projects);
@@ -90,30 +97,38 @@ namespace SIL.XForge.Realtime
             await opsCollection.DeleteManyAsync(dFilter);
         }
 
-        public IQueryable<T> QuerySnapshots<T>(string type) where T : IIdentifiable
+        public IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable
         {
-            string collectionName = GetCollectionName(type);
+            string collectionName = GetCollectionName<T>();
             IMongoCollection<T> collection = _database.GetCollection<T>(collectionName);
             return collection.AsQueryable();
         }
 
-        internal string GetOTTypeName(string type)
+        internal DocConfig GetDocConfig<T>() where T : IIdentifiable
         {
-            switch (type)
-            {
-                case RootDataTypes.Users:
-                case RootDataTypes.Projects:
-                    return OTType.Json0;
+            return _docConfigs[typeof(T)];
+        }
 
-                default:
-                    DocConfig docConfig = _realtimeOptions.Value.ProjectDataDocs.First(dc => dc.Type == type);
-                    return docConfig.OTTypeName;
-            }
+        internal string GetCollectionName(string rootDataType)
+        {
+            if (rootDataType == RootDataTypes.Projects)
+                return $"{_dataAccessOptions.Value.Prefix}_{rootDataType.Underscore()}";
+            return rootDataType.Underscore();
         }
 
         protected override void DisposeManagedResources()
         {
             StopServer();
+        }
+
+        private void AddDocConfig(DocConfig docConfig)
+        {
+            if (docConfig.Type == null)
+            {
+                throw new ArgumentException($"The doc config {docConfig.RootDataType} does not have a type set.",
+                    nameof(docConfig));
+            }
+            _docConfigs[docConfig.Type] = docConfig;
         }
 
         private async Task DeleteProjectDocsAsync(string type, string projectId)
@@ -162,7 +177,7 @@ namespace SIL.XForge.Realtime
         {
             return new
             {
-                Name = GetCollectionName(docConfig.Type),
+                Name = GetCollectionName(docConfig.RootDataType),
                 OTTypeName = docConfig.OTTypeName,
                 Domains = docConfig.Domains
                     .OrderByDescending(d => d.PathTemplate?.Template?.Items?.Count ?? 0)

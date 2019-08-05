@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -53,6 +54,13 @@ namespace SIL.XForge.Realtime
                 Data = data;
                 Version = 0;
             }
+        }
+
+        public async Task FetchOrCreateAsync(Func<T> createData)
+        {
+            await FetchAsync();
+            if (!IsLoaded)
+                await CreateAsync(createData());
         }
 
         public async Task SubmitOpAsync(object op)
