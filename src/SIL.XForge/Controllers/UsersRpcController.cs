@@ -120,7 +120,7 @@ namespace SIL.XForge.Controllers
             using (IConnection conn = await _realtimeService.ConnectAsync())
             {
                 DateTime now = DateTime.UtcNow;
-                IDocument<User> userDoc = conn.Get<User>(RootDataTypes.Users, UserId);
+                IDocument<User> userDoc = conn.Get<User>(RootDataTypes.Users, ResourceId);
                 await userDoc.FetchAsync();
                 if (!userDoc.IsLoaded)
                 {
