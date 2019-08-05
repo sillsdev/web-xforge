@@ -11,7 +11,6 @@ namespace SIL.XForge.Controllers
 {
     [Authorize]
     [Route(XForgeConstants.CommandApiNamespace + "/" + RootDataTypes.Projects)]
-    [ApiController]
     public abstract class ProjectsController<T> : ControllerBase where T : Project
     {
         private readonly IUserAccessor _userAccessor;

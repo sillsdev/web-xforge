@@ -11,7 +11,6 @@ namespace SIL.XForge.Controllers
 {
     [Authorize]
     [Route(XForgeConstants.CommandApiNamespace + "/" + RootDataTypes.Users)]
-    [ApiController]
     public class UsersController : ControllerBase
     {
         private readonly IUserAccessor _userAccessor;
