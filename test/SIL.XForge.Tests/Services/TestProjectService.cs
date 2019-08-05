@@ -1,4 +1,3 @@
-using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using SIL.XForge.Configuration;
@@ -18,16 +17,6 @@ namespace SIL.XForge.Services
         }
 
         protected override string ProjectAdminRole => TestProjectRoles.Administrator;
-
-        public override Task<string> CreateProjectAsync(string userId, TestProject newProject)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Task DeleteProjectAsync(string userId, string projectId)
-        {
-            throw new System.NotImplementedException();
-        }
 
         protected override Task<Attempt<string>> TryGetProjectRoleAsync(TestProject project, string userId)
         {

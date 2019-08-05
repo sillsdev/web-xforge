@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { combineLatest, from, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
-import { JsonRpcService } from './json-rpc.service';
+import { CommandService } from './command.service';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
 import { QueryParameters, QueryResults, RealtimeService } from './realtime.service';
@@ -17,7 +17,7 @@ export class UserService {
   constructor(
     private readonly realtimeService: RealtimeService,
     private readonly authService: AuthService,
-    private readonly jsonRpcService: JsonRpcService
+    private readonly commandService: CommandService
   ) {}
 
   get currentUserId(): string {
@@ -38,7 +38,7 @@ export class UserService {
   }
 
   async onlineDelete(id: string): Promise<void> {
-    await this.jsonRpcService.onlineInvoke(UserDoc.TYPE, id, 'delete');
+    await this.commandService.onlineInvoke(UserDoc.TYPE, 'delete', { userId: id });
   }
 
   onlineSearch(

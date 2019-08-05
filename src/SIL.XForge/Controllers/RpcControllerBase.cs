@@ -13,35 +13,15 @@ namespace SIL.XForge.Controllers
     public abstract class RpcControllerBase : RpcController
     {
         private readonly IUserAccessor _userAccessor;
-        private readonly IHttpRequestAccessor _httpRequestAccessor;
 
-        protected RpcControllerBase(IUserAccessor userAccessor, IHttpRequestAccessor httpRequestAccessor)
+        protected RpcControllerBase(IUserAccessor userAccessor)
         {
             _userAccessor = userAccessor;
-            _httpRequestAccessor = httpRequestAccessor;
         }
 
         protected string UserId => _userAccessor.UserId;
         protected string SystemRole => _userAccessor.Role;
         protected string AuthId => _userAccessor.AuthId;
-
-        protected string ResourceId
-        {
-            get
-            {
-                string path = _httpRequestAccessor.Path.Value;
-                // find beginning of the ID
-                int index = path.IndexOf('/', $"/{XForgeConstants.CommandApiNamespace}".Length + 1);
-                if (index < 0)
-                    return null;
-                index++;
-                // get length of the ID
-                int length = path.Length - $"/{XForgeConstants.CommandsEndpoint}".Length - index;
-                if (length < 0)
-                    return null;
-                return path.Substring(index, length);
-            }
-        }
 
         protected IRpcMethodResult ForbiddenError()
         {

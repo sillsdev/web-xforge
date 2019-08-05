@@ -1,8 +1,7 @@
 namespace SIL.XForge
 {
-    public static class XForgeConstants
+    public static class ControllerConstants
     {
         public const string CommandApiNamespace = "command-api";
-        public const string CommandsEndpoint = "commands";
     }
 }

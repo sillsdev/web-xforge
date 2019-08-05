@@ -1,12 +1,23 @@
+using System;
+using EdjCase.JsonRpc.Router.Abstractions;
+using EdjCase.JsonRpc.Router.RouteProviders;
+using Microsoft.Extensions.Options;
+using SIL.XForge;
+using SIL.XForge.Controllers;
+using SIL.XForge.Models;
 using SIL.XForge.Services;
 
 namespace Microsoft.AspNetCore.Builder
 {
     public static class JsonRpcApplicationBuilderExtensions
     {
-        public static void UseXFJsonRpc(this IApplicationBuilder app)
+        public static void UseXFJsonRpc(this IApplicationBuilder app, Action<RpcManualRoutingOptions> configureOptions)
         {
-            app.UseRouter(new XFRpcHttpRouter());
+            var options = new RpcManualRoutingOptions { BaseRequestPath = $"/{ControllerConstants.CommandApiNamespace}" };
+            options.RegisterController<UsersRpcController>(RootDataTypes.Users);
+            configureOptions(options);
+
+            app.UseRouter(new MultiAuthSchemeRpcHttpRouter(new RpcManualRouteProvider(Options.Create(options))));
         }
     }
 }

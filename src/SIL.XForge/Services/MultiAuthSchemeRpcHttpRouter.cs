@@ -1,19 +1,20 @@
 using System.Security.Claims;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router;
+using EdjCase.JsonRpc.Router.Abstractions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace SIL.XForge.Services
 {
-    public class XFRpcHttpRouter : IRouter
+    public class MultiAuthSchemeRpcHttpRouter : IRouter
     {
         private readonly RpcHttpRouter _internalRouter;
 
-        public XFRpcHttpRouter()
+        public MultiAuthSchemeRpcHttpRouter(IRpcRouteProvider routeProvider)
         {
-            _internalRouter = new RpcHttpRouter(new XFRpcRouteProvider());
+            _internalRouter = new RpcHttpRouter(routeProvider);
         }
 
         public VirtualPathData GetVirtualPath(VirtualPathContext context)
@@ -24,8 +25,6 @@ namespace SIL.XForge.Services
         public async Task RouteAsync(RouteContext context)
         {
             if (context.HttpContext.Request.ContentType != "application/json")
-                return;
-            if (!context.HttpContext.Request.Path.Value.EndsWith($"/{XForgeConstants.CommandsEndpoint}"))
                 return;
 
             var authSchemeProvider = context.HttpContext.RequestServices.GetService<IAuthenticationSchemeProvider>();

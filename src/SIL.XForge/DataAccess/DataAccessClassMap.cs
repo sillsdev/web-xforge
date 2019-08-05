@@ -22,12 +22,5 @@ namespace SIL.XForge.DataAccess
                 mapSetup?.Invoke(cm);
             });
         }
-
-        public static void RegisterConcreteClass<TBase, TConcrete>()
-        {
-            BsonSerializer.RegisterDiscriminatorConvention(typeof(TBase),
-                new SingleDiscriminatorConvention(typeof(TConcrete)));
-            BsonClassMap.RegisterClassMap<TConcrete>();
-        }
     }
 }

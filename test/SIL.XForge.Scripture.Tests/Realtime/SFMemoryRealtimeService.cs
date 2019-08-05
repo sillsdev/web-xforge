@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using SIL.XForge.DataAccess;
-using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 
@@ -10,9 +9,8 @@ namespace SIL.XForge.Scripture.Realtime
     {
         public override async Task DeleteProjectAsync(string projectId)
         {
-            await GetRepository<SFProject>(RootDataTypes.Projects).DeleteAsync(projectId);
-            await GetRepository<SFProjectUserConfig>(SFRootDataTypes.ProjectUserConfigs)
-                .DeleteAllAsync(puc => puc.Id.StartsWith(projectId));
+            await GetRepository<SFProject>().DeleteAsync(projectId);
+            await GetRepository<SFProjectUserConfig>().DeleteAllAsync(puc => puc.Id.StartsWith(projectId));
         }
     }
 }

@@ -8,12 +8,15 @@ using SIL.Machine.Corpora;
 using SIL.Machine.Tokenization;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
-using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
+    /// <summary>
+    /// This class represents a Machine text corpus for a SF project. It is used during batch training of the Machine
+    /// translation engine.
+    /// </summary>
     public class SFTextCorpusFactory : ITextCorpusFactory
     {
         private readonly IMongoClient _mongoClient;
@@ -38,7 +41,7 @@ namespace SIL.XForge.Scripture.Services
             StringTokenizer wordTokenizer = new LatinWordTokenizer();
             IMongoDatabase database = _mongoClient.GetDatabase(_dataAccessOptions.Value.MongoDatabaseName);
             IMongoCollection<BsonDocument> textDataColl = database.GetCollection<BsonDocument>(
-                _realtimeService.GetCollectionName(SFRootDataTypes.Texts));
+                _realtimeService.GetCollectionName<TextData>());
             var texts = new List<IText>();
             foreach (string projectId in projects)
             {
@@ -55,7 +58,7 @@ namespace SIL.XForge.Scripture.Services
                         throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextType));
                 }
 
-                var project = await _realtimeService.GetSnapshotAsync<SFProject>(RootDataTypes.Projects, projectId);
+                var project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);
 
                 foreach (TextInfo text in project.Texts)
                 {

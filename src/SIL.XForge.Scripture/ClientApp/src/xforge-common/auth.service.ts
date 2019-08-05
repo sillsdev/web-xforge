@@ -5,7 +5,7 @@ import jwtDecode from 'jwt-decode';
 import { fromEvent, of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
-import { JsonRpcService } from './json-rpc.service';
+import { CommandService } from './command.service';
 import { LocationService } from './location.service';
 import { SystemRole } from './models/system-role';
 import { UserDoc } from './models/user-doc';
@@ -38,7 +38,7 @@ export class AuthService {
   constructor(
     private readonly realtimeService: RealtimeService,
     private readonly locationService: LocationService,
-    private readonly jsonRpcService: JsonRpcService,
+    private readonly commandService: CommandService,
     private readonly router: Router
   ) {
     // listen for changes to the auth state
@@ -142,12 +142,10 @@ export class AuthService {
     const isNewUser = prevUserId != null && prevUserId !== this.currentUserId;
     await this.realtimeService.init(this.accessToken, isNewUser);
     if (secondaryId != null) {
-      await this.jsonRpcService.onlineInvoke(UserDoc.TYPE, this.currentUserId, 'linkParatextAccount', {
-        authId: secondaryId
-      });
+      await this.commandService.onlineInvoke(UserDoc.TYPE, 'linkParatextAccount', { authId: secondaryId });
     } else if (!environment.production) {
       try {
-        await this.jsonRpcService.onlineInvoke(UserDoc.TYPE, this.currentUserId, 'pullAuthUserProfile');
+        await this.commandService.onlineInvoke(UserDoc.TYPE, 'pullAuthUserProfile');
       } catch (err) {
         console.error(err);
         return false;
