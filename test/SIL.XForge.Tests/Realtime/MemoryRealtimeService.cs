@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Humanizer;
 using Microsoft.AspNetCore.NodeServices;
 using Microsoft.Extensions.DependencyInjection;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 
@@ -22,13 +23,13 @@ namespace SIL.XForge.Realtime
             return sp.GetRequiredService<INodeServices>();
         }
 
-        private readonly Dictionary<string, object> _repos;
-        private readonly Dictionary<string, string> _otTypeNames;
+        private readonly Dictionary<Type, object> _repos;
+        private readonly Dictionary<Type, DocConfig> _docConfigs;
 
         public MemoryRealtimeService()
         {
-            _repos = new Dictionary<string, object>();
-            _otTypeNames = new Dictionary<string, string>();
+            _repos = new Dictionary<Type, object>();
+            _docConfigs = new Dictionary<Type, DocConfig>();
         }
 
         public void StartServer()
@@ -49,30 +50,36 @@ namespace SIL.XForge.Realtime
             return Task.CompletedTask;
         }
 
-        public string GetCollectionName(string type)
+        public string GetCollectionName<T>() where T : IIdentifiable
         {
-            return type.Underscore();
+            DocConfig docConfig = GetDocConfig<T>();
+            return GetCollectionName(docConfig.RootDataType);
         }
 
-        public IQueryable<T> QuerySnapshots<T>(string type) where T : IIdentifiable
+        public IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable
         {
-            return GetRepository<T>(type).Query();
+            return GetRepository<T>().Query();
         }
 
         public void AddRepository<T>(string type, string otTypeName, MemoryRepository<T> repo) where T : IIdentifiable
         {
-            _repos[type] = repo;
-            _otTypeNames[type] = otTypeName;
+            _repos[typeof(T)] = repo;
+            _docConfigs[typeof(T)] = new DocConfig(type, otTypeName) { Type = typeof(T) };
         }
 
-        public MemoryRepository<T> GetRepository<T>(string type) where T : IIdentifiable
+        public MemoryRepository<T> GetRepository<T>() where T : IIdentifiable
         {
-            return (MemoryRepository<T>)_repos[type];
+            return (MemoryRepository<T>)_repos[typeof(T)];
         }
 
-        internal string GetOtTypeName(string type)
+        internal DocConfig GetDocConfig<T>() where T : IIdentifiable
         {
-            return _otTypeNames[type];
+            return _docConfigs[typeof(T)];
+        }
+
+        internal string GetCollectionName(string rootDataType)
+        {
+            return rootDataType.Underscore();
         }
     }
 }

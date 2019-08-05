@@ -332,17 +332,13 @@ namespace SIL.XForge.Scripture.Services
 
             public async Task<IEnumerable<IDocument<QuestionList>>> GetQuestionListDocsAsync(IConnection conn)
             {
-                IDocument<QuestionList> questionListDoc = conn.Get<QuestionList>(SFRootDataTypes.Questions,
-                    "questions01");
-                await questionListDoc.FetchAsync();
+                IDocument<QuestionList> questionListDoc = await conn.FetchAsync<QuestionList>("questions01");
                 return new[] { questionListDoc };
             }
 
             public async Task<IEnumerable<IDocument<CommentList>>> GetCommentListDocsAsync(IConnection conn)
             {
-                IDocument<CommentList> commentListDoc = conn.Get<CommentList>(SFRootDataTypes.Comments,
-                    "comments01");
-                await commentListDoc.FetchAsync();
+                IDocument<CommentList> commentListDoc = await conn.FetchAsync<CommentList>("comments01");
                 return new[] { commentListDoc };
             }
 

@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using EdjCase.JsonRpc.Router;
 using EdjCase.JsonRpc.Router.Abstractions;
 using EdjCase.JsonRpc.Router.MethodProviders;
-using JsonApiDotNetCore.Extensions;
 using SIL.XForge.Controllers;
 
 namespace SIL.XForge.Services
@@ -14,8 +14,6 @@ namespace SIL.XForge.Services
     /// namespace prefix followed by a pluralized resource name. The resource name is generated from the controller
     /// class name by removing the "RpcController" suffix and then dasherizing the remaining string. The resource name
     /// can also be specified manually by using a <see cref="EdjCase.JsonRpc.Router.RpcRouteAttribute"/>.
-    ///
-    /// This class should generate routes that are consist with <see cref="XFDasherizedRoutingConvention"/>.
     /// </summary>
     public class XFRpcRouteProvider : IRpcRouteProvider
     {
@@ -59,7 +57,7 @@ namespace SIL.XForge.Services
                         {
                             routePathString = controllerType.Name;
                         }
-                        routePathString = routePathString.Dasherize();
+                        routePathString = Dasherize(routePathString);
                     }
                     else
                     {
@@ -76,6 +74,29 @@ namespace SIL.XForge.Services
                 this._routeCache = controllerRoutes;
             }
             return this._routeCache;
+        }
+
+        private static string Dasherize(string str)
+        {
+            var chars = str.ToCharArray();
+            if (chars.Length > 0)
+            {
+                var builder = new StringBuilder();
+                for (var i = 0; i < chars.Length; i++)
+                {
+                    if (char.IsUpper(chars[i]))
+                    {
+                        var hashedString = (i > 0) ? $"-{char.ToLower(chars[i])}" : $"{char.ToLower(chars[i])}";
+                        builder.Append(hashedString);
+                    }
+                    else
+                    {
+                        builder.Append(chars[i]);
+                    }
+                }
+                return builder.ToString();
+            }
+            return str;
         }
     }
 }

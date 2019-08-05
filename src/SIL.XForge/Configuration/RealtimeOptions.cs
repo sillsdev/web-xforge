@@ -3,10 +3,14 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Configuration
 {
+    /// <summary>
+    /// This class represents the configuration of the real-time service.
+    /// </summary>
     public class RealtimeOptions
     {
         private static readonly DocConfig DefaultUserDocConfig = new DocConfig(RootDataTypes.Users)
         {
+            Type = typeof(User),
             ImmutableProperties =
             {
                 PathTemplateConfig<User>.Create(u => u.AuthId),

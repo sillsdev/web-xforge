@@ -17,6 +17,9 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
+    /// <summary>
+    /// This class manages SF projects.
+    /// </summary>
     public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFProjectService
     {
         private readonly IEngineService _engineService;
@@ -51,13 +54,11 @@ namespace SIL.XForge.Scripture.Services
 
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
-                IDocument<SFProject> projectDoc = conn.Get<SFProject>(RootDataTypes.Projects,
-                    ObjectId.GenerateNewId().ToString());
-                await projectDoc.CreateAsync(newProject);
+                IDocument<SFProject> projectDoc = await conn.CreateAsync<SFProject>(ObjectId.GenerateNewId().ToString(),
+                    newProject);
                 await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
 
-                IDocument<User> userDoc = conn.Get<User>(RootDataTypes.Users, userId);
-                await userDoc.FetchAsync();
+                IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
                 await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRoles.Administrator);
 
                 if (newProject.TranslateEnabled)
@@ -79,23 +80,19 @@ namespace SIL.XForge.Scripture.Services
         {
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
-                IDocument<SFProject> projectDoc = conn.Get<SFProject>(RootDataTypes.Projects, projectId);
-                await projectDoc.FetchAsync();
+                IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
                 if (!projectDoc.IsLoaded)
                     throw new DataNotFoundException("The project does not exist.");
                 if (!IsProjectAdmin(projectDoc.Data, userId))
                     throw new ForbiddenException();
-                async Task removeUser(IDocument<User> userDoc)
+                async Task removeUser(string projectUserId)
                 {
-                    await userDoc.FetchAsync();
+                    IDocument<User> userDoc = await conn.FetchAsync<User>(projectUserId);
                     await RemoveUserFromProjectAsync(conn, projectDoc, userDoc);
                 }
                 var tasks = new List<Task>();
                 foreach (string projectUserId in projectDoc.Data.UserRoles.Keys)
-                {
-                    IDocument<User> userDoc = conn.Get<User>(RootDataTypes.Users, projectUserId);
-                    tasks.Add(removeUser(userDoc));
-                }
+                    tasks.Add(removeUser(projectUserId));
                 await Task.WhenAll(tasks);
                 await projectDoc.DeleteAsync();
             }
@@ -112,8 +109,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
-                IDocument<SFProject> projectDoc = conn.Get<SFProject>(RootDataTypes.Projects, projectId);
-                await projectDoc.FetchAsync();
+                IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
                 if (!projectDoc.IsLoaded)
                     throw new DataNotFoundException("The project does not exist.");
                 if (!IsProjectAdmin(projectDoc.Data, userId))
@@ -161,8 +157,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task AddTranslateMetricsAsync(string userId, string projectId, TranslateMetrics metrics)
         {
-            Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(RootDataTypes.Projects,
-                projectId);
+            Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
             if (!attempt.TryResult(out SFProject project))
                 throw new DataNotFoundException("The project does not exist.");
 
@@ -177,8 +172,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task SyncAsync(string userId, string projectId)
         {
-            Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(RootDataTypes.Projects,
-                projectId);
+            Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
             if (!attempt.TryResult(out SFProject project))
                 throw new DataNotFoundException("The project does not exist.");
 
@@ -192,18 +186,17 @@ namespace SIL.XForge.Scripture.Services
             IDocument<User> userDoc, string projectRole)
         {
             await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
-            IDocument<SFProjectUserConfig> projectUserConfigDoc = conn.Get<SFProjectUserConfig>(
-                SFRootDataTypes.ProjectUserConfigs, SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id));
-            await projectUserConfigDoc.CreateAsync(new SFProjectUserConfig { OwnerRef = userDoc.Id });
+            IDocument<SFProjectUserConfig> projectUserConfigDoc = await conn.CreateAsync<SFProjectUserConfig>(
+                SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
+                new SFProjectUserConfig { OwnerRef = userDoc.Id });
         }
 
         protected override async Task RemoveUserFromProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,
             IDocument<User> userDoc)
         {
             await base.RemoveUserFromProjectAsync(conn, projectDoc, userDoc);
-            IDocument<SFProjectUserConfig> projectUserConfigDoc = conn.Get<SFProjectUserConfig>(
-                SFRootDataTypes.ProjectUserConfigs, SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id));
-            await projectUserConfigDoc.FetchAsync();
+            IDocument<SFProjectUserConfig> projectUserConfigDoc = await conn.FetchAsync<SFProjectUserConfig>(
+                SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id));
             await projectUserConfigDoc.DeleteAsync();
         }
 
