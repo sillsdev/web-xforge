@@ -1,5 +1,8 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import {
+  AudioAttachment,
+  CheckingAudioRecorderComponent
+} from '../checking-audio-recorder/checking-audio-recorder.component';
 
 @Component({
   selector: 'app-checking-audio-combined',
@@ -7,6 +10,7 @@ import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recor
   styleUrls: ['./checking-audio-combined.component.scss']
 })
 export class CheckingAudioCombinedComponent {
+  @ViewChild(CheckingAudioRecorderComponent) audioRecorderComponent: CheckingAudioRecorderComponent;
   @Input() source: string = '';
   @Output() update: EventEmitter<AudioAttachment> = new EventEmitter<AudioAttachment>();
 

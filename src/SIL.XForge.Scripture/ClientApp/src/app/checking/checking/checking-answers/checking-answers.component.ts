@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { clone } from '@orbit/utils';
 import { AccountService } from 'xforge-common/account.service';
@@ -10,6 +10,7 @@ import { Question } from '../../../core/models/question';
 import { SFProject } from '../../../core/models/sfproject';
 import { SFProjectRoles } from '../../../core/models/sfproject-roles';
 import { SFProjectUserConfigDoc } from '../../../core/models/sfproject-user-config-doc';
+import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CommentAction } from './checking-comments/checking-comments.component';
 
@@ -26,6 +27,7 @@ export interface AnswerAction {
   styleUrls: ['./checking-answers.component.scss']
 })
 export class CheckingAnswersComponent implements OnInit {
+  @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent: CheckingAudioCombinedComponent;
   @Input() project: SFProject;
   @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
   @Input() set question(question: Question) {
@@ -164,7 +166,10 @@ export class CheckingAnswersComponent implements OnInit {
     });
   }
 
-  submit(): void {
+  async submit() {
+    if (this.audio.status === 'recording') {
+      await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
+    }
     this.setValidationRules();
     this.answerFormSubmitAttempted = true;
     if (this.answerForm.invalid) {
