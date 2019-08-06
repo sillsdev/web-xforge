@@ -27,12 +27,12 @@ namespace SIL.XForge.Scripture.Services
         private const string SiteId = "xf";
 
         [Test]
-        public async Task UpdateTasksAsync_ChangeSourceProject_RecreateMachineProjectAndSync()
+        public async Task UpdateSettingsAsync_ChangeSourceProject_RecreateMachineProjectAndSync()
         {
             var env = new TestEnvironment();
 
-            await env.Service.UpdateTasksAsync(User01, Project01,
-                new UpdateTasksParams { SourceParatextId = "changedId" });
+            await env.Service.UpdateSettingsAsync(User01, Project01,
+                new SFProjectSettings { SourceParatextId = "changedId" });
 
             SFProject project = env.GetProject("project01");
             Assert.That(project.SourceParatextId, Is.EqualTo("changedId"));
@@ -43,12 +43,12 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task UpdateTasksAsync_EnableTranslate_CreateMachineProjectAndSync()
+        public async Task UpdateSettingsAsync_EnableTranslate_CreateMachineProjectAndSync()
         {
             var env = new TestEnvironment();
 
-            await env.Service.UpdateTasksAsync(User01, Project01,
-                new UpdateTasksParams { TranslateEnabled = true, SourceParatextId = "changedId" });
+            await env.Service.UpdateSettingsAsync(User01, Project01,
+                new SFProjectSettings { TranslateEnabled = true, SourceParatextId = "changedId" });
 
             SFProject project = env.GetProject(Project01);
             Assert.That(project.TranslateEnabled, Is.True);
@@ -60,11 +60,11 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task UpdateTasksAsync_EnableChecking_Sync()
+        public async Task UpdateSettingsAsync_EnableChecking_Sync()
         {
             var env = new TestEnvironment();
 
-            await env.Service.UpdateTasksAsync(User01, Project01, new UpdateTasksParams { CheckingEnabled = true });
+            await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings { CheckingEnabled = true });
 
             SFProject project = env.GetProject(Project01);
             Assert.That(project.CheckingEnabled, Is.True);
@@ -72,6 +72,21 @@ namespace SIL.XForge.Scripture.Services
             await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
             await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Machine.WebApi.Models.Project>());
             await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        }
+
+        [Test]
+        public async Task UpdateSettingsAsync_EnableSharing_NoSync()
+        {
+            var env = new TestEnvironment();
+
+            await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings { ShareEnabled = true });
+
+            SFProject project = env.GetProject(Project01);
+            Assert.That(project.ShareEnabled, Is.True);
+
+            await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
+            await env.EngineService.DidNotReceive().AddProjectAsync(Arg.Any<Machine.WebApi.Models.Project>());
+            await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
         }
 
         [Test]
@@ -123,6 +138,7 @@ namespace SIL.XForge.Scripture.Services
                             ProjectName = "project01",
                             TranslateEnabled = true,
                             SourceParatextId = "paratextId",
+                            ShareEnabled = false,
                             UserRoles = new Dictionary<string, string>
                             {
                                 { User01, SFProjectRoles.Administrator }

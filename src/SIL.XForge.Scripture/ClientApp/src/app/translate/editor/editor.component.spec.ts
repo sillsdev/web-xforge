@@ -556,7 +556,7 @@ class TestEnvironment {
         Promise.resolve(new MockInteractiveTranslationSession(segment, prefix => (this.lastApprovedPrefix = prefix)))
     );
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
-    when(this.mockedSFProjectService.addTranslateMetrics('project01', anything())).thenResolve();
+    when(this.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
 
     TestBed.configureTestingModule({
       declarations: [EditorComponent, SuggestionComponent],

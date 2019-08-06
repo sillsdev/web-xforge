@@ -10,11 +10,11 @@ import { QuestionListDoc } from './models/question-list-doc';
 import { SFProject } from './models/sfproject';
 import { SFProjectDoc } from './models/sfproject-doc';
 import { SF_PROJECT_ROLES } from './models/sfproject-roles';
+import { SFProjectSettings } from './models/sfproject-settings';
 import { SFProjectUserConfigDoc } from './models/sfproject-user-config-doc';
 import { TextDoc } from './models/text-doc';
 import { TextDocId } from './models/text-doc-id';
 import { TranslateMetrics } from './models/translate-metrics';
-import { UpdateTasksParams } from './models/update-tasks-params';
 
 @Injectable({
   providedIn: 'root'
@@ -37,7 +37,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return new RemoteTranslationEngine(projectId, this.machineHttp);
   }
 
-  addTranslateMetrics(id: string, metrics: TranslateMetrics): Promise<void> {
+  onlineAddTranslateMetrics(id: string, metrics: TranslateMetrics): Promise<void> {
     return this.jsonRpcService.onlineInvoke(SFProjectDoc.TYPE, id, 'addTranslateMetrics', { metrics });
   }
 
@@ -53,11 +53,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.get(CommentListDoc.TYPE, id.toString());
   }
 
-  sync(id: string): Promise<void> {
+  onlineSync(id: string): Promise<void> {
     return this.jsonRpcService.onlineInvoke(SFProjectDoc.TYPE, id, 'sync');
   }
 
-  updateTasks(id: string, parameters: UpdateTasksParams): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(SFProjectDoc.TYPE, id, 'updateTasks', { parameters });
+  onlineUpdateSettings(id: string, settings: SFProjectSettings): Promise<void> {
+    return this.jsonRpcService.onlineInvoke(SFProjectDoc.TYPE, id, 'updateSettings', { settings });
   }
 }

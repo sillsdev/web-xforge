@@ -108,7 +108,7 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit, OnD
 
   syncProject(): Promise<void> {
     this.syncActive = true;
-    return this.projectService.sync(this.projectDoc.id);
+    return this.projectService.onlineSync(this.projectDoc.id);
   }
 
   private checkSyncStatus(): void {
