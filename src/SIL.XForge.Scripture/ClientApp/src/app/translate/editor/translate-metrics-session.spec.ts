@@ -36,7 +36,7 @@ describe('TranslateMetricsSession', () => {
         chapter: 1,
         keyNavigationCount: 1
       };
-      verify(env.mockedSFProjectService.addTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
+      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
       env.keyPress('Backspace');
       env.keyPress('b');
       env.keyPress('Delete');
@@ -73,7 +73,7 @@ describe('TranslateMetricsSession', () => {
         chapter: 1,
         mouseClickCount: 2
       };
-      verify(env.mockedSFProjectService.addTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
+      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
       env.keyPress('a');
       tick(ACTIVE_EDIT_TIMEOUT);
       expect(env.session.metrics.type).toBe('edit');
@@ -91,14 +91,14 @@ describe('TranslateMetricsSession', () => {
       env.startSession();
 
       env.keyPress('a');
-      verify(env.mockedSFProjectService.addTranslateMetrics('project01', anything())).never();
+      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       tick(ACTIVE_EDIT_TIMEOUT);
       expect(env.session.metrics.type).toBe('edit');
       expect(env.session.metrics.timeEditActive).toBeDefined();
       expect(env.session.metrics.keyCharacterCount).toBe(1);
 
       env.keyPress('ArrowRight');
-      verify(env.mockedSFProjectService.addTranslateMetrics('project01', anything())).never();
+      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       expect(env.session.metrics.type).toBe('edit');
       expect(env.session.metrics.keyNavigationCount).toBe(1);
 
@@ -110,14 +110,14 @@ describe('TranslateMetricsSession', () => {
       env.startSession();
 
       env.keyPress('a');
-      verify(env.mockedSFProjectService.addTranslateMetrics('project01', anything())).never();
+      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       tick(ACTIVE_EDIT_TIMEOUT);
       expect(env.session.metrics.type).toBe('edit');
       expect(env.session.metrics.timeEditActive).toBeDefined();
       expect(env.session.metrics.keyCharacterCount).toBe(1);
 
       env.mouseClick();
-      verify(env.mockedSFProjectService.addTranslateMetrics('project01', anything())).never();
+      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       expect(env.session.metrics.type).toBe('edit');
       expect(env.session.metrics.mouseClickCount).toBe(1);
 
@@ -150,7 +150,9 @@ describe('TranslateMetricsSession', () => {
         targetWordCount: 8,
         editEndEvent: 'timeout'
       };
-      verify(env.mockedSFProjectService.addTranslateMetrics('project01', objectContaining(expectedMetrics))).once();
+      verify(
+        env.mockedSFProjectService.onlineAddTranslateMetrics('project01', objectContaining(expectedMetrics))
+      ).once();
 
       env.keyPress('b');
       tick(ACTIVE_EDIT_TIMEOUT);
@@ -187,7 +189,9 @@ describe('TranslateMetricsSession', () => {
         targetWordCount: 8,
         editEndEvent: 'segment-change'
       };
-      verify(env.mockedSFProjectService.addTranslateMetrics('project01', objectContaining(expectedMetrics))).once();
+      verify(
+        env.mockedSFProjectService.onlineAddTranslateMetrics('project01', objectContaining(expectedMetrics))
+      ).once();
       expect(env.session.metrics.type).toBe('navigate');
 
       env.session.dispose();
@@ -232,7 +236,7 @@ describe('TranslateMetricsSession', () => {
       env.target.segmentRef = 'verse_1_2';
       env.targetFixture.detectChanges();
       tick();
-      verify(env.mockedSFProjectService.addTranslateMetrics('project01', anything())).never();
+      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       expect(env.session.metrics.type).toBe('navigate');
 
       env.keyPress('ArrowDown');
@@ -252,7 +256,7 @@ describe('TranslateMetricsSession', () => {
     env.keyPress('a');
     env.keyPress('b');
     expect(env.session.metrics.type).toBe('edit');
-    verify(env.mockedSFProjectService.addTranslateMetrics('project01', anything())).never();
+    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
 
     const sessionId = env.session.id;
     const metricsId = env.session.metrics.id;
@@ -269,7 +273,7 @@ describe('TranslateMetricsSession', () => {
       targetWordCount: 8,
       editEndEvent: 'task-exit'
     };
-    verify(env.mockedSFProjectService.addTranslateMetrics('project01', objectContaining(expectedMetrics))).once();
+    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', objectContaining(expectedMetrics))).once();
   }));
 
   it('periodic send', fakeAsync(() => {
@@ -280,7 +284,7 @@ describe('TranslateMetricsSession', () => {
     env.keyPress('ArrowLeft');
     expect(env.session.metrics.type).toBe('navigate');
     expect(env.session.metrics.keyNavigationCount).toBe(2);
-    verify(env.mockedSFProjectService.addTranslateMetrics('project01', anything())).never();
+    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
 
     tick(SEND_METRICS_INTERVAL);
     let expectedMetrics: TranslateMetrics = {
@@ -291,13 +295,13 @@ describe('TranslateMetricsSession', () => {
       chapter: 1,
       keyNavigationCount: 2
     };
-    verify(env.mockedSFProjectService.addTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
+    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
 
     resetCalls(env.mockedSFProjectService);
     env.mouseClick();
     expect(env.session.metrics.type).toBe('navigate');
     expect(env.session.metrics.mouseClickCount).toBe(1);
-    verify(env.mockedSFProjectService.addTranslateMetrics('project01', anything())).never();
+    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
 
     tick(SEND_METRICS_INTERVAL);
     expectedMetrics = {
@@ -309,7 +313,7 @@ describe('TranslateMetricsSession', () => {
       keyNavigationCount: 2,
       mouseClickCount: 1
     };
-    verify(env.mockedSFProjectService.addTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
+    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
 
     env.session.dispose();
   }));
@@ -330,7 +334,7 @@ class TestEnvironment {
   constructor() {
     this.addTextDoc(new TextDocId('project01', 'text01', 1, 'source'));
     this.addTextDoc(new TextDocId('project01', 'text01', 1, 'target'));
-    when(this.mockedSFProjectService.addTranslateMetrics('project01', anything())).thenResolve();
+    when(this.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
 
     TestBed.configureTestingModule({
       declarations: [TextComponent],

@@ -6,27 +6,18 @@ import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ElementState } from 'xforge-common/models/element-state';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
-import { SharingLevel } from 'xforge-common/models/sharing-level';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { nameof } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../environments/environment';
 import { SFProject } from '../core/models/sfproject';
 import { SFProjectDoc } from '../core/models/sfproject-doc';
-import { UpdateTasksParams } from '../core/models/update-tasks-params';
+import { SFProjectSettings } from '../core/models/sfproject-settings';
 import { SFProjectService } from '../core/sfproject.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
-
-interface Settings {
-  translate?: boolean;
-  sourceParatextId?: string;
-  checking?: boolean;
-  seeOthersResponses?: boolean;
-  share?: boolean;
-  shareLevel?: SharingLevel;
-}
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
 @Component({
@@ -37,25 +28,28 @@ interface Settings {
 export class SettingsComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
   form = new FormGroup(
     {
-      translate: new FormControl(false),
+      translateEnabled: new FormControl(false),
       sourceParatextId: new FormControl(undefined),
-      checking: new FormControl(false),
-      seeOthersResponses: new FormControl(false),
-      share: new FormControl(false),
+      checkingEnabled: new FormControl(false),
+      usersSeeEachOthersResponses: new FormControl(false),
+      shareEnabled: new FormControl(false),
       shareLevel: new FormControl(undefined)
     },
-    XFValidators.requireOneWithValue(['translate', 'checking'], true)
+    XFValidators.requireOneWithValue(
+      [nameof<SFProjectSettings>('translateEnabled'), nameof<SFProjectSettings>('checkingEnabled')],
+      true
+    )
   );
   sourceProjects: ParatextProject[];
 
   private projectDoc: SFProjectDoc;
   /** Elements in this component and their states. */
-  private controlStates = new Map<string, ElementState>();
+  private controlStates = new Map<Extract<keyof SFProjectSettings, string>, ElementState>();
   // ensures `get isLoading()` marks the initial load of data in the component since `noticeService.isLoading` is slow
   // to update its status
   private isFirstLoad: boolean = true;
   private paratextProjects: ParatextProject[];
-  private previousFormValues: Settings;
+  private previousFormValues: SFProjectSettings;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -77,12 +71,12 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     return this.paratextProjects != null;
   }
 
-  get translate(): boolean {
-    return this.form.controls.translate.value;
+  get translateEnabled(): boolean {
+    return this.form.controls.translateEnabled.value;
   }
 
-  get checking(): boolean {
-    return this.form.controls.checking.value;
+  get checkingEnabled(): boolean {
+    return this.form.controls.checkingEnabled.value;
   }
 
   get projectId(): string {
@@ -156,77 +150,59 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     });
   }
 
-  getControlState(setting: string): ElementState {
+  getControlState(setting: Extract<keyof SFProjectSettings, string>): ElementState {
     return this.controlStates.get(setting);
   }
 
-  private onFormValueChanges(newValue: Settings): void {
+  private onFormValueChanges(newValue: SFProjectSettings): void {
     if (this.projectDoc == null) {
       return;
     }
 
     if (this.form.valid || this.isOnlyBasedOnInvalid) {
-      const updatedProject: Partial<SFProject> = {};
       // Set status and include values for changed form items
-      if (newValue.translate !== this.projectDoc.data.translateEnabled && this.form.controls.translate.enabled) {
-        updatedProject.translateEnabled = newValue.translate;
+      if (
+        newValue.translateEnabled !== this.previousFormValues.translateEnabled &&
+        this.form.controls.translateEnabled.enabled
+      ) {
         this.setValidators();
-        if (!newValue.translate || (this.form.valid && this.projectDoc.data.sourceParatextId)) {
-          this.previousFormValues = newValue;
-          this.checkUpdateStatus(
-            'translate',
-            this.projectService.updateTasks(this.projectDoc.id, { translateEnabled: newValue.translate })
-          );
+        if (!newValue.translateEnabled || (this.form.valid && this.projectDoc.data.sourceParatextId)) {
+          this.updateSetting(newValue, 'translateEnabled');
         } else {
-          this.controlStates.set('translate', ElementState.InSync);
+          this.controlStates.set('translateEnabled', ElementState.InSync);
         }
       }
-      if (newValue.sourceParatextId !== this.projectDoc.data.sourceParatextId) {
-        if (newValue.translate && newValue.sourceParatextId != null) {
-          updatedProject.sourceParatextId = newValue.sourceParatextId;
-          updatedProject.sourceInputSystem = ParatextService.getInputSystem(
-            this.sourceProjects.find(project => project.paratextId === newValue.sourceParatextId)
-          );
-          const parameters: UpdateTasksParams = {
-            sourceParatextId: updatedProject.sourceParatextId,
-            sourceInputSystem: updatedProject.sourceInputSystem
+      if (newValue.sourceParatextId !== this.previousFormValues.sourceParatextId) {
+        if (newValue.translateEnabled && newValue.sourceParatextId != null) {
+          const settings: SFProjectSettings = {
+            sourceParatextId: newValue.sourceParatextId,
+            sourceInputSystem: ParatextService.getInputSystem(
+              this.sourceProjects.find(project => project.paratextId === newValue.sourceParatextId)
+            )
           };
           if (this.previousFormValues.sourceParatextId == null) {
-            parameters.translateEnabled = true;
+            settings.translateEnabled = true;
           }
-          const updateTaskPromise = this.projectService.updateTasks(this.projectDoc.id, parameters);
+          const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
           this.checkUpdateStatus('sourceParatextId', updateTaskPromise);
           if (this.previousFormValues.sourceParatextId == null) {
-            this.checkUpdateStatus('translate', updateTaskPromise);
+            this.checkUpdateStatus('translateEnabled', updateTaskPromise);
           }
           this.previousFormValues = newValue;
         }
       }
-      if (newValue.checking !== this.projectDoc.data.checkingEnabled) {
-        updatedProject.checkingEnabled = newValue.checking;
-        this.previousFormValues = newValue;
-        this.checkUpdateStatus(
-          'checking',
-          this.projectService.updateTasks(this.projectDoc.id, { checkingEnabled: newValue.checking })
-        );
+      if (newValue.checkingEnabled !== this.previousFormValues.checkingEnabled) {
+        this.updateSetting(newValue, 'checkingEnabled');
       }
-      if (newValue.seeOthersResponses !== this.projectDoc.data.usersSeeEachOthersResponses) {
-        updatedProject.usersSeeEachOthersResponses = newValue.seeOthersResponses;
-        this.previousFormValues = newValue;
-        this.checkUpdateStatus(
-          'seeOthersResponses',
-          this.projectDoc.submitJson0Op(op => op.set(p => p.usersSeeEachOthersResponses, newValue.seeOthersResponses))
-        );
+      if (newValue.usersSeeEachOthersResponses !== this.previousFormValues.usersSeeEachOthersResponses) {
+        this.updateSetting(newValue, 'usersSeeEachOthersResponses');
       }
-      if (newValue.share !== this.projectDoc.data.shareEnabled) {
-        updatedProject.shareEnabled = newValue.share;
-        this.previousFormValues = newValue;
-        this.checkUpdateStatus(
-          'share',
-          this.projectDoc.submitJson0Op(op => op.set(p => p.shareEnabled, newValue.share))
-        );
+      if (newValue.shareEnabled !== this.previousFormValues.shareEnabled) {
+        this.updateSetting(newValue, 'shareEnabled');
         const shareLevelControl = this.form.controls.shareLevel;
-        if (newValue.share) {
+        if (newValue.shareEnabled) {
+          // when a control is disabled the value is undefined, so reset back to previous value
+          this.previousFormValues.shareLevel = this.projectDoc.data.shareLevel;
           shareLevelControl.enable();
         } else {
           shareLevelControl.disable();
@@ -234,15 +210,10 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
       }
       if (
         newValue.shareLevel != null &&
-        newValue.shareLevel !== this.projectDoc.data.shareLevel &&
+        newValue.shareLevel !== this.previousFormValues.shareLevel &&
         this.form.controls.shareLevel.enabled
       ) {
-        updatedProject.shareLevel = newValue.shareLevel;
-        this.previousFormValues = newValue;
-        this.checkUpdateStatus(
-          'shareLevel',
-          this.projectDoc.submitJson0Op(op => op.set(p => p.shareLevel, newValue.shareLevel))
-        );
+        this.updateSetting(newValue, 'shareLevel');
       }
     } else if (this.previousFormValues && this.form.errors && this.form.errors.requireAtLeastOneWithValue) {
       // reset invalid form value
@@ -250,26 +221,32 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     }
   }
 
-  private checkUpdateStatus(formControl: string, updatePromise: Promise<any>): void {
-    this.controlStates.set(formControl, ElementState.Submitting);
+  private updateSetting(newValue: SFProjectSettings, setting: Extract<keyof SFProjectSettings, string>): void {
+    const settings: SFProjectSettings = { [setting]: newValue[setting] };
+    this.checkUpdateStatus(setting, this.projectService.onlineUpdateSettings(this.projectDoc.id, settings));
+    this.previousFormValues = newValue;
+  }
+
+  private checkUpdateStatus(setting: Extract<keyof SFProjectSettings, string>, updatePromise: Promise<void>): void {
+    this.controlStates.set(setting, ElementState.Submitting);
     updatePromise
-      .then(() => this.controlStates.set(formControl, ElementState.Submitted))
-      .catch(() => this.controlStates.set(formControl, ElementState.Error));
+      .then(() => this.controlStates.set(setting, ElementState.Submitted))
+      .catch(() => this.controlStates.set(setting, ElementState.Error));
   }
 
   private updateSettingsInfo() {
     this.previousFormValues = {
-      translate: this.projectDoc.data.translateEnabled,
+      translateEnabled: this.projectDoc.data.translateEnabled,
       sourceParatextId: this.projectDoc.data.sourceParatextId,
-      checking: this.projectDoc.data.checkingEnabled,
-      seeOthersResponses: this.projectDoc.data.usersSeeEachOthersResponses,
-      share: this.projectDoc.data.shareEnabled,
+      checkingEnabled: this.projectDoc.data.checkingEnabled,
+      usersSeeEachOthersResponses: this.projectDoc.data.usersSeeEachOthersResponses,
+      shareEnabled: this.projectDoc.data.shareEnabled,
       shareLevel: this.projectDoc.data.shareLevel
     };
     this.setValidators();
     this.form.reset(this.previousFormValues);
     if (!this.isLoggedInToParatext) {
-      this.form.controls.translate.disable();
+      this.form.controls.translateEnabled.disable();
     }
     if (!this.projectDoc.data.shareEnabled) {
       this.form.controls.shareLevel.disable();
@@ -284,11 +261,11 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
   }
 
   private setAllControlsToInSync() {
-    this.controlStates.set('translate', ElementState.InSync);
+    this.controlStates.set('translateEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
-    this.controlStates.set('checking', ElementState.InSync);
-    this.controlStates.set('seeOthersResponses', ElementState.InSync);
-    this.controlStates.set('share', ElementState.InSync);
+    this.controlStates.set('checkingEnabled', ElementState.InSync);
+    this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);
+    this.controlStates.set('shareEnabled', ElementState.InSync);
     this.controlStates.set('shareLevel', ElementState.InSync);
   }
 }

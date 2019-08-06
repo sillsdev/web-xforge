@@ -25,6 +25,8 @@ namespace SIL.XForge.Configuration
         {
             ImmutableProperties =
             {
+                PathTemplateConfig<Project>.Create(p => p.ShareEnabled),
+                PathTemplateConfig<Project>.Create(p => p.ShareLevel),
                 PathTemplateConfig<Project>.Create(p => p.UserRoles)
             }
         };

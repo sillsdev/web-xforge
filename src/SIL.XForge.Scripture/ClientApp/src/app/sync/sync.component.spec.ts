@@ -44,7 +44,7 @@ describe('SyncComponent', () => {
     const env = new TestEnvironment(true);
     verify(env.mockedProjectService.get('testproject01')).once();
     env.clickElement(env.syncButton);
-    verify(env.mockedProjectService.sync('testproject01')).once();
+    verify(env.mockedProjectService.onlineSync('testproject01')).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).toBeDefined();
     expect(env.component.isProgressDeterminate).toBe(false);
@@ -67,7 +67,7 @@ describe('SyncComponent', () => {
     const env = new TestEnvironment(true);
     verify(env.mockedProjectService.get('testproject01')).once();
     env.clickElement(env.syncButton);
-    verify(env.mockedProjectService.sync('testproject01')).once();
+    verify(env.mockedProjectService.onlineSync('testproject01')).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).toBeDefined();
     // Simulate sync in progress
@@ -107,7 +107,7 @@ class TestEnvironment {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'testproject01' }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(this.mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
-    when(this.mockedProjectService.sync('testproject01')).thenResolve();
+    when(this.mockedProjectService.onlineSync('testproject01')).thenResolve();
     when(this.mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
     when(this.mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
     when(this.mockedNoticeService.isLoading).thenCall(() => this.isLoading);

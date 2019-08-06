@@ -21,7 +21,9 @@ namespace Microsoft.Extensions.DependencyInjection
                         PathTemplateConfig<SFProject>.Create(p => p.ParatextId),
                         PathTemplateConfig<SFProject>.Create(p => p.Texts),
                         PathTemplateConfig<SFProject>.Create(p => p.CheckingEnabled),
-                        PathTemplateConfig<SFProject>.Create(p => p.TranslateEnabled)
+                        PathTemplateConfig<SFProject>.Create(p => p.TranslateEnabled),
+                        PathTemplateConfig<SFProject>.Create(p => p.DownloadAudioFiles),
+                        PathTemplateConfig<SFProject>.Create(p => p.UsersSeeEachOthersResponses)
                     });
                     o.ProjectRoles = SFProjectRoles.Instance;
                     o.ProjectDataDocs = new[]
