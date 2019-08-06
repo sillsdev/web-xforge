@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output } from '@angular/core';
-import { eq } from '@orbit/utils';
+import isEqual from 'lodash/isEqual';
 import Quill from 'quill';
 import { fromEvent } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -36,7 +36,7 @@ export class SuggestionComponent extends SubscriptionDisposable implements After
 
   @Input()
   set words(value: string[]) {
-    if (!eq(this._words, value)) {
+    if (!isEqual(this._words, value)) {
       this._words = value;
       setTimeout(() => this.setPosition());
     }

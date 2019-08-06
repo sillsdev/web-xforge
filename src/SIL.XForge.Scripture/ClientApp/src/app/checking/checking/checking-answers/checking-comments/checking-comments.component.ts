@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { clone } from '@orbit/utils';
+import cloneDeep from 'lodash/cloneDeep';
 import { UserService } from 'xforge-common/user.service';
 import { Answer } from '../../../../core/models/answer';
 import { Comment } from '../../../../core/models/comment';
@@ -55,7 +55,7 @@ export class CheckingCommentsComponent implements OnInit {
   }
 
   editComment(comment: Comment) {
-    this.activeComment = clone(comment);
+    this.activeComment = cloneDeep(comment);
     this.showCommentForm();
   }
 
@@ -90,7 +90,7 @@ export class CheckingCommentsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.initUserCommentRefsRead = clone(this.projectUserConfigDoc.data.commentRefsRead);
+    this.initUserCommentRefsRead = cloneDeep(this.projectUserConfigDoc.data.commentRefsRead);
   }
 
   showComments(): void {

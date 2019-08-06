@@ -30,7 +30,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   getUserConfig(id: string, userId: string): Promise<SFProjectUserConfigDoc> {
-    return this.realtimeService.get({ type: SFProjectUserConfigDoc.TYPE, id: `${id}:${userId}` });
+    return this.realtimeService.get(SFProjectUserConfigDoc.TYPE, `${id}:${userId}`);
   }
 
   createTranslationEngine(projectId: string): RemoteTranslationEngine {
@@ -38,26 +38,26 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   addTranslateMetrics(id: string, metrics: TranslateMetrics): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(this.identity(id), 'addTranslateMetrics', { metrics });
+    return this.jsonRpcService.onlineInvoke(SFProjectDoc.TYPE, id, 'addTranslateMetrics', { metrics });
   }
 
   getText(id: TextDocId): Promise<TextDoc> {
-    return this.realtimeService.get({ type: TextDoc.TYPE, id: id.toString() });
+    return this.realtimeService.get(TextDoc.TYPE, id.toString());
   }
 
   getQuestionList(id: TextDocId): Promise<QuestionListDoc> {
-    return this.realtimeService.get({ type: QuestionListDoc.TYPE, id: id.toString() });
+    return this.realtimeService.get(QuestionListDoc.TYPE, id.toString());
   }
 
   getCommentList(id: TextDocId): Promise<CommentListDoc> {
-    return this.realtimeService.get({ type: CommentListDoc.TYPE, id: id.toString() });
+    return this.realtimeService.get(CommentListDoc.TYPE, id.toString());
   }
 
   sync(id: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(this.identity(id), 'sync');
+    return this.jsonRpcService.onlineInvoke(SFProjectDoc.TYPE, id, 'sync');
   }
 
   updateTasks(id: string, parameters: UpdateTasksParams): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(this.identity(id), 'updateTasks', { parameters });
+    return this.jsonRpcService.onlineInvoke(SFProjectDoc.TYPE, id, 'updateTasks', { parameters });
   }
 }

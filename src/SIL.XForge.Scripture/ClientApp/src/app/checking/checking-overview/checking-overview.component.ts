@@ -1,8 +1,8 @@
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { clone } from '@orbit/utils';
 import { distanceInWordsToNow } from 'date-fns';
+import cloneDeep from 'lodash/cloneDeep';
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -295,7 +295,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     const id = new TextDocId(this.projectId, bookId, chapterNumber);
     const questionIndex = this.getQuestionIndex(questionId, id);
     const question = this.questionListDocs[id.toString()].data.questions[questionIndex];
-    const updatedQuestion: Question = clone(question);
+    const updatedQuestion: Question = cloneDeep(question);
     updatedQuestion.isArchived = archiveStatus;
     updatedQuestion.dateArchived = archiveStatus ? new Date().toISOString() : null;
     this.questionListDocs[id.toString()].submitJson0Op(op =>
@@ -354,7 +354,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
       id = new TextDocId(this.projectDoc.id, bookId, chapterNumber);
       questionIndex = this.getQuestionIndex(questionId, id);
       question = this.questionListDocs[id.toString()].data.questions[questionIndex];
-      newQuestion = clone(question);
+      newQuestion = cloneDeep(question);
     }
     const dialogConfig: MdcDialogConfig<QuestionDialogData> = {
       data: {

@@ -1,4 +1,3 @@
-import { RecordIdentity } from '@orbit/data';
 import { merge, Observable, Subject, Subscription } from 'rxjs';
 import { RealtimeDocAdapter } from '../realtime-doc-adapter';
 import { RealtimeOfflineData, RealtimeOfflineStore } from '../realtime-offline-store';
@@ -16,7 +15,7 @@ export interface RealtimeDocConstructor {
  * @template T The actual data type.
  * @template Ops The operations data type.
  */
-export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity {
+export abstract class RealtimeDoc<T = any, Ops = any> {
   private updateOfflineDataSub: Subscription;
   private onDeleteSub: Subscription;
   private offlineSnapshotVersion: number;
@@ -60,10 +59,6 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
    */
   get remoteChanges$(): Observable<Ops> {
     return this.adapter.remoteChanges$;
-  }
-
-  private get identity(): RecordIdentity {
-    return { type: this.type, id: this.id };
   }
 
   /**
@@ -113,6 +108,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
 
     this.offlineSnapshotVersion = this.adapter.version;
     const offlineData: RealtimeOfflineData = {
+      id: this.id,
       snapshot: {
         v: this.adapter.version,
         data: this.prepareDataForStore(this.adapter.data),
@@ -120,7 +116,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
       },
       pendingOps
     };
-    this.store.setItem(this.identity, offlineData);
+    this.store.put(this.type, offlineData);
   }
 
   /**
@@ -146,7 +142,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
   }
 
   protected onDelete(): void {
-    this.store.delete(this.identity);
+    this.store.delete(this.type, this.id);
   }
 
   private async subscribeToChanges(): Promise<void> {
@@ -173,7 +169,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> implements RecordIdentity 
     if (this.isLoaded) {
       return;
     }
-    const offlineData = await this.store.getItem(this.identity);
+    const offlineData = await this.store.get(this.type, this.id);
     if (offlineData != null) {
       if (offlineData.pendingOps.length > 0) {
         await this.adapter.fetch();

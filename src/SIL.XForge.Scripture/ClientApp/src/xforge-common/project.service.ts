@@ -1,5 +1,4 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { RecordIdentity } from '@orbit/data';
 import { combineLatest, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { JsonRpcService } from './json-rpc.service';
@@ -28,11 +27,11 @@ export abstract class ProjectService<
   }
 
   get(id: string): Promise<TDoc> {
-    return this.realtimeService.get(this.identity(id));
+    return this.realtimeService.get(ProjectDoc.TYPE, id);
   }
 
   onlineCreate(project: TProj): Promise<string> {
-    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, 'create', { project });
+    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, undefined, 'create', { project });
   }
 
   onlineSearch(
@@ -61,32 +60,32 @@ export abstract class ProjectService<
   }
 
   onlineAddCurrentUser(id: string, projectRole?: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(this.identity(id), 'addUser', { projectRole });
+    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'addUser', { projectRole });
   }
 
   onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
-    return this.jsonRpcService.onlineInvoke(this.identity(id), 'isAlreadyInvited', { email });
+    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'isAlreadyInvited', { email });
   }
 
   /** Get added into project, with optionally specified shareKey code. */
   onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(this.identity(id), 'checkLinkSharing', { shareKey });
+    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'checkLinkSharing', { shareKey });
   }
 
   onlineRemoveUser(id: string, userId: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(this.identity(id), 'removeUser', { projectUserId: userId });
+    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'removeUser', { projectUserId: userId });
   }
 
   onlineUpdateCurrentUserRole(id: string, projectRole: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(this.identity(id), 'updateRole', { projectRole });
+    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'updateRole', { projectRole });
   }
 
   onlineInvite(id: string, email: string): Promise<string> {
-    return this.jsonRpcService.onlineInvoke(this.identity(id), 'invite', { email });
+    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'invite', { email });
   }
 
   onlineDelete(id: string): Promise<void> {
-    return this.jsonRpcService.onlineInvoke(this.identity(id), 'delete');
+    return this.jsonRpcService.onlineInvoke(ProjectDoc.TYPE, id, 'delete');
   }
 
   async uploadAudio(id: string, file: File): Promise<string> {
@@ -99,9 +98,5 @@ export abstract class ProjectService<
       })
       .toPromise();
     return response.headers.get('Location');
-  }
-
-  protected identity(id: string): RecordIdentity {
-    return { type: ProjectDoc.TYPE, id };
   }
 }

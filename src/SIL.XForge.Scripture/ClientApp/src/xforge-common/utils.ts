@@ -1,19 +1,9 @@
-import { ClientError } from '@orbit/data';
-import { underscore } from '@orbit/utils';
 import { ObjectId } from 'bson';
 import { environment } from '../environments/environment';
 import { ProjectDoc } from './models/project-doc';
 
 export function nameof<T>(name: Extract<keyof T, string>): string {
   return name;
-}
-
-export function isNotFoundError(err: any): boolean {
-  if (err instanceof ClientError) {
-    const response: Response = (err as any).response;
-    return response.status === 404;
-  }
-  return false;
 }
 
 export function objectId(): string {
@@ -25,4 +15,14 @@ export function getCollectionName(type: string): string {
     return `${environment.prefix}_${type}`;
   }
   return underscore(type);
+}
+
+/**
+ * Underscore words that are dasherized, space-delimited, or camelCased.
+ */
+export function underscore(str: string): string {
+  return str
+    .replace(/([a-z\d])([A-Z]+)/g, '$1_$2')
+    .replace(/\-|\s+/g, '_')
+    .toLowerCase();
 }

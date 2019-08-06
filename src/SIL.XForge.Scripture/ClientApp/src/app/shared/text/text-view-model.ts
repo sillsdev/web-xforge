@@ -1,4 +1,4 @@
-import { clone } from '@orbit/utils';
+import cloneDeep from 'lodash/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { Subscription } from 'rxjs';
 import { Delta, TextDoc } from '../../core/models/text-doc';
@@ -193,7 +193,7 @@ export class TextViewModel {
   private viewToData(delta: DeltaStatic): DeltaStatic {
     const modelDelta = new Delta();
     for (const op of delta.ops) {
-      const modelOp: DeltaOperation = clone(op);
+      const modelOp: DeltaOperation = cloneDeep(op);
       removeAttribute(modelOp, 'highlight-segment');
       removeAttribute(modelOp, 'highlight-para');
       removeAttribute(modelOp, 'para-contents');

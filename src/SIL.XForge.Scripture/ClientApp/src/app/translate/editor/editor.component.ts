@@ -1,7 +1,6 @@
 import { MdcIconButton } from '@angular-mdc/web';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { eq } from '@orbit/utils';
 import {
   InteractiveTranslationSession,
   LatinWordTokenizer,
@@ -11,6 +10,7 @@ import {
   Tokenizer,
   TranslationSuggester
 } from '@sillsdev/machine';
+import isEqual from 'lodash/isEqual';
 import { DeltaStatic, RangeStatic } from 'quill';
 import { BehaviorSubject, fromEvent, Subject, Subscription } from 'rxjs';
 import { debounceTime, filter, map, repeat, skip, tap } from 'rxjs/operators';
@@ -458,7 +458,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     }
     const sourceId = new TextDocId(this.projectDoc.id, this.text.bookId, this._chapter, 'source');
     const targetId = new TextDocId(this.projectDoc.id, this.text.bookId, this._chapter, 'target');
-    if (!eq(targetId, this.target.id)) {
+    if (!isEqual(targetId, this.target.id)) {
       // blur the target before switching so that scrolling is reset to the top
       this.target.blur();
     }
@@ -535,7 +535,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
           const suggestion = this.translationSuggester.getSuggestion(prefix.length, isLastWordComplete, result);
           this.suggestionWords = suggestion.targetWordIndices.map(j => result.targetSegment[j]);
           this.suggestionConfidence = suggestion.confidence;
-          if (this.suggestionWords.length > 0 && !eq(this.lastShownSuggestionWords, this.suggestionWords)) {
+          if (this.suggestionWords.length > 0 && !isEqual(this.lastShownSuggestionWords, this.suggestionWords)) {
             this.metricsSession.onSuggestionShown();
             this.lastShownSuggestionWords = this.suggestionWords;
           }
