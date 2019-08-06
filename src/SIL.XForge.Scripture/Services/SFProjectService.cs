@@ -108,7 +108,7 @@ namespace SIL.XForge.Scripture.Services
                 _fileSystemService.DeleteDirectory(syncDir);
         }
 
-        public async Task UpdateTasksAsync(string userId, string projectId, UpdateTasksParams parameters)
+        public async Task UpdateSettingsAsync(string userId, string projectId, SFProjectSettings settings)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
@@ -121,41 +121,51 @@ namespace SIL.XForge.Scripture.Services
 
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
-                    UpdateSetting(op, p => p.CheckingEnabled, parameters.CheckingEnabled);
-                    UpdateSetting(op, p => p.TranslateEnabled, parameters.TranslateEnabled);
-                    UpdateSetting(op, p => p.SourceParatextId, parameters.SourceParatextId);
-                    UpdateSetting(op, p => p.SourceInputSystem, parameters.SourceInputSystem);
+                    UpdateSetting(op, p => p.TranslateEnabled, settings.TranslateEnabled);
+                    UpdateSetting(op, p => p.SourceParatextId, settings.SourceParatextId);
+                    UpdateSetting(op, p => p.SourceInputSystem, settings.SourceInputSystem);
+
+                    UpdateSetting(op, p => p.CheckingEnabled, settings.CheckingEnabled);
+                    UpdateSetting(op, p => p.DownloadAudioFiles, settings.DownloadAudioFiles);
+                    UpdateSetting(op, p => p.UsersSeeEachOthersResponses, settings.UsersSeeEachOthersResponses);
+                    UpdateSetting(op, p => p.ShareEnabled, settings.ShareEnabled);
+                    UpdateSetting(op, p => p.ShareLevel, settings.ShareLevel);
                 });
 
-                bool translateEnabledSet = parameters.TranslateEnabled != null;
-                bool sourceParatextIdSet = parameters.SourceParatextId != null;
-                bool trainEngine = false;
-                if (translateEnabledSet || sourceParatextIdSet)
+                bool translateEnabledSet = settings.TranslateEnabled != null;
+                bool sourceParatextIdSet = settings.SourceParatextId != null;
+                bool checkingEnabledSet = settings.CheckingEnabled != null;
+                // check if a sync needs to be run
+                if (translateEnabledSet || sourceParatextIdSet || checkingEnabledSet)
                 {
-                    if (projectDoc.Data.TranslateEnabled && projectDoc.Data.SourceParatextId != null)
+                    bool trainEngine = false;
+                    if (translateEnabledSet || sourceParatextIdSet)
                     {
-                        // translate task was enabled or source project changed
-
-                        // recreate Machine project only if source project changed
-                        if (!translateEnabledSet && sourceParatextIdSet)
-                            await _engineService.RemoveProjectAsync(projectId);
-                        var project = new Machine.WebApi.Models.Project
+                        if (projectDoc.Data.TranslateEnabled && projectDoc.Data.SourceParatextId != null)
                         {
-                            Id = projectId,
-                            SourceLanguageTag = projectDoc.Data.SourceInputSystem.Tag,
-                            TargetLanguageTag = projectDoc.Data.InputSystem.Tag
-                        };
-                        await _engineService.AddProjectAsync(project);
-                        trainEngine = true;
-                    }
-                    else
-                    {
-                        // translate task was disabled or source project set to null
-                        await _engineService.RemoveProjectAsync(projectId);
-                    }
-                }
+                            // translate task was enabled or source project changed
 
-                await _syncService.SyncAsync(projectId, userId, trainEngine);
+                            // recreate Machine project only if source project changed
+                            if (!translateEnabledSet && sourceParatextIdSet)
+                                await _engineService.RemoveProjectAsync(projectId);
+                            var project = new Machine.WebApi.Models.Project
+                            {
+                                Id = projectId,
+                                SourceLanguageTag = projectDoc.Data.SourceInputSystem.Tag,
+                                TargetLanguageTag = projectDoc.Data.InputSystem.Tag
+                            };
+                            await _engineService.AddProjectAsync(project);
+                            trainEngine = true;
+                        }
+                        else
+                        {
+                            // translate task was disabled or source project set to null
+                            await _engineService.RemoveProjectAsync(projectId);
+                        }
+                    }
+
+                    await _syncService.SyncAsync(projectId, userId, trainEngine);
+                }
             }
         }
 

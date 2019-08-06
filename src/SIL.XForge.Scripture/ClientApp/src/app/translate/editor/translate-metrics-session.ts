@@ -220,7 +220,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
     }
     if (!this.isMetricsEmpty && !isEqual(this.prevMetrics, this.metrics)) {
       this.prevMetrics = cloneDeep(this.metrics);
-      await this.projectService.addTranslateMetrics(this.projectId, this.metrics);
+      await this.projectService.onlineAddTranslateMetrics(this.projectId, this.metrics);
     }
   }
 
