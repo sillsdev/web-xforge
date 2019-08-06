@@ -68,6 +68,7 @@ describe('ShareControlComponent', () => {
     env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
     env.click(env.sendButton);
     verify(env.mockedNoticeService.show(anything())).once();
+    verify(env.mockedProjectService.onlineInvite(anything(), anything())).once();
     expect(capture(env.mockedNoticeService.show).last()[0]).toContain('email has been sent');
   }));
 
@@ -76,6 +77,8 @@ describe('ShareControlComponent', () => {
     env.setTextFieldValue(env.emailTextField, 'already-project-member@example.com');
     env.click(env.sendButton);
     verify(env.mockedNoticeService.show(anything())).once();
+    verify(env.mockedProjectService.onlineInvite(anything(), anything())).once();
+
     expect(capture(env.mockedNoticeService.show).last()[0]).toContain('is already');
   }));
 
@@ -83,6 +86,37 @@ describe('ShareControlComponent', () => {
     const env = new TestEnvironment(true, 'myProject1');
     expect(env.component.shareLink).toContain('myProject1');
     flush();
+  }));
+
+  it('Does not crash inviting blank email address if click Send twice', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    // Cannot invite blank or invalid email address
+    env.click(env.sendButton);
+    verify(env.mockedProjectService.onlineInvite(anything(), anything())).never();
+    env.setTextFieldValue(env.emailTextField, '');
+    env.click(env.sendButton);
+    verify(env.mockedProjectService.onlineInvite(anything(), anything())).never();
+    env.setTextFieldValue(env.emailTextField, 'unknown-addre');
+    env.click(env.sendButton);
+    verify(env.mockedProjectService.onlineInvite(anything(), anything())).never();
+
+    // Invite
+    env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
+    expect(env.getTextFieldValue(env.emailTextField)).toEqual('unknown-address@example.com', 'test setup');
+    env.click(env.sendButton);
+    verify(env.mockedProjectService.onlineInvite(anything(), anything())).once();
+
+    // Can not immediately request an invite to a blank email address
+    expect(env.getTextFieldValue(env.emailTextField)).toEqual('', 'test setup');
+    env.click(env.sendButton);
+    // Not called a second time
+    verify(env.mockedProjectService.onlineInvite(anything(), anything())).once();
+
+    // Invite
+    env.setTextFieldValue(env.emailTextField, 'unknown-address2@example.com');
+    env.click(env.sendButton);
+    verify(env.mockedProjectService.onlineInvite(anything(), anything())).twice();
   }));
 
   @NgModule({
@@ -183,6 +217,14 @@ describe('ShareControlComponent', () => {
       inputElem.dispatchEvent(new Event('input'));
       flush();
       this.fixture.detectChanges();
+    }
+
+    getTextFieldValue(element: HTMLElement | DebugElement) {
+      if (element instanceof DebugElement) {
+        element = element.nativeElement;
+      }
+      const inputElem: HTMLInputElement = (element as HTMLElement).querySelector('input');
+      return inputElem.value;
     }
   }
 });
