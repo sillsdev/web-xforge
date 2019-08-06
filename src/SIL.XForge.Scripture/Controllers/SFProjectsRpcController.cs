@@ -17,11 +17,11 @@ namespace SIL.XForge.Scripture.Controllers
             _projectService = projectService;
         }
 
-        public async Task<IRpcMethodResult> UpdateTasks(UpdateTasksParams parameters)
+        public async Task<IRpcMethodResult> UpdateSettings(SFProjectSettings settings)
         {
             try
             {
-                await _projectService.UpdateTasksAsync(UserId, ResourceId, parameters);
+                await _projectService.UpdateSettingsAsync(UserId, ResourceId, settings);
                 return Ok();
             }
             catch (ForbiddenException)

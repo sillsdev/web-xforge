@@ -7,7 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import * as OTJson0 from 'ot-json0';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { SharingLevel } from 'xforge-common/models/sharing-level';
@@ -78,18 +78,22 @@ describe('SettingsComponent', () => {
 
     it('error on data submit shows error icon', fakeAsync(() => {
       const env = new TestEnvironment();
+      when(
+        env.mockedSFProjectService.onlineUpdateSettings('project01', deepEqual({ usersSeeEachOthersResponses: true }))
+      ).thenReject('Network error');
       env.setupProject();
-      tick();
-      env.fixture.detectChanges();
-      // prove 'error status' elements are absent
-      expect(env.statusError(env.checkingStatus)).toBeNull();
-      expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
+      env.wait();
       env.clickElement(env.inputElement(env.checkingCheckbox));
+      expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
+
+      // prove 'error status' elements are absent
+      expect(env.statusError(env.seeOthersResponsesStatus)).toBeNull();
+      expect(env.inputElement(env.seeOthersResponsesCheckbox).checked).toBe(false);
+      env.clickElement(env.inputElement(env.seeOthersResponsesCheckbox));
       tick();
       env.fixture.detectChanges();
       // 'error status' elements should now be present
-      // We'll need the line below for a later refactor that uses JSON-RPC calls to update settings (online only)
-      // expect(env.statusError(env.checkingStatus)).not.toBeNull();
+      expect(env.statusError(env.seeOthersResponsesStatus)).not.toBeNull();
     }));
 
     describe('Translate options', () => {
@@ -380,7 +384,7 @@ class TestEnvironment {
     ]);
     when(this.mockedParatextService.getProjects()).thenReturn(this.paratextProjects$);
     when(this.mockedSFProjectService.onlineDelete(anything())).thenResolve();
-    when(this.mockedSFProjectService.updateTasks('project01', anything())).thenResolve();
+    when(this.mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
     this.currentUserDoc = new UserDoc(
       new MemoryRealtimeDocAdapter('user01', OTJson0.type, { sites: { sf: { currentProjectId: 'project01' } } }),
       instance(this.mockedRealtimeOfflineStore)
