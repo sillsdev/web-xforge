@@ -53,7 +53,7 @@ export class ShareControlComponent {
   }
 
   async sendEmail(): Promise<void> {
-    if (this.email.value === '' || !this.sendInviteForm.valid) {
+    if (this.email.value === '' || this.email.value == null || !this.sendInviteForm.valid) {
       return;
     }
 
