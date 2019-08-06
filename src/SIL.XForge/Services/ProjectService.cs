@@ -20,10 +20,12 @@ namespace SIL.XForge.Services
         private readonly ISecurityService _securityService;
 
         public ProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IEmailService emailService, IRepository<TSecret> projectSecrets, ISecurityService securityService)
+            IOptions<AudioOptions> audioOptions, IEmailService emailService, IRepository<TSecret> projectSecrets,
+            ISecurityService securityService)
         {
             RealtimeService = realtimeService;
             SiteOptions = siteOptions;
+            AudioOptions = audioOptions;
             _emailService = emailService;
             ProjectSecrets = projectSecrets;
             _securityService = securityService;
@@ -31,6 +33,7 @@ namespace SIL.XForge.Services
 
         protected IRealtimeService RealtimeService { get; }
         protected IOptions<SiteOptions> SiteOptions { get; }
+        protected IOptions<AudioOptions> AudioOptions { get; }
         protected IRepository<TSecret> ProjectSecrets { get; }
         protected abstract string ProjectAdminRole { get; }
 
@@ -228,16 +231,17 @@ namespace SIL.XForge.Services
                 File.Delete(path);
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
-            string mp3FileName = ConvertToMp3Async(path);
+            string mp3FilePath = ConvertToMp3(path);
+            string mp3FileName = Path.GetFileName(mp3FilePath);
             var uri = new Uri(SiteOptions.Value.Origin, $"{projectId}/{mp3FileName}");
             return uri;
         }
 
-        private string ConvertToMp3Async(string filePath)
+        private string ConvertToMp3(string filePath)
         {
             if (Path.GetExtension(filePath) == ".mp3")
             {
-                return Path.GetFileName(filePath);
+                return filePath;
             }
             string mp3FilePath = Path.ChangeExtension(filePath, ".mp3");
             if (File.Exists(mp3FilePath))
@@ -248,7 +252,7 @@ namespace SIL.XForge.Services
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "ffmpeg",
+                    FileName = AudioOptions.Value.FfmpegPath,
                     Arguments = $"-i \"{filePath}\" \"{mp3FilePath}\"",
                     UseShellExecute = false,
                     CreateNoWindow = true
@@ -256,8 +260,10 @@ namespace SIL.XForge.Services
             };
             process.Start();
             process.WaitForExit();
+            if (process.ExitCode != 0)
+                throw new Exception($"Error: Could not convert {filePath} to mp3");
             File.Delete(filePath);
-            return Path.GetFileName(mp3FilePath);
+            return mp3FilePath;
         }
 
         /// <summary>Encode the input so it is easier to use as a JSON object
