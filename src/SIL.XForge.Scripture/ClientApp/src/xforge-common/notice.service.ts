@@ -1,6 +1,5 @@
 import { MdcSnackbar, MdcSnackbarConfig } from '@angular-mdc/web';
 import { Injectable } from '@angular/core';
-
 import { AuthService } from './auth.service';
 
 /** Manages and provides access to notices shown to user on the web site. */
@@ -9,6 +8,7 @@ import { AuthService } from './auth.service';
 })
 export class NoticeService {
   private _isLoading: boolean = false;
+  private loadingCount: number = 0;
 
   constructor(private readonly snackbar: MdcSnackbar, private readonly authService: AuthService) {}
 
@@ -17,11 +17,17 @@ export class NoticeService {
   }
 
   loadingStarted(): void {
-    setTimeout(() => (this._isLoading = true));
+    if (this.loadingCount === 0) {
+      setTimeout(() => (this._isLoading = true));
+    }
+    this.loadingCount++;
   }
 
   loadingFinished(): void {
-    setTimeout(() => (this._isLoading = false));
+    this.loadingCount--;
+    if (this.loadingCount === 0) {
+      setTimeout(() => (this._isLoading = false));
+    }
   }
 
   async show(message: string): Promise<void> {
