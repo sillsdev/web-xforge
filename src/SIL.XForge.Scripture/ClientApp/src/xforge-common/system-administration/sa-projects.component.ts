@@ -1,11 +1,11 @@
-import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { NoticeService } from 'xforge-common/notice.service';
+import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRole } from '../models/project-role';
+import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { QueryParameters } from '../realtime.service';
-import { SubscriptionDisposable } from '../subscription-disposable';
 import { UserService } from '../user.service';
 
 class Row {
@@ -35,7 +35,7 @@ class Row {
   templateUrl: './sa-projects.component.html',
   styleUrls: ['./sa-projects.component.scss']
 })
-export class SaProjectsComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
+export class SaProjectsComponent extends DataLoadingComponent implements OnInit {
   @HostBinding('class') classes = 'flex-column';
 
   rows: Row[];
@@ -50,11 +50,11 @@ export class SaProjectsComponent extends SubscriptionDisposable implements OnIni
   private readonly queryParameters$: BehaviorSubject<QueryParameters>;
 
   constructor(
-    private readonly noticeService: NoticeService,
+    noticeService: NoticeService,
     private readonly projectService: ProjectService,
     private readonly userService: UserService
   ) {
-    super();
+    super(noticeService);
     this.searchTerm$ = new BehaviorSubject<string>('');
     this.queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
   }
@@ -68,19 +68,14 @@ export class SaProjectsComponent extends SubscriptionDisposable implements OnIni
   }
 
   ngOnInit() {
-    this.noticeService.loadingStarted();
+    this.loadingStarted();
     this.subscribe(this.projectService.onlineSearch(this.searchTerm$, this.queryParameters$), searchResults => {
-      this.noticeService.loadingStarted();
+      this.loadingStarted();
       this.projectDocs = searchResults.docs;
       this.length = searchResults.totalPagedCount;
       this.generateRows();
-      this.noticeService.loadingFinished();
+      this.loadingFinished();
     });
-  }
-
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
-    this.noticeService.loadingFinished();
   }
 
   updateSearchTerm(term: string): void {

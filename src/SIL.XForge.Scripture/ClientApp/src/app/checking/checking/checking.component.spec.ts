@@ -18,6 +18,7 @@ import { SharingLevel } from 'xforge-common/models/sharing-level';
 import { User } from 'xforge-common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { ProjectService } from 'xforge-common/project.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
@@ -404,6 +405,7 @@ class TestEnvironment {
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
   readonly mockedUserService = mock(UserService);
   readonly mockedProjectService = mock(SFProjectService);
+  readonly mockedNoticeService = mock(NoticeService);
 
   adminUser = this.createUser('01', SFProjectRoles.ParatextAdministrator);
   reviewerUser = this.createUser('02', SFProjectRoles.Reviewer);
@@ -487,7 +489,8 @@ class TestEnvironment {
         { provide: AccountService, useFactory: () => instance(this.mockedAccountService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
+        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) },
+        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
       ]
     });
   }

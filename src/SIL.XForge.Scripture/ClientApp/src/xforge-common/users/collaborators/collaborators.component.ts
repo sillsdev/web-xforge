@@ -1,15 +1,15 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { SharingLevel } from 'xforge-common/models/sharing-level';
-import { User } from 'xforge-common/models/user';
-import { UserService } from 'xforge-common/user.service';
-import { XFValidators } from 'xforge-common/xfvalidators';
+import { DataLoadingComponent } from '../../data-loading-component';
 import { ProjectDoc } from '../../models/project-doc';
+import { SharingLevel } from '../../models/sharing-level';
+import { User } from '../../models/user';
 import { NoticeService } from '../../notice.service';
 import { ProjectService } from '../../project.service';
-import { SubscriptionDisposable } from '../../subscription-disposable';
+import { UserService } from '../../user.service';
+import { XFValidators } from '../../xfvalidators';
 
 interface Row {
   readonly id: string;
@@ -23,7 +23,7 @@ interface Row {
   templateUrl: './collaborators.component.html',
   styleUrls: ['./collaborators.component.scss']
 })
-export class CollaboratorsComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
+export class CollaboratorsComponent extends DataLoadingComponent implements OnInit {
   userInviteForm = new FormGroup({
     email: new FormControl('', [XFValidators.email])
   });
@@ -37,12 +37,11 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
-    private readonly noticeService: NoticeService,
+    noticeService: NoticeService,
     private readonly projectService: ProjectService,
     private readonly userService: UserService
   ) {
-    super();
-    this.noticeService.loadingStarted();
+    super(noticeService);
   }
 
   get hasEmailError(): boolean {
@@ -89,7 +88,8 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
     return this.page(rows);
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
+    this.loadingStarted();
     this.subscribe(
       this.activatedRoute.params.pipe(
         map(params => params['projectId'] as string),
@@ -97,25 +97,20 @@ export class CollaboratorsComponent extends SubscriptionDisposable implements On
         filter(projectId => projectId != null)
       ),
       async projectId => {
-        this.noticeService.loadingStarted();
+        this.loadingStarted();
         this.projectDoc = await this.projectService.get(projectId);
         this.loadUsers();
         this.subscribe(this.projectDoc.remoteChanges$, async () => {
-          this.noticeService.loadingStarted();
+          this.loadingStarted();
           try {
             await this.loadUsers();
           } finally {
-            this.noticeService.loadingFinished();
+            this.loadingFinished();
           }
         });
-        this.noticeService.loadingFinished();
+        this.loadingFinished();
       }
     );
-  }
-
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
-    this.noticeService.loadingFinished();
   }
 
   isCurrentUser(userRow: Row): boolean {

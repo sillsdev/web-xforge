@@ -1,19 +1,18 @@
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { ElementState } from 'xforge-common/models/element-state';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../environments/environment';
-import { SFProject } from '../core/models/sfproject';
 import { SFProjectDoc } from '../core/models/sfproject-doc';
 import { SFProjectSettings } from '../core/models/sfproject-settings';
 import { SFProjectService } from '../core/sfproject.service';
@@ -25,7 +24,7 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
 })
-export class SettingsComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
+export class SettingsComponent extends DataLoadingComponent implements OnInit {
   form = new FormGroup(
     {
       translateEnabled: new FormControl(false),
@@ -45,26 +44,19 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
   private projectDoc: SFProjectDoc;
   /** Elements in this component and their states. */
   private controlStates = new Map<Extract<keyof SFProjectSettings, string>, ElementState>();
-  // ensures `get isLoading()` marks the initial load of data in the component since `noticeService.isLoading` is slow
-  // to update its status
-  private isFirstLoad: boolean = true;
   private paratextProjects: ParatextProject[];
   private previousFormValues: SFProjectSettings;
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly dialog: MdcDialog,
-    private readonly noticeService: NoticeService,
+    noticeService: NoticeService,
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService
   ) {
-    super();
-    this.noticeService.loadingStarted();
-  }
-
-  get isLoading(): boolean {
-    return this.isFirstLoad || this.noticeService.isLoading;
+    super(noticeService);
+    this.loadingStarted();
   }
 
   get isLoggedInToParatext(): boolean {
@@ -102,7 +94,7 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     this.setAllControlsToInSync();
     const projectId$ = this.route.params.pipe(
       tap(() => {
-        this.noticeService.loadingStarted();
+        this.loadingStarted();
         this.form.disable();
       }),
       map(params => params['projectId'] as string)
@@ -110,7 +102,7 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
     this.subscribe(
       combineLatest(projectId$, this.paratextService.getProjects()),
       async ([projectId, paratextProjects]) => {
-        this.noticeService.loadingStarted();
+        this.loadingStarted();
         this.form.enable();
         this.paratextProjects = paratextProjects;
         if (paratextProjects != null) {
@@ -120,15 +112,9 @@ export class SettingsComponent extends SubscriptionDisposable implements OnInit,
         if (this.projectDoc) {
           this.updateSettingsInfo();
         }
-        this.isFirstLoad = false;
-        this.noticeService.loadingFinished();
+        this.loadingFinished();
       }
     );
-  }
-
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
-    this.noticeService.loadingFinished();
   }
 
   logInWithParatext(): void {

@@ -1,11 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProject } from '../core/models/sfproject';
 import { SFProjectDoc } from '../core/models/sfproject-doc';
@@ -25,7 +24,7 @@ interface ConnectProjectFormValues {
   templateUrl: './connect-project.component.html',
   styleUrls: ['./connect-project.component.scss']
 })
-export class ConnectProjectComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
+export class ConnectProjectComponent extends DataLoadingComponent implements OnInit {
   connectProjectForm = new FormGroup({
     paratextId: new FormControl(undefined),
     tasks: new FormGroup({
@@ -44,12 +43,11 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
 
   constructor(
     private readonly paratextService: ParatextService,
-    private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     private readonly router: Router,
-    private readonly noticeService: NoticeService
+    noticeService: NoticeService
   ) {
-    super();
+    super(noticeService);
     this.connectProjectForm.disable();
   }
 
@@ -82,7 +80,7 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
   }
 
   ngOnInit(): void {
-    this.noticeService.loadingStarted();
+    this.loadingStarted();
     this.subscribe(this.connectProjectForm.controls.paratextId.valueChanges, (paratextId: string) => {
       if (this.state !== 'input') {
         return;
@@ -121,13 +119,8 @@ export class ConnectProjectComponent extends SubscriptionDisposable implements O
         this.state = 'login';
       }
       this.connectProjectForm.enable();
-      this.noticeService.loadingFinished();
+      this.loadingFinished();
     });
-  }
-
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
-    this.noticeService.loadingFinished();
   }
 
   logInWithParatext(): void {

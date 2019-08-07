@@ -53,8 +53,8 @@ export class UserService {
 
     return combineLatest(debouncedTerm$, queryParameters$, reload$).pipe(
       switchMap(([term, queryParameters]) => {
-        const query: any = {
-          name: { $regex: `.*${term}.*`, $options: 'i' }
+        const query = {
+          $or: [{ name: { $regex: `.*${term}.*`, $options: 'i' } }, { email: { $regex: `.*${term}.*`, $options: 'i' } }]
         };
         return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.TYPE, query, queryParameters));
       })
