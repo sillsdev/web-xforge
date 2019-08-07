@@ -1,13 +1,13 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
-import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { NoticeService } from 'xforge-common/notice.service';
 import { environment } from '../../environments/environment';
+import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
 import { User } from '../models/user';
+import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { QueryParameters } from '../realtime.service';
-import { SubscriptionDisposable } from '../subscription-disposable';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
 
@@ -23,7 +23,7 @@ interface Row {
   templateUrl: './sa-users.component.html',
   styleUrls: ['./sa-users.component.scss']
 })
-export class SaUsersComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
+export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   @HostBinding('class') classes = 'flex-column';
 
   length: number = 0;
@@ -39,11 +39,11 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit, 
 
   constructor(
     private readonly dialog: MdcDialog,
-    private readonly noticeService: NoticeService,
+    noticeService: NoticeService,
     private readonly userService: UserService,
     private readonly projectService: ProjectService
   ) {
-    super();
+    super(noticeService);
     this.searchTerm$ = new BehaviorSubject<string>('');
     this.queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
     this.reload$ = new BehaviorSubject<void>(null);
@@ -54,11 +54,11 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit, 
   }
 
   ngOnInit() {
-    this.noticeService.loadingStarted();
+    this.loadingStarted();
     this.subscribe(
       this.userService.onlineSearch(this.searchTerm$, this.queryParameters$, this.reload$),
       async searchResults => {
-        this.noticeService.loadingStarted();
+        this.loadingStarted();
         const projectDocs = new Map<string, ProjectDoc>();
         for (const userDoc of searchResults.docs) {
           for (const projectId of userDoc.data.sites[environment.siteId].projects) {
@@ -79,14 +79,9 @@ export class SaUsersComponent extends SubscriptionDisposable implements OnInit, 
             } as Row)
         );
         this.length = searchResults.totalPagedCount;
-        this.noticeService.loadingFinished();
+        this.loadingFinished();
       }
     );
-  }
-
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
-    this.noticeService.loadingFinished();
   }
 
   updateSearchTerm(term: string): void {

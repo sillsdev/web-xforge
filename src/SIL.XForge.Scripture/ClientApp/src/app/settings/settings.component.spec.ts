@@ -308,13 +308,10 @@ describe('SettingsComponent', () => {
     it('should disable Delete button while loading', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject();
-      env.wait();
-      env.isLoading = true;
-      env.wait();
+      env.fixture.detectChanges();
       expect(env.deleteProjectButton).not.toBeNull();
       expect(env.deleteProjectButton.disabled).toBe(true);
 
-      env.isLoading = false;
       env.wait();
       expect(env.deleteProjectButton.disabled).toBe(false);
     }));
@@ -348,7 +345,6 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<SettingsComponent>;
   readonly overlayContainer: OverlayContainer;
 
-  isLoading: boolean = false;
   readonly mockedActivatedRoute: ActivatedRoute = mock(ActivatedRoute);
   readonly mockedAuthService: AuthService = mock(AuthService);
   readonly mockedNoticeService: NoticeService = mock(NoticeService);
@@ -363,7 +359,6 @@ class TestEnvironment {
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
-    when(this.mockedNoticeService.isLoading).thenCall(() => this.isLoading);
     this.paratextProjects$ = new BehaviorSubject<ParatextProject[]>([
       {
         paratextId: 'paratextId01',

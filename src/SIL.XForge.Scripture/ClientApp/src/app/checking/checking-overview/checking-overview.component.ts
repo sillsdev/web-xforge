@@ -5,8 +5,8 @@ import { distanceInWordsToNow } from 'date-fns';
 import cloneDeep from 'lodash/cloneDeep';
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { CommentListDoc } from '../../core/models/comment-list-doc';
@@ -33,8 +33,7 @@ import {
   templateUrl: './checking-overview.component.html',
   styleUrls: ['./checking-overview.component.scss']
 })
-export class CheckingOverviewComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
-  isLoading = true;
+export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   itemVisible: { [bookIdOrDocId: string]: boolean } = {};
   itemVisibleArchived: { [bookIdOrDocId: string]: boolean } = {};
   commentListDocs: { [docId: string]: CommentListDoc } = {};
@@ -50,11 +49,11 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
   constructor(
     private readonly activatedRoute: ActivatedRoute,
     private readonly dialog: MdcDialog,
-    private readonly noticeService: NoticeService,
+    noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService
   ) {
-    super();
+    super(noticeService);
   }
 
   get allQuestionsCount(): string {
@@ -151,29 +150,25 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
 
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
-      this.isLoading = true;
-      this.noticeService.loadingStarted();
+      this.loadingStarted();
       this.projectId = projectId;
       try {
         this.projectDoc = await this.projectService.get(projectId);
         this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
         await this.initTexts();
       } finally {
-        this.isLoading = false;
-        this.noticeService.loadingFinished();
+        this.loadingFinished();
       }
 
       if (this.projectDataChangesSub != null) {
         this.projectDataChangesSub.unsubscribe();
       }
       this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(async () => {
-        this.isLoading = true;
-        this.noticeService.loadingStarted();
+        this.loadingStarted();
         try {
           await this.initTexts();
         } finally {
-          this.noticeService.loadingFinished();
-          this.isLoading = false;
+          this.loadingFinished();
         }
       });
     });
@@ -184,7 +179,6 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     if (this.projectDataChangesSub != null) {
       this.projectDataChangesSub.unsubscribe();
     }
-    this.noticeService.loadingFinished();
   }
 
   getTextJsonDocIdStr(bookId: string, chapter: number): string {

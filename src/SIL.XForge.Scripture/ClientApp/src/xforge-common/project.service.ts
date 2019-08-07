@@ -45,9 +45,11 @@ export abstract class ProjectService<
 
     return combineLatest(debouncedTerm$, queryParameters$).pipe(
       switchMap(([term, parameters]) => {
-        const query: any = {
-          projectName: { $regex: `.*${term}.*`, $options: 'i' },
-          'inputSystem.languageName': { $regex: `.*${term}.*`, $options: 'i' }
+        const query = {
+          $or: [
+            { projectName: { $regex: `.*${term}.*`, $options: 'i' } },
+            { 'inputSystem.languageName': { $regex: `.*${term}.*`, $options: 'i' } }
+          ]
         };
         return this.realtimeService.onlineQuery(ProjectDoc.TYPE, query, parameters);
       })

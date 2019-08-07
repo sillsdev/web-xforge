@@ -3,8 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
 import { Subscription } from 'rxjs';
 import { filter, map, repeat, tap } from 'rxjs/operators';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectDoc } from '../../core/models/sfproject-doc';
 import { TextDocId } from '../../core/models/text-doc-id';
 import { TextInfo } from '../../core/models/text-info';
@@ -36,7 +36,7 @@ class TextProgress extends Progress {
   templateUrl: './translate-overview.component.html',
   styleUrls: ['./translate-overview.component.scss']
 })
-export class TranslateOverviewComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
+export class TranslateOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   texts: TextProgress[];
   overallProgress = new Progress();
   trainingPercentage: number = 0;
@@ -53,10 +53,10 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
-    private readonly noticeService: NoticeService,
+    noticeService: NoticeService,
     private readonly projectService: SFProjectService
   ) {
-    super();
+    super(noticeService);
     this.engineQualityStars = [];
     for (let i = 0; i < ENGINE_QUALITY_STAR_COUNT; i++) {
       this.engineQualityStars.push(i);
@@ -65,24 +65,24 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
 
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
-      this.noticeService.loadingStarted();
+      this.loadingStarted();
       try {
         this.createTranslationEngine(projectId);
         this.projectDoc = await this.projectService.get(projectId);
         await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
       } finally {
-        this.noticeService.loadingFinished();
+        this.loadingFinished();
       }
 
       if (this.projectDataChangesSub != null) {
         this.projectDataChangesSub.unsubscribe();
       }
       this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(async () => {
-        this.noticeService.loadingStarted();
+        this.loadingStarted();
         try {
           await this.calculateProgress();
         } finally {
-          this.noticeService.loadingFinished();
+          this.loadingFinished();
         }
       });
     });
@@ -96,7 +96,6 @@ export class TranslateOverviewComponent extends SubscriptionDisposable implement
     if (this.trainingSub != null) {
       this.trainingSub.unsubscribe();
     }
-    this.noticeService.loadingFinished();
   }
 
   startTraining(): void {

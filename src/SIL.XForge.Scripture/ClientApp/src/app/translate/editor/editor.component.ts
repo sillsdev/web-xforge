@@ -14,8 +14,8 @@ import isEqual from 'lodash/isEqual';
 import { DeltaStatic, RangeStatic } from 'quill';
 import { BehaviorSubject, fromEvent, Subject, Subscription } from 'rxjs';
 import { debounceTime, filter, map, repeat, skip, tap } from 'rxjs/operators';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import XRegExp from 'xregexp';
 import { HelpHeroService } from '../../core/help-hero.service';
@@ -41,7 +41,7 @@ const PUNCT_SPACE_REGEX = XRegExp('^(\\p{P}|\\p{S}|\\p{Cc}|\\p{Z})+$');
   templateUrl: './editor.component.html',
   styleUrls: ['./editor.component.scss']
 })
-export class EditorComponent extends SubscriptionDisposable implements OnInit, OnDestroy, AfterViewInit {
+export class EditorComponent extends DataLoadingComponent implements OnInit, OnDestroy, AfterViewInit {
   suggestionWords: string[] = [];
   suggestionConfidence: number = 0;
   showSuggestion: boolean = false;
@@ -83,10 +83,10 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     private readonly activatedRoute: ActivatedRoute,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
-    private readonly noticeService: NoticeService,
+    noticeService: NoticeService,
     private readonly helpHeroService: HelpHeroService
   ) {
-    super();
+    super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
     this.sourceWordTokenizer = wordTokenizer;
     this.targetWordTokenizer = wordTokenizer;
@@ -192,7 +192,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
       this.showSuggestion = false;
       this.sourceLoaded = false;
       this.targetLoaded = false;
-      this.noticeService.loadingStarted();
+      this.loadingStarted();
       const projectId = params['projectId'];
       const bookId = params['bookId'];
 
@@ -282,7 +282,6 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
     if (this.projectUserConfigChangesSub != null) {
       this.projectUserConfigChangesSub.unsubscribe();
     }
-    this.noticeService.loadingFinished();
     this.metricsSession.dispose();
   }
 
@@ -384,7 +383,7 @@ export class EditorComponent extends SubscriptionDisposable implements OnInit, O
         break;
     }
     if (this.sourceLoaded && this.targetLoaded) {
-      this.noticeService.loadingFinished();
+      this.loadingFinished();
     }
   }
 

@@ -3,9 +3,9 @@ import { ActivatedRoute } from '@angular/router';
 import { distanceInWordsToNow } from 'date-fns';
 import { combineLatest, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectDoc } from '../core/models/sfproject-doc';
 import { SFProjectService } from '../core/sfproject.service';
 
@@ -14,7 +14,7 @@ import { SFProjectService } from '../core/sfproject.service';
   templateUrl: './sync.component.html',
   styleUrls: ['./sync.component.scss']
 })
-export class SyncComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
+export class SyncComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   syncActive: boolean = false;
 
   private projectDoc: SFProjectDoc;
@@ -23,15 +23,11 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit, OnD
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly noticeService: NoticeService,
+    noticeService: NoticeService,
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService
   ) {
-    super();
-  }
-
-  get isLoading(): boolean {
-    return this.noticeService.isLoading;
+    super(noticeService);
   }
 
   get isLoggedIntoParatext(): boolean {
@@ -72,7 +68,7 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit, OnD
 
   ngOnInit() {
     const projectId$ = this.route.params.pipe(
-      tap(() => this.noticeService.loadingStarted()),
+      tap(() => this.loadingStarted()),
       map(params => params['projectId'] as string)
     );
 
@@ -88,7 +84,7 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit, OnD
           this.projectDataSub.unsubscribe();
         }
         this.projectDataSub = this.projectDoc.remoteChanges$.subscribe(() => this.checkSyncStatus());
-        this.noticeService.loadingFinished();
+        this.loadingFinished();
       }
     );
   }
@@ -98,7 +94,6 @@ export class SyncComponent extends SubscriptionDisposable implements OnInit, OnD
     if (this.projectDataSub != null) {
       this.projectDataSub.unsubscribe();
     }
-    this.noticeService.loadingFinished();
   }
 
   logInWithParatext(): void {

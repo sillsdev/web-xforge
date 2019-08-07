@@ -4,7 +4,8 @@ import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash/cloneDeep';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { HelpHeroService } from '../../core/help-hero.service';
@@ -41,7 +42,7 @@ interface CheckingData {
   templateUrl: './checking.component.html',
   styleUrls: ['./checking.component.scss']
 })
-export class CheckingComponent extends SubscriptionDisposable implements OnInit {
+export class CheckingComponent extends DataLoadingComponent implements OnInit {
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
     // Need to trigger the calculation for the slider after DOM has been updated
     this.answersPanelContainerElement = answersPanelContainerElement;
@@ -84,9 +85,10 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly helpHeroService: HelpHeroService,
-    private readonly media: MediaObserver
+    private readonly media: MediaObserver,
+    noticeService: NoticeService
   ) {
-    super();
+    super(noticeService);
   }
 
   get chapter(): number {
@@ -148,6 +150,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
 
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params, async params => {
+      this.loadingStarted();
       const projectId = params['projectId'];
       const bookId = params['bookId'];
       const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
@@ -178,6 +181,7 @@ export class CheckingComponent extends SubscriptionDisposable implements OnInit 
         this.refreshComments();
 
         this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
+        this.loadingFinished();
       }
     });
     this.subscribe(this.media.media$, (change: MediaChange) => {
