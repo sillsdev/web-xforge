@@ -217,7 +217,17 @@ describe('CheckingComponent', () => {
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
-      env.clickButton(env.answers[0].query(By.css('.answer-delete')));
+      env.clickButton(env.answerDeleteButton(0));
+      env.waitForSliderUpdate();
+      expect(env.answers.length).toEqual(0);
+    }));
+
+    it('can delete correct answer after changing chapters', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.reviewerUser);
+      env.selectQuestion(2);
+      env.answerQuestion('Answer question 2');
+      env.component.chapter = env.component.chapter + 1;
+      env.clickButton(env.answerDeleteButton(0));
       env.waitForSliderUpdate();
       expect(env.answers.length).toEqual(0);
     }));
@@ -617,6 +627,10 @@ class TestEnvironment {
 
   getAnswer(index: number): DebugElement {
     return this.answers[index];
+  }
+
+  answerDeleteButton(index: number): DebugElement {
+    return this.getAnswer(index).query(By.css('.answer-delete'));
   }
 
   getAnswerEditButton(index: number): DebugElement {
