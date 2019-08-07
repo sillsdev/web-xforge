@@ -221,6 +221,16 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(0);
     }));
 
+    it('can delete correct answer after changing chapters', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.reviewerUser);
+      env.selectQuestion(2);
+      env.answerQuestion('Answer question 2');
+      env.component.chapter = env.component.chapter + 1;
+      env.clickButton(env.answers[0].query(By.css('.answer-delete')));
+      env.waitForSliderUpdate();
+      expect(env.answers.length).toEqual(0);
+    }));
+
     it('answers reset when changing questions', fakeAsync(() => {
       env.setupReviewerScenarioData(env.reviewerUser);
       env.selectQuestion(2);
