@@ -1,6 +1,5 @@
 using System.Linq;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
@@ -213,6 +212,8 @@ namespace SIL.XForge.Services
 
         public async Task<Uri> SaveAudioAsync(string projectId, string fileName, Stream inputStream)
         {
+            if (fileName.IndexOf('/') >= 0)
+                return null;
             string audioDir = Path.Combine(SiteOptions.Value.SiteDir, "audio", projectId);
             if (!Directory.Exists(audioDir))
                 Directory.CreateDirectory(audioDir);
@@ -221,39 +222,10 @@ namespace SIL.XForge.Services
                 File.Delete(path);
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
-            string mp3FilePath = ConvertToMp3(path);
+            string mp3FilePath = await AudioUtils.ConvertToMp3Async(path, AudioOptions.Value.FfmpegPath);
             string mp3FileName = Path.GetFileName(mp3FilePath);
             var uri = new Uri(SiteOptions.Value.Origin, $"{projectId}/{mp3FileName}");
             return uri;
-        }
-
-        private string ConvertToMp3(string filePath)
-        {
-            if (Path.GetExtension(filePath) == ".mp3")
-            {
-                return filePath;
-            }
-            string mp3FilePath = Path.ChangeExtension(filePath, ".mp3");
-            if (File.Exists(mp3FilePath))
-            {
-                File.Delete(mp3FilePath);
-            }
-            var process = new Process()
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = AudioOptions.Value.FfmpegPath,
-                    Arguments = $"-i \"{filePath}\" \"{mp3FilePath}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-            process.Start();
-            process.WaitForExit();
-            if (process.ExitCode != 0)
-                throw new Exception($"Error: Could not convert {filePath} to mp3");
-            File.Delete(filePath);
-            return mp3FilePath;
         }
 
         /// <summary>Encode the input so it is easier to use as a JSON object
