@@ -62,7 +62,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
       return '-';
     }
 
-    return '' + this.allPublicQuestions.length;
+    return '' + this.allPublishedQuestions.length;
   }
 
   get myAnswerCount(): string {
@@ -71,7 +71,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     }
 
     let count: number = 0;
-    for (const question of this.allPublicQuestions) {
+    for (const question of this.allPublishedQuestions) {
       if (question.answers == null) {
         continue;
       }
@@ -91,7 +91,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     }
 
     let count: number = 0;
-    for (const question of this.allPublicQuestions) {
+    for (const question of this.allPublishedQuestions) {
       if (question.answers == null) {
         continue;
       }
@@ -121,7 +121,7 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
         continue;
       }
       const publicComments = commentListDoc.data.comments.filter(
-        c => this.allPublicQuestions.find(q => q.answers && q.answers.map(a => a.id).includes(c.answerRef)) != null
+        c => this.allPublishedQuestions.find(q => q.answers && q.answers.map(a => a.id).includes(c.answerRef)) != null
       );
       if (this.isProjectAdmin) {
         count += publicComments.length;
@@ -141,7 +141,15 @@ export class CheckingOverviewComponent extends SubscriptionDisposable implements
     );
   }
 
-  private get allPublicQuestions(): Question[] {
+  get allArchivedQuestionsCount(): number {
+    let questions: Readonly<Question[]> = [];
+    for (const doc of Object.values(this.questionListDocs)) {
+      questions = questions.concat(doc.data.questions);
+    }
+    return questions.filter(q => q.isArchived === true).length;
+  }
+
+  private get allPublishedQuestions(): Question[] {
     let questions: Readonly<Question[]> = [];
     for (const doc of Object.values(this.questionListDocs)) {
       questions = questions.concat(doc.data.questions);
