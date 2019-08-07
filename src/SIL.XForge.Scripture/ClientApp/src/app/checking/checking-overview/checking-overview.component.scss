@@ -12,6 +12,11 @@
   overflow: hidden;
 }
 
+#no-questions-label,
+#no-archived-questions-label {
+  color: var(--mdc-theme-text-hint-on-background);
+}
+
 .reviewer-panels {
   max-width: 800px;
 }
