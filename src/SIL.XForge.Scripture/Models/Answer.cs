@@ -10,6 +10,7 @@ namespace SIL.XForge.Scripture.Models
         public string SyncUserRef { get; set; }
         public VerseRefData ScriptureStart { get; set; }
         public VerseRefData ScriptureEnd { get; set; }
+        public string ScriptureText { get; set; }
         public string Text { get; set; }
         public string AudioUrl { get; set; }
         public List<Like> Likes { get; set; } = new List<Like>();
