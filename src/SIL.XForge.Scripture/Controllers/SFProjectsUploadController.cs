@@ -30,6 +30,9 @@ namespace SIL.XForge.Scripture.Controllers
         [RequestSizeLimit(100_000_000)]
         public async Task<IActionResult> UploadAudioAsync([FromForm] string id, [FromForm] IFormFile file)
         {
+            if (file.FileName.IndexOfAny(Path.GetInvalidFileNameChars()) != -1)
+                return BadRequest();
+
             if (!await _projectService.IsAuthorizedAsync(id, _userAccessor.UserId))
                 return Forbid();
 

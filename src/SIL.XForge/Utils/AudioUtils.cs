@@ -13,15 +13,11 @@ namespace SIL.XForge.Utils
     {
         public static async Task<string> ConvertToMp3Async(string filePath, string ffmpegPath)
         {
-            if (Path.GetExtension(filePath) == ".mp3")
-            {
+            if (string.Equals(Path.GetExtension(filePath), ".mp3", StringComparison.InvariantCultureIgnoreCase))
                 return filePath;
-            }
             string mp3FilePath = Path.ChangeExtension(filePath, ".mp3");
             if (File.Exists(mp3FilePath))
-            {
                 File.Delete(mp3FilePath);
-            }
             var process = new Process()
             {
                 StartInfo = new ProcessStartInfo

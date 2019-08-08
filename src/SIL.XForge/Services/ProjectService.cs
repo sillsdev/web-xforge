@@ -212,8 +212,6 @@ namespace SIL.XForge.Services
 
         public async Task<Uri> SaveAudioAsync(string projectId, string fileName, Stream inputStream)
         {
-            if (fileName.IndexOf('/') >= 0)
-                return null;
             string audioDir = Path.Combine(SiteOptions.Value.SiteDir, "audio", projectId);
             if (!Directory.Exists(audioDir))
                 Directory.CreateDirectory(audioDir);
@@ -222,9 +220,20 @@ namespace SIL.XForge.Services
                 File.Delete(path);
             using (var fileStream = new FileStream(path, FileMode.Create))
                 await inputStream.CopyToAsync(fileStream);
-            string mp3FilePath = await AudioUtils.ConvertToMp3Async(path, AudioOptions.Value.FfmpegPath);
-            string mp3FileName = Path.GetFileName(mp3FilePath);
-            var uri = new Uri(SiteOptions.Value.Origin, $"{projectId}/{mp3FileName}");
+            string ext = Path.GetExtension(path);
+            string outputFileName;
+            if (string.Equals(ext, ".mp3", StringComparison.InvariantCultureIgnoreCase)
+                || string.Equals(ext, ".webm", StringComparison.InvariantCultureIgnoreCase))
+            {
+                outputFileName = Path.GetFileName(path);
+            }
+            else
+            {
+                string mp3FilePath = await AudioUtils.ConvertToMp3Async(path, AudioOptions.Value.FfmpegPath);
+                outputFileName = Path.GetFileName(mp3FilePath);
+            }
+            var uri = new Uri(SiteOptions.Value.Origin,
+                $"{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}");
             return uri;
         }
 
