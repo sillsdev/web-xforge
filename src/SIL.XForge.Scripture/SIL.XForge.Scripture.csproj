@@ -12,7 +12,7 @@
     <BuildServerSideRenderer>false</BuildServerSideRenderer>
     <UserSecretsId>4d0606c3-0fc7-4d76-b43b-236485004e81</UserSecretsId>
     <MachineVersion>2.1.0-34</MachineVersion>
-    <RealtimeRoot>..\SIL.XForge\Realtime\</RealtimeRoot>
+    <RealtimeServerRoot>..\SIL.XForge\Realtime\Server\</RealtimeServerRoot>
     <AngularConfig>production</AngularConfig>
   </PropertyGroup>
 
@@ -29,10 +29,6 @@
     <!-- Don't publish the SPA source files, but do show them in the project files list -->
     <Content Remove="$(SpaRoot)**" />
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
-    <Compile Remove="CodeGenerator\**" />
-    <Content Remove="CodeGenerator\**" />
-    <EmbeddedResource Remove="CodeGenerator\**" />
-    <None Remove="CodeGenerator\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -58,7 +54,7 @@
   <Target Name="PublishRunWebpack" AfterTargets="ComputeFilesToPublish">
     <!-- As part of publishing, ensure the JS resources are freshly built in production mode -->
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
-    <Exec WorkingDirectory="$(RealtimeRoot)" Command="npm install" />
+    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="npm install" />
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build -- --configuration=$(AngularConfig)" />
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build:ssr -- --configuration=$(AngularConfig)" Condition=" '$(BuildServerSideRenderer)' == 'true' " />
 
@@ -70,9 +66,9 @@
         <RelativePath>%(DistFiles.Identity)</RelativePath>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </ResolvedFileToPublish>
-      <RealtimeFiles Include="$(RealtimeRoot)node_modules\**\*" />
+      <RealtimeFiles Include="$(RealtimeServerRoot)**\*" />
       <ResolvedFileToPublish Include="@(RealtimeFiles)" Exclude="@(ResolvedFileToPublish)">
-        <RelativePath>Realtime\node_modules\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <RelativePath>Realtime\Server\%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
         <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </ResolvedFileToPublish>
     </ItemGroup>
