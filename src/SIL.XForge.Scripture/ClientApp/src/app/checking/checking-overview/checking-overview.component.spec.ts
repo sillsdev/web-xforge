@@ -8,6 +8,9 @@ import { ActivatedRoute } from '@angular/router';
 import { ngfModule } from 'angular-file';
 import * as OTJson0 from 'ot-json0';
 import { of } from 'rxjs';
+import { ScrVers } from 'src/app/core/models/scripture/scr-vers';
+import { VerseRef } from 'src/app/core/models/scripture/verse-ref';
+import { ScrVersType } from 'src/app/core/models/scripture/versification';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { SharingLevel } from 'xforge-common/models/sharing-level';
@@ -70,7 +73,7 @@ describe('CheckingOverviewComponent', () => {
       const env = new TestEnvironment();
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
       env.waitForQuestions();
-      verify(env.mockedProjectService.getQuestionList(anything())).twice();
+      verify(env.mockedProjectService.getQuestionList(anything())).thrice();
 
       resetCalls(env.mockedProjectService);
       env.clickElement(env.addQuestionButton);
@@ -90,13 +93,17 @@ describe('CheckingOverviewComponent', () => {
         })
       );
       env.waitForQuestions();
-      verify(env.mockedProjectService.getQuestionList(anything())).twice();
+      verify(env.mockedProjectService.getQuestionList(anything())).thrice();
+      env.simulateRowClick(0);
+      expect(env.textRows.length).toEqual(3);
 
       resetCalls(env.mockedProjectService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
       verify(env.mockedProjectService.getQuestionList(anything())).once();
-      expect().nothing();
+      const id = new TextDocId('project01', 'MAT', 3);
+      env.simulateRowClick(1, id);
+      expect(env.textRows.length).toEqual(5);
     }));
   });
 
@@ -129,7 +136,7 @@ describe('CheckingOverviewComponent', () => {
       const id = new TextDocId('project01', 'MAT', 1);
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
         of({
-          scriptureStart: 'MAT 3:3',
+          scriptureStart: 'MAT 1:3',
           scriptureEnd: '',
           text: '',
           audio: { fileName: '' }
@@ -140,12 +147,38 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(9);
       expect(env.questionEditButtons.length).toEqual(6);
-      verify(env.mockedProjectService.getQuestionList(anything())).twice();
+      verify(env.mockedProjectService.getQuestionList(anything())).thrice();
 
       resetCalls(env.mockedProjectService);
       env.clickElement(env.questionEditButtons[0]);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
       verify(env.mockedProjectService.getQuestionList(anything())).never();
+    }));
+
+    it('allows editing scripture reference', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const id = new TextDocId('project01', 'MAT', 1);
+      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
+        of({
+          scriptureStart: 'MAT 3:3',
+          scriptureEnd: '',
+          text: 'scripture reference moved to chapter 2',
+          audio: { fileName: '' }
+        })
+      );
+      env.waitForQuestions();
+      env.simulateRowClick(0);
+      env.simulateRowClick(1, id);
+      expect(env.textRows.length).toEqual(9);
+      const mat3Id = new TextDocId('project01', 'MAT', 3);
+
+      resetCalls(env.mockedProjectService);
+      expect(env.questionEditButtons.length).toEqual(6);
+      env.clickElement(env.questionEditButtons[0]);
+      verify(env.mockedProjectService.getQuestionList(deepEqual(mat3Id))).once();
+      expect(env.questionEditButtons.length).toEqual(5);
+      env.simulateRowClick(1, mat3Id);
+      expect(env.textRows.length).toEqual(10);
     }));
   });
 
@@ -277,7 +310,7 @@ class TestEnvironment {
     shareEnabled: true,
     shareLevel: SharingLevel.Anyone,
     texts: [
-      { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1, lastVerse: 25 }] },
+      { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1, lastVerse: 25 }, { number: 3, lastVerse: 17 }] },
       { bookId: 'LUK', name: 'Luke', chapters: [{ number: 1, lastVerse: 80 }] }
     ],
     userRoles: {
@@ -301,10 +334,17 @@ class TestEnvironment {
     );
 
     const text1_1id = new TextDocId('project01', 'MAT', 1);
+    const verseData = VerseRef.fromStr('MAT 1:3', ScrVers.English);
     when(this.mockedProjectService.getQuestionList(deepEqual(text1_1id))).thenResolve(
       this.createQuestionListDoc(text1_1id, [
         {
           id: 'q1Id',
+          scriptureStart: {
+            book: verseData.book,
+            chapter: verseData.chapter,
+            verse: verseData.verse,
+            versification: ScrVersType[ScrVersType.English]
+          },
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q1 text',
           answers: [
