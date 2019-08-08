@@ -397,11 +397,19 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           newQuestion.audioUrl = '';
         }
 
-        if (editMode) {
+        if (
+          editMode &&
+          question.scriptureStart.book === verseStart.book &&
+          question.scriptureStart.chapter === verseStart.chapter
+        ) {
           this.questionListDocs[id.toString()].submitJson0Op(op =>
             op.replace(cq => cq.questions, questionIndex, newQuestion)
           );
         } else {
+          if (editMode) {
+            // The scripture book or chapter reference has been edited. Delete the question in the old QuestionListDoc
+            await this.deleteQuestion(question.id, id);
+          }
           id = new TextDocId(this.projectDoc.id, this.textFromBook(verseStart.book).bookId, verseStart.chapterNum);
           const questionsDoc = await this.projectService.getQuestionList(id);
           newQuestion.id = newQuestionId;
@@ -412,6 +420,15 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         }
       }
     });
+  }
+
+  private async deleteQuestion(questionId: string, textDocId: TextDocId): Promise<boolean> {
+    const questionIndex = this.questionListDocs[textDocId.toString()].data.questions.findIndex(
+      q => q.id === questionId
+    );
+    return this.questionListDocs[textDocId.toString()].submitJson0Op(op =>
+      op.remove(cq => cq.questions, questionIndex)
+    );
   }
 
   private async initTexts(): Promise<void> {
