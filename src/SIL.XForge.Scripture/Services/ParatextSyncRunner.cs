@@ -567,11 +567,15 @@ namespace SIL.XForge.Scripture.Services
 
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
-                op.Inc(pd => pd.Sync.QueuedCount, -1);
                 op.Unset(pd => pd.Sync.PercentCompleted);
                 op.Set(pd => pd.Sync.LastSyncSuccessful, successful);
                 if (successful)
                     op.Set(pd => pd.Sync.DateLastSuccessfulSync, DateTime.UtcNow);
+                // the frontend checks the queued count to determine if the sync is complete. The ShareDB client emits
+                // an event for each individual op even if they are applied as a batch, so this needs to be set last,
+                // otherwise the info about the sync won't be set yet when the frontend determines that the sync is
+                // complete.
+                op.Inc(pd => pd.Sync.QueuedCount, -1);
             });
             if (_notesMapper.NewSyncUsers.Count > 0)
             {
