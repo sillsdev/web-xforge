@@ -114,8 +114,8 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(0);
       expect(env.textRows.length).toEqual(3);
       env.simulateRowClick(1, id);
-      expect(env.textRows.length).toEqual(5);
-      expect(env.questionEditButtons.length).toEqual(2);
+      expect(env.textRows.length).toEqual(9);
+      expect(env.questionEditButtons.length).toEqual(6);
 
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(3);
@@ -138,8 +138,8 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       env.simulateRowClick(0);
       env.simulateRowClick(1, id);
-      expect(env.textRows.length).toEqual(5);
-      expect(env.questionEditButtons.length).toEqual(2);
+      expect(env.textRows.length).toEqual(9);
+      expect(env.questionEditButtons.length).toEqual(6);
       verify(env.mockedProjectService.getQuestionList(anything())).twice();
 
       resetCalls(env.mockedProjectService);
@@ -169,14 +169,13 @@ describe('CheckingOverviewComponent', () => {
     it('should calculate the right progress proportions and stats', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser(env.reviewerUser);
-      const text = env.setupReviewerForum();
       env.waitForQuestions();
-      const [unread, read, answered] = env.component.bookProgress(text);
+      const [unread, read, answered] = env.component.bookProgress({ bookId: 'MAT', chapters: [{ number: 1 }] });
       expect(unread).toBe(3);
       expect(read).toBe(2);
       expect(answered).toBe(1);
-      // A tenth question is archived
-      expect(env.component.allQuestionsCount).toBe('9');
+      // 1 of 7 questions of MAT is archived + 1 in LUK
+      expect(env.component.allQuestionsCount).toBe('7');
       expect(env.component.myAnswerCount).toBe('1');
       expect(env.component.myCommentCount).toBe('2');
       expect(env.component.myLikeCount).toBe('3');
@@ -185,10 +184,9 @@ describe('CheckingOverviewComponent', () => {
     it('should calculate the right stats for project admin', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser(env.adminUser);
-      env.setupReviewerForum();
       env.waitForQuestions();
-      // A tenth question is archived
-      expect(env.component.allQuestionsCount).toBe('9');
+      // 1 of 7 questions of MAT is archived + 1 in LUK
+      expect(env.component.allQuestionsCount).toBe('7');
       expect(env.component.myAnswerCount).toBe('3');
       expect(env.component.myCommentCount).toBe('3');
       expect(env.component.myLikeCount).toBe('4');
@@ -196,29 +194,31 @@ describe('CheckingOverviewComponent', () => {
   });
 
   describe('Archive Question', () => {
-    it('archives and-republishes a question', fakeAsync(() => {
+    it('archives and republishes a question', fakeAsync(() => {
       const env = new TestEnvironment();
       const id = new TextDocId('project01', 'MAT', 1);
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
-      expect(env.textArchivedRows.length).toEqual(0);
+      expect(env.textArchivedRows.length).toEqual(1);
+      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toBe('1 questions');
       env.simulateRowClick(0);
       env.simulateRowClick(1, id);
-      expect(env.textRows.length).toEqual(5);
-      expect(env.questionArchiveButtons.length).toEqual(2);
+      expect(env.textRows.length).toEqual(9);
+      expect(env.questionArchiveButtons.length).toEqual(6);
       env.clickElement(env.questionArchiveButtons[0]);
       expect(env.textArchivedRows.length).toEqual(1);
-      expect(env.textRows.length).toEqual(4);
+      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toBe('2 questions');
+      expect(env.textRows.length).toEqual(8);
 
       // Re-publish a question that has been archived
       env.simulateRowClick(0, undefined, true);
       env.simulateRowClick(1, id, true);
-      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toBe('1 questions');
       const archivedQuestion: HTMLElement = env.archivedQuestionDates[0].nativeElement;
       expect(archivedQuestion.textContent).toBe('Archived less than a minute ago');
       env.clickElement(env.questionPublishButtons[0]);
-      expect(env.textArchivedRows.length).toEqual(0);
-      expect(env.textRows.length).toEqual(5);
+      expect(env.textArchivedRows.length).toEqual(3);
+      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toBe('1 questions');
+      expect(env.textRows.length).toEqual(9);
     }));
   });
 });
@@ -285,6 +285,7 @@ class TestEnvironment {
       [this.reviewerUser.id]: this.reviewerUser.role
     }
   };
+  private readonly anotherUserId = 'anotherUserId';
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
@@ -301,18 +302,93 @@ class TestEnvironment {
 
     const text1_1id = new TextDocId('project01', 'MAT', 1);
     when(this.mockedProjectService.getQuestionList(deepEqual(text1_1id))).thenResolve(
-      this.createQuestionsDoc(text1_1id, [
-        { id: 'q1Id', ownerRef: undefined, text: 'Book 1, Q1 text' },
-        { id: 'q2Id', ownerRef: undefined, text: 'Book 1, Q2 text' }
+      this.createQuestionListDoc(text1_1id, [
+        {
+          id: 'q1Id',
+          ownerRef: this.adminUser.id,
+          text: 'Book 1, Q1 text',
+          answers: [
+            {
+              id: 'a1Id',
+              ownerRef: this.reviewerUser.id,
+              likes: [{ ownerRef: this.reviewerUser.id }, { ownerRef: this.anotherUserId }],
+              dateCreated: '',
+              dateModified: ''
+            }
+          ]
+        },
+        {
+          id: 'q2Id',
+          ownerRef: this.adminUser.id,
+          text: 'Book 1, Q2 text',
+          answers: [
+            {
+              id: 'a2Id',
+              ownerRef: this.anotherUserId,
+              likes: [{ ownerRef: this.reviewerUser.id }],
+              dateCreated: '',
+              dateModified: ''
+            }
+          ]
+        },
+        {
+          id: 'q3Id',
+          ownerRef: this.adminUser.id,
+          text: 'Book 1, Q3 text',
+          answers: [
+            {
+              id: 'a3Id',
+              ownerRef: this.anotherUserId,
+              likes: [{ ownerRef: this.reviewerUser.id }],
+              dateCreated: '',
+              dateModified: ''
+            }
+          ]
+        },
+        { id: 'q4Id', ownerRef: this.adminUser.id, text: 'Book 1, Q4 text' },
+        { id: 'q5Id', ownerRef: this.adminUser.id, text: 'Book 1, Q5 text' },
+        { id: 'q6Id', ownerRef: this.adminUser.id, text: 'Book 1, Q6 text' },
+        {
+          id: 'q7Id',
+          ownerRef: this.adminUser.id,
+          text: 'Book 1, Q7 text',
+          isArchived: true,
+          dateArchived: '2019-07-30T12:00:00.000Z'
+        }
+      ])
+    );
+    when(this.mockedProjectService.getCommentList(deepEqual(text1_1id))).thenResolve(
+      this.createCommentListDoc(text1_1id, [
+        {
+          id: 'c1Id',
+          ownerRef: this.reviewerUser.id,
+          dateCreated: '',
+          dateModified: '',
+          answerRef: 'a1Id'
+        },
+        {
+          id: 'c2Id',
+          ownerRef: this.reviewerUser.id,
+          dateCreated: '',
+          dateModified: '',
+          answerRef: 'a2Id'
+        },
+        {
+          id: 'c3Id',
+          ownerRef: this.anotherUserId,
+          dateCreated: '',
+          dateModified: '',
+          answerRef: 'a3Id'
+        }
       ])
     );
     const text1_3id = new TextDocId('project01', 'MAT', 3);
     when(this.mockedProjectService.getQuestionList(deepEqual(text1_3id))).thenResolve(
-      this.createQuestionsDoc(text1_3id, [])
+      this.createQuestionListDoc(text1_3id, [])
     );
     const text2_1id = new TextDocId('project01', 'LUK', 1);
     when(this.mockedProjectService.getQuestionList(deepEqual(text2_1id))).thenResolve(
-      this.createQuestionsDoc(text2_1id, [{ id: 'q3Id', ownerRef: undefined, text: 'Book 2, Q3 text' }])
+      this.createQuestionListDoc(text2_1id, [{ id: 'q8Id', ownerRef: this.anotherUserId, text: 'Book 2, Q3 text' }])
     );
     this.setCurrentUser(this.adminUser);
 
@@ -417,102 +493,12 @@ class TestEnvironment {
     when(this.mockedUserService.currentUserId).thenReturn(currentUser.id);
   }
 
-  setupReviewerForum(): TextInfo {
-    const projectId = 'project01';
-    const bookId = 'BK1';
-    const chapterNumber = 1;
-    const currentUserId = this.reviewerUser.id;
-    const anotherUserId = 'anotherUserId';
-    const ownerRef = this.adminUser.id;
-    const textId = new TextDocId(projectId, bookId, chapterNumber);
-    this.component.questionListDocs[textId.toString()] = this.createQuestionsDoc(textId, [
-      {
-        id: 'q1Id',
-        ownerRef,
-        text: 'Book 1, Q1 text',
-        answers: [
-          {
-            id: 'a1Id',
-            ownerRef: currentUserId,
-            likes: [{ ownerRef: currentUserId }, { ownerRef: anotherUserId }],
-            dateCreated: '',
-            dateModified: ''
-          }
-        ]
-      },
-      {
-        id: 'q2Id',
-        ownerRef,
-        text: 'Book 1, Q2 text',
-        answers: [
-          {
-            id: 'a2Id',
-            ownerRef: anotherUserId,
-            likes: [{ ownerRef: currentUserId }],
-            dateCreated: '',
-            dateModified: ''
-          }
-        ]
-      },
-      {
-        id: 'q3Id',
-        ownerRef,
-        text: 'Book 1, Q3 text',
-        answers: [
-          {
-            id: 'a3Id',
-            ownerRef: anotherUserId,
-            likes: [{ ownerRef: currentUserId }],
-            dateCreated: '',
-            dateModified: ''
-          }
-        ]
-      },
-      { id: 'q4Id', ownerRef, text: 'Book 1, Q4 text' },
-      { id: 'q5Id', ownerRef, text: 'Book 1, Q5 text' },
-      { id: 'q6Id', ownerRef, text: 'Book 1, Q6 text' },
-
-      {
-        id: 'q7Id',
-        ownerRef,
-        text: 'Book 1, Q7 text',
-        isArchived: true,
-        dateArchived: '2019-07-30T12:00:00.000Z'
-      }
-    ]);
-    this.component.commentListDocs[textId.toString()] = this.createCommentsDoc(textId, [
-      {
-        id: 'c1Id',
-        ownerRef: currentUserId,
-        dateCreated: '',
-        dateModified: '',
-        answerRef: 'a1Id'
-      },
-      {
-        id: 'c2Id',
-        ownerRef: currentUserId,
-        dateCreated: '',
-        dateModified: '',
-        answerRef: 'a2Id'
-      },
-      {
-        id: 'c3Id',
-        ownerRef: anotherUserId,
-        dateCreated: '',
-        dateModified: '',
-        answerRef: 'a3Id'
-      }
-    ]);
-
-    return { bookId, chapters: [{ number: chapterNumber }] };
-  }
-
-  private createQuestionsDoc(id: TextDocId, data: Question[]): QuestionListDoc {
+  private createQuestionListDoc(id: TextDocId, data: Question[]): QuestionListDoc {
     const adapter = new MemoryRealtimeDocAdapter(id.toString(), OTJson0.type, { questions: data });
     return new QuestionListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 
-  private createCommentsDoc(id: TextDocId, data: Comment[]): CommentListDoc {
+  private createCommentListDoc(id: TextDocId, data: Comment[]): CommentListDoc {
     const adapter = new MemoryRealtimeDocAdapter(id.toString(), OTJson0.type, { comments: data });
     return new CommentListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
