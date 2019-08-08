@@ -355,6 +355,7 @@ namespace SIL.XForge.Services
                     Name = "xForge",
                     Origin = new Uri("http://localhost")
                 });
+                var audioOptions = Substitute.For<IOptions<AudioOptions>>();
 
                 EmailService = Substitute.For<IEmailService>();
 
@@ -377,8 +378,8 @@ namespace SIL.XForge.Services
                 SecurityService = Substitute.For<ISecurityService>();
                 SecurityService.GenerateKey().Returns("1234abc");
 
-                Service = new TestProjectService(RealtimeService, siteOptions, EmailService, ProjectSecrets,
-                    SecurityService);
+                Service = new TestProjectService(RealtimeService, siteOptions, audioOptions, EmailService,
+                    ProjectSecrets, SecurityService);
             }
 
             public TestProjectService Service { get; }
