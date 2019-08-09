@@ -39,7 +39,7 @@ namespace SIL.XForge.Services
         protected IRepository<TSecret> ProjectSecrets { get; }
         protected abstract string ProjectAdminRole { get; }
 
-        public async Task AddUserAsync(string userId, string projectId, string projectRole = null)
+        public async Task AddUserAsync(string userId, string projectId, string projectRole)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {

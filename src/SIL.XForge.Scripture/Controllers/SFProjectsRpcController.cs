@@ -74,7 +74,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        public async Task<IRpcMethodResult> AddUser(string projectId, string projectRole)
+        public async Task<IRpcMethodResult> AddUser(string projectId, string projectRole = null)
         {
             try
             {
