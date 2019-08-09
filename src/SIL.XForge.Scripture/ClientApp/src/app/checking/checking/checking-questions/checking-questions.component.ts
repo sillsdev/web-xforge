@@ -30,41 +30,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     super();
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
     this.subscribe(this.activeQuestionSubject.pipe(debounceTime(2000)), question => {
-      this.projectUserConfigDoc
-        .submitJson0Op(op => {
-          if (!this.hasUserReadQuestion(question)) {
-            op.add(puc => puc.questionRefsRead, question.id);
-          }
-          if (this.hasUserAnswered(question) || this.isAdministrator) {
-            for (const answer of this.getAnswers(question)) {
-              if (!this.hasUserReadAnswer(answer)) {
-                op.add(puc => puc.answerRefsRead, answer.id);
-              }
-            }
-          }
-          for (const answer of this.getAnswers(question)) {
-            const comments = this.getAnswerComments(answer);
-            let readLimit = 3;
-            if (comments.length > 3) {
-              readLimit = 2;
-            }
-            let commentCount = 0;
-            for (const comment of comments) {
-              if (!this.hasUserReadComment(comment)) {
-                op.add(puc => puc.commentRefsRead, comment.id);
-              }
-              commentCount++;
-              if (commentCount === readLimit) {
-                break;
-              }
-            }
-          }
-        })
-        .then(updated => {
-          if (updated) {
-            this.update.emit(question);
-          }
-        });
+      this.updateElementsRead(question);
     });
   }
 
@@ -74,6 +40,10 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
 
   get activeQuestionIndex(): number {
     return this.questions.findIndex(question => question.id === this.activeQuestion.id);
+  }
+
+  get isAdministrator(): boolean {
+    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRoles.ParatextAdministrator;
   }
 
   get questions(): Readonly<Question[]> {
@@ -125,6 +95,42 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     return unread;
   }
 
+  updateElementsRead(question: Question): void {
+    this.projectUserConfigDoc
+      .submitJson0Op(op => {
+        if (!this.hasUserReadQuestion(question)) {
+          op.add(puc => puc.questionRefsRead, question.id);
+        }
+        if (this.hasUserAnswered(question) || this.isAdministrator) {
+          for (const answer of this.getAnswers(question)) {
+            if (!this.hasUserReadAnswer(answer)) {
+              op.add(puc => puc.answerRefsRead, answer.id);
+            }
+            const comments = this.getAnswerComments(answer);
+            let readLimit = 3;
+            if (comments.length > 3) {
+              readLimit = 2;
+            }
+            let commentCount = 0;
+            for (const comment of comments) {
+              if (!this.hasUserReadComment(comment)) {
+                op.add(puc => puc.commentRefsRead, comment.id);
+              }
+              commentCount++;
+              if (commentCount === readLimit) {
+                break;
+              }
+            }
+          }
+        }
+      })
+      .then(updated => {
+        if (updated) {
+          this.update.emit(question);
+        }
+      });
+  }
+
   checkCanChangeQuestion(newIndex: number): boolean {
     return !!this.questions[this.activeQuestionIndex + newIndex];
   }
@@ -149,10 +155,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       ? this.projectUserConfigDoc.data.commentRefsRead.includes(comment.id) ||
           this.projectUserConfigDoc.data.ownerRef === comment.ownerRef
       : false;
-  }
-
-  get isAdministrator(): boolean {
-    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRoles.ParatextAdministrator;
   }
 
   nextQuestion(): void {
