@@ -397,7 +397,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         op.insert(ql => ql.questions[this.activeQuestionIndex].answers, 0, questionWithAnswer.answers[0])
       );
     }
-    this.refreshSummary();
+    this.questionsPanel.updateElementsRead(this.questionsPanel.activeQuestion);
   }
 
   private saveComment(comment: Comment) {
