@@ -102,6 +102,18 @@
   </mdc-list>
 </div>
 
+<div
+  fxLayout="row"
+  fxLayoutAlign="space-around"
+  class="reviewer-panels"
+  *ngIf="allQuestionsCount === '-' || allQuestionsCount === '0'"
+  id="no-questions-label"
+>
+  <p>
+    There are no published questions. <span *ngIf="isProjectAdmin">Click <b>Add question</b>.</span>
+  </p>
+</div>
+
 <ng-template #reviewerQuestionPanel>
   <div fxLayout="column" fxLayoutAlign="space-around" class="reviewer-panels" id="reviewer-question-panel">
     <mdc-list dense id="reviewer-questions-list">
@@ -185,7 +197,7 @@
       >
         <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
           <mdc-icon fxFlex="24px" mdcListItemMeta
-            >keyboard_arrow_{{ itemVisibleArchived[bookId] ? "down" : "right" }}</mdc-icon
+            >keyboard_arrow_{{ itemVisibleArchived[text.bookId] ? "down" : "right" }}</mdc-icon
           ><span fxFlex>{{ text?.name }}</span>
           <span fxFlex="80px" fxLayoutAlign="end center" class="archived-questions-count">{{
             questionCountLabel(bookQuestionCount(text, true))
@@ -241,4 +253,13 @@
       </ng-container>
     </ng-container>
   </mdc-list>
+  <div
+    fxLayout="row"
+    fxLayoutAlign="space-around"
+    class="reviewer-panels"
+    *ngIf="allArchivedQuestionsCount === 0"
+    id="no-archived-questions-label"
+  >
+    <p>There are no archived questions.</p>
+  </div>
 </div>

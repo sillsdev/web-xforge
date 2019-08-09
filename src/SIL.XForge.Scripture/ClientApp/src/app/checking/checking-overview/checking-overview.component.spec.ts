@@ -35,6 +35,14 @@ import { CheckingOverviewComponent } from './checking-overview.component';
 
 describe('CheckingOverviewComponent', () => {
   describe('Add Question', () => {
+    it('should display "No question" message', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.fixture.detectChanges();
+      expect(env.noQuestionsLabel).not.toBeNull();
+      env.waitForQuestions();
+      expect(env.noQuestionsLabel).toBeNull();
+    }));
+
     it('should not display "Add question" button for Reviewer', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser(env.reviewerUser);
@@ -150,6 +158,15 @@ describe('CheckingOverviewComponent', () => {
   });
 
   describe('for Reviewer', () => {
+    it('should display "No question" message', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser(env.reviewerUser);
+      env.fixture.detectChanges();
+      expect(env.noQuestionsLabel).not.toBeNull();
+      env.waitForQuestions();
+      expect(env.noQuestionsLabel).toBeNull();
+    }));
+
     it('should not display progress for project admin', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser(env.adminUser);
@@ -194,6 +211,18 @@ describe('CheckingOverviewComponent', () => {
   });
 
   describe('Archive Question', () => {
+    it('should display "No archived question" message', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const id = new TextDocId('project01', 'MAT', 1);
+      env.waitForQuestions();
+      expect(env.noArchivedQuestionsLabel).toBeNull();
+
+      env.simulateRowClick(0, undefined, true);
+      env.simulateRowClick(1, id, true);
+      env.clickElement(env.questionPublishButtons[0]);
+      expect(env.noArchivedQuestionsLabel).not.toBeNull();
+    }));
+
     it('archives and republishes a question', fakeAsync(() => {
       const env = new TestEnvironment();
       const id = new TextDocId('project01', 'MAT', 1);
@@ -415,6 +444,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#text-with-archived-questions'));
   }
 
+  get noQuestionsLabel(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#no-questions-label'));
+  }
+
   get textRows(): DebugElement[] {
     return this.questions.queryAll(By.css('mdc-list-item'));
   }
@@ -439,12 +472,12 @@ class TestEnvironment {
     return this.archivedQuestions.queryAll(By.css('mdc-list-item .publish-btn'));
   }
 
-  get archivedQuestionDates(): DebugElement[] {
-    return this.archivedQuestions.queryAll(By.css('mdc-list-item .date-archived'));
+  get noArchivedQuestionsLabel(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#no-archived-questions-label'));
   }
 
-  getArchivedQuestionsCountByRow(row: number): DebugElement {
-    return this.archivedQuestions.queryAll(By.css('mdc-list-item .archived-questions-count'))[row];
+  get archivedQuestionDates(): DebugElement[] {
+    return this.archivedQuestions.queryAll(By.css('mdc-list-item .date-archived'));
   }
 
   get overallProgressChart(): DebugElement {
@@ -453,6 +486,10 @@ class TestEnvironment {
 
   get reviewerQuestionPanel(): DebugElement {
     return this.fixture.debugElement.query(By.css('#reviewer-question-panel'));
+  }
+
+  getArchivedQuestionsCountByRow(row: number): DebugElement {
+    return this.archivedQuestions.queryAll(By.css('mdc-list-item .archived-questions-count'))[row];
   }
 
   waitForQuestions(): void {
