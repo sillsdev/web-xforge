@@ -131,8 +131,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
       : 0;
   }
 
-  private get textJsonDocId(): string {
-    return getTextDocIdStr(this.projectDoc.id, this.text.bookId, this.chapter);
+  private get questionTextJsonDocId(): string {
+    return getTextDocIdStr(this.projectDoc.id, this.text.bookId, this.questionsPanel.activeQuestionChapter);
+  }
+
+  private get activeQuestionIndex(): number {
+    return this.checkingData.questionListDocs[this.questionTextJsonDocId].data.questions.findIndex(
+      question => question.id === this.questionsPanel.activeQuestion.id
+    );
   }
 
   private get minAnswerPanelHeight(): number {
@@ -329,8 +335,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   }
 
   questionChanged(question: Question) {
-    if (this.questionsPanel.activateQuestionChapter !== this.chapter) {
-      this.chapter = this.questionsPanel.activateQuestionChapter;
+    if (this.questionsPanel.activeQuestionChapter !== this.chapter) {
+      this.chapter = this.questionsPanel.activeQuestionChapter;
     }
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
@@ -357,8 +363,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         this.deleteComment(answerComment);
       }
       // TODO: Need to physically delete any audio file as well on the backend
-      this.checkingData.questionListDocs[this.textJsonDocId].submitJson0Op(op =>
-        op.remove(ql => ql.questions[this.activeChapterQuestionIndex].answers, answerIndex)
+      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
+        op.remove(ql => ql.questions[this.activeQuestionIndex].answers, answerIndex)
       );
       this.refreshSummary();
     }
@@ -379,35 +385,29 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     const questionWithAnswer: Question = cloneDeep(this.questionsPanel.activeQuestion);
     questionWithAnswer.answers = answers;
     if (answerIndex >= 0) {
-      this.checkingData.questionListDocs[this.textJsonDocId].submitJson0Op(op =>
+      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
         op.replace(
-          ql => ql.questions[this.activeChapterQuestionIndex].answers,
+          ql => ql.questions[this.activeQuestionIndex].answers,
           answerIndex,
           questionWithAnswer.answers[answerIndex]
         )
       );
     } else {
-      this.checkingData.questionListDocs[this.textJsonDocId].submitJson0Op(op =>
-        op.insert(ql => ql.questions[this.activeChapterQuestionIndex].answers, 0, questionWithAnswer.answers[0])
+      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
+        op.insert(ql => ql.questions[this.activeQuestionIndex].answers, 0, questionWithAnswer.answers[0])
       );
     }
     this.refreshSummary();
   }
 
-  get activeChapterQuestionIndex(): number {
-    return this.checkingData.questionListDocs[this.textJsonDocId].data.questions.findIndex(
-      question => question.id === this.questionsPanel.activeQuestion.id
-    );
-  }
-
   private saveComment(comment: Comment) {
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
-      this.checkingData.commentListDocs[this.textJsonDocId].submitJson0Op(op =>
+      this.checkingData.commentListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
         op.replace(cl => cl.comments, commentIndex, comment)
       );
     } else {
-      this.checkingData.commentListDocs[this.textJsonDocId].submitJson0Op(op =>
+      this.checkingData.commentListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
         op.insert(cl => cl.comments, 0, comment)
       );
     }
@@ -417,7 +417,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   private deleteComment(comment: Comment) {
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
-      this.checkingData.commentListDocs[this.textJsonDocId].submitJson0Op(op =>
+      this.checkingData.commentListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
         op.remove(cl => cl.comments, commentIndex)
       );
     }
@@ -439,12 +439,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     const answerIndex = this.getAnswerIndex(answer);
 
     if (likeIndex >= 0) {
-      this.checkingData.questionListDocs[this.textJsonDocId].submitJson0Op(op =>
-        op.remove(ql => ql.questions[this.activeChapterQuestionIndex].answers[answerIndex].likes, likeIndex)
+      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
+        op.remove(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].likes, likeIndex)
       );
     } else {
-      this.checkingData.questionListDocs[this.textJsonDocId].submitJson0Op(op =>
-        op.insert(ql => ql.questions[this.activeChapterQuestionIndex].answers[answerIndex].likes, 0, {
+      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
+        op.insert(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].likes, 0, {
           ownerRef: currentUserId
         })
       );
