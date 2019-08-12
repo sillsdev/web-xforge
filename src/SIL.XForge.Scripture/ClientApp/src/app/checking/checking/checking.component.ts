@@ -4,6 +4,7 @@ import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash/cloneDeep';
+import { Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -35,6 +36,7 @@ interface Summary {
 interface CheckingData {
   questionListDocs: { [docId: string]: QuestionListDoc };
   commentListDocs: { [docId: string]: CommentListDoc };
+  realtimeSubscriptions: { [docId: string]: Subscription[] };
 }
 
 @Component({
@@ -59,8 +61,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   @ViewChild('chapterMenuList') chapterMenuList: MdcList;
 
   chapters: number[] = [];
-  checkingData: CheckingData = { questionListDocs: {}, commentListDocs: {} };
-  comments: Comment[] = [];
+  checkingData: CheckingData = { questionListDocs: {}, commentListDocs: {}, realtimeSubscriptions: {} };
+  comments: Readonly<Comment[]> = [];
   isExpanded: boolean = false;
   publicQuestions: Readonly<Question[]> = [];
   resetAnswerPanelHeightOnFormHide: boolean = false;
@@ -167,7 +169,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
       this.chapters = this.text.chapters.map(c => c.number);
       if (prevProjectId !== this.projectDoc.id || prevBookId !== this.text.bookId) {
         const bindCheckingDataPromises: Promise<void>[] = [];
-        this._questions = [];
         for (const chapter of this.chapters) {
           bindCheckingDataPromises.push(
             this.bindCheckingData(new TextDocId(this.projectDoc.id, this.text.bookId, chapter))
@@ -177,13 +178,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         await Promise.all(bindCheckingDataPromises);
         this._chapter = undefined;
         this.chapter = 1;
-        for (const chapter of this.chapters) {
-          this._questions = this._questions.concat(
-            this.checkingData.questionListDocs[getTextDocIdStr(this.projectDoc.id, this.text.bookId, chapter)].data
-              .questions
-          );
-        }
-        this.publicQuestions = this._questions.filter(q => q.isArchived !== true);
+        this.refreshQuestions();
         this.refreshComments();
 
         this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
@@ -424,6 +419,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     this.refreshComments();
   }
 
+  private refreshQuestions() {
+    this._questions = [];
+    for (const chapter of this.chapters) {
+      this._questions = this._questions.concat(
+        this.checkingData.questionListDocs[getTextDocIdStr(this.projectDoc.id, this.text.bookId, chapter)].data
+          .questions
+      );
+    }
+    this.publicQuestions = this._questions.filter(q => q.isArchived !== true);
+  }
+
   private refreshComments() {
     this.comments = [];
     for (const chapter of this.chapters) {
@@ -480,6 +486,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     this.unbindCheckingData(id);
     this.checkingData.questionListDocs[id.toString()] = await this.projectService.getQuestionList(id);
     this.checkingData.commentListDocs[id.toString()] = await this.projectService.getCommentList(id);
+    this.checkingData.realtimeSubscriptions[id.toString()] = [
+      this.checkingData.questionListDocs[id.toString()].remoteChanges$.subscribe(() => this.refreshQuestions()),
+      this.checkingData.commentListDocs[id.toString()].remoteChanges$.subscribe(() => this.refreshComments())
+    ];
   }
 
   private unbindCheckingData(id: TextDocId): void {
@@ -487,6 +497,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
+    for (const sub of this.checkingData.realtimeSubscriptions[id.toString()]) {
+      sub.unsubscribe();
+    }
     delete this.checkingData.questionListDocs[id.toString()];
     delete this.checkingData.commentListDocs[id.toString()];
   }
