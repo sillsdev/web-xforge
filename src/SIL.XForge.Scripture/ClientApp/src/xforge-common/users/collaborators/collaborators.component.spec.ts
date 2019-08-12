@@ -69,6 +69,47 @@ describe('CollaboratorsComponent', () => {
     expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
   }));
 
+  it('displays invited users', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+      'alice@a.aa',
+      'bob@b.bb',
+      'charles@c.cc'
+    ]);
+
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    const numUsersOnProject = 3;
+    const numInvitees = 3;
+    expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
+
+    const inviteeRow = 3;
+    const inviteeDisplay = env.elementTextContent(env.cell(inviteeRow, 1));
+    expect(inviteeDisplay).toContain('Awaiting');
+    expect(inviteeDisplay).toContain('alice@a.aa');
+    // Invitee row has cancel button but not remove button.
+    expect(env.removeUserButtonOnRow(inviteeRow)).toBeFalsy();
+    expect(env.cancelInviteButtonOnRow(inviteeRow)).toBeTruthy();
+  }));
+
+  it('should uninvite user from project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    const inviteeRow = 3;
+    env.clickElement(env.cancelInviteButtonOnRow(inviteeRow));
+    verify(env.mockedProjectService.onlineUninviteUser(env.project01Id, 'alice@a.aa')).once();
+
+    expect().nothing();
+  }));
+
   it('should remove user from project', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
@@ -118,6 +159,7 @@ class TestProjectDoc extends ProjectDoc {
 class TestEnvironment {
   readonly fixture: ComponentFixture<CollaboratorsComponent>;
   readonly component: CollaboratorsComponent;
+  readonly project01Id: string = 'project01';
 
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedLocationService = mock(LocationService);
@@ -127,7 +169,7 @@ class TestEnvironment {
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
   constructor() {
-    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: this.project01Id }));
     when(this.mockedProjectService.roles).thenReturn(
       new Map<string, ProjectRoleInfo>([
         ['admin', { role: 'admin', displayName: 'Administrator' }],
@@ -135,7 +177,8 @@ class TestEnvironment {
         [NONE_ROLE.role, NONE_ROLE]
       ])
     );
-    when(this.mockedProjectService.onlineInvite('project01', anything())).thenResolve();
+    when(this.mockedProjectService.onlineInvite(this.project01Id, anything())).thenResolve();
+    when(this.mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
     when(this.mockedNoticeService.show(anything())).thenResolve();
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
     this.addUserProfile('user01', { displayName: 'User 01' });
@@ -221,6 +264,10 @@ class TestEnvironment {
     tick(1000);
   }
 
+  elementTextContent(element: DebugElement): string {
+    return element.nativeElement.textContent;
+  }
+
   setInputValue(input: HTMLInputElement | DebugElement, value: string): void {
     if (input instanceof DebugElement) {
       input = (input as DebugElement).nativeElement as HTMLInputElement;
@@ -250,15 +297,15 @@ class TestEnvironment {
       }
     };
 
-    this.setupThisProjectData('project01', project);
+    this.setupThisProjectData(this.project01Id, project);
   }
 
   setupNullProjectData(): void {
-    this.setupThisProjectData('project01', null);
+    this.setupThisProjectData(this.project01Id, null);
   }
 
   setupProjectDataWithNoUsers(): void {
-    this.setupThisProjectData('project01', { projectName: 'Project 01', userRoles: {} });
+    this.setupThisProjectData(this.project01Id, { projectName: 'Project 01', userRoles: {} });
   }
 
   private addUserProfile(id: string, user: User): void {
@@ -278,3 +325,6 @@ class TestEnvironment {
     when(this.mockedProjectService.get(projectId)).thenResolve(projectDoc);
   }
 }
+
+// TODO update users list after sending invitation
+// TODO handle Cancel Invite button

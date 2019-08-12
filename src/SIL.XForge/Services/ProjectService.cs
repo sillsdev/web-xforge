@@ -97,9 +97,7 @@ namespace SIL.XForge.Services
 
         public async Task<bool> InviteAsync(string userId, string projectId, string email)
         {
-            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
-            if (!projectAttempt.TryResult(out TModel project))
-                throw new DataNotFoundException("The project does not exist.");
+            var project = await GetProject(projectId);
             if (await RealtimeService.QuerySnapshots<User>()
                 .AnyAsync(u => project.UserRoles.Keys.Contains(u.Id) && u.Email == email))
             {
@@ -150,12 +148,29 @@ namespace SIL.XForge.Services
             return true;
         }
 
+        /// <summary>Cancel an outstanding project invitation.</summary>
+        public async Task UninviteUserAsync(string requestingUserId, string projectId, string emailToUninvite)
+        {
+            var project = await GetProject(projectId);
+            if (!IsProjectAdmin(project, requestingUserId))
+                throw new ForbiddenException();
+
+            if (!await IsAlreadyInvitedAsync(requestingUserId, projectId, emailToUninvite))
+            {
+                // There is not an invitation for this email address
+                return;
+            }
+
+            await ProjectSecrets.UpdateAsync(anySecretSet => anySecretSet.Id == projectId, u =>
+            {
+                u.RemoveAll(secretSet => secretSet.ShareKeys, shareKey => shareKey.Email == (emailToUninvite));
+            });
+        }
+
         /// <summary>Is there already a pending invitation to the project for the specified email address?</summary>
         public async Task<bool> IsAlreadyInvitedAsync(string userId, string projectId, string email)
         {
-            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
-            if (!projectAttempt.TryResult(out TModel project))
-                throw new DataNotFoundException("The project does not exist.");
+            var project = await GetProject(projectId);
             if (!IsProjectAdmin(project, userId) && !project.ShareEnabled)
                 throw new ForbiddenException();
 
@@ -163,6 +178,47 @@ namespace SIL.XForge.Services
                 return false;
             return await ProjectSecrets.Query()
                 .AnyAsync(p => p.Id == projectId && p.ShareKeys.Any(sk => sk.Email == email));
+        }
+
+        /// <summary>Return list of email addresses with outstanding invitations</summary>
+        public async Task<string[]> InvitedUsersAsync(string userId, string projectId)
+        {
+            User user = await GetUser(userId);
+            var project = await GetProject(projectId);
+
+            if (!IsProjectAdmin(project, userId)
+             && !IsSystemAdministrator(user))
+                throw new ForbiddenException();
+
+            TSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
+
+
+            return projectSecret.ShareKeys.Select(sk => sk.Email).ToArray();
+        }
+
+        private static bool IsSystemAdministrator(User user)
+        {
+            return user.Role == SystemRoles.SystemAdmin;
+        }
+
+        private async Task<User> GetUser(string userId)
+        {
+            Attempt<User> userAttempt = await RealtimeService.TryGetSnapshotAsync<User>(userId);
+            if (!userAttempt.TryResult(out User user))
+            {
+                throw new DataNotFoundException("The user does not exist.");
+            }
+            return user;
+        }
+
+        private async Task<TModel> GetProject(string projectId)
+        {
+            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
+            if (!projectAttempt.TryResult(out TModel project))
+            {
+                throw new DataNotFoundException("The project does not exist.");
+            }
+            return project;
         }
 
         public async Task CheckLinkSharingAsync(string userId, string projectId, string shareKey = null)
@@ -216,9 +272,7 @@ namespace SIL.XForge.Services
         public async Task<Uri> SaveAudioAsync(string userId, string projectId, string dataId, string extension,
             Stream inputStream)
         {
-            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
-            if (!projectAttempt.TryResult(out TModel project))
-                throw new DataNotFoundException("The project does not exist.");
+            var project = await GetProject(projectId);
 
             if (!project.UserRoles.ContainsKey(userId))
                 throw new ForbiddenException();
@@ -255,9 +309,7 @@ namespace SIL.XForge.Services
 
         public async Task DeleteAudioAsync(string userId, string projectId, string ownerId, string dataId)
         {
-            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
-            if (!projectAttempt.TryResult(out TModel project))
-                throw new DataNotFoundException("The project does not exist.");
+            var project = await GetProject(projectId);
 
             if (userId != ownerId && !IsProjectAdmin(project, userId))
                 throw new ForbiddenException();
@@ -304,3 +356,5 @@ namespace SIL.XForge.Services
         protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);
     }
 }
+
+// TODO test views in small phone

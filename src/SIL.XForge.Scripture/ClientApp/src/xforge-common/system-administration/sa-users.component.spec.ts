@@ -74,6 +74,55 @@ describe('SaUsersComponent', () => {
     expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
   }));
 
+  it('should display invited users', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedProjectService.onlineInvitedUsers('project01')).thenResolve([
+      'alice@a.aa',
+      'bob@b.bb',
+      'charles@c.cc'
+    ]);
+    env.setupUserData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    const numUsersOnProject = 3;
+    const numInvitees = 3;
+    expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
+
+    const inviteeRow = 3;
+    const inviteeDisplay = env.elementTextContent(env.cell(inviteeRow, 1));
+    expect(env.cellDisplayName(inviteeRow, 1)).toBeNull();
+    expect(env.cellName(inviteeRow, 1)).toBeNull();
+    expect(env.cellProjectLink(inviteeRow, 2)).toBeNull();
+    expect(inviteeDisplay).toContain('Awaiting');
+    expect(inviteeDisplay).toContain('alice@a.aa');
+    // Invitee row has cancel button but not remove button.
+    expect(env.removeUserButtonOnRow(inviteeRow)).toBeFalsy();
+    expect(env.cancelInviteButtonOnRow(inviteeRow)).toBeTruthy();
+
+    // Regular user data still shows as expected
+    const firstNonInviteeRow = 0;
+    expect(env.cellDisplayName(firstNonInviteeRow, 1).innerText).toEqual('User01');
+    expect(env.cellName(firstNonInviteeRow, 1).innerText).toEqual('User 01');
+    expect(env.cellProjectLink(firstNonInviteeRow, 2).text).toEqual('Project 01');
+  }));
+
+  it('should uninvite user from project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedProjectService.onlineInvitedUsers('project01')).thenResolve(['alice@a.aa']);
+    env.setupUserData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    const inviteeRow = 3;
+    env.clickElement(env.cancelInviteButtonOnRow(inviteeRow));
+    verify(env.mockedProjectService.onlineUninviteUser('project01', 'alice@a.aa')).once();
+
+    expect().nothing();
+  }));
+
   it('should delete user', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupUserData();
@@ -249,6 +298,10 @@ class TestEnvironment {
     this.fixture.detectChanges();
     tick(1000);
     this.fixture.detectChanges();
+  }
+
+  elementTextContent(element: DebugElement): string {
+    return element.nativeElement.textContent;
   }
 
   setupEmptyUserData(): void {

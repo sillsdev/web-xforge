@@ -70,6 +70,11 @@ export abstract class ProjectService<
     return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'isAlreadyInvited', { projectId: id, email });
   }
 
+  /** Get list of email addresses that have outstanding invitations on project.
+   * Caller must be an admin on the project. */
+  onlineInvitedUsers(projectId: string): Promise<string[]> {
+    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'InvitedUsers', { projectId });
+  }
   /** Get added into project, with optionally specified shareKey code. */
   onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
     return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'checkLinkSharing', { projectId: id, shareKey });
@@ -85,6 +90,10 @@ export abstract class ProjectService<
 
   onlineInvite(id: string, email: string): Promise<string> {
     return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'invite', { projectId: id, email });
+  }
+
+  onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
+    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'uninviteUser', { projectId, emailToUninvite });
   }
 
   onlineDelete(id: string): Promise<void> {

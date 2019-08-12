@@ -7,9 +7,10 @@ import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
-import { QueryParameters } from '../realtime.service';
+import { QueryParameters, QueryResults } from '../realtime.service';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
+import { UserDoc } from 'xforge-common/models/user-doc';
 
 interface Row {
   readonly id: string;
@@ -58,28 +59,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     this.subscribe(
       this.userService.onlineSearch(this.searchTerm$, this.queryParameters$, this.reload$),
       async searchResults => {
-        this.loadingStarted();
-        const projectDocs = new Map<string, ProjectDoc>();
-        for (const userDoc of searchResults.docs) {
-          for (const projectId of userDoc.data.sites[environment.siteId].projects) {
-            projectDocs.set(projectId, null);
-          }
-        }
-        const projectDocArray = await this.projectService.onlineGetMany(Array.from(projectDocs.keys()));
-        for (const projectDoc of projectDocArray) {
-          projectDocs.set(projectDoc.id, projectDoc);
-        }
-        this.userRows = searchResults.docs.map(
-          userDoc =>
-            ({
-              id: userDoc.id,
-              user: userDoc.data,
-              active: true,
-              projectDocs: userDoc.data.sites[environment.siteId].projects.map(id => projectDocs.get(id))
-            } as Row)
-        );
-        this.length = searchResults.totalPagedCount;
-        this.loadingFinished();
+        await this.loadSearchResults(searchResults);
       }
     );
   }
@@ -92,6 +72,10 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
     this.queryParameters$.next(this.getQueryParameters());
+  }
+
+  uninviteProjectUser(emailToUninvite: string): void {
+    this.projectService.onlineUninviteUser('some-project-id', emailToUninvite);
   }
 
   removeUser(userId: string, user: User): void {
@@ -108,6 +92,49 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     });
   }
 
+  private async loadSearchResults(searchResults: QueryResults<UserDoc>) {
+    this.loadingStarted();
+    const projectDocs = new Map<string, ProjectDoc>();
+    for (const userDoc of searchResults.docs) {
+      for (const projectId of userDoc.data.sites[environment.siteId].projects) {
+        projectDocs.set(projectId, null);
+      }
+    }
+    const projectDocArray = await this.projectService.onlineGetMany(Array.from(projectDocs.keys()));
+    for (const projectDoc of projectDocArray) {
+      projectDocs.set(projectDoc.id, projectDoc);
+    }
+    this.userRows = searchResults.docs.map(
+      userDoc =>
+        ({
+          id: userDoc.id,
+          user: userDoc.data,
+          active: true,
+          projectDocs: userDoc.data.sites[environment.siteId].projects.map(id => projectDocs.get(id))
+        } as Row)
+    );
+    this.length = searchResults.totalPagedCount;
+
+    // TODO Probably some other way
+    for (const projectId of projectDocs.keys()) {
+      const invitedEmailAddresses = await this.projectService.onlineInvitedUsers(projectId);
+      if (invitedEmailAddresses != null) {
+        const invitees: Row[] = invitedEmailAddresses.map(invitee => {
+          return {
+            id: '',
+            user: { email: invitee } as User,
+            active: false
+            // TODO projectDocs:
+          } as Row;
+        });
+        // TODO this.length+=...
+        this.userRows = this.userRows.concat(invitees);
+      }
+    }
+
+    this.loadingFinished();
+  }
+
   private async deleteUser(userId: string) {
     await this.userService.onlineDelete(userId);
     this.reload$.next(null);
@@ -121,3 +148,10 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     };
   }
 }
+
+// TODO handle uninviting user from a *specific* project, since they could be invited to many.
+// TODO handle uninviting an existing user without deleting that user.
+// TODO update collab user list after an invitation is sent.
+// TODO update collab user list after uninviting
+// TODO update sa user list after uninviting.
+// TODO test that invitees from multiple projects all show up in the list.

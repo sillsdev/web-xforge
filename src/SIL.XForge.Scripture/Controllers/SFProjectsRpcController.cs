@@ -142,11 +142,44 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
+        public async Task<IRpcMethodResult> UninviteUser(string projectId, string emailToUninvite)
+        {
+            try
+            {
+                await _projectService.UninviteUserAsync(UserId, projectId, emailToUninvite);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+        }
+
         public async Task<IRpcMethodResult> IsAlreadyInvited(string projectId, string email)
         {
             try
             {
                 return Ok(await _projectService.IsAlreadyInvitedAsync(UserId, projectId, email));
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+        }
+
+        public async Task<IRpcMethodResult> InvitedUsers(string projectId)
+        {
+            try
+            {
+                return Ok(await _projectService.InvitedUsersAsync(UserId, projectId));
             }
             catch (ForbiddenException)
             {
@@ -227,3 +260,4 @@ namespace SIL.XForge.Scripture.Controllers
         }
     }
 }
+// TODO refresh page after canceling invite

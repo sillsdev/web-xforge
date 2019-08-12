@@ -15,6 +15,7 @@ interface Row {
   readonly id: string;
   readonly user: User;
   readonly roleName: string;
+  /** Whether the user is a user of this project, or an invitee. */
   readonly active: boolean;
 }
 
@@ -130,6 +131,10 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     this.projectService.onlineRemoveUser(this.projectId, userId);
   }
 
+  uninviteProjectUser(emailToUninvite: string): void {
+    this.projectService.onlineUninviteUser(this.projectId, emailToUninvite);
+  }
+
   private page(rows: Row[]): Row[] {
     const start = this.pageSize * this.pageIndex;
     return rows.slice(start, start + this.pageSize);
@@ -154,7 +159,17 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
           .then(userDoc => (userRows[index] = { id: userDoc.id, user: userDoc.data, roleName, active: true }))
       );
     }
+    const invitees: Row[] = (await this.projectService.onlineInvitedUsers(this.projectId)).map(invitee => {
+      return {
+        id: '',
+        user: { email: invitee } as User,
+        roleName: '',
+        active: false
+      } as Row;
+    });
     await Promise.all(tasks);
-    this._userRows = userRows;
+    this._userRows = userRows.concat(invitees);
   }
 }
+
+// TODO So does filtering on the collab page work for invited users?

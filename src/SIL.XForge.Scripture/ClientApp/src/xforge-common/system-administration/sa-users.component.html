@@ -61,7 +61,7 @@
             outlined
             color="warn"
             class="cancel-invite"
-            (click)="removeUser(userRow.id, userRow.user)"
+            (click)="uninviteProjectUser(userRow.user.email)"
           >
             Cancel invite
           </button>
@@ -72,7 +72,7 @@
             mdc-icon-button
             color="warn"
             class="cancel-invite"
-            (click)="removeUser(userRow.id, userRow.user)"
+            (click)="uninviteProjectUser(userRow.user.email)"
           >
             <mdc-icon>clear</mdc-icon>
           </button>
