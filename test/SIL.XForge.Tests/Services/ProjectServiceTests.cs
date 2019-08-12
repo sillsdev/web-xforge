@@ -204,6 +204,8 @@ namespace SIL.XForge.Services
             Assert.That(await env.Service.IsAlreadyInvitedAsync(User01, Project03, ""), Is.False);
 
             Assert.That(await env.Service.IsAlreadyInvitedAsync(User01, Project03, "junk"), Is.False);
+
+            Assert.That(await env.Service.IsAlreadyInvitedAsync(User03, Project02, "nothing"), Is.False);
         }
 
         [Test]
@@ -220,6 +222,7 @@ namespace SIL.XForge.Services
             var env = new TestEnvironment();
 
             Assert.That(await env.Service.IsAlreadyInvitedAsync(User01, Project03, "user01@example.com"), Is.False);
+            Assert.That(await env.Service.IsAlreadyInvitedAsync(User03, Project02, "user01@example.com"), Is.False);
         }
 
         [Test]
@@ -228,6 +231,7 @@ namespace SIL.XForge.Services
             var env = new TestEnvironment();
 
             Assert.That(await env.Service.IsAlreadyInvitedAsync(User01, Project03, "unheardof@example.com"), Is.False);
+            Assert.That(await env.Service.IsAlreadyInvitedAsync(User03, Project02, "nobody@example.com"), Is.False);
         }
 
         [Test]
@@ -332,7 +336,8 @@ namespace SIL.XForge.Services
                             ShareLevel = SharingLevel.Anyone,
                             UserRoles =
                             {
-                                { User01, TestProjectRoles.Administrator }
+                                { User01, TestProjectRoles.Administrator },
+                                { User03, TestProjectRoles.Reviewer }
                             }
                         },
                         new TestProject
