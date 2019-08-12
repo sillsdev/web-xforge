@@ -154,7 +154,7 @@ namespace SIL.XForge.Services
             Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
             if (!projectAttempt.TryResult(out TModel project))
                 throw new DataNotFoundException("The project does not exist.");
-            if (!IsProjectAdmin(project, userId))
+            if (!IsProjectAdmin(project, userId) && !project.ShareEnabled)
                 throw new ForbiddenException();
 
             if (email == null)
