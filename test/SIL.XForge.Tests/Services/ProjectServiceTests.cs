@@ -22,6 +22,7 @@ namespace SIL.XForge.Services
         private const string User01 = "user01";
         private const string User02 = "user02";
         private const string User03 = "user03";
+        private const string User04 = "user04";
         private const string SiteId = "xf";
 
         [Test]
@@ -360,6 +361,108 @@ namespace SIL.XForge.Services
                 env.Service.UpdateRoleAsync(User02, SystemRole.User, Project01, TestProjectRole.Administrator));
         }
 
+        public async Task InvitedUsers_Reports()
+        {
+            var env = new TestEnvironment();
+            // Project with no outstanding invitations
+            Assert.That((await env.Service.InvitedUsersAsync(User01, Project01)).Length, Is.EqualTo(0));
+
+            // Project with several outstanding invitations
+            var invitees = (await env.Service.InvitedUsersAsync(User01, Project03));
+            Assert.That(invitees.Length, Is.EqualTo(3));
+            string[] expectedEmailList = { "bob@example.com", "user02@example.com", "bill@example.com" };
+            foreach (var expectedEmail in expectedEmailList)
+            {
+                Assert.That(Array.Exists(invitees, invitee => invitee == expectedEmail));
+            }
+        }
+
+        [Test]
+        public async Task InvitedUsers_SystemAdmin_Reports()
+        {
+            var env = new TestEnvironment();
+
+            // User04 is a system admin, but not a project-admin or even a user on Project03
+            Assert.That(env.GetProject(Project03).UserRoles.ContainsKey(User04), Is.False, "test setup");
+            Assert.That(env.GetUser(User04).Role, Is.EqualTo(SystemRole.SystemAdmin), "test setup");
+
+            var invitees = (await env.Service.InvitedUsersAsync(User04, Project03, env.GetUser(User04).Role));
+            Assert.That(invitees.Length, Is.EqualTo(3));
+            string[] expectedEmailList = { "bob@example.com", "user02@example.com", "bill@example.com" };
+            foreach (var expectedEmail in expectedEmailList)
+            {
+                Assert.That(Array.Exists(invitees, invitee => invitee == expectedEmail));
+            }
+        }
+
+        [Test]
+        public void InvitedUsers_NonProjectAdmin_Forbidden()
+        {
+            var env = new TestEnvironment();
+            // User02 is not a system admin or an admin on Project01
+            Assert.That(env.GetProject(Project01).UserRoles[User02], Is.Not.EqualTo(TestProjectRole.Administrator), "test setup");
+            Assert.That(env.GetUser(User02).Role, Is.Not.EqualTo(SystemRole.SystemAdmin), "test setup");
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InvitedUsersAsync(User02, Project01, env.GetUser(User02).Role), "should have been forbidden");
+        }
+
+        [Test]
+        public void InvitedUsers_BadProject_Error()
+        {
+            var env = new TestEnvironment();
+
+            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.InvitedUsersAsync(User02, "bad-project-id"));
+        }
+
+        [Test]
+        public void InvitedUsers_BadUser_Forbidden()
+        {
+            var env = new TestEnvironment();
+
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InvitedUsersAsync("bad-user-id", Project01));
+        }
+
+
+        [Test]
+        public void UninviteUser_BadProject_Error()
+        {
+            var env = new TestEnvironment();
+            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.UninviteUserAsync(User02, "nonexistent-project", "some@email.com"));
+        }
+
+        [Test]
+        public void UninviteUser_NonAdmin_Error()
+        {
+            var env = new TestEnvironment();
+            // User02 is not an admin on Project01
+            Assert.That(env.GetProject(Project01).UserRoles[User02], Is.Not.EqualTo(TestProjectRole.Administrator), "test setup");
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.UninviteUserAsync(User02, Project01, "some@email.com"), "should have been forbidden");
+        }
+
+        [Test]
+        public async Task UninviteUser_BadEmail_Ignored()
+        {
+            var env = new TestEnvironment();
+            var initialInvitationCount = 3;
+            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count, Is.EqualTo(initialInvitationCount), "test setup");
+
+            await env.Service.UninviteUserAsync(User01, Project03, "unknown@email.com");
+            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count, Is.EqualTo(initialInvitationCount), "should not have changed");
+        }
+
+        [Test]
+        public async Task UninviteUser_RemovesInvitation()
+        {
+            var env = new TestEnvironment();
+            var initialInvitationCount = 3;
+            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count, Is.EqualTo(initialInvitationCount), "test setup");
+            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Any(sk => sk.Email == "bob@example.com"), Is.True, "test setup");
+            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count, Is.EqualTo(initialInvitationCount), "test setup");
+
+            await env.Service.UninviteUserAsync(User01, Project03, "bob@example.com");
+            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count, Is.EqualTo(initialInvitationCount - 1), "unexpected number of outstanding invitations");
+            Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Any(sk => sk.Email == "bob@example.com"), Is.False, "should not still have uninvited email address");
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment(bool isResetLinkExpired = false)
@@ -386,7 +489,13 @@ namespace SIL.XForge.Services
                             Email = "user03@example.com",
                             Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
                         },
-
+                        new User
+                        {
+                            Id = User04,
+                            Email = "user04@example.com",
+                            Sites = new Dictionary<string,Site>(),
+                            Role = SystemRole.SystemAdmin
+                        }
                     }));
                 RealtimeService.AddRepository("projects", OTType.Json0,
                     new MemoryRepository<TestProject>(new[]

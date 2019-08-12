@@ -26,16 +26,18 @@
       <table mat-table fxFill id="project-users-table" [dataSource]="userRows">
         <ng-container matColumnDef="avatar">
           <td mat-cell *matCellDef="let userRow; let i = index">
-            <div *ngIf="userRow.active"><app-avatar [user]="userRow.user" size="32" [round]="false"></app-avatar></div>
+            <div *ngIf="!userRow.isInvitee">
+              <app-avatar [user]="userRow.user" size="32" [round]="false"></app-avatar>
+            </div>
           </td>
         </ng-container>
         <ng-container matColumnDef="name">
           <td mat-cell *matCellDef="let userRow">
-            <div *ngIf="userRow.active" class="display-name-label">
+            <div *ngIf="!userRow.isInvitee" class="display-name-label">
               {{ userRow.user?.displayName }}
               <strong *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;me</strong>
             </div>
-            <div *ngIf="!userRow.active">
+            <div *ngIf="userRow.isInvitee">
               Awaiting response from
               <div>{{ userRow.user?.email }}</div>
             </div>
@@ -52,21 +54,21 @@
               mdc-icon-button
               icon="clear"
               class="remove-user"
-              *ngIf="userRow.active && !isCurrentUser(userRow)"
+              *ngIf="!userRow.isInvitee && !isCurrentUser(userRow)"
               (click)="removeProjectUser(userRow.id)"
               title="Remove from project"
             ></button>
 
             <!-- 2 buttons below are 1 button displayed mutually exclusively, different style on breakpoints -->
             <button
-              *ngIf="!userRow.active"
+              *ngIf="userRow.isInvitee"
               fxHide.lt-sm
               fxShow
               mdc-button
               outlined
               color="warn"
               class="cancel-invite"
-              (click)="removeProjectUser(userRow.id)"
+              (click)="uninviteProjectUser(userRow.user.email)"
             >
               Cancel invite
             </button>
@@ -75,10 +77,10 @@
               icon="clear"
               color="warn"
               class="cancel-invite"
-              *ngIf="!userRow.active"
+              *ngIf="userRow.isInvitee"
               fxHide
               fxShow.lt-sm
-              (click)="removeProjectUser(userRow.id)"
+              (click)="uninviteProjectUser(userRow.user.email)"
               title="Cancel invite"
             ></button>
           </td>

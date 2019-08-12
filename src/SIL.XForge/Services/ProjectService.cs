@@ -45,13 +45,9 @@ namespace SIL.XForge.Services
         {
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
-                IDocument<TModel> projectDoc = await conn.FetchAsync<TModel>(projectId);
-                if (!projectDoc.IsLoaded)
-                    throw new DataNotFoundException("The project does not exist.");
+                IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
-                IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
-                if (!userDoc.IsLoaded)
-                    throw new DataNotFoundException("The user does not exist.");
+                IDocument<User> userDoc = await GetUserDocAsync(curUserId, conn);
 
                 if (userDoc.Data.Role == SystemRole.User || projectRole == null)
                 {
@@ -68,16 +64,12 @@ namespace SIL.XForge.Services
         {
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
-                IDocument<TModel> projectDoc = await conn.FetchAsync<TModel>(projectId);
-                if (!projectDoc.IsLoaded)
-                    throw new DataNotFoundException("The project does not exist.");
+                IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
                 if (curUserId != projectUserId && !IsProjectAdmin(projectDoc.Data, curUserId))
                     throw new ForbiddenException();
 
-                IDocument<User> userDoc = await conn.FetchAsync<User>(projectUserId);
-                if (!userDoc.IsLoaded)
-                    throw new DataNotFoundException("The user does not exist.");
+                IDocument<User> userDoc = await GetUserDocAsync(projectUserId, conn);
 
                 await RemoveUserFromProjectAsync(conn, projectDoc, userDoc);
             }
@@ -90,9 +82,7 @@ namespace SIL.XForge.Services
 
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
-                IDocument<TModel> projectDoc = await conn.FetchAsync<TModel>(projectId);
-                if (!projectDoc.IsLoaded)
-                    throw new DataNotFoundException("The project does not exist.");
+                IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
                 await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[curUserId], projectRole));
             }
@@ -100,9 +90,7 @@ namespace SIL.XForge.Services
 
         public async Task<bool> InviteAsync(string curUserId, string projectId, string email)
         {
-            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
-            if (!projectAttempt.TryResult(out TModel project))
-                throw new DataNotFoundException("The project does not exist.");
+            TModel project = await GetProjectAsync(projectId);
             if (await RealtimeService.QuerySnapshots<User>()
                 .AnyAsync(u => project.UserRoles.Keys.Contains(u.Id) && u.Email == email))
             {
@@ -153,12 +141,29 @@ namespace SIL.XForge.Services
             return true;
         }
 
+        /// <summary>Cancel an outstanding project invitation.</summary>
+        public async Task UninviteUserAsync(string curUserId, string projectId, string emailToUninvite)
+        {
+            TModel project = await GetProjectAsync(projectId);
+            if (!IsProjectAdmin(project, curUserId))
+                throw new ForbiddenException();
+
+            if (!await IsAlreadyInvitedAsync(curUserId, projectId, emailToUninvite))
+            {
+                // There is not an invitation for this email address
+                return;
+            }
+
+            await ProjectSecrets.UpdateAsync(projectId, u =>
+            {
+                u.RemoveAll(secretSet => secretSet.ShareKeys, shareKey => shareKey.Email == (emailToUninvite));
+            });
+        }
+
         /// <summary>Is there already a pending invitation to the project for the specified email address?</summary>
         public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email)
         {
-            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
-            if (!projectAttempt.TryResult(out TModel project))
-                throw new DataNotFoundException("The project does not exist.");
+            TModel project = await GetProjectAsync(projectId);
             if (!IsProjectAdmin(project, curUserId) && !project.ShareEnabled)
                 throw new ForbiddenException();
 
@@ -168,13 +173,26 @@ namespace SIL.XForge.Services
                 .AnyAsync(p => p.Id == projectId && p.ShareKeys.Any(sk => sk.Email == email));
         }
 
+        /// <summary>Return list of email addresses with outstanding invitations</summary>
+        public async Task<string[]> InvitedUsersAsync(string curUserId, string projectId, string userSystemRole = null)
+        {
+            TModel project = await GetProjectAsync(projectId);
+
+            if (!IsProjectAdmin(project, curUserId)
+             && !IsSystemAdministrator(userSystemRole))
+                throw new ForbiddenException();
+
+            TSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
+
+
+            return projectSecret.ShareKeys.Select(sk => sk.Email).ToArray();
+        }
+
         public async Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
-                IDocument<TModel> projectDoc = await conn.FetchAsync<TModel>(projectId);
-                if (!projectDoc.IsLoaded)
-                    throw new DataNotFoundException("The project does not exist.");
+                IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
                 if (!projectDoc.Data.ShareEnabled)
                     throw new ForbiddenException();
@@ -222,9 +240,7 @@ namespace SIL.XForge.Services
             if (!StringUtils.ValidateId(dataId))
                 throw new FormatException($"{nameof(dataId)} is not a valid id.");
 
-            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
-            if (!projectAttempt.TryResult(out TModel project))
-                throw new DataNotFoundException("The project does not exist.");
+            TModel project = await GetProjectAsync(projectId);
 
             if (!project.UserRoles.ContainsKey(curUserId))
                 throw new ForbiddenException();
@@ -264,9 +280,7 @@ namespace SIL.XForge.Services
             if (!StringUtils.ValidateId(dataId))
                 throw new FormatException($"{nameof(dataId)} is not a valid id.");
 
-            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
-            if (!projectAttempt.TryResult(out TModel project))
-                throw new DataNotFoundException("The project does not exist.");
+            TModel project = await GetProjectAsync(projectId);
 
             if (curUserId != ownerId && !IsProjectAdmin(project, curUserId))
                 throw new ForbiddenException();
@@ -311,5 +325,36 @@ namespace SIL.XForge.Services
         }
 
         protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);
+
+        private static bool IsSystemAdministrator(string userSystemRole)
+        {
+            return userSystemRole == SystemRole.SystemAdmin;
+        }
+
+        private async Task<TModel> GetProjectAsync(string projectId)
+        {
+            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
+            if (!projectAttempt.TryResult(out TModel project))
+            {
+                throw new DataNotFoundException("The project does not exist.");
+            }
+            return project;
+        }
+
+        private async Task<IDocument<TModel>> GetProjectDocAsync(string projectId, IConnection conn)
+        {
+            IDocument<TModel> projectDoc = await conn.FetchAsync<TModel>(projectId);
+            if (!projectDoc.IsLoaded)
+                throw new DataNotFoundException("The project does not exist.");
+            return projectDoc;
+        }
+
+        private async Task<IDocument<User>> GetUserDocAsync(string userId, IConnection conn)
+        {
+            IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
+            if (!userDoc.IsLoaded)
+                throw new DataNotFoundException("The user does not exist.");
+            return userDoc;
+        }
     }
 }
