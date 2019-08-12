@@ -10,7 +10,9 @@ namespace SIL.XForge.Services
         Task RemoveUserAsync(string userId, string projectId, string projectUserId);
         Task UpdateRoleAsync(string userId, string projectId, string projectRole);
         Task<bool> InviteAsync(string userId, string projectId, string email);
+        Task UninviteUserAsync(string userId, string projectId, string email);
         Task<bool> IsAlreadyInvitedAsync(string userId, string projectId, string email);
+        Task<string[]> InvitedUsersAsync(string userId, string projectId);
         Task CheckLinkSharingAsync(string userId, string projectId, string shareKey = null);
         Task<bool> IsAuthorizedAsync(string projectId, string userId);
         Task<Uri> SaveAudioAsync(string userId, string projectId, string dataId, string extension, Stream inputStream);

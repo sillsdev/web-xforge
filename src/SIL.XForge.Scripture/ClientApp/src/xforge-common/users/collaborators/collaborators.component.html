@@ -66,7 +66,7 @@
               outlined
               color="warn"
               class="cancel-invite"
-              (click)="removeProjectUser(userRow.id)"
+              (click)="uninviteProjectUser(userRow.user.email)"
             >
               Cancel invite
             </button>
@@ -78,7 +78,7 @@
               *ngIf="!userRow.active"
               fxHide
               fxShow.lt-sm
-              (click)="removeProjectUser(userRow.id)"
+              (click)="uninviteProjectUser(userRow.user.email)"
               title="Cancel invite"
             ></button>
           </td>
