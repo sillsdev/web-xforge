@@ -7,7 +7,7 @@
 export const environment = {
   production: false,
   pwaTest: false,
-  issueEmail: 'issues@qa.beta.scriptureforge.org',
+  issueEmail: 'issues@scriptureforge.org',
   siteName: 'Scripture Forge',
   realtimePort: 5003,
   realtimeUrl: '/',
