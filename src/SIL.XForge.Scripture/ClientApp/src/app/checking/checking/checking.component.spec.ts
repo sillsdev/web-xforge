@@ -27,6 +27,7 @@ import { ShareDialogComponent } from 'xforge-common/share/share-dialog.component
 import { ShareComponent } from 'xforge-common/share/share.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { objectId } from 'xforge-common/utils';
 import { Comment } from '../../core/models/comment';
 import { CommentListDoc } from '../../core/models/comment-list-doc';
 import { Question } from '../../core/models/question';
@@ -136,6 +137,30 @@ describe('CheckingComponent', () => {
       tick();
       env.fixture.detectChanges();
       expect(env.getUnread(env.questions[6])).toEqual(0);
+    }));
+
+    it('responds to remote question added', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.reviewerUser);
+      let question = env.selectQuestion(1);
+      const questionId = env.component.questionsPanel.activeQuestion.id;
+      expect(env.questions.length).toEqual(15);
+      const newQuestion: Question = {
+        id: objectId(),
+        ownerRef: env.adminUser.id,
+        text: 'Admin just added a question.',
+        answers: [],
+        scriptureStart: { book: 'JHN', chapter: '1', verse: '10', versification: 'English' }
+      };
+      const textDocId = new TextDocId('project01', 'JHN', 1);
+      env.component.checkingData.questionListDocs[textDocId.toString()].submitJson0Op(
+        op => op.insert(ql => ql.questions, 0, newQuestion),
+        false
+      );
+      env.waitForSliderUpdate();
+      expect(env.component.questionsPanel.activeQuestion.id).toBe(questionId);
+      expect(env.questions.length).toEqual(16);
+      question = env.selectQuestion(1);
+      expect(env.getQuestionText(question)).toBe('Admin just added a question.');
     }));
   });
 
@@ -384,6 +409,29 @@ describe('CheckingComponent', () => {
         env.clickButton(env.getShowAllCommentsButton(0));
         env.waitForSliderUpdate();
         expect(env.getUnread(question)).toEqual(0);
+      }));
+
+      it('displays comments in real-time', fakeAsync(() => {
+        env.setupReviewerScenarioData(env.reviewerUser);
+        env.selectQuestion(1);
+        env.answerQuestion('Admin will add a comment to this');
+        expect(env.getAnswerComments(0).length).toEqual(0);
+        const textDocId = new TextDocId('project01', 'JHN', 1);
+        const date: string = new Date().toJSON();
+        const comment: Comment = {
+          id: objectId(),
+          ownerRef: env.adminUser.id,
+          answerRef: env.component.questionsPanel.activeQuestion.answers[0].id,
+          text: 'Comment left by admin',
+          dateCreated: date,
+          dateModified: date
+        };
+        env.component.checkingData.commentListDocs[textDocId.toString()].submitJson0Op(
+          op => op.insert(cl => cl.comments, 0, comment),
+          false
+        );
+        env.waitForSliderUpdate();
+        expect(env.getAnswerComments(0).length).toEqual(1);
       }));
     });
   });

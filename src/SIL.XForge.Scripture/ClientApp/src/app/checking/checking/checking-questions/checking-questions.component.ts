@@ -52,7 +52,9 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
 
   @Input() set questions(questions: Readonly<Question[]>) {
     if (questions.length) {
-      this.activateQuestion(questions[Object.keys(questions)[0]]);
+      if (this.activeQuestion == null) {
+        this.activateQuestion(questions[Object.keys(questions)[0]]);
+      }
     } else {
       this.activeQuestion = undefined;
     }
