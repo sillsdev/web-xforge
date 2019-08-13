@@ -20,23 +20,25 @@ namespace SIL.XForge.Services
     {
         private readonly IEmailService _emailService;
         private readonly ISecurityService _securityService;
+        private readonly IAudioService _audioService;
 
         public ProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IOptions<AudioOptions> audioOptions, IEmailService emailService, IRepository<TSecret> projectSecrets,
-            ISecurityService securityService)
+            IAudioService audioService, IEmailService emailService, IRepository<TSecret> projectSecrets,
+            ISecurityService securityService, IFileSystemService fileSystemService)
         {
             RealtimeService = realtimeService;
             SiteOptions = siteOptions;
-            AudioOptions = audioOptions;
+            _audioService = audioService;
             _emailService = emailService;
             ProjectSecrets = projectSecrets;
             _securityService = securityService;
+            FileSystemService = fileSystemService;
         }
 
         protected IRealtimeService RealtimeService { get; }
         protected IOptions<SiteOptions> SiteOptions { get; }
-        protected IOptions<AudioOptions> AudioOptions { get; }
         protected IRepository<TSecret> ProjectSecrets { get; }
+        protected IFileSystemService FileSystemService { get; }
         protected abstract string ProjectAdminRole { get; }
 
         public async Task AddUserAsync(string userId, string projectId, string projectRole)
@@ -210,31 +212,59 @@ namespace SIL.XForge.Services
                 .AnyAsync(p => p.Id == projectId && p.UserRoles.ContainsKey(userId));
         }
 
-        public async Task<Uri> SaveAudioAsync(string projectId, string fileName, Stream inputStream)
+        public async Task<Uri> SaveAudioAsync(string userId, string projectId, string dataId, string extension,
+            Stream inputStream)
         {
-            string audioDir = Path.Combine(SiteOptions.Value.SiteDir, "audio", projectId);
-            if (!Directory.Exists(audioDir))
-                Directory.CreateDirectory(audioDir);
-            string path = Path.Combine(audioDir, fileName);
-            if (File.Exists(path))
-                File.Delete(path);
-            using (var fileStream = new FileStream(path, FileMode.Create))
-                await inputStream.CopyToAsync(fileStream);
-            string ext = Path.GetExtension(path);
-            string outputFileName;
-            if (string.Equals(ext, ".mp3", StringComparison.InvariantCultureIgnoreCase)
-                || string.Equals(ext, ".webm", StringComparison.InvariantCultureIgnoreCase))
+            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
+            if (!projectAttempt.TryResult(out TModel project))
+                throw new DataNotFoundException("The project does not exist.");
+
+            if (!project.UserRoles.ContainsKey(userId))
+                throw new ForbiddenException();
+
+            string audioDir = GetAudioDir(projectId);
+            if (!FileSystemService.DirectoryExists(audioDir))
+                FileSystemService.CreateDirectory(audioDir);
+            string outputPath = Path.Combine(audioDir, $"{userId}_{dataId}.mp3");
+            if (string.Equals(extension, ".mp3", StringComparison.InvariantCultureIgnoreCase))
             {
-                outputFileName = Path.GetFileName(path);
+                using (Stream fileStream = FileSystemService.OpenFile(outputPath, FileMode.Create))
+                    await inputStream.CopyToAsync(fileStream);
             }
             else
             {
-                string mp3FilePath = await AudioUtils.ConvertToMp3Async(path, AudioOptions.Value.FfmpegPath);
-                outputFileName = Path.GetFileName(mp3FilePath);
+                string tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + extension);
+                try
+                {
+                    using (Stream fileStream = FileSystemService.OpenFile(tempPath, FileMode.Create))
+                        await inputStream.CopyToAsync(fileStream);
+                    await _audioService.ConvertToMp3Async(tempPath, outputPath);
+                }
+                finally
+                {
+                    if (FileSystemService.FileExists(tempPath))
+                        FileSystemService.DeleteFile(tempPath);
+                }
             }
+            string outputFileName = Path.GetFileName(outputPath);
             var uri = new Uri(SiteOptions.Value.Origin,
-                $"{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}");
+                $"assets/audio/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}");
             return uri;
+        }
+
+        public async Task DeleteAudioAsync(string userId, string projectId, string ownerId, string dataId)
+        {
+            Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
+            if (!projectAttempt.TryResult(out TModel project))
+                throw new DataNotFoundException("The project does not exist.");
+
+            if (userId != ownerId && !IsProjectAdmin(project, userId))
+                throw new ForbiddenException();
+
+            string audioDir = GetAudioDir(projectId);
+            string filePath = Path.Combine(audioDir, $"{ownerId}_{dataId}.mp3");
+            if (FileSystemService.FileExists(filePath))
+                FileSystemService.DeleteFile(filePath);
         }
 
         /// <summary>Encode the input so it is easier to use as a JSON object
@@ -280,6 +310,11 @@ namespace SIL.XForge.Services
         protected bool IsProjectAdmin(TModel project, string userId)
         {
             return project.UserRoles.TryGetValue(userId, out string role) && role == ProjectAdminRole;
+        }
+
+        protected string GetAudioDir(string projectId)
+        {
+            return Path.Combine(SiteOptions.Value.SiteDir, "audio", projectId);
         }
 
         protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);

@@ -217,9 +217,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         answer.scriptureEnd = answerAction.scriptureEnd;
         answer.dateModified = dateNow;
         if (answerAction.audio.fileName) {
-          const response = await this.projectService.uploadAudio(
+          const response = await this.projectService.onlineUploadAudio(
             this.projectDoc.id,
-            new File([answerAction.audio.blob], answer.id + '~' + answerAction.audio.fileName)
+            answer.id,
+            new File([answerAction.audio.blob], answerAction.audio.fileName)
           );
           // Get the amended filename and save it against the answer
           answer.audioUrl = response;
@@ -338,34 +339,33 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     this.collapseDrawer();
   }
 
-  totalQuestions() {
+  totalQuestions(): number {
     return this.publicQuestions.length;
   }
 
-  private getAnswerIndex(answer: Answer) {
+  private getAnswerIndex(answer: Answer): number {
     return this.questionsPanel.activeQuestion.answers.findIndex(existingAnswer => existingAnswer.id === answer.id);
   }
 
-  private getCommentIndex(comment: Comment) {
+  private getCommentIndex(comment: Comment): number {
     return this.comments.findIndex(existingComment => existingComment.id === comment.id);
   }
 
-  private deleteAnswer(answer: Answer) {
+  private deleteAnswer(answer: Answer): void {
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
       const answerComments = this.comments.filter(comment => comment.answerRef === answer.id);
       for (const answerComment of answerComments) {
         this.deleteComment(answerComment);
       }
-      // TODO: Need to physically delete any audio file as well on the backend
-      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
-        op.remove(ql => ql.questions[this.activeQuestionIndex].answers, answerIndex)
-      );
+      this.checkingData.questionListDocs[this.questionTextJsonDocId]
+        .submitJson0Op(op => op.remove(ql => ql.questions[this.activeQuestionIndex].answers, answerIndex))
+        .then(() => this.projectService.onlineDeleteAudio(this.projectDoc.id, answer.id, answer.ownerRef));
       this.refreshSummary();
     }
   }
 
-  private saveAnswer(answer: Answer) {
+  private saveAnswer(answer: Answer): void {
     const answers = cloneDeep(this.questionsPanel.activeQuestion.answers);
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
@@ -376,17 +376,26 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     this.updateQuestionAnswers(answers, answerIndex);
   }
 
-  private updateQuestionAnswers(answers: Answer[], answerIndex: number) {
+  private updateQuestionAnswers(answers: Answer[], answerIndex: number): void {
     const questionWithAnswer: Question = cloneDeep(this.questionsPanel.activeQuestion);
     questionWithAnswer.answers = answers;
     if (answerIndex >= 0) {
-      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
+      const oldAnswer = this.checkingData.questionListDocs[this.questionTextJsonDocId].data.questions[
+        this.activeQuestionIndex
+      ].answers[answerIndex];
+      const newAnswer = questionWithAnswer.answers[answerIndex];
+      const submitPromise = this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
         op.replace(
           ql => ql.questions[this.activeQuestionIndex].answers,
           answerIndex,
           questionWithAnswer.answers[answerIndex]
         )
       );
+      if (oldAnswer.audioUrl !== '' && newAnswer.audioUrl === '') {
+        submitPromise.then(() =>
+          this.projectService.onlineDeleteAudio(this.projectDoc.id, oldAnswer.id, oldAnswer.ownerRef)
+        );
+      }
     } else {
       this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
         op.insert(ql => ql.questions[this.activeQuestionIndex].answers, 0, questionWithAnswer.answers[0])
@@ -395,7 +404,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     this.questionsPanel.updateElementsRead(this.questionsPanel.activeQuestion);
   }
 
-  private saveComment(comment: Comment) {
+  private saveComment(comment: Comment): void {
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
       this.checkingData.commentListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
@@ -409,7 +418,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     this.refreshComments();
   }
 
-  private deleteComment(comment: Comment) {
+  private deleteComment(comment: Comment): void {
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
       this.checkingData.commentListDocs[this.questionTextJsonDocId].submitJson0Op(op =>

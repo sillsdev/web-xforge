@@ -208,5 +208,22 @@ namespace SIL.XForge.Scripture.Controllers
                 return InvalidParamsError();
             }
         }
+
+        public async Task<IRpcMethodResult> DeleteAudio(string projectId, string ownerId, string dataId)
+        {
+            try
+            {
+                await _projectService.DeleteAudioAsync(UserId, projectId, ownerId, dataId);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+        }
     }
 }

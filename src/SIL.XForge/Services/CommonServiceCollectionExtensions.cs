@@ -16,6 +16,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IAuthService, AuthService>();
             services.AddSingleton<IUserService, UserService>();
             services.AddSingleton<ISecurityService, SecurityService>();
+            services.AddSingleton<IAudioService, AudioService>();
             return services;
         }
     }

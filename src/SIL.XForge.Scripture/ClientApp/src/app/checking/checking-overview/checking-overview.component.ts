@@ -387,9 +387,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         };
         newQuestion.text = result.text;
         if (result.audio.fileName) {
-          const response = await this.projectService.uploadAudio(
+          const response = await this.projectService.onlineUploadAudio(
             this.projectId,
-            new File([result.audio.blob], newQuestionId + '~' + result.audio.fileName)
+            newQuestionId,
+            new File([result.audio.blob], result.audio.fileName)
           );
           // Get the amended filename and save it against the answer
           newQuestion.audioUrl = response;
@@ -405,6 +406,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           this.questionListDocs[id.toString()].submitJson0Op(op =>
             op.replace(cq => cq.questions, questionIndex, newQuestion)
           );
+          if (question.audioUrl !== '' && newQuestion.audioUrl === '') {
+            await this.projectService.onlineDeleteAudio(this.projectDoc.id, question.id, question.ownerRef);
+          }
         } else {
           if (editMode) {
             // The scripture book or chapter reference has been edited. Delete the question in the old QuestionListDoc

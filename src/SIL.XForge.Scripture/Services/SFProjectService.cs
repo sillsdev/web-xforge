@@ -27,21 +27,20 @@ namespace SIL.XForge.Scripture.Services
         private readonly IParatextService _paratextService;
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IRepository<TranslateMetrics> _translateMetrics;
-        private readonly IFileSystemService _fileSystemService;
 
         public SFProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IOptions<AudioOptions> audioOptions, IEmailService emailService, IRepository<SFProjectSecret> projectSecrets,
-            ISecurityService securityService, IEngineService engineService, ISyncService syncService,
-            IParatextService paratextService, IRepository<UserSecret> userSecrets,
-            IRepository<TranslateMetrics> translateMetrics, IFileSystemService fileSystemService)
-            : base(realtimeService, siteOptions, audioOptions, emailService, projectSecrets, securityService)
+            IAudioService audioService, IEmailService emailService, IRepository<SFProjectSecret> projectSecrets,
+            ISecurityService securityService, IFileSystemService fileSystemService, IEngineService engineService,
+            ISyncService syncService, IParatextService paratextService, IRepository<UserSecret> userSecrets,
+            IRepository<TranslateMetrics> translateMetrics)
+            : base(realtimeService, siteOptions, audioService, emailService, projectSecrets, securityService,
+                fileSystemService)
         {
             _engineService = engineService;
             _syncService = syncService;
             _paratextService = paratextService;
             _userSecrets = userSecrets;
             _translateMetrics = translateMetrics;
-            _fileSystemService = fileSystemService;
         }
 
         protected override string ProjectAdminRole => SFProjectRoles.Administrator;
@@ -101,8 +100,11 @@ namespace SIL.XForge.Scripture.Services
             await RealtimeService.DeleteProjectAsync(projectId);
             await _engineService.RemoveProjectAsync(projectId);
             string syncDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", projectId);
-            if (_fileSystemService.DirectoryExists(syncDir))
-                _fileSystemService.DeleteDirectory(syncDir);
+            if (FileSystemService.DirectoryExists(syncDir))
+                FileSystemService.DeleteDirectory(syncDir);
+            string audioDir = GetAudioDir(projectId);
+            if (FileSystemService.DirectoryExists(audioDir))
+                FileSystemService.DeleteDirectory(audioDir);
         }
 
         public async Task UpdateSettingsAsync(string userId, string projectId, SFProjectSettings settings)

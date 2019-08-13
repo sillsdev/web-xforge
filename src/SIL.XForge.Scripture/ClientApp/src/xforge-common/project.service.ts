@@ -1,6 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { combineLatest, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
 import { Project } from './models/project';
 import { ProjectDoc } from './models/project-doc';
@@ -90,9 +91,10 @@ export abstract class ProjectService<
     return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'delete', { projectId: id });
   }
 
-  async uploadAudio(id: string, file: File): Promise<string> {
+  async onlineUploadAudio(id: string, dataId: string, file: File): Promise<string> {
     const formData = new FormData();
-    formData.append('id', id);
+    formData.append('projectId', id);
+    formData.append('dataId', dataId);
     formData.append('file', file);
     const response = await this.http
       .post<HttpResponse<string>>(`command-api/projects/audio`, formData, {
@@ -100,6 +102,11 @@ export abstract class ProjectService<
         observe: 'response'
       })
       .toPromise();
-    return response.headers.get('Location');
+    const path = response.headers.get('Location');
+    return path.replace(environment.assets.audio, '/');
+  }
+
+  onlineDeleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
+    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'deleteAudio', { projectId: id, ownerId, dataId });
   }
 }

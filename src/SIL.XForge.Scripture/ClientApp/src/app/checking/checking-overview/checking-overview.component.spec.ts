@@ -146,7 +146,7 @@ describe('CheckingOverviewComponent', () => {
           scriptureStart: 'MAT 1:3',
           scriptureEnd: '',
           text: '',
-          audio: { fileName: '' }
+          audio: {}
         })
       );
       env.waitForQuestions();
@@ -170,7 +170,7 @@ describe('CheckingOverviewComponent', () => {
           scriptureStart: 'MAT 3:3',
           scriptureEnd: '',
           text: 'scripture reference moved to chapter 2',
-          audio: { fileName: '' }
+          audio: {}
         })
       );
       env.waitForQuestions();
@@ -186,6 +186,31 @@ describe('CheckingOverviewComponent', () => {
       expect(env.questionEditButtons.length).toEqual(5);
       env.simulateRowClick(1, mat3Id);
       expect(env.textRows.length).toEqual(10);
+    }));
+
+    it('should remove audio file when reset', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const id = new TextDocId('project01', 'MAT', 1);
+      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
+        of({
+          scriptureStart: 'MAT 1:3',
+          scriptureEnd: '',
+          text: 'Book 1, Q1 text',
+          audio: { status: 'reset' }
+        })
+      );
+      env.waitForQuestions();
+      env.simulateRowClick(0);
+      env.simulateRowClick(1, id);
+      expect(env.textRows.length).toEqual(9);
+      expect(env.questionEditButtons.length).toEqual(6);
+      verify(env.mockedProjectService.getQuestionList(anything())).thrice();
+
+      resetCalls(env.mockedProjectService);
+      env.clickElement(env.questionEditButtons[0]);
+      verify(env.mockedMdcDialog.open(anything(), anything())).once();
+      verify(env.mockedProjectService.getQuestionList(anything())).never();
+      verify(env.mockedProjectService.onlineDeleteAudio('project01', 'q1Id', env.adminUser.id)).once();
     }));
   });
 
@@ -383,7 +408,8 @@ class TestEnvironment {
               dateCreated: '',
               dateModified: ''
             }
-          ]
+          ],
+          audioUrl: '/audio.mp3'
         },
         {
           id: 'q2Id',
