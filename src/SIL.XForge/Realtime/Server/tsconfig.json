@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "downlevelIteration": true,
+    "strict": true,
+    "lib": ["es2017", "dom"]
+  }
+}
