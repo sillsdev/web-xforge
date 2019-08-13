@@ -93,8 +93,8 @@ Hardware-assisted virtualization (VT-x or AMD-V) needs to be enabled in your BIO
 
 Create a directory to manage the development machine, such as `xforge`. Checkout the xforge git repository to access (and later receive updates to) the vagrant development machine configuration file:
 
-    git clone https://github.com/sillsdev/web-xforge.git
-    cd web-xforge.git/deploy/vagrant_xenial_gui
+    git clone https://github.com/sillsdev/web-xforge
+    cd web-xforge/deploy/vagrant_xenial_gui
 
 Run `vagrant up`. This will download, initialize, and run the development machine. The machine is about 5GB, so expect the download to take a while.
 
