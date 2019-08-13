@@ -1,4 +1,4 @@
-<div fxLayout="column" fxLayoutAlign="space-between stretch" fxLayoutGap="2rem" class="container">
+<div fxLayout="column" fxLayoutAlign="space-between start" fxLayoutGap="2rem" class="container">
   <div mdcHeadline4>Settings</div>
   <div>
     <div mdcHeadline6>Tasks</div>
@@ -11,7 +11,7 @@
         </ng-container>
         <div class="card-content">
           <div class="task-setting">
-            <div class="task-setting-field">
+            <div class="task-setting-field checkbox-field">
               <mdc-form-field>
                 <mdc-checkbox formControlName="translateEnabled" id="checkbox-translate"></mdc-checkbox>
                 <label>Translate</label>
@@ -33,7 +33,7 @@
             <span class="more-options">to enable <b>Translate</b> and see more options</span>
           </div>
           <ng-container *ngIf="translateEnabled && isLoggedInToParatext">
-            <div class="task-setting indent">
+            <div class="task-setting select-indent">
               <div class="task-setting-field">
                 <mdc-form-field>
                   <mdc-select placeholder="Based on" formControlName="sourceParatextId" id="based-on-select">
@@ -63,7 +63,7 @@
         <mdc-list-divider></mdc-list-divider>
         <div class="card-content">
           <div class="task-setting">
-            <div class="task-setting-field">
+            <div class="task-setting-field checkbox-field">
               <mdc-form-field>
                 <mdc-checkbox formControlName="checkingEnabled" id="checkbox-community-checking"></mdc-checkbox>
                 <label>Community Checking</label>
@@ -81,7 +81,7 @@
           </div>
           <ng-container *ngIf="checkingEnabled">
             <div class="task-setting indent">
-              <div class="task-setting-field">
+              <div class="task-setting-field checkbox-field">
                 <mdc-form-field>
                   <mdc-checkbox
                     formControlName="usersSeeEachOthersResponses"
@@ -100,7 +100,7 @@
               </div>
             </div>
             <div class="task-setting indent">
-              <div class="task-setting-field">
+              <div class="task-setting-field checkbox-field">
                 <mdc-form-field>
                   <mdc-checkbox formControlName="shareEnabled" id="checkbox-share"></mdc-checkbox>
                   <label>Share</label>
@@ -148,7 +148,7 @@
       <p>
         This will <strong>not</strong> delete your Paratext project, but it will delete any unsynchronized data stored
         in Scripture Forge. It is recommended to
-        <a [routerLink]="['/projects', projectId, 'sync']">Synchronise</a> first before deleting.
+        <a [routerLink]="['/projects', projectId, 'sync']">Synchronize</a> first before deleting.
       </p>
       <div fxLayout="row" fxLayoutAlign="end stretch">
         <button id="delete-btn" mdc-button unelevated (click)="openDeleteProjectDialog()" [disabled]="isLoading">
