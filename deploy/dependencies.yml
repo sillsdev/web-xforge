@@ -37,14 +37,12 @@
   tasks:
     - name: install packages
       apt:
-        name: [
-          'dotnet-sdk-2.1',
-          'mongodb-org',
-          'nodejs',
-          'npm',
-          'libmp3lame0',
-          'ffmpeg'
-        ]
+        name:
+          - "dotnet-sdk-2.1"
+          - ffmpeg
+          - "mongodb-org"
+          - nodejs
+          - npm
         update_cache: yes
       tags: ["packages"]
 
@@ -134,7 +132,7 @@
       become: no
       lineinfile:
         path: "{{lookup('env','HOME')}}/.pam_environment"
-        line: 'CHROME_BIN=chromium-browser'
+        line: "CHROME_BIN=chromium-browser"
         create: yes
 
     - name: Install/update reportgenerator
