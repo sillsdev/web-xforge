@@ -258,8 +258,10 @@ describe('CheckingComponent', () => {
       env.setupReviewerScenarioData(env.reviewerUser);
       env.selectQuestion(7);
       expect(env.answers.length).toBe(0);
+      expect(env.getUnread(env.questions[6])).toEqual(4);
       env.answerQuestion('Answer from reviewer');
       expect(env.answers.length).toBe(2);
+      expect(env.getUnread(env.questions[6])).toEqual(0);
     }));
 
     it('reviewer can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
