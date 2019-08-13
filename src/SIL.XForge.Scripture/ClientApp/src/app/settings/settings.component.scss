@@ -1,5 +1,11 @@
 @import '~src/global';
 
+.container {
+  margin: 0;
+  padding: 0;
+  max-width: 800px;
+}
+
 .card-content {
   padding: 16px;
 }
@@ -12,10 +18,24 @@
     margin-left: 34px;
   }
 
-  > .task-setting-field {
+  &.select-indent {
+    margin-top: 16px;
+    margin-left: 44px;
+  }
+
+  > .checkbox-field {
     display: flex;
+  }
+
+  > .task-setting-field {
+    @include media-breakpoint-up(sm) {
+      display: flex;
+    }
 
     > app-write-status {
+      @include media-breakpoint-only(xs) {
+        margin-left: 10px;
+      }
       margin-left: 32px;
     }
   }
