@@ -55,6 +55,9 @@ export class CheckingAudioPlayerComponent {
     this.audio = new Audio();
     if (source && source !== '') {
       if (!source.includes('://')) {
+        if (source.startsWith('/')) {
+          source = source.substring(1);
+        }
         source = environment.assets.audio + source;
       }
       this.enabled = false;

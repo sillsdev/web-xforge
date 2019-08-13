@@ -1,3 +1,4 @@
+using System.IO;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -235,6 +236,70 @@ namespace SIL.XForge.Services
         }
 
         [Test]
+        public async Task SaveAudioAsync_NonMp3File_AudioConverted()
+        {
+            var env = new TestEnvironment();
+            string filePath = Path.Combine("site", "audio", Project01, $"{User01}_answer01.mp3");
+            env.FileSystemService.OpenFile(Arg.Any<string>(), FileMode.Create).Returns(new MemoryStream());
+            env.FileSystemService.FileExists(filePath).Returns(true);
+
+            var stream = new MemoryStream();
+            Uri uri = await env.Service.SaveAudioAsync(User01, Project01, "answer01", ".wav", stream);
+            Assert.That(uri.ToString().StartsWith("http://localhost/assets/audio/project01/user01_answer01.mp3?t="),
+                Is.True);
+            await env.AudioService.Received().ConvertToMp3Async(Arg.Any<string>(), filePath);
+        }
+
+        [Test]
+        public async Task SaveAudioAsync_Mp3File_AudioSaved()
+        {
+            var env = new TestEnvironment();
+            string filePath = Path.Combine("site", "audio", Project01, $"{User01}_answer01.mp3");
+            env.FileSystemService.OpenFile(Arg.Any<string>(), FileMode.Create).Returns(new MemoryStream());
+            env.FileSystemService.FileExists(filePath).Returns(true);
+
+            var stream = new MemoryStream();
+            Uri uri = await env.Service.SaveAudioAsync(User01, Project01, "answer01", ".mp3", stream);
+            Assert.That(uri.ToString().StartsWith("http://localhost/assets/audio/project01/user01_answer01.mp3?t="),
+                Is.True);
+            env.FileSystemService.Received().OpenFile(filePath, FileMode.Create);
+            await env.AudioService.DidNotReceive().ConvertToMp3Async(Arg.Any<string>(), filePath);
+        }
+
+        [Test]
+        public async Task DeleteAudioAsync_NonAdminUser_FileDeleted()
+        {
+            var env = new TestEnvironment();
+            string filePath = Path.Combine("site", "audio", Project01, $"{User02}_answer01.mp3");
+            env.FileSystemService.FileExists(filePath).Returns(true);
+
+            await env.Service.DeleteAudioAsync(User02, Project01, User02, "answer01");
+            env.FileSystemService.Received().DeleteFile(filePath);
+        }
+
+        [Test]
+        public async Task DeleteAudioAsync_AdminUser_FileDeleted()
+        {
+            var env = new TestEnvironment();
+            string filePath = Path.Combine("site", "audio", Project01, $"{User02}_answer01.mp3");
+            env.FileSystemService.FileExists(filePath).Returns(true);
+
+            await env.Service.DeleteAudioAsync(User01, Project01, User02, "answer01");
+            env.FileSystemService.Received().DeleteFile(filePath);
+        }
+
+        [Test]
+        public void DeleteAudioAsync_NotOwner_ForbiddenError()
+        {
+            var env = new TestEnvironment();
+            string filePath = Path.Combine("site", "audio", Project01, $"{User01}_answer01.mp3");
+            env.FileSystemService.FileExists(filePath).Returns(true);
+
+            Assert.ThrowsAsync<ForbiddenException>(() =>
+                env.Service.DeleteAudioAsync(User02, Project01, User01, "answer01"));
+        }
+
+        [Test]
         public void EncodeJsonName_RetainsNondots()
         {
             foreach (var input in new string[] { "abc", "ABCabc123-_~!@#$%^&",
@@ -358,9 +423,10 @@ namespace SIL.XForge.Services
                 {
                     Id = SiteId,
                     Name = "xForge",
-                    Origin = new Uri("http://localhost")
+                    Origin = new Uri("http://localhost"),
+                    SiteDir = "site"
                 });
-                var audioOptions = Substitute.For<IOptions<AudioOptions>>();
+                AudioService = Substitute.For<IAudioService>();
 
                 EmailService = Substitute.For<IEmailService>();
 
@@ -383,8 +449,10 @@ namespace SIL.XForge.Services
                 SecurityService = Substitute.For<ISecurityService>();
                 SecurityService.GenerateKey().Returns("1234abc");
 
-                Service = new TestProjectService(RealtimeService, siteOptions, audioOptions, EmailService,
-                    ProjectSecrets, SecurityService);
+                FileSystemService = Substitute.For<IFileSystemService>();
+
+                Service = new TestProjectService(RealtimeService, siteOptions, AudioService, EmailService,
+                    ProjectSecrets, SecurityService, FileSystemService);
             }
 
             public TestProjectService Service { get; }
@@ -392,6 +460,8 @@ namespace SIL.XForge.Services
             public IEmailService EmailService { get; }
             public MemoryRepository<TestProjectSecret> ProjectSecrets { get; }
             public ISecurityService SecurityService { get; }
+            public IFileSystemService FileSystemService { get; }
+            public IAudioService AudioService { get; }
 
             public TestProject GetProject(string id)
             {

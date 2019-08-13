@@ -199,7 +199,7 @@ namespace SIL.XForge.Scripture.Services
                     Origin = new Uri("http://localhost"),
                     SiteDir = "xforge"
                 });
-                var audioOptions = Substitute.For<IOptions<AudioOptions>>();
+                var audioService = Substitute.For<IAudioService>();
                 var emailService = Substitute.For<IEmailService>();
                 ProjectSecrets = new MemoryRepository<SFProjectSecret>(new[]
                 {
@@ -220,9 +220,9 @@ namespace SIL.XForge.Scripture.Services
                 });
                 var translateMetrics = new MemoryRepository<TranslateMetrics>();
                 FileSystemService = Substitute.For<IFileSystemService>();
-                Service = new SFProjectService(RealtimeService, siteOptions, audioOptions, emailService, ProjectSecrets,
-                    securityService, EngineService, SyncService, paratextService, userSecrets, translateMetrics,
-                    FileSystemService);
+                Service = new SFProjectService(RealtimeService, siteOptions, audioService, emailService, ProjectSecrets,
+                    securityService, FileSystemService, EngineService, SyncService, paratextService, userSecrets,
+                    translateMetrics);
             }
 
             public SFProjectService Service { get; }

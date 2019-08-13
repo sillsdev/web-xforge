@@ -237,14 +237,27 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerText(0)).toBe('Edited question 2 answer');
     }));
 
+    it('can remove audio from answer', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.reviewerUser);
+      env.selectQuestion(6);
+      env.clickButton(env.getAnswerEditButton(0));
+      env.waitForSliderUpdate();
+      env.clickButton(env.audioTab);
+      env.clickButton(env.removeAudioButton);
+      env.clickButton(env.saveAnswerButton);
+      env.waitForSliderUpdate();
+      verify(env.mockedProjectService.onlineDeleteAudio('project01', 'a6Id', env.reviewerUser.id)).once();
+      expect().nothing();
+    }));
+
     it('can delete an answer', fakeAsync(() => {
       env.setupReviewerScenarioData(env.reviewerUser);
-      const question = env.selectQuestion(2);
-      env.answerQuestion('Answer question 2');
+      env.selectQuestion(6);
       expect(env.answers.length).toEqual(1);
       env.clickButton(env.answerDeleteButton(0));
       env.waitForSliderUpdate();
       expect(env.answers.length).toEqual(0);
+      verify(env.mockedProjectService.onlineDeleteAudio('project01', 'a6Id', env.reviewerUser.id)).once();
     }));
 
     it('can delete correct answer after changing chapters', fakeAsync(() => {
@@ -628,6 +641,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(2)'));
   }
 
+  get removeAudioButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.remove-audio-file'));
+  }
+
   get saveAnswerButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#save-answer'));
   }
@@ -847,7 +864,8 @@ class TestEnvironment {
       scriptureText: 'Quoted scripture',
       likes: [],
       dateCreated: dateNow,
-      dateModified: dateNow
+      dateModified: dateNow,
+      audioUrl: 'file://audio.mp3'
     });
     questionData1[6].answers.push({
       id: 'a7Id',
