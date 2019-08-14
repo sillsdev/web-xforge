@@ -205,11 +205,15 @@
   background-color: #005c97;
   padding-left: 8px;
   padding-right: 8px;
-  padding-bottom: 5px;
+  padding-bottom: 1em;
 }
 
 #sil {
   width: 100px;
+}
+
+#icons {
+  padding: 0 1em;
 }
 
 #payap {
@@ -224,6 +228,10 @@
 #sil img {
   width: 100%;
   height: auto;
+}
+
+#copyright, #copyright a {
+  color: white;
 }
 
 @media screen and (max-width: 600px) {
