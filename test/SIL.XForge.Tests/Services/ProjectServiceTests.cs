@@ -1,3 +1,4 @@
+using System.Linq;
 using System.IO;
 using System;
 using System.Collections.Generic;
@@ -41,7 +42,6 @@ namespace SIL.XForge.Services
         {
             var env = new TestEnvironment();
             const string email = "newuser@example.com";
-            const string encodedEmail = "newuser@example[dot]com";
 
             await env.Service.InviteAsync(User01, Project03, email);
             await env.EmailService.Received(1).SendEmailAsync(email, Arg.Any<string>(),
@@ -51,7 +51,7 @@ namespace SIL.XForge.Services
 
             // Code was recorded in database and email address was encoded in ShareKeys
             TestProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys[encodedEmail], Is.EqualTo("1234abc"));
+            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).Key, Is.EqualTo("1234abc"));
         }
 
         [Test]
@@ -59,10 +59,9 @@ namespace SIL.XForge.Services
         {
             var env = new TestEnvironment();
             const string email = "newuser@example.com";
-            const string encodedEmail = "newuser@example[dot]com";
 
             TestProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys.ContainsKey(email), Is.False, "setup");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == email), Is.False, "setup");
 
             env.SecurityService.GenerateKey().Returns("1111", "3333");
             await env.Service.InviteAsync(User01, Project03, email);
@@ -72,7 +71,7 @@ namespace SIL.XForge.Services
 
             // Code was recorded in database
             projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys.ContainsKey(encodedEmail), Is.True);
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == email), Is.True);
 
             await env.Service.InviteAsync(User01, Project03, email);
             // Invitation email was sent again, but with first code
@@ -81,7 +80,8 @@ namespace SIL.XForge.Services
                     body.Contains($"http://localhost/projects/{Project03}?sharing=true&shareKey=1111")));
 
             projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys[encodedEmail], Is.EqualTo("1111"), "Code should not have been changed");
+            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).Key, Is.EqualTo("1111"),
+                "Code should not have been changed");
         }
 
         [Test]
@@ -109,7 +109,6 @@ namespace SIL.XForge.Services
         {
             var env = new TestEnvironment();
             const string email = "user01@example.com";
-            const string encodedEmail = "user01@example[dot]com";
             TestProject project = env.GetProject(Project03);
             Assert.That(project.UserRoles.ContainsKey(User01), Is.True,
                 "setup - user should already be a project user");
@@ -119,7 +118,7 @@ namespace SIL.XForge.Services
             Assert.That(project.UserRoles.ContainsKey(User01), Is.True, "user should still be a project user");
 
             TestProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys.ContainsKey(encodedEmail), Is.False,
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == email), Is.False,
                 "no sharekey should have been added");
 
             // Email should not have been sent
@@ -155,7 +154,7 @@ namespace SIL.XForge.Services
             TestProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
 
             Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-            Assert.That(projectSecret.ShareKeys.ContainsKey("user03@example.com"), Is.False, "setup");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "user03@example.com"), Is.False, "setup");
 
             Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User03, Project03),
                 "The user should be forbidden to join the project: Email address was not in ShareKeys list.");
@@ -169,7 +168,7 @@ namespace SIL.XForge.Services
             TestProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
 
             Assert.That(project.UserRoles.ContainsKey(User02), Is.False, "setup");
-            Assert.That(projectSecret.ShareKeys.ContainsKey("user02@example[dot]com"), Is.True, "setup");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "user02@example.com"), Is.True, "setup");
 
             Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User02, Project03),
                 "The user should be forbidden to join the project: Email address was in ShareKeys list, but wrong code was given.");
@@ -183,7 +182,7 @@ namespace SIL.XForge.Services
             TestProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
 
             Assert.That(project.UserRoles.ContainsKey(User02), Is.False, "setup");
-            Assert.That(projectSecret.ShareKeys.ContainsValue("key1234"), Is.True, "setup");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
             Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(3), "setup");
 
             await env.Service.CheckLinkSharingAsync(User02, Project03, "key1234");
@@ -191,7 +190,7 @@ namespace SIL.XForge.Services
             project = env.GetProject(Project03);
             projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(project.UserRoles.ContainsKey(User02), Is.True, "User should have been added to project");
-            Assert.That(projectSecret.ShareKeys.ContainsValue("key1234"), Is.False,
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.False,
                 "Code should have been removed from project");
         }
 
@@ -299,58 +298,6 @@ namespace SIL.XForge.Services
                 env.Service.DeleteAudioAsync(User02, Project01, User01, "answer01"));
         }
 
-        [Test]
-        public void EncodeJsonName_RetainsNondots()
-        {
-            foreach (var input in new string[] { "abc", "ABCabc123-_~!@#$%^&",
-                "bob@localhost", null, "", " " })
-            {
-                Assert.That(TestProjectService.EncodeJsonName(input),
-                    Is.EqualTo(input));
-            }
-        }
-
-        [Test]
-        public void EncodeJsonName_ReplacesDots()
-        {
-            Assert.That(TestProjectService.EncodeJsonName("."),
-                Is.EqualTo("[dot]"));
-            Assert.That(TestProjectService.EncodeJsonName("a.a"),
-                Is.EqualTo("a[dot]a"));
-            Assert.That(TestProjectService
-                .EncodeJsonName("bob.smith@my.example.com"),
-                Is.EqualTo("bob[dot]smith@my[dot]example[dot]com"));
-            Assert.That(TestProjectService
-                .EncodeJsonName("\"bob..smith\"@example.com"),
-                Is.EqualTo("\"bob[dot][dot]smith\"@example[dot]com"));
-        }
-
-        [Test]
-        public void DecodeJsonName_NonspecialIsUnmodified()
-        {
-            foreach (var input in new string[] { "abc", "ABCabc123-_~!@#$%^&",
-                "bob@localhost", null, "", " ", "a[dot", "dot]a", "a[ dot]a" })
-            {
-                Assert.That(TestProjectService.DecodeJsonName(input),
-                    Is.EqualTo(input));
-            }
-        }
-
-        [Test]
-        public void DecodeJsonName_ReplacesToken()
-        {
-            Assert.That(TestProjectService.DecodeJsonName("[dot]"),
-                Is.EqualTo("."));
-            Assert.That(TestProjectService.DecodeJsonName("a[dot]a"),
-                Is.EqualTo("a.a"));
-            Assert.That(TestProjectService
-                .DecodeJsonName("bob[dot]smith@my[dot]example[dot]com"),
-                Is.EqualTo("bob.smith@my.example.com"));
-            Assert.That(TestProjectService
-                .DecodeJsonName("\"bob[dot][dot]smith\"@example[dot]com"),
-                Is.EqualTo("\"bob..smith\"@example.com"));
-        }
-
         private class TestEnvironment
         {
             public TestEnvironment(bool isResetLinkExpired = false)
@@ -437,11 +384,11 @@ namespace SIL.XForge.Services
                     new TestProjectSecret
                     {
                         Id = Project03,
-                        ShareKeys = new Dictionary<string, string>
+                        ShareKeys = new List<ShareKey>
                         {
-                            { "bob@example[dot]com", "key1111" },
-                            { "user02@example[dot]com", "key1234" },
-                            { "bill@example[dot]com", "key2222" }
+                            new ShareKey { Email = "bob@example.com", Key = "key1111" },
+                            new ShareKey { Email = "user02@example.com", Key = "key1234" },
+                            new ShareKey { Email = "bill@example.com", Key = "key2222" }
                         }
                     },
                 });

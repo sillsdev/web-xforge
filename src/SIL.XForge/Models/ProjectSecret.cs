@@ -9,6 +9,6 @@ namespace SIL.XForge.Models
         /// <summary>
         /// Outstanding project access shares to specific people, represented by an email address and code pair.
         /// </summary>
-        public Dictionary<string, string> ShareKeys { get; set; } = new Dictionary<string, string>();
+        public List<ShareKey> ShareKeys { get; set; } = new List<ShareKey>();
     }
 }
