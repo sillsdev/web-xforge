@@ -1,5 +1,5 @@
 import { MdcSliderChange } from '@angular-mdc/web';
-import { Component, Input, Pipe, PipeTransform } from '@angular/core';
+import { Component, EventEmitter, Input, Output, Pipe, PipeTransform } from '@angular/core';
 import { saveAs } from 'file-saver';
 import { environment } from '../../../../environments/environment';
 
@@ -10,6 +10,7 @@ import { environment } from '../../../../environments/environment';
 })
 export class CheckingAudioPlayerComponent {
   seek: number = 0;
+  @Output() requestPlay: EventEmitter<HTMLAudioElement> = new EventEmitter<HTMLAudioElement>();
 
   private _currentTime: number = 0;
   private _duration: number = 0;
@@ -87,6 +88,7 @@ export class CheckingAudioPlayerComponent {
       } else {
         this.enabled = true;
       }
+      this.audio.addEventListener('play', () => this.requestPlay.emit(this.audio));
     }
   }
 

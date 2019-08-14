@@ -33,6 +33,6 @@
       icon="delete"
       class="remove-audio-file"
     ></button>
-    <app-checking-audio-player [source]="source"></app-checking-audio-player>
+    <app-checking-audio-player [source]="source" (requestPlay)="playRequested.emit($event)"></app-checking-audio-player>
   </ng-container>
 </div>

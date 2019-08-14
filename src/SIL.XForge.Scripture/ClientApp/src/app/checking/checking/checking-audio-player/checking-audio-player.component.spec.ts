@@ -34,6 +34,18 @@ describe('CheckingAudioPlayerComponent', () => {
     expect(env.currentTime).toBe('0:01');
   });
 
+  it('plays and pauses the other playing audio', async () => {
+    const template =
+      '<app-checking-audio-player #player source="' +
+      audioFile +
+      '" (requestPlay)="hasRequestedPlay=true"></app-checking-audio-player>';
+    await env.createHostComponent(template);
+    expect(env.component.hasRequestedPlay).toBe(false);
+    env.clickButton(env.playButton);
+    await env.waitForPlayer(100);
+    expect(env.component.hasRequestedPlay).toBe(true);
+  });
+
   it('can enable download', async () => {
     const template = '<app-checking-audio-player #player source="' + audioFile + '"></app-checking-audio-player>';
     await env.createHostComponent(template);
@@ -49,10 +61,12 @@ describe('CheckingAudioPlayerComponent', () => {
 @Component({ selector: 'app-host', template: '' })
 class HostComponent {
   @ViewChild(CheckingAudioPlayerComponent) player: CheckingAudioPlayerComponent;
+  hasRequestedPlay: boolean = false;
 }
 
 class TestEnvironment {
   fixture: ComponentFixture<HostComponent>;
+  component: HostComponent;
 
   constructor() {
     TestBed.configureTestingModule({
@@ -92,6 +106,7 @@ class TestEnvironment {
   async createHostComponent(template: string) {
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.fixture = TestBed.createComponent(HostComponent);
+    this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
     await this.waitForPlayer(1000);
     this.fixture.detectChanges();

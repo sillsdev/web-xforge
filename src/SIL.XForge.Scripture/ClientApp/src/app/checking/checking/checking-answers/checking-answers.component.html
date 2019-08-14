@@ -11,6 +11,7 @@
     <div *ngIf="question.audioUrl" class="question-audio">
       <app-checking-audio-player
         [source]="question.audioUrl"
+        (requestPlay)="playAudioRequested.emit($event)"
         [downloadable]="canDownloadAudioFiles"
       ></app-checking-audio-player>
     </div>
@@ -51,6 +52,7 @@
       <app-checking-audio-combined
         [source]="activeAnswer?.audioUrl"
         (update)="processAudio($event)"
+        (playRequested)="playAudioRequested.emit($event)"
       ></app-checking-audio-combined>
     </div>
     <div [fxShow]="answerTabs.activeTabIndex === 2" class="answer-tab answer-select-text">
@@ -139,6 +141,7 @@
         <app-checking-audio-player
           *ngIf="answer.audioUrl"
           [source]="answer.audioUrl"
+          (requestPlay)="playAudioRequested.emit($event)"
           [downloadable]="canDownloadAudioFiles"
         ></app-checking-audio-player>
         <div class="answer-footer">
