@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { canTranslate } from '../core/models/sfproject-roles';
 import { SFProjectService } from '../core/sfproject.service';
@@ -11,14 +12,15 @@ import { SFProjectService } from '../core/sfproject.service';
   templateUrl: './project.component.html',
   styleUrls: ['./project.component.scss']
 })
-export class ProjectComponent extends SubscriptionDisposable implements OnInit {
+export class ProjectComponent extends DataLoadingComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly projectService: SFProjectService,
     private readonly router: Router,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    noticeService: NoticeService
   ) {
-    super();
+    super(noticeService);
   }
 
   ngOnInit(): void {
@@ -29,6 +31,7 @@ export class ProjectComponent extends SubscriptionDisposable implements OnInit {
         filter(projectId => projectId != null)
       ),
       async projectId => {
+        this.loadingStarted();
         // if the link has sharing turned on, check if the current user needs to be added to the project
         const sharing = this.route.snapshot.queryParams['sharing'] as string;
         if (sharing === 'true') {
@@ -71,6 +74,7 @@ export class ProjectComponent extends SubscriptionDisposable implements OnInit {
             }
           }
         }
+        this.loadingFinished();
       }
     );
   }

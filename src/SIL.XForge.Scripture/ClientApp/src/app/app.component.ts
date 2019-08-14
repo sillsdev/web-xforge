@@ -2,17 +2,17 @@ import { MdcDialog, MdcSelect, MdcTopAppBar } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { Observable, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
+import { combineLatest, from, Observable, Subscription } from 'rxjs';
+import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component.js';
 import { LocationService } from 'xforge-common/location.service';
 import { Site } from 'xforge-common/models/site';
 import { SystemRole } from 'xforge-common/models/system-role';
 import { AuthType, getAuthType, User } from 'xforge-common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
@@ -31,7 +31,7 @@ export const CONNECT_PROJECT_OPTION = '*connect-project*';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent extends SubscriptionDisposable implements OnInit, OnDestroy {
+export class AppComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   version: string = version;
   issueEmail: string = environment.issueEmail;
   isExpanded: boolean = false;
@@ -58,14 +58,14 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
     private readonly locationService: LocationService,
     private readonly helpHeroService: HelpHeroService,
     private readonly userService: UserService,
-    private readonly noticeService: NoticeService,
+    noticeService: NoticeService,
     media: MediaObserver,
     private readonly projectService: SFProjectService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog
   ) {
-    super();
+    super(noticeService);
     this.subscribe(media.media$, (change: MediaChange) => {
       this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg'].includes(change.mqAlias);
     });
@@ -116,8 +116,8 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
     return this.authService.isLoggedIn;
   }
 
-  get isLoading(): boolean {
-    return this.noticeService.isLoading;
+  get isAppLoading(): boolean {
+    return this.noticeService.isAppLoading;
   }
 
   get isSystemAdmin(): boolean {
@@ -176,13 +176,16 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
   }
 
   async ngOnInit(): Promise<void> {
-    this.noticeService.loadingStarted();
+    this.loadingStarted();
     this.authService.init();
     if (await this.isLoggedIn) {
       this.currentUserDoc = await this.userService.getCurrentUser();
       this.currentUserAuthType = getAuthType(this.currentUserDoc.data.authId);
-      await this.getProjectDocs();
-      this.subscribe(this.currentUserDoc.remoteChanges$, () => this.getProjectDocs());
+
+      const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
+        startWith(null),
+        switchMap(() => from(this.getProjectDocs()))
+      );
 
       // retrieve the projectId from the current route. Since the nav menu is outside of the router outlet, it cannot
       // use ActivatedRoute to get the params. Instead the nav menu, listens to router events and traverses the route
@@ -222,7 +225,8 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
       );
 
       // select the current project
-      this.subscribe(projectId$, projectId => {
+      this.subscribe(combineLatest(projectDocs$, projectId$), ([projectDocs, projectId]) => {
+        this.projectDocs = projectDocs;
         // if the project deleted dialog is displayed, don't do anything
         if (this.projectDeletedDialogRef != null) {
           return;
@@ -230,7 +234,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
         const selectedProjectDoc = projectId == null ? undefined : this.projectDocs.find(p => p.id === projectId);
 
         // check if the currently selected project has been deleted
-        if (projectId != null && (selectedProjectDoc == null || !selectedProjectDoc.isLoaded)) {
+        if (projectId != null && selectedProjectDoc != null && !selectedProjectDoc.isLoaded) {
           this.currentUserDoc
             .submitJson0Op(op => op.unset(u => u.sites[environment.siteId].currentProjectId))
             .then(() => this.navigateToStart());
@@ -239,6 +243,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
 
         if (this.selectedProjectDeleteSub != null) {
           this.selectedProjectDeleteSub.unsubscribe();
+          this.selectedProjectDeleteSub = undefined;
         }
         this.selectedProjectDoc = selectedProjectDoc;
         this.setTopAppBarVariant();
@@ -246,7 +251,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
           this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
             ? undefined
             : (this.selectedProjectDoc.data.userRoles[this.currentUserDoc.id] as SFProjectRoles);
-        if (this.selectedProjectDoc == null) {
+        if (this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded) {
           return;
         }
 
@@ -278,7 +283,7 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
       // tell HelpHero to remember this user to make sure we won't show them an identical tour again later
       this.helpHeroService.setIdentity(this.userService.currentUserId);
     }
-    this.noticeService.loadingFinished();
+    this.loadingFinished();
   }
 
   ngOnDestroy(): void {
@@ -348,7 +353,8 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
     this.isExpanded = false;
   }
 
-  private async getProjectDocs(): Promise<void> {
+  private async getProjectDocs(): Promise<SFProjectDoc[]> {
+    this.loadingStarted();
     const projectDocs: SFProjectDoc[] = new Array(this.site.projects.length);
     const promises: Promise<any>[] = [];
     for (let i = 0; i < this.site.projects.length; i++) {
@@ -356,7 +362,8 @@ export class AppComponent extends SubscriptionDisposable implements OnInit, OnDe
       promises.push(this.projectService.get(this.site.projects[index]).then(p => (projectDocs[index] = p)));
     }
     await Promise.all(promises);
-    this.projectDocs = projectDocs;
+    this.loadingFinished();
+    return projectDocs;
   }
 
   private async showProjectDeletedDialog(): Promise<void> {

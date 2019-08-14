@@ -91,6 +91,10 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     this.updateOfflineData();
   }
 
+  delete(): Promise<void> {
+    return this.adapter.delete();
+  }
+
   /**
    * Updates offline storage with the current state of the realtime data.
    */
