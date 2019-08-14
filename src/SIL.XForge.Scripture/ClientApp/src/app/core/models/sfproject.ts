@@ -7,7 +7,6 @@ export interface SFProject extends Project {
   paratextId?: string;
   checkingEnabled?: boolean;
   usersSeeEachOthersResponses?: boolean;
-  downloadAudioFiles?: boolean;
   translateEnabled?: boolean;
   sourceParatextId?: string;
   sourceInputSystem?: InputSystem;

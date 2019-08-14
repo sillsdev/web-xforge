@@ -1,6 +1,5 @@
 import { MdcSliderChange } from '@angular-mdc/web';
 import { Component, Input, Pipe, PipeTransform } from '@angular/core';
-import { saveAs } from 'file-saver';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -14,20 +13,11 @@ export class CheckingAudioPlayerComponent {
   private _currentTime: number = 0;
   private _duration: number = 0;
   private _enabled: boolean = false;
-  private _isDownloadable: boolean = false;
   private _isPlaying: boolean = false;
   private audio: HTMLAudioElement = new Audio();
 
-  get canDownload(): boolean {
-    return this._isDownloadable;
-  }
-
   get currentTime(): number {
     return this._currentTime;
-  }
-
-  @Input() set downloadable(downloadable: boolean) {
-    this._isDownloadable = downloadable;
   }
 
   get duration(): number {
@@ -92,12 +82,6 @@ export class CheckingAudioPlayerComponent {
 
   private get checkIsPlaying(): boolean {
     return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
-  }
-
-  download() {
-    if (this.canDownload) {
-      saveAs(this.audio.src, this.audio.src.split('~').pop());
-    }
   }
 
   pause() {

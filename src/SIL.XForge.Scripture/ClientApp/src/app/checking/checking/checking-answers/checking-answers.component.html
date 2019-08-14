@@ -9,10 +9,7 @@
   <div class="question">
     <div class="question-text">{{ question.text }}</div>
     <div *ngIf="question.audioUrl" class="question-audio">
-      <app-checking-audio-player
-        [source]="question.audioUrl"
-        [downloadable]="canDownloadAudioFiles"
-      ></app-checking-audio-player>
+      <app-checking-audio-player [source]="question.audioUrl"></app-checking-audio-player>
     </div>
   </div>
   <div *ngIf="!answerFormVisible" class="actions">
@@ -136,11 +133,7 @@
           <span class="answer-scripture-text">{{ answer.scriptureText }}</span>
           <span class="answer-scripture-verse">{{ scriptureTextVerseRef(answer) }}</span>
         </div>
-        <app-checking-audio-player
-          *ngIf="answer.audioUrl"
-          [source]="answer.audioUrl"
-          [downloadable]="canDownloadAudioFiles"
-        ></app-checking-audio-player>
+        <app-checking-audio-player *ngIf="answer.audioUrl" [source]="answer.audioUrl"></app-checking-audio-player>
         <div class="answer-footer">
           <div class="actions">
             <button *ngIf="hasPermission(answer, 'edit')" mdc-button (click)="editAnswer(answer)" class="answer-edit">
