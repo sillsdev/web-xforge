@@ -10,6 +10,7 @@
     <div class="question-text">{{ question.text }}</div>
     <div *ngIf="question.audioUrl" class="question-audio">
       <app-checking-audio-player [source]="question.audioUrl"></app-checking-audio-player>
+        (requestPlay)="playAudioRequested.emit($event)"
     </div>
   </div>
   <div *ngIf="!answerFormVisible" class="actions">
@@ -48,6 +49,7 @@
       <app-checking-audio-combined
         [source]="activeAnswer?.audioUrl"
         (update)="processAudio($event)"
+        (playRequested)="playAudioRequested.emit($event)"
       ></app-checking-audio-combined>
     </div>
     <div [fxShow]="answerTabs.activeTabIndex === 2" class="answer-tab answer-select-text">
@@ -134,6 +136,7 @@
           <span class="answer-scripture-verse">{{ scriptureTextVerseRef(answer) }}</span>
         </div>
         <app-checking-audio-player *ngIf="answer.audioUrl" [source]="answer.audioUrl"></app-checking-audio-player>
+          (requestPlay)="playAudioRequested.emit($event)"
         <div class="answer-footer">
           <div class="actions">
             <button *ngIf="hasPermission(answer, 'edit')" mdc-button (click)="editAnswer(answer)" class="answer-edit">

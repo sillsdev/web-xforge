@@ -13,6 +13,7 @@ export class CheckingAudioCombinedComponent {
   @ViewChild(CheckingAudioRecorderComponent) audioRecorderComponent: CheckingAudioRecorderComponent;
   @Input() source: string = '';
   @Output() update: EventEmitter<AudioAttachment> = new EventEmitter<AudioAttachment>();
+  @Output() playRequested: EventEmitter<HTMLAudioElement> = new EventEmitter<HTMLAudioElement>();
 
   uploadAudioFile: File;
 
