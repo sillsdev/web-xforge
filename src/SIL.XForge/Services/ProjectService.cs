@@ -118,14 +118,14 @@ namespace SIL.XForge.Services
             {
                 // Invite a specific person
                 // Reuse prior code, if any
-                string encodedEmail = EncodeJsonName(email);
                 TSecret projectSecret = await ProjectSecrets.UpdateAsync(
-                    p => p.Id == projectId && !p.ShareKeys.ContainsKey(encodedEmail),
-                    update => update.Set(p => p.ShareKeys[encodedEmail], _securityService.GenerateKey()));
+                    p => p.Id == projectId && !p.ShareKeys.Any(sk => sk.Email == email),
+                    update => update.Add(p => p.ShareKeys,
+                        new ShareKey { Email = email, Key = _securityService.GenerateKey() }));
                 if (projectSecret == null)
                     projectSecret = await ProjectSecrets.GetAsync(projectId);
-                string code = projectSecret.ShareKeys[encodedEmail];
-                url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={code}";
+                string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
+                url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}";
                 additionalMessage = "This link will only work for this email address.";
             }
             else
@@ -161,8 +161,8 @@ namespace SIL.XForge.Services
 
             if (email == null)
                 return false;
-            TSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
-            return projectSecret.ShareKeys.ContainsKey(EncodeJsonName(email));
+            return await ProjectSecrets.Query()
+                .AnyAsync(p => p.Id == projectId && p.ShareKeys.Any(sk => sk.Email == email));
         }
 
         public async Task CheckLinkSharingAsync(string userId, string projectId, string shareKey = null)
@@ -190,10 +190,11 @@ namespace SIL.XForge.Services
                 string projectRole = attempt.Result;
                 if (projectDoc.Data.ShareLevel == SharingLevel.Specific)
                 {
-                    string currentUserEmail = EncodeJsonName(userDoc.Data.Email);
+                    string currentUserEmail = userDoc.Data.Email;
                     TSecret projectSecret = await ProjectSecrets.UpdateAsync(
-                        p => p.Id == projectId && p.ShareKeys[currentUserEmail] == shareKey,
-                        update => update.Unset(p => p.ShareKeys[currentUserEmail]));
+                        p => p.Id == projectId
+                            && p.ShareKeys.Any(sk => sk.Email == currentUserEmail && sk.Key == shareKey),
+                        update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == currentUserEmail));
                     if (projectSecret != null)
                         await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
                     else
@@ -265,29 +266,6 @@ namespace SIL.XForge.Services
             string filePath = Path.Combine(audioDir, $"{ownerId}_{dataId}.mp3");
             if (FileSystemService.FileExists(filePath))
                 FileSystemService.DeleteFile(filePath);
-        }
-
-        /// <summary>Encode the input so it is easier to use as a JSON object
-        /// name using our libraries. Replaces dot characters. A proper encoder
-        /// would do much more (https://json.org/).</summary>
-        internal static string EncodeJsonName(string name)
-        {
-            if (name == null)
-            {
-                return null;
-            }
-            return name.Replace(".", "[dot]");
-        }
-
-        /// <summary>Decode a string that was previously given by
-        /// EncodeJsonName().</summary>
-        internal static string DecodeJsonName(string encodedName)
-        {
-            if (encodedName == null)
-            {
-                return null;
-            }
-            return encodedName.Replace("[dot]", ".");
         }
 
         protected virtual async Task AddUserToProjectAsync(IConnection conn, IDocument<TModel> projectDoc,
