@@ -188,89 +188,95 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
 
   ngOnInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => this.setTextHeight());
-    this.subscribe(this.activatedRoute.params, async params => {
-      this.showSuggestion = false;
-      this.sourceLoaded = false;
-      this.targetLoaded = false;
-      this.loadingStarted();
-      const projectId = params['projectId'];
-      const bookId = params['bookId'];
+    this.subscribe(
+      this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
+      async params => {
+        this.showSuggestion = false;
+        this.sourceLoaded = false;
+        this.targetLoaded = false;
+        this.loadingStarted();
+        const projectId = params['projectId'];
+        const bookId = params['bookId'];
 
-      const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
-      if (projectId !== prevProjectId) {
-        this.projectDoc = await this.projectService.get(projectId);
-        this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+        const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
+        if (projectId !== prevProjectId) {
+          this.projectDoc = await this.projectService.get(projectId);
+          this.projectUserConfigDoc = await this.projectService.getUserConfig(
+            projectId,
+            this.userService.currentUserId
+          );
 
-        if (this.projectUserConfigChangesSub != null) {
-          this.projectUserConfigChangesSub.unsubscribe();
-        }
-        this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(() =>
-          this.loadProjectUserConfig()
-        );
-      }
-      this.text = this.projectDoc.data.texts.find(t => t.bookId === bookId);
-      this.chapters = this.text.chapters.map(c => c.number);
-
-      this.loadProjectUserConfig();
-
-      if (this.projectDoc.id !== prevProjectId) {
-        if (this.trainingSubscription != null) {
-          this.trainingSubscription.unsubscribe();
-        }
-        this.translationEngine = this.projectService.createTranslationEngine(this.projectDoc.id);
-        this.trainingSubscription = this.subscribe(
-          this.translationEngine.listenForTrainingStatus().pipe(
-            tap(undefined, undefined, async () => {
-              // training completed successfully
-              if (this.trainingProgressClosed) {
-                this.noticeService.show('Training completed successfully');
-                this.trainingProgressClosed = false;
-              } else {
-                this.trainingMessage = 'Completed successfully';
-                this.trainingCompletedTimeout = setTimeout(() => {
-                  this.showTrainingProgress = false;
-                  this.trainingCompletedTimeout = undefined;
-                }, 5000);
-              }
-
-              // ensure that any changes to the segment will be trained
-              if (this.target.segment != null) {
-                this.target.segment.acceptChanges();
-              }
-              // re-translate current segment
-              this.onStartTranslating();
-              try {
-                await this.translateSegment();
-              } finally {
-                this.onFinishTranslating();
-              }
-            }),
-            repeat(),
-            filter(progress => progress.percentCompleted > 0)
-          ),
-          progress => {
-            if (!this.trainingProgressClosed) {
-              this.showTrainingProgress = true;
-            }
-            if (this.trainingCompletedTimeout != null) {
-              clearTimeout(this.trainingCompletedTimeout);
-              this.trainingCompletedTimeout = undefined;
-            }
-            this.trainingPercentage = Math.round(progress.percentCompleted * 100);
-            this.trainingMessage = progress.message;
+          if (this.projectUserConfigChangesSub != null) {
+            this.projectUserConfigChangesSub.unsubscribe();
           }
-        );
-        this.metricsSession.start(
-          this.projectDoc.id,
-          this.source,
-          this.target,
-          this.sourceWordTokenizer,
-          this.targetWordTokenizer
-        );
-      }
+          this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(() =>
+            this.loadProjectUserConfig()
+          );
+        }
+        this.text = this.projectDoc.data.texts.find(t => t.bookId === bookId);
+        this.chapters = this.text.chapters.map(c => c.number);
 
-      this.startUserOnboardingTour(); // start HelpHero tour for the Translate feature
-    });
+        this.loadProjectUserConfig();
+
+        if (this.projectDoc.id !== prevProjectId) {
+          if (this.trainingSubscription != null) {
+            this.trainingSubscription.unsubscribe();
+          }
+          this.translationEngine = this.projectService.createTranslationEngine(this.projectDoc.id);
+          this.trainingSubscription = this.subscribe(
+            this.translationEngine.listenForTrainingStatus().pipe(
+              tap(undefined, undefined, async () => {
+                // training completed successfully
+                if (this.trainingProgressClosed) {
+                  this.noticeService.show('Training completed successfully');
+                  this.trainingProgressClosed = false;
+                } else {
+                  this.trainingMessage = 'Completed successfully';
+                  this.trainingCompletedTimeout = setTimeout(() => {
+                    this.showTrainingProgress = false;
+                    this.trainingCompletedTimeout = undefined;
+                  }, 5000);
+                }
+
+                // ensure that any changes to the segment will be trained
+                if (this.target.segment != null) {
+                  this.target.segment.acceptChanges();
+                }
+                // re-translate current segment
+                this.onStartTranslating();
+                try {
+                  await this.translateSegment();
+                } finally {
+                  this.onFinishTranslating();
+                }
+              }),
+              repeat(),
+              filter(progress => progress.percentCompleted > 0)
+            ),
+            progress => {
+              if (!this.trainingProgressClosed) {
+                this.showTrainingProgress = true;
+              }
+              if (this.trainingCompletedTimeout != null) {
+                clearTimeout(this.trainingCompletedTimeout);
+                this.trainingCompletedTimeout = undefined;
+              }
+              this.trainingPercentage = Math.round(progress.percentCompleted * 100);
+              this.trainingMessage = progress.message;
+            }
+          );
+          this.metricsSession.start(
+            this.projectDoc.id,
+            this.source,
+            this.target,
+            this.sourceWordTokenizer,
+            this.targetWordTokenizer
+          );
+        }
+
+        this.startUserOnboardingTour(); // start HelpHero tour for the Translate feature
+      }
+    );
   }
 
   ngAfterViewInit(): void {

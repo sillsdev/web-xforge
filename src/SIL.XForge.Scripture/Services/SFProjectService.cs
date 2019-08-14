@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using System;
 using System.IO;
@@ -84,16 +85,19 @@ namespace SIL.XForge.Scripture.Services
                     throw new DataNotFoundException("The project does not exist.");
                 if (!IsProjectAdmin(projectDoc.Data, userId))
                     throw new ForbiddenException();
+
+                // delete the project first, so that users get notified about the deletion
+                string[] projectUserIds = projectDoc.Data.UserRoles.Keys.ToArray();
+                await projectDoc.DeleteAsync();
                 async Task removeUser(string projectUserId)
                 {
                     IDocument<User> userDoc = await conn.FetchAsync<User>(projectUserId);
                     await RemoveUserFromProjectAsync(conn, projectDoc, userDoc);
                 }
                 var tasks = new List<Task>();
-                foreach (string projectUserId in projectDoc.Data.UserRoles.Keys)
+                foreach (string projectUserId in projectUserIds)
                     tasks.Add(removeUser(projectUserId));
                 await Task.WhenAll(tasks);
-                await projectDoc.DeleteAsync();
             }
 
             await ProjectSecrets.DeleteAsync(projectId);

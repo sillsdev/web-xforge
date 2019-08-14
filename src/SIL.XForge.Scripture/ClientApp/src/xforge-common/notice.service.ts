@@ -7,18 +7,18 @@ import { AuthService } from './auth.service';
   providedIn: 'root'
 })
 export class NoticeService {
-  private _isLoading: boolean = false;
+  private _isAppLoading: boolean = false;
   private loadingCount: number = 0;
 
   constructor(private readonly snackbar: MdcSnackbar, private readonly authService: AuthService) {}
 
-  get isLoading(): boolean {
-    return this._isLoading;
+  get isAppLoading(): boolean {
+    return this._isAppLoading;
   }
 
   loadingStarted(): void {
     if (this.loadingCount === 0) {
-      setTimeout(() => (this._isLoading = true));
+      setTimeout(() => (this._isAppLoading = true));
     }
     this.loadingCount++;
   }
@@ -26,7 +26,7 @@ export class NoticeService {
   loadingFinished(): void {
     this.loadingCount--;
     if (this.loadingCount === 0) {
-      setTimeout(() => (this._isLoading = false));
+      setTimeout(() => (this._isAppLoading = false));
     }
   }
 

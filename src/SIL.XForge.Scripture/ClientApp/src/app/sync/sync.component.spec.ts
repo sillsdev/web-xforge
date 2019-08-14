@@ -110,7 +110,7 @@ class TestEnvironment {
     when(this.mockedProjectService.onlineSync('testproject01')).thenResolve();
     when(this.mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
     when(this.mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
-    when(this.mockedNoticeService.isLoading).thenCall(() => this.isLoading);
+    when(this.mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);
 
     const date = new Date();
     date.setMonth(date.getMonth() - 2);

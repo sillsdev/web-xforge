@@ -152,6 +152,18 @@ describe('AppComponent', () => {
     expect(env.location.path()).toEqual('/projects');
   }));
 
+  it('user added to project after init', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects']);
+    env.init();
+
+    env.addUserToProject04();
+    env.navigate(['/projects', 'project04']);
+    env.wait();
+    expect(env.isDrawerVisible).toEqual(true);
+    expect(env.selectedProjectId).toEqual('project04');
+  }));
+
   it('should only display Sync, Settings and Users for admin', fakeAsync(() => {
     const env = new TestEnvironment();
     env.makeUserAProjectAdmin(false);
@@ -210,7 +222,6 @@ class TestEnvironment {
   readonly location: Location;
   readonly overlayContainer: OverlayContainer;
   readonly lastLogin: string = '2019-02-01T12:00:00.000Z';
-  readonly project01DocAdapter: MemoryRealtimeDocAdapter;
 
   readonly mockedAccountService = mock(AccountService);
   readonly mockedAuthService = mock(AuthService);
@@ -224,6 +235,8 @@ class TestEnvironment {
   readonly mockedNameDialogRef = mock(MdcDialogRef);
 
   private readonly currentUserDoc: UserDoc;
+  private readonly project01Doc: SFProjectDoc;
+  private readonly project04Doc: SFProjectDoc;
 
   constructor() {
     this.currentUserDoc = new UserDoc(
@@ -240,7 +253,7 @@ class TestEnvironment {
       instance(this.mockedRealtimeOfflineStore)
     );
 
-    this.project01DocAdapter = this.addProject('project01', {
+    this.project01Doc = this.addProject('project01', {
       projectName: 'project01',
       translateEnabled: true,
       checkingEnabled: true,
@@ -268,6 +281,16 @@ class TestEnvironment {
       texts: [
         { bookId: 'text05', name: 'Book 5', hasSource: true },
         { bookId: 'text06', name: 'Book 6', hasSource: true }
+      ]
+    });
+    this.project04Doc = this.addProject('project04', {
+      projectName: 'project04',
+      translateEnabled: true,
+      checkingEnabled: true,
+      userRoles: {},
+      texts: [
+        { bookId: 'text07', name: 'Book 7', hasSource: true },
+        { bookId: 'text08', name: 'Book 8', hasSource: true }
       ]
     });
 
@@ -388,9 +411,14 @@ class TestEnvironment {
       this.currentUserDoc.data.sites.sf.currentProjectId = null;
     }
     this.fixture.ngZone.run(() => {
-      this.project01DocAdapter.delete();
+      this.project01Doc.delete();
     });
     this.wait();
+  }
+
+  addUserToProject04(): void {
+    this.project04Doc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRoles.Reviewer), false);
+    this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
   }
 
   confirmDialog(): void {
@@ -403,10 +431,10 @@ class TestEnvironment {
     this.component.editName('User 01');
   }
 
-  private addProject(projectId: string, project: SFProject): MemoryRealtimeDocAdapter {
+  private addProject(projectId: string, project: SFProject): SFProjectDoc {
     const adapter = new MemoryRealtimeDocAdapter(projectId, OTJson0.type, project);
     const doc = new SFProjectDoc(adapter, instance(this.mockedRealtimeOfflineStore));
     when(this.mockedSFProjectService.get(projectId)).thenResolve(doc);
-    return adapter;
+    return doc;
   }
 }

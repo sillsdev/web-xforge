@@ -3,6 +3,7 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router'
 import * as OTJson0 from 'ot-json0';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { NoticeService } from 'xforge-common/notice.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -104,6 +105,7 @@ class TestEnvironment {
   readonly mockedRouter = mock(Router);
   readonly mockedSFProjectService = mock(SFProjectService);
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+  readonly mockedNoticeService = mock(NoticeService);
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
@@ -122,7 +124,8 @@ class TestEnvironment {
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
         { provide: Router, useFactory: () => instance(this.mockedRouter) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) }
+        { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
+        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
       ]
     });
     this.fixture = TestBed.createComponent(ProjectComponent);

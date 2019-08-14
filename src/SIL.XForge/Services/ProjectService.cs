@@ -301,10 +301,16 @@ namespace SIL.XForge.Services
         protected virtual async Task RemoveUserFromProjectAsync(IConnection conn, IDocument<TModel> projectDoc,
             IDocument<User> userDoc)
         {
-            await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserRoles[userDoc.Id]));
+            if (projectDoc.IsLoaded)
+                await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserRoles[userDoc.Id]));
             string siteId = SiteOptions.Value.Id;
-            int index = userDoc.Data.Sites[siteId].Projects.IndexOf(projectDoc.Id);
-            await userDoc.SubmitJson0OpAsync(op => op.Remove(u => u.Sites[siteId].Projects, index));
+            await userDoc.SubmitJson0OpAsync(op =>
+            {
+                int index = userDoc.Data.Sites[siteId].Projects.IndexOf(projectDoc.Id);
+                op.Remove(u => u.Sites[siteId].Projects, index);
+                if (userDoc.Data.Sites[siteId].CurrentProjectId == projectDoc.Id)
+                    op.Unset(u => u.Sites[siteId].CurrentProjectId);
+            });
         }
 
         protected bool IsProjectAdmin(TModel project, string userId)
