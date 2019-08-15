@@ -128,7 +128,6 @@ namespace SIL.XForge.Scripture.Services
                     UpdateSetting(op, p => p.SourceInputSystem, settings.SourceInputSystem);
 
                     UpdateSetting(op, p => p.CheckingEnabled, settings.CheckingEnabled);
-                    UpdateSetting(op, p => p.DownloadAudioFiles, settings.DownloadAudioFiles);
                     UpdateSetting(op, p => p.UsersSeeEachOthersResponses, settings.UsersSeeEachOthersResponses);
                     UpdateSetting(op, p => p.ShareEnabled, settings.ShareEnabled);
                     UpdateSetting(op, p => p.ShareLevel, settings.ShareLevel);

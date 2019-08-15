@@ -22,27 +22,13 @@ describe('CheckingAudioPlayerComponent', () => {
   });
 
   it('can play', async () => {
-    const template =
-      '<app-checking-audio-player #player source="' +
-      audioFile +
-      '" [downloadable]="true"></app-checking-audio-player>';
+    const template = '<app-checking-audio-player #player source="' + audioFile + '"></app-checking-audio-player>';
     await env.createHostComponent(template);
     env.clickButton(env.playButton);
     await env.waitForPlayer(1500);
     env.fixture.detectChanges();
     env.clickButton(env.pauseButton);
     expect(env.currentTime).toBe('0:01');
-  });
-
-  it('can enable download', async () => {
-    const template = '<app-checking-audio-player #player source="' + audioFile + '"></app-checking-audio-player>';
-    await env.createHostComponent(template);
-    expect(env.moreMenuButton).toBeFalsy();
-    env.fixture.componentInstance.player.downloadable = true;
-    env.fixture.detectChanges();
-    expect(env.moreMenuButton).toBeTruthy();
-    env.clickButton(env.moreMenuButton);
-    expect(env.downloadButton).toBeTruthy();
   });
 });
 

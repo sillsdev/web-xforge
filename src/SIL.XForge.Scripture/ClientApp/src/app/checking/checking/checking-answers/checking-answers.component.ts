@@ -103,10 +103,6 @@ export class CheckingAnswersComponent implements OnInit {
     }
   }
 
-  get canDownloadAudioFiles(): boolean {
-    return this.project.downloadAudioFiles;
-  }
-
   get canSeeOtherUserResponses(): boolean {
     return this.project.usersSeeEachOthersResponses;
   }
