@@ -23,14 +23,14 @@ import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SFProject } from '../../core/models/sfproject';
-import { SFProjectDoc } from '../../core/models/sfproject-doc';
-import { SFProjectRoles } from '../../core/models/sfproject-roles';
-import { SFProjectUserConfig } from '../../core/models/sfproject-user-config';
-import { SFProjectUserConfigDoc } from '../../core/models/sfproject-user-config-doc';
-import { Delta, TextDoc } from '../../core/models/text-doc';
-import { TextDocId } from '../../core/models/text-doc-id';
-import { SFProjectService } from '../../core/sfproject.service';
+import { SFProjectDoc } from '../../core/docs/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../../core/docs/sf-project-user-config-doc';
+import { Delta, TextDoc } from '../../core/docs/text-doc';
+import { TextDocId } from '../../core/docs/text-doc-id';
+import { SFProject } from '../../core/models/sf-project';
+import { SFProjectRole } from '../../core/models/sf-project-role';
+import { SFProjectUserConfig } from '../../core/models/sf-project-user-config';
+import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
 import { CONFIDENCE_THRESHOLD_TIMEOUT, EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { SuggestionComponent } from './suggestion.component';
@@ -539,7 +539,7 @@ class TestEnvironment {
       instance(this.mockedRemoteTranslationEngine)
     );
     const project: SFProject = {
-      userRoles: { user01: SFProjectRoles.ParatextTranslator },
+      userRoles: { user01: SFProjectRole.ParatextTranslator },
       inputSystem: { languageName: 'Target' },
       translateEnabled: true,
       sourceInputSystem: { languageName: 'Source' },

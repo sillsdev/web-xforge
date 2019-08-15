@@ -3,23 +3,23 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angu
 import { AbstractControl, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import cloneDeep from 'lodash/cloneDeep';
 import { AccountService } from 'xforge-common/account.service';
-import { UserDoc } from 'xforge-common/models/user-doc';
+import { UserDoc } from 'xforge-common/docs/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { SFProjectUserConfigDoc } from '../../../core/docs/sf-project-user-config-doc';
 import { Answer } from '../../../core/models/answer';
 import { Comment } from '../../../core/models/comment';
 import { Question } from '../../../core/models/question';
-import { ScrVers } from '../../../core/models/scripture/scr-vers';
-import { VerseRef } from '../../../core/models/scripture/verse-ref';
-import { SFProject } from '../../../core/models/sfproject';
-import { SFProjectRoles } from '../../../core/models/sfproject-roles';
-import { SFProjectUserConfigDoc } from '../../../core/models/sfproject-user-config-doc';
+import { SFProject } from '../../../core/models/sf-project';
+import { SFProjectRole } from '../../../core/models/sf-project-role';
 import { TextInfo, TextsByBook } from '../../../core/models/text-info';
 import { VerseRefData } from '../../../core/models/verse-ref-data';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../../scripture-chooser-dialog/scripture-chooser-dialog.component';
+import { ScrVers } from '../../../shared/scripture-utils/scr-vers';
+import { VerseRef } from '../../../shared/scripture-utils/verse-ref';
 import { SFValidators } from '../../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
@@ -133,7 +133,7 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   get isAdministrator(): boolean {
-    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRoles.ParatextAdministrator;
+    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRole.ParatextAdministrator;
   }
 
   get question(): Question {

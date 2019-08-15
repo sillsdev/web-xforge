@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import cloneDeep from 'lodash/cloneDeep';
 import { UserService } from 'xforge-common/user.service';
+import { SFProjectUserConfigDoc } from '../../../../core/docs/sf-project-user-config-doc';
 import { Answer } from '../../../../core/models/answer';
 import { Comment } from '../../../../core/models/comment';
-import { SFProject } from '../../../../core/models/sfproject';
-import { SFProjectRoles } from '../../../../core/models/sfproject-roles';
-import { SFProjectUserConfigDoc } from '../../../../core/models/sfproject-user-config-doc';
+import { SFProject } from '../../../../core/models/sf-project';
+import { SFProjectRole } from '../../../../core/models/sf-project-role';
 
 export interface CommentAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'show-comments';
@@ -35,7 +35,7 @@ export class CheckingCommentsComponent implements OnInit {
   constructor(private userService: UserService) {}
 
   get isAdministrator(): boolean {
-    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRoles.ParatextAdministrator;
+    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRole.ParatextAdministrator;
   }
 
   get showMoreCommentsLabel(): string {

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { ElementState } from 'xforge-common/models/element-state';
+import { ElementState } from 'xforge-common/element-state';
 
 @Component({
   selector: 'app-write-status',

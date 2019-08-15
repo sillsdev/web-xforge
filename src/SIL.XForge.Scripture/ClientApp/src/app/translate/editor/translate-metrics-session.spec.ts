@@ -5,10 +5,10 @@ import * as RichText from 'rich-text';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
-import { Delta, TextDoc } from '../../core/models/text-doc';
-import { TextDocId } from '../../core/models/text-doc-id';
+import { Delta, TextDoc } from '../../core/docs/text-doc';
+import { TextDocId } from '../../core/docs/text-doc-id';
 import { TranslateMetrics } from '../../core/models/translate-metrics';
-import { SFProjectService } from '../../core/sfproject.service';
+import { SFProjectService } from '../../core/sf-project.service';
 import { TextComponent } from '../../shared/text/text.component';
 import {
   ACTIVE_EDIT_TIMEOUT,

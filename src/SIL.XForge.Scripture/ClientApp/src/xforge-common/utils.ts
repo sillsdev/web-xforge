@@ -1,6 +1,6 @@
 import { ObjectId } from 'bson';
 import { environment } from '../environments/environment';
-import { ProjectDoc } from './models/project-doc';
+import { ProjectDoc } from './docs/project-doc';
 
 export function nameof<T>(name: Extract<keyof T, string>): string {
   return name;

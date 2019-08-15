@@ -18,14 +18,14 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import XRegExp from 'xregexp';
+import { SFProjectDoc } from '../../core/docs/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../../core/docs/sf-project-user-config-doc';
+import { Delta } from '../../core/docs/text-doc';
+import { TextDocId, TextType } from '../../core/docs/text-doc-id';
 import { HelpHeroService } from '../../core/help-hero.service';
-import { SFProjectDoc } from '../../core/models/sfproject-doc';
-import { SFProjectRoles } from '../../core/models/sfproject-roles';
-import { SFProjectUserConfigDoc } from '../../core/models/sfproject-user-config-doc';
-import { Delta } from '../../core/models/text-doc';
-import { TextDocId, TextType } from '../../core/models/text-doc-id';
+import { SFProjectRole } from '../../core/models/sf-project-role';
 import { TextInfo } from '../../core/models/text-info';
-import { SFProjectService } from '../../core/sfproject.service';
+import { SFProjectService } from '../../core/sf-project.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
@@ -610,7 +610,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   private startUserOnboardingTour() {
     // HelpHero user-onboarding tour setup
     const isProjectAdmin: boolean =
-      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRoles.ParatextAdministrator;
+      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator;
 
     this.helpHeroService.setProperty({
       isAdmin: isProjectAdmin

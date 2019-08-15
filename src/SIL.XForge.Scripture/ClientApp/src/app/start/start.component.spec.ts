@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import * as OTJson0 from 'ot-json0';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-import { UserDoc } from 'xforge-common/models/user-doc';
+import { UserDoc } from 'xforge-common/docs/user-doc';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';

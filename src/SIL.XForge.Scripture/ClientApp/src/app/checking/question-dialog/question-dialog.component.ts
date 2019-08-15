@@ -13,14 +13,14 @@ import {
 import { NoticeService } from 'xforge-common/notice.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { Question } from '../../core/models/question';
-import { ScrVers } from '../../core/models/scripture/scr-vers';
-import { VerseRef } from '../../core/models/scripture/verse-ref';
 import { TextsByBook } from '../../core/models/text-info';
 import { VerseRefData } from '../../core/models/verse-ref-data';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
+import { ScrVers } from '../../shared/scripture-utils/scr-vers';
+import { VerseRef } from '../../shared/scripture-utils/verse-ref';
 import { SFValidators } from '../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking/checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';

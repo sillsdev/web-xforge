@@ -1,5 +1,5 @@
 import { Question } from '../core/models/question';
-import { SFProjectUserConfig } from '../core/models/sfproject-user-config';
+import { SFProjectUserConfig } from '../core/models/sf-project-user-config';
 
 export class CheckingUtils {
   static hasUserAnswered(question: Question, userId: string): boolean {

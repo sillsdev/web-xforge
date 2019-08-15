@@ -64,7 +64,7 @@ namespace SIL.XForge.Realtime
         public void AddRepository<T>(string type, string otTypeName, MemoryRepository<T> repo) where T : IIdentifiable
         {
             _repos[typeof(T)] = repo;
-            _docConfigs[typeof(T)] = new DocConfig(type, otTypeName) { Type = typeof(T) };
+            _docConfigs[typeof(T)] = new DocConfig(type, typeof(T), otTypeName);
         }
 
         public MemoryRepository<T> GetRepository<T>() where T : IIdentifiable

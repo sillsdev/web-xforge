@@ -9,18 +9,18 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { CommentListDoc } from '../../core/docs/comment-list-doc';
+import { QuestionListDoc } from '../../core/docs/question-list-doc';
+import { SFProjectDoc } from '../../core/docs/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../../core/docs/sf-project-user-config-doc';
+import { getTextDocIdStr, TextDocId } from '../../core/docs/text-doc-id';
 import { HelpHeroService } from '../../core/help-hero.service';
 import { Answer } from '../../core/models/answer';
 import { Comment } from '../../core/models/comment';
-import { CommentListDoc } from '../../core/models/comment-list-doc';
 import { Question } from '../../core/models/question';
-import { QuestionListDoc } from '../../core/models/question-list-doc';
-import { SFProjectDoc } from '../../core/models/sfproject-doc';
-import { SFProjectRoles } from '../../core/models/sfproject-roles';
-import { SFProjectUserConfigDoc } from '../../core/models/sfproject-user-config-doc';
-import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
+import { SFProjectRole } from '../../core/models/sf-project-role';
 import { TextInfo } from '../../core/models/text-info';
-import { SFProjectService } from '../../core/sfproject.service';
+import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingUtils } from '../checking.utils';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
@@ -531,7 +531,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   private startUserOnboardingTour() {
     // HelpHero user-onboarding tour setup
     const isProjectAdmin: boolean =
-      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRoles.ParatextAdministrator;
+      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator;
     const isDiscussionEnabled: boolean = this.projectDoc.data.usersSeeEachOthersResponses;
     const isInvitingEnabled: boolean = this.projectDoc.data.shareEnabled;
 

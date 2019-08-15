@@ -22,23 +22,4 @@
     <PackageReference Include="idunno.Authentication.Basic" Version="2.1.1" />
   </ItemGroup>
 
-  <Target Name="EnsureNodeInstalled">
-    <!-- Ensure Node.js is installed -->
-    <Exec Command="node --version" ContinueOnError="true">
-      <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
-    </Exec>
-    <Error Condition="'$(ErrorCode)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE." />
-  </Target>
-
-  <Target Name="BuildRealtimeServer" DependsOnTargets="EnsureNodeInstalled" BeforeTargets="AssignTargetPaths" Condition="'$(Configuration)' == 'Debug'">
-    <Message Importance="high" Text="Building real-time server..." />
-    <Exec WorkingDirectory="Realtime\Server\" Command="npm install" Condition="!Exists('Realtime\Server\node_modules') Or '$(NpmInstall)' == 'true'" />
-    <Exec WorkingDirectory="Realtime\Server\" Command="npm run build" Condition="Exists('Realtime\Server\node_modules') And '$(NpmInstall)' != 'true' " />
-    <ItemGroup>
-      <Content Include="Realtime\Server\**\*">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-    </ItemGroup>
-  </Target>
-
 </Project>

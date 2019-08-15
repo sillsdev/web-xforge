@@ -1,6 +1,6 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import RecordRTC from 'recordrtc';
-import { UserDoc } from 'xforge-common/models/user-doc';
+import { UserDoc } from 'xforge-common/docs/user-doc';
 import { UserService } from 'xforge-common/user.service';
 
 export interface AudioAttachment {

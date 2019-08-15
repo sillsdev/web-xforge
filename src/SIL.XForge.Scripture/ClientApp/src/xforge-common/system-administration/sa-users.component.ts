@@ -3,7 +3,7 @@ import { Component, HostBinding, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { DataLoadingComponent } from '../data-loading-component';
-import { ProjectDoc } from '../models/project-doc';
+import { ProjectDoc } from '../docs/project-doc';
 import { User } from '../models/user';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';

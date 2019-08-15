@@ -9,18 +9,18 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { CommentListDoc } from '../../core/models/comment-list-doc';
+import { CommentListDoc } from '../../core/docs/comment-list-doc';
+import { QuestionListDoc } from '../../core/docs/question-list-doc';
+import { SFProjectDoc } from '../../core/docs/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../../core/docs/sf-project-user-config-doc';
+import { getTextDocIdStr, TextDocId } from '../../core/docs/text-doc-id';
 import { Question, QuestionSource } from '../../core/models/question';
-import { QuestionListDoc } from '../../core/models/question-list-doc';
-import { ScrVers } from '../../core/models/scripture/scr-vers';
-import { VerseRef } from '../../core/models/scripture/verse-ref';
-import { ScrVersType } from '../../core/models/scripture/versification';
-import { SFProjectDoc } from '../../core/models/sfproject-doc';
-import { SFProjectRoles } from '../../core/models/sfproject-roles';
-import { SFProjectUserConfigDoc } from '../../core/models/sfproject-user-config-doc';
-import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
+import { SFProjectRole } from '../../core/models/sf-project-role';
 import { TextInfo, TextsByBook } from '../../core/models/text-info';
-import { SFProjectService } from '../../core/sfproject.service';
+import { SFProjectService } from '../../core/sf-project.service';
+import { ScrVers } from '../../shared/scripture-utils/scr-vers';
+import { VerseRef } from '../../shared/scripture-utils/verse-ref';
+import { ScrVersType } from '../../shared/scripture-utils/versification';
 import { CheckingUtils } from '../checking.utils';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import {
@@ -137,7 +137,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return (
       this.projectDoc != null &&
       this.projectDoc.data != null &&
-      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRoles.ParatextAdministrator
+      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
     );
   }
 

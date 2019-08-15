@@ -17,9 +17,9 @@ import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SFProject } from '../core/models/sfproject';
-import { SFProjectDoc } from '../core/models/sfproject-doc';
-import { SFProjectService } from '../core/sfproject.service';
+import { SFProjectDoc } from '../core/docs/sf-project-doc';
+import { SFProject } from '../core/models/sf-project';
+import { SFProjectService } from '../core/sf-project.service';
 import { ConnectProjectComponent } from './connect-project.component';
 
 describe('ConnectProjectComponent', () => {

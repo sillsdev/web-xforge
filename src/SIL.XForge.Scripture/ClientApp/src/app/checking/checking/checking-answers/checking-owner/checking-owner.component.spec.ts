@@ -5,7 +5,7 @@ import { AvatarService } from 'ngx-avatar';
 import * as OTJson0 from 'ot-json0';
 import { instance, mock, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
-import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
+import { UserProfileDoc } from 'xforge-common/docs/user-profile-doc';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';

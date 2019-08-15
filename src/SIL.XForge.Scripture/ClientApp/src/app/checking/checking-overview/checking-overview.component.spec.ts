@@ -17,20 +17,20 @@ import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { CommentListDoc } from '../../core/docs/comment-list-doc';
+import { QuestionListDoc } from '../../core/docs/question-list-doc';
+import { SFProjectDoc } from '../../core/docs/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../../core/docs/sf-project-user-config-doc';
+import { TextDocId } from '../../core/docs/text-doc-id';
 import { Comment } from '../../core/models/comment';
-import { CommentListDoc } from '../../core/models/comment-list-doc';
 import { Question } from '../../core/models/question';
-import { QuestionListDoc } from '../../core/models/question-list-doc';
-import { ScrVers } from '../../core/models/scripture/scr-vers';
-import { VerseRef } from '../../core/models/scripture/verse-ref';
-import { ScrVersType } from '../../core/models/scripture/versification';
-import { SFProject } from '../../core/models/sfproject';
-import { SFProjectDoc } from '../../core/models/sfproject-doc';
-import { SFProjectRoles } from '../../core/models/sfproject-roles';
-import { SFProjectUserConfig } from '../../core/models/sfproject-user-config';
-import { SFProjectUserConfigDoc } from '../../core/models/sfproject-user-config-doc';
-import { TextDocId } from '../../core/models/text-doc-id';
-import { SFProjectService } from '../../core/sfproject.service';
+import { SFProject } from '../../core/models/sf-project';
+import { SFProjectRole } from '../../core/models/sf-project-role';
+import { SFProjectUserConfig } from '../../core/models/sf-project-user-config';
+import { SFProjectService } from '../../core/sf-project.service';
+import { ScrVers } from '../../shared/scripture-utils/scr-vers';
+import { VerseRef } from '../../shared/scripture-utils/verse-ref';
+import { ScrVersType } from '../../shared/scripture-utils/versification';
 import { CheckingModule } from '../checking.module';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogComponent } from '../question-dialog/question-dialog.component';
@@ -376,8 +376,8 @@ class TestEnvironment {
   mockedUserService: UserService = mock(UserService);
   mockedAuthService: AuthService = mock(AuthService);
   mockedRealtimeOfflineStore: RealtimeOfflineStore = mock(RealtimeOfflineStore);
-  adminUser = this.createUser('01', SFProjectRoles.ParatextAdministrator);
-  reviewerUser = this.createUser('02', SFProjectRoles.Reviewer);
+  adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
+  reviewerUser = this.createUser('02', SFProjectRole.Reviewer);
 
   private adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.adminUser.id,

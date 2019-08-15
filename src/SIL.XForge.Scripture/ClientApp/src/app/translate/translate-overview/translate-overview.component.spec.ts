@@ -13,11 +13,11 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { SFProject } from '../../core/models/sfproject';
-import { SFProjectDoc } from '../../core/models/sfproject-doc';
-import { Delta, TextDoc } from '../../core/models/text-doc';
-import { TextDocId } from '../../core/models/text-doc-id';
-import { SFProjectService } from '../../core/sfproject.service';
+import { SFProjectDoc } from '../../core/docs/sf-project-doc';
+import { Delta, TextDoc } from '../../core/docs/text-doc';
+import { TextDocId } from '../../core/docs/text-doc-id';
+import { SFProject } from '../../core/models/sf-project';
+import { SFProjectService } from '../../core/sf-project.service';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
 describe('TranslateOverviewComponent', () => {

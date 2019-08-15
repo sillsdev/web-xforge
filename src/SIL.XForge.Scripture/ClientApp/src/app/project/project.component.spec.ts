@@ -8,12 +8,12 @@ import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SFProject } from '../core/models/sfproject';
-import { SFProjectDoc } from '../core/models/sfproject-doc';
-import { SFProjectRoles } from '../core/models/sfproject-roles';
-import { SFProjectUserConfig } from '../core/models/sfproject-user-config';
-import { SFProjectUserConfigDoc } from '../core/models/sfproject-user-config-doc';
-import { SFProjectService } from '../core/sfproject.service';
+import { SFProjectDoc } from '../core/docs/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../core/docs/sf-project-user-config-doc';
+import { SFProject } from '../core/models/sf-project';
+import { SFProjectRole } from '../core/models/sf-project-role';
+import { SFProjectUserConfig } from '../core/models/sf-project-user-config';
+import { SFProjectService } from '../core/sf-project.service';
 import { ProjectComponent } from './project.component';
 
 describe('ProjectComponent', () => {
@@ -41,7 +41,7 @@ describe('ProjectComponent', () => {
 
   it('navigate to checking task if a reviewer and no last selected text', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ role: SFProjectRoles.Reviewer });
+    env.setProjectData({ role: SFProjectRole.Reviewer });
     env.fixture.detectChanges();
     tick();
 
@@ -149,7 +149,7 @@ class TestEnvironment {
     isTranslateEnabled?: boolean;
     hasTexts?: boolean;
     selectedTask?: string;
-    role?: SFProjectRoles;
+    role?: SFProjectRole;
   }): void {
     const projectUserConfig: SFProjectUserConfig = {
       ownerRef: 'user01',
@@ -165,7 +165,7 @@ class TestEnvironment {
       translateEnabled: args.isTranslateEnabled == null || args.isTranslateEnabled,
       checkingEnabled: true,
       texts: args.hasTexts == null || args.hasTexts ? [{ bookId: 'text01' }, { bookId: 'text02' }] : undefined,
-      userRoles: { user01: args.role == null ? SFProjectRoles.ParatextTranslator : args.role }
+      userRoles: { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }
     };
     const projectDoc = new SFProjectDoc(
       new MemoryRealtimeDocAdapter('project01', OTJson0.type, project),

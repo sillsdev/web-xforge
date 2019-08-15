@@ -8,37 +8,11 @@ namespace SIL.XForge.Configuration
     /// </summary>
     public class RealtimeOptions
     {
-        private static readonly DocConfig DefaultUserDocConfig = new DocConfig(RootDataTypes.Users)
-        {
-            Type = typeof(User),
-            ImmutableProperties =
-            {
-                PathTemplateConfig<User>.Create(u => u.AuthId),
-                PathTemplateConfig<User>.Create(u => u.ParatextId),
-                PathTemplateConfig<User>.Create(u => u.Role),
-                PathTemplateConfig<User>.Create(u => u.AvatarUrl),
-                PathTemplateConfig<User>.Create(u => u.Email),
-                PathTemplateConfig<User>.Create(u => u.Sites, false),
-                PathTemplateConfig<User>.Create(u => u.Sites["*"], false),
-                PathTemplateConfig<User>.Create(u => u.Sites["*"].LastLogin),
-                PathTemplateConfig<User>.Create(u => u.Sites["*"].Projects)
-            }
-        };
-
-        private static readonly DocConfig DefaultProjectDocConfig = new DocConfig(RootDataTypes.Projects)
-        {
-            ImmutableProperties =
-            {
-                PathTemplateConfig<Project>.Create(p => p.ShareEnabled),
-                PathTemplateConfig<Project>.Create(p => p.ShareLevel),
-                PathTemplateConfig<Project>.Create(p => p.UserRoles)
-            }
-        };
-
+        public string AppModuleName { get; set; }
         public int Port { get; set; } = 5003;
-        public DocConfig UserDoc { get; set; } = DefaultUserDocConfig;
-        public DocConfig ProjectDoc { get; set; } = DefaultProjectDocConfig;
-        public ProjectRoles ProjectRoles { get; set; }
-        public IList<DocConfig> ProjectDataDocs { get; set; } = new List<DocConfig>();
+        public List<DocConfig> Docs { get; set; } = new List<DocConfig>
+            {
+                new DocConfig(RootDataTypes.Users, typeof(User))
+            };
     }
 }

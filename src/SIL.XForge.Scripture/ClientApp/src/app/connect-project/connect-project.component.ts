@@ -6,9 +6,9 @@ import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { SFProject } from '../core/models/sfproject';
-import { SFProjectDoc } from '../core/models/sfproject-doc';
-import { SFProjectService } from '../core/sfproject.service';
+import { SFProjectDoc } from '../core/docs/sf-project-doc';
+import { SFProject } from '../core/models/sf-project';
+import { SFProjectService } from '../core/sf-project.service';
 
 interface ConnectProjectFormValues {
   paratextId: string;

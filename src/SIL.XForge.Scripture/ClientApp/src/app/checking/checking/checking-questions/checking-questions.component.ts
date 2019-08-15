@@ -3,12 +3,12 @@ import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { SFProjectUserConfigDoc } from '../../../core/docs/sf-project-user-config-doc';
 import { Answer } from '../../../core/models/answer';
 import { Comment } from '../../../core/models/comment';
 import { Question } from '../../../core/models/question';
-import { SFProject } from '../../../core/models/sfproject';
-import { SFProjectRoles } from '../../../core/models/sfproject-roles';
-import { SFProjectUserConfigDoc } from '../../../core/models/sfproject-user-config-doc';
+import { SFProject } from '../../../core/models/sf-project';
+import { SFProjectRole } from '../../../core/models/sf-project-role';
 import { CheckingUtils } from '../../checking.utils';
 
 @Component({
@@ -43,7 +43,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   get isAdministrator(): boolean {
-    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRoles.ParatextAdministrator;
+    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRole.ParatextAdministrator;
   }
 
   get questions(): Readonly<Question[]> {
