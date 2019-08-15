@@ -81,7 +81,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   private _isDrawerPermanent: boolean = true;
   private _chapter: number;
   private _questions: Readonly<Question[]> = [];
-  private lastPlayedAudio: HTMLAudioElement = null;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -325,13 +324,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     if (this.chapter !== chapter) {
       this.chapter = chapter;
     }
-  }
-
-  onAudioPlayRequested(audio: HTMLAudioElement) {
-    if (this.lastPlayedAudio && this.lastPlayedAudio.src !== audio.src) {
-      this.lastPlayedAudio.pause();
-    }
-    this.lastPlayedAudio = audio;
   }
 
   questionUpdated(question: Question) {
