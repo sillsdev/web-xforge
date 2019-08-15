@@ -10,6 +10,7 @@ import {
   ValidationErrors,
   Validators
 } from '@angular/forms';
+import { NoticeService } from 'xforge-common/notice.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { Question } from '../../core/models/question';
 import { ScrVers } from '../../core/models/scripture/scr-vers';
@@ -74,6 +75,7 @@ export class QuestionDialogComponent implements OnInit {
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
     @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData,
+    private noticeService: NoticeService,
     readonly dialog: MdcDialog
   ) {}
 
@@ -110,6 +112,7 @@ export class QuestionDialogComponent implements OnInit {
   async submit() {
     if (this.audio.status === 'recording') {
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
+      this.noticeService.show('Your recorded question has been automatically saved.');
     }
     if (this.questionForm.invalid) {
       return;

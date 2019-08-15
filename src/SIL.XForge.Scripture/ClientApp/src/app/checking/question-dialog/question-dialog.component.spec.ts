@@ -7,6 +7,7 @@ import { of } from 'rxjs';
 import { anything, capture, instance, mock, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
@@ -300,6 +301,7 @@ class TestEnvironment {
 
   mockedAuthService: AuthService = mock(AuthService);
   mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
+  mockedNoticeService = mock(NoticeService);
   mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
   mockedUserService: UserService = mock(UserService);
   dialogSpy: MdcDialog;
@@ -309,7 +311,8 @@ class TestEnvironment {
       imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
       providers: [
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
+        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
       ]
     });
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
