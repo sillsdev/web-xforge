@@ -4,6 +4,7 @@ import { AbstractControl, FormControl, FormGroup, FormGroupDirective, NgForm, Va
 import cloneDeep from 'lodash/cloneDeep';
 import { AccountService } from 'xforge-common/account.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { Answer } from '../../../core/models/answer';
 import { Comment } from '../../../core/models/comment';
@@ -89,7 +90,12 @@ export class CheckingAnswersComponent implements OnInit {
   private initUserAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
 
-  constructor(private accountService: AccountService, private userService: UserService, readonly dialog: MdcDialog) {}
+  constructor(
+    private accountService: AccountService,
+    private userService: UserService,
+    readonly dialog: MdcDialog,
+    private noticeService: NoticeService
+  ) {}
 
   get answerText(): AbstractControl {
     return this.answerForm.controls.answerText;
@@ -313,6 +319,7 @@ export class CheckingAnswersComponent implements OnInit {
   async submit() {
     if (this.audio.status === 'recording') {
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
+      this.noticeService.show('Your recorded answer has been automatically saved.');
     }
     this.setValidationRules();
     this.answerFormSubmitAttempted = true;
