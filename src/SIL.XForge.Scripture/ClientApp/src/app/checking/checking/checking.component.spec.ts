@@ -8,14 +8,19 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import * as OTJson0 from 'ot-json0';
+import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
+import { User } from 'realtime-server/lib/common/models/user';
+import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
+import { Question } from 'realtime-server/lib/scriptureforge/models/question';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
-import { SharingLevel } from 'xforge-common/models/sharing-level';
-import { User } from 'xforge-common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -28,18 +33,13 @@ import { ShareComponent } from 'xforge-common/share/share.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { Comment } from '../../core/models/comment';
 import { CommentListDoc } from '../../core/models/comment-list-doc';
-import { Question } from '../../core/models/question';
 import { QuestionListDoc } from '../../core/models/question-list-doc';
-import { SFProject } from '../../core/models/sfproject';
-import { SFProjectDoc } from '../../core/models/sfproject-doc';
-import { SFProjectRoles } from '../../core/models/sfproject-roles';
-import { SFProjectUserConfig } from '../../core/models/sfproject-user-config';
-import { SFProjectUserConfigDoc } from '../../core/models/sfproject-user-config-doc';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
-import { SFProjectService } from '../../core/sfproject.service';
+import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
@@ -480,9 +480,9 @@ class TestEnvironment {
   readonly mockedProjectService = mock(SFProjectService);
   readonly mockedNoticeService = mock(NoticeService);
 
-  adminUser = this.createUser('01', SFProjectRoles.ParatextAdministrator);
-  reviewerUser = this.createUser('02', SFProjectRoles.Reviewer);
-  cleanReviewUser = this.createUser('03', SFProjectRoles.Reviewer, false);
+  adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
+  reviewerUser = this.createUser('02', SFProjectRole.Reviewer);
+  cleanReviewUser = this.createUser('03', SFProjectRole.Reviewer, false);
 
   private adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.adminUser.id,

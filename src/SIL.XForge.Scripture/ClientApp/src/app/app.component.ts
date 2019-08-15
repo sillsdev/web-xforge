@@ -2,25 +2,26 @@ import { MdcDialog, MdcSelect, MdcTopAppBar } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { Site } from 'realtime-server/lib/common/models/site';
+import { SystemRole } from 'realtime-server/lib/common/models/system-role';
+import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { combineLatest, from, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component.js';
 import { LocationService } from 'xforge-common/location.service';
-import { Site } from 'xforge-common/models/site';
-import { SystemRole } from 'xforge-common/models/system-role';
-import { AuthType, getAuthType, User } from 'xforge-common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
-import { SFProjectDoc } from './core/models/sfproject-doc';
-import { canTranslate, SFProjectRoles } from './core/models/sfproject-roles';
-import { TextInfo } from './core/models/text-info';
-import { SFProjectService } from './core/sfproject.service';
+import { SFProjectDoc } from './core/models/sf-project-doc';
+import { canTranslate } from './core/models/sf-project-role-info';
+import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
 
@@ -49,7 +50,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private selectedProjectDoc: SFProjectDoc;
   private selectedProjectDeleteSub: Subscription;
   private _isDrawerPermanent: boolean = true;
-  private selectedProjectRole: SFProjectRoles;
+  private selectedProjectRole: SFProjectRole;
 
   constructor(
     private readonly router: Router,
@@ -250,7 +251,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.selectedProjectRole =
           this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
             ? undefined
-            : (this.selectedProjectDoc.data.userRoles[this.currentUserDoc.id] as SFProjectRoles);
+            : (this.selectedProjectDoc.data.userRoles[this.currentUserDoc.id] as SFProjectRole);
         if (this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded) {
           return;
         }

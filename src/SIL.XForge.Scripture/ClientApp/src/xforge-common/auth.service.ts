@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
+import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { fromEvent, of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
 import { LocationService } from './location.service';
-import { SystemRole } from './models/system-role';
 import { UserDoc } from './models/user-doc';
 import { RealtimeService } from './realtime.service';
 

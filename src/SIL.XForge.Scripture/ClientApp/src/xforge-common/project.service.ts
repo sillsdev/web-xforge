@@ -1,26 +1,26 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Project } from 'realtime-server/lib/common/models/project';
 import { combineLatest, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
-import { Project } from './models/project';
 import { ProjectDoc } from './models/project-doc';
-import { NONE_ROLE, ProjectRole } from './models/project-role';
+import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
 import { QueryParameters, QueryResults, RealtimeService } from './realtime.service';
 
 export abstract class ProjectService<
   TProj extends Project = Project,
   TDoc extends ProjectDoc<TProj> = ProjectDoc<TProj>
 > {
-  readonly roles: Map<string, ProjectRole>;
+  readonly roles: Map<string, ProjectRoleInfo>;
 
   constructor(
     protected readonly realtimeService: RealtimeService,
     protected readonly commandService: CommandService,
-    roles: ProjectRole[],
+    roles: ProjectRoleInfo[],
     private readonly http: HttpClient
   ) {
-    this.roles = new Map<string, ProjectRole>();
+    this.roles = new Map<string, ProjectRoleInfo>();
     for (const role of roles) {
       this.roles.set(role.role, role);
     }

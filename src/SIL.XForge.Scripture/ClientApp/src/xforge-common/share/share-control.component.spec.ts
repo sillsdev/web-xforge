@@ -6,13 +6,12 @@ import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import * as OTJson0 from 'ot-json0';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
-import { DomainModel } from 'xforge-common/models/domain-model';
-import { ProjectDoc } from 'xforge-common/models/project-doc';
-import { NoticeService } from 'xforge-common/notice.service';
-import { ProjectService } from 'xforge-common/project.service';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { ProjectDoc } from '../models/project-doc';
+import { NoticeService } from '../notice.service';
+import { ProjectService } from '../project.service';
+import { MemoryRealtimeDocAdapter } from '../realtime-doc-adapter';
+import { RealtimeOfflineStore } from '../realtime-offline-store';
+import { UICommonModule } from '../ui-common.module';
 import { ShareControlComponent } from './share-control.component';
 
 describe('ShareControlComponent', () => {
@@ -156,7 +155,6 @@ describe('ShareControlComponent', () => {
         declarations: [TestHostComponent],
         imports: [TestModule],
         providers: [
-          { provide: DomainModel },
           { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
           { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
         ]

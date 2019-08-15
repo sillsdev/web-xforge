@@ -1,5 +1,5 @@
 import { Snapshot } from 'sharedb/lib/client';
-import { DomainModel } from './models/domain-model';
+import { RealtimeDocTypes } from './realtime-doc-types';
 import { getCollectionName } from './utils';
 
 const DATABASE_NAME = 'xforge';
@@ -19,7 +19,7 @@ export class RealtimeOfflineStore {
   private openDBPromise: Promise<void>;
   private db: IDBDatabase;
 
-  constructor(private readonly domainModel: DomainModel) {}
+  constructor(private readonly domainModel: RealtimeDocTypes) {}
 
   async getAllIds(type: string): Promise<string[]> {
     await this.openDB();
@@ -97,7 +97,7 @@ export class RealtimeOfflineStore {
       };
       request.onupgradeneeded = () => {
         const db = request.result;
-        for (const docType of this.domainModel.realtimeDocTypes) {
+        for (const docType of this.domainModel.docTypes) {
           db.createObjectStore(getCollectionName(docType), { keyPath: 'id' });
         }
       };

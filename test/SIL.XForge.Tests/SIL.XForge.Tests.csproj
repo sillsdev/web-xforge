@@ -7,6 +7,7 @@
 
     <RootNamespace>SIL.XForge</RootNamespace>
     <LangVersion>latest</LangVersion>
+    <RealtimeServerRoot>..\..\src\RealtimeServer\</RealtimeServerRoot>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,5 +24,26 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SIL.XForge\SIL.XForge.csproj" />
   </ItemGroup>
+
+  <Target Name="EnsureNodeInstalled">
+    <!-- Ensure Node.js is installed -->
+    <Exec Command="node --version" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
+    </Exec>
+    <Error Condition="'$(ErrorCode)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE." />
+  </Target>
+
+  <Target Name="BuildRealtimeServer" DependsOnTargets="EnsureNodeInstalled" BeforeTargets="AssignTargetPaths" Condition="'$(Configuration)' == 'Debug'">
+    <Message Importance="high" Text="Building real-time server..." />
+    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="npm install" Condition="!Exists('$(RealtimeServerRoot)node_modules') Or '$(NpmInstall)' == 'true'" />
+    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="npm run build" Condition="Exists('$(RealtimeServerRoot)node_modules') And '$(NpmInstall)' != 'true' " />
+    <ItemGroup>
+      <RealtimeFiles Include="$(RealtimeServerRoot)**\*" />
+      <Content Include="@(RealtimeFiles)">
+        <Link>RealtimeServer\%(RecursiveDir)%(Filename)%(Extension)</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+  </Target>
 
 </Project>

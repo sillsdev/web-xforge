@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot } from '@angular/router';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { from, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectRoles } from '../core/models/sfproject-roles';
-import { SFProjectService } from '../core/sfproject.service';
+import { SFProjectService } from '../core/sf-project.service';
 
 @Injectable({
   providedIn: 'root'
@@ -29,7 +29,7 @@ export class SFAdminAuthGuard implements CanActivate {
           return from(this.projectService.get(projectId)).pipe(
             map(
               projectDoc =>
-                projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRoles.ParatextAdministrator
+                projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
             )
           );
         }

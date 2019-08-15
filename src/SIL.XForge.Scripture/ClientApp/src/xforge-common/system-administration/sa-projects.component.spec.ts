@@ -4,13 +4,13 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import * as OTJson0 from 'ot-json0';
+import { Project } from 'realtime-server/lib/common/models/project';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { NoticeService } from 'xforge-common/notice.service';
-import { Project } from '../models/project';
 import { ProjectDoc } from '../models/project-doc';
-import { NONE_ROLE, ProjectRole } from '../models/project-role';
+import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
+import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { MemoryRealtimeDocAdapter } from '../realtime-doc-adapter';
 import { RealtimeOfflineStore } from '../realtime-offline-store';
@@ -127,7 +127,7 @@ class TestEnvironment {
   constructor() {
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedProjectService.roles).thenReturn(
-      new Map<string, ProjectRole>([
+      new Map<string, ProjectRoleInfo>([
         ['admin', { role: 'admin', displayName: 'Administrator' }],
         ['user', { role: 'user', displayName: 'User' }],
         [NONE_ROLE.role, NONE_ROLE]

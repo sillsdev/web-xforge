@@ -14,8 +14,8 @@ namespace SIL.XForge.Realtime
         public RealtimeServer(INodeServices nodeServices)
         {
             _nodeServices = nodeServices;
-            _modulePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Realtime",
-                "Server", "dist", "index");
+            _modulePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                "RealtimeServer", "lib", "common", "index");
         }
 
         public void Start(object options)

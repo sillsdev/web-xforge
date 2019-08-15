@@ -6,8 +6,8 @@ import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
-import { SFProjectDoc } from '../core/models/sfproject-doc';
-import { SFProjectService } from '../core/sfproject.service';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectService } from '../core/sf-project.service';
 
 @Component({
   selector: 'app-sync',

@@ -4,20 +4,20 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import * as OTJson0 from 'ot-json0';
+import { Project } from 'realtime-server/lib/common/models/project';
+import { User } from 'realtime-server/lib/common/models/user';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { LocationService } from 'xforge-common/location.service';
-import { ProjectDoc } from 'xforge-common/models/project-doc';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
-import { ShareControlComponent } from 'xforge-common/share/share-control.component';
 import { AvatarTestingModule } from '../../avatar/avatar-testing.module';
-import { Project } from '../../models/project';
-import { NONE_ROLE, ProjectRole } from '../../models/project-role';
-import { User } from '../../models/user';
+import { LocationService } from '../../location.service';
+import { ProjectDoc } from '../../models/project-doc';
+import { NONE_ROLE, ProjectRoleInfo } from '../../models/project-role-info';
 import { UserProfileDoc } from '../../models/user-profile-doc';
 import { NoticeService } from '../../notice.service';
 import { ProjectService } from '../../project.service';
 import { MemoryRealtimeDocAdapter } from '../../realtime-doc-adapter';
+import { RealtimeOfflineStore } from '../../realtime-offline-store';
+import { ShareControlComponent } from '../../share/share-control.component';
 import { UICommonModule } from '../../ui-common.module';
 import { UserService } from '../../user.service';
 import { CollaboratorsComponent } from './collaborators.component';
@@ -129,7 +129,7 @@ class TestEnvironment {
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(this.mockedProjectService.roles).thenReturn(
-      new Map<string, ProjectRole>([
+      new Map<string, ProjectRoleInfo>([
         ['admin', { role: 'admin', displayName: 'Administrator' }],
         ['user', { role: 'user', displayName: 'User' }],
         [NONE_ROLE.role, NONE_ROLE]
