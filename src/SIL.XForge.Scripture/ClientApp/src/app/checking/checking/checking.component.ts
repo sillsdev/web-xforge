@@ -327,13 +327,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     }
   }
 
-  onAudioPlayRequested(audio: HTMLAudioElement) {
-    if (this.lastPlayedAudio && this.lastPlayedAudio.src !== audio.src) {
-      this.lastPlayedAudio.pause();
-    }
-    this.lastPlayedAudio = audio;
-  }
-
   questionUpdated(question: Question) {
     this.refreshSummary();
   }

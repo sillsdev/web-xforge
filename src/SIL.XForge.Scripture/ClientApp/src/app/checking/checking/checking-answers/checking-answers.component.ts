@@ -72,7 +72,6 @@ export class CheckingAnswersComponent implements OnInit {
   @Input() comments: Readonly<Comment[]> = [];
   @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
   @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
-  @Output() playAudioRequested: EventEmitter<HTMLAudioElement> = new EventEmitter<HTMLAudioElement>();
 
   activeAnswer: Answer;
   answerForm: FormGroup = new FormGroup({
