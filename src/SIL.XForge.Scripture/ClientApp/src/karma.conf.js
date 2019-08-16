@@ -29,7 +29,16 @@ module.exports = function(config) {
       fixWebpackSourcePaths: true
     },
     files: [
-      { pattern: 'app/checking/checking/checking-audio-player/test-audio-player.webm', watched: false, included: false }
+      {
+        pattern: 'app/checking/checking/checking-audio-player/test-audio-player.webm',
+        watched: false,
+        included: false
+      },
+      {
+        pattern: 'app/checking/checking/checking-audio-player/test-audio-player-b.webm',
+        watched: false,
+        included: false
+      }
     ],
     proxies: {
       '/assets/audio/': '/base/app/checking/checking/checking-audio-player/'

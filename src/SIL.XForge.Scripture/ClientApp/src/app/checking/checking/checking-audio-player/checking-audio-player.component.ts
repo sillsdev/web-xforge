@@ -1,5 +1,5 @@
 import { MdcSliderChange } from '@angular-mdc/web';
-import { Component, Input, Pipe, PipeTransform } from '@angular/core';
+import { Component, Input, OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -7,7 +7,8 @@ import { environment } from '../../../../environments/environment';
   templateUrl: './checking-audio-player.component.html',
   styleUrls: ['./checking-audio-player.component.scss']
 })
-export class CheckingAudioPlayerComponent {
+export class CheckingAudioPlayerComponent implements OnDestroy {
+  static lastPlayedAudio: HTMLAudioElement;
   seek: number = 0;
 
   private _currentTime: number = 0;
@@ -77,11 +78,26 @@ export class CheckingAudioPlayerComponent {
       } else {
         this.enabled = true;
       }
+      this.audio.addEventListener('play', () => {
+        if (
+          CheckingAudioPlayerComponent.lastPlayedAudio &&
+          CheckingAudioPlayerComponent.lastPlayedAudio.src !== this.audio.src
+        ) {
+          CheckingAudioPlayerComponent.lastPlayedAudio.pause();
+        }
+        CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;
+      });
     }
   }
 
   private get checkIsPlaying(): boolean {
     return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
+  }
+
+  ngOnDestroy() {
+    if (this.isPlaying) {
+      this.audio.pause();
+    }
   }
 
   pause() {
