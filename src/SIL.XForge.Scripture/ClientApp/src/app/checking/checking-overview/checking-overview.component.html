@@ -233,7 +233,7 @@
                 <span fxFlex class="no-overflow-ellipsis"
                   >v{{ question?.scriptureStart?.verse }} - {{ question?.text }}</span
                 >
-                <span fxFlex="200px" fxLayoutAlign="end center" class="date-archived"
+                <span fxFlex="200px" fxHide.lt-sm fxLayoutAlign="end center" class="date-archived"
                   >Archived {{ dateInWords(question?.dateArchived) }} ago</span
                 >
                 <span fxFlex="64px" fxLayoutAlign="end center">
