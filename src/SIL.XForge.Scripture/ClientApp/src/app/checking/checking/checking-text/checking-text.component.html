@@ -1,1 +1,6 @@
-<app-text [isReadOnly]="true" [id]="id"></app-text>
+<app-text
+  [isReadOnly]="true"
+  [id]="id"
+  (segmentClicked)="segmentClicked($event)"
+  (loaded)="highlightQuestions()"
+></app-text>

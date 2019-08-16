@@ -1,3 +1,4 @@
+import { VerseRefData } from '../verse-ref-data';
 import { Canon } from './canon';
 import { ScrVers } from './scr-vers';
 import { ScrVersType } from './versification';
@@ -17,6 +18,13 @@ export class VerseRef {
   private static readonly chapterDigitShifter: number = 1000;
   private static readonly bookDigitShifter: number = VerseRef.chapterDigitShifter * VerseRef.chapterDigitShifter;
   private static readonly bcvMaxValue: number = VerseRef.chapterDigitShifter - 1;
+
+  static fromData(verseRefData: VerseRefData): VerseRef {
+    let result: string = verseRefData.book ? verseRefData.book : '';
+    result += verseRefData.chapter ? ' ' + verseRefData.chapter : '';
+    result += verseRefData.verse ? ':' + verseRefData.verse : '';
+    return this.fromStr(result);
+  }
 
   static fromStr(verseStr: string, versification: ScrVers = VerseRef.defaultVersification): VerseRef {
     let vref = new VerseRef(undefined, undefined, undefined, versification);

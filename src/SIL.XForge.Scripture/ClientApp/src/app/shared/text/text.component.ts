@@ -1,10 +1,12 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, ViewEncapsulation } from '@angular/core';
+
 import isEqual from 'lodash/isEqual';
 import merge from 'lodash/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import { fromEvent } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../core/models/text-doc-id';
+import { VerseRefData } from '../../core/models/verse-ref-data';
 import { SFProjectService } from '../../core/sfproject.service';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
@@ -50,6 +52,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
+  @Output() segmentClicked = new EventEmitter<VerseRefData>();
 
   private _editorStyles: any = { fontSize: '1rem' };
   private readonly DEFAULT_MODULES: any = {
@@ -82,7 +85,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   private _id?: TextDocId;
   private _modules: any = this.DEFAULT_MODULES;
   private _editor?: Quill;
-  private viewModel?: TextViewModel;
+  private _viewModel?: TextViewModel;
   private _segment?: Segment;
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
@@ -184,10 +187,14 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.applyEditorStyles();
   }
 
+  get viewModel(): TextViewModel {
+    return this._viewModel;
+  }
+
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.viewModel != null) {
-      this.viewModel.unbind();
+    if (this._viewModel != null) {
+      this._viewModel.unbind();
     }
     EDITORS.delete(this._editor);
   }
@@ -197,7 +204,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.highlightMarker = this._editor.addContainer('highlight-marker');
     this.subscribe(fromEvent(this._editor.root, 'scroll'), () => this.updateHighlightMarkerVisibility());
     this.subscribe(fromEvent(window, 'resize'), () => this.setHighlightMarkerPosition());
-    this.viewModel = new TextViewModel(this._editor);
+    this._viewModel = new TextViewModel(this._editor);
     if (this.id != null) {
       this.bindQuill();
     }
@@ -232,17 +239,59 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   getSegmentRange(ref: string): RangeStatic {
-    return this.viewModel.getSegmentRange(ref);
+    return this._viewModel.getSegmentRange(ref);
   }
 
   getSegmentText(ref: string): string {
-    const range = this.viewModel.getSegmentRange(ref);
+    const range = this._viewModel.getSegmentRange(ref);
     return range == null ? '' : this._editor.getText(range.index, range.length);
   }
 
+  highlightSegments(segments: string[]) {
+    for (const segment of segments) {
+      if (!this._viewModel.hasSegmentRange(segment)) {
+        continue;
+      }
+      const segmentRef = new Segment(this._id.bookId, segment);
+      const range = this._viewModel.getSegmentRange(segmentRef.ref);
+      const text = this._editor.getText(range.index, range.length);
+      segmentRef.update(text, range);
+      this._viewModel.toggleHighlight(segmentRef, this._id.textType);
+      const element = this._editor.container.querySelector('usx-segment[data-segment=' + segmentRef.ref + ']');
+      this.subscribe(fromEvent(element, 'click'), (event: MouseEvent) => {
+        let target = event.target;
+        if (target['offsetParent']['nodeName'] === 'USX-SEGMENT') {
+          target = target['offsetParent'];
+        }
+        if (target['nodeName'] === 'USX-SEGMENT') {
+          const clickSegment = target['attributes']['data-segment'].value;
+          const segmentParts = clickSegment.split('_', 3);
+          const verseRefData: VerseRefData = {
+            book: this._id.bookId,
+            chapter: segmentParts[1],
+            verse: segmentParts[2]
+          };
+          this.segmentClicked.emit(verseRefData);
+        }
+      });
+    }
+  }
+
+  questionSegments(segments: string[]) {
+    for (const segment of segments) {
+      if (!this._viewModel.hasSegmentRange(segment)) {
+        continue;
+      }
+      const element = this._editor.container.querySelector('usx-segment[data-segment=' + segment + ']');
+      if (element) {
+        element.setAttribute('data-question', 'true');
+      }
+    }
+  }
+
   onContentChanged(delta: DeltaStatic, source: Sources): void {
-    this.viewModel.update(delta, source);
-    if (this.viewModel.isEmpty) {
+    this._viewModel.update(delta, source);
+    if (this._viewModel.isEmpty) {
       this.setPlaceholderText('Book does not exist');
     }
     // skip updating when only formatting changes occurred
@@ -267,13 +316,13 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private async bindQuill(): Promise<void> {
-    this.viewModel.unbind();
+    this._viewModel.unbind();
     if (this._id == null || this._editor == null) {
       return;
     }
     this.setPlaceholderText('Loading...');
     const textDoc = await this.projectService.getText(this._id);
-    this.viewModel.bind(textDoc);
+    this._viewModel.bind(textDoc);
 
     this.loaded.emit();
     this.applyEditorStyles();
@@ -316,7 +365,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       // get currently selected segment ref
       const selection = this._editor.getSelection();
       if (selection != null) {
-        segmentRef = this.viewModel.getSegmentRef(selection);
+        segmentRef = this._viewModel.getSegmentRef(selection);
       }
     }
 
@@ -328,8 +377,8 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
         this.updateSegment();
         if (this._highlightSegment) {
           // ensure that the currently selected segment is highlighted
-          if (!this.viewModel.isHighlighted(this._segment)) {
-            this.viewModel.toggleHighlight(this._segment, this._id.textType);
+          if (!this._viewModel.isHighlighted(this._segment)) {
+            this._viewModel.toggleHighlight(this._segment, this._id.textType);
           }
         }
       }
@@ -346,7 +395,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       return false;
     }
 
-    if (!this.viewModel.hasSegmentRange(segmentRef)) {
+    if (!this._viewModel.hasSegmentRange(segmentRef)) {
       if (this._segment != null && this.highlightSegment) {
         this.toggleHighlight(false);
       }
@@ -357,9 +406,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
     if (focus) {
       const selection = this._editor.getSelection();
-      const selectedSegmentRef = selection == null ? null : this.viewModel.getSegmentRef(selection);
+      const selectedSegmentRef = selection == null ? null : this._viewModel.getSegmentRef(selection);
       if (selectedSegmentRef !== segmentRef) {
-        const range = this.viewModel.getSegmentRange(segmentRef);
+        const range = this._viewModel.getSegmentRange(segmentRef);
         Promise.resolve().then(() => this._editor.setSelection(range.index + range.length, 0, 'user'));
       }
     }
@@ -380,7 +429,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private updateSegment(): void {
-    const range = this.viewModel.getSegmentRange(this._segment.ref);
+    const range = this._viewModel.getSegmentRange(this._segment.ref);
     const text = this._editor.getText(range.index, range.length);
     this._segment.update(text, range);
   }
@@ -411,7 +460,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private toggleHighlight(value: boolean): void {
-    this.viewModel.toggleHighlight(this._segment, value ? this._id.textType : false);
+    this._viewModel.toggleHighlight(this._segment, value ? this._id.textType : false);
 
     if (this._id.textType === 'target') {
       if (value) {
