@@ -19,7 +19,7 @@
       class="upload-audio-file"
     >
       <mdc-icon>cloud_upload</mdc-icon>
-      Upload Audio File
+      <span fxShow fxHide.lt-sm>Upload Audio File</span> <span fxHide fxShow.xs>Upload</span>
     </button>
     <button *ngIf="source" fxHide.xs mdc-button (click)="resetAudioAttachment()" class="remove-audio-file">
       <mdc-icon>delete</mdc-icon>
