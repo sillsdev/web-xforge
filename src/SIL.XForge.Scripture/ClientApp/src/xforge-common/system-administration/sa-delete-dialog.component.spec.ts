@@ -66,7 +66,7 @@ class TestEnvironment {
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     const config: MdcDialogConfig<SaDeleteUserDialogData> = {
       viewContainerRef,
-      data: { user: { name: 'Billy T James' } }
+      data: { user: { displayName: 'Billy T James' } }
     };
     this.dialogRef = TestBed.get(MdcDialog).open(SaDeleteDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');

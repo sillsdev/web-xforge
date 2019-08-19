@@ -326,16 +326,16 @@ export class CheckingAnswersComponent implements OnInit {
     if (this.answerForm.invalid) {
       return;
     }
-    if (this.user.data.isNameConfirmed) {
+    if (this.user.data.isDisplayNameConfirmed) {
       this.emitAnswerToSave();
       this.hideAnswerForm();
       return;
     }
-    const dialogRef = this.accountService.openNameDialog(this.user.data.name, true);
+    const dialogRef = this.accountService.openNameDialog(this.user.data.displayName, true);
     dialogRef.afterClosed().subscribe(async response => {
       await this.user.submitJson0Op(op => {
-        op.set(u => u.name, response as string);
-        op.set<boolean>(u => u.isNameConfirmed, true);
+        op.set(u => u.displayName, response as string);
+        op.set<boolean>(u => u.isDisplayNameConfirmed, true);
       });
       this.emitAnswerToSave();
       this.hideAnswerForm();

@@ -34,7 +34,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   }
 
   get recodingFileName(): string {
-    return this.user.data.name + '.webm';
+    return this.user.data.displayName + '.webm';
   }
 
   ngOnDestroy(): void {

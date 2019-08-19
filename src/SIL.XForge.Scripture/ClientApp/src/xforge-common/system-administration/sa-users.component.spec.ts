@@ -55,18 +55,21 @@ describe('SaUsersComponent', () => {
     expect(env.noUsersLabel).toBeNull();
     expect(env.userRows.length).toEqual(3);
 
-    expect(env.cell(0, 1).query(By.css('strong')).nativeElement.innerText).toEqual('User 01');
-    expect(env.cell(0, 2).query(By.css('a')).nativeElement.text).toEqual('Project 01');
+    expect(env.cellDisplayName(0, 1).innerText).toEqual('User01');
+    expect(env.cellName(0, 1).innerText).toEqual('User 01');
+    expect(env.cellProjectLink(0, 2).text).toEqual('Project 01');
     expect(env.removeUserButtonOnRow(0)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(0)).toBeFalsy();
 
-    expect(env.cell(1, 1).query(By.css('strong')).nativeElement.innerText).toEqual('User 02');
-    expect(env.cell(1, 2).query(By.css('a'))).toBeNull();
+    expect(env.cellDisplayName(1, 1).innerText).toEqual('User 02');
+    expect(env.cellName(1, 1)).toBeNull();
+    expect(env.cellProjectLink(1, 2)).toBeNull();
     expect(env.removeUserButtonOnRow(1)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(1)).toBeFalsy();
 
-    expect(env.cell(2, 1).query(By.css('strong')).nativeElement.innerText).toEqual('User 03');
-    expect(env.cell(2, 2).query(By.css('a')).nativeElement.text).toEqual('Project 01');
+    expect(env.cellDisplayName(2, 1).innerText).toEqual('User 03');
+    expect(env.cellName(2, 1)).toBeNull();
+    expect(env.cellProjectLink(2, 2).text).toEqual('Project 01');
     expect(env.removeUserButtonOnRow(2)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
   }));
@@ -139,9 +142,22 @@ class TestEnvironment {
   readonly mockedProjectService = mock(ProjectService);
 
   private readonly userDocs: UserDoc[] = [
-    this.createUserDoc('user01', { name: 'User 01', sites: { [environment.siteId]: { projects: ['project01'] } } }),
-    this.createUserDoc('user02', { name: 'User 02', sites: { [environment.siteId]: { projects: [] } } }),
-    this.createUserDoc('user03', { name: 'User 03', sites: { [environment.siteId]: { projects: ['project01'] } } })
+    this.createUserDoc('user01', {
+      name: 'User 01',
+      displayName: 'User01',
+      sites: { [environment.siteId]: { projects: ['project01'] } }
+    }),
+    this.createUserDoc('user02', {
+      name: 'User 02',
+      displayName: 'User 02',
+      sites: { [environment.siteId]: { projects: [] } }
+    }),
+    this.createUserDoc('user03', {
+      name: 'user03@example.com',
+      displayName: 'User 03',
+      email: 'user03@example.com',
+      sites: { [environment.siteId]: { projects: ['project01'] } }
+    })
   ];
 
   constructor() {
@@ -199,6 +215,21 @@ class TestEnvironment {
 
   cell(row: number, column: number): DebugElement {
     return this.userRows[row].children[column];
+  }
+
+  cellDisplayName(row: number, column: number): HTMLElement {
+    const element = this.cell(row, column).query(By.css('strong'));
+    return element != null ? element.nativeElement : element;
+  }
+
+  cellName(row: number, column: number): HTMLElement {
+    const element = this.cell(row, column).query(By.css('.name-label'));
+    return element != null ? element.nativeElement : element;
+  }
+
+  cellProjectLink(row: number, column: number): HTMLAnchorElement {
+    const element = this.cell(row, column).query(By.css('a'));
+    return element != null ? element.nativeElement : element;
   }
 
   removeUserButtonOnRow(row: number): DebugElement {

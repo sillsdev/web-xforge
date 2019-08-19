@@ -31,7 +31,8 @@ export interface User {
   paratextId?: string;
   avatarUrl?: string;
   role?: string;
-  isNameConfirmed?: boolean;
+  displayName?: string;
+  isDisplayNameConfirmed?: boolean;
   mobilePhone?: string;
   contactMethod?: 'email' | 'sms' | 'emailSms';
   birthday?: string;

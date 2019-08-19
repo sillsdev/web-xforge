@@ -53,18 +53,18 @@ describe('CollaboratorsComponent', () => {
     expect(env.noUsersLabel).toBeNull();
     expect(env.userRows.length).toEqual(3);
 
-    expect(env.cell(0, 1).query(By.css('strong')).nativeElement.innerText).toEqual('User 01');
-    expect(env.cell(0, 2).query(By.css('em')).nativeElement.innerText).toEqual('Administrator');
+    expect(env.cellDisplayName(0, 1).innerText).toEqual('User 01');
+    expect(env.cellRole(0, 2).innerText).toEqual('Administrator');
     expect(env.removeUserButtonOnRow(0)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(0)).toBeFalsy();
 
-    expect(env.cell(1, 1).query(By.css('strong')).nativeElement.innerText).toEqual('User 02');
-    expect(env.cell(1, 2).query(By.css('em')).nativeElement.innerText).toEqual('User');
+    expect(env.cellDisplayName(1, 1).innerText).toEqual('User 02');
+    expect(env.cellRole(1, 2).innerText).toEqual('User');
     expect(env.removeUserButtonOnRow(1)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(1)).toBeFalsy();
 
-    expect(env.cell(2, 1).query(By.css('strong')).nativeElement.innerText).toEqual('User 03');
-    expect(env.cell(2, 2).query(By.css('em')).nativeElement.innerText).toEqual('User');
+    expect(env.cellDisplayName(2, 1).innerText).toEqual('User 03');
+    expect(env.cellRole(2, 2).innerText).toEqual('User');
     expect(env.removeUserButtonOnRow(2)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
   }));
@@ -138,9 +138,9 @@ class TestEnvironment {
     when(this.mockedProjectService.onlineInvite('project01', anything())).thenResolve();
     when(this.mockedNoticeService.show(anything())).thenResolve();
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
-    this.addUserProfile('user01', { name: 'User 01' });
-    this.addUserProfile('user02', { name: 'User 02' });
-    this.addUserProfile('user03', { name: 'User 03' });
+    this.addUserProfile('user01', { displayName: 'User 01' });
+    this.addUserProfile('user02', { displayName: 'User 02' });
+    this.addUserProfile('user03', { displayName: 'User 03' });
     TestBed.configureTestingModule({
       declarations: [CollaboratorsComponent, ShareControlComponent],
       imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
@@ -193,6 +193,14 @@ class TestEnvironment {
 
   cell(row: number, column: number): DebugElement {
     return this.userRows[row].children[column];
+  }
+
+  cellDisplayName(row: number, column: number): HTMLElement {
+    return this.cell(row, column).query(By.css('.display-name-label')).nativeElement;
+  }
+
+  cellRole(row: number, column: number): HTMLElement {
+    return this.cell(row, column).query(By.css('em')).nativeElement;
   }
 
   removeUserButtonOnRow(row: number): DebugElement {

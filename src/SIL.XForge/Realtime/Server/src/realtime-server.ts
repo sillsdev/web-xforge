@@ -22,7 +22,7 @@ const XF_ROLE_CLAIM = 'http://xforge.org/role';
 const SYSTEM_ADMIN_ROLE = 'system_admin';
 
 const USER_PROFILE_FIELDS: ProjectionFields = {
-  name: true,
+  displayName: true,
   avatarUrl: true
 };
 

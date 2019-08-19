@@ -25,7 +25,7 @@ export class CheckingOwnerComponent implements OnInit {
     if (this.ownerDoc == null) {
       return '';
     }
-    return this.userService.currentUserId === this.ownerDoc.id ? 'Me' : this.ownerDoc.data.name;
+    return this.userService.currentUserId === this.ownerDoc.id ? 'Me' : this.ownerDoc.data.displayName;
   }
 
   get owner(): User {

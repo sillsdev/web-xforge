@@ -180,10 +180,10 @@ describe('AppComponent', () => {
     it('updates user with name', fakeAsync(() => {
       const env = new TestEnvironment();
       env.init();
-      env.updateName('Updated Name');
+      env.updateDisplayName('Updated Name');
       tick();
       verify(env.mockedAccountService.openNameDialog(anything(), anything()));
-      expect(env.currentUserName).toEqual('Updated Name');
+      expect(env.currentUserDisplayName).toEqual('Updated Name');
     }));
   });
 });
@@ -241,7 +241,7 @@ class TestEnvironment {
   constructor() {
     this.currentUserDoc = new UserDoc(
       new MemoryRealtimeDocAdapter('user01', OTJson0.type, {
-        name: 'User 01',
+        displayName: 'User 01',
         sites: {
           sf: {
             currentProjectId: 'project01',
@@ -369,8 +369,8 @@ class TestEnvironment {
     return this.currentUserDoc.data.sites.sf.currentProjectId;
   }
 
-  get currentUserName(): string {
-    return this.currentUserDoc.data.name;
+  get currentUserDisplayName(): string {
+    return this.currentUserDoc.data.displayName;
   }
 
   init(): void {
@@ -426,8 +426,8 @@ class TestEnvironment {
     this.wait();
   }
 
-  updateName(name: string) {
-    when(this.mockedNameDialogRef.afterClosed()).thenReturn(of(name));
+  updateDisplayName(displayName: string) {
+    when(this.mockedNameDialogRef.afterClosed()).thenReturn(of(displayName));
     this.component.editName('User 01');
   }
 
