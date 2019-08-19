@@ -48,6 +48,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private _topAppBar: MdcTopAppBar;
   private selectedProjectDoc: SFProjectDoc;
   private selectedProjectDeleteSub: Subscription;
+  private removedFromProjectSub: Subscription;
   private _isDrawerPermanent: boolean = true;
   private selectedProjectRole: SFProjectRoles;
 
@@ -263,6 +264,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           }
         });
 
+        if (this.removedFromProjectSub != null) {
+          this.removedFromProjectSub.unsubscribe();
+        }
+        this.removedFromProjectSub = this.selectedProjectDoc.remoteChanges$.subscribe(() => {
+          if (this.selectedProjectDoc != null && this.selectedProjectDoc.isLoaded) {
+            if (this.selectedProjectDoc.data.userRoles[this.currentUserDoc.id] == null) {
+              // The user has been removed from the project
+              this.showProjectDeletedDialog();
+            }
+          }
+        });
+
         if (!this.isTranslateEnabled) {
           this.translateVisible = false;
         }
@@ -290,6 +303,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     super.ngOnDestroy();
     if (this.selectedProjectDeleteSub != null) {
       this.selectedProjectDeleteSub.unsubscribe();
+    }
+    if (this.removedFromProjectSub != null) {
+      this.removedFromProjectSub.unsubscribe();
     }
   }
 

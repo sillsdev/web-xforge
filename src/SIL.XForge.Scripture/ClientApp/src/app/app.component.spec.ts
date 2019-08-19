@@ -122,7 +122,7 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     env.deleteProject01(false);
-    expect(env.projectDeletedDialog).toBeDefined();
+    expect(env.projectDeletedDialog).not.toBeNull();
     expect(env.currentProjectId).toBeUndefined();
     env.confirmDialog();
     expect(env.isDrawerVisible).toEqual(false);
@@ -149,6 +149,18 @@ describe('AppComponent', () => {
     expect(env.selectedProjectId).toEqual('project01');
     env.deleteProject01(true);
     expect(env.isDrawerVisible).toEqual(false);
+    expect(env.location.path()).toEqual('/projects');
+  }));
+
+  it('response to removed from project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    expect(env.selectedProjectId).toEqual('project01');
+    env.removesUserFromProject01();
+    expect(env.projectDeletedDialog).not.toBeNull();
+    env.confirmDialog();
     expect(env.location.path()).toEqual('/projects');
   }));
 
@@ -413,6 +425,11 @@ class TestEnvironment {
     this.fixture.ngZone.run(() => {
       this.project01Doc.delete();
     });
+    this.wait();
+  }
+
+  removesUserFromProject01(): void {
+    this.project01Doc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
     this.wait();
   }
 
