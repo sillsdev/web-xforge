@@ -89,6 +89,19 @@ describe('CheckingComponent', () => {
       expect(prev.nativeElement.disabled).toBe(false);
       expect(next.nativeElement.disabled).toBe(true);
     }));
+
+    it('responds to remote removed from project', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.reviewerUser);
+      env.selectQuestion(1);
+      expect(Object.keys(env.component.checkingData.questionListDocs).length).toEqual(2);
+      expect(Object.keys(env.component.checkingData.commentListDocs).length).toEqual(2);
+      env.component.projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles[env.reviewerUser.id]), false);
+      env.waitForSliderUpdate();
+      expect(env.component.projectDoc).toBeNull();
+      expect(Object.keys(env.component.checkingData.questionListDocs).length).toEqual(0);
+      expect(Object.keys(env.component.checkingData.commentListDocs).length).toEqual(0);
+      env.waitForSliderUpdate();
+    }));
   });
 
   describe('Questions', () => {
