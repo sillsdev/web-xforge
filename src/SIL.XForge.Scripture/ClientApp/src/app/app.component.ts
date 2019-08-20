@@ -270,7 +270,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
         this.removedFromProjectSub = this.selectedProjectDoc.remoteChanges$.subscribe(() => {
           if (this.selectedProjectDoc != null && this.selectedProjectDoc.isLoaded) {
-            if (this.selectedProjectDoc.data.userRoles[this.currentUserDoc.id] == null) {
+            if (!(this.currentUserDoc.id in this.selectedProjectDoc.data.userRoles)) {
               // The user has been removed from the project
               this.showProjectDeletedDialog();
             }

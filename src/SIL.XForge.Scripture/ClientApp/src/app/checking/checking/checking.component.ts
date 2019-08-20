@@ -186,7 +186,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
       }
       // Subscribe to the projectDoc now that it is defined
       this.subscribe(this.projectDoc.remoteChanges$, () => {
-        if (this.projectDoc.data.userRoles[this.userService.currentUserId] == null) {
+        if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
           this.onRemovedFromProject();
         }
       });
@@ -494,6 +494,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     }, 100);
   }
 
+  // Unbind this component from the data when a user is removed from the project, otherwise console
+  // errors appear before the app can navigate to the start component
   private onRemovedFromProject() {
     this.questionsPanel.activeQuestion = null;
     this.publicQuestions = [];
