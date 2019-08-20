@@ -32,6 +32,7 @@ import { SFProjectUserConfigDoc } from '../../core/models/sfproject-user-config-
 import { TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectService } from '../../core/sfproject.service';
 import { CheckingModule } from '../checking.module';
+import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogComponent } from '../question-dialog/question-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview.component';
 
@@ -169,7 +170,7 @@ describe('CheckingOverviewComponent', () => {
         of({
           scriptureStart: 'MAT 3:3',
           scriptureEnd: '',
-          text: 'scripture reference moved to chapter 2',
+          text: 'scripture reference moved to chapter 3',
           audio: {}
         })
       );
@@ -182,10 +183,43 @@ describe('CheckingOverviewComponent', () => {
       resetCalls(env.mockedProjectService);
       expect(env.questionEditButtons.length).toEqual(6);
       env.clickElement(env.questionEditButtons[0]);
+      env.fixture.detectChanges();
       verify(env.mockedProjectService.getQuestionList(deepEqual(mat3Id))).once();
       expect(env.questionEditButtons.length).toEqual(5);
       env.simulateRowClick(1, mat3Id);
       expect(env.textRows.length).toEqual(10);
+    }));
+
+    it('should bring up question dialog only if user confirms question answered dialog', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const id = new TextDocId('project01', 'MAT', 1);
+      env.waitForQuestions();
+      env.simulateRowClick(0);
+      env.simulateRowClick(1, id);
+      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
+      // Edit a question with no answers
+      env.clickElement(env.questionEditButtons[3]);
+      verify(env.mockedMdcDialog.open(QuestionAnsweredDialogComponent)).never();
+      verify(env.mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
+      resetCalls(env.mockedMdcDialog);
+      when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
+      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
+        of({
+          scriptureStart: 'MAT 1:3',
+          scriptureEnd: '',
+          text: 'Book 1, Q1 Text',
+          audio: {}
+        })
+      );
+      // Edit a question with answers
+      env.clickElement(env.questionEditButtons[0]);
+      verify(env.mockedMdcDialog.open(QuestionAnsweredDialogComponent)).once();
+      verify(env.mockedMdcDialog.open(QuestionDialogComponent, anything())).never();
+      when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
+      env.clickElement(env.questionEditButtons[0]);
+      verify(env.mockedMdcDialog.open(QuestionAnsweredDialogComponent)).twice();
+      verify(env.mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
+      expect().nothing();
     }));
 
     it('should remove audio file when reset', fakeAsync(() => {
@@ -336,6 +370,7 @@ class TestEnvironment {
   mockedActivatedRoute: ActivatedRoute = mock(ActivatedRoute);
   mockedMdcDialog: MdcDialog = mock(MdcDialog);
   mockedQuestionDialogRef: MdcDialogRef<QuestionDialogComponent> = mock(MdcDialogRef);
+  mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   mockedNoticeService = mock(NoticeService);
   mockedProjectService: SFProjectService = mock(SFProjectService);
   mockedUserService: UserService = mock(UserService);
@@ -375,7 +410,11 @@ class TestEnvironment {
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
-    when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedQuestionDialogRef));
+    when(this.mockedMdcDialog.open(QuestionDialogComponent, anything())).thenReturn(
+      instance(this.mockedQuestionDialogRef)
+    );
+    when(this.mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
+    when(this.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
     const adapter = new MemoryRealtimeDocAdapter('project01', OTJson0.type, this.testProject);
     const projectDoc = new SFProjectDoc(adapter, instance(this.mockedRealtimeOfflineStore));
     when(this.mockedProjectService.get('project01')).thenResolve(projectDoc);

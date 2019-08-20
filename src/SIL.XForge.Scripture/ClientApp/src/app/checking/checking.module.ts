@@ -22,6 +22,7 @@ import { CheckingQuestionsComponent } from './checking/checking-questions/checki
 import { CheckingTextComponent } from './checking/checking-text/checking-text.component';
 import { CheckingComponent } from './checking/checking.component';
 import { FontSizeComponent } from './checking/font-size/font-size.component';
+import { QuestionAnsweredDialogComponent } from './question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogComponent } from './question-dialog/question-dialog.component';
 
 @NgModule({
@@ -40,7 +41,8 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     CheckingAudioRecorderComponent,
     CheckingAudioPlayerComponent,
     AudioTimePipe,
-    CheckingAudioCombinedComponent
+    CheckingAudioCombinedComponent,
+    QuestionAnsweredDialogComponent
   ],
   imports: [
     CheckingRoutingModule,
@@ -52,6 +54,6 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     ngfModule
   ],
   exports: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent],
-  entryComponents: [QuestionDialogComponent]
+  entryComponents: [QuestionDialogComponent, QuestionAnsweredDialogComponent]
 })
 export class CheckingModule {}
