@@ -79,7 +79,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         ? this._userRows.filter(userRow => {
             return (
               userRow.user &&
-              ((userRow.user.name && userRow.user.name.includes(this.term)) ||
+              ((userRow.user.displayName && userRow.user.displayName.includes(this.term)) ||
                 (userRow.roleName && userRow.roleName.includes(this.term)))
             );
           })

@@ -31,12 +31,14 @@
         </ng-container>
         <ng-container matColumnDef="name">
           <td mat-cell *matCellDef="let userRow">
-            <div *ngIf="userRow.active">
-              <strong>{{ userRow.user?.name }}</strong>
-              <span *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;me</span>
+            <div *ngIf="userRow.active" class="display-name-label">
+              {{ userRow.user?.displayName }}
+              <strong *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;me</strong>
             </div>
-            <div *ngIf="!userRow.active">Awaiting response from</div>
-            {{ userRow.user?.email }}
+            <div *ngIf="!userRow.active">
+              Awaiting response from
+              <div>{{ userRow.user?.email }}</div>
+            </div>
           </td>
         </ng-container>
         <ng-container matColumnDef="projects">

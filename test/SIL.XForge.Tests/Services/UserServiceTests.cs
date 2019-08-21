@@ -57,15 +57,31 @@ namespace SIL.XForge.Services
         }
 
         [Test]
-        public async Task PushAuthUserProfile_NewUser_NameExtracted()
+        public async Task PushAuthUserProfile_NewUser_NickNameExtracted()
         {
             var env = new TestEnvironment();
 
             JObject userProfile = env.CreateUserProfile("user03", "auth03", env.IssuedAt);
             userProfile["name"] = "usernew@example.com";
+            userProfile["nickname"] = "usernew";
             await env.Service.UpdateUserFromProfileAsync("user03", userProfile);
             User user3 = env.GetUser("user03");
-            Assert.That(user3.Name, Is.EqualTo("usernew"));
+            Assert.That(user3.DisplayName, Is.EqualTo("usernew"));
+            UserSecret userSecret = env.UserSecrets.Get("user03");
+            Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
+        }
+
+        [Test]
+        public async Task PushAuthUserProfile_NewUser_NameExtracted()
+        {
+            var env = new TestEnvironment();
+
+            JObject userProfile = env.CreateUserProfile("user03", "auth03", env.IssuedAt);
+            userProfile["name"] = "User New";
+            userProfile["nickname"] = "usernew";
+            await env.Service.UpdateUserFromProfileAsync("user03", userProfile);
+            User user3 = env.GetUser("user03");
+            Assert.That(user3.DisplayName, Is.EqualTo("User New"));
             UserSecret userSecret = env.UserSecrets.Get("user03");
             Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
         }

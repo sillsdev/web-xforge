@@ -305,10 +305,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       });
   }
 
-  editName(currentName: string): void {
-    const dialogRef = this.accountService.openNameDialog(currentName, false);
+  editName(currentDisplayName: string): void {
+    const dialogRef = this.accountService.openNameDialog(currentDisplayName, false);
     dialogRef.afterClosed().subscribe(response => {
-      this.currentUserDoc.submitJson0Op(op => op.set(u => u.name, response as string));
+      this.currentUserDoc.submitJson0Op(op => op.set(u => u.displayName, response as string));
     });
   }
 

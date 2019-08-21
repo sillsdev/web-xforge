@@ -10,7 +10,8 @@ namespace SIL.XForge.Models
         public string Role { get; set; }
         public string AvatarUrl { get; set; }
         public string ParatextId { get; set; }
-        public bool IsNameConfirmed { get; set; }
+        public string DisplayName { get; set; }
+        public bool IsDisplayNameConfirmed { get; set; }
         public string MobilePhone { get; set; }
 
         /// <summary>

@@ -42,13 +42,15 @@ namespace SIL.XForge.Services
             using (IConnection conn = await _realtimeService.ConnectAsync())
             {
                 DateTime now = DateTime.UtcNow;
-                IDocument<User> userDoc = await conn.FetchOrCreateAsync<User>(userId,
-                    () => new User { AuthId = (string)userProfile["user_id"] });
+                string name = (string)userProfile["name"];
+                IDocument<User> userDoc = await conn.FetchOrCreateAsync<User>(userId, () => new User
+                {
+                    AuthId = (string)userProfile["user_id"],
+                    DisplayName = string.IsNullOrWhiteSpace(name) || emailRegex.IsMatch(name) ?
+                        (string)userProfile["nickname"] : name
+                });
                 await userDoc.SubmitJson0OpAsync(op =>
                     {
-                        string name = emailRegex.IsMatch((string)userProfile["name"])
-                            ? ((string)userProfile["name"]).Substring(0, ((string)userProfile["name"]).IndexOf('@'))
-                            : (string)userProfile["name"];
                         op.Set(u => u.Name, name);
                         op.Set(u => u.Email, (string)userProfile["email"]);
                         op.Set(u => u.AvatarUrl, (string)userProfile["picture"]);

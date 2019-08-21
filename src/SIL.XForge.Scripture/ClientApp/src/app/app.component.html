@@ -49,10 +49,10 @@
                 Logged in as
                 <div fxLayout="row" fxLayoutAlign="start center">
                   <span fxFlex>&nbsp;</span>
-                  <button id="edit-name-btn" mdcIconButton (click)="editName(currentUser.name)">
+                  <button id="edit-name-btn" mdcIconButton (click)="editName(currentUser.displayName)">
                     <mdc-icon>edit</mdc-icon>
                   </button>
-                  <strong class="user-menu-name">{{ currentUser.name }}</strong>
+                  <strong class="user-menu-name">{{ currentUser.displayName }}</strong>
                 </div>
               </div>
               <mdc-list-divider></mdc-list-divider>

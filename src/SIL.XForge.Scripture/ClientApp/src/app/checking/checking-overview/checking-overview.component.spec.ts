@@ -616,8 +616,8 @@ class TestEnvironment {
     return {
       id: 'user' + id,
       user: {
-        name: 'User ' + id,
-        isNameConfirmed: nameConfirmed
+        displayName: 'User ' + id,
+        isDisplayNameConfirmed: nameConfirmed
       },
       role
     };

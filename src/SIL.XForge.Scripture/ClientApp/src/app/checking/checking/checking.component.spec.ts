@@ -182,7 +182,7 @@ describe('CheckingComponent', () => {
       env.setupReviewerScenarioData(env.cleanReviewUser);
       env.selectQuestion(2);
       env.answerQuestion('Answering question 2 should pop up a dialog');
-      verify(env.mockedAccountService.openNameDialog(env.cleanReviewUser.user.name, true)).once();
+      verify(env.mockedAccountService.openNameDialog(env.cleanReviewUser.user.displayName, true)).once();
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answering question 2 should pop up a dialog');
     }));
@@ -929,7 +929,7 @@ class TestEnvironment {
       instance(this.mockedCheckingNameDialogRef)
     );
 
-    when(this.mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.user.name));
+    when(this.mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.user.displayName));
   }
 
   private initComponentEnviroment(): void {
@@ -947,8 +947,8 @@ class TestEnvironment {
     return {
       id: 'user' + id,
       user: {
-        name: 'User ' + id,
-        isNameConfirmed: nameConfirmed
+        displayName: 'User ' + id,
+        isDisplayNameConfirmed: nameConfirmed
       },
       role
     };

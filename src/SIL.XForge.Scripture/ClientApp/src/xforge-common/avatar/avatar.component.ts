@@ -16,6 +16,6 @@ export class AvatarComponent {
   }
 
   get name(): string {
-    return this.user ? this.user.name : '';
+    return this.user ? this.user.displayName : '';
   }
 }
