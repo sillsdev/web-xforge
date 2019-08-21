@@ -27,6 +27,20 @@ describe('CheckingNameDialogComponent', () => {
     expect(env.component.confirmedName).toBe('Follow The Leader');
   });
 
+  it('should not allow the name to be blank', () => {
+    const env = new TestEnvironment();
+    env.openDialog();
+    expect(env.component.confirmedName).toBeUndefined();
+    env.setTextFieldValue(env.nameInput, '');
+    env.confirmButton.click();
+    env.fixture.detectChanges();
+    expect(env.component.confirmedName).toBeUndefined();
+    env.setTextFieldValue(env.nameInput, ' ');
+    env.confirmButton.click();
+    env.fixture.detectChanges();
+    expect(env.component.confirmedName).toBeUndefined();
+  });
+
   it('shows messages in a confirmation context', () => {
     const env = new TestEnvironment();
     env.component.isConfirmContext = true;
