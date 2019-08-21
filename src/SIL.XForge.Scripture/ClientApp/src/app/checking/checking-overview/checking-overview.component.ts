@@ -22,6 +22,7 @@ import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { TextInfo, TextsByBook } from '../../core/models/text-info';
 import { SFProjectService } from '../../core/sfproject.service';
 import { CheckingUtils } from '../checking.utils';
+import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import {
   QuestionDialogComponent,
   QuestionDialogData,
@@ -343,7 +344,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return [unread, read, answered];
   }
 
-  questionDialog(editMode = false, bookId?: string, chapterNumber?: number, questionId?: string): void {
+  async questionDialog(editMode = false, bookId?: string, chapterNumber?: number, questionId?: string): Promise<void> {
     let newQuestion: Question = { id: undefined, ownerRef: undefined };
     let id: TextDocId;
     let question: Question;
@@ -352,7 +353,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       if (bookId == null || bookId === '' || chapterNumber == null || chapterNumber < 0 || questionId == null) {
         throw new Error('Must supply valid bookId, chapterNumber and questionId in editMode');
       }
-
+      if (this.answerCount(bookId, chapterNumber, questionId) > 0) {
+        const answeredDialogRef = this.dialog.open(QuestionAnsweredDialogComponent);
+        const response = (await answeredDialogRef.afterClosed().toPromise()) as string;
+        if (response === 'close') {
+          return;
+        }
+      }
       id = new TextDocId(this.projectDoc.id, bookId, chapterNumber);
       questionIndex = this.getQuestionIndex(questionId, id);
       question = this.questionListDocs[id.toString()].data.questions[questionIndex];
