@@ -1,5 +1,5 @@
 import Quill, { DeltaOperation, DeltaStatic } from 'quill';
-import { RealtimeDoc } from 'xforge-common/docs/realtime-doc';
+import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 import { RealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 

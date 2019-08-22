@@ -1,6 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
 
-import { TextDocId } from '../../../core/docs/text-doc-id';
+import { TextDocId } from '../../../core/models/text-doc-id';
 import { TextComponent } from '../../../shared/text/text.component';
 
 @Component({

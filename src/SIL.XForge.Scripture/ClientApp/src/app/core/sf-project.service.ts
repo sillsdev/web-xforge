@@ -1,19 +1,19 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { CommandService } from 'xforge-common/command.service';
 import { ProjectService } from 'xforge-common/project.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
-import { CommentListDoc } from './docs/comment-list-doc';
-import { QuestionListDoc } from './docs/question-list-doc';
-import { SFProjectDoc } from './docs/sf-project-doc';
-import { SFProjectUserConfigDoc } from './docs/sf-project-user-config-doc';
-import { TextDoc } from './docs/text-doc';
-import { TextDocId } from './docs/text-doc-id';
 import { MachineHttpClient } from './machine-http-client';
-import { SFProject } from './models/sf-project';
-import { SF_PROJECT_ROLES } from './models/sf-project-role';
+import { CommentListDoc } from './models/comment-list-doc';
+import { QuestionListDoc } from './models/question-list-doc';
+import { SFProjectDoc } from './models/sf-project-doc';
+import { SF_PROJECT_ROLES } from './models/sf-project-role-info';
 import { SFProjectSettings } from './models/sf-project-settings';
+import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
+import { TextDoc } from './models/text-doc';
+import { TextDocId } from './models/text-doc-id';
 import { TranslateMetrics } from './models/translate-metrics';
 
 @Injectable({

@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { SFProjectDoc } from '../core/docs/sf-project-doc';
-import { SFProject } from '../core/models/sf-project';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectService } from '../core/sf-project.service';
 
 interface ConnectProjectFormValues {

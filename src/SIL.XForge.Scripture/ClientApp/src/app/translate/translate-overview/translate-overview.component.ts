@@ -1,13 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
+import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Subscription } from 'rxjs';
 import { filter, map, repeat, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
-import { SFProjectDoc } from '../../core/docs/sf-project-doc';
-import { TextDocId } from '../../core/docs/text-doc-id';
-import { TextInfo } from '../../core/models/text-info';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectService } from '../../core/sf-project.service';
 
 const ENGINE_QUALITY_STAR_COUNT = 3;

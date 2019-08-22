@@ -1,6 +1,6 @@
-import { RealtimeDocConstructor } from './docs/realtime-doc';
-import { UserDoc } from './docs/user-doc';
-import { UserProfileDoc } from './docs/user-profile-doc';
+import { RealtimeDocConstructor } from './models/realtime-doc';
+import { UserDoc } from './models/user-doc';
+import { UserProfileDoc } from './models/user-profile-doc';
 
 /**
  * This class is used to register all real-time doc types so that {@link RealtimeService} can create them dynamically.

@@ -26,7 +26,6 @@
             "main": "src/main.ts",
             "tsConfig": "src/tsconfig.app.json",
             "progress": true,
-            "preserveSymlinks": true,
             "polyfills": "src/polyfills.ts",
             "assets": ["src/favicon.ico", "src/assets", "src/manifest.json"],
             "styles": [
@@ -118,7 +117,6 @@
             "karmaConfig": "./src/karma.conf.js",
             "polyfills": "src/polyfills.ts",
             "tsConfig": "src/tsconfig.spec.json",
-            "preserveSymlinks": true,
             "scripts": [],
             "styles": [
               {

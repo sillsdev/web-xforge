@@ -40,7 +40,7 @@
           </mdc-menu>
         </div>
         <div mdcMenuSurfaceAnchor #userMenuAnchor>
-          <mdc-icon mdcTopAppBarActionItem [title]="currentUser.name" (click)="userMenu.open = !userMenu.open">
+          <mdc-icon mdcTopAppBarActionItem [title]="currentUser.displayName" (click)="userMenu.open = !userMenu.open">
             <app-avatar id="avatarId" [user]="currentUser" size="32" [round]="true"></app-avatar>
           </mdc-icon>
           <mdc-menu #userMenu [anchorCorner]="'bottomStart'" [anchorElement]="userMenuAnchor">

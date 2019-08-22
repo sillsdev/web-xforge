@@ -1,14 +1,14 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
+import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
+import { Question } from 'realtime-server/lib/scriptureforge/models/question';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectUserConfigDoc } from '../../../core/docs/sf-project-user-config-doc';
-import { Answer } from '../../../core/models/answer';
-import { Comment } from '../../../core/models/comment';
-import { Question } from '../../../core/models/question';
-import { SFProject } from '../../../core/models/sf-project';
-import { SFProjectRole } from '../../../core/models/sf-project-role';
+import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { CheckingUtils } from '../../checking.utils';
 
 @Component({

@@ -1,7 +1,7 @@
 import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
 import { Component, Inject, OnInit } from '@angular/core';
-import { TextsByBook } from '../core/models/text-info';
-import { VerseRefData } from '../core/models/verse-ref-data';
+import { TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from '../shared/scripture-utils/canon';
 
 export interface ScriptureChooserDialogData {

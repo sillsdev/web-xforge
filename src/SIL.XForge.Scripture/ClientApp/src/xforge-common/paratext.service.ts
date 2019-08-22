@@ -1,8 +1,8 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { InputSystem } from 'realtime-server/lib/common/models/input-system';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
-import { InputSystem } from './models/input-system';
 import { ParatextProject } from './models/paratext-project';
 
 @Injectable({

@@ -1,5 +1,5 @@
-import { RealtimeServer, RealtimeServerOptions } from 'xforge-common/realtime-server';
-import { DocService } from 'xforge-common/services/doc-service';
+import { RealtimeServer, RealtimeServerOptions } from '../common/realtime-server';
+import { DocService } from '../common/services/doc-service';
 import { CommentListService } from './services/comment-list-service';
 import { QuestionListService } from './services/question-list-service';
 import { SFProjectService } from './services/sf-project-service';

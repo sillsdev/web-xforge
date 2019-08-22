@@ -3,8 +3,8 @@ import { combineLatest, from, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
-import { UserDoc } from './docs/user-doc';
-import { UserProfileDoc } from './docs/user-profile-doc';
+import { UserDoc } from './models/user-doc';
+import { UserProfileDoc } from './models/user-profile-doc';
 import { QueryParameters, QueryResults, RealtimeService } from './realtime.service';
 
 /**

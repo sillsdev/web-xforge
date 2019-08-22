@@ -1,11 +1,11 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Project } from 'realtime-server/lib/common/models/project';
 import { combineLatest, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
-import { ProjectDoc } from './docs/project-doc';
-import { Project } from './models/project';
-import { NONE_ROLE, ProjectRoleInfo } from './models/project-role';
+import { ProjectDoc } from './models/project-doc';
+import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
 import { QueryParameters, QueryResults, RealtimeService } from './realtime.service';
 
 export abstract class ProjectService<

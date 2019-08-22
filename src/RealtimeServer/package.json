@@ -11,14 +11,13 @@
   },
   "author": "SIL",
   "repository": "github:sillsdev/web-xforge",
-  "main": "dist/xforge-common/index.js",
-  "types": "dist/xforge-common/index.d.ts",
+  "main": "lib/common/index.js",
+  "types": "lib/common/index.d.ts",
   "private": true,
   "dependencies": {
     "express": "^4.17.1",
     "jwks-rsa": "^1.6.0",
     "lodash": ">=4.17.14",
-    "module-alias": "^2.2.1",
     "mongodb": "^2.2.36",
     "ot-json0": "^1.1.0",
     "rich-text": "^3.1.0",
@@ -36,9 +35,5 @@
     "@types/ws": "^6.0.2",
     "tslint": "^5.18.0",
     "typescript": "^3.5.3"
-  },
-  "_moduleAliases": {
-    "xforge-common": "dist/xforge-common",
-    "scriptureforge": "dist/scriptureforge"
   }
 }

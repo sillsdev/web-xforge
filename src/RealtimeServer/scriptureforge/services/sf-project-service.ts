@@ -1,4 +1,4 @@
-import { ProjectService } from 'xforge-common/services/project-service';
+import { ProjectService } from '../../common/services/project-service';
 import { SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 

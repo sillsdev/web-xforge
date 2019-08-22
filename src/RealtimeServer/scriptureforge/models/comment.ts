@@ -1,4 +1,4 @@
-import { OwnedData } from 'xforge-common/models/owned-data';
+import { OwnedData } from '../../common/models/owned-data';
 import { VerseRefData } from './verse-ref-data';
 
 export interface Comment extends OwnedData {

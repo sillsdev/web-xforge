@@ -1,5 +1,5 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { TextsByBook } from '../core/models/text-info';
+import { TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { ScrVers } from './scripture-utils/scr-vers';
 import { VerseRef } from './scripture-utils/verse-ref';
 
