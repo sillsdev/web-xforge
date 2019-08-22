@@ -77,6 +77,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return encodeURI('mailto:' + environment.issueEmail + '?subject=Scripture Forge v2 Issue');
   }
 
+  get helpsPage(): string {
+    return encodeURI(environment.helps);
+  }
+
   @ViewChild('topAppBar')
   set topAppBar(value: MdcTopAppBar) {
     this._topAppBar = value;

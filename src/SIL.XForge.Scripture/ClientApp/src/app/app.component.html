@@ -21,12 +21,11 @@
           <mdc-menu #helpMenu [anchorCorner]="'bottomStart'" [anchorElement]="helpMenuAnchor">
             <mdc-list-group>
               <mdc-list>
-                <div class="mdc-list-group__subheader">
-                  <small>Product version: v{{ version }}</small>
-                </div>
+                <div class="mdc-list-group__subheader">Product version: v{{ version }}</div>
                 <mdc-list-divider></mdc-list-divider>
+                <mdc-list-item> <a target="_blank" [href]="helpsPage"> Help</a> </mdc-list-item>
                 <mdc-list-item name="issues">
-                  <a target="_blank" [href]="issueMailTo" mdcListItemMeta>
+                  <a target="_blank" [href]="issueMailTo">
                     <mdc-list-item-text>
                       Report an Issue
                       <div>

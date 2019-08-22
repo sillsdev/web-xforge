@@ -19,5 +19,6 @@ export const environment = {
   siteId: 'sf',
   assets: {
     audio: '/assets/audio/'
-  }
+  },
+  helps: 'https://help.scriptureforge.org'
 };

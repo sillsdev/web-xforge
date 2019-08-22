@@ -38,6 +38,10 @@
     mdc-top-app-bar-section {
       mdc-menu {
         min-width: 200px;
+        a {
+          width: 100%;
+          color: var(--mdc-theme-text-primary-on-background);
+        }
       }
     }
 
