@@ -5,7 +5,6 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { Question } from '../../../core/models/question';
 import { TextDocId } from '../../../core/models/text-doc-id';
 import { VerseRefData, VerseRefFunctions } from '../../../core/models/verse-ref-data';
-import { Segment } from '../../../shared/text/segment';
 import { TextComponent } from '../../../shared/text/text.component';
 
 @Component({
@@ -95,14 +94,9 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       if (!this.textComponent.hasSegmentRange(segment)) {
         continue;
       }
-      const segmentRef = new Segment(this.id.bookId, segment);
-      const range = this.textComponent.getSegmentRange(segmentRef.ref);
-      const text = this.textComponent.editor.getText(range.index, range.length);
-      segmentRef.update(text, range);
-      this.textComponent.toggleHighlight(true, segmentRef);
-      const element = this.textComponent.editor.container.querySelector(
-        'usx-segment[data-segment=' + segmentRef.ref + ']'
-      );
+      const range = this.textComponent.getSegmentRange(segment);
+      this.textComponent.toggleHighlight(true, range);
+      const element = this.textComponent.editor.container.querySelector('usx-segment[data-segment=' + segment + ']');
       this.subscribe(fromEvent(element, 'click'), (event: MouseEvent) => {
         let target = event.target;
         if (target['offsetParent']['nodeName'] === 'USX-SEGMENT') {
