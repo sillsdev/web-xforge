@@ -184,6 +184,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
         this.loadingFinished();
       }
+      // Subscribe to the projectDoc now that it is defined
+      this.subscribe(this.projectDoc.remoteChanges$, () => {
+        if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
+          this.onRemovedFromProject();
+        }
+      });
+      this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
     });
     this.subscribe(this.media.media$, (change: MediaChange) => {
       this.calculateScriptureSliderPosition();
@@ -485,6 +492,20 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
       const scripturePanelHeight = 100 - answerPanelHeight;
       this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
     }, 100);
+  }
+
+  // Unbind this component from the data when a user is removed from the project, otherwise console
+  // errors appear before the app can navigate to the start component
+  private onRemovedFromProject() {
+    this.questionsPanel.activeQuestion = null;
+    this.publicQuestions = [];
+    this.comments = [];
+    this.projectUserConfigDoc = null;
+    for (const chapter of this.chapters) {
+      this.unbindCheckingData(new TextDocId(this.projectDoc.id, this.text.bookId, chapter));
+    }
+    this.projectDoc = null;
+    this.text = null;
   }
 
   private async bindCheckingData(id: TextDocId): Promise<void> {
