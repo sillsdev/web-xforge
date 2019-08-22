@@ -10,3 +10,44 @@ app-text {
   flex-direction: column;
   flex: 1;
 }
+.ql-container {
+  .highlight-marker {
+    display: none;
+  }
+  .ql-editor {
+    .highlight-para-target {
+      > usx-para-contents {
+        box-shadow: unset;
+      }
+    }
+    .highlight-segment-target {
+      box-shadow: 2px 4px 4px -4px #bfb092;
+      position: relative;
+      cursor: pointer;
+
+      &[data-question='true'] {
+        margin-left: 1.5em;
+
+        &:before {
+          content: '?';
+          border-radius: 50%;
+          width: 1.5em;
+          height: 1.5em;
+          font-size: 0.8em;
+          display: flex;
+          align-content: center;
+          justify-content: center;
+          background: var(--mdc-theme-secondary);
+          font-weight: bold;
+          position: absolute;
+          left: -1.75em;
+          top: 0;
+        }
+      }
+
+      &[data-selected='true'] {
+        background: yellow;
+      }
+    }
+  }
+}
