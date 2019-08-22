@@ -149,8 +149,7 @@ export class TextViewModel {
     return formats['highlight-segment'] != null;
   }
 
-  toggleHighlight(segment: Segment, value: TextType | boolean): void {
-    const range = segment.range;
+  toggleHighlight(range: RangeStatic, value: TextType | boolean): void {
     if (range.length > 0) {
       // this changes the underlying HTML, which can mess up some Quill events, so defer this call
       Promise.resolve().then(() => {

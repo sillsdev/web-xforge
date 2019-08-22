@@ -78,7 +78,13 @@
             >
               <as-split-area size="100">
                 <div class="panel-content" #scripturePanelContainer>
-                  <app-checking-text #textPanel [id]="textDocId"></app-checking-text>
+                  <app-checking-text
+                    #textPanel
+                    [id]="textDocId"
+                    [activeQuestion]="questionsPanel.activeQuestion"
+                    [questions]="publicQuestions"
+                    (questionClicked)="questionsPanel.activateQuestion($event)"
+                  ></app-checking-text>
                 </div>
               </as-split-area>
               <as-split-area size="0">

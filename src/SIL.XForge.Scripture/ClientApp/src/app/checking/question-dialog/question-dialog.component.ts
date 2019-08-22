@@ -21,6 +21,7 @@ import {
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { ScrVers } from '../../shared/scripture-utils/scr-vers';
 import { VerseRef } from '../../shared/scripture-utils/verse-ref';
+import { verseRefDataToString, verseRefToVerseRefData } from '../../shared/scripture-utils/verse-ref-data-converters';
 import { SFValidators } from '../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking/checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
@@ -43,22 +44,6 @@ export interface QuestionDialogResult {
   styleUrls: ['./question-dialog.component.scss']
 })
 export class QuestionDialogComponent implements OnInit {
-  private static verseRefDataToString(verseRefData: VerseRefData): string {
-    let result: string = verseRefData.book ? verseRefData.book : '';
-    result += verseRefData.chapter ? ' ' + verseRefData.chapter : '';
-    result += verseRefData.verse ? ':' + verseRefData.verse : '';
-    return result;
-  }
-
-  private static verseRefToVerseRefData(input: VerseRef): VerseRefData {
-    const refData: VerseRefData = {};
-    refData.book = input.book;
-    refData.chapter = input.chapter;
-    refData.verse = input.verse;
-    refData.versification = input.versification.name;
-    return refData;
-  }
-
   @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent: CheckingAudioCombinedComponent;
   modeLabel = this.data && this.data.editMode ? 'Edit' : 'New';
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
@@ -95,10 +80,10 @@ export class QuestionDialogComponent implements OnInit {
     if (this.data && this.data.question) {
       const question = this.data.question;
       if (question.scriptureStart) {
-        this.scriptureStart.setValue(QuestionDialogComponent.verseRefDataToString(question.scriptureStart));
+        this.scriptureStart.setValue(verseRefDataToString(question.scriptureStart));
       }
       if (question.scriptureEnd) {
-        this.scriptureEnd.setValue(QuestionDialogComponent.verseRefDataToString(question.scriptureEnd));
+        this.scriptureEnd.setValue(verseRefDataToString(question.scriptureEnd));
       }
       if (question.text) {
         this.questionText.setValue(question.text);
@@ -128,15 +113,11 @@ export class QuestionDialogComponent implements OnInit {
 
   /** Edit text of control using Scripture chooser dialog. */
   openScriptureChooser(control: AbstractControl) {
-    const currentVerseSelection = QuestionDialogComponent.verseRefToVerseRefData(
-      VerseRef.fromStr(control.value, ScrVers.English)
-    );
+    const currentVerseSelection = verseRefToVerseRefData(VerseRef.fromStr(control.value, ScrVers.English));
 
     let rangeStart: VerseRefData;
     if (control !== this.scriptureStart) {
-      rangeStart = QuestionDialogComponent.verseRefToVerseRefData(
-        VerseRef.fromStr(this.scriptureStart.value, ScrVers.English)
-      );
+      rangeStart = verseRefToVerseRefData(VerseRef.fromStr(this.scriptureStart.value, ScrVers.English));
     }
 
     const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
@@ -148,7 +129,7 @@ export class QuestionDialogComponent implements OnInit {
       if (result !== 'close') {
         control.markAsTouched();
         control.markAsDirty();
-        control.setValue(QuestionDialogComponent.verseRefDataToString(result));
+        control.setValue(verseRefDataToString(result));
       }
     });
   }

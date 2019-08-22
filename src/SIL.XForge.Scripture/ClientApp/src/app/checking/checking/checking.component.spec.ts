@@ -162,7 +162,8 @@ describe('CheckingComponent', () => {
         ownerRef: env.adminUser.id,
         text: 'Admin just added a question.',
         answers: [],
-        scriptureStart: { book: 'JHN', chapter: '1', verse: '10', versification: 'English' }
+        scriptureStart: { book: 'JHN', chapter: '1', verse: '10', versification: 'English' },
+        scriptureEnd: { book: 'JHN', chapter: '1', verse: '11', versification: 'English' }
       };
       const textDocId = new TextDocId('project01', 'JHN', 1);
       env.component.checkingData.questionListDocs[textDocId.toString()].submitJson0Op(
@@ -471,6 +472,15 @@ describe('CheckingComponent', () => {
       expect(editor.style.fontSize).toBe('1.1rem');
       env.clickButton(env.decreaseFontSizeButton);
       expect(editor.style.fontSize).toBe('1rem');
+    }));
+
+    it('can select a question from the text', fakeAsync(() => {
+      env.setupAdminScenarioData();
+      env.quillEditor.querySelector('usx-segment[data-segment=verse_1_3]').dispatchEvent(new Event('click'));
+      env.waitForSliderUpdate();
+      tick(env.questionReadTimer);
+      env.fixture.detectChanges();
+      expect(env.currentQuestion).toBe(4);
     }));
   });
 });
@@ -868,6 +878,8 @@ class TestEnvironment {
       answers: [],
       isArchived: true
     });
+    questionData1[3].scriptureStart.verse = '3';
+    questionData1[3].scriptureEnd.verse = '4';
     questionData1[5].answers.push({
       id: 'a6Id',
       ownerRef: this.reviewerUser.id,

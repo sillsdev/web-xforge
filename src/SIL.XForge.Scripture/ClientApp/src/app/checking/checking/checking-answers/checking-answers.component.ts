@@ -20,6 +20,10 @@ import {
 } from '../../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { ScrVers } from '../../../shared/scripture-utils/scr-vers';
 import { VerseRef } from '../../../shared/scripture-utils/verse-ref';
+import {
+  verseRefDataToString,
+  verseRefToVerseRefData
+} from '../../../shared/scripture-utils/verse-ref-data-converters';
 import { SFValidators } from '../../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
@@ -42,22 +46,6 @@ export interface AnswerAction {
   styleUrls: ['./checking-answers.component.scss']
 })
 export class CheckingAnswersComponent implements OnInit {
-  private static verseRefDataToString(verseRefData: VerseRefData): string {
-    let result: string = verseRefData.book ? verseRefData.book : '';
-    result += verseRefData.chapter ? ' ' + verseRefData.chapter : '';
-    result += verseRefData.verse ? ':' + verseRefData.verse : '';
-    return result;
-  }
-
-  private static verseRefToVerseRefData(input: VerseRef): VerseRefData {
-    const refData: VerseRefData = {};
-    refData.book = input.book;
-    refData.chapter = input.chapter;
-    refData.verse = input.verse;
-    refData.versification = input.versification.name;
-    return refData;
-  }
-
   @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent: CheckingAudioCombinedComponent;
   @Input() project: SFProject;
   @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
@@ -200,8 +188,8 @@ export class CheckingAnswersComponent implements OnInit {
   editAnswer(answer: Answer) {
     this.activeAnswer = cloneDeep(answer);
     this.audio.url = this.activeAnswer.audioUrl;
-    this.scriptureStart.setValue(CheckingAnswersComponent.verseRefDataToString(this.activeAnswer.scriptureStart));
-    this.scriptureEnd.setValue(CheckingAnswersComponent.verseRefDataToString(this.activeAnswer.scriptureEnd));
+    this.scriptureStart.setValue(verseRefDataToString(this.activeAnswer.scriptureStart));
+    this.scriptureEnd.setValue(verseRefDataToString(this.activeAnswer.scriptureEnd));
     this.scriptureText.setValue(this.activeAnswer.scriptureText);
     this.showAnswerForm();
   }
@@ -262,15 +250,11 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   openScriptureChooser(control: AbstractControl) {
-    const currentVerseSelection = CheckingAnswersComponent.verseRefToVerseRefData(
-      VerseRef.fromStr(control.value, ScrVers.English)
-    );
+    const currentVerseSelection = verseRefToVerseRefData(VerseRef.fromStr(control.value, ScrVers.English));
 
     let rangeStart: VerseRefData;
     if (control !== this.scriptureStart) {
-      rangeStart = CheckingAnswersComponent.verseRefToVerseRefData(
-        VerseRef.fromStr(this.scriptureStart.value, ScrVers.English)
-      );
+      rangeStart = verseRefToVerseRefData(VerseRef.fromStr(this.scriptureStart.value, ScrVers.English));
     }
 
     const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
@@ -280,7 +264,7 @@ export class CheckingAnswersComponent implements OnInit {
     const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig);
     dialogRef.afterClosed().subscribe((result: VerseRefData) => {
       if (result !== 'close') {
-        control.setValue(CheckingAnswersComponent.verseRefDataToString(result));
+        control.setValue(verseRefDataToString(result));
         control.markAsTouched();
         control.markAsDirty();
         this.extractScriptureText();
@@ -301,7 +285,7 @@ export class CheckingAnswersComponent implements OnInit {
   scriptureTextVerseRef(answer: Answer): string {
     return (
       '(' +
-      CheckingAnswersComponent.verseRefDataToString(answer.scriptureStart) +
+      verseRefDataToString(answer.scriptureStart) +
       (answer.scriptureEnd.verse && answer.scriptureStart.verse !== answer.scriptureEnd.verse
         ? '-' + answer.scriptureEnd.verse
         : '') +
@@ -358,8 +342,8 @@ export class CheckingAnswersComponent implements OnInit {
       answer: this.activeAnswer,
       audio: this.audio,
       scriptureText: this.scriptureText.value,
-      scriptureStart: CheckingAnswersComponent.verseRefToVerseRefData(this.scriptureStartVerseRef),
-      scriptureEnd: CheckingAnswersComponent.verseRefToVerseRefData(this.scriptureEndVerseRef)
+      scriptureStart: verseRefToVerseRefData(this.scriptureStartVerseRef),
+      scriptureEnd: verseRefToVerseRefData(this.scriptureEndVerseRef)
     });
   }
 

@@ -240,6 +240,10 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     return range == null ? '' : this._editor.getText(range.index, range.length);
   }
 
+  hasSegmentRange(ref: string): boolean {
+    return this.viewModel.hasSegmentRange(ref);
+  }
+
   onContentChanged(delta: DeltaStatic, source: Sources): void {
     this.viewModel.update(delta, source);
     if (this.viewModel.isEmpty) {
@@ -253,6 +257,18 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   onSelectionChanged(): void {
     this.update();
+  }
+
+  toggleHighlight(value: boolean, range?: RangeStatic): void {
+    this.viewModel.toggleHighlight(range ? range : this._segment.range, value ? this._id.textType : false);
+
+    if (this._id.textType === 'target') {
+      if (value) {
+        this.highlightMarker.style.visibility = '';
+      } else {
+        this.highlightMarker.style.visibility = 'hidden';
+      }
+    }
   }
 
   private applyEditorStyles() {
@@ -329,7 +345,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
         if (this._highlightSegment) {
           // ensure that the currently selected segment is highlighted
           if (!this.viewModel.isHighlighted(this._segment)) {
-            this.viewModel.toggleHighlight(this._segment, this._id.textType);
+            this.viewModel.toggleHighlight(this._segment.range, this._id.textType);
           }
         }
       }
@@ -407,18 +423,6 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
     if (sel.index !== newSel.index || sel.length !== newSel.length) {
       this._editor.setSelection(newSel, 'user');
-    }
-  }
-
-  private toggleHighlight(value: boolean): void {
-    this.viewModel.toggleHighlight(this._segment, value ? this._id.textType : false);
-
-    if (this._id.textType === 'target') {
-      if (value) {
-        this.highlightMarker.style.visibility = '';
-      } else {
-        this.highlightMarker.style.visibility = 'hidden';
-      }
     }
   }
 
