@@ -12,7 +12,7 @@ import {
 } from '@angular/forms';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { VerseRefData, VerseRefFunctions } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import {
@@ -43,22 +43,6 @@ export interface QuestionDialogResult {
   styleUrls: ['./question-dialog.component.scss']
 })
 export class QuestionDialogComponent implements OnInit {
-  private static verseRefDataToString(verseRefData: VerseRefData): string {
-    let result: string = verseRefData.book ? verseRefData.book : '';
-    result += verseRefData.chapter ? ' ' + verseRefData.chapter : '';
-    result += verseRefData.verse ? ':' + verseRefData.verse : '';
-    return result;
-  }
-
-  private static verseRefToVerseRefData(input: VerseRef): VerseRefData {
-    const refData: VerseRefData = {};
-    refData.book = input.book;
-    refData.chapter = input.chapter;
-    refData.verse = input.verse;
-    refData.versification = input.versification.name;
-    return refData;
-  }
-
   @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent: CheckingAudioCombinedComponent;
   modeLabel = this.data && this.data.editMode ? 'Edit' : 'New';
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
@@ -95,10 +79,10 @@ export class QuestionDialogComponent implements OnInit {
     if (this.data && this.data.question) {
       const question = this.data.question;
       if (question.scriptureStart) {
-        this.scriptureStart.setValue(QuestionDialogComponent.verseRefDataToString(question.scriptureStart));
+        this.scriptureStart.setValue(VerseRefFunctions.verseRefDataToString(question.scriptureStart));
       }
       if (question.scriptureEnd) {
-        this.scriptureEnd.setValue(QuestionDialogComponent.verseRefDataToString(question.scriptureEnd));
+        this.scriptureEnd.setValue(VerseRefFunctions.verseRefDataToString(question.scriptureEnd));
       }
       if (question.text) {
         this.questionText.setValue(question.text);
@@ -128,13 +112,13 @@ export class QuestionDialogComponent implements OnInit {
 
   /** Edit text of control using Scripture chooser dialog. */
   openScriptureChooser(control: AbstractControl) {
-    const currentVerseSelection = QuestionDialogComponent.verseRefToVerseRefData(
+    const currentVerseSelection = VerseRefFunctions.verseRefToVerseRefData(
       VerseRef.fromStr(control.value, ScrVers.English)
     );
 
     let rangeStart: VerseRefData;
     if (control !== this.scriptureStart) {
-      rangeStart = QuestionDialogComponent.verseRefToVerseRefData(
+      rangeStart = VerseRefFunctions.verseRefToVerseRefData(
         VerseRef.fromStr(this.scriptureStart.value, ScrVers.English)
       );
     }
@@ -148,7 +132,7 @@ export class QuestionDialogComponent implements OnInit {
       if (result !== 'close') {
         control.markAsTouched();
         control.markAsDirty();
-        control.setValue(QuestionDialogComponent.verseRefDataToString(result));
+        control.setValue(VerseRefFunctions.verseRefDataToString(result));
       }
     });
   }

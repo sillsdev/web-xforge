@@ -388,6 +388,14 @@ export function registerScripture(): void {
     scope: Parchment.Scope.BLOCK
   });
 
+  const CheckingQuestionData = new QuillParchment.Attributor.Attribute('data-question', 'data-question', {
+    scope: Parchment.Scope.INLINE
+  });
+
+  const CheckingSelectedData = new QuillParchment.Attributor.Attribute('data-selected', 'data-selected', {
+    scope: Parchment.Scope.INLINE
+  });
+
   class DisableHtmlClipboard extends QuillClipboard {
     onPaste(e: ClipboardEvent): void {
       if (e.defaultPrevented || !this.quill.isEnabled()) {
@@ -418,6 +426,8 @@ export function registerScripture(): void {
   Quill.register('formats/highlight-segment', HighlightSegmentClass);
   Quill.register('attributors/class/highlight-para', HighlightParaClass);
   Quill.register('formats/highlight-para', HighlightParaClass);
+  Quill.register('formats/data-question', CheckingQuestionData);
+  Quill.register('formats/data-selected', CheckingSelectedData);
   Quill.register('blots/verse', VerseEmbed);
   Quill.register('blots/blank', BlankEmbed);
   Quill.register('blots/note', NoteEmbed);
