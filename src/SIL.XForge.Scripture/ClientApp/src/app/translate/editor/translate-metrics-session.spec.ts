@@ -8,7 +8,7 @@ import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc-id';
 import { TranslateMetrics } from '../../core/models/translate-metrics';
-import { SFProjectService } from '../../core/sfproject.service';
+import { SFProjectService } from '../../core/sf-project.service';
 import { TextComponent } from '../../shared/text/text.component';
 import {
   ACTIVE_EDIT_TIMEOUT,

@@ -4,8 +4,8 @@ import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { canTranslate } from '../core/models/sfproject-roles';
-import { SFProjectService } from '../core/sfproject.service';
+import { canTranslate } from '../core/models/sf-project-role-info';
+import { SFProjectService } from '../core/sf-project.service';
 
 @Component({
   selector: 'app-projects',

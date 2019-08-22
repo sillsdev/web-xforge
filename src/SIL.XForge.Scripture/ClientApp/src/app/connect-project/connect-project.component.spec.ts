@@ -8,6 +8,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import cloneDeep from 'lodash/cloneDeep';
 import * as OTJson0 from 'ot-json0';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { defer, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
@@ -17,9 +18,8 @@ import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SFProject } from '../core/models/sfproject';
-import { SFProjectDoc } from '../core/models/sfproject-doc';
-import { SFProjectService } from '../core/sfproject.service';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectService } from '../core/sf-project.service';
 import { ConnectProjectComponent } from './connect-project.component';
 
 describe('ConnectProjectComponent', () => {

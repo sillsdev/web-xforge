@@ -13,9 +13,9 @@ import { UserService } from 'xforge-common/user.service';
 import { nameof } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../environments/environment';
-import { SFProjectDoc } from '../core/models/sfproject-doc';
-import { SFProjectSettings } from '../core/models/sfproject-settings';
-import { SFProjectService } from '../core/sfproject.service';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectSettings } from '../core/models/sf-project-settings';
+import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */

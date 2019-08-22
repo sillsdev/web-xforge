@@ -6,6 +6,7 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
 import * as OTJson0 from 'ot-json0';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -13,11 +14,10 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { SFProject } from '../../core/models/sfproject';
-import { SFProjectDoc } from '../../core/models/sfproject-doc';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc-id';
-import { SFProjectService } from '../../core/sfproject.service';
+import { SFProjectService } from '../../core/sf-project.service';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
 describe('TranslateOverviewComponent', () => {

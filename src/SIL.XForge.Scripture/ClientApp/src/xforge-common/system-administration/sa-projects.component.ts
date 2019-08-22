@@ -2,7 +2,7 @@ import { Component, HostBinding, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
-import { NONE_ROLE, ProjectRole } from '../models/project-role';
+import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { QueryParameters } from '../realtime.service';
@@ -11,7 +11,7 @@ import { UserService } from '../user.service';
 class Row {
   isUpdatingRole: boolean = false;
 
-  constructor(public readonly projectDoc: ProjectDoc, public projectRole: ProjectRole) {}
+  constructor(public readonly projectDoc: ProjectDoc, public projectRole: ProjectRoleInfo) {}
 
   get id(): string {
     return this.projectDoc.id;
@@ -63,7 +63,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
     return this.projectDocs == null;
   }
 
-  get projectRoles(): ProjectRole[] {
+  get projectRoles(): ProjectRoleInfo[] {
     return Array.from(this.projectService.roles.values());
   }
 
@@ -88,7 +88,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
     this.queryParameters$.next(this.getQueryParameters());
   }
 
-  async updateRole(row: Row, projectRole: ProjectRole): Promise<void> {
+  async updateRole(row: Row, projectRole: ProjectRoleInfo): Promise<void> {
     row.isUpdatingRole = true;
     if (row.projectRole === NONE_ROLE) {
       // add user to project

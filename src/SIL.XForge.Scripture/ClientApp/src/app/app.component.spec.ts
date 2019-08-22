@@ -6,13 +6,15 @@ import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import * as OTJson0 from 'ot-json0';
+import { User } from 'realtime-server/lib/common/models/user';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { LocationService } from 'xforge-common/location.service';
-import { User } from 'xforge-common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
@@ -21,10 +23,8 @@ import { RealtimeService } from 'xforge-common/realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
-import { SFProject } from './core/models/sfproject';
-import { SFProjectDoc } from './core/models/sfproject-doc';
-import { SFProjectRoles } from './core/models/sfproject-roles';
-import { SFProjectService } from './core/sfproject.service';
+import { SFProjectDoc } from './core/models/sf-project-doc';
+import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
 
@@ -257,7 +257,7 @@ class TestEnvironment {
       projectName: 'project01',
       translateEnabled: true,
       checkingEnabled: true,
-      userRoles: { user01: SFProjectRoles.ParatextTranslator },
+      userRoles: { user01: SFProjectRole.ParatextTranslator },
       texts: [
         { bookId: 'text01', name: 'Book 1', hasSource: true },
         { bookId: 'text02', name: 'Book 2', hasSource: false }
@@ -267,7 +267,7 @@ class TestEnvironment {
       projectName: 'project02',
       translateEnabled: false,
       checkingEnabled: true,
-      userRoles: { user01: SFProjectRoles.Reviewer },
+      userRoles: { user01: SFProjectRole.Reviewer },
       texts: [
         { bookId: 'text03', name: 'Book 3', hasSource: false },
         { bookId: 'text04', name: 'Book 4', hasSource: false }
@@ -277,7 +277,7 @@ class TestEnvironment {
       projectName: 'project03',
       translateEnabled: true,
       checkingEnabled: true,
-      userRoles: { user01: SFProjectRoles.Reviewer },
+      userRoles: { user01: SFProjectRole.Reviewer },
       texts: [
         { bookId: 'text05', name: 'Book 5', hasSource: true },
         { bookId: 'text06', name: 'Book 6', hasSource: true }
@@ -417,7 +417,7 @@ class TestEnvironment {
   }
 
   addUserToProject04(): void {
-    this.project04Doc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRoles.Reviewer), false);
+    this.project04Doc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.Reviewer), false);
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
   }
 

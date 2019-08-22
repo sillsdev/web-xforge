@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
+import { User } from 'realtime-server/lib/common/models/user';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from '../../data-loading-component';
 import { ProjectDoc } from '../../models/project-doc';
-import { SharingLevel } from '../../models/sharing-level';
-import { User } from '../../models/user';
 import { NoticeService } from '../../notice.service';
 import { ProjectService } from '../../project.service';
 import { UserService } from '../../user.service';

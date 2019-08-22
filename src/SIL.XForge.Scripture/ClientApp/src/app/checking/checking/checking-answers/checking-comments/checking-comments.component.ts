@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import cloneDeep from 'lodash/cloneDeep';
+import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
+import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { UserService } from 'xforge-common/user.service';
-import { Answer } from '../../../../core/models/answer';
-import { Comment } from '../../../../core/models/comment';
-import { SFProject } from '../../../../core/models/sfproject';
-import { SFProjectRoles } from '../../../../core/models/sfproject-roles';
-import { SFProjectUserConfigDoc } from '../../../../core/models/sfproject-user-config-doc';
+import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 
 export interface CommentAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'show-comments';
@@ -35,7 +35,7 @@ export class CheckingCommentsComponent implements OnInit {
   constructor(private userService: UserService) {}
 
   get isAdministrator(): boolean {
-    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRoles.ParatextAdministrator;
+    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRole.ParatextAdministrator;
   }
 
   get showMoreCommentsLabel(): string {

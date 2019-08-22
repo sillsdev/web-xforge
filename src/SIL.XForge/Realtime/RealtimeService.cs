@@ -9,7 +9,6 @@ using MongoDB.Driver;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.Models;
-using SIL.XForge.Utils;
 
 namespace SIL.XForge.Realtime
 {
@@ -39,9 +38,7 @@ namespace SIL.XForge.Realtime
 
             RealtimeOptions options = _realtimeOptions.Value;
             _docConfigs = new Dictionary<Type, DocConfig>();
-            AddDocConfig(options.UserDoc);
-            AddDocConfig(options.ProjectDoc);
-            foreach (DocConfig projectDataDoc in options.ProjectDataDocs)
+            foreach (DocConfig projectDataDoc in options.Docs)
                 AddDocConfig(projectDataDoc);
         }
 
@@ -82,7 +79,7 @@ namespace SIL.XForge.Realtime
         public async Task DeleteProjectAsync(string projectId)
         {
             var tasks = new List<Task>();
-            foreach (DocConfig docConfig in _realtimeOptions.Value.ProjectDataDocs)
+            foreach (DocConfig docConfig in _realtimeOptions.Value.Docs)
                 tasks.Add(DeleteProjectDocsAsync(docConfig.RootDataType, projectId));
             await Task.WhenAll(tasks);
 
@@ -149,55 +146,12 @@ namespace SIL.XForge.Realtime
             string mongo = $"{_dataAccessOptions.Value.ConnectionString}/{_dataAccessOptions.Value.MongoDatabaseName}";
             return new
             {
+                AppModuleName = _realtimeOptions.Value.AppModuleName,
                 ConnectionString = mongo,
                 Port = _realtimeOptions.Value.Port,
                 Authority = $"https://{_authOptions.Value.Domain}/",
-                UsersCollection = CreateCollectionConfig(_realtimeOptions.Value.UserDoc),
-                ProjectsCollection = CreateCollectionConfig(_realtimeOptions.Value.ProjectDoc),
-                UserProfilesCollectionName = GetCollectionName(RootDataTypes.UserProfiles),
-                ProjectRoles = CreateProjectRoles(_realtimeOptions.Value.ProjectRoles),
-                ProjectAdminRole = _realtimeOptions.Value.ProjectRoles.AdminRole,
-                ProjectDataCollections = _realtimeOptions.Value.ProjectDataDocs
-                    .Select(c => CreateCollectionConfig(c)).ToArray(),
                 Audience = _authOptions.Value.Audience,
                 Scope = _authOptions.Value.Scope
-            };
-        }
-
-        private static object CreateProjectRoles(ProjectRoles projectRoles)
-        {
-            return projectRoles.Rights.Select(kvp => new
-            {
-                Name = kvp.Key,
-                Rights = kvp.Value.Select(r => r.Domain + (int)r.Operation).ToArray()
-            }).ToArray();
-        }
-
-        private object CreateCollectionConfig(DocConfig docConfig)
-        {
-            return new
-            {
-                Name = GetCollectionName(docConfig.RootDataType),
-                OTTypeName = docConfig.OTTypeName,
-                Domains = docConfig.Domains
-                    .OrderByDescending(d => d.PathTemplate?.Template?.Items?.Count ?? 0)
-                    .Select(d => new { Domain = d.Domain, PathTemplate = CreatePathTemplateConfig(d.PathTemplate) })
-                    .ToArray(),
-                ImmutableProps = docConfig.ImmutableProperties
-                    .Select(ip => CreatePathTemplateConfig(ip))
-                    .ToArray()
-            };
-        }
-
-        private static object CreatePathTemplateConfig(PathTemplateConfig pathTemplateConfig)
-        {
-            if (pathTemplateConfig == null)
-                return new { Template = new object[0], Inherit = true };
-            return new
-            {
-                Template = pathTemplateConfig.Template.Items.Select(i => (i is string str) ? str.ToCamelCase() : i)
-                    .ToArray(),
-                Inherit = pathTemplateConfig.Inherit
             };
         }
     }

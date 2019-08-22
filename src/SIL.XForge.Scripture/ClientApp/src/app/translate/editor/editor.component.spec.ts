@@ -15,6 +15,9 @@ import {
   WordAlignmentMatrix
 } from '@sillsdev/machine';
 import * as OTJson0 from 'ot-json0';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
@@ -23,14 +26,11 @@ import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SFProject } from '../../core/models/sfproject';
-import { SFProjectDoc } from '../../core/models/sfproject-doc';
-import { SFProjectRoles } from '../../core/models/sfproject-roles';
-import { SFProjectUserConfig } from '../../core/models/sfproject-user-config';
-import { SFProjectUserConfigDoc } from '../../core/models/sfproject-user-config-doc';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc-id';
-import { SFProjectService } from '../../core/sfproject.service';
+import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
 import { CONFIDENCE_THRESHOLD_TIMEOUT, EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { SuggestionComponent } from './suggestion.component';
@@ -539,7 +539,7 @@ class TestEnvironment {
       instance(this.mockedRemoteTranslationEngine)
     );
     const project: SFProject = {
-      userRoles: { user01: SFProjectRoles.ParatextTranslator },
+      userRoles: { user01: SFProjectRole.ParatextTranslator },
       inputSystem: { languageName: 'Target' },
       translateEnabled: true,
       sourceInputSystem: { languageName: 'Source' },

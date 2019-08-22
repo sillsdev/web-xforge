@@ -1,7 +1,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { ScrVers } from '../core/models/scripture/scr-vers';
-import { VerseRef } from '../core/models/scripture/verse-ref';
-import { TextsByBook } from '../core/models/text-info';
+import { TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { ScrVers } from './scripture-utils/scr-vers';
+import { VerseRef } from './scripture-utils/verse-ref';
 
 export class SFValidators {
   static verseStr(textsByBook: TextsByBook): ValidatorFn {

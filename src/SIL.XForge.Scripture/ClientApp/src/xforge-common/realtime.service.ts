@@ -4,9 +4,9 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 import { Connection, Query } from 'sharedb/lib/client';
 import { environment } from '../environments/environment';
 import { LocationService } from './location.service';
-import { DomainModel } from './models/domain-model';
 import { RealtimeDoc } from './models/realtime-doc';
 import { SharedbRealtimeDocAdapter } from './realtime-doc-adapter';
+import { RealtimeDocTypes } from './realtime-doc-types';
 import { RealtimeOfflineStore } from './realtime-offline-store';
 import { getCollectionName } from './utils';
 
@@ -40,7 +40,7 @@ export class RealtimeService {
   private store: RealtimeOfflineStore;
   private accessToken: string;
 
-  constructor(private readonly domainModel: DomainModel, private readonly locationService: LocationService) {}
+  constructor(private readonly domainModel: RealtimeDocTypes, private readonly locationService: LocationService) {}
 
   async init(accessToken: string, deleteStore: boolean): Promise<void> {
     this.store = new RealtimeOfflineStore(this.domainModel);
@@ -107,7 +107,7 @@ export class RealtimeService {
     }
     const queries = await Promise.all(queryPromises);
     const resultsQuery = queries[0];
-    const RealtimeDocType = this.domainModel.getRealtimeDocType(type);
+    const RealtimeDocType = this.domainModel.getDocType(type);
     const docs: T[] = [];
     for (const shareDoc of resultsQuery.results) {
       const key = getDocKey(type, shareDoc.id);
@@ -134,7 +134,7 @@ export class RealtimeService {
   private createDoc(type: string, id: string): RealtimeDoc {
     const collection = getCollectionName(type);
     const sharedbDoc = this.connection.get(collection, id);
-    const RealtimeDocType = this.domainModel.getRealtimeDocType(type);
+    const RealtimeDocType = this.domainModel.getDocType(type);
     return new RealtimeDocType(new SharedbRealtimeDocAdapter(this.connection, collection, sharedbDoc), this.store);
   }
 
