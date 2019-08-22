@@ -1,5 +1,5 @@
-import { PathTemplate } from 'xforge-common/path-template';
-import { ProjectDomainConfig } from 'xforge-common/services/project-data-service';
+import { PathTemplate } from '../../common/path-template';
+import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectUserConfig } from '../models/sf-project-user-config';
 import { SFProjectDataService } from './sf-project-data-service';

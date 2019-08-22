@@ -6,7 +6,7 @@ import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import * as OTJson0 from 'ot-json0';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
-import { ProjectDoc } from '../docs/project-doc';
+import { ProjectDoc } from '../models/project-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { MemoryRealtimeDocAdapter } from '../realtime-doc-adapter';

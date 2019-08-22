@@ -1,7 +1,7 @@
-import { JsonRealtimeDoc } from 'xforge-common/docs/json-realtime-doc';
+import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import { JsonRealtimeDoc } from 'xforge-common/models/json-realtime-doc';
 import { RealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
-import { SFProjectUserConfig } from '../models/sf-project-user-config';
 
 export class SFProjectUserConfigDoc extends JsonRealtimeDoc<SFProjectUserConfig> {
   static readonly TYPE = 'sf-project-user-configs';

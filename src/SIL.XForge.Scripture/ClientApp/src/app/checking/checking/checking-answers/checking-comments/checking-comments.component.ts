@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import cloneDeep from 'lodash/cloneDeep';
+import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
+import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectUserConfigDoc } from '../../../../core/docs/sf-project-user-config-doc';
-import { Answer } from '../../../../core/models/answer';
-import { Comment } from '../../../../core/models/comment';
-import { SFProject } from '../../../../core/models/sf-project';
-import { SFProjectRole } from '../../../../core/models/sf-project-role';
+import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 
 export interface CommentAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'show-comments';

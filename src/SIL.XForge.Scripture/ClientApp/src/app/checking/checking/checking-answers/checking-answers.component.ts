@@ -2,18 +2,18 @@ import { ErrorStateMatcher, MdcDialog, MdcDialogConfig } from '@angular-mdc/web'
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import cloneDeep from 'lodash/cloneDeep';
+import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
+import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
+import { Question } from 'realtime-server/lib/scriptureforge/models/question';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { TextInfo, TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { AccountService } from 'xforge-common/account.service';
-import { UserDoc } from 'xforge-common/docs/user-doc';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectUserConfigDoc } from '../../../core/docs/sf-project-user-config-doc';
-import { Answer } from '../../../core/models/answer';
-import { Comment } from '../../../core/models/comment';
-import { Question } from '../../../core/models/question';
-import { SFProject } from '../../../core/models/sf-project';
-import { SFProjectRole } from '../../../core/models/sf-project-role';
-import { TextInfo, TextsByBook } from '../../../core/models/text-info';
-import { VerseRefData } from '../../../core/models/verse-ref-data';
+import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData

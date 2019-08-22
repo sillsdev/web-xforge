@@ -1,4 +1,4 @@
-import { OwnedData } from 'xforge-common/models/owned-data';
+import { OwnedData } from '../../common/models/owned-data';
 import { Like } from './like';
 import { VerseRefData } from './verse-ref-data';
 

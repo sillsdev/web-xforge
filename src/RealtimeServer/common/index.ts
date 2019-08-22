@@ -1,4 +1,3 @@
-require('module-alias/register');
 import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import ShareDB = require('sharedb');
@@ -18,7 +17,7 @@ function createSnapshot(doc: Doc): { version: number; data: any } {
 
 export = {
   start: (callback: InteropCallback, options: RealtimeServerOptions) => {
-    const RealtimeServerType: RealtimeServerConstructor = require(`${options.appModuleName}/realtime-server`);
+    const RealtimeServerType: RealtimeServerConstructor = require(`../${options.appModuleName}/realtime-server`);
     server = new RealtimeServerType(options);
     server
       .init()

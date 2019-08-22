@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { UserProfileDoc } from 'xforge-common/docs/user-profile-doc';
-import { User } from 'xforge-common/models/user';
+import { User } from 'realtime-server/lib/common/models/user';
+import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { UserService } from 'xforge-common/user.service';
 
 @Component({

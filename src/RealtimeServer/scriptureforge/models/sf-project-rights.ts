@@ -1,4 +1,4 @@
-import { Operation, ProjectRight, ProjectRights } from 'xforge-common/models/project-rights';
+import { Operation, ProjectRight, ProjectRights } from '../../common/models/project-rights';
 import { SFProjectRole } from './sf-project-role';
 
 export enum SFProjectDomain {

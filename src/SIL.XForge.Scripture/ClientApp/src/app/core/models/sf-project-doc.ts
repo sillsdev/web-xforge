@@ -1,5 +1,5 @@
-import { ProjectDoc } from 'xforge-common/docs/project-doc';
-import { SFProject } from '../models/sf-project';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { ProjectDoc } from 'xforge-common/models/project-doc';
 import { CommentListDoc } from './comment-list-doc';
 import { QuestionListDoc } from './question-list-doc';
 import { SFProjectUserConfigDoc } from './sf-project-user-config-doc';

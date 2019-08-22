@@ -10,9 +10,7 @@
     "composite": true,
     "baseUrl": ".",
     "paths": {
-      "*": ["./typings/*"],
-      "xforge-common/*": ["./xforge-common/*"],
-      "scriptureforge/*": ["./scriptureforge/*"]
+      "*": ["./typings/*"]
     }
   }
 }

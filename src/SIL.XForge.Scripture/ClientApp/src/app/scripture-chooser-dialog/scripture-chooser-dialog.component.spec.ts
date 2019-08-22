@@ -12,9 +12,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { fakeAsync, flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
+import { TextInfo, TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { TextInfo, TextsByBook } from '../core/models/text-info';
-import { VerseRefData } from '../core/models/verse-ref-data';
 import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './scripture-chooser-dialog.component';
 
 describe('ScriptureChooserDialog', () => {

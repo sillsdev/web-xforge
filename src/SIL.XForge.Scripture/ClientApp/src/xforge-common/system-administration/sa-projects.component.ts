@@ -1,8 +1,8 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { DataLoadingComponent } from '../data-loading-component';
-import { ProjectDoc } from '../docs/project-doc';
-import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role';
+import { ProjectDoc } from '../models/project-doc';
+import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { QueryParameters } from '../realtime.service';

@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot } from '@angular/router';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { from, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectRole } from '../core/models/sf-project-role';
 import { SFProjectService } from '../core/sf-project.service';
 
 @Injectable({

@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, RouterStateSnapshot } from '@angular/router';
+import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { Observable } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
-import { SystemRole } from './models/system-role';
 
 @Injectable({
   providedIn: 'root'

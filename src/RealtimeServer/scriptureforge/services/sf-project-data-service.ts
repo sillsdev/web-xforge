@@ -1,4 +1,4 @@
-import { ProjectDataService } from 'xforge-common/services/project-data-service';
+import { ProjectDataService } from '../../common/services/project-data-service';
 import { SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
 
 /**

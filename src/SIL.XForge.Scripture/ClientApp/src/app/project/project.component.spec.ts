@@ -1,6 +1,9 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import * as OTJson0 from 'ot-json0';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -8,11 +11,8 @@ import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SFProjectDoc } from '../core/docs/sf-project-doc';
-import { SFProjectUserConfigDoc } from '../core/docs/sf-project-user-config-doc';
-import { SFProject } from '../core/models/sf-project';
-import { SFProjectRole } from '../core/models/sf-project-role';
-import { SFProjectUserConfig } from '../core/models/sf-project-user-config';
+import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectComponent } from './project.component';
 

@@ -1,4 +1,4 @@
 {
   "files": [],
-  "references": [{ "path": "./xforge-common" }, { "path": "./scriptureforge" }]
+  "references": [{ "path": "./common" }, { "path": "./scriptureforge" }]
 }

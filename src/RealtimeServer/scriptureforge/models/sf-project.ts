@@ -1,5 +1,5 @@
-import { InputSystem } from 'xforge-common/models/input-system';
-import { Project } from 'xforge-common/models/project';
+import { InputSystem } from '../../common/models/input-system';
+import { Project } from '../../common/models/project';
 import { Sync } from './sync';
 import { TextInfo } from './text-info';
 

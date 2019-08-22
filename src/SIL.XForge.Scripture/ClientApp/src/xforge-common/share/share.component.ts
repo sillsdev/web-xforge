@@ -1,8 +1,8 @@
 import { MdcDialog } from '@angular-mdc/web';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
 import { map } from 'rxjs/operators';
-import { SharingLevel } from '../models/sharing-level';
 import { ProjectService } from '../project.service';
 import { ShareDialogComponent, ShareDialogData } from './share-dialog.component';
 

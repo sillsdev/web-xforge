@@ -3,16 +3,16 @@ import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Question } from 'realtime-server/lib/scriptureforge/models/question';
+import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { of } from 'rxjs';
 import { anything, capture, instance, mock, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { UserDoc } from 'xforge-common/docs/user-doc';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { Question } from '../../core/models/question';
-import { VerseRefData } from '../../core/models/verse-ref-data';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData

@@ -1,7 +1,7 @@
 import { Delta } from 'rich-text';
-import { ConnectSession } from 'xforge-common/connect-session';
-import { Operation } from 'xforge-common/models/project-rights';
-import { DocService } from 'xforge-common/services/doc-service';
+import { ConnectSession } from '../../common/connect-session';
+import { Operation } from '../../common/models/project-rights';
+import { DocService } from '../../common/services/doc-service';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
 
 /**

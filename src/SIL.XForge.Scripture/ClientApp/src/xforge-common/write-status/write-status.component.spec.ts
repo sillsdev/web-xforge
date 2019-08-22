@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { ElementState } from '../element-state';
+import { ElementState } from '../models/element-state';
 import { UICommonModule } from '../ui-common.module';
 import { WriteStatusComponent } from './write-status.component';
 

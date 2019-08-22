@@ -2,6 +2,6 @@
   "extends": "../../tslint.json",
   "rules": {},
   "linterOptions": {
-    "exclude": ["./dist/**/*"]
+    "exclude": ["./lib/**/*"]
   }
 }
