@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-
+import { Question } from 'realtime-server/lib/scriptureforge/models/question';
+import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { fromEvent } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { Question } from '../../../core/models/question';
 import { TextDocId } from '../../../core/models/text-doc-id';
-import { VerseRefData, VerseRefFunctions } from '../../../core/models/verse-ref-data';
+import { verseRefDataToVerseRef } from '../../../shared/scripture-utils/verse-ref-data-converters';
 import { TextComponent } from '../../../shared/text/text.component';
 
 @Component({
@@ -19,7 +19,9 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   @Input() set activeQuestion(question: Readonly<Question>) {
     if (this.activeQuestion && this.isEditorLoaded) {
       this.selectActiveQuestion(this.activeQuestion, false);
-      this.selectActiveQuestion(question, true);
+      if (question != null) {
+        this.selectActiveQuestion(question, true);
+      }
     }
     this._activeQuestion = question;
   }
@@ -70,8 +72,8 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     const segments: string[] = [];
     let segment = '';
     if (question.scriptureStart) {
-      const verseStart = VerseRefFunctions.fromData(question.scriptureStart);
-      let verseEnd = VerseRefFunctions.fromData(question.scriptureEnd);
+      const verseStart = verseRefDataToVerseRef(question.scriptureStart);
+      let verseEnd = verseRefDataToVerseRef(question.scriptureEnd);
       if (!verseEnd.book) {
         verseEnd = verseStart;
       }
@@ -117,10 +119,10 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   }
 
   private segmentClicked(verseRefData: VerseRefData) {
-    const verseRef = VerseRefFunctions.fromData(verseRefData);
+    const verseRef = verseRefDataToVerseRef(verseRefData);
     for (const question of this.questions) {
-      const verseStart = VerseRefFunctions.fromData(question.scriptureStart);
-      let verseEnd = VerseRefFunctions.fromData(question.scriptureEnd);
+      const verseStart = verseRefDataToVerseRef(question.scriptureStart);
+      let verseEnd = verseRefDataToVerseRef(question.scriptureEnd);
       if (!verseEnd.book) {
         verseEnd = verseStart;
       }

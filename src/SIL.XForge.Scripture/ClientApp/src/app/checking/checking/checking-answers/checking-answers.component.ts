@@ -8,7 +8,7 @@ import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo, TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { VerseRefData, VerseRefFunctions } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { AccountService } from 'xforge-common/account.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -20,6 +20,10 @@ import {
 } from '../../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { ScrVers } from '../../../shared/scripture-utils/scr-vers';
 import { VerseRef } from '../../../shared/scripture-utils/verse-ref';
+import {
+  verseRefDataToString,
+  verseRefToVerseRefData
+} from '../../../shared/scripture-utils/verse-ref-data-converters';
 import { SFValidators } from '../../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
@@ -184,8 +188,8 @@ export class CheckingAnswersComponent implements OnInit {
   editAnswer(answer: Answer) {
     this.activeAnswer = cloneDeep(answer);
     this.audio.url = this.activeAnswer.audioUrl;
-    this.scriptureStart.setValue(VerseRefFunctions.verseRefDataToString(this.activeAnswer.scriptureStart));
-    this.scriptureEnd.setValue(VerseRefFunctions.verseRefDataToString(this.activeAnswer.scriptureEnd));
+    this.scriptureStart.setValue(verseRefDataToString(this.activeAnswer.scriptureStart));
+    this.scriptureEnd.setValue(verseRefDataToString(this.activeAnswer.scriptureEnd));
     this.scriptureText.setValue(this.activeAnswer.scriptureText);
     this.showAnswerForm();
   }
@@ -246,15 +250,11 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   openScriptureChooser(control: AbstractControl) {
-    const currentVerseSelection = VerseRefFunctions.verseRefToVerseRefData(
-      VerseRef.fromStr(control.value, ScrVers.English)
-    );
+    const currentVerseSelection = verseRefToVerseRefData(VerseRef.fromStr(control.value, ScrVers.English));
 
     let rangeStart: VerseRefData;
     if (control !== this.scriptureStart) {
-      rangeStart = VerseRefFunctions.verseRefToVerseRefData(
-        VerseRef.fromStr(this.scriptureStart.value, ScrVers.English)
-      );
+      rangeStart = verseRefToVerseRefData(VerseRef.fromStr(this.scriptureStart.value, ScrVers.English));
     }
 
     const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
@@ -264,7 +264,7 @@ export class CheckingAnswersComponent implements OnInit {
     const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig);
     dialogRef.afterClosed().subscribe((result: VerseRefData) => {
       if (result !== 'close') {
-        control.setValue(VerseRefFunctions.verseRefDataToString(result));
+        control.setValue(verseRefDataToString(result));
         control.markAsTouched();
         control.markAsDirty();
         this.extractScriptureText();
@@ -285,7 +285,7 @@ export class CheckingAnswersComponent implements OnInit {
   scriptureTextVerseRef(answer: Answer): string {
     return (
       '(' +
-      VerseRefFunctions.verseRefDataToString(answer.scriptureStart) +
+      verseRefDataToString(answer.scriptureStart) +
       (answer.scriptureEnd.verse && answer.scriptureStart.verse !== answer.scriptureEnd.verse
         ? '-' + answer.scriptureEnd.verse
         : '') +
@@ -342,8 +342,8 @@ export class CheckingAnswersComponent implements OnInit {
       answer: this.activeAnswer,
       audio: this.audio,
       scriptureText: this.scriptureText.value,
-      scriptureStart: VerseRefFunctions.verseRefToVerseRefData(this.scriptureStartVerseRef),
-      scriptureEnd: VerseRefFunctions.verseRefToVerseRefData(this.scriptureEndVerseRef)
+      scriptureStart: verseRefToVerseRefData(this.scriptureStartVerseRef),
+      scriptureEnd: verseRefToVerseRefData(this.scriptureEndVerseRef)
     });
   }
 
