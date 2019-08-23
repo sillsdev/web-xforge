@@ -189,6 +189,29 @@ export class TextViewModel {
     return segmentRef;
   }
 
+  getNextSegmentRef(ref: string): string {
+    let found = false;
+    for (const segmentRef of this._segments.keys()) {
+      if (found) {
+        return segmentRef;
+      } else if (segmentRef === ref) {
+        found = true;
+      }
+    }
+    return undefined;
+  }
+
+  getPrevSegmentRef(ref: string): string {
+    let prevSegmentRef: string;
+    for (const segmentRef of this._segments.keys()) {
+      if (segmentRef === ref) {
+        return prevSegmentRef;
+      }
+      prevSegmentRef = segmentRef;
+    }
+    return undefined;
+  }
+
   private viewToData(delta: DeltaStatic): DeltaStatic {
     const modelDelta = new Delta();
     for (const op of delta.ops) {
