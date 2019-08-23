@@ -346,7 +346,7 @@ namespace SIL.XForge.Services
             public TestEnvironment(bool isResetLinkExpired = false)
             {
                 RealtimeService = new MemoryRealtimeService();
-                RealtimeService.AddRepository(RootDataTypes.Users, OTType.Json0,
+                RealtimeService.AddRepository("users", OTType.Json0,
                     new MemoryRepository<User>(new[]
                     {
                         new User
@@ -369,7 +369,7 @@ namespace SIL.XForge.Services
                         },
 
                     }));
-                RealtimeService.AddRepository(RootDataTypes.Projects, OTType.Json0,
+                RealtimeService.AddRepository("projects", OTType.Json0,
                     new MemoryRepository<TestProject>(new[]
                     {
                         new TestProject

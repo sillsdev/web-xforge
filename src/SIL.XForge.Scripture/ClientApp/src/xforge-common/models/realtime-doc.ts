@@ -3,7 +3,7 @@ import { RealtimeDocAdapter } from '../realtime-doc-adapter';
 import { RealtimeOfflineData, RealtimeOfflineStore } from '../realtime-offline-store';
 
 export interface RealtimeDocConstructor {
-  readonly TYPE: string;
+  readonly COLLECTION: string;
 
   new (adapter: RealtimeDocAdapter, store: RealtimeOfflineStore): RealtimeDoc;
 }
@@ -24,7 +24,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   private _delete$: Observable<void>;
 
   constructor(
-    public readonly type: string,
+    public readonly collection: string,
     private readonly adapter: RealtimeDocAdapter,
     protected readonly store: RealtimeOfflineStore
   ) {
@@ -120,7 +120,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       },
       pendingOps
     };
-    this.store.put(this.type, offlineData);
+    this.store.put(this.collection, offlineData);
   }
 
   /**
@@ -146,7 +146,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   }
 
   protected onDelete(): void {
-    this.store.delete(this.type, this.id);
+    this.store.delete(this.collection, this.id);
   }
 
   private async subscribeToChanges(): Promise<void> {
@@ -173,7 +173,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     if (this.isLoaded) {
       return;
     }
-    const offlineData = await this.store.get(this.type, this.id);
+    const offlineData = await this.store.get(this.collection, this.id);
     if (offlineData != null) {
       if (offlineData.pendingOps.length > 0) {
         await this.adapter.fetch();

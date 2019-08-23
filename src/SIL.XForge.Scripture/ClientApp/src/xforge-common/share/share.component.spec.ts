@@ -12,7 +12,7 @@ import { LocationService } from 'xforge-common/location.service';
 import { ProjectDoc } from '../models/project-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
-import { MemoryRealtimeDocAdapter } from '../realtime-doc-adapter';
+import { MemoryRealtimeDocAdapter, RealtimeDocAdapter } from '../realtime-doc-adapter';
 import { RealtimeOfflineStore } from '../realtime-offline-store';
 import { UICommonModule } from '../ui-common.module';
 import { ShareControlComponent } from './share-control.component';
@@ -126,6 +126,10 @@ describe('ShareComponent', () => {
 class DialogTestModule {}
 
 class TestProjectDoc extends ProjectDoc {
+  constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
+    super('projects', adapter, store);
+  }
+
   get taskNames(): string[] {
     return [];
   }

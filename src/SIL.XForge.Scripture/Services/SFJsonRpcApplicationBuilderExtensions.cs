@@ -1,4 +1,4 @@
-using SIL.XForge.Models;
+using SIL.XForge;
 using SIL.XForge.Scripture.Controllers;
 
 namespace Microsoft.AspNetCore.Builder
@@ -9,7 +9,7 @@ namespace Microsoft.AspNetCore.Builder
         {
             app.UseXFJsonRpc(options =>
             {
-                options.RegisterController<SFProjectsRpcController>(RootDataTypes.Projects);
+                options.RegisterController<SFProjectsRpcController>(UrlConstants.Projects);
             });
         }
     }

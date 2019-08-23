@@ -1,7 +1,7 @@
 import ShareDB = require('sharedb');
 import { ConnectSession } from '../connect-session';
 import { SystemRole } from '../models/system-role';
-import { User, USERS_COLLECTION } from '../models/user';
+import { User, USER_PROFILES_COLLECTION, USERS_COLLECTION } from '../models/user';
 import { PathTemplate } from '../path-template';
 import { RealtimeServer } from '../realtime-server';
 import { JsonDocService } from './json-doc-service';
@@ -35,7 +35,7 @@ export class UserService extends JsonDocService<User> {
   }
 
   init(server: RealtimeServer): void {
-    server.backend.addProjection('user_profiles', this.collection, USER_PROFILE_FIELDS);
+    server.backend.addProjection(USER_PROFILES_COLLECTION, this.collection, USER_PROFILE_FIELDS);
     super.init(server);
   }
 

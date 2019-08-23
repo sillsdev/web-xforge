@@ -12,7 +12,7 @@ import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
-import { MemoryRealtimeDocAdapter } from '../realtime-doc-adapter';
+import { MemoryRealtimeDocAdapter, RealtimeDocAdapter } from '../realtime-doc-adapter';
 import { RealtimeOfflineStore } from '../realtime-offline-store';
 import { QueryParameters, QueryResults } from '../realtime.service';
 import { UICommonModule } from '../ui-common.module';
@@ -113,6 +113,9 @@ describe('SaProjectsComponent', () => {
 
 class TestProjectDoc extends ProjectDoc {
   readonly taskNames: string[] = ['Task1', 'Task2'];
+  constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
+    super('projects', adapter, store);
+  }
 }
 
 class TestEnvironment {

@@ -1,6 +1,5 @@
 import { Snapshot } from 'sharedb/lib/client';
 import { RealtimeDocTypes } from './realtime-doc-types';
-import { getCollectionName } from './utils';
 
 const DATABASE_NAME = 'xforge';
 
@@ -21,12 +20,11 @@ export class RealtimeOfflineStore {
 
   constructor(private readonly domainModel: RealtimeDocTypes) {}
 
-  async getAllIds(type: string): Promise<string[]> {
+  async getAllIds(collection: string): Promise<string[]> {
     await this.openDB();
     return await new Promise<string[]>((resolve, reject) => {
-      const collectionName = getCollectionName(type);
-      const transaction = this.db.transaction(collectionName);
-      const objectStore = transaction.objectStore(collectionName);
+      const transaction = this.db.transaction(collection);
+      const objectStore = transaction.objectStore(collection);
 
       const request = objectStore.getAllKeys();
       request.onerror = () => reject(request.error);
@@ -34,12 +32,11 @@ export class RealtimeOfflineStore {
     });
   }
 
-  async get(type: string, id: string): Promise<RealtimeOfflineData> {
+  async get(collection: string, id: string): Promise<RealtimeOfflineData> {
     await this.openDB();
     return await new Promise<RealtimeOfflineData>((resolve, reject) => {
-      const collectionName = getCollectionName(type);
-      const transaction = this.db.transaction(collectionName);
-      const objectStore = transaction.objectStore(collectionName);
+      const transaction = this.db.transaction(collection);
+      const objectStore = transaction.objectStore(collection);
 
       const request = objectStore.get(id);
       request.onerror = () => reject(request.error);
@@ -47,12 +44,11 @@ export class RealtimeOfflineStore {
     });
   }
 
-  async put(type: string, offlineData: RealtimeOfflineData): Promise<void> {
+  async put(collection: string, offlineData: RealtimeOfflineData): Promise<void> {
     await this.openDB();
     await new Promise<void>((resolve, reject) => {
-      const collectionName = getCollectionName(type);
-      const transaction = this.db.transaction(collectionName, 'readwrite');
-      const objectStore = transaction.objectStore(collectionName);
+      const transaction = this.db.transaction(collection, 'readwrite');
+      const objectStore = transaction.objectStore(collection);
 
       const request = objectStore.put(offlineData);
       request.onerror = () => reject(request.error);
@@ -60,12 +56,11 @@ export class RealtimeOfflineStore {
     });
   }
 
-  async delete(type: string, id: string): Promise<void> {
+  async delete(collection: string, id: string): Promise<void> {
     await this.openDB();
     await new Promise<void>((resolve, reject) => {
-      const collectionName = getCollectionName(type);
-      const transaction = this.db.transaction(collectionName, 'readwrite');
-      const objectStore = transaction.objectStore(collectionName);
+      const transaction = this.db.transaction(collection, 'readwrite');
+      const objectStore = transaction.objectStore(collection);
 
       const request = objectStore.delete(id);
       request.onerror = () => reject(request.error);
@@ -97,8 +92,8 @@ export class RealtimeOfflineStore {
       };
       request.onupgradeneeded = () => {
         const db = request.result;
-        for (const docType of this.domainModel.docTypes) {
-          db.createObjectStore(getCollectionName(docType), { keyPath: 'id' });
+        for (const collection of this.domainModel.collections) {
+          db.createObjectStore(collection, { keyPath: 'id' });
         }
       };
     });

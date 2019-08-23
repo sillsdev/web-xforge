@@ -1,6 +1,7 @@
 import { Site } from './site';
 
 export const USERS_COLLECTION = 'users';
+export const USER_PROFILES_COLLECTION = 'user_profiles';
 
 export enum AuthType {
   Unknown,

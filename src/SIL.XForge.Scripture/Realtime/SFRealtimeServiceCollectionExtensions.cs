@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using SIL.XForge.Configuration;
-using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 
@@ -17,13 +16,13 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddRealtimeServer(configuration, o =>
                 {
                     o.AppModuleName = "scriptureforge";
-                    o.Docs.AddRange(new[]
+                    o.ProjectDoc = new DocConfig("sf_projects", typeof(SFProject));
+                    o.ProjectDataDocs.AddRange(new[]
                     {
-                        new DocConfig(RootDataTypes.Projects, typeof(SFProject)),
-                        new DocConfig(SFRootDataTypes.ProjectUserConfigs, typeof(SFProjectUserConfig)),
-                        new DocConfig(SFRootDataTypes.Texts, typeof(TextData), OTType.RichText),
-                        new DocConfig(SFRootDataTypes.Questions, typeof(QuestionList)),
-                        new DocConfig(SFRootDataTypes.Comments, typeof(CommentList))
+                        new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)),
+                        new DocConfig("texts", typeof(TextData), OTType.RichText),
+                        new DocConfig("questions", typeof(QuestionList)),
+                        new DocConfig("comments", typeof(CommentList))
                     });
                 }, launchWithDebugging);
             return services;

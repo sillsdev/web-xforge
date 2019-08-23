@@ -110,7 +110,7 @@ namespace SIL.XForge.Scripture.Services
             public TestEnvironment()
             {
                 RealtimeService = new SFMemoryRealtimeService();
-                RealtimeService.AddRepository(RootDataTypes.Users, OTType.Json0, new MemoryRepository<User>(new[]
+                RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
                 {
                     new User
                     {
@@ -129,7 +129,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                     }
                 }));
-                RealtimeService.AddRepository(RootDataTypes.Projects, OTType.Json0, new MemoryRepository<SFProject>(
+                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
                     new[]
                     {
                         new SFProject
@@ -183,7 +183,7 @@ namespace SIL.XForge.Scripture.Services
                             }
                         }
                     }));
-                RealtimeService.AddRepository(SFRootDataTypes.ProjectUserConfigs, OTType.Json0,
+                RealtimeService.AddRepository("sf_project_user_configs", OTType.Json0,
                     new MemoryRepository<SFProjectUserConfig>(new[]
                     {
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },

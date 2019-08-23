@@ -11,17 +11,17 @@ export class RealtimeDocTypes {
 
   constructor(docTypes: RealtimeDocConstructor[]) {
     this._docTypes = new Map<string, RealtimeDocConstructor>(
-      docTypes.map(r => [r.TYPE, r] as [string, RealtimeDocConstructor])
+      docTypes.map(r => [r.COLLECTION, r] as [string, RealtimeDocConstructor])
     );
-    this._docTypes.set(UserDoc.TYPE, UserDoc);
-    this._docTypes.set(UserProfileDoc.TYPE, UserProfileDoc);
+    this._docTypes.set(UserDoc.COLLECTION, UserDoc);
+    this._docTypes.set(UserProfileDoc.COLLECTION, UserProfileDoc);
   }
 
-  get docTypes(): IterableIterator<string> {
+  get collections(): IterableIterator<string> {
     return this._docTypes.keys();
   }
 
-  getDocType(recordType: string): RealtimeDocConstructor {
-    return this._docTypes.get(recordType);
+  getDocType(collection: string): RealtimeDocConstructor {
+    return this._docTypes.get(collection);
   }
 }
