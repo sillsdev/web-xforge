@@ -39,6 +39,10 @@ describe('CheckingNameDialogComponent', () => {
     env.confirmButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBeUndefined();
+    env.setTextFieldValue(env.nameInput, 'Bob');
+    env.confirmButton.click();
+    env.fixture.detectChanges();
+    expect(env.component.confirmedName).toBe('Bob');
   });
 
   it('shows messages in a confirmation context', () => {
