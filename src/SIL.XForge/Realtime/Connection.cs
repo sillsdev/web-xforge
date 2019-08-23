@@ -25,11 +25,10 @@ namespace SIL.XForge.Realtime
         public IDocument<T> Get<T>(string id) where T : IIdentifiable
         {
             DocConfig docConfig = _realtimeService.GetDocConfig<T>();
-            string collection = _realtimeService.GetCollectionName(docConfig.RootDataType);
-            object doc = _documents.GetOrAdd((collection, id), key =>
+            object doc = _documents.GetOrAdd((docConfig.CollectionName, id), key =>
             {
                 string otTypeName = docConfig.OTTypeName;
-                return new Document<T>(_realtimeService.Server, _handle, otTypeName, collection, id);
+                return new Document<T>(_realtimeService.Server, _handle, otTypeName, docConfig.CollectionName, id);
             });
             return (Document<T>)doc;
         }

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Humanizer;
 using Microsoft.AspNetCore.NodeServices;
 using Microsoft.Extensions.DependencyInjection;
 using SIL.XForge.Configuration;
@@ -53,7 +52,7 @@ namespace SIL.XForge.Realtime
         public string GetCollectionName<T>() where T : IIdentifiable
         {
             DocConfig docConfig = GetDocConfig<T>();
-            return GetCollectionName(docConfig.RootDataType);
+            return docConfig.CollectionName;
         }
 
         public IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable
@@ -61,10 +60,11 @@ namespace SIL.XForge.Realtime
             return GetRepository<T>().Query();
         }
 
-        public void AddRepository<T>(string type, string otTypeName, MemoryRepository<T> repo) where T : IIdentifiable
+        public void AddRepository<T>(string collectionName, string otTypeName, MemoryRepository<T> repo)
+            where T : IIdentifiable
         {
             _repos[typeof(T)] = repo;
-            _docConfigs[typeof(T)] = new DocConfig(type, typeof(T), otTypeName);
+            _docConfigs[typeof(T)] = new DocConfig(collectionName, typeof(T), otTypeName);
         }
 
         public MemoryRepository<T> GetRepository<T>() where T : IIdentifiable
@@ -75,11 +75,6 @@ namespace SIL.XForge.Realtime
         internal DocConfig GetDocConfig<T>() where T : IIdentifiable
         {
             return _docConfigs[typeof(T)];
-        }
-
-        internal string GetCollectionName(string rootDataType)
-        {
-            return rootDataType.Underscore();
         }
     }
 }

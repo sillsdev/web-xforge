@@ -99,11 +99,13 @@ export class TextViewModel {
     }
 
     this.textDoc = textDoc;
-    this.editor.setContents(this.textDoc.data);
+    this.editor.setContents(this.textDoc.data as DeltaStatic);
     this.editor.history.clear();
-    this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => this.editor.updateContents(ops));
+    this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops =>
+      this.editor.updateContents(ops as DeltaStatic)
+    );
     this.onCreateSub = this.textDoc.create$.subscribe(() => {
-      this.editor.setContents(this.textDoc.data);
+      this.editor.setContents(this.textDoc.data as DeltaStatic);
       this.editor.history.clear();
     });
   }

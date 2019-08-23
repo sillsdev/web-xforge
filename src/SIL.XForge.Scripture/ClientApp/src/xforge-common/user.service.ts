@@ -6,6 +6,7 @@ import { CommandService } from './command.service';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
 import { QueryParameters, QueryResults, RealtimeService } from './realtime.service';
+import { USERS_URL } from './url-constants';
 
 /**
  * Provides operations on user objects.
@@ -30,15 +31,15 @@ export class UserService {
   }
 
   get(id: string): Promise<UserDoc> {
-    return this.realtimeService.get(UserDoc.TYPE, id);
+    return this.realtimeService.get(UserDoc.COLLECTION, id);
   }
 
   getProfile(id: string): Promise<UserProfileDoc> {
-    return this.realtimeService.get(UserProfileDoc.TYPE, id);
+    return this.realtimeService.get(UserProfileDoc.COLLECTION, id);
   }
 
   async onlineDelete(id: string): Promise<void> {
-    await this.commandService.onlineInvoke(UserDoc.TYPE, 'delete', { userId: id });
+    await this.onlineInvoke('delete', { userId: id });
   }
 
   onlineSearch(
@@ -56,8 +57,12 @@ export class UserService {
         const query = {
           $or: [{ name: { $regex: `.*${term}.*`, $options: 'i' } }, { email: { $regex: `.*${term}.*`, $options: 'i' } }]
         };
-        return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.TYPE, query, queryParameters));
+        return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.COLLECTION, query, queryParameters));
       })
     );
+  }
+
+  private onlineInvoke<T>(method: string, params?: any): Promise<T> {
+    return this.commandService.onlineInvoke<T>(USERS_URL, method, params);
   }
 }

@@ -119,7 +119,7 @@ namespace SIL.XForge.Services
                 });
 
                 RealtimeService = new MemoryRealtimeService();
-                RealtimeService.AddRepository(RootDataTypes.Users, OTType.Json0, new MemoryRepository<User>(new[]
+                RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
                 {
                     new User
                     {

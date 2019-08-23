@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using SIL.XForge.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
@@ -14,7 +13,7 @@ namespace SIL.XForge.Scripture.Controllers
     /// This controller contains upload endpoints.
     /// </summary>
     [Authorize]
-    [Route(ControllerConstants.CommandApiNamespace + "/" + RootDataTypes.Projects)]
+    [Route(UrlConstants.CommandApiNamespace + "/" + UrlConstants.Projects)]
     public class SFProjectsUploadController : ControllerBase
     {
         private readonly IUserAccessor _userAccessor;

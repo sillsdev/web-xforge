@@ -259,7 +259,7 @@ namespace SIL.XForge.Scripture.Services
 
             public void AddQuestions(string syncUserId1, string syncUserId2)
             {
-                RealtimeService.AddRepository(SFRootDataTypes.Questions, OTType.Json0,
+                RealtimeService.AddRepository("questions", OTType.Json0,
                     new MemoryRepository<QuestionList>(new[]
                     {
                         new QuestionList
@@ -299,7 +299,7 @@ namespace SIL.XForge.Scripture.Services
 
             public void AddComments(string syncUserId1, string syncUserId2)
             {
-                RealtimeService.AddRepository(SFRootDataTypes.Comments, OTType.Json0,
+                RealtimeService.AddRepository("comments", OTType.Json0,
                     new MemoryRepository<CommentList>(new[]
                     {
                         new CommentList

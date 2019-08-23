@@ -7,6 +7,7 @@ import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
 import { QueryParameters, QueryResults, RealtimeService } from './realtime.service';
+import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
 
 export abstract class ProjectService<
   TProj extends Project = Project,
@@ -27,12 +28,14 @@ export abstract class ProjectService<
     this.roles.set(NONE_ROLE.role, NONE_ROLE);
   }
 
+  protected abstract get collection(): string;
+
   get(id: string): Promise<TDoc> {
-    return this.realtimeService.get(ProjectDoc.TYPE, id);
+    return this.realtimeService.get(this.collection, id);
   }
 
   onlineCreate(project: TProj): Promise<string> {
-    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'create', { project });
+    return this.onlineInvoke('create', { project });
   }
 
   onlineSearch(
@@ -52,43 +55,43 @@ export abstract class ProjectService<
             { 'inputSystem.languageName': { $regex: `.*${term}.*`, $options: 'i' } }
           ]
         };
-        return this.realtimeService.onlineQuery(ProjectDoc.TYPE, query, parameters);
+        return this.realtimeService.onlineQuery(this.collection, query, parameters);
       })
     );
   }
 
   async onlineGetMany(projectIds: string[]): Promise<TDoc[]> {
-    const results = await this.realtimeService.onlineQuery(ProjectDoc.TYPE, { _id: { $in: projectIds } });
+    const results = await this.realtimeService.onlineQuery(this.collection, { _id: { $in: projectIds } });
     return results.docs as TDoc[];
   }
 
   onlineAddCurrentUser(id: string, projectRole?: string): Promise<void> {
-    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'addUser', { projectId: id, projectRole });
+    return this.onlineInvoke('addUser', { projectId: id, projectRole });
   }
 
   onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
-    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'isAlreadyInvited', { projectId: id, email });
+    return this.onlineInvoke('isAlreadyInvited', { projectId: id, email });
   }
 
   /** Get added into project, with optionally specified shareKey code. */
   onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
-    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'checkLinkSharing', { projectId: id, shareKey });
+    return this.onlineInvoke('checkLinkSharing', { projectId: id, shareKey });
   }
 
   onlineRemoveUser(id: string, userId: string): Promise<void> {
-    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'removeUser', { projectId: id, projectUserId: userId });
+    return this.onlineInvoke('removeUser', { projectId: id, projectUserId: userId });
   }
 
   onlineUpdateCurrentUserRole(id: string, projectRole: string): Promise<void> {
-    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'updateRole', { projectId: id, projectRole });
+    return this.onlineInvoke('updateRole', { projectId: id, projectRole });
   }
 
   onlineInvite(id: string, email: string): Promise<string> {
-    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'invite', { projectId: id, email });
+    return this.onlineInvoke('invite', { projectId: id, email });
   }
 
   onlineDelete(id: string): Promise<void> {
-    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'delete', { projectId: id });
+    return this.onlineInvoke('delete', { projectId: id });
   }
 
   async onlineUploadAudio(id: string, dataId: string, file: File): Promise<string> {
@@ -97,7 +100,7 @@ export abstract class ProjectService<
     formData.append('dataId', dataId);
     formData.append('file', file);
     const response = await this.http
-      .post<HttpResponse<string>>(`command-api/projects/audio`, formData, {
+      .post<HttpResponse<string>>(`${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/audio`, formData, {
         headers: { Accept: 'application/json' },
         observe: 'response'
       })
@@ -107,6 +110,10 @@ export abstract class ProjectService<
   }
 
   onlineDeleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
-    return this.commandService.onlineInvoke(ProjectDoc.TYPE, 'deleteAudio', { projectId: id, ownerId, dataId });
+    return this.onlineInvoke('deleteAudio', { projectId: id, ownerId, dataId });
+  }
+
+  protected onlineInvoke<T>(method: string, params?: any): Promise<T> {
+    return this.commandService.onlineInvoke<T>(PROJECTS_URL, method, params);
   }
 }

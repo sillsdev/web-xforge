@@ -8,8 +8,8 @@ import { filter, mergeMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
 import { LocationService } from './location.service';
-import { UserDoc } from './models/user-doc';
 import { RealtimeService } from './realtime.service';
+import { USERS_URL } from './url-constants';
 
 const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 const XF_ROLE_CLAIM = 'http://xforge.org/role';
@@ -142,10 +142,10 @@ export class AuthService {
     const isNewUser = prevUserId != null && prevUserId !== this.currentUserId;
     await this.realtimeService.init(this.accessToken, isNewUser);
     if (secondaryId != null) {
-      await this.commandService.onlineInvoke(UserDoc.TYPE, 'linkParatextAccount', { authId: secondaryId });
+      await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
     } else if (!environment.production) {
       try {
-        await this.commandService.onlineInvoke(UserDoc.TYPE, 'pullAuthUserProfile');
+        await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
       } catch (err) {
         console.error(err);
         return false;

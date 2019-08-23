@@ -486,7 +486,7 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupSFData(bool translateEnabled, bool checkingEnabled, bool changed, params Book[] books)
             {
-                RealtimeService.AddRepository(RootDataTypes.Projects, OTType.Json0, new MemoryRepository<SFProject>(
+                RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
                     new[]
                     {
                         new SFProject
@@ -527,11 +527,9 @@ namespace SIL.XForge.Scripture.Services
                         .Returns(books.Where(b => b.SourceChapterCount > 0).Select(b => $"{b.Id}.xml"));
                 }
 
-                RealtimeService.AddRepository(SFRootDataTypes.Texts, OTType.RichText, new MemoryRepository<TextData>());
-                RealtimeService.AddRepository(SFRootDataTypes.Questions, OTType.Json0,
-                    new MemoryRepository<QuestionList>());
-                RealtimeService.AddRepository(SFRootDataTypes.Comments, OTType.Json0,
-                    new MemoryRepository<CommentList>());
+                RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
+                RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<QuestionList>());
+                RealtimeService.AddRepository("comments", OTType.Json0, new MemoryRepository<CommentList>());
                 foreach (Book book in books)
                 {
                     AddSFBook(book.Id, book.TargetChapterCount, TextType.Target, changed);

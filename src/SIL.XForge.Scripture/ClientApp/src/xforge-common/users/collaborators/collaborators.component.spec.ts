@@ -15,7 +15,7 @@ import { NONE_ROLE, ProjectRoleInfo } from '../../models/project-role-info';
 import { UserProfileDoc } from '../../models/user-profile-doc';
 import { NoticeService } from '../../notice.service';
 import { ProjectService } from '../../project.service';
-import { MemoryRealtimeDocAdapter } from '../../realtime-doc-adapter';
+import { MemoryRealtimeDocAdapter, RealtimeDocAdapter } from '../../realtime-doc-adapter';
 import { RealtimeOfflineStore } from '../../realtime-offline-store';
 import { ShareControlComponent } from '../../share/share-control.component';
 import { UICommonModule } from '../../ui-common.module';
@@ -110,6 +110,9 @@ describe('CollaboratorsComponent', () => {
 });
 
 class TestProjectDoc extends ProjectDoc {
+  constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
+    super('projects', adapter, store);
+  }
   get taskNames(): string[] {
     return [];
   }

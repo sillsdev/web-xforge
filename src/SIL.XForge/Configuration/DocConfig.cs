@@ -8,14 +8,14 @@ namespace SIL.XForge.Configuration
     /// </summary>
     public class DocConfig
     {
-        public DocConfig(string rootDataType, Type type, string otTypeName = OTType.Json0)
+        public DocConfig(string collectionName, Type type, string otTypeName = OTType.Json0)
         {
-            RootDataType = rootDataType;
+            CollectionName = collectionName;
             Type = type;
             OTTypeName = otTypeName;
         }
 
-        public string RootDataType { get; }
+        public string CollectionName { get; }
         public Type Type { get; }
         public string OTTypeName { get; }
     }

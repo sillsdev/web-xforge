@@ -17,7 +17,7 @@ import { ProjectDoc } from '../models/project-doc';
 import { UserDoc } from '../models/user-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
-import { MemoryRealtimeDocAdapter } from '../realtime-doc-adapter';
+import { MemoryRealtimeDocAdapter, RealtimeDocAdapter } from '../realtime-doc-adapter';
 import { RealtimeOfflineStore } from '../realtime-offline-store';
 import { QueryParameters, QueryResults } from '../realtime.service';
 import { UICommonModule } from '../ui-common.module';
@@ -118,7 +118,10 @@ describe('SaUsersComponent', () => {
 });
 
 class TestProjectDoc extends ProjectDoc {
-  taskNames: string[];
+  readonly taskNames: string[];
+  constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
+    super('projects', adapter, store);
+  }
 }
 
 @NgModule({

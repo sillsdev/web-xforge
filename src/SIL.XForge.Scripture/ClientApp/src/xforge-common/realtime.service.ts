@@ -8,10 +8,9 @@ import { RealtimeDoc } from './models/realtime-doc';
 import { SharedbRealtimeDocAdapter } from './realtime-doc-adapter';
 import { RealtimeDocTypes } from './realtime-doc-types';
 import { RealtimeOfflineStore } from './realtime-offline-store';
-import { getCollectionName } from './utils';
 
-function getDocKey(type: string, id: string): string {
-  return `${type}:${id}`;
+function getDocKey(collection: string, id: string): string {
+  return `${collection}:${id}`;
 }
 
 export interface QueryResults<T extends RealtimeDoc> {
@@ -68,11 +67,11 @@ export class RealtimeService {
    * @param {RecordIdentity} identity The data identity.
    * @returns {Promise<T>} The realtime data.
    */
-  async get<T extends RealtimeDoc>(type: string, id: string): Promise<T> {
-    const key = getDocKey(type, id);
+  async get<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
+    const key = getDocKey(collection, id);
     let doc = this.docs.get(key);
     if (doc == null) {
-      doc = this.createDoc(type, id);
+      doc = this.createDoc(collection, id);
       this.docs.set(key, doc);
     }
     await doc.subscribe();
@@ -80,11 +79,10 @@ export class RealtimeService {
   }
 
   async onlineQuery<T extends RealtimeDoc>(
-    type: string,
+    collection: string,
     query: any,
     parameters: QueryParameters = {}
   ): Promise<QueryResults<T>> {
-    const collection = getCollectionName(type);
     const resultsQueryParams = cloneDeep(query);
     if (parameters.sort != null) {
       resultsQueryParams.$sort = parameters.sort;
@@ -107,10 +105,10 @@ export class RealtimeService {
     }
     const queries = await Promise.all(queryPromises);
     const resultsQuery = queries[0];
-    const RealtimeDocType = this.domainModel.getDocType(type);
+    const RealtimeDocType = this.domainModel.getDocType(collection);
     const docs: T[] = [];
     for (const shareDoc of resultsQuery.results) {
-      const key = getDocKey(type, shareDoc.id);
+      const key = getDocKey(collection, shareDoc.id);
       let doc = this.docs.get(key);
       if (doc == null) {
         doc = new RealtimeDocType(new SharedbRealtimeDocAdapter(this.connection, collection, shareDoc), this.store);
@@ -131,10 +129,9 @@ export class RealtimeService {
     return url;
   }
 
-  private createDoc(type: string, id: string): RealtimeDoc {
-    const collection = getCollectionName(type);
+  private createDoc(collection: string, id: string): RealtimeDoc {
     const sharedbDoc = this.connection.get(collection, id);
-    const RealtimeDocType = this.domainModel.getDocType(type);
+    const RealtimeDocType = this.domainModel.getDocType(collection);
     return new RealtimeDocType(new SharedbRealtimeDocAdapter(this.connection, collection, sharedbDoc), this.store);
   }
 

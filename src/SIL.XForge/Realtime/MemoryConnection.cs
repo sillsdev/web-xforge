@@ -19,13 +19,12 @@ namespace SIL.XForge.Realtime
         public IDocument<T> Get<T>(string id) where T : IIdentifiable
         {
             DocConfig docConfig = _realtimeService.GetDocConfig<T>();
-            string collection = _realtimeService.GetCollectionName(docConfig.RootDataType);
-            if (_documents.TryGetValue((collection, id), out object docObj))
+            if (_documents.TryGetValue((docConfig.CollectionName, id), out object docObj))
                 return (IDocument<T>)docObj;
 
             MemoryRepository<T> repo = _realtimeService.GetRepository<T>();
-            IDocument<T> doc = new MemoryDocument<T>(repo, docConfig.OTTypeName, collection, id);
-            _documents[(collection, id)] = doc;
+            IDocument<T> doc = new MemoryDocument<T>(repo, docConfig.OTTypeName, docConfig.CollectionName, id);
+            _documents[(docConfig.CollectionName, id)] = doc;
             return doc;
         }
 
