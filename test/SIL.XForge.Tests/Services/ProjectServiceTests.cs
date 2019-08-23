@@ -336,8 +336,8 @@ namespace SIL.XForge.Services
                             ShareEnabled = false,
                             UserRoles =
                             {
-                                { User01, TestProjectRoles.Administrator },
-                                { User02, TestProjectRoles.Reviewer }
+                                { User01, TestProjectRole.Administrator },
+                                { User02, TestProjectRole.Reviewer }
                             }
                         },
                         new TestProject
@@ -348,8 +348,8 @@ namespace SIL.XForge.Services
                             ShareLevel = SharingLevel.Anyone,
                             UserRoles =
                             {
-                                { User01, TestProjectRoles.Administrator },
-                                { User03, TestProjectRoles.Reviewer }
+                                { User01, TestProjectRole.Administrator },
+                                { User03, TestProjectRole.Reviewer }
                             }
                         },
                         new TestProject
@@ -360,7 +360,7 @@ namespace SIL.XForge.Services
                             ShareLevel = SharingLevel.Specific,
                             UserRoles =
                             {
-                                { User01, TestProjectRoles.Administrator }
+                                { User01, TestProjectRole.Administrator }
                             }
                         }
                     }));

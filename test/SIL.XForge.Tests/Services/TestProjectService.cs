@@ -18,11 +18,11 @@ namespace SIL.XForge.Services
         {
         }
 
-        protected override string ProjectAdminRole => TestProjectRoles.Administrator;
+        protected override string ProjectAdminRole => TestProjectRole.Administrator;
 
         protected override Task<Attempt<string>> TryGetProjectRoleAsync(TestProject project, string userId)
         {
-            return Task.FromResult(Attempt.Success(TestProjectRoles.Reviewer));
+            return Task.FromResult(Attempt.Success(TestProjectRole.Reviewer));
         }
     }
 }

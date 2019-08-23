@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Newtonsoft.Json;
 
 namespace SIL.XForge.Models
 {
@@ -10,15 +9,5 @@ namespace SIL.XForge.Models
         public Dictionary<string, string> UserRoles { get; set; } = new Dictionary<string, string>();
         public bool ShareEnabled { get; set; } = true;
         public string ShareLevel { get; set; } = SharingLevel.Specific;
-
-        [JsonIgnore]
-        public abstract ProjectRoles Roles { get; }
-
-        public bool HasRight(string userId, Right right)
-        {
-            if (UserRoles.TryGetValue(userId, out string role))
-                return Roles.Rights[role].Contains(right);
-            return false;
-        }
     }
 }

@@ -44,12 +44,12 @@ namespace SIL.XForge.Scripture.Services
             _translateMetrics = translateMetrics;
         }
 
-        protected override string ProjectAdminRole => SFProjectRoles.Administrator;
+        protected override string ProjectAdminRole => SFProjectRole.Administrator;
 
         public async Task<string> CreateProjectAsync(string userId, SFProject newProject)
         {
             Attempt<string> attempt = await TryGetProjectRoleAsync(newProject, userId);
-            if (!attempt.TryResult(out string projectRole) || projectRole != SFProjectRoles.Administrator)
+            if (!attempt.TryResult(out string projectRole) || projectRole != SFProjectRole.Administrator)
                 throw new ForbiddenException();
 
             using (IConnection conn = await RealtimeService.ConnectAsync())
@@ -59,7 +59,7 @@ namespace SIL.XForge.Scripture.Services
                 await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
 
                 IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
-                await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRoles.Administrator);
+                await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRole.Administrator);
 
                 if (newProject.TranslateEnabled)
                 {
@@ -228,7 +228,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
 
-            return Attempt.Failure(SFProjectRoles.SFReviewer);
+            return Attempt.Failure(SFProjectRole.SFReviewer);
         }
 
         private static void UpdateSetting<T>(Json0OpBuilder<SFProject> builder, Expression<Func<SFProject, T>> field,

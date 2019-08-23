@@ -1,6 +1,7 @@
 import { ProjectService } from '../../common/services/project-service';
 import { SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
+import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 
 /**
  * This class manages SF project docs.
@@ -11,7 +12,7 @@ export class SFProjectService extends ProjectService<SFProject> {
   protected readonly projectAdminRole = SFProjectRole.ParatextAdministrator;
 
   constructor() {
-    super();
+    super(SF_PROJECT_MIGRATIONS);
 
     const immutableProps = [
       this.createPathTemplate(p => p.sourceParatextId!),

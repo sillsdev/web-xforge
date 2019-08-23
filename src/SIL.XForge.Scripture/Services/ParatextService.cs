@@ -104,7 +104,7 @@ namespace SIL.XForge.Scripture.Services
                     isConnected = true;
                     isConnectable = !project.UserRoles.ContainsKey(userSecret.Id);
                 }
-                else if (role == SFProjectRoles.Administrator)
+                else if (role == SFProjectRole.Administrator)
                 {
                     isConnectable = true;
                 }
