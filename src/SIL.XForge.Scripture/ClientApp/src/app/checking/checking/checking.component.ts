@@ -355,7 +355,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   }
 
   private getCommentIndex(comment: Comment): number {
-    return this.comments.findIndex(existingComment => existingComment.id === comment.id);
+    const commentsInDoc = this.checkingData.commentListDocs[this.questionTextJsonDocId].data.comments;
+    return commentsInDoc.findIndex(existingComment => existingComment.id === comment.id);
   }
 
   private deleteAnswer(answer: Answer): void {
