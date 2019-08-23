@@ -26,7 +26,7 @@ namespace SIL.XForge.Services
             JObject userProfile = env.CreateUserProfile("user01", "auth01", env.IssuedAt - TimeSpan.FromMinutes(5));
             await env.Service.UpdateUserFromProfileAsync("user01", userProfile);
             User user1 = env.GetUser("user01");
-            Assert.That(user1.Sites["xf"].LastLogin, Is.Not.Null);
+            Assert.That(user1.Sites.ContainsKey("xf"), Is.True);
             UserSecret userSecret = env.UserSecrets.Get("user01");
             Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("refresh_token"));
         }
@@ -39,7 +39,7 @@ namespace SIL.XForge.Services
             JObject userProfile = env.CreateUserProfile("user01", "auth01", env.IssuedAt + TimeSpan.FromMinutes(5));
             await env.Service.UpdateUserFromProfileAsync("user01", userProfile);
             User user1 = env.GetUser("user01");
-            Assert.That(user1.Sites["xf"].LastLogin, Is.Not.Null);
+            Assert.That(user1.Sites.ContainsKey("xf"), Is.True);
             UserSecret userSecret = env.UserSecrets.Get("user01");
             Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
         }
