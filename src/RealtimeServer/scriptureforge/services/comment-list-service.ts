@@ -10,8 +10,9 @@ import { SFProjectDataService } from './sf-project-data-service';
 export class CommentListService extends SFProjectDataService<CommentList> {
   readonly collection = 'comments';
 
-  protected readonly domains: ProjectDomainConfig[] = [
-    { projectDomain: SFProjectDomain.Comments, pathTemplate: this.createPathTemplate(cl => cl.comments[-1]) }
-  ];
   protected readonly immutableProps: PathTemplate[] = [this.createPathTemplate(cl => cl.comments[-1].syncUserRef!)];
+
+  protected setupDomains(): ProjectDomainConfig[] {
+    return [{ projectDomain: SFProjectDomain.Comments, pathTemplate: this.createPathTemplate(cl => cl.comments[-1]) }];
+  }
 }
