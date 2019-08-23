@@ -13,6 +13,7 @@ import {
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { TextDocId } from 'src/app/core/models/text-doc-id';
 import { NoticeService } from 'xforge-common/notice.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import {
@@ -30,6 +31,7 @@ export interface QuestionDialogData {
   editMode: boolean;
   question: Question;
   textsByBook: TextsByBook;
+  projectId: string;
 }
 
 export interface QuestionDialogResult {
@@ -74,6 +76,14 @@ export class QuestionDialogComponent implements OnInit {
 
   get questionText(): AbstractControl {
     return this.questionForm.controls.questionText;
+  }
+
+  get textDocId(): TextDocId {
+    if (this.scriptureStart.value && this.scriptureStart.valid) {
+      const verseData = VerseRef.fromStr(this.scriptureStart.value);
+      return new TextDocId(this.data.projectId, verseData.book, verseData.chapterNum);
+    }
+    return undefined;
   }
 
   ngOnInit(): void {

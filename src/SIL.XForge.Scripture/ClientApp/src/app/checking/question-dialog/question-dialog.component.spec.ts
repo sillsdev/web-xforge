@@ -5,11 +5,16 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import * as RichText from 'rich-text';
 import { of } from 'rxjs';
-import { anything, capture, instance, mock, spy, verify, when } from 'ts-mockito';
+import { Delta, TextDoc } from 'src/app/core/models/text-doc';
+import { getTextDocIdStr, TextDocId } from 'src/app/core/models/text-doc-id';
+import { SFProjectService } from 'src/app/core/sf-project.service';
+import { anything, capture, deepEqual, instance, mock, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
@@ -277,6 +282,15 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.questionText.valid).toBe(false);
     expect(env.component.questionText.errors.required).not.toBeNull();
   }));
+
+  it('display quill editor', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    expect(env.quillEditor).not.toBeNull();
+    expect(env.component.textDocId).toBeUndefined();
+    env.component.scriptureStart.setValue('LUK 1:1');
+    expect(env.component.textDocId.toString()).toBe('project01:LUK:1:target');
+  }));
 });
 
 @Directive({
@@ -319,6 +333,7 @@ class TestEnvironment {
   mockedAuthService: AuthService = mock(AuthService);
   mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
   mockedNoticeService = mock(NoticeService);
+  mockedProjectService = mock(SFProjectService);
   mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
   mockedUserService: UserService = mock(UserService);
   dialogSpy: MdcDialog;
@@ -329,7 +344,8 @@ class TestEnvironment {
       providers: [
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
+        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
+        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
       ]
     });
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
@@ -346,7 +362,8 @@ class TestEnvironment {
             chapters: [{ number: 1, lastVerse: 25 }, { number: 2, lastVerse: 23 }]
           },
           LUK: { id: 'text02', bookId: 'LUK', name: 'Luke', chapters: [{ number: 1, lastVerse: 80 }] }
-        }
+        },
+        projectId: 'project01'
       },
       viewContainerRef
     };
@@ -361,6 +378,9 @@ class TestEnvironment {
     when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult: VerseRefData = { book: 'LUK', chapter: '1', verse: '2' };
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
+    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 'LUK', 1, 'target')))).thenResolve(
+      this.createTextDoc()
+    );
     this.fixture.detectChanges();
   }
 
@@ -374,6 +394,10 @@ class TestEnvironment {
 
   get questionInput(): HTMLTextAreaElement {
     return this.overlayContainerElement.querySelector('#question-text');
+  }
+
+  get quillEditor(): HTMLElement {
+    return <HTMLElement>document.getElementsByClassName('ql-container')[0];
   }
 
   get saveButton(): HTMLButtonElement {
@@ -417,5 +441,30 @@ class TestEnvironment {
   setAudioStatus(status: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded') {
     const audio: AudioAttachment = { status: status };
     this.component.processAudio(audio);
+  }
+
+  private createTextDoc(): TextDoc {
+    const delta = new Delta();
+    delta.insert({ chapter: { number: '1', style: 'c' } });
+    delta.insert({ verse: { number: '1', style: 'v' } });
+    delta.insert('target: chapter 1, verse 1.', { segment: 'verse_1_1' });
+    delta.insert({ verse: { number: '2', style: 'v' } });
+    delta.insert({ blank: 'normal' }, { segment: 'verse_1_2' });
+    delta.insert('\n', { para: { style: 'p' } });
+    delta.insert({ verse: { number: '3', style: 'v' } });
+    delta.insert(`target: chapter 1, verse 3.`, { segment: 'verse_1_3' });
+    delta.insert({ verse: { number: '4', style: 'v' } });
+    delta.insert(`target: chapter 1, verse 4.`, { segment: 'verse_1_4' });
+    delta.insert('\n', { para: { style: 'p' } });
+    delta.insert({ blank: 'initial' }, { segment: 'verse_1_4/p_1' });
+    delta.insert({ verse: { number: '5', style: 'v' } });
+    delta.insert(`target: chapter 1, `, { segment: 'verse_1_5' });
+    delta.insert('\n', { para: { style: 'p' } });
+    const adapter = new MemoryRealtimeDocAdapter(
+      getTextDocIdStr('project01', 'LUK', 1, 'target'),
+      RichText.type,
+      delta
+    );
+    return new TextDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 }
