@@ -1,11 +1,11 @@
 import Quill, {
   BoundsStatic,
+  ClipboardStatic,
+  DeltaOperation,
+  DeltaStatic,
   QuillOptionsStatic,
   RangeStatic,
-  DeltaStatic,
-  Sources,
-  ClipboardStatic,
-  DeltaOperation
+  Sources
 } from 'quill';
 
 /* SystemJS module definition */

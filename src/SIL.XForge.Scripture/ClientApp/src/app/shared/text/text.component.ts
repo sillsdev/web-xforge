@@ -56,7 +56,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     toolbar: false,
     keyboard: {
       bindings: {
-        disableBackspace: {
+        'disable backspace': {
           key: 'backspace',
           altKey: null,
           ctrlKey: null,
@@ -64,14 +64,34 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
           shiftKey: null,
           handler: (range: RangeStatic) => this.isBackspaceAllowed(range)
         },
-        disableDelete: {
+        'disable delete': {
           key: 'delete',
           handler: (range: RangeStatic) => this.isDeleteAllowed(range)
         },
-        disableEnter: {
+        'disable enter': {
           key: 'enter',
           shiftKey: null,
           handler: () => false
+        },
+        'move next, tab': {
+          key: 'tab',
+          shiftKey: false,
+          handler: () => this.moveNextSegment()
+        },
+        'move prev, tab': {
+          key: 'tab',
+          shiftKey: true,
+          handler: () => this.movePrevSegment()
+        },
+        'move next, blank segment, right arrow': {
+          key: 'right',
+          handler: () => {
+            if (this.segment.text === '') {
+              this.moveNextSegment();
+              return false;
+            }
+            return true;
+          }
         }
       }
     },
@@ -311,6 +331,20 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
 
     return range.index !== this._segment.range.index + this._segment.range.length;
+  }
+
+  private moveNextSegment(): void {
+    const nextRef = this.viewModel.getNextSegmentRef(this._segment.ref);
+    if (nextRef != null) {
+      this.setSegment(nextRef, undefined, true);
+    }
+  }
+
+  private movePrevSegment(): void {
+    const prevRef = this.viewModel.getPrevSegmentRef(this._segment.ref);
+    if (prevRef != null) {
+      this.setSegment(prevRef, undefined, true);
+    }
   }
 
   private update(delta?: DeltaStatic): void {
