@@ -10,7 +10,7 @@ import { SFProjectDataService } from './sf-project-data-service';
 export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUserConfig> {
   readonly collection = 'sf_project_user_configs';
 
-  protected readonly domains: ProjectDomainConfig[] = [
-    { projectDomain: SFProjectDomain.ProjectUserConfigs, pathTemplate: new PathTemplate() }
-  ];
+  protected setupDomains(): ProjectDomainConfig[] {
+    return [{ projectDomain: SFProjectDomain.ProjectUserConfigs, pathTemplate: new PathTemplate() }];
+  }
 }

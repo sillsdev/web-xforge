@@ -10,18 +10,21 @@ import { SFProjectDataService } from './sf-project-data-service';
 export class QuestionListService extends SFProjectDataService<QuestionList> {
   readonly collection = 'questions';
 
-  protected readonly domains: ProjectDomainConfig[] = [
-    { projectDomain: SFProjectDomain.Questions, pathTemplate: this.createPathTemplate(ql => ql.questions[-1]) },
-    {
-      projectDomain: SFProjectDomain.Answers,
-      pathTemplate: this.createPathTemplate(ql => ql.questions[-1].answers![-1])
-    },
-    {
-      projectDomain: SFProjectDomain.Likes,
-      pathTemplate: this.createPathTemplate(ql => ql.questions[-1].answers![-1].likes[-1])
-    }
-  ];
   protected readonly immutableProps: PathTemplate[] = [
     this.createPathTemplate(ql => ql.questions[-1].answers![-1].syncUserRef!)
   ];
+
+  protected setupDomains(): ProjectDomainConfig[] {
+    return [
+      { projectDomain: SFProjectDomain.Questions, pathTemplate: this.createPathTemplate(ql => ql.questions[-1]) },
+      {
+        projectDomain: SFProjectDomain.Answers,
+        pathTemplate: this.createPathTemplate(ql => ql.questions[-1].answers![-1])
+      },
+      {
+        projectDomain: SFProjectDomain.Likes,
+        pathTemplate: this.createPathTemplate(ql => ql.questions[-1].answers![-1].likes[-1])
+      }
+    ];
+  }
 }
