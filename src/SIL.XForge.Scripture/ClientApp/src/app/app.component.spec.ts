@@ -233,7 +233,6 @@ class TestEnvironment {
   readonly router: Router;
   readonly location: Location;
   readonly overlayContainer: OverlayContainer;
-  readonly lastLogin: string = '2019-02-01T12:00:00.000Z';
 
   readonly mockedAccountService = mock(AccountService);
   readonly mockedAuthService = mock(AuthService);
@@ -257,7 +256,6 @@ class TestEnvironment {
         sites: {
           sf: {
             currentProjectId: 'project01',
-            lastLogin: this.lastLogin,
             projects: ['project01', 'project02', 'project03']
           }
         }

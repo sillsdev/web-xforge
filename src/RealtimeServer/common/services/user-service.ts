@@ -26,7 +26,6 @@ export class UserService extends JsonDocService<User> {
     this.createPathTemplate(u => u.name!),
     this.createPathTemplate(u => u.sites!, false),
     this.createPathTemplate(u => u.sites!['*'], false),
-    this.createPathTemplate(u => u.sites!['*'].lastLogin!),
     this.createPathTemplate(u => u.sites!['*'].projects)
   ];
 
