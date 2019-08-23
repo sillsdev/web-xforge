@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
 using SIL.XForge.Controllers;
@@ -221,6 +222,10 @@ namespace SIL.XForge.Scripture.Controllers
                 return ForbiddenError();
             }
             catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
+            }
+            catch (FormatException)
             {
                 return InvalidParamsError();
             }

@@ -48,6 +48,10 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFound();
             }
+            catch (FormatException)
+            {
+                return BadRequest();
+            }
         }
     }
 }
