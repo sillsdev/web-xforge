@@ -48,6 +48,12 @@
               </mdc-helper-text>
             </mdc-form-field>
           </div>
+          <div class="split-container">
+            <small>Enter a reference to load text</small>
+            <as-split direction="vertical">
+              <as-split-area size="100"> <app-text [isReadOnly]="true" [id]="textDocId"></app-text> </as-split-area>
+            </as-split>
+          </div>
           <mdc-form-field fluid>
             <mdc-textarea
               label="Question"
