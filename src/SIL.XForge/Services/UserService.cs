@@ -61,10 +61,8 @@ namespace SIL.XForge.Services
                             op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId));
                         }
                         string key = _siteOptions.Value.Id;
-                        if (userDoc.Data.Sites.ContainsKey(key))
-                            op.Set(u => u.Sites[key].LastLogin, now);
-                        else
-                            op.Set(u => u.Sites[key], new Site { LastLogin = now });
+                        if (!userDoc.Data.Sites.ContainsKey(key))
+                            op.Set(u => u.Sites[key], new Site());
                     });
             }
 
