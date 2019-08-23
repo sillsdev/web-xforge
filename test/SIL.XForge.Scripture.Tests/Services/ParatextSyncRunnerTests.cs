@@ -495,7 +495,7 @@ namespace SIL.XForge.Scripture.Services
                             ProjectName = "project01",
                             UserRoles = new Dictionary<string, string>
                             {
-                                { "user01", SFProjectRoles.Administrator }
+                                { "user01", SFProjectRole.Administrator }
                             },
                             ParatextId = "target",
                             SourceParatextId = "source",

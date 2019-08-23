@@ -110,7 +110,7 @@ namespace SIL.XForge.Scripture.Controllers
 
         public async Task<IRpcMethodResult> UpdateRole(string projectId, string projectRole)
         {
-            if (SystemRole != SystemRoles.SystemAdmin)
+            if (Role != SystemRole.SystemAdmin)
                 return ForbiddenError();
 
             try

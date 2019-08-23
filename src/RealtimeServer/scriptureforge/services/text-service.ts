@@ -3,12 +3,17 @@ import { ConnectSession } from '../../common/connect-session';
 import { Operation } from '../../common/models/project-rights';
 import { DocService } from '../../common/services/doc-service';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
+import { TEXT_MIGRATIONS } from './text-migrations';
 
 /**
  * This class manages text docs.
  */
 export class TextService extends DocService<Delta> {
   readonly collection = 'texts';
+
+  constructor() {
+    super(TEXT_MIGRATIONS);
+  }
 
   async allowRead(docId: string, doc: Delta, session: ConnectSession): Promise<boolean> {
     if (session.isServer || Object.keys(doc).length === 0) {

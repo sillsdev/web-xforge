@@ -1,6 +1,6 @@
 namespace SIL.XForge.Models
 {
-    public static class SystemRoles
+    public static class SystemRole
     {
         public const string SystemAdmin = "system_admin";
         public const string User = "user";
