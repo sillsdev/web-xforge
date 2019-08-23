@@ -238,13 +238,14 @@ namespace SIL.XForge.Services
         public async Task SaveAudioAsync_NonMp3File_AudioConverted()
         {
             var env = new TestEnvironment();
-            string filePath = Path.Combine("site", "audio", Project01, $"{User01}_answer01.mp3");
+            const string dataId = "507f1f77bcf86cd799439011";
+            string filePath = Path.Combine("site", "audio", Project01, $"{User01}_{dataId}.mp3");
             env.FileSystemService.OpenFile(Arg.Any<string>(), FileMode.Create).Returns(new MemoryStream());
             env.FileSystemService.FileExists(filePath).Returns(true);
 
             var stream = new MemoryStream();
-            Uri uri = await env.Service.SaveAudioAsync(User01, Project01, "answer01", ".wav", stream);
-            Assert.That(uri.ToString().StartsWith("http://localhost/assets/audio/project01/user01_answer01.mp3?t="),
+            Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, ".wav", stream);
+            Assert.That(uri.ToString().StartsWith($"http://localhost/assets/audio/project01/user01_{dataId}.mp3?t="),
                 Is.True);
             await env.AudioService.Received().ConvertToMp3Async(Arg.Any<string>(), filePath);
         }
@@ -253,26 +254,38 @@ namespace SIL.XForge.Services
         public async Task SaveAudioAsync_Mp3File_AudioSaved()
         {
             var env = new TestEnvironment();
-            string filePath = Path.Combine("site", "audio", Project01, $"{User01}_answer01.mp3");
+            const string dataId = "507f1f77bcf86cd799439011";
+            string filePath = Path.Combine("site", "audio", Project01, $"{User01}_{dataId}.mp3");
             env.FileSystemService.OpenFile(Arg.Any<string>(), FileMode.Create).Returns(new MemoryStream());
             env.FileSystemService.FileExists(filePath).Returns(true);
 
             var stream = new MemoryStream();
-            Uri uri = await env.Service.SaveAudioAsync(User01, Project01, "answer01", ".mp3", stream);
-            Assert.That(uri.ToString().StartsWith("http://localhost/assets/audio/project01/user01_answer01.mp3?t="),
+            Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, ".mp3", stream);
+            Assert.That(uri.ToString().StartsWith($"http://localhost/assets/audio/project01/user01_{dataId}.mp3?t="),
                 Is.True);
             env.FileSystemService.Received().OpenFile(filePath, FileMode.Create);
             await env.AudioService.DidNotReceive().ConvertToMp3Async(Arg.Any<string>(), filePath);
         }
 
         [Test]
+        public void SaveAudioAsync_InvalidDataId_FormatError()
+        {
+            var env = new TestEnvironment();
+
+            var stream = new MemoryStream();
+            Assert.ThrowsAsync<FormatException>(() => env.Service.SaveAudioAsync(User01, Project01, "/../test/abc.txt",
+                ".wav", stream));
+        }
+
+        [Test]
         public async Task DeleteAudioAsync_NonAdminUser_FileDeleted()
         {
             var env = new TestEnvironment();
-            string filePath = Path.Combine("site", "audio", Project01, $"{User02}_answer01.mp3");
+            const string dataId = "507f1f77bcf86cd799439011";
+            string filePath = Path.Combine("site", "audio", Project01, $"{User02}_{dataId}.mp3");
             env.FileSystemService.FileExists(filePath).Returns(true);
 
-            await env.Service.DeleteAudioAsync(User02, Project01, User02, "answer01");
+            await env.Service.DeleteAudioAsync(User02, Project01, User02, dataId);
             env.FileSystemService.Received().DeleteFile(filePath);
         }
 
@@ -280,10 +293,11 @@ namespace SIL.XForge.Services
         public async Task DeleteAudioAsync_AdminUser_FileDeleted()
         {
             var env = new TestEnvironment();
-            string filePath = Path.Combine("site", "audio", Project01, $"{User02}_answer01.mp3");
+            const string dataId = "507f1f77bcf86cd799439011";
+            string filePath = Path.Combine("site", "audio", Project01, $"{User02}_{dataId}.mp3");
             env.FileSystemService.FileExists(filePath).Returns(true);
 
-            await env.Service.DeleteAudioAsync(User01, Project01, User02, "answer01");
+            await env.Service.DeleteAudioAsync(User01, Project01, User02, dataId);
             env.FileSystemService.Received().DeleteFile(filePath);
         }
 
@@ -291,11 +305,21 @@ namespace SIL.XForge.Services
         public void DeleteAudioAsync_NotOwner_ForbiddenError()
         {
             var env = new TestEnvironment();
-            string filePath = Path.Combine("site", "audio", Project01, $"{User01}_answer01.mp3");
+            const string dataId = "507f1f77bcf86cd799439011";
+            string filePath = Path.Combine("site", "audio", Project01, $"{User01}_{dataId}.mp3");
             env.FileSystemService.FileExists(filePath).Returns(true);
 
             Assert.ThrowsAsync<ForbiddenException>(() =>
-                env.Service.DeleteAudioAsync(User02, Project01, User01, "answer01"));
+                env.Service.DeleteAudioAsync(User02, Project01, User01, dataId));
+        }
+
+        [Test]
+        public void DeleteAudioAsync_InvalidDataId_FormatError()
+        {
+            var env = new TestEnvironment();
+
+            Assert.ThrowsAsync<FormatException>(() =>
+                env.Service.DeleteAudioAsync(User02, Project01, User01, "/../test/abc.txt"));
         }
 
         private class TestEnvironment
