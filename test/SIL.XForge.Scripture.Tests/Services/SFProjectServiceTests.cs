@@ -141,7 +141,7 @@ namespace SIL.XForge.Scripture.Services
                             ShareEnabled = false,
                             UserRoles = new Dictionary<string, string>
                             {
-                                { User01, SFProjectRoles.Administrator }
+                                { User01, SFProjectRole.Administrator }
                             },
                             Texts =
                             {
@@ -169,7 +169,7 @@ namespace SIL.XForge.Scripture.Services
                             ProjectName = "project02",
                             UserRoles =
                             {
-                                { User02, SFProjectRoles.Administrator }
+                                { User02, SFProjectRole.Administrator }
                             }
                         },
                         new SFProject
@@ -178,8 +178,8 @@ namespace SIL.XForge.Scripture.Services
                             ProjectName = "project03",
                             UserRoles =
                             {
-                                { User01, SFProjectRoles.Administrator },
-                                { User02, SFProjectRoles.Translator }
+                                { User01, SFProjectRole.Administrator },
+                                { User02, SFProjectRole.Translator }
                             }
                         }
                     }));

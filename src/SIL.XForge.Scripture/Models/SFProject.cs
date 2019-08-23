@@ -5,7 +5,6 @@ namespace SIL.XForge.Scripture.Models
 {
     public class SFProject : Project
     {
-        public override ProjectRoles Roles => SFProjectRoles.Instance;
         public string ParatextId { get; set; }
         public List<TextInfo> Texts { get; set; } = new List<TextInfo>();
         public Sync Sync { get; set; } = new Sync();

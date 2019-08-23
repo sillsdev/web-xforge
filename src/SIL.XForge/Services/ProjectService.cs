@@ -53,7 +53,7 @@ namespace SIL.XForge.Services
                 if (!userDoc.IsLoaded)
                     throw new DataNotFoundException("The user does not exist.");
 
-                if (userDoc.Data.Role == SystemRoles.User || projectRole == null)
+                if (userDoc.Data.Role == SystemRole.User || projectRole == null)
                 {
                     Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, userId);
                     if (!attempt.TryResult(out projectRole))

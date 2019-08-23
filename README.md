@@ -356,6 +356,22 @@ When files change on the backend it will compile the changes automatically and n
 
 See the [Debugging](#debugging) section below for how to do this in **VS Code**.
 
+### Model Changes
+
+The Angular app has a dependency on the Node backend NPM package so that it has access to the model types. If the models are changed, the Angular app will not see the changes until the backend package is rebuilt. You can rebuild the backend by executing the following commands:
+
+```bash
+cd src/RealtimeServer/
+npm run build
+```
+
+If a model change is made, then a corresponding data migration should be implemented in the Node backend. A data migration is implemented by following these steps:
+
+1. Create a class that extends the `Migration` base class with the name `<collection>Migration<version>` in the appropriate collection migrations file. The version number in the class name should be left padded with zeroes for 6 digits. For example, if you are adding a user migration for schema version 10, then you would add the class `UserMigration000010` to the `src/RealtimeServer/common/services/user-migrations.ts` file.
+2. Implement the `migrateDoc` method. The `submitMigrationOp` function MUST be used to submit any migration changes to the doc.
+3. Implement the `migrateOp` method.
+4. Add the class to the migrations array in the migrations file.
+
 ## Debugging
 
 In Visual Studio Code, in the debug sidebar, choose **Full App (SF)** to debug the front-end and back-end at the same time, or **Launch Chrome (SF)** or **.NET Core (SF)** to just debug the front-end or back-end.

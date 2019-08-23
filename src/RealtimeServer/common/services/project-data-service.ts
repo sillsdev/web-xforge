@@ -1,5 +1,6 @@
 import ShareDB = require('sharedb');
 import { ConnectSession } from '../connect-session';
+import { MigrationConstructor } from '../migration';
 import { OwnedData } from '../models/owned-data';
 import { Operation, ProjectRights } from '../models/project-rights';
 import { PathTemplate } from '../path-template';
@@ -17,8 +18,8 @@ export abstract class ProjectDataService<T> extends JsonDocService<T> {
   protected abstract get projectRights(): ProjectRights;
   private readonly domains: ProjectDomainConfig[];
 
-  constructor() {
-    super();
+  constructor(migrations: MigrationConstructor[]) {
+    super(migrations);
     this.domains = this.setupDomains();
     this.domains.sort((a, b) => {
       if (a.pathTemplate.template.length > b.pathTemplate.template.length) {

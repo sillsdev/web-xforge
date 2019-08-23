@@ -11,7 +11,7 @@ export abstract class DocService<T = any> {
   protected server?: RealtimeServer;
   private readonly migrations = new Map<number, MigrationConstructor>();
 
-  constructor(migrations: MigrationConstructor[] = []) {
+  constructor(migrations: MigrationConstructor[]) {
     let maxVersion = 0;
     for (const migration of migrations) {
       maxVersion = Math.max(maxVersion, migration.VERSION);

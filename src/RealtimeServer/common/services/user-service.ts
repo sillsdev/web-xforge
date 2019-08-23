@@ -5,6 +5,7 @@ import { User } from '../models/user';
 import { PathTemplate } from '../path-template';
 import { RealtimeServer } from '../realtime-server';
 import { JsonDocService } from './json-doc-service';
+import { USER_MIGRATIONS } from './user-migrations';
 
 const USER_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   displayName: true,
@@ -28,6 +29,10 @@ export class UserService extends JsonDocService<User> {
     this.createPathTemplate(u => u.sites!['*'], false),
     this.createPathTemplate(u => u.sites!['*'].projects)
   ];
+
+  constructor() {
+    super(USER_MIGRATIONS);
+  }
 
   init(server: RealtimeServer): void {
     server.backend.addProjection('user_profiles', this.collection, USER_PROFILE_FIELDS);

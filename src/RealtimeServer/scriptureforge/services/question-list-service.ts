@@ -2,6 +2,7 @@ import { PathTemplate } from '../../common/path-template';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { QuestionList } from '../models/question-list';
 import { SFProjectDomain } from '../models/sf-project-rights';
+import { QUESTION_LIST_MIGRATIONS } from './question-list-migrations';
 import { SFProjectDataService } from './sf-project-data-service';
 
 /**
@@ -13,6 +14,10 @@ export class QuestionListService extends SFProjectDataService<QuestionList> {
   protected readonly immutableProps: PathTemplate[] = [
     this.createPathTemplate(ql => ql.questions[-1].answers![-1].syncUserRef!)
   ];
+
+  constructor() {
+    super(QUESTION_LIST_MIGRATIONS);
+  }
 
   protected setupDomains(): ProjectDomainConfig[] {
     return [
