@@ -115,6 +115,11 @@ export class QuestionDialogComponent implements OnInit {
 
   /** Edit text of control using Scripture chooser dialog. */
   openScriptureChooser(control: AbstractControl) {
+    if (this.scriptureStart.value === '') {
+      // the input element is losing focus, but the input is still being interacted with, so errors shouldn't be shown
+      this.scriptureStart.markAsUntouched();
+    }
+
     const currentVerseSelection = verseRefToVerseRefData(VerseRef.fromStr(control.value, ScrVers.English));
 
     let rangeStart: VerseRefData;
