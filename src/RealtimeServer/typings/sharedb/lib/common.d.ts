@@ -83,10 +83,12 @@ export interface RawOp {
   src?: string;
   seq?: number;
   v?: number;
-  op: Op[];
+  op?: Op[];
   m?: any;
   c?: string;
   d?: string;
+  create?: any;
+  del?: true;
 
   [key: string]: any;
 }

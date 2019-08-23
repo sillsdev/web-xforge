@@ -7,6 +7,9 @@ import { DocService } from './doc-service';
  * This is the abstract base class for all doc services that manage JSON0 docs.
  */
 export abstract class JsonDocService<T> extends DocService<T> {
+  /**
+   * The object paths to the immutable properties in the JSON0 doc.
+   */
   protected readonly immutableProps: PathTemplate[] = [];
 
   protected createPathTemplate<TField>(template: ObjProxyArg<T, TField>, inherit: boolean = true): PathTemplate {
