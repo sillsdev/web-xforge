@@ -1,5 +1,5 @@
 import Parchment from 'parchment';
-import Quill, { Clipboard, DeltaOperation, DeltaStatic } from 'quill';
+import Quill, { Clipboard, DeltaOperation, DeltaStatic, Module } from 'quill';
 
 const Delta: new () => DeltaStatic = Quill.import('delta');
 
@@ -61,6 +61,7 @@ interface Unmatched {
 
 export function registerScripture(): void {
   const QuillClipboard = Quill.import('modules/clipboard') as typeof Clipboard;
+  const QuillKeyboard = Quill.import('modules/keyboard') as typeof Module;
   const QuillParchment = Quill.import('parchment') as typeof Parchment;
   const Inline = Quill.import('blots/inline') as typeof Parchment.Inline;
   const Block = Quill.import('blots/block') as typeof Parchment.Block;
@@ -422,6 +423,10 @@ export function registerScripture(): void {
     }
   }
 
+  class NoDefaultBindingsKeyboard extends QuillKeyboard {
+    static DEFAULTS: any = {};
+  }
+
   Quill.register('attributors/class/highlight-segment', HighlightSegmentClass);
   Quill.register('formats/highlight-segment', HighlightSegmentClass);
   Quill.register('attributors/class/highlight-para', HighlightParaClass);
@@ -442,4 +447,5 @@ export function registerScripture(): void {
   Quill.register('blots/unmatched', UnmatchedEmbed);
   Quill.register('blots/scroll', Scroll, true);
   Quill.register('modules/clipboard', DisableHtmlClipboard, true);
+  Quill.register('modules/keyboard', NoDefaultBindingsKeyboard, true);
 }
