@@ -10,7 +10,10 @@
     }"
     [activated]="activeQuestion && activeQuestion.id === question.id"
   >
-    <div class="question-title">{{ question.text }}</div>
+    <div class="question-title">
+      <mdc-icon *ngIf="question?.audioUrl">hearing</mdc-icon>
+      <span class="question-text" *ngIf="question?.text">{{ question.text }}</span>
+    </div>
     <a class="view-answers" mdcListItemMeta title="View Answers">
       <i mdcIcon>forum</i> <span>{{ getUnreadAnswers(question) }}</span>
     </a>

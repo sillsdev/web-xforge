@@ -16,10 +16,13 @@
     cursor: pointer;
 
     .question-title {
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
       width: 100%;
+
+      .material-icons {
+        margin-right: 5px;
+      }
 
       &:before {
         position: absolute;
@@ -32,19 +35,27 @@
       }
     }
 
+    .question-text {
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
     &.question-read {
-      .question-title {
+      .question-text {
         font-weight: normal;
       }
     }
 
     &.question-unread {
       .question-title {
-        font-weight: bold;
-
         &:before {
           background-color: $questionUnread;
         }
+      }
+
+      .question-text {
+        font-weight: bold;
       }
     }
 
