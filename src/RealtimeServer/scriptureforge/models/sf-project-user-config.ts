@@ -1,5 +1,7 @@
 import { OwnedData } from '../../common/models/owned-data';
 
+export const SF_PROJECT_USER_CONFIGS_COLLECTION = 'sf_project_user_configs';
+
 export interface SFProjectUserConfig extends OwnedData {
   selectedTask?: string;
   selectedBookId?: string;

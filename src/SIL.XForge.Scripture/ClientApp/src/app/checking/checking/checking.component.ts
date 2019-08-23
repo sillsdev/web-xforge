@@ -361,10 +361,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   private deleteAnswer(answer: Answer): void {
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
-      const answerComments = this.comments.filter(comment => comment.answerRef === answer.id);
-      for (const answerComment of answerComments) {
-        this.deleteComment(answerComment);
-      }
       this.checkingData.questionListDocs[this.questionTextJsonDocId]
         .submitJson0Op(op => op.remove(ql => ql.questions[this.activeQuestionIndex].answers, answerIndex))
         .then(() => this.projectService.onlineDeleteAudio(this.projectDoc.id, answer.id, answer.ownerRef));

@@ -3,6 +3,8 @@ import { Project } from '../../common/models/project';
 import { Sync } from './sync';
 import { TextInfo } from './text-info';
 
+export const SF_PROJECTS_COLLECTION = 'sf_projects';
+
 export interface SFProject extends Project {
   paratextId?: string;
   checkingEnabled?: boolean;
