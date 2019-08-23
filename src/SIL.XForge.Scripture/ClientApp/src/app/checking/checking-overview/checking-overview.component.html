@@ -77,8 +77,10 @@
                 >
                   <mdc-icon>edit</mdc-icon>
                 </button>
+                v{{ question?.scriptureStart?.verse }} -&nbsp;
+                <mdc-icon class="audio-icon" *ngIf="question?.audioUrl">hearing</mdc-icon>
                 <span fxFlex class="no-overflow-ellipsis">
-                  v{{ question?.scriptureStart?.verse }} - {{ question?.text }}
+                  <span *ngIf="question?.text">{{ question?.text }}</span>
                 </span>
                 <span fxFlex="80px" fxLayoutAlign="end center">
                   {{ answerCountLabel(answerCount(text.bookId, chapter.number, question.id)) }}
@@ -230,9 +232,10 @@
             >
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="40px" class="indent"></span>
-                <span fxFlex class="no-overflow-ellipsis"
-                  >v{{ question?.scriptureStart?.verse }} - {{ question?.text }}</span
-                >
+                <span fxFlex class="no-overflow-ellipsis">
+                  v{{ question?.scriptureStart?.verse }} - <span *ngIf="question?.text">{{ question?.text }}</span>
+                  <span *ngIf="!question?.text">** audio question **</span>
+                </span>
                 <span fxFlex="200px" fxHide.lt-sm fxLayoutAlign="end center" class="date-archived"
                   >Archived {{ dateInWords(question?.dateArchived) }} ago</span
                 >

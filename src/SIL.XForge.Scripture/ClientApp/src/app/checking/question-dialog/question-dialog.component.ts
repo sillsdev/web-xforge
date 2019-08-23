@@ -57,8 +57,6 @@ export class QuestionDialogComponent implements OnInit {
   );
   audio: AudioAttachment = {};
 
-  private readonly audioQuestionText = '** audio question **';
-
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
     @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData,
@@ -142,14 +140,8 @@ export class QuestionDialogComponent implements OnInit {
     this.audio = audio;
     if (audio.status === 'uploaded' || audio.status === 'processed' || audio.status === 'recording') {
       this.questionText.clearValidators();
-      if (!this.questionText.value) {
-        this.questionText.setValue(this.audioQuestionText);
-      }
     } else if (audio.status === 'reset') {
       this.questionText.setValidators([Validators.required, XFValidators.someNonWhitespace]);
-      if (this.questionText.value === this.audioQuestionText) {
-        this.questionText.setValue('');
-      }
     }
     this.questionText.updateValueAndValidity();
   }
