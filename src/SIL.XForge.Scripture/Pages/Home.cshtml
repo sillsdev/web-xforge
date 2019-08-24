@@ -1,3 +1,5 @@
+@page
+@model HomepageModel
 @section css {
     <link rel="stylesheet" href="~/css/sf.css" />
     <style>
@@ -19,6 +21,7 @@
         }
     </script>
 }
+
 <div class="mdl-layout__content">
 
   <div id="header" class="flex-row prim-between sec-center mdl-button--raised">
@@ -39,8 +42,9 @@
   <div id="content" class="flex-column prim-start sec-center"
   ngClass.lt-md="smallcontent" ngClass.md="mediumcontent" ngClass.gt-md="largecontent">
     <div id="welcome" class="flex-column prim-center sec-center">
-        <h1>Welcome to Scripture Forge.</h1>
+        <h1>Welcome to Scripture Forge</h1>
         <p>Work with your Scripture data in a web app giving you the option of engaging a wider variety of language speakers. The online Scripture Checking App can help you run a Scripture checking campaign with the aim of getting broader feedback to the translation team quickly.</p>
+        <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" href="/register">Register your interest</a>
     </div>
     <div id="checking" class="flex-row prim-around sec-baseline">
       <div id="offline" class="text-column">

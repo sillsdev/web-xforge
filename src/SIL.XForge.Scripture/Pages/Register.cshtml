@@ -1,0 +1,86 @@
+@page
+@model RegisterModel
+@section css {
+    <link rel="stylesheet" href="~/css/sf.css" />
+    <style>
+        .mdl-grid {
+            background-color: rgb(184, 212, 50);
+            padding: 20px;
+        }
+        .mdl-textfield > input,
+        .mdl-textfield > select,
+        .mdl-textfield > textarea {
+            background-color: white;
+        }
+        #registration > h4 {
+            margin-bottom: 0;
+        }
+        #registration > h2 {
+            margin-top: 0;
+        }
+        .required {
+            color: red;
+        }
+    </style>
+}
+
+<div class="mdl-layout__content">
+    <div
+        id="registration"
+        class="flex-column prim-start sec-start"
+        ngClass.lt-md="smallcontent"
+        ngClass.md="mediumcontent"
+        ngClass.gt-md="largecontent"
+    >
+        <h4>Want to know more?</h4>
+        <h2>Get in Touch with Us</h2>
+        <div class="flex-column prim-center sec-center">
+            <h3>When can I start using Scripture Forge?</h3>
+            <P>Send us your information and we will be in contact with you on how to join the beta.</P>
+            <div asp-validation-summary="All" class="required"></div>
+            <form method="POST">
+                <div class="flex-row prim-center sec-center">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" asp-for="Name" pattern="\D+">
+                        <label class="mdl-textfield__label" for="Name">
+                            What's your name and last name? <span class="required">*</span>
+                        </label>
+                        <span class="mdl-textfield__error">Letters and spaces only</span>
+                    </div>
+                </div>
+                <div class="flex-row prim-center sec-center">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <input class="mdl-textfield__input" asp-for="Email">
+                        <label class="mdl-textfield__label" for="Email">
+                            Where can we email you? <span class="required">*</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex-row prim-center sec-center role-holder">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <select class="mdl-textfield__input" asp-for="Role">
+                            <option></option>
+                            <option value="Language Program Manager">Language Program Manager</option>
+                            <option value="Translator">Translator</option>
+                            <option value="Paratext Consultant">Paratext Consultant</option>
+                            <option value="Language Technology Consultant">Language Technology Consultant</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <label class="mdl-textfield__label" for="Role">What is your language project role?</label>
+                    </div>
+                </div>
+                <div class="flex-row prim-center sec-center">
+                    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                        <textarea class="mdl-textfield__input" rows= "3" asp-for="Message"></textarea>
+                        <label class="mdl-textfield__label" for="Message">Why do you want to use Scripture Forge?</label>
+                    </div>
+                </div>
+                <div class="flex-row prim-center sec-center">
+                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" type="submit">
+                        Register
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
