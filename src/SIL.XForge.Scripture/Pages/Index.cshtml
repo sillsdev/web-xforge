@@ -1,8 +1,10 @@
+@page
+@model IndexModel
 @section scripts {
     <script type="text/javascript">
         webAuth.checkSession({}, function(err, authResult) {
             if (err) {
-                window.location.href = '/default/home';
+                window.location.href = '/home';
             } else {
                 var options = { state: JSON.stringify({}) };
                 webAuth.authorize(options);
@@ -10,4 +12,6 @@
         });
     </script>
 }
-<div style="font-family: sans-serif; line-height: 1.5; font-size: 16px;">Loading...</div>
+<div style="margin: 50px 8px; font-family: sans-serif; line-height: 1.5; text-align:center; width: 100%">
+    Loading...
+</div>
