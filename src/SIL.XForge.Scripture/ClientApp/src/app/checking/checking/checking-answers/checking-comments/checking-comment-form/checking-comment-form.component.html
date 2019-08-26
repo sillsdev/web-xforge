@@ -1,6 +1,7 @@
 <form [formGroup]="commentForm" (ngSubmit)="submit()" autocomplete="off" id="comment-form">
   <mdc-form-field fluid>
     <mdc-text-field
+      appAutofocus
       label="Your Comment"
       type="text"
       formControlName="commentText"
