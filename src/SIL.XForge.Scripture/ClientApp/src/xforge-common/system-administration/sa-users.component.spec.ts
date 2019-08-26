@@ -53,25 +53,25 @@ describe('SaUsersComponent', () => {
     env.fixture.detectChanges();
 
     expect(env.noUsersLabel).toBeNull();
-    expect(env.userRows.length).toEqual(3);
+
+    const numUsersOnProject = 3;
+    expect(env.component.totalRecordCount).toEqual(numUsersOnProject);
+    expect(env.userRows.length).toEqual(numUsersOnProject);
 
     expect(env.cellDisplayName(0, 1).innerText).toEqual('User01');
     expect(env.cellName(0, 1).innerText).toEqual('User 01');
     expect(env.cellProjectLink(0, 2).text).toEqual('Project 01');
-    expect(env.removeUserButtonOnRow(0)).toBeTruthy();
-    expect(env.cancelInviteButtonOnRow(0)).toBeFalsy();
+    expect(env.removeUserButtonOnRow(0)).not.toBeNull();
 
     expect(env.cellDisplayName(1, 1).innerText).toEqual('User 02');
     expect(env.cellName(1, 1)).toBeNull();
     expect(env.cellProjectLink(1, 2)).toBeNull();
-    expect(env.removeUserButtonOnRow(1)).toBeTruthy();
-    expect(env.cancelInviteButtonOnRow(1)).toBeFalsy();
+    expect(env.removeUserButtonOnRow(1)).not.toBeNull();
 
     expect(env.cellDisplayName(2, 1).innerText).toEqual('User 03');
     expect(env.cellName(2, 1)).toBeNull();
     expect(env.cellProjectLink(2, 2).text).toEqual('Project 01');
-    expect(env.removeUserButtonOnRow(2)).toBeTruthy();
-    expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
+    expect(env.removeUserButtonOnRow(2)).not.toBeNull();
   }));
 
   it('should delete user', fakeAsync(() => {
@@ -97,22 +97,28 @@ describe('SaUsersComponent', () => {
     tick();
     env.fixture.detectChanges();
 
+    // All users shown
     expect(env.userRows.length).toEqual(3);
     env.setInputValue(env.filterInput, '02');
-
+    // Subset shown
     expect(env.userRows.length).toEqual(1);
   }));
 
   it('should page', fakeAsync(() => {
     const env = new TestEnvironment();
+    const pageSize = 2;
+    env.component.updatePage(0, pageSize);
     env.setupUserData();
-    env.component.pageSize = 2;
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
+    const numUsersOnProject = 3;
+    expect(env.component.totalRecordCount).toEqual(numUsersOnProject);
 
+    // First page
+    expect(env.userRows.length).toEqual(2);
     env.clickElement(env.nextPageButton);
-
+    // Second page
     expect(env.userRows.length).toEqual(1);
   }));
 });
@@ -233,10 +239,6 @@ class TestEnvironment {
 
   removeUserButtonOnRow(row: number): DebugElement {
     return this.userRows[row].query(By.css('button.remove-user'));
-  }
-
-  cancelInviteButtonOnRow(row: number): DebugElement {
-    return this.userRows[row].query(By.css('button.cancel-invite'));
   }
 
   clickElement(element: HTMLElement | DebugElement): void {

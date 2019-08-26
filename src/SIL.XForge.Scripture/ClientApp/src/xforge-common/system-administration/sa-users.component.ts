@@ -2,6 +2,8 @@ import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { User } from 'realtime-server/lib/common/models/user';
 import { BehaviorSubject } from 'rxjs';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { environment } from '../../environments/environment';
 import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
@@ -15,7 +17,6 @@ import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dia
 interface Row {
   readonly id: string;
   readonly user: User;
-  readonly active: boolean;
   readonly projectDocs: ProjectDoc[];
 }
 
@@ -27,7 +28,7 @@ interface Row {
 export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   @HostBinding('class') classes = 'flex-column';
 
-  length: number = 0;
+  totalRecordCount: number = 0;
   pageIndex: number = 0;
   pageSize: number = 50;
 
@@ -59,27 +60,18 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     this.subscribe(
       this.userService.onlineSearch(this.searchTerm$, this.queryParameters$, this.reload$),
       async searchResults => {
+        // Process the query for users into Rows that can be displayed.
         this.loadingStarted();
-        const projectDocs = new Map<string, ProjectDoc>();
-        for (const userDoc of searchResults.docs) {
-          for (const projectId of userDoc.data.sites[environment.siteId].projects) {
-            projectDocs.set(projectId, null);
-          }
-        }
-        const projectDocArray = await this.projectService.onlineGetMany(Array.from(projectDocs.keys()));
-        for (const projectDoc of projectDocArray) {
-          projectDocs.set(projectDoc.id, projectDoc);
-        }
+        const projectDocs = await this.getUserProjectDocs(searchResults);
         this.userRows = searchResults.docs.map(
           userDoc =>
             ({
               id: userDoc.id,
               user: userDoc.data,
-              active: true,
               projectDocs: userDoc.data.sites[environment.siteId].projects.map(id => projectDocs.get(id))
             } as Row)
         );
-        this.length = searchResults.totalUnpagedCount;
+        this.totalRecordCount = searchResults.totalUnpagedCount;
         this.loadingFinished();
       }
     );
@@ -107,6 +99,22 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
         this.deleteUser(userId);
       }
     });
+  }
+
+  /** Get project docs for each project associated with each user, keyed by project id. */
+  private async getUserProjectDocs(userDocs: RealtimeQuery<UserDoc>) {
+    const projectDocsLookup = new Map<string, ProjectDoc>();
+    for (const userDoc of userDocs.docs) {
+      for (const projectId of userDoc.data.sites[environment.siteId].projects) {
+        projectDocsLookup.set(projectId, null);
+      }
+    }
+
+    const projectDocs = await this.projectService.onlineGetMany(Array.from(projectDocsLookup.keys()));
+    for (const projectDoc of projectDocs) {
+      projectDocsLookup.set(projectDoc.id, projectDoc);
+    }
+    return projectDocsLookup;
   }
 
   private async deleteUser(userId: string) {
