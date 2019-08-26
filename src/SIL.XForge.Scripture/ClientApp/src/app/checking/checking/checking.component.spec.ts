@@ -368,7 +368,8 @@ describe('CheckingComponent', () => {
 
       it('can edit comment on an answer', fakeAsync(() => {
         env.setupReviewerScenarioData(env.reviewerUser);
-        env.selectQuestion(1);
+        // Answer a question in a chapter where chapters previous also have comments
+        env.selectQuestion(15);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
         env.clickButton(env.getEditCommentButton(0, 0));
