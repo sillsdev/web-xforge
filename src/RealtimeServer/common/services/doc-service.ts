@@ -40,6 +40,18 @@ export abstract class DocService<T = any> {
     return new migrationType();
   }
 
+  protected addUpdateListener(server: RealtimeServer, handler: (docId: string, ops: any) => Promise<void>): void {
+    server.backend.use('afterSubmit', (context, callback) => {
+      if (context.collection === this.collection) {
+        handler(context.id, context.op.op)
+          .then(() => callback())
+          .catch(err => callback(err));
+      } else {
+        callback();
+      }
+    });
+  }
+
   protected allowCreate(_docId: string, _doc: T, session: ConnectSession): Promise<boolean> | boolean {
     return session.isServer;
   }

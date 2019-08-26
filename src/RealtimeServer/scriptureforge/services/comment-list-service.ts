@@ -1,6 +1,6 @@
 import { PathTemplate } from '../../common/path-template';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
-import { CommentList } from '../models/comment-list';
+import { CommentList, COMMENTS_COLLECTION } from '../models/comment-list';
 import { SFProjectDomain } from '../models/sf-project-rights';
 import { COMMENT_LIST_MIGRATIONS } from './comment-list-migrations';
 import { SFProjectDataService } from './sf-project-data-service';
@@ -9,7 +9,7 @@ import { SFProjectDataService } from './sf-project-data-service';
  * This class manages comment list docs.
  */
 export class CommentListService extends SFProjectDataService<CommentList> {
-  readonly collection = 'comments';
+  readonly collection = COMMENTS_COLLECTION;
 
   protected readonly immutableProps: PathTemplate[] = [this.createPathTemplate(cl => cl.comments[-1].syncUserRef!)];
 

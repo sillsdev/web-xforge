@@ -1,7 +1,7 @@
 import ShareDB = require('sharedb');
 import { ConnectSession } from '../connect-session';
 import { SystemRole } from '../models/system-role';
-import { User } from '../models/user';
+import { User, USERS_COLLECTION } from '../models/user';
 import { PathTemplate } from '../path-template';
 import { RealtimeServer } from '../realtime-server';
 import { JsonDocService } from './json-doc-service';
@@ -16,7 +16,7 @@ const USER_PROFILE_FIELDS: ShareDB.ProjectionFields = {
  * This class manages user docs.
  */
 export class UserService extends JsonDocService<User> {
-  readonly collection = 'users';
+  readonly collection = USERS_COLLECTION;
 
   readonly immutableProps: PathTemplate[] = [
     this.createPathTemplate(u => u.authId!),

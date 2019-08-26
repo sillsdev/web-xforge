@@ -1,21 +1,21 @@
-import { Delta } from 'rich-text';
 import { ConnectSession } from '../../common/connect-session';
 import { Operation } from '../../common/models/project-rights';
 import { DocService } from '../../common/services/doc-service';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
+import { TextData, TEXTS_COLLECTION } from '../models/text-data';
 import { TEXT_MIGRATIONS } from './text-migrations';
 
 /**
  * This class manages text docs.
  */
-export class TextService extends DocService<Delta> {
-  readonly collection = 'texts';
+export class TextService extends DocService<TextData> {
+  readonly collection = TEXTS_COLLECTION;
 
   constructor() {
     super(TEXT_MIGRATIONS);
   }
 
-  async allowRead(docId: string, doc: Delta, session: ConnectSession): Promise<boolean> {
+  async allowRead(docId: string, doc: TextData, session: ConnectSession): Promise<boolean> {
     if (session.isServer || Object.keys(doc).length === 0) {
       return true;
     }
@@ -33,8 +33,8 @@ export class TextService extends DocService<Delta> {
 
   async allowUpdate(
     docId: string,
-    _oldDoc: Delta,
-    _newDoc: Delta,
+    _oldDoc: TextData,
+    _newDoc: TextData,
     _ops: any,
     session: ConnectSession
   ): Promise<boolean> {

@@ -213,6 +213,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
             this.loadProjectUserConfig()
           );
         }
+        if (!this.projectDoc.isLoaded) {
+          return;
+        }
         this.text = this.projectDoc.data.texts.find(t => t.bookId === bookId);
         this.chapters = this.text.chapters.map(c => c.number);
 
