@@ -90,6 +90,8 @@ export class QuestionDialogComponent implements OnInit {
       }
       if (question.audioUrl) {
         this.audio.url = question.audioUrl;
+        this.questionText.clearValidators();
+        this.questionText.updateValueAndValidity();
       }
     }
   }
@@ -136,6 +138,12 @@ export class QuestionDialogComponent implements OnInit {
 
   processAudio(audio: AudioAttachment) {
     this.audio = audio;
+    if (audio.status === 'uploaded' || audio.status === 'processed' || audio.status === 'recording') {
+      this.questionText.clearValidators();
+    } else if (audio.status === 'reset') {
+      this.questionText.setValidators([Validators.required, XFValidators.someNonWhitespace]);
+    }
+    this.questionText.updateValueAndValidity();
   }
 
   private validateVerseAfterStart(group: FormGroup): ValidationErrors | null {

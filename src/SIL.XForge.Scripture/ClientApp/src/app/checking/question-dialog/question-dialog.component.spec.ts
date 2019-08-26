@@ -18,6 +18,7 @@ import {
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { CheckingModule } from '../checking.module';
+import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 import { QuestionDialogComponent } from './question-dialog.component';
 
 describe('QuestionDialogComponent', () => {
@@ -260,6 +261,22 @@ describe('QuestionDialogComponent', () => {
     env.inputValue(env.scriptureStartInput, 'LUK 1:1');
     expect(env.component.scriptureEnd.disabled).toBe(false);
   }));
+
+  it('allows a question without text if audio is provided', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    env.inputValue(env.questionInput, '');
+    expect(env.component.questionText.valid).toBe(false);
+    expect(env.component.questionText.errors.required).not.toBeNull();
+    // Test that audio recorded results in a valid questionText control
+    env.setAudioStatus('processed');
+    expect(env.component.questionText.valid).toBe(true);
+    expect(env.component.questionText.errors).toBeNull();
+    // Removing the audio sets the validators on questionText
+    env.setAudioStatus('reset');
+    expect(env.component.questionText.valid).toBe(false);
+    expect(env.component.questionText.errors.required).not.toBeNull();
+  }));
 });
 
 @Directive({
@@ -395,5 +412,10 @@ class TestEnvironment {
     element.click();
     this.fixture.detectChanges();
     tick();
+  }
+
+  setAudioStatus(status: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded') {
+    const audio: AudioAttachment = { status: status };
+    this.component.processAudio(audio);
   }
 }
