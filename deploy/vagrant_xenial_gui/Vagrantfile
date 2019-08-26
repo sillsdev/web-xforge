@@ -45,7 +45,7 @@ Vagrant.configure("2") do |config|
     git pull --ff-only --recurse-submodules
 
     cd ~/src/web-xforge/deploy
-    tryharderto ansible-playbook playbook_xenial.yml --limit localhost
+    tryharderto ansible-playbook playbook_bionic.yml --limit localhost
 
     # Remove canary
     rm ~/Desktop/development-tools/warning-not-provisioned.txt
