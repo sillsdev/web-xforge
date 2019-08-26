@@ -297,13 +297,14 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   setQuestionArchiveStatus(questionId: string, archiveStatus: boolean, bookId: string, chapterNumber: number) {
     const id = new TextDocId(this.projectId, bookId, chapterNumber);
     const questionIndex = this.getQuestionIndex(questionId, id);
-    const question = this.questionListDocs[id.toString()].data.questions[questionIndex];
-    const updatedQuestion: Question = cloneDeep(question);
-    updatedQuestion.isArchived = archiveStatus;
-    updatedQuestion.dateArchived = archiveStatus ? new Date().toISOString() : null;
-    this.questionListDocs[id.toString()].submitJson0Op(op =>
-      op.replace(q => q.questions, questionIndex, updatedQuestion)
-    );
+    this.questionListDocs[id.toString()].submitJson0Op(op => {
+      op.set(ql => ql.questions[questionIndex].isArchived, archiveStatus);
+      if (archiveStatus) {
+        op.set(ql => ql.questions[questionIndex].dateArchived, new Date().toJSON());
+      } else {
+        op.unset(ql => ql.questions[questionIndex].dateArchived);
+      }
+    });
   }
 
   overallProgress(): number[] {
@@ -410,10 +411,15 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           question.scriptureStart.book === verseStart.book &&
           question.scriptureStart.chapter === verseStart.chapter
         ) {
-          this.questionListDocs[id.toString()].submitJson0Op(op =>
-            op.replace(cq => cq.questions, questionIndex, newQuestion)
+          const deleteAudio = question.audioUrl !== '' && newQuestion.audioUrl === '';
+          await this.questionListDocs[id.toString()].submitJson0Op(op =>
+            op
+              .set(ql => ql.questions[questionIndex].scriptureStart, newQuestion.scriptureStart)
+              .set(ql => ql.questions[questionIndex].scriptureEnd, newQuestion.scriptureEnd)
+              .set(ql => ql.questions[questionIndex].text, newQuestion.text)
+              .set(ql => ql.questions[questionIndex].audioUrl, newQuestion.audioUrl)
           );
-          if (question.audioUrl !== '' && newQuestion.audioUrl === '') {
+          if (deleteAudio) {
             await this.projectService.onlineDeleteAudio(this.projectDoc.id, question.id, question.ownerRef);
           }
         } else {
@@ -427,7 +433,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           newQuestion.ownerRef = this.userService.currentUserId;
           newQuestion.source = QuestionSource.Created;
           newQuestion.answers = [];
-          questionsDoc.submitJson0Op(op => op.insert(cq => cq.questions, 0, newQuestion));
+          await questionsDoc.submitJson0Op(op => op.insert(cq => cq.questions, 0, newQuestion));
         }
       }
     });
