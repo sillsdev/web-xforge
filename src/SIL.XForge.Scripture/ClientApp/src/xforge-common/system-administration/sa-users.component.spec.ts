@@ -47,36 +47,36 @@ describe('SaUsersComponent', () => {
 
   it('should display users', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupUserData();
+    env.setupUserQueryResults();
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
 
     expect(env.noUsersLabel).toBeNull();
-    expect(env.userRows.length).toEqual(3);
+
+    const numUsersOnProject = 3;
+    expect(env.component.totalRecordCount).toEqual(numUsersOnProject);
+    expect(env.userRows.length).toEqual(numUsersOnProject);
 
     expect(env.cellDisplayName(0, 1).innerText).toEqual('User01');
     expect(env.cellName(0, 1).innerText).toEqual('User 01');
     expect(env.cellProjectLink(0, 2).text).toEqual('Project 01');
-    expect(env.removeUserButtonOnRow(0)).toBeTruthy();
-    expect(env.cancelInviteButtonOnRow(0)).toBeFalsy();
+    expect(env.removeUserButtonOnRow(0)).not.toBeNull();
 
     expect(env.cellDisplayName(1, 1).innerText).toEqual('User 02');
     expect(env.cellName(1, 1)).toBeNull();
     expect(env.cellProjectLink(1, 2)).toBeNull();
-    expect(env.removeUserButtonOnRow(1)).toBeTruthy();
-    expect(env.cancelInviteButtonOnRow(1)).toBeFalsy();
+    expect(env.removeUserButtonOnRow(1)).not.toBeNull();
 
     expect(env.cellDisplayName(2, 1).innerText).toEqual('User 03');
     expect(env.cellName(2, 1)).toBeNull();
     expect(env.cellProjectLink(2, 2).text).toEqual('Project 01');
-    expect(env.removeUserButtonOnRow(2)).toBeTruthy();
-    expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
+    expect(env.removeUserButtonOnRow(2)).not.toBeNull();
   }));
 
   it('should delete user', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupUserData();
+    env.setupUserQueryResults();
     when(env.mockedDeleteUserDialogRef.afterClosed()).thenReturn(of('confirmed'));
     env.fixture.detectChanges();
     tick();
@@ -92,28 +92,35 @@ describe('SaUsersComponent', () => {
 
   it('should filter users', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupUserData();
+    env.setupUserQueryResults(env.secondTimeFilterUserQueryResults);
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
 
+    // All users shown
     expect(env.userRows.length).toEqual(3);
-    env.setInputValue(env.filterInput, 'test');
-
+    // Because of how we are mocking, it doesn't matter what we filter by but that we filter at all.
+    env.setInputValue(env.filterInput, 'some filter');
+    // Subset shown
     expect(env.userRows.length).toEqual(1);
   }));
 
   it('should page', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupUserData();
     env.component.pageSize = 2;
+    env.setupUserQueryResults();
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
+    const numUsersOnProject = 3;
+    expect(env.component.totalRecordCount).toEqual(numUsersOnProject);
 
+    // First page
+    expect(env.userRows.length).toEqual(2);
     env.clickElement(env.nextPageButton);
-
+    // Second page
     expect(env.userRows.length).toEqual(1);
+    env.setupUserQueryResults();
   }));
 });
 
@@ -216,6 +223,27 @@ class TestEnvironment {
     return oce.querySelector('#confirm-button-no');
   }
 
+  get pagedUserQueryResults(): QueryResults<UserDoc>[] {
+    return [
+      // first query, for page 1.
+      { docs: this.userDocs.slice(0, 1 * this.component.pageSize), totalPagedCount: this.userDocs.length },
+      // second query, for page 2.
+      {
+        docs: this.userDocs.slice(1 * this.component.pageSize, 2 * this.component.pageSize),
+        totalPagedCount: this.userDocs.length
+      }
+    ];
+  }
+
+  get secondTimeFilterUserQueryResults(): QueryResults<UserDoc>[] {
+    return [
+      // first query.
+      { docs: this.userDocs.slice(0, 1 * this.component.pageSize), totalPagedCount: this.userDocs.length },
+      // second query, which is filtering for 'user02".
+      { docs: [this.userDocs[1]], totalPagedCount: 1 }
+    ];
+  }
+
   cell(row: number, column: number): DebugElement {
     return this.userRows[row].children[column];
   }
@@ -239,10 +267,6 @@ class TestEnvironment {
     return this.userRows[row].query(By.css('button.remove-user'));
   }
 
-  cancelInviteButtonOnRow(row: number): DebugElement {
-    return this.userRows[row].query(By.css('button.cancel-invite'));
-  }
-
   clickElement(element: HTMLElement | DebugElement): void {
     if (element instanceof DebugElement) {
       element = (element as DebugElement).nativeElement as HTMLElement;
@@ -261,15 +285,13 @@ class TestEnvironment {
     when(this.mockedProjectService.onlineGetMany(anything())).thenResolve([]);
   }
 
-  setupUserData(): void {
+  setupUserQueryResults(userResults?: QueryResults<UserDoc>[]): void {
     when(this.mockedUserService.onlineSearch(anything(), anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>, reload$: Observable<void>) => {
-        const results: QueryResults<UserDoc>[] = [
-          // page 1
-          { docs: this.userDocs, totalPagedCount: this.userDocs.length },
-          // page 2
-          { docs: [this.userDocs[2]], totalPagedCount: 1 }
-        ];
+        let results = this.pagedUserQueryResults;
+        if (!!userResults) {
+          results = userResults;
+        }
 
         return combineLatest(term$, parameters$, reload$).pipe(map((_value, index) => results[index]));
       }
