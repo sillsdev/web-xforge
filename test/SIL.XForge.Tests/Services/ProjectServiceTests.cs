@@ -424,7 +424,7 @@ namespace SIL.XForge.Services
         }
 
         [Test]
-        public void UninviteUser_NonAdmin_Error()
+        public void UninviteUser_NonProjectAdmin_Error()
         {
             var env = new TestEnvironment();
             // User02 is not an admin on Project01
@@ -455,6 +455,18 @@ namespace SIL.XForge.Services
             await env.Service.UninviteUserAsync(User01, Project03, "bob@example.com");
             Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Count, Is.EqualTo(initialInvitationCount - 1), "unexpected number of outstanding invitations");
             Assert.That((await env.ProjectSecrets.GetAsync(Project03)).ShareKeys.Any(sk => sk.Email == "bob@example.com"), Is.False, "should not still have uninvited email address");
+        }
+
+
+        [Test]
+        public async Task UninviteUser_SystemAdmin_NoSpecialAccess()
+        {
+            var env = new TestEnvironment();
+            // User04 is a system admin, but not a project-admin or even a user on Project03
+            Assert.That(env.GetProject(Project03).UserRoles.ContainsKey(User04), Is.False, "test setup");
+            Assert.That(env.GetUser(User04).Role, Is.EqualTo(SystemRole.SystemAdmin), "test setup");
+
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.UninviteUserAsync(User04, Project03, "bob@example.com"), "should have been forbidden");
         }
 
         private class TestEnvironment
