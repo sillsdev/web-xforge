@@ -17,6 +17,22 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
   private _isPlaying: boolean = false;
   private audio: HTMLAudioElement = new Audio();
 
+  constructor() {
+    this.audio.addEventListener('loadedmetadata', () => this.updateDuration());
+
+    this.audio.addEventListener('timeupdate', () => {
+      this.updateDuration();
+      this._isPlaying = this.checkIsPlaying;
+      this._currentTime = this.audio.currentTime;
+      this._duration = this.audio.duration;
+      if (this.isPlaying) {
+        this.seek = (this.currentTime / this.duration) * 100;
+      } else if (this.currentTime === this.duration) {
+        this.seek = 100;
+      }
+    });
+  }
+
   get currentTime(): number {
     return this._currentTime;
   }
@@ -43,7 +59,6 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
   }
 
   @Input() set source(source: string) {
-    this.audio = new Audio();
     if (source && source !== '') {
       if (!source.includes('://')) {
         if (source.startsWith('/')) {
@@ -53,40 +68,13 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
       }
       this.enabled = false;
       this.audio.src = source;
-      this.audio.addEventListener('timeupdate', () => {
-        this._isPlaying = this.checkIsPlaying;
-        this._currentTime = this.audio.currentTime;
-        this._duration = this.audio.duration;
-        if (!this.enabled) {
-          // Reset back to the start of the audio file after the event has triggered
-          this.audio.currentTime = 0;
-          this.enabled = true;
-        } else {
-          if (this.isPlaying) {
-            this.seek = (this.currentTime / this.duration) * 100;
-          } else if (this.currentTime === this.duration) {
-            this.seek = 100;
-          }
-        }
-      });
-      this._duration = this.audio.duration;
       this.seek = 0;
-      // The duration isn't immediately available on blob files so play in mute mode to figure it out
-      if (isNaN(this.duration) || this.duration === Infinity) {
-        // Trigger the timeupdate event
-        this.audio.currentTime = 1000;
-      } else {
-        this.enabled = true;
-      }
-      this.audio.addEventListener('play', () => {
-        if (
-          CheckingAudioPlayerComponent.lastPlayedAudio &&
-          CheckingAudioPlayerComponent.lastPlayedAudio.src !== this.audio.src
-        ) {
-          CheckingAudioPlayerComponent.lastPlayedAudio.pause();
-        }
-        CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;
-      });
+      // In Chromium the duration of blobs isn't known even after metadata is loaded
+      // By making it skip to the end the duration becomes available. To do this we have to skip to some point that we
+      // assume is past the end. This number should be large, but numbers as small as 1e16 have been observed to cause
+      // audio playback to skip to the end of the audio when the user presses play in Chromium. Normal audio files will
+      // know the duration once metadata has loaded.
+      this.audio.currentTime = 1e10;
     }
   }
 
@@ -105,13 +93,27 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
   }
 
   play() {
+    if (CheckingAudioPlayerComponent.lastPlayedAudio) {
+      CheckingAudioPlayerComponent.lastPlayedAudio.pause();
+    }
     this.audio.play();
+    CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;
   }
 
   seeking(event: MdcSliderChange) {
     this.seek = event.value;
     this.audio.currentTime = this.seek > 0 ? this.duration * (this.seek / 100) : 0;
     this._currentTime = this.audio.currentTime;
+  }
+
+  private updateDuration() {
+    if (!this.enabled && this.audio.duration !== Infinity && !isNaN(this.audio.duration)) {
+      this.enabled = true;
+      this._duration = this.audio.duration;
+      this.audio.currentTime = 0;
+      this._currentTime = 0;
+      this.seek = 0;
+    }
   }
 }
 
