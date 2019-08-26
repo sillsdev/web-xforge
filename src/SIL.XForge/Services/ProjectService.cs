@@ -216,6 +216,9 @@ namespace SIL.XForge.Services
         public async Task<Uri> SaveAudioAsync(string userId, string projectId, string dataId, string extension,
             Stream inputStream)
         {
+            if (!StringUtils.ValidateId(dataId))
+                throw new FormatException($"{nameof(dataId)} is not a valid id.");
+
             Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
             if (!projectAttempt.TryResult(out TModel project))
                 throw new DataNotFoundException("The project does not exist.");
@@ -255,6 +258,9 @@ namespace SIL.XForge.Services
 
         public async Task DeleteAudioAsync(string userId, string projectId, string ownerId, string dataId)
         {
+            if (!StringUtils.ValidateId(dataId))
+                throw new FormatException($"{nameof(dataId)} is not a valid id.");
+
             Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
             if (!projectAttempt.TryResult(out TModel project))
                 throw new DataNotFoundException("The project does not exist.");
