@@ -34,7 +34,7 @@ namespace SIL.XForge.Scripture.Services
             if (projectId != null)
             {
                 string userId = context.User.FindFirst(XFClaimTypes.UserId)?.Value;
-                if (await _projectService.IsAuthorizedAsync(projectId, userId))
+                if (await _projectService.IsAuthorizedAsync(userId, projectId))
                 {
                     List<IAuthorizationRequirement> pendingRequirements = context.PendingRequirements.ToList();
                     foreach (IAuthorizationRequirement requirement in pendingRequirements)

@@ -6,14 +6,15 @@ namespace SIL.XForge.Services
 {
     public interface IProjectService
     {
-        Task AddUserAsync(string userId, string projectId, string projectRole = null);
-        Task RemoveUserAsync(string userId, string projectId, string projectUserId);
-        Task UpdateRoleAsync(string userId, string projectId, string projectRole);
-        Task<bool> InviteAsync(string userId, string projectId, string email);
-        Task<bool> IsAlreadyInvitedAsync(string userId, string projectId, string email);
-        Task CheckLinkSharingAsync(string userId, string projectId, string shareKey = null);
-        Task<bool> IsAuthorizedAsync(string projectId, string userId);
-        Task<Uri> SaveAudioAsync(string userId, string projectId, string dataId, string extension, Stream inputStream);
-        Task DeleteAudioAsync(string userId, string projectId, string ownerId, string dataId);
+        Task AddUserAsync(string curUserId, string projectId, string projectRole = null);
+        Task RemoveUserAsync(string curUserId, string projectId, string projectUserId);
+        Task UpdateRoleAsync(string curUserId, string systemRole, string projectId, string projectRole);
+        Task<bool> InviteAsync(string curUserId, string projectId, string email);
+        Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email);
+        Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null);
+        Task<bool> IsAuthorizedAsync(string curUserId, string projectId);
+        Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string extension,
+            Stream inputStream);
+        Task DeleteAudioAsync(string curUserId, string projectId, string ownerId, string dataId);
     }
 }

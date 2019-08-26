@@ -341,6 +341,25 @@ namespace SIL.XForge.Services
                 env.Service.DeleteAudioAsync(User02, "/../test/abc.txt", User01, "507f1f77bcf86cd799439011"));
         }
 
+        [Test]
+        public async Task UpdateRoleAsync_SystemAdmin_RoleUpdated()
+        {
+            var env = new TestEnvironment();
+
+            await env.Service.UpdateRoleAsync(User02, SystemRole.SystemAdmin, Project01, TestProjectRole.Administrator);
+            TestProject project = env.GetProject(Project01);
+            Assert.That(project.UserRoles[User02], Is.EqualTo(TestProjectRole.Administrator));
+        }
+
+        [Test]
+        public void UpdateRoleAsync_NormalUser_ForbiddenError()
+        {
+            var env = new TestEnvironment();
+
+            Assert.ThrowsAsync<ForbiddenException>(() =>
+                env.Service.UpdateRoleAsync(User02, SystemRole.User, Project01, TestProjectRole.Administrator));
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment(bool isResetLinkExpired = false)

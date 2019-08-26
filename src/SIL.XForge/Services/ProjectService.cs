@@ -41,7 +41,7 @@ namespace SIL.XForge.Services
         protected IFileSystemService FileSystemService { get; }
         protected abstract string ProjectAdminRole { get; }
 
-        public async Task AddUserAsync(string userId, string projectId, string projectRole)
+        public async Task AddUserAsync(string curUserId, string projectId, string projectRole)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
@@ -49,13 +49,13 @@ namespace SIL.XForge.Services
                 if (!projectDoc.IsLoaded)
                     throw new DataNotFoundException("The project does not exist.");
 
-                IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
+                IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 if (!userDoc.IsLoaded)
                     throw new DataNotFoundException("The user does not exist.");
 
                 if (userDoc.Data.Role == SystemRole.User || projectRole == null)
                 {
-                    Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, userId);
+                    Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
                     if (!attempt.TryResult(out projectRole))
                         throw new ForbiddenException();
                 }
@@ -64,7 +64,7 @@ namespace SIL.XForge.Services
             }
         }
 
-        public async Task RemoveUserAsync(string userId, string projectId, string projectUserId)
+        public async Task RemoveUserAsync(string curUserId, string projectId, string projectUserId)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
@@ -72,7 +72,7 @@ namespace SIL.XForge.Services
                 if (!projectDoc.IsLoaded)
                     throw new DataNotFoundException("The project does not exist.");
 
-                if (userId != projectUserId && !IsProjectAdmin(projectDoc.Data, userId))
+                if (curUserId != projectUserId && !IsProjectAdmin(projectDoc.Data, curUserId))
                     throw new ForbiddenException();
 
                 IDocument<User> userDoc = await conn.FetchAsync<User>(projectUserId);
@@ -83,19 +83,22 @@ namespace SIL.XForge.Services
             }
         }
 
-        public async Task UpdateRoleAsync(string userId, string projectId, string projectRole)
+        public async Task UpdateRoleAsync(string curUserId, string systemRole, string projectId, string projectRole)
         {
+            if (systemRole != SystemRole.SystemAdmin)
+                throw new ForbiddenException();
+
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
                 IDocument<TModel> projectDoc = await conn.FetchAsync<TModel>(projectId);
                 if (!projectDoc.IsLoaded)
                     throw new DataNotFoundException("The project does not exist.");
 
-                await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[userId], projectRole));
+                await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[curUserId], projectRole));
             }
         }
 
-        public async Task<bool> InviteAsync(string userId, string projectId, string email)
+        public async Task<bool> InviteAsync(string curUserId, string projectId, string email)
         {
             Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
             if (!projectAttempt.TryResult(out TModel project))
@@ -114,7 +117,7 @@ namespace SIL.XForge.Services
                 additionalMessage = "This link can be shared with others so they can join the project too.";
             }
             else if ((project.ShareEnabled && project.ShareLevel == SharingLevel.Specific)
-                || IsProjectAdmin(project, userId))
+                || IsProjectAdmin(project, curUserId))
             {
                 // Invite a specific person
                 // Reuse prior code, if any
@@ -133,7 +136,7 @@ namespace SIL.XForge.Services
                 throw new ForbiddenException();
             }
 
-            User inviter = await RealtimeService.GetSnapshotAsync<User>(userId);
+            User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);
             string subject = $"You've been invited to the project {project.ProjectName} on {siteOptions.Name}";
             string body = "<p>Hello,</p><p></p>" +
                 $"<p>{inviter.Name} invites you to join the {project.ProjectName} project on {siteOptions.Name}." +
@@ -151,12 +154,12 @@ namespace SIL.XForge.Services
         }
 
         /// <summary>Is there already a pending invitation to the project for the specified email address?</summary>
-        public async Task<bool> IsAlreadyInvitedAsync(string userId, string projectId, string email)
+        public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email)
         {
             Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
             if (!projectAttempt.TryResult(out TModel project))
                 throw new DataNotFoundException("The project does not exist.");
-            if (!IsProjectAdmin(project, userId) && !project.ShareEnabled)
+            if (!IsProjectAdmin(project, curUserId) && !project.ShareEnabled)
                 throw new ForbiddenException();
 
             if (email == null)
@@ -165,7 +168,7 @@ namespace SIL.XForge.Services
                 .AnyAsync(p => p.Id == projectId && p.ShareKeys.Any(sk => sk.Email == email));
         }
 
-        public async Task CheckLinkSharingAsync(string userId, string projectId, string shareKey = null)
+        public async Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync())
             {
@@ -182,11 +185,11 @@ namespace SIL.XForge.Services
                     throw new ForbiddenException();
                 }
 
-                if (projectDoc.Data.UserRoles.ContainsKey(userId))
+                if (projectDoc.Data.UserRoles.ContainsKey(curUserId))
                     return;
 
-                IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
-                Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, userId);
+                IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+                Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
                 string projectRole = attempt.Result;
                 if (projectDoc.Data.ShareLevel == SharingLevel.Specific)
                 {
@@ -207,13 +210,13 @@ namespace SIL.XForge.Services
             }
         }
 
-        public Task<bool> IsAuthorizedAsync(string projectId, string userId)
+        public Task<bool> IsAuthorizedAsync(string curUserId, string projectId)
         {
             return RealtimeService.QuerySnapshots<TModel>()
-                .AnyAsync(p => p.Id == projectId && p.UserRoles.ContainsKey(userId));
+                .AnyAsync(p => p.Id == projectId && p.UserRoles.ContainsKey(curUserId));
         }
 
-        public async Task<Uri> SaveAudioAsync(string userId, string projectId, string dataId, string extension,
+        public async Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string extension,
             Stream inputStream)
         {
             if (!StringUtils.ValidateId(dataId))
@@ -223,13 +226,13 @@ namespace SIL.XForge.Services
             if (!projectAttempt.TryResult(out TModel project))
                 throw new DataNotFoundException("The project does not exist.");
 
-            if (!project.UserRoles.ContainsKey(userId))
+            if (!project.UserRoles.ContainsKey(curUserId))
                 throw new ForbiddenException();
 
             string audioDir = GetAudioDir(projectId);
             if (!FileSystemService.DirectoryExists(audioDir))
                 FileSystemService.CreateDirectory(audioDir);
-            string outputPath = Path.Combine(audioDir, $"{userId}_{dataId}.mp3");
+            string outputPath = Path.Combine(audioDir, $"{curUserId}_{dataId}.mp3");
             if (string.Equals(extension, ".mp3", StringComparison.InvariantCultureIgnoreCase))
             {
                 using (Stream fileStream = FileSystemService.OpenFile(outputPath, FileMode.Create))
@@ -256,7 +259,7 @@ namespace SIL.XForge.Services
             return uri;
         }
 
-        public async Task DeleteAudioAsync(string userId, string projectId, string ownerId, string dataId)
+        public async Task DeleteAudioAsync(string curUserId, string projectId, string ownerId, string dataId)
         {
             if (!StringUtils.ValidateId(dataId))
                 throw new FormatException($"{nameof(dataId)} is not a valid id.");
@@ -265,7 +268,7 @@ namespace SIL.XForge.Services
             if (!projectAttempt.TryResult(out TModel project))
                 throw new DataNotFoundException("The project does not exist.");
 
-            if (userId != ownerId && !IsProjectAdmin(project, userId))
+            if (curUserId != ownerId && !IsProjectAdmin(project, curUserId))
                 throw new ForbiddenException();
 
             string audioDir = GetAudioDir(projectId);

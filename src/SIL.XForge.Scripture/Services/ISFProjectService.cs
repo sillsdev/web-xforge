@@ -6,10 +6,10 @@ namespace SIL.XForge.Scripture.Services
 {
     public interface ISFProjectService : IProjectService
     {
-        Task<string> CreateProjectAsync(string userId, SFProject newProject);
-        Task DeleteProjectAsync(string userId, string projectId);
-        Task UpdateSettingsAsync(string userId, string projectId, SFProjectSettings settings);
-        Task AddTranslateMetricsAsync(string userId, string projectId, TranslateMetrics metrics);
-        Task SyncAsync(string userId, string projectId);
+        Task<string> CreateProjectAsync(string curUserId, SFProject newProject);
+        Task DeleteProjectAsync(string curUserId, string projectId);
+        Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings);
+        Task AddTranslateMetricsAsync(string curUserId, string projectId, TranslateMetrics metrics);
+        Task SyncAsync(string curUserId, string projectId);
     }
 }

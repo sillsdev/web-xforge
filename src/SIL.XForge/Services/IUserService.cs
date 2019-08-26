@@ -5,8 +5,8 @@ namespace SIL.XForge.Services
 {
     public interface IUserService
     {
-        Task UpdateUserFromProfileAsync(string userId, JObject userProfile);
-        Task LinkParatextAccountAsync(string userId, string primaryAuthId, string secondaryAuthId);
-        Task DeleteAsync(string userId);
+        Task UpdateUserFromProfileAsync(string curUserId, JObject userProfile);
+        Task LinkParatextAccountAsync(string curUserId, string primaryAuthId, string secondaryAuthId);
+        Task DeleteAsync(string curUserId, string systemRole, string userId);
     }
 }

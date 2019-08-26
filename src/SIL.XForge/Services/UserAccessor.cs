@@ -18,7 +18,7 @@ namespace SIL.XForge.Services
 
         public bool IsAuthenticated => User.Identity.IsAuthenticated;
         public string UserId => User.FindFirst(XFClaimTypes.UserId)?.Value;
-        public string Role => User.FindFirst(XFClaimTypes.Role)?.Value;
+        public string SystemRole => User.FindFirst(XFClaimTypes.Role)?.Value;
         public string Name
         {
             get
