@@ -6,6 +6,7 @@ import { ProjectDomainConfig } from '../../common/services/project-data-service'
 import { docFetch, docSubmitOp } from '../../common/utils';
 import { Answer } from '../models/answer';
 import { CommentList, COMMENTS_COLLECTION } from '../models/comment-list';
+import { Question } from '../models/question';
 import { QuestionList, QUESTIONS_COLLECTION } from '../models/question-list';
 import { SFProjectDomain } from '../models/sf-project-rights';
 import { QUESTION_LIST_MIGRATIONS } from './question-list-migrations';
@@ -42,14 +43,21 @@ export class QuestionListService extends SFProjectDataService<QuestionList> {
 
   protected async onDelete(docId: string, projectDomain: SFProjectDomain, entity: OwnedData): Promise<void> {
     switch (projectDomain) {
+      case SFProjectDomain.Questions:
+        const question = entity as Question;
+        if (question.answers != null) {
+          await this.deleteAnswerComments(docId, question.answers.map(a => a.id));
+        }
+        break;
       case SFProjectDomain.Answers:
         const answer = entity as Answer;
-        await this.deleteAnswerComments(docId, answer.id);
+        await this.deleteAnswerComments(docId, [answer.id]);
         break;
     }
   }
 
-  private async deleteAnswerComments(docId: string, answerId: string): Promise<void> {
+  private async deleteAnswerComments(docId: string, answerIds: string[]): Promise<void> {
+    const answerIdSet = new Set<string>(answerIds);
     const conn = this.server!.backend.connect();
     const commentListDoc = conn.get(COMMENTS_COLLECTION, docId);
     await docFetch(commentListDoc);
@@ -58,7 +66,7 @@ export class QuestionListService extends SFProjectDataService<QuestionList> {
     const ops: ShareDB.Op[] = [];
     for (let i = commentList.comments.length - 1; i >= 0; i--) {
       const comment = commentList.comments[i];
-      if (comment.answerRef === answerId) {
+      if (comment.answerRef != null && answerIdSet.has(comment.answerRef)) {
         const op: ShareDB.ListDeleteOp = {
           p: getPath(cl.comments[i]),
           ld: comment

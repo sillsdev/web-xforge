@@ -388,14 +388,20 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         this.activeQuestionIndex
       ].answers[answerIndex];
       const newAnswer = questionWithAnswer.answers[answerIndex];
+      const deleteAudio = oldAnswer.audioUrl !== '' && newAnswer.audioUrl === '';
       const submitPromise = this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
-        op.replace(
-          ql => ql.questions[this.activeQuestionIndex].answers,
-          answerIndex,
-          questionWithAnswer.answers[answerIndex]
-        )
+        op
+          .set(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].text, newAnswer.text)
+          .set(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].scriptureText, newAnswer.scriptureText)
+          .set(
+            ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].scriptureStart,
+            newAnswer.scriptureStart
+          )
+          .set(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].scriptureEnd, newAnswer.scriptureEnd)
+          .set(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].audioUrl, newAnswer.audioUrl)
+          .set(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].dateModified, newAnswer.dateModified)
       );
-      if (oldAnswer.audioUrl !== '' && newAnswer.audioUrl === '') {
+      if (deleteAudio) {
         submitPromise.then(() =>
           this.projectService.onlineDeleteAudio(this.projectDoc.id, oldAnswer.id, oldAnswer.ownerRef)
         );
@@ -412,7 +418,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     const commentIndex = this.getCommentIndex(comment);
     if (commentIndex >= 0) {
       this.checkingData.commentListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
-        op.replace(cl => cl.comments, commentIndex, comment)
+        op
+          .set(cl => cl.comments[commentIndex].text, comment.text)
+          .set(cl => cl.comments[commentIndex].dateModified, comment.dateModified)
       );
     } else {
       this.checkingData.commentListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
