@@ -142,10 +142,11 @@ namespace SIL.XForge.Services
         }
 
         /// <summary>Cancel an outstanding project invitation.</summary>
-        public async Task UninviteUserAsync(string curUserId, string projectId, string emailToUninvite)
+        public async Task UninviteUserAsync(string curUserId, string projectId, string emailToUninvite, string userSystemRole = null)
         {
             TModel project = await GetProjectAsync(projectId);
-            if (!IsProjectAdmin(project, curUserId))
+            if (!IsProjectAdmin(project, curUserId)
+            && !IsSystemAdministrator(userSystemRole))
                 throw new ForbiddenException();
 
             if (!await IsAlreadyInvitedAsync(curUserId, projectId, emailToUninvite))

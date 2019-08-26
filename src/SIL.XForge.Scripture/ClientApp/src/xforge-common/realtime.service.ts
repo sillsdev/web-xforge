@@ -15,6 +15,8 @@ function getDocKey(collection: string, id: string): string {
 
 export interface QueryResults<T extends RealtimeDoc> {
   docs: T[];
+  /** The number of docs that would have been returned if the
+   * query did not filter via 'skip' and 'limit' for pagination. */
   totalPagedCount: number;
 }
 

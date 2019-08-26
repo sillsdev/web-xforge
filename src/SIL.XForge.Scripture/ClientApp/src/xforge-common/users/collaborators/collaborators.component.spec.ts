@@ -95,6 +95,9 @@ describe('CollaboratorsComponent', () => {
     expect(env.cancelInviteButtonOnRow(inviteeRow)).toBeTruthy();
   }));
 
+  // Not specifying behaviour for when current user is not a project admin,
+  // since currently this component is only accessed by admins.
+
   it('should uninvite user from project', fakeAsync(() => {
     const env = new TestEnvironment();
     when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);

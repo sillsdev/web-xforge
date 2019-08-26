@@ -147,7 +147,7 @@ namespace SIL.XForge.Scripture.Controllers
         {
             try
             {
-                await _projectService.UninviteUserAsync(UserId, projectId, emailToUninvite);
+                await _projectService.UninviteUserAsync(UserId, projectId, emailToUninvite, SystemRole);
                 return Ok();
             }
             catch (ForbiddenException)

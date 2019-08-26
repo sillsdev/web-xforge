@@ -8,16 +8,18 @@
   </mdc-form-field>
 </div>
 <div *ngIf="!isLoading">
-  <div *ngIf="length > 0">
+  <div *ngIf="totalRecordCount > 0">
     <table mat-table fxFill id="users-table" [dataSource]="userRows">
       <ng-container matColumnDef="avatar">
         <td mat-cell *matCellDef="let userRow; let i = index">
-          <div *ngIf="userRow.active"><app-avatar [user]="userRow.user" size="32" [round]="false"> </app-avatar></div>
+          <div *ngIf="!userRow.isInvitee">
+            <app-avatar [user]="userRow.user" size="32" [round]="false"> </app-avatar>
+          </div>
         </td>
       </ng-container>
       <ng-container matColumnDef="name">
         <td mat-cell *matCellDef="let userRow">
-          <div *ngIf="userRow.active">
+          <div *ngIf="!userRow.isInvitee">
             <strong *ngIf="userRow.user.displayName !== userRow.user.email">{{ userRow.user.displayName }}</strong>
             <div
               *ngIf="userRow.user.name !== userRow.user.displayName && userRow.user.name !== userRow.user.email"
@@ -26,7 +28,7 @@
               {{ userRow.user.name }}
             </div>
           </div>
-          <div *ngIf="!userRow.active">Awaiting response from</div>
+          <div *ngIf="userRow.isInvitee">Awaiting response from</div>
           {{ userRow.user.email }}
         </td>
       </ng-container>
@@ -44,7 +46,7 @@
       <ng-container matColumnDef="remove">
         <td mat-cell *matCellDef="let userRow" class="remove-cell">
           <button
-            *ngIf="userRow.active"
+            *ngIf="!userRow.isInvitee"
             mdc-icon-button
             class="remove-user"
             (click)="removeUser(userRow.id, userRow.user)"
@@ -54,25 +56,25 @@
 
           <!-- 2 buttons below are 1 button displayed mutually exclusively, different style on breakpoints -->
           <button
-            *ngIf="!userRow.active"
+            *ngIf="userRow.isInvitee"
             fxHide.lt-sm
             fxShow
             mdc-button
             outlined
             color="warn"
             class="cancel-invite"
-            (click)="removeUser(userRow.id, userRow.user)"
+            (click)="uninviteUser(userRow.projectDocs[0].id, userRow.user.email)"
           >
             Cancel invite
           </button>
           <button
-            *ngIf="!userRow.active"
+            *ngIf="userRow.isInvitee"
             fxHide
             fxShow.lt-sm
             mdc-icon-button
             color="warn"
             class="cancel-invite"
-            (click)="removeUser(userRow.id, userRow.user)"
+            (click)="uninviteUser(userRow.projectDocs[0].id, userRow.user.email)"
           >
             <mdc-icon>clear</mdc-icon>
           </button>
@@ -84,12 +86,12 @@
 
     <mat-paginator
       [pageIndex]="pageIndex"
-      [length]="length"
+      [length]="totalRecordCount"
       [pageSize]="pageSize"
       [pageSizeOptions]="[5, 10, 20, 50, 100]"
       (page)="updatePage($event.pageIndex, $event.pageSize)"
     >
     </mat-paginator>
   </div>
-  <div *ngIf="length === 0" id="no-users-label">No users found</div>
+  <div *ngIf="totalRecordCount === 0" id="no-users-label">No users found</div>
 </div>
