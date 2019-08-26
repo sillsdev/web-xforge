@@ -1,6 +1,7 @@
 import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
 import { Component, Inject } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
+import { XFValidators } from 'xforge-common/xfvalidators';
 
 @Component({
   templateUrl: './edit-name-dialog.component.html'
@@ -12,7 +13,7 @@ export class EditNameDialogComponent {
     public dialogRef: MdcDialogRef<EditNameDialogComponent>,
     @Inject(MDC_DIALOG_DATA) public data: { name: string; isConfirmation: boolean }
   ) {
-    this.name.setValidators([Validators.required, Validators.pattern(/\S/)]);
+    this.name.setValidators([Validators.required, XFValidators.someNonWhitespace]);
     this.name.setValue(data.name);
   }
 
