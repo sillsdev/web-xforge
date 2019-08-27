@@ -1,11 +1,17 @@
 import { Component, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
+import isEqual from 'lodash/isEqual';
 import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { fromEvent } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../../core/models/text-doc-id';
 import { verseRefDataToVerseRef } from '../../../shared/scripture-utils/verse-ref-data-converters';
 import { TextComponent } from '../../../shared/text/text.component';
+
+// An interface for objects with scripture reference properties i.e. Questions
+export interface ScriptureReference {
+  scriptureStart?: VerseRefData;
+  scriptureEnd?: VerseRefData;
+}
 
 @Component({
   selector: 'app-checking-text',
@@ -16,28 +22,42 @@ import { TextComponent } from '../../../shared/text/text.component';
 export class CheckingTextComponent extends SubscriptionDisposable {
   @ViewChild(TextComponent) textComponent: TextComponent;
 
-  @Input() set activeQuestion(question: Readonly<Question>) {
-    if (this.activeQuestion && this.isEditorLoaded) {
-      this.selectActiveQuestion(this.activeQuestion, false);
-      if (question != null) {
-        this.selectActiveQuestion(question, true);
+  @Input() set activeReference(reference: Readonly<ScriptureReference>) {
+    if (this.activeReference && this.isEditorLoaded) {
+      // Removed the highlight on the old active reference
+      this.highlightActiveReference(this.activeReference, false);
+      if (reference != null) {
+        this.highlightActiveReference(reference, true);
       }
     }
-    this._activeQuestion = question;
+    this._activeReference = reference;
   }
-  @Input() id: TextDocId;
-  @Output() questionClicked: EventEmitter<Question> = new EventEmitter<Question>();
-  @Input() questions: Readonly<Question[]> = [];
+  @Input() set id(textDocId: TextDocId) {
+    if (textDocId) {
+      if (this.isEditorLoaded && !isEqual(this._id, textDocId)) {
+        this._editorLoaded = false;
+      }
+      this._id = textDocId;
+    }
+  }
+  @Output() referenceClicked: EventEmitter<ScriptureReference> = new EventEmitter<ScriptureReference>();
+  @Input() references: Readonly<ScriptureReference[]> = [];
+  @Input() mode: 'checking' | 'dialog' = 'checking';
 
-  private _activeQuestion: Readonly<Question>;
+  private _activeReference: Readonly<ScriptureReference>;
   private _editorLoaded = false;
+  private _id: TextDocId;
 
-  get activeQuestion(): Readonly<Question> {
-    return this._activeQuestion;
+  get activeReference(): Readonly<ScriptureReference> {
+    return this._activeReference;
   }
 
   get isEditorLoaded(): boolean {
     return this._editorLoaded;
+  }
+
+  get id() {
+    return this._id;
   }
 
   applyFontChange(fontSize: string) {
@@ -46,29 +66,42 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     };
   }
 
-  highlightQuestions() {
+  highlightReferences() {
     this._editorLoaded = true;
-    if (this.questions) {
-      const segments: string[] = [];
-      for (const question of this.questions) {
-        const questionSegments = this.getQuestionSegments(question);
-        if (questionSegments.length) {
-          this.setupQuestionSegments([questionSegments[0]]);
-          for (const segment of questionSegments) {
-            if (!segments.includes(segment)) {
-              segments.push(segment);
+    if (this.mode === 'checking') {
+      if (this.references) {
+        const segments: string[] = [];
+        for (const reference of this.references) {
+          const referenceSegments = this.getReferenceSegments(reference);
+          if (referenceSegments.length) {
+            this.setupQuestionSegments([referenceSegments[0]]);
+            for (const segment of referenceSegments) {
+              if (!segments.includes(segment)) {
+                segments.push(segment);
+              }
             }
           }
         }
+        this.highlightSegments(segments);
+        if (this.activeReference) {
+          this.selectActiveReference(this.activeReference, true);
+        }
       }
-      this.highlightSegments(segments);
-      if (this.activeQuestion) {
-        this.selectActiveQuestion(this.activeQuestion, true);
-      }
+    } else {
+      // In dialog mode, highlight the active reference without putting the ? marker before the text
+      this.highlightActiveReference(this._activeReference, true);
     }
   }
 
-  private getQuestionSegments(question: Question): string[] {
+  highlightActiveReference(reference: ScriptureReference, toggle: boolean) {
+    if (this.mode === 'dialog') {
+      const segments = this.getReferenceSegments(reference);
+      this.highlightSegments(segments, toggle);
+    }
+    this.selectActiveReference(reference, toggle);
+  }
+
+  private getReferenceSegments(question: ScriptureReference): string[] {
     const segments: string[] = [];
     let segment = '';
     if (question.scriptureStart) {
@@ -91,13 +124,16 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     return 'verse_' + chapter + '_' + verse;
   }
 
-  private highlightSegments(segments: string[]) {
+  private highlightSegments(segments: string[], toggle = true) {
     for (const segment of segments) {
       if (!this.textComponent.hasSegmentRange(segment)) {
         continue;
       }
       const range = this.textComponent.getSegmentRange(segment);
-      this.textComponent.toggleHighlight(true, range);
+      this.textComponent.toggleHighlight(toggle, range);
+      if (this.mode === 'dialog') {
+        continue;
+      }
       const element = this.textComponent.editor.container.querySelector('usx-segment[data-segment=' + segment + ']');
       this.subscribe(fromEvent(element, 'click'), (event: MouseEvent) => {
         let target = event.target;
@@ -108,7 +144,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
           const clickSegment = target['attributes']['data-segment'].value;
           const segmentParts = clickSegment.split('_', 3);
           const verseRefData: VerseRefData = {
-            book: this.id.bookId,
+            book: this._id.bookId,
             chapter: segmentParts[1],
             verse: segmentParts[2]
           };
@@ -120,9 +156,9 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
   private segmentClicked(verseRefData: VerseRefData) {
     const verseRef = verseRefDataToVerseRef(verseRefData);
-    for (const question of this.questions) {
-      const verseStart = verseRefDataToVerseRef(question.scriptureStart);
-      let verseEnd = verseRefDataToVerseRef(question.scriptureEnd);
+    for (const reference of this.references) {
+      const verseStart = verseRefDataToVerseRef(reference.scriptureStart);
+      let verseEnd = verseRefDataToVerseRef(reference.scriptureEnd);
       if (!verseEnd.book) {
         verseEnd = verseStart;
       }
@@ -131,7 +167,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
         verseStart.verseNum <= verseRef.verseNum &&
         verseEnd.verseNum >= verseRef.verseNum
       ) {
-        this.questionClicked.emit(question);
+        this.referenceClicked.emit(reference);
       }
     }
   }
@@ -148,8 +184,8 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
   }
 
-  private selectActiveQuestion(question: Question, toggle: boolean) {
-    for (const segment of this.getQuestionSegments(question)) {
+  private selectActiveReference(reference: ScriptureReference, toggle: boolean) {
+    for (const segment of this.getReferenceSegments(reference)) {
       if (!this.textComponent.hasSegmentRange(segment)) {
         continue;
       }

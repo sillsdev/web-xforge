@@ -289,7 +289,14 @@ describe('QuestionDialogComponent', () => {
     expect(env.quillEditor).not.toBeNull();
     expect(env.component.textDocId).toBeUndefined();
     env.component.scriptureStart.setValue('LUK 1:1');
-    expect(env.component.textDocId.toString()).toBe('project01:LUK:1:target');
+    tick(500);
+    env.fixture.detectChanges();
+    tick(500);
+    const textDocId = new TextDocId('project01', 'LUK', 1, 'target');
+    expect(env.component.textDocId.toString()).toBe(textDocId.toString());
+    verify(env.mockedProjectService.getText(deepEqual(textDocId))).once();
+    expect(env.isSegmentHighlighted('1')).toBe(true);
+    expect(env.isSegmentHighlighted('2')).toBe(false);
   }));
 });
 
@@ -436,6 +443,11 @@ class TestEnvironment {
     element.click();
     this.fixture.detectChanges();
     tick();
+  }
+
+  isSegmentHighlighted(verse: string): boolean {
+    const segment = this.quillEditor.querySelector('usx-segment[data-segment=verse_1_' + verse + ']');
+    return segment.classList.toString().includes('highlight-segment-target');
   }
 
   setAudioStatus(status: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded') {

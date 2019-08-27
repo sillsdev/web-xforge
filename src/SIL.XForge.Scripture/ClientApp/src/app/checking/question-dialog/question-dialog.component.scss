@@ -4,6 +4,9 @@
 
 mdc-form-field {
   margin-bottom: 1em;
+  .scripture-helper-text {
+    max-width: 248px;
+  }
 }
 
 mdc-text-field {
