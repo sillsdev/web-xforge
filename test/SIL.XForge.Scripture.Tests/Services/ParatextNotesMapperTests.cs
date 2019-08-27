@@ -32,7 +32,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""italic"">Test question?</span></p>
+                                    <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -47,7 +47,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""italic"">Test question?</span></p>
+                                    <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -59,7 +59,8 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""italic"">Test question?</span></p>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
@@ -71,7 +72,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
-                                    <p><span style=""italic"">Test question?</span></p>
+                                    <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -100,7 +101,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""italic"">Test question?</span></p>
+                                    <p><span style=""bold"">Test question?</span></p>
                                     <p>Old test answer 1.</p>
                                 </content>
                             </comment>
@@ -109,7 +110,8 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""italic"">Test question?</span></p>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
@@ -127,7 +129,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""italic"">Test question?</span></p>
+                                    <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -164,7 +166,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""italic"">Test question?</span></p>
+                                    <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -176,7 +178,8 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""italic"">Test question?</span></p>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
@@ -191,7 +194,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
                                 <content>
-                                    <p><span style=""italic"">Test question?</span></p>
+                                    <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -218,7 +221,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
-                                    <p><span style=""italic"">Test question?</span></p>
+                                    <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -288,7 +291,10 @@ namespace SIL.XForge.Scripture.Services
                                             OwnerRef = "user04",
                                             SyncUserRef = syncUserId2,
                                             DateCreated = new DateTime(2019, 1, 2, 8, 0, 0, DateTimeKind.Utc),
-                                            Text = "Test answer 2."
+                                            Text = "Test answer 2.",
+                                            ScriptureStart = new VerseRefData("MAT", "1", "2"),
+                                            ScriptureEnd = new VerseRefData("MAT", "1", "3"),
+                                            ScriptureText = "This is some scripture."
                                         }
                                     }
                                 }
