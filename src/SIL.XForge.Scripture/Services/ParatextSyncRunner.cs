@@ -565,6 +565,13 @@ namespace SIL.XForge.Scripture.Services
             if (_projectDoc == null || _projectSecret == null)
                 return;
 
+            IReadOnlyDictionary<string, string> ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
+                _projectDoc.Data.ParatextId);
+            var projectUsers = await _realtimeService.QuerySnapshots<User>()
+                    .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
+                    .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
+                    .ToListAsync();
+
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
                 op.Unset(pd => pd.Sync.PercentCompleted);
@@ -576,6 +583,13 @@ namespace SIL.XForge.Scripture.Services
                 // otherwise the info about the sync won't be set yet when the frontend determines that the sync is
                 // complete.
                 op.Inc(pd => pd.Sync.QueuedCount, -1);
+
+                foreach (var projectUser in projectUsers)
+                {
+                    if (!ptUserRoles.TryGetValue(projectUser.ParatextId, out string role))
+                        role = SFProjectRole.SFReviewer;
+                    op.Set(p => p.UserRoles[projectUser.UserId], role);
+                }
             });
             if (_notesMapper.NewSyncUsers.Count > 0)
             {

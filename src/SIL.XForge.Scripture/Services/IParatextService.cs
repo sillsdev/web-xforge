@@ -17,5 +17,6 @@ namespace SIL.XForge.Scripture.Services
             string revision, string usxText);
         Task<string> GetNotesAsync(UserSecret userSecret, string projectId, string bookId);
         Task<string> UpdateNotesAsync(UserSecret userSecret, string projectId, string notesText);
+        Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret, string projectId);
     }
 }
