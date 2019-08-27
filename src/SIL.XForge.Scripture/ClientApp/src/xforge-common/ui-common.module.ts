@@ -34,6 +34,7 @@ import {
 } from '@angular/material';
 import { ChartsModule } from 'ng2-charts';
 
+import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 
 const modules = [
@@ -126,9 +127,9 @@ const appFlexLayoutBreakPoints = [
 ];
 
 @NgModule({
-  declarations: [BlurOnClickDirective],
+  declarations: [BlurOnClickDirective, AutofocusDirective],
   imports: modules,
-  exports: [...modules, BlurOnClickDirective],
+  exports: [...modules, BlurOnClickDirective, AutofocusDirective],
   providers: [{ provide: BREAKPOINT, useValue: appFlexLayoutBreakPoints, multi: true }]
 })
 export class UICommonModule {}
