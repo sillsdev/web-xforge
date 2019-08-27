@@ -20,7 +20,7 @@ namespace SIL.XForge.Controllers
         }
 
         protected string UserId => _userAccessor.UserId;
-        protected string Role => _userAccessor.Role;
+        protected string SystemRole => _userAccessor.SystemRole;
         protected string AuthId => _userAccessor.AuthId;
 
         protected IRpcMethodResult ForbiddenError()

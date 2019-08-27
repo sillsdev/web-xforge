@@ -111,13 +111,14 @@ namespace SIL.XForge.Scripture.Controllers
 
         public async Task<IRpcMethodResult> UpdateRole(string projectId, string projectRole)
         {
-            if (Role != SystemRole.SystemAdmin)
-                return ForbiddenError();
-
             try
             {
-                await _projectService.UpdateRoleAsync(UserId, projectId, projectRole);
+                await _projectService.UpdateRoleAsync(UserId, SystemRole, projectId, projectRole);
                 return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
             }
             catch (DataNotFoundException)
             {

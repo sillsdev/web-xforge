@@ -58,11 +58,15 @@ namespace SIL.XForge.Controllers
 
         public async Task<IRpcMethodResult> Delete(string userId)
         {
-            if (Role != SystemRole.SystemAdmin && userId != UserId)
+            try
+            {
+                await _userService.DeleteAsync(UserId, SystemRole, userId);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
                 return ForbiddenError();
-
-            await _userService.DeleteAsync(userId);
-            return Ok();
+            }
         }
     }
 }
