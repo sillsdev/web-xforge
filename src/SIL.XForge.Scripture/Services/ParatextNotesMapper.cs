@@ -81,9 +81,22 @@ namespace SIL.XForge.Scripture.Services
                                 new XAttribute("verseRef", question.ScriptureStart.ToString()),
                                 new XAttribute("startPos", 0),
                                 new XAttribute("selectedText", "")));
+                        var contents = new List<object>();
+                        contents.Add(new XElement("span", new XAttribute("style", "bold"), question.Text));
+                        if (!string.IsNullOrEmpty(answer.ScriptureText))
+                        {
+                            string scriptureRef = answer.ScriptureStart.ToString();
+                            if (!string.IsNullOrEmpty(answer.ScriptureEnd.Verse)
+                                && answer.ScriptureEnd.Verse != answer.ScriptureStart.Verse)
+                            {
+                                scriptureRef += $"-{answer.ScriptureEnd.Verse}";
+                            }
+                            string scriptureText = $"{answer.ScriptureText.Trim()} ({scriptureRef})";
+                            contents.Add(new XElement("span", new XAttribute("style", "italic"), scriptureText));
+                        }
+                        contents.Add(answer.Text);
                         string answerSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
-                            answer.OwnerRef, answer.SyncUserRef, (DateTime)answer.DateCreated,
-                            new XElement("span", new XAttribute("style", "italic"), question.Text), answer.Text);
+                            answer.OwnerRef, answer.SyncUserRef, (DateTime)answer.DateCreated, contents.ToArray());
                         if (answer.SyncUserRef == null)
                             answerSyncUserIds.Add((i, j, answerSyncUserId));
 
