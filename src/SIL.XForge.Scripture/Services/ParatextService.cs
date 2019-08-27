@@ -190,6 +190,16 @@ namespace SIL.XForge.Scripture.Services
             return CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Post, $"notes/{projectId}", notesText);
         }
 
+        public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
+            string projectId)
+        {
+            string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
+                $"projects/{projectId}/members");
+            var members = JArray.Parse(response);
+            return members.OfType<JObject>().Where(m => m["userId"] != null)
+                .ToDictionary(m => (string)m["userId"], m => (string)m["role"]);
+        }
+
         private async Task RefreshAccessTokenAsync(UserSecret userSecret)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, "api8/token");

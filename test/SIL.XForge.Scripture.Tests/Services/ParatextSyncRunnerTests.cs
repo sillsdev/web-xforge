@@ -213,6 +213,8 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Administrator));
+            Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.Translator));
         }
 
         [Test]
@@ -380,6 +382,29 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
+        [Test]
+        public async Task SyncAsync_UserRoleChanged()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, false, books);
+            env.SetupPTData(books);
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Translator }
+            };
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Translator));
+            Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.SFReviewer));
+        }
+
         private class Book
         {
             public Book(string bookId, int chapterCount, bool hasSource = true)
@@ -422,6 +447,14 @@ namespace SIL.XForge.Scripture.Services
                 });
                 EngineService = Substitute.For<IEngineService>();
                 ParatextService = Substitute.For<IParatextService>();
+
+                var ptUserRoles = new Dictionary<string, string>
+                {
+                    { "pt01", SFProjectRole.Administrator },
+                    { "pt02", SFProjectRole.Translator }
+                };
+                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                    .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
                 RealtimeService = new SFMemoryRealtimeService();
                 FileSystemService = Substitute.For<IFileSystemService>();
                 _deltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
@@ -486,6 +519,19 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupSFData(bool translateEnabled, bool checkingEnabled, bool changed, params Book[] books)
             {
+                RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
+                {
+                    new User
+                    {
+                        Id = "user01",
+                        ParatextId = "pt01"
+                    },
+                    new User
+                    {
+                        Id = "user02",
+                        ParatextId = "pt02"
+                    }
+                }));
                 RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
                     new[]
                     {
@@ -495,7 +541,8 @@ namespace SIL.XForge.Scripture.Services
                             ProjectName = "project01",
                             UserRoles = new Dictionary<string, string>
                             {
-                                { "user01", SFProjectRole.Administrator }
+                                { "user01", SFProjectRole.Administrator },
+                                { "user02", SFProjectRole.Translator }
                             },
                             ParatextId = "target",
                             SourceParatextId = "source",
