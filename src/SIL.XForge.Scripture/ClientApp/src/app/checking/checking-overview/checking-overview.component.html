@@ -78,7 +78,7 @@
                   <mdc-icon>edit</mdc-icon>
                 </button>
                 v{{ question?.scriptureStart?.verse }} -&nbsp;
-                <mdc-icon class="audio-icon" *ngIf="question?.audioUrl">hearing</mdc-icon>
+                <mdc-icon class="audio-icon" *ngIf="question?.audioUrl">headset</mdc-icon>
                 <span fxFlex class="no-overflow-ellipsis">
                   <span *ngIf="question?.text">{{ question?.text }}</span>
                 </span>
@@ -231,10 +231,10 @@
               *ngFor="let question of getQuestions(getTextJsonDocIdStr(text.bookId, chapter.number), true)"
             >
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                <span fxFlex="40px" class="indent"></span>
+                <span fxFlex="40px" class="indent"></span> v{{ question?.scriptureStart?.verse }} -&nbsp;
+                <mdc-icon class="audio-icon" *ngIf="question?.audioUrl">headset</mdc-icon>
                 <span fxFlex class="no-overflow-ellipsis">
-                  v{{ question?.scriptureStart?.verse }} - <span *ngIf="question?.text">{{ question?.text }}</span>
-                  <span *ngIf="!question?.text">** audio question **</span>
+                  <span *ngIf="question?.text">{{ question?.text }}</span>
                 </span>
                 <span fxFlex="200px" fxHide.lt-sm fxLayoutAlign="end center" class="date-archived"
                   >Archived {{ dateInWords(question?.dateArchived) }} ago</span
