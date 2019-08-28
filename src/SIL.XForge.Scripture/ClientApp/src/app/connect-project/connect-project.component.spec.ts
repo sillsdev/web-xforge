@@ -104,10 +104,65 @@ describe('ConnectProjectComponent', () => {
     verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
+  it('should display projects sorted', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedParatextService.getProjects()).thenReturn(
+      of<ParatextProject[]>([
+        {
+          paratextId: 'pt02',
+          name: 'Maori',
+          languageTag: 'mri',
+          languageName: 'Maori',
+          isConnectable: false,
+          isConnected: true
+        },
+        {
+          paratextId: 'pt03',
+          name: 'Thai',
+          languageTag: 'th',
+          languageName: 'Thai',
+          isConnectable: true,
+          isConnected: true
+        },
+        {
+          paratextId: 'pt04',
+          name: 'Spanish',
+          languageTag: 'es',
+          languageName: 'Spanish',
+          isConnectable: false,
+          isConnected: false
+        },
+        {
+          paratextId: 'pt01',
+          name: 'English',
+          languageTag: 'en',
+          languageName: 'English',
+          isConnectable: true,
+          isConnected: false
+        }
+      ])
+    );
+    env.fixture.detectChanges();
+    expect(env.component.state).toEqual('input');
+    expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
+    expect(env.getMenuItemText(env.projectSelect, 0)).toContain('English');
+    expect(env.getMenuItemText(env.projectSelect, 1)).toContain('Maori');
+    expect(env.getMenuItemText(env.projectSelect, 2)).toContain('Spanish');
+    expect(env.getMenuItemText(env.projectSelect, 3)).toContain('Thai');
+  }));
+
   it('should display non-connectable projects disabled', fakeAsync(() => {
     const env = new TestEnvironment();
     when(env.mockedParatextService.getProjects()).thenReturn(
       of<ParatextProject[]>([
+        {
+          paratextId: 'pt04',
+          name: 'Source',
+          languageTag: 'es',
+          languageName: 'Spanish',
+          isConnectable: false,
+          isConnected: false
+        },
         {
           paratextId: 'pt01',
           name: 'Target1',
@@ -131,24 +186,16 @@ describe('ConnectProjectComponent', () => {
           languageName: 'Thai',
           isConnectable: true,
           isConnected: true
-        },
-        {
-          paratextId: 'pt04',
-          name: 'Source',
-          languageTag: 'es',
-          languageName: 'Spanish',
-          isConnectable: false,
-          isConnected: false
         }
       ])
     );
     env.fixture.detectChanges();
     expect(env.component.state).toEqual('input');
     expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
-    expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
-    expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(false);
-    expect(env.isMenuItemDisabled(env.projectSelect, 3)).toBe(true);
+    expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(true);
+    expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(false);
+    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(true);
+    expect(env.isMenuItemDisabled(env.projectSelect, 3)).toBe(false);
     expect(env.nonAdminMessage).not.toBeNull();
   }));
 
@@ -189,6 +236,57 @@ describe('ConnectProjectComponent', () => {
     expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
     expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(false);
     expect(env.nonAdminMessage).toBeNull();
+  }));
+
+  it('should display source projects sorted', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedParatextService.getProjects()).thenReturn(
+      of<ParatextProject[]>([
+        {
+          paratextId: 'pt02',
+          name: 'Maori',
+          languageTag: 'mri',
+          languageName: 'Maori',
+          isConnectable: false,
+          isConnected: true
+        },
+        {
+          paratextId: 'pt03',
+          name: 'Thai',
+          languageTag: 'th',
+          languageName: 'Thai',
+          isConnectable: true,
+          isConnected: true
+        },
+        {
+          paratextId: 'pt04',
+          name: 'Spanish',
+          languageTag: 'es',
+          languageName: 'Spanish',
+          isConnectable: false,
+          isConnected: false
+        },
+        {
+          paratextId: 'pt01',
+          name: 'English',
+          languageTag: 'en',
+          languageName: 'English',
+          isConnectable: true,
+          isConnected: false
+        }
+      ])
+    );
+    env.fixture.detectChanges();
+    expect(env.component.state).toEqual('input');
+
+    env.changeSelectValue(env.projectSelect, 'pt01');
+    expect(env.sourceParatextIdControl.hasError('required')).toBe(true);
+    expect(env.sourceParatextIdControl.disabled).toBe(false);
+
+    expect(env.getMenuItems(env.sourceProjectSelect).length).toEqual(3);
+    expect(env.getMenuItemText(env.sourceProjectSelect, 0)).toContain('Maori');
+    expect(env.getMenuItemText(env.sourceProjectSelect, 1)).toContain('Spanish');
+    expect(env.getMenuItemText(env.sourceProjectSelect, 2)).toContain('Thai');
   }));
 
   it('should create when non-existent project is selected', fakeAsync(() => {
@@ -249,6 +347,7 @@ describe('ConnectProjectComponent', () => {
       checkingEnabled: true,
       translateEnabled: true,
       sourceParatextId: 'pt02',
+      sourceName: 'Source',
       sourceInputSystem: {
         languageName: 'Spanish',
         tag: 'es',
@@ -406,6 +505,10 @@ class TestEnvironment {
 
   isMenuItemDisabled(menu: DebugElement, index: number): boolean {
     return this.getMenuItems(menu)[index].nativeElement.classList.contains('mdc-list-item--disabled');
+  }
+
+  getMenuItemText(menu: DebugElement, index: number): string {
+    return this.getMenuItems(menu)[index].nativeElement.textContent.trim();
   }
 
   inputElement(element: DebugElement): HTMLInputElement {

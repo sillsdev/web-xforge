@@ -6,6 +6,7 @@ import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
  */
 export interface SFProjectSettings {
   translateEnabled?: boolean;
+  sourceName?: string;
   sourceParatextId?: string;
   sourceInputSystem?: InputSystem;
 

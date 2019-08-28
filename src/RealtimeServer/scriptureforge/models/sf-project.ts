@@ -11,6 +11,7 @@ export interface SFProject extends Project {
   usersSeeEachOthersResponses?: boolean;
   translateEnabled?: boolean;
   sourceParatextId?: string;
+  sourceName?: string;
   sourceInputSystem?: InputSystem;
 
   texts?: TextInfo[];
