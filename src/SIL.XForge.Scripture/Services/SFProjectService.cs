@@ -125,6 +125,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     UpdateSetting(op, p => p.TranslateEnabled, settings.TranslateEnabled);
                     UpdateSetting(op, p => p.SourceParatextId, settings.SourceParatextId);
+                    UpdateSetting(op, p => p.SourceName, settings.SourceName);
                     UpdateSetting(op, p => p.SourceInputSystem, settings.SourceInputSystem);
 
                     UpdateSetting(op, p => p.CheckingEnabled, settings.CheckingEnabled);

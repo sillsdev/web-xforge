@@ -111,6 +111,9 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     });
 
     this.subscribe(this.paratextService.getProjects(), projects => {
+      if (projects != null) {
+        projects.sort((a, b) => a.name.localeCompare(b.name));
+      }
       this.projects = projects;
       if (projects != null) {
         this.targetProjects = projects.filter(p => p.isConnectable);
@@ -146,6 +149,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       if (values.tasks.translate) {
         const translateSourceProject = this.projects.find(p => p.paratextId === values.tasks.sourceParatextId);
         newProject.sourceParatextId = translateSourceProject.paratextId;
+        newProject.sourceName = translateSourceProject.name;
         newProject.sourceInputSystem = ParatextService.getInputSystem(translateSourceProject);
       }
 

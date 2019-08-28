@@ -165,6 +165,40 @@ describe('SettingsComponent', () => {
         expect(env.statusDone(env.basedOnStatus)).not.toBeNull();
       }));
 
+      it('should display Based On projects sorted', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        env.wait();
+        expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
+        expect(env.basedOnSelect).not.toBeNull();
+        expect(env.getMenuItems(env.basedOnSelect).length).toEqual(2);
+        expect(env.getMenuItemText(env.basedOnSelect, 0)).toContain('ParatextP1');
+        expect(env.getMenuItemText(env.basedOnSelect, 1)).toContain('ParatextP2');
+      }));
+
+      it('should display Based On project even if user is not a member', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.setupParatextProjects([
+          {
+            paratextId: 'paratextId02',
+            name: 'ParatextP2',
+            languageTag: 'qaa',
+            languageName: 'unspecified',
+            isConnectable: true,
+            isConnected: false
+          }
+        ]);
+        env.wait();
+        env.wait();
+        expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
+        expect(env.basedOnSelect).not.toBeNull();
+        expect(env.getMenuItems(env.basedOnSelect).length).toEqual(2);
+        expect(env.getMenuItemText(env.basedOnSelect, 0)).toContain('ParatextP1');
+        expect(env.getMenuItemText(env.basedOnSelect, 1)).toContain('ParatextP2');
+      }));
+
       it('should not save Translate enable if Based On not set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
@@ -361,16 +395,16 @@ class TestEnvironment {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     this.paratextProjects$ = new BehaviorSubject<ParatextProject[]>([
       {
-        paratextId: 'paratextId01',
-        name: 'ParatextP1',
+        paratextId: 'paratextId02',
+        name: 'ParatextP2',
         languageTag: 'qaa',
         languageName: 'unspecified',
         isConnectable: true,
         isConnected: false
       },
       {
-        paratextId: 'paratextId02',
-        name: 'ParatextP2',
+        paratextId: 'paratextId01',
+        name: 'ParatextP1',
         languageTag: 'qaa',
         languageName: 'unspecified',
         isConnectable: true,
@@ -537,7 +571,14 @@ class TestEnvironment {
       usersSeeEachOthersResponses: false,
       shareEnabled: false,
       translateEnabled: true,
-      sourceParatextId: 'paratextId01'
+      sourceParatextId: 'paratextId01',
+      sourceName: 'ParatextP1',
+      sourceInputSystem: {
+        languageName: 'unspecified',
+        tag: 'qaa',
+        abbreviation: 'qaa',
+        isRightToLeft: false
+      }
     }
   ) {
     this.projectDoc = new SFProjectDoc(
@@ -549,6 +590,14 @@ class TestEnvironment {
 
   setupParatextProjects(paratextProjects: ParatextProject[]) {
     this.paratextProjects$.next(paratextProjects);
+  }
+
+  getMenuItems(menu: DebugElement): DebugElement[] {
+    return menu.queryAll(By.css('mdc-list-item'));
+  }
+
+  getMenuItemText(menu: DebugElement, index: number): string {
+    return this.getMenuItems(menu)[index].nativeElement.textContent.trim();
   }
 }
 

@@ -16,6 +16,7 @@ namespace SIL.XForge.Scripture.Models
         // translate
         public bool TranslateEnabled { get; set; }
         public string SourceParatextId { get; set; }
+        public string SourceName { get; set; }
         public InputSystem SourceInputSystem { get; set; } = new InputSystem();
     }
 }

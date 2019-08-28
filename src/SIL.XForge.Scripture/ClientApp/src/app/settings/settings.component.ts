@@ -104,13 +104,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       async ([projectId, paratextProjects]) => {
         this.loadingStarted();
         this.form.enable();
-        this.paratextProjects = paratextProjects;
-        if (paratextProjects != null) {
-          this.sourceProjects = paratextProjects.filter(p => p.projectId !== projectId);
-        }
         this.projectDoc = await this.projectService.get(projectId);
-        if (this.projectDoc) {
+        this.paratextProjects = paratextProjects;
+        if (this.projectDoc != null) {
           this.updateSettingsInfo();
+          this.updateSourceProjects();
+          this.subscribe(this.projectDoc.remoteChanges$, () => this.updateSourceProjects());
         }
         this.loadingFinished();
       }
@@ -160,11 +159,13 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       }
       if (newValue.sourceParatextId !== this.previousFormValues.sourceParatextId) {
         if (newValue.translateEnabled && newValue.sourceParatextId != null) {
+          const sourceParatextProject = this.sourceProjects.find(
+            project => project.paratextId === newValue.sourceParatextId
+          );
           const settings: SFProjectSettings = {
             sourceParatextId: newValue.sourceParatextId,
-            sourceInputSystem: ParatextService.getInputSystem(
-              this.sourceProjects.find(project => project.paratextId === newValue.sourceParatextId)
-            )
+            sourceName: sourceParatextProject.name,
+            sourceInputSystem: ParatextService.getInputSystem(sourceParatextProject)
           };
           if (this.previousFormValues.sourceParatextId == null) {
             settings.translateEnabled = true;
@@ -253,5 +254,28 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);
     this.controlStates.set('shareEnabled', ElementState.InSync);
     this.controlStates.set('shareLevel', ElementState.InSync);
+  }
+
+  private updateSourceProjects(): void {
+    if (this.projectDoc == null || this.paratextProjects == null) {
+      return;
+    }
+
+    const sourceProjects = this.paratextProjects.filter(p => p.projectId !== this.projectDoc.id);
+    if (this.projectDoc.data.sourceParatextId != null) {
+      const sourceProject = sourceProjects.find(p => p.paratextId === this.projectDoc.data.sourceParatextId);
+      if (sourceProject == null) {
+        sourceProjects.push({
+          paratextId: this.projectDoc.data.sourceParatextId,
+          name: this.projectDoc.data.sourceName,
+          languageName: this.projectDoc.data.sourceInputSystem.languageName,
+          languageTag: this.projectDoc.data.sourceInputSystem.tag,
+          isConnectable: false,
+          isConnected: false
+        });
+      }
+    }
+    sourceProjects.sort((a, b) => a.name.localeCompare(b.name));
+    this.sourceProjects = sourceProjects;
   }
 }

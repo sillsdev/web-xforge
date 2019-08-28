@@ -31,11 +31,15 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            await env.Service.UpdateSettingsAsync(User01, Project01,
-                new SFProjectSettings { SourceParatextId = "changedId" });
+            await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings
+            {
+                SourceParatextId = "changedId",
+                SourceName = "NewSource"
+            });
 
             SFProject project = env.GetProject("project01");
             Assert.That(project.SourceParatextId, Is.EqualTo("changedId"));
+            Assert.That(project.SourceName, Is.EqualTo("NewSource"));
 
             await env.EngineService.Received().RemoveProjectAsync(Arg.Any<string>());
             await env.EngineService.Received().AddProjectAsync(Arg.Any<Machine.WebApi.Models.Project>());
@@ -47,12 +51,17 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
 
-            await env.Service.UpdateSettingsAsync(User01, Project01,
-                new SFProjectSettings { TranslateEnabled = true, SourceParatextId = "changedId" });
+            await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings
+            {
+                TranslateEnabled = true,
+                SourceParatextId = "changedId",
+                SourceName = "NewSource"
+            });
 
             SFProject project = env.GetProject(Project01);
             Assert.That(project.TranslateEnabled, Is.True);
             Assert.That(project.SourceParatextId, Is.EqualTo("changedId"));
+            Assert.That(project.SourceName, Is.EqualTo("NewSource"));
 
             await env.EngineService.DidNotReceive().RemoveProjectAsync(Arg.Any<string>());
             await env.EngineService.Received().AddProjectAsync(Arg.Any<Machine.WebApi.Models.Project>());
@@ -138,6 +147,7 @@ namespace SIL.XForge.Scripture.Services
                             ProjectName = "project01",
                             TranslateEnabled = true,
                             SourceParatextId = "paratextId",
+                            SourceName = "Source",
                             ShareEnabled = false,
                             UserRoles = new Dictionary<string, string>
                             {
