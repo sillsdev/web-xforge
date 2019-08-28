@@ -35,6 +35,9 @@ export class CheckingCommentsComponent implements OnInit {
   constructor(private userService: UserService) {}
 
   get isAdministrator(): boolean {
+    if (this.project == null || this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded) {
+      return false;
+    }
     return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRole.ParatextAdministrator;
   }
 

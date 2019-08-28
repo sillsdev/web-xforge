@@ -164,6 +164,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
       const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
       const prevBookId = this.text == null ? '' : this.text.bookId;
       this.projectDoc = await this.projectService.get(projectId);
+      if (!this.projectDoc.isLoaded) {
+        return;
+      }
       this.text = this.projectDoc.data.texts.find(t => t.bookId === bookId);
       this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
       this.chapters = this.text.chapters.map(c => c.number);

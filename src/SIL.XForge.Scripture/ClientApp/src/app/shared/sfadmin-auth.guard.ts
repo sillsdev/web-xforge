@@ -29,6 +29,7 @@ export class SFAdminAuthGuard implements CanActivate {
           return from(this.projectService.get(projectId)).pipe(
             map(
               projectDoc =>
+                projectDoc.isLoaded &&
                 projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
             )
           );
