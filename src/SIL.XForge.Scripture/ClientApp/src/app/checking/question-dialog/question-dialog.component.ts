@@ -146,7 +146,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   async submit() {
     if (this.audio.status === 'recording') {
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
-      this.noticeService.show('Your recorded question has been automatically saved.');
+      this.noticeService.show('The recording for your question was automatically stopped.');
     }
     if (this.questionForm.invalid) {
       return;
