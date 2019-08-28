@@ -11,7 +11,7 @@
     [activated]="activeQuestion && activeQuestion.id === question.id"
   >
     <div class="question-title">
-      <mdc-icon *ngIf="question?.audioUrl">hearing</mdc-icon>
+      <mdc-icon *ngIf="question?.audioUrl">headset</mdc-icon>
       <span class="question-text" *ngIf="question?.text">{{ question.text }}</span>
     </div>
     <a class="view-answers" mdcListItemMeta title="View Answers">
