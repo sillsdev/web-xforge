@@ -4,6 +4,9 @@
 
 mdc-form-field {
   margin-bottom: 1em;
+  .scripture-helper-text {
+    max-width: 248px;
+  }
 }
 
 mdc-text-field {
@@ -12,4 +15,9 @@ mdc-text-field {
 
 mdc-dialog-actions {
   text-align: end;
+}
+
+.split-container {
+  height: 8em;
+  margin-bottom: 2.5em;
 }

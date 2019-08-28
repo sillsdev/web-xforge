@@ -370,7 +370,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       data: {
         editMode,
         question,
-        textsByBook: this.textsByBook
+        textsByBook: this.textsByBook,
+        projectId: this.projectDoc.id
       }
     };
     const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig);

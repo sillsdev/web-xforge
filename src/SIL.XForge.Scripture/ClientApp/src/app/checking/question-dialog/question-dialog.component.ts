@@ -14,7 +14,9 @@ import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { NoticeService } from 'xforge-common/notice.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { TextDocId } from '../../core/models/text-doc-id';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
@@ -25,11 +27,13 @@ import { verseRefDataToString, verseRefToVerseRefData } from '../../shared/scrip
 import { SFValidators } from '../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking/checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
+import { ScriptureReference } from '../checking/checking-text/checking-text.component';
 
 export interface QuestionDialogData {
   editMode: boolean;
   question: Question;
   textsByBook: TextsByBook;
+  projectId: string;
 }
 
 export interface QuestionDialogResult {
@@ -43,7 +47,7 @@ export interface QuestionDialogResult {
   templateUrl: './question-dialog.component.html',
   styleUrls: ['./question-dialog.component.scss']
 })
-export class QuestionDialogComponent implements OnInit {
+export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent: CheckingAudioCombinedComponent;
   modeLabel = this.data && this.data.editMode ? 'Edit' : 'New';
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
@@ -56,13 +60,16 @@ export class QuestionDialogComponent implements OnInit {
     this.validateVerseAfterStart
   );
   audio: AudioAttachment = {};
+  _scriptureRef: ScriptureReference;
 
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
     @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData,
     private noticeService: NoticeService,
     readonly dialog: MdcDialog
-  ) {}
+  ) {
+    super();
+  }
 
   get scriptureStart(): AbstractControl {
     return this.questionForm.controls.scriptureStart;
@@ -74,6 +81,30 @@ export class QuestionDialogComponent implements OnInit {
 
   get questionText(): AbstractControl {
     return this.questionForm.controls.questionText;
+  }
+
+  get textDocId(): TextDocId {
+    if (this.scriptureStart.value && this.scriptureStart.valid) {
+      const verseData = VerseRef.fromStr(this.scriptureStart.value);
+      return new TextDocId(this.data.projectId, verseData.book, verseData.chapterNum);
+    }
+    return undefined;
+  }
+
+  get scriptureRef() {
+    return this._scriptureRef;
+  }
+
+  updateScriptureRef() {
+    if (this.textDocId == null) {
+      this._scriptureRef = null;
+    }
+    const verseStart = VerseRef.fromStr(this.scriptureStart.value);
+    const verseEnd = VerseRef.fromStr(this.scriptureEnd.value);
+    this._scriptureRef = {
+      scriptureStart: verseRefToVerseRefData(verseStart),
+      scriptureEnd: verseRefToVerseRefData(verseEnd)
+    };
   }
 
   ngOnInit(): void {
@@ -94,6 +125,17 @@ export class QuestionDialogComponent implements OnInit {
         this.questionText.updateValueAndValidity();
       }
     }
+
+    this.subscribe(this.scriptureStart.valueChanges, () => {
+      if (this.scriptureStart.valid) {
+        this.updateScriptureRef();
+      }
+    });
+    this.subscribe(this.scriptureEnd.valueChanges, () => {
+      if (this.scriptureEnd.valid) {
+        this.updateScriptureRef();
+      }
+    });
   }
 
   async submit() {

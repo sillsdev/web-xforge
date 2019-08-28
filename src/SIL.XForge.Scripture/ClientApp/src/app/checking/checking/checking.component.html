@@ -81,9 +81,9 @@
                   <app-checking-text
                     #textPanel
                     [id]="textDocId"
-                    [activeQuestion]="questionsPanel.activeQuestion"
-                    [questions]="publicQuestions"
-                    (questionClicked)="questionsPanel.activateQuestion($event)"
+                    [activeReference]="questionsPanel.activeQuestion"
+                    [references]="publicQuestions"
+                    (referenceClicked)="questionsPanel.activateQuestion($event)"
                   ></app-checking-text>
                 </div>
               </as-split-area>

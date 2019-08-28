@@ -20,7 +20,7 @@
                   >expand_more</mdc-icon
                 >
               </mdc-text-field>
-              <mdc-helper-text validation id="question-scripture-start-helper-text">
+              <mdc-helper-text validation id="question-scripture-start-helper-text" class="scripture-helper-text">
                 *Required<span *ngIf="scriptureStart.hasError('verseFormat')">, e.g. JHN 3:16</span>
                 <span *ngIf="scriptureStart.hasError('verseRange')">, must be inside verse range</span>
               </mdc-helper-text>
@@ -47,6 +47,14 @@
                 <span *ngIf="questionForm.hasError('verseBeforeStart')">Must be after <b>Scripture reference</b></span>
               </mdc-helper-text>
             </mdc-form-field>
+          </div>
+          <div class="split-container">
+            <small>Enter a reference to load text</small>
+            <as-split direction="vertical">
+              <as-split-area size="100">
+                <app-checking-text [id]="textDocId" [activeReference]="scriptureRef" mode="dialog"></app-checking-text>
+              </as-split-area>
+            </as-split>
           </div>
           <mdc-form-field fluid>
             <mdc-textarea
