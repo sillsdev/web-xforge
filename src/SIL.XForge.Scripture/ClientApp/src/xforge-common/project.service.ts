@@ -83,6 +83,7 @@ export abstract class ProjectService<
   onlineInvitedUsers(projectId: string): Promise<string[]> {
     return this.onlineInvoke('invitedUsers', { projectId });
   }
+
   /** Get added into project, with optionally specified shareKey code. */
   onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
     return this.onlineInvoke('checkLinkSharing', { projectId: id, shareKey });

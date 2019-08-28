@@ -1,6 +1,10 @@
 <div class="invite-user">
   <h3>Share with others</h3>
-  <app-share-control [projectId]="projectId" [isLinkSharingEnabled]="isLinkSharingEnabled"></app-share-control>
+  <app-share-control
+    [projectId]="projectId"
+    [isLinkSharingEnabled]="isLinkSharingEnabled"
+    (invited)="onInvitationSent()"
+  ></app-share-control>
 
   <mdc-list-divider></mdc-list-divider>
 

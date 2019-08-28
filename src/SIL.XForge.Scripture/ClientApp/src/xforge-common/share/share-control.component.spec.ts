@@ -117,6 +117,14 @@ describe('ShareControlComponent', () => {
     verify(env.mockedProjectService.onlineInvite(anything(), anything())).twice();
   }));
 
+  it('Output event fires after invitation is sent', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
+    expect(env.hostComponent.invitedCount).toEqual(0);
+    env.click(env.sendButton);
+    expect(env.hostComponent.invitedCount).toEqual(1);
+  }));
+
   @NgModule({
     imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule],
     declarations: [ShareControlComponent],
@@ -134,16 +142,22 @@ describe('ShareControlComponent', () => {
 
   @Component({
     template:
-      '<app-share-control [projectId]="projectId" [isLinkSharingEnabled]="isLinkSharingEnabled"></app-share-control>'
+      '<app-share-control [projectId]="projectId" [isLinkSharingEnabled]="isLinkSharingEnabled" (invited)="onInvited()"></app-share-control>'
   })
   class TestHostComponent {
     @ViewChild(ShareControlComponent, { static: false }) component: ShareControlComponent;
     projectId = '';
     isLinkSharingEnabled = false;
+    invitedCount = 0;
+
+    onInvited() {
+      this.invitedCount++;
+    }
   }
 
   class TestEnvironment {
     readonly fixture: ComponentFixture<TestHostComponent>;
+    readonly hostComponent: TestHostComponent;
     readonly component: ShareControlComponent;
 
     readonly mockedProjectService = mock(ProjectService);
@@ -163,6 +177,7 @@ describe('ShareControlComponent', () => {
       this.fixture = TestBed.createComponent(TestHostComponent);
       this.fixture.detectChanges();
       this.component = this.fixture.componentInstance.component;
+      this.hostComponent = this.fixture.componentInstance;
 
       this.fixture.componentInstance.projectId = projectId === undefined ? 'project123' : projectId;
       this.fixture.componentInstance.isLinkSharingEnabled =
