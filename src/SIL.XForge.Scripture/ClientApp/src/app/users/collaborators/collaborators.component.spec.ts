@@ -1,5 +1,5 @@
 import { DebugElement, getDebugNode } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
@@ -97,10 +97,10 @@ describe('CollaboratorsComponent', () => {
     expect(env.cancelInviteButtonOnRow(inviteeRow)).toBeTruthy();
   }));
 
-  // Not specifying behaviour for when current user is not a project admin,
+  // Not specifying behaviour for when current user is not a project admin, with respect to displaying invited users,
   // since currently this component is only accessed by admins.
 
-  it('should uninvite user from project', fakeAsync(() => {
+  it('should refresh user list after inviting a new user', fakeAsync(() => {
     const env = new TestEnvironment();
     when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
     env.setupProjectData();
@@ -108,9 +108,55 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
 
+    // Only Alice invitee is listed
+    const numUsersOnProject = 3;
+    let numInvitees = 1;
+    expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
+
+    // Simulate invitation event
+    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+      'alice@a.aa',
+      'new-invitee@example.com'
+    ]);
+    numInvitees++;
+    env.component.onInvitationSent();
+    flush();
+    env.fixture.detectChanges();
+
+    // Both invitees are now listed
+    expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
+  }));
+
+  it('should uninvite user from project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedProjectService.onlineUninviteUser(anything(), anything())).thenResolve();
+    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    // Alice invitee is listed
+    const numUsersOnProject = 3;
+    let numInvitees = 1;
+    expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
+
     const inviteeRow = 3;
+    const inviteeDisplay = env.elementTextContent(env.cell(inviteeRow, 1));
+    expect(inviteeDisplay).toContain('Awaiting');
+    expect(inviteeDisplay).toContain('alice@a.aa');
+    // Invitee row has cancel button but not remove button.
+    expect(env.removeUserButtonOnRow(inviteeRow)).toBeFalsy();
+    expect(env.cancelInviteButtonOnRow(inviteeRow)).toBeTruthy();
+
+    // Uninvite Alice
+    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([]);
     env.clickElement(env.cancelInviteButtonOnRow(inviteeRow));
     verify(env.mockedProjectService.onlineUninviteUser(env.project01Id, 'alice@a.aa')).once();
+
+    // Alice is not shown as in invitee
+    numInvitees = 0;
+    expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
 
     expect().nothing();
   }));
@@ -267,8 +313,8 @@ class TestEnvironment {
     }
 
     element.click();
+    flush();
     this.fixture.detectChanges();
-    tick(1000);
   }
 
   elementTextContent(element: DebugElement): string {

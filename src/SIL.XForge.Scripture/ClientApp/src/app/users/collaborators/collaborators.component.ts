@@ -135,8 +135,13 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     this.projectService.onlineRemoveUser(this.projectId, userId);
   }
 
-  uninviteProjectUser(emailToUninvite: string): void {
-    this.projectService.onlineUninviteUser(this.projectId, emailToUninvite);
+  async uninviteProjectUser(emailToUninvite: string): Promise<void> {
+    await this.projectService.onlineUninviteUser(this.projectId, emailToUninvite);
+    this.loadUsers();
+  }
+
+  onInvitationSent() {
+    this.loadUsers();
   }
 
   private page(rows: Row[]): Row[] {
