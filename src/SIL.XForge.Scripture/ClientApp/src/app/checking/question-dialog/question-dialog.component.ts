@@ -95,18 +95,6 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     return this._scriptureRef;
   }
 
-  updateScriptureRef() {
-    if (this.textDocId == null) {
-      this._scriptureRef = null;
-    }
-    const verseStart = VerseRef.fromStr(this.scriptureStart.value);
-    const verseEnd = VerseRef.fromStr(this.scriptureEnd.value);
-    this._scriptureRef = {
-      scriptureStart: verseRefToVerseRefData(verseStart),
-      scriptureEnd: verseRefToVerseRefData(verseEnd)
-    };
-  }
-
   ngOnInit(): void {
     if (this.data && this.data.question) {
       const question = this.data.question;
@@ -124,6 +112,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
         this.questionText.clearValidators();
         this.questionText.updateValueAndValidity();
       }
+      this.updateScriptureRef();
     }
 
     this.subscribe(this.scriptureStart.valueChanges, () => {
@@ -136,6 +125,18 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
         this.updateScriptureRef();
       }
     });
+  }
+
+  updateScriptureRef() {
+    if (this.textDocId == null) {
+      this._scriptureRef = null;
+    }
+    const verseStart = VerseRef.fromStr(this.scriptureStart.value);
+    const verseEnd = VerseRef.fromStr(this.scriptureEnd.value);
+    this._scriptureRef = {
+      scriptureStart: verseRefToVerseRefData(verseStart),
+      scriptureEnd: verseRefToVerseRefData(verseEnd)
+    };
   }
 
   async submit() {
