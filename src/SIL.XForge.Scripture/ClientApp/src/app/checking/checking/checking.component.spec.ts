@@ -242,13 +242,15 @@ describe('CheckingComponent', () => {
 
     it('can edit an answer', fakeAsync(() => {
       env.setupReviewerScenarioData(env.reviewerUser);
-      env.selectQuestion(2);
-      env.answerQuestion('Answer question 2');
+      env.selectQuestion(7);
+      env.answerQuestion('Answer question 7');
+      expect(env.getAnswer(1).classes['answer-unread']).toBe(true);
       env.clickButton(env.getAnswerEditButton(0));
-      env.setTextFieldValue(env.yourAnswerField, 'Edited question 2 answer');
+      env.setTextFieldValue(env.yourAnswerField, 'Edited question 7 answer');
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.getAnswerText(0)).toBe('Edited question 2 answer');
+      expect(env.getAnswer(1).classes['answer-unread']).toBe(false);
+      expect(env.getAnswerText(0)).toBe('Edited question 7 answer');
     }));
 
     it('can remove audio from answer', fakeAsync(() => {
