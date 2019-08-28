@@ -10,8 +10,6 @@ import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
 import { UserService } from 'xforge-common/user.service';
-import { nameof } from 'xforge-common/utils';
-import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../environments/environment';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
@@ -25,20 +23,14 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent extends DataLoadingComponent implements OnInit {
-  form = new FormGroup(
-    {
-      translateEnabled: new FormControl(false),
-      sourceParatextId: new FormControl(undefined),
-      checkingEnabled: new FormControl(false),
-      usersSeeEachOthersResponses: new FormControl(false),
-      shareEnabled: new FormControl(false),
-      shareLevel: new FormControl(undefined)
-    },
-    XFValidators.requireOneWithValue(
-      [nameof<SFProjectSettings>('translateEnabled'), nameof<SFProjectSettings>('checkingEnabled')],
-      true
-    )
-  );
+  form = new FormGroup({
+    translationSuggestionsEnabled: new FormControl(false),
+    sourceParatextId: new FormControl(undefined),
+    checkingEnabled: new FormControl(false),
+    usersSeeEachOthersResponses: new FormControl(false),
+    shareEnabled: new FormControl(false),
+    shareLevel: new FormControl(undefined)
+  });
   sourceProjects: ParatextProject[];
 
   private projectDoc: SFProjectDoc;
@@ -63,8 +55,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     return this.paratextProjects != null;
   }
 
-  get translateEnabled(): boolean {
-    return this.form.controls.translateEnabled.value;
+  get translationSuggestionsEnabled(): boolean {
+    return this.form.controls.translationSuggestionsEnabled.value;
   }
 
   get checkingEnabled(): boolean {
@@ -147,18 +139,18 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (this.form.valid || this.isOnlyBasedOnInvalid) {
       // Set status and include values for changed form items
       if (
-        newValue.translateEnabled !== this.previousFormValues.translateEnabled &&
-        this.form.controls.translateEnabled.enabled
+        newValue.translationSuggestionsEnabled !== this.previousFormValues.translationSuggestionsEnabled &&
+        this.form.controls.translationSuggestionsEnabled.enabled
       ) {
         this.setValidators();
-        if (!newValue.translateEnabled || (this.form.valid && this.projectDoc.data.sourceParatextId)) {
-          this.updateSetting(newValue, 'translateEnabled');
+        if (!newValue.translationSuggestionsEnabled || (this.form.valid && this.projectDoc.data.sourceParatextId)) {
+          this.updateSetting(newValue, 'translationSuggestionsEnabled');
         } else {
-          this.controlStates.set('translateEnabled', ElementState.InSync);
+          this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
         }
       }
       if (newValue.sourceParatextId !== this.previousFormValues.sourceParatextId) {
-        if (newValue.translateEnabled && newValue.sourceParatextId != null) {
+        if (newValue.translationSuggestionsEnabled && newValue.sourceParatextId != null) {
           const sourceParatextProject = this.sourceProjects.find(
             project => project.paratextId === newValue.sourceParatextId
           );
@@ -168,12 +160,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
             sourceInputSystem: ParatextService.getInputSystem(sourceParatextProject)
           };
           if (this.previousFormValues.sourceParatextId == null) {
-            settings.translateEnabled = true;
+            settings.translationSuggestionsEnabled = true;
           }
           const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
           this.checkUpdateStatus('sourceParatextId', updateTaskPromise);
           if (this.previousFormValues.sourceParatextId == null) {
-            this.checkUpdateStatus('translateEnabled', updateTaskPromise);
+            this.checkUpdateStatus('translationSuggestionsEnabled', updateTaskPromise);
           }
           this.previousFormValues = newValue;
         }
@@ -202,9 +194,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       ) {
         this.updateSetting(newValue, 'shareLevel');
       }
-    } else if (this.previousFormValues && this.form.errors && this.form.errors.requireAtLeastOneWithValue) {
-      // reset invalid form value
-      setTimeout(() => this.form.patchValue(this.previousFormValues), 1000);
     }
   }
 
@@ -223,7 +212,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   private updateSettingsInfo() {
     this.previousFormValues = {
-      translateEnabled: this.projectDoc.data.translateEnabled,
+      translationSuggestionsEnabled: this.projectDoc.data.translationSuggestionsEnabled,
       sourceParatextId: this.projectDoc.data.sourceParatextId,
       checkingEnabled: this.projectDoc.data.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.usersSeeEachOthersResponses,
@@ -233,7 +222,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.setValidators();
     this.form.reset(this.previousFormValues);
     if (!this.isLoggedInToParatext) {
-      this.form.controls.translateEnabled.disable();
+      this.form.controls.translationSuggestionsEnabled.disable();
     }
     if (!this.projectDoc.data.shareEnabled) {
       this.form.controls.shareLevel.disable();
@@ -242,13 +231,13 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private setValidators() {
-    this.projectDoc.data.translateEnabled && this.isLoggedInToParatext
+    this.projectDoc.data.translationSuggestionsEnabled && this.isLoggedInToParatext
       ? this.form.controls.sourceParatextId.setValidators(Validators.required)
       : this.form.controls.sourceParatextId.setValidators(null);
   }
 
   private setAllControlsToInSync() {
-    this.controlStates.set('translateEnabled', ElementState.InSync);
+    this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);

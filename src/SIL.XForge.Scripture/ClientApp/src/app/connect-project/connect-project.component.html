@@ -16,7 +16,7 @@
   </mdc-card>
   <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
     <ng-container *ngIf="projects?.length > 0; else noProjectMsg">
-      <p *ngIf="hasNonAdministratorProject && !showTasks" id="connect-non-admin-msg">
+      <p *ngIf="hasNonAdministratorProject && !showSettings" id="connect-non-admin-msg">
         ** You must be the Paratext Administrator of a project to start it here. Ask your Administrator to connect to
         your project then you can also connect to it here after that.
       </p>
@@ -53,42 +53,46 @@
         connect to.
       </p>
     </ng-template>
-    <mdc-card id="tasks-card" *ngIf="showTasks" outlined formGroupName="tasks">
-      <div class="card-title">
-        <span mdcHeadline6>Tasks</span>
-        <span
-          *ngIf="connectProjectForm.errors && connectProjectForm.errors['requireAtLeastOneWithValue']"
-          class="invalid-feedback"
-        >
-          You must select at least one option
-        </span>
+    <mdc-card id="settings-card" *ngIf="showSettings" outlined formGroupName="settings">
+      <div fxLayout="column" fxLayoutAlign="start" class="card-title">
+        <div mdcHeadline6>Additional Settings</div>
+        <div mdcBody2>You can change these later.</div>
       </div>
       <div class="card-content">
         <div fxLayout="row" fxLayoutAlign="start center">
           <mdc-form-field>
-            <mdc-checkbox formControlName="translate" id="translate-checkbox"></mdc-checkbox>
-            <label>Translate</label>
+            <mdc-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox"></mdc-checkbox>
+            <label>Translation Suggestions</label>
           </mdc-form-field>
         </div>
         <div fxLayout="row" fxLayoutAlign="start center">
           <div fxFlex="44px" class="indent"></div>
           <p fxFlex class="helper-text">
-            Collaborate with other translators working on the same text and use translation suggestions.
+            Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your
+            project is setup as a <b>Daughter Translation</b> in Paratext.
           </p>
         </div>
-        <div fxLayout="row" fxLayoutAlign="start center" class="indented-field-row">
+        <div
+          *ngIf="translationSuggestionsEnabled"
+          fxLayout="row"
+          fxLayoutAlign="start center"
+          class="indented-field-row"
+        >
           <div fxFlex="44px" class="indent"></div>
-          <mdc-form-field fxFlex="1 1 0%">
-            <mdc-select placeholder="Based on" formControlName="sourceParatextId" id="based-on-select" required>
-              <mdc-menu>
-                <mdc-list>
-                  <mdc-list-item *ngFor="let project of sourceProjects" [value]="project.paratextId">
-                    {{ project.name }}
-                  </mdc-list-item>
-                </mdc-list>
-              </mdc-menu>
-            </mdc-select>
-          </mdc-form-field>
+          <div fxLayout="column" fxLayoutAlign="start">
+            <mdc-form-field fxFlex="1 1 0%">
+              <mdc-select placeholder="Based on" formControlName="sourceParatextId" id="based-on-select" required>
+                <mdc-menu>
+                  <mdc-list>
+                    <mdc-list-item *ngFor="let project of sourceProjects" [value]="project.paratextId">
+                      {{ project.name }}
+                    </mdc-list-item>
+                  </mdc-list>
+                </mdc-menu>
+              </mdc-select>
+            </mdc-form-field>
+            <div class="helper-text">Choose the Paratext project that your project is based on.</div>
+          </div>
         </div>
       </div>
       <mdc-list-divider></mdc-list-divider>

@@ -24,19 +24,29 @@ describe('TranslateOverviewComponent', () => {
   describe('Progress Card', () => {
     it('should list all books in project', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.fixture.detectChanges();
+      env.wait();
+
       expect(env.progressTitle.textContent).toContain('Progress');
-      expect(env.component.texts.length).toEqual(3);
+      expect(env.component.texts.length).toEqual(4);
       env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
       env.expectContainsTextProgress(1, 'Mark', '10 of 20 segments');
       env.expectContainsTextProgress(2, 'Luke', '10 of 20 segments');
+      env.expectContainsTextProgress(3, 'John', '10 of 20 segments');
     }));
   });
 
   describe('Engine Card', () => {
+    it('should be hidden when translation suggestions disabled', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProjectData(false);
+      env.wait();
+
+      expect(env.engineCard).toBeNull();
+    }));
+
     it('should display engine stats', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.fixture.detectChanges();
+      env.wait();
 
       expect(env.qualityStarIcons).toEqual(['star', 'star_half', 'star_border']);
       expect(env.segmentsCount.nativeElement.textContent).toBe('100');
@@ -44,7 +54,7 @@ describe('TranslateOverviewComponent', () => {
 
     it('training progress status', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.fixture.detectChanges();
+      env.wait();
 
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.updateTrainingProgress(0.1);
@@ -61,7 +71,7 @@ describe('TranslateOverviewComponent', () => {
 
     it('retrain', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.fixture.detectChanges();
+      env.wait();
 
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.clickRetrainButton();
@@ -107,8 +117,6 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(TranslateOverviewComponent);
     this.component = this.fixture.componentInstance;
     this.setupProjectData();
-    this.fixture.detectChanges();
-    tick();
   }
 
   get progressTextList(): HTMLElement {
@@ -140,6 +148,16 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#retrain-button'));
   }
 
+  get engineCard(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.engine-card'));
+  }
+
+  wait(): void {
+    this.fixture.detectChanges();
+    tick();
+    this.fixture.detectChanges();
+  }
+
   expectContainsTextProgress(index: number, primary: string, secondary: string): void {
     const items = this.progressTextList.querySelectorAll('mdc-list-item');
     const item = items.item(index);
@@ -149,8 +167,9 @@ class TestEnvironment {
     expect(secondaryElem.textContent).toBe(secondary);
   }
 
-  setupProjectData(): void {
+  setupProjectData(translationSuggestionsEnabled: boolean = true): void {
     const project: SFProject = {
+      translationSuggestionsEnabled,
       texts: [
         { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
         { bookId: 'MRK', name: 'Mark', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
@@ -168,6 +187,8 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 'MRK', 2, 'target'));
     this.addTextDoc(new TextDocId('project01', 'LUK', 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 'LUK', 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 'JHN', 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 'JHN', 2, 'target'));
   }
 
   updateTrainingProgress(percentCompleted: number): void {

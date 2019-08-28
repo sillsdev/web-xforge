@@ -19,7 +19,7 @@ namespace SIL.XForge.Scripture.Models
         // translate
         public bool IsTargetTextRight { get; set; } = true;
         public double ConfidenceThreshold { get; set; } = 0.2;
-        public bool IsSuggestionsEnabled { get; set; } = true;
+        public bool TranslationSuggestionsEnabled { get; set; } = true;
         public string SelectedSegment { get; set; } = "";
         public int? SelectedSegmentChecksum { get; set; }
 

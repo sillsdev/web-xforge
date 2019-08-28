@@ -75,7 +75,8 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   private _chapter: number;
   private lastShownSuggestionWords: string[] = [];
   private readonly segmentUpdated$: Subject<void>;
-  private trainingSubscription: Subscription;
+  private trainingSub: Subscription;
+  private projectDataChangesSub: Subscription;
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
 
@@ -113,13 +114,13 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   get sourceLabel(): string {
-    return this.projectDoc == null || this.projectDoc.data.sourceInputSystem == null
+    return this.projectDoc == null || !this.projectDoc.isLoaded || this.projectDoc.data.sourceInputSystem == null
       ? ''
       : this.projectDoc.data.sourceInputSystem.languageName;
   }
 
   get targetLabel(): string {
-    return this.projectDoc == null || this.projectDoc.data.inputSystem == null
+    return this.projectDoc == null || !this.projectDoc.isLoaded || this.projectDoc.data.inputSystem == null
       ? ''
       : this.projectDoc.data.inputSystem.languageName;
   }
@@ -134,16 +135,26 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
   }
 
-  get isSuggestionsEnabled(): boolean {
-    return this.projectUserConfigDoc == null || this.projectUserConfigDoc.data.isSuggestionsEnabled == null
-      ? true
-      : this.projectUserConfigDoc.data.isSuggestionsEnabled;
+  get translationSuggestionsEnabled(): boolean {
+    return this.hasSource && this.translationSuggestionsProjectEnabled && this.translationSuggestionsUserEnabled;
   }
 
-  set isSuggestionsEnabled(value: boolean) {
-    if (this.isSuggestionsEnabled !== value) {
-      this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.isSuggestionsEnabled, value));
+  get translationSuggestionsUserEnabled(): boolean {
+    return this.projectUserConfigDoc == null ||
+      !this.projectUserConfigDoc.isLoaded ||
+      this.projectUserConfigDoc.data.translationSuggestionsEnabled == null
+      ? true
+      : this.projectUserConfigDoc.data.translationSuggestionsEnabled;
+  }
+
+  set translationSuggestionsUserEnabled(value: boolean) {
+    if (this.translationSuggestionsUserEnabled !== value) {
+      this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.translationSuggestionsEnabled, value));
     }
+  }
+
+  get translationSuggestionsProjectEnabled(): boolean {
+    return this.projectDoc != null && this.projectDoc.isLoaded && this.projectDoc.data.translationSuggestionsEnabled;
   }
 
   get confidenceThreshold(): number {
@@ -166,6 +177,14 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
   }
 
+  get textName(): string {
+    return this.text == null ? '' : this.text.name;
+  }
+
+  get hasSource(): boolean {
+    return this.text == null ? false : this.text.hasSource;
+  }
+
   private get isSelectionAtSegmentEnd(): boolean {
     const selection = this.target.editor.getSelection();
     if (selection == null) {
@@ -180,10 +199,6 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     const selectionEndIndex = selection.index + selection.length;
     const segmentEndIndex = this.target.segment.range.index + this.target.segment.range.length;
     return selectionEndIndex === segmentEndIndex;
-  }
-
-  get textName(): string {
-    return this.text == null ? '' : this.text.name;
   }
 
   ngOnInit(): void {
@@ -222,52 +237,25 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
         this.loadProjectUserConfig();
 
         if (this.projectDoc.id !== prevProjectId) {
-          if (this.trainingSubscription != null) {
-            this.trainingSubscription.unsubscribe();
+          this.setupTranslationEngine();
+          if (this.projectDataChangesSub != null) {
+            this.projectDataChangesSub.unsubscribe();
           }
-          this.translationEngine = this.projectService.createTranslationEngine(this.projectDoc.id);
-          this.trainingSubscription = this.subscribe(
-            this.translationEngine.listenForTrainingStatus().pipe(
-              tap(undefined, undefined, async () => {
-                // training completed successfully
-                if (this.trainingProgressClosed) {
-                  this.noticeService.show('Training completed successfully');
-                  this.trainingProgressClosed = false;
-                } else {
-                  this.trainingMessage = 'Completed successfully';
-                  this.trainingCompletedTimeout = setTimeout(() => {
-                    this.showTrainingProgress = false;
-                    this.trainingCompletedTimeout = undefined;
-                  }, 5000);
-                }
-
-                // ensure that any changes to the segment will be trained
-                if (this.target.segment != null) {
-                  this.target.segment.acceptChanges();
-                }
-                // re-translate current segment
-                this.onStartTranslating();
-                try {
-                  await this.translateSegment();
-                } finally {
-                  this.onFinishTranslating();
-                }
-              }),
-              repeat(),
-              filter(progress => progress.percentCompleted > 0)
-            ),
-            progress => {
-              if (!this.trainingProgressClosed) {
-                this.showTrainingProgress = true;
+          this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
+            let sourceId: TextDocId;
+            if (this.hasSource) {
+              sourceId = new TextDocId(this.projectDoc.id, this.text.bookId, this._chapter, 'source');
+              if (!isEqual(this.source.id, sourceId)) {
+                this.sourceLoaded = false;
+                this.loadingStarted();
               }
-              if (this.trainingCompletedTimeout != null) {
-                clearTimeout(this.trainingCompletedTimeout);
-                this.trainingCompletedTimeout = undefined;
-              }
-              this.trainingPercentage = Math.round(progress.percentCompleted * 100);
-              this.trainingMessage = progress.message;
             }
-          );
+            this.source.id = sourceId;
+            if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled) {
+              this.setupTranslationEngine();
+            }
+          });
+
           this.metricsSession.start(
             this.projectDoc.id,
             this.source,
@@ -290,6 +278,12 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     super.ngOnDestroy();
     if (this.projectUserConfigChangesSub != null) {
       this.projectUserConfigChangesSub.unsubscribe();
+    }
+    if (this.trainingSub != null) {
+      this.trainingSub.unsubscribe();
+    }
+    if (this.projectDataChangesSub != null) {
+      this.projectDataChangesSub.unsubscribe();
     }
     this.metricsSession.dispose();
   }
@@ -391,7 +385,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
         this.targetLoaded = true;
         break;
     }
-    if (this.sourceLoaded && this.targetLoaded) {
+    if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
       this.loadingFinished();
     }
   }
@@ -431,6 +425,62 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     this.metricsSession.onSuggestionAccepted(event);
   }
 
+  private setupTranslationEngine(): void {
+    if (this.trainingSub != null) {
+      this.trainingSub.unsubscribe();
+      this.trainingSub = undefined;
+    }
+    this.translationSession = undefined;
+    this.translationEngine = undefined;
+    if (!this.translationSuggestionsProjectEnabled) {
+      return;
+    }
+
+    this.translationEngine = this.projectService.createTranslationEngine(this.projectDoc.id);
+    this.trainingSub = this.translationEngine
+      .listenForTrainingStatus()
+      .pipe(
+        tap(undefined, undefined, async () => {
+          // training completed successfully
+          if (this.trainingProgressClosed) {
+            this.noticeService.show('Training completed successfully');
+            this.trainingProgressClosed = false;
+          } else {
+            this.trainingMessage = 'Completed successfully';
+            this.trainingCompletedTimeout = setTimeout(() => {
+              this.showTrainingProgress = false;
+              this.trainingCompletedTimeout = undefined;
+            }, 5000);
+          }
+
+          // ensure that any changes to the segment will be trained
+          if (this.target.segment != null) {
+            this.target.segment.acceptChanges();
+          }
+          // re-translate current segment
+          this.onStartTranslating();
+          try {
+            await this.translateSegment();
+          } finally {
+            this.onFinishTranslating();
+          }
+        }),
+        repeat(),
+        filter(progress => progress.percentCompleted > 0)
+      )
+      .subscribe(progress => {
+        if (!this.trainingProgressClosed) {
+          this.showTrainingProgress = true;
+        }
+        if (this.trainingCompletedTimeout != null) {
+          clearTimeout(this.trainingCompletedTimeout);
+          this.trainingCompletedTimeout = undefined;
+        }
+        this.trainingPercentage = Math.round(progress.percentCompleted * 100);
+        this.trainingMessage = progress.message;
+      });
+  }
+
   private setTextHeight(): void {
     // this is a horrible hack to set the height of the text components
     // we don't want to use flexbox because it makes editing very slow
@@ -464,13 +514,14 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       selectedSegment = this.projectUserConfigDoc.data.selectedSegment;
       selectedSegmentChecksum = this.projectUserConfigDoc.data.selectedSegmentChecksum;
     }
-    const sourceId = new TextDocId(this.projectDoc.id, this.text.bookId, this._chapter, 'source');
+    this.source.id = this.hasSource
+      ? new TextDocId(this.projectDoc.id, this.text.bookId, this._chapter, 'source')
+      : undefined;
     const targetId = new TextDocId(this.projectDoc.id, this.text.bookId, this._chapter, 'target');
     if (!isEqual(targetId, this.target.id)) {
       // blur the target before switching so that scrolling is reset to the top
       this.target.blur();
     }
-    this.source.id = sourceId;
     this.target.id = targetId;
     if (selectedSegment != null) {
       const segmentChanged = this.target.setSegment(selectedSegment, selectedSegmentChecksum, true);
@@ -488,13 +539,16 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   private async translateSegment(): Promise<void> {
-    this.translationSession = null;
+    this.translationSession = undefined;
+    if (this.translationEngine == null) {
+      return;
+    }
     const sourceSegment = this.source.segmentText;
     const words = this.sourceWordTokenizer.tokenizeToStrings(sourceSegment);
     if (words.length === 0) {
       return;
     } else if (words.length > MAX_SEGMENT_LENGTH) {
-      this.translationSession = null;
+      this.translationSession = undefined;
       this.noticeService.show('This verse is too long to generate suggestions.');
       return;
     }
@@ -565,7 +619,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   private async trainSegment(segment: Segment): Promise<void> {
-    if (!this.canTrainSegment(segment)) {
+    if (this.translationSession == null || !this.canTrainSegment(segment)) {
       return;
     }
 
@@ -598,7 +652,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   private syncScroll(): void {
-    if (this.source == null || this.source.segment == null || !this.target.hasFocus) {
+    if (!this.hasSource || this.source == null || this.source.segment == null || !this.target.hasFocus) {
       return;
     }
 
