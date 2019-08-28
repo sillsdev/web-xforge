@@ -53,13 +53,13 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings
             {
-                TranslateEnabled = true,
+                TranslationSuggestionsEnabled = true,
                 SourceParatextId = "changedId",
                 SourceName = "NewSource"
             });
 
             SFProject project = env.GetProject(Project01);
-            Assert.That(project.TranslateEnabled, Is.True);
+            Assert.That(project.TranslationSuggestionsEnabled, Is.True);
             Assert.That(project.SourceParatextId, Is.EqualTo("changedId"));
             Assert.That(project.SourceName, Is.EqualTo("NewSource"));
 
@@ -145,7 +145,7 @@ namespace SIL.XForge.Scripture.Services
                         {
                             Id = Project01,
                             ProjectName = "project01",
-                            TranslateEnabled = true,
+                            TranslationSuggestionsEnabled = true,
                             SourceParatextId = "paratextId",
                             SourceName = "Source",
                             ShareEnabled = false,

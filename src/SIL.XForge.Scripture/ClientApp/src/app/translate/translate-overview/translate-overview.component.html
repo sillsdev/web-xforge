@@ -41,7 +41,7 @@
     </mdc-list>
   </mdc-card>
 
-  <mdc-card class="engine-card">
+  <mdc-card *ngIf="translationSuggestionsEnabled" class="engine-card">
     <mdc-linear-progress
       id="training-progress"
       [determinate]="trainingPercentage > 0"

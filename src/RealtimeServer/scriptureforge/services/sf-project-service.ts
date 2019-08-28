@@ -22,7 +22,7 @@ export class SFProjectService extends ProjectService<SFProject> {
       this.createPathTemplate(p => p.paratextId!),
       this.createPathTemplate(p => p.texts!),
       this.createPathTemplate(p => p.checkingEnabled),
-      this.createPathTemplate(p => p.translateEnabled),
+      this.createPathTemplate(p => p.translationSuggestionsEnabled),
       this.createPathTemplate(p => p.usersSeeEachOthersResponses)
     ];
     this.immutableProps.push(...immutableProps);

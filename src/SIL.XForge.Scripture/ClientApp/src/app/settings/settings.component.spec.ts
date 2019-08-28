@@ -39,25 +39,7 @@ describe('SettingsComponent', () => {
       expect(env.statusDone(env.checkingStatus)).not.toBeNull();
     }));
 
-    it('unchecking the last task should report error, retick last task, and not send an update', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject();
-      env.wait();
-      // prove error div is absent
-      expect(env.atLeastOneError).toBeNull();
-      expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
-      expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
-      env.clickElement(env.inputElement(env.translateCheckbox));
-      expect(env.inputElement(env.translateCheckbox).checked).toBe(false);
-      // error div should now be present
-      expect(env.atLeastOneError).not.toBeNull();
-      tick(1000);
-      env.fixture.detectChanges();
-      expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
-      expect(env.statusDone(env.translateStatus)).toBeNull();
-    }));
-
-    it('changing state of task option results in status icon', fakeAsync(() => {
+    it('changing state of top-level setting results in status icon', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject();
       env.wait();
@@ -68,12 +50,12 @@ describe('SettingsComponent', () => {
       env.fixture.detectChanges();
       expect(env.statusDone(env.checkingStatus)).not.toBeNull();
 
-      expect(env.statusDone(env.translateStatus)).toBeNull();
-      expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
-      env.clickElement(env.inputElement(env.translateCheckbox));
+      expect(env.statusDone(env.translationSuggestionsStatus)).toBeNull();
+      expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
+      env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
       tick();
       env.fixture.detectChanges();
-      expect(env.statusDone(env.translateStatus)).not.toBeNull();
+      expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
     }));
 
     it('error on data submit shows error icon', fakeAsync(() => {
@@ -96,55 +78,55 @@ describe('SettingsComponent', () => {
       expect(env.statusError(env.seeOthersResponsesStatus)).not.toBeNull();
     }));
 
-    describe('Translate options', () => {
+    describe('Translation Suggestions options', () => {
       it('should see login button when Paratext account not connected', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
         env.setupParatextProjects(null);
         env.wait();
         expect(env.loginButton).not.toBeNull();
-        expect(env.inputElement(env.translateCheckbox).disabled).toBe(true);
+        expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(true);
         expect(env.basedOnSelect).toBeNull();
       }));
 
-      it('should hide Based On when Translate is disabled', fakeAsync(() => {
+      it('should hide Based On when Translation Suggestions is disabled', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
         env.wait();
         env.clickElement(env.inputElement(env.checkingCheckbox));
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
-        expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.loginButton).toBeNull();
         expect(env.basedOnSelect).not.toBeNull();
         expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
 
-        env.clickElement(env.inputElement(env.translateCheckbox));
+        env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
 
-        expect(env.inputElement(env.translateCheckbox).checked).toBe(false);
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
         expect(env.basedOnSelect).toBeNull();
         expect(env.loginButton).toBeNull();
       }));
 
-      it('should retain Based On value when Translate is disabled', fakeAsync(() => {
+      it('should retain Based On value when Translation Suggestions is disabled', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
         env.wait();
         env.clickElement(env.inputElement(env.checkingCheckbox));
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
-        expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.basedOnSelect).not.toBeNull();
         expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
 
-        env.clickElement(env.inputElement(env.translateCheckbox));
+        env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
 
         env.wait();
-        expect(env.inputElement(env.translateCheckbox).checked).toBe(false);
-        expect(env.statusDone(env.translateStatus)).not.toBeNull();
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
+        expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
 
-        env.clickElement(env.inputElement(env.translateCheckbox));
+        env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
 
         env.wait();
-        expect(env.statusDone(env.translateStatus)).not.toBeNull();
+        expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
         expect(env.basedOnSelect).not.toBeNull();
         expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
       }));
@@ -154,7 +136,7 @@ describe('SettingsComponent', () => {
         env.setupProject();
         env.wait();
         env.wait();
-        expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.basedOnSelect).not.toBeNull();
         expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
         expect(env.statusDone(env.basedOnStatus)).toBeNull();
@@ -170,7 +152,7 @@ describe('SettingsComponent', () => {
         env.setupProject();
         env.wait();
         env.wait();
-        expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.basedOnSelect).not.toBeNull();
         expect(env.getMenuItems(env.basedOnSelect).length).toEqual(2);
         expect(env.getMenuItemText(env.basedOnSelect, 0)).toContain('ParatextP1');
@@ -192,86 +174,86 @@ describe('SettingsComponent', () => {
         ]);
         env.wait();
         env.wait();
-        expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.basedOnSelect).not.toBeNull();
         expect(env.getMenuItems(env.basedOnSelect).length).toEqual(2);
         expect(env.getMenuItemText(env.basedOnSelect, 0)).toContain('ParatextP1');
         expect(env.getMenuItemText(env.basedOnSelect, 1)).toContain('ParatextP2');
       }));
 
-      it('should not save Translate enable if Based On not set', fakeAsync(() => {
+      it('should not save Translation Suggestions enable if Based On not set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
           projectName: 'project01',
           checkingEnabled: true,
           usersSeeEachOthersResponses: false,
           shareEnabled: false,
-          translateEnabled: false,
+          translationSuggestionsEnabled: false,
           sourceParatextId: undefined
         });
         tick();
         env.fixture.detectChanges();
         env.wait();
-        expect(env.inputElement(env.translateCheckbox).checked).toBe(false);
-        expect(env.statusNone(env.translateStatus)).toBe(true);
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
+        expect(env.statusNone(env.translationSuggestionsStatus)).toBe(true);
         expect(env.loginButton).toBeNull();
         expect(env.basedOnSelect).toBeNull();
 
-        env.clickElement(env.inputElement(env.translateCheckbox));
+        env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
 
-        expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
-        expect(env.statusNone(env.translateStatus)).toBe(true);
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
+        expect(env.statusNone(env.translationSuggestionsStatus)).toBe(true);
         expect(env.loginButton).toBeNull();
         expect(env.basedOnSelect).not.toBeNull();
         expect(env.basedOnSelect.nativeElement.textContent).toEqual('Based on');
         expect(env.statusDone(env.basedOnStatus)).toBeNull();
       }));
 
-      it('should save Translate disable if Based On not set', fakeAsync(() => {
+      it('should save Translation Suggestions disable if Based On not set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
           projectName: 'project01',
           checkingEnabled: true,
           usersSeeEachOthersResponses: false,
           shareEnabled: false,
-          translateEnabled: false,
+          translationSuggestionsEnabled: false,
           sourceParatextId: undefined
         });
         env.wait();
-        env.clickElement(env.inputElement(env.translateCheckbox));
-        expect(env.statusNone(env.translateStatus)).toBe(true);
+        env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
+        expect(env.statusNone(env.translationSuggestionsStatus)).toBe(true);
 
-        env.clickElement(env.inputElement(env.translateCheckbox));
+        env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
         tick();
         env.fixture.detectChanges();
 
-        expect(env.statusNone(env.translateStatus)).toBe(true);
+        expect(env.statusNone(env.translationSuggestionsStatus)).toBe(true);
       }));
 
-      it('should save Translate and Based On when Based On set', fakeAsync(() => {
+      it('should save Translation Suggestions and Based On when Based On set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
           projectName: 'project01',
           checkingEnabled: true,
           usersSeeEachOthersResponses: false,
           shareEnabled: false,
-          translateEnabled: false,
+          translationSuggestionsEnabled: false,
           sourceParatextId: undefined
         });
         env.wait();
-        env.clickElement(env.inputElement(env.translateCheckbox));
-        expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
+        env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.statusNone(env.translateStatus)).toBe(true);
+        expect(env.statusNone(env.translationSuggestionsStatus)).toBe(true);
         expect(env.statusNone(env.basedOnStatus)).toBe(true);
         expect(env.basedOnSelect.nativeElement.textContent).toEqual('Based on');
-        expect(env.statusDone(env.translateStatus)).toBeNull();
+        expect(env.statusDone(env.translationSuggestionsStatus)).toBeNull();
         expect(env.statusDone(env.basedOnStatus)).toBeNull();
 
         env.setSelectValue(env.basedOnSelect, 'paratextId02');
 
         expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP2');
-        expect(env.statusDone(env.translateStatus)).not.toBeNull();
+        expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
         expect(env.statusDone(env.basedOnStatus)).not.toBeNull();
       }));
     });
@@ -281,7 +263,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject();
         env.wait();
-        expect(env.inputElement(env.translateCheckbox).checked).toBe(true);
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
         expect(env.seeOthersResponsesCheckbox).toBeNull();
         expect(env.shareCheckbox).toBeNull();
@@ -319,7 +301,7 @@ describe('SettingsComponent', () => {
           usersSeeEachOthersResponses: false,
           shareEnabled: true,
           shareLevel: SharingLevel.Anyone,
-          translateEnabled: false,
+          translationSuggestionsEnabled: false,
           sourceParatextId: undefined
         });
         env.wait();
@@ -444,12 +426,12 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.invalid-feedback'));
   }
 
-  get translateCheckbox(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#checkbox-translate'));
+  get translationSuggestionsCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-translation-suggestions'));
   }
 
-  get translateStatus(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#translate-status'));
+  get translationSuggestionsStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#translation-suggestions-status'));
   }
 
   get basedOnSelect(): DebugElement {
@@ -570,7 +552,7 @@ class TestEnvironment {
       checkingEnabled: false,
       usersSeeEachOthersResponses: false,
       shareEnabled: false,
-      translateEnabled: true,
+      translationSuggestionsEnabled: true,
       sourceParatextId: 'paratextId01',
       sourceName: 'ParatextP1',
       sourceInputSystem: {

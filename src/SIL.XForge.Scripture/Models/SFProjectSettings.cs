@@ -9,7 +9,7 @@ namespace SIL.XForge.Scripture.Models
     public class SFProjectSettings
     {
         // translate settings
-        public bool? TranslateEnabled { get; set; }
+        public bool? TranslationSuggestionsEnabled { get; set; }
         public string SourceParatextId { get; set; }
         public string SourceName { get; set; }
         public InputSystem SourceInputSystem { get; set; }

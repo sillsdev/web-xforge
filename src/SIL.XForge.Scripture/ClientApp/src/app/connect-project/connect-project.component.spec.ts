@@ -96,7 +96,7 @@ describe('ConnectProjectComponent', () => {
 
     env.changeSelectValue(env.projectSelect, 'pt01');
 
-    expect(env.tasksCard).toBeNull();
+    expect(env.settingsCard).toBeNull();
 
     env.clickElement(env.submitButton);
 
@@ -280,6 +280,8 @@ describe('ConnectProjectComponent', () => {
     expect(env.component.state).toEqual('input');
 
     env.changeSelectValue(env.projectSelect, 'pt01');
+
+    env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
     expect(env.sourceParatextIdControl.hasError('required')).toBe(true);
     expect(env.sourceParatextIdControl.disabled).toBe(false);
 
@@ -315,10 +317,12 @@ describe('ConnectProjectComponent', () => {
     expect(env.component.state).toEqual('input');
 
     env.changeSelectValue(env.projectSelect, 'pt01');
-    expect(env.sourceParatextIdControl.hasError('required')).toBe(true);
-    expect(env.sourceParatextIdControl.disabled).toBe(false);
 
     env.clickElement(env.inputElement(env.checkingCheckbox));
+
+    env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
+    expect(env.sourceParatextIdControl.hasError('required')).toBe(true);
+    expect(env.sourceParatextIdControl.disabled).toBe(false);
 
     env.changeSelectValue(env.sourceProjectSelect, 'pt02');
     expect(env.component.connectProjectForm.valid).toBe(true);
@@ -345,7 +349,7 @@ describe('ConnectProjectComponent', () => {
         isRightToLeft: false
       },
       checkingEnabled: true,
-      translateEnabled: true,
+      translationSuggestionsEnabled: true,
       sourceParatextId: 'pt02',
       sourceName: 'Source',
       sourceInputSystem: {
@@ -359,7 +363,7 @@ describe('ConnectProjectComponent', () => {
     verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
-  it('should do nothing when no task is selected', fakeAsync(() => {
+  it('should create when no setting is selected', fakeAsync(() => {
     const env = new TestEnvironment();
     when(env.mockedParatextService.getProjects()).thenReturn(
       of<ParatextProject[]>([
@@ -376,15 +380,36 @@ describe('ConnectProjectComponent', () => {
     env.fixture.detectChanges();
     expect(env.component.state).toEqual('input');
     env.changeSelectValue(env.projectSelect, 'pt01');
-    env.clickElement(env.inputElement(env.translateCheckbox));
-    expect(env.inputElement(env.translateCheckbox).checked).toBe(false);
+    expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
     expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
 
     env.clickElement(env.submitButton);
+    tick();
 
-    verify(env.mockedSFProjectService.onlineCreate(anything())).never();
-    verify(env.mockedSFProjectService.onlineAddCurrentUser(anything(), anything())).never();
-    verify(env.mockedRouter.navigate(anything())).never();
+    expect(env.component.state).toEqual('connecting');
+    expect(env.progressBar).toBeDefined();
+    expect(env.component.connectPending).toEqual(true);
+
+    env.emitSyncProgress(0);
+    expect(env.component.connectPending).toEqual(false);
+    env.emitSyncProgress(0.5);
+    env.emitSyncProgress(1);
+    env.emitSyncComplete();
+
+    const project: SFProject = {
+      projectName: 'Target',
+      paratextId: 'pt01',
+      inputSystem: {
+        tag: 'en',
+        languageName: 'English',
+        abbreviation: 'en',
+        isRightToLeft: false
+      },
+      checkingEnabled: false,
+      translationSuggestionsEnabled: false
+    };
+    verify(env.mockedSFProjectService.onlineCreate(deepEqual(project))).once();
+    verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 });
 
@@ -459,16 +484,16 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#projects-menu'));
   }
 
-  get tasksCard(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#tasks-card'));
+  get settingsCard(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#settings-card'));
   }
 
   get checkingCheckbox(): DebugElement {
     return this.fixture.debugElement.query(By.css('#checking-checkbox'));
   }
 
-  get translateCheckbox(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#translate-checkbox'));
+  get translationSuggestionsCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#translation-suggestions-checkbox'));
   }
 
   get sourceProjectSelect(): DebugElement {
@@ -476,7 +501,7 @@ class TestEnvironment {
   }
 
   get sourceParatextIdControl(): AbstractControl {
-    return this.component.connectProjectForm.get('tasks.sourceParatextId');
+    return this.component.connectProjectForm.get('settings.sourceParatextId');
   }
 
   get progressBar(): DebugElement {

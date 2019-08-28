@@ -2,57 +2,60 @@
   <div class="book-label" mdcHeadline4>{{ textName }}</div>
   <div class="toolbar" fxLayout="row wrap" fxLayoutAlign="start center">
     <app-chapter-nav [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
-    <div class="toolbar-separator">&nbsp;</div>
-    <button
-      mdcIconButton
-      title="Enable/disable suggestions"
-      [on]="isSuggestionsEnabled"
-      (change)="isSuggestionsEnabled = !$event.value"
-    >
-      <mdc-icon mdcIconOn>speaker_notes</mdc-icon>
-      <mdc-icon>speaker_notes_off</mdc-icon>
-    </button>
-    <div mdcMenuSurfaceAnchor #suggestionsAnchor>
+    <ng-container *ngIf="hasSource">
+      <div class="toolbar-separator">&nbsp;</div>
       <button
-        #suggestionsMenuButton
-        mdc-icon-button
-        icon="linear_scale"
-        title="Adjust suggestion confidence"
-        (click)="suggestionsMenu.open = !suggestionsMenu.open"
-        [class.mdc-icon-button--activated]="suggestionsMenu.open"
-      ></button>
-      <mdc-menu-surface
-        class="suggestions-menu"
-        #suggestionsMenu
-        [anchorElement]="suggestionsAnchor"
-        [quickOpen]="true"
-        anchorCorner="bottomStart"
-        (opened)="suggestionsMenuOpened()"
-        (closed)="suggestionsMenuClosed()"
+        mdcIconButton
+        title="Enable/disable suggestions"
+        [on]="translationSuggestionsUserEnabled"
+        (change)="isSuggestionsEnabled = !$event.value"
       >
-        <div mdcSubtitle1 fxLayout="row" fxLayoutAlign="center">Suggestion Confidence</div>
-        <div class="slider-labels" fxLayout="row" fxLayoutAlign="space-between">
-          <span mdcCaption>More</span> <span mdcCaption>{{ confidenceThreshold }}%</span> <span mdcCaption>Better</span>
-        </div>
-        <mdc-slider
-          id="confidence-threshold-slider"
-          *ngIf="displaySlider"
-          [min]="0"
-          [max]="100"
-          [(ngModel)]="confidenceThreshold"
-        ></mdc-slider>
-      </mdc-menu-surface>
-    </div>
-    <button
-      mdc-icon-button
-      appBlurOnClick
-      icon="swap_horiz"
-      (click)="isTargetTextRight = !isTargetTextRight"
-      title="Swap source and target"
-    ></button>
+        <mdc-icon mdcIconOn>speaker_notes</mdc-icon>
+        <mdc-icon>speaker_notes_off</mdc-icon>
+      </button>
+      <div mdcMenuSurfaceAnchor #suggestionsAnchor>
+        <button
+          #suggestionsMenuButton
+          mdc-icon-button
+          icon="linear_scale"
+          title="Adjust suggestion confidence"
+          (click)="suggestionsMenu.open = !suggestionsMenu.open"
+          [class.mdc-icon-button--activated]="suggestionsMenu.open"
+        ></button>
+        <mdc-menu-surface
+          class="suggestions-menu"
+          #suggestionsMenu
+          [anchorElement]="suggestionsAnchor"
+          [quickOpen]="true"
+          anchorCorner="bottomStart"
+          (opened)="suggestionsMenuOpened()"
+          (closed)="suggestionsMenuClosed()"
+        >
+          <div mdcSubtitle1 fxLayout="row" fxLayoutAlign="center">Suggestion Confidence</div>
+          <div class="slider-labels" fxLayout="row" fxLayoutAlign="space-between">
+            <span mdcCaption>More</span> <span mdcCaption>{{ confidenceThreshold }}%</span>
+            <span mdcCaption>Better</span>
+          </div>
+          <mdc-slider
+            id="confidence-threshold-slider"
+            *ngIf="displaySlider"
+            [min]="0"
+            [max]="100"
+            [(ngModel)]="confidenceThreshold"
+          ></mdc-slider>
+        </mdc-menu-surface>
+      </div>
+      <button
+        mdc-icon-button
+        appBlurOnClick
+        icon="swap_horiz"
+        (click)="isTargetTextRight = !isTargetTextRight"
+        title="Swap source and target"
+      ></button>
+    </ng-container>
   </div>
   <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" fxLayoutGap="5px">
-    <div fxHide.xs class="text-area" ngClass.xs="text-area-vertical">
+    <div id="source-text-area" [fxShow]="hasSource" fxHide.xs class="text-area">
       <div class="language-label" mdcSubtitle1>{{ sourceLabel }}</div>
       <div #sourceContainer class="text-container" [style.height]="textHeight">
         <app-text
@@ -64,7 +67,7 @@
         ></app-text>
       </div>
     </div>
-    <div class="text-area" ngClass.xs="text-area-vertical">
+    <div class="text-area" ngClass.xs="text-area-full-width" [class.text-area-full-width]="!hasSource">
       <div class="language-label" fxHide.xs mdcSubtitle1>{{ targetLabel }}</div>
       <div #targetContainer class="text-container" [style.height]="textHeight">
         <app-text
@@ -76,7 +79,7 @@
         ></app-text>
         <app-suggestion
           [mdcElevation]="2"
-          [show]="showSuggestion && isSuggestionsEnabled"
+          [show]="showSuggestion && translationSuggestionsEnabled"
           [words]="suggestionWords"
           [confidence]="suggestionConfidence"
           [text]="target"

@@ -14,7 +14,7 @@ namespace SIL.XForge.Scripture.Models
         public bool UsersSeeEachOthersResponses { get; set; } = true;
 
         // translate
-        public bool TranslateEnabled { get; set; }
+        public bool TranslationSuggestionsEnabled { get; set; }
         public string SourceParatextId { get; set; }
         public string SourceName { get; set; }
         public InputSystem SourceInputSystem { get; set; } = new InputSystem();

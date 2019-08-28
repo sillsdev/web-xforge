@@ -118,7 +118,7 @@
           Overview
         </mdc-list-item>
         <mdc-list-item
-          *ngFor="let text of translateTexts"
+          *ngFor="let text of texts"
           [routerLink]="['/projects', selectedProjectId, 'translate', text.bookId]"
           [activated]="rla.isActive"
           routerLinkActive
@@ -152,7 +152,7 @@
           Overview
         </mdc-list-item>
         <mdc-list-item
-          *ngFor="let text of checkingTexts"
+          *ngFor="let text of texts"
           [routerLink]="['/projects', selectedProjectId, 'checking', text.bookId]"
           [activated]="rla.isActive"
           routerLinkActive

@@ -182,22 +182,18 @@ namespace SIL.XForge.Scripture.Services
                     targetParatextId));
 
                 string sourceParatextId = _projectDoc.Data.SourceParatextId;
-                var sourceBooks = new HashSet<string>(_projectDoc.Data.TranslateEnabled
+                var sourceBooks = new HashSet<string>(_projectDoc.Data.TranslationSuggestionsEnabled
                     ? await _paratextService.GetBooksAsync(_userSecret, sourceParatextId)
                     : Enumerable.Empty<string>());
+                sourceBooks.IntersectWith(targetBooks);
 
-                var booksToSync = new HashSet<string>(targetBooks);
-                if (!_projectDoc.Data.CheckingEnabled)
-                    booksToSync.IntersectWith(sourceBooks);
-
-                var targetBooksToDelete = new HashSet<string>(GetBooksToDelete(TextType.Target, booksToSync));
-                var sourceBooksToDelete = new HashSet<string>(_projectDoc.Data.TranslateEnabled
-                    ? GetBooksToDelete(TextType.Source, booksToSync)
+                var targetBooksToDelete = new HashSet<string>(GetBooksToDelete(TextType.Target, targetBooks));
+                var sourceBooksToDelete = new HashSet<string>(_projectDoc.Data.TranslationSuggestionsEnabled
+                    ? GetBooksToDelete(TextType.Source, sourceBooks)
                     : Enumerable.Empty<string>());
 
                 _step = 0;
-                _stepCount = (booksToSync.Count * (_projectDoc.Data.CheckingEnabled ? 3 : 2))
-                    + (sourceBooks.Intersect(booksToSync).Count() * 2);
+                _stepCount = (targetBooks.Count * (_projectDoc.Data.CheckingEnabled ? 3 : 2)) + (sourceBooks.Count * 2);
                 if (targetBooksToDelete.Count > 0 || sourceBooksToDelete.Count > 0)
                 {
                     _stepCount += 1;
@@ -222,7 +218,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // sync source and target books
-                foreach (string bookId in booksToSync)
+                foreach (string bookId in targetBooks)
                 {
                     if (!BookNames.TryGetValue(bookId, out string name))
                         name = bookId;
@@ -260,7 +256,7 @@ namespace SIL.XForge.Scripture.Services
                     });
                 }
 
-                if (_projectDoc.Data.TranslateEnabled && trainEngine)
+                if (_projectDoc.Data.TranslationSuggestionsEnabled && trainEngine)
                 {
                     // start training Machine engine
                     await _engineService.StartBuildByProjectIdAsync(projectId);

@@ -63,12 +63,16 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     }
   }
 
+  get translationSuggestionsEnabled(): boolean {
+    return this.projectDoc != null && this.projectDoc.isLoaded && this.projectDoc.data.translationSuggestionsEnabled;
+  }
+
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
       this.loadingStarted();
       try {
-        this.createTranslationEngine(projectId);
         this.projectDoc = await this.projectService.get(projectId);
+        this.setupTranslationEngine();
         await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
       } finally {
         this.loadingFinished();
@@ -79,8 +83,11 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       }
       this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(async () => {
         this.loadingStarted();
+        if (this.translationEngine == null || !this.translationSuggestionsEnabled) {
+          this.setupTranslationEngine();
+        }
         try {
-          await this.calculateProgress();
+          await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
         } finally {
           this.loadingFinished();
         }
@@ -105,7 +112,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   }
 
   private async calculateProgress(): Promise<void> {
-    this.texts = this.projectDoc.data.texts.filter(t => t.hasSource).map(t => new TextProgress(t));
+    this.texts = this.projectDoc.data.texts.map(t => new TextProgress(t));
     this.overallProgress = new Progress();
     const updateTextProgressPromises: Promise<void>[] = [];
     for (const textProgress of this.texts) {
@@ -126,11 +133,17 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     }
   }
 
-  private createTranslationEngine(projectId: string): void {
+  private setupTranslationEngine(): void {
     if (this.trainingSub != null) {
       this.trainingSub.unsubscribe();
+      this.trainingSub = undefined;
     }
-    this.translationEngine = this.projectService.createTranslationEngine(projectId);
+    this.translationEngine = undefined;
+    if (!this.translationSuggestionsEnabled) {
+      return;
+    }
+
+    this.translationEngine = this.projectService.createTranslationEngine(this.projectDoc.id);
     const trainingStatus$ = this.translationEngine.listenForTrainingStatus().pipe(
       tap(undefined, undefined, () => {
         this.isTraining = false;
@@ -146,6 +159,9 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   }
 
   private async updateEngineStats(): Promise<void> {
+    if (this.translationEngine == null) {
+      return;
+    }
     const stats = await this.translationEngine.getStats();
 
     this.engineConfidence = Math.round(stats.confidence * 100) / 100;

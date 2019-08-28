@@ -61,7 +61,7 @@ namespace SIL.XForge.Scripture.Services
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRole.Administrator);
 
-                if (newProject.TranslateEnabled)
+                if (newProject.TranslationSuggestionsEnabled)
                 {
                     var project = new Machine.WebApi.Models.Project
                     {
@@ -123,7 +123,7 @@ namespace SIL.XForge.Scripture.Services
 
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
-                    UpdateSetting(op, p => p.TranslateEnabled, settings.TranslateEnabled);
+                    UpdateSetting(op, p => p.TranslationSuggestionsEnabled, settings.TranslationSuggestionsEnabled);
                     UpdateSetting(op, p => p.SourceParatextId, settings.SourceParatextId);
                     UpdateSetting(op, p => p.SourceName, settings.SourceName);
                     UpdateSetting(op, p => p.SourceInputSystem, settings.SourceInputSystem);
@@ -134,21 +134,21 @@ namespace SIL.XForge.Scripture.Services
                     UpdateSetting(op, p => p.ShareLevel, settings.ShareLevel);
                 });
 
-                bool translateEnabledSet = settings.TranslateEnabled != null;
+                bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;
                 bool sourceParatextIdSet = settings.SourceParatextId != null;
                 bool checkingEnabledSet = settings.CheckingEnabled != null;
                 // check if a sync needs to be run
-                if (translateEnabledSet || sourceParatextIdSet || checkingEnabledSet)
+                if (suggestionsEnabledSet || sourceParatextIdSet || checkingEnabledSet)
                 {
                     bool trainEngine = false;
-                    if (translateEnabledSet || sourceParatextIdSet)
+                    if (suggestionsEnabledSet || sourceParatextIdSet)
                     {
-                        if (projectDoc.Data.TranslateEnabled && projectDoc.Data.SourceParatextId != null)
+                        if (projectDoc.Data.TranslationSuggestionsEnabled && projectDoc.Data.SourceParatextId != null)
                         {
                             // translate task was enabled or source project changed
 
                             // recreate Machine project only if source project changed
-                            if (!translateEnabledSet && sourceParatextIdSet)
+                            if (!suggestionsEnabledSet && sourceParatextIdSet)
                                 await _engineService.RemoveProjectAsync(projectId);
                             var project = new Machine.WebApi.Models.Project
                             {
