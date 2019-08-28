@@ -20,7 +20,7 @@ import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ScrVers } from '../../shared/scripture-utils/scr-vers';
 import { VerseRef } from '../../shared/scripture-utils/verse-ref';
-import { ScrVersType } from '../../shared/scripture-utils/versification';
+import { verseRefToVerseRefData } from '../../shared/scripture-utils/verse-ref-data-converters';
 import { CheckingUtils } from '../checking.utils';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import {
@@ -380,20 +380,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       if (result !== 'close') {
         const verseStart = VerseRef.fromStr(result.scriptureStart, ScrVers.English);
         const verseEnd = VerseRef.fromStr(result.scriptureEnd, ScrVers.English);
-        const versification: string = ScrVersType[ScrVersType.English];
         const newQuestionId = editMode ? newQuestion.id : objectId();
-        newQuestion.scriptureStart = {
-          book: verseStart.book,
-          chapter: verseStart.chapter,
-          verse: verseStart.verse,
-          versification
-        };
-        newQuestion.scriptureEnd = {
-          book: verseEnd.book,
-          chapter: verseEnd.chapter,
-          verse: verseEnd.verse,
-          versification
-        };
+        newQuestion.scriptureStart = verseRefToVerseRefData(verseStart);
+        newQuestion.scriptureEnd = verseRefToVerseRefData(verseEnd);
         newQuestion.text = result.text;
         if (result.audio.fileName) {
           const response = await this.projectService.onlineUploadAudio(
@@ -404,7 +393,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           // Get the amended filename and save it against the answer
           newQuestion.audioUrl = response;
         } else if (result.audio.status === 'reset') {
-          newQuestion.audioUrl = '';
+          newQuestion.audioUrl = undefined;
         }
 
         if (
@@ -412,7 +401,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           question.scriptureStart.book === verseStart.book &&
           question.scriptureStart.chapter === verseStart.chapter
         ) {
-          const deleteAudio = question.audioUrl !== '' && newQuestion.audioUrl === '';
+          const deleteAudio = question.audioUrl != null && newQuestion.audioUrl == null;
           await this.questionListDocs[id.toString()].submitJson0Op(op =>
             op
               .set(ql => ql.questions[questionIndex].scriptureStart, newQuestion.scriptureStart)

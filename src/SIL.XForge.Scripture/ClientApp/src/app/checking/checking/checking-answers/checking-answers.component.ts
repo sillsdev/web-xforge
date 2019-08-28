@@ -283,14 +283,11 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   scriptureTextVerseRef(answer: Answer): string {
-    return (
-      '(' +
-      verseRefDataToString(answer.scriptureStart) +
-      (answer.scriptureEnd.verse && answer.scriptureStart.verse !== answer.scriptureEnd.verse
-        ? '-' + answer.scriptureEnd.verse
-        : '') +
-      ')'
-    );
+    let scriptureRef = verseRefDataToString(answer.scriptureStart);
+    if (answer.scriptureEnd != null && answer.scriptureStart.verse !== answer.scriptureEnd.verse) {
+      scriptureRef += `-${answer.scriptureEnd.verse}`;
+    }
+    return `(${scriptureRef})`;
   }
 
   showAnswerForm() {
@@ -341,7 +338,7 @@ export class CheckingAnswersComponent implements OnInit {
       text: this.answerText.value,
       answer: this.activeAnswer,
       audio: this.audio,
-      scriptureText: this.scriptureText.value,
+      scriptureText: this.scriptureText.value != null ? this.scriptureText.value : undefined,
       scriptureStart: verseRefToVerseRefData(this.scriptureStartVerseRef),
       scriptureEnd: verseRefToVerseRefData(this.scriptureEndVerseRef)
     });

@@ -232,7 +232,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
           // Get the amended filename and save it against the answer
           answer.audioUrl = response;
         } else if (answerAction.audio.status === 'reset') {
-          answer.audioUrl = '';
+          answer.audioUrl = undefined;
         }
         this.saveAnswer(answer);
         break;
@@ -388,7 +388,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         this.activeQuestionIndex
       ].answers[answerIndex];
       const newAnswer = questionWithAnswer.answers[answerIndex];
-      const deleteAudio = oldAnswer.audioUrl !== '' && newAnswer.audioUrl === '';
+      const deleteAudio = oldAnswer.audioUrl != null && newAnswer.audioUrl == null;
       const submitPromise = this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
         op
           .set(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].text, newAnswer.text)
