@@ -75,6 +75,9 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
       // audio playback to skip to the end of the audio when the user presses play in Chromium. Normal audio files will
       // know the duration once metadata has loaded.
       this.audio.currentTime = 1e10;
+    } else {
+      this.audio.src = undefined;
+      this.enabled = false;
     }
   }
 
