@@ -13,5 +13,5 @@ export const environment = {
   assets: {
     audio: '/assets/audio/'
   },
-  helps: 'https://help.scriptureforge.org'
+  helps: 'https://help.scriptureforge.org/#t=Overview/Getting_Started.htm'
 };
