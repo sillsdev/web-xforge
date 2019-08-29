@@ -9,7 +9,7 @@ export interface SFProject extends Project {
   paratextId?: string;
   checkingEnabled?: boolean;
   usersSeeEachOthersResponses?: boolean;
-  translateEnabled?: boolean;
+  translationSuggestionsEnabled?: boolean;
   sourceParatextId?: string;
   sourceName?: string;
   sourceInputSystem?: InputSystem;

@@ -30,12 +30,12 @@ describe('ProjectComponent', () => {
 
   it('navigate to first text when no last selected text', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ isTranslateEnabled: false });
+    env.setProjectData();
     env.fixture.detectChanges();
     tick();
 
     verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(deepEqual(['./', 'checking', 'text01']), anything())).once();
+    verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'text01']), anything())).once();
     expect().nothing();
   }));
 
@@ -52,7 +52,7 @@ describe('ProjectComponent', () => {
 
   it('do not navigate when no texts', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ isTranslateEnabled: false, hasTexts: false });
+    env.setProjectData({ hasTexts: false });
     env.fixture.detectChanges();
     tick();
 
@@ -145,12 +145,7 @@ class TestEnvironment {
     when(this.mockedSFProjectService.get('project01')).thenResolve(projectDoc);
   }
 
-  setProjectData(args: {
-    isTranslateEnabled?: boolean;
-    hasTexts?: boolean;
-    selectedTask?: string;
-    role?: SFProjectRole;
-  }): void {
+  setProjectData(args: { hasTexts?: boolean; selectedTask?: string; role?: SFProjectRole } = {}): void {
     const projectUserConfig: SFProjectUserConfig = {
       ownerRef: 'user01',
       selectedTask: args.selectedTask,
@@ -162,7 +157,6 @@ class TestEnvironment {
     );
     when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenResolve(projectUserConfigDoc);
     const project: SFProject = {
-      translateEnabled: args.isTranslateEnabled == null || args.isTranslateEnabled,
       checkingEnabled: true,
       texts: args.hasTexts == null || args.hasTexts ? [{ bookId: 'text01' }, { bookId: 'text02' }] : undefined,
       userRoles: { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }

@@ -66,7 +66,43 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncAsync_NewProjectTranslateAndCheckingEnabled()
+        public async Task SyncAsync_NewProjectTranslationSuggestionsAndCheckingDisabled()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(false, false, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
+
+            await env.Runner.RunAsync("project01", "user01", true);
+
+            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.True);
+
+            Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
+
+            Assert.That(env.ContainsQuestionList("MAT", 1), Is.True);
+            Assert.That(env.ContainsQuestionList("MAT", 2), Is.True);
+            Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
+            Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
+
+            Assert.That(env.ContainsCommentList("MAT", 1), Is.True);
+            Assert.That(env.ContainsCommentList("MAT", 2), Is.True);
+            Assert.That(env.ContainsCommentList("MRK", 1), Is.True);
+            Assert.That(env.ContainsCommentList("MRK", 2), Is.True);
+
+            await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_NewProjectTranslationSuggestionsAndCheckingEnabled()
         {
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false);
@@ -102,7 +138,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncAsync_NewProjectOnlyTranslateEnabled()
+        public async Task SyncAsync_NewProjectOnlyTranslationSuggestionsEnabled()
         {
             var env = new TestEnvironment();
             env.SetupSFData(true, false, false);
@@ -112,8 +148,8 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
             Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
-            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.False);
-            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MRK", 1, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MRK", 2, TextType.Target), Is.True);
 
             Assert.That(env.ContainsText("MAT", 1, TextType.Source), Is.True);
             Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.True);
@@ -122,13 +158,13 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(env.ContainsQuestionList("MAT", 1), Is.True);
             Assert.That(env.ContainsQuestionList("MAT", 2), Is.True);
-            Assert.That(env.ContainsQuestionList("MRK", 1), Is.False);
-            Assert.That(env.ContainsQuestionList("MRK", 2), Is.False);
+            Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
+            Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
 
             Assert.That(env.ContainsCommentList("MAT", 1), Is.True);
             Assert.That(env.ContainsCommentList("MAT", 2), Is.True);
-            Assert.That(env.ContainsCommentList("MRK", 1), Is.False);
-            Assert.That(env.ContainsCommentList("MRK", 2), Is.False);
+            Assert.That(env.ContainsCommentList("MRK", 1), Is.True);
+            Assert.That(env.ContainsCommentList("MRK", 2), Is.True);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
 
@@ -517,7 +553,8 @@ namespace SIL.XForge.Scripture.Services
                     .Get(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
             }
 
-            public void SetupSFData(bool translateEnabled, bool checkingEnabled, bool changed, params Book[] books)
+            public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,
+                params Book[] books)
             {
                 RealtimeService.AddRepository("users", OTType.Json0, new MemoryRepository<User>(new[]
                 {
@@ -546,7 +583,7 @@ namespace SIL.XForge.Scripture.Services
                             },
                             ParatextId = "target",
                             SourceParatextId = "source",
-                            TranslateEnabled = translateEnabled,
+                            TranslationSuggestionsEnabled = translationSuggestionsEnabled,
                             CheckingEnabled = checkingEnabled,
                             Texts = books.Select(b =>
                                 new TextInfo

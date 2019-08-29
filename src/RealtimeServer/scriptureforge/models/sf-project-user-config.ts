@@ -8,7 +8,7 @@ export interface SFProjectUserConfig extends OwnedData {
   selectedChapter?: number;
   isTargetTextRight?: boolean;
   confidenceThreshold?: number;
-  isSuggestionsEnabled?: boolean;
+  translationSuggestionsEnabled?: boolean;
   selectedSegment?: string;
   selectedSegmentChecksum?: number;
   questionRefsRead?: string[];

@@ -74,7 +74,7 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     env.selectItem(0);
-    expect(env.menuLength).toEqual(7);
+    expect(env.menuLength).toEqual(8);
     env.selectItem(0);
     expect(env.menuLength).toEqual(5);
   }));
@@ -265,7 +265,6 @@ class TestEnvironment {
 
     this.project01Doc = this.addProject('project01', {
       projectName: 'project01',
-      translateEnabled: true,
       checkingEnabled: true,
       userRoles: { user01: SFProjectRole.ParatextTranslator },
       texts: [
@@ -275,7 +274,6 @@ class TestEnvironment {
     });
     this.addProject('project02', {
       projectName: 'project02',
-      translateEnabled: false,
       checkingEnabled: true,
       userRoles: { user01: SFProjectRole.Reviewer },
       texts: [
@@ -285,7 +283,6 @@ class TestEnvironment {
     });
     this.addProject('project03', {
       projectName: 'project03',
-      translateEnabled: true,
       checkingEnabled: true,
       userRoles: { user01: SFProjectRole.Reviewer },
       texts: [
@@ -295,7 +292,6 @@ class TestEnvironment {
     });
     this.project04Doc = this.addProject('project04', {
       projectName: 'project04',
-      translateEnabled: true,
       checkingEnabled: true,
       userRoles: {},
       texts: [

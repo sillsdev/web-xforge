@@ -10,7 +10,7 @@
   padding: 16px;
 }
 
-.task-setting {
+.tool-setting {
   display: flex;
   flex-direction: column;
   &.indent {
@@ -27,7 +27,7 @@
     display: flex;
   }
 
-  > .task-setting-field {
+  > .tool-setting-field {
     @include media-breakpoint-up(sm) {
       display: flex;
     }
@@ -41,6 +41,7 @@
   }
 
   > .helper-text {
+    font-size: 14px;
     color: var(--mdc-theme-text-hint-on-background);
     &.checkbox-helper-text {
       margin: 0 0 0 44px;
@@ -75,6 +76,10 @@
   > .more-options {
     margin-left: 16px;
   }
+}
+
+.checkbox-placeholder {
+  visibility: hidden;
 }
 
 .invalid-feedback {

@@ -15,12 +15,9 @@ export class SFProjectDoc extends ProjectDoc<SFProject> {
   }
 
   get taskNames(): string[] {
-    const names: string[] = [];
+    const names: string[] = ['Translate'];
     if (this.data.checkingEnabled != null && this.data.checkingEnabled) {
       names.push('Community Checking');
-    }
-    if (this.data.translateEnabled != null && this.data.translateEnabled) {
-      names.push('Translate');
     }
     return names;
   }

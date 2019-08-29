@@ -6,15 +6,14 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
-import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectService } from '../core/sf-project.service';
 
 interface ConnectProjectFormValues {
   paratextId: string;
-  tasks: {
+  settings: {
     checking: boolean;
-    translate: boolean;
+    translationSuggestions: boolean;
     sourceParatextId: string;
   };
 }
@@ -27,8 +26,8 @@ interface ConnectProjectFormValues {
 export class ConnectProjectComponent extends DataLoadingComponent implements OnInit {
   connectProjectForm = new FormGroup({
     paratextId: new FormControl(undefined),
-    tasks: new FormGroup({
-      translate: new FormControl(true),
+    settings: new FormGroup({
+      translationSuggestions: new FormControl(false),
       sourceParatextId: new FormControl(undefined),
       checking: new FormControl(false)
     })
@@ -63,7 +62,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.state === 'input' && this.targetProjects.length > 0;
   }
 
-  get showTasks(): boolean {
+  get showSettings(): boolean {
     if (this.state !== 'input') {
       return false;
     }
@@ -79,6 +78,10 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.projects.filter(p => !p.isConnected && !p.isConnectable).length > 0;
   }
 
+  get translationSuggestionsEnabled(): boolean {
+    return this.connectProjectForm.get('settings.translationSuggestions').value;
+  }
+
   ngOnInit(): void {
     this.loadingStarted();
     this.subscribe(this.connectProjectForm.controls.paratextId.valueChanges, (paratextId: string) => {
@@ -86,22 +89,22 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
         return;
       }
       this.sourceProjects = this.projects.filter(p => p.paratextId !== paratextId);
-      const tasks = this.connectProjectForm.get('tasks');
-      tasks.get('sourceParatextId').reset();
-      if (this.showTasks) {
-        tasks.enable();
-        this.connectProjectForm.setValidators(
-          XFValidators.requireOneWithValue(['tasks.translate', 'tasks.checking'], true)
-        );
+      const settings = this.connectProjectForm.get('settings');
+      if (this.showSettings) {
+        settings.enable();
       } else {
-        tasks.disable();
-        this.connectProjectForm.clearValidators();
+        settings.disable();
+      }
+      if (!this.translationSuggestionsEnabled) {
+        const sourceParatextId = settings.get('sourceParatextId');
+        sourceParatextId.reset();
+        sourceParatextId.disable();
       }
     });
 
     this.state = 'loading';
-    this.subscribe(this.connectProjectForm.get('tasks.translate').valueChanges, (value: boolean) => {
-      const sourceParatextId = this.connectProjectForm.get('tasks.sourceParatextId');
+    this.subscribe(this.connectProjectForm.get('settings.translationSuggestions').valueChanges, (value: boolean) => {
+      const sourceParatextId = this.connectProjectForm.get('settings.sourceParatextId');
       if (value) {
         sourceParatextId.enable();
       } else {
@@ -143,11 +146,11 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
         projectName: project.name,
         paratextId: project.paratextId,
         inputSystem: ParatextService.getInputSystem(project),
-        checkingEnabled: values.tasks.checking,
-        translateEnabled: values.tasks.translate
+        checkingEnabled: values.settings.checking,
+        translationSuggestionsEnabled: values.settings.translationSuggestions
       };
-      if (values.tasks.translate) {
-        const translateSourceProject = this.projects.find(p => p.paratextId === values.tasks.sourceParatextId);
+      if (values.settings.translationSuggestions) {
+        const translateSourceProject = this.projects.find(p => p.paratextId === values.settings.sourceParatextId);
         newProject.sourceParatextId = translateSourceProject.paratextId;
         newProject.sourceName = translateSourceProject.name;
         newProject.sourceInputSystem = ParatextService.getInputSystem(translateSourceProject);

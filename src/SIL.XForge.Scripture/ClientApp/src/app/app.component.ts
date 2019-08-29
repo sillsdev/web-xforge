@@ -131,17 +131,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get isTranslateEnabled(): boolean {
-    return (
-      this.selectedProjectDoc != null &&
-      this.selectedProjectDoc.isLoaded &&
-      this.selectedProjectDoc.data.translateEnabled != null &&
-      this.selectedProjectDoc.data.translateEnabled &&
-      canTranslate(this.selectedProjectRole)
-    );
-  }
-
-  get translateTexts(): TextInfo[] {
-    return this.texts.filter(t => t.hasSource);
+    return canTranslate(this.selectedProjectRole);
   }
 
   get isCheckingEnabled(): boolean {
@@ -151,10 +141,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       this.selectedProjectDoc.data.checkingEnabled != null &&
       this.selectedProjectDoc.data.checkingEnabled
     );
-  }
-
-  get checkingTexts(): TextInfo[] {
-    return this.texts;
   }
 
   get currentUser(): User {
@@ -171,7 +157,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       : this.selectedProjectDoc.id;
   }
 
-  private get texts(): TextInfo[] {
+  get texts(): TextInfo[] {
     return this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
       ? []
       : this.selectedProjectDoc.data.texts;
