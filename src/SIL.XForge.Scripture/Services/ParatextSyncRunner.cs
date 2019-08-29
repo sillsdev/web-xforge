@@ -583,7 +583,7 @@ namespace SIL.XForge.Scripture.Services
                 foreach (var projectUser in projectUsers)
                 {
                     if (!ptUserRoles.TryGetValue(projectUser.ParatextId, out string role))
-                        role = SFProjectRole.SFReviewer;
+                        role = SFProjectRole.Reviewer;
                     op.Set(p => p.UserRoles[projectUser.UserId], role);
                 }
             });

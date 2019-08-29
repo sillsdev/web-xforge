@@ -48,7 +48,7 @@ describe('CheckingOverviewComponent', () => {
 
     it('should not display "Add question" button for Reviewer', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setCurrentUser(env.reviewerUser);
+      env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
       expect(env.addQuestionButton).toBeNull();
     }));
@@ -251,7 +251,7 @@ describe('CheckingOverviewComponent', () => {
   describe('for Reviewer', () => {
     it('should display "No question" message', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setCurrentUser(env.reviewerUser);
+      env.setCurrentUser(env.checkerUser);
       env.fixture.detectChanges();
       expect(env.noQuestionsLabel).not.toBeNull();
       env.waitForQuestions();
@@ -268,7 +268,7 @@ describe('CheckingOverviewComponent', () => {
 
     it('should display progress', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setCurrentUser(env.reviewerUser);
+      env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
       expect(env.overallProgressChart).not.toBeNull();
       expect(env.reviewerQuestionPanel).not.toBeNull();
@@ -276,7 +276,7 @@ describe('CheckingOverviewComponent', () => {
 
     it('should calculate the right progress proportions and stats', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setCurrentUser(env.reviewerUser);
+      env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
       const [unread, read, answered] = env.component.bookProgress({ bookId: 'MAT', chapters: [{ number: 1 }] });
       expect(unread).toBe(3);
@@ -377,7 +377,7 @@ class TestEnvironment {
   mockedAuthService: AuthService = mock(AuthService);
   mockedRealtimeOfflineStore: RealtimeOfflineStore = mock(RealtimeOfflineStore);
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
-  reviewerUser = this.createUser('02', SFProjectRole.Reviewer);
+  checkerUser = this.createUser('02', SFProjectRole.CommunityChecker);
 
   private adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.adminUser.id,
@@ -386,7 +386,7 @@ class TestEnvironment {
     commentRefsRead: []
   };
   private reviewerProjectUserConfig: SFProjectUserConfig = {
-    ownerRef: this.reviewerUser.id,
+    ownerRef: this.checkerUser.id,
     questionRefsRead: ['q1Id', 'q2Id', 'q3Id'],
     answerRefsRead: [],
     commentRefsRead: []
@@ -403,7 +403,7 @@ class TestEnvironment {
     ],
     userRoles: {
       [this.adminUser.id]: this.adminUser.role,
-      [this.reviewerUser.id]: this.reviewerUser.role
+      [this.checkerUser.id]: this.checkerUser.role
     }
   };
   private readonly anotherUserId = 'anotherUserId';
@@ -421,7 +421,7 @@ class TestEnvironment {
     when(this.mockedProjectService.getUserConfig('project01', this.adminUser.id)).thenResolve(
       this.createProjectUserConfigDoc(this.adminProjectUserConfig)
     );
-    when(this.mockedProjectService.getUserConfig('project01', this.reviewerUser.id)).thenResolve(
+    when(this.mockedProjectService.getUserConfig('project01', this.checkerUser.id)).thenResolve(
       this.createProjectUserConfigDoc(this.reviewerProjectUserConfig)
     );
 
@@ -442,8 +442,8 @@ class TestEnvironment {
           answers: [
             {
               id: 'a1Id',
-              ownerRef: this.reviewerUser.id,
-              likes: [{ ownerRef: this.reviewerUser.id }, { ownerRef: this.anotherUserId }],
+              ownerRef: this.checkerUser.id,
+              likes: [{ ownerRef: this.checkerUser.id }, { ownerRef: this.anotherUserId }],
               dateCreated: '',
               dateModified: ''
             }
@@ -458,7 +458,7 @@ class TestEnvironment {
             {
               id: 'a2Id',
               ownerRef: this.anotherUserId,
-              likes: [{ ownerRef: this.reviewerUser.id }],
+              likes: [{ ownerRef: this.checkerUser.id }],
               dateCreated: '',
               dateModified: ''
             }
@@ -472,7 +472,7 @@ class TestEnvironment {
             {
               id: 'a3Id',
               ownerRef: this.anotherUserId,
-              likes: [{ ownerRef: this.reviewerUser.id }],
+              likes: [{ ownerRef: this.checkerUser.id }],
               dateCreated: '',
               dateModified: ''
             }
@@ -494,14 +494,14 @@ class TestEnvironment {
       this.createCommentListDoc(text1_1id, [
         {
           id: 'c1Id',
-          ownerRef: this.reviewerUser.id,
+          ownerRef: this.checkerUser.id,
           dateCreated: '',
           dateModified: '',
           answerRef: 'a1Id'
         },
         {
           id: 'c2Id',
-          ownerRef: this.reviewerUser.id,
+          ownerRef: this.checkerUser.id,
           dateCreated: '',
           dateModified: '',
           answerRef: 'a2Id'
