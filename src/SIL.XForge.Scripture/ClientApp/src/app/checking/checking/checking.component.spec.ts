@@ -91,11 +91,11 @@ describe('CheckingComponent', () => {
     }));
 
     it('responds to remote removed from project', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(1);
       expect(Object.keys(env.component.checkingData.questionListDocs).length).toEqual(2);
       expect(Object.keys(env.component.checkingData.commentListDocs).length).toEqual(2);
-      env.component.projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles[env.reviewerUser.id]), false);
+      env.component.projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles[env.checkerUser.id]), false);
       env.waitForSliderUpdate();
       expect(env.component.projectDoc).toBeNull();
       expect(Object.keys(env.component.checkingData.questionListDocs).length).toEqual(0);
@@ -106,7 +106,7 @@ describe('CheckingComponent', () => {
 
   describe('Questions', () => {
     it('questions are displaying', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       // A sixteenth question is archived
       expect(env.questions.length).toEqual(15);
       const question = env.selectQuestion(15);
@@ -114,13 +114,13 @@ describe('CheckingComponent', () => {
     }));
 
     it('can select a question', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       const question = env.selectQuestion(1);
       expect(question.classes['mdc-list-item--activated']).toBeTruthy();
     }));
 
     it('question status change to read', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       let question = env.selectQuestion(2, false);
       expect(question.classes['question-read']).toBeFalsy();
       question = env.selectQuestion(3);
@@ -128,7 +128,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('question status change to answered', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(question.classes['question-answered']).toBeTruthy();
@@ -144,7 +144,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('unread questions badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       expect(env.getUnread(env.questions[6])).toEqual(4);
       env.component.projectDoc.submitJson0Op(op => op.set<boolean>(p => p.usersSeeEachOthersResponses, false), false);
       tick();
@@ -153,7 +153,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('responds to remote question added', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       let question = env.selectQuestion(1);
       const questionId = env.component.questionsPanel.activeQuestion.id;
       expect(env.questions.length).toEqual(15);
@@ -180,12 +180,12 @@ describe('CheckingComponent', () => {
 
   describe('Answers', () => {
     it('answer panel is initiated and shows the first question', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       expect(env.answerPanel).toBeDefined();
     }));
 
     it('can answer a question', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
@@ -193,16 +193,16 @@ describe('CheckingComponent', () => {
     }));
 
     it('opens dialog if answering a question for the first time', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.cleanReviewUser);
+      env.setupReviewerScenarioData(env.cleanCheckerUser);
       env.selectQuestion(2);
       env.answerQuestion('Answering question 2 should pop up a dialog');
-      verify(env.mockedAccountService.openNameDialog(env.cleanReviewUser.user.displayName, true)).once();
+      verify(env.mockedAccountService.openNameDialog(env.cleanCheckerUser.user.displayName, true)).once();
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answering question 2 should pop up a dialog');
     }));
 
     it('inserts newer answer above older answers', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(7);
       env.answerQuestion('Just added answer');
       expect(env.answers.length).toEqual(2);
@@ -211,7 +211,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       const question = env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.waitForSliderUpdate();
@@ -223,7 +223,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can change answering tabs', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       const question = env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.waitForSliderUpdate();
@@ -232,7 +232,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('check answering validation', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       const question = env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
@@ -241,7 +241,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can edit an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(7);
       env.answerQuestion('Answer question 7');
       expect(env.getAnswer(1).classes['answer-unread']).toBe(true);
@@ -254,7 +254,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can remove audio from answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
       env.waitForSliderUpdate();
@@ -262,22 +262,22 @@ describe('CheckingComponent', () => {
       env.clickButton(env.removeAudioButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      verify(env.mockedProjectService.onlineDeleteAudio('project01', 'a6Id', env.reviewerUser.id)).once();
+      verify(env.mockedProjectService.onlineDeleteAudio('project01', 'a6Id', env.checkerUser.id)).once();
       expect().nothing();
     }));
 
     it('can delete an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(6);
       expect(env.answers.length).toEqual(1);
       env.clickButton(env.answerDeleteButton(0));
       env.waitForSliderUpdate();
       expect(env.answers.length).toEqual(0);
-      verify(env.mockedProjectService.onlineDeleteAudio('project01', 'a6Id', env.reviewerUser.id)).once();
+      verify(env.mockedProjectService.onlineDeleteAudio('project01', 'a6Id', env.checkerUser.id)).once();
     }));
 
     it('can delete correct answer after changing chapters', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       env.component.chapter = env.component.chapter + 1;
@@ -287,7 +287,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('answers reset when changing questions', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
@@ -296,7 +296,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can like and unlike an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(1);
       env.answerQuestion('Answer question to be liked');
       expect(env.likeTotal).toBe(0);
@@ -309,7 +309,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('do not show answers until current user has submitted an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(7);
       expect(env.answers.length).toBe(0);
       expect(env.getUnread(env.questions[6])).toEqual(4);
@@ -319,7 +319,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('reviewer can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.component.projectDoc.submitJson0Op(op => op.set<boolean>(p => p.usersSeeEachOthersResponses, false), false);
       tick();
       env.fixture.detectChanges();
@@ -332,7 +332,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can add scripture to an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(1);
       env.clickButton(env.addAnswerButton);
       env.setTextFieldValue(env.yourAnswerField, 'Answer question');
@@ -348,7 +348,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can remove scripture from an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.reviewerUser);
+      env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(6);
       expect(env.getAnswerScriptureText(0)).toBe('Quoted scripture(JHN 1:1)');
       env.clickButton(env.getAnswerEditButton(0));
@@ -361,7 +361,7 @@ describe('CheckingComponent', () => {
 
     describe('Comments', () => {
       it('can comment on an answer', fakeAsync(() => {
-        env.setupReviewerScenarioData(env.reviewerUser);
+        env.setupReviewerScenarioData(env.checkerUser);
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -369,7 +369,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('can edit comment on an answer', fakeAsync(() => {
-        env.setupReviewerScenarioData(env.reviewerUser);
+        env.setupReviewerScenarioData(env.checkerUser);
         // Answer a question in a chapter where chapters previous also have comments
         env.selectQuestion(15);
         env.answerQuestion('Answer question to be commented on');
@@ -383,7 +383,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('can delete comment on an answer', fakeAsync(() => {
-        env.setupReviewerScenarioData(env.reviewerUser);
+        env.setupReviewerScenarioData(env.checkerUser);
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -394,7 +394,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('comments only appear on the relevant answer', fakeAsync(() => {
-        env.setupReviewerScenarioData(env.reviewerUser);
+        env.setupReviewerScenarioData(env.checkerUser);
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'First comment');
@@ -442,7 +442,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('displays comments in real-time', fakeAsync(() => {
-        env.setupReviewerScenarioData(env.reviewerUser);
+        env.setupReviewerScenarioData(env.checkerUser);
         env.selectQuestion(1);
         env.answerQuestion('Admin will add a comment to this');
         expect(env.getAnswerComments(0).length).toEqual(0);
@@ -507,8 +507,8 @@ class TestEnvironment {
   readonly mockedNoticeService = mock(NoticeService);
 
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
-  reviewerUser = this.createUser('02', SFProjectRole.Reviewer);
-  cleanReviewUser = this.createUser('03', SFProjectRole.Reviewer, false);
+  checkerUser = this.createUser('02', SFProjectRole.CommunityChecker);
+  cleanCheckerUser = this.createUser('03', SFProjectRole.CommunityChecker, false);
 
   private adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.adminUser.id,
@@ -518,14 +518,14 @@ class TestEnvironment {
   };
 
   private reviewerProjectUserConfig: SFProjectUserConfig = {
-    ownerRef: this.reviewerUser.id,
+    ownerRef: this.checkerUser.id,
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
   };
 
   private cleanReviewerProjectUserConfig: SFProjectUserConfig = {
-    ownerRef: this.cleanReviewUser.id,
+    ownerRef: this.cleanCheckerUser.id,
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
@@ -547,8 +547,8 @@ class TestEnvironment {
     ],
     userRoles: {
       [this.adminUser.id]: this.adminUser.role,
-      [this.reviewerUser.id]: this.reviewerUser.role,
-      [this.cleanReviewUser.id]: this.cleanReviewUser.role
+      [this.checkerUser.id]: this.checkerUser.role,
+      [this.cleanCheckerUser.id]: this.cleanCheckerUser.role
     }
   };
 
@@ -836,10 +836,10 @@ class TestEnvironment {
     when(this.mockedProjectService.getUserConfig('project01', this.adminUser.id)).thenResolve(
       this.createProjectUserConfigDoc(this.adminProjectUserConfig)
     );
-    when(this.mockedProjectService.getUserConfig('project01', this.reviewerUser.id)).thenResolve(
+    when(this.mockedProjectService.getUserConfig('project01', this.checkerUser.id)).thenResolve(
       this.createProjectUserConfigDoc(this.reviewerProjectUserConfig)
     );
-    when(this.mockedProjectService.getUserConfig('project01', this.cleanReviewUser.id)).thenResolve(
+    when(this.mockedProjectService.getUserConfig('project01', this.cleanCheckerUser.id)).thenResolve(
       this.createProjectUserConfigDoc(this.cleanReviewerProjectUserConfig)
     );
 
@@ -885,7 +885,7 @@ class TestEnvironment {
     questionData1[3].scriptureEnd.verse = '4';
     questionData1[5].answers.push({
       id: 'a6Id',
-      ownerRef: this.reviewerUser.id,
+      ownerRef: this.checkerUser.id,
       text: 'Answer 6 on question',
       scriptureStart: { chapter: '1', verse: '1', book: 'JHN', versification: 'English' },
       scriptureEnd: { chapter: '1', verse: '1', book: 'JHN', versification: 'English' },
@@ -925,7 +925,7 @@ class TestEnvironment {
     for (let commentNumber = 1; commentNumber <= 4; commentNumber++) {
       commentData.push({
         id: 'c' + commentNumber + 'Id',
-        ownerRef: this.reviewerUser.id,
+        ownerRef: this.checkerUser.id,
         answerRef: 'a8Id',
         text: 'Comment ' + commentNumber + ' on question 8',
         dateCreated: dateNow,
@@ -947,11 +947,11 @@ class TestEnvironment {
     when(this.mockedUserService.currentUserId).thenReturn(user.id);
     when(this.mockedUserService.getCurrentUser()).thenResolve(this.createUserDoc(user));
     when(this.mockedUserService.getProfile(this.adminUser.id)).thenResolve(this.createUserProfileDoc(this.adminUser));
-    when(this.mockedUserService.getProfile(this.reviewerUser.id)).thenResolve(
-      this.createUserProfileDoc(this.reviewerUser)
+    when(this.mockedUserService.getProfile(this.checkerUser.id)).thenResolve(
+      this.createUserProfileDoc(this.checkerUser)
     );
-    when(this.mockedUserService.getProfile(this.cleanReviewUser.id)).thenResolve(
-      this.createUserProfileDoc(this.cleanReviewUser)
+    when(this.mockedUserService.getProfile(this.cleanCheckerUser.id)).thenResolve(
+      this.createUserProfileDoc(this.cleanCheckerUser)
     );
     when(this.mockedAccountService.openNameDialog(anything(), anything())).thenReturn(
       instance(this.mockedCheckingNameDialogRef)

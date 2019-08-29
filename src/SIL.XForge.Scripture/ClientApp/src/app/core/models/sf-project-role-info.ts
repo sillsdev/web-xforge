@@ -9,6 +9,7 @@ export const SF_PROJECT_ROLES: ProjectRoleInfo[] = [
   { role: SFProjectRole.ParatextAdministrator, displayName: 'Administrator' },
   { role: SFProjectRole.ParatextTranslator, displayName: 'Translator' },
   { role: SFProjectRole.ParatextConsultant, displayName: 'Consultant/Reviewer/Archivist/Typesetter' },
+  { role: SFProjectRole.ParatextObserver, displayName: 'Observer' },
   { role: SFProjectRole.Reviewer, displayName: 'Reviewer' },
-  { role: SFProjectRole.ParatextObserver, displayName: 'Observer' }
+  { role: SFProjectRole.CommunityChecker, displayName: 'Community Checker' }
 ];

@@ -229,7 +229,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
 
-            return Attempt.Failure(SFProjectRole.SFReviewer);
+            return Attempt.Failure(SFProjectRole.CommunityChecker);
         }
 
         private static void UpdateSetting<T>(Json0OpBuilder<SFProject> builder, Expression<Func<SFProject, T>> field,

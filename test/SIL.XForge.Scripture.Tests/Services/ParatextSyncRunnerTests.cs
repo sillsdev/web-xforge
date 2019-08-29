@@ -438,7 +438,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
             Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Translator));
-            Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.SFReviewer));
+            Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.Reviewer));
         }
 
         private class Book

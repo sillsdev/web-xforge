@@ -8,6 +8,7 @@ namespace SIL.XForge.Scripture.Models
         public const string Observer = "pt_observer";
         public const string Read = "pt_read";
         public const string WriteNote = "pt_write_note";
-        public const string SFReviewer = "sf_reviewer";
+        public const string Reviewer = "sf_reviewer";
+        public const string CommunityChecker = "sf_community_checker";
     }
 }

@@ -5,5 +5,6 @@ export enum SFProjectRole {
   ParatextObserver = 'pt_observer',
   ParatextRead = 'pt_read',
   ParatextWriteNote = 'pt_write_note',
-  Reviewer = 'sf_reviewer'
+  Reviewer = 'sf_reviewer',
+  CommunityChecker = 'sf_community_checker'
 }
