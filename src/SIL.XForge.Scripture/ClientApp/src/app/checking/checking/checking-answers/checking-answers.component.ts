@@ -211,6 +211,10 @@ export class CheckingAnswersComponent implements OnInit {
     this.scriptureText.setValue(verses.length ? verses.join(' ') : null);
   }
 
+  updateScriptureEndEnabled() {
+    this.scriptureStart.valid ? this.scriptureEnd.enable() : this.scriptureEnd.disable();
+  }
+
   getComments(answer: Answer): Comment[] {
     return this.comments
       .filter(comment => comment.answerRef === answer.id)
@@ -269,6 +273,7 @@ export class CheckingAnswersComponent implements OnInit {
         control.markAsTouched();
         control.markAsDirty();
         this.extractScriptureText();
+        this.updateScriptureEndEnabled();
       }
     });
   }

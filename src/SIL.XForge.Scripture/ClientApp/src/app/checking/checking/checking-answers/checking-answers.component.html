@@ -59,7 +59,7 @@
           formControlName="scriptureStart"
           outlined
           id="scripture-start"
-          (input)="this.scriptureStart.valid ? this.scriptureEnd.enable() : this.scriptureEnd.disable()"
+          (input)="updateScriptureEndEnabled()"
           (change)="extractScriptureText()"
         >
           <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureStart)"
