@@ -20,7 +20,6 @@ import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
 import { SFProjectDoc } from './core/models/sf-project-doc';
-import { canTranslate } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
@@ -131,7 +130,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get isTranslateEnabled(): boolean {
-    return canTranslate(this.selectedProjectRole);
+    return this.selectedProjectRole !== SFProjectRole.CommunityChecker;
   }
 
   get isCheckingEnabled(): boolean {

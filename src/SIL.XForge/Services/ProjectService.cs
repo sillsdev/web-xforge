@@ -228,12 +228,6 @@ namespace SIL.XForge.Services
             }
         }
 
-        public Task<bool> IsAuthorizedAsync(string curUserId, string projectId)
-        {
-            return RealtimeService.QuerySnapshots<TModel>()
-                .AnyAsync(p => p.Id == projectId && p.UserRoles.ContainsKey(curUserId));
-        }
-
         public async Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string extension,
             Stream inputStream)
         {

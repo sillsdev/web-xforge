@@ -39,9 +39,9 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
-  it('navigate to checking task if a reviewer and no last selected text', fakeAsync(() => {
+  it('navigate to checking tool if a checker and no last selected text', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ role: SFProjectRole.Reviewer });
+    env.setProjectData({ role: SFProjectRole.CommunityChecker });
     env.fixture.detectChanges();
     tick();
 

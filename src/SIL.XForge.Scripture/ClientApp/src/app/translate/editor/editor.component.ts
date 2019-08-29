@@ -12,6 +12,8 @@ import {
 } from '@sillsdev/machine';
 import isEqual from 'lodash/isEqual';
 import { DeltaStatic, RangeStatic } from 'quill';
+import { Operation } from 'realtime-server/lib/common/models/project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { BehaviorSubject, fromEvent, Subject, Subscription } from 'rxjs';
@@ -182,7 +184,18 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   get hasSource(): boolean {
+    if (!this.canEditTexts) {
+      return false;
+    }
     return this.text == null ? false : this.text.hasSource;
+  }
+
+  get canEditTexts(): boolean {
+    if (this.projectDoc == null || !this.projectDoc.isLoaded) {
+      return false;
+    }
+    const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
+    return SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit });
   }
 
   private get isSelectionAtSegmentEnd(): boolean {
@@ -432,7 +445,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
     this.translationSession = undefined;
     this.translationEngine = undefined;
-    if (!this.translationSuggestionsProjectEnabled) {
+    if (!this.translationSuggestionsProjectEnabled || !this.canEditTexts) {
       return;
     }
 

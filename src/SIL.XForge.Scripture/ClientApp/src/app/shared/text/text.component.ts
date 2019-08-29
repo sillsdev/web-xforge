@@ -410,7 +410,8 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       const selectedSegmentRef = selection == null ? null : this.viewModel.getSegmentRef(selection);
       if (selectedSegmentRef !== segmentRef) {
         const range = this.viewModel.getSegmentRange(segmentRef);
-        Promise.resolve().then(() => this._editor.setSelection(range.index + range.length, 0, 'user'));
+        // setTimeout seems necessary to ensure that the editor is focused
+        setTimeout(() => this._editor.setSelection(range.index + range.length, 0, 'user'));
       }
     }
 

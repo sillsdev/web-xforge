@@ -14,6 +14,7 @@ import {
   TranslationResultBuilder,
   WordAlignmentMatrix
 } from '@sillsdev/machine';
+import cloneDeep from 'lodash/cloneDeep';
 import * as OTJson0 from 'ot-json0';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -102,7 +103,7 @@ describe('EditorComponent', () => {
       const selection = env.component.target.editor.getSelection();
       expect(selection.index).toBe(32);
       expect(selection.length).toBe(0);
-      expect(env.projectUserConfigDoc.data.selectedSegment).toBe('verse_1_3');
+      expect(env.getProjectUserConfigDoc().data.selectedSegment).toBe('verse_1_3');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.component.showSuggestion).toBe(false);
 
@@ -123,7 +124,7 @@ describe('EditorComponent', () => {
       const selection = env.component.target.editor.getSelection();
       expect(selection.index).toBe(30);
       expect(selection.length).toBe(0);
-      expect(env.projectUserConfigDoc.data.selectedSegment).toBe('verse_1_2');
+      expect(env.getProjectUserConfigDoc().data.selectedSegment).toBe('verse_1_2');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.component.showSuggestion).toBe(true);
       expect(env.component.suggestionWords).toEqual(['target']);
@@ -349,7 +350,7 @@ describe('EditorComponent', () => {
       expect(env.component.target.segmentRef).toBe('verse_1_1');
       expect(env.component.target.segment.initialChecksum).toBe(0);
 
-      env.projectUserConfigDoc.submitJson0Op(op => op.unset(puc => puc.selectedSegmentChecksum), false);
+      env.getProjectUserConfigDoc().submitJson0Op(op => op.unset(puc => puc.selectedSegmentChecksum), false);
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_1');
       expect(env.component.target.segment.initialChecksum).not.toBe(0);
@@ -460,7 +461,24 @@ describe('EditorComponent', () => {
       expect(selection.length).toBe(0);
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
       expect(env.component.showSuggestion).toBe(false);
-      expect(env.isSourceAreaHidden).toEqual(true);
+      expect(env.isSourceAreaHidden).toBe(true);
+      env.dispose();
+    }));
+
+    it('user cannot edit', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser('user02');
+      env.setProjectUserConfig();
+      env.wait();
+      expect(env.component.textName).toBe('Book 1');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toBe('Source');
+      expect(env.component.targetLabel).toBe('Target');
+      expect(env.component.target.segmentRef).toBe('');
+      const selection = env.component.target.editor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEditTexts).toBe(false);
+      expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
   });
@@ -479,7 +497,7 @@ describe('EditorComponent', () => {
       expect(env.component.target.segmentRef).toBe('');
       const selection = env.component.target.editor.getSelection();
       expect(selection).toBeNull();
-      expect(env.isSourceAreaHidden).toEqual(true);
+      expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
 
@@ -497,7 +515,25 @@ describe('EditorComponent', () => {
       expect(selection.length).toBe(0);
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
       expect(env.component.showSuggestion).toBe(false);
-      expect(env.isSourceAreaHidden).toEqual(true);
+      expect(env.isSourceAreaHidden).toBe(true);
+      env.dispose();
+    }));
+
+    it('user cannot edit', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser('user02');
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'text03' });
+      env.wait();
+      expect(env.component.textName).toBe('Book 3');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toBe('Source');
+      expect(env.component.targetLabel).toBe('Target');
+      expect(env.component.target.segmentRef).toBe('');
+      const selection = env.component.target.editor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEditTexts).toBe(false);
+      expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
   });
@@ -577,10 +613,10 @@ class TestEnvironment {
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
   lastApprovedPrefix: string[] = [];
-  projectUserConfigDoc: SFProjectUserConfigDoc;
 
   private readonly params$: BehaviorSubject<Params>;
   private trainingProgress$ = new Subject<ProgressStatus>();
+  private readonly userConfigDocs = new Map<string, SFProjectUserConfigDoc>();
 
   constructor() {
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'text01' });
@@ -594,7 +630,7 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 'text03', 2, 'target'));
 
     when(this.mockedActivatedRoute.params).thenReturn(this.params$);
-    when(this.mockedUserService.currentUserId).thenReturn('user01');
+    this.setCurrentUser('user01');
     when(this.mockedSFProjectService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );
@@ -652,9 +688,13 @@ class TestEnvironment {
     return this.sourceTextArea.nativeElement.style.display === 'none';
   }
 
+  setCurrentUser(userId: string): void {
+    when(this.mockedUserService.currentUserId).thenReturn(userId);
+  }
+
   setupProject(translationSuggestionsEnabled: boolean = true): void {
     const project: SFProject = {
-      userRoles: { user01: SFProjectRole.ParatextTranslator },
+      userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
       inputSystem: { languageName: 'Target' },
       translationSuggestionsEnabled,
       sourceInputSystem: { languageName: 'Source' },
@@ -670,10 +710,16 @@ class TestEnvironment {
   }
 
   setProjectUserConfig(userConfig: Partial<SFProjectUserConfig> = {}): void {
-    userConfig.ownerRef = 'user01';
-    const adapter = new MemoryRealtimeDocAdapter('project01', OTJson0.type, userConfig);
-    this.projectUserConfigDoc = new SFProjectUserConfigDoc(adapter, instance(this.mockedRealtimeOfflineStore));
-    when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenResolve(this.projectUserConfigDoc);
+    const user1Config = cloneDeep(userConfig);
+    user1Config.ownerRef = 'user01';
+    this.addProjectUserConfig(user1Config as SFProjectUserConfig);
+    const user2Config = cloneDeep(userConfig);
+    user2Config.ownerRef = 'user02';
+    this.addProjectUserConfig(user2Config as SFProjectUserConfig);
+  }
+
+  getProjectUserConfigDoc(userId: string = 'user01'): SFProjectUserConfigDoc {
+    return this.userConfigDocs.get(userId);
   }
 
   wait(): void {
@@ -785,6 +831,13 @@ class TestEnvironment {
     delta.insert('\n', { para: { style: 'p' } });
     const adapter = new MemoryRealtimeDocAdapter(id.toString(), RichText.type, delta);
     return new TextDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+  }
+
+  private addProjectUserConfig(userConfig: SFProjectUserConfig): void {
+    const adapter = new MemoryRealtimeDocAdapter(`project01:${userConfig.ownerRef}`, OTJson0.type, userConfig);
+    const projectUserConfigDoc = new SFProjectUserConfigDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    when(this.mockedSFProjectService.getUserConfig('project01', userConfig.ownerRef)).thenResolve(projectUserConfigDoc);
+    this.userConfigDocs.set(userConfig.ownerRef, projectUserConfigDoc);
   }
 
   private addTextDoc(id: TextDocId): void {
