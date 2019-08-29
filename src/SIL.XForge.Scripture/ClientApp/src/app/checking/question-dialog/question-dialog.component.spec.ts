@@ -22,6 +22,8 @@ import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
+import { VerseRef } from '../../shared/scripture-utils/verse-ref';
+import { verseRefDataToString, verseRefToVerseRefData } from '../../shared/scripture-utils/verse-ref-data-converters';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 import { QuestionDialogComponent } from './question-dialog.component';
@@ -298,6 +300,15 @@ describe('QuestionDialogComponent', () => {
     expect(env.isSegmentHighlighted('1')).toBe(true);
     expect(env.isSegmentHighlighted('2')).toBe(false);
   }));
+
+  it('retrieves scripture text on editing a question', fakeAsync(() => {
+    const env = new TestEnvironment(true);
+    flush();
+    const textDocId = new TextDocId('project01', 'LUK', 1, 'target');
+    expect(env.component.textDocId.toString()).toBe(textDocId.toString());
+    verify(env.mockedProjectService.getText(deepEqual(textDocId))).once();
+    expect(verseRefDataToString(env.component.scriptureRef.scriptureStart)).toEqual('LUK 1:3');
+  }));
 });
 
 @Directive({
@@ -345,7 +356,7 @@ class TestEnvironment {
   mockedUserService: UserService = mock(UserService);
   dialogSpy: MdcDialog;
 
-  constructor() {
+  constructor(editMode: boolean = false) {
     TestBed.configureTestingModule({
       imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
       providers: [
@@ -359,8 +370,14 @@ class TestEnvironment {
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     const config: MdcDialogConfig = {
       data: {
-        editMode: false,
-        question: {} as Question,
+        editMode: editMode,
+        question: editMode
+          ? ({
+              id: 'question01',
+              ownerRef: 'user01',
+              scriptureStart: verseRefToVerseRefData(VerseRef.fromStr('LUK 1:3'))
+            } as Question)
+          : undefined,
         textsByBook: {
           MAT: {
             id: 'text01',
