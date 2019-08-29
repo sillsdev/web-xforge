@@ -55,7 +55,7 @@ export class CheckingAnswersComponent implements OnInit {
       this.hideAnswerForm();
     }
     this._question = question;
-    this.initUserAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
+    this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
   }
   @Input() checkingTextComponent: CheckingTextComponent;
   @Input() comments: Readonly<Comment[]> = [];
@@ -75,7 +75,7 @@ export class CheckingAnswersComponent implements OnInit {
 
   private user: UserDoc;
   private _question: Question;
-  private initUserAnswerRefsRead: string[] = [];
+  private userAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
 
   constructor(
@@ -229,9 +229,7 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   hasUserReadAnswer(answer: Answer): boolean {
-    return (
-      this.initUserAnswerRefsRead.includes(answer.id) || this.projectUserConfigDoc.data.ownerRef === answer.ownerRef
-    );
+    return this.userAnswerRefsRead.includes(answer.id) || this.projectUserConfigDoc.data.ownerRef === answer.ownerRef;
   }
 
   hideAnswerForm() {
@@ -336,6 +334,10 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   private emitAnswerToSave() {
+    if (this.activeAnswer) {
+      // If editing an answer, ensure answers read is current
+      this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
+    }
     this.action.emit({
       action: 'save',
       text: this.answerText.value,
