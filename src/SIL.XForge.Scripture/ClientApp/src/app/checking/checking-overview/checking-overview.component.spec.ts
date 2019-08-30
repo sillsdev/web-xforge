@@ -320,14 +320,14 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       expect(env.textArchivedRows.length).toEqual(1);
-      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toBe('1 questions');
+      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toContain('1 questions');
       env.simulateRowClick(0);
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(9);
       expect(env.questionArchiveButtons.length).toEqual(6);
       env.clickElement(env.questionArchiveButtons[0]);
       expect(env.textArchivedRows.length).toEqual(1);
-      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toBe('2 questions');
+      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toContain('2 questions');
       expect(env.textRows.length).toEqual(8);
 
       // Re-publish a question that has been archived
@@ -337,7 +337,7 @@ describe('CheckingOverviewComponent', () => {
       expect(archivedQuestion.textContent).toBe('Archived less than a minute ago');
       env.clickElement(env.questionPublishButtons[0]);
       expect(env.textArchivedRows.length).toEqual(3);
-      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toBe('1 questions');
+      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toContain('1 questions');
       expect(env.textRows.length).toEqual(9);
     }));
   });
