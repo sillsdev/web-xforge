@@ -139,6 +139,10 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     };
   }
 
+  updateScriptureEndEnabled() {
+    this.scriptureStart.valid ? this.scriptureEnd.enable() : this.scriptureEnd.disable();
+  }
+
   async submit() {
     if (this.audio.status === 'recording') {
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
@@ -180,6 +184,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
         control.markAsTouched();
         control.markAsDirty();
         control.setValue(verseRefDataToString(result));
+        this.updateScriptureEndEnabled();
       }
     });
   }

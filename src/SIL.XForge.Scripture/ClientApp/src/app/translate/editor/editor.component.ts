@@ -558,7 +558,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     if (sourceSegment === this.source.segmentText) {
       this.translationSession = translationSession;
       const finish = performance.now();
-      console.log('Translated segment, length: %d, time: %dms', words.length, finish - start);
+      console.log(`Translated segment, length: ${words.length}, time: ${finish - start}ms`);
     }
   }
 
