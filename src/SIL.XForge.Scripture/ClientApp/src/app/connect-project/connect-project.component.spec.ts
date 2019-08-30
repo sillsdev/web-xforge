@@ -94,6 +94,12 @@ describe('ConnectProjectComponent', () => {
     env.fixture.detectChanges();
     expect(env.component.state).toEqual('input');
 
+    // Simulate touching the control
+    env.component.paratextIdControl.markAsTouched();
+    expect(env.component.paratextIdControl.valid).toBe(true);
+    env.clickElement(env.submitButton);
+    expect(env.component.paratextIdControl.errors['required']).toBe(true);
+
     env.changeSelectValue(env.projectSelect, 'pt01');
 
     expect(env.settingsCard).toBeNull();
