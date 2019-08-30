@@ -234,7 +234,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return this.questionListDocs[id.toString()].data.questions.filter(q => q.isArchived !== true).length;
   }
 
-  questionCountLabel(count: number): string {
+  questionCountLabel(count: number, abbreviate = false): string {
+    if (abbreviate) {
+      return count ? count + ' Q' : '';
+    }
     return count ? count + ' questions' : '';
   }
 
@@ -290,7 +293,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count;
   }
 
-  answerCountLabel(count: number): string {
+  answerCountLabel(count: number, abbrev = false): string {
+    if (abbrev) {
+      return count ? count + ' A' : '';
+    }
     return count ? count + ' answers' : '';
   }
 

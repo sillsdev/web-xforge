@@ -35,9 +35,15 @@
             keyboard_arrow_{{ itemVisible[text.bookId] ? "down" : "right" }}
           </mdc-icon>
           <span fxFlex>{{ text?.name }}</span>
-          <span fxFlex="80px" fxLayoutAlign="end center">{{ questionCountLabel(bookQuestionCount(text)) }}</span>
-          <span fxFlex="80px" fxLayoutAlign="end center">{{ answerCountLabel(bookAnswerCount(text)) }}</span>
-          <span fxFlex="64px" fxLayoutAlign="end center">&nbsp;</span>
+          <span fxFlex="160px" fxShow fxHide.xs fxLayoutAlign="end center">
+            {{ questionCountLabel(bookQuestionCount(text)) }}&nbsp;&nbsp;&nbsp;&nbsp;
+            {{ answerCountLabel(bookAnswerCount(text)) }}
+          </span>
+          <span fxFlex="64px" fxHide fxShow.xs fxLayoutAlign="end center">
+            {{ questionCountLabel(bookQuestionCount(text), true) }}&nbsp;&nbsp;&nbsp;&nbsp;
+            {{ answerCountLabel(bookAnswerCount(text), true) }}
+          </span>
+          <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
         </div>
       </mdc-list-item>
       <ng-container *ngIf="itemVisible[text.bookId]">
@@ -56,13 +62,15 @@
                 keyboard_arrow_{{ itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)] ? "down" : "right" }}
               </mdc-icon>
               <span fxFlex>{{ text?.name + " " + chapter?.number }}</span>
-              <span fxFlex="80px" fxLayoutAlign="end center">
-                {{ questionCountLabel(questionCount(text.bookId, chapter.number)) }}
-              </span>
-              <span fxFlex="80px" fxLayoutAlign="end center">
+              <span fxFlex="160px" fxShow fxHide.xs fxLayoutAlign="end center">
+                {{ questionCountLabel(questionCount(text.bookId, chapter.number)) }}&nbsp;&nbsp;&nbsp;&nbsp;
                 {{ answerCountLabel(chapterAnswerCount(text.bookId, chapter.number)) }}
               </span>
-              <span fxFlex="64px" fxLayoutAlign="end center">&nbsp;</span>
+              <span fxFlex="64px" fxHide fxShow.xs fxLayoutAlign="end center">
+                {{ questionCountLabel(questionCount(text.bookId, chapter.number), true) }}&nbsp;&nbsp;&nbsp;&nbsp;
+                {{ answerCountLabel(chapterAnswerCount(text.bookId, chapter.number), true) }}
+              </span>
+              <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
             </div>
           </mdc-list-item>
           <ng-container *ngIf="itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)]">
@@ -82,7 +90,7 @@
                 <span fxFlex class="no-overflow-ellipsis">
                   <span *ngIf="question?.text">{{ question?.text }}</span>
                 </span>
-                <span fxFlex="80px" fxLayoutAlign="end center">
+                <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
                   {{ answerCountLabel(answerCount(text.bookId, chapter.number, question.id)) }}
                 </span>
                 <span fxFlex="64px" fxLayoutAlign="end center">
@@ -201,10 +209,13 @@
           <mdc-icon fxFlex="24px" mdcListItemMeta
             >keyboard_arrow_{{ itemVisibleArchived[text.bookId] ? "down" : "right" }}</mdc-icon
           ><span fxFlex>{{ text?.name }}</span>
-          <span fxFlex="80px" fxLayoutAlign="end center" class="archived-questions-count">{{
-            questionCountLabel(bookQuestionCount(text, true))
-          }}</span>
-          <span fxFlex="64px" fxLayoutAlign="end center">&nbsp;</span>
+          <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center" class="archived-questions-count">
+            {{ questionCountLabel(bookQuestionCount(text, true)) }}
+          </span>
+          <span fxFlex="64px" fxHide fxShow.xs fxLayoutAlign="end center">
+            {{ questionCountLabel(bookQuestionCount(text, true), true) }}
+          </span>
+          <span fxFlex="64px" fxHide fxShow.sx fxLayoutAlign="end center">&nbsp;</span>
         </div>
       </mdc-list-item>
       <ng-container *ngIf="itemVisibleArchived[text.bookId]">
