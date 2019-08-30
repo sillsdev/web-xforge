@@ -55,20 +55,16 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public async Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem,
-            IEnumerable<IDocument<QuestionList>> chapterQuestionsDocs,
-            IEnumerable<IDocument<CommentList>> chapterCommentsDocs)
+            IEnumerable<IDocument<QuestionList>> chapterQuestionsDocs)
         {
             var version = (string)oldNotesElem.Attribute("version");
             Dictionary<string, XElement> oldCommentElems = GetOldCommentElements(oldNotesElem);
 
             var notesElem = new XElement("notes", new XAttribute("version", version));
-            var chapterDocs = chapterQuestionsDocs.Zip(chapterCommentsDocs, (qs, cs) => (qs, cs));
-            foreach ((IDocument<QuestionList> questionsDoc, IDocument<CommentList> commentsDoc) in chapterDocs)
+            foreach (IDocument<QuestionList> questionsDoc in chapterQuestionsDocs)
             {
                 var answerSyncUserIds = new List<(int, int, string)>();
-                var commentSyncUserIds = new List<(int, string)>();
-                var commentsLookup = commentsDoc.Data.Comments.Select((c, i) => new { Comment = c, Index = i })
-                    .ToLookup(c => c.Comment.AnswerRef);
+                var commentSyncUserIds = new List<(int, int, int, string)>();
                 for (int i = 0; i < questionsDoc.Data.Questions.Count; i++)
                 {
                     Question question = questionsDoc.Data.Questions[i];
@@ -81,8 +77,8 @@ namespace SIL.XForge.Scripture.Services
                                 new XAttribute("verseRef", question.ScriptureStart.ToString()),
                                 new XAttribute("startPos", 0),
                                 new XAttribute("selectedText", "")));
-                        var contents = new List<object>();
-                        contents.Add(new XElement("span", new XAttribute("style", "bold"), question.Text));
+                        var answerPrefixContents = new List<object>();
+                        answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), question.Text));
                         if (!string.IsNullOrEmpty(answer.ScriptureText))
                         {
                             string scriptureRef = answer.ScriptureStart.ToString();
@@ -92,21 +88,21 @@ namespace SIL.XForge.Scripture.Services
                                 scriptureRef += $"-{answer.ScriptureEnd.Verse}";
                             }
                             string scriptureText = $"{answer.ScriptureText.Trim()} ({scriptureRef})";
-                            contents.Add(new XElement("span", new XAttribute("style", "italic"), scriptureText));
+                            answerPrefixContents.Add(new XElement("span", new XAttribute("style", "italic"),
+                                scriptureText));
                         }
-                        contents.Add(answer.Text);
                         string answerSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
-                            answer.OwnerRef, answer.SyncUserRef, (DateTime)answer.DateCreated, contents.ToArray());
+                            answer, answerPrefixContents);
                         if (answer.SyncUserRef == null)
                             answerSyncUserIds.Add((i, j, answerSyncUserId));
 
-                        foreach (var c in commentsLookup[answer.Id])
+                        for (int k = 0; k < answer.Comments.Count; k++)
                         {
+                            Comment comment = answer.Comments[k];
                             string commentSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
-                                c.Comment.OwnerRef, c.Comment.SyncUserRef, (DateTime)c.Comment.DateCreated,
-                                c.Comment.Text);
-                            if (c.Comment.SyncUserRef == null)
-                                commentSyncUserIds.Add((c.Index, commentSyncUserId));
+                                comment);
+                            if (comment.SyncUserRef == null)
+                                commentSyncUserIds.Add((i, j, k, commentSyncUserId));
                         }
                         if (threadElem.Elements("comment").Any())
                             notesElem.Add(threadElem);
@@ -114,15 +110,13 @@ namespace SIL.XForge.Scripture.Services
                 }
                 // set SyncUserRef property on answers and comments that need it
                 await questionsDoc.SubmitJson0OpAsync(op =>
-                    {
-                        foreach ((int questionIndex, int answerIndex, string syncUserId) in answerSyncUserIds)
-                            op.Set(cq => cq.Questions[questionIndex].Answers[answerIndex].SyncUserRef, syncUserId);
-                    });
-                await commentsDoc.SubmitJson0OpAsync(op =>
-                    {
-                        foreach ((int commentIndex, string syncUserId) in commentSyncUserIds)
-                            op.Set(cc => cc.Comments[commentIndex].SyncUserRef, syncUserId);
-                    });
+                {
+                    foreach ((int qIndex, int aIndex, string syncUserId) in answerSyncUserIds)
+                        op.Set(ql => ql.Questions[qIndex].Answers[aIndex].SyncUserRef, syncUserId);
+
+                    foreach ((int qIndex, int aIndex, int cIndex, string syncUserId) in commentSyncUserIds)
+                        op.Set(ql => ql.Questions[qIndex].Answers[aIndex].Comments[cIndex].SyncUserRef, syncUserId);
+                });
             }
 
             AddDeletedNotes(notesElem, oldCommentElems.Values);
@@ -154,25 +148,27 @@ namespace SIL.XForge.Scripture.Services
         }
 
         private async Task<string> AddCommentIfChangedAsync(Dictionary<string, XElement> oldCommentElems,
-            XElement threadElem, string ownerRef, string syncUserRef, DateTime dateCreated, params object[] content)
+            XElement threadElem, Comment comment, IReadOnlyList<object> prefixContent = null)
         {
-            (string syncUserId, string user, bool isParatextUser) = await GetSyncUserAsync(syncUserRef, ownerRef);
+            (string syncUserId, string user, bool isParatextUser) = await GetSyncUserAsync(comment.SyncUserRef,
+                comment.OwnerRef);
 
             var commentElem = new XElement("comment");
             commentElem.Add(new XAttribute("user", user));
             // if the user isn't a PT user, then set external user id
             if (!isParatextUser)
-                commentElem.Add(new XAttribute("extUser", ownerRef));
-            commentElem.Add(new XAttribute("date", dateCreated.ToString("o").Replace("Z", "+00:00")));
+                commentElem.Add(new XAttribute("extUser", comment.OwnerRef));
+            commentElem.Add(new XAttribute("date", comment.DateCreated.ToString("o").Replace("Z", "+00:00")));
             var contentElem = new XElement("content");
-            if (content.Length == 1)
+            if (prefixContent == null || prefixContent.Count == 0)
             {
-                contentElem.Add(content[0]);
+                contentElem.Add(comment.Text);
             }
             else
             {
-                foreach (object paraContent in content)
+                foreach (object paraContent in prefixContent)
                     contentElem.Add(new XElement("p", paraContent));
+                contentElem.Add(new XElement("p", comment.Text));
             }
             commentElem.Add(contentElem);
 

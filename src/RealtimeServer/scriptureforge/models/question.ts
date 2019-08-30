@@ -8,7 +8,7 @@ export interface Question extends OwnedData {
   scriptureEnd?: VerseRefData;
   text?: string;
   audioUrl?: string;
-  answers?: Answer[];
+  answers: Answer[];
   isArchived?: boolean;
   dateArchived?: string;
 }

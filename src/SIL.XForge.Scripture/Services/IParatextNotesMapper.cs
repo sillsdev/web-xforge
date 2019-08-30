@@ -13,7 +13,6 @@ namespace SIL.XForge.Scripture.Services
 
         void Init(UserSecret currentUserSecret, SFProjectSecret projectSecret);
         Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem,
-            IEnumerable<IDocument<QuestionList>> chapterQuestionsDocs,
-            IEnumerable<IDocument<CommentList>> chapterCommentsDocs);
+            IEnumerable<IDocument<QuestionList>> chapterQuestionsDocs);
     }
 }

@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
 {
-    public class Question
+    public class Question : IOwnedData
     {
         public string Id { get; set; }
         public string OwnerRef { get; set; }

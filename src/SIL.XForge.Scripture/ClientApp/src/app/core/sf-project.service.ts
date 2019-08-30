@@ -6,7 +6,6 @@ import { CommandService } from 'xforge-common/command.service';
 import { ProjectService } from 'xforge-common/project.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { MachineHttpClient } from './machine-http-client';
-import { CommentListDoc } from './models/comment-list-doc';
 import { QuestionListDoc } from './models/question-list-doc';
 import { SFProjectDoc } from './models/sf-project-doc';
 import { SF_PROJECT_ROLES } from './models/sf-project-role-info';
@@ -49,10 +48,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   getQuestionList(id: TextDocId): Promise<QuestionListDoc> {
     return this.realtimeService.get(QuestionListDoc.COLLECTION, id.toString());
-  }
-
-  getCommentList(id: TextDocId): Promise<CommentListDoc> {
-    return this.realtimeService.get(CommentListDoc.COLLECTION, id.toString());
   }
 
   onlineSync(id: string): Promise<void> {

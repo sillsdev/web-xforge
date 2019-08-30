@@ -89,11 +89,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
             Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
 
-            Assert.That(env.ContainsCommentList("MAT", 1), Is.True);
-            Assert.That(env.ContainsCommentList("MAT", 2), Is.True);
-            Assert.That(env.ContainsCommentList("MRK", 1), Is.True);
-            Assert.That(env.ContainsCommentList("MRK", 2), Is.True);
-
             await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
 
             SFProject project = env.GetProject();
@@ -124,11 +119,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestionList("MAT", 2), Is.True);
             Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
             Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
-
-            Assert.That(env.ContainsCommentList("MAT", 1), Is.True);
-            Assert.That(env.ContainsCommentList("MAT", 2), Is.True);
-            Assert.That(env.ContainsCommentList("MRK", 1), Is.True);
-            Assert.That(env.ContainsCommentList("MRK", 2), Is.True);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
 
@@ -161,11 +151,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
             Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
 
-            Assert.That(env.ContainsCommentList("MAT", 1), Is.True);
-            Assert.That(env.ContainsCommentList("MAT", 2), Is.True);
-            Assert.That(env.ContainsCommentList("MRK", 1), Is.True);
-            Assert.That(env.ContainsCommentList("MRK", 2), Is.True);
-
             await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
 
             SFProject project = env.GetProject();
@@ -196,11 +181,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestionList("MAT", 2), Is.True);
             Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
             Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
-
-            Assert.That(env.ContainsCommentList("MAT", 1), Is.True);
-            Assert.That(env.ContainsCommentList("MAT", 2), Is.True);
-            Assert.That(env.ContainsCommentList("MRK", 1), Is.True);
-            Assert.That(env.ContainsCommentList("MRK", 2), Is.True);
 
             await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
 
@@ -354,9 +334,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestionList("MAT", 3), Is.True);
             Assert.That(env.ContainsQuestionList("MRK", 2), Is.False);
 
-            Assert.That(env.ContainsCommentList("MAT", 3), Is.True);
-            Assert.That(env.ContainsCommentList("MRK", 2), Is.False);
-
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
@@ -385,11 +362,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestionList("MRK", 2), Is.False);
             Assert.That(env.ContainsQuestionList("LUK", 1), Is.True);
             Assert.That(env.ContainsQuestionList("LUK", 2), Is.True);
-
-            Assert.That(env.ContainsCommentList("MRK", 1), Is.False);
-            Assert.That(env.ContainsCommentList("MRK", 2), Is.False);
-            Assert.That(env.ContainsCommentList("LUK", 1), Is.True);
-            Assert.That(env.ContainsCommentList("LUK", 2), Is.True);
 
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
@@ -541,18 +513,6 @@ namespace SIL.XForge.Scripture.Services
                     .Get(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
             }
 
-            public bool ContainsCommentList(string bookId, int chapter)
-            {
-                return RealtimeService.GetRepository<CommentList>()
-                    .Contains(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
-            }
-
-            public CommentList GetCommentList(string bookId, int chapter)
-            {
-                return RealtimeService.GetRepository<CommentList>()
-                    .Get(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
-            }
-
             public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,
                 params Book[] books)
             {
@@ -613,7 +573,6 @@ namespace SIL.XForge.Scripture.Services
 
                 RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
                 RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<QuestionList>());
-                RealtimeService.AddRepository("comments", OTType.Json0, new MemoryRepository<CommentList>());
                 foreach (Book book in books)
                 {
                     AddSFBook(book.Id, book.TargetChapterCount, TextType.Target, changed);
@@ -630,8 +589,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 _notesMapper.GetNotesChangelistAsync(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<QuestionList>>>(),
-                    Arg.Any<IEnumerable<IDocument<CommentList>>>()).Returns(Task.FromResult(notesElem));
+                    Arg.Any<IEnumerable<IDocument<QuestionList>>>()).Returns(Task.FromResult(notesElem));
                 _notesMapper.NewSyncUsers.Returns(newSyncUsers);
             }
 
@@ -693,7 +651,6 @@ namespace SIL.XForge.Scripture.Services
                     RealtimeService.GetRepository<TextData>()
                         .Add(new TextData(Delta.New().InsertText(changed ? "changed" : "text")) { Id = id });
                     RealtimeService.GetRepository<QuestionList>().Add(new QuestionList { Id = id });
-                    RealtimeService.GetRepository<CommentList>().Add(new CommentList { Id = id });
                 }
             }
 

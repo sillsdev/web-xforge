@@ -3,7 +3,7 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
 {
-    public class SFProjectUserConfig : Json0Snapshot
+    public class SFProjectUserConfig : Json0Snapshot, IOwnedData
     {
         public static string GetDocId(string projectId, string userId)
         {

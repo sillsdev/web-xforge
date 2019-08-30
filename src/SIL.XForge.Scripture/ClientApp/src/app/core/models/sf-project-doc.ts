@@ -2,7 +2,6 @@ import { SF_PROJECTS_COLLECTION, SFProject } from 'realtime-server/lib/scripture
 import { ProjectDoc } from 'xforge-common/models/project-doc';
 import { RealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
-import { CommentListDoc } from './comment-list-doc';
 import { QuestionListDoc } from './question-list-doc';
 import { SFProjectUserConfigDoc } from './sf-project-user-config-doc';
 import { TextDoc } from './text-doc';
@@ -27,7 +26,6 @@ export class SFProjectDoc extends ProjectDoc<SFProject> {
     this.deleteProjectDocs(SFProjectUserConfigDoc.COLLECTION);
     this.deleteProjectDocs(TextDoc.COLLECTION);
     this.deleteProjectDocs(QuestionListDoc.COLLECTION);
-    this.deleteProjectDocs(CommentListDoc.COLLECTION);
   }
 
   private async deleteProjectDocs(collection: string): Promise<void> {

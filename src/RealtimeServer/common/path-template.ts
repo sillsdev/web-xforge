@@ -1,5 +1,8 @@
 import ShareDB = require('sharedb');
 
+export const ANY_KEY = '*';
+export const ANY_INDEX = -1;
+
 /**
  * This class represents the generic template for a path to a property in an object.
  */
@@ -15,11 +18,11 @@ export class PathTemplate {
     }
 
     for (let j = 0; j < this.template.length; j++) {
-      if (this.template[j] === -1) {
+      if (this.template[j] === ANY_INDEX) {
         if (typeof path[j] !== 'number') {
           return false;
         }
-      } else if (this.template[j] !== '*' && this.template[j] !== path[j]) {
+      } else if (this.template[j] !== ANY_KEY && this.template[j] !== path[j]) {
         return false;
       }
     }

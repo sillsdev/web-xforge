@@ -6,7 +6,7 @@ export enum SFProjectDomain {
   ProjectUserConfigs = 1100,
   Questions = 1200,
   Answers = 1300,
-  Comments = 1400,
+  AnswerComments = 1400,
   Likes = 1500
 }
 
@@ -26,7 +26,7 @@ export class SFProjectRights extends ProjectRights {
 
       { projectDomain: SFProjectDomain.Answers, operation: Operation.View },
 
-      { projectDomain: SFProjectDomain.Comments, operation: Operation.View },
+      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.View },
 
       { projectDomain: SFProjectDomain.Likes, operation: Operation.View }
     ];
@@ -37,9 +37,9 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Answers, operation: Operation.EditOwn },
       { projectDomain: SFProjectDomain.Answers, operation: Operation.DeleteOwn },
 
-      { projectDomain: SFProjectDomain.Comments, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.Comments, operation: Operation.EditOwn },
-      { projectDomain: SFProjectDomain.Comments, operation: Operation.DeleteOwn },
+      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.EditOwn },
+      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.DeleteOwn },
 
       { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn }
@@ -61,8 +61,8 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Answers, operation: Operation.Edit },
       { projectDomain: SFProjectDomain.Answers, operation: Operation.Delete },
 
-      { projectDomain: SFProjectDomain.Comments, operation: Operation.Edit },
-      { projectDomain: SFProjectDomain.Comments, operation: Operation.Delete }
+      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Edit },
+      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Delete }
     ]);
     this.addRights(SFProjectRole.ParatextAdministrator, administratorRights);
   }
