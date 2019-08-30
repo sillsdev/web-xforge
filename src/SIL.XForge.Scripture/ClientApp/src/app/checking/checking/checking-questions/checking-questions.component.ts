@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import sortBy from 'lodash/sortBy';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
@@ -19,7 +20,6 @@ import { CheckingUtils } from '../../checking.utils';
 export class CheckingQuestionsComponent extends SubscriptionDisposable {
   @Input() project: SFProject;
   @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
-  @Input() comments: Readonly<Comment[]> = [];
   @Output() update: EventEmitter<Question> = new EventEmitter<Question>();
   @Output() changed: EventEmitter<Question> = new EventEmitter<Question>();
   _questions: Readonly<Question[]> = [];
@@ -72,14 +72,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     }
   }
 
-  getAnswerComments(answer: Answer): Comment[] {
-    return this.comments
-      .filter(comment => comment.answerRef === answer.id)
-      .sort((a: Comment, b: Comment) => {
-        return new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime();
-      });
-  }
-
   getUnreadAnswers(question: Question): number {
     let unread = 0;
     if (!this.isAdministrator && !this.project.usersSeeEachOthersResponses) {
@@ -91,7 +83,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       }
     }
     for (const answer of this.getAnswers(question)) {
-      for (const comment of this.getAnswerComments(answer)) {
+      for (const comment of answer.comments) {
         if (!this.hasUserReadComment(comment)) {
           unread++;
         }
@@ -111,7 +103,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
             if (!this.hasUserReadAnswer(answer)) {
               op.add(puc => puc.answerRefsRead, answer.id);
             }
-            const comments = this.getAnswerComments(answer);
+            const comments = sortBy(answer.comments, c => c.dateCreated);
             let readLimit = 3;
             if (comments.length > 3) {
               readLimit = 2;

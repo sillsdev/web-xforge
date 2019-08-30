@@ -3,7 +3,6 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angu
 import { AbstractControl, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
-import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -58,7 +57,6 @@ export class CheckingAnswersComponent implements OnInit {
     this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
   }
   @Input() checkingTextComponent: CheckingTextComponent;
-  @Input() comments: Readonly<Comment[]> = [];
   @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
   @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
 
@@ -213,14 +211,6 @@ export class CheckingAnswersComponent implements OnInit {
 
   updateScriptureEndEnabled() {
     this.scriptureStart.valid ? this.scriptureEnd.enable() : this.scriptureEnd.disable();
-  }
-
-  getComments(answer: Answer): Comment[] {
-    return this.comments
-      .filter(comment => comment.answerRef === answer.id)
-      .sort((a: Comment, b: Comment) => {
-        return new Date(a.dateCreated).getTime() - new Date(b.dateCreated).getTime();
-      });
   }
 
   hasPermission(answer: Answer, permission: string): boolean {

@@ -33,7 +33,6 @@ import { ShareComponent } from 'xforge-common/share/share.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { CommentListDoc } from '../../core/models/comment-list-doc';
 import { QuestionListDoc } from '../../core/models/question-list-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -94,12 +93,10 @@ describe('CheckingComponent', () => {
       env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(1);
       expect(Object.keys(env.component.checkingData.questionListDocs).length).toEqual(2);
-      expect(Object.keys(env.component.checkingData.commentListDocs).length).toEqual(2);
       env.component.projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles[env.checkerUser.id]), false);
       env.waitForSliderUpdate();
       expect(env.component.projectDoc).toBeNull();
       expect(Object.keys(env.component.checkingData.questionListDocs).length).toEqual(0);
-      expect(Object.keys(env.component.checkingData.commentListDocs).length).toEqual(0);
       env.waitForSliderUpdate();
     }));
   });
@@ -451,13 +448,17 @@ describe('CheckingComponent', () => {
         const comment: Comment = {
           id: objectId(),
           ownerRef: env.adminUser.id,
-          answerRef: env.component.questionsPanel.activeQuestion.answers[0].id,
           text: 'Comment left by admin',
           dateCreated: date,
           dateModified: date
         };
-        env.component.checkingData.commentListDocs[textDocId.toString()].submitJson0Op(
-          op => op.insert(cl => cl.comments, 0, comment),
+        env.component.checkingData.questionListDocs[textDocId.toString()].submitJson0Op(
+          op =>
+            op.insert(
+              ql => ql.questions[env.component.questionsPanel.activeQuestionIndex].answers[0].comments,
+              0,
+              comment
+            ),
           false
         );
         env.waitForSliderUpdate();
@@ -893,56 +894,55 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateNow,
       dateModified: dateNow,
-      audioUrl: 'file://audio.mp3'
+      audioUrl: 'file://audio.mp3',
+      comments: []
     });
+
+    const a7Comments: Comment[] = [];
+    for (let commentNumber = 1; commentNumber <= 3; commentNumber++) {
+      a7Comments.push({
+        id: 'c' + commentNumber + 'Id',
+        ownerRef: this.adminUser.id,
+        text: 'Comment ' + commentNumber + ' on question 7',
+        dateCreated: dateNow,
+        dateModified: dateNow
+      });
+    }
     questionData1[6].answers.push({
       id: 'a7Id',
       ownerRef: this.adminUser.id,
       text: 'Answer 7 on question',
       likes: [],
       dateCreated: dateNow,
-      dateModified: dateNow
+      dateModified: dateNow,
+      comments: a7Comments
     });
+
+    const a8Comments: Comment[] = [];
+    for (let commentNumber = 1; commentNumber <= 4; commentNumber++) {
+      a8Comments.push({
+        id: 'c' + commentNumber + 'Id',
+        ownerRef: this.checkerUser.id,
+        text: 'Comment ' + commentNumber + ' on question 8',
+        dateCreated: dateNow,
+        dateModified: dateNow
+      });
+    }
     questionData1[7].answers.push({
       id: 'a8Id',
       ownerRef: this.adminUser.id,
       text: 'Answer 8 on question',
       likes: [],
       dateCreated: dateNow,
-      dateModified: dateNow
+      dateModified: dateNow,
+      comments: a8Comments
     });
-    const commentData: Comment[] = [];
-    for (let commentNumber = 1; commentNumber <= 3; commentNumber++) {
-      commentData.push({
-        id: 'c' + commentNumber + 'Id',
-        ownerRef: this.adminUser.id,
-        answerRef: 'a7Id',
-        text: 'Comment ' + commentNumber + ' on question 7',
-        dateCreated: dateNow,
-        dateModified: dateNow
-      });
-    }
-    for (let commentNumber = 1; commentNumber <= 4; commentNumber++) {
-      commentData.push({
-        id: 'c' + commentNumber + 'Id',
-        ownerRef: this.checkerUser.id,
-        answerRef: 'a8Id',
-        text: 'Comment ' + commentNumber + ' on question 8',
-        dateCreated: dateNow,
-        dateModified: dateNow
-      });
-    }
+
     when(this.mockedProjectService.getQuestionList(deepEqual(text1_1id))).thenResolve(
       this.createQuestionListDoc(text1_1id, questionData1)
     );
-    when(this.mockedProjectService.getCommentList(deepEqual(text1_1id))).thenResolve(
-      this.createCommentListDoc(text1_1id, commentData)
-    );
     when(this.mockedProjectService.getQuestionList(deepEqual(text1_2id))).thenResolve(
       this.createQuestionListDoc(text1_2id, questionData2)
-    );
-    when(this.mockedProjectService.getCommentList(deepEqual(text1_2id))).thenResolve(
-      this.createCommentListDoc(text1_2id, [])
     );
     when(this.mockedUserService.currentUserId).thenReturn(user.id);
     when(this.mockedUserService.getCurrentUser()).thenResolve(this.createUserDoc(user));
@@ -999,11 +999,6 @@ class TestEnvironment {
   private createQuestionListDoc(id: TextDocId, data: Question[]): QuestionListDoc {
     const adapter = new MemoryRealtimeDocAdapter(id.toString(), OTJson0.type, { questions: data });
     return new QuestionListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
-  }
-
-  private createCommentListDoc(id: TextDocId, data: Comment[]): CommentListDoc {
-    const adapter = new MemoryRealtimeDocAdapter(id.toString(), OTJson0.type, { comments: data });
-    return new CommentListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 
   private createTextDoc(): TextDoc {

@@ -26,7 +26,6 @@
                 (update)="questionUpdated($event)"
                 (changed)="questionChanged($event)"
                 [questions]="publicQuestions"
-                [comments]="comments"
                 [project]="projectDoc?.data"
                 [projectUserConfigDoc]="projectUserConfigDoc"
               ></app-checking-questions>
@@ -95,7 +94,6 @@
                     [project]="projectDoc?.data"
                     [projectText]="text"
                     [question]="questionsPanel.activeQuestion"
-                    [comments]="comments"
                     [projectUserConfigDoc]="projectUserConfigDoc"
                     (action)="answerAction($event)"
                     (commentAction)="commentAction($event)"
