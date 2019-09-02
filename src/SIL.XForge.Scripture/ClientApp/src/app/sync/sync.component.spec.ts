@@ -115,7 +115,7 @@ class TestEnvironment {
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
     this.project = {
-      projectName: 'Sync Test Project',
+      name: 'Sync Test Project',
       paratextId: 'pt01',
       sync: {
         queuedCount: isInProgress ? 1 : 0,

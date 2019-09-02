@@ -532,7 +532,7 @@ class TestEnvironment {
   };
 
   private testProject: SFProject = {
-    projectName: 'Project 01',
+    name: 'Project 01',
     usersSeeEachOthersResponses: true,
     checkingEnabled: true,
     shareEnabled: true,

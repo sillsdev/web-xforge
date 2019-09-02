@@ -3,7 +3,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { distanceInWordsToNow } from 'date-fns';
 import cloneDeep from 'lodash/cloneDeep';
-import { Question, QuestionSource } from 'realtime-server/lib/scriptureforge/models/question';
+import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo, TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Subscription } from 'rxjs';
@@ -421,7 +421,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           const questionsDoc = await this.projectService.getQuestionList(id);
           newQuestion.id = newQuestionId;
           newQuestion.ownerRef = this.userService.currentUserId;
-          newQuestion.source = QuestionSource.Created;
           newQuestion.answers = [];
           await questionsDoc.submitJson0Op(op => op.insert(cq => cq.questions, 0, newQuestion));
         }

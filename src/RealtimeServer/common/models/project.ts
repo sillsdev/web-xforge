@@ -2,7 +2,7 @@ import { InputSystem } from './input-system';
 import { SharingLevel } from './sharing-level';
 
 export interface Project {
-  projectName?: string;
+  name?: string;
   inputSystem?: InputSystem;
   shareEnabled?: boolean;
   shareLevel?: SharingLevel;

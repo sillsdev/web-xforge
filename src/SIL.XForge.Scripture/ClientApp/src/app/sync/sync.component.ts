@@ -63,7 +63,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   get projectName(): string {
-    return this.projectDoc == null ? '' : this.projectDoc.data.projectName;
+    return this.projectDoc == null ? '' : this.projectDoc.data.name;
   }
 
   ngOnInit() {

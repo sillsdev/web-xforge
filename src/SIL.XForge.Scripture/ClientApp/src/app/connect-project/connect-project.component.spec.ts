@@ -340,12 +340,11 @@ describe('ConnectProjectComponent', () => {
     env.emitSyncComplete();
 
     const project: SFProject = {
-      projectName: 'Target',
+      name: 'Target',
       paratextId: 'pt01',
       inputSystem: {
         tag: 'en',
         languageName: 'English',
-        abbreviation: 'en',
         isRightToLeft: false
       },
       checkingEnabled: true,
@@ -355,8 +354,7 @@ describe('ConnectProjectComponent', () => {
       sourceInputSystem: {
         languageName: 'Spanish',
         tag: 'es',
-        isRightToLeft: false,
-        abbreviation: 'es'
+        isRightToLeft: false
       }
     };
     verify(env.mockedSFProjectService.onlineCreate(deepEqual(project))).once();
@@ -397,12 +395,11 @@ describe('ConnectProjectComponent', () => {
     env.emitSyncComplete();
 
     const project: SFProject = {
-      projectName: 'Target',
+      name: 'Target',
       paratextId: 'pt01',
       inputSystem: {
         tag: 'en',
         languageName: 'English',
-        abbreviation: 'en',
         isRightToLeft: false
       },
       checkingEnabled: false,

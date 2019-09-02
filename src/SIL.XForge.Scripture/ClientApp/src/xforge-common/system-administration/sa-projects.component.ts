@@ -22,7 +22,7 @@ class Row {
   }
 
   get name(): string {
-    return this.projectDoc.data.projectName;
+    return this.projectDoc.data.name;
   }
 
   get tasks(): string {
@@ -122,7 +122,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
 
   private getQueryParameters(): QueryParameters {
     return {
-      sort: { projectName: 1 },
+      sort: { name: 1 },
       skip: this.pageIndex * this.pageSize,
       limit: this.pageSize
     };

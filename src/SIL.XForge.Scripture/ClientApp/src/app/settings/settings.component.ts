@@ -115,7 +115,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   openDeleteProjectDialog(): void {
     const config: MdcDialogConfig = {
-      data: { name: this.projectDoc.data.projectName }
+      data: { name: this.projectDoc.data.name }
     };
     const dialogRef = this.dialog.open(DeleteProjectDialogComponent, config);
     dialogRef.afterClosed().subscribe(async result => {

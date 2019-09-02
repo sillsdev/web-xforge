@@ -264,7 +264,7 @@ class TestEnvironment {
     );
 
     this.project01Doc = this.addProject('project01', {
-      projectName: 'project01',
+      name: 'project01',
       checkingEnabled: true,
       userRoles: { user01: SFProjectRole.ParatextTranslator },
       texts: [
@@ -273,7 +273,7 @@ class TestEnvironment {
       ]
     });
     this.addProject('project02', {
-      projectName: 'project02',
+      name: 'project02',
       checkingEnabled: true,
       userRoles: { user01: SFProjectRole.CommunityChecker },
       texts: [
@@ -282,7 +282,7 @@ class TestEnvironment {
       ]
     });
     this.addProject('project03', {
-      projectName: 'project03',
+      name: 'project03',
       checkingEnabled: true,
       userRoles: { user01: SFProjectRole.CommunityChecker },
       texts: [
@@ -291,7 +291,7 @@ class TestEnvironment {
       ]
     });
     this.project04Doc = this.addProject('project04', {
-      projectName: 'project04',
+      name: 'project04',
       checkingEnabled: true,
       userRoles: {},
       texts: [

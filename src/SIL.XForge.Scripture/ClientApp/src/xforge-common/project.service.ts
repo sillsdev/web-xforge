@@ -51,7 +51,7 @@ export abstract class ProjectService<
       switchMap(([term, parameters]) => {
         const query = {
           $or: [
-            { projectName: { $regex: `.*${term}.*`, $options: 'i' } },
+            { name: { $regex: `.*${term}.*`, $options: 'i' } },
             { 'inputSystem.languageName': { $regex: `.*${term}.*`, $options: 'i' } }
           ]
         };

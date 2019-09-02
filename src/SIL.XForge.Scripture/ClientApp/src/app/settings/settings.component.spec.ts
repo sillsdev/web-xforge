@@ -184,7 +184,7 @@ describe('SettingsComponent', () => {
       it('should not save Translation Suggestions enable if Based On not set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          projectName: 'project01',
+          name: 'project01',
           checkingEnabled: true,
           usersSeeEachOthersResponses: false,
           shareEnabled: false,
@@ -212,7 +212,7 @@ describe('SettingsComponent', () => {
       it('should save Translation Suggestions disable if Based On not set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          projectName: 'project01',
+          name: 'project01',
           checkingEnabled: true,
           usersSeeEachOthersResponses: false,
           shareEnabled: false,
@@ -233,7 +233,7 @@ describe('SettingsComponent', () => {
       it('should save Translation Suggestions and Based On when Based On set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          projectName: 'project01',
+          name: 'project01',
           checkingEnabled: true,
           usersSeeEachOthersResponses: false,
           shareEnabled: false,
@@ -296,7 +296,7 @@ describe('SettingsComponent', () => {
       it('share level should be disabled if share set to false', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          projectName: 'project01',
+          name: 'project01',
           checkingEnabled: true,
           usersSeeEachOthersResponses: false,
           shareEnabled: true,
@@ -498,7 +498,7 @@ class TestEnvironment {
     const oce = this.overlayContainer.getContainerElement();
     if (confirm) {
       const projectInput: HTMLInputElement = oce.querySelector('#project-entry').querySelector('input');
-      projectInput.value = this.projectDoc.data.projectName;
+      projectInput.value = this.projectDoc.data.name;
       projectInput.dispatchEvent(new Event('input'));
       button = this.confirmDeleteBtn;
     } else {
@@ -558,7 +558,6 @@ class TestEnvironment {
       sourceInputSystem: {
         languageName: 'unspecified',
         tag: 'qaa',
-        abbreviation: 'qaa',
         isRightToLeft: false
       }
     }
