@@ -15,7 +15,7 @@ import { XFValidators } from '../xfvalidators';
 export class ShareControlComponent {
   @Input() readonly projectId: string;
   @Input() readonly isLinkSharingEnabled: boolean;
-  @ViewChild('shareLinkField') shareLinkField: MdcTextField;
+  @ViewChild('shareLinkField', { static: false }) shareLinkField: MdcTextField;
 
   sendInviteForm: FormGroup = new FormGroup({
     email: new FormControl('', [XFValidators.email])

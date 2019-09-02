@@ -48,7 +48,7 @@ export interface QuestionDialogResult {
   styleUrls: ['./question-dialog.component.scss']
 })
 export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit {
-  @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent: CheckingAudioCombinedComponent;
+  @ViewChild(CheckingAudioCombinedComponent, { static: true }) audioCombinedComponent: CheckingAudioCombinedComponent;
   modeLabel = this.data && this.data.editMode ? 'Edit' : 'New';
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   questionForm: FormGroup = new FormGroup(

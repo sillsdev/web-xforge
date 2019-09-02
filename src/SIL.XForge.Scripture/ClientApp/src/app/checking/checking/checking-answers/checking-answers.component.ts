@@ -46,7 +46,7 @@ export interface AnswerAction {
   styleUrls: ['./checking-answers.component.scss']
 })
 export class CheckingAnswersComponent implements OnInit {
-  @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent: CheckingAudioCombinedComponent;
+  @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent: CheckingAudioCombinedComponent;
   @Input() project: SFProject;
   @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
   @Input() projectText: TextInfo;

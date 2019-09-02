@@ -24,16 +24,13 @@ import {
 import { NgModule } from '@angular/core';
 import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import {
-  MatFormFieldModule,
-  MatOptionModule,
-  MatPaginatorModule,
-  MatProgressSpinnerModule,
-  MatSelectModule,
-  MatTableModule
-} from '@angular/material';
+import { MatOptionModule } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTableModule } from '@angular/material/table';
 import { ChartsModule } from 'ng2-charts';
-
 import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 

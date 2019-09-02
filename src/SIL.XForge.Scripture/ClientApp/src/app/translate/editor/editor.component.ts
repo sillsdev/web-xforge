@@ -55,10 +55,10 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   showTrainingProgress: boolean = false;
   textHeight: string = '';
 
-  @ViewChild('targetContainer') targetContainer: ElementRef;
-  @ViewChild('source') source: TextComponent;
-  @ViewChild('target') target: TextComponent;
-  @ViewChild('suggestionsMenuButton') suggestionsMenuButton: MdcIconButton;
+  @ViewChild('targetContainer', { static: true }) targetContainer: ElementRef;
+  @ViewChild('source', { static: true }) source: TextComponent;
+  @ViewChild('target', { static: true }) target: TextComponent;
+  @ViewChild('suggestionsMenuButton', { static: false }) suggestionsMenuButton: MdcIconButton;
 
   private translationEngine: RemoteTranslationEngine;
   private isTranslating: boolean = false;
