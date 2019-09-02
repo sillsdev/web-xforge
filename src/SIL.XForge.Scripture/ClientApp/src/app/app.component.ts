@@ -80,7 +80,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return encodeURI(environment.helps);
   }
 
-  @ViewChild('topAppBar')
+  @ViewChild('topAppBar', { static: true })
   set topAppBar(value: MdcTopAppBar) {
     this._topAppBar = value;
     this.setTopAppBarVariant();
@@ -90,7 +90,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this._projectSelect;
   }
 
-  @ViewChild(MdcSelect)
+  @ViewChild(MdcSelect, { static: false })
   set projectSelect(value: MdcSelect) {
     this._projectSelect = value;
     if (this._projectSelect != null) {

@@ -7,7 +7,7 @@ import { ChapterNavComponent } from './chapter-nav/chapter-nav.component';
 import { TextComponent } from './text/text.component';
 
 @NgModule({
-  imports: [CommonModule, QuillModule, UICommonModule],
+  imports: [CommonModule, QuillModule.forRoot(), UICommonModule],
   declarations: [TextComponent, ChapterNavComponent],
   exports: [TextComponent, ChapterNavComponent]
 })

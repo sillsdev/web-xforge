@@ -55,7 +55,7 @@ export abstract class ProjectService<
             { 'inputSystem.languageName': { $regex: `.*${term}.*`, $options: 'i' } }
           ]
         };
-        return this.realtimeService.onlineQuery(this.collection, query, parameters);
+        return this.realtimeService.onlineQuery<TDoc>(this.collection, query, parameters);
       })
     );
   }
