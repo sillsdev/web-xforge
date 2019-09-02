@@ -72,6 +72,7 @@ namespace SIL.XForge.Scripture.Services
                                 {
                                     ChapterEnded(chapterDeltas, chapterDelta, curChapter, lastVerse, curRef,
                                         topLevelVerses);
+                                    nextIds.Clear();
                                     chapterDelta = new Delta();
                                 }
                                 curRef = null;

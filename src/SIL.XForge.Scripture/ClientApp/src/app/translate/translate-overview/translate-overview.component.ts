@@ -1,11 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
+import { Operation } from 'realtime-server/lib/common/models/project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Subscription } from 'rxjs';
 import { filter, map, repeat, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { TextDocId } from '../../core/models/text-doc-id';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -54,7 +57,8 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
     noticeService: NoticeService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    private readonly userService: UserService
   ) {
     super(noticeService);
     this.engineQualityStars = [];
@@ -65,6 +69,14 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   get translationSuggestionsEnabled(): boolean {
     return this.projectDoc != null && this.projectDoc.isLoaded && this.projectDoc.data.translationSuggestionsEnabled;
+  }
+
+  get canEditTexts(): boolean {
+    if (this.projectDoc == null || !this.projectDoc.isLoaded) {
+      return false;
+    }
+    const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
+    return SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit });
   }
 
   ngOnInit(): void {
@@ -139,7 +151,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       this.trainingSub = undefined;
     }
     this.translationEngine = undefined;
-    if (!this.translationSuggestionsEnabled) {
+    if (!this.translationSuggestionsEnabled || !this.canEditTexts) {
       return;
     }
 

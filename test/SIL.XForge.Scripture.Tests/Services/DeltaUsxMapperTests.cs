@@ -515,12 +515,19 @@ namespace SIL.XForge.Scripture.Services
                     Verse("2")),
                 Para("s"),
                 Para("p",
+                    Verse("3")),
+                Chapter("2"),
+                Para("p",
+                    Verse("1"),
+                    Verse("2")),
+                Para("s"),
+                Para("p",
                     Verse("3")));
 
             var mapper = new DeltaUsxMapper();
             IReadOnlyDictionary<int, (Delta Delta, int LastVerse)> newDeltas = mapper.ToChapterDeltas(usxElem);
 
-            var expected = Delta.New()
+            var expectedChapter1 = Delta.New()
                 .InsertText("Philemon", "mt_1")
                 .InsertPara("mt")
                 .InsertChapter("1")
@@ -535,8 +542,24 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("verse_1_3")
                 .InsertPara("p");
 
-            Assert.IsTrue(newDeltas[1].Delta.DeepEquals(expected));
+            var expectedChapter2 = Delta.New()
+                .InsertChapter("2")
+                .InsertVerse("1")
+                .InsertBlank("verse_2_1")
+                .InsertVerse("2")
+                .InsertBlank("verse_2_2")
+                .InsertPara("p")
+                .InsertBlank("s_1")
+                .InsertPara("s")
+                .InsertVerse("3")
+                .InsertBlank("verse_2_3")
+                .InsertPara("p");
+
+            Assert.That(newDeltas.Count, Is.EqualTo(2));
+            Assert.IsTrue(newDeltas[1].Delta.DeepEquals(expectedChapter1));
             Assert.That(newDeltas[1].LastVerse, Is.EqualTo(3));
+            Assert.IsTrue(newDeltas[2].Delta.DeepEquals(expectedChapter2));
+            Assert.That(newDeltas[2].LastVerse, Is.EqualTo(3));
         }
 
         [Test]

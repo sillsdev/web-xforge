@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { canTranslate } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 
 @Component({
@@ -61,7 +61,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
             const projectRole = project.userRoles[this.userService.currentUserId];
             // the user has not navigated anywhere before, so navigate to the default location in the first enabled task
             let task: string;
-            if (canTranslate(projectRole)) {
+            if (projectRole !== SFProjectRole.CommunityChecker) {
               task = 'translate';
             } else if (project.checkingEnabled != null && project.checkingEnabled) {
               task = 'checking';

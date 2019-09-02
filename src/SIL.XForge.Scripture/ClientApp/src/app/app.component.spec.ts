@@ -53,7 +53,7 @@ describe('AppComponent', () => {
     expect(env.currentProjectId).toEqual('project02');
   }));
 
-  it('hide translate task for reviewers', fakeAsync(() => {
+  it('hide translate tool for community checkers', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project03']);
     env.init();
@@ -66,7 +66,7 @@ describe('AppComponent', () => {
     expect(env.currentProjectId).toEqual('project03');
   }));
 
-  it('expand/collapse task', fakeAsync(() => {
+  it('expand/collapse tool', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project01']);
     env.init();
@@ -275,7 +275,7 @@ class TestEnvironment {
     this.addProject('project02', {
       projectName: 'project02',
       checkingEnabled: true,
-      userRoles: { user01: SFProjectRole.Reviewer },
+      userRoles: { user01: SFProjectRole.CommunityChecker },
       texts: [
         { bookId: 'text03', name: 'Book 3', hasSource: false },
         { bookId: 'text04', name: 'Book 4', hasSource: false }
@@ -284,7 +284,7 @@ class TestEnvironment {
     this.addProject('project03', {
       projectName: 'project03',
       checkingEnabled: true,
-      userRoles: { user01: SFProjectRole.Reviewer },
+      userRoles: { user01: SFProjectRole.CommunityChecker },
       texts: [
         { bookId: 'text05', name: 'Book 5', hasSource: true },
         { bookId: 'text06', name: 'Book 6', hasSource: true }
@@ -428,7 +428,10 @@ class TestEnvironment {
   }
 
   addUserToProject04(): void {
-    this.project04Doc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.Reviewer), false);
+    this.project04Doc.submitJson0Op(
+      op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker),
+      false
+    );
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
   }
 

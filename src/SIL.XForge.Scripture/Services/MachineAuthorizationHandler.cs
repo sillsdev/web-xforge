@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using SIL.Machine.WebApi.Models;
+using SIL.XForge.Realtime;
+using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
@@ -12,11 +14,11 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class MachineAuthorizationHandler : IAuthorizationHandler
     {
-        private readonly ISFProjectService _projectService;
+        private readonly IRealtimeService _realtimeService;
 
-        public MachineAuthorizationHandler(ISFProjectService projectService)
+        public MachineAuthorizationHandler(IRealtimeService realtimeService)
         {
-            _projectService = projectService;
+            _realtimeService = realtimeService;
         }
 
         public async Task HandleAsync(AuthorizationHandlerContext context)
@@ -33,12 +35,17 @@ namespace SIL.XForge.Scripture.Services
             }
             if (projectId != null)
             {
-                string userId = context.User.FindFirst(XFClaimTypes.UserId)?.Value;
-                if (await _projectService.IsAuthorizedAsync(userId, projectId))
+                Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+                if (attempt.TryResult(out SFProject project))
                 {
-                    List<IAuthorizationRequirement> pendingRequirements = context.PendingRequirements.ToList();
-                    foreach (IAuthorizationRequirement requirement in pendingRequirements)
-                        context.Succeed(requirement);
+                    string userId = context.User.FindFirst(XFClaimTypes.UserId)?.Value;
+                    if (project.UserRoles.TryGetValue(userId, out string role)
+                        && (role == SFProjectRole.Administrator || role == SFProjectRole.Translator))
+                    {
+                        List<IAuthorizationRequirement> pendingRequirements = context.PendingRequirements.ToList();
+                        foreach (IAuthorizationRequirement requirement in pendingRequirements)
+                            context.Succeed(requirement);
+                    }
                 }
             }
         }

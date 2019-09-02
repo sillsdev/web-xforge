@@ -7,6 +7,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
 import * as OTJson0 from 'ot-json0';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -14,6 +15,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc-id';
@@ -38,6 +40,15 @@ describe('TranslateOverviewComponent', () => {
   describe('Engine Card', () => {
     it('should be hidden when translation suggestions disabled', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.setupProjectData(false);
+      env.wait();
+
+      expect(env.engineCard).toBeNull();
+    }));
+
+    it('should be hidden when user cannot edit texts', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser('user02');
       env.setupProjectData(false);
       env.wait();
 
@@ -90,6 +101,7 @@ class TestEnvironment {
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
   readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+  readonly mockedUserService = mock(UserService);
 
   readonly component: TranslateOverviewComponent;
   readonly fixture: ComponentFixture<TranslateOverviewComponent>;
@@ -104,13 +116,15 @@ class TestEnvironment {
     );
     when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
+    this.setCurrentUser();
     TestBed.configureTestingModule({
       declarations: [TranslateOverviewComponent],
       imports: [RouterTestingModule, UICommonModule],
       providers: [
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
+        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
       ]
     });
 
@@ -152,6 +166,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.engine-card'));
   }
 
+  setCurrentUser(userId: string = 'user01'): void {
+    when(this.mockedUserService.currentUserId).thenReturn(userId);
+  }
+
   wait(): void {
     this.fixture.detectChanges();
     tick();
@@ -169,6 +187,10 @@ class TestEnvironment {
 
   setupProjectData(translationSuggestionsEnabled: boolean = true): void {
     const project: SFProject = {
+      userRoles: {
+        user01: SFProjectRole.ParatextTranslator,
+        user02: SFProjectRole.ParatextConsultant
+      },
       translationSuggestionsEnabled,
       texts: [
         { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
