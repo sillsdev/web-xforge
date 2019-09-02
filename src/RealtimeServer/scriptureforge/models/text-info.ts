@@ -3,8 +3,8 @@ export interface TextsByBook {
 }
 
 export interface Chapter {
-  number?: number;
-  lastVerse?: number;
+  number: number;
+  lastVerse: number;
 }
 
 /** Documents in the texts collection in the database represent the metadata
@@ -13,7 +13,7 @@ export interface Chapter {
  * book in a given SF site project. */
 export interface TextInfo {
   bookId: string;
-  name?: string;
-  hasSource?: boolean;
-  chapters?: Chapter[];
+  name: string;
+  hasSource: boolean;
+  chapters: Chapter[];
 }

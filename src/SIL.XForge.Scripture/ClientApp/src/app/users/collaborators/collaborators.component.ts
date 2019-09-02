@@ -1,19 +1,24 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
-import { User } from 'realtime-server/lib/common/models/user';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { DataLoadingComponent } from '../../data-loading-component';
-import { ProjectDoc } from '../../models/project-doc';
-import { NoticeService } from '../../notice.service';
-import { ProjectService } from '../../project.service';
-import { UserService } from '../../user.service';
-import { XFValidators } from '../../xfvalidators';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { NoticeService } from 'xforge-common/notice.service';
+import { UserService } from 'xforge-common/user.service';
+import { XFValidators } from 'xforge-common/xfvalidators';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectService } from '../../core/sf-project.service';
+
+interface UserInfo {
+  displayName?: string;
+  avatarUrl?: string;
+  email?: string;
+}
 
 interface Row {
   readonly id: string;
-  readonly user: User;
+  readonly user: UserInfo;
   readonly roleName: string;
   readonly isInvitee: boolean;
 }
@@ -30,14 +35,14 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   pageIndex: number = 0;
   pageSize: number = 50;
 
-  private projectDoc: ProjectDoc;
+  private projectDoc: SFProjectDoc;
   private term: string;
   private _userRows: Row[];
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
     noticeService: NoticeService,
-    private readonly projectService: ProjectService,
+    private readonly projectService: SFProjectService,
     private readonly userService: UserService
   ) {
     super(noticeService);
@@ -51,8 +56,8 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     return (
       this.projectDoc &&
       this.projectDoc.data &&
-      this.projectDoc.data.shareEnabled &&
-      this.projectDoc.data.shareLevel === SharingLevel.Anyone
+      this.projectDoc.data.checkingConfig.shareEnabled &&
+      this.projectDoc.data.checkingConfig.shareLevel === CheckingShareLevel.Anyone
     );
   }
 
@@ -155,13 +160,16 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       tasks.push(
         this.userService
           .getProfile(userId)
-          .then(userDoc => (userRows[index] = { id: userDoc.id, user: userDoc.data, roleName, isInvitee: false }))
+          .then(
+            userProfileDoc =>
+              (userRows[index] = { id: userProfileDoc.id, user: userProfileDoc.data, roleName, isInvitee: false })
+          )
       );
     }
     const invitees: Row[] = (await this.projectService.onlineInvitedUsers(this.projectId)).map(invitee => {
       return {
         id: '',
-        user: { email: invitee } as User,
+        user: { email: invitee },
         roleName: '',
         isInvitee: true
       } as Row;

@@ -7,7 +7,5 @@ namespace SIL.XForge.Models
         public string Name { get; set; }
         public InputSystem InputSystem { get; set; } = new InputSystem();
         public Dictionary<string, string> UserRoles { get; set; } = new Dictionary<string, string>();
-        public bool ShareEnabled { get; set; } = true;
-        public string ShareLevel { get; set; } = SharingLevel.Specific;
     }
 }

@@ -68,7 +68,11 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   }
 
   get translationSuggestionsEnabled(): boolean {
-    return this.projectDoc != null && this.projectDoc.isLoaded && this.projectDoc.data.translationSuggestionsEnabled;
+    return (
+      this.projectDoc != null &&
+      this.projectDoc.isLoaded &&
+      this.projectDoc.data.translateConfig.translationSuggestionsEnabled
+    );
   }
 
   get canEditTexts(): boolean {

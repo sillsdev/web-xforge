@@ -137,8 +137,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return (
       this.selectedProjectDoc != null &&
       this.selectedProjectDoc.isLoaded &&
-      this.selectedProjectDoc.data.checkingEnabled != null &&
-      this.selectedProjectDoc.data.checkingEnabled
+      this.selectedProjectDoc.data.checkingConfig.checkingEnabled
     );
   }
 

@@ -9,9 +9,9 @@ import { JsonDocService } from './json-doc-service';
 export abstract class ProjectService<T extends Project = Project> extends JsonDocService<T> {
   protected abstract get projectAdminRole(): string;
   protected readonly immutableProps = [
-    this.createPathTemplate(p => p.shareEnabled!),
-    this.createPathTemplate(p => p.shareLevel!),
-    this.createPathTemplate(p => p.userRoles!)
+    this.createPathTemplate(p => p.name),
+    this.createPathTemplate(p => p.inputSystem),
+    this.createPathTemplate(p => p.userRoles)
   ];
 
   protected allowRead(_docId: string, doc: T, session: ConnectSession): boolean {

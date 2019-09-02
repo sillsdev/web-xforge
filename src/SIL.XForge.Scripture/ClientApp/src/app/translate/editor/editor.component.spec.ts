@@ -15,6 +15,7 @@ import {
   WordAlignmentMatrix
 } from '@sillsdev/machine';
 import cloneDeep from 'lodash/cloneDeep';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
@@ -692,14 +693,42 @@ class TestEnvironment {
 
   setupProject(translationSuggestionsEnabled: boolean = true): void {
     const project: SFProject = {
+      name: 'project 01',
+      paratextId: 'target01',
       userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
-      inputSystem: { languageName: 'Target' },
-      translationSuggestionsEnabled,
-      sourceInputSystem: { languageName: 'Source' },
+      inputSystem: { tag: 'qaa', languageName: 'Target' },
+      translateConfig: {
+        translationSuggestionsEnabled,
+        source: {
+          paratextId: 'source01',
+          name: 'source',
+          inputSystem: {
+            tag: 'qaa',
+            languageName: 'Source'
+          }
+        }
+      },
+      checkingConfig: {
+        checkingEnabled: false,
+        usersSeeEachOthersResponses: true,
+        shareEnabled: true,
+        shareLevel: CheckingShareLevel.Specific
+      },
+      sync: { queuedCount: 0 },
       texts: [
-        { bookId: 'text01', name: 'Book 1', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
-        { bookId: 'text02', name: 'Book 2', chapters: [{ number: 1 }], hasSource: true },
-        { bookId: 'text03', name: 'Book 3', chapters: [{ number: 1 }, { number: 2 }], hasSource: false }
+        {
+          bookId: 'text01',
+          name: 'Book 1',
+          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+          hasSource: true
+        },
+        { bookId: 'text02', name: 'Book 2', chapters: [{ number: 1, lastVerse: 3 }], hasSource: true },
+        {
+          bookId: 'text03',
+          name: 'Book 3',
+          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+          hasSource: false
+        }
       ]
     };
     const adapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project);

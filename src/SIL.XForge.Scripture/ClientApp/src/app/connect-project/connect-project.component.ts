@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { ParatextService } from 'src/app/core/paratext.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { NoticeService } from 'xforge-common/notice.service';
-import { ParatextService } from 'xforge-common/paratext.service';
+import { ParatextProject } from '../core/models/paratext-project';
+import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectService } from '../core/sf-project.service';
 
@@ -158,21 +158,14 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     if (project != null && project.projectId == null) {
       this.state = 'connecting';
       this.connectProjectName = project.name;
-      const newProject: SFProject = {
-        name: project.name,
+      const settings: SFProjectCreateSettings = {
         paratextId: project.paratextId,
-        inputSystem: ParatextService.getInputSystem(project),
         checkingEnabled: values.settings.checking,
-        translationSuggestionsEnabled: values.settings.translationSuggestions
+        translationSuggestionsEnabled: values.settings.translationSuggestions,
+        sourceParatextId: values.settings.sourceParatextId
       };
-      if (values.settings.translationSuggestions) {
-        const translateSourceProject = this.projects.find(p => p.paratextId === values.settings.sourceParatextId);
-        newProject.sourceParatextId = translateSourceProject.paratextId;
-        newProject.sourceName = translateSourceProject.name;
-        newProject.sourceInputSystem = ParatextService.getInputSystem(translateSourceProject);
-      }
 
-      const projectId = await this.projectService.onlineCreate(newProject);
+      const projectId = await this.projectService.onlineCreate(settings);
       this.projectDoc = await this.projectService.get(projectId);
       this.checkSyncStatus();
       this.subscribe(this.projectDoc.remoteChanges$, () => this.checkSyncStatus());

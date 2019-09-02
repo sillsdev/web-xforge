@@ -65,7 +65,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   getAnswers(questionDoc: QuestionDoc): Answer[] {
-    if (this.project.usersSeeEachOthersResponses || this.isAdministrator) {
+    if (this.project.checkingConfig.usersSeeEachOthersResponses || this.isAdministrator) {
       return questionDoc.data.answers;
     } else {
       return questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
@@ -74,7 +74,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
 
   getUnreadAnswers(questionDoc: QuestionDoc): number {
     let unread = 0;
-    if (!this.isAdministrator && !this.project.usersSeeEachOthersResponses) {
+    if (!this.isAdministrator && !this.project.checkingConfig.usersSeeEachOthersResponses) {
       return unread;
     }
     for (const answer of this.getAnswers(questionDoc)) {

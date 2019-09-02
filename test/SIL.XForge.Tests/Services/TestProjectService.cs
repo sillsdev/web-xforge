@@ -11,10 +11,9 @@ namespace SIL.XForge.Services
     public class TestProjectService : ProjectService<TestProject, TestProjectSecret>
     {
         public TestProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IAudioService audioService, IEmailService emailService, IRepository<TestProjectSecret> projectSecrets,
-            ISecurityService securityService, IFileSystemService fileSystemService)
-            : base(realtimeService, siteOptions, audioService, emailService, projectSecrets, securityService,
-                fileSystemService)
+            IAudioService audioService, IRepository<TestProjectSecret> projectSecrets,
+            IFileSystemService fileSystemService)
+            : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
         {
         }
 

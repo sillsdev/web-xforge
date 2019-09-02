@@ -3,15 +3,16 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
-import { ParatextService } from 'xforge-common/paratext.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SyncComponent } from './sync.component';
 
@@ -116,12 +117,27 @@ class TestEnvironment {
     this.project = {
       name: 'Sync Test Project',
       paratextId: 'pt01',
+      inputSystem: {
+        tag: 'en',
+        languageName: 'English'
+      },
+      translateConfig: {
+        translationSuggestionsEnabled: false
+      },
+      checkingConfig: {
+        checkingEnabled: false,
+        usersSeeEachOthersResponses: true,
+        shareEnabled: true,
+        shareLevel: CheckingShareLevel.Specific
+      },
       sync: {
         queuedCount: isInProgress ? 1 : 0,
         percentCompleted: isInProgress ? 0.1 : undefined,
         lastSyncSuccessful: true,
         dateLastSuccessfulSync: date.toJSON()
-      }
+      },
+      texts: [],
+      userRoles: {}
     };
     this.projectDocAdapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'testproject01', this.project);
     when(this.mockedProjectService.get('testproject01')).thenResolve(

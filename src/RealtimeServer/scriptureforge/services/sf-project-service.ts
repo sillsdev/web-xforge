@@ -15,15 +15,11 @@ export class SFProjectService extends ProjectService<SFProject> {
     super(SF_PROJECT_MIGRATIONS);
 
     const immutableProps = [
-      this.createPathTemplate(p => p.sourceParatextId!),
-      this.createPathTemplate(p => p.sourceInputSystem!),
-      this.createPathTemplate(p => p.sync!),
-      this.createPathTemplate(p => p.inputSystem!),
-      this.createPathTemplate(p => p.paratextId!),
-      this.createPathTemplate(p => p.texts!),
-      this.createPathTemplate(p => p.checkingEnabled),
-      this.createPathTemplate(p => p.translationSuggestionsEnabled),
-      this.createPathTemplate(p => p.usersSeeEachOthersResponses)
+      this.createPathTemplate(p => p.sync),
+      this.createPathTemplate(p => p.paratextId),
+      this.createPathTemplate(p => p.texts),
+      this.createPathTemplate(p => p.translateConfig),
+      this.createPathTemplate(p => p.checkingConfig)
     ];
     this.immutableProps.push(...immutableProps);
   }

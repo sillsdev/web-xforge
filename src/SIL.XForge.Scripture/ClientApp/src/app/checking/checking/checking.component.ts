@@ -492,8 +492,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     // HelpHero user-onboarding tour setup
     const isProjectAdmin: boolean =
       this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator;
-    const isDiscussionEnabled: boolean = this.projectDoc.data.usersSeeEachOthersResponses;
-    const isInvitingEnabled: boolean = this.projectDoc.data.shareEnabled;
+    const isDiscussionEnabled: boolean = this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses;
+    const isInvitingEnabled: boolean = this.projectDoc.data.checkingConfig.shareEnabled;
 
     this.helpHeroService.setProperty({
       isAdmin: isProjectAdmin,

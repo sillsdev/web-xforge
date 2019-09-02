@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { User } from 'realtime-server/lib/common/models/user';
+import { UserProfile } from 'realtime-server/lib/common/models/user';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { UserService } from 'xforge-common/user.service';
 
@@ -28,7 +28,7 @@ export class CheckingOwnerComponent implements OnInit {
     return this.userService.currentUserId === this.ownerDoc.id ? 'Me' : this.ownerDoc.data.displayName;
   }
 
-  get owner(): User {
+  get owner(): UserProfile {
     return this.ownerDoc == null ? undefined : this.ownerDoc.data;
   }
 

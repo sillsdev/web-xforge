@@ -116,15 +116,13 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   get sourceLabel(): string {
-    return this.projectDoc == null || !this.projectDoc.isLoaded || this.projectDoc.data.sourceInputSystem == null
+    return this.projectDoc == null || !this.projectDoc.isLoaded || this.projectDoc.data.translateConfig.source == null
       ? ''
-      : this.projectDoc.data.sourceInputSystem.languageName;
+      : this.projectDoc.data.translateConfig.source.inputSystem.languageName;
   }
 
   get targetLabel(): string {
-    return this.projectDoc == null || !this.projectDoc.isLoaded || this.projectDoc.data.inputSystem == null
-      ? ''
-      : this.projectDoc.data.inputSystem.languageName;
+    return this.projectDoc == null || !this.projectDoc.isLoaded ? '' : this.projectDoc.data.inputSystem.languageName;
   }
 
   get isTargetTextRight(): boolean {
@@ -156,7 +154,11 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   get translationSuggestionsProjectEnabled(): boolean {
-    return this.projectDoc != null && this.projectDoc.isLoaded && this.projectDoc.data.translationSuggestionsEnabled;
+    return (
+      this.projectDoc != null &&
+      this.projectDoc.isLoaded &&
+      this.projectDoc.data.translateConfig.translationSuggestionsEnabled
+    );
   }
 
   get confidenceThreshold(): number {

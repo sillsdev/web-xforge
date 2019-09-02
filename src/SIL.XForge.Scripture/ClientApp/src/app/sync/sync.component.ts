@@ -5,8 +5,8 @@ import { combineLatest, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
-import { ParatextService } from 'xforge-common/paratext.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 
 @Component({

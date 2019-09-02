@@ -4,16 +4,17 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { LocationService } from '../location.service';
-import { MemoryRealtimeOfflineStore } from '../memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from '../memory-realtime-remote-store';
-import { ProjectDoc } from '../models/project-doc';
-import { NoticeService } from '../notice.service';
-import { ProjectService } from '../project.service';
-import { UICommonModule } from '../ui-common.module';
+import { LocationService } from 'xforge-common/location.service';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { NoticeService } from 'xforge-common/notice.service';
+import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from './share-control.component';
 import { ShareDialogComponent } from './share-dialog.component';
 import { ShareComponent } from './share.component';
@@ -21,7 +22,7 @@ import { ShareComponent } from './share.component';
 describe('ShareComponent', () => {
   it('share button should be hidden when sharing is disabled', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setShareConfig(false, SharingLevel.Anyone);
+    env.setShareConfig(false, CheckingShareLevel.Anyone);
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
@@ -93,7 +94,7 @@ describe('ShareComponent', () => {
 
   it('share link should be hidden if link sharing is turned off', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setShareConfig(true, SharingLevel.Specific);
+    env.setShareConfig(true, CheckingShareLevel.Specific);
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
@@ -124,21 +125,13 @@ describe('ShareComponent', () => {
 })
 class DialogTestModule {}
 
-class TestProjectDoc extends ProjectDoc {
-  static readonly COLLECTION = 'projects';
-
-  get taskNames(): string[] {
-    return [];
-  }
-}
-
 class TestEnvironment {
   readonly component: ShareComponent;
   readonly fixture: ComponentFixture<ShareComponent>;
   readonly overlayContainer: OverlayContainer;
 
   readonly mockedMdcDialogRef: MdcDialogRef<ShareDialogComponent> = mock(MdcDialogRef);
-  readonly mockedProjectService = mock(ProjectService);
+  readonly mockedProjectService = mock(SFProjectService);
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedLocationService = mock(LocationService);
@@ -150,14 +143,14 @@ class TestEnvironment {
     when(this.mockedNoticeService.show(anything())).thenResolve();
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
-    this.setShareConfig(true, SharingLevel.Anyone);
+    this.setShareConfig(true, CheckingShareLevel.Anyone);
 
     TestBed.configureTestingModule({
       imports: [DialogTestModule],
       declarations: [ShareComponent],
       providers: [
         { provide: MdcDialogRef, useFactory: () => instance(this.mockedMdcDialogRef) },
-        { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
+        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
         { provide: LocationService, useFactory: () => instance(this.mockedLocationService) }
@@ -211,10 +204,25 @@ class TestEnvironment {
     tick();
   }
 
-  setShareConfig(shareEnabled: boolean, shareLevel: SharingLevel): void {
-    const projectDoc = new TestProjectDoc(
+  setShareConfig(shareEnabled: boolean, shareLevel: CheckingShareLevel): void {
+    const project: SFProject = {
+      name: 'project 01',
+      paratextId: 'pt01',
+      inputSystem: { tag: 'qaa', languageName: 'Unspecified' },
+      translateConfig: { translationSuggestionsEnabled: false },
+      checkingConfig: {
+        checkingEnabled: true,
+        usersSeeEachOthersResponses: true,
+        shareEnabled,
+        shareLevel
+      },
+      sync: { queuedCount: 0 },
+      texts: [],
+      userRoles: {}
+    };
+    const projectDoc = new SFProjectDoc(
       this.offlineStore,
-      new MemoryRealtimeDocAdapter(TestProjectDoc.COLLECTION, 'project01', { shareEnabled, shareLevel })
+      new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project)
     );
     when(this.mockedProjectService.get(anything())).thenResolve(projectDoc);
   }

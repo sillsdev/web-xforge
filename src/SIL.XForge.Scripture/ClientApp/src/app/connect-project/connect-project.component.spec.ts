@@ -7,18 +7,18 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import cloneDeep from 'lodash/cloneDeep';
-import * as OTJson0 from 'ot-json0';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { defer, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
-import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { NoticeService } from 'xforge-common/notice.service';
-import { ParatextService } from 'xforge-common/paratext.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { ParatextProject } from '../core/models/paratext-project';
+import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ConnectProjectComponent } from './connect-project.component';
 
@@ -129,8 +129,10 @@ describe('ConnectProjectComponent', () => {
         {
           paratextId: 'pt01',
           name: 'Target1',
-          languageTag: 'en',
-          languageName: 'English',
+          inputSystem: {
+            tag: 'en',
+            languageName: 'English'
+          },
           isConnectable: true,
           isConnected: false
         },
@@ -138,8 +140,10 @@ describe('ConnectProjectComponent', () => {
           paratextId: 'pt02',
           projectId: 'project02',
           name: 'Target2',
-          languageTag: 'mri',
-          languageName: 'Maori',
+          inputSystem: {
+            tag: 'mri',
+            languageName: 'Maori'
+          },
           isConnectable: false,
           isConnected: true
         },
@@ -147,8 +151,10 @@ describe('ConnectProjectComponent', () => {
           paratextId: 'pt03',
           projectId: 'project03',
           name: 'Target3',
-          languageTag: 'th',
-          languageName: 'Thai',
+          inputSystem: {
+            tag: 'th',
+            languageName: 'Thai'
+          },
           isConnectable: true,
           isConnected: true
         }
@@ -197,18 +203,13 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
     env.clickElement(env.submitButton);
     env.emitSyncComplete();
-    const project: SFProject = {
-      name: 'English',
+    const settings: SFProjectCreateSettings = {
       paratextId: 'pt01',
-      inputSystem: {
-        tag: 'en',
-        languageName: 'English',
-        isRightToLeft: false
-      },
       checkingEnabled: false,
-      translationSuggestionsEnabled: false
+      translationSuggestionsEnabled: false,
+      sourceParatextId: undefined
     };
-    verify(env.mockedSFProjectService.onlineCreate(deepEqual(project))).once();
+    verify(env.mockedSFProjectService.onlineCreate(deepEqual(settings))).once();
     verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
@@ -241,25 +242,13 @@ describe('ConnectProjectComponent', () => {
     env.emitSyncProgress(1);
     env.emitSyncComplete();
 
-    const project: SFProject = {
-      name: 'English',
+    const settings: SFProjectCreateSettings = {
       paratextId: 'pt01',
-      inputSystem: {
-        tag: 'en',
-        languageName: 'English',
-        isRightToLeft: false
-      },
       checkingEnabled: true,
       translationSuggestionsEnabled: true,
-      sourceParatextId: 'pt04',
-      sourceName: 'Spanish',
-      sourceInputSystem: {
-        languageName: 'Spanish',
-        tag: 'es',
-        isRightToLeft: false
-      }
+      sourceParatextId: 'pt04'
     };
-    verify(env.mockedSFProjectService.onlineCreate(deepEqual(project))).once();
+    verify(env.mockedSFProjectService.onlineCreate(deepEqual(settings))).once();
     verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
@@ -285,16 +274,11 @@ describe('ConnectProjectComponent', () => {
     env.emitSyncProgress(1);
     env.emitSyncComplete();
 
-    const project: SFProject = {
-      name: 'English',
+    const project: SFProjectCreateSettings = {
       paratextId: 'pt01',
-      inputSystem: {
-        tag: 'en',
-        languageName: 'English',
-        isRightToLeft: false
-      },
       checkingEnabled: false,
-      translationSuggestionsEnabled: false
+      translationSuggestionsEnabled: false,
+      sourceParatextId: undefined
     };
     verify(env.mockedSFProjectService.onlineCreate(deepEqual(project))).once();
     verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
@@ -451,8 +435,10 @@ class TestEnvironment {
           paratextId: 'pt02',
           projectId: 'project02',
           name: 'Maori',
-          languageTag: 'mri',
-          languageName: 'Maori',
+          inputSystem: {
+            tag: 'mri',
+            languageName: 'Maori'
+          },
           isConnectable: false,
           isConnected: true
         },
@@ -460,24 +446,30 @@ class TestEnvironment {
           paratextId: 'pt03',
           projectId: 'project03',
           name: 'Thai',
-          languageTag: 'th',
-          languageName: 'Thai',
+          inputSystem: {
+            tag: 'th',
+            languageName: 'Thai'
+          },
           isConnectable: true,
           isConnected: true
         },
         {
           paratextId: 'pt04',
           name: 'Spanish',
-          languageTag: 'es',
-          languageName: 'Spanish',
+          inputSystem: {
+            tag: 'es',
+            languageName: 'Spanish'
+          },
           isConnectable: false,
           isConnected: false
         },
         {
           paratextId: 'pt01',
           name: 'English',
-          languageTag: 'en',
-          languageName: 'English',
+          inputSystem: {
+            tag: 'en',
+            languageName: 'English'
+          },
           isConnectable: true,
           isConnected: false
         }

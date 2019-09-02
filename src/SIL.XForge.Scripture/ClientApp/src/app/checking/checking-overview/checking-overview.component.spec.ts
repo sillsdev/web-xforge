@@ -5,8 +5,9 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { ngfModule } from 'angular-file';
-import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
+import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -263,7 +264,12 @@ describe('CheckingOverviewComponent', () => {
       const env = new TestEnvironment();
       env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
-      const [unread, read, answered] = env.component.bookProgress({ bookId: 'MAT', chapters: [{ number: 1 }] });
+      const [unread, read, answered] = env.component.bookProgress({
+        bookId: 'MAT',
+        name: 'Matthew',
+        hasSource: false,
+        chapters: [{ number: 1, lastVerse: 3 }]
+      });
       expect(unread).toBe(3);
       expect(read).toBe(2);
       expect(answered).toBe(1);
@@ -371,13 +377,29 @@ class TestEnvironment {
   };
   private testProject: SFProject = {
     name: 'Project 01',
-    usersSeeEachOthersResponses: true,
-    checkingEnabled: true,
-    shareEnabled: true,
-    shareLevel: SharingLevel.Anyone,
+    paratextId: 'pt01',
+    inputSystem: {
+      tag: 'en',
+      languageName: 'English'
+    },
+    checkingConfig: {
+      usersSeeEachOthersResponses: true,
+      checkingEnabled: true,
+      shareEnabled: true,
+      shareLevel: CheckingShareLevel.Anyone
+    },
+    translateConfig: {
+      translationSuggestionsEnabled: false
+    },
+    sync: { queuedCount: 0 },
     texts: [
-      { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1, lastVerse: 25 }, { number: 3, lastVerse: 17 }] },
-      { bookId: 'LUK', name: 'Luke', chapters: [{ number: 1, lastVerse: 80 }] }
+      {
+        bookId: 'MAT',
+        name: 'Matthew',
+        hasSource: false,
+        chapters: [{ number: 1, lastVerse: 25 }, { number: 3, lastVerse: 17 }]
+      },
+      { bookId: 'LUK', name: 'Luke', hasSource: false, chapters: [{ number: 1, lastVerse: 80 }] }
     ],
     userRoles: {
       [this.adminUser.id]: this.adminUser.role,
@@ -745,8 +767,14 @@ class TestEnvironment {
     return {
       id: 'user' + id,
       user: {
+        name: 'User ' + id,
+        email: 'user1@example.com',
+        role: SystemRole.User,
+        authId: 'auth01',
+        avatarUrl: '',
         displayName: 'User ' + id,
-        isDisplayNameConfirmed: nameConfirmed
+        isDisplayNameConfirmed: nameConfirmed,
+        sites: {}
       },
       role
     };

@@ -121,8 +121,11 @@ namespace SIL.XForge.Scripture.Services
                 {
                     ParatextId = paratextId,
                     Name = (string)projectObj["identification_name"],
-                    LanguageTag = (string)projectObj["language_ldml"],
-                    LanguageName = langName,
+                    InputSystem = new InputSystem
+                    {
+                        Tag = (string)projectObj["language_ldml"],
+                        LanguageName = langName
+                    },
                     ProjectId = projectId,
                     IsConnectable = isConnectable,
                     IsConnected = isConnected
@@ -130,6 +133,8 @@ namespace SIL.XForge.Scripture.Services
             }
             return projects;
         }
+
+
 
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
         {
