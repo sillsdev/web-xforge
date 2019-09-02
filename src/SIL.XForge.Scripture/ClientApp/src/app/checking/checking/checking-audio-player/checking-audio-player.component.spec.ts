@@ -53,6 +53,15 @@ describe('CheckingAudioPlayerComponent', () => {
     env.clickButton(env.pauseButton(2));
     expect(env.component.player2.isPlaying).toBe(false);
   });
+
+  it('disables the audio player when audio is reset', async () => {
+    const template =
+      '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
+    await env.createHostComponent(template);
+    expect(env.component.player1.hasSource).toBe(true);
+    env.component.player1.source = '';
+    expect(env.component.player1.hasSource).toBe(false);
+  });
 });
 
 @Component({ selector: 'app-host', template: '' })

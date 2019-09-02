@@ -306,7 +306,7 @@ export class CheckingAnswersComponent implements OnInit {
   async submit() {
     if (this.audio.status === 'recording') {
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
-      this.noticeService.show('Your recorded answer has been automatically saved.');
+      this.noticeService.show('The recording for your answer was automatically stopped.');
     }
     this.setValidationRules();
     this.answerFormSubmitAttempted = true;
