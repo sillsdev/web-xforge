@@ -140,7 +140,7 @@ describe('ShareControlComponent', () => {
       '<app-share-control [projectId]="projectId" [isLinkSharingEnabled]="isLinkSharingEnabled"></app-share-control>'
   })
   class TestHostComponent {
-    @ViewChild(ShareControlComponent) component: ShareControlComponent;
+    @ViewChild(ShareControlComponent, { static: false }) component: ShareControlComponent;
     projectId = '';
     isLinkSharingEnabled = false;
   }

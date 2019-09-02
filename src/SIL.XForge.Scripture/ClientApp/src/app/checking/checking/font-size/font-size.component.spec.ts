@@ -117,7 +117,7 @@ describe('FontSizeComponent', () => {
 
 @Component({ selector: 'app-host', template: '' })
 class HostComponent {
-  @ViewChild('container') container: ElementRef;
+  @ViewChild('container', { static: true }) container: ElementRef;
 
   applyFontChange($event: string) {
     this.container.nativeElement.style.fontSize = $event;

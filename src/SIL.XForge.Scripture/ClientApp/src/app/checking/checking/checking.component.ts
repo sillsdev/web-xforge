@@ -45,20 +45,22 @@ interface CheckingData {
   styleUrls: ['./checking.component.scss']
 })
 export class CheckingComponent extends DataLoadingComponent implements OnInit {
-  @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
+  @ViewChild('answerPanelContainer', { static: false }) set answersPanelElement(
+    answersPanelContainerElement: ElementRef
+  ) {
     // Need to trigger the calculation for the slider after DOM has been updated
     this.answersPanelContainerElement = answersPanelContainerElement;
     this.calculateScriptureSliderPosition(true);
   }
 
   @HostBinding('class') classes = 'flex-max';
-  @ViewChild(CheckingAnswersComponent) answersPanel: CheckingAnswersComponent;
-  @ViewChild(CheckingTextComponent) scripturePanel: CheckingTextComponent;
-  @ViewChild(CheckingQuestionsComponent) questionsPanel: CheckingQuestionsComponent;
-  @ViewChild(SplitComponent) splitComponent: SplitComponent;
-  @ViewChild('splitContainer') splitContainerElement: ElementRef;
-  @ViewChild('scripturePanelContainer') scripturePanelContainerElement: ElementRef;
-  @ViewChild('chapterMenuList') chapterMenuList: MdcList;
+  @ViewChild(CheckingAnswersComponent, { static: false }) answersPanel: CheckingAnswersComponent;
+  @ViewChild(CheckingTextComponent, { static: true }) scripturePanel: CheckingTextComponent;
+  @ViewChild(CheckingQuestionsComponent, { static: true }) questionsPanel: CheckingQuestionsComponent;
+  @ViewChild(SplitComponent, { static: true }) splitComponent: SplitComponent;
+  @ViewChild('splitContainer', { static: true }) splitContainerElement: ElementRef;
+  @ViewChild('scripturePanelContainer', { static: true }) scripturePanelContainerElement: ElementRef;
+  @ViewChild('chapterMenuList', { static: true }) chapterMenuList: MdcList;
 
   chapters: number[] = [];
   checkingData: CheckingData = { questionListDocs: {}, commentListDocs: {}, realtimeSubscriptions: {} };

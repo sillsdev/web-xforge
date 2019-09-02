@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import isEqual from 'lodash/isEqual';
 import Quill from 'quill';
 import { fromEvent } from 'rxjs';
@@ -16,7 +16,7 @@ export interface SuggestionSelectedEvent {
   templateUrl: './suggestion.component.html',
   styleUrls: ['./suggestion.component.scss']
 })
-export class SuggestionComponent extends SubscriptionDisposable implements AfterViewInit {
+export class SuggestionComponent extends SubscriptionDisposable implements OnInit {
   @Input() confidence: number;
   @Input() text: TextComponent;
   @Output() selected = new EventEmitter<SuggestionSelectedEvent>();
@@ -77,7 +77,22 @@ export class SuggestionComponent extends SubscriptionDisposable implements After
     return document.body;
   }
 
-  ngAfterViewInit(): void {
+  ngOnInit(): void {
+    if (this.editor != null) {
+      this.init();
+    }
+    this.subscribe(this.text.loaded, () => this.init());
+  }
+
+  toggleHelp(): void {
+    this.showHelp = !this.showHelp;
+  }
+
+  selectAll(event: Event): void {
+    this.selected.emit({ index: -1, event });
+  }
+
+  private init(): void {
     if (this.editor.root === this.editor.scrollingContainer) {
       this.subscribe(fromEvent(this.editor.root, 'scroll'), () => this.updateVisibility());
     }
@@ -98,14 +113,6 @@ export class SuggestionComponent extends SubscriptionDisposable implements After
     this.show = false;
     this.root.style.left = '0px';
     this.root.style.top = '0px';
-  }
-
-  toggleHelp(): void {
-    this.showHelp = !this.showHelp;
-  }
-
-  selectAll(event: Event): void {
-    this.selected.emit({ index: -1, event });
   }
 
   private setPosition(): void {

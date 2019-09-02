@@ -120,7 +120,7 @@ class ViewContainerDirective {
   template: '<viewContainerDirective></viewContainerDirective>'
 })
 class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective) viewContainer: ViewContainerDirective;
+  @ViewChild(ViewContainerDirective, { static: true }) viewContainer: ViewContainerDirective;
 
   get childViewContainer(): ViewContainerRef {
     return this.viewContainer.viewContainerRef;
