@@ -1,4 +1,3 @@
-using System.Linq;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -18,20 +17,15 @@ namespace SIL.XForge.Services
     public abstract class ProjectService<TModel, TSecret> : IProjectService where TModel : Project, new()
         where TSecret : ProjectSecret
     {
-        private readonly IEmailService _emailService;
-        private readonly ISecurityService _securityService;
         private readonly IAudioService _audioService;
 
         public ProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IAudioService audioService, IEmailService emailService, IRepository<TSecret> projectSecrets,
-            ISecurityService securityService, IFileSystemService fileSystemService)
+            IAudioService audioService, IRepository<TSecret> projectSecrets, IFileSystemService fileSystemService)
         {
             RealtimeService = realtimeService;
             SiteOptions = siteOptions;
             _audioService = audioService;
-            _emailService = emailService;
             ProjectSecrets = projectSecrets;
-            _securityService = securityService;
             FileSystemService = fileSystemService;
         }
 
@@ -85,145 +79,6 @@ namespace SIL.XForge.Services
                 IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
                 await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[curUserId], projectRole));
-            }
-        }
-
-        public async Task<bool> InviteAsync(string curUserId, string projectId, string email)
-        {
-            TModel project = await GetProjectAsync(projectId);
-            if (await RealtimeService.QuerySnapshots<User>()
-                .AnyAsync(u => project.UserRoles.Keys.Contains(u.Id) && u.Email == email))
-            {
-                return false;
-            }
-            SiteOptions siteOptions = SiteOptions.Value;
-            string url;
-            string additionalMessage = null;
-            if (project.ShareEnabled && project.ShareLevel == SharingLevel.Anyone)
-            {
-                url = $"{siteOptions.Origin}projects/{projectId}?sharing=true";
-                additionalMessage = "This link can be shared with others so they can join the project too.";
-            }
-            else if ((project.ShareEnabled && project.ShareLevel == SharingLevel.Specific)
-                || IsProjectAdmin(project, curUserId))
-            {
-                // Invite a specific person
-                // Reuse prior code, if any
-                TSecret projectSecret = await ProjectSecrets.UpdateAsync(
-                    p => p.Id == projectId && !p.ShareKeys.Any(sk => sk.Email == email),
-                    update => update.Add(p => p.ShareKeys,
-                        new ShareKey { Email = email, Key = _securityService.GenerateKey() }));
-                if (projectSecret == null)
-                    projectSecret = await ProjectSecrets.GetAsync(projectId);
-                string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
-                url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}";
-                additionalMessage = "This link will only work for this email address.";
-            }
-            else
-            {
-                throw new ForbiddenException();
-            }
-
-            User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);
-            string subject = $"You've been invited to the project {project.Name} on {siteOptions.Name}";
-            string body = "<p>Hello,</p><p></p>" +
-                $"<p>{inviter.Name} invites you to join the {project.Name} project on {siteOptions.Name}." +
-                "</p><p></p>" +
-                "<p>Just click the link below, choose how to log in, and you will be ready to start.</p><p></p>" +
-                $"<p>To join, go to <a href=\"{url}\">{url}</a></p><p></p>" +
-                $"<p>{additionalMessage}</p><p></p>" +
-                $"<p>If you are not already a {siteOptions.Name} user, then after clicking the link, click <b>Sign Up</b> and do one of the following:" +
-                $"<ul><li>Click <b>Sign up with Paratext</b> and follow the instructions to access {siteOptions.Name} using an existing Paratext account, or</li>" +
-                $"<li>Click <b>Sign up with Google</b> and follow the instructions to access {siteOptions.Name} using an existing Google account (such as a Gmail account), or</li>" +
-                $"<li>Enter your email address and a new password for your {siteOptions.Name} account and click Sign up.</li></ul></p><p></p>" +
-                $"<p>Regards,</p><p>The {siteOptions.Name} team</p>";
-            await _emailService.SendEmailAsync(email, subject, body);
-            return true;
-        }
-
-        /// <summary>Cancel an outstanding project invitation.</summary>
-        public async Task UninviteUserAsync(string curUserId, string projectId, string emailToUninvite)
-        {
-            TModel project = await GetProjectAsync(projectId);
-            if (!IsProjectAdmin(project, curUserId))
-                throw new ForbiddenException();
-
-            if (!await IsAlreadyInvitedAsync(curUserId, projectId, emailToUninvite))
-            {
-                // There is not an invitation for this email address
-                return;
-            }
-
-            await ProjectSecrets.UpdateAsync(projectId, u =>
-            {
-                u.RemoveAll(secretSet => secretSet.ShareKeys, shareKey => shareKey.Email == (emailToUninvite));
-            });
-        }
-
-        /// <summary>Is there already a pending invitation to the project for the specified email address?</summary>
-        public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email)
-        {
-            TModel project = await GetProjectAsync(projectId);
-            if (!IsProjectAdmin(project, curUserId) && !project.ShareEnabled)
-                throw new ForbiddenException();
-
-            if (email == null)
-                return false;
-            return await ProjectSecrets.Query()
-                .AnyAsync(p => p.Id == projectId && p.ShareKeys.Any(sk => sk.Email == email));
-        }
-
-        /// <summary>Return list of email addresses with outstanding invitations</summary>
-        public async Task<string[]> InvitedUsersAsync(string curUserId, string projectId)
-        {
-            TModel project = await GetProjectAsync(projectId);
-
-            if (!IsProjectAdmin(project, curUserId))
-                throw new ForbiddenException();
-
-            TSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
-
-
-            return projectSecret.ShareKeys.Select(sk => sk.Email).ToArray();
-        }
-
-        public async Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null)
-        {
-            using (IConnection conn = await RealtimeService.ConnectAsync())
-            {
-                IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
-
-                if (!projectDoc.Data.ShareEnabled)
-                    throw new ForbiddenException();
-
-                if (projectDoc.Data.ShareLevel != SharingLevel.Anyone
-                    && projectDoc.Data.ShareLevel != SharingLevel.Specific)
-                {
-                    throw new ForbiddenException();
-                }
-
-                if (projectDoc.Data.UserRoles.ContainsKey(curUserId))
-                    return;
-
-                IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
-                Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
-                string projectRole = attempt.Result;
-                if (projectDoc.Data.ShareLevel == SharingLevel.Specific)
-                {
-                    string currentUserEmail = userDoc.Data.Email;
-                    TSecret projectSecret = await ProjectSecrets.UpdateAsync(
-                        p => p.Id == projectId
-                            && p.ShareKeys.Any(sk => sk.Email == currentUserEmail && sk.Key == shareKey),
-                        update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == currentUserEmail));
-                    if (projectSecret != null)
-                        await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
-                    else
-                        throw new ForbiddenException();
-                }
-                else
-                {
-                    await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
-                }
             }
         }
 
@@ -319,7 +174,7 @@ namespace SIL.XForge.Services
 
         protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);
 
-        private async Task<TModel> GetProjectAsync(string projectId)
+        protected async Task<TModel> GetProjectAsync(string projectId)
         {
             Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
             if (!projectAttempt.TryResult(out TModel project))
@@ -329,7 +184,7 @@ namespace SIL.XForge.Services
             return project;
         }
 
-        private async Task<IDocument<TModel>> GetProjectDocAsync(string projectId, IConnection conn)
+        protected async Task<IDocument<TModel>> GetProjectDocAsync(string projectId, IConnection conn)
         {
             IDocument<TModel> projectDoc = await conn.FetchAsync<TModel>(projectId);
             if (!projectDoc.IsLoaded)
@@ -337,7 +192,7 @@ namespace SIL.XForge.Services
             return projectDoc;
         }
 
-        private async Task<IDocument<User>> GetUserDocAsync(string userId, IConnection conn)
+        protected async Task<IDocument<User>> GetUserDocAsync(string userId, IConnection conn)
         {
             IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
             if (!userDoc.IsLoaded)

@@ -28,14 +28,17 @@ export function getAuthType(authId: string): AuthType {
   return AuthType.Unknown;
 }
 
-export interface User {
-  name?: string;
-  email?: string;
+export interface UserProfile {
+  displayName: string;
+  avatarUrl: string;
+}
+
+export interface User extends UserProfile {
+  name: string;
+  email: string;
   paratextId?: string;
-  avatarUrl?: string;
-  role?: string;
-  displayName?: string;
-  isDisplayNameConfirmed?: boolean;
-  authId?: string;
-  sites?: { [key: string]: Site };
+  role: string;
+  isDisplayNameConfirmed: boolean;
+  authId: string;
+  sites: { [key: string]: Site };
 }

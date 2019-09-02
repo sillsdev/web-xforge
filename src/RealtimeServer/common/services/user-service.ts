@@ -19,15 +19,15 @@ export class UserService extends JsonDocService<User> {
   readonly collection = USERS_COLLECTION;
 
   readonly immutableProps: PathTemplate[] = [
-    this.createPathTemplate(u => u.authId!),
+    this.createPathTemplate(u => u.authId),
     this.createPathTemplate(u => u.paratextId!),
-    this.createPathTemplate(u => u.role!),
-    this.createPathTemplate(u => u.avatarUrl!),
-    this.createPathTemplate(u => u.email!),
-    this.createPathTemplate(u => u.name!),
-    this.createPathTemplate(u => u.sites!, false),
-    this.createPathTemplate(u => u.sites![ANY_KEY], false),
-    this.createPathTemplate(u => u.sites![ANY_KEY].projects)
+    this.createPathTemplate(u => u.role),
+    this.createPathTemplate(u => u.avatarUrl),
+    this.createPathTemplate(u => u.email),
+    this.createPathTemplate(u => u.name),
+    this.createPathTemplate(u => u.sites, false),
+    this.createPathTemplate(u => u.sites[ANY_KEY], false),
+    this.createPathTemplate(u => u.sites[ANY_KEY].projects)
   ];
 
   constructor() {

@@ -1,5 +1,3 @@
-using SIL.XForge.Models;
-
 namespace SIL.XForge.Scripture.Models
 {
     /// <summary>
@@ -11,8 +9,6 @@ namespace SIL.XForge.Scripture.Models
         // translate settings
         public bool? TranslationSuggestionsEnabled { get; set; }
         public string SourceParatextId { get; set; }
-        public string SourceName { get; set; }
-        public InputSystem SourceInputSystem { get; set; }
 
         // checking settings
         public bool? CheckingEnabled { get; set; }

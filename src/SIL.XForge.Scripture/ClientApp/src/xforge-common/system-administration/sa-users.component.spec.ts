@@ -7,6 +7,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import merge from 'lodash/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
+import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { combineLatest, from, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -256,6 +257,11 @@ class TestEnvironment {
         data: {
           name: 'User 01',
           displayName: 'User01',
+          isDisplayNameConfirmed: true,
+          email: 'user01@example.com',
+          avatarUrl: '',
+          authId: 'auth01',
+          role: SystemRole.User,
           sites: { [environment.siteId]: { projects: ['project01'] } }
         }
       },
@@ -264,6 +270,11 @@ class TestEnvironment {
         data: {
           name: 'User 02',
           displayName: 'User 02',
+          isDisplayNameConfirmed: true,
+          email: 'user02@example.com',
+          avatarUrl: '',
+          authId: 'auth02',
+          role: SystemRole.User,
           sites: { [environment.siteId]: { projects: [] } }
         }
       },
@@ -272,13 +283,24 @@ class TestEnvironment {
         data: {
           name: 'user03@example.com',
           displayName: 'User 03',
+          isDisplayNameConfirmed: true,
           email: 'user03@example.com',
+          avatarUrl: '',
+          authId: 'auth03',
+          role: SystemRole.User,
           sites: { [environment.siteId]: { projects: ['project01'] } }
         }
       }
     ]);
     this.realtimeService.addSnapshots<Project>(TestProjectDoc.COLLECTION, [
-      { id: 'project01', data: { name: 'Project 01', userRoles: { user01: 'admin', user03: 'user' } } }
+      {
+        id: 'project01',
+        data: {
+          name: 'Project 01',
+          inputSystem: { tag: 'qaa', languageName: 'Unspecified' },
+          userRoles: { user01: 'admin', user03: 'user' }
+        }
+      }
     ]);
   }
 

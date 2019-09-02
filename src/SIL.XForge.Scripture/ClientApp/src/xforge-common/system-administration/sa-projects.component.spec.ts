@@ -243,9 +243,30 @@ class TestEnvironment {
 
   setupProjectData(): void {
     this.realtimeService.addSnapshots<Project>(TestProjectDoc.COLLECTION, [
-      { id: 'project01', data: { name: 'Project 01', userRoles: { user01: 'admin' } } },
-      { id: 'project02', data: { name: 'Project 02', userRoles: {} } },
-      { id: 'project03', data: { name: 'Project 03', userRoles: { user01: 'user' } } }
+      {
+        id: 'project01',
+        data: {
+          name: 'Project 01',
+          inputSystem: { tag: 'qaa', languageName: 'Unspecified' },
+          userRoles: { user01: 'admin' }
+        }
+      },
+      {
+        id: 'project02',
+        data: {
+          name: 'Project 02',
+          inputSystem: { tag: 'qaa', languageName: 'Unspecified' },
+          userRoles: {}
+        }
+      },
+      {
+        id: 'project03',
+        data: {
+          name: 'Project 03',
+          inputSystem: { tag: 'qaa', languageName: 'Unspecified' },
+          userRoles: { user01: 'user' }
+        }
+      }
     ]);
   }
 }

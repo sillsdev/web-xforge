@@ -3,22 +3,25 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import { Project } from 'realtime-server/lib/common/models/project';
-import { User } from 'realtime-server/lib/common/models/user';
+import { UserProfile } from 'realtime-server/lib/common/models/user';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { AvatarTestingModule } from '../../avatar/avatar-testing.module';
-import { LocationService } from '../../location.service';
-import { MemoryRealtimeOfflineStore } from '../../memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from '../../memory-realtime-remote-store';
-import { ProjectDoc } from '../../models/project-doc';
-import { NONE_ROLE, ProjectRoleInfo } from '../../models/project-role-info';
-import { UserProfileDoc } from '../../models/user-profile-doc';
-import { NoticeService } from '../../notice.service';
-import { ProjectService } from '../../project.service';
-import { ShareControlComponent } from '../../share/share-control.component';
-import { UICommonModule } from '../../ui-common.module';
-import { UserService } from '../../user.service';
+import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { LocationService } from 'xforge-common/location.service';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
+import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
+import { NoticeService } from 'xforge-common/notice.service';
+import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
+import { SFProjectService } from '../../core/sf-project.service';
+import { ShareControlComponent } from '../../shared/share/share-control.component';
 import { CollaboratorsComponent } from './collaborators.component';
 
 describe('CollaboratorsComponent', () => {
@@ -58,12 +61,12 @@ describe('CollaboratorsComponent', () => {
     expect(env.cancelInviteButtonOnRow(0)).toBeFalsy();
 
     expect(env.cellDisplayName(1, 1).innerText).toEqual('User 02');
-    expect(env.cellRole(1, 2).innerText).toEqual('User');
+    expect(env.cellRole(1, 2).innerText).toEqual('Translator');
     expect(env.removeUserButtonOnRow(1)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(1)).toBeFalsy();
 
     expect(env.cellDisplayName(2, 1).innerText).toEqual('User 03');
-    expect(env.cellRole(2, 2).innerText).toEqual('User');
+    expect(env.cellRole(2, 2).innerText).toEqual('Community Checker');
     expect(env.removeUserButtonOnRow(2)).toBeTruthy();
     expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
   }));
@@ -125,11 +128,12 @@ describe('CollaboratorsComponent', () => {
   it('should filter users', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
+    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['bob@example.com']);
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
 
-    expect(env.userRows.length).toEqual(3);
+    expect(env.userRows.length).toEqual(4);
     env.setInputValue(env.filterInput, '02');
 
     expect(env.userRows.length).toEqual(1);
@@ -156,13 +160,6 @@ describe('CollaboratorsComponent', () => {
   }));
 });
 
-class TestProjectDoc extends ProjectDoc {
-  static readonly COLLECTION = 'projects';
-  get taskNames(): string[] {
-    return [];
-  }
-}
-
 class TestEnvironment {
   readonly fixture: ComponentFixture<CollaboratorsComponent>;
   readonly component: CollaboratorsComponent;
@@ -171,27 +168,26 @@ class TestEnvironment {
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedLocationService = mock(LocationService);
   readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedProjectService = mock(ProjectService);
+  readonly mockedProjectService = mock(SFProjectService);
   readonly mockedUserService = mock(UserService);
 
   private readonly offlineStore = new MemoryRealtimeOfflineStore();
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: this.project01Id }));
-    when(this.mockedProjectService.roles).thenReturn(
-      new Map<string, ProjectRoleInfo>([
-        ['admin', { role: 'admin', displayName: 'Administrator' }],
-        ['user', { role: 'user', displayName: 'User' }],
-        [NONE_ROLE.role, NONE_ROLE]
-      ])
-    );
+    const roles = new Map<string, ProjectRoleInfo>();
+    for (const role of SF_PROJECT_ROLES) {
+      roles.set(role.role, role);
+    }
+    roles.set(NONE_ROLE.role, NONE_ROLE);
+    when(this.mockedProjectService.roles).thenReturn(roles);
     when(this.mockedProjectService.onlineInvite(this.project01Id, anything())).thenResolve();
     when(this.mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
     when(this.mockedNoticeService.show(anything())).thenResolve();
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
-    this.addUserProfile('user01', { displayName: 'User 01' });
-    this.addUserProfile('user02', { displayName: 'User 02' });
-    this.addUserProfile('user03', { displayName: 'User 03', email: 'bob@example.com' });
+    this.addUserProfile('user01', { displayName: 'User 01', avatarUrl: '' });
+    this.addUserProfile('user02', { displayName: 'User 02', avatarUrl: '' });
+    this.addUserProfile('user03', { displayName: 'User 03', avatarUrl: '' });
     TestBed.configureTestingModule({
       declarations: [CollaboratorsComponent, ShareControlComponent],
       imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
@@ -199,7 +195,7 @@ class TestEnvironment {
         { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
         { provide: LocationService, useFactory: () => instance(this.mockedLocationService) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
+        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) }
       ]
     });
@@ -296,16 +292,14 @@ class TestEnvironment {
   }
 
   setupProjectData(): void {
-    const project: Project = {
-      name: 'Project 01',
-      userRoles: {
-        user01: 'admin',
-        user02: 'user',
-        user03: 'user'
-      }
-    };
-
-    this.setupThisProjectData(this.project01Id, project);
+    this.setupThisProjectData(
+      this.project01Id,
+      this.createProject({
+        user01: SFProjectRole.ParatextAdministrator,
+        user02: SFProjectRole.ParatextTranslator,
+        user03: SFProjectRole.CommunityChecker
+      })
+    );
   }
 
   setupNullProjectData(): void {
@@ -313,19 +307,37 @@ class TestEnvironment {
   }
 
   setupProjectDataWithNoUsers(): void {
-    this.setupThisProjectData(this.project01Id, { name: 'Project 01', userRoles: {} });
+    this.setupThisProjectData(this.project01Id, this.createProject({}));
   }
 
-  private addUserProfile(id: string, user: User): void {
+  private createProject(userRoles: { [userRef: string]: string }): SFProject {
+    return {
+      name: 'Project 01',
+      paratextId: 'pt01',
+      texts: [],
+      inputSystem: { tag: 'en', languageName: 'English' },
+      sync: { queuedCount: 0 },
+      translateConfig: { translationSuggestionsEnabled: false },
+      checkingConfig: {
+        checkingEnabled: false,
+        usersSeeEachOthersResponses: false,
+        shareEnabled: false,
+        shareLevel: CheckingShareLevel.Specific
+      },
+      userRoles
+    };
+  }
+
+  private addUserProfile(id: string, user: UserProfile): void {
     when(this.mockedUserService.getProfile(id)).thenResolve(
       new UserProfileDoc(this.offlineStore, new MemoryRealtimeDocAdapter(UserProfileDoc.COLLECTION, id, user))
     );
   }
 
-  private setupThisProjectData(projectId: string, project: Project): void {
-    const projectDoc = new TestProjectDoc(
+  private setupThisProjectData(projectId: string, project: SFProject): void {
+    const projectDoc = new SFProjectDoc(
       this.offlineStore,
-      new MemoryRealtimeDocAdapter(TestProjectDoc.COLLECTION, projectId, project)
+      new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, projectId, project)
     );
     when(this.mockedProjectService.get(projectId)).thenResolve(projectDoc);
   }

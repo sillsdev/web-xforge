@@ -18,10 +18,10 @@ import { ProjectComponent } from './project/project.component';
 import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings/settings.component';
-import { SharedModule } from './shared/shared.module';
 import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
+import { UsersModule } from './users/users.module';
 
 @NgModule({
   declarations: [
@@ -43,9 +43,9 @@ import { TranslateModule } from './translate/translate.module';
     HttpClientModule,
     // not ready for production yet - 2018-11 IJH
     ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.pwaTest }), // || environment.production }),
-    SharedModule,
     TranslateModule,
     CheckingModule,
+    UsersModule,
     UICommonModule,
     XForgeCommonModule
   ],

@@ -34,7 +34,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
   closeFocuses: number = 0;
 
   /** User's selection */
-  selection: VerseRefData = {};
+  selection: VerseRefData = { book: undefined, chapter: undefined, verse: undefined };
 
   constructor(
     public dialogRef: MdcDialogRef<ScriptureChooserDialogComponent>,

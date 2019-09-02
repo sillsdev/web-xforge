@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AvatarTestingModule } from '../avatar/avatar-testing.module';
 import { UICommonModule } from '../ui-common.module';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
@@ -66,7 +67,18 @@ class TestEnvironment {
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     const config: MdcDialogConfig<SaDeleteUserDialogData> = {
       viewContainerRef,
-      data: { user: { displayName: 'Billy T James' } }
+      data: {
+        user: {
+          name: 'Billy T James',
+          displayName: 'Billy T James',
+          isDisplayNameConfirmed: true,
+          email: 'user01@example.com',
+          avatarUrl: '',
+          authId: 'auth01',
+          role: SystemRole.User,
+          sites: {}
+        }
+      }
     };
     this.dialogRef = TestBed.get(MdcDialog).open(SaDeleteDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');

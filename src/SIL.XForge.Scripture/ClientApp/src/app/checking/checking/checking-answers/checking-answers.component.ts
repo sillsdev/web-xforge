@@ -100,7 +100,7 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   get canSeeOtherUserResponses(): boolean {
-    return this.project.usersSeeEachOthersResponses;
+    return this.project.checkingConfig.usersSeeEachOthersResponses;
   }
 
   get canShowScriptureInput(): boolean {
@@ -268,7 +268,7 @@ export class CheckingAnswersComponent implements OnInit {
     };
 
     const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig);
-    dialogRef.afterClosed().subscribe((result: VerseRefData) => {
+    dialogRef.afterClosed().subscribe((result: VerseRefData | 'close') => {
       if (result !== 'close') {
         control.setValue(verseRefDataToString(result));
         control.markAsTouched();

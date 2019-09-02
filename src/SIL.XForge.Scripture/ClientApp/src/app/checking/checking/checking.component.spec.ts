@@ -7,8 +7,9 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
-import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
+import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
@@ -28,9 +29,6 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ProjectService } from 'xforge-common/project.service';
-import { ShareControlComponent } from 'xforge-common/share/share-control.component';
-import { ShareDialogComponent } from 'xforge-common/share/share-dialog.component';
-import { ShareComponent } from 'xforge-common/share/share.component';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
@@ -41,6 +39,9 @@ import { getSFProjectUserConfigDocId, SFProjectUserConfigDoc } from '../../core/
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, getTextDocId, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { ShareControlComponent } from '../../shared/share/share-control.component';
+import { ShareDialogComponent } from '../../shared/share/share-dialog.component';
+import { ShareComponent } from '../../shared/share/share.component';
 import { SharedModule } from '../../shared/shared.module';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
@@ -145,7 +146,10 @@ describe('CheckingComponent', () => {
     it('unread questions badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
       env.setupReviewerScenarioData(env.checkerUser);
       expect(env.getUnread(env.questions[6])).toEqual(4);
-      env.component.projectDoc.submitJson0Op(op => op.set<boolean>(p => p.usersSeeEachOthersResponses, false), false);
+      env.component.projectDoc.submitJson0Op(
+        op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, false),
+        false
+      );
       tick();
       env.fixture.detectChanges();
       expect(env.getUnread(env.questions[6])).toEqual(0);
@@ -319,7 +323,10 @@ describe('CheckingComponent', () => {
 
     it('reviewer can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
       env.setupReviewerScenarioData(env.checkerUser);
-      env.component.projectDoc.submitJson0Op(op => op.set<boolean>(p => p.usersSeeEachOthersResponses, false), false);
+      env.component.projectDoc.submitJson0Op(
+        op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, false),
+        false
+      );
       tick();
       env.fixture.detectChanges();
       env.selectQuestion(6);
@@ -532,10 +539,23 @@ class TestEnvironment {
 
   private testProject: SFProject = {
     name: 'Project 01',
-    usersSeeEachOthersResponses: true,
-    checkingEnabled: true,
-    shareEnabled: true,
-    shareLevel: SharingLevel.Anyone,
+    paratextId: 'pt01',
+    inputSystem: {
+      tag: 'en',
+      languageName: 'English'
+    },
+    sync: {
+      queuedCount: 0
+    },
+    checkingConfig: {
+      usersSeeEachOthersResponses: true,
+      checkingEnabled: true,
+      shareEnabled: true,
+      shareLevel: CheckingShareLevel.Anyone
+    },
+    translateConfig: {
+      translationSuggestionsEnabled: false
+    },
     texts: [
       {
         bookId: 'JHN',
@@ -568,10 +588,7 @@ class TestEnvironment {
         CheckingOwnerComponent,
         CheckingQuestionsComponent,
         CheckingTextComponent,
-        FontSizeComponent,
-        ShareComponent,
-        ShareControlComponent,
-        ShareDialogComponent
+        FontSizeComponent
       ],
       imports: [
         AngularSplitModule.forRoot(),
@@ -1029,8 +1046,14 @@ class TestEnvironment {
     return {
       id: 'user' + id,
       user: {
+        name: 'User ' + id,
+        email: 'user1@example.com',
+        role: SystemRole.User,
+        authId: 'auth01',
+        avatarUrl: '',
         displayName: 'User ' + id,
-        isDisplayNameConfirmed: nameConfirmed
+        isDisplayNameConfirmed: nameConfirmed,
+        sites: {}
       },
       role
     };

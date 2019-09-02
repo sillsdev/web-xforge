@@ -1,5 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
@@ -165,8 +166,29 @@ class TestEnvironment {
     );
     when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenResolve(projectUserConfigDoc);
     const project: SFProject = {
-      checkingEnabled: true,
-      texts: args.hasTexts == null || args.hasTexts ? [{ bookId: 'text01' }, { bookId: 'text02' }] : undefined,
+      name: 'project 01',
+      paratextId: 'pt01',
+      inputSystem: {
+        tag: 'qaa',
+        languageName: 'Unspecified'
+      },
+      translateConfig: {
+        translationSuggestionsEnabled: false
+      },
+      checkingConfig: {
+        checkingEnabled: true,
+        usersSeeEachOthersResponses: true,
+        shareEnabled: true,
+        shareLevel: CheckingShareLevel.Specific
+      },
+      sync: { queuedCount: 0 },
+      texts:
+        args.hasTexts == null || args.hasTexts
+          ? [
+              { bookId: 'text01', name: 'Text 01', chapters: [], hasSource: false },
+              { bookId: 'text02', name: 'Text 02', chapters: [], hasSource: false }
+            ]
+          : [],
       userRoles: { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }
     };
     const projectDoc = new SFProjectDoc(

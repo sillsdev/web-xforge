@@ -1,6 +1,6 @@
 export interface VerseRefData {
-  book?: string;
-  chapter?: string;
-  verse?: string;
+  book: string;
+  chapter: string;
+  verse: string;
   versification?: string;
 }

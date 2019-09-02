@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -18,7 +19,7 @@ namespace SIL.XForge.DataAccess
             ContractResolver = new WritableContractResolver()
         };
 
-        private readonly Dictionary<string, string> _entities;
+        private readonly ConcurrentDictionary<string, string> _entities;
         private readonly Func<T, object>[] _uniqueKeySelectors;
         private readonly HashSet<object>[] _uniqueKeys;
 
@@ -34,7 +35,7 @@ namespace SIL.XForge.DataAccess
             for (int i = 0; i < _uniqueKeys.Length; i++)
                 _uniqueKeys[i] = new HashSet<object>();
 
-            _entities = new Dictionary<string, string>();
+            _entities = new ConcurrentDictionary<string, string>();
             if (entities != null)
                 Add(entities);
         }
@@ -66,7 +67,7 @@ namespace SIL.XForge.DataAccess
                 if (key != null)
                     _uniqueKeys[i].Remove(key);
             }
-            _entities.Remove(entity.Id);
+            _entities.TryRemove(entity.Id, out _);
         }
 
         public void Replace(T entity)
