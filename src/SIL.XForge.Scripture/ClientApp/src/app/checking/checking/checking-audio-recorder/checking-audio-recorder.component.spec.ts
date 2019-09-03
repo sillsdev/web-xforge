@@ -27,7 +27,7 @@ describe('CheckingAudioRecorderComponent', () => {
     expect(env.recordButton).toBeFalsy();
     expect(env.stopRecordingButton).toBeTruthy();
     env.clickButton(env.stopRecordingButton);
-    await env.waitForRecorder(1000);
+    await env.waitForRecorder(100);
     expect(env.component.hasAudioAttachment).toBe(true);
   });
 
@@ -35,7 +35,7 @@ describe('CheckingAudioRecorderComponent', () => {
     env.clickButton(env.recordButton);
     await env.waitForRecorder(1000);
     env.clickButton(env.stopRecordingButton);
-    await env.waitForRecorder(1000);
+    await env.waitForRecorder(100);
     env.clickButton(env.tryAgainButton);
     expect(env.recordButton).toBeTruthy();
   });

@@ -1,6 +1,7 @@
 declare module 'recordrtc' {
   const RecordRTC: {
     (stream: MediaStream, config: object): RecordRTC;
+    MediaStreamRecorder(stream: MediaStream, config: object): RecorderType;
     StereoAudioRecorder(stream: MediaStream, config: object): RecorderType;
   };
 
