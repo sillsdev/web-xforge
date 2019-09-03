@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SIL.XForge.Configuration;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -11,9 +12,9 @@ namespace Microsoft.Extensions.DependencyInjection
     public static class SFRealtimeServiceCollectionExtensions
     {
         public static IServiceCollection AddSFRealtimeServer(this IServiceCollection services,
-            IConfiguration configuration, bool launchWithDebugging = false)
+            ILoggerFactory loggerFactory, IConfiguration configuration, bool launchWithDebugging = false)
         {
-            services.AddRealtimeServer(configuration, o =>
+            services.AddRealtimeServer(loggerFactory, configuration, o =>
                 {
                     o.AppModuleName = "scriptureforge";
                     o.ProjectDoc = new DocConfig("sf_projects", typeof(SFProject));

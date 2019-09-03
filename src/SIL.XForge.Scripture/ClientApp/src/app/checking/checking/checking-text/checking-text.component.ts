@@ -20,7 +20,7 @@ export interface ScriptureReference {
   encapsulation: ViewEncapsulation.None
 })
 export class CheckingTextComponent extends SubscriptionDisposable {
-  @ViewChild(TextComponent) textComponent: TextComponent;
+  @ViewChild(TextComponent, { static: true }) textComponent: TextComponent;
 
   @Input() set activeReference(reference: Readonly<ScriptureReference>) {
     if (this.activeReference && this.isEditorLoaded) {

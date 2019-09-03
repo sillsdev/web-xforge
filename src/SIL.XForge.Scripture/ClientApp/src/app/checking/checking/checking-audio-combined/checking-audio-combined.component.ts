@@ -10,7 +10,7 @@ import {
   styleUrls: ['./checking-audio-combined.component.scss']
 })
 export class CheckingAudioCombinedComponent {
-  @ViewChild(CheckingAudioRecorderComponent) audioRecorderComponent: CheckingAudioRecorderComponent;
+  @ViewChild(CheckingAudioRecorderComponent, { static: false }) audioRecorderComponent: CheckingAudioRecorderComponent;
   @Input() source: string = '';
   @Output() update: EventEmitter<AudioAttachment> = new EventEmitter<AudioAttachment>();
 

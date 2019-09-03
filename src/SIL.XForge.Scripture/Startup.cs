@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SIL.XForge.Configuration;
 
@@ -24,14 +25,16 @@ namespace SIL.XForge.Scripture
 
     public class Startup
     {
-        public Startup(IConfiguration configuration, IHostingEnvironment env)
+        public Startup(IConfiguration configuration, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             Configuration = configuration;
             Environment = env;
+            LoggerFactory = loggerFactory;
         }
 
         public IConfiguration Configuration { get; }
         public IHostingEnvironment Environment { get; }
+        public ILoggerFactory LoggerFactory { get; }
         public IContainer ApplicationContainer { get; private set; }
 
         private SpaDevServerStartup SpaDevServerStartup
@@ -66,7 +69,7 @@ namespace SIL.XForge.Scripture
 
             services.AddConfiguration(Configuration);
 
-            services.AddSFRealtimeServer(Configuration, IsDevelopment);
+            services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment);
 
             services.AddExceptionLogging();
 
@@ -157,7 +160,7 @@ namespace SIL.XForge.Scripture
                 switch (SpaDevServerStartup)
                 {
                     case SpaDevServerStartup.Start:
-                        spa.UseAngularCliServer(npmScript: "start");
+                        spa.UseAngularCliServer(npmScript: "start:no-progress");
                         break;
 
                     case SpaDevServerStartup.Listen:

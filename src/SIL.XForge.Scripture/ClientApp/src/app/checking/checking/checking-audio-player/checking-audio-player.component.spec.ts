@@ -66,8 +66,8 @@ describe('CheckingAudioPlayerComponent', () => {
 
 @Component({ selector: 'app-host', template: '' })
 class HostComponent {
-  @ViewChild(CheckingAudioPlayerComponent) player1: CheckingAudioPlayerComponent;
-  @ViewChild(CheckingAudioPlayerComponent) player2: CheckingAudioPlayerComponent;
+  @ViewChild(CheckingAudioPlayerComponent, { static: false }) player1: CheckingAudioPlayerComponent;
+  @ViewChild(CheckingAudioPlayerComponent, { static: false }) player2: CheckingAudioPlayerComponent;
 }
 
 class TestEnvironment {

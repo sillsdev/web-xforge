@@ -338,7 +338,7 @@ class TestEnvironment {
 
     TestBed.configureTestingModule({
       declarations: [TextComponent],
-      imports: [QuillModule],
+      imports: [QuillModule.forRoot()],
       providers: [{ provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) }]
     });
     this.sourceFixture = TestBed.createComponent(TextComponent);
