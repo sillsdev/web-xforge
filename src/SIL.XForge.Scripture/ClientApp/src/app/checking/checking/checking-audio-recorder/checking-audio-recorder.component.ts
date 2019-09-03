@@ -64,9 +64,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   }
 
   startRecording() {
-    const mediaConstraints: MediaStreamConstraints = {
-      audio: true
-    };
+    const mediaConstraints: MediaStreamConstraints = { audio: true };
     navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then(this.successCallback.bind(this), this.errorCallback.bind(this));
@@ -97,8 +95,13 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
     const options = {
       disableLogs: true,
       type: 'audio',
-      mimeType: 'audio/webm'
+      mimeType: 'audio/webm',
+      recorderType: RecordRTC.MediaStreamRecorder
     };
+    // Fallback for devices not supporting the native Media Recording API i.e. Safari/iOS
+    if (!window.hasOwnProperty('MediaRecorder')) {
+      options.recorderType = RecordRTC.StereoAudioRecorder;
+    }
     this.stream = stream;
     this.recordRTC = RecordRTC(stream, options);
     this.recordRTC.startRecording();

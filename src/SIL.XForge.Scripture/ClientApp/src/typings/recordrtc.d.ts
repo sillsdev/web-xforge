@@ -1,7 +1,11 @@
 declare module 'recordrtc' {
-  export = RecordRTC;
+  const RecordRTC: {
+    (stream: MediaStream, config: object): RecordRTC;
+    MediaStreamRecorder(stream: MediaStream, config: object): RecorderType;
+    StereoAudioRecorder(stream: MediaStream, config: object): RecorderType;
+  };
 
-  function RecordRTC(stream: MediaStream, config: object): RecordRTC;
+  export = RecordRTC;
 
   interface RecordRTC {
     state: string;
@@ -11,5 +15,9 @@ declare module 'recordrtc' {
     save(fileName: string): void;
     getDataURL(callback: Function): void;
     getBlob(): Blob;
+  }
+
+  interface RecorderType {
+    config: object;
   }
 }
