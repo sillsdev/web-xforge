@@ -156,19 +156,27 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
   private segmentClicked(verseRefData: VerseRefData) {
     const verseRef = verseRefDataToVerseRef(verseRefData);
+    let bestMatch: ScriptureReference = {};
+
     for (const reference of this.references) {
       const verseStart = verseRefDataToVerseRef(reference.scriptureStart);
       let verseEnd = verseRefDataToVerseRef(reference.scriptureEnd);
       if (!verseEnd.book) {
         verseEnd = verseStart;
       }
-      if (
+      if (verseStart.chapterNum === verseRef.chapterNum && verseStart.verseNum === verseRef.verseNum) {
+        bestMatch = reference;
+        break;
+      } else if (
         verseStart.chapterNum === verseRef.chapterNum &&
         verseStart.verseNum <= verseRef.verseNum &&
         verseEnd.verseNum >= verseRef.verseNum
       ) {
-        this.referenceClicked.emit(reference);
+        bestMatch = reference;
       }
+    }
+    if (bestMatch) {
+      this.referenceClicked.emit(bestMatch);
     }
   }
 
