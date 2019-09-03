@@ -1,0 +1,28 @@
+@page
+@section css {
+    <link rel="stylesheet" href="~/css/sf.css" />
+    <style>
+        .mdl-grid {
+            background-color: rgb(184, 212, 50);
+            padding: 20px;
+        }
+    </style>
+}
+
+<div class="mdl-layout__content">
+    <div
+        id="registration"
+        class="flex-column prim-start sec-start"
+        ngClass.lt-md="smallcontent"
+        ngClass.md="mediumcontent"
+        ngClass.gt-md="largecontent"
+    >
+        <div class="flex-column prim-center sec-center">
+            <h3>You've been registered sucessfully</h3>
+            <P>We will be in touch soon to let you know how you can get connected to the <b>Scripture Forge v2 Beta</b>.</P>
+            <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" href="/home">
+                Return Home
+            </a>
+        </div>
+    </div>
+</div>
