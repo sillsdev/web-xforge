@@ -125,9 +125,9 @@ namespace SIL.XForge.Services
             }
 
             User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);
-            string subject = $"You've been invited to the project {project.ProjectName} on {siteOptions.Name}";
+            string subject = $"You've been invited to the project {project.Name} on {siteOptions.Name}";
             string body = "<p>Hello,</p><p></p>" +
-                $"<p>{inviter.Name} invites you to join the {project.ProjectName} project on {siteOptions.Name}." +
+                $"<p>{inviter.Name} invites you to join the {project.Name} project on {siteOptions.Name}." +
                 "</p><p></p>" +
                 "<p>Just click the link below, choose how to log in, and you will be ready to start.</p><p></p>" +
                 $"<p>To join, go to <a href=\"{url}\">{url}</a></p><p></p>" +

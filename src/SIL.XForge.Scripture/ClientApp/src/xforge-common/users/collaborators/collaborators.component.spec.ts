@@ -292,7 +292,7 @@ class TestEnvironment {
 
   setupProjectData(): void {
     const project: Project = {
-      projectName: 'Project 01',
+      name: 'Project 01',
       userRoles: {
         user01: 'admin',
         user02: 'user',
@@ -308,7 +308,7 @@ class TestEnvironment {
   }
 
   setupProjectDataWithNoUsers(): void {
-    this.setupThisProjectData(this.project01Id, { projectName: 'Project 01', userRoles: {} });
+    this.setupThisProjectData(this.project01Id, { name: 'Project 01', userRoles: {} });
   }
 
   private addUserProfile(id: string, user: User): void {

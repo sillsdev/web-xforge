@@ -503,7 +503,7 @@ namespace SIL.XForge.Services
                         new TestProject
                         {
                             Id = Project01,
-                            ProjectName = "Project 1",
+                            Name = "Project 1",
                             ShareEnabled = false,
                             UserRoles =
                             {
@@ -514,7 +514,7 @@ namespace SIL.XForge.Services
                         new TestProject
                         {
                             Id = Project02,
-                            ProjectName = "Project 2",
+                            Name = "Project 2",
                             ShareEnabled = true,
                             ShareLevel = SharingLevel.Anyone,
                             UserRoles =
@@ -526,7 +526,7 @@ namespace SIL.XForge.Services
                         new TestProject
                         {
                             Id = Project03,
-                            ProjectName = "Project 3",
+                            Name = "Project 3",
                             ShareEnabled = true,
                             ShareLevel = SharingLevel.Specific,
                             UserRoles =

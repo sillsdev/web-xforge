@@ -217,14 +217,14 @@ class TestEnvironment {
     when(this.mockedProjectService.onlineSearch(anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>) => {
         const project03Doc = this.createProjectDoc('project03', {
-          projectName: 'Project 03',
+          name: 'Project 03',
           userRoles: { user01: 'user' }
         });
         const results: QueryResults<ProjectDoc>[] = [
           {
             docs: [
-              this.createProjectDoc('project01', { projectName: 'Project 01', userRoles: { user01: 'admin' } }),
-              this.createProjectDoc('project02', { projectName: 'Project 02', userRoles: {} }),
+              this.createProjectDoc('project01', { name: 'Project 01', userRoles: { user01: 'admin' } }),
+              this.createProjectDoc('project02', { name: 'Project 02', userRoles: {} }),
               project03Doc
             ],
             totalPagedCount: 3

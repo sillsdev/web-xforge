@@ -143,7 +143,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       this.state = 'connecting';
       this.connectProjectName = project.name;
       const newProject: SFProject = {
-        projectName: project.name,
+        name: project.name,
         paratextId: project.paratextId,
         inputSystem: ParatextService.getInputSystem(project),
         checkingEnabled: values.settings.checking,

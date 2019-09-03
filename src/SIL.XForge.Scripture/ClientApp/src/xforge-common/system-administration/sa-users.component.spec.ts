@@ -276,7 +276,7 @@ class TestEnvironment {
     );
 
     when(this.mockedProjectService.onlineGetMany(anything())).thenResolve([
-      this.createProjectDoc('project01', { projectName: 'Project 01', userRoles: { user01: 'admin', user03: 'user' } })
+      this.createProjectDoc('project01', { name: 'Project 01', userRoles: { user01: 'admin', user03: 'user' } })
     ]);
   }
 

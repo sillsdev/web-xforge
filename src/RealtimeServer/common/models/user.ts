@@ -36,10 +36,6 @@ export interface User {
   role?: string;
   displayName?: string;
   isDisplayNameConfirmed?: boolean;
-  mobilePhone?: string;
-  contactMethod?: 'email' | 'sms' | 'emailSms';
-  birthday?: string;
-  gender?: 'female' | 'male';
   authId?: string;
   sites?: { [key: string]: Site };
 }

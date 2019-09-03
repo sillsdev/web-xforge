@@ -13,7 +13,6 @@ export class ParatextService {
     return {
       tag: project.languageTag,
       languageName: project.languageName,
-      abbreviation: project.languageTag,
       isRightToLeft: false
     };
   }

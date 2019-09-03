@@ -144,7 +144,7 @@ namespace SIL.XForge.Scripture.Services
                         new SFProject
                         {
                             Id = Project01,
-                            ProjectName = "project01",
+                            Name = "project01",
                             TranslationSuggestionsEnabled = true,
                             SourceParatextId = "paratextId",
                             SourceName = "Source",
@@ -176,7 +176,7 @@ namespace SIL.XForge.Scripture.Services
                         new SFProject
                         {
                             Id = Project02,
-                            ProjectName = "project02",
+                            Name = "project02",
                             UserRoles =
                             {
                                 { User02, SFProjectRole.Administrator }
@@ -185,7 +185,7 @@ namespace SIL.XForge.Scripture.Services
                         new SFProject
                         {
                             Id = Project03,
-                            ProjectName = "project03",
+                            Name = "project03",
                             UserRoles =
                             {
                                 { User01, SFProjectRole.Administrator },
