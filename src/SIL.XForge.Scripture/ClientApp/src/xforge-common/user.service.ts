@@ -1,12 +1,17 @@
 import { Injectable } from '@angular/core';
+import merge from 'lodash/merge';
+import { User } from 'realtime-server/lib/common/models/user';
 import { combineLatest, from, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
+import { RealtimeQuery } from './models/realtime-query';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
-import { QueryParameters, QueryResults, RealtimeService } from './realtime.service';
+import { Filters, QueryParameters } from './query-parameters';
+import { RealtimeService } from './realtime.service';
 import { USERS_URL } from './url-constants';
+import { getObjPathStr, objProxy } from './utils';
 
 /**
  * Provides operations on user objects.
@@ -31,11 +36,11 @@ export class UserService {
   }
 
   get(id: string): Promise<UserDoc> {
-    return this.realtimeService.get(UserDoc.COLLECTION, id);
+    return this.realtimeService.subscribe(UserDoc.COLLECTION, id);
   }
 
   getProfile(id: string): Promise<UserProfileDoc> {
-    return this.realtimeService.get(UserProfileDoc.COLLECTION, id);
+    return this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id);
   }
 
   async onlineDelete(id: string): Promise<void> {
@@ -46,22 +51,23 @@ export class UserService {
     term$: Observable<string>,
     queryParameters$: Observable<QueryParameters>,
     reload$: Observable<void>
-  ): Observable<QueryResults<UserDoc>> {
+  ): Observable<RealtimeQuery<UserDoc>> {
     const debouncedTerm$ = term$.pipe(
       debounceTime(400),
       distinctUntilChanged()
     );
 
+    const u = objProxy<User>();
     return combineLatest(debouncedTerm$, queryParameters$, reload$).pipe(
       switchMap(([term, queryParameters]) => {
-        const query = {
+        const filters: Filters = {
           $or: [
-            { name: { $regex: `.*${term}.*`, $options: 'i' } },
-            { email: { $regex: `.*${term}.*`, $options: 'i' } },
-            { displayName: { $regex: `.*${term}.*`, $options: 'i' } }
+            { [getObjPathStr(u.name)]: { $regex: `.*${term}.*`, $options: 'i' } },
+            { [getObjPathStr(u.email)]: { $regex: `.*${term}.*`, $options: 'i' } },
+            { [getObjPathStr(u.displayName)]: { $regex: `.*${term}.*`, $options: 'i' } }
           ]
         };
-        return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.COLLECTION, query, queryParameters));
+        return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.COLLECTION, merge(filters, queryParameters)));
       })
     );
   }

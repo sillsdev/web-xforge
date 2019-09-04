@@ -4,7 +4,7 @@ import merge from 'lodash/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import { fromEvent } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { TextDocId } from '../../core/models/text-doc-id';
+import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';

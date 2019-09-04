@@ -7,8 +7,9 @@ import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
-import { QueryParameters } from '../realtime.service';
+import { QueryParameters } from '../query-parameters';
 import { UserService } from '../user.service';
+import { getObjPathStr, objProxy } from '../utils';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
 
 interface Row {
@@ -78,7 +79,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
               projectDocs: userDoc.data.sites[environment.siteId].projects.map(id => projectDocs.get(id))
             } as Row)
         );
-        this.length = searchResults.totalPagedCount;
+        this.length = searchResults.totalUnpagedCount;
         this.loadingFinished();
       }
     );
@@ -115,9 +116,9 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
 
   private getQueryParameters(): QueryParameters {
     return {
-      sort: { name: 1 },
-      skip: this.pageIndex * this.pageSize,
-      limit: this.pageSize
+      $sort: { [getObjPathStr(objProxy<User>().name)]: 1 },
+      $skip: this.pageIndex * this.pageSize,
+      $limit: this.pageSize
     };
   }
 }

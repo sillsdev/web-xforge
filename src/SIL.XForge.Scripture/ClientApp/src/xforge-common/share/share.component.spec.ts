@@ -4,16 +4,15 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import * as OTJson0 from 'ot-json0';
 import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { LocationService } from 'xforge-common/location.service';
+import { LocationService } from '../location.service';
+import { MemoryRealtimeOfflineStore } from '../memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from '../memory-realtime-remote-store';
 import { ProjectDoc } from '../models/project-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
-import { MemoryRealtimeDocAdapter, RealtimeDocAdapter } from '../realtime-doc-adapter';
-import { RealtimeOfflineStore } from '../realtime-offline-store';
 import { UICommonModule } from '../ui-common.module';
 import { ShareControlComponent } from './share-control.component';
 import { ShareDialogComponent } from './share-dialog.component';
@@ -126,9 +125,7 @@ describe('ShareComponent', () => {
 class DialogTestModule {}
 
 class TestProjectDoc extends ProjectDoc {
-  constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
-    super('projects', adapter, store);
-  }
+  static readonly COLLECTION = 'projects';
 
   get taskNames(): string[] {
     return [];
@@ -145,7 +142,8 @@ class TestEnvironment {
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedLocationService = mock(LocationService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
 
   constructor() {
     when(this.mockedProjectService.onlineInvite('project01', anything())).thenResolve();
@@ -215,8 +213,8 @@ class TestEnvironment {
 
   setShareConfig(shareEnabled: boolean, shareLevel: SharingLevel): void {
     const projectDoc = new TestProjectDoc(
-      new MemoryRealtimeDocAdapter('project01', OTJson0.type, { shareEnabled, shareLevel }),
-      instance(this.mockedRealtimeOfflineStore)
+      this.offlineStore,
+      new MemoryRealtimeDocAdapter(TestProjectDoc.COLLECTION, 'project01', { shareEnabled, shareLevel })
     );
     when(this.mockedProjectService.get(anything())).thenResolve(projectDoc);
   }

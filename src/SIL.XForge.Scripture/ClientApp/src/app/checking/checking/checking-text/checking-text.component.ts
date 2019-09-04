@@ -3,15 +3,10 @@ import isEqual from 'lodash/isEqual';
 import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { fromEvent } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { TextDocId } from '../../../core/models/text-doc-id';
+import { ScriptureReference } from '../../../core/models/scripture-reference';
+import { TextDocId } from '../../../core/models/text-doc';
 import { verseRefDataToVerseRef } from '../../../shared/scripture-utils/verse-ref-data-converters';
 import { TextComponent } from '../../../shared/text/text.component';
-
-// An interface for objects with scripture reference properties i.e. Questions
-export interface ScriptureReference {
-  scriptureStart?: VerseRefData;
-  scriptureEnd?: VerseRefData;
-}
 
 @Component({
   selector: 'app-checking-text',

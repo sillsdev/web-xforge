@@ -76,7 +76,7 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
       // know the duration once metadata has loaded.
       this.audio.currentTime = 1e10;
     } else {
-      this.audio.src = undefined;
+      this.audio.src = '';
       this.enabled = false;
     }
   }

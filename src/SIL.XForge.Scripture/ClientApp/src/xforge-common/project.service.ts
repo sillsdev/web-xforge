@@ -1,4 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
+import merge from 'lodash/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { combineLatest, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
@@ -6,8 +7,11 @@ import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
-import { QueryParameters, QueryResults, RealtimeService } from './realtime.service';
+import { RealtimeQuery } from './models/realtime-query';
+import { Filters, QueryParameters } from './query-parameters';
+import { RealtimeService } from './realtime.service';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
+import { getObjPathStr, objProxy } from './utils';
 
 export abstract class ProjectService<
   TProj extends Project = Project,
@@ -31,7 +35,7 @@ export abstract class ProjectService<
   protected abstract get collection(): string;
 
   get(id: string): Promise<TDoc> {
-    return this.realtimeService.get(this.collection, id);
+    return this.realtimeService.subscribe(this.collection, id);
   }
 
   onlineCreate(project: TProj): Promise<string> {
@@ -41,27 +45,28 @@ export abstract class ProjectService<
   onlineSearch(
     term$: Observable<string>,
     queryParameters$: Observable<QueryParameters>
-  ): Observable<QueryResults<TDoc>> {
+  ): Observable<RealtimeQuery<TDoc>> {
     const debouncedTerm$ = term$.pipe(
       debounceTime(400),
       distinctUntilChanged()
     );
 
+    const p = objProxy<Project>();
     return combineLatest(debouncedTerm$, queryParameters$).pipe(
-      switchMap(([term, parameters]) => {
-        const query = {
+      switchMap(([term, queryParameters]) => {
+        const filters: Filters = {
           $or: [
-            { name: { $regex: `.*${term}.*`, $options: 'i' } },
-            { 'inputSystem.languageName': { $regex: `.*${term}.*`, $options: 'i' } }
+            { [getObjPathStr(p.name)]: { $regex: `.*${term}.*`, $options: 'i' } },
+            { [getObjPathStr(p.inputSystem.languageName)]: { $regex: `.*${term}.*`, $options: 'i' } }
           ]
         };
-        return this.realtimeService.onlineQuery<TDoc>(this.collection, query, parameters);
+        return this.realtimeService.onlineQuery<TDoc>(this.collection, merge(filters, queryParameters));
       })
     );
   }
 
   async onlineGetMany(projectIds: string[]): Promise<TDoc[]> {
-    const results = await this.realtimeService.onlineQuery(this.collection, { _id: { $in: projectIds } });
+    const results = await this.realtimeService.onlineQuery<TDoc>(this.collection, { _id: { $in: projectIds } });
     return results.docs as TDoc[];
   }
 

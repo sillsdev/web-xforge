@@ -2,11 +2,10 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ngfModule } from 'angular-file';
-import * as OTJson0 from 'ot-json0';
 import { instance, mock, when } from 'ts-mockito';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
@@ -62,11 +61,12 @@ describe('CheckingAudioCombinedComponent', () => {
 });
 
 class TestEnvironment {
-  audioFile: string = 'test-audio-player.webm';
-  component: CheckingAudioCombinedComponent;
-  fixture: ComponentFixture<CheckingAudioCombinedComponent>;
-  mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
-  mockedUserService: UserService = mock(UserService);
+  readonly audioFile: string = 'test-audio-player.webm';
+  readonly component: CheckingAudioCombinedComponent;
+  readonly fixture: ComponentFixture<CheckingAudioCombinedComponent>;
+  readonly mockedUserService: UserService = mock(UserService);
+
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
 
   constructor() {
     TestBed.configureTestingModule({
@@ -83,8 +83,8 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
 
     const currentUserDoc = new UserDoc(
-      new MemoryRealtimeDocAdapter('user01', OTJson0.type, { name: 'user' }),
-      instance(this.mockedRealtimeOfflineStore)
+      this.offlineStore,
+      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', { name: 'user' })
     );
     when(this.mockedUserService.getCurrentUser()).thenResolve(currentUserDoc);
     this.fixture.detectChanges();

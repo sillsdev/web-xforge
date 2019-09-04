@@ -1,12 +1,14 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
+import { Project } from 'realtime-server/lib/common/models/project';
 import { BehaviorSubject } from 'rxjs';
 import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
-import { QueryParameters } from '../realtime.service';
+import { QueryParameters } from '../query-parameters';
 import { UserService } from '../user.service';
+import { getObjPathStr, objProxy } from '../utils';
 
 class Row {
   isUpdatingRole: boolean = false;
@@ -44,7 +46,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
   pageIndex: number = 0;
   pageSize: number = 50;
 
-  private projectDocs: ProjectDoc[];
+  private projectDocs: Readonly<ProjectDoc[]>;
 
   private readonly searchTerm$: BehaviorSubject<string>;
   private readonly queryParameters$: BehaviorSubject<QueryParameters>;
@@ -72,7 +74,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
     this.subscribe(this.projectService.onlineSearch(this.searchTerm$, this.queryParameters$), searchResults => {
       this.loadingStarted();
       this.projectDocs = searchResults.docs;
-      this.length = searchResults.totalPagedCount;
+      this.length = searchResults.totalUnpagedCount;
       this.generateRows();
       this.loadingFinished();
     });
@@ -122,9 +124,9 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
 
   private getQueryParameters(): QueryParameters {
     return {
-      sort: { name: 1 },
-      skip: this.pageIndex * this.pageSize,
-      limit: this.pageSize
+      $sort: { [getObjPathStr(objProxy<Project>().name)]: 1 },
+      $skip: this.pageIndex * this.pageSize,
+      $limit: this.pageSize
     };
   }
 }

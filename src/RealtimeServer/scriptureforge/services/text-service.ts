@@ -20,10 +20,7 @@ export class TextService extends DocService<TextData> {
       return true;
     }
 
-    if (this.server == null) {
-      throw new Error('The doc service has not been initialized.');
-    }
-    const role = await this.server.getUserProjectRole(session, docId);
+    const role = await this.getUserProjectRole(session, docId);
     if (role == null) {
       return false;
     }
@@ -42,10 +39,7 @@ export class TextService extends DocService<TextData> {
       return true;
     }
 
-    if (this.server == null) {
-      throw new Error('The doc service has not been initialized.');
-    }
-    const role = await this.server.getUserProjectRole(session, docId);
+    const role = await this.getUserProjectRole(session, docId);
     if (role == null) {
       return false;
     }
@@ -55,5 +49,14 @@ export class TextService extends DocService<TextData> {
 
   private hasRight(role: string, operation: Operation): boolean {
     return SF_PROJECT_RIGHTS.hasRight(role, { projectDomain: SFProjectDomain.Texts, operation });
+  }
+
+  private getUserProjectRole(session: ConnectSession, docId: string): Promise<string | undefined> {
+    const parts = docId.split(':');
+    const projectId = parts[0];
+    if (this.server == null) {
+      throw new Error('The doc service has not been initialized.');
+    }
+    return this.server.getUserProjectRole(session, projectId);
   }
 }

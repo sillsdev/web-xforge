@@ -26,7 +26,7 @@ import { HelpHeroService } from '../../core/help-hero.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta } from '../../core/models/text-doc';
-import { TextDocId, TextType } from '../../core/models/text-doc-id';
+import { TextDocId, TextType } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';

@@ -5,20 +5,19 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
-import * as OTJson0 from 'ot-json0';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
-import { TextDocId } from '../../core/models/text-doc-id';
+import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
@@ -100,12 +99,12 @@ class TestEnvironment {
   readonly mockedSFProjectService = mock(SFProjectService);
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
   readonly mockedUserService = mock(UserService);
 
   readonly component: TranslateOverviewComponent;
   readonly fixture: ComponentFixture<TranslateOverviewComponent>;
 
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
   private trainingProgress$ = new Subject<ProgressStatus>();
 
   constructor() {
@@ -199,8 +198,8 @@ class TestEnvironment {
         { bookId: 'JHN', name: 'John', chapters: [{ number: 1 }, { number: 2 }], hasSource: false }
       ]
     };
-    const adapter = new MemoryRealtimeDocAdapter('project01', OTJson0.type, project);
-    const doc = new SFProjectDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    const adapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project);
+    const doc = new SFProjectDoc(this.offlineStore, adapter);
     when(this.mockedSFProjectService.get('project01')).thenResolve(doc);
 
     this.addTextDoc(new TextDocId('project01', 'MAT', 1, 'target'));
@@ -259,7 +258,7 @@ class TestEnvironment {
     delta.insert({ verse: { number: '10', style: 'v' } });
     delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapter}_10` });
     delta.insert('\n', { para: { style: 'p' } });
-    const adapter = new MemoryRealtimeDocAdapter(id.toString(), RichText.type, delta);
-    return new TextDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    const adapter = new MemoryRealtimeDocAdapter(TextDoc.COLLECTION, id.toString(), delta, RichText.type);
+    return new TextDoc(this.offlineStore, adapter);
   }
 }

@@ -2,13 +2,13 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import sortBy from 'lodash/sortBy';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { CheckingUtils } from '../../checking.utils';
 
@@ -20,26 +20,26 @@ import { CheckingUtils } from '../../checking.utils';
 export class CheckingQuestionsComponent extends SubscriptionDisposable {
   @Input() project: SFProject;
   @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
-  @Output() update: EventEmitter<Question> = new EventEmitter<Question>();
-  @Output() changed: EventEmitter<Question> = new EventEmitter<Question>();
-  _questions: Readonly<Question[]> = [];
-  activeQuestion: Question;
-  activeQuestionSubject: Subject<Question> = new Subject<Question>();
+  @Output() update = new EventEmitter<QuestionDoc>();
+  @Output() changed = new EventEmitter<QuestionDoc>();
+  _questionDocs: Readonly<QuestionDoc[]> = [];
+  activeQuestionDoc: QuestionDoc;
+  activeQuestionDoc$ = new Subject<QuestionDoc>();
 
   constructor(private userService: UserService) {
     super();
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
-    this.subscribe(this.activeQuestionSubject.pipe(debounceTime(2000)), question => {
-      this.updateElementsRead(question);
+    this.subscribe(this.activeQuestionDoc$.pipe(debounceTime(2000)), questionDoc => {
+      this.updateElementsRead(questionDoc);
     });
   }
 
   get activeQuestionChapter(): number {
-    return parseInt(this.activeQuestion.scriptureStart.chapter, 10);
+    return parseInt(this.activeQuestionDoc.data.scriptureStart.chapter, 10);
   }
 
   get activeQuestionIndex(): number {
-    return this.questions.findIndex(question => question.id === this.activeQuestion.id);
+    return this.questionDocs.findIndex(question => question.id === this.activeQuestionDoc.id);
   }
 
   get isAdministrator(): boolean {
@@ -49,40 +49,40 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRole.ParatextAdministrator;
   }
 
-  get questions(): Readonly<Question[]> {
-    return this._questions;
+  get questionDocs(): Readonly<QuestionDoc[]> {
+    return this._questionDocs;
   }
 
-  @Input() set questions(questions: Readonly<Question[]>) {
-    if (questions.length) {
-      if (this.activeQuestion == null || !questions.some(question => question.id === this.activeQuestion.id)) {
-        this.activateQuestion(questions[Object.keys(questions)[0]]);
+  @Input() set questionDocs(questionDocs: Readonly<QuestionDoc[]>) {
+    if (questionDocs.length) {
+      if (this.activeQuestionDoc == null || !questionDocs.some(question => question.id === this.activeQuestionDoc.id)) {
+        this.activateQuestion(questionDocs[0]);
       }
     } else {
-      this.activeQuestion = undefined;
+      this.activeQuestionDoc = undefined;
     }
-    this._questions = questions;
+    this._questionDocs = questionDocs;
   }
 
-  getAnswers(question: Question): Answer[] {
+  getAnswers(questionDoc: QuestionDoc): Answer[] {
     if (this.project.usersSeeEachOthersResponses || this.isAdministrator) {
-      return question.answers;
+      return questionDoc.data.answers;
     } else {
-      return question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
+      return questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
     }
   }
 
-  getUnreadAnswers(question: Question): number {
+  getUnreadAnswers(questionDoc: QuestionDoc): number {
     let unread = 0;
     if (!this.isAdministrator && !this.project.usersSeeEachOthersResponses) {
       return unread;
     }
-    for (const answer of this.getAnswers(question)) {
+    for (const answer of this.getAnswers(questionDoc)) {
       if (!this.hasUserReadAnswer(answer)) {
         unread++;
       }
     }
-    for (const answer of this.getAnswers(question)) {
+    for (const answer of this.getAnswers(questionDoc)) {
       for (const comment of answer.comments) {
         if (!this.hasUserReadComment(comment)) {
           unread++;
@@ -92,16 +92,16 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     return unread;
   }
 
-  updateElementsRead(question: Question): void {
+  updateElementsRead(questionDoc: QuestionDoc): void {
     this.projectUserConfigDoc
       .submitJson0Op(op => {
-        if (!this.hasUserReadQuestion(question)) {
-          op.add(puc => puc.questionRefsRead, question.id);
+        if (!this.hasUserReadQuestion(questionDoc)) {
+          op.add(puc => puc.questionRefsRead, questionDoc.data.dataId);
         }
-        if (this.hasUserAnswered(question) || this.isAdministrator) {
-          for (const answer of this.getAnswers(question)) {
+        if (this.hasUserAnswered(questionDoc) || this.isAdministrator) {
+          for (const answer of this.getAnswers(questionDoc)) {
             if (!this.hasUserReadAnswer(answer)) {
-              op.add(puc => puc.answerRefsRead, answer.id);
+              op.add(puc => puc.answerRefsRead, answer.dataId);
             }
             const comments = sortBy(answer.comments, c => c.dateCreated);
             let readLimit = 3;
@@ -111,7 +111,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
             let commentCount = 0;
             for (const comment of comments) {
               if (!this.hasUserReadComment(comment)) {
-                op.add(puc => puc.commentRefsRead, comment.id);
+                op.add(puc => puc.commentRefsRead, comment.dataId);
               }
               commentCount++;
               if (commentCount === readLimit) {
@@ -123,33 +123,33 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       })
       .then(updated => {
         if (updated) {
-          this.update.emit(question);
+          this.update.emit(questionDoc);
         }
       });
   }
 
   checkCanChangeQuestion(newIndex: number): boolean {
-    return !!this.questions[this.activeQuestionIndex + newIndex];
+    return !!this.questionDocs[this.activeQuestionIndex + newIndex];
   }
 
-  hasUserAnswered(question: Question): boolean {
-    return CheckingUtils.hasUserAnswered(question, this.userService.currentUserId);
+  hasUserAnswered(questionDoc: QuestionDoc): boolean {
+    return CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId);
   }
 
-  hasUserReadQuestion(question: Question): boolean {
-    return CheckingUtils.hasUserReadQuestion(question, this.projectUserConfigDoc.data);
+  hasUserReadQuestion(questionDoc: QuestionDoc): boolean {
+    return CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data);
   }
 
   hasUserReadAnswer(answer: Answer): boolean {
     return this.projectUserConfigDoc.data.answerRefsRead
-      ? this.projectUserConfigDoc.data.answerRefsRead.includes(answer.id) ||
+      ? this.projectUserConfigDoc.data.answerRefsRead.includes(answer.dataId) ||
           this.projectUserConfigDoc.data.ownerRef === answer.ownerRef
       : false;
   }
 
   hasUserReadComment(comment: Comment): boolean {
     return this.projectUserConfigDoc.data.commentRefsRead
-      ? this.projectUserConfigDoc.data.commentRefsRead.includes(comment.id) ||
+      ? this.projectUserConfigDoc.data.commentRefsRead.includes(comment.dataId) ||
           this.projectUserConfigDoc.data.ownerRef === comment.ownerRef
       : false;
   }
@@ -162,15 +162,15 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     this.changeQuestion(-1);
   }
 
-  activateQuestion(question: Question): void {
-    this.activeQuestion = question;
-    this.changed.emit(question);
-    this.activeQuestionSubject.next(question);
+  activateQuestion(questionDoc: QuestionDoc): void {
+    this.activeQuestionDoc = questionDoc;
+    this.changed.emit(questionDoc);
+    this.activeQuestionDoc$.next(questionDoc);
   }
 
   private changeQuestion(newDifferential: number): void {
-    if (this.activeQuestion && this.checkCanChangeQuestion(newDifferential)) {
-      this.activateQuestion(this.questions[this.activeQuestionIndex + newDifferential]);
+    if (this.activeQuestionDoc && this.checkCanChangeQuestion(newDifferential)) {
+      this.activateQuestion(this.questionDocs[this.activeQuestionIndex + newDifferential]);
     }
   }
 }

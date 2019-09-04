@@ -1,11 +1,10 @@
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as OTJson0 from 'ot-json0';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { StartComponent } from './start.component';
@@ -49,7 +48,8 @@ class TestEnvironment {
   readonly mockedUserService = mock(UserService);
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedRouter = mock(Router);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
 
   constructor() {
     TestBed.configureTestingModule({
@@ -67,10 +67,10 @@ class TestEnvironment {
 
   setCurrentUserProjectData(projectId?: string, projects: string[] = ['project01', 'project02']): void {
     const currentUserDoc = new UserDoc(
-      new MemoryRealtimeDocAdapter('user01', OTJson0.type, {
+      this.offlineStore,
+      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', {
         sites: { sf: { currentProjectId: projectId == null ? undefined : projectId, projects } }
-      }),
-      instance(this.mockedRealtimeOfflineStore)
+      })
     );
     when(this.mockedUserService.getCurrentUser()).thenResolve(currentUserDoc);
   }

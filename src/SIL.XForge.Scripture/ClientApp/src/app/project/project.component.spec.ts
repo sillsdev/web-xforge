@@ -1,18 +1,17 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
-import * as OTJson0 from 'ot-json0';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
+import { getSFProjectUserConfigDocId, SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectComponent } from './project.component';
 
@@ -104,8 +103,9 @@ class TestEnvironment {
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedRouter = mock(Router);
   readonly mockedSFProjectService = mock(SFProjectService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
   readonly mockedNoticeService = mock(NoticeService);
+
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
@@ -134,13 +134,16 @@ class TestEnvironment {
 
   setNoProjectData(): void {
     const projectUserConfigDoc = new SFProjectUserConfigDoc(
-      new MemoryRealtimeDocAdapter('project01:user01'),
-      instance(this.mockedRealtimeOfflineStore)
+      this.offlineStore,
+      new MemoryRealtimeDocAdapter(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId('project01', 'user01')
+      )
     );
     when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenResolve(projectUserConfigDoc);
     const projectDoc = new SFProjectDoc(
-      new MemoryRealtimeDocAdapter('project01'),
-      instance(this.mockedRealtimeOfflineStore)
+      this.offlineStore,
+      new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01')
     );
     when(this.mockedSFProjectService.get('project01')).thenResolve(projectDoc);
   }
@@ -148,12 +151,17 @@ class TestEnvironment {
   setProjectData(args: { hasTexts?: boolean; selectedTask?: string; role?: SFProjectRole } = {}): void {
     const projectUserConfig: SFProjectUserConfig = {
       ownerRef: 'user01',
+      projectRef: 'project01',
       selectedTask: args.selectedTask,
       selectedBookId: args.selectedTask == null ? undefined : 'text02'
     };
     const projectUserConfigDoc = new SFProjectUserConfigDoc(
-      new MemoryRealtimeDocAdapter('project01:user01', OTJson0.type, projectUserConfig),
-      instance(this.mockedRealtimeOfflineStore)
+      this.offlineStore,
+      new MemoryRealtimeDocAdapter(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId('project01', 'user01'),
+        projectUserConfig
+      )
     );
     when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenResolve(projectUserConfigDoc);
     const project: SFProject = {
@@ -162,8 +170,8 @@ class TestEnvironment {
       userRoles: { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }
     };
     const projectDoc = new SFProjectDoc(
-      new MemoryRealtimeDocAdapter('project01', OTJson0.type, project),
-      instance(this.mockedRealtimeOfflineStore)
+      this.offlineStore,
+      new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project)
     );
     when(this.mockedSFProjectService.get('project01')).thenResolve(projectDoc);
   }

@@ -1,34 +1,29 @@
 import { MdcDialog, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { ngfModule } from 'angular-file';
-import * as OTJson0 from 'ot-json0';
 import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
 import { User } from 'realtime-server/lib/common/models/user';
-import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { of } from 'rxjs';
-import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { SF_REALTIME_DOC_TYPES } from 'src/app/core/models/sf-realtime-doc-types';
+import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { QuestionListDoc } from '../../core/models/question-list-doc';
+import { getQuestionDocId, QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { TextDocId } from '../../core/models/text-doc-id';
+import { getSFProjectUserConfigDocId, SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ScrVers } from '../../shared/scripture-utils/scr-vers';
-import { VerseRef } from '../../shared/scripture-utils/verse-ref';
 import { ScrVersType } from '../../shared/scripture-utils/versification';
 import { CheckingModule } from '../checking.module';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
@@ -80,12 +75,10 @@ describe('CheckingOverviewComponent', () => {
       const env = new TestEnvironment();
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
       env.waitForQuestions();
-      verify(env.mockedProjectService.getQuestionList(anything())).thrice();
 
       resetCalls(env.mockedProjectService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedProjectService.getQuestionList(anything())).never();
       expect().nothing();
     }));
 
@@ -100,14 +93,12 @@ describe('CheckingOverviewComponent', () => {
         })
       );
       env.waitForQuestions();
-      verify(env.mockedProjectService.getQuestionList(anything())).thrice();
       env.simulateRowClick(0);
       expect(env.textRows.length).toEqual(3);
 
       resetCalls(env.mockedProjectService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedProjectService.getQuestionList(anything())).once();
       const id = new TextDocId('project01', 'MAT', 3);
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(5);
@@ -122,7 +113,7 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(2);
       expect(env.questionEditButtons.length).toEqual(0);
       expect(env.component.itemVisible[id.toString()]).toBeFalsy();
-      expect(env.component.questionListDocs[id.toString()].data.questions.length).toBeGreaterThan(0);
+      expect(env.component.questionDocs[id.toString()].length).toBeGreaterThan(0);
       expect(env.component.questionCount(id.bookId, id.chapter)).toBeGreaterThan(0);
 
       env.simulateRowClick(0);
@@ -154,12 +145,10 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(9);
       expect(env.questionEditButtons.length).toEqual(6);
-      verify(env.mockedProjectService.getQuestionList(anything())).thrice();
 
       resetCalls(env.mockedProjectService);
       env.clickElement(env.questionEditButtons[0]);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedProjectService.getQuestionList(anything())).never();
     }));
 
     it('allows editing scripture reference', fakeAsync(() => {
@@ -183,7 +172,6 @@ describe('CheckingOverviewComponent', () => {
       expect(env.questionEditButtons.length).toEqual(6);
       env.clickElement(env.questionEditButtons[0]);
       env.fixture.detectChanges();
-      verify(env.mockedProjectService.getQuestionList(deepEqual(mat3Id))).once();
       expect(env.questionEditButtons.length).toEqual(5);
       env.simulateRowClick(1, mat3Id);
       expect(env.textRows.length).toEqual(10);
@@ -237,12 +225,10 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(9);
       expect(env.questionEditButtons.length).toEqual(6);
-      verify(env.mockedProjectService.getQuestionList(anything())).thrice();
 
       resetCalls(env.mockedProjectService);
       env.clickElement(env.questionEditButtons[0]);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      verify(env.mockedProjectService.getQuestionList(anything())).never();
       verify(env.mockedProjectService.onlineDeleteAudio('project01', 'q1Id', env.adminUser.id)).once();
     }));
   });
@@ -343,15 +329,7 @@ describe('CheckingOverviewComponent', () => {
 });
 
 @NgModule({
-  imports: [
-    FormsModule,
-    MdcDialogModule,
-    ReactiveFormsModule,
-    NoopAnimationsModule,
-    UICommonModule,
-    ngfModule,
-    CheckingModule
-  ],
+  imports: [MdcDialogModule, NoopAnimationsModule, UICommonModule, ngfModule, CheckingModule],
   entryComponents: [QuestionDialogComponent]
 })
 class DialogTestModule {}
@@ -374,18 +352,19 @@ class TestEnvironment {
   mockedProjectService: SFProjectService = mock(SFProjectService);
   mockedUserService: UserService = mock(UserService);
   mockedAuthService: AuthService = mock(AuthService);
-  mockedRealtimeOfflineStore: RealtimeOfflineStore = mock(RealtimeOfflineStore);
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
   checkerUser = this.createUser('02', SFProjectRole.CommunityChecker);
 
   private adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.adminUser.id,
+    projectRef: 'project01',
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
   };
   private reviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.checkerUser.id,
+    projectRef: 'project01',
     questionRefsRead: ['q1Id', 'q2Id', 'q3Id'],
     answerRefsRead: [],
     commentRefsRead: []
@@ -406,48 +385,33 @@ class TestEnvironment {
     }
   };
   private readonly anotherUserId = 'anotherUserId';
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
-    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
-    when(this.mockedMdcDialog.open(QuestionDialogComponent, anything())).thenReturn(
-      instance(this.mockedQuestionDialogRef)
-    );
-    when(this.mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
-    when(this.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
-    const adapter = new MemoryRealtimeDocAdapter('project01', OTJson0.type, this.testProject);
-    const projectDoc = new SFProjectDoc(adapter, instance(this.mockedRealtimeOfflineStore));
-    when(this.mockedProjectService.get('project01')).thenResolve(projectDoc);
-    when(this.mockedProjectService.getUserConfig('project01', this.adminUser.id)).thenResolve(
-      this.createProjectUserConfigDoc(this.adminProjectUserConfig)
-    );
-    when(this.mockedProjectService.getUserConfig('project01', this.checkerUser.id)).thenResolve(
-      this.createProjectUserConfigDoc(this.reviewerProjectUserConfig)
-    );
-
-    const text1_1id = new TextDocId('project01', 'MAT', 1);
-    const verseData = VerseRef.fromStr('MAT 1:3', ScrVers.English);
-    when(this.mockedProjectService.getQuestionList(deepEqual(text1_1id))).thenResolve(
-      this.createQuestionListDoc(text1_1id, [
-        {
-          id: 'q1Id',
+    this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, [
+      {
+        id: getQuestionDocId('project01', 'q1Id'),
+        data: {
+          dataId: 'q1Id',
+          projectRef: 'project01',
           scriptureStart: {
-            book: verseData.book,
-            chapter: verseData.chapter,
-            verse: verseData.verse,
+            book: 'MAT',
+            chapter: '1',
+            verse: '3',
             versification: ScrVersType[ScrVersType.English]
           },
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q1 text',
           answers: [
             {
-              id: 'a1Id',
+              dataId: 'a1Id',
               ownerRef: this.checkerUser.id,
               likes: [{ ownerRef: this.checkerUser.id }, { ownerRef: this.anotherUserId }],
               dateCreated: '',
               dateModified: '',
               comments: [
                 {
-                  id: 'c1Id',
+                  dataId: 'c1Id',
                   ownerRef: this.checkerUser.id,
                   dateCreated: '',
                   dateModified: ''
@@ -455,74 +419,216 @@ class TestEnvironment {
               ]
             }
           ],
-          audioUrl: '/audio.mp3'
-        },
-        {
-          id: 'q2Id',
+          audioUrl: '/audio.mp3',
+          isArchived: false,
+          dateCreated: '',
+          dateModified: ''
+        }
+      },
+      {
+        id: getQuestionDocId('project01', 'q2Id'),
+        data: {
+          dataId: 'q2Id',
+          projectRef: 'project01',
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q2 text',
+          scriptureStart: {
+            book: 'MAT',
+            chapter: '1',
+            verse: '4',
+            versification: ScrVersType[ScrVersType.English]
+          },
           answers: [
             {
-              id: 'a2Id',
+              dataId: 'a2Id',
               ownerRef: this.anotherUserId,
               likes: [{ ownerRef: this.checkerUser.id }],
               dateCreated: '',
               dateModified: '',
               comments: [
                 {
-                  id: 'c2Id',
+                  dataId: 'c2Id',
                   ownerRef: this.checkerUser.id,
                   dateCreated: '',
                   dateModified: ''
                 }
               ]
             }
-          ]
-        },
-        {
-          id: 'q3Id',
+          ],
+          isArchived: false,
+          dateModified: '',
+          dateCreated: ''
+        }
+      },
+      {
+        id: getQuestionDocId('project01', 'q3Id'),
+        data: {
+          dataId: 'q3Id',
+          projectRef: 'project01',
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q3 text',
+          scriptureStart: {
+            book: 'MAT',
+            chapter: '1',
+            verse: '5',
+            versification: ScrVersType[ScrVersType.English]
+          },
           answers: [
             {
-              id: 'a3Id',
+              dataId: 'a3Id',
               ownerRef: this.anotherUserId,
               likes: [{ ownerRef: this.checkerUser.id }],
               dateCreated: '',
               dateModified: '',
               comments: [
                 {
-                  id: 'c3Id',
+                  dataId: 'c3Id',
                   ownerRef: this.anotherUserId,
                   dateCreated: '',
                   dateModified: ''
                 }
               ]
             }
-          ]
-        },
-        { id: 'q4Id', ownerRef: this.adminUser.id, text: 'Book 1, Q4 text', answers: [] },
-        { id: 'q5Id', ownerRef: this.adminUser.id, text: 'Book 1, Q5 text', answers: [] },
-        { id: 'q6Id', ownerRef: this.adminUser.id, text: 'Book 1, Q6 text', answers: [] },
-        {
-          id: 'q7Id',
+          ],
+          isArchived: false,
+          dateCreated: '',
+          dateModified: ''
+        }
+      },
+      {
+        id: getQuestionDocId('project01', 'q4Id'),
+        data: {
+          dataId: 'q4Id',
+          projectRef: 'project01',
+          ownerRef: this.adminUser.id,
+          text: 'Book 1, Q4 text',
+          scriptureStart: {
+            book: 'MAT',
+            chapter: '1',
+            verse: '6',
+            versification: ScrVersType[ScrVersType.English]
+          },
+          answers: [],
+          isArchived: false,
+          dateCreated: '',
+          dateModified: ''
+        }
+      },
+      {
+        id: getQuestionDocId('project01', 'q5Id'),
+        data: {
+          dataId: 'q5Id',
+          projectRef: 'project01',
+          ownerRef: this.adminUser.id,
+          text: 'Book 1, Q5 text',
+          scriptureStart: {
+            book: 'MAT',
+            chapter: '1',
+            verse: '7',
+            versification: ScrVersType[ScrVersType.English]
+          },
+          answers: [],
+          isArchived: false,
+          dateCreated: '',
+          dateModified: ''
+        }
+      },
+      {
+        id: getQuestionDocId('project01', 'q6Id'),
+        data: {
+          dataId: 'q6Id',
+          projectRef: 'project01',
+          ownerRef: this.adminUser.id,
+          text: 'Book 1, Q6 text',
+          scriptureStart: {
+            book: 'MAT',
+            chapter: '1',
+            verse: '8',
+            versification: ScrVersType[ScrVersType.English]
+          },
+          answers: [],
+          isArchived: false,
+          dateCreated: '',
+          dateModified: ''
+        }
+      },
+      {
+        id: getQuestionDocId('project01', 'q7Id'),
+        data: {
+          dataId: 'q7Id',
+          projectRef: 'project01',
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q7 text',
+          scriptureStart: {
+            book: 'MAT',
+            chapter: '1',
+            verse: '9',
+            versification: ScrVersType[ScrVersType.English]
+          },
+          answers: [],
           isArchived: true,
-          dateArchived: '2019-07-30T12:00:00.000Z',
-          answers: []
+          dateCreated: '',
+          dateModified: ''
         }
-      ])
+      },
+      {
+        id: getQuestionDocId('project01', 'q8Id'),
+        data: {
+          dataId: 'q8Id',
+          projectRef: 'project01',
+          ownerRef: this.anotherUserId,
+          text: 'Book 2, Q3 text',
+          scriptureStart: {
+            book: 'LUK',
+            chapter: '1',
+            verse: '1',
+            versification: ScrVersType[ScrVersType.English]
+          },
+          answers: [],
+          isArchived: false,
+          dateCreated: '',
+          dateModified: ''
+        }
+      }
+    ]);
+    this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
+      {
+        id: 'project01',
+        data: this.testProject
+      }
+    ]);
+    this.realtimeService.addSnapshots<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, [
+      {
+        id: getSFProjectUserConfigDocId('project01', this.adminUser.id),
+        data: this.adminProjectUserConfig
+      },
+      {
+        id: getSFProjectUserConfigDocId('project01', this.checkerUser.id),
+        data: this.reviewerProjectUserConfig
+      }
+    ]);
+
+    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    when(this.mockedMdcDialog.open(QuestionDialogComponent, anything())).thenReturn(
+      instance(this.mockedQuestionDialogRef)
     );
-    const text1_3id = new TextDocId('project01', 'MAT', 3);
-    when(this.mockedProjectService.getQuestionList(deepEqual(text1_3id))).thenResolve(
-      this.createQuestionListDoc(text1_3id, [])
+    when(this.mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
+    when(this.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
+    when(this.mockedProjectService.get(anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
     );
-    const text2_1id = new TextDocId('project01', 'LUK', 1);
-    when(this.mockedProjectService.getQuestionList(deepEqual(text2_1id))).thenResolve(
-      this.createQuestionListDoc(text2_1id, [
-        { id: 'q8Id', ownerRef: this.anotherUserId, text: 'Book 2, Q3 text', answers: [] }
-      ])
+    when(this.mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
+      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
+    );
+    when(this.mockedProjectService.getQuestions('project01')).thenCall(() =>
+      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {})
+    );
+    when(this.mockedProjectService.createQuestion(anything(), anything())).thenCall((id, newQuestion) =>
+      this.realtimeService.create<QuestionDoc>(
+        QuestionDoc.COLLECTION,
+        getQuestionDocId(id, newQuestion.dataId),
+        newQuestion
+      )
     );
     this.setCurrentUser(this.adminUser);
 
@@ -633,18 +739,6 @@ class TestEnvironment {
 
   setCurrentUser(currentUser: UserInfo): void {
     when(this.mockedUserService.currentUserId).thenReturn(currentUser.id);
-  }
-
-  private createQuestionListDoc(id: TextDocId, data: Question[]): QuestionListDoc {
-    const adapter = new MemoryRealtimeDocAdapter(id.toString(), OTJson0.type, { questions: data });
-    return new QuestionListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
-  }
-
-  private createProjectUserConfigDoc(projectUserConfig: SFProjectUserConfig): SFProjectUserConfigDoc {
-    return new SFProjectUserConfigDoc(
-      new MemoryRealtimeDocAdapter(`project01:${projectUserConfig.ownerRef}`, OTJson0.type, projectUserConfig),
-      instance(this.mockedRealtimeOfflineStore)
-    );
   }
 
   private createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {

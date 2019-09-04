@@ -204,7 +204,7 @@ namespace SIL.XForge.Scripture.Services
             await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
             IDocument<SFProjectUserConfig> projectUserConfigDoc = await conn.CreateAsync<SFProjectUserConfig>(
                 SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
-                new SFProjectUserConfig { OwnerRef = userDoc.Id });
+                new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id });
         }
 
         protected override async Task RemoveUserFromProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,

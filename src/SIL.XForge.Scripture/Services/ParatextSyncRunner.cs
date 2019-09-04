@@ -456,7 +456,20 @@ namespace SIL.XForge.Scripture.Services
 
         private async Task UpdateNotesData(TextInfo text, List<Chapter> newChapters)
         {
-            SortedList<int, IDocument<QuestionList>> questionsDocs = await FetchQuestionsDocsAsync(text);
+            IReadOnlyList<IDocument<Question>> allQuestionDocs = await FetchQuestionDocsAsync(text);
+
+            // handle deletion of chapters
+            var questionDocs = new List<IDocument<Question>>();
+            var chapterNums = new HashSet<string>(newChapters.Select(c => c.Number.ToString()));
+            var tasks = new List<Task>();
+            foreach (IDocument<Question> questionDoc in allQuestionDocs)
+            {
+                if (chapterNums.Contains(questionDoc.Data.ScriptureStart.Chapter))
+                    questionDocs.Add(questionDoc);
+                else
+                    tasks.Add(questionDoc.DeleteAsync());
+            }
+            await Task.WhenAll(tasks);
 
             if (_projectDoc.Data.CheckingEnabled)
             {
@@ -468,7 +481,7 @@ namespace SIL.XForge.Scripture.Services
                 else
                     oldNotesElem = new XElement("notes", new XAttribute("version", "1.1"));
 
-                XElement notesElem = await _notesMapper.GetNotesChangelistAsync(oldNotesElem, questionsDocs.Values);
+                XElement notesElem = await _notesMapper.GetNotesChangelistAsync(oldNotesElem, allQuestionDocs);
 
                 if (notesElem.Elements("thread").Any())
                 {
@@ -478,33 +491,26 @@ namespace SIL.XForge.Scripture.Services
 
                 await UpdateProgress();
             }
-
-            // handle addition/deletion of chapters
-            var tasks = new List<Task>();
-            foreach (Chapter newChapter in newChapters)
-            {
-                if (questionsDocs.ContainsKey(newChapter.Number))
-                    questionsDocs.Remove(newChapter.Number);
-                else
-                    tasks.Add(CreateQuestionsDocAsync(text, newChapter.Number));
-            }
-            foreach (IDocument<QuestionList> questionsDoc in questionsDocs.Values)
-                tasks.Add(questionsDoc.DeleteAsync());
-            await Task.WhenAll(tasks);
         }
 
-        private async Task<SortedList<int, IDocument<QuestionList>>> FetchQuestionsDocsAsync(TextInfo text)
+        private async Task<IReadOnlyList<IDocument<Question>>> FetchQuestionDocsAsync(TextInfo text)
         {
-            var questionsDocs = new SortedList<int, IDocument<QuestionList>>();
+            List<string> questionDocIds = await _realtimeService.QuerySnapshots<Question>()
+                .Where(q => q.ProjectRef == _projectDoc.Id && q.ScriptureStart.Book == text.BookId)
+                .Select(q => q.Id)
+                .ToListAsync();
+            var questionDocs = new IDocument<Question>[questionDocIds.Count];
             var tasks = new List<Task>();
-            foreach (Chapter chapter in text.Chapters)
+            for (int i = 0; i < questionDocIds.Count; i++)
             {
-                IDocument<QuestionList> questionsDoc = GetQuestionsDoc(text, chapter.Number);
-                questionsDocs[chapter.Number] = questionsDoc;
-                tasks.Add(questionsDoc.FetchAsync());
+                async Task fetchQuestion()
+                {
+                    questionDocs[i] = await _conn.FetchAsync<Question>(questionDocIds[i]);
+                }
+                tasks.Add(fetchQuestion());
             }
             await Task.WhenAll(tasks);
-            return questionsDocs;
+            return questionDocs;
         }
 
         /// <summary>
@@ -512,9 +518,21 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         private async Task DeleteAllQuestionsDocsForBookAsync(TextInfo text)
         {
+            List<string> questionDocIds = await _realtimeService.QuerySnapshots<Question>()
+                .Where(q => q.ProjectRef == _projectDoc.Id && q.ScriptureStart.Book == text.BookId)
+                .Select(q => q.Id)
+                .ToListAsync();
             var tasks = new List<Task>();
-            foreach (Chapter chapter in text.Chapters)
-                tasks.Add(DeleteQuestionsDocAsync(text, chapter.Number));
+            foreach (string questionId in questionDocIds)
+            {
+                async Task deleteQuestion()
+                {
+                    IDocument<Question> questionDoc = await _conn.FetchAsync<Question>(questionId);
+                    if (questionDoc.IsLoaded)
+                        await questionDoc.DeleteAsync();
+                }
+                tasks.Add(deleteQuestion());
+            }
             await Task.WhenAll(tasks);
         }
 
@@ -619,33 +637,12 @@ namespace SIL.XForge.Scripture.Services
             return _conn.Get<Models.TextData>(TextInfo.GetTextDocId(_projectDoc.Id, text.BookId, chapter, textType));
         }
 
-        private IDocument<QuestionList> GetQuestionsDoc(TextInfo text, int chapter)
-        {
-            return _conn.Get<QuestionList>(TextInfo.GetTextDocId(_projectDoc.Id, text.BookId, chapter));
-        }
-
-        private async Task CreateQuestionsDocAsync(TextInfo text, int chapter)
-        {
-            IDocument<QuestionList> questionsDoc = GetQuestionsDoc(text, chapter);
-            await questionsDoc.FetchAsync();
-            if (!questionsDoc.IsLoaded)
-                await questionsDoc.CreateAsync(new QuestionList());
-        }
-
         private async Task DeleteTextDocAsync(TextInfo text, int chapter, TextType textType)
         {
             IDocument<Models.TextData> textDoc = GetTextDoc(text, chapter, textType);
             await textDoc.FetchAsync();
             if (textDoc.IsLoaded)
                 await textDoc.DeleteAsync();
-        }
-
-        private async Task DeleteQuestionsDocAsync(TextInfo text, int chapter)
-        {
-            IDocument<QuestionList> questionsDoc = GetQuestionsDoc(text, chapter);
-            await questionsDoc.FetchAsync();
-            if (questionsDoc.IsLoaded)
-                await questionsDoc.DeleteAsync();
         }
 
         private async Task UpdateProgress()

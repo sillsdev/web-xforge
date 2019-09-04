@@ -5,7 +5,6 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as OTJson0 from 'ot-json0';
 import { User } from 'realtime-server/lib/common/models/user';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -15,10 +14,10 @@ import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { LocationService } from 'xforge-common/location.service';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
@@ -242,16 +241,17 @@ class TestEnvironment {
   readonly mockedRealtimeService = mock(RealtimeService);
   readonly mockedLocationService = mock(LocationService);
   readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
   readonly mockedNameDialogRef = mock(MdcDialogRef);
 
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
   private readonly currentUserDoc: UserDoc;
   private readonly project01Doc: SFProjectDoc;
   private readonly project04Doc: SFProjectDoc;
 
   constructor() {
     this.currentUserDoc = new UserDoc(
-      new MemoryRealtimeDocAdapter('user01', OTJson0.type, {
+      this.offlineStore,
+      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', {
         displayName: 'User 01',
         sites: {
           sf: {
@@ -259,8 +259,7 @@ class TestEnvironment {
             projects: ['project01', 'project02', 'project03']
           }
         }
-      } as User),
-      instance(this.mockedRealtimeOfflineStore)
+      } as User)
     );
 
     this.project01Doc = this.addProject('project01', {
@@ -446,8 +445,8 @@ class TestEnvironment {
   }
 
   private addProject(projectId: string, project: SFProject): SFProjectDoc {
-    const adapter = new MemoryRealtimeDocAdapter(projectId, OTJson0.type, project);
-    const doc = new SFProjectDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    const adapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, projectId, project);
+    const doc = new SFProjectDoc(this.offlineStore, adapter);
     when(this.mockedSFProjectService.get(projectId)).thenResolve(doc);
     return doc;
   }

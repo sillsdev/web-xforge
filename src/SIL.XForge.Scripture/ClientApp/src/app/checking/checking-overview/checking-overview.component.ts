@@ -2,24 +2,24 @@ import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { distanceInWordsToNow } from 'date-fns';
-import cloneDeep from 'lodash/cloneDeep';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo, TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { Subscription } from 'rxjs';
+import { merge, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { QuestionListDoc } from '../../core/models/question-list-doc';
+import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
+import { getTextDocId, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ScrVers } from '../../shared/scripture-utils/scr-vers';
 import { VerseRef } from '../../shared/scripture-utils/verse-ref';
-import { verseRefToVerseRefData } from '../../shared/scripture-utils/verse-ref-data-converters';
+import { verseRefDataToVerseRef, verseRefToVerseRefData } from '../../shared/scripture-utils/verse-ref-data-converters';
 import { CheckingUtils } from '../checking.utils';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import {
@@ -36,14 +36,15 @@ import {
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   itemVisible: { [bookIdOrDocId: string]: boolean } = {};
   itemVisibleArchived: { [bookIdOrDocId: string]: boolean } = {};
-  questionListDocs: { [docId: string]: QuestionListDoc } = {};
+  questionDocs: { [docId: string]: QuestionDoc[] } = {};
   texts: TextInfo[] = [];
   projectId: string;
   textsByBook: TextsByBook;
 
   private projectDoc: SFProjectDoc;
-  private projectDataChangesSub: Subscription;
+  private dataChangesSub: Subscription;
   private projectUserConfigDoc: SFProjectUserConfigDoc;
+  private questionsQuery: RealtimeQuery<QuestionDoc>;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -56,7 +57,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get allQuestionsCount(): string {
-    if (this.questionListDocs == null) {
+    if (this.questionDocs == null) {
       return '-';
     }
 
@@ -64,19 +65,16 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get myAnswerCount(): string {
-    if (this.questionListDocs == null) {
+    if (this.questionDocs == null) {
       return '-';
     }
 
     let count: number = 0;
-    for (const question of this.allPublishedQuestions) {
-      if (question.answers == null) {
-        continue;
-      }
+    for (const questionDoc of this.allPublishedQuestions) {
       if (this.isProjectAdmin) {
-        count += question.answers.length;
+        count += questionDoc.data.answers.length;
       } else {
-        count += question.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
+        count += questionDoc.data.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
       }
     }
 
@@ -84,13 +82,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get myLikeCount(): string {
-    if (this.questionListDocs == null) {
+    if (this.questionDocs == null) {
       return '-';
     }
 
     let count: number = 0;
-    for (const question of this.allPublishedQuestions) {
-      for (const answer of question.answers) {
+    for (const questionDoc of this.allPublishedQuestions) {
+      for (const answer of questionDoc.data.answers) {
         if (this.isProjectAdmin) {
           count += answer.likes.length;
         } else {
@@ -103,13 +101,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get myCommentCount(): string {
-    if (this.questionListDocs == null) {
+    if (this.questionDocs == null) {
       return '-';
     }
 
     let count: number = 0;
-    for (const question of this.allPublishedQuestions) {
-      for (const answer of question.answers) {
+    for (const questionDoc of this.allPublishedQuestions) {
+      for (const answer of questionDoc.data.answers) {
         if (this.isProjectAdmin) {
           count += answer.comments.length;
         } else {
@@ -130,19 +128,17 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get allArchivedQuestionsCount(): number {
-    let questions: Readonly<Question[]> = [];
-    for (const doc of Object.values(this.questionListDocs)) {
-      questions = questions.concat(doc.data.questions);
+    if (this.questionsQuery == null) {
+      return 0;
     }
-    return questions.filter(q => q.isArchived === true).length;
+    return this.questionsQuery.docs.filter(qd => qd.data.isArchived === true).length;
   }
 
-  private get allPublishedQuestions(): Question[] {
-    let questions: Readonly<Question[]> = [];
-    for (const doc of Object.values(this.questionListDocs)) {
-      questions = questions.concat(doc.data.questions);
+  private get allPublishedQuestions(): QuestionDoc[] {
+    if (this.questionsQuery == null) {
+      return [];
     }
-    return questions.filter(q => q.isArchived !== true);
+    return this.questionsQuery.docs.filter(qd => qd.data.isArchived !== true);
   }
 
   ngOnInit(): void {
@@ -152,18 +148,22 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       try {
         this.projectDoc = await this.projectService.get(projectId);
         this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+        if (this.questionsQuery != null) {
+          this.questionsQuery.dispose();
+        }
+        this.questionsQuery = await this.projectService.getQuestions(projectId);
         await this.initTexts();
       } finally {
         this.loadingFinished();
       }
 
-      if (this.projectDataChangesSub != null) {
-        this.projectDataChangesSub.unsubscribe();
+      if (this.dataChangesSub != null) {
+        this.dataChangesSub.unsubscribe();
       }
-      this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(async () => {
+      this.dataChangesSub = merge(this.projectDoc.remoteChanges$, this.questionsQuery.remoteChanges$).subscribe(() => {
         this.loadingStarted();
         try {
-          await this.initTexts();
+          this.initTexts();
         } finally {
           this.loadingFinished();
         }
@@ -173,24 +173,23 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.projectDataChangesSub != null) {
-      this.projectDataChangesSub.unsubscribe();
+    if (this.dataChangesSub != null) {
+      this.dataChangesSub.unsubscribe();
+    }
+    if (this.questionsQuery != null) {
+      this.questionsQuery.dispose();
     }
   }
 
-  getTextJsonDocIdStr(bookId: string, chapter: number): string {
-    return getTextDocIdStr(this.projectDoc.id, bookId, chapter);
+  getTextDocId(bookId: string, chapter: number): string {
+    return getTextDocId(this.projectDoc.id, bookId, chapter);
   }
 
-  getQuestions(textDocId: TextDocId, fromArchive = false): Question[] {
+  getQuestionDocs(textDocId: TextDocId, fromArchive = false): QuestionDoc[] {
     if (fromArchive) {
-      return this.questionListDocs[textDocId.toString()].data.questions.filter(q => q.isArchived === true);
+      return this.questionDocs[textDocId.toString()].filter(qd => qd.data.isArchived === true);
     }
-    return this.questionListDocs[textDocId.toString()].data.questions.filter(q => q.isArchived !== true);
-  }
-
-  getQuestionIndex(questionId: string, textDocId: TextDocId): number {
-    return this.questionListDocs[textDocId.toString()].data.questions.findIndex(q => q.id === questionId);
+    return this.questionDocs[textDocId.toString()].filter(qd => qd.data.isArchived !== true);
   }
 
   bookQuestionCount(text: TextInfo, fromArchive = false): number {
@@ -213,13 +212,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   questionCount(bookId: string, chapterNumber: number, fromArchive = false): number {
     const id = new TextDocId(this.projectDoc.id, bookId, chapterNumber);
-    if (!(id.toString() in this.questionListDocs)) {
+    if (!(id.toString() in this.questionDocs)) {
       return undefined;
     }
     if (fromArchive) {
-      return this.questionListDocs[id.toString()].data.questions.filter(q => q.isArchived === true).length;
+      return this.questionDocs[id.toString()].filter(qd => qd.data.isArchived === true).length;
     }
-    return this.questionListDocs[id.toString()].data.questions.filter(q => q.isArchived !== true).length;
+    return this.questionDocs[id.toString()].filter(qd => qd.data.isArchived !== true).length;
   }
 
   questionCountLabel(count: number): string {
@@ -242,13 +241,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   chapterAnswerCount(bookId: string, chapterNumber: number): number {
     const id = new TextDocId(this.projectDoc.id, bookId, chapterNumber);
-    if (!(id.toString() in this.questionListDocs)) {
+    if (!(id.toString() in this.questionDocs)) {
       return undefined;
     }
 
     let count: number;
-    for (const q of this.getQuestions(id)) {
-      const answerCount = this.answerCount(bookId, chapterNumber, q.id);
+    for (const q of this.getQuestionDocs(id)) {
+      const answerCount = q.data.answers.length;
       if (answerCount) {
         if (!count) {
           count = 0;
@@ -260,37 +259,17 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count;
   }
 
-  answerCount(bookId: string, chapterNumber: number, questionId: string): number {
-    const id = new TextDocId(this.projectDoc.id, bookId, chapterNumber);
-    if (!(id.toString() in this.questionListDocs)) {
-      return undefined;
-    }
-
-    let count: number;
-    const question = this.questionListDocs[id.toString()].data.questions[this.getQuestionIndex(questionId, id)];
-    if (question.answers) {
-      if (!count) {
-        count = 0;
-      }
-      count += question.answers.length;
-    }
-
-    return count;
-  }
-
   answerCountLabel(count: number): string {
     return count ? count + ' answers' : '';
   }
 
-  setQuestionArchiveStatus(questionId: string, archiveStatus: boolean, bookId: string, chapterNumber: number) {
-    const id = new TextDocId(this.projectId, bookId, chapterNumber);
-    const questionIndex = this.getQuestionIndex(questionId, id);
-    this.questionListDocs[id.toString()].submitJson0Op(op => {
-      op.set(ql => ql.questions[questionIndex].isArchived, archiveStatus);
+  setQuestionArchiveStatus(questionDoc: QuestionDoc, archiveStatus: boolean) {
+    questionDoc.submitJson0Op(op => {
+      op.set(q => q.isArchived, archiveStatus);
       if (archiveStatus) {
-        op.set(ql => ql.questions[questionIndex].dateArchived, new Date().toJSON());
+        op.set(q => q.dateArchived, new Date().toJSON());
       } else {
-        op.unset(ql => ql.questions[questionIndex].dateArchived);
+        op.unset(q => q.dateArchived);
       }
     });
   }
@@ -315,14 +294,14 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     let answered: number = 0;
     for (const chapter of text.chapters) {
       const id = new TextDocId(this.projectId, text.bookId, chapter.number);
-      if (!(id.toString() in this.questionListDocs)) {
+      if (!(id.toString() in this.questionDocs)) {
         continue;
       }
 
-      for (const question of this.getQuestions(id)) {
-        if (CheckingUtils.hasUserAnswered(question, this.userService.currentUserId)) {
+      for (const questionDoc of this.getQuestionDocs(id)) {
+        if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
           answered++;
-        } else if (CheckingUtils.hasUserReadQuestion(question, this.projectUserConfigDoc.data)) {
+        } else if (CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)) {
           read++;
         } else {
           unread++;
@@ -333,37 +312,19 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return [unread, read, answered];
   }
 
-  async questionDialog(editMode = false, bookId?: string, chapterNumber?: number, questionId?: string): Promise<void> {
-    let newQuestion: Question;
-    let id: TextDocId;
-    let question: Question;
-    let questionIndex: number;
-    if (editMode) {
-      if (bookId == null || bookId === '' || chapterNumber == null || chapterNumber < 0 || questionId == null) {
-        throw new Error('Must supply valid bookId, chapterNumber and questionId in editMode');
-      }
-      if (this.answerCount(bookId, chapterNumber, questionId) > 0) {
+  async questionDialog(questionDoc?: QuestionDoc): Promise<void> {
+    if (questionDoc != null) {
+      if (questionDoc.data.answers.length > 0) {
         const answeredDialogRef = this.dialog.open(QuestionAnsweredDialogComponent);
         const response = (await answeredDialogRef.afterClosed().toPromise()) as string;
         if (response === 'close') {
           return;
         }
       }
-      id = new TextDocId(this.projectDoc.id, bookId, chapterNumber);
-      questionIndex = this.getQuestionIndex(questionId, id);
-      question = this.questionListDocs[id.toString()].data.questions[questionIndex];
-      newQuestion = cloneDeep(question);
-    } else {
-      newQuestion = {
-        id: objectId(),
-        ownerRef: this.userService.currentUserId,
-        answers: []
-      };
     }
     const dialogConfig: MdcDialogConfig<QuestionDialogData> = {
       data: {
-        editMode,
-        question,
+        question: questionDoc != null ? questionDoc.data : undefined,
         textsByBook: this.textsByBook,
         projectId: this.projectDoc.id
       }
@@ -371,99 +332,108 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig);
 
     dialogRef.afterClosed().subscribe(async (result: QuestionDialogResult) => {
-      if (result !== 'close') {
-        const verseStart = VerseRef.fromStr(result.scriptureStart, ScrVers.English);
-        const verseEnd = VerseRef.fromStr(result.scriptureEnd, ScrVers.English);
-        newQuestion.scriptureStart = verseRefToVerseRefData(verseStart);
-        newQuestion.scriptureEnd = verseRefToVerseRefData(verseEnd);
-        newQuestion.text = result.text;
-        if (result.audio.fileName) {
-          const response = await this.projectService.onlineUploadAudio(
-            this.projectId,
-            newQuestion.id,
-            new File([result.audio.blob], result.audio.fileName)
-          );
-          // Get the amended filename and save it against the answer
-          newQuestion.audioUrl = response;
-        } else if (result.audio.status === 'reset') {
-          newQuestion.audioUrl = undefined;
-        }
+      if (result === 'close') {
+        return;
+      }
+      const questionId = questionDoc != null ? questionDoc.data.dataId : objectId();
+      const verseStart = VerseRef.fromStr(result.scriptureStart, ScrVers.English);
+      const verseEnd = VerseRef.fromStr(result.scriptureEnd, ScrVers.English);
+      const scriptureStart = verseRefToVerseRefData(verseStart);
+      const scriptureEnd = verseRefToVerseRefData(verseEnd);
+      const text = result.text;
+      let audioUrl = questionDoc != null ? questionDoc.data.audioUrl : undefined;
+      if (result.audio.fileName) {
+        const response = await this.projectService.onlineUploadAudio(
+          this.projectId,
+          questionId,
+          new File([result.audio.blob], result.audio.fileName)
+        );
+        // Get the amended filename and save it against the answer
+        audioUrl = response;
+      } else if (result.audio.status === 'reset') {
+        audioUrl = undefined;
+      }
 
-        if (
-          editMode &&
-          question.scriptureStart.book === verseStart.book &&
-          question.scriptureStart.chapter === verseStart.chapter
-        ) {
-          const deleteAudio = question.audioUrl != null && newQuestion.audioUrl == null;
-          await this.questionListDocs[id.toString()].submitJson0Op(op =>
-            op
-              .set(ql => ql.questions[questionIndex].scriptureStart, newQuestion.scriptureStart)
-              .set(ql => ql.questions[questionIndex].scriptureEnd, newQuestion.scriptureEnd)
-              .set(ql => ql.questions[questionIndex].text, newQuestion.text)
-              .set(ql => ql.questions[questionIndex].audioUrl, newQuestion.audioUrl)
-          );
-          if (deleteAudio) {
-            await this.projectService.onlineDeleteAudio(this.projectDoc.id, question.id, question.ownerRef);
-          }
-        } else {
-          if (editMode) {
-            // The scripture book or chapter reference has been edited. Delete the question in the old QuestionListDoc
-            await this.deleteQuestion(question.id, id);
-          }
-          id = new TextDocId(this.projectDoc.id, this.textFromBook(verseStart.book).bookId, verseStart.chapterNum);
-          const questionsDoc = await this.projectService.getQuestionList(id);
-          await questionsDoc.submitJson0Op(op => op.insert(cq => cq.questions, 0, newQuestion));
+      const currentDate = new Date().toJSON();
+      if (questionDoc != null) {
+        const deleteAudio = questionDoc.data.audioUrl != null && audioUrl == null;
+        const oldScriptureStart = questionDoc.data.scriptureStart;
+        const moveToDifferentChapter =
+          oldScriptureStart.book !== scriptureStart.book || oldScriptureStart.chapter !== scriptureStart.chapter;
+        if (moveToDifferentChapter) {
+          this.removeQuestionDoc(questionDoc);
         }
+        await questionDoc.submitJson0Op(op =>
+          op
+            .set(q => q.scriptureStart, scriptureStart)
+            .set(q => q.scriptureEnd, scriptureEnd)
+            .set(q => q.text, text)
+            .set(q => q.audioUrl, audioUrl)
+            .set(q => q.dateModified, currentDate)
+        );
+        if (deleteAudio) {
+          await this.projectService.onlineDeleteAudio(
+            this.projectDoc.id,
+            questionDoc.data.dataId,
+            questionDoc.data.ownerRef
+          );
+        }
+        if (moveToDifferentChapter) {
+          this.addQuestionDoc(questionDoc);
+        }
+      } else {
+        const newQuestion: Question = {
+          dataId: questionId,
+          projectRef: this.projectId,
+          ownerRef: this.userService.currentUserId,
+          scriptureStart,
+          scriptureEnd,
+          text,
+          audioUrl,
+          answers: [],
+          isArchived: false,
+          dateCreated: currentDate,
+          dateModified: currentDate
+        };
+        questionDoc = await this.projectService.createQuestion(this.projectId, newQuestion);
+        this.addQuestionDoc(questionDoc);
       }
     });
   }
 
-  private async deleteQuestion(questionId: string, textDocId: TextDocId): Promise<boolean> {
-    const questionIndex = this.questionListDocs[textDocId.toString()].data.questions.findIndex(
-      q => q.id === questionId
-    );
-    return this.questionListDocs[textDocId.toString()].submitJson0Op(op =>
-      op.remove(cq => cq.questions, questionIndex)
-    );
-  }
-
-  private async initTexts(): Promise<void> {
+  private initTexts(): void {
     if (this.projectDoc == null || this.projectDoc.data == null) {
       return;
     }
 
+    this.questionDocs = {};
     this.textsByBook = {};
     this.texts = [];
     for (const text of this.projectDoc.data.texts) {
       this.textsByBook[text.bookId] = text;
       this.texts.push(text);
       for (const chapter of text.chapters) {
-        await this.bindQuestionListDoc(new TextDocId(this.projectDoc.id, text.bookId, chapter.number));
+        const textId = new TextDocId(this.projectDoc.id, text.bookId, chapter.number);
+        this.questionDocs[textId.toString()] = [];
       }
     }
+
+    for (const questionDoc of this.questionsQuery.docs) {
+      this.addQuestionDoc(questionDoc);
+    }
   }
 
-  private async bindQuestionListDoc(id: TextDocId): Promise<void> {
-    if (id == null) {
-      return;
-    }
-
-    this.unbindQuestionListDoc(id);
-    this.questionListDocs[id.toString()] = await this.projectService.getQuestionList(id);
+  private addQuestionDoc(questionDoc: QuestionDoc): void {
+    const verseStart = verseRefDataToVerseRef(questionDoc.data.scriptureStart);
+    const textId = new TextDocId(this.projectDoc.id, verseStart.book, verseStart.chapterNum);
+    this.questionDocs[textId.toString()].push(questionDoc);
   }
 
-  private unbindQuestionListDoc(id: TextDocId): void {
-    if (!(id.toString() in this.questionListDocs)) {
-      return;
-    }
-
-    delete this.questionListDocs[id.toString()];
-  }
-
-  private textFromBook(bookId: string): TextInfo {
-    if (!(bookId in this.textsByBook)) {
-      return undefined;
-    }
-    return this.textsByBook[bookId];
+  private removeQuestionDoc(questionDoc: QuestionDoc): void {
+    const verseStart = verseRefDataToVerseRef(questionDoc.data.scriptureStart);
+    const textId = new TextDocId(this.projectDoc.id, verseStart.book, verseStart.chapterNum);
+    const chapterQuestionDocs = this.questionDocs[textId.toString()];
+    const index = chapterQuestionDocs.indexOf(questionDoc);
+    chapterQuestionDocs.splice(index, 1);
   }
 }

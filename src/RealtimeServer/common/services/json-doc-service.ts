@@ -12,17 +12,24 @@ export abstract class JsonDocService<T> extends DocService<T> {
    */
   protected readonly immutableProps: PathTemplate[] = [];
 
-  protected createPathTemplate<TField>(template: ObjProxyArg<T, TField>, inherit: boolean = true): PathTemplate {
+  protected createPathTemplate<TField>(template?: ObjProxyArg<T, TField>, inherit: boolean = true): PathTemplate {
+    if (template == null) {
+      return new PathTemplate();
+    }
     return new PathTemplate(getPath(template), inherit);
   }
 
-  protected checkImmutableProps(ops: ShareDB.Op[]): boolean {
-    for (const op of ops) {
-      if (this.getMatchingPathTemplate(this.immutableProps, op.p) !== -1) {
-        return false;
+  protected checkImmutableProps(ops: ShareDB.Op[] | ShareDB.Op): boolean {
+    if (ops instanceof Array) {
+      for (const op of ops) {
+        if (this.getMatchingPathTemplate(this.immutableProps, op.p) !== -1) {
+          return false;
+        }
       }
+      return true;
     }
-    return true;
+
+    return this.getMatchingPathTemplate(this.immutableProps, ops.p) === -1;
   }
 
   protected getMatchingPathTemplate(pathTemplates: PathTemplate[], path: ShareDB.Path): number {

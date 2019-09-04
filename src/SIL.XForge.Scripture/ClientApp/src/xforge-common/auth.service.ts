@@ -8,7 +8,8 @@ import { filter, mergeMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
 import { LocationService } from './location.service';
-import { RealtimeService } from './realtime.service';
+import { RealtimeOfflineStore } from './realtime-offline-store';
+import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
 
 const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
@@ -36,7 +37,8 @@ export class AuthService {
   });
 
   constructor(
-    private readonly realtimeService: RealtimeService,
+    private readonly remoteStore: SharedbRealtimeRemoteStore,
+    private readonly offlineStore: RealtimeOfflineStore,
     private readonly locationService: LocationService,
     private readonly commandService: CommandService,
     private readonly router: Router
@@ -101,7 +103,7 @@ export class AuthService {
   }
 
   async logOut(): Promise<void> {
-    await this.realtimeService.deleteStore();
+    await this.offlineStore.deleteDB();
     this.clearState();
     this.auth0.logout({ returnTo: this.locationService.origin + '/' });
   }
@@ -140,7 +142,10 @@ export class AuthService {
     }
     this.scheduleRenewal();
     const isNewUser = prevUserId != null && prevUserId !== this.currentUserId;
-    await this.realtimeService.init(this.accessToken, isNewUser);
+    this.remoteStore.init(() => this.accessToken);
+    if (isNewUser) {
+      await this.offlineStore.deleteDB();
+    }
     if (secondaryId != null) {
       await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
     } else if (!environment.production) {
@@ -190,7 +195,6 @@ export class AuthService {
       const authResult = await this.checkSession();
       if (authResult != null && authResult.accessToken != null && authResult.idToken != null) {
         this.localLogIn(authResult);
-        this.realtimeService.setAccessToken(this.accessToken);
       }
     } catch (err) {
       await this.logOut();

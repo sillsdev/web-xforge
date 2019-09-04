@@ -5,18 +5,17 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as OTJson0 from 'ot-json0';
 import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
@@ -367,8 +366,8 @@ class TestEnvironment {
   readonly mockedParatextService: ParatextService = mock(ParatextService);
   readonly mockedSFProjectService: SFProjectService = mock(SFProjectService);
   readonly mockedUserService: UserService = mock(UserService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
   private projectDoc: SFProjectDoc;
   private readonly paratextProjects$: BehaviorSubject<ParatextProject[]>;
   private readonly currentUserDoc: UserDoc;
@@ -397,8 +396,10 @@ class TestEnvironment {
     when(this.mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(this.mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
     this.currentUserDoc = new UserDoc(
-      new MemoryRealtimeDocAdapter('user01', OTJson0.type, { sites: { sf: { currentProjectId: 'project01' } } }),
-      instance(this.mockedRealtimeOfflineStore)
+      this.offlineStore,
+      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', {
+        sites: { sf: { currentProjectId: 'project01' } }
+      })
     );
     when(this.mockedUserService.getCurrentUser()).thenResolve(this.currentUserDoc);
     TestBed.configureTestingModule({
@@ -563,8 +564,8 @@ class TestEnvironment {
     }
   ) {
     this.projectDoc = new SFProjectDoc(
-      new MemoryRealtimeDocAdapter('project01', OTJson0.type, project),
-      instance(this.mockedRealtimeOfflineStore)
+      this.offlineStore,
+      new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project)
     );
     when(this.mockedSFProjectService.get('project01')).thenResolve(this.projectDoc);
   }

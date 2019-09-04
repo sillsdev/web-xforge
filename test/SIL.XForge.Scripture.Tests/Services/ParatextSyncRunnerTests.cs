@@ -84,10 +84,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
             Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
 
-            Assert.That(env.ContainsQuestionList("MAT", 1), Is.True);
-            Assert.That(env.ContainsQuestionList("MAT", 2), Is.True);
-            Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
-            Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
+            Assert.That(env.ContainsQuestion("MAT", 1), Is.False);
+            Assert.That(env.ContainsQuestion("MAT", 2), Is.False);
+            Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
+            Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
             await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
 
@@ -115,10 +115,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
             Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
 
-            Assert.That(env.ContainsQuestionList("MAT", 1), Is.True);
-            Assert.That(env.ContainsQuestionList("MAT", 2), Is.True);
-            Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
-            Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
+            Assert.That(env.ContainsQuestion("MAT", 1), Is.False);
+            Assert.That(env.ContainsQuestion("MAT", 2), Is.False);
+            Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
+            Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
 
@@ -146,10 +146,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
             Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
 
-            Assert.That(env.ContainsQuestionList("MAT", 1), Is.True);
-            Assert.That(env.ContainsQuestionList("MAT", 2), Is.True);
-            Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
-            Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
+            Assert.That(env.ContainsQuestion("MAT", 1), Is.False);
+            Assert.That(env.ContainsQuestion("MAT", 2), Is.False);
+            Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
+            Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
 
@@ -177,10 +177,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("MRK", 1, TextType.Source), Is.False);
             Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
 
-            Assert.That(env.ContainsQuestionList("MAT", 1), Is.True);
-            Assert.That(env.ContainsQuestionList("MAT", 2), Is.True);
-            Assert.That(env.ContainsQuestionList("MRK", 1), Is.True);
-            Assert.That(env.ContainsQuestionList("MRK", 2), Is.True);
+            Assert.That(env.ContainsQuestion("MAT", 1), Is.False);
+            Assert.That(env.ContainsQuestion("MAT", 2), Is.False);
+            Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
+            Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
             await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
 
@@ -331,8 +331,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("MAT", 3, TextType.Source), Is.True);
             Assert.That(env.ContainsText("MRK", 2, TextType.Source), Is.False);
 
-            Assert.That(env.ContainsQuestionList("MAT", 3), Is.True);
-            Assert.That(env.ContainsQuestionList("MRK", 2), Is.False);
+            Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
+            Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
@@ -358,10 +358,10 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("LUK", 1, TextType.Source), Is.True);
             Assert.That(env.ContainsText("LUK", 2, TextType.Source), Is.True);
 
-            Assert.That(env.ContainsQuestionList("MRK", 1), Is.False);
-            Assert.That(env.ContainsQuestionList("MRK", 2), Is.False);
-            Assert.That(env.ContainsQuestionList("LUK", 1), Is.True);
-            Assert.That(env.ContainsQuestionList("LUK", 2), Is.True);
+            Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
+            Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
+            Assert.That(env.ContainsQuestion("MAT", 1), Is.True);
+            Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
 
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
@@ -504,16 +504,14 @@ namespace SIL.XForge.Scripture.Services
                     .Get(TextInfo.GetTextDocId("project01", bookId, chapter, textType));
             }
 
-            public bool ContainsQuestionList(string bookId, int chapter)
+            public bool ContainsQuestion(string bookId, int chapter)
             {
-                return RealtimeService.GetRepository<QuestionList>()
-                    .Contains(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
+                return RealtimeService.GetRepository<Question>().Contains($"project01:question{bookId}{chapter}");
             }
 
-            public QuestionList GetQuestionList(string bookId, int chapter)
+            public Question GetQuestion(string bookId, int chapter)
             {
-                return RealtimeService.GetRepository<QuestionList>()
-                    .Get(TextInfo.GetTextDocId("project01", bookId, chapter, TextType.Target));
+                return RealtimeService.GetRepository<Question>().Get($"project01:question{bookId}{chapter}");
             }
 
             public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled, bool changed,
@@ -575,7 +573,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
-                RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<QuestionList>());
+                RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
                 foreach (Book book in books)
                 {
                     AddSFBook(book.Id, book.TargetChapterCount, TextType.Target, changed);
@@ -592,7 +590,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 _notesMapper.GetNotesChangelistAsync(Arg.Any<XElement>(),
-                    Arg.Any<IEnumerable<IDocument<QuestionList>>>()).Returns(Task.FromResult(notesElem));
+                    Arg.Any<IEnumerable<IDocument<Question>>>()).Returns(Task.FromResult(notesElem));
                 _notesMapper.NewSyncUsers.Returns(newSyncUsers);
             }
 
@@ -653,7 +651,16 @@ namespace SIL.XForge.Scripture.Services
                     string id = TextInfo.GetTextDocId("project01", bookId, c, textType);
                     RealtimeService.GetRepository<TextData>()
                         .Add(new TextData(Delta.New().InsertText(changed ? "changed" : "text")) { Id = id });
-                    RealtimeService.GetRepository<QuestionList>().Add(new QuestionList { Id = id });
+                    RealtimeService.GetRepository<Question>().Add(new[]
+                    {
+                        new Question
+                        {
+                            Id = $"project01:question{bookId}{c}",
+                            DataId = $"question{bookId}{c}",
+                            ProjectRef = "project01",
+                            ScriptureStart = new VerseRefData(bookId, c.ToString(), "1")
+                        }
+                    });
                 }
             }
 

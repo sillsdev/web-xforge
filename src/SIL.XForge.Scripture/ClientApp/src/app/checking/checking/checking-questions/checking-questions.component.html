@@ -1,21 +1,21 @@
 <mdc-list>
   <mdc-list-item
-    (click)="activateQuestion(question)"
-    *ngFor="let question of questions"
+    *ngFor="let questionDoc of questionDocs"
+    (click)="activateQuestion(questionDoc)"
     [ngClass]="{
-      'question-read': hasUserReadQuestion(question),
-      'question-unread': !hasUserReadQuestion(question),
-      'question-answered': hasUserAnswered(question),
-      'question-has-answers': getUnreadAnswers(question)
+      'question-read': hasUserReadQuestion(questionDoc),
+      'question-unread': !hasUserReadQuestion(questionDoc),
+      'question-answered': hasUserAnswered(questionDoc),
+      'question-has-answers': getUnreadAnswers(questionDoc)
     }"
-    [activated]="activeQuestion && activeQuestion.id === question.id"
+    [activated]="activeQuestionDoc && activeQuestionDoc.id === questionDoc.id"
   >
     <div class="question-title">
-      <mdc-icon *ngIf="question?.audioUrl">headset</mdc-icon>
-      <span class="question-text" *ngIf="question?.text">{{ question.text }}</span>
+      <mdc-icon *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
+      <span class="question-text" *ngIf="questionDoc.data?.text">{{ questionDoc.data.text }}</span>
     </div>
     <a class="view-answers" mdcListItemMeta title="View Answers">
-      <i mdcIcon>forum</i> <span>{{ getUnreadAnswers(question) }}</span>
+      <i mdcIcon>forum</i> <span>{{ getUnreadAnswers(questionDoc) }}</span>
     </a>
   </mdc-list-item>
 </mdc-list>

@@ -1,20 +1,21 @@
 import { DebugElement, getDebugNode } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as OTJson0 from 'ot-json0';
+import merge from 'lodash/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
-import { combineLatest, Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { combineLatest, from, Observable } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { getObjPathStr, objProxy } from 'xforge-common/utils';
+import XRegExp from 'xregexp';
 import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
-import { MemoryRealtimeDocAdapter, RealtimeDocAdapter } from '../realtime-doc-adapter';
-import { RealtimeOfflineStore } from '../realtime-offline-store';
-import { QueryParameters, QueryResults } from '../realtime.service';
+import { Filters, QueryParameters } from '../query-parameters';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaProjectsComponent } from './sa-projects.component';
@@ -24,7 +25,9 @@ describe('SaProjectsComponent', () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
-    flush();
+    tick();
+    env.fixture.detectChanges();
+    tick();
 
     expect(env.rows.length).toEqual(3);
     expect(env.cell(0, 0).query(By.css('a')).nativeElement.text).toEqual('Project 01');
@@ -37,9 +40,9 @@ describe('SaProjectsComponent', () => {
 
   it('should display message when there are no projects', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupEmptyProjectData();
     env.fixture.detectChanges();
-    flush();
+    tick();
+    env.fixture.detectChanges();
 
     expect(env.fixture.debugElement.query(By.css('.no-projects-label'))).not.toBeNull();
   }));
@@ -48,7 +51,9 @@ describe('SaProjectsComponent', () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
-    flush();
+    tick();
+    env.fixture.detectChanges();
+    tick();
 
     const roleSelect = env.roleSelect(0);
     expect(env.selectValue(roleSelect)).toEqual('Administrator');
@@ -63,7 +68,9 @@ describe('SaProjectsComponent', () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
-    flush();
+    tick();
+    env.fixture.detectChanges();
+    tick();
 
     const roleSelect = env.roleSelect(1);
     expect(env.selectValue(roleSelect)).toEqual('None');
@@ -77,7 +84,9 @@ describe('SaProjectsComponent', () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
-    flush();
+    tick();
+    env.fixture.detectChanges();
+    tick();
 
     const roleSelect = env.roleSelect(0);
     expect(env.selectValue(roleSelect)).toEqual('Administrator');
@@ -91,9 +100,10 @@ describe('SaProjectsComponent', () => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
-    flush();
+    tick();
+    env.fixture.detectChanges();
 
-    env.setInputValue(env.filterInput, 'test');
+    env.setInputValue(env.filterInput, '02');
 
     expect(env.rows.length).toEqual(1);
   }));
@@ -103,7 +113,8 @@ describe('SaProjectsComponent', () => {
     env.setupProjectData();
     env.component.pageSize = 2;
     env.fixture.detectChanges();
-    flush();
+    tick();
+    env.fixture.detectChanges();
 
     env.clickButton(env.nextButton);
 
@@ -112,10 +123,8 @@ describe('SaProjectsComponent', () => {
 });
 
 class TestProjectDoc extends ProjectDoc {
+  static readonly COLLECTION = 'projects';
   readonly taskNames: string[] = ['Task1', 'Task2'];
-  constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
-    super('projects', adapter, store);
-  }
 }
 
 class TestEnvironment {
@@ -125,7 +134,8 @@ class TestEnvironment {
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedProjectService = mock(ProjectService);
   readonly mockedUserService = mock(UserService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+
+  private readonly realtimeService = new TestRealtimeService([TestProjectDoc]);
 
   constructor() {
     when(this.mockedUserService.currentUserId).thenReturn('user01');
@@ -139,6 +149,22 @@ class TestEnvironment {
     when(this.mockedProjectService.onlineAddCurrentUser(anything(), anything())).thenResolve();
     when(this.mockedProjectService.onlineRemoveUser(anything(), 'user01')).thenResolve();
     when(this.mockedProjectService.onlineUpdateCurrentUserRole(anything(), anything())).thenResolve();
+    when(this.mockedProjectService.onlineSearch(anything(), anything())).thenCall(
+      (term$: Observable<string>, parameters$: Observable<QueryParameters>) =>
+        combineLatest(term$, parameters$).pipe(
+          switchMap(([term, queryParameters]) => {
+            const filters: Filters = {
+              [getObjPathStr(objProxy<Project>().name)]: { $regex: `.*${XRegExp.escape(term)}.*`, $options: 'i' }
+            };
+            return from(
+              this.realtimeService.onlineQuery<TestProjectDoc>(
+                TestProjectDoc.COLLECTION,
+                merge(filters, queryParameters)
+              )
+            );
+          })
+        )
+    );
 
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, RouterTestingModule, UICommonModule],
@@ -192,11 +218,11 @@ class TestEnvironment {
   changeSelectValue(select: DebugElement, option: number): void {
     select.nativeElement.click();
     this.fixture.detectChanges();
-    flush();
+    tick();
     const options = select.queryAll(By.css('mat-option'));
     options[option].nativeElement.click();
     this.fixture.detectChanges();
-    flush();
+    tick(1000);
   }
 
   setInputValue(input: DebugElement, value: string): void {
@@ -204,52 +230,22 @@ class TestEnvironment {
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('keyup'));
     this.fixture.detectChanges();
-    flush();
+    tick();
+    this.fixture.detectChanges();
   }
 
   clickButton(button: DebugElement): void {
     button.nativeElement.click();
     this.fixture.detectChanges();
-    flush();
+    tick();
+    this.fixture.detectChanges();
   }
 
   setupProjectData(): void {
-    when(this.mockedProjectService.onlineSearch(anything(), anything())).thenCall(
-      (term$: Observable<string>, parameters$: Observable<QueryParameters>) => {
-        const project03Doc = this.createProjectDoc('project03', {
-          name: 'Project 03',
-          userRoles: { user01: 'user' }
-        });
-        const results: QueryResults<ProjectDoc>[] = [
-          {
-            docs: [
-              this.createProjectDoc('project01', { name: 'Project 01', userRoles: { user01: 'admin' } }),
-              this.createProjectDoc('project02', { name: 'Project 02', userRoles: {} }),
-              project03Doc
-            ],
-            totalPagedCount: 3
-          },
-          {
-            docs: [project03Doc],
-            totalPagedCount: 1
-          }
-        ];
-
-        return combineLatest(term$, parameters$).pipe(map((_value, index) => results[index]));
-      }
-    );
-  }
-
-  setupEmptyProjectData(): void {
-    when(this.mockedProjectService.onlineSearch(anything(), anything())).thenReturn(
-      of({ docs: [], totalPagedCount: 0 } as QueryResults<ProjectDoc>)
-    );
-  }
-
-  private createProjectDoc(id: string, project: Project): ProjectDoc {
-    return new TestProjectDoc(
-      new MemoryRealtimeDocAdapter(id, OTJson0.type, project),
-      instance(this.mockedRealtimeOfflineStore)
-    );
+    this.realtimeService.addSnapshots<Project>(TestProjectDoc.COLLECTION, [
+      { id: 'project01', data: { name: 'Project 01', userRoles: { user01: 'admin' } } },
+      { id: 'project02', data: { name: 'Project 02', userRoles: {} } },
+      { id: 'project03', data: { name: 'Project 03', userRoles: { user01: 'user' } } }
+    ]);
   }
 }

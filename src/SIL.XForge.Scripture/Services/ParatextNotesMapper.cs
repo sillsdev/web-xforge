@@ -55,67 +55,64 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public async Task<XElement> GetNotesChangelistAsync(XElement oldNotesElem,
-            IEnumerable<IDocument<QuestionList>> chapterQuestionsDocs)
+            IEnumerable<IDocument<Question>> questionsDocs)
         {
             var version = (string)oldNotesElem.Attribute("version");
             Dictionary<string, XElement> oldCommentElems = GetOldCommentElements(oldNotesElem);
 
             var notesElem = new XElement("notes", new XAttribute("version", version));
-            foreach (IDocument<QuestionList> questionsDoc in chapterQuestionsDocs)
+            foreach (IDocument<Question> questionDoc in questionsDocs)
             {
-                var answerSyncUserIds = new List<(int, int, string)>();
-                var commentSyncUserIds = new List<(int, int, int, string)>();
-                for (int i = 0; i < questionsDoc.Data.Questions.Count; i++)
+                var answerSyncUserIds = new List<(int, string)>();
+                var commentSyncUserIds = new List<(int, int, string)>();
+                Question question = questionDoc.Data;
+                for (int j = 0; j < question.Answers.Count; j++)
                 {
-                    Question question = questionsDoc.Data.Questions[i];
-                    for (int j = 0; j < question.Answers.Count; j++)
+                    Answer answer = question.Answers[j];
+                    string threadId = $"ANSWER_{answer.DataId}";
+                    var threadElem = new XElement("thread", new XAttribute("id", threadId),
+                        new XElement("selection",
+                            new XAttribute("verseRef", question.ScriptureStart.ToString()),
+                            new XAttribute("startPos", 0),
+                            new XAttribute("selectedText", "")));
+                    var answerPrefixContents = new List<object>();
+                    answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), question.Text));
+                    if (!string.IsNullOrEmpty(answer.ScriptureText))
                     {
-                        Answer answer = question.Answers[j];
-                        string threadId = $"ANSWER_{answer.Id}";
-                        var threadElem = new XElement("thread", new XAttribute("id", threadId),
-                            new XElement("selection",
-                                new XAttribute("verseRef", question.ScriptureStart.ToString()),
-                                new XAttribute("startPos", 0),
-                                new XAttribute("selectedText", "")));
-                        var answerPrefixContents = new List<object>();
-                        answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), question.Text));
-                        if (!string.IsNullOrEmpty(answer.ScriptureText))
+                        string scriptureRef = answer.ScriptureStart.ToString();
+                        if (!string.IsNullOrEmpty(answer.ScriptureEnd.Verse)
+                            && answer.ScriptureEnd.Verse != answer.ScriptureStart.Verse)
                         {
-                            string scriptureRef = answer.ScriptureStart.ToString();
-                            if (!string.IsNullOrEmpty(answer.ScriptureEnd.Verse)
-                                && answer.ScriptureEnd.Verse != answer.ScriptureStart.Verse)
-                            {
-                                scriptureRef += $"-{answer.ScriptureEnd.Verse}";
-                            }
-                            string scriptureText = $"{answer.ScriptureText.Trim()} ({scriptureRef})";
-                            answerPrefixContents.Add(new XElement("span", new XAttribute("style", "italic"),
-                                scriptureText));
+                            scriptureRef += $"-{answer.ScriptureEnd.Verse}";
                         }
-                        string answerSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
-                            answer, answerPrefixContents);
-                        if (answer.SyncUserRef == null)
-                            answerSyncUserIds.Add((i, j, answerSyncUserId));
-
-                        for (int k = 0; k < answer.Comments.Count; k++)
-                        {
-                            Comment comment = answer.Comments[k];
-                            string commentSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
-                                comment);
-                            if (comment.SyncUserRef == null)
-                                commentSyncUserIds.Add((i, j, k, commentSyncUserId));
-                        }
-                        if (threadElem.Elements("comment").Any())
-                            notesElem.Add(threadElem);
+                        string scriptureText = $"{answer.ScriptureText.Trim()} ({scriptureRef})";
+                        answerPrefixContents.Add(new XElement("span", new XAttribute("style", "italic"),
+                            scriptureText));
                     }
+                    string answerSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
+                        answer, answerPrefixContents);
+                    if (answer.SyncUserRef == null)
+                        answerSyncUserIds.Add((j, answerSyncUserId));
+
+                    for (int k = 0; k < answer.Comments.Count; k++)
+                    {
+                        Comment comment = answer.Comments[k];
+                        string commentSyncUserId = await AddCommentIfChangedAsync(oldCommentElems, threadElem,
+                            comment);
+                        if (comment.SyncUserRef == null)
+                            commentSyncUserIds.Add((j, k, commentSyncUserId));
+                    }
+                    if (threadElem.Elements("comment").Any())
+                        notesElem.Add(threadElem);
                 }
                 // set SyncUserRef property on answers and comments that need it
-                await questionsDoc.SubmitJson0OpAsync(op =>
+                await questionDoc.SubmitJson0OpAsync(op =>
                 {
-                    foreach ((int qIndex, int aIndex, string syncUserId) in answerSyncUserIds)
-                        op.Set(ql => ql.Questions[qIndex].Answers[aIndex].SyncUserRef, syncUserId);
+                    foreach ((int aIndex, string syncUserId) in answerSyncUserIds)
+                        op.Set(q => q.Answers[aIndex].SyncUserRef, syncUserId);
 
-                    foreach ((int qIndex, int aIndex, int cIndex, string syncUserId) in commentSyncUserIds)
-                        op.Set(ql => ql.Questions[qIndex].Answers[aIndex].Comments[cIndex].SyncUserRef, syncUserId);
+                    foreach ((int aIndex, int cIndex, string syncUserId) in commentSyncUserIds)
+                        op.Set(q => q.Answers[aIndex].Comments[cIndex].SyncUserRef, syncUserId);
                 });
             }
 
