@@ -1,6 +1,16 @@
-<div fxLayout="column" fxLayoutAlign="start center" class="container">
-  <h1>An error has occurred.</h1>
-  <h3 id="error-code">{{ errorCode }}</h3>
-  <span><a (click)="showDetails = !showDetails" class="text-blue">Click for details</a></span>
-  <pre *ngIf="showDetails">{{ stack }}</pre>
-</div>
+<mdc-dialog>
+  <mdc-dialog-container>
+    <mdc-dialog-surface>
+      <mdc-dialog-title>An error has occurred</mdc-dialog-title>
+      <mdc-dialog-content>
+        <p>{{ data.message }}</p>
+        <p>
+          To report an issue, email <a target="_blank" [href]="issueMailTo">{{ issueEmail }}</a>
+        </p>
+        <a (click)="toggleStack()">{{ showDetails ? "Hide" : "Show" }} details</a>
+        <pre [fxShow]="showDetails">{{ data.stack }}</pre>
+      </mdc-dialog-content>
+      <mdc-dialog-actions> <button default mdcDialogButton mdcDialogAction="close">Close</button> </mdc-dialog-actions>
+    </mdc-dialog-surface>
+  </mdc-dialog-container>
+</mdc-dialog>

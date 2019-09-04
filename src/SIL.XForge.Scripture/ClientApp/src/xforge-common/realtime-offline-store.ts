@@ -82,6 +82,9 @@ export class RealtimeOfflineStore {
       return this.openDBPromise;
     }
     this.openDBPromise = new Promise<void>((resolve, reject) => {
+      if (!window.indexedDB) {
+        return reject(new Error('IndexedDB is not avilable in this browser. Please use a different browser.'));
+      }
       const request = window.indexedDB.open(DATABASE_NAME);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {

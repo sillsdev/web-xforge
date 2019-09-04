@@ -1,27 +1,33 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { first } from 'rxjs/operators';
-import { NoticeService } from 'xforge-common/notice.service';
+import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
+import { Component, Inject, NgZone } from '@angular/core';
+import { environment } from 'src/environments/environment';
+
+export interface ErrorAlert {
+  message: string;
+  stack: string;
+}
 
 @Component({
-  selector: 'app-error',
   templateUrl: './error.component.html',
   styleUrls: ['./error.component.scss']
 })
-export class ErrorComponent implements OnInit {
-  stack: string;
-  errorCode: string = 'Error: No error code';
+export class ErrorComponent {
+  issueEmail = environment.issueEmail;
   showDetails: boolean = false;
 
-  constructor(private readonly activatedRoute: ActivatedRoute, private readonly noticeService: NoticeService) {}
+  constructor(
+    public dialogRef: MdcDialogRef<ErrorComponent>,
+    @Inject(MDC_DIALOG_DATA) public data: ErrorAlert,
+    private readonly zone: NgZone
+  ) {}
 
-  ngOnInit() {
-    this.activatedRoute.queryParams.pipe(first()).subscribe(params => {
-      this.noticeService.loadingFinished();
-      this.stack = params['stack'];
-      if (params['errorCode']) {
-        this.errorCode = params['errorCode'];
-      }
+  get issueMailTo(): string {
+    return encodeURI('mailto:' + environment.issueEmail + '?subject=Scripture Forge v2 Issue');
+  }
+
+  toggleStack() {
+    this.zone.run(() => {
+      this.showDetails = !this.showDetails;
     });
   }
 }
