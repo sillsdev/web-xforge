@@ -87,12 +87,12 @@ namespace SIL.XForge.Realtime
 
             IMongoCollection<BsonDocument> snapshotCollection = _database.GetCollection<BsonDocument>(
                 options.ProjectDoc.CollectionName);
-            FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Regex("_id", projectId);
+            FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Eq("_id", projectId);
             await snapshotCollection.DeleteManyAsync(idFilter);
 
             IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>(
-                "o_" + options.ProjectDoc.CollectionName);
-            FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", projectId);
+                $"o_{options.ProjectDoc.CollectionName}");
+            FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Eq("d", projectId);
             await opsCollection.DeleteManyAsync(dFilter);
         }
 
@@ -124,7 +124,7 @@ namespace SIL.XForge.Realtime
             FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Regex("_id", $"^{projectId}");
             await snapshotCollection.DeleteManyAsync(idFilter);
 
-            IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>("o_" + collectionName);
+            IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>($"o_{collectionName}");
             FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", $"^{projectId}");
             await opsCollection.DeleteManyAsync(dFilter);
         }

@@ -7,7 +7,6 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
-import * as OTJson0 from 'ot-json0';
 import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
@@ -15,29 +14,32 @@ import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import { TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
+import { MemoryRealtimeQueryAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ProjectService } from 'xforge-common/project.service';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { ShareControlComponent } from 'xforge-common/share/share-control.component';
 import { ShareDialogComponent } from 'xforge-common/share/share-dialog.component';
 import { ShareComponent } from 'xforge-common/share/share.component';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { QuestionListDoc } from '../../core/models/question-list-doc';
+import { getQuestionDocId, QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { Delta, TextDoc } from '../../core/models/text-doc';
-import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
+import { getSFProjectUserConfigDocId, SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
+import { Delta, getTextDocId, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
@@ -92,11 +94,11 @@ describe('CheckingComponent', () => {
     it('responds to remote removed from project', fakeAsync(() => {
       env.setupReviewerScenarioData(env.checkerUser);
       env.selectQuestion(1);
-      expect(Object.keys(env.component.checkingData.questionListDocs).length).toEqual(2);
+      expect(env.component.questionDocs.length).toEqual(15);
       env.component.projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles[env.checkerUser.id]), false);
       env.waitForSliderUpdate();
       expect(env.component.projectDoc).toBeNull();
-      expect(Object.keys(env.component.checkingData.questionListDocs).length).toEqual(0);
+      expect(env.component.questionDocs.length).toEqual(0);
       env.waitForSliderUpdate();
     }));
   });
@@ -152,23 +154,23 @@ describe('CheckingComponent', () => {
     it('responds to remote question added', fakeAsync(() => {
       env.setupReviewerScenarioData(env.checkerUser);
       let question = env.selectQuestion(1);
-      const questionId = env.component.questionsPanel.activeQuestion.id;
+      const questionId = env.component.questionsPanel.activeQuestionDoc.id;
       expect(env.questions.length).toEqual(15);
       const newQuestion: Question = {
-        id: objectId(),
+        dataId: objectId(),
         ownerRef: env.adminUser.id,
+        projectRef: 'project01',
         text: 'Admin just added a question.',
         answers: [],
         scriptureStart: { book: 'JHN', chapter: '1', verse: '10', versification: 'English' },
-        scriptureEnd: { book: 'JHN', chapter: '1', verse: '11', versification: 'English' }
+        scriptureEnd: { book: 'JHN', chapter: '1', verse: '11', versification: 'English' },
+        isArchived: false,
+        dateCreated: '',
+        dateModified: ''
       };
-      const textDocId = new TextDocId('project01', 'JHN', 1);
-      env.component.checkingData.questionListDocs[textDocId.toString()].submitJson0Op(
-        op => op.insert(ql => ql.questions, 0, newQuestion),
-        false
-      );
+      env.insertQuestion(newQuestion);
       env.waitForSliderUpdate();
-      expect(env.component.questionsPanel.activeQuestion.id).toBe(questionId);
+      expect(env.component.questionsPanel.activeQuestionDoc.id).toBe(questionId);
       expect(env.questions.length).toEqual(16);
       question = env.selectQuestion(1);
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
@@ -443,22 +445,16 @@ describe('CheckingComponent', () => {
         env.selectQuestion(1);
         env.answerQuestion('Admin will add a comment to this');
         expect(env.getAnswerComments(0).length).toEqual(0);
-        const textDocId = new TextDocId('project01', 'JHN', 1);
         const date: string = new Date().toJSON();
         const comment: Comment = {
-          id: objectId(),
+          dataId: objectId(),
           ownerRef: env.adminUser.id,
           text: 'Comment left by admin',
           dateCreated: date,
           dateModified: date
         };
-        env.component.checkingData.questionListDocs[textDocId.toString()].submitJson0Op(
-          op =>
-            op.insert(
-              ql => ql.questions[env.component.questionsPanel.activeQuestionIndex].answers[0].comments,
-              0,
-              comment
-            ),
+        env.component.questionsPanel.activeQuestionDoc.submitJson0Op(
+          op => op.insert(q => q.answers[0].comments, 0, comment),
           false
         );
         env.waitForSliderUpdate();
@@ -502,7 +498,6 @@ class TestEnvironment {
 
   readonly mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent> = mock(MdcDialogRef);
   readonly mockedAccountService = mock(AccountService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
   readonly mockedUserService = mock(UserService);
   readonly mockedProjectService = mock(SFProjectService);
   readonly mockedNoticeService = mock(NoticeService);
@@ -513,6 +508,7 @@ class TestEnvironment {
 
   private adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.adminUser.id,
+    projectRef: 'project01',
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
@@ -520,6 +516,7 @@ class TestEnvironment {
 
   private reviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.checkerUser.id,
+    projectRef: 'project01',
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
@@ -527,6 +524,7 @@ class TestEnvironment {
 
   private cleanReviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.cleanCheckerUser.id,
+    projectRef: 'project01',
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
@@ -552,6 +550,9 @@ class TestEnvironment {
       [this.cleanCheckerUser.id]: this.cleanCheckerUser.role
     }
   };
+
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private questionsQuery: RealtimeQuery<QuestionDoc>;
 
   constructor() {
     TestBed.configureTestingModule({
@@ -827,65 +828,102 @@ class TestEnvironment {
     this.initComponentEnviroment();
   }
 
+  insertQuestion(newQuestion: Question): void {
+    const docId = getQuestionDocId('project01', newQuestion.dataId);
+    this.realtimeService.addSnapshot(QuestionDoc.COLLECTION, {
+      id: docId,
+      data: newQuestion
+    });
+    const adapter = this.questionsQuery.adapter as MemoryRealtimeQueryAdapter;
+    adapter.insert$.next({ index: 0, docIds: [docId] });
+  }
+
   private setupDefaultProjectData(user: UserInfo): void {
-    when(this.mockedProjectService.get('project01')).thenResolve(
-      new SFProjectDoc(
-        new MemoryRealtimeDocAdapter('project01', OTJson0.type, this.testProject),
-        instance(this.mockedRealtimeOfflineStore)
-      )
-    );
-    when(this.mockedProjectService.getUserConfig('project01', this.adminUser.id)).thenResolve(
-      this.createProjectUserConfigDoc(this.adminProjectUserConfig)
-    );
-    when(this.mockedProjectService.getUserConfig('project01', this.checkerUser.id)).thenResolve(
-      this.createProjectUserConfigDoc(this.reviewerProjectUserConfig)
-    );
-    when(this.mockedProjectService.getUserConfig('project01', this.cleanCheckerUser.id)).thenResolve(
-      this.createProjectUserConfigDoc(this.cleanReviewerProjectUserConfig)
+    this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
+      {
+        id: 'project01',
+        data: this.testProject
+      }
+    ]);
+    when(this.mockedProjectService.get(anything())).thenCall(id =>
+      this.realtimeService.subscribe<SFProjectDoc>(SFProjectDoc.COLLECTION, id)
     );
 
-    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 'JHN', 1, 'target')))).thenResolve(
-      this.createTextDoc()
+    this.realtimeService.addSnapshots<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, [
+      {
+        id: getSFProjectUserConfigDocId('project01', this.adminUser.id),
+        data: this.adminProjectUserConfig
+      },
+      {
+        id: getSFProjectUserConfigDocId('project01', this.checkerUser.id),
+        data: this.reviewerProjectUserConfig
+      },
+      {
+        id: getSFProjectUserConfigDocId('project01', this.cleanCheckerUser.id),
+        data: this.cleanReviewerProjectUserConfig
+      }
+    ]);
+    when(this.mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
+      this.realtimeService.subscribe<SFProjectUserConfigDoc>(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId(id, userId)
+      )
     );
-    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 'JHN', 2, 'target')))).thenResolve(
-      this.createTextDoc()
+
+    this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
+      {
+        id: getTextDocId('project01', 'JHN', 1),
+        data: this.createTextData(),
+        type: RichText.type.name
+      },
+      {
+        id: getTextDocId('project01', 'JHN', 2),
+        data: this.createTextData(),
+        type: RichText.type.name
+      }
+    ]);
+    when(this.mockedProjectService.getText(anything())).thenCall(id =>
+      this.realtimeService.subscribe<TextDoc>(TextDoc.COLLECTION, id.toString())
     );
-    const text1_1id = new TextDocId('project01', 'JHN', 1);
-    const text1_2id = new TextDocId('project01', 'JHN', 2);
+
     const dateNow: string = new Date().toJSON();
-    const questionData1: Question[] = [];
-    const questionData2: Question[] = [];
+    const questions: Partial<Snapshot<Question>>[] = [];
     for (let questionNumber = 1; questionNumber <= 14; questionNumber++) {
-      questionData1.push({
-        id: 'q' + questionNumber + 'Id',
-        ownerRef: undefined,
-        text: 'Book 1, Q' + questionNumber + ' text',
-        scriptureStart: { book: 'JHN', chapter: '1', verse: '1', versification: 'English' },
-        scriptureEnd: { book: 'JHN', chapter: '1', verse: '2', versification: 'English' },
-        answers: []
+      questions.push({
+        id: getQuestionDocId('project01', `q${questionNumber}Id`),
+        data: {
+          dataId: 'q' + questionNumber + 'Id',
+          ownerRef: this.adminUser.id,
+          projectRef: 'project01',
+          text: 'Book 1, Q' + questionNumber + ' text',
+          scriptureStart: { book: 'JHN', chapter: '1', verse: '1', versification: 'English' },
+          scriptureEnd: { book: 'JHN', chapter: '1', verse: '2', versification: 'English' },
+          answers: [],
+          isArchived: false,
+          dateCreated: dateNow,
+          dateModified: dateNow
+        }
       });
     }
-    questionData2.push({
-      id: 'q15Id',
-      ownerRef: undefined,
-      text: 'Question relating to chapter 2',
-      scriptureStart: { book: 'JHN', chapter: '2', verse: '1', versification: 'English' },
-      scriptureEnd: { book: 'JHN', chapter: '2', verse: '2', versification: 'English' },
-      answers: []
+    questions.push({
+      id: getQuestionDocId('project01', 'q15Id'),
+      data: {
+        dataId: 'q15Id',
+        ownerRef: this.adminUser.id,
+        projectRef: 'project01',
+        text: 'Question relating to chapter 2',
+        scriptureStart: { book: 'JHN', chapter: '2', verse: '1', versification: 'English' },
+        scriptureEnd: { book: 'JHN', chapter: '2', verse: '2', versification: 'English' },
+        answers: [],
+        isArchived: false,
+        dateCreated: dateNow,
+        dateModified: dateNow
+      }
     });
-    // An archived question (which must not appear in the list of questions)
-    questionData2.push({
-      id: 'q16Id',
-      ownerRef: undefined,
-      text: 'This question is archived',
-      scriptureStart: { book: 'JHN', chapter: '2', verse: '2', versification: 'English' },
-      answers: [],
-      isArchived: true
-    });
-    questionData1[3].scriptureStart.verse = '3';
-    questionData1[3].scriptureEnd.verse = '4';
-    questionData1[5].answers.push({
-      id: 'a6Id',
+    questions[3].data.scriptureStart.verse = '3';
+    questions[3].data.scriptureEnd.verse = '4';
+    questions[5].data.answers.push({
+      dataId: 'a6Id',
       ownerRef: this.checkerUser.id,
       text: 'Answer 6 on question',
       scriptureStart: { chapter: '1', verse: '1', book: 'JHN', versification: 'English' },
@@ -901,15 +939,15 @@ class TestEnvironment {
     const a7Comments: Comment[] = [];
     for (let commentNumber = 1; commentNumber <= 3; commentNumber++) {
       a7Comments.push({
-        id: 'c' + commentNumber + 'Id',
+        dataId: 'c' + commentNumber + 'Id',
         ownerRef: this.adminUser.id,
         text: 'Comment ' + commentNumber + ' on question 7',
         dateCreated: dateNow,
         dateModified: dateNow
       });
     }
-    questionData1[6].answers.push({
-      id: 'a7Id',
+    questions[6].data.answers.push({
+      dataId: 'a7Id',
       ownerRef: this.adminUser.id,
       text: 'Answer 7 on question',
       likes: [],
@@ -921,15 +959,15 @@ class TestEnvironment {
     const a8Comments: Comment[] = [];
     for (let commentNumber = 1; commentNumber <= 4; commentNumber++) {
       a8Comments.push({
-        id: 'c' + commentNumber + 'Id',
+        dataId: 'c' + commentNumber + 'Id',
         ownerRef: this.checkerUser.id,
         text: 'Comment ' + commentNumber + ' on question 8',
         dateCreated: dateNow,
         dateModified: dateNow
       });
     }
-    questionData1[7].answers.push({
-      id: 'a8Id',
+    questions[7].data.answers.push({
+      dataId: 'a8Id',
       ownerRef: this.adminUser.id,
       text: 'Answer 8 on question',
       likes: [],
@@ -937,22 +975,38 @@ class TestEnvironment {
       dateModified: dateNow,
       comments: a8Comments
     });
-
-    when(this.mockedProjectService.getQuestionList(deepEqual(text1_1id))).thenResolve(
-      this.createQuestionListDoc(text1_1id, questionData1)
-    );
-    when(this.mockedProjectService.getQuestionList(deepEqual(text1_2id))).thenResolve(
-      this.createQuestionListDoc(text1_2id, questionData2)
-    );
+    this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions);
+    this.questionsQuery = this.realtimeService.createQuery(QuestionDoc.COLLECTION, {});
+    this.questionsQuery.subscribe();
+    when(
+      this.mockedProjectService.getQuestions('project01', deepEqual({ bookId: 'JHN', activeOnly: true, sort: true }))
+    ).thenResolve(this.questionsQuery);
     when(this.mockedUserService.currentUserId).thenReturn(user.id);
-    when(this.mockedUserService.getCurrentUser()).thenResolve(this.createUserDoc(user));
-    when(this.mockedUserService.getProfile(this.adminUser.id)).thenResolve(this.createUserProfileDoc(this.adminUser));
-    when(this.mockedUserService.getProfile(this.checkerUser.id)).thenResolve(
-      this.createUserProfileDoc(this.checkerUser)
+
+    this.realtimeService.addSnapshots<User>(UserDoc.COLLECTION, [
+      {
+        id: user.id,
+        data: user.user
+      }
+    ]);
+    when(this.mockedUserService.getCurrentUser()).thenReturn(
+      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id)
     );
-    when(this.mockedUserService.getProfile(this.cleanCheckerUser.id)).thenResolve(
-      this.createUserProfileDoc(this.cleanCheckerUser)
+
+    this.realtimeService.addSnapshots<User>(UserProfileDoc.COLLECTION, [
+      {
+        id: this.adminUser.id,
+        data: this.adminUser.user
+      },
+      {
+        id: this.checkerUser.id,
+        data: this.checkerUser.user
+      }
+    ]);
+    when(this.mockedUserService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
     );
+
     when(this.mockedAccountService.openNameDialog(anything(), anything())).thenReturn(
       instance(this.mockedCheckingNameDialogRef)
     );
@@ -982,27 +1036,7 @@ class TestEnvironment {
     };
   }
 
-  private createUserDoc(user: UserInfo): UserDoc {
-    return new UserDoc(
-      new MemoryRealtimeDocAdapter(user.id, OTJson0.type, user.user),
-      instance(this.mockedRealtimeOfflineStore)
-    );
-  }
-
-  private createUserProfileDoc(user: UserInfo): UserProfileDoc {
-    return new UserProfileDoc(
-      new MemoryRealtimeDocAdapter(user.id, OTJson0.type, user.user),
-      instance(this.mockedRealtimeOfflineStore)
-    );
-  }
-
-  private createQuestionListDoc(id: TextDocId, data: Question[]): QuestionListDoc {
-    const adapter = new MemoryRealtimeDocAdapter(id.toString(), OTJson0.type, { questions: data });
-    return new QuestionListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
-  }
-
-  private createTextDoc(): TextDoc {
-    const mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+  private createTextData(): TextData {
     const delta = new Delta();
     delta.insert({ chapter: { number: '1', style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
@@ -1019,18 +1053,6 @@ class TestEnvironment {
     delta.insert({ verse: { number: '5', style: 'v' } });
     delta.insert(`target: chapter 1, `, { segment: 'verse_1_5' });
     delta.insert('\n', { para: { style: 'p' } });
-    const adapter = new MemoryRealtimeDocAdapter(
-      getTextDocIdStr('project01', 'JHN', 1, 'target'),
-      RichText.type,
-      delta
-    );
-    return new TextDoc(adapter, instance(mockedRealtimeOfflineStore));
-  }
-
-  private createProjectUserConfigDoc(projectUserConfig: SFProjectUserConfig): SFProjectUserConfigDoc {
-    return new SFProjectUserConfigDoc(
-      new MemoryRealtimeDocAdapter(`project01:${projectUserConfig.ownerRef}`, OTJson0.type, projectUserConfig),
-      instance(this.mockedRealtimeOfflineStore)
-    );
+    return delta;
   }
 }

@@ -43,14 +43,14 @@ declare module 'sharedb/lib/client' {
     createFetchQuery(
       collection: string,
       query: any,
-      options: any,
-      callback: (err: Error, results: Doc[]) => void
+      options?: any,
+      callback?: (err: Error, results: Doc[]) => void
     ): Query;
     createSubscribeQuery(
       collection: string,
       query: any,
-      options: any,
-      callback: (err: Error, results: Doc[]) => void
+      options?: any,
+      callback?: (err: Error, results: Doc[]) => void
     ): Query;
     close(): void;
   }
@@ -61,16 +61,18 @@ declare module 'sharedb/lib/client' {
   };
 
   export interface Doc extends EventEmitter {
-    type: OTType;
-    id: string;
-    data: any;
-    version: number;
+    readonly type: OTType;
+    readonly id: string;
+    readonly data: any;
+    readonly version: number;
+    readonly collection: string;
+    readonly connection: Connection;
 
-    subscribed: boolean;
-    wantSubscribe: boolean;
+    readonly subscribed: boolean;
+    readonly wantSubscribe: boolean;
 
-    inflightOp: any;
-    pendingOps: any[];
+    readonly inflightOp: any;
+    readonly pendingOps: any[];
 
     on(event: 'load' | 'no write pending' | 'nothing pending', callback: () => void): this;
     on(event: 'create', callback: (source: any) => void): this;
@@ -110,6 +112,10 @@ declare module 'sharedb/lib/client' {
   }
 
   export interface Query extends EventEmitter {
+    readonly action: 'qs' | 'qf';
+    readonly collection: string;
+    readonly connection: Connection;
+    readonly query: any;
     readonly ready: boolean;
     readonly results: Doc[];
     readonly extra: any;

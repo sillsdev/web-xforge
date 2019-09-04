@@ -5,21 +5,22 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as OTJson0 from 'ot-json0';
+import merge from 'lodash/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { User } from 'realtime-server/lib/common/models/user';
-import { combineLatest, Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { combineLatest, from, Observable, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { getObjPathStr, objProxy } from 'xforge-common/utils';
+import XRegExp from 'xregexp';
 import { environment } from '../../environments/environment';
 import { AvatarTestingModule } from '../avatar/avatar-testing.module';
 import { ProjectDoc } from '../models/project-doc';
 import { UserDoc } from '../models/user-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
-import { MemoryRealtimeDocAdapter, RealtimeDocAdapter } from '../realtime-doc-adapter';
-import { RealtimeOfflineStore } from '../realtime-offline-store';
-import { QueryParameters, QueryResults } from '../realtime.service';
+import { Filters, QueryParameters } from '../query-parameters';
+import { TestRealtimeService } from '../test-realtime.service';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
@@ -28,7 +29,6 @@ import { SaUsersComponent } from './sa-users.component';
 describe('SaUsersComponent', () => {
   it('should not display no-users label while loading', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupEmptyUserData();
     env.fixture.detectChanges();
 
     expect(env.noUsersLabel).toBeNull();
@@ -37,7 +37,6 @@ describe('SaUsersComponent', () => {
 
   it('should display message when there are no users', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupEmptyUserData();
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
@@ -98,7 +97,7 @@ describe('SaUsersComponent', () => {
     env.fixture.detectChanges();
 
     expect(env.userRows.length).toEqual(3);
-    env.setInputValue(env.filterInput, 'test');
+    env.setInputValue(env.filterInput, '02');
 
     expect(env.userRows.length).toEqual(1);
   }));
@@ -118,10 +117,8 @@ describe('SaUsersComponent', () => {
 });
 
 class TestProjectDoc extends ProjectDoc {
+  static readonly COLLECTION = 'projects';
   readonly taskNames: string[];
-  constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
-    super('projects', adapter, store);
-  }
 }
 
 @NgModule({
@@ -141,30 +138,28 @@ class TestEnvironment {
   readonly mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedUserService = mock(UserService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
   readonly mockedProjectService = mock(ProjectService);
 
-  private readonly userDocs: UserDoc[] = [
-    this.createUserDoc('user01', {
-      name: 'User 01',
-      displayName: 'User01',
-      sites: { [environment.siteId]: { projects: ['project01'] } }
-    }),
-    this.createUserDoc('user02', {
-      name: 'User 02',
-      displayName: 'User 02',
-      sites: { [environment.siteId]: { projects: [] } }
-    }),
-    this.createUserDoc('user03', {
-      name: 'user03@example.com',
-      displayName: 'User 03',
-      email: 'user03@example.com',
-      sites: { [environment.siteId]: { projects: ['project01'] } }
-    })
-  ];
+  private readonly realtimeService = new TestRealtimeService([UserDoc, TestProjectDoc]);
 
   constructor() {
     when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));
+    when(this.mockedUserService.onlineSearch(anything(), anything(), anything())).thenCall(
+      (term$: Observable<string>, parameters$: Observable<QueryParameters>, reload$: Observable<void>) =>
+        combineLatest(term$, parameters$, reload$).pipe(
+          switchMap(([term, queryParameters]) => {
+            const filters: Filters = {
+              [getObjPathStr(objProxy<User>().name)]: { $regex: `.*${XRegExp.escape(term)}.*`, $options: 'i' }
+            };
+            return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.COLLECTION, merge(filters, queryParameters)));
+          })
+        )
+    );
+    when(this.mockedProjectService.onlineGetMany(anything())).thenCall(async () => {
+      const query = await this.realtimeService.onlineQuery<TestProjectDoc>(TestProjectDoc.COLLECTION, {});
+      return query.docs;
+    });
+
     TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, RouterTestingModule, AvatarTestingModule, UICommonModule, DialogTestModule],
       declarations: [SaUsersComponent],
@@ -254,29 +249,36 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setupEmptyUserData(): void {
-    when(this.mockedUserService.onlineSearch(anything(), anything(), anything())).thenReturn(
-      of({ docs: [], totalPagedCount: 0 })
-    );
-    when(this.mockedProjectService.onlineGetMany(anything())).thenResolve([]);
-  }
-
   setupUserData(): void {
-    when(this.mockedUserService.onlineSearch(anything(), anything(), anything())).thenCall(
-      (term$: Observable<string>, parameters$: Observable<QueryParameters>, reload$: Observable<void>) => {
-        const results: QueryResults<UserDoc>[] = [
-          // page 1
-          { docs: this.userDocs, totalPagedCount: this.userDocs.length },
-          // page 2
-          { docs: [this.userDocs[2]], totalPagedCount: 1 }
-        ];
-
-        return combineLatest(term$, parameters$, reload$).pipe(map((_value, index) => results[index]));
+    this.realtimeService.addSnapshots<User>(UserDoc.COLLECTION, [
+      {
+        id: 'user01',
+        data: {
+          name: 'User 01',
+          displayName: 'User01',
+          sites: { [environment.siteId]: { projects: ['project01'] } }
+        }
+      },
+      {
+        id: 'user02',
+        data: {
+          name: 'User 02',
+          displayName: 'User 02',
+          sites: { [environment.siteId]: { projects: [] } }
+        }
+      },
+      {
+        id: 'user03',
+        data: {
+          name: 'user03@example.com',
+          displayName: 'User 03',
+          email: 'user03@example.com',
+          sites: { [environment.siteId]: { projects: ['project01'] } }
+        }
       }
-    );
-
-    when(this.mockedProjectService.onlineGetMany(anything())).thenResolve([
-      this.createProjectDoc('project01', { name: 'Project 01', userRoles: { user01: 'admin', user03: 'user' } })
+    ]);
+    this.realtimeService.addSnapshots<Project>(TestProjectDoc.COLLECTION, [
+      { id: 'project01', data: { name: 'Project 01', userRoles: { user01: 'admin', user03: 'user' } } }
     ]);
   }
 
@@ -290,16 +292,5 @@ class TestEnvironment {
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
-  }
-
-  private createUserDoc(id: string, user: User): UserDoc {
-    return new UserDoc(new MemoryRealtimeDocAdapter(id, OTJson0.type, user), instance(this.mockedRealtimeOfflineStore));
-  }
-
-  private createProjectDoc(id: string, project: Project): ProjectDoc {
-    return new TestProjectDoc(
-      new MemoryRealtimeDocAdapter(id, OTJson0.type, project),
-      instance(this.mockedRealtimeOfflineStore)
-    );
   }
 }

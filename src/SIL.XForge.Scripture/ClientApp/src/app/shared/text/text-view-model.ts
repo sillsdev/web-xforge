@@ -1,8 +1,7 @@
 import cloneDeep from 'lodash/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { Subscription } from 'rxjs';
-import { Delta, TextDoc } from '../../core/models/text-doc';
-import { TextType } from '../../core/models/text-doc-id';
+import { Delta, TextDoc, TextType } from '../../core/models/text-doc';
 import { Segment } from './segment';
 
 const PARA_STYLES: Set<string> = new Set<string>([

@@ -3,21 +3,19 @@ import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
-import { Delta, TextDoc } from 'src/app/core/models/text-doc';
-import { getTextDocIdStr, TextDocId } from 'src/app/core/models/text-doc-id';
-import { SFProjectService } from 'src/app/core/sf-project.service';
 import { anything, capture, deepEqual, instance, mock, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { Delta, getTextDocId, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
@@ -26,7 +24,7 @@ import { VerseRef } from '../../shared/scripture-utils/verse-ref';
 import { verseRefDataToString, verseRefToVerseRefData } from '../../shared/scripture-utils/verse-ref-data-converters';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
-import { QuestionDialogComponent } from './question-dialog.component';
+import { QuestionDialogComponent, QuestionDialogData } from './question-dialog.component';
 
 describe('QuestionDialogComponent', () => {
   it('should allow user to cancel', fakeAsync(() => {
@@ -352,9 +350,10 @@ class TestEnvironment {
   mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
   mockedNoticeService = mock(NoticeService);
   mockedProjectService = mock(SFProjectService);
-  mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
   mockedUserService: UserService = mock(UserService);
   dialogSpy: MdcDialog;
+
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
 
   constructor(editMode: boolean = false) {
     TestBed.configureTestingModule({
@@ -370,13 +369,17 @@ class TestEnvironment {
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     const config: MdcDialogConfig = {
       data: {
-        editMode: editMode,
         question: editMode
-          ? ({
-              id: 'question01',
+          ? {
+              dataId: 'question01',
               ownerRef: 'user01',
-              scriptureStart: verseRefToVerseRefData(VerseRef.fromStr('LUK 1:3'))
-            } as Question)
+              projectRef: 'project01',
+              scriptureStart: verseRefToVerseRefData(VerseRef.fromStr('LUK 1:3')),
+              answers: [],
+              isArchived: false,
+              dateCreated: '',
+              dateModified: ''
+            }
           : undefined,
         textsByBook: {
           MAT: {
@@ -388,7 +391,7 @@ class TestEnvironment {
           LUK: { id: 'text02', bookId: 'LUK', name: 'Luke', chapters: [{ number: 1, lastVerse: 80 }] }
         },
         projectId: 'project01'
-      },
+      } as QuestionDialogData,
       viewContainerRef
     };
     this.dialogRef = TestBed.get(MdcDialog).open(QuestionDialogComponent, config);
@@ -490,10 +493,11 @@ class TestEnvironment {
     delta.insert(`target: chapter 1, `, { segment: 'verse_1_5' });
     delta.insert('\n', { para: { style: 'p' } });
     const adapter = new MemoryRealtimeDocAdapter(
-      getTextDocIdStr('project01', 'LUK', 1, 'target'),
-      RichText.type,
-      delta
+      TextDoc.COLLECTION,
+      getTextDocId('project01', 'LUK', 1, 'target'),
+      delta,
+      RichText.type
     );
-    return new TextDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    return new TextDoc(this.offlineStore, adapter);
   }
 }

@@ -1,11 +1,11 @@
 import { merge, Observable, Subject, Subscription } from 'rxjs';
-import { RealtimeDocAdapter } from '../realtime-doc-adapter';
 import { RealtimeOfflineData, RealtimeOfflineStore } from '../realtime-offline-store';
+import { RealtimeDocAdapter } from '../realtime-remote-store';
 
 export interface RealtimeDocConstructor {
   readonly COLLECTION: string;
 
-  new (adapter: RealtimeDocAdapter, store: RealtimeOfflineStore): RealtimeDoc;
+  new (store: RealtimeOfflineStore, adapter: RealtimeDocAdapter): RealtimeDoc;
 }
 
 /**
@@ -22,13 +22,14 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   private subscribePromise: Promise<void>;
   private localDelete$ = new Subject<void>();
   private _delete$: Observable<void>;
+  private subscribeQueryCount: number = 0;
 
-  constructor(
-    public readonly collection: string,
-    private readonly adapter: RealtimeDocAdapter,
-    protected readonly store: RealtimeOfflineStore
-  ) {
+  constructor(protected readonly store: RealtimeOfflineStore, public readonly adapter: RealtimeDocAdapter) {
     this._delete$ = merge(this.localDelete$, this.adapter.delete$);
+    this.updateOfflineDataSub = merge(this.adapter.remoteChanges$, this.adapter.idle$, this.adapter.create$).subscribe(
+      () => this.updateOfflineData()
+    );
+    this.onDeleteSub = this.adapter.delete$.subscribe(() => this.onDelete());
   }
 
   get id(): string {
@@ -41,6 +42,14 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
 
   get isLoaded(): boolean {
     return this.adapter.type != null;
+  }
+
+  get subscribed(): boolean {
+    return this.adapter.subscribed || this.subscribeQueryCount > 0;
+  }
+
+  get collection(): string {
+    return this.adapter.collection;
   }
 
   /** Fires when underlying data is recreated. */
@@ -74,6 +83,10 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     return this.subscribePromise;
   }
 
+  onlineFetch(): Promise<void> {
+    return this.adapter.fetch();
+  }
+
   /**
    * Submits the specified mutation operations. The operations are applied to the actual data and then submitted to the
    * realtime server. Data can only be updated using operations and should not be updated directly.
@@ -91,6 +104,10 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     this.updateOfflineData();
   }
 
+  create(data: T): Promise<void> {
+    return this.adapter.create(data);
+  }
+
   delete(): Promise<void> {
     return this.adapter.delete();
   }
@@ -99,7 +116,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
    * Updates offline storage with the current state of the realtime data.
    */
   updateOfflineData(): void {
-    if (!this.isLoaded || !this.adapter.subscribed) {
+    if (!this.isLoaded || !this.subscribed) {
       return;
     }
 
@@ -113,14 +130,45 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     this.offlineSnapshotVersion = this.adapter.version;
     const offlineData: RealtimeOfflineData = {
       id: this.id,
-      snapshot: {
-        v: this.adapter.version,
-        data: this.prepareDataForStore(this.adapter.data),
-        type: this.adapter.type.name
-      },
+      v: this.adapter.version,
+      data: this.prepareDataForStore(this.adapter.data),
+      type: this.adapter.type.name,
       pendingOps
     };
     this.store.put(this.collection, offlineData);
+  }
+
+  async loadFromStore(): Promise<void> {
+    if (this.isLoaded) {
+      return;
+    }
+    const offlineData = await this.store.get(this.collection, this.id);
+    if (offlineData != null) {
+      if (offlineData.pendingOps.length > 0) {
+        await this.adapter.fetch();
+        await Promise.all(offlineData.pendingOps.map(op => this.adapter.submitOp(op)));
+      } else {
+        await this.adapter.ingestSnapshot(offlineData);
+        this.offlineSnapshotVersion = this.adapter.version;
+      }
+    }
+  }
+
+  addedToSubscribeQuery(): void {
+    this.subscribeQueryCount++;
+    this.updateOfflineData();
+  }
+
+  removedFromSubscribeQuery(): void {
+    this.updateOfflineData();
+    this.subscribeQueryCount--;
+  }
+
+  async checkExists(): Promise<void> {
+    if (!(await this.adapter.exists())) {
+      this.onDelete();
+      this.localDelete$.next();
+    }
   }
 
   /**
@@ -131,13 +179,9 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   async dispose(): Promise<void> {
     if (this.subscribePromise != null) {
       await this.subscribePromise;
-      if (this.updateOfflineData != null) {
-        this.updateOfflineDataSub.unsubscribe();
-      }
-      if (this.onDeleteSub != null) {
-        this.onDeleteSub.unsubscribe();
-      }
     }
+    this.updateOfflineDataSub.unsubscribe();
+    this.onDeleteSub.unsubscribe();
     await this.adapter.destroy();
   }
 
@@ -150,38 +194,12 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   }
 
   private async subscribeToChanges(): Promise<void> {
-    this.updateOfflineDataSub = merge(this.adapter.remoteChanges$, this.adapter.idle$, this.adapter.create$).subscribe(
-      () => this.updateOfflineData()
-    );
-    this.onDeleteSub = this.adapter.delete$.subscribe(() => this.onDelete());
     await this.loadFromStore();
     const promise = this.adapter.subscribe();
-    if (this.adapter.type == null) {
-      await promise;
-    } else {
-      this.adapter.exists().then(exists => {
-        if (!exists) {
-          // the doc has been deleted remotely, so remove it
-          this.onDelete();
-          this.localDelete$.next();
-        }
-      });
-    }
-  }
-
-  private async loadFromStore(): Promise<void> {
     if (this.isLoaded) {
-      return;
-    }
-    const offlineData = await this.store.get(this.collection, this.id);
-    if (offlineData != null) {
-      if (offlineData.pendingOps.length > 0) {
-        await this.adapter.fetch();
-        await Promise.all(offlineData.pendingOps.map(op => this.adapter.submitOp(op)));
-      } else {
-        await this.adapter.ingestSnapshot(offlineData.snapshot);
-        this.offlineSnapshotVersion = this.adapter.version;
-      }
+      this.checkExists();
+    } else {
+      await promise;
     }
   }
 }

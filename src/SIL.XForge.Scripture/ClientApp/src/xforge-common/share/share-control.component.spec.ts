@@ -4,13 +4,12 @@ import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
-import * as OTJson0 from 'ot-json0';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
+import { MemoryRealtimeOfflineStore } from '../memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from '../memory-realtime-remote-store';
 import { ProjectDoc } from '../models/project-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
-import { MemoryRealtimeDocAdapter, RealtimeDocAdapter } from '../realtime-doc-adapter';
-import { RealtimeOfflineStore } from '../realtime-offline-store';
 import { UICommonModule } from '../ui-common.module';
 import { ShareControlComponent } from './share-control.component';
 
@@ -127,9 +126,7 @@ describe('ShareControlComponent', () => {
   class TestModule {}
 
   class TestProjectDoc extends ProjectDoc {
-    constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
-      super('projects', adapter, store);
-    }
+    static readonly COLLECTION = 'projects';
     get taskNames(): string[] {
       return [];
     }
@@ -151,7 +148,8 @@ describe('ShareControlComponent', () => {
 
     readonly mockedProjectService = mock(ProjectService);
     readonly mockedNoticeService = mock(NoticeService);
-    readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+
+    private readonly offlineStore = new MemoryRealtimeOfflineStore();
 
     constructor(isLinkSharingEnabled?: boolean, projectId?: string) {
       TestBed.configureTestingModule({
@@ -171,8 +169,8 @@ describe('ShareControlComponent', () => {
         isLinkSharingEnabled === undefined ? false : isLinkSharingEnabled;
 
       const projectDoc = new TestProjectDoc(
-        new MemoryRealtimeDocAdapter('project01', OTJson0.type, {}),
-        instance(this.mockedRealtimeOfflineStore)
+        this.offlineStore,
+        new MemoryRealtimeDocAdapter(TestProjectDoc.COLLECTION, 'project01', {})
       );
       when(this.mockedProjectService.get(anything())).thenResolve(projectDoc);
       when(this.mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com')).thenResolve(null);

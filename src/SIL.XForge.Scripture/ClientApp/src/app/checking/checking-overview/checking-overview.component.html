@@ -49,15 +49,15 @@
           <mdc-list-item
             *ngIf="questionCount(text.bookId, chapter.number) > 0"
             (selectionChange)="
-              itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)] = !itemVisible[
-                getTextJsonDocIdStr(text.bookId, chapter.number)
+              itemVisible[getTextDocId(text.bookId, chapter.number)] = !itemVisible[
+                getTextDocId(text.bookId, chapter.number)
               ]
             "
           >
             <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
               <span fxFlex="16px" class="indent"></span>
               <mdc-icon fxFlex="24px" mdcListItemMeta>
-                keyboard_arrow_{{ itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)] ? "down" : "right" }}
+                keyboard_arrow_{{ itemVisible[getTextDocId(text.bookId, chapter.number)] ? "down" : "right" }}
               </mdc-icon>
               <span fxFlex>{{ text?.name + " " + chapter?.number }}</span>
               <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
@@ -69,30 +69,25 @@
               <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
             </div>
           </mdc-list-item>
-          <ng-container *ngIf="itemVisible[getTextJsonDocIdStr(text.bookId, chapter.number)]">
-            <mdc-list-item *ngFor="let question of getQuestions(getTextJsonDocIdStr(text.bookId, chapter.number))">
+          <ng-container *ngIf="itemVisible[getTextDocId(text.bookId, chapter.number)]">
+            <mdc-list-item *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookId, chapter.number))">
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="16px" class="indent"></span>
-                <button
-                  fxFlex="64px"
-                  mdc-button
-                  (click)="questionDialog(true, text.bookId, chapter.number, question.id)"
-                  class="edit-btn"
-                >
+                <button fxFlex="64px" mdc-button (click)="questionDialog(questionDoc)" class="edit-btn">
                   <mdc-icon>edit</mdc-icon>
                 </button>
-                v{{ question?.scriptureStart?.verse }} -&nbsp;
-                <mdc-icon class="audio-icon" *ngIf="question?.audioUrl">headset</mdc-icon>
+                v{{ questionDoc.data?.scriptureStart?.verse }} -&nbsp;
+                <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
                 <span fxFlex class="no-overflow-ellipsis">
-                  <span *ngIf="question?.text">{{ question?.text }}</span>
+                  <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
                 </span>
                 <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
-                  {{ answerCountLabel(answerCount(text.bookId, chapter.number, question.id)) }}
+                  {{ answerCountLabel(questionDoc.data.answers.length) }}
                 </span>
                 <span fxFlex="64px" fxLayoutAlign="end center">
                   <button
                     mdc-button
-                    (click)="setQuestionArchiveStatus(question.id, true, text.bookId, chapter.number)"
+                    (click)="setQuestionArchiveStatus(questionDoc, true)"
                     title="Archive"
                     class="archive-btn"
                   >
@@ -216,37 +211,35 @@
           <mdc-list-item
             *ngIf="questionCount(text.bookId, chapter.number, true) > 0"
             (selectionChange)="
-              itemVisibleArchived[getTextJsonDocIdStr(text.bookId, chapter.number)] = !itemVisibleArchived[
-                getTextJsonDocIdStr(text.bookId, chapter.number)
+              itemVisibleArchived[getTextDocId(text.bookId, chapter.number)] = !itemVisibleArchived[
+                getTextDocId(text.bookId, chapter.number)
               ]
             "
             ><div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
               <span fxFlex="16px" class="indent"></span>
               <mdc-icon fxFlex="24px" mdcListItemMeta
                 >keyboard_arrow_{{
-                  itemVisibleArchived[getTextJsonDocIdStr(text.bookId, chapter.number)] ? "down" : "right"
+                  itemVisibleArchived[getTextDocId(text.bookId, chapter.number)] ? "down" : "right"
                 }}</mdc-icon
               >
               <span fxFlex>{{ text?.name + " " + chapter?.number }}</span>
             </div>
           </mdc-list-item>
-          <ng-container *ngIf="itemVisibleArchived[getTextJsonDocIdStr(text.bookId, chapter.number)]">
-            <mdc-list-item
-              *ngFor="let question of getQuestions(getTextJsonDocIdStr(text.bookId, chapter.number), true)"
-            >
+          <ng-container *ngIf="itemVisibleArchived[getTextDocId(text.bookId, chapter.number)]">
+            <mdc-list-item *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookId, chapter.number), true)">
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                <span fxFlex="40px" class="indent"></span> v{{ question?.scriptureStart?.verse }} -&nbsp;
-                <mdc-icon class="audio-icon" *ngIf="question?.audioUrl">headset</mdc-icon>
+                <span fxFlex="40px" class="indent"></span> v{{ questionDoc.data?.scriptureStart?.verse }} -&nbsp;
+                <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
                 <span fxFlex class="no-overflow-ellipsis">
-                  <span *ngIf="question?.text">{{ question?.text }}</span>
+                  <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
                 </span>
                 <span fxFlex="200px" fxHide.lt-sm fxLayoutAlign="end center" class="date-archived"
-                  >Archived {{ dateInWords(question?.dateArchived) }} ago</span
+                  >Archived {{ dateInWords(questionDoc.data?.dateArchived) }} ago</span
                 >
                 <span fxFlex="64px" fxLayoutAlign="end center">
                   <button
                     mdc-button
-                    (click)="setQuestionArchiveStatus(question.id, false, text.bookId, chapter.number)"
+                    (click)="setQuestionArchiveStatus(questionDoc, false)"
                     title="Republish"
                     class="publish-btn"
                   >

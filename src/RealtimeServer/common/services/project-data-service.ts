@@ -2,6 +2,7 @@ import ShareDB = require('sharedb');
 import { ConnectSession } from '../connect-session';
 import { MigrationConstructor } from '../migration';
 import { OwnedData } from '../models/owned-data';
+import { ProjectData } from '../models/project-data';
 import { Operation, ProjectRights } from '../models/project-rights';
 import { PathTemplate } from '../path-template';
 import { RealtimeServer } from '../realtime-server';
@@ -19,7 +20,11 @@ export interface ProjectDomainConfig {
 /**
  * This is the abstract base class for all doc services that manage JSON0 project data.
  */
-export abstract class ProjectDataService<T> extends JsonDocService<T> {
+export abstract class ProjectDataService<T extends ProjectData> extends JsonDocService<T> {
+  protected readonly immutableProps: PathTemplate[] = [
+    this.createPathTemplate(pd => pd.projectRef),
+    this.createPathTemplate(pd => pd.ownerRef)
+  ];
   protected abstract get projectRights(): ProjectRights;
   /**
    * Set this property to "true" in services that need to override "onInsert", "onUpdate", and "onDelete"
@@ -56,7 +61,47 @@ export abstract class ProjectDataService<T> extends JsonDocService<T> {
     }
   }
 
-  protected async allowRead(docId: string, doc: T, session: ConnectSession): Promise<boolean> {
+  protected async allowCreate(_docId: string, doc: T, session: ConnectSession): Promise<boolean> {
+    if (session.isServer) {
+      return true;
+    }
+
+    if (this.server == null) {
+      throw new Error('The doc service has not been initialized.');
+    }
+    const role = await this.server.getUserProjectRole(session, doc.projectRef);
+    if (role == null) {
+      return false;
+    }
+
+    const domain = this.getUpdatedDomain([]);
+    if (domain == null) {
+      return false;
+    }
+    return this.checkJsonCreateRight(session.userId, role, domain, doc);
+  }
+
+  protected async allowDelete(_docId: string, doc: T, session: ConnectSession): Promise<boolean> {
+    if (session.isServer) {
+      return true;
+    }
+
+    if (this.server == null) {
+      throw new Error('The doc service has not been initialized.');
+    }
+    const role = await this.server.getUserProjectRole(session, doc.projectRef);
+    if (role == null) {
+      return false;
+    }
+
+    const domain = this.getUpdatedDomain([]);
+    if (domain == null) {
+      return false;
+    }
+    return this.checkJsonDeleteRight(session.userId, role, domain, doc);
+  }
+
+  protected async allowRead(_docId: string, doc: T, session: ConnectSession): Promise<boolean> {
     if (session.isServer || Object.keys(doc).length === 0) {
       return true;
     }
@@ -64,7 +109,7 @@ export abstract class ProjectDataService<T> extends JsonDocService<T> {
     if (this.server == null) {
       throw new Error('The doc service has not been initialized.');
     }
-    const role = await this.server.getUserProjectRole(session, docId);
+    const role = await this.server.getUserProjectRole(session, doc.projectRef);
     if (role == null) {
       return false;
     }
@@ -81,7 +126,7 @@ export abstract class ProjectDataService<T> extends JsonDocService<T> {
   }
 
   protected async allowUpdate(
-    docId: string,
+    _docId: string,
     oldDoc: T,
     newDoc: T,
     ops: ShareDB.Op[],
@@ -94,7 +139,7 @@ export abstract class ProjectDataService<T> extends JsonDocService<T> {
     if (this.server == null) {
       throw new Error('The doc service has not been initialized.');
     }
-    const role = await this.server.getUserProjectRole(session, docId);
+    const role = await this.server.getUserProjectRole(session, oldDoc.projectRef);
     if (role == null) {
       return false;
     }
@@ -105,6 +150,7 @@ export abstract class ProjectDataService<T> extends JsonDocService<T> {
         return false;
       }
 
+      let checkImmutableProps = true;
       if (domain.pathTemplate.template.length < op.p.length) {
         // property update
         const entityPath = op.p.slice(0, domain.pathTemplate.template.length);
@@ -125,18 +171,21 @@ export abstract class ProjectDataService<T> extends JsonDocService<T> {
           if (!this.checkJsonCreateRight(session.userId, role, domain, listOp.li)) {
             return false;
           }
+          checkImmutableProps = false;
         } else if (listOp.ld != null) {
           // delete
           if (!this.checkJsonDeleteRight(session.userId, role, domain, listOp.ld)) {
             return false;
           }
+          checkImmutableProps = false;
         }
       }
-    }
 
-    // check if trying to update an immutable property
-    if (!this.checkImmutableProps(ops)) {
-      return false;
+      if (checkImmutableProps) {
+        if (!this.checkImmutableProps(op)) {
+          return false;
+        }
+      }
     }
 
     return true;

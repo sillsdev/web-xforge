@@ -3,7 +3,7 @@ import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/s
 
 export class CheckingUtils {
   static hasUserAnswered(question: Question, userId: string): boolean {
-    if (question == null || question.answers == null) {
+    if (question == null) {
       return false;
     }
     return question.answers.filter(answer => answer.ownerRef === userId).length > 0;
@@ -11,7 +11,7 @@ export class CheckingUtils {
 
   static hasUserReadQuestion(question: Question, projectUserConfig: SFProjectUserConfig): boolean {
     return projectUserConfig && projectUserConfig.questionRefsRead
-      ? projectUserConfig.questionRefsRead.includes(question.id)
+      ? projectUserConfig.questionRefsRead.includes(question.dataId)
       : false;
   }
 }

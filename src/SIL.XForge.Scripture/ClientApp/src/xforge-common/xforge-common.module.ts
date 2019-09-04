@@ -8,9 +8,13 @@ import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
 import { EditNameDialogComponent } from './edit-name-dialog/edit-name-dialog.component';
 import { ErrorComponent } from './error/error.component';
+import { IndexeddbRealtimeOfflineStore } from './indexeddb-realtime-offline-store';
+import { RealtimeOfflineStore } from './realtime-offline-store';
+import { RealtimeRemoteStore } from './realtime-remote-store';
 import { ShareControlComponent } from './share/share-control.component';
 import { ShareDialogComponent } from './share/share-dialog.component';
 import { ShareComponent } from './share/share.component';
+import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { SaDeleteDialogComponent } from './system-administration/sa-delete-dialog.component';
 import { SaProjectsComponent } from './system-administration/sa-projects.component';
 import { SaUsersComponent } from './system-administration/sa-users.component';
@@ -50,6 +54,10 @@ export const xForgeCommonEntryComponents = [EditNameDialogComponent, ShareDialog
   declarations: componentExports,
   exports: componentExports,
   entryComponents: [ErrorComponent],
-  providers: [{ provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true }]
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true },
+    { provide: RealtimeRemoteStore, useExisting: SharedbRealtimeRemoteStore },
+    { provide: RealtimeOfflineStore, useExisting: IndexeddbRealtimeOfflineStore }
+  ]
 })
 export class XForgeCommonModule {}

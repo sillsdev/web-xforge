@@ -16,7 +16,8 @@ import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-re
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { TextDocId } from '../../core/models/text-doc-id';
+import { ScriptureReference } from '../../core/models/scripture-reference';
+import { TextDocId } from '../../core/models/text-doc';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
@@ -27,11 +28,9 @@ import { verseRefDataToString, verseRefToVerseRefData } from '../../shared/scrip
 import { SFValidators } from '../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking/checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
-import { ScriptureReference } from '../checking/checking-text/checking-text.component';
 
 export interface QuestionDialogData {
-  editMode: boolean;
-  question: Question;
+  question?: Question;
   textsByBook: TextsByBook;
   projectId: string;
 }
@@ -49,7 +48,7 @@ export interface QuestionDialogResult {
 })
 export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(CheckingAudioCombinedComponent, { static: true }) audioCombinedComponent: CheckingAudioCombinedComponent;
-  modeLabel = this.data && this.data.editMode ? 'Edit' : 'New';
+  modeLabel = this.data && this.data.question != null ? 'Edit' : 'New';
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   questionForm: FormGroup = new FormGroup(
     {

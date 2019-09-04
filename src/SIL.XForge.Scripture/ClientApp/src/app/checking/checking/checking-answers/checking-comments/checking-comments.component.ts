@@ -90,7 +90,8 @@ export class CheckingCommentsComponent implements OnInit {
 
   hasUserReadComment(comment: Comment): boolean {
     return (
-      this.initUserCommentRefsRead.includes(comment.id) || this.projectUserConfigDoc.data.ownerRef === comment.ownerRef
+      this.initUserCommentRefsRead.includes(comment.dataId) ||
+      this.projectUserConfigDoc.data.ownerRef === comment.ownerRef
     );
   }
 

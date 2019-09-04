@@ -1,14 +1,18 @@
-import { OwnedData } from '../../common/models/owned-data';
+import { ProjectData } from '../../common/models/project-data';
 import { Answer } from './answer';
 import { VerseRefData } from './verse-ref-data';
 
-export interface Question extends OwnedData {
-  id: string;
-  scriptureStart?: VerseRefData;
+export const QUESTIONS_COLLECTION = 'questions';
+
+export interface Question extends ProjectData {
+  dataId: string;
+  scriptureStart: VerseRefData;
   scriptureEnd?: VerseRefData;
   text?: string;
   audioUrl?: string;
   answers: Answer[];
-  isArchived?: boolean;
+  isArchived: boolean;
   dateArchived?: string;
+  dateModified: string;
+  dateCreated: string;
 }
