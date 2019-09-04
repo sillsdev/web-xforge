@@ -66,6 +66,10 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.connectProjectForm.controls.paratextId;
   }
 
+  get sourceParatextIdControl() {
+    return this.connectProjectForm.get('settings.sourceParatextId');
+  }
+
   get showSettings(): boolean {
     if (this.state !== 'input') {
       return false;
@@ -142,6 +146,10 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     // when the user clicks it. Marking it untouched does not appear to work.
     this.paratextIdControl.setValidators(Validators.required);
     this.paratextIdControl.updateValueAndValidity();
+    if (this.translationSuggestionsEnabled) {
+      this.sourceParatextIdControl.setValidators(Validators.required);
+      this.sourceParatextIdControl.updateValueAndValidity();
+    }
     if (!this.connectProjectForm.valid) {
       return;
     }

@@ -103,7 +103,6 @@ describe('ConnectProjectComponent', () => {
     env.changeSelectValue(env.projectSelect, 'pt01');
 
     expect(env.settingsCard).toBeNull();
-
     env.clickElement(env.submitButton);
 
     verify(env.mockedSFProjectService.onlineAddCurrentUser('project01')).once();
@@ -288,13 +287,18 @@ describe('ConnectProjectComponent', () => {
     env.changeSelectValue(env.projectSelect, 'pt01');
 
     env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
-    expect(env.sourceParatextIdControl.hasError('required')).toBe(true);
     expect(env.sourceParatextIdControl.disabled).toBe(false);
 
     expect(env.getMenuItems(env.sourceProjectSelect).length).toEqual(3);
     expect(env.getMenuItemText(env.sourceProjectSelect, 0)).toContain('Maori');
     expect(env.getMenuItemText(env.sourceProjectSelect, 1)).toContain('Spanish');
     expect(env.getMenuItemText(env.sourceProjectSelect, 2)).toContain('Thai');
+
+    // Simulate touching source project control
+    env.component.sourceParatextIdControl.markAsTouched();
+    expect(env.component.sourceParatextIdControl.valid).toBe(true);
+    env.clickElement(env.submitButton);
+    expect(env.component.sourceParatextIdControl.errors['required']).toBe(true);
   }));
 
   it('should create when non-existent project is selected', fakeAsync(() => {
@@ -327,7 +331,7 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.inputElement(env.checkingCheckbox));
 
     env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
-    expect(env.sourceParatextIdControl.hasError('required')).toBe(true);
+    expect(env.sourceParatextIdControl.valid).toBe(true);
     expect(env.sourceParatextIdControl.disabled).toBe(false);
 
     env.changeSelectValue(env.sourceProjectSelect, 'pt02');
