@@ -1,27 +1,29 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { first } from 'rxjs/operators';
-import { NoticeService } from 'xforge-common/notice.service';
+import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
+import { ChangeDetectorRef, Component, Inject } from '@angular/core';
+
+export interface ErrorAlert {
+  message: string;
+  stack: string;
+}
 
 @Component({
-  selector: 'app-error',
   templateUrl: './error.component.html',
   styleUrls: ['./error.component.scss']
 })
-export class ErrorComponent implements OnInit {
-  stack: string;
-  errorCode: string = 'Error: No error code';
+export class ErrorComponent {
   showDetails: boolean = false;
 
-  constructor(private readonly activatedRoute: ActivatedRoute, private readonly noticeService: NoticeService) {}
+  constructor(
+    public dialogRef: MdcDialogRef<ErrorComponent>,
+    @Inject(MDC_DIALOG_DATA) public data: ErrorAlert,
+    private readonly cd: ChangeDetectorRef
+  ) {}
 
-  ngOnInit() {
-    this.activatedRoute.queryParams.pipe(first()).subscribe(params => {
-      this.noticeService.loadingFinished();
-      this.stack = params['stack'];
-      if (params['errorCode']) {
-        this.errorCode = params['errorCode'];
-      }
-    });
+  toggleStack() {
+    this.showDetails = !this.showDetails;
+    // Without this the view doesn't get updated when the "Show details" link is clicked. Using this.cd.markForCheck()
+    // instead does not solve the problem. It's unclear what the cause of this is.
+    // The same issue occured when the error handler routed to /error
+    this.cd.detectChanges();
   }
 }
