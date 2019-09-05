@@ -2,7 +2,7 @@ import ShareDB = require('sharedb');
 import { ConnectSession } from '../connect-session';
 import { SystemRole } from '../models/system-role';
 import { User, USER_PROFILES_COLLECTION, USERS_COLLECTION } from '../models/user';
-import { PathTemplate } from '../path-template';
+import { ANY_KEY, PathTemplate } from '../path-template';
 import { RealtimeServer } from '../realtime-server';
 import { JsonDocService } from './json-doc-service';
 import { USER_MIGRATIONS } from './user-migrations';
@@ -26,8 +26,8 @@ export class UserService extends JsonDocService<User> {
     this.createPathTemplate(u => u.email!),
     this.createPathTemplate(u => u.name!),
     this.createPathTemplate(u => u.sites!, false),
-    this.createPathTemplate(u => u.sites!['*'], false),
-    this.createPathTemplate(u => u.sites!['*'].projects)
+    this.createPathTemplate(u => u.sites![ANY_KEY], false),
+    this.createPathTemplate(u => u.sites![ANY_KEY].projects)
   ];
 
   constructor() {

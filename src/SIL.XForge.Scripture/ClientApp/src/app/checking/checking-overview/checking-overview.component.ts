@@ -12,7 +12,6 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { CommentListDoc } from '../../core/models/comment-list-doc';
 import { QuestionListDoc } from '../../core/models/question-list-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -37,7 +36,6 @@ import {
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   itemVisible: { [bookIdOrDocId: string]: boolean } = {};
   itemVisibleArchived: { [bookIdOrDocId: string]: boolean } = {};
-  commentListDocs: { [docId: string]: CommentListDoc } = {};
   questionListDocs: { [docId: string]: QuestionListDoc } = {};
   texts: TextInfo[] = [];
   projectId: string;
@@ -92,13 +90,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
     let count: number = 0;
     for (const question of this.allPublishedQuestions) {
-      if (question.answers == null) {
-        continue;
-      }
       for (const answer of question.answers) {
-        if (answer.likes == null) {
-          continue;
-        }
         if (this.isProjectAdmin) {
           count += answer.likes.length;
         } else {
@@ -111,22 +103,18 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get myCommentCount(): string {
-    if (this.commentListDocs == null) {
+    if (this.questionListDocs == null) {
       return '-';
     }
 
     let count: number = 0;
-    for (const commentListDoc of Object.values(this.commentListDocs)) {
-      if (commentListDoc == null) {
-        continue;
-      }
-      const publicComments = commentListDoc.data.comments.filter(
-        c => this.allPublishedQuestions.find(q => q.answers && q.answers.map(a => a.id).includes(c.answerRef)) != null
-      );
-      if (this.isProjectAdmin) {
-        count += publicComments.length;
-      } else {
-        count += publicComments.filter(c => c.ownerRef === this.userService.currentUserId).length;
+    for (const question of this.allPublishedQuestions) {
+      for (const answer of question.answers) {
+        if (this.isProjectAdmin) {
+          count += answer.comments.length;
+        } else {
+          count += answer.comments.filter(c => c.ownerRef === this.userService.currentUserId).length;
+        }
       }
     }
 
@@ -346,7 +334,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   async questionDialog(editMode = false, bookId?: string, chapterNumber?: number, questionId?: string): Promise<void> {
-    let newQuestion: Question = { id: undefined, ownerRef: undefined };
+    let newQuestion: Question;
     let id: TextDocId;
     let question: Question;
     let questionIndex: number;
@@ -365,6 +353,12 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       questionIndex = this.getQuestionIndex(questionId, id);
       question = this.questionListDocs[id.toString()].data.questions[questionIndex];
       newQuestion = cloneDeep(question);
+    } else {
+      newQuestion = {
+        id: objectId(),
+        ownerRef: this.userService.currentUserId,
+        answers: []
+      };
     }
     const dialogConfig: MdcDialogConfig<QuestionDialogData> = {
       data: {
@@ -380,14 +374,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       if (result !== 'close') {
         const verseStart = VerseRef.fromStr(result.scriptureStart, ScrVers.English);
         const verseEnd = VerseRef.fromStr(result.scriptureEnd, ScrVers.English);
-        const newQuestionId = editMode ? newQuestion.id : objectId();
         newQuestion.scriptureStart = verseRefToVerseRefData(verseStart);
         newQuestion.scriptureEnd = verseRefToVerseRefData(verseEnd);
         newQuestion.text = result.text;
         if (result.audio.fileName) {
           const response = await this.projectService.onlineUploadAudio(
             this.projectId,
-            newQuestionId,
+            newQuestion.id,
             new File([result.audio.blob], result.audio.fileName)
           );
           // Get the amended filename and save it against the answer
@@ -419,9 +412,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           }
           id = new TextDocId(this.projectDoc.id, this.textFromBook(verseStart.book).bookId, verseStart.chapterNum);
           const questionsDoc = await this.projectService.getQuestionList(id);
-          newQuestion.id = newQuestionId;
-          newQuestion.ownerRef = this.userService.currentUserId;
-          newQuestion.answers = [];
           await questionsDoc.submitJson0Op(op => op.insert(cq => cq.questions, 0, newQuestion));
         }
       }
@@ -448,28 +438,26 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       this.textsByBook[text.bookId] = text;
       this.texts.push(text);
       for (const chapter of text.chapters) {
-        await this.bindForumDocs(new TextDocId(this.projectDoc.id, text.bookId, chapter.number));
+        await this.bindQuestionListDoc(new TextDocId(this.projectDoc.id, text.bookId, chapter.number));
       }
     }
   }
 
-  private async bindForumDocs(id: TextDocId): Promise<void> {
+  private async bindQuestionListDoc(id: TextDocId): Promise<void> {
     if (id == null) {
       return;
     }
 
-    this.unbindForumDocs(id);
+    this.unbindQuestionListDoc(id);
     this.questionListDocs[id.toString()] = await this.projectService.getQuestionList(id);
-    this.commentListDocs[id.toString()] = await this.projectService.getCommentList(id);
   }
 
-  private unbindForumDocs(id: TextDocId): void {
+  private unbindQuestionListDoc(id: TextDocId): void {
     if (!(id.toString() in this.questionListDocs)) {
       return;
     }
 
     delete this.questionListDocs[id.toString()];
-    delete this.commentListDocs[id.toString()];
   }
 
   private textFromBook(bookId: string): TextInfo {

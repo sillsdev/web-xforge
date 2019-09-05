@@ -22,7 +22,6 @@ import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
 import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { CommentListDoc } from '../../core/models/comment-list-doc';
 import { QuestionListDoc } from '../../core/models/question-list-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -445,7 +444,15 @@ class TestEnvironment {
               ownerRef: this.checkerUser.id,
               likes: [{ ownerRef: this.checkerUser.id }, { ownerRef: this.anotherUserId }],
               dateCreated: '',
-              dateModified: ''
+              dateModified: '',
+              comments: [
+                {
+                  id: 'c1Id',
+                  ownerRef: this.checkerUser.id,
+                  dateCreated: '',
+                  dateModified: ''
+                }
+              ]
             }
           ],
           audioUrl: '/audio.mp3'
@@ -460,7 +467,15 @@ class TestEnvironment {
               ownerRef: this.anotherUserId,
               likes: [{ ownerRef: this.checkerUser.id }],
               dateCreated: '',
-              dateModified: ''
+              dateModified: '',
+              comments: [
+                {
+                  id: 'c2Id',
+                  ownerRef: this.checkerUser.id,
+                  dateCreated: '',
+                  dateModified: ''
+                }
+              ]
             }
           ]
         },
@@ -474,44 +489,28 @@ class TestEnvironment {
               ownerRef: this.anotherUserId,
               likes: [{ ownerRef: this.checkerUser.id }],
               dateCreated: '',
-              dateModified: ''
+              dateModified: '',
+              comments: [
+                {
+                  id: 'c3Id',
+                  ownerRef: this.anotherUserId,
+                  dateCreated: '',
+                  dateModified: ''
+                }
+              ]
             }
           ]
         },
-        { id: 'q4Id', ownerRef: this.adminUser.id, text: 'Book 1, Q4 text' },
-        { id: 'q5Id', ownerRef: this.adminUser.id, text: 'Book 1, Q5 text' },
-        { id: 'q6Id', ownerRef: this.adminUser.id, text: 'Book 1, Q6 text' },
+        { id: 'q4Id', ownerRef: this.adminUser.id, text: 'Book 1, Q4 text', answers: [] },
+        { id: 'q5Id', ownerRef: this.adminUser.id, text: 'Book 1, Q5 text', answers: [] },
+        { id: 'q6Id', ownerRef: this.adminUser.id, text: 'Book 1, Q6 text', answers: [] },
         {
           id: 'q7Id',
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q7 text',
           isArchived: true,
-          dateArchived: '2019-07-30T12:00:00.000Z'
-        }
-      ])
-    );
-    when(this.mockedProjectService.getCommentList(deepEqual(text1_1id))).thenResolve(
-      this.createCommentListDoc(text1_1id, [
-        {
-          id: 'c1Id',
-          ownerRef: this.checkerUser.id,
-          dateCreated: '',
-          dateModified: '',
-          answerRef: 'a1Id'
-        },
-        {
-          id: 'c2Id',
-          ownerRef: this.checkerUser.id,
-          dateCreated: '',
-          dateModified: '',
-          answerRef: 'a2Id'
-        },
-        {
-          id: 'c3Id',
-          ownerRef: this.anotherUserId,
-          dateCreated: '',
-          dateModified: '',
-          answerRef: 'a3Id'
+          dateArchived: '2019-07-30T12:00:00.000Z',
+          answers: []
         }
       ])
     );
@@ -521,7 +520,9 @@ class TestEnvironment {
     );
     const text2_1id = new TextDocId('project01', 'LUK', 1);
     when(this.mockedProjectService.getQuestionList(deepEqual(text2_1id))).thenResolve(
-      this.createQuestionListDoc(text2_1id, [{ id: 'q8Id', ownerRef: this.anotherUserId, text: 'Book 2, Q3 text' }])
+      this.createQuestionListDoc(text2_1id, [
+        { id: 'q8Id', ownerRef: this.anotherUserId, text: 'Book 2, Q3 text', answers: [] }
+      ])
     );
     this.setCurrentUser(this.adminUser);
 
@@ -637,11 +638,6 @@ class TestEnvironment {
   private createQuestionListDoc(id: TextDocId, data: Question[]): QuestionListDoc {
     const adapter = new MemoryRealtimeDocAdapter(id.toString(), OTJson0.type, { questions: data });
     return new QuestionListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
-  }
-
-  private createCommentListDoc(id: TextDocId, data: Comment[]): CommentListDoc {
-    const adapter = new MemoryRealtimeDocAdapter(id.toString(), OTJson0.type, { comments: data });
-    return new CommentListDoc(adapter, instance(this.mockedRealtimeOfflineStore));
   }
 
   private createProjectUserConfigDoc(projectUserConfig: SFProjectUserConfig): SFProjectUserConfigDoc {

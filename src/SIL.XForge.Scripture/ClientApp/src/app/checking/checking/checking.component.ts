@@ -15,7 +15,6 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { HelpHeroService } from '../../core/help-hero.service';
-import { CommentListDoc } from '../../core/models/comment-list-doc';
 import { QuestionListDoc } from '../../core/models/question-list-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -35,8 +34,7 @@ interface Summary {
 
 interface CheckingData {
   questionListDocs: { [docId: string]: QuestionListDoc };
-  commentListDocs: { [docId: string]: CommentListDoc };
-  realtimeSubscriptions: { [docId: string]: Subscription[] };
+  realtimeSubscriptions: { [docId: string]: Subscription };
 }
 
 @Component({
@@ -63,8 +61,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   @ViewChild('chapterMenuList', { static: true }) chapterMenuList: MdcList;
 
   chapters: number[] = [];
-  checkingData: CheckingData = { questionListDocs: {}, commentListDocs: {}, realtimeSubscriptions: {} };
-  comments: Readonly<Comment[]> = [];
+  checkingData: CheckingData = { questionListDocs: {}, realtimeSubscriptions: {} };
   isExpanded: boolean = false;
   publicQuestions: Readonly<Question[]> = [];
   resetAnswerPanelHeightOnFormHide: boolean = false;
@@ -184,7 +181,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         this._chapter = undefined;
         this.chapter = 1;
         this.refreshQuestions();
-        this.refreshComments();
 
         this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
         this.loadingFinished();
@@ -220,7 +216,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
             text: '',
             likes: [],
             dateCreated: dateNow,
-            dateModified: dateNow
+            dateModified: dateNow,
+            comments: []
           };
         }
         answer.text = answerAction.text;
@@ -285,13 +282,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     let useMaxAnswersPanelSize: boolean = true;
     switch (commentAction.action) {
       case 'save':
-        let comment: Comment = commentAction.comment;
+        let comment = commentAction.comment;
         const dateNow: string = new Date().toJSON();
         if (!comment) {
           comment = {
             id: objectId(),
             ownerRef: this.userService.currentUserId,
-            answerRef: commentAction.answer.id,
             text: '',
             dateCreated: dateNow,
             dateModified: dateNow
@@ -299,11 +295,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         }
         comment.text = commentAction.text;
         comment.dateModified = dateNow;
-        this.saveComment(comment);
+        this.saveComment(commentAction.answer, comment);
         break;
       case 'show-comments':
         this.projectUserConfigDoc.submitJson0Op(op => {
-          for (const comm of this.comments) {
+          for (const comm of commentAction.answer.comments) {
             if (!this.questionsPanel.hasUserReadComment(comm)) {
               op.add(puc => puc.commentRefsRead, comm.id);
             }
@@ -311,7 +307,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         });
         break;
       case 'delete':
-        this.deleteComment(commentAction.comment);
+        this.deleteComment(commentAction.answer, commentAction.comment);
         break;
       case 'show-form':
         this.resetAnswerPanelHeightOnFormHide = true;
@@ -357,11 +353,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
 
   private getAnswerIndex(answer: Answer): number {
     return this.questionsPanel.activeQuestion.answers.findIndex(existingAnswer => existingAnswer.id === answer.id);
-  }
-
-  private getCommentIndex(comment: Comment): number {
-    const commentsInDoc = this.checkingData.commentListDocs[this.questionTextJsonDocId].data.comments;
-    return commentsInDoc.findIndex(existingComment => existingComment.id === comment.id);
   }
 
   private deleteAnswer(answer: Answer): void {
@@ -419,30 +410,36 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     this.questionsPanel.updateElementsRead(this.questionsPanel.activeQuestion);
   }
 
-  private saveComment(comment: Comment): void {
-    const commentIndex = this.getCommentIndex(comment);
+  private saveComment(answer: Answer, comment: Comment): void {
+    const answerIndex = this.getAnswerIndex(answer);
+    const commentIndex = answer.comments.findIndex(c => c.id === comment.id);
     if (commentIndex >= 0) {
-      this.checkingData.commentListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
+      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
         op
-          .set(cl => cl.comments[commentIndex].text, comment.text)
-          .set(cl => cl.comments[commentIndex].dateModified, comment.dateModified)
+          .set(
+            ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].comments[commentIndex].text,
+            comment.text
+          )
+          .set(
+            ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].comments[commentIndex].dateModified,
+            comment.dateModified
+          )
       );
     } else {
-      this.checkingData.commentListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
-        op.insert(cl => cl.comments, 0, comment)
+      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
+        op.insert(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].comments, 0, comment)
       );
     }
-    this.refreshComments();
   }
 
-  private deleteComment(comment: Comment): void {
-    const commentIndex = this.getCommentIndex(comment);
+  private deleteComment(answer: Answer, comment: Comment): void {
+    const answerIndex = this.getAnswerIndex(answer);
+    const commentIndex = answer.comments.findIndex(c => c.id === comment.id);
     if (commentIndex >= 0) {
-      this.checkingData.commentListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
-        op.remove(cl => cl.comments, commentIndex)
+      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
+        op.remove(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].comments, commentIndex)
       );
     }
-    this.refreshComments();
   }
 
   private refreshQuestions() {
@@ -454,15 +451,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
       );
     }
     this.publicQuestions = this._questions.filter(q => q.isArchived !== true);
-  }
-
-  private refreshComments() {
-    this.comments = [];
-    for (const chapter of this.chapters) {
-      this.comments = this.comments.concat(
-        this.checkingData.commentListDocs[getTextDocIdStr(this.projectDoc.id, this.text.bookId, chapter)].data.comments
-      );
-    }
   }
 
   private likeAnswer(answer: Answer) {
@@ -509,7 +497,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   private onRemovedFromProject() {
     this.questionsPanel.activeQuestion = null;
     this.publicQuestions = [];
-    this.comments = [];
     this.projectUserConfigDoc = null;
     for (const chapter of this.chapters) {
       this.unbindCheckingData(new TextDocId(this.projectDoc.id, this.text.bookId, chapter));
@@ -525,11 +512,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
 
     this.unbindCheckingData(id);
     this.checkingData.questionListDocs[id.toString()] = await this.projectService.getQuestionList(id);
-    this.checkingData.commentListDocs[id.toString()] = await this.projectService.getCommentList(id);
-    this.checkingData.realtimeSubscriptions[id.toString()] = [
-      this.checkingData.questionListDocs[id.toString()].remoteChanges$.subscribe(() => this.refreshQuestions()),
-      this.checkingData.commentListDocs[id.toString()].remoteChanges$.subscribe(() => this.refreshComments())
-    ];
+    this.checkingData.realtimeSubscriptions[id.toString()] = this.checkingData.questionListDocs[
+      id.toString()
+    ].remoteChanges$.subscribe(() => this.refreshQuestions());
   }
 
   private unbindCheckingData(id: TextDocId): void {
@@ -537,11 +522,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
-    for (const sub of this.checkingData.realtimeSubscriptions[id.toString()]) {
-      sub.unsubscribe();
-    }
+    this.checkingData.realtimeSubscriptions[id.toString()].unsubscribe();
     delete this.checkingData.questionListDocs[id.toString()];
-    delete this.checkingData.commentListDocs[id.toString()];
+    delete this.checkingData.realtimeSubscriptions[id.toString()];
   }
 
   private refreshSummary() {

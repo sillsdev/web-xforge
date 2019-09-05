@@ -1,16 +1,12 @@
-import { OwnedData } from '../../common/models/owned-data';
+import { Comment } from './comment';
 import { Like } from './like';
 import { VerseRefData } from './verse-ref-data';
 
-export interface Answer extends OwnedData {
-  id: string;
-  syncUserRef?: string;
+export interface Answer extends Comment {
   scriptureStart?: VerseRefData;
   scriptureEnd?: VerseRefData;
   scriptureText?: string;
-  text?: string;
   audioUrl?: string;
   likes: Like[];
-  dateModified: string;
-  dateCreated: string;
+  comments: Comment[];
 }

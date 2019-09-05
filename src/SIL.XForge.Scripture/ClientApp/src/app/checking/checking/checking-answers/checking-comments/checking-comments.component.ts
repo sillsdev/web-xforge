@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import cloneDeep from 'lodash/cloneDeep';
+import sortBy from 'lodash/sortBy';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
@@ -23,7 +24,6 @@ export class CheckingCommentsComponent implements OnInit {
   @Input() project: SFProject;
   @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
   @Output() action: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
-  @Input() comments: Comment[] = [];
   @Input() answer: Answer;
 
   activeComment: Comment;
@@ -42,10 +42,11 @@ export class CheckingCommentsComponent implements OnInit {
   }
 
   get showMoreCommentsLabel(): string {
-    let label = 'Show ' + (this.comments.length - (this.maxCommentsToShow - 1)) + ' more comments';
+    const comments = this.getSortedComments();
+    let label = 'Show ' + (comments.length - (this.maxCommentsToShow - 1)) + ' more comments';
     let counter = 1;
     let unread = 0;
-    for (const comment of this.comments) {
+    for (const comment of comments) {
       if (counter >= this.maxCommentsToShow) {
         if (!this.hasUserReadComment(comment)) {
           unread++;
@@ -57,6 +58,14 @@ export class CheckingCommentsComponent implements OnInit {
     return label;
   }
 
+  get commentCount(): number {
+    return this.answer != null ? this.answer.comments.length : 0;
+  }
+
+  getSortedComments(): Comment[] {
+    return this.answer != null ? sortBy(this.answer.comments, c => c.dateCreated) : [];
+  }
+
   editComment(comment: Comment) {
     this.activeComment = cloneDeep(comment);
     this.showCommentForm();
@@ -65,6 +74,7 @@ export class CheckingCommentsComponent implements OnInit {
   deleteComment(comment: Comment) {
     this.action.emit({
       action: 'delete',
+      answer: this.answer,
       comment: comment
     });
   }
@@ -99,7 +109,8 @@ export class CheckingCommentsComponent implements OnInit {
   showComments(): void {
     this.showAllComments = true;
     this.action.emit({
-      action: 'show-comments'
+      action: 'show-comments',
+      answer: this.answer
     });
   }
 
