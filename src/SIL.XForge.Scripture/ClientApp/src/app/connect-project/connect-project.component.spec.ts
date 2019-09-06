@@ -136,6 +136,7 @@ describe('ConnectProjectComponent', () => {
         },
         {
           paratextId: 'pt02',
+          projectId: 'project02',
           name: 'Target2',
           languageTag: 'mri',
           languageName: 'Maori',
@@ -144,6 +145,7 @@ describe('ConnectProjectComponent', () => {
         },
         {
           paratextId: 'pt03',
+          projectId: 'project03',
           name: 'Target3',
           languageTag: 'th',
           languageName: 'Thai',
@@ -447,6 +449,7 @@ class TestEnvironment {
       of<ParatextProject[]>([
         {
           paratextId: 'pt02',
+          projectId: 'project02',
           name: 'Maori',
           languageTag: 'mri',
           languageName: 'Maori',
