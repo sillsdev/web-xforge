@@ -120,7 +120,7 @@ namespace SIL.XForge.Scripture.Services
                 projects.Add(new ParatextProject
                 {
                     ParatextId = paratextId,
-                    Name = (string)identificationObj["fullname"],
+                    Name = (string)projectObj["identification_name"],
                     LanguageTag = (string)projectObj["language_ldml"],
                     LanguageName = langName,
                     ProjectId = projectId,
