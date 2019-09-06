@@ -1,19 +1,47 @@
-import { ErrorHandler, Injectable, Injector } from '@angular/core';
-import { Router } from '@angular/router';
+import { MdcDialog } from '@angular-mdc/web';
+import { ErrorHandler, Injectable } from '@angular/core';
+import { ErrorAlert, ErrorComponent } from './error/error.component';
 
 @Injectable()
 export class ExceptionHandlingService implements ErrorHandler {
-  ERROR_CODE_REGEXP = /(error:\s+\d+:\s+[a-z\s]+)/i;
-  constructor(private readonly injector: Injector) {}
+  private alertQueue: ErrorAlert[] = [];
+  private dialogOpen = false;
 
-  handleError(error: Error) {
-    const router: Router = this.injector.get(Router);
-    let url = '/error?stack=' + error.stack;
-    const code = this.ERROR_CODE_REGEXP.exec(error.stack);
-    if (code) {
-      url = url + '&errorCode=' + code[1];
+  constructor(private readonly dialog: MdcDialog) {}
+
+  handleError(error: any) {
+    let message = error.rejection ? error.rejection.message || error.rejection : error.message;
+    if (typeof message === 'string') {
+      message = message.split('\n')[0];
+    } else {
+      message = 'Unknown error';
     }
-    router.navigateByUrl(url);
+
+    if (
+      message.includes('A mutation operation was attempted on a database that did not allow mutations.') &&
+      window.navigator.userAgent.includes('Gecko/')
+    ) {
+      message = 'Firefox private browsing mode is not supported because IndexedDB is not avilable.';
+    }
+
+    this.handleAlert({ message, stack: error.stack });
+    // Using console.error results in logging 'Error: "[object Object]"', which isn't very helpful
     throw error;
+  }
+
+  private handleAlert(error: ErrorAlert) {
+    this.alertQueue.unshift(error);
+    this.showAlert();
+  }
+
+  private showAlert() {
+    if (!this.dialogOpen && this.alertQueue.length) {
+      this.dialogOpen = true;
+      const dialog = this.dialog.open(ErrorComponent, { data: this.alertQueue.pop() });
+      dialog.afterClosed().subscribe(() => {
+        this.dialogOpen = false;
+        this.showAlert();
+      });
+    }
   }
 }

@@ -49,6 +49,7 @@ export const xForgeCommonEntryComponents = [EditNameDialogComponent, ShareDialog
   ],
   declarations: componentExports,
   exports: componentExports,
+  entryComponents: [ErrorComponent],
   providers: [{ provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true }]
 })
 export class XForgeCommonModule {}

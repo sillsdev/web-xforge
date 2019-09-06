@@ -1,59 +1,74 @@
+import { MdcDialog } from '@angular-mdc/web';
+import { OverlayContainer } from '@angular-mdc/web';
+import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
-import { instance, mock, when } from 'ts-mockito';
-import { NoticeService } from 'xforge-common/notice.service';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ErrorComponent } from './error.component';
 
 describe('ErrorComponent', () => {
-  it('should display error page', () => {
+  it('should display error dialog', () => {
     const env = new TestEnvironment();
-    expect(env.errorCode.textContent).toBe('Error: 404: Not found');
 
-    expect(env.stackTrace).toBeNull();
-    env.clickForDetailsText.click();
-    env.fixture.detectChanges();
-    expect(env.stackTrace).not.toBeNull();
-    expect(env.stackTrace.textContent).toBe('Some made up component');
+    expect(env.errorMessage.textContent).toBe('The error message');
+    expect(env.showDetails.textContent).toBe('Show details');
+    expect(env.stackTrace.style.display).toBe('none');
 
-    env.clickForDetailsText.click();
-    env.fixture.detectChanges();
-    expect(env.stackTrace).toBeNull();
+    env.showDetails.click();
+    expect(env.showDetails.textContent).toBe('Hide details');
+    expect(env.stackTrace.style.display).not.toBe('none');
+    expect(env.stackTrace.textContent).toBe('The error stack');
+
+    env.showDetails.click();
+    expect(env.showDetails.textContent).toBe('Show details');
+    expect(env.stackTrace.style.display).toBe('none');
+
+    env.closeButton.click();
   });
 });
 
-class TestEnvironment {
-  fixture: ComponentFixture<ErrorComponent>;
-  component: ErrorComponent;
+@NgModule({
+  imports: [UICommonModule],
+  declarations: [ErrorComponent],
+  entryComponents: [ErrorComponent]
+})
+class DialogTestModule {}
 
-  mockedActivatedRoute: ActivatedRoute = mock(ActivatedRoute);
-  mockedNoticeService: NoticeService = mock(NoticeService);
+class TestEnvironment {
+  fixture: ComponentFixture<DialogOpenerComponent>;
+  element: HTMLElement;
 
   constructor() {
-    when(this.mockedActivatedRoute.queryParams).thenReturn(
-      of({ stack: 'Some made up component', errorCode: 'Error: 404: Not found' })
-    );
     TestBed.configureTestingModule({
-      providers: [
-        { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
-      ],
-      declarations: [ErrorComponent]
+      declarations: [DialogOpenerComponent],
+      imports: [DialogTestModule]
     });
-    this.fixture = TestBed.createComponent(ErrorComponent);
-    this.component = this.fixture.componentInstance;
-    this.fixture.detectChanges();
+    TestBed.get(MdcDialog).open(ErrorComponent, {
+      data: {
+        message: 'The error message',
+        stack: 'The error stack'
+      }
+    });
+    this.fixture = TestBed.createComponent(DialogOpenerComponent);
+    this.element = TestBed.get(OverlayContainer).getContainerElement();
   }
 
-  get errorCode(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#error-code');
+  get errorMessage(): HTMLElement {
+    return this.element.querySelector('mdc-dialog-content p');
   }
 
-  get clickForDetailsText(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('span a');
+  get showDetails(): HTMLElement {
+    return this.element.querySelector('mdc-dialog-content > a');
   }
 
   get stackTrace(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('pre');
+    return this.element.querySelector('pre');
+  }
+
+  get closeButton(): HTMLElement {
+    return this.element.querySelector('button');
   }
 }
+@Component({
+  template: ''
+})
+class DialogOpenerComponent {}
