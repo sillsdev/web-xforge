@@ -26,7 +26,6 @@
           id="project-select"
           placeholder="Paratext Project"
           formControlName="paratextId"
-          required
           outlined
         >
           <mdc-menu id="projects-menu">
@@ -81,7 +80,7 @@
           <div fxFlex="44px" class="indent"></div>
           <div fxLayout="column" fxLayoutAlign="start">
             <mdc-form-field fxFlex="1 1 0%">
-              <mdc-select placeholder="Based on" formControlName="sourceParatextId" id="based-on-select" required>
+              <mdc-select placeholder="Based on" formControlName="sourceParatextId" id="based-on-select">
                 <mdc-menu>
                   <mdc-list>
                     <mdc-list-item *ngFor="let project of sourceProjects" [value]="project.paratextId">

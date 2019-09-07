@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -62,11 +62,19 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.state === 'input' && this.targetProjects.length > 0;
   }
 
+  get paratextIdControl() {
+    return this.connectProjectForm.controls.paratextId;
+  }
+
+  get sourceParatextIdControl() {
+    return this.connectProjectForm.get('settings.sourceParatextId');
+  }
+
   get showSettings(): boolean {
     if (this.state !== 'input') {
       return false;
     }
-    const paratextId: string = this.connectProjectForm.controls.paratextId.value;
+    const paratextId: string = this.paratextIdControl.value;
     const project = this.projects.find(p => p.paratextId === paratextId);
     return project != null && project.projectId == null;
   }
@@ -84,7 +92,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
 
   ngOnInit(): void {
     this.loadingStarted();
-    this.subscribe(this.connectProjectForm.controls.paratextId.valueChanges, (paratextId: string) => {
+    this.subscribe(this.paratextIdControl.valueChanges, (paratextId: string) => {
       if (this.state !== 'input') {
         return;
       }
@@ -134,6 +142,14 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   async submit(): Promise<void> {
+    // Set the validator when the user tries to submit the form to prevent the select immediately being invalid
+    // when the user clicks it. Marking it untouched does not appear to work.
+    this.paratextIdControl.setValidators(Validators.required);
+    this.paratextIdControl.updateValueAndValidity();
+    if (this.translationSuggestionsEnabled) {
+      this.sourceParatextIdControl.setValidators(Validators.required);
+      this.sourceParatextIdControl.updateValueAndValidity();
+    }
     if (!this.connectProjectForm.valid) {
       return;
     }
