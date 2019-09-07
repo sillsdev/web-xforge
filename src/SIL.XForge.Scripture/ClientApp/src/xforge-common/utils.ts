@@ -113,3 +113,12 @@ export function getObjValue<TRoot, T>(
 export function getObjPath<TRoot, T>(proxy: ObjProxyArg<TRoot, T>): Array<string | number> {
   return getPath(proxy) as Array<string | number>;
 }
+
+export function promiseTimeout<T>(promise: Promise<T>, timeout: number) {
+  return Promise.race([
+    promise,
+    new Promise<never>((_resolve, reject) => {
+      setTimeout(reject, timeout);
+    })
+  ]);
+}

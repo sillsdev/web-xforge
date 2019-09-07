@@ -1,17 +1,7 @@
-export const environment = {
-  production: true,
-  pwaTest: false,
-  issueEmail: 'scriptureforgeissues@sil.org',
-  siteName: 'Scripture Forge',
-  realtimePort: undefined as number,
-  realtimeUrl: '/realtime-api/',
+import { production } from './environment.defaults';
+
+export const environment = Object.assign(production, {
+  releaseStage: 'qa',
   authDomain: 'dev-sillsdev.auth0.com',
-  authClientId: '4eHLjo40mAEGFU6zUxdYjnpnC1K1Ydnj',
-  audience: 'https://scriptureforge.org/',
-  scope: 'sf_data',
-  siteId: 'sf',
-  assets: {
-    audio: '/assets/audio/'
-  },
-  helps: 'https://help.scriptureforge.org/#t=Overview/Getting_Started.htm'
-};
+  authClientId: '4eHLjo40mAEGFU6zUxdYjnpnC1K1Ydnj'
+});
