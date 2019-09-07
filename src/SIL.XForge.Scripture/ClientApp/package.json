@@ -32,6 +32,8 @@
     "@angular/pwa": "^0.803.2",
     "@angular/router": "^8.2.4",
     "@angular/service-worker": "^8.2.4",
+    "@bugsnag/core": "^6.4.0",
+    "@bugsnag/js": "^6.4.0",
     "@sillsdev/machine": "^2.1.0-34",
     "angular-file": "^0.5.9",
     "angular-split": "^3.0.2",
