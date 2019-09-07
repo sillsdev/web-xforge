@@ -9,7 +9,8 @@ describe('ErrorComponent', () => {
   it('should display error dialog', () => {
     const env = new TestEnvironment({
       message: 'The error message',
-      stack: 'The error stack'
+      stack: 'The error stack',
+      eventId: '0'
     });
 
     expect(env.errorMessage.textContent).toBe('The error message');
@@ -30,7 +31,8 @@ describe('ErrorComponent', () => {
 
   it('should only offer to show more when a stack trace is available', () => {
     const env = new TestEnvironment({
-      message: 'Testing without stack'
+      message: 'Testing without stack',
+      eventId: '1'
     });
 
     expect(env.errorMessage.textContent).toBe('Testing without stack');

@@ -74,7 +74,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get issueMailTo(): string {
-    return encodeURI('mailto:' + environment.issueEmail + '?subject=Scripture Forge v2 Issue');
+    return encodeURI(`mailto:${environment.issueEmail}?subject=${environment.siteName} issue`);
   }
 
   get helpsPage(): string {
