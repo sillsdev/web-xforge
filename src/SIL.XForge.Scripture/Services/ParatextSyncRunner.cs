@@ -130,6 +130,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
+        private readonly ISFProjectService _projectService;
         private readonly IEngineService _engineService;
         private readonly IParatextService _paratextService;
         private readonly IRealtimeService _realtimeService;
@@ -146,13 +147,14 @@ namespace SIL.XForge.Scripture.Services
         private int _step;
 
         public ParatextSyncRunner(IOptions<SiteOptions> siteOptions, IRepository<UserSecret> userSecrets,
-            IRepository<SFProjectSecret> projectSecrets, IEngineService engineService, IParatextService paratextService,
-            IRealtimeService realtimeService, IFileSystemService fileSystemService, IDeltaUsxMapper deltaUsxMapper,
-            IParatextNotesMapper notesMapper, ILogger<ParatextSyncRunner> logger)
+            IRepository<SFProjectSecret> projectSecrets, ISFProjectService projectService, IEngineService engineService,
+            IParatextService paratextService, IRealtimeService realtimeService, IFileSystemService fileSystemService,
+            IDeltaUsxMapper deltaUsxMapper, IParatextNotesMapper notesMapper, ILogger<ParatextSyncRunner> logger)
         {
             _siteOptions = siteOptions;
             _userSecrets = userSecrets;
             _projectSecrets = projectSecrets;
+            _projectService = projectService;
             _engineService = engineService;
             _paratextService = paratextService;
             _realtimeService = realtimeService;
@@ -536,6 +538,7 @@ namespace SIL.XForge.Scripture.Services
 
             IReadOnlyDictionary<string, string> ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
                 _projectDoc.Data.ParatextId);
+            var userIdsToRemove = new List<string>();
             var projectUsers = await _realtimeService.QuerySnapshots<User>()
                     .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                     .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
@@ -555,11 +558,14 @@ namespace SIL.XForge.Scripture.Services
 
                 foreach (var projectUser in projectUsers)
                 {
-                    if (!ptUserRoles.TryGetValue(projectUser.ParatextId, out string role))
-                        role = SFProjectRole.Reviewer;
-                    op.Set(p => p.UserRoles[projectUser.UserId], role);
+                    if (ptUserRoles.TryGetValue(projectUser.ParatextId, out string role))
+                        op.Set(p => p.UserRoles[projectUser.UserId], role);
+                    else
+                        userIdsToRemove.Add(projectUser.UserId);
                 }
             });
+            foreach (var userId in userIdsToRemove)
+                await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
             if (_notesMapper.NewSyncUsers.Count > 0)
             {
                 await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>

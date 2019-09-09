@@ -391,7 +391,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncAsync_UserRoleChanged()
+        public async Task SyncAsync_UserRoleChangedAndUserRemoved()
         {
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
@@ -410,7 +410,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
             Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Translator));
-            Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.Reviewer));
+            await env.SFProjectService.Received().RemoveUserAsync("user01", "project01", "user02");
         }
 
         private class Book
@@ -453,6 +453,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     new SFProjectSecret { Id = "project01" }
                 });
+                SFProjectService = Substitute.For<ISFProjectService>();
                 EngineService = Substitute.For<IEngineService>();
                 ParatextService = Substitute.For<IParatextService>();
 
@@ -469,11 +470,13 @@ namespace SIL.XForge.Scripture.Services
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
                 var logger = Substitute.For<ILogger<ParatextSyncRunner>>();
 
-                Runner = new ParatextSyncRunner(siteOptions, userSecrets, _projectSecrets, EngineService,
-                    ParatextService, RealtimeService, FileSystemService, _deltaUsxMapper, _notesMapper, logger);
+                Runner = new ParatextSyncRunner(siteOptions, userSecrets, _projectSecrets, SFProjectService,
+                    EngineService, ParatextService, RealtimeService, FileSystemService, _deltaUsxMapper, _notesMapper,
+                    logger);
             }
 
             public ParatextSyncRunner Runner { get; }
+            public ISFProjectService SFProjectService { get; }
             public IEngineService EngineService { get; }
             public IParatextService ParatextService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
