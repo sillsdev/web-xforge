@@ -8,7 +8,7 @@
         mdcIconButton
         title="Enable/disable suggestions"
         [on]="translationSuggestionsUserEnabled"
-        (change)="isSuggestionsEnabled = !$event.value"
+        (change)="translationSuggestionsUserEnabled = !$event.value"
       >
         <mdc-icon mdcIconOn>speaker_notes</mdc-icon>
         <mdc-icon>speaker_notes_off</mdc-icon>
