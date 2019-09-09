@@ -378,7 +378,7 @@ namespace SIL.XForge.Services
         }
 
         [Test]
-        public async Task InvitedUsers_SystemAdmin_Reports()
+        public async Task InvitedUsers_SystemAdmin_NoSpecialAccess()
         {
             var env = new TestEnvironment();
 
@@ -386,23 +386,17 @@ namespace SIL.XForge.Services
             Assert.That(env.GetProject(Project03).UserRoles.ContainsKey(User04), Is.False, "test setup");
             Assert.That(env.GetUser(User04).Role, Is.EqualTo(SystemRole.SystemAdmin), "test setup");
 
-            var invitees = (await env.Service.InvitedUsersAsync(User04, Project03, env.GetUser(User04).Role));
-            Assert.That(invitees.Length, Is.EqualTo(3));
-            string[] expectedEmailList = { "bob@example.com", "user02@example.com", "bill@example.com" };
-            foreach (var expectedEmail in expectedEmailList)
-            {
-                Assert.That(Array.Exists(invitees, invitee => invitee == expectedEmail));
-            }
+            Assert.ThrowsAsync<ForbiddenException>(() => (env.Service.InvitedUsersAsync(User04, Project03)), "should have been forbidden");
         }
 
         [Test]
         public void InvitedUsers_NonProjectAdmin_Forbidden()
         {
             var env = new TestEnvironment();
-            // User02 is not a system admin or an admin on Project01
+            // User02 is not an admin on Project01
             Assert.That(env.GetProject(Project01).UserRoles[User02], Is.Not.EqualTo(TestProjectRole.Administrator), "test setup");
             Assert.That(env.GetUser(User02).Role, Is.Not.EqualTo(SystemRole.SystemAdmin), "test setup");
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InvitedUsersAsync(User02, Project01, env.GetUser(User02).Role), "should have been forbidden");
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InvitedUsersAsync(User02, Project01), "should have been forbidden");
         }
 
         [Test]
