@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -60,7 +61,7 @@ namespace SIL.XForge.Scripture.Services
 
                 var project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);
 
-                foreach (TextInfo text in project.Texts)
+                foreach (TextInfo text in project.Texts.Where(t => t.HasSource))
                 {
                     foreach (Chapter chapter in text.Chapters)
                     {
