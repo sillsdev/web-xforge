@@ -1,0 +1,13 @@
+// Global styles
+@import 'variables';
+@import 'mixins/breakpoints';
+@import 'layout';
+@import 'forms';
+@import 'styles';
+
+// Page Sections
+@import 'header';
+@import 'footer';
+
+// Page specific styles
+@import 'home';

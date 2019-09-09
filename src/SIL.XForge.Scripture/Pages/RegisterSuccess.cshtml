@@ -1,28 +1,19 @@
 @page
-@section css {
-    <link rel="stylesheet" href="~/css/sf.css" />
-    <style>
-        .mdl-grid {
-            background-color: rgb(184, 212, 50);
-            padding: 20px;
-        }
-    </style>
-}
 
-<div class="mdl-layout__content">
-    <div
-        id="registration"
-        class="flex-column prim-start sec-start"
-        ngClass.lt-md="smallcontent"
-        ngClass.md="mediumcontent"
-        ngClass.gt-md="largecontent"
-    >
-        <div class="flex-column prim-center sec-center">
-            <h3>You've been registered sucessfully</h3>
-            <P>We will be in touch soon to let you know how you can get connected to the <b>Scripture Forge v2 Beta</b>.</P>
-            <a class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" href="/home">
-                Return Home
-            </a>
+<section id="hero">
+    <div class="container">
+        <div class="mdl-grid">
+            <div class="mdl-cell mdl-cell--12-col align-center">
+                <h3>You've been registered sucessfully</h3>
+                <P>We will be in touch soon to let you know how you can get connected to the <b>Scripture Forge v2 Beta</b>.</P>
+                <a class="button" href="/">
+                    <span class="button-prefix">
+                        <span class="beta">Beta</span>
+                        <img src="/images/logo-sf-white.svg" alt="Scripture Forge">
+                    </span>
+                    <span class="text">Return Home</span>
+                </a>
+            </div>
         </div>
     </div>
 </div>

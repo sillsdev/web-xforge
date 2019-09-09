@@ -1,0 +1,113 @@
+#hero {
+  background-color: $greenLight;
+  background-image: linear-gradient($greenLight, #98b132);
+  padding: 130px 0 130px;
+  @include media-breakpoint-down(md) {
+    padding: 100px 0 70px;
+  }
+  @include media-breakpoint-down(sm) {
+    padding-bottom: 30px;
+  }
+
+  h1 {
+    margin: 57px auto;
+    max-width: 900px;
+    line-height: 1.2;
+    letter-spacing: 0;
+  }
+
+  button {
+    margin: auto;
+  }
+}
+
+#engage {
+  background-image: url('/images/engage-banner.jpg');
+  background-size: cover;
+  background-position: bottom;
+  color: $white;
+  position: relative;
+  padding: 180px 0;
+  @include media-breakpoint-down(md) {
+    padding: 70px 0;
+  }
+  @include media-breakpoint-down(sm) {
+    padding: 30px 0;
+  }
+
+  &:before {
+    position: absolute;
+    content: '';
+    top: -1px;
+    width: 100%;
+    height: 35px;
+    background: url('/images/banner-book-curve.svg') no-repeat center;
+  }
+
+  .title {
+    max-width: 780px;
+    margin: auto;
+  }
+
+  .engage-features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-column-gap: 16px;
+    grid-row-gap: 16px;
+    @include media-breakpoint-down(sm) {
+      grid-template-columns: repeat(1, 1fr);
+    }
+
+    .engage-feature {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin-top: 66px;
+      @include media-breakpoint-down(sm) {
+        margin-top: 40px;
+      }
+
+      img {
+        width: 110px;
+        height: 110px;
+        @include media-breakpoint-down(md) {
+          width: 85px;
+          height: 85px;
+        }
+      }
+
+      span {
+        font-size: 22px;
+        margin-top: 51px;
+        @include media-breakpoint-down(md) {
+          font-size: 18px;
+        }
+        @include media-breakpoint-down(sm) {
+          margin-top: 20px;
+        }
+      }
+    }
+  }
+}
+#contact {
+  background-color: $greenLight;
+  padding: 76px 0 125px;
+  @include media-breakpoint-down(md) {
+    padding: 46px 0 70px;
+  }
+  @include media-breakpoint-down(sm) {
+    padding: 30px 0;
+  }
+}
+
+#register {
+  margin-top: 80px;
+  @include media-breakpoint-down(md) {
+    margin-top: 40px;
+  }
+
+  h3 {
+    margin: 0 0 10px;
+  }
+}
