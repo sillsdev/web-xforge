@@ -174,12 +174,11 @@ namespace SIL.XForge.Services
         }
 
         /// <summary>Return list of email addresses with outstanding invitations</summary>
-        public async Task<string[]> InvitedUsersAsync(string curUserId, string projectId, string userSystemRole = null)
+        public async Task<string[]> InvitedUsersAsync(string curUserId, string projectId)
         {
             TModel project = await GetProjectAsync(projectId);
 
-            if (!IsProjectAdmin(project, curUserId)
-             && !IsSystemAdministrator(userSystemRole))
+            if (!IsProjectAdmin(project, curUserId))
                 throw new ForbiddenException();
 
             TSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
@@ -319,11 +318,6 @@ namespace SIL.XForge.Services
         }
 
         protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);
-
-        private static bool IsSystemAdministrator(string userSystemRole)
-        {
-            return userSystemRole == SystemRole.SystemAdmin;
-        }
 
         private async Task<TModel> GetProjectAsync(string projectId)
         {

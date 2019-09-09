@@ -180,7 +180,7 @@ namespace SIL.XForge.Scripture.Controllers
         {
             try
             {
-                return Ok(await _projectService.InvitedUsersAsync(UserId, projectId, SystemRole));
+                return Ok(await _projectService.InvitedUsersAsync(UserId, projectId));
             }
             catch (ForbiddenException)
             {

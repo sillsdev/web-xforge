@@ -13,7 +13,7 @@ namespace SIL.XForge.Services
         Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email);
         Task UninviteUserAsync(string curUserId, string projectId, string email);
         Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null);
-        Task<string[]> InvitedUsersAsync(string curUserId, string projectId, string curUserSystemRole = null);
+        Task<string[]> InvitedUsersAsync(string curUserId, string projectId);
         Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string extension,
             Stream inputStream);
         Task DeleteAudioAsync(string curUserId, string projectId, string ownerId, string dataId);
