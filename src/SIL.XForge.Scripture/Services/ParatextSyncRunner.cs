@@ -130,6 +130,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
+        private readonly ISFProjectService _projectService;
         private readonly IEngineService _engineService;
         private readonly IParatextService _paratextService;
         private readonly IRealtimeService _realtimeService;
@@ -146,13 +147,14 @@ namespace SIL.XForge.Scripture.Services
         private int _step;
 
         public ParatextSyncRunner(IOptions<SiteOptions> siteOptions, IRepository<UserSecret> userSecrets,
-            IRepository<SFProjectSecret> projectSecrets, IEngineService engineService, IParatextService paratextService,
-            IRealtimeService realtimeService, IFileSystemService fileSystemService, IDeltaUsxMapper deltaUsxMapper,
-            IParatextNotesMapper notesMapper, ILogger<ParatextSyncRunner> logger)
+            IRepository<SFProjectSecret> projectSecrets, ISFProjectService projectService, IEngineService engineService,
+            IParatextService paratextService, IRealtimeService realtimeService, IFileSystemService fileSystemService,
+            IDeltaUsxMapper deltaUsxMapper, IParatextNotesMapper notesMapper, ILogger<ParatextSyncRunner> logger)
         {
             _siteOptions = siteOptions;
             _userSecrets = userSecrets;
             _projectSecrets = projectSecrets;
+            _projectService = projectService;
             _engineService = engineService;
             _paratextService = paratextService;
             _realtimeService = realtimeService;
@@ -173,7 +175,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 if (!await InitAsync(projectId, userId))
                 {
-                    await CompleteSync(false);
+                    await CompleteSync(false, projectId, userId);
                     return;
                 }
 
@@ -262,12 +264,12 @@ namespace SIL.XForge.Scripture.Services
                     await _engineService.StartBuildByProjectIdAsync(projectId);
                 }
 
-                await CompleteSync(true);
+                await CompleteSync(true, projectId, userId);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
-                await CompleteSync(false);
+                await CompleteSync(false, projectId, userId);
             }
             finally
             {
@@ -529,7 +531,7 @@ namespace SIL.XForge.Scripture.Services
             return booksToDelete;
         }
 
-        private async Task CompleteSync(bool successful)
+        private async Task CompleteSync(bool successful, string projectId, string userId)
         {
             if (_projectDoc == null || _projectSecret == null)
                 return;
@@ -555,9 +557,10 @@ namespace SIL.XForge.Scripture.Services
 
                 foreach (var projectUser in projectUsers)
                 {
-                    if (!ptUserRoles.TryGetValue(projectUser.ParatextId, out string role))
-                        role = SFProjectRole.Reviewer;
-                    op.Set(p => p.UserRoles[projectUser.UserId], role);
+                    if (ptUserRoles.TryGetValue(projectUser.ParatextId, out string role))
+                        op.Set(p => p.UserRoles[projectUser.UserId], role);
+                    else
+                        _projectService.RemoveUserAsync(userId, projectId, projectUser.UserId);
                 }
             });
             if (_notesMapper.NewSyncUsers.Count > 0)
