@@ -3,14 +3,13 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import * as OTJson0 from 'ot-json0';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectService } from '../core/sf-project.service';
@@ -97,8 +96,8 @@ class TestEnvironment {
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedParatextService = mock(ParatextService);
   readonly mockedProjectService = mock(SFProjectService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
   private readonly project: SFProject;
   private readonly projectDocAdapter: MemoryRealtimeDocAdapter;
   private isLoading: boolean = false;
@@ -124,9 +123,9 @@ class TestEnvironment {
         dateLastSuccessfulSync: date.toJSON()
       }
     };
-    this.projectDocAdapter = new MemoryRealtimeDocAdapter('testproject01', OTJson0.type, this.project);
+    this.projectDocAdapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'testproject01', this.project);
     when(this.mockedProjectService.get('testproject01')).thenResolve(
-      new SFProjectDoc(this.projectDocAdapter, instance(this.mockedRealtimeOfflineStore))
+      new SFProjectDoc(this.offlineStore, this.projectDocAdapter)
     );
 
     TestBed.configureTestingModule({

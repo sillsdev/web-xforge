@@ -3,10 +3,9 @@ import { LatinWordTokenizer } from '@sillsdev/machine';
 import { QuillModule } from 'ngx-quill';
 import * as RichText from 'rich-text';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
-import { Delta, TextDoc } from '../../core/models/text-doc';
-import { TextDocId } from '../../core/models/text-doc-id';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { TranslateMetrics } from '../../core/models/translate-metrics';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextComponent } from '../../shared/text/text.component';
@@ -327,8 +326,8 @@ class TestEnvironment {
   readonly session: TranslateMetricsSession;
 
   readonly mockedSFProjectService = mock(SFProjectService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
   private readonly tokenizer = new LatinWordTokenizer();
 
   constructor() {
@@ -410,7 +409,7 @@ class TestEnvironment {
     delta.insert({ verse: { number: '2', style: 'v' } });
     delta.insert(`${id.textType}: chapter ${id.chapter}, verse 2.`, { segment: `verse_${id.chapter}_2` });
     delta.insert('\n', { para: { style: 'p' } });
-    const adapter = new MemoryRealtimeDocAdapter(id.toString(), RichText.type, delta);
-    return new TextDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    const adapter = new MemoryRealtimeDocAdapter(TextDoc.COLLECTION, id.toString(), delta, RichText.type);
+    return new TextDoc(this.offlineStore, adapter);
   }
 }

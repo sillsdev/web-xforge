@@ -2,12 +2,12 @@ import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AvatarService } from 'ngx-avatar';
-import * as OTJson0 from 'ot-json0';
 import { instance, mock, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { CheckingOwnerComponent } from './checking-owner.component';
@@ -77,13 +77,17 @@ class TestEnvironment {
 
   readonly mockedUserService = mock(UserService);
   readonly mockedAvatarService = mock(AvatarService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
 
   constructor() {
     when(this.mockedUserService.getProfile('user01')).thenResolve(
       new UserProfileDoc(
-        new MemoryRealtimeDocAdapter('user01', OTJson0.type, { displayName: 'User 01', role: 'user' }),
-        instance(this.mockedRealtimeOfflineStore)
+        this.offlineStore,
+        new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', {
+          displayName: 'User 01',
+          role: 'user'
+        })
       )
     );
     TestBed.configureTestingModule({

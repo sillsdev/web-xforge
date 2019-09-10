@@ -22,7 +22,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     {
                         new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)),
                         new DocConfig("texts", typeof(TextData), OTType.RichText),
-                        new DocConfig("questions", typeof(QuestionList))
+                        new DocConfig("questions", typeof(Question))
                     });
                 }, launchWithDebugging);
             return services;

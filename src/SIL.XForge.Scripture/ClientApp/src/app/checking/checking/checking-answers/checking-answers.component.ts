@@ -12,6 +12,7 @@ import { AccountService } from 'xforge-common/account.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import {
   ScriptureChooserDialogComponent,
@@ -49,11 +50,11 @@ export class CheckingAnswersComponent implements OnInit {
   @Input() project: SFProject;
   @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
   @Input() projectText: TextInfo;
-  @Input() set question(question: Question) {
-    if (question !== this._question) {
+  @Input() set questionDoc(questionDoc: QuestionDoc) {
+    if (questionDoc !== this._questionDoc) {
       this.hideAnswerForm();
     }
-    this._question = question;
+    this._questionDoc = questionDoc;
     this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
   }
   @Input() checkingTextComponent: CheckingTextComponent;
@@ -72,7 +73,7 @@ export class CheckingAnswersComponent implements OnInit {
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
 
   private user: UserDoc;
-  private _question: Question;
+  private _questionDoc: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
 
@@ -88,10 +89,13 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   get answers(): Answer[] {
+    if (this._questionDoc == null || !this._questionDoc.isLoaded) {
+      return [];
+    }
     if (this.canSeeOtherUserResponses || this.isAdministrator) {
-      return this.question.answers;
+      return this._questionDoc.data.answers;
     } else {
-      return this.question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
+      return this._questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
     }
   }
 
@@ -109,12 +113,17 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   get currentUserTotalAnswers(): number {
-    return this.question.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length;
+    if (this._questionDoc == null || !this._questionDoc.isLoaded) {
+      return 0;
+    }
+    return this._questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length;
   }
 
   get hasUserRead(): boolean {
-    return this.projectUserConfigDoc != null && this.projectUserConfigDoc.data.questionRefsRead
-      ? this.projectUserConfigDoc.data.questionRefsRead.includes(this.question.id)
+    return this.projectUserConfigDoc != null &&
+      this.projectUserConfigDoc.isLoaded &&
+      this.projectUserConfigDoc.data.questionRefsRead
+      ? this.projectUserConfigDoc.data.questionRefsRead.includes(this.questionDoc.data.dataId)
       : false;
   }
 
@@ -125,8 +134,8 @@ export class CheckingAnswersComponent implements OnInit {
     return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRole.ParatextAdministrator;
   }
 
-  get question(): Question {
-    return this._question;
+  get questionDoc(): QuestionDoc {
+    return this._questionDoc;
   }
 
   get scriptureStart(): AbstractControl {
@@ -223,7 +232,9 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   hasUserReadAnswer(answer: Answer): boolean {
-    return this.userAnswerRefsRead.includes(answer.id) || this.projectUserConfigDoc.data.ownerRef === answer.ownerRef;
+    return (
+      this.userAnswerRefsRead.includes(answer.dataId) || this.projectUserConfigDoc.data.ownerRef === answer.ownerRef
+    );
   }
 
   hideAnswerForm() {

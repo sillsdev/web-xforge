@@ -1,4 +1,3 @@
-import { PathTemplate } from '../../common/path-template';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { SFProjectDomain } from '../models/sf-project-rights';
 import { SF_PROJECT_USER_CONFIGS_COLLECTION, SFProjectUserConfig } from '../models/sf-project-user-config';
@@ -16,6 +15,6 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
   }
 
   protected setupDomains(): ProjectDomainConfig[] {
-    return [{ projectDomain: SFProjectDomain.ProjectUserConfigs, pathTemplate: new PathTemplate() }];
+    return [{ projectDomain: SFProjectDomain.ProjectUserConfigs, pathTemplate: this.createPathTemplate() }];
   }
 }

@@ -11,11 +11,11 @@ import * as OTJson0 from 'ot-json0';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { defer, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextService } from 'xforge-common/paratext.service';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -310,8 +310,8 @@ class TestEnvironment {
   readonly mockedSFProjectService = mock(SFProjectService);
   readonly mockedUserService = mock(UserService);
   readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
   private projectDoc: SFProjectDoc;
 
   constructor() {
@@ -320,8 +320,8 @@ class TestEnvironment {
       newProject.sync = { queuedCount: 1 };
 
       this.projectDoc = new SFProjectDoc(
-        new MemoryRealtimeDocAdapter('project01', OTJson0.type, newProject),
-        instance(this.mockedRealtimeOfflineStore)
+        this.offlineStore,
+        new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', newProject)
       );
       when(this.mockedSFProjectService.get('project01')).thenResolve(this.projectDoc);
       return Promise.resolve('project01');

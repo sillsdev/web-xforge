@@ -10,7 +10,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { TextDocId } from '../../core/models/text-doc-id';
+import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 
 const ENGINE_QUALITY_STAR_COUNT = 3;

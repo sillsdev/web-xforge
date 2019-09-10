@@ -4,10 +4,9 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
 {
-    public class Question : IOwnedData
+    public class Question : ProjectData
     {
-        public string Id { get; set; }
-        public string OwnerRef { get; set; }
+        public string DataId { get; set; }
         public VerseRefData ScriptureStart { get; set; }
         public VerseRefData ScriptureEnd { get; set; }
         public string Text { get; set; }
@@ -15,5 +14,7 @@ namespace SIL.XForge.Scripture.Models
         public List<Answer> Answers { get; set; } = new List<Answer>();
         public bool IsArchived { get; set; }
         public DateTime? DateArchived { get; set; }
+        public DateTime DateModified { get; set; }
+        public DateTime DateCreated { get; set; }
     }
 }

@@ -38,7 +38,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                     </notes>";
                 XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionListDocsAsync(conn));
+                    await env.GetQuestionDocsAsync(conn));
 
                 const string expectedNotesText = @"
                     <notes version=""1.1"">
@@ -119,7 +119,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                     </notes>";
                 XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionListDocsAsync(conn));
+                    await env.GetQuestionDocsAsync(conn));
 
                 const string expectedNotesText = @"
                     <notes version=""1.1"">
@@ -198,7 +198,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                     </notes>";
                 XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
-                    await env.GetQuestionListDocsAsync(conn));
+                    await env.GetQuestionDocsAsync(conn));
 
                 const string expectedNotesText = @"
                     <notes version=""1.1"">
@@ -260,60 +260,54 @@ namespace SIL.XForge.Scripture.Services
             public void AddData(string answerSyncUserId1, string answerSyncUserId2, string commentSyncUserId1,
                 string commentSyncUserId2)
             {
-                RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<QuestionList>(new[]
+                RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>(new[]
                 {
-                    new QuestionList
+                    new Question
                     {
-                        Id = "questions01",
-                        Questions =
+                        Id = "project01:question01",
+                        DataId = "question01",
+                        ScriptureStart = new VerseRefData("MAT", "1", "1"),
+                        Text = "Test question?",
+                        Answers =
                         {
-                            new Question
+                            new Answer
                             {
-                                Id = "question01",
-                                ScriptureStart = new VerseRefData("MAT", "1", "1"),
-                                Text = "Test question?",
-                                Answers =
+                                DataId = "answer01",
+                                OwnerRef = "user02",
+                                SyncUserRef = answerSyncUserId1,
+                                DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
+                                Text = "Test answer 1.",
+                                Comments =
                                 {
-                                    new Answer
+                                    new Comment
                                     {
-                                        Id = "answer01",
+                                        DataId = "comment01",
+                                        OwnerRef = "user03",
+                                        SyncUserRef = commentSyncUserId1,
+                                        DateCreated = new DateTime(2019, 1, 1, 9, 0, 0, DateTimeKind.Utc),
+                                        Text = "Test comment 1."
+                                    }
+                                }
+                            },
+                            new Answer
+                            {
+                                DataId = "answer02",
+                                OwnerRef = "user04",
+                                SyncUserRef = answerSyncUserId2,
+                                DateCreated = new DateTime(2019, 1, 2, 8, 0, 0, DateTimeKind.Utc),
+                                Text = "Test answer 2.",
+                                ScriptureStart = new VerseRefData("MAT", "1", "2"),
+                                ScriptureEnd = new VerseRefData("MAT", "1", "3"),
+                                ScriptureText = "This is some scripture.",
+                                Comments =
+                                {
+                                    new Comment
+                                    {
+                                        DataId = "comment02",
                                         OwnerRef = "user02",
-                                        SyncUserRef = answerSyncUserId1,
-                                        DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
-                                        Text = "Test answer 1.",
-                                        Comments =
-                                        {
-                                            new Comment
-                                            {
-                                                Id = "comment01",
-                                                OwnerRef = "user03",
-                                                SyncUserRef = commentSyncUserId1,
-                                                DateCreated = new DateTime(2019, 1, 1, 9, 0, 0, DateTimeKind.Utc),
-                                                Text = "Test comment 1."
-                                            }
-                                        }
-                                    },
-                                    new Answer
-                                    {
-                                        Id = "answer02",
-                                        OwnerRef = "user04",
-                                        SyncUserRef = answerSyncUserId2,
-                                        DateCreated = new DateTime(2019, 1, 2, 8, 0, 0, DateTimeKind.Utc),
-                                        Text = "Test answer 2.",
-                                        ScriptureStart = new VerseRefData("MAT", "1", "2"),
-                                        ScriptureEnd = new VerseRefData("MAT", "1", "3"),
-                                        ScriptureText = "This is some scripture.",
-                                        Comments =
-                                        {
-                                            new Comment
-                                            {
-                                                Id = "comment02",
-                                                OwnerRef = "user02",
-                                                SyncUserRef = commentSyncUserId2,
-                                                DateCreated = new DateTime(2019, 1, 2, 9, 0, 0, DateTimeKind.Utc),
-                                                Text = "Test comment 2."
-                                            }
-                                        }
+                                        SyncUserRef = commentSyncUserId2,
+                                        DateCreated = new DateTime(2019, 1, 2, 9, 0, 0, DateTimeKind.Utc),
+                                        Text = "Test comment 2."
                                     }
                                 }
                             }
@@ -322,10 +316,10 @@ namespace SIL.XForge.Scripture.Services
                 }));
             }
 
-            public async Task<IEnumerable<IDocument<QuestionList>>> GetQuestionListDocsAsync(IConnection conn)
+            public async Task<IEnumerable<IDocument<Question>>> GetQuestionDocsAsync(IConnection conn)
             {
-                IDocument<QuestionList> questionListDoc = await conn.FetchAsync<QuestionList>("questions01");
-                return new[] { questionListDoc };
+                IDocument<Question> questionDoc = await conn.FetchAsync<Question>("project01:question01");
+                return new[] { questionDoc };
             }
 
             private static SFProjectSecret ProjectSecret(bool includeSyncUsers)

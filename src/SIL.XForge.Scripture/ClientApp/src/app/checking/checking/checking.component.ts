@@ -1,5 +1,5 @@
 import { MdcList, MdcMenuSelectedEvent } from '@angular-mdc/web';
-import { Component, ElementRef, HostBinding, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import { SplitComponent } from 'angular-split';
@@ -9,16 +9,16 @@ import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { HelpHeroService } from '../../core/help-hero.service';
-import { QuestionListDoc } from '../../core/models/question-list-doc';
+import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { getTextDocIdStr, TextDocId } from '../../core/models/text-doc-id';
+import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingUtils } from '../checking.utils';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
@@ -32,17 +32,12 @@ interface Summary {
   answered: number;
 }
 
-interface CheckingData {
-  questionListDocs: { [docId: string]: QuestionListDoc };
-  realtimeSubscriptions: { [docId: string]: Subscription };
-}
-
 @Component({
   selector: 'app-checking',
   templateUrl: './checking.component.html',
   styleUrls: ['./checking.component.scss']
 })
-export class CheckingComponent extends DataLoadingComponent implements OnInit {
+export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   @ViewChild('answerPanelContainer', { static: false }) set answersPanelElement(
     answersPanelContainerElement: ElementRef
   ) {
@@ -61,9 +56,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   @ViewChild('chapterMenuList', { static: true }) chapterMenuList: MdcList;
 
   chapters: number[] = [];
-  checkingData: CheckingData = { questionListDocs: {}, realtimeSubscriptions: {} };
   isExpanded: boolean = false;
-  publicQuestions: Readonly<Question[]> = [];
   resetAnswerPanelHeightOnFormHide: boolean = false;
   summary: Summary = {
     read: 0,
@@ -79,7 +72,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
 
   private _isDrawerPermanent: boolean = true;
   private _chapter: number;
-  private _questions: Readonly<Question[]> = [];
+  private questionsQuery: RealtimeQuery<QuestionDoc>;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -120,6 +113,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     }
   }
 
+  get questionDocs(): Readonly<QuestionDoc[]> {
+    return this.questionsQuery != null ? this.questionsQuery.docs : [];
+  }
+
   private get answerPanelElementHeight(): number {
     return this.answersPanelContainerElement ? this.answersPanelContainerElement.nativeElement.offsetHeight : 0;
   }
@@ -130,16 +127,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
           this.answersPanelContainerElement.nativeElement.querySelector('.answers-container').offsetHeight +
           20
       : 0;
-  }
-
-  private get questionTextJsonDocId(): string {
-    return getTextDocIdStr(this.projectDoc.id, this.text.bookId, this.questionsPanel.activeQuestionChapter);
-  }
-
-  private get activeQuestionIndex(): number {
-    return this.checkingData.questionListDocs[this.questionTextJsonDocId].data.questions.findIndex(
-      question => question.id === this.questionsPanel.activeQuestion.id
-    );
   }
 
   private get minAnswerPanelHeight(): number {
@@ -170,17 +157,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
       this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
       this.chapters = this.text.chapters.map(c => c.number);
       if (prevProjectId !== this.projectDoc.id || prevBookId !== this.text.bookId) {
-        const bindCheckingDataPromises: Promise<void>[] = [];
-        for (const chapter of this.chapters) {
-          bindCheckingDataPromises.push(
-            this.bindCheckingData(new TextDocId(this.projectDoc.id, this.text.bookId, chapter))
-          );
+        if (this.questionsQuery != null) {
+          this.questionsQuery.dispose();
         }
-        // Trigger the chapter setter to bind the relevant comments.
-        await Promise.all(bindCheckingDataPromises);
+        this.questionsQuery = await this.projectService.getQuestions(projectId, {
+          bookId: this.text.bookId,
+          activeOnly: true,
+          sort: true
+        });
         this._chapter = undefined;
         this.chapter = 1;
-        this.refreshQuestions();
 
         this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
         this.loadingFinished();
@@ -199,6 +185,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    if (this.questionsQuery != null) {
+      this.questionsQuery.dispose();
+    }
+  }
+
   applyFontChange(fontSize: string) {
     this.scripturePanel.applyFontChange(fontSize);
   }
@@ -211,7 +203,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         const dateNow: string = new Date().toJSON();
         if (!answer) {
           answer = {
-            id: objectId(),
+            dataId: objectId(),
             ownerRef: this.userService.currentUserId,
             text: '',
             likes: [],
@@ -228,7 +220,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         if (answerAction.audio.fileName) {
           const response = await this.projectService.onlineUploadAudio(
             this.projectDoc.id,
-            answer.id,
+            answer.dataId,
             new File([answerAction.audio.blob], answerAction.audio.fileName)
           );
           // Get the amended filename and save it against the answer
@@ -286,7 +278,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         const dateNow: string = new Date().toJSON();
         if (!comment) {
           comment = {
-            id: objectId(),
+            dataId: objectId(),
             ownerRef: this.userService.currentUserId,
             text: '',
             dateCreated: dateNow,
@@ -301,7 +293,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
         this.projectUserConfigDoc.submitJson0Op(op => {
           for (const comm of commentAction.answer.comments) {
             if (!this.questionsPanel.hasUserReadComment(comm)) {
-              op.add(puc => puc.commentRefsRead, comm.id);
+              op.add(puc => puc.commentRefsRead, comm.dataId);
             }
           }
         });
@@ -348,25 +340,27 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   }
 
   totalQuestions(): number {
-    return this.publicQuestions.length;
+    return this.questionsQuery != null ? this.questionsQuery.docs.length : 0;
   }
 
   private getAnswerIndex(answer: Answer): number {
-    return this.questionsPanel.activeQuestion.answers.findIndex(existingAnswer => existingAnswer.id === answer.id);
+    return this.questionsPanel.activeQuestionDoc.data.answers.findIndex(
+      existingAnswer => existingAnswer.dataId === answer.dataId
+    );
   }
 
   private deleteAnswer(answer: Answer): void {
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
-      this.checkingData.questionListDocs[this.questionTextJsonDocId]
-        .submitJson0Op(op => op.remove(ql => ql.questions[this.activeQuestionIndex].answers, answerIndex))
-        .then(() => this.projectService.onlineDeleteAudio(this.projectDoc.id, answer.id, answer.ownerRef));
+      this.questionsPanel.activeQuestionDoc
+        .submitJson0Op(op => op.remove(q => q.answers, answerIndex))
+        .then(() => this.projectService.onlineDeleteAudio(this.projectDoc.id, answer.dataId, answer.ownerRef));
       this.refreshSummary();
     }
   }
 
   private saveAnswer(answer: Answer): void {
-    const answers = cloneDeep(this.questionsPanel.activeQuestion.answers);
+    const answers = cloneDeep(this.questionsPanel.activeQuestionDoc.data.answers);
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
       answers[answerIndex] = answer;
@@ -377,80 +371,54 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   }
 
   private updateQuestionAnswers(answers: Answer[], answerIndex: number): void {
-    const questionWithAnswer: Question = cloneDeep(this.questionsPanel.activeQuestion);
-    questionWithAnswer.answers = answers;
     if (answerIndex >= 0) {
-      const oldAnswer = this.checkingData.questionListDocs[this.questionTextJsonDocId].data.questions[
-        this.activeQuestionIndex
-      ].answers[answerIndex];
-      const newAnswer = questionWithAnswer.answers[answerIndex];
+      const oldAnswer = this.questionsPanel.activeQuestionDoc.data.answers[answerIndex];
+      const newAnswer = answers[answerIndex];
       const deleteAudio = oldAnswer.audioUrl != null && newAnswer.audioUrl == null;
-      const submitPromise = this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
+      const submitPromise = this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
         op
-          .set(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].text, newAnswer.text)
-          .set(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].scriptureText, newAnswer.scriptureText)
-          .set(
-            ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].scriptureStart,
-            newAnswer.scriptureStart
-          )
-          .set(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].scriptureEnd, newAnswer.scriptureEnd)
-          .set(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].audioUrl, newAnswer.audioUrl)
-          .set(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].dateModified, newAnswer.dateModified)
+          .set(q => q.answers[answerIndex].text, newAnswer.text)
+          .set(q => q.answers[answerIndex].scriptureText, newAnswer.scriptureText)
+          .set(q => q.answers[answerIndex].scriptureStart, newAnswer.scriptureStart)
+          .set(q => q.answers[answerIndex].scriptureEnd, newAnswer.scriptureEnd)
+          .set(q => q.answers[answerIndex].audioUrl, newAnswer.audioUrl)
+          .set(q => q.answers[answerIndex].dateModified, newAnswer.dateModified)
       );
       if (deleteAudio) {
         submitPromise.then(() =>
-          this.projectService.onlineDeleteAudio(this.projectDoc.id, oldAnswer.id, oldAnswer.ownerRef)
+          this.projectService.onlineDeleteAudio(this.projectDoc.id, oldAnswer.dataId, oldAnswer.ownerRef)
         );
       }
     } else {
-      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
-        op.insert(ql => ql.questions[this.activeQuestionIndex].answers, 0, questionWithAnswer.answers[0])
-      );
+      this.questionsPanel.activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
     }
-    this.questionsPanel.updateElementsRead(this.questionsPanel.activeQuestion);
+    this.questionsPanel.updateElementsRead(this.questionsPanel.activeQuestionDoc);
   }
 
   private saveComment(answer: Answer, comment: Comment): void {
     const answerIndex = this.getAnswerIndex(answer);
-    const commentIndex = answer.comments.findIndex(c => c.id === comment.id);
+    const commentIndex = answer.comments.findIndex(c => c.dataId === comment.dataId);
     if (commentIndex >= 0) {
-      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
+      this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
         op
-          .set(
-            ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].comments[commentIndex].text,
-            comment.text
-          )
-          .set(
-            ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].comments[commentIndex].dateModified,
-            comment.dateModified
-          )
+          .set(q => q.answers[answerIndex].comments[commentIndex].text, comment.text)
+          .set(q => q.answers[answerIndex].comments[commentIndex].dateModified, comment.dateModified)
       );
     } else {
-      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
-        op.insert(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].comments, 0, comment)
+      this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
+        op.insert(q => q.answers[answerIndex].comments, 0, comment)
       );
     }
   }
 
   private deleteComment(answer: Answer, comment: Comment): void {
     const answerIndex = this.getAnswerIndex(answer);
-    const commentIndex = answer.comments.findIndex(c => c.id === comment.id);
+    const commentIndex = answer.comments.findIndex(c => c.dataId === comment.dataId);
     if (commentIndex >= 0) {
-      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
-        op.remove(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].comments, commentIndex)
+      this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
+        op.remove(q => q.answers[answerIndex].comments, commentIndex)
       );
     }
-  }
-
-  private refreshQuestions() {
-    this._questions = [];
-    for (const chapter of this.chapters) {
-      this._questions = this._questions.concat(
-        this.checkingData.questionListDocs[getTextDocIdStr(this.projectDoc.id, this.text.bookId, chapter)].data
-          .questions
-      );
-    }
-    this.publicQuestions = this._questions.filter(q => q.isArchived !== true);
   }
 
   private likeAnswer(answer: Answer) {
@@ -459,12 +427,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
     const answerIndex = this.getAnswerIndex(answer);
 
     if (likeIndex >= 0) {
-      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
-        op.remove(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].likes, likeIndex)
+      this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
+        op.remove(q => q.answers[answerIndex].likes, likeIndex)
       );
     } else {
-      this.checkingData.questionListDocs[this.questionTextJsonDocId].submitJson0Op(op =>
-        op.insert(ql => ql.questions[this.activeQuestionIndex].answers[answerIndex].likes, 0, {
+      this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
+        op.insert(q => q.answers[answerIndex].likes, 0, {
           ownerRef: currentUserId
         })
       );
@@ -495,46 +463,24 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit {
   // Unbind this component from the data when a user is removed from the project, otherwise console
   // errors appear before the app can navigate to the start component
   private onRemovedFromProject() {
-    this.questionsPanel.activeQuestion = null;
-    this.publicQuestions = [];
+    this.questionsPanel.activeQuestionDoc = null;
     this.projectUserConfigDoc = null;
-    for (const chapter of this.chapters) {
-      this.unbindCheckingData(new TextDocId(this.projectDoc.id, this.text.bookId, chapter));
+    if (this.questionsQuery != null) {
+      this.questionsQuery.dispose();
     }
+    this.questionsQuery = undefined;
     this.projectDoc = null;
     this.text = null;
-  }
-
-  private async bindCheckingData(id: TextDocId): Promise<void> {
-    if (id == null) {
-      return;
-    }
-
-    this.unbindCheckingData(id);
-    this.checkingData.questionListDocs[id.toString()] = await this.projectService.getQuestionList(id);
-    this.checkingData.realtimeSubscriptions[id.toString()] = this.checkingData.questionListDocs[
-      id.toString()
-    ].remoteChanges$.subscribe(() => this.refreshQuestions());
-  }
-
-  private unbindCheckingData(id: TextDocId): void {
-    if (!(id.toString() in this.checkingData.questionListDocs)) {
-      return;
-    }
-
-    this.checkingData.realtimeSubscriptions[id.toString()].unsubscribe();
-    delete this.checkingData.questionListDocs[id.toString()];
-    delete this.checkingData.realtimeSubscriptions[id.toString()];
   }
 
   private refreshSummary() {
     this.summary.answered = 0;
     this.summary.read = 0;
     this.summary.unread = 0;
-    for (const question of this.publicQuestions) {
-      if (CheckingUtils.hasUserAnswered(question, this.userService.currentUserId)) {
+    for (const questionDoc of this.questionsQuery.docs) {
+      if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
         this.summary.answered++;
-      } else if (CheckingUtils.hasUserReadQuestion(question, this.projectUserConfigDoc.data)) {
+      } else if (CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)) {
         this.summary.read++;
       } else {
         this.summary.unread++;

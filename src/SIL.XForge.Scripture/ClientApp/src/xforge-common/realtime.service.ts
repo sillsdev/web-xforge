@@ -1,149 +1,109 @@
 import { Injectable } from '@angular/core';
-import cloneDeep from 'lodash/cloneDeep';
-import ReconnectingWebSocket from 'reconnecting-websocket';
-import { Connection, Query } from 'sharedb/lib/client';
-import { environment } from '../environments/environment';
-import { LocationService } from './location.service';
 import { RealtimeDoc } from './models/realtime-doc';
-import { SharedbRealtimeDocAdapter } from './realtime-doc-adapter';
+import { RealtimeQuery } from './models/realtime-query';
+import { QueryParameters } from './query-parameters';
 import { RealtimeDocTypes } from './realtime-doc-types';
 import { RealtimeOfflineStore } from './realtime-offline-store';
+import { RealtimeRemoteStore } from './realtime-remote-store';
 
 function getDocKey(collection: string, id: string): string {
   return `${collection}:${id}`;
 }
 
-export interface QueryResults<T extends RealtimeDoc> {
-  docs: T[];
-  totalPagedCount: number;
-}
-
-export interface QueryParameters {
-  sort?: any;
-  skip?: number;
-  limit?: number;
-}
-
 /**
- * The realtime service is responsible for retrieving realtime data models. This service transparently manages the
- * interaction between three data sources: a memory cache, an IndexedDB database, and a realtime collaboration server
- * (ShareDB). Models are cached and reused until the service is reset.
+ * The realtime service is responsible for retrieving and mutating realtime data models. This service transparently
+ * manages the interaction between three data sources: a memory cache, a local database (IndexedDB), and a realtime
+ * collaboration server (ShareDB).
  */
 @Injectable({
   providedIn: 'root'
 })
 export class RealtimeService {
-  private ws: ReconnectingWebSocket;
-  private connection: Connection;
   private readonly docs = new Map<string, RealtimeDoc>();
-  private store: RealtimeOfflineStore;
-  private accessToken: string;
 
-  constructor(private readonly domainModel: RealtimeDocTypes, private readonly locationService: LocationService) {}
+  constructor(
+    private readonly docTypes: RealtimeDocTypes,
+    public readonly remoteStore: RealtimeRemoteStore,
+    public readonly offlineStore: RealtimeOfflineStore
+  ) {}
 
-  async init(accessToken: string, deleteStore: boolean): Promise<void> {
-    this.store = new RealtimeOfflineStore(this.domainModel);
-    if (deleteStore) {
-      await this.deleteStore();
-    }
-    this.accessToken = accessToken;
-    this.ws = new ReconnectingWebSocket(() => this.getUrl());
-    this.connection = new Connection(this.ws);
-  }
-
-  async deleteStore(): Promise<void> {
-    if (this.store != null) {
-      await this.store.deleteDB();
-    }
-  }
-
-  setAccessToken(accessToken: string): void {
-    this.accessToken = accessToken;
-  }
-
-  /**
-   * Gets the real-time data with the specified identity. It is not necessary to subscribe to the returned model.
-   *
-   * @param {RecordIdentity} identity The data identity.
-   * @returns {Promise<T>} The realtime data.
-   */
-  async get<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
+  get<T extends RealtimeDoc>(collection: string, id: string): T {
     const key = getDocKey(collection, id);
     let doc = this.docs.get(key);
     if (doc == null) {
-      doc = this.createDoc(collection, id);
+      const RealtimeDocType = this.docTypes.getDocType(collection);
+      doc = new RealtimeDocType(this.offlineStore, this.remoteStore.createDocAdapter(collection, id));
       this.docs.set(key, doc);
     }
-    await doc.subscribe();
     return doc as T;
   }
 
-  async onlineQuery<T extends RealtimeDoc>(
+  createQuery<T extends RealtimeDoc>(collection: string, parameters: QueryParameters): RealtimeQuery<T> {
+    return new RealtimeQuery<T>(this, this.remoteStore.createQueryAdapter(collection, parameters));
+  }
+
+  /**
+   * Gets the real-time doc with the specified id and subscribes to remote changes.
+   *
+   * @param {string} collection The collection name.
+   * @param {string} id The id.
+   * @returns {Promise<T>} The real-time doc.
+   */
+  async subscribe<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
+    const doc = this.get<T>(collection, id);
+    await doc.subscribe();
+    return doc;
+  }
+
+  async onlineFetch<T extends RealtimeDoc>(collection: string, id: string): Promise<T> {
+    const doc = this.get<T>(collection, id);
+    await doc.onlineFetch();
+    return doc;
+  }
+
+  /**
+   * Creates a real-time doc with the specified id and data.
+   *
+   * @param {string} collection The collection name.
+   * @param {string} id The id.
+   * @param {*} data The initial data.
+   * @returns {Promise<T>} The newly created real-time doc.
+   */
+  async create<T extends RealtimeDoc>(collection: string, id: string, data: any): Promise<T> {
+    const doc = this.get<T>(collection, id);
+    await doc.create(data);
+    return doc;
+  }
+
+  /**
+   * Performs an optimistic query on the specified collection and subscribes to any remote changes to both the results
+   * and the individual docs.
+   *
+   * @param {string} collection The collection name.
+   * @param {QueryParameters} parameters The query parameters.
+   * See https://github.com/share/sharedb-mongo#queries.
+   * @returns {Promise<RealtimeQuery<T>>} The query.
+   */
+  async subscribeQuery<T extends RealtimeDoc>(
     collection: string,
-    query: any,
-    parameters: QueryParameters = {}
-  ): Promise<QueryResults<T>> {
-    const resultsQueryParams = cloneDeep(query);
-    if (parameters.sort != null) {
-      resultsQueryParams.$sort = parameters.sort;
-    }
-    let getCount = false;
-    if (parameters.skip != null) {
-      resultsQueryParams.$skip = parameters.skip;
-      getCount = true;
-    }
-    if (parameters.limit != null) {
-      resultsQueryParams.$limit = parameters.limit;
-      getCount = true;
-    }
-    const queryPromises: Promise<Query>[] = [];
-    queryPromises.push(this.createFetchQuery(collection, resultsQueryParams));
-    if (getCount) {
-      const countQueryParams = cloneDeep(query);
-      countQueryParams.$count = { applySkipLimit: false };
-      queryPromises.push(this.createFetchQuery(collection, countQueryParams));
-    }
-    const queries = await Promise.all(queryPromises);
-    const resultsQuery = queries[0];
-    const RealtimeDocType = this.domainModel.getDocType(collection);
-    const docs: T[] = [];
-    for (const shareDoc of resultsQuery.results) {
-      const key = getDocKey(collection, shareDoc.id);
-      let doc = this.docs.get(key);
-      if (doc == null) {
-        doc = new RealtimeDocType(new SharedbRealtimeDocAdapter(this.connection, collection, shareDoc), this.store);
-        this.docs.set(key, doc);
-      }
-      docs.push(doc as T);
-    }
-    return { docs, totalPagedCount: queries.length === 2 ? queries[1].extra : docs.length };
+    parameters: QueryParameters
+  ): Promise<RealtimeQuery<T>> {
+    const query = this.createQuery<T>(collection, parameters);
+    await query.subscribe();
+    return query;
   }
 
-  private getUrl(): string {
-    const protocol = this.locationService.protocol === 'https:' ? 'wss:' : 'ws:';
-    let url = `${protocol}//${this.locationService.hostname}`;
-    if ('realtimePort' in environment && environment.realtimePort != null && environment.realtimePort !== 0) {
-      url += `:${environment.realtimePort}`;
-    }
-    url += environment.realtimeUrl + '?access_token=' + this.accessToken;
-    return url;
-  }
-
-  private createDoc(collection: string, id: string): RealtimeDoc {
-    const sharedbDoc = this.connection.get(collection, id);
-    const RealtimeDocType = this.domainModel.getDocType(collection);
-    return new RealtimeDocType(new SharedbRealtimeDocAdapter(this.connection, collection, sharedbDoc), this.store);
-  }
-
-  private createFetchQuery(collection: string, query: any): Promise<Query> {
-    return new Promise<Query>((resolve, reject) => {
-      const queryObj = this.connection.createFetchQuery(collection, query, {}, err => {
-        if (err != null) {
-          reject(err);
-        } else {
-          resolve(queryObj);
-        }
-      });
-    });
+  /**
+   * Performs a pessimistic query on the specified collection. The returned query is not notified of any changes.
+   *
+   * @param {string} collection The collection name.
+   * @param {QueryParameters} parameters The query parameters.
+   * See https://github.com/share/sharedb-mongo#queries.
+   * @returns {Promise<RealtimeQuery<T>>} The query.
+   */
+  async onlineQuery<T extends RealtimeDoc>(collection: string, parameters: QueryParameters): Promise<RealtimeQuery<T>> {
+    const query = this.createQuery<T>(collection, parameters);
+    await query.fetch();
+    return query;
   }
 }

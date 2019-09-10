@@ -3,20 +3,19 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import * as OTJson0 from 'ot-json0';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { User } from 'realtime-server/lib/common/models/user';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AvatarTestingModule } from '../../avatar/avatar-testing.module';
 import { LocationService } from '../../location.service';
+import { MemoryRealtimeOfflineStore } from '../../memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from '../../memory-realtime-remote-store';
 import { ProjectDoc } from '../../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../../models/project-role-info';
 import { UserProfileDoc } from '../../models/user-profile-doc';
 import { NoticeService } from '../../notice.service';
 import { ProjectService } from '../../project.service';
-import { MemoryRealtimeDocAdapter, RealtimeDocAdapter } from '../../realtime-doc-adapter';
-import { RealtimeOfflineStore } from '../../realtime-offline-store';
 import { ShareControlComponent } from '../../share/share-control.component';
 import { UICommonModule } from '../../ui-common.module';
 import { UserService } from '../../user.service';
@@ -151,9 +150,7 @@ describe('CollaboratorsComponent', () => {
 });
 
 class TestProjectDoc extends ProjectDoc {
-  constructor(adapter: RealtimeDocAdapter, store: RealtimeOfflineStore) {
-    super('projects', adapter, store);
-  }
+  static readonly COLLECTION = 'projects';
   get taskNames(): string[] {
     return [];
   }
@@ -169,7 +166,8 @@ class TestEnvironment {
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedProjectService = mock(ProjectService);
   readonly mockedUserService = mock(UserService);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
+
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: this.project01Id }));
@@ -313,17 +311,14 @@ class TestEnvironment {
 
   private addUserProfile(id: string, user: User): void {
     when(this.mockedUserService.getProfile(id)).thenResolve(
-      new UserProfileDoc(
-        new MemoryRealtimeDocAdapter(id, OTJson0.type, user),
-        instance(this.mockedRealtimeOfflineStore)
-      )
+      new UserProfileDoc(this.offlineStore, new MemoryRealtimeDocAdapter(UserProfileDoc.COLLECTION, id, user))
     );
   }
 
   private setupThisProjectData(projectId: string, project: Project): void {
     const projectDoc = new TestProjectDoc(
-      new MemoryRealtimeDocAdapter(projectId, OTJson0.type, project),
-      instance(this.mockedRealtimeOfflineStore)
+      this.offlineStore,
+      new MemoryRealtimeDocAdapter(TestProjectDoc.COLLECTION, projectId, project)
     );
     when(this.mockedProjectService.get(projectId)).thenResolve(projectDoc);
   }

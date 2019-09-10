@@ -3,14 +3,12 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
 {
-    public class SFProjectUserConfig : Json0Snapshot, IOwnedData
+    public class SFProjectUserConfig : ProjectData
     {
         public static string GetDocId(string projectId, string userId)
         {
             return $"{projectId}:{userId}";
         }
-
-        public string OwnerRef { get; set; }
 
         public string SelectedTask { get; set; }
         public string SelectedBookId { get; set; }

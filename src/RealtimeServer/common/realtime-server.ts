@@ -145,9 +145,7 @@ export abstract class RealtimeServer {
     return undefined;
   }
 
-  async getUserProjectRole(session: ConnectSession, docId: string): Promise<string | undefined> {
-    const parts = docId.split(':');
-    const projectId = parts[0];
+  async getUserProjectRole(session: ConnectSession, projectId: string): Promise<string | undefined> {
     let projectRole = session.projectRoles.get(projectId);
     if (projectRole == null) {
       session.projectRoles = await this.getUserProjectRoles(session.userId);

@@ -15,10 +15,8 @@ export class SFProjectRights extends ProjectRights {
     super();
 
     const observerRights: ProjectRight[] = [
-      { projectDomain: SFProjectDomain.ProjectUserConfigs, operation: Operation.Create },
       { projectDomain: SFProjectDomain.ProjectUserConfigs, operation: Operation.ViewOwn },
       { projectDomain: SFProjectDomain.ProjectUserConfigs, operation: Operation.EditOwn },
-      { projectDomain: SFProjectDomain.ProjectUserConfigs, operation: Operation.DeleteOwn },
 
       { projectDomain: SFProjectDomain.Texts, operation: Operation.View },
 

@@ -15,22 +15,20 @@ import {
   WordAlignmentMatrix
 } from '@sillsdev/machine';
 import cloneDeep from 'lodash/cloneDeep';
-import * as OTJson0 from 'ot-json0';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/realtime-doc-adapter';
-import { RealtimeOfflineStore } from 'xforge-common/realtime-offline-store';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { Delta, TextDoc } from '../../core/models/text-doc';
-import { TextDocId } from '../../core/models/text-doc-id';
+import { getSFProjectUserConfigDocId, SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
 import { CONFIDENCE_THRESHOLD_TIMEOUT, EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
@@ -610,10 +608,10 @@ class TestEnvironment {
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
-  readonly mockedRealtimeOfflineStore = mock(RealtimeOfflineStore);
 
   lastApprovedPrefix: string[] = [];
 
+  private readonly offlineStore = new MemoryRealtimeOfflineStore();
   private readonly params$: BehaviorSubject<Params>;
   private trainingProgress$ = new Subject<ProgressStatus>();
   private readonly userConfigDocs = new Map<string, SFProjectUserConfigDoc>();
@@ -704,8 +702,8 @@ class TestEnvironment {
         { bookId: 'text03', name: 'Book 3', chapters: [{ number: 1 }, { number: 2 }], hasSource: false }
       ]
     };
-    const adapter = new MemoryRealtimeDocAdapter('project01', OTJson0.type, project);
-    const projectDataDoc = new SFProjectDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    const adapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project);
+    const projectDataDoc = new SFProjectDoc(this.offlineStore, adapter);
     when(this.mockedSFProjectService.get('project01')).thenResolve(projectDataDoc);
   }
 
@@ -829,13 +827,17 @@ class TestEnvironment {
         break;
     }
     delta.insert('\n', { para: { style: 'p' } });
-    const adapter = new MemoryRealtimeDocAdapter(id.toString(), RichText.type, delta);
-    return new TextDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    const adapter = new MemoryRealtimeDocAdapter(TextDoc.COLLECTION, id.toString(), delta, RichText.type);
+    return new TextDoc(this.offlineStore, adapter);
   }
 
   private addProjectUserConfig(userConfig: SFProjectUserConfig): void {
-    const adapter = new MemoryRealtimeDocAdapter(`project01:${userConfig.ownerRef}`, OTJson0.type, userConfig);
-    const projectUserConfigDoc = new SFProjectUserConfigDoc(adapter, instance(this.mockedRealtimeOfflineStore));
+    const adapter = new MemoryRealtimeDocAdapter(
+      SFProjectUserConfigDoc.COLLECTION,
+      getSFProjectUserConfigDocId('project01', userConfig.ownerRef),
+      userConfig
+    );
+    const projectUserConfigDoc = new SFProjectUserConfigDoc(this.offlineStore, adapter);
     when(this.mockedSFProjectService.getUserConfig('project01', userConfig.ownerRef)).thenResolve(projectUserConfigDoc);
     this.userConfigDocs.set(userConfig.ownerRef, projectUserConfigDoc);
   }
