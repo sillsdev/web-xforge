@@ -74,16 +74,17 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       return [];
     }
 
-    const rows: Row[] =
-      this.term && this.term.trim()
-        ? this._userRows.filter(userRow => {
-            return (
-              userRow.user &&
-              ((userRow.user.displayName && userRow.user.displayName.includes(this.term)) ||
-                (userRow.roleName && userRow.roleName.includes(this.term)))
-            );
-          })
-        : this._userRows;
+    const term = this.term && this.term.toUpperCase();
+    const rows: Row[] = term
+      ? this._userRows.filter(userRow => {
+          return (
+            userRow.user &&
+            ((userRow.user.displayName && userRow.user.displayName.toUpperCase().includes(term)) ||
+              (userRow.roleName && userRow.roleName.toUpperCase().includes(term)) ||
+              (userRow.user.email && userRow.user.email.toUpperCase().includes(term)))
+          );
+        })
+      : this._userRows;
 
     return this.page(rows);
   }
