@@ -15,7 +15,9 @@ import { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { BehaviorSubject, fromEvent, Subject, Subscription } from 'rxjs';
 import { debounceTime, filter, map, repeat, skip, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -26,7 +28,7 @@ import { HelpHeroService } from '../../core/help-hero.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta } from '../../core/models/text-doc';
-import { TextDocId, TextType } from '../../core/models/text-doc';
+import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
@@ -126,7 +128,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   get isTargetTextRight(): boolean {
-    return this.projectUserConfigDoc == null ? true : this.projectUserConfigDoc.data.isTargetTextRight;
+    return this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded
+      ? true
+      : this.projectUserConfigDoc.data.isTargetTextRight;
   }
 
   set isTargetTextRight(value: boolean) {
@@ -181,8 +185,8 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
   }
 
-  get textName(): string {
-    return this.text == null ? '' : this.text.name;
+  get bookName(): string {
+    return this.text == null ? '' : Canon.bookNumberToEnglishName(this.text.bookNum);
   }
 
   get hasSource(): boolean {
@@ -225,8 +229,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
         this.sourceLoaded = false;
         this.targetLoaded = false;
         this.loadingStarted();
-        const projectId = params['projectId'];
-        const bookId = params['bookId'];
+        const projectId = params['projectId'] as string;
+        const bookId = params['bookId'] as string;
+        const bookNum = bookId != null ? Canon.bookIdToNumber(bookId) : 0;
 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
@@ -246,7 +251,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
         if (!this.projectDoc.isLoaded) {
           return;
         }
-        this.text = this.projectDoc.data.texts.find(t => t.bookId === bookId);
+        this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
         this.chapters = this.text.chapters.map(c => c.number);
 
         this.loadProjectUserConfig();
@@ -259,7 +264,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
           this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
             let sourceId: TextDocId;
             if (this.hasSource) {
-              sourceId = new TextDocId(this.projectDoc.id, this.text.bookId, this._chapter, 'source');
+              sourceId = new TextDocId(this.projectDoc.id, this.text.bookNum, this._chapter, 'source');
               if (!isEqual(this.source.id, sourceId)) {
                 this.sourceLoaded = false;
                 this.loadingStarted();
@@ -334,14 +339,14 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
         if (
           this.projectUserConfigDoc != null &&
           this.target.segmentRef !== '' &&
-          (this.projectUserConfigDoc.data.selectedBookId !== this.text.bookId ||
-            this.projectUserConfigDoc.data.selectedChapter !== this._chapter ||
+          (this.projectUserConfigDoc.data.selectedBookNum !== this.text.bookNum ||
+            this.projectUserConfigDoc.data.selectedChapterNum !== this._chapter ||
             this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
           await this.projectUserConfigDoc.submitJson0Op(op => {
             op.set<string>(puc => puc.selectedTask, 'translate');
-            op.set(puc => puc.selectedBookId, this.text.bookId);
-            op.set(puc => puc.selectedChapter, this._chapter);
+            op.set(puc => puc.selectedBookNum, this.text.bookNum);
+            op.set(puc => puc.selectedChapterNum, this._chapter);
             op.set(puc => puc.selectedSegment, this.target.segmentRef);
             op.set(puc => puc.selectedSegmentChecksum, this.target.segmentChecksum);
           });
@@ -522,17 +527,17 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     let selectedSegmentChecksum: number;
     if (
       this.projectUserConfigDoc != null &&
-      this.projectUserConfigDoc.data.selectedBookId === this.text.bookId &&
-      this.projectUserConfigDoc.data.selectedChapter === this._chapter &&
+      this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum &&
+      this.projectUserConfigDoc.data.selectedChapterNum === this._chapter &&
       this.projectUserConfigDoc.data.selectedSegment !== ''
     ) {
       selectedSegment = this.projectUserConfigDoc.data.selectedSegment;
       selectedSegmentChecksum = this.projectUserConfigDoc.data.selectedSegmentChecksum;
     }
     this.source.id = this.hasSource
-      ? new TextDocId(this.projectDoc.id, this.text.bookId, this._chapter, 'source')
+      ? new TextDocId(this.projectDoc.id, this.text.bookNum, this._chapter, 'source')
       : undefined;
-    const targetId = new TextDocId(this.projectDoc.id, this.text.bookId, this._chapter, 'target');
+    const targetId = new TextDocId(this.projectDoc.id, this.text.bookNum, this._chapter, 'target');
     if (!isEqual(targetId, this.target.id)) {
       // blur the target before switching so that scrolling is reset to the top
       this.target.blur();
@@ -640,7 +645,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
 
     await this.translationSession.approve(true);
     segment.acceptChanges();
-    console.log('Segment ' + segment.ref + ' of document ' + segment.bookId + ' was trained successfully.');
+    console.log(
+      'Segment ' + segment.ref + ' of document ' + Canon.bookNumberToId(segment.bookNum) + ' was trained successfully.'
+    );
   }
 
   private canTrainSegment(segment: Segment): boolean {
@@ -654,12 +661,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       this.confidenceThreshold$.next(pcnt);
     }
     let chapter = 1;
-    if (this.projectUserConfigDoc.data.selectedBookId === this.text.bookId) {
-      if (
-        this.projectUserConfigDoc.data.selectedChapter != null &&
-        this.projectUserConfigDoc.data.selectedChapter !== 0
-      ) {
-        chapter = this.projectUserConfigDoc.data.selectedChapter;
+    if (this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
+      if (this.projectUserConfigDoc.data.selectedChapterNum != null) {
+        chapter = this.projectUserConfigDoc.data.selectedChapterNum;
       }
     }
     this._chapter = chapter;

@@ -3,7 +3,10 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router'
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import {
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
+} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
@@ -12,7 +15,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
-import { getSFProjectUserConfigDocId, SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
+import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectComponent } from './project.component';
 
@@ -24,7 +27,7 @@ describe('ProjectComponent', () => {
     tick();
 
     verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'text02']), anything())).once();
+    verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'MRK']), anything())).once();
     expect().nothing();
   }));
 
@@ -35,7 +38,7 @@ describe('ProjectComponent', () => {
     tick();
 
     verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'text01']), anything())).once();
+    verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'MAT']), anything())).once();
     expect().nothing();
   }));
 
@@ -46,7 +49,7 @@ describe('ProjectComponent', () => {
     tick();
 
     verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(deepEqual(['./', 'checking', 'text01']), anything())).once();
+    verify(env.mockedRouter.navigate(deepEqual(['./', 'checking', 'MAT']), anything())).once();
     expect().nothing();
   }));
 
@@ -80,7 +83,7 @@ describe('ProjectComponent', () => {
     tick();
 
     verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).once();
-    verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'text02']), anything())).once();
+    verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'MRK']), anything())).once();
     expect().nothing();
   }));
 
@@ -154,7 +157,14 @@ class TestEnvironment {
       ownerRef: 'user01',
       projectRef: 'project01',
       selectedTask: args.selectedTask,
-      selectedBookId: args.selectedTask == null ? undefined : 'text02'
+      selectedBookNum: args.selectedTask == null ? undefined : 41,
+      isTargetTextRight: true,
+      confidenceThreshold: 0.2,
+      translationSuggestionsEnabled: true,
+      selectedSegment: '',
+      questionRefsRead: [],
+      answerRefsRead: [],
+      commentRefsRead: []
     };
     const projectUserConfigDoc = new SFProjectUserConfigDoc(
       this.offlineStore,
@@ -184,10 +194,7 @@ class TestEnvironment {
       sync: { queuedCount: 0 },
       texts:
         args.hasTexts == null || args.hasTexts
-          ? [
-              { bookId: 'text01', name: 'Text 01', chapters: [], hasSource: false },
-              { bookId: 'text02', name: 'Text 02', chapters: [], hasSource: false }
-            ]
+          ? [{ bookNum: 40, chapters: [], hasSource: false }, { bookNum: 41, chapters: [], hasSource: false }]
           : [],
       userRoles: { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }
     };

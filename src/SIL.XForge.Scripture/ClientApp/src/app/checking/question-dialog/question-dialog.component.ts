@@ -11,33 +11,30 @@ import {
   Validators
 } from '@angular/forms';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
-import { TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { toStartAndEndVerseRefs } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { ScriptureReference } from '../../core/models/scripture-reference';
+import { Anchorable } from '../../core/models/anchorable';
 import { TextDocId } from '../../core/models/text-doc';
+import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { ScrVers } from '../../shared/scripture-utils/scr-vers';
-import { VerseRef } from '../../shared/scripture-utils/verse-ref';
-import { verseRefDataToString, verseRefToVerseRefData } from '../../shared/scripture-utils/verse-ref-data-converters';
 import { SFValidators } from '../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking/checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
 export interface QuestionDialogData {
   question?: Question;
-  textsByBook: TextsByBook;
+  textsByBookId: TextsByBookId;
   projectId: string;
 }
 
 export interface QuestionDialogResult {
-  scriptureStart?: string;
-  scriptureEnd?: string;
+  verseRef: string;
   text?: string;
   audio?: AudioAttachment;
 }
@@ -52,14 +49,14 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   questionForm: FormGroup = new FormGroup(
     {
-      scriptureStart: new FormControl('', [Validators.required, SFValidators.verseStr(this.data.textsByBook)]),
-      scriptureEnd: new FormControl('', [SFValidators.verseStr(this.data.textsByBook)]),
+      scriptureStart: new FormControl('', [Validators.required, SFValidators.verseStr(this.data.textsByBookId)]),
+      scriptureEnd: new FormControl('', [SFValidators.verseStr(this.data.textsByBookId)]),
       questionText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])
     },
     this.validateVerseAfterStart
   );
   audio: AudioAttachment = {};
-  _scriptureRef: ScriptureReference;
+  _selection: Anchorable;
 
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
@@ -84,58 +81,64 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
 
   get textDocId(): TextDocId {
     if (this.scriptureStart.value && this.scriptureStart.valid) {
-      const verseData = VerseRef.fromStr(this.scriptureStart.value);
-      return new TextDocId(this.data.projectId, verseData.book, verseData.chapterNum);
+      const verseData = VerseRef.parse(this.scriptureStart.value);
+      return new TextDocId(this.data.projectId, verseData.bookNum, verseData.chapterNum);
     }
     return undefined;
   }
 
-  get scriptureRef() {
-    return this._scriptureRef;
+  get selection() {
+    return this._selection;
   }
 
   ngOnInit(): void {
-    if (this.data && this.data.question) {
-      const question = this.data.question;
-      if (question.scriptureStart) {
-        this.scriptureStart.setValue(verseRefDataToString(question.scriptureStart));
+    const question = this.data.question;
+    if (question != null) {
+      const [startRef, endRef] = toStartAndEndVerseRefs(question.verseRef);
+      this.scriptureStart.setValue(startRef.toString());
+      if (endRef != null) {
+        this.scriptureEnd.setValue(endRef.toString());
       }
-      if (question.scriptureEnd) {
-        this.scriptureEnd.setValue(verseRefDataToString(question.scriptureEnd));
-      }
-      if (question.text) {
+      if (question.text != null) {
         this.questionText.setValue(question.text);
       }
-      if (question.audioUrl) {
+      if (question.audioUrl != null) {
         this.audio.url = question.audioUrl;
         this.questionText.clearValidators();
         this.questionText.updateValueAndValidity();
       }
-      this.updateScriptureRef();
+      this.updateSelection();
     }
 
     this.subscribe(this.scriptureStart.valueChanges, () => {
       if (this.scriptureStart.valid) {
-        this.updateScriptureRef();
+        this.updateSelection();
       }
     });
     this.subscribe(this.scriptureEnd.valueChanges, () => {
       if (this.scriptureEnd.valid) {
-        this.updateScriptureRef();
+        this.updateSelection();
       }
     });
   }
 
-  updateScriptureRef() {
+  updateSelection() {
     if (this.textDocId == null) {
-      this._scriptureRef = null;
+      this._selection = null;
     }
-    const verseStart = VerseRef.fromStr(this.scriptureStart.value);
-    const verseEnd = VerseRef.fromStr(this.scriptureEnd.value);
-    this._scriptureRef = {
-      scriptureStart: verseRefToVerseRefData(verseStart),
-      scriptureEnd: verseRefToVerseRefData(verseEnd)
-    };
+
+    let verseRefStr = this.scriptureStart.value;
+    if (this.scriptureEnd.value !== '') {
+      const scriptureEnd = VerseRef.parse(this.scriptureEnd.value);
+      verseRefStr += `-${scriptureEnd.verse}`;
+    }
+
+    let verseRef = VerseRef.tryParse(verseRefStr);
+    if (verseRef != null) {
+      verseRef = verseRef.valid ? verseRef : undefined;
+    }
+
+    this._selection = { verseRef };
   }
 
   updateScriptureEndEnabled() {
@@ -152,8 +155,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     }
 
     this.dialogRef.close({
-      scriptureStart: this.scriptureStart.value,
-      scriptureEnd: this.scriptureEnd.value,
+      verseRef: this._selection.verseRef.toString(),
       text: this.questionText.value,
       audio: this.audio
     });
@@ -166,23 +168,23 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       this.scriptureStart.markAsUntouched();
     }
 
-    const currentVerseSelection = verseRefToVerseRefData(VerseRef.fromStr(control.value, ScrVers.English));
+    const currentVerseSelection = VerseRef.tryParse(control.value);
 
-    let rangeStart: VerseRefData;
+    let rangeStart: VerseRef;
     if (control !== this.scriptureStart) {
-      rangeStart = verseRefToVerseRefData(VerseRef.fromStr(this.scriptureStart.value, ScrVers.English));
+      rangeStart = VerseRef.tryParse(this.scriptureStart.value);
     }
 
     const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
-      data: { input: currentVerseSelection, booksAndChaptersToShow: this.data.textsByBook, rangeStart }
+      data: { input: currentVerseSelection, booksAndChaptersToShow: this.data.textsByBookId, rangeStart }
     };
 
     const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig);
-    dialogRef.afterClosed().subscribe((result: VerseRefData | 'close') => {
+    dialogRef.afterClosed().subscribe((result: VerseRef | 'close') => {
       if (result !== 'close') {
         control.markAsTouched();
         control.markAsDirty();
-        control.setValue(verseRefDataToString(result));
+        control.setValue(result.toString());
         this.updateScriptureEndEnabled();
       }
     });
@@ -199,20 +201,17 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   }
 
   private validateVerseAfterStart(group: FormGroup): ValidationErrors | null {
-    const scriptureStartRef = VerseRef.fromStr(group.controls.scriptureStart.value, ScrVers.English);
-    const scriptureEndRef = VerseRef.fromStr(group.controls.scriptureEnd.value, ScrVers.English);
+    const scriptureStartRef = VerseRef.tryParse(group.controls.scriptureStart.value);
+    const scriptureEndRef = VerseRef.tryParse(group.controls.scriptureEnd.value);
     if (
-      !scriptureStartRef.valid ||
-      !scriptureEndRef.valid ||
+      scriptureStartRef == null ||
+      scriptureEndRef == null ||
       group.controls.scriptureStart.errors ||
       group.controls.scriptureEnd.errors
     ) {
       return null;
     }
-    if (
-      scriptureStartRef.book !== scriptureEndRef.book ||
-      scriptureStartRef.chapterNum !== scriptureEndRef.chapterNum
-    ) {
+    if (scriptureStartRef.BBBCCC !== scriptureEndRef.BBBCCC) {
       return { verseDifferentBookOrChapter: true };
     }
     const isAfterStart: boolean = scriptureStartRef.verseNum <= scriptureEndRef.verseNum;

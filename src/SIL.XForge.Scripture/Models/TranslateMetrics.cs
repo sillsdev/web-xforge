@@ -10,8 +10,8 @@ namespace SIL.XForge.Scripture.Models
         public string SessionId { get; set; }
         public string UserRef { get; set; }
         public string ProjectRef { get; set; }
-        public string BookId { get; set; }
-        public int Chapter { get; set; }
+        public int BookNum { get; set; }
+        public int ChapterNum { get; set; }
         public DateTime Timestamp { get; set; }
 
         // editing metrics

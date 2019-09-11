@@ -11,8 +11,8 @@ namespace SIL.XForge.Scripture.Models
         }
 
         public string SelectedTask { get; set; }
-        public string SelectedBookId { get; set; }
-        public int SelectedChapter { get; set; }
+        public int? SelectedBookNum { get; set; }
+        public int? SelectedChapterNum { get; set; }
 
         // translate
         public bool IsTargetTextRight { get; set; } = true;

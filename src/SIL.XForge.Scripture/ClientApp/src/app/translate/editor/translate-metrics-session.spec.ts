@@ -31,8 +31,8 @@ describe('TranslateMetricsSession', () => {
         id: env.session.prevMetricsId,
         type: 'navigate',
         sessionId: env.session.id,
-        bookId: 'text01',
-        chapter: 1,
+        bookNum: 40,
+        chapterNum: 1,
         keyNavigationCount: 1
       };
       verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
@@ -68,8 +68,8 @@ describe('TranslateMetricsSession', () => {
         id: env.session.prevMetricsId,
         type: 'navigate',
         sessionId: env.session.id,
-        bookId: 'text01',
-        chapter: 1,
+        bookNum: 40,
+        chapterNum: 1,
         mouseClickCount: 2
       };
       verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
@@ -141,8 +141,8 @@ describe('TranslateMetricsSession', () => {
         id: env.session.prevMetricsId,
         type: 'edit',
         sessionId: env.session.id,
-        bookId: 'text01',
-        chapter: 1,
+        bookNum: 40,
+        chapterNum: 1,
         keyCharacterCount: 1,
         segment: 'verse_1_1',
         sourceWordCount: 8,
@@ -180,8 +180,8 @@ describe('TranslateMetricsSession', () => {
         id: env.session.prevMetricsId,
         type: 'edit',
         sessionId: env.session.id,
-        bookId: 'text01',
-        chapter: 1,
+        bookNum: 40,
+        chapterNum: 1,
         keyCharacterCount: 1,
         segment: 'verse_1_1',
         sourceWordCount: 8,
@@ -264,8 +264,8 @@ describe('TranslateMetricsSession', () => {
       id: metricsId,
       type: 'edit',
       sessionId: sessionId,
-      bookId: 'text01',
-      chapter: 1,
+      bookNum: 40,
+      chapterNum: 1,
       keyCharacterCount: 2,
       segment: 'verse_1_1',
       sourceWordCount: 8,
@@ -290,8 +290,8 @@ describe('TranslateMetricsSession', () => {
       id: env.session.metrics.id,
       type: 'navigate',
       sessionId: env.session.id,
-      bookId: 'text01',
-      chapter: 1,
+      bookNum: 40,
+      chapterNum: 1,
       keyNavigationCount: 2
     };
     verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
@@ -307,8 +307,8 @@ describe('TranslateMetricsSession', () => {
       id: env.session.metrics.id,
       type: 'navigate',
       sessionId: env.session.id,
-      bookId: 'text01',
-      chapter: 1,
+      bookNum: 40,
+      chapterNum: 1,
       keyNavigationCount: 2,
       mouseClickCount: 1
     };
@@ -331,8 +331,8 @@ class TestEnvironment {
   private readonly tokenizer = new LatinWordTokenizer();
 
   constructor() {
-    this.addTextDoc(new TextDocId('project01', 'text01', 1, 'source'));
-    this.addTextDoc(new TextDocId('project01', 'text01', 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 40, 1, 'source'));
+    this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
     when(this.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
 
     TestBed.configureTestingModule({
@@ -342,11 +342,11 @@ class TestEnvironment {
     });
     this.sourceFixture = TestBed.createComponent(TextComponent);
     this.source = this.sourceFixture.componentInstance;
-    this.source.id = new TextDocId('project01', 'text01', 1, 'source');
+    this.source.id = new TextDocId('project01', 40, 1, 'source');
     this.source.segmentRef = 'verse_1_1';
     this.targetFixture = TestBed.createComponent(TextComponent);
     this.target = this.targetFixture.componentInstance;
-    this.target.id = new TextDocId('project01', 'text01', 1, 'target');
+    this.target.id = new TextDocId('project01', 40, 1, 'target');
     this.target.segmentRef = 'verse_1_1';
     this.session = new TranslateMetricsSession(instance(this.mockedSFProjectService));
 
@@ -403,11 +403,11 @@ class TestEnvironment {
 
   private createTextDoc(id: TextDocId): TextDoc {
     const delta = new Delta();
-    delta.insert({ chapter: { number: id.chapter.toString(), style: 'c' } });
+    delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapter}, verse 1.`, { segment: `verse_${id.chapter}_1` });
+    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
     delta.insert({ verse: { number: '2', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapter}, verse 2.`, { segment: `verse_${id.chapter}_2` });
+    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2.`, { segment: `verse_${id.chapterNum}_2` });
     delta.insert('\n', { para: { style: 'p' } });
     const adapter = new MemoryRealtimeDocAdapter(TextDoc.COLLECTION, id.toString(), delta, RichText.type);
     return new TextDoc(this.offlineStore, adapter);

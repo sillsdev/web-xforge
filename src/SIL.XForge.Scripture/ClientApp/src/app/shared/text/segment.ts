@@ -9,7 +9,7 @@ export class Segment {
   private _checksum: number = null;
   private initialTextLen: number = -1;
 
-  constructor(public readonly bookId: string, public readonly ref: string) {}
+  constructor(public readonly bookNum: number, public readonly ref: string) {}
 
   get text(): string {
     return this._text;

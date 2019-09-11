@@ -72,19 +72,14 @@ namespace SIL.XForge.Scripture.Services
                     string threadId = $"ANSWER_{answer.DataId}";
                     var threadElem = new XElement("thread", new XAttribute("id", threadId),
                         new XElement("selection",
-                            new XAttribute("verseRef", question.ScriptureStart.ToString()),
+                            new XAttribute("verseRef", question.VerseRef.ToString()),
                             new XAttribute("startPos", 0),
                             new XAttribute("selectedText", "")));
                     var answerPrefixContents = new List<object>();
                     answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), question.Text));
                     if (!string.IsNullOrEmpty(answer.ScriptureText))
                     {
-                        string scriptureRef = answer.ScriptureStart.ToString();
-                        if (!string.IsNullOrEmpty(answer.ScriptureEnd.Verse)
-                            && answer.ScriptureEnd.Verse != answer.ScriptureStart.Verse)
-                        {
-                            scriptureRef += $"-{answer.ScriptureEnd.Verse}";
-                        }
+                        string scriptureRef = answer.VerseRef.ToString();
                         string scriptureText = $"{answer.ScriptureText.Trim()} ({scriptureRef})";
                         answerPrefixContents.Add(new XElement("span", new XAttribute("style", "italic"),
                             scriptureText));

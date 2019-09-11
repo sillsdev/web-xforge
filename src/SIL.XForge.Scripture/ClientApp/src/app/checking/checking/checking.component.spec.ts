@@ -11,11 +11,14 @@ import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
+import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
-import { TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
+import {
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
+} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -33,15 +36,12 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { getQuestionDocId, QuestionDoc } from '../../core/models/question-doc';
+import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { getSFProjectUserConfigDocId, SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
-import { Delta, getTextDocId, TextDoc } from '../../core/models/text-doc';
+import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ShareControlComponent } from '../../shared/share/share-control.component';
-import { ShareDialogComponent } from '../../shared/share/share-dialog.component';
-import { ShareComponent } from '../../shared/share/share.component';
 import { SharedModule } from '../../shared/shared.module';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
@@ -166,8 +166,7 @@ describe('CheckingComponent', () => {
         projectRef: 'project01',
         text: 'Admin just added a question.',
         answers: [],
-        scriptureStart: { book: 'JHN', chapter: '1', verse: '10', versification: 'English' },
-        scriptureEnd: { book: 'JHN', chapter: '1', verse: '11', versification: 'English' },
+        verseRef: { bookNum: 43, chapterNum: 1, verseNum: 10, verse: '10-11' },
         isArchived: false,
         dateCreated: '',
         dateModified: ''
@@ -516,6 +515,10 @@ class TestEnvironment {
   private adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.adminUser.id,
     projectRef: 'project01',
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    translationSuggestionsEnabled: true,
+    selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
@@ -524,6 +527,10 @@ class TestEnvironment {
   private reviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.checkerUser.id,
     projectRef: 'project01',
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    translationSuggestionsEnabled: true,
+    selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
@@ -532,6 +539,10 @@ class TestEnvironment {
   private cleanReviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.cleanCheckerUser.id,
     projectRef: 'project01',
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    translationSuggestionsEnabled: true,
+    selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
@@ -558,8 +569,7 @@ class TestEnvironment {
     },
     texts: [
       {
-        bookId: 'JHN',
-        name: 'John',
+        bookNum: 43,
         hasSource: false,
         chapters: [{ number: 1, lastVerse: 18 }, { number: 2, lastVerse: 25 }]
       }
@@ -889,12 +899,12 @@ class TestEnvironment {
 
     this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
       {
-        id: getTextDocId('project01', 'JHN', 1),
+        id: getTextDocId('project01', 43, 1),
         data: this.createTextData(),
         type: RichText.type.name
       },
       {
-        id: getTextDocId('project01', 'JHN', 2),
+        id: getTextDocId('project01', 43, 2),
         data: this.createTextData(),
         type: RichText.type.name
       }
@@ -913,8 +923,7 @@ class TestEnvironment {
           ownerRef: this.adminUser.id,
           projectRef: 'project01',
           text: 'Book 1, Q' + questionNumber + ' text',
-          scriptureStart: { book: 'JHN', chapter: '1', verse: '1', versification: 'English' },
-          scriptureEnd: { book: 'JHN', chapter: '1', verse: '2', versification: 'English' },
+          verseRef: { bookNum: 43, chapterNum: 1, verseNum: 1, verse: '1-2' },
           answers: [],
           isArchived: false,
           dateCreated: dateNow,
@@ -929,22 +938,19 @@ class TestEnvironment {
         ownerRef: this.adminUser.id,
         projectRef: 'project01',
         text: 'Question relating to chapter 2',
-        scriptureStart: { book: 'JHN', chapter: '2', verse: '1', versification: 'English' },
-        scriptureEnd: { book: 'JHN', chapter: '2', verse: '2', versification: 'English' },
+        verseRef: { bookNum: 43, chapterNum: 2, verseNum: 1, verse: '1-2' },
         answers: [],
         isArchived: false,
         dateCreated: dateNow,
         dateModified: dateNow
       }
     });
-    questions[3].data.scriptureStart.verse = '3';
-    questions[3].data.scriptureEnd.verse = '4';
+    questions[3].data.verseRef.verse = '3-4';
     questions[5].data.answers.push({
       dataId: 'a6Id',
       ownerRef: this.checkerUser.id,
       text: 'Answer 6 on question',
-      scriptureStart: { chapter: '1', verse: '1', book: 'JHN', versification: 'English' },
-      scriptureEnd: { chapter: '1', verse: '1', book: 'JHN', versification: 'English' },
+      verseRef: { chapterNum: 1, verseNum: 1, bookNum: 43 },
       scriptureText: 'Quoted scripture',
       likes: [],
       dateCreated: dateNow,
@@ -996,7 +1002,7 @@ class TestEnvironment {
     this.questionsQuery = this.realtimeService.createQuery(QuestionDoc.COLLECTION, {});
     this.questionsQuery.subscribe();
     when(
-      this.mockedProjectService.getQuestions('project01', deepEqual({ bookId: 'JHN', activeOnly: true, sort: true }))
+      this.mockedProjectService.getQuestions('project01', deepEqual({ bookNum: 43, activeOnly: true, sort: true }))
     ).thenResolve(this.questionsQuery);
     when(this.mockedUserService.currentUserId).thenReturn(user.id);
 

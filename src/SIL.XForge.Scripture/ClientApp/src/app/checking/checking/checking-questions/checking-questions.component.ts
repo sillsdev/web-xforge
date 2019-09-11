@@ -35,7 +35,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   get activeQuestionChapter(): number {
-    return parseInt(this.activeQuestionDoc.data.scriptureStart.chapter, 10);
+    return this.activeQuestionDoc.data.verseRef.chapterNum;
   }
 
   get activeQuestionIndex(): number {

@@ -37,11 +37,11 @@
         <span>Choose chapter</span>
       </mdc-dialog-title>
       <mdc-dialog-content>
-        <div class="reference">{{ data.booksAndChaptersToShow[selection.book].name }}</div>
+        <div class="reference">{{ getBookName(data.booksAndChaptersToShow[selection.book]) }}</div>
         <button
           *ngFor="let chapter of chaptersOf(selection?.book)"
           mdc-button
-          [primary]="data.input?.book === selection?.book && +data.input?.chapter === +chapter"
+          [primary]="data.input?.book === selection?.book && +data.input?.chapterNum === +chapter"
           (click)="onClickChapter($event)"
         >
           {{ chapter }}
@@ -57,14 +57,16 @@
         <span>Choose verse</span>
       </mdc-dialog-title>
       <mdc-dialog-content>
-        <div class="reference">{{ data.booksAndChaptersToShow[selection.book].name }} {{ selection.chapter }}</div>
+        <div class="reference">
+          {{ getBookName(data.booksAndChaptersToShow[selection.book]) }} {{ selection.chapter }}
+        </div>
         <button
           *ngFor="let verse of versesOf(selection?.book, selection?.chapter)"
           mdc-button
           [primary]="
             data.input?.book === selection?.book &&
             data.input?.chapter === selection?.chapter &&
-            +data.input?.verse === +verse
+            +data.input?.verseNum === +verse
           "
           (click)="onClickVerse($event)"
         >
@@ -82,7 +84,7 @@
       </mdc-dialog-title>
       <mdc-dialog-content>
         <div class="reference">
-          {{ data.booksAndChaptersToShow[data.rangeStart.book].name }} {{ data.rangeStart.chapter }}
+          {{ getBookName(data.booksAndChaptersToShow[data.rangeStart.book]) }} {{ data.rangeStart.chapter }}
         </div>
         <button
           *ngFor="let verse of versesOf(data.rangeStart.book, data.rangeStart.chapter, data.rangeStart.verse)"
@@ -90,7 +92,7 @@
           [primary]="
             data.input?.book === data.rangeStart.book &&
             data.input?.chapter === data.rangeStart.chapter &&
-            +data.input?.verse === +verse
+            +data.input?.verseNum === +verse
           "
           (click)="onClickVerse($event)"
         >

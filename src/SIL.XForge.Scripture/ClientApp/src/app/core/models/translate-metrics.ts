@@ -5,8 +5,8 @@ export interface TranslateMetrics {
   id: string;
   type: TranslateMetricsType;
   sessionId: string;
-  bookId: string;
-  chapter: number;
+  bookNum: number;
+  chapterNum: number;
 
   // editing metrics
   segment?: string;

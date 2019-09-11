@@ -209,26 +209,22 @@ class TestEnvironment {
       },
       texts: [
         {
-          bookId: 'MAT',
-          name: 'Matthew',
+          bookNum: 40,
           chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
           hasSource: true
         },
         {
-          bookId: 'MRK',
-          name: 'Mark',
+          bookNum: 41,
           chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
           hasSource: true
         },
         {
-          bookId: 'LUK',
-          name: 'Luke',
+          bookNum: 42,
           chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
           hasSource: true
         },
         {
-          bookId: 'JHN',
-          name: 'John',
+          bookNum: 43,
           chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
           hasSource: false
         }
@@ -238,14 +234,14 @@ class TestEnvironment {
     const doc = new SFProjectDoc(this.offlineStore, adapter);
     when(this.mockedSFProjectService.get('project01')).thenResolve(doc);
 
-    this.addTextDoc(new TextDocId('project01', 'MAT', 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 'MAT', 2, 'target'));
-    this.addTextDoc(new TextDocId('project01', 'MRK', 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 'MRK', 2, 'target'));
-    this.addTextDoc(new TextDocId('project01', 'LUK', 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 'LUK', 2, 'target'));
-    this.addTextDoc(new TextDocId('project01', 'JHN', 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 'JHN', 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 41, 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 41, 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 42, 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 42, 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 43, 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 43, 2, 'target'));
   }
 
   updateTrainingProgress(percentCompleted: number): void {
@@ -272,27 +268,27 @@ class TestEnvironment {
 
   private createTextDoc(id: TextDocId): TextDoc {
     const delta = new Delta();
-    delta.insert({ chapter: { number: id.chapter.toString(), style: 'c' } });
+    delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
-    delta.insert(`chapter ${id.chapter}, verse 1.`, { segment: `verse_${id.chapter}_1` });
+    delta.insert(`chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
     delta.insert({ verse: { number: '2', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapter}_2` });
+    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_2` });
     delta.insert({ verse: { number: '3', style: 'v' } });
-    delta.insert(`chapter ${id.chapter}, verse 3.`, { segment: `verse_${id.chapter}_3` });
+    delta.insert(`chapter ${id.chapterNum}, verse 3.`, { segment: `verse_${id.chapterNum}_3` });
     delta.insert({ verse: { number: '4', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapter}_4` });
+    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_4` });
     delta.insert({ verse: { number: '5', style: 'v' } });
-    delta.insert(`chapter ${id.chapter}, verse 5.`, { segment: `verse_${id.chapter}_5` });
+    delta.insert(`chapter ${id.chapterNum}, verse 5.`, { segment: `verse_${id.chapterNum}_5` });
     delta.insert({ verse: { number: '6', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapter}_6` });
+    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_6` });
     delta.insert({ verse: { number: '7', style: 'v' } });
-    delta.insert(`chapter ${id.chapter}, verse 7.`, { segment: `verse_${id.chapter}_7` });
+    delta.insert(`chapter ${id.chapterNum}, verse 7.`, { segment: `verse_${id.chapterNum}_7` });
     delta.insert({ verse: { number: '8', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapter}_8` });
+    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_8` });
     delta.insert({ verse: { number: '9', style: 'v' } });
-    delta.insert(`chapter ${id.chapter}, verse 9.`, { segment: `verse_${id.chapter}_9` });
+    delta.insert(`chapter ${id.chapterNum}, verse 9.`, { segment: `verse_${id.chapterNum}_9` });
     delta.insert({ verse: { number: '10', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapter}_10` });
+    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_10` });
     delta.insert('\n', { para: { style: 'p' } });
     const adapter = new MemoryRealtimeDocAdapter(TextDoc.COLLECTION, id.toString(), delta, RichText.type);
     return new TextDoc(this.offlineStore, adapter);

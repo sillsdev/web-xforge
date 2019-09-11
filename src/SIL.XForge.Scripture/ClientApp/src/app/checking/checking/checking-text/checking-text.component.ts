@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import isEqual from 'lodash/isEqual';
-import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { QuestionDoc } from '../../../core/models/question-doc';
+import { Anchorable } from '../../../core/models/anchorable';
 import { TextDocId } from '../../../core/models/text-doc';
-import { verseRefDataToVerseRef } from '../../../shared/scripture-utils/verse-ref-data-converters';
 import { TextComponent } from '../../../shared/text/text.component';
 
 @Component({
@@ -17,15 +17,15 @@ import { TextComponent } from '../../../shared/text/text.component';
 export class CheckingTextComponent extends SubscriptionDisposable {
   @ViewChild(TextComponent, { static: true }) textComponent: TextComponent;
 
-  @Input() set activeReference(reference: Readonly<QuestionDoc>) {
-    if (this.activeReference && this.isEditorLoaded) {
-      // Removed the highlight on the old active reference
-      this.highlightActiveReference(this.activeReference, false);
-      if (reference != null) {
-        this.highlightActiveReference(reference, true);
+  @Input() set activeObject(obj: Readonly<Anchorable>) {
+    if (this.activeObject && this.isEditorLoaded) {
+      // Removed the highlight on the old active object
+      this.highlightActiveObject(this.activeObject, false);
+      if (obj != null) {
+        this.highlightActiveObject(obj, true);
       }
     }
-    this._activeReference = reference;
+    this._activeObject = obj;
   }
   @Input() set id(textDocId: TextDocId) {
     if (textDocId) {
@@ -35,16 +35,16 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       this._id = textDocId;
     }
   }
-  @Output() referenceClicked: EventEmitter<QuestionDoc> = new EventEmitter<QuestionDoc>();
-  @Input() references: Readonly<QuestionDoc[]> = [];
+  @Output() objectClicked: EventEmitter<Anchorable> = new EventEmitter<Anchorable>();
+  @Input() objects: Readonly<Anchorable[]> = [];
   @Input() mode: 'checking' | 'dialog' = 'checking';
 
-  private _activeReference: Readonly<QuestionDoc>;
+  private _activeObject: Readonly<Anchorable>;
   private _editorLoaded = false;
   private _id: TextDocId;
 
-  get activeReference(): Readonly<QuestionDoc> {
-    return this._activeReference;
+  get activeObject(): Readonly<Anchorable> {
+    return this._activeObject;
   }
 
   get isEditorLoaded(): boolean {
@@ -61,13 +61,13 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     };
   }
 
-  highlightReferences() {
+  highlightObjects() {
     this._editorLoaded = true;
     if (this.mode === 'checking') {
-      if (this.references) {
+      if (this.objects) {
         const segments: string[] = [];
-        for (const reference of this.references) {
-          const referenceSegments = this.getReferenceSegments(reference);
+        for (const obj of this.objects) {
+          const referenceSegments = this.getObjectSegments(obj);
           if (referenceSegments.length) {
             this.setupQuestionSegments([referenceSegments[0]]);
             for (const segment of referenceSegments) {
@@ -78,35 +78,30 @@ export class CheckingTextComponent extends SubscriptionDisposable {
           }
         }
         this.highlightSegments(segments);
-        if (this.activeReference) {
-          this.selectActiveReference(this.activeReference, true);
+        if (this.activeObject) {
+          this.selectActiveObject(this.activeObject, true);
         }
       }
     } else {
-      // In dialog mode, highlight the active reference without putting the ? marker before the text
-      this.highlightActiveReference(this._activeReference, true);
+      // In dialog mode, highlight the active object without putting the ? marker before the text
+      this.highlightActiveObject(this._activeObject, true);
     }
   }
 
-  highlightActiveReference(reference: Readonly<QuestionDoc>, toggle: boolean) {
+  highlightActiveObject(obj: Anchorable, toggle: boolean) {
     if (this.mode === 'dialog') {
-      const segments = this.getReferenceSegments(reference);
+      const segments = this.getObjectSegments(obj);
       this.highlightSegments(segments, toggle);
     }
-    this.selectActiveReference(reference, toggle);
+    this.selectActiveObject(obj, toggle);
   }
 
-  private getReferenceSegments(question: Readonly<QuestionDoc>): string[] {
+  private getObjectSegments(obj: Anchorable): string[] {
     const segments: string[] = [];
     let segment = '';
-    if (question.scriptureStart) {
-      const verseStart = verseRefDataToVerseRef(question.scriptureStart);
-      let verseEnd = verseRefDataToVerseRef(question.scriptureEnd);
-      if (!verseEnd.book) {
-        verseEnd = verseStart;
-      }
-      for (let verse = verseStart.verseNum; verse <= verseEnd.verseNum; verse++) {
-        segment = this.getSegment(verseStart.chapterNum, verse);
+    if (obj.verseRef != null) {
+      for (const verseInRange of obj.verseRef.allVerses()) {
+        segment = this.getSegment(verseInRange.chapterNum, verseInRange.verseNum);
         if (!segments.includes(segment)) {
           segments.push(segment);
         }
@@ -138,11 +133,8 @@ export class CheckingTextComponent extends SubscriptionDisposable {
         if (target['nodeName'] === 'USX-SEGMENT') {
           const clickSegment = target['attributes']['data-segment'].value;
           const segmentParts = clickSegment.split('_', 3);
-          const verseRefData: VerseRefData = {
-            book: this._id.bookId,
-            chapter: segmentParts[1],
-            verse: segmentParts[2]
-          };
+          const verseRef = new VerseRef(this._id.bookNum, segmentParts[1], segmentParts[2]);
+          const verseRefData = fromVerseRef(verseRef);
           this.segmentClicked(verseRefData);
         }
       });
@@ -150,28 +142,23 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   }
 
   private segmentClicked(verseRefData: VerseRefData) {
-    const verseRef = verseRefDataToVerseRef(verseRefData);
-    let bestMatch: QuestionDoc;
+    const verseRef = toVerseRef(verseRefData);
+    let bestMatch: Anchorable = {};
 
-    for (const reference of this.references) {
-      const verseStart = verseRefDataToVerseRef(reference.scriptureStart);
-      let verseEnd = verseRefDataToVerseRef(reference.scriptureEnd);
-      if (!verseEnd.book) {
-        verseEnd = verseStart;
-      }
-      if (verseStart.chapterNum === verseRef.chapterNum && verseStart.verseNum === verseRef.verseNum) {
-        bestMatch = reference;
+    for (const obj of this.objects) {
+      if (obj.verseRef.chapterNum === verseRef.chapterNum && obj.verseRef.verseNum === verseRef.verseNum) {
+        bestMatch = obj;
         break;
-      } else if (
-        verseStart.chapterNum === verseRef.chapterNum &&
-        verseStart.verseNum <= verseRef.verseNum &&
-        verseEnd.verseNum >= verseRef.verseNum
-      ) {
-        bestMatch = reference;
+      } else if (obj.verseRef.chapterNum === verseRef.chapterNum && obj.verseRef.verseNum <= verseRef.verseNum) {
+        const allVerses = obj.verseRef.allVerses(true);
+        const endRef = allVerses[allVerses.length - 1];
+        if (endRef.verseNum >= verseRef.verseNum) {
+          bestMatch = obj;
+        }
       }
     }
     if (bestMatch) {
-      this.referenceClicked.emit(bestMatch);
+      this.objectClicked.emit(bestMatch);
     }
   }
 
@@ -187,8 +174,8 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
   }
 
-  private selectActiveReference(reference: Readonly<QuestionDoc>, toggle: boolean) {
-    for (const segment of this.getReferenceSegments(reference)) {
+  private selectActiveObject(obj: Anchorable, toggle: boolean) {
+    for (const segment of this.getObjectSegments(obj)) {
       if (!this.textComponent.hasSegmentRange(segment)) {
         continue;
       }

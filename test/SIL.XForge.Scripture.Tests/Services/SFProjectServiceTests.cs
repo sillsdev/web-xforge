@@ -519,14 +519,12 @@ namespace SIL.XForge.Scripture.Services
                             {
                                 new TextInfo
                                 {
-                                    BookId = "MAT",
-                                    Name = "Matthew",
+                                    BookNum = 40,
                                     Chapters = { new Chapter { Number = 1, LastVerse = 3 } }
                                 },
                                 new TextInfo
                                 {
-                                    BookId = "MRK",
-                                    Name = "Mark",
+                                    BookNum = 41,
                                     Chapters =
                                     {
                                         new Chapter { Number = 1, LastVerse = 3 },

@@ -1,22 +1,23 @@
 import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
 import { Component, Inject, OnInit } from '@angular/core';
-import { TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { Canon } from '../shared/scripture-utils/canon';
+import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { TextsByBookId } from '../core/models/texts-by-book-id';
 
 export interface ScriptureChooserDialogData {
   /** Starting verse selection, to highlight */
-  input?: VerseRefData;
+  input?: VerseRef;
 
   /** Set of books and chapters to make available for selection */
-  booksAndChaptersToShow: TextsByBook;
+  booksAndChaptersToShow: TextsByBookId;
 
   /** Starting verse of a range, that this dialog will be used to select the end
    *  of. If present, the dialog will only show a verse picker, for the start
    *  verse and verses following thru the end of the chapter.
    *  A value of null or undefined will cause normal dialog behaviour of
    *  book,chapter,verse selection. */
-  rangeStart?: VerseRefData;
+  rangeStart?: VerseRef;
 }
 
 /** Dialog to allow selection of a particular Scripture reference. */
@@ -34,7 +35,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
   closeFocuses: number = 0;
 
   /** User's selection */
-  selection: VerseRefData = { book: undefined, chapter: undefined, verse: undefined };
+  selection: { book?: string; chapter?: string; verse?: string } = {};
 
   constructor(
     public dialogRef: MdcDialogRef<ScriptureChooserDialogComponent>,
@@ -50,7 +51,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
     this.otBooks = books.filter(book => this.isOT(book));
     this.ntBooks = books.filter(book => !this.isOT(book));
 
-    if (!!this.data.rangeStart) {
+    if (this.data.rangeStart != null) {
       // Is rangeStart for a book and chapter in the list we know about, and
       // with a verse not greater than the last verse of that chapter?
       if (
@@ -96,7 +97,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
 
   onClickVerse(event: Event) {
     this.selection.verse = (event.target as HTMLElement).innerText;
-    this.dialogRef.close(this.selection);
+    this.dialogRef.close(new VerseRef(this.selection.book, this.selection.chapter, this.selection.verse));
   }
 
   onClickBackoutButton() {
@@ -158,5 +159,9 @@ export class ScriptureChooserDialogComponent implements OnInit {
       verses = verses.slice(startingWithVerse - 1);
     }
     return verses;
+  }
+
+  getBookName(text: TextInfo): string {
+    return Canon.bookNumberToEnglishName(text.bookNum);
   }
 }

@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.Machine.WebApi.Services;
+using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -495,13 +496,13 @@ namespace SIL.XForge.Scripture.Services
             public bool ContainsText(string bookId, int chapter, TextType textType)
             {
                 return RealtimeService.GetRepository<TextData>()
-                    .Contains(TextInfo.GetTextDocId("project01", bookId, chapter, textType));
+                    .Contains(TextData.GetTextDocId("project01", Canon.BookIdToNumber(bookId), chapter, textType));
             }
 
             public TextData GetText(string bookId, int chapter, TextType textType)
             {
                 return RealtimeService.GetRepository<TextData>()
-                    .Get(TextInfo.GetTextDocId("project01", bookId, chapter, textType));
+                    .Get(TextData.GetTextDocId("project01", Canon.BookIdToNumber(bookId), chapter, textType));
             }
 
             public bool ContainsQuestion(string bookId, int chapter)
@@ -564,7 +565,7 @@ namespace SIL.XForge.Scripture.Services
                             Texts = books.Select(b =>
                                 new TextInfo
                                 {
-                                    BookId = b.Id,
+                                    BookNum = Canon.BookIdToNumber(b.Id),
                                     Chapters = Enumerable.Range(1, b.TargetChapterCount)
                                         .Select(c => new Chapter { Number = c, LastVerse = 10 }).ToList(),
                                     HasSource = b.SourceChapterCount > 0
@@ -652,6 +653,7 @@ namespace SIL.XForge.Scripture.Services
 
             private void AddSFBook(string bookId, int chapterCount, TextType textType, bool changed)
             {
+                int bookNum = Canon.BookIdToNumber(bookId);
                 string oldBookText = GetBookText(textType, bookId, 1);
                 string filename = GetUsxFileName(textType, bookId);
                 FileSystemService.OpenFile(filename, FileMode.Open)
@@ -663,7 +665,7 @@ namespace SIL.XForge.Scripture.Services
 
                 for (int c = 1; c <= chapterCount; c++)
                 {
-                    string id = TextInfo.GetTextDocId("project01", bookId, c, textType);
+                    string id = TextData.GetTextDocId("project01", bookNum, c, textType);
                     RealtimeService.GetRepository<TextData>()
                         .Add(new TextData(Delta.New().InsertText(changed ? "changed" : "text")) { Id = id });
                     RealtimeService.GetRepository<Question>().Add(new[]
@@ -673,7 +675,7 @@ namespace SIL.XForge.Scripture.Services
                             Id = $"project01:question{bookId}{c}",
                             DataId = $"question{bookId}{c}",
                             ProjectRef = "project01",
-                            ScriptureStart = new VerseRefData(bookId, c.ToString(), "1")
+                            VerseRef = new VerseRefData(bookNum, c, 1)
                         }
                     });
                 }

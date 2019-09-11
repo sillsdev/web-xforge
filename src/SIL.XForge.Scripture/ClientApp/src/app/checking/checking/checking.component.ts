@@ -8,6 +8,7 @@ import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -91,7 +92,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   set chapter(value: number) {
     if (this._chapter !== value) {
       this._chapter = value;
-      this.textDocId = new TextDocId(this.projectDoc.id, this.text.bookId, this.chapter, 'target');
+      this.textDocId = new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target');
     }
   }
 
@@ -114,6 +115,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   get questionDocs(): Readonly<QuestionDoc[]> {
     return this.questionsQuery != null ? this.questionsQuery.docs : [];
+  }
+
+  get bookName(): string {
+    return this.text != null ? Canon.bookNumberToEnglishName(this.text.bookNum) : '';
   }
 
   private get answerPanelElementHeight(): number {
@@ -144,23 +149,24 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params, async params => {
       this.loadingStarted();
-      const projectId = params['projectId'];
-      const bookId = params['bookId'];
+      const projectId = params['projectId'] as string;
+      const bookId = params['bookId'] as string;
       const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
-      const prevBookId = this.text == null ? '' : this.text.bookId;
+      const prevBookNum = this.text == null ? 0 : this.text.bookNum;
       this.projectDoc = await this.projectService.get(projectId);
       if (!this.projectDoc.isLoaded) {
         return;
       }
-      this.text = this.projectDoc.data.texts.find(t => t.bookId === bookId);
+      const bookNum = bookId == null ? 0 : Canon.bookIdToNumber(bookId);
+      this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
       this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
       this.chapters = this.text.chapters.map(c => c.number);
-      if (prevProjectId !== this.projectDoc.id || prevBookId !== this.text.bookId) {
+      if (prevProjectId !== this.projectDoc.id || prevBookNum !== this.text.bookNum) {
         if (this.questionsQuery != null) {
           this.questionsQuery.dispose();
         }
         this.questionsQuery = await this.projectService.getQuestions(projectId, {
-          bookId: this.text.bookId,
+          bookNum: this.text.bookNum,
           activeOnly: true,
           sort: true
         });
@@ -213,8 +219,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         }
         answer.text = answerAction.text;
         answer.scriptureText = answerAction.scriptureText;
-        answer.scriptureStart = answerAction.scriptureStart;
-        answer.scriptureEnd = answerAction.scriptureEnd;
+        answer.verseRef = answerAction.verseRef;
         answer.dateModified = dateNow;
         if (answerAction.audio.fileName) {
           const response = await this.projectService.onlineUploadAudio(
@@ -378,8 +383,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         op
           .set(q => q.answers[answerIndex].text, newAnswer.text)
           .set(q => q.answers[answerIndex].scriptureText, newAnswer.scriptureText)
-          .set(q => q.answers[answerIndex].scriptureStart, newAnswer.scriptureStart)
-          .set(q => q.answers[answerIndex].scriptureEnd, newAnswer.scriptureEnd)
+          .set(q => q.answers[answerIndex].verseRef, newAnswer.verseRef)
           .set(q => q.answers[answerIndex].audioUrl, newAnswer.audioUrl)
           .set(q => q.answers[answerIndex].dateModified, newAnswer.dateModified)
       );

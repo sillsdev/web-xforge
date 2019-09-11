@@ -266,7 +266,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         Id = "project01:question01",
                         DataId = "question01",
-                        ScriptureStart = new VerseRefData("MAT", "1", "1"),
+                        VerseRef = new VerseRefData(40, 1, 1),
                         Text = "Test question?",
                         Answers =
                         {
@@ -296,8 +296,7 @@ namespace SIL.XForge.Scripture.Services
                                 SyncUserRef = answerSyncUserId2,
                                 DateCreated = new DateTime(2019, 1, 2, 8, 0, 0, DateTimeKind.Utc),
                                 Text = "Test answer 2.",
-                                ScriptureStart = new VerseRefData("MAT", "1", "2"),
-                                ScriptureEnd = new VerseRefData("MAT", "1", "3"),
+                                VerseRef = new VerseRefData(40, 1, "2-3"),
                                 ScriptureText = "This is some scripture.",
                                 Comments =
                                 {

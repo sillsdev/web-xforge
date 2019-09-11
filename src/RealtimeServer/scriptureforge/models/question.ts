@@ -4,10 +4,13 @@ import { VerseRefData } from './verse-ref-data';
 
 export const QUESTIONS_COLLECTION = 'questions';
 
+export function getQuestionDocId(projectId: string, questionId: string): string {
+  return `${projectId}:${questionId}`;
+}
+
 export interface Question extends ProjectData {
   dataId: string;
-  scriptureStart: VerseRefData;
-  scriptureEnd?: VerseRefData;
+  verseRef: VerseRefData;
   text?: string;
   audioUrl?: string;
   answers: Answer[];

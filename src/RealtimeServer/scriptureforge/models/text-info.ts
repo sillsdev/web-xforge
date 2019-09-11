@@ -1,7 +1,3 @@
-export interface TextsByBook {
-  [bookId: string]: TextInfo;
-}
-
 export interface Chapter {
   number: number;
   lastVerse: number;
@@ -12,8 +8,7 @@ export interface Chapter {
  * paratext project (eg mother or daughter), but represent metadata for a
  * book in a given SF site project. */
 export interface TextInfo {
-  bookId: string;
-  name: string;
+  bookNum: number;
   hasSource: boolean;
   chapters: Chapter[];
 }

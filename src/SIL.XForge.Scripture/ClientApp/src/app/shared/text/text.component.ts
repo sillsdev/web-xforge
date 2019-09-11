@@ -391,7 +391,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private tryChangeSegment(segmentRef: string, checksum?: number, focus: boolean = false): boolean {
-    if (this._segment != null && this._id.bookId === this._segment.bookId && segmentRef === this._segment.ref) {
+    if (this._segment != null && this._id.bookNum === this._segment.bookNum && segmentRef === this._segment.ref) {
       // the selection has not changed to a different segment
       return false;
     }
@@ -418,7 +418,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (this._segment != null && this.highlightSegment) {
       this.toggleHighlight(false);
     }
-    this._segment = new Segment(this._id.bookId, segmentRef);
+    this._segment = new Segment(this._id.bookNum, segmentRef);
     if (checksum != null) {
       this._segment.initialChecksum = checksum;
     }

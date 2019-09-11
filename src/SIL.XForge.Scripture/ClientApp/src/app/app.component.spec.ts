@@ -272,20 +272,20 @@ class TestEnvironment {
     );
 
     this.project01Doc = this.addProject('project01', { user01: SFProjectRole.ParatextTranslator }, [
-      { bookId: 'text01', name: 'Book 1', hasSource: true, chapters: [] },
-      { bookId: 'text02', name: 'Book 2', hasSource: false, chapters: [] }
+      { bookNum: 40, hasSource: true, chapters: [] },
+      { bookNum: 41, hasSource: false, chapters: [] }
     ]);
     this.addProject('project02', { user01: SFProjectRole.CommunityChecker }, [
-      { bookId: 'text03', name: 'Book 3', hasSource: false, chapters: [] },
-      { bookId: 'text04', name: 'Book 4', hasSource: false, chapters: [] }
+      { bookNum: 42, hasSource: false, chapters: [] },
+      { bookNum: 43, hasSource: false, chapters: [] }
     ]);
     this.addProject('project03', { user01: SFProjectRole.CommunityChecker }, [
-      { bookId: 'text05', name: 'Book 5', hasSource: true, chapters: [] },
-      { bookId: 'text06', name: 'Book 6', hasSource: true, chapters: [] }
+      { bookNum: 44, hasSource: true, chapters: [] },
+      { bookNum: 45, hasSource: true, chapters: [] }
     ]);
     this.project04Doc = this.addProject('project04', {}, [
-      { bookId: 'text07', name: 'Book 7', hasSource: true, chapters: [] },
-      { bookId: 'text08', name: 'Book 8', hasSource: true, chapters: [] }
+      { bookNum: 46, hasSource: true, chapters: [] },
+      { bookNum: 47, hasSource: true, chapters: [] }
     ]);
 
     when(this.mockedUserService.currentUserId).thenReturn('user01');

@@ -43,7 +43,7 @@
                 <mdc-icon fxHide.lt-md>library_books</mdc-icon>
                 <div #textNameAnchor mdcMenuSurfaceAnchor>
                   <h2 class="chapter-select" (click)="chapterMenu.open = !chapterMenu.open">
-                    <span>{{ text?.name }}</span>
+                    <span>{{ bookName }}</span>
                     <span>
                       {{ chapter }} <mdc-icon *ngIf="!chapterMenu.open">keyboard_arrow_down</mdc-icon
                       ><mdc-icon *ngIf="chapterMenu.open">keyboard_arrow_up</mdc-icon>
@@ -58,7 +58,7 @@
                   >
                     <mdc-list #chapterMenuList>
                       <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
-                        >{{ text?.name }} {{ cs }}</mdc-list-item
+                        >{{ bookName }} {{ cs }}</mdc-list-item
                       >
                     </mdc-list>
                   </mdc-menu>
@@ -80,9 +80,9 @@
                   <app-checking-text
                     #textPanel
                     [id]="textDocId"
-                    [activeReference]="questionsPanel.activeQuestionDoc"
-                    [references]="questionDocs"
-                    (referenceClicked)="questionsPanel.activateQuestion($event)"
+                    [activeObject]="questionsPanel.activeQuestionDoc"
+                    [objects]="questionDocs"
+                    (objectClicked)="questionsPanel.activateQuestion($event)"
                   ></app-checking-text>
                 </div>
               </as-split-area>

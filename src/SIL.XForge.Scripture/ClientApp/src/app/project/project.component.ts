@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -47,9 +48,9 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
           projectUserConfig.selectedTask !== ''
         ) {
           // the user has previously navigated to a location in a task
-          const bookId = projectUserConfig.selectedBookId;
-          if (bookId != null) {
-            this.router.navigate(['./', projectUserConfig.selectedTask, bookId], {
+          const bookNum = projectUserConfig.selectedBookNum;
+          if (bookNum != null) {
+            this.router.navigate(['./', projectUserConfig.selectedTask, Canon.bookNumberToId(bookNum)], {
               relativeTo: this.route,
               replaceUrl: true
             });
@@ -67,7 +68,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
               task = 'checking';
             }
             if (task != null) {
-              this.router.navigate(['./', task, project.texts[0].bookId], {
+              this.router.navigate(['./', task, Canon.bookNumberToId(project.texts[0].bookNum)], {
                 relativeTo: this.route,
                 replaceUrl: true
               });

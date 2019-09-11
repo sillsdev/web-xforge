@@ -4,6 +4,7 @@ import { RemoteTranslationEngine } from '@sillsdev/machine';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { Subscription } from 'rxjs';
 import { filter, map, repeat, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -127,6 +128,14 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     this.isTraining = true;
   }
 
+  getBookName(text: TextInfo): string {
+    return Canon.bookNumberToEnglishName(text.bookNum);
+  }
+
+  getBookId(text: TextInfo): string {
+    return Canon.bookNumberToId(text.bookNum);
+  }
+
   private async calculateProgress(): Promise<void> {
     this.texts = this.projectDoc.data.texts.map(t => new TextProgress(t));
     this.overallProgress = new Progress();
@@ -139,7 +148,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   private async updateTextProgress(textProgress: TextProgress): Promise<void> {
     for (const chapter of textProgress.text.chapters) {
-      const textDocId = new TextDocId(this.projectDoc.id, textProgress.text.bookId, chapter.number, 'target');
+      const textDocId = new TextDocId(this.projectDoc.id, textProgress.text.bookNum, chapter.number, 'target');
       const chapterText = await this.projectService.getText(textDocId);
       const { translated, blank } = chapterText.getSegmentCount();
       textProgress.translated += translated;
