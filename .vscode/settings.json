@@ -2,5 +2,14 @@
   "dotnet-test-explorer.testProjectPath": "test/**/*.Tests.csproj",
   "editor.formatOnSave": true,
   "editor.rulers": [120],
-  "editor.wordWrapColumn": 120
+  "editor.wordWrapColumn": 120,
+  "liveSassCompile.settings.includeItems": ["src/SIL.XForge.Scripture/wwwroot/scss/**.*"],
+  "liveSassCompile.settings.formats": [
+    {
+      "format": "compressed",
+      "extensionName": ".min.css",
+      "savePath": "~/../css/"
+    }
+  ],
+  "liveSassCompile.settings.generateMap": false
 }

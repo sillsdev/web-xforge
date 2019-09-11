@@ -19,13 +19,46 @@
     <title>Scripture Forge</title>
     <link rel="icon" type="image/x-icon" href="~/sf.ico" />
     <link rel="shortcut icon" type="image/x-icon" href="~/sf.ico" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300&display=swap" />
     <link rel="stylesheet" href="~/lib/material-design-lite/css/material.sf_grey-pt_green.min.css"/>
+    <link rel="stylesheet" href="~/css/sf.min.css" />
     @RenderSection("css", required: false)
 </head>
 <body>
-    <div class="mdl-grid container body-content">
+    <header>
+        <div class="container">
+            <div class="mdl-grid">
+            <div class="mdl-cell mdl-cell--12-col flex align-items-center">
+                <a href="/">
+                    <img src="~/images/logo-sf.svg" alt="Scripture Forge">
+                    <span>Scripture Forge</span>
+                </a>
+            </div>
+            </div>
+        </div>
+    </header>
+    <div id="render-body">
         @RenderBody()
     </div>
+    <footer>
+        <div class="container">
+            <div class="mdl-grid">
+                <div class="mdl-cell mdl-cell--12-col flex justify-content-space-between align-items-end">
+                    <div id="profile">
+                        <ul>
+                            <li class="copyright">@DateTime.Now.Year <a target="_blank" href="http://www.sil.org">SIL International</a></li>
+                            <li class="version">@System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion</li>
+                            <li><a href="~/terms_and_conditions">Terms</a></li>
+                        </ul>
+                    </div>
+                    <div id="logos">
+                        <a id="payap" href="https://inter.payap.ac.th/" target="_blank"><img src="~/images/logo-payap.svg" alt="Payap University Logo"></a>
+                        <a id="sil" href="http://www.sil.org/" target="_blank"><img src="~/images/logo-sil.svg" alt="SIL International Logo"></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
     <script src="~/lib/material-design-lite/js/material.min.js"></script>
     <script src="https://cdn.auth0.com/js/auth0/9.10/auth0.min.js"></script>
     <script type="text/javascript">
