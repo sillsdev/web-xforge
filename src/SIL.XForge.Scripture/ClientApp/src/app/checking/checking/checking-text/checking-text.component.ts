@@ -3,7 +3,7 @@ import isEqual from 'lodash/isEqual';
 import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { fromEvent } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { ScriptureReference } from '../../../core/models/scripture-reference';
+import { QuestionDoc } from '../../../core/models/question-doc';
 import { TextDocId } from '../../../core/models/text-doc';
 import { verseRefDataToVerseRef } from '../../../shared/scripture-utils/verse-ref-data-converters';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -17,7 +17,7 @@ import { TextComponent } from '../../../shared/text/text.component';
 export class CheckingTextComponent extends SubscriptionDisposable {
   @ViewChild(TextComponent, { static: true }) textComponent: TextComponent;
 
-  @Input() set activeReference(reference: Readonly<ScriptureReference>) {
+  @Input() set activeReference(reference: Readonly<QuestionDoc>) {
     if (this.activeReference && this.isEditorLoaded) {
       // Removed the highlight on the old active reference
       this.highlightActiveReference(this.activeReference, false);
@@ -35,15 +35,15 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       this._id = textDocId;
     }
   }
-  @Output() referenceClicked: EventEmitter<ScriptureReference> = new EventEmitter<ScriptureReference>();
-  @Input() references: Readonly<ScriptureReference[]> = [];
+  @Output() referenceClicked: EventEmitter<QuestionDoc> = new EventEmitter<QuestionDoc>();
+  @Input() references: Readonly<QuestionDoc[]> = [];
   @Input() mode: 'checking' | 'dialog' = 'checking';
 
-  private _activeReference: Readonly<ScriptureReference>;
+  private _activeReference: Readonly<QuestionDoc>;
   private _editorLoaded = false;
   private _id: TextDocId;
 
-  get activeReference(): Readonly<ScriptureReference> {
+  get activeReference(): Readonly<QuestionDoc> {
     return this._activeReference;
   }
 
@@ -88,7 +88,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
   }
 
-  highlightActiveReference(reference: ScriptureReference, toggle: boolean) {
+  highlightActiveReference(reference: Readonly<QuestionDoc>, toggle: boolean) {
     if (this.mode === 'dialog') {
       const segments = this.getReferenceSegments(reference);
       this.highlightSegments(segments, toggle);
@@ -96,7 +96,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this.selectActiveReference(reference, toggle);
   }
 
-  private getReferenceSegments(question: ScriptureReference): string[] {
+  private getReferenceSegments(question: Readonly<QuestionDoc>): string[] {
     const segments: string[] = [];
     let segment = '';
     if (question.scriptureStart) {
@@ -151,7 +151,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
   private segmentClicked(verseRefData: VerseRefData) {
     const verseRef = verseRefDataToVerseRef(verseRefData);
-    let bestMatch: ScriptureReference = {};
+    let bestMatch: QuestionDoc;
 
     for (const reference of this.references) {
       const verseStart = verseRefDataToVerseRef(reference.scriptureStart);
@@ -187,7 +187,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
   }
 
-  private selectActiveReference(reference: ScriptureReference, toggle: boolean) {
+  private selectActiveReference(reference: Readonly<QuestionDoc>, toggle: boolean) {
     for (const segment of this.getReferenceSegments(reference)) {
       if (!this.textComponent.hasSegmentRange(segment)) {
         continue;

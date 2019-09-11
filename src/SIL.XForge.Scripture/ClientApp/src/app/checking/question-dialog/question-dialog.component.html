@@ -48,13 +48,9 @@
               </mdc-helper-text>
             </mdc-form-field>
           </div>
-          <div class="split-container">
+          <div class="text-container">
             <small>Enter a reference to load text</small>
-            <as-split direction="vertical">
-              <as-split-area size="100">
-                <app-checking-text [id]="textDocId" [activeReference]="scriptureRef" mode="dialog"></app-checking-text>
-              </as-split-area>
-            </as-split>
+            <app-checking-text [id]="textDocId" [activeReference]="scriptureRef" mode="dialog"></app-checking-text>
           </div>
           <mdc-form-field fluid>
             <mdc-textarea
