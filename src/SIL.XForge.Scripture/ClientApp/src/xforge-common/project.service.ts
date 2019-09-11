@@ -38,10 +38,6 @@ export abstract class ProjectService<
     return this.realtimeService.subscribe(this.collection, id);
   }
 
-  onlineCreate(project: TProj): Promise<string> {
-    return this.onlineInvoke('create', { project });
-  }
-
   onlineSearch(
     term$: Observable<string>,
     queryParameters$: Observable<QueryParameters>
@@ -74,34 +70,12 @@ export abstract class ProjectService<
     return this.onlineInvoke('addUser', { projectId: id, projectRole });
   }
 
-  onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
-    return this.onlineInvoke('isAlreadyInvited', { projectId: id, email });
-  }
-
-  /** Get list of email addresses that have outstanding invitations on project.
-   * Caller must be an admin on the project. */
-  onlineInvitedUsers(projectId: string): Promise<string[]> {
-    return this.onlineInvoke('invitedUsers', { projectId });
-  }
-  /** Get added into project, with optionally specified shareKey code. */
-  onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
-    return this.onlineInvoke('checkLinkSharing', { projectId: id, shareKey });
-  }
-
   onlineRemoveUser(id: string, userId: string): Promise<void> {
     return this.onlineInvoke('removeUser', { projectId: id, projectUserId: userId });
   }
 
   onlineUpdateCurrentUserRole(id: string, projectRole: string): Promise<void> {
     return this.onlineInvoke('updateRole', { projectId: id, projectRole });
-  }
-
-  onlineInvite(id: string, email: string): Promise<string> {
-    return this.onlineInvoke('invite', { projectId: id, email });
-  }
-
-  onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
-    return this.onlineInvoke('uninviteUser', { projectId, emailToUninvite });
   }
 
   onlineDelete(id: string): Promise<void> {

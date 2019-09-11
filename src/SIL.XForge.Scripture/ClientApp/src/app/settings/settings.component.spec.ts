@@ -5,21 +5,22 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
+import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { TranslateConfig } from 'realtime-server/lib/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
-import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { ParatextService } from 'xforge-common/paratext.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
+import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings.component';
@@ -165,8 +166,10 @@ describe('SettingsComponent', () => {
           {
             paratextId: 'paratextId02',
             name: 'ParatextP2',
-            languageTag: 'qaa',
-            languageName: 'unspecified',
+            inputSystem: {
+              tag: 'qaa',
+              languageName: 'unspecified'
+            },
             isConnectable: true,
             isConnected: false
           }
@@ -183,12 +186,7 @@ describe('SettingsComponent', () => {
       it('should not save Translation Suggestions enable if Based On not set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          name: 'project01',
-          checkingEnabled: true,
-          usersSeeEachOthersResponses: false,
-          shareEnabled: false,
-          translationSuggestionsEnabled: false,
-          sourceParatextId: undefined
+          translationSuggestionsEnabled: false
         });
         tick();
         env.fixture.detectChanges();
@@ -211,12 +209,7 @@ describe('SettingsComponent', () => {
       it('should save Translation Suggestions disable if Based On not set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          name: 'project01',
-          checkingEnabled: true,
-          usersSeeEachOthersResponses: false,
-          shareEnabled: false,
-          translationSuggestionsEnabled: false,
-          sourceParatextId: undefined
+          translationSuggestionsEnabled: false
         });
         env.wait();
         env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
@@ -232,12 +225,7 @@ describe('SettingsComponent', () => {
       it('should save Translation Suggestions and Based On when Based On set', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject({
-          name: 'project01',
-          checkingEnabled: true,
-          usersSeeEachOthersResponses: false,
-          shareEnabled: false,
-          translationSuggestionsEnabled: false,
-          sourceParatextId: undefined
+          translationSuggestionsEnabled: false
         });
         env.wait();
         env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
@@ -294,14 +282,11 @@ describe('SettingsComponent', () => {
 
       it('share level should be disabled if share set to false', fakeAsync(() => {
         const env = new TestEnvironment();
-        env.setupProject({
-          name: 'project01',
+        env.setupProject(undefined, {
           checkingEnabled: true,
           usersSeeEachOthersResponses: false,
           shareEnabled: true,
-          shareLevel: SharingLevel.Anyone,
-          translationSuggestionsEnabled: false,
-          sourceParatextId: undefined
+          shareLevel: CheckingShareLevel.Anyone
         });
         env.wait();
 
@@ -378,16 +363,20 @@ class TestEnvironment {
       {
         paratextId: 'paratextId02',
         name: 'ParatextP2',
-        languageTag: 'qaa',
-        languageName: 'unspecified',
+        inputSystem: {
+          tag: 'qaa',
+          languageName: 'unspecified'
+        },
         isConnectable: true,
         isConnected: false
       },
       {
         paratextId: 'paratextId01',
         name: 'ParatextP1',
-        languageTag: 'qaa',
-        languageName: 'unspecified',
+        inputSystem: {
+          tag: 'qaa',
+          languageName: 'unspecified'
+        },
         isConnectable: true,
         isConnected: false
       }
@@ -549,20 +538,37 @@ class TestEnvironment {
   }
 
   setupProject(
-    project: Partial<SFProject> = {
+    translateConfig: TranslateConfig = {
+      translationSuggestionsEnabled: true,
+      source: {
+        paratextId: 'paratextId01',
+        name: 'ParatextP1',
+        inputSystem: {
+          languageName: 'unspecified',
+          tag: 'qaa'
+        }
+      }
+    },
+    checkingConfig: CheckingConfig = {
       checkingEnabled: false,
       usersSeeEachOthersResponses: false,
       shareEnabled: false,
-      translationSuggestionsEnabled: true,
-      sourceParatextId: 'paratextId01',
-      sourceName: 'ParatextP1',
-      sourceInputSystem: {
-        languageName: 'unspecified',
-        tag: 'qaa',
-        isRightToLeft: false
-      }
+      shareLevel: CheckingShareLevel.Specific
     }
   ) {
+    const project: SFProject = {
+      name: 'project 01',
+      paratextId: 'pt01',
+      inputSystem: {
+        tag: 'en',
+        languageName: 'English'
+      },
+      translateConfig,
+      checkingConfig,
+      sync: { queuedCount: 0 },
+      texts: [],
+      userRoles: {}
+    };
     this.projectDoc = new SFProjectDoc(
       this.offlineStore,
       new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project)

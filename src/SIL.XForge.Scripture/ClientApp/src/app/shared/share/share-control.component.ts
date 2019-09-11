@@ -1,10 +1,10 @@
 import { MdcTextField } from '@angular-mdc/web';
 import { Component, Input, ViewChild } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { LocationService } from '../location.service';
-import { NoticeService } from '../notice.service';
-import { ProjectService } from '../project.service';
-import { XFValidators } from '../xfvalidators';
+import { LocationService } from 'xforge-common/location.service';
+import { NoticeService } from 'xforge-common/notice.service';
+import { XFValidators } from 'xforge-common/xfvalidators';
+import { SFProjectService } from '../../core/sf-project.service';
 
 /** UI to share project access with new users, such as by sending an invitation email. */
 @Component({
@@ -26,7 +26,7 @@ export class ShareControlComponent {
 
   constructor(
     private readonly noticeService: NoticeService,
-    private readonly projectService: ProjectService,
+    private readonly projectService: SFProjectService,
     private readonly locationService: LocationService
   ) {}
 

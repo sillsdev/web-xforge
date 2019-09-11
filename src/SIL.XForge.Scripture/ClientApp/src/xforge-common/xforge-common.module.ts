@@ -11,36 +11,26 @@ import { ErrorComponent } from './error/error.component';
 import { IndexeddbRealtimeOfflineStore } from './indexeddb-realtime-offline-store';
 import { RealtimeOfflineStore } from './realtime-offline-store';
 import { RealtimeRemoteStore } from './realtime-remote-store';
-import { ShareControlComponent } from './share/share-control.component';
-import { ShareDialogComponent } from './share/share-dialog.component';
-import { ShareComponent } from './share/share.component';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { SaDeleteDialogComponent } from './system-administration/sa-delete-dialog.component';
 import { SaProjectsComponent } from './system-administration/sa-projects.component';
 import { SaUsersComponent } from './system-administration/sa-users.component';
 import { SystemAdministrationComponent } from './system-administration/system-administration.component';
 import { UICommonModule } from './ui-common.module';
-import { CollaboratorsComponent } from './users/collaborators/collaborators.component';
-import { UsersComponent } from './users/users.component';
 import { WriteStatusComponent } from './write-status/write-status.component';
 
 const componentExports = [
   AvatarComponent,
-  CollaboratorsComponent,
   EditNameDialogComponent,
   ErrorComponent,
   SaProjectsComponent,
   SaDeleteDialogComponent,
   SaUsersComponent,
-  ShareComponent,
-  ShareControlComponent,
-  ShareDialogComponent,
   SystemAdministrationComponent,
-  UsersComponent,
   WriteStatusComponent
 ];
 
-export const xForgeCommonEntryComponents = [EditNameDialogComponent, ShareDialogComponent, SaDeleteDialogComponent];
+export const xForgeCommonEntryComponents = [EditNameDialogComponent, SaDeleteDialogComponent];
 
 @NgModule({
   imports: [

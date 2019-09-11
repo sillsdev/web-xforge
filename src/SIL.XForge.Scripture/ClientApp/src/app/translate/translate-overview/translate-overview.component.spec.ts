@@ -5,6 +5,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import * as RichText from 'rich-text';
@@ -186,16 +187,51 @@ class TestEnvironment {
 
   setupProjectData(translationSuggestionsEnabled: boolean = true): void {
     const project: SFProject = {
+      name: 'project 01',
+      paratextId: 'pt01',
+      inputSystem: {
+        tag: 'qaa',
+        languageName: 'Unspecified'
+      },
+      translateConfig: {
+        translationSuggestionsEnabled
+      },
+      checkingConfig: {
+        checkingEnabled: false,
+        usersSeeEachOthersResponses: true,
+        shareEnabled: true,
+        shareLevel: CheckingShareLevel.Specific
+      },
+      sync: { queuedCount: 0 },
       userRoles: {
         user01: SFProjectRole.ParatextTranslator,
         user02: SFProjectRole.ParatextConsultant
       },
-      translationSuggestionsEnabled,
       texts: [
-        { bookId: 'MAT', name: 'Matthew', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
-        { bookId: 'MRK', name: 'Mark', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
-        { bookId: 'LUK', name: 'Luke', chapters: [{ number: 1 }, { number: 2 }], hasSource: true },
-        { bookId: 'JHN', name: 'John', chapters: [{ number: 1 }, { number: 2 }], hasSource: false }
+        {
+          bookId: 'MAT',
+          name: 'Matthew',
+          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+          hasSource: true
+        },
+        {
+          bookId: 'MRK',
+          name: 'Mark',
+          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+          hasSource: true
+        },
+        {
+          bookId: 'LUK',
+          name: 'Luke',
+          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+          hasSource: true
+        },
+        {
+          bookId: 'JHN',
+          name: 'John',
+          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+          hasSource: false
+        }
       ]
     };
     const adapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project);

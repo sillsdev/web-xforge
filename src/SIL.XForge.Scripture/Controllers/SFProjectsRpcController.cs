@@ -27,16 +27,20 @@ namespace SIL.XForge.Scripture.Controllers
             _projectService = projectService;
         }
 
-        public async Task<IRpcMethodResult> Create(SFProject project)
+        public async Task<IRpcMethodResult> Create(SFProjectCreateSettings settings)
         {
             try
             {
-                string projectId = await _projectService.CreateProjectAsync(UserId, project);
+                string projectId = await _projectService.CreateProjectAsync(UserId, settings);
                 return Ok(projectId);
             }
             catch (ForbiddenException)
             {
                 return ForbiddenError();
+            }
+            catch (DataNotFoundException)
+            {
+                return InvalidParamsError();
             }
         }
 

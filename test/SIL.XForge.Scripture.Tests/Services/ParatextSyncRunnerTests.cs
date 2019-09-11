@@ -543,9 +543,24 @@ namespace SIL.XForge.Scripture.Services
                                 { "user02", SFProjectRole.Translator }
                             },
                             ParatextId = "target",
-                            SourceParatextId = "source",
-                            TranslationSuggestionsEnabled = translationSuggestionsEnabled,
-                            CheckingEnabled = checkingEnabled,
+                            TranslateConfig = new TranslateConfig
+                            {
+                                TranslationSuggestionsEnabled = translationSuggestionsEnabled,
+                                Source = new TranslateSource
+                                {
+                                    ParatextId = "source",
+                                    Name = "Source",
+                                    InputSystem = new InputSystem
+                                    {
+                                        Tag = "en",
+                                        LanguageName = "English"
+                                    }
+                                }
+                            },
+                            CheckingConfig = new CheckingConfig
+                            {
+                                CheckingEnabled = checkingEnabled
+                            },
                             Texts = books.Select(b =>
                                 new TextInfo
                                 {

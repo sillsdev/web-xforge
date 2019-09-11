@@ -1,22 +1,13 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { InputSystem } from 'realtime-server/lib/common/models/input-system';
 import { Observable } from 'rxjs';
-import { AuthService } from './auth.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { ParatextProject } from './models/paratext-project';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ParatextService {
-  static getInputSystem(project: ParatextProject): InputSystem {
-    return {
-      tag: project.languageTag,
-      languageName: project.languageName,
-      isRightToLeft: false
-    };
-  }
-
   constructor(private readonly http: HttpClient, private readonly authService: AuthService) {}
 
   linkParatext(returnUrl: string): void {

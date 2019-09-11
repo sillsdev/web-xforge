@@ -11,6 +11,7 @@ import { RealtimeService } from 'xforge-common/realtime.service';
 import { getObjPathStr, objProxy } from 'xforge-common/utils';
 import { MachineHttpClient } from './machine-http-client';
 import { getQuestionDocId, QuestionDoc } from './models/question-doc';
+import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
 import { SF_PROJECT_ROLES } from './models/sf-project-role-info';
 import { SFProjectSettings } from './models/sf-project-settings';
@@ -31,6 +32,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     private readonly machineHttp: MachineHttpClient
   ) {
     super(realtimeService, commandService, SF_PROJECT_ROLES, http);
+  }
+
+  onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
+    return this.onlineInvoke('create', { settings });
   }
 
   getUserConfig(id: string, userId: string): Promise<SFProjectUserConfigDoc> {
@@ -81,5 +86,28 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   onlineUpdateSettings(id: string, settings: SFProjectSettings): Promise<void> {
     return this.onlineInvoke('updateSettings', { projectId: id, settings });
+  }
+
+  onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
+    return this.onlineInvoke('isAlreadyInvited', { projectId: id, email });
+  }
+
+  /** Get list of email addresses that have outstanding invitations on project.
+   * Caller must be an admin on the project. */
+  onlineInvitedUsers(projectId: string): Promise<string[]> {
+    return this.onlineInvoke('invitedUsers', { projectId });
+  }
+
+  /** Get added into project, with optionally specified shareKey code. */
+  onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
+    return this.onlineInvoke('checkLinkSharing', { projectId: id, shareKey });
+  }
+
+  onlineInvite(id: string, email: string): Promise<string> {
+    return this.onlineInvoke('invite', { projectId: id, email });
+  }
+
+  onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
+    return this.onlineInvoke('uninviteUser', { projectId, emailToUninvite });
   }
 }

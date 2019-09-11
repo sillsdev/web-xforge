@@ -1,7 +1,7 @@
-namespace SIL.XForge.Models
+namespace SIL.XForge.Scripture.Models
 {
-    /// <summary>Type of sharing for a project.</summary>
-    public static class SharingLevel
+    /// <summary>Type of sharing for community checking.</summary>
+    public static class CheckingShareLevel
     {
         /// <summary>Anyone can access the project via a share URL.</summary>
         public const string Anyone = "anyone";

@@ -5,12 +5,12 @@ import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
-import { MemoryRealtimeOfflineStore } from '../memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from '../memory-realtime-remote-store';
-import { ProjectDoc } from '../models/project-doc';
-import { NoticeService } from '../notice.service';
-import { ProjectService } from '../project.service';
-import { UICommonModule } from '../ui-common.module';
+import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
+import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { NoticeService } from 'xforge-common/notice.service';
+import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from './share-control.component';
 
 describe('ShareControlComponent', () => {
@@ -125,13 +125,6 @@ describe('ShareControlComponent', () => {
   })
   class TestModule {}
 
-  class TestProjectDoc extends ProjectDoc {
-    static readonly COLLECTION = 'projects';
-    get taskNames(): string[] {
-      return [];
-    }
-  }
-
   @Component({
     template:
       '<app-share-control [projectId]="projectId" [isLinkSharingEnabled]="isLinkSharingEnabled"></app-share-control>'
@@ -146,7 +139,7 @@ describe('ShareControlComponent', () => {
     readonly fixture: ComponentFixture<TestHostComponent>;
     readonly component: ShareControlComponent;
 
-    readonly mockedProjectService = mock(ProjectService);
+    readonly mockedProjectService = mock(SFProjectService);
     readonly mockedNoticeService = mock(NoticeService);
 
     private readonly offlineStore = new MemoryRealtimeOfflineStore();
@@ -156,7 +149,7 @@ describe('ShareControlComponent', () => {
         declarations: [TestHostComponent],
         imports: [TestModule],
         providers: [
-          { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
+          { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) },
           { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
         ]
       });
@@ -168,9 +161,9 @@ describe('ShareControlComponent', () => {
       this.fixture.componentInstance.isLinkSharingEnabled =
         isLinkSharingEnabled === undefined ? false : isLinkSharingEnabled;
 
-      const projectDoc = new TestProjectDoc(
+      const projectDoc = new SFProjectDoc(
         this.offlineStore,
-        new MemoryRealtimeDocAdapter(TestProjectDoc.COLLECTION, 'project01', {})
+        new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', {})
       );
       when(this.mockedProjectService.get(anything())).thenResolve(projectDoc);
       when(this.mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com')).thenResolve(null);

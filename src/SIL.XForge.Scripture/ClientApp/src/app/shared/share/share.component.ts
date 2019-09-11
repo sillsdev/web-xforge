@@ -1,9 +1,9 @@
 import { MdcDialog } from '@angular-mdc/web';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { SharingLevel } from 'realtime-server/lib/common/models/sharing-level';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { map } from 'rxjs/operators';
-import { ProjectService } from '../project.service';
+import { SFProjectService } from '../../core/sf-project.service';
 import { ShareDialogComponent, ShareDialogData } from './share-dialog.component';
 
 @Component({
@@ -14,11 +14,11 @@ import { ShareDialogComponent, ShareDialogData } from './share-dialog.component'
 export class ShareComponent implements OnInit {
   private projectId: string;
   private shareEnabled: boolean;
-  private shareLevel: SharingLevel;
+  private shareLevel: CheckingShareLevel;
 
   constructor(
     private readonly dialog: MdcDialog,
-    private readonly projectService: ProjectService,
+    private readonly projectService: SFProjectService,
     private readonly activatedRoute: ActivatedRoute
   ) {}
 
@@ -30,8 +30,8 @@ export class ShareComponent implements OnInit {
     this.activatedRoute.params.pipe(map(params => params['projectId'] as string)).subscribe(async projectId => {
       this.projectId = projectId;
       const projectDoc = await this.projectService.get(projectId);
-      this.shareEnabled = projectDoc.data.shareEnabled;
-      this.shareLevel = projectDoc.data.shareLevel;
+      this.shareEnabled = projectDoc.data.checkingConfig.shareEnabled;
+      this.shareLevel = projectDoc.data.checkingConfig.shareLevel;
     });
   }
 
@@ -39,7 +39,7 @@ export class ShareComponent implements OnInit {
     this.dialog.open(ShareDialogComponent, {
       data: {
         projectId: this.projectId,
-        isLinkSharingEnabled: this.shareLevel === SharingLevel.Anyone
+        isLinkSharingEnabled: this.shareLevel === CheckingShareLevel.Anyone
       } as ShareDialogData
     });
   }

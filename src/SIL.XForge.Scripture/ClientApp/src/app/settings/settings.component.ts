@@ -6,13 +6,13 @@ import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { ElementState } from 'xforge-common/models/element-state';
-import { ParatextProject } from 'xforge-common/models/paratext-project';
 import { NoticeService } from 'xforge-common/notice.service';
-import { ParatextService } from 'xforge-common/paratext.service';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
+import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
+import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 
@@ -143,7 +143,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         this.form.controls.translationSuggestionsEnabled.enabled
       ) {
         this.setValidators();
-        if (!newValue.translationSuggestionsEnabled || (this.form.valid && this.projectDoc.data.sourceParatextId)) {
+        if (
+          !newValue.translationSuggestionsEnabled ||
+          (this.form.valid && this.projectDoc.data.translateConfig.source != null)
+        ) {
           this.updateSetting(newValue, 'translationSuggestionsEnabled');
         } else {
           this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
@@ -151,13 +154,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       }
       if (newValue.sourceParatextId !== this.previousFormValues.sourceParatextId) {
         if (newValue.translationSuggestionsEnabled && newValue.sourceParatextId != null) {
-          const sourceParatextProject = this.sourceProjects.find(
-            project => project.paratextId === newValue.sourceParatextId
-          );
           const settings: SFProjectSettings = {
-            sourceParatextId: newValue.sourceParatextId,
-            sourceName: sourceParatextProject.name,
-            sourceInputSystem: ParatextService.getInputSystem(sourceParatextProject)
+            sourceParatextId: newValue.sourceParatextId
           };
           if (this.previousFormValues.sourceParatextId == null) {
             settings.translationSuggestionsEnabled = true;
@@ -181,7 +179,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         const shareLevelControl = this.form.controls.shareLevel;
         if (newValue.shareEnabled) {
           // when a control is disabled the value is undefined, so reset back to previous value
-          this.previousFormValues.shareLevel = this.projectDoc.data.shareLevel;
+          this.previousFormValues.shareLevel = this.projectDoc.data.checkingConfig.shareLevel;
           shareLevelControl.enable();
         } else {
           shareLevelControl.disable();
@@ -211,27 +209,28 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private updateSettingsInfo() {
+    const curSource = this.projectDoc.data.translateConfig.source;
     this.previousFormValues = {
-      translationSuggestionsEnabled: this.projectDoc.data.translationSuggestionsEnabled,
-      sourceParatextId: this.projectDoc.data.sourceParatextId,
-      checkingEnabled: this.projectDoc.data.checkingEnabled,
-      usersSeeEachOthersResponses: this.projectDoc.data.usersSeeEachOthersResponses,
-      shareEnabled: this.projectDoc.data.shareEnabled,
-      shareLevel: this.projectDoc.data.shareLevel
+      translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
+      sourceParatextId: curSource != null ? curSource.paratextId : undefined,
+      checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
+      usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
+      shareEnabled: this.projectDoc.data.checkingConfig.shareEnabled,
+      shareLevel: this.projectDoc.data.checkingConfig.shareLevel
     };
     this.setValidators();
     this.form.reset(this.previousFormValues);
     if (!this.isLoggedInToParatext) {
       this.form.controls.translationSuggestionsEnabled.disable();
     }
-    if (!this.projectDoc.data.shareEnabled) {
+    if (!this.projectDoc.data.checkingConfig.shareEnabled) {
       this.form.controls.shareLevel.disable();
     }
     this.setAllControlsToInSync();
   }
 
   private setValidators() {
-    this.projectDoc.data.translationSuggestionsEnabled && this.isLoggedInToParatext
+    this.projectDoc.data.translateConfig.translationSuggestionsEnabled && this.isLoggedInToParatext
       ? this.form.controls.sourceParatextId.setValidators(Validators.required)
       : this.form.controls.sourceParatextId.setValidators(null);
   }
@@ -251,14 +250,14 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     }
 
     const sourceProjects = this.paratextProjects.filter(p => p.projectId !== this.projectDoc.id);
-    if (this.projectDoc.data.sourceParatextId != null) {
-      const sourceProject = sourceProjects.find(p => p.paratextId === this.projectDoc.data.sourceParatextId);
+    const curSource = this.projectDoc.data.translateConfig.source;
+    if (curSource != null) {
+      const sourceProject = sourceProjects.find(p => p.paratextId === curSource.paratextId);
       if (sourceProject == null) {
         sourceProjects.push({
-          paratextId: this.projectDoc.data.sourceParatextId,
-          name: this.projectDoc.data.sourceName,
-          languageName: this.projectDoc.data.sourceInputSystem.languageName,
-          languageTag: this.projectDoc.data.sourceInputSystem.tag,
+          paratextId: curSource.paratextId,
+          name: curSource.name,
+          inputSystem: curSource.inputSystem,
           isConnectable: false,
           isConnected: false
         });

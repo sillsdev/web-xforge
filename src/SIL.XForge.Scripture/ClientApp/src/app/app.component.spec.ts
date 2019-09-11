@@ -5,9 +5,12 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
@@ -252,6 +255,12 @@ class TestEnvironment {
     this.currentUserDoc = new UserDoc(
       this.offlineStore,
       new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', {
+        name: 'User 01',
+        email: 'user1@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId: 'auth01',
         displayName: 'User 01',
         sites: {
           sf: {
@@ -262,42 +271,22 @@ class TestEnvironment {
       } as User)
     );
 
-    this.project01Doc = this.addProject('project01', {
-      name: 'project01',
-      checkingEnabled: true,
-      userRoles: { user01: SFProjectRole.ParatextTranslator },
-      texts: [
-        { bookId: 'text01', name: 'Book 1', hasSource: true },
-        { bookId: 'text02', name: 'Book 2', hasSource: false }
-      ]
-    });
-    this.addProject('project02', {
-      name: 'project02',
-      checkingEnabled: true,
-      userRoles: { user01: SFProjectRole.CommunityChecker },
-      texts: [
-        { bookId: 'text03', name: 'Book 3', hasSource: false },
-        { bookId: 'text04', name: 'Book 4', hasSource: false }
-      ]
-    });
-    this.addProject('project03', {
-      name: 'project03',
-      checkingEnabled: true,
-      userRoles: { user01: SFProjectRole.CommunityChecker },
-      texts: [
-        { bookId: 'text05', name: 'Book 5', hasSource: true },
-        { bookId: 'text06', name: 'Book 6', hasSource: true }
-      ]
-    });
-    this.project04Doc = this.addProject('project04', {
-      name: 'project04',
-      checkingEnabled: true,
-      userRoles: {},
-      texts: [
-        { bookId: 'text07', name: 'Book 7', hasSource: true },
-        { bookId: 'text08', name: 'Book 8', hasSource: true }
-      ]
-    });
+    this.project01Doc = this.addProject('project01', { user01: SFProjectRole.ParatextTranslator }, [
+      { bookId: 'text01', name: 'Book 1', hasSource: true, chapters: [] },
+      { bookId: 'text02', name: 'Book 2', hasSource: false, chapters: [] }
+    ]);
+    this.addProject('project02', { user01: SFProjectRole.CommunityChecker }, [
+      { bookId: 'text03', name: 'Book 3', hasSource: false, chapters: [] },
+      { bookId: 'text04', name: 'Book 4', hasSource: false, chapters: [] }
+    ]);
+    this.addProject('project03', { user01: SFProjectRole.CommunityChecker }, [
+      { bookId: 'text05', name: 'Book 5', hasSource: true, chapters: [] },
+      { bookId: 'text06', name: 'Book 6', hasSource: true, chapters: [] }
+    ]);
+    this.project04Doc = this.addProject('project04', {}, [
+      { bookId: 'text07', name: 'Book 7', hasSource: true, chapters: [] },
+      { bookId: 'text08', name: 'Book 8', hasSource: true, chapters: [] }
+    ]);
 
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedAuthService.isLoggedIn).thenResolve(true);
@@ -444,7 +433,27 @@ class TestEnvironment {
     this.component.editName('User 01');
   }
 
-  private addProject(projectId: string, project: SFProject): SFProjectDoc {
+  private addProject(projectId: string, userRoles: { [userRef: string]: string }, texts: TextInfo[]): SFProjectDoc {
+    const project: SFProject = {
+      name: projectId,
+      paratextId: projectId,
+      inputSystem: {
+        tag: 'en',
+        languageName: 'English'
+      },
+      translateConfig: {
+        translationSuggestionsEnabled: false
+      },
+      checkingConfig: {
+        checkingEnabled: true,
+        shareEnabled: true,
+        shareLevel: CheckingShareLevel.Specific,
+        usersSeeEachOthersResponses: true
+      },
+      sync: { queuedCount: 0 },
+      userRoles,
+      texts
+    };
     const adapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, projectId, project);
     const doc = new SFProjectDoc(this.offlineStore, adapter);
     when(this.mockedSFProjectService.get(projectId)).thenResolve(doc);

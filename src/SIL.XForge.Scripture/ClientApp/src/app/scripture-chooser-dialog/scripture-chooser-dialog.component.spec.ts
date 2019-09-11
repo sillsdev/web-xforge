@@ -153,14 +153,14 @@ describe('ScriptureChooserDialog', () => {
   }));
 
   it('input can omit verse', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: { book: 'EPH', chapter: '3' } });
+    const env = new TestEnvironment({ inputScriptureReference: { book: 'EPH', chapter: '3', verse: undefined } });
     expect(env.component.data.input.book).toEqual('EPH');
     expect(env.component.data.input.chapter).toEqual('3');
     expect(env.component.data.input.verse).toBeUndefined();
   }));
 
   it('input can omit chapter and verse', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: { book: 'EPH' } });
+    const env = new TestEnvironment({ inputScriptureReference: { book: 'EPH', chapter: undefined, verse: undefined } });
     expect(env.component.data.input.book).toEqual('EPH');
     expect(env.component.data.input.chapter).toBeUndefined();
     expect(env.component.data.input.verse).toBeUndefined();
@@ -220,19 +220,19 @@ describe('ScriptureChooserDialog', () => {
   });
 
   it('knows if project doesnt have any OT books', () => {
-    const onlyNTTexts = [
+    const onlyNTTexts: TextInfo[] = [
       {
-        id: 'text03',
         bookId: 'EPH',
         name: 'Ephesians',
-        chapters: [{ number: 3, lastVerse: 21 }]
-      } as TextInfo,
+        chapters: [{ number: 3, lastVerse: 21 }],
+        hasSource: false
+      },
       {
-        id: 'text04',
         bookId: 'ROM',
         name: 'Romans',
-        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }]
-      } as TextInfo
+        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }],
+        hasSource: false
+      }
     ];
     const env = new TestEnvironment({ textsInProject: onlyNTTexts });
     expect(env.component.hasOTBooks).toBe(false);
@@ -272,12 +272,14 @@ describe('ScriptureChooserDialog', () => {
       {
         bookId: 'EPH',
         name: 'Ephesians',
-        chapters: [{ number: 3, lastVerse: 21 }]
+        chapters: [{ number: 3, lastVerse: 21 }],
+        hasSource: false
       },
       {
         bookId: 'ROM',
         name: 'Romans',
-        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }]
+        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }],
+        hasSource: false
       }
       // No RUT text
     ];
@@ -311,12 +313,14 @@ describe('ScriptureChooserDialog', () => {
       {
         bookId: 'EPH',
         name: 'Ephesians',
-        chapters: [{ number: 3, lastVerse: 21 }]
+        chapters: [{ number: 3, lastVerse: 21 }],
+        hasSource: false
       },
       {
         bookId: 'ROM',
         name: 'Romans',
-        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }]
+        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }],
+        hasSource: false
       }
     ];
 
@@ -349,12 +353,14 @@ describe('ScriptureChooserDialog', () => {
       {
         bookId: 'EPH',
         name: 'Ephesians',
-        chapters: [{ number: 3, lastVerse: 21 }]
+        chapters: [{ number: 3, lastVerse: 21 }],
+        hasSource: false
       },
       {
         bookId: 'ROM',
         name: 'Romans',
-        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }]
+        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }],
+        hasSource: false
       }
     ];
 
@@ -439,31 +445,31 @@ describe('ScriptureChooserDialog', () => {
         rangeStart = args.rangeStart;
       }
 
-      let textsInProject = [
+      let textsInProject: TextInfo[] = [
         {
-          id: 'text01',
           bookId: 'EXO',
           name: 'Exodus',
-          chapters: [{ number: 39, lastVerse: 43 }, { number: 40, lastVerse: 38 }]
-        } as TextInfo,
+          chapters: [{ number: 39, lastVerse: 43 }, { number: 40, lastVerse: 38 }],
+          hasSource: false
+        },
         {
-          id: 'text02',
           bookId: 'MAT',
           name: 'Matthew',
-          chapters: [{ number: 1, lastVerse: 25 }, { number: 2, lastVerse: 23 }]
-        } as TextInfo,
+          chapters: [{ number: 1, lastVerse: 25 }, { number: 2, lastVerse: 23 }],
+          hasSource: false
+        },
         {
-          id: 'text03',
           bookId: 'EPH',
           name: 'Ephesians',
-          chapters: [{ number: 3, lastVerse: 21 }]
-        } as TextInfo,
+          chapters: [{ number: 3, lastVerse: 21 }],
+          hasSource: false
+        },
         {
-          id: 'text04',
           bookId: 'ROM',
           name: 'Romans',
-          chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }]
-        } as TextInfo
+          chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }],
+          hasSource: false
+        }
       ];
       if (args && args.textsInProject) {
         textsInProject = args.textsInProject;

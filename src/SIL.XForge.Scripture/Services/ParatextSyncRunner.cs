@@ -166,6 +166,9 @@ namespace SIL.XForge.Scripture.Services
 
         private string WorkingDir => Path.Combine(_siteOptions.Value.SiteDir, "sync");
 
+        private bool TranslationSuggestionsEnabled => _projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
+        private bool CheckingEnabled => _projectDoc.Data.CheckingConfig.CheckingEnabled;
+
         // Do not allow multiple sync jobs to run in parallel on the same project by creating a mutex on the projectId
         // parameter, i.e. "{0}"
         [Mutex("{0}")]
@@ -180,22 +183,23 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 string targetParatextId = _projectDoc.Data.ParatextId;
+                string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
+
                 var targetBooks = new HashSet<string>(await _paratextService.GetBooksAsync(_userSecret,
                     targetParatextId));
 
-                string sourceParatextId = _projectDoc.Data.SourceParatextId;
-                var sourceBooks = new HashSet<string>(_projectDoc.Data.TranslationSuggestionsEnabled
+                var sourceBooks = new HashSet<string>(TranslationSuggestionsEnabled
                     ? await _paratextService.GetBooksAsync(_userSecret, sourceParatextId)
                     : Enumerable.Empty<string>());
                 sourceBooks.IntersectWith(targetBooks);
 
                 var targetBooksToDelete = new HashSet<string>(GetBooksToDelete(TextType.Target, targetBooks));
-                var sourceBooksToDelete = new HashSet<string>(_projectDoc.Data.TranslationSuggestionsEnabled
+                var sourceBooksToDelete = new HashSet<string>(TranslationSuggestionsEnabled
                     ? GetBooksToDelete(TextType.Source, sourceBooks)
                     : Enumerable.Empty<string>());
 
                 _step = 0;
-                _stepCount = (targetBooks.Count * (_projectDoc.Data.CheckingEnabled ? 3 : 2)) + (sourceBooks.Count * 2);
+                _stepCount = (targetBooks.Count * (CheckingEnabled ? 3 : 2)) + (sourceBooks.Count * 2);
                 if (targetBooksToDelete.Count > 0 || sourceBooksToDelete.Count > 0)
                 {
                     _stepCount += 1;
@@ -258,7 +262,7 @@ namespace SIL.XForge.Scripture.Services
                     });
                 }
 
-                if (_projectDoc.Data.TranslationSuggestionsEnabled && trainEngine)
+                if (TranslationSuggestionsEnabled && trainEngine)
                 {
                     // start training Machine engine
                     await _engineService.StartBuildByProjectIdAsync(projectId);
@@ -471,7 +475,7 @@ namespace SIL.XForge.Scripture.Services
             }
             await Task.WhenAll(tasks);
 
-            if (_projectDoc.Data.CheckingEnabled)
+            if (CheckingEnabled)
             {
                 XElement oldNotesElem;
                 string oldNotesText = await _paratextService.GetNotesAsync(_userSecret, _projectDoc.Data.ParatextId,

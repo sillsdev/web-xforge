@@ -386,9 +386,10 @@ class TestEnvironment {
             id: 'text01',
             bookId: 'MAT',
             name: 'Matthew',
+            hasSource: false,
             chapters: [{ number: 1, lastVerse: 25 }, { number: 2, lastVerse: 23 }]
           },
-          LUK: { id: 'text02', bookId: 'LUK', name: 'Luke', chapters: [{ number: 1, lastVerse: 80 }] }
+          LUK: { id: 'text02', bookId: 'LUK', name: 'Luke', hasSource: false, chapters: [{ number: 1, lastVerse: 80 }] }
         },
         projectId: 'project01'
       } as QuestionDialogData,

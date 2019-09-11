@@ -178,7 +178,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     };
 
     const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig);
-    dialogRef.afterClosed().subscribe((result: VerseRefData) => {
+    dialogRef.afterClosed().subscribe((result: VerseRefData | 'close') => {
       if (result !== 'close') {
         control.markAsTouched();
         control.markAsDirty();
