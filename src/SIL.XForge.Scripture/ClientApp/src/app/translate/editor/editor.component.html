@@ -67,7 +67,7 @@
         ></app-text>
       </div>
     </div>
-    <div class="text-area" ngClass.xs="text-area-full-width" [class.text-area-full-width]="!hasSource">
+    <div class="text-area" [ngClass.gt-xs]="{ 'text-area-full-width': !hasSource }" ngClass.xs="text-area-full-width">
       <div class="language-label" fxHide.xs mdcSubtitle1>{{ targetLabel }}</div>
       <div #targetContainer class="text-container" [style.height]="textHeight">
         <app-text
