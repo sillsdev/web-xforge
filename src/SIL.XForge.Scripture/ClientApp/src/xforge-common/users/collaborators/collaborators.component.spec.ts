@@ -133,6 +133,13 @@ describe('CollaboratorsComponent', () => {
     env.setInputValue(env.filterInput, '02');
 
     expect(env.userRows.length).toEqual(1);
+
+    env.setInputValue(env.filterInput, 'bob@example.com');
+    expect(env.userRows.length).toEqual(1);
+    env.setInputValue(env.filterInput, 'BOB');
+    expect(env.userRows.length).toEqual(1);
+    env.setInputValue(env.filterInput, '    BOB ');
+    expect(env.userRows.length).toEqual(1);
   }));
 
   it('should page', fakeAsync(() => {
@@ -184,7 +191,7 @@ class TestEnvironment {
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
     this.addUserProfile('user01', { displayName: 'User 01' });
     this.addUserProfile('user02', { displayName: 'User 02' });
-    this.addUserProfile('user03', { displayName: 'User 03' });
+    this.addUserProfile('user03', { displayName: 'User 03', email: 'bob@example.com' });
     TestBed.configureTestingModule({
       declarations: [CollaboratorsComponent, ShareControlComponent],
       imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
