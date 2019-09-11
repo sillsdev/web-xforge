@@ -1,5 +1,5 @@
 import { MdcTextField } from '@angular-mdc/web';
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -13,6 +13,8 @@ import { SFProjectService } from '../../core/sf-project.service';
   styleUrls: ['./share-control.component.scss']
 })
 export class ShareControlComponent {
+  /** Fires when an invitation is sent. */
+  @Output() invited = new EventEmitter<void>();
   @Input() readonly projectId: string;
   @Input() readonly isLinkSharingEnabled: boolean;
   @ViewChild('shareLinkField', { static: false }) shareLinkField: MdcTextField;
@@ -66,6 +68,7 @@ export class ShareControlComponent {
       message = 'Not inviting: User is already a member of this project';
     } else {
       message = 'An invitation email has been sent to ' + this.sendInviteForm.value.email;
+      this.invited.emit();
     }
 
     this.noticeService.show(message);
