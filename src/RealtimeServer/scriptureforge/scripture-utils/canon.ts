@@ -345,6 +345,18 @@ export class Canon {
     return Canon.allBookIds[index];
   }
 
+  static bookNumberToEnglishName(number: number): string {
+    if (number <= 0 || number > this.lastBook) {
+      return '******';
+    }
+
+    return Canon.allBookEnglishNames[number - 1];
+  }
+
+  static bookIdToEnglishName(id: string): string {
+    return this.bookNumberToEnglishName(this.bookIdToNumber(id));
+  }
+
   static isObsolete(bookNum: number): boolean {
     const name: string = this.allBookEnglishNames[bookNum - 1];
     return name.includes('*obsolete*');

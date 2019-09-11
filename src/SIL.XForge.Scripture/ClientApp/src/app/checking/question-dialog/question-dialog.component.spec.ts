@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
+import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, spy, verify, when } from 'ts-mockito';
@@ -14,14 +16,12 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { Delta, getTextDocId, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { VerseRef } from '../../shared/scripture-utils/verse-ref';
-import { verseRefDataToString, verseRefToVerseRefData } from '../../shared/scripture-utils/verse-ref-data-converters';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 import { QuestionDialogComponent, QuestionDialogData } from './question-dialog.component';
@@ -173,12 +173,7 @@ describe('QuestionDialogComponent', () => {
     env.clickElement(env.scriptureStartInputIcon);
     flush();
     verify(env.dialogSpy.open(anything(), anything())).once();
-    expect(env.dataPassedToDialog.input).toEqual({
-      book: 'MAT',
-      chapter: '3',
-      verse: '4',
-      versification: undefined
-    });
+    expect(env.dataPassedToDialog.input.toString()).toEqual('MAT 3:4');
     flush();
     expect(env.component.scriptureStart.value).toEqual('LUK 1:2');
   }));
@@ -218,19 +213,9 @@ describe('QuestionDialogComponent', () => {
     flush();
     verify(env.dialogSpy.open(anything(), anything())).once();
     // Dialog receives unhelpful input value that can be ignored.
-    expect(env.dataPassedToDialog.input).toEqual({
-      book: 'GEN',
-      chapter: '5',
-      verse: '6',
-      versification: undefined
-    });
+    expect(env.dataPassedToDialog.input.toString()).toEqual('GEN 5:6');
     // rangeStart should have been passed in, and from scriptureStart value.
-    expect(env.dataPassedToDialog.rangeStart).toEqual({
-      book: 'LUK',
-      chapter: '1',
-      verse: '1',
-      versification: undefined
-    });
+    expect(env.dataPassedToDialog.rangeStart.toString()).toEqual('LUK 1:1');
     flush();
     expect(env.component.scriptureEnd.value).toEqual('LUK 1:2');
   }));
@@ -243,12 +228,7 @@ describe('QuestionDialogComponent', () => {
     env.clickElement(env.scriptureStartInputIcon);
     flush();
     verify(env.dialogSpy.open(anything(), anything())).once();
-    expect(env.dataPassedToDialog.input).toEqual({
-      book: 'LUK',
-      chapter: '1',
-      verse: '1',
-      versification: undefined
-    });
+    expect(env.dataPassedToDialog.input.toString()).toEqual('LUK 1:1');
     // rangeStart should not have been passed in.
     expect(env.dataPassedToDialog.rangeStart).toBeUndefined();
     flush();
@@ -292,7 +272,7 @@ describe('QuestionDialogComponent', () => {
     tick(500);
     env.fixture.detectChanges();
     tick(500);
-    const textDocId = new TextDocId('project01', 'LUK', 1, 'target');
+    const textDocId = new TextDocId('project01', 42, 1, 'target');
     expect(env.component.textDocId.toString()).toBe(textDocId.toString());
     verify(env.mockedProjectService.getText(deepEqual(textDocId))).once();
     expect(env.isSegmentHighlighted('1')).toBe(true);
@@ -302,10 +282,10 @@ describe('QuestionDialogComponent', () => {
   it('retrieves scripture text on editing a question', fakeAsync(() => {
     const env = new TestEnvironment(true);
     flush();
-    const textDocId = new TextDocId('project01', 'LUK', 1, 'target');
+    const textDocId = new TextDocId('project01', 42, 1, 'target');
     expect(env.component.textDocId.toString()).toBe(textDocId.toString());
     verify(env.mockedProjectService.getText(deepEqual(textDocId))).once();
-    expect(verseRefDataToString(env.component.scriptureRef.scriptureStart)).toEqual('LUK 1:3');
+    expect(env.component.selection.verseRef.toString()).toEqual('LUK 1:3');
   }));
 });
 
@@ -367,29 +347,28 @@ class TestEnvironment {
     });
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
-    const config: MdcDialogConfig = {
+    const config: MdcDialogConfig<QuestionDialogData> = {
       data: {
         question: editMode
           ? {
               dataId: 'question01',
               ownerRef: 'user01',
               projectRef: 'project01',
-              scriptureStart: verseRefToVerseRefData(VerseRef.fromStr('LUK 1:3')),
+              verseRef: fromVerseRef(VerseRef.parse('LUK 1:3')),
               answers: [],
               isArchived: false,
               dateCreated: '',
               dateModified: ''
             }
           : undefined,
-        textsByBook: {
+        textsByBookId: {
           MAT: {
             id: 'text01',
-            bookId: 'MAT',
-            name: 'Matthew',
+            bookNum: 40,
             hasSource: false,
             chapters: [{ number: 1, lastVerse: 25 }, { number: 2, lastVerse: 23 }]
           },
-          LUK: { id: 'text02', bookId: 'LUK', name: 'Luke', hasSource: false, chapters: [{ number: 1, lastVerse: 80 }] }
+          LUK: { id: 'text02', bookNum: 42, hasSource: false, chapters: [{ number: 1, lastVerse: 80 }] }
         },
         projectId: 'project01'
       } as QuestionDialogData,
@@ -404,9 +383,9 @@ class TestEnvironment {
     // Set up MdcDialog mocking after it's already used above in creating the component.
     this.dialogSpy = spy(this.component.dialog);
     when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
-    const chooserDialogResult: VerseRefData = { book: 'LUK', chapter: '1', verse: '2' };
+    const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
-    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 'LUK', 1, 'target')))).thenResolve(
+    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 42, 1, 'target')))).thenResolve(
       this.createTextDoc()
     );
     this.fixture.detectChanges();
@@ -495,7 +474,7 @@ class TestEnvironment {
     delta.insert('\n', { para: { style: 'p' } });
     const adapter = new MemoryRealtimeDocAdapter(
       TextDoc.COLLECTION,
-      getTextDocId('project01', 'LUK', 1, 'target'),
+      getTextDocId('project01', 42, 1, 'target'),
       delta,
       RichText.type
     );

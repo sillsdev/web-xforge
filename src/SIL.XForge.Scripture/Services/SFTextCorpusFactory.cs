@@ -65,14 +65,11 @@ namespace SIL.XForge.Scripture.Services
                 {
                     foreach (Chapter chapter in text.Chapters)
                     {
-                        string id = TextInfo.GetTextDocId(projectId, text.BookId, chapter.Number, textType);
+                        string id = TextData.GetTextDocId(projectId, text.BookNum, chapter.Number, textType);
                         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", id);
                         BsonDocument doc = await textDataColl.Find(filter).FirstOrDefaultAsync();
                         if (doc != null)
-                        {
-                            texts.Add(new SFScriptureText(wordTokenizer, projectId, text.BookId, chapter.Number,
-                                doc));
-                        }
+                            texts.Add(new SFScriptureText(wordTokenizer, projectId, text.BookNum, chapter.Number, doc));
                     }
                 }
             }

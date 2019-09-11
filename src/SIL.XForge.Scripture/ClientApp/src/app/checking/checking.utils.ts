@@ -10,8 +10,6 @@ export class CheckingUtils {
   }
 
   static hasUserReadQuestion(question: Question, projectUserConfig: SFProjectUserConfig): boolean {
-    return projectUserConfig && projectUserConfig.questionRefsRead
-      ? projectUserConfig.questionRefsRead.includes(question.dataId)
-      : false;
+    return projectUserConfig ? projectUserConfig.questionRefsRead.includes(question.dataId) : false;
   }
 }

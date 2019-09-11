@@ -19,10 +19,10 @@
     </div>
     <mdc-list-divider></mdc-list-divider>
     <mdc-list *ngIf="texts != null" twoLine [interactive]="false">
-      <mdc-list-item *ngFor="let textProgress of texts" [routerLink]="['./', textProgress.text.bookId]">
+      <mdc-list-item *ngFor="let textProgress of texts" [routerLink]="['./', getBookId(textProgress.text)]">
         <mdc-icon mdcListItemGraphic>book</mdc-icon>
         <mdc-list-item-text [secondaryText]="textProgress.translated + ' of ' + textProgress.total + ' segments'">{{
-          textProgress.text.name
+          getBookName(textProgress.text)
         }}</mdc-list-item-text>
         <div class="progress" mdcListItemMeta [title]="textProgress.percentage + '%'">
           <canvas

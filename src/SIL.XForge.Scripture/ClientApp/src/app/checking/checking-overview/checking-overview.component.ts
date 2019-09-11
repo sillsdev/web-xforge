@@ -1,10 +1,14 @@
-import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { distanceInWordsToNow } from 'date-fns';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { TextInfo, TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
+import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { merge, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -15,11 +19,9 @@ import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { getTextDocId, TextDocId } from '../../core/models/text-doc';
+import { TextDocId } from '../../core/models/text-doc';
+import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ScrVers } from '../../shared/scripture-utils/scr-vers';
-import { VerseRef } from '../../shared/scripture-utils/verse-ref';
-import { verseRefDataToVerseRef, verseRefToVerseRefData } from '../../shared/scripture-utils/verse-ref-data-converters';
 import { CheckingUtils } from '../checking.utils';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import {
@@ -39,8 +41,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   questionDocs: { [docId: string]: QuestionDoc[] } = {};
   texts: TextInfo[] = [];
   projectId: string;
-  textsByBook: TextsByBook;
 
+  private textsByBookId: TextsByBookId;
   private projectDoc: SFProjectDoc;
   private dataChangesSub: Subscription;
   private projectUserConfigDoc: SFProjectUserConfigDoc;
@@ -181,8 +183,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
   }
 
-  getTextDocId(bookId: string, chapter: number): string {
-    return getTextDocId(this.projectDoc.id, bookId, chapter);
+  getTextDocId(bookNum: number, chapter: number): string {
+    return getTextDocId(this.projectDoc.id, bookNum, chapter);
   }
 
   getQuestionDocs(textDocId: TextDocId, fromArchive = false): QuestionDoc[] {
@@ -195,7 +197,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   bookQuestionCount(text: TextInfo, fromArchive = false): number {
     let count: number;
     for (const chapter of text.chapters) {
-      const questionCount = this.questionCount(text.bookId, chapter.number, fromArchive);
+      const questionCount = this.questionCount(text.bookNum, chapter.number, fromArchive);
       if (questionCount) {
         if (!count) {
           count = 0;
@@ -210,8 +212,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return distanceInWordsToNow(new Date(date));
   }
 
-  questionCount(bookId: string, chapterNumber: number, fromArchive = false): number {
-    const id = new TextDocId(this.projectDoc.id, bookId, chapterNumber);
+  questionCount(bookNum: number, chapterNumber: number, fromArchive = false): number {
+    const id = new TextDocId(this.projectDoc.id, bookNum, chapterNumber);
     if (!(id.toString() in this.questionDocs)) {
       return undefined;
     }
@@ -228,7 +230,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   bookAnswerCount(text: TextInfo): number {
     let count: number;
     for (const chapter of text.chapters) {
-      const answerCount = this.chapterAnswerCount(text.bookId, chapter.number);
+      const answerCount = this.chapterAnswerCount(text.bookNum, chapter.number);
       if (answerCount) {
         if (!count) {
           count = 0;
@@ -239,8 +241,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count;
   }
 
-  chapterAnswerCount(bookId: string, chapterNumber: number): number {
-    const id = new TextDocId(this.projectDoc.id, bookId, chapterNumber);
+  chapterAnswerCount(bookNum: number, chapterNumber: number): number {
+    const id = new TextDocId(this.projectDoc.id, bookNum, chapterNumber);
     if (!(id.toString() in this.questionDocs)) {
       return undefined;
     }
@@ -293,7 +295,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     let read: number = 0;
     let answered: number = 0;
     for (const chapter of text.chapters) {
-      const id = new TextDocId(this.projectId, text.bookId, chapter.number);
+      const id = new TextDocId(this.projectId, text.bookNum, chapter.number);
       if (!(id.toString() in this.questionDocs)) {
         continue;
       }
@@ -325,21 +327,21 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const dialogConfig: MdcDialogConfig<QuestionDialogData> = {
       data: {
         question: questionDoc != null ? questionDoc.data : undefined,
-        textsByBook: this.textsByBook,
+        textsByBookId: this.textsByBookId,
         projectId: this.projectDoc.id
       }
     };
-    const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig);
+    const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig) as MdcDialogRef<
+      QuestionDialogComponent,
+      QuestionDialogResult | 'close'
+    >;
 
-    dialogRef.afterClosed().subscribe(async (result: QuestionDialogResult) => {
+    dialogRef.afterClosed().subscribe(async result => {
       if (result === 'close') {
         return;
       }
       const questionId = questionDoc != null ? questionDoc.data.dataId : objectId();
-      const verseStart = VerseRef.fromStr(result.scriptureStart, ScrVers.English);
-      const verseEnd = VerseRef.fromStr(result.scriptureEnd, ScrVers.English);
-      const scriptureStart = verseRefToVerseRefData(verseStart);
-      const scriptureEnd = verseRefToVerseRefData(verseEnd);
+      const verseRef = fromVerseRef(result.verseRef);
       const text = result.text;
       let audioUrl = questionDoc != null ? questionDoc.data.audioUrl : undefined;
       if (result.audio.fileName) {
@@ -357,16 +359,15 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       const currentDate = new Date().toJSON();
       if (questionDoc != null) {
         const deleteAudio = questionDoc.data.audioUrl != null && audioUrl == null;
-        const oldScriptureStart = questionDoc.data.scriptureStart;
+        const oldVerseRef = questionDoc.data.verseRef;
         const moveToDifferentChapter =
-          oldScriptureStart.book !== scriptureStart.book || oldScriptureStart.chapter !== scriptureStart.chapter;
+          oldVerseRef.bookNum !== verseRef.bookNum || oldVerseRef.chapterNum !== verseRef.chapterNum;
         if (moveToDifferentChapter) {
           this.removeQuestionDoc(questionDoc);
         }
         await questionDoc.submitJson0Op(op =>
           op
-            .set(q => q.scriptureStart, scriptureStart)
-            .set(q => q.scriptureEnd, scriptureEnd)
+            .set(q => q.verseRef, verseRef)
             .set(q => q.text, text)
             .set(q => q.audioUrl, audioUrl)
             .set(q => q.dateModified, currentDate)
@@ -386,8 +387,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           dataId: questionId,
           projectRef: this.projectId,
           ownerRef: this.userService.currentUserId,
-          scriptureStart,
-          scriptureEnd,
+          verseRef,
           text,
           audioUrl,
           answers: [],
@@ -401,19 +401,27 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     });
   }
 
+  getBookName(text: TextInfo): string {
+    return Canon.bookNumberToEnglishName(text.bookNum);
+  }
+
+  getBookId(text: TextInfo): string {
+    return Canon.bookNumberToId(text.bookNum);
+  }
+
   private initTexts(): void {
     if (this.projectDoc == null || this.projectDoc.data == null) {
       return;
     }
 
     this.questionDocs = {};
-    this.textsByBook = {};
+    this.textsByBookId = {};
     this.texts = [];
     for (const text of this.projectDoc.data.texts) {
-      this.textsByBook[text.bookId] = text;
+      this.textsByBookId[Canon.bookNumberToId(text.bookNum)] = text;
       this.texts.push(text);
       for (const chapter of text.chapters) {
-        const textId = new TextDocId(this.projectDoc.id, text.bookId, chapter.number);
+        const textId = new TextDocId(this.projectDoc.id, text.bookNum, chapter.number);
         this.questionDocs[textId.toString()] = [];
       }
     }
@@ -424,14 +432,20 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   private addQuestionDoc(questionDoc: QuestionDoc): void {
-    const verseStart = verseRefDataToVerseRef(questionDoc.data.scriptureStart);
-    const textId = new TextDocId(this.projectDoc.id, verseStart.book, verseStart.chapterNum);
+    const textId = new TextDocId(
+      this.projectDoc.id,
+      questionDoc.data.verseRef.bookNum,
+      questionDoc.data.verseRef.chapterNum
+    );
     this.questionDocs[textId.toString()].push(questionDoc);
   }
 
   private removeQuestionDoc(questionDoc: QuestionDoc): void {
-    const verseStart = verseRefDataToVerseRef(questionDoc.data.scriptureStart);
-    const textId = new TextDocId(this.projectDoc.id, verseStart.book, verseStart.chapterNum);
+    const textId = new TextDocId(
+      this.projectDoc.id,
+      questionDoc.data.verseRef.bookNum,
+      questionDoc.data.verseRef.chapterNum
+    );
     const chapterQuestionDocs = this.questionDocs[textId.toString()];
     const index = chapterQuestionDocs.indexOf(questionDoc);
     chapterQuestionDocs.splice(index, 1);

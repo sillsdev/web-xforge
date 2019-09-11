@@ -1,29 +1,38 @@
-import { ErrorStateMatcher, MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
+import { ErrorStateMatcher, MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  FormGroupDirective,
+  NgForm,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { TextInfo, TextsByBook } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import {
+  fromVerseRef,
+  toStartAndEndVerseRefs,
+  toVerseRef,
+  VerseRefData
+} from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { AccountService } from 'xforge-common/account.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
+import { TextsByBookId } from '../../../core/models/texts-by-book-id';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { ScrVers } from '../../../shared/scripture-utils/scr-vers';
-import { VerseRef } from '../../../shared/scripture-utils/verse-ref';
-import {
-  verseRefDataToString,
-  verseRefToVerseRefData
-} from '../../../shared/scripture-utils/verse-ref-data-converters';
 import { SFValidators } from '../../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
@@ -34,8 +43,7 @@ export interface AnswerAction {
   action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'like' | 'recorder';
   answer?: Answer;
   text?: string;
-  scriptureStart?: VerseRefData;
-  scriptureEnd?: VerseRefData;
+  verseRef?: VerseRefData;
   scriptureText?: string;
   audio?: AudioAttachment;
 }
@@ -62,12 +70,15 @@ export class CheckingAnswersComponent implements OnInit {
   @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
 
   activeAnswer: Answer;
-  answerForm: FormGroup = new FormGroup({
-    answerText: new FormControl(),
-    scriptureStart: new FormControl(),
-    scriptureEnd: new FormControl(),
-    scriptureText: new FormControl()
-  });
+  answerForm = new FormGroup(
+    {
+      answerText: new FormControl(),
+      scriptureStart: new FormControl(),
+      scriptureEnd: new FormControl(),
+      scriptureText: new FormControl()
+    },
+    SFValidators.verseStartBeforeEnd
+  );
   answerFormVisible: boolean = false;
   answerFormSubmitAttempted: boolean = false;
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
@@ -142,28 +153,11 @@ export class CheckingAnswersComponent implements OnInit {
     return this.answerForm.controls.scriptureStart;
   }
 
-  get scriptureStartVerseRef(): VerseRef {
-    return VerseRef.fromStr(this.scriptureStart.value, ScrVers.English);
-  }
-
   get scriptureEnd(): AbstractControl {
     return this.answerForm.controls.scriptureEnd;
   }
-
-  get scriptureEndVerseRef(): VerseRef {
-    return VerseRef.fromStr(this.scriptureEnd.value, ScrVers.English);
-  }
-
   get scriptureText(): AbstractControl {
     return this.answerForm.controls.scriptureText;
-  }
-
-  get textsByBook(): TextsByBook {
-    const textsByBook: TextsByBook = {};
-    if (this.projectText) {
-      textsByBook[this.projectText.bookId] = this.projectText;
-    }
-    return textsByBook;
   }
 
   get totalAnswersHeading(): string {
@@ -174,11 +168,19 @@ export class CheckingAnswersComponent implements OnInit {
     }
   }
 
+  private get textsByBookId(): TextsByBookId {
+    const textsByBook: TextsByBookId = {};
+    if (this.projectText) {
+      textsByBook[Canon.bookNumberToId(this.projectText.bookNum)] = this.projectText;
+    }
+    return textsByBook;
+  }
+
   ngOnInit(): void {
     this.userService.getCurrentUser().then(u => (this.user = u));
-    this.scriptureStart.setValidators([SFValidators.verseStr(this.textsByBook)]);
+    this.scriptureStart.setValidators([SFValidators.verseStr(this.textsByBookId)]);
     this.scriptureStart.updateValueAndValidity();
-    this.scriptureEnd.setValidators([SFValidators.verseStr(this.textsByBook)]);
+    this.scriptureEnd.setValidators([SFValidators.verseStr(this.textsByBookId)]);
     this.scriptureEnd.updateValueAndValidity();
   }
 
@@ -198,20 +200,24 @@ export class CheckingAnswersComponent implements OnInit {
   editAnswer(answer: Answer) {
     this.activeAnswer = cloneDeep(answer);
     this.audio.url = this.activeAnswer.audioUrl;
-    this.scriptureStart.setValue(verseRefDataToString(this.activeAnswer.scriptureStart));
-    this.scriptureEnd.setValue(verseRefDataToString(this.activeAnswer.scriptureEnd));
+    if (this.activeAnswer.verseRef != null) {
+      const { startVerseRef, endVerseRef } = toStartAndEndVerseRefs(this.activeAnswer.verseRef);
+      this.scriptureStart.setValue(startVerseRef.toString());
+      if (endVerseRef != null) {
+        this.scriptureEnd.setValue(endVerseRef.toString());
+      }
+    }
     this.scriptureText.setValue(this.activeAnswer.scriptureText);
     this.showAnswerForm();
   }
 
   extractScriptureText() {
-    const verseStart = this.scriptureStartVerseRef;
-    const verseEnd = this.scriptureEnd.value ? this.scriptureEndVerseRef : verseStart;
+    const verseRef = this.getVerseRef();
     const verses = [];
-    if (verseStart.verseNum > 0) {
-      for (let verse = verseStart.verseNum; verse <= verseEnd.verseNum; verse++) {
+    if (verseRef != null) {
+      for (const verseInRange of verseRef.allVerses()) {
         verses.push(
-          this.checkingTextComponent.textComponent.getSegmentText('verse_' + verseStart.chapter + '_' + verse)
+          this.checkingTextComponent.textComponent.getSegmentText(`verse_${verseInRange.chapter}_${verseInRange.verse}`)
         );
       }
     }
@@ -256,21 +262,33 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   openScriptureChooser(control: AbstractControl) {
-    const currentVerseSelection = verseRefToVerseRefData(VerseRef.fromStr(control.value, ScrVers.English));
+    let currentVerseSelection: VerseRef;
+    if (control.value != null) {
+      const { verseRef } = VerseRef.tryParse(control.value);
+      if (verseRef.valid) {
+        currentVerseSelection = verseRef;
+      }
+    }
 
-    let rangeStart: VerseRefData;
-    if (control !== this.scriptureStart) {
-      rangeStart = verseRefToVerseRefData(VerseRef.fromStr(this.scriptureStart.value, ScrVers.English));
+    let rangeStart: VerseRef;
+    if (control !== this.scriptureStart && this.scriptureStart.value != null) {
+      const { verseRef } = VerseRef.tryParse(this.scriptureStart.value);
+      if (verseRef.valid) {
+        rangeStart = verseRef;
+      }
     }
 
     const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
-      data: { input: currentVerseSelection, booksAndChaptersToShow: this.textsByBook, rangeStart }
+      data: { input: currentVerseSelection, booksAndChaptersToShow: this.textsByBookId, rangeStart }
     };
 
-    const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig);
-    dialogRef.afterClosed().subscribe((result: VerseRefData | 'close') => {
+    const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
+      ScriptureChooserDialogComponent,
+      VerseRef | 'close'
+    >;
+    dialogRef.afterClosed().subscribe(result => {
       if (result !== 'close') {
-        control.setValue(verseRefDataToString(result));
+        control.setValue(result.toString());
         control.markAsTouched();
         control.markAsDirty();
         this.extractScriptureText();
@@ -290,11 +308,11 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   scriptureTextVerseRef(answer: Answer): string {
-    let scriptureRef = verseRefDataToString(answer.scriptureStart);
-    if (answer.scriptureEnd != null && answer.scriptureStart.verse !== answer.scriptureEnd.verse) {
-      scriptureRef += `-${answer.scriptureEnd.verse}`;
+    if (answer.verseRef == null) {
+      return '';
     }
-    return `(${scriptureRef})`;
+    const verseRef = toVerseRef(answer.verseRef);
+    return `(${verseRef.toString()})`;
   }
 
   showAnswerForm() {
@@ -350,8 +368,7 @@ export class CheckingAnswersComponent implements OnInit {
       answer: this.activeAnswer,
       audio: this.audio,
       scriptureText: this.scriptureText.value != null ? this.scriptureText.value : undefined,
-      scriptureStart: verseRefToVerseRefData(this.scriptureStartVerseRef),
-      scriptureEnd: verseRefToVerseRefData(this.scriptureEndVerseRef)
+      verseRef: fromVerseRef(this.getVerseRef())
     });
   }
 
@@ -362,6 +379,20 @@ export class CheckingAnswersComponent implements OnInit {
       this.answerForm.get('answerText').setValidators(Validators.required);
     }
     this.answerForm.get('answerText').updateValueAndValidity();
+  }
+
+  private getVerseRef(): VerseRef {
+    let verseRefStr = this.scriptureStart.value;
+    if (!verseRefStr) {
+      return undefined;
+    }
+    if (this.scriptureEnd.value && verseRefStr !== this.scriptureEnd.value) {
+      const scriptureEnd = VerseRef.parse(this.scriptureEnd.value);
+      verseRefStr += `-${scriptureEnd.verse}`;
+    }
+
+    const { verseRef } = VerseRef.tryParse(verseRefStr);
+    return verseRef.valid ? verseRef : undefined;
   }
 }
 

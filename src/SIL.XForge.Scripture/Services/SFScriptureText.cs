@@ -9,10 +9,10 @@ namespace SIL.XForge.Scripture.Services
 {
     public class SFScriptureText : IText
     {
-        public SFScriptureText(ITokenizer<string, int> wordTokenizer, string projectId, string bookId, int chapter,
+        public SFScriptureText(ITokenizer<string, int> wordTokenizer, string projectId, int book, int chapter,
             BsonDocument doc)
         {
-            Id = $"{projectId}_{bookId}_{chapter}";
+            Id = $"{projectId}_{book}_{chapter}";
             Segments = GetSegments(wordTokenizer, doc).OrderBy(s => s.SegmentRef).ToArray();
         }
 

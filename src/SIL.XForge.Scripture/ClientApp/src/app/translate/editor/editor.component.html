@@ -1,5 +1,5 @@
 <div mdcMenuSurfaceAnchor #trainingProgressAnchor fxLayout="column">
-  <div class="book-label" mdcHeadline4>{{ textName }}</div>
+  <div class="book-label" mdcHeadline4>{{ bookName }}</div>
   <div class="toolbar" fxLayout="row wrap" fxLayoutAlign="start center">
     <app-chapter-nav [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
     <ng-container *ngIf="hasSource">

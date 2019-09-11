@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
+import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { getSFProjectUserConfigDocId } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { CommandService } from 'xforge-common/command.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
@@ -10,12 +11,12 @@ import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { getObjPathStr, objProxy } from 'xforge-common/utils';
 import { MachineHttpClient } from './machine-http-client';
-import { getQuestionDocId, QuestionDoc } from './models/question-doc';
+import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
 import { SF_PROJECT_ROLES } from './models/sf-project-role-info';
 import { SFProjectSettings } from './models/sf-project-settings';
-import { getSFProjectUserConfigDocId, SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
+import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
 import { TextDoc, TextDocId } from './models/text-doc';
 import { TranslateMetrics } from './models/translate-metrics';
 
@@ -56,22 +57,20 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   getQuestions(
     id: string,
-    options?: { bookId?: string; activeOnly?: boolean; sort?: boolean }
+    options: { bookNum?: number; activeOnly?: boolean; sort?: boolean } = {}
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const q = objProxy<Question>();
     const queryParams: QueryParameters = {
       [getObjPathStr(q.projectRef)]: id
     };
-    if (options != null) {
-      if (options.bookId != null) {
-        queryParams[getObjPathStr(q.scriptureStart.book)] = options.bookId;
-      }
-      if (options.activeOnly != null && options.activeOnly) {
-        queryParams[getObjPathStr(q.isArchived)] = false;
-      }
-      if (options.sort != null) {
-        queryParams.$sort = { [getObjPathStr(q.dateCreated)]: -1 };
-      }
+    if (options.bookNum != null) {
+      queryParams[getObjPathStr(q.verseRef.bookNum)] = options.bookNum;
+    }
+    if (options.activeOnly != null && options.activeOnly) {
+      queryParams[getObjPathStr(q.isArchived)] = false;
+    }
+    if (options.sort != null) {
+      queryParams.$sort = { [getObjPathStr(q.dateCreated)]: -1 };
     }
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
   }

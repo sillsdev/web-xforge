@@ -4,8 +4,7 @@ namespace SIL.XForge.Scripture.Models
 {
     public class Answer : Comment
     {
-        public VerseRefData ScriptureStart { get; set; }
-        public VerseRefData ScriptureEnd { get; set; }
+        public VerseRefData VerseRef { get; set; }
         public string ScriptureText { get; set; }
         public string AudioUrl { get; set; }
         public List<Like> Likes { get; set; } = new List<Like>();
