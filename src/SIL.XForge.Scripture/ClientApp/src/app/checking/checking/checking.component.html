@@ -71,7 +71,7 @@
           <div id="split-container" #splitContainer>
             <as-split
               direction="vertical"
-              [disabled]="!questionsPanel.activeQuestion"
+              [disabled]="!questionsPanel.activeQuestionDoc"
               (dragEnd)="checkSliderPosition($event)"
               useTransition="true"
             >

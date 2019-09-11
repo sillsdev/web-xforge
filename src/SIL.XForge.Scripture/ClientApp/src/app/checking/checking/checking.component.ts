@@ -6,7 +6,6 @@ import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -326,11 +325,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  questionUpdated(question: Question) {
+  questionUpdated(questionDoc: QuestionDoc) {
     this.refreshSummary();
   }
 
-  questionChanged(question: Question) {
+  questionChanged(questionDoc: QuestionDoc) {
     if (this.questionsPanel.activeQuestionChapter !== this.chapter) {
       this.chapter = this.questionsPanel.activeQuestionChapter;
     }

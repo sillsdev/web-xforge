@@ -17,7 +17,10 @@ mdc-dialog-actions {
   text-align: end;
 }
 
-.split-container {
+.text-container {
   height: 8em;
   margin-bottom: 2.5em;
+  app-checking-text {
+    position: relative;
+  }
 }
