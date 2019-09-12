@@ -379,12 +379,15 @@ describe('CheckingComponent', () => {
         env.selectQuestion(15);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
+        env.commentOnAnswer(0, 'Second comment to answer');
         env.clickButton(env.getEditCommentButton(0, 0));
+        expect(env.commentFormTextFields.length).toEqual(1);
         env.setTextFieldValue(env.getYourCommentField(0), 'Edited comment');
         env.clickButton(env.getSaveCommentButton(0));
         env.waitForSliderUpdate();
         expect(env.getAnswerCommentText(0, 0)).toBe('Edited comment');
-        expect(env.getAnswerComments(0).length).toBe(1);
+        expect(env.getAnswerCommentText(0, 1)).toBe('Second comment to answer');
+        expect(env.getAnswerComments(0).length).toBe(2);
       }));
 
       it('can delete comment on an answer', fakeAsync(() => {
@@ -638,6 +641,10 @@ class TestEnvironment {
 
   get cancelAnswerButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#cancel-answer'));
+  }
+
+  get commentFormTextFields(): DebugElement[] {
+    return this.fixture.debugElement.queryAll(By.css('mdc-text-field[formControlName="commentText"]'));
   }
 
   get currentQuestion(): number {
