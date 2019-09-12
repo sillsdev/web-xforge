@@ -466,6 +466,7 @@ describe('CheckingComponent', () => {
         );
         env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toEqual(1);
+        expect(env.component.projectUserConfigDoc.data.commentRefsRead.includes(comment.dataId)).toBe(true);
       }));
     });
   });
