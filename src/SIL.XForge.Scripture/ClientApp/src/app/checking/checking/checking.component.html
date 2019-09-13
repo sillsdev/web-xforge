@@ -42,7 +42,10 @@
               <div>
                 <mdc-icon fxHide.lt-md>library_books</mdc-icon>
                 <div #textNameAnchor mdcMenuSurfaceAnchor>
-                  <h2 class="chapter-select" (click)="chapterMenu.open = !chapterMenu.open">
+                  <h2
+                    class="chapter-select"
+                    (click)="showAllBooks ? openScriptureChooser() : (chapterMenu.open = !chapterMenu.open)"
+                  >
                     <span>{{ bookName }}</span>
                     <span>
                       {{ chapter }} <mdc-icon *ngIf="!chapterMenu.open">keyboard_arrow_down</mdc-icon

@@ -19,6 +19,7 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -111,6 +112,19 @@ describe('CheckingComponent', () => {
       expect(env.questions.length).toEqual(15);
       const question = env.selectQuestion(15);
       expect(env.getQuestionText(question)).toBe('Question relating to chapter 2');
+    }));
+
+    it('questions are displaying for all books', fakeAsync(() => {
+      env.projectBookRoute = 'ALL';
+      env.setupReviewerScenarioData(env.checkerUser);
+      // A sixteenth question is archived
+      expect(env.questions.length).toEqual(16);
+      let question = env.selectQuestion(1);
+      expect(env.getQuestionText(question)).toBe('Book 1, Q1 text');
+      expect(env.currentBookAndChapter).toBe('John 1');
+      question = env.selectQuestion(16);
+      expect(env.getQuestionText(question)).toBe('Matthew question relating to chapter 1');
+      expect(env.currentBookAndChapter).toBe('Matthew 1');
     }));
 
     it('can select a question', fakeAsync(() => {
@@ -556,6 +570,7 @@ interface UserInfo {
 class TestEnvironment {
   component: CheckingComponent;
   fixture: ComponentFixture<CheckingComponent>;
+  projectBookRoute: string = 'JHN';
   questionReadTimer: number = 2000;
 
   readonly mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent> = mock(MdcDialogRef);
@@ -563,6 +578,7 @@ class TestEnvironment {
   readonly mockedUserService = mock(UserService);
   readonly mockedProjectService = mock(SFProjectService);
   readonly mockedNoticeService = mock(NoticeService);
+  readonly mockedActivatedRoute = mock(ActivatedRoute);
 
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
   checkerUser = this.createUser('02', SFProjectRole.CommunityChecker);
@@ -628,6 +644,11 @@ class TestEnvironment {
         bookNum: 43,
         hasSource: false,
         chapters: [{ number: 1, lastVerse: 18 }, { number: 2, lastVerse: 25 }]
+      },
+      {
+        bookNum: 40,
+        hasSource: false,
+        chapters: [{ number: 1, lastVerse: 28 }]
       }
     ],
     userRoles: {
@@ -668,7 +689,7 @@ class TestEnvironment {
       providers: [
         {
           provide: ActivatedRoute,
-          useValue: { params: of({ projectId: 'project01', bookId: 'JHN' }) }
+          useFactory: () => instance(this.mockedActivatedRoute)
         },
         { provide: AccountService, useFactory: () => instance(this.mockedAccountService) },
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
@@ -693,6 +714,13 @@ class TestEnvironment {
 
   get cancelAnswerButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#cancel-answer'));
+  }
+
+  get currentBookAndChapter(): string {
+    return this.fixture.debugElement
+      .query(By.css('h2.chapter-select'))
+      .nativeElement.textContent.replace('keyboard_arrow_down', '')
+      .trim();
   }
 
   get commentFormTextFields(): DebugElement[] {
@@ -931,6 +959,7 @@ class TestEnvironment {
   }
 
   private setupDefaultProjectData(user: UserInfo): void {
+    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01', bookId: this.projectBookRoute }));
     this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
       {
         id: 'project01',
@@ -972,6 +1001,11 @@ class TestEnvironment {
         id: getTextDocId('project01', 43, 2),
         data: this.createTextDataForChapter(2),
         type: RichText.type.name
+      },
+      {
+        id: getTextDocId('project01', 40, 1),
+        data: this.createTextData(),
+        type: RichText.type.name
       }
     ]);
     when(this.mockedProjectService.getText(anything())).thenCall(id =>
@@ -979,9 +1013,11 @@ class TestEnvironment {
     );
 
     const dateNow: string = new Date().toJSON();
-    const questions: Partial<Snapshot<Question>>[] = [];
+    let questions: Partial<Snapshot<Question>>[] = [];
+    const johnQuestions: Partial<Snapshot<Question>>[] = [];
+    const matthewQuestions: Partial<Snapshot<Question>>[] = [];
     for (let questionNumber = 1; questionNumber <= 14; questionNumber++) {
-      questions.push({
+      johnQuestions.push({
         id: getQuestionDocId('project01', `q${questionNumber}Id`),
         data: {
           dataId: 'q' + questionNumber + 'Id',
@@ -996,7 +1032,7 @@ class TestEnvironment {
         }
       });
     }
-    questions.push({
+    johnQuestions.push({
       id: getQuestionDocId('project01', 'q15Id'),
       data: {
         dataId: 'q15Id',
@@ -1010,8 +1046,22 @@ class TestEnvironment {
         dateModified: dateNow
       }
     });
-    questions[3].data.verseRef.verse = '3-4';
-    questions[5].data.answers.push({
+    matthewQuestions.push({
+      id: getQuestionDocId('project01', 'q16Id'),
+      data: {
+        dataId: 'q16Id',
+        ownerRef: this.adminUser.id,
+        projectRef: 'project01',
+        text: 'Matthew question relating to chapter 1',
+        verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
+        answers: [],
+        isArchived: false,
+        dateCreated: dateNow,
+        dateModified: dateNow
+      }
+    });
+    johnQuestions[3].data.verseRef.verse = '3-4';
+    johnQuestions[5].data.answers.push({
       dataId: 'a6Id',
       ownerRef: this.checkerUser.id,
       text: 'Answer 6 on question',
@@ -1034,7 +1084,7 @@ class TestEnvironment {
         dateModified: dateNow
       });
     }
-    questions[6].data.answers.push({
+    johnQuestions[6].data.answers.push({
       dataId: 'a7Id',
       ownerRef: this.adminUser.id,
       text: 'Answer 7 on question',
@@ -1054,7 +1104,7 @@ class TestEnvironment {
         dateModified: dateNow
       });
     }
-    questions[7].data.answers.push({
+    johnQuestions[7].data.answers.push({
       dataId: 'a8Id',
       ownerRef: this.adminUser.id,
       text: 'Answer 8 on question',
@@ -1063,11 +1113,23 @@ class TestEnvironment {
       dateModified: dateNow,
       comments: a8Comments
     });
+    if (this.projectBookRoute === 'JHN') {
+      questions = johnQuestions;
+    } else if (this.projectBookRoute === 'ALL') {
+      questions = johnQuestions.concat(matthewQuestions);
+    }
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions);
     this.questionsQuery = this.realtimeService.createQuery(QuestionDoc.COLLECTION, {});
     this.questionsQuery.subscribe();
     when(
-      this.mockedProjectService.getQuestions('project01', deepEqual({ bookNum: 43, activeOnly: true, sort: true }))
+      this.mockedProjectService.getQuestions(
+        'project01',
+        deepEqual({
+          bookNum: this.projectBookRoute === 'ALL' ? null : Canon.bookIdToNumber(this.projectBookRoute),
+          activeOnly: true,
+          sort: true
+        })
+      )
     ).thenResolve(this.questionsQuery);
     when(this.mockedUserService.currentUserId).thenReturn(user.id);
 
