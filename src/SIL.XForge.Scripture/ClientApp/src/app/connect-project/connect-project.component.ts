@@ -122,9 +122,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     });
 
     this.subscribe(this.paratextService.getProjects(), projects => {
-      if (projects != null) {
-        projects.sort((a, b) => a.name.localeCompare(b.name));
-      }
       this.projects = projects;
       if (projects != null) {
         this.targetProjects = projects.filter(p => p.isConnectable);

@@ -97,18 +97,6 @@ describe('ConnectProjectComponent', () => {
     verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project03']))).once();
   }));
 
-  it('should display projects sorted', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupDefaultProjectData();
-    env.fixture.detectChanges();
-    expect(env.component.state).toEqual('input');
-    expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
-    expect(env.getMenuItemText(env.projectSelect, 0)).toContain('English');
-    expect(env.getMenuItemText(env.projectSelect, 1)).toContain('Maori');
-    expect(env.getMenuItemText(env.projectSelect, 2)).toContain('Spanish');
-    expect(env.getMenuItemText(env.projectSelect, 3)).toContain('Thai');
-  }));
-
   it('should display non-connectable projects disabled', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
@@ -167,23 +155,6 @@ describe('ConnectProjectComponent', () => {
     expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
     expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(false);
     expect(env.nonAdminMessage).toBeNull();
-  }));
-
-  it('should display source projects sorted', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupDefaultProjectData();
-    env.fixture.detectChanges();
-    expect(env.component.state).toEqual('input');
-
-    env.changeSelectValue(env.projectSelect, 'pt01');
-
-    env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
-    expect(env.sourceParatextIdControl.disabled).toBe(false);
-
-    expect(env.getMenuItems(env.sourceProjectSelect).length).toEqual(3);
-    expect(env.getMenuItemText(env.sourceProjectSelect, 0)).toContain('Maori');
-    expect(env.getMenuItemText(env.sourceProjectSelect, 1)).toContain('Spanish');
-    expect(env.getMenuItemText(env.sourceProjectSelect, 2)).toContain('Thai');
   }));
 
   it('submit if user selects a source project then disables translation suggestions', fakeAsync(() => {
@@ -432,6 +403,16 @@ class TestEnvironment {
     when(this.mockedParatextService.getProjects()).thenReturn(
       of<ParatextProject[]>([
         {
+          paratextId: 'pt01',
+          name: 'English',
+          inputSystem: {
+            tag: 'en',
+            languageName: 'English'
+          },
+          isConnectable: true,
+          isConnected: false
+        },
+        {
           paratextId: 'pt02',
           projectId: 'project02',
           name: 'Maori',
@@ -440,17 +421,6 @@ class TestEnvironment {
             languageName: 'Maori'
           },
           isConnectable: false,
-          isConnected: true
-        },
-        {
-          paratextId: 'pt03',
-          projectId: 'project03',
-          name: 'Thai',
-          inputSystem: {
-            tag: 'th',
-            languageName: 'Thai'
-          },
-          isConnectable: true,
           isConnected: true
         },
         {
@@ -464,14 +434,15 @@ class TestEnvironment {
           isConnected: false
         },
         {
-          paratextId: 'pt01',
-          name: 'English',
+          paratextId: 'pt03',
+          projectId: 'project03',
+          name: 'Thai',
           inputSystem: {
-            tag: 'en',
-            languageName: 'English'
+            tag: 'th',
+            languageName: 'Thai'
           },
           isConnectable: true,
-          isConnected: false
+          isConnected: true
         }
       ])
     );

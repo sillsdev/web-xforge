@@ -131,7 +131,7 @@ namespace SIL.XForge.Scripture.Services
                     IsConnected = isConnected
                 });
             }
-            return projects;
+            return projects.OrderBy(p => p.Name, StringComparer.InvariantCulture).ToArray();
         }
 
 

@@ -254,7 +254,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (curSource != null) {
       const sourceProject = sourceProjects.find(p => p.paratextId === curSource.paratextId);
       if (sourceProject == null) {
-        sourceProjects.push({
+        sourceProjects.unshift({
           paratextId: curSource.paratextId,
           name: curSource.name,
           inputSystem: curSource.inputSystem,
@@ -263,7 +263,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         });
       }
     }
-    sourceProjects.sort((a, b) => a.name.localeCompare(b.name));
     this.sourceProjects = sourceProjects;
   }
 }
