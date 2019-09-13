@@ -80,7 +80,7 @@
   <mdc-drawer-header>
     <div [class.mdc-top-app-bar--short-fixed-adjust]="isDrawerPermanent"></div>
     <mdc-select *ngIf="projectDocs != null" class="project-select" (valueChange)="projectChanged($event.value)">
-      <mdc-menu>
+      <mdc-menu quickOpen="true">
         <mdc-list>
           <mdc-list-item *ngFor="let projectDoc of projectDocs" [value]="projectDoc.id">{{
             projectDoc.data?.name

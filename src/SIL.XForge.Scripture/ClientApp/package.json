@@ -18,7 +18,7 @@
   },
   "private": true,
   "dependencies": {
-    "@angular-mdc/web": "^1.0.5",
+    "@angular-mdc/web": "^2.0.1",
     "@angular/animations": "^8.2.4",
     "@angular/cdk": "^8.1.4",
     "@angular/common": "^8.2.4",
@@ -49,7 +49,7 @@
     "lodash": "^4.17.15",
     "material-components-web": "^2.3.0",
     "ng2-charts": "^1.6.0",
-    "ngx-avatar": "^3.4.0",
+    "ngx-avatar": "^3.7.0",
     "ngx-quill": "^7.2.0",
     "ot-json0": "^1.1.0",
     "process": "^0.11.10",
