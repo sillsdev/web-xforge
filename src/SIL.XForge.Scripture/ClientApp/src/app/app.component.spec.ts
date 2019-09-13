@@ -39,7 +39,7 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     expect(env.menuLength).toEqual(5);
-    expect(env.currentProjectId).toEqual('project01');
+    verify(env.mockedUserService.setCurrentProjectId('project01')).once();
   }));
 
   it('navigate to different project', fakeAsync(() => {
@@ -52,7 +52,7 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(4);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
-    expect(env.currentProjectId).toEqual('project02');
+    verify(env.mockedUserService.setCurrentProjectId('project02')).once();
   }));
 
   it('hide translate tool for community checkers', fakeAsync(() => {
@@ -65,7 +65,7 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(4);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
-    expect(env.currentProjectId).toEqual('project03');
+    verify(env.mockedUserService.setCurrentProjectId('project03')).once();
   }));
 
   it('expand/collapse tool', fakeAsync(() => {
@@ -92,7 +92,7 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project02');
     expect(env.location.path()).toEqual('/projects/project02');
-    expect(env.currentProjectId).toEqual('project02');
+    verify(env.mockedUserService.setCurrentProjectId('project02')).once();
   }));
 
   it('connect project', fakeAsync(() => {
@@ -125,7 +125,7 @@ describe('AppComponent', () => {
     expect(env.selectedProjectId).toEqual('project01');
     env.deleteProject01(false);
     expect(env.projectDeletedDialog).not.toBeNull();
-    expect(env.currentProjectId).toBeUndefined();
+    verify(env.mockedUserService.setCurrentProjectId()).once();
     env.confirmDialog();
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.location.path()).toEqual('/projects');
@@ -138,7 +138,7 @@ describe('AppComponent', () => {
     env.init();
 
     expect(env.isDrawerVisible).toEqual(false);
-    expect(env.currentProjectId).toBeUndefined();
+    verify(env.mockedUserService.setCurrentProjectId()).once();
     expect(env.location.path()).toEqual('/projects');
   }));
 
@@ -252,23 +252,24 @@ class TestEnvironment {
   private readonly project04Doc: SFProjectDoc;
 
   constructor() {
+    const user: User = {
+      name: 'User 01',
+      email: 'user1@example.com',
+      role: SystemRole.User,
+      isDisplayNameConfirmed: true,
+      avatarUrl: '',
+      authId: 'auth01',
+      displayName: 'User 01',
+      sites: {
+        sf: {
+          projects: ['project01', 'project02', 'project03']
+        }
+      }
+    };
+
     this.currentUserDoc = new UserDoc(
       this.offlineStore,
-      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', {
-        name: 'User 01',
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth01',
-        displayName: 'User 01',
-        sites: {
-          sf: {
-            currentProjectId: 'project01',
-            projects: ['project01', 'project02', 'project03']
-          }
-        }
-      } as User)
+      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', user)
     );
 
     this.project01Doc = this.addProject('project01', { user01: SFProjectRole.ParatextTranslator }, [
@@ -291,6 +292,7 @@ class TestEnvironment {
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedAuthService.isLoggedIn).thenResolve(true);
     when(this.mockedUserService.getCurrentUser()).thenResolve(this.currentUserDoc);
+    when(this.mockedUserService.currentProjectId).thenReturn('project01');
     when(this.mockedAccountService.openNameDialog(anything(), false)).thenReturn(instance(this.mockedNameDialogRef));
     when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
 
@@ -359,10 +361,6 @@ class TestEnvironment {
     return oce.querySelector('#ok-button');
   }
 
-  get currentProjectId(): string {
-    return this.currentUserDoc.data.sites.sf.currentProjectId;
-  }
-
   get currentUserDisplayName(): string {
     return this.currentUserDoc.data.displayName;
   }
@@ -402,7 +400,7 @@ class TestEnvironment {
 
   deleteProject01(isLocal: boolean): void {
     if (isLocal) {
-      this.currentUserDoc.data.sites.sf.currentProjectId = null;
+      when(this.mockedUserService.currentProjectId).thenReturn(undefined);
     }
     this.fixture.ngZone.run(() => {
       this.project01Doc.delete();

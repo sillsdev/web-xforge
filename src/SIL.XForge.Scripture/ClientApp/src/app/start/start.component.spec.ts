@@ -1,6 +1,8 @@
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { SystemRole } from 'realtime-server/lib/common/models/system-role';
+import { User } from 'realtime-server/lib/common/models/user';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
@@ -66,11 +68,20 @@ class TestEnvironment {
   }
 
   setCurrentUserProjectData(projectId?: string, projects: string[] = ['project01', 'project02']): void {
+    when(this.mockedUserService.currentProjectId).thenReturn(projectId);
+    const user: User = {
+      name: 'User 01',
+      email: 'user1@example.com',
+      role: SystemRole.User,
+      isDisplayNameConfirmed: true,
+      avatarUrl: '',
+      authId: 'auth01',
+      displayName: 'User 01',
+      sites: { sf: { projects } }
+    };
     const currentUserDoc = new UserDoc(
       this.offlineStore,
-      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', {
-        sites: { sf: { currentProjectId: projectId == null ? undefined : projectId, projects } }
-      })
+      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', user)
     );
     when(this.mockedUserService.getCurrentUser()).thenResolve(currentUserDoc);
   }

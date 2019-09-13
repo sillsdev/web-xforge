@@ -12,7 +12,7 @@ import { combineLatest, from, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
-import { DataLoadingComponent } from 'xforge-common/data-loading-component.js';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -226,9 +226,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
         // check if the currently selected project has been deleted
         if (projectId != null && selectedProjectDoc != null && !selectedProjectDoc.isLoaded) {
-          this.currentUserDoc
-            .submitJson0Op(op => op.unset(u => u.sites[environment.siteId].currentProjectId))
-            .then(() => this.navigateToStart());
+          this.userService.setCurrentProjectId();
+          this.navigateToStart();
           return;
         }
 
@@ -247,7 +246,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
 
         this.selectedProjectDeleteSub = this.selectedProjectDoc.delete$.subscribe(() => {
-          if (this.currentUserDoc.data.sites[environment.siteId].currentProjectId != null) {
+          if (this.userService.currentProjectId != null) {
             this.showProjectDeletedDialog();
           } else {
             this.navigateToStart();
@@ -277,11 +276,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           this._projectSelect.value = this.selectedProjectDoc.id;
         }
 
-        if (this.site.currentProjectId !== this.selectedProjectDoc.id) {
-          this.currentUserDoc.submitJson0Op(op =>
-            op.set(u => u.sites[environment.siteId].currentProjectId, this.selectedProjectDoc.id)
-          );
-        }
+        this.userService.setCurrentProjectId(this.selectedProjectDoc.id);
       });
       // tell HelpHero to remember this user to make sure we won't show them an identical tour again later
       this.helpHeroService.setIdentity(this.userService.currentUserId);
@@ -380,8 +375,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return projectDocs;
   }
 
-  private async showProjectDeletedDialog(): Promise<void> {
-    await this.currentUserDoc.submitJson0Op(op => op.unset(u => u.sites[environment.siteId].currentProjectId));
+  private showProjectDeletedDialog(): void {
+    this.userService.setCurrentProjectId();
     this.projectDeletedDialogRef = this.dialog.open(ProjectDeletedDialogComponent);
     this.projectDeletedDialogRef.afterClosed().subscribe(() => this.navigateToStart());
   }

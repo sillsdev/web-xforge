@@ -8,7 +8,6 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { environment } from '../../environments/environment';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
@@ -118,11 +117,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       data: { name: this.projectDoc.data.name }
     };
     const dialogRef = this.dialog.open(DeleteProjectDialogComponent, config);
-    dialogRef.afterClosed().subscribe(async result => {
+    dialogRef.afterClosed().subscribe(result => {
       if (result === 'accept') {
-        const userDoc = await this.userService.getCurrentUser();
-        await userDoc.submitJson0Op(op => op.unset(u => u.sites[environment.siteId].currentProjectId));
-        await this.projectService.onlineDelete(this.projectDoc.id);
+        this.userService.setCurrentProjectId();
+        this.projectService.onlineDelete(this.projectDoc.id);
       }
     });
   }
