@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SIL.Machine.WebApi.Services;
 using SIL.ObjectModel;
+using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -22,7 +23,7 @@ using SIL.XForge.Services;
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>
-    /// This class syncs real-time text, questions, and comments docs with the Paratext data access API.
+    /// This class syncs real-time text and question docs with the Paratext data access API.
     ///
     /// Text sync (two-way):
     /// 1. The text deltas from the real-time docs are converted to USX.
@@ -34,96 +35,11 @@ namespace SIL.XForge.Scripture.Services
     ///
     /// Notes sync (one-way):
     /// 1. The current notes are retrieved from the PT data access API.
-    /// 2. A notes changelist XML is generated from the real-time questions and comments docs.
+    /// 2. A notes changelist XML is generated from the real-time question docs.
     /// 3. The notes changelist is sent to the PT data access API.
     /// </summary>
     public class ParatextSyncRunner
     {
-        private static readonly Dictionary<string, string> BookNames = new Dictionary<string, string>
-        {
-            { "GEN", "Genesis" },
-            { "EXO", "Exodus" },
-            { "LEV", "Leviticus" },
-            { "NUM", "Numbers" },
-            { "DEU", "Deuteronomy" },
-            { "JOS", "Joshua" },
-            { "JDG", "Judges" },
-            { "RUT", "Ruth" },
-            { "1SA", "1 Samuel" },
-            { "2SA", "2 Samuel" },
-            { "1KI", "1 Kings" },
-            { "2KI", "2 Kings" },
-            { "1CH", "1 Chronicles" },
-            { "2CH", "2 Chronicles" },
-            { "EZR", "Ezra" },
-            { "NEH", "Nehemiah" },
-            { "EST", "Esther" },
-            { "JOB", "Job" },
-            { "PSA", "Psalm" },
-            { "PRO", "Proverbs" },
-            { "ECC", "Ecclesiastes" },
-            { "SNG", "Song of Songs" },
-            { "ISA", "Isaiah" },
-            { "JER", "Jeremiah" },
-            { "LAM", "Lamentations" },
-            { "EZK", "Ezekiel" },
-            { "DAN", "Daniel" },
-            { "HOS", "Hosea" },
-            { "JOL", "Joel" },
-            { "AMO", "Amos" },
-            { "OBA", "Obadiah" },
-            { "JON", "Jonah" },
-            { "MIC", "Micah" },
-            { "NAM", "Nahum" },
-            { "HAB", "Habakkuk" },
-            { "ZEP", "Zephaniah" },
-            { "HAG", "Haggai" },
-            { "ZEC", "Zechariah" },
-            { "MAL", "Malachi" },
-            { "MAT", "Matthew" },
-            { "MRK", "Mark" },
-            { "LUK", "Luke" },
-            { "JHN", "John" },
-            { "ACT", "Acts" },
-            { "ROM", "Romans" },
-            { "1CO", "1 Corinthians" },
-            { "2CO", "2 Corinthians" },
-            { "GAL", "Galatians" },
-            { "EPH", "Ephesians" },
-            { "PHP", "Philippians" },
-            { "COL", "Colossians" },
-            { "1TH", "1 Thessalonians" },
-            { "2TH", "2 Thessalonians" },
-            { "1TI", "1 Timothy" },
-            { "2TI", "2 Timothy" },
-            { "TIT", "Titus" },
-            { "PHM", "Philemon" },
-            { "HEB", "Hebrews" },
-            { "JAS", "James" },
-            { "1PE", "1 Peter" },
-            { "2PE", "2 Peter" },
-            { "1JN", "1 John" },
-            { "2JN", "2 John" },
-            { "3JN", "3 John" },
-            { "JUD", "Jude" },
-            { "REV", "Revelation" },
-            { "TOB", "Tobit" },
-            { "JDT", "Judith" },
-            { "ESG", "Esther (Greek)" },
-            { "WIS", "The Wisdom of Solomon" },
-            { "SIR", "Sirach" },
-            { "BAR", "Baruch" },
-            { "LJE", "Letter of Jeremiah" },
-            { "S3Y", "Song of Three Young Men" },
-            { "SUS", "Susanna" },
-            { "BEL", "Bel and the Dragon" },
-            { "1MA", "1 Maccabees" },
-            { "2MA", "2 Maccabees" },
-            { "1ES", "1 Esdras" },
-            { "2ES", "2 Esdras" },
-            { "MAN", "The Prayer of Manasseh" }
-        };
-
         private static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
             SequenceEqualityComparer.Create(new ChapterEqualityComparer());
 
@@ -185,18 +101,19 @@ namespace SIL.XForge.Scripture.Services
                 string targetParatextId = _projectDoc.Data.ParatextId;
                 string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
 
-                var targetBooks = new HashSet<string>(await _paratextService.GetBooksAsync(_userSecret,
-                    targetParatextId));
+                var targetBooks = new HashSet<int>((await _paratextService.GetBooksAsync(_userSecret,
+                    targetParatextId)).Select(bookId => Canon.BookIdToNumber(bookId)));
 
-                var sourceBooks = new HashSet<string>(TranslationSuggestionsEnabled
-                    ? await _paratextService.GetBooksAsync(_userSecret, sourceParatextId)
-                    : Enumerable.Empty<string>());
+                var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
+                    ? (await _paratextService.GetBooksAsync(_userSecret, sourceParatextId))
+                        .Select(bookId => Canon.BookIdToNumber(bookId))
+                    : Enumerable.Empty<int>());
                 sourceBooks.IntersectWith(targetBooks);
 
-                var targetBooksToDelete = new HashSet<string>(GetBooksToDelete(TextType.Target, targetBooks));
-                var sourceBooksToDelete = new HashSet<string>(TranslationSuggestionsEnabled
+                var targetBooksToDelete = new HashSet<int>(GetBooksToDelete(TextType.Target, targetBooks));
+                var sourceBooksToDelete = new HashSet<int>(TranslationSuggestionsEnabled
                     ? GetBooksToDelete(TextType.Source, sourceBooks)
-                    : Enumerable.Empty<string>());
+                    : Enumerable.Empty<int>());
 
                 _step = 0;
                 _stepCount = (targetBooks.Count * (CheckingEnabled ? 3 : 2)) + (sourceBooks.Count * 2);
@@ -205,15 +122,15 @@ namespace SIL.XForge.Scripture.Services
                     _stepCount += 1;
 
                     // delete source books
-                    foreach (string bookId in sourceBooksToDelete)
+                    foreach (int bookNum in sourceBooksToDelete)
                     {
-                        TextInfo text = _projectDoc.Data.Texts.First(t => t.BookId == bookId);
+                        TextInfo text = _projectDoc.Data.Texts.First(t => t.BookNum == bookNum);
                         await DeleteAllTextDataForBookAsync(text, TextType.Source);
                     }
                     // delete target books
-                    foreach (string bookId in targetBooksToDelete)
+                    foreach (int bookNum in targetBooksToDelete)
                     {
-                        int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookId == bookId);
+                        int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
                         TextInfo text = _projectDoc.Data.Texts[textIndex];
                         await _projectDoc.SubmitJson0OpAsync(op => op.Remove(pd => pd.Texts, textIndex));
 
@@ -224,16 +141,13 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // sync source and target books
-                foreach (string bookId in targetBooks)
+                foreach (int bookNum in targetBooks)
                 {
-                    if (!BookNames.TryGetValue(bookId, out string name))
-                        name = bookId;
-
-                    bool hasSource = sourceBooks.Contains(bookId);
-                    int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookId == bookId);
+                    bool hasSource = sourceBooks.Contains(bookNum);
+                    int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
                     TextInfo text;
                     if (textIndex == -1)
-                        text = new TextInfo { BookId = bookId, Name = name, HasSource = hasSource };
+                        text = new TextInfo { BookNum = bookNum, HasSource = hasSource };
                     else
                         text = _projectDoc.Data.Texts[textIndex];
 
@@ -310,7 +224,7 @@ namespace SIL.XForge.Scripture.Services
             if (!_fileSystemService.DirectoryExists(projectPath))
                 _fileSystemService.CreateDirectory(projectPath);
 
-            string fileName = GetUsxFileName(projectPath, text.BookId);
+            string fileName = GetUsxFileName(projectPath, text.BookNum);
             if (_fileSystemService.FileExists(fileName))
                 return await SyncBookUsxAsync(text, textType, paratextId, fileName, isReadOnly, chaptersToInclude);
             else
@@ -322,12 +236,13 @@ namespace SIL.XForge.Scripture.Services
         {
             SortedList<int, IDocument<Models.TextData>> textDocs = await FetchTextDocsAsync(text, textType);
 
+            string bookId = Canon.BookNumberToId(text.BookNum);
             // Merge mongo data to PT cloud.
             XElement bookTextElem;
             string bookText;
             if (isReadOnly)
             {
-                bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, text.BookId);
+                bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
             }
             else
             {
@@ -346,11 +261,11 @@ namespace SIL.XForge.Scripture.Services
 
                 if (XNode.DeepEquals(oldUsxElem, newUsxElem))
                 {
-                    bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, text.BookId);
+                    bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
                 }
                 else
                 {
-                    bookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, text.BookId,
+                    bookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
                         revision, newUsxElem.ToString());
                 }
             }
@@ -413,7 +328,8 @@ namespace SIL.XForge.Scripture.Services
             // Remove any stale text_data records that may be in the way.
             await DeleteAllTextDocsForBookAsync(text, textType);
 
-            string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, text.BookId);
+            string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId,
+                Canon.BookNumberToId(text.BookNum));
             var bookTextElem = XElement.Parse(bookText);
 
             await SaveXmlFileAsync(bookTextElem, fileName);
@@ -443,7 +359,7 @@ namespace SIL.XForge.Scripture.Services
         private async Task DeleteAllTextDataForBookAsync(TextInfo text, TextType textType)
         {
             string projectPath = GetProjectPath(textType);
-            _fileSystemService.DeleteFile(GetUsxFileName(projectPath, text.BookId));
+            _fileSystemService.DeleteFile(GetUsxFileName(projectPath, text.BookNum));
             await DeleteAllTextDocsForBookAsync(text, textType);
         }
 
@@ -464,11 +380,11 @@ namespace SIL.XForge.Scripture.Services
 
             // handle deletion of chapters
             var questionDocs = new List<IDocument<Question>>();
-            var chapterNums = new HashSet<string>(newChapters.Select(c => c.Number.ToString()));
+            var chapterNums = new HashSet<int>(newChapters.Select(c => c.Number));
             var tasks = new List<Task>();
             foreach (IDocument<Question> questionDoc in allQuestionDocs)
             {
-                if (chapterNums.Contains(questionDoc.Data.ScriptureStart.Chapter))
+                if (chapterNums.Contains(questionDoc.Data.VerseRef.ChapterNum))
                     questionDocs.Add(questionDoc);
                 else
                     tasks.Add(questionDoc.DeleteAsync());
@@ -479,7 +395,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 XElement oldNotesElem;
                 string oldNotesText = await _paratextService.GetNotesAsync(_userSecret, _projectDoc.Data.ParatextId,
-                    text.BookId);
+                    Canon.BookNumberToId(text.BookNum));
                 if (oldNotesText != "")
                     oldNotesElem = XElement.Parse(oldNotesText);
                 else
@@ -500,7 +416,7 @@ namespace SIL.XForge.Scripture.Services
         private async Task<IReadOnlyList<IDocument<Question>>> FetchQuestionDocsAsync(TextInfo text)
         {
             List<string> questionDocIds = await _realtimeService.QuerySnapshots<Question>()
-                .Where(q => q.ProjectRef == _projectDoc.Id && q.ScriptureStart.Book == text.BookId)
+                .Where(q => q.ProjectRef == _projectDoc.Id && q.VerseRef.BookNum == text.BookNum)
                 .Select(q => q.Id)
                 .ToListAsync();
             var questionDocs = new IDocument<Question>[questionDocIds.Count];
@@ -523,7 +439,7 @@ namespace SIL.XForge.Scripture.Services
         private async Task DeleteAllQuestionsDocsForBookAsync(TextInfo text)
         {
             List<string> questionDocIds = await _realtimeService.QuerySnapshots<Question>()
-                .Where(q => q.ProjectRef == _projectDoc.Id && q.ScriptureStart.Book == text.BookId)
+                .Where(q => q.ProjectRef == _projectDoc.Id && q.VerseRef.BookNum == text.BookNum)
                 .Select(q => q.Id)
                 .ToListAsync();
             var tasks = new List<Task>();
@@ -543,12 +459,13 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Gets all books that need to be deleted.
         /// </summary>
-        private IEnumerable<string> GetBooksToDelete(TextType textType, IEnumerable<string> existingBooks)
+        private IEnumerable<int> GetBooksToDelete(TextType textType, IEnumerable<int> existingBooks)
         {
             string projectPath = GetProjectPath(textType);
-            var booksToDelete = new HashSet<string>(_fileSystemService.DirectoryExists(projectPath)
-                ? _fileSystemService.EnumerateFiles(projectPath).Select(Path.GetFileNameWithoutExtension)
-                : Enumerable.Empty<string>());
+            var booksToDelete = new HashSet<int>(_fileSystemService.DirectoryExists(projectPath)
+                ? _fileSystemService.EnumerateFiles(projectPath)
+                    .Select(p => Canon.BookIdToNumber(Path.GetFileNameWithoutExtension(p)))
+                : Enumerable.Empty<int>());
             booksToDelete.ExceptWith(existingBooks);
             return booksToDelete;
         }
@@ -615,9 +532,9 @@ namespace SIL.XForge.Scripture.Services
             return Path.Combine(WorkingDir, _projectDoc.Id, textTypeDir);
         }
 
-        private static string GetUsxFileName(string projectPath, string bookId)
+        private static string GetUsxFileName(string projectPath, int bookNum)
         {
-            return Path.Combine(projectPath, bookId + ".xml");
+            return Path.Combine(projectPath, Canon.BookNumberToId(bookNum) + ".xml");
         }
 
         private async Task<XElement> LoadXmlFileAsync(string fileName)
@@ -638,7 +555,7 @@ namespace SIL.XForge.Scripture.Services
 
         private IDocument<Models.TextData> GetTextDoc(TextInfo text, int chapter, TextType textType)
         {
-            return _conn.Get<Models.TextData>(TextInfo.GetTextDocId(_projectDoc.Id, text.BookId, chapter, textType));
+            return _conn.Get<Models.TextData>(TextData.GetTextDocId(_projectDoc.Id, text.BookNum, chapter, textType));
         }
 
         private async Task DeleteTextDocAsync(TextInfo text, int chapter, TextType textType)

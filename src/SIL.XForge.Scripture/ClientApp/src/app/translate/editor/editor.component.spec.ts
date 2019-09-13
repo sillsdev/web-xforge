@@ -18,7 +18,10 @@ import cloneDeep from 'lodash/cloneDeep';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import {
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
+} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
@@ -28,7 +31,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { getSFProjectUserConfigDocId, SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
@@ -41,11 +44,11 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      expect(env.component.textName).toBe('Book 1');
+      expect(env.component.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toBe('Source');
-      expect(env.component.targetLabel).toBe('Target');
-      expect(env.component.target.segmentRef).toBe('');
+      expect(env.component.sourceLabel).toEqual('Source');
+      expect(env.component.targetLabel).toEqual('Target');
+      expect(env.component.target.segmentRef).toEqual('');
       const selection = env.component.target.editor.getSelection();
       expect(selection).toBeNull();
       env.dispose();
@@ -53,11 +56,11 @@ describe('EditorComponent', () => {
 
     it('start with previously selected segment', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 2, selectedSegment: 'verse_2_1' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 2, selectedSegment: 'verse_2_1' });
       env.wait();
-      expect(env.component.textName).toBe('Book 1');
+      expect(env.component.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(2);
-      expect(env.component.target.segmentRef).toBe('verse_2_1');
+      expect(env.component.target.segmentRef).toEqual('verse_2_1');
       const selection = env.component.target.editor.getSelection();
       expect(selection.index).toBe(29);
       expect(selection.length).toBe(0);
@@ -68,10 +71,10 @@ describe('EditorComponent', () => {
 
     it('source retrieved after target', fakeAsync(() => {
       const env = new TestEnvironment();
-      const sourceId = new TextDocId('project01', 'text01', 1, 'source');
+      const sourceId = new TextDocId('project01', 40, 1, 'source');
       let resolve: (value?: TextDoc) => void;
       when(env.mockedSFProjectService.getText(deepEqual(sourceId))).thenReturn(new Promise(r => (resolve = r)));
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_2' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_2');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
@@ -88,7 +91,7 @@ describe('EditorComponent', () => {
 
     it('select non-blank segment', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
@@ -111,7 +114,7 @@ describe('EditorComponent', () => {
 
     it('select blank segment', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_1');
 
@@ -166,7 +169,7 @@ describe('EditorComponent', () => {
 
     it('insert suggestion in non-blank segment', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_5');
       expect(env.component.showSuggestion).toBe(true);
@@ -180,7 +183,7 @@ describe('EditorComponent', () => {
 
     it('insert space when typing character after inserting a suggestion', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_5');
       expect(env.component.showSuggestion).toBe(true);
@@ -201,7 +204,7 @@ describe('EditorComponent', () => {
 
     it('insert space when inserting a suggestion after inserting a previous suggestion', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_5');
       expect(env.component.showSuggestion).toBe(true);
@@ -224,7 +227,7 @@ describe('EditorComponent', () => {
 
     it('do not insert space when typing punctuation after inserting a suggestion', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_5');
       expect(env.component.showSuggestion).toBe(true);
@@ -245,7 +248,7 @@ describe('EditorComponent', () => {
 
     it('train a modified segment after selecting a different segment', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_5');
       expect(env.component.showSuggestion).toBe(true);
@@ -264,7 +267,7 @@ describe('EditorComponent', () => {
 
     it('do not train an unmodified segment after selecting a different segment', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_5' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_5');
       expect(env.component.showSuggestion).toBe(true);
@@ -288,24 +291,24 @@ describe('EditorComponent', () => {
 
     it('change texts', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
-      expect(env.component.textName).toBe('Book 1');
-      expect(env.component.target.segmentRef).toBe('verse_1_1');
+      expect(env.component.bookName).toEqual('Matthew');
+      expect(env.component.target.segmentRef).toEqual('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
 
       resetCalls(env.mockedRemoteTranslationEngine);
-      env.updateParams({ projectId: 'project01', bookId: 'text02' });
+      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
-      expect(env.component.textName).toBe('Book 2');
-      expect(env.component.target.segmentRef).toBe('');
+      expect(env.component.bookName).toEqual('Mark');
+      expect(env.component.target.segmentRef).toEqual('');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
 
       resetCalls(env.mockedRemoteTranslationEngine);
-      env.updateParams({ projectId: 'project01', bookId: 'text01' });
+      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
-      expect(env.component.textName).toBe('Book 1');
-      expect(env.component.target.segmentRef).toBe('verse_1_1');
+      expect(env.component.bookName).toEqual('Matthew');
+      expect(env.component.target.segmentRef).toEqual('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
 
       env.dispose();
@@ -313,7 +316,7 @@ describe('EditorComponent', () => {
 
     it('change chapters', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.chapter).toBe(1);
       expect(env.component.target.segmentRef).toBe('verse_1_1');
@@ -339,8 +342,8 @@ describe('EditorComponent', () => {
     it('selected segment checksum unset on server', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({
-        selectedBookId: 'text01',
-        selectedChapter: 1,
+        selectedBookNum: 40,
+        selectedChapterNum: 1,
         selectedSegment: 'verse_1_1',
         selectedSegmentChecksum: 0
       });
@@ -360,8 +363,8 @@ describe('EditorComponent', () => {
     it('update confidence threshold', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({
-        selectedBookId: 'text01',
-        selectedChapter: 1,
+        selectedBookNum: 40,
+        selectedChapterNum: 1,
         selectedSegment: 'verse_1_2',
         confidenceThreshold: 0.5
       });
@@ -384,7 +387,7 @@ describe('EditorComponent', () => {
 
     it('training status', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_1');
       expect(env.component.showTrainingProgress).toBe(false);
@@ -417,7 +420,7 @@ describe('EditorComponent', () => {
 
     it('close training status', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text01', selectedChapter: 1, selectedSegment: 'verse_1_1' });
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_1');
       expect(env.component.showTrainingProgress).toBe(false);
@@ -447,14 +450,14 @@ describe('EditorComponent', () => {
 
     it('no source', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookId: 'text03', selectedChapter: 1, selectedSegment: 'verse_1_1' });
-      env.updateParams({ projectId: 'project01', bookId: 'text03' });
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
-      expect(env.component.textName).toBe('Book 3');
+      expect(env.component.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toBe('Source');
-      expect(env.component.targetLabel).toBe('Target');
-      expect(env.component.target.segmentRef).toBe('verse_1_1');
+      expect(env.component.sourceLabel).toEqual('Source');
+      expect(env.component.targetLabel).toEqual('Target');
+      expect(env.component.target.segmentRef).toEqual('verse_1_1');
       const selection = env.component.target.editor.getSelection();
       expect(selection.index).toBe(29);
       expect(selection.length).toBe(0);
@@ -469,11 +472,11 @@ describe('EditorComponent', () => {
       env.setCurrentUser('user02');
       env.setProjectUserConfig();
       env.wait();
-      expect(env.component.textName).toBe('Book 1');
+      expect(env.component.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toBe('Source');
-      expect(env.component.targetLabel).toBe('Target');
-      expect(env.component.target.segmentRef).toBe('');
+      expect(env.component.sourceLabel).toEqual('Source');
+      expect(env.component.targetLabel).toEqual('Target');
+      expect(env.component.target.segmentRef).toEqual('');
       const selection = env.component.target.editor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEditTexts).toBe(false);
@@ -487,13 +490,13 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject(false);
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'text03' });
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
-      expect(env.component.textName).toBe('Book 3');
+      expect(env.component.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toBe('Source');
-      expect(env.component.targetLabel).toBe('Target');
-      expect(env.component.target.segmentRef).toBe('');
+      expect(env.component.sourceLabel).toEqual('Source');
+      expect(env.component.targetLabel).toEqual('Target');
+      expect(env.component.target.segmentRef).toEqual('');
       const selection = env.component.target.editor.getSelection();
       expect(selection).toBeNull();
       expect(env.isSourceAreaHidden).toBe(true);
@@ -503,12 +506,12 @@ describe('EditorComponent', () => {
     it('start with previously selected segment', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject(false);
-      env.setProjectUserConfig({ selectedBookId: 'text03', selectedChapter: 2, selectedSegment: 'verse_2_1' });
-      env.updateParams({ projectId: 'project01', bookId: 'text03' });
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2, selectedSegment: 'verse_2_1' });
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
-      expect(env.component.textName).toBe('Book 3');
+      expect(env.component.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(2);
-      expect(env.component.target.segmentRef).toBe('verse_2_1');
+      expect(env.component.target.segmentRef).toEqual('verse_2_1');
       const selection = env.component.target.editor.getSelection();
       expect(selection.index).toBe(29);
       expect(selection.length).toBe(0);
@@ -522,13 +525,13 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setCurrentUser('user02');
       env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'text03' });
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
-      expect(env.component.textName).toBe('Book 3');
+      expect(env.component.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toBe('Source');
-      expect(env.component.targetLabel).toBe('Target');
-      expect(env.component.target.segmentRef).toBe('');
+      expect(env.component.sourceLabel).toEqual('Source');
+      expect(env.component.targetLabel).toEqual('Target');
+      expect(env.component.target.segmentRef).toEqual('');
       const selection = env.component.target.editor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEditTexts).toBe(false);
@@ -618,15 +621,15 @@ class TestEnvironment {
   private readonly userConfigDocs = new Map<string, SFProjectUserConfigDoc>();
 
   constructor() {
-    this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'text01' });
-    this.addTextDoc(new TextDocId('project01', 'text01', 1, 'source'));
-    this.addTextDoc(new TextDocId('project01', 'text01', 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 'text01', 2, 'source'));
-    this.addTextDoc(new TextDocId('project01', 'text01', 2, 'target'));
-    this.addTextDoc(new TextDocId('project01', 'text02', 1, 'source'));
-    this.addTextDoc(new TextDocId('project01', 'text02', 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 'text03', 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 'text03', 2, 'target'));
+    this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'MAT' });
+    this.addTextDoc(new TextDocId('project01', 40, 1, 'source'));
+    this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 40, 2, 'source'));
+    this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
+    this.addTextDoc(new TextDocId('project01', 41, 1, 'source'));
+    this.addTextDoc(new TextDocId('project01', 41, 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 42, 1, 'target'));
+    this.addTextDoc(new TextDocId('project01', 42, 2, 'target'));
 
     when(this.mockedActivatedRoute.params).thenReturn(this.params$);
     this.setCurrentUser('user01');
@@ -717,15 +720,13 @@ class TestEnvironment {
       sync: { queuedCount: 0 },
       texts: [
         {
-          bookId: 'text01',
-          name: 'Book 1',
+          bookNum: 40,
           chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
           hasSource: true
         },
-        { bookId: 'text02', name: 'Book 2', chapters: [{ number: 1, lastVerse: 3 }], hasSource: true },
+        { bookNum: 41, chapters: [{ number: 1, lastVerse: 3 }], hasSource: true },
         {
-          bookId: 'text03',
-          name: 'Book 3',
+          bookNum: 42,
           chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
           hasSource: false
         }
@@ -828,31 +829,31 @@ class TestEnvironment {
 
   createTextDoc(id: TextDocId): TextDoc {
     const delta = new Delta();
-    delta.insert({ chapter: { number: id.chapter.toString(), style: 'c' } });
+    delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapter}, verse 1.`, { segment: `verse_${id.chapter}_1` });
+    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
     delta.insert({ verse: { number: '2', style: 'v' } });
     switch (id.textType) {
       case 'source':
-        delta.insert(`${id.textType}: chapter ${id.chapter}, verse 2.`, { segment: `verse_${id.chapter}_2` });
+        delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2.`, { segment: `verse_${id.chapterNum}_2` });
         break;
       case 'target':
-        delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapter}_2` });
+        delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_2` });
         break;
     }
     delta.insert({ verse: { number: '3', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapter}, verse 3.`, { segment: `verse_${id.chapter}_3` });
+    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 3.`, { segment: `verse_${id.chapterNum}_3` });
     delta.insert({ verse: { number: '4', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapter}, verse 4.`, { segment: `verse_${id.chapter}_4` });
+    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 4.`, { segment: `verse_${id.chapterNum}_4` });
     delta.insert('\n', { para: { style: 'p' } });
-    delta.insert({ blank: 'initial' }, { segment: `verse_${id.chapter}_4/p_1` });
+    delta.insert({ blank: 'initial' }, { segment: `verse_${id.chapterNum}_4/p_1` });
     delta.insert({ verse: { number: '5', style: 'v' } });
     switch (id.textType) {
       case 'source':
-        delta.insert(`${id.textType}: chapter ${id.chapter}, verse 5.`, { segment: `verse_${id.chapter}_5` });
+        delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 5.`, { segment: `verse_${id.chapterNum}_5` });
         break;
       case 'target':
-        delta.insert(`${id.textType}: chapter ${id.chapter}, `, { segment: `verse_${id.chapter}_5` });
+        delta.insert(`${id.textType}: chapter ${id.chapterNum}, `, { segment: `verse_${id.chapterNum}_5` });
         break;
     }
     delta.insert('\n', { para: { style: 'p' } });

@@ -28,13 +28,13 @@
     <ng-container *ngFor="let text of texts">
       <mdc-list-item
         *ngIf="bookQuestionCount(text) > 0"
-        (selectionChange)="itemVisible[text.bookId] = !itemVisible[text.bookId]"
+        (selectionChange)="itemVisible[getBookId(text)] = !itemVisible[getBookId(text)]"
       >
         <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
           <mdc-icon fxFlex="24px" mdcListItemMeta>
-            keyboard_arrow_{{ itemVisible[text.bookId] ? "down" : "right" }}
+            keyboard_arrow_{{ itemVisible[getBookId(text)] ? "down" : "right" }}
           </mdc-icon>
-          <span fxFlex>{{ text?.name }}</span>
+          <span fxFlex>{{ getBookName(text) }}</span>
           <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
             {{ questionCountLabel(bookQuestionCount(text)) }}
           </span>
@@ -44,39 +44,39 @@
           <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
         </div>
       </mdc-list-item>
-      <ng-container *ngIf="itemVisible[text.bookId]">
+      <ng-container *ngIf="itemVisible[getBookId(text)]">
         <ng-container *ngFor="let chapter of text.chapters">
           <mdc-list-item
-            *ngIf="questionCount(text.bookId, chapter.number) > 0"
+            *ngIf="questionCount(text.bookNum, chapter.number) > 0"
             (selectionChange)="
-              itemVisible[getTextDocId(text.bookId, chapter.number)] = !itemVisible[
-                getTextDocId(text.bookId, chapter.number)
+              itemVisible[getTextDocId(text.bookNum, chapter.number)] = !itemVisible[
+                getTextDocId(text.bookNum, chapter.number)
               ]
             "
           >
             <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
               <span fxFlex="16px" class="indent"></span>
               <mdc-icon fxFlex="24px" mdcListItemMeta>
-                keyboard_arrow_{{ itemVisible[getTextDocId(text.bookId, chapter.number)] ? "down" : "right" }}
+                keyboard_arrow_{{ itemVisible[getTextDocId(text.bookNum, chapter.number)] ? "down" : "right" }}
               </mdc-icon>
-              <span fxFlex>{{ text?.name + " " + chapter?.number }}</span>
+              <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
               <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
-                {{ questionCountLabel(questionCount(text.bookId, chapter.number)) }}
+                {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
               </span>
               <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
-                {{ answerCountLabel(chapterAnswerCount(text.bookId, chapter.number)) }}
+                {{ answerCountLabel(chapterAnswerCount(text.bookNum, chapter.number)) }}
               </span>
               <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
             </div>
           </mdc-list-item>
-          <ng-container *ngIf="itemVisible[getTextDocId(text.bookId, chapter.number)]">
-            <mdc-list-item *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookId, chapter.number))">
+          <ng-container *ngIf="itemVisible[getTextDocId(text.bookNum, chapter.number)]">
+            <mdc-list-item *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookNum, chapter.number))">
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="16px" class="indent"></span>
                 <button fxFlex="64px" mdc-button (click)="questionDialog(questionDoc)" class="edit-btn">
                   <mdc-icon>edit</mdc-icon>
                 </button>
-                v{{ questionDoc.data?.scriptureStart?.verse }} -&nbsp;
+                v{{ questionDoc.data?.verseRef.verseNum }} -&nbsp;
                 <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
                 <span fxFlex class="no-overflow-ellipsis">
                   <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
@@ -121,10 +121,10 @@
       <ng-container *ngFor="let text of texts">
         <mdc-list-item
           *ngIf="bookQuestionCount(text) > 0"
-          [routerLink]="['/projects', projectId, 'checking', text.bookId]"
+          [routerLink]="['/projects', projectId, 'checking', getBookId(text)]"
         >
           <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-            <span fxFlex>{{ text?.name }}</span>
+            <span fxFlex>{{ getBookName(text) }}</span>
             <span>
               <canvas
                 baseChart
@@ -194,41 +194,43 @@
     <ng-container *ngFor="let text of texts">
       <mdc-list-item
         *ngIf="bookQuestionCount(text, true) > 0"
-        (selectionChange)="itemVisibleArchived[text.bookId] = !itemVisibleArchived[text.bookId]"
+        (selectionChange)="itemVisibleArchived[getBookId(text)] = !itemVisibleArchived[getBookId(text)]"
       >
         <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
           <mdc-icon fxFlex="24px" mdcListItemMeta
-            >keyboard_arrow_{{ itemVisibleArchived[text.bookId] ? "down" : "right" }}</mdc-icon
-          ><span fxFlex>{{ text?.name }}</span>
+            >keyboard_arrow_{{ itemVisibleArchived[getBookId(text)] ? "down" : "right" }}</mdc-icon
+          ><span fxFlex>{{ getBookName(text) }}</span>
           <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center" class="archived-questions-count">
             {{ questionCountLabel(bookQuestionCount(text, true)) }}
           </span>
           <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
         </div>
       </mdc-list-item>
-      <ng-container *ngIf="itemVisibleArchived[text.bookId]">
+      <ng-container *ngIf="itemVisibleArchived[getBookId(text)]">
         <ng-container *ngFor="let chapter of text.chapters">
           <mdc-list-item
-            *ngIf="questionCount(text.bookId, chapter.number, true) > 0"
+            *ngIf="questionCount(text.bookNum, chapter.number, true) > 0"
             (selectionChange)="
-              itemVisibleArchived[getTextDocId(text.bookId, chapter.number)] = !itemVisibleArchived[
-                getTextDocId(text.bookId, chapter.number)
+              itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] = !itemVisibleArchived[
+                getTextDocId(text.bookNum, chapter.number)
               ]
             "
             ><div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
               <span fxFlex="16px" class="indent"></span>
               <mdc-icon fxFlex="24px" mdcListItemMeta
                 >keyboard_arrow_{{
-                  itemVisibleArchived[getTextDocId(text.bookId, chapter.number)] ? "down" : "right"
+                  itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] ? "down" : "right"
                 }}</mdc-icon
               >
-              <span fxFlex>{{ text?.name + " " + chapter?.number }}</span>
+              <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
             </div>
           </mdc-list-item>
-          <ng-container *ngIf="itemVisibleArchived[getTextDocId(text.bookId, chapter.number)]">
-            <mdc-list-item *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookId, chapter.number), true)">
+          <ng-container *ngIf="itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)]">
+            <mdc-list-item
+              *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookNum, chapter.number), true)"
+            >
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                <span fxFlex="40px" class="indent"></span> v{{ questionDoc.data?.scriptureStart?.verse }} -&nbsp;
+                <span fxFlex="40px" class="indent"></span> v{{ questionDoc.data?.verseRef.verseNum }} -&nbsp;
                 <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
                 <span fxFlex class="no-overflow-ellipsis">
                   <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>

@@ -7,6 +7,7 @@ import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { combineLatest, from, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AccountService } from 'xforge-common/account.service';
@@ -356,6 +357,14 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   drawerCollapsed(): void {
     this.isExpanded = false;
+  }
+
+  getBookName(text: TextInfo): string {
+    return Canon.bookNumberToEnglishName(text.bookNum);
+  }
+
+  getBookId(text: TextInfo): string {
+    return Canon.bookNumberToId(text.bookNum);
   }
 
   private async getProjectDocs(): Promise<SFProjectDoc[]> {

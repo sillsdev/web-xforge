@@ -8,24 +8,28 @@ import { ngfModule } from 'angular-file';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
+import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { SFProjectUserConfig } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import {
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
+} from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { of } from 'rxjs';
-import { SF_REALTIME_DOC_TYPES } from 'src/app/core/models/sf-realtime-doc-types';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { getQuestionDocId, QuestionDoc } from '../../core/models/question-doc';
+import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { getSFProjectUserConfigDocId, SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ScrVersType } from '../../shared/scripture-utils/versification';
 import { CheckingModule } from '../checking.module';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogComponent } from '../question-dialog/question-dialog.component';
@@ -87,8 +91,7 @@ describe('CheckingOverviewComponent', () => {
       const env = new TestEnvironment();
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
         of({
-          scriptureStart: 'MAT 3:3',
-          scriptureEnd: '',
+          verseRef: VerseRef.parse('MAT 3:3'),
           text: '',
           audio: { fileName: '' }
         })
@@ -100,7 +103,7 @@ describe('CheckingOverviewComponent', () => {
       resetCalls(env.mockedProjectService);
       env.clickElement(env.addQuestionButton);
       verify(env.mockedMdcDialog.open(anything(), anything())).once();
-      const id = new TextDocId('project01', 'MAT', 3);
+      const id = new TextDocId('project01', 40, 3);
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(5);
     }));
@@ -109,13 +112,13 @@ describe('CheckingOverviewComponent', () => {
   describe('Edit Question', () => {
     it('should expand/collapse questions in book text', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextDocId('project01', 'MAT', 1);
+      const id = new TextDocId('project01', 40, 1);
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       expect(env.questionEditButtons.length).toEqual(0);
       expect(env.component.itemVisible[id.toString()]).toBeFalsy();
       expect(env.component.questionDocs[id.toString()].length).toBeGreaterThan(0);
-      expect(env.component.questionCount(id.bookId, id.chapter)).toBeGreaterThan(0);
+      expect(env.component.questionCount(id.bookNum, id.chapterNum)).toBeGreaterThan(0);
 
       env.simulateRowClick(0);
       expect(env.textRows.length).toEqual(3);
@@ -132,11 +135,10 @@ describe('CheckingOverviewComponent', () => {
 
     it('should edit question', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextDocId('project01', 'MAT', 1);
+      const id = new TextDocId('project01', 40, 1);
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
         of({
-          scriptureStart: 'MAT 1:3',
-          scriptureEnd: '',
+          verseRef: VerseRef.parse('MAT 1:3'),
           text: '',
           audio: {}
         })
@@ -154,11 +156,10 @@ describe('CheckingOverviewComponent', () => {
 
     it('allows editing scripture reference', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextDocId('project01', 'MAT', 1);
+      const id = new TextDocId('project01', 40, 1);
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
         of({
-          scriptureStart: 'MAT 3:3',
-          scriptureEnd: '',
+          verseRef: VerseRef.parse('MAT 3:3'),
           text: 'scripture reference moved to chapter 3',
           audio: {}
         })
@@ -167,7 +168,7 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(0);
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(9);
-      const mat3Id = new TextDocId('project01', 'MAT', 3);
+      const mat3Id = new TextDocId('project01', 40, 3);
 
       resetCalls(env.mockedProjectService);
       expect(env.questionEditButtons.length).toEqual(6);
@@ -180,7 +181,7 @@ describe('CheckingOverviewComponent', () => {
 
     it('should bring up question dialog only if user confirms question answered dialog', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextDocId('project01', 'MAT', 1);
+      const id = new TextDocId('project01', 40, 1);
       env.waitForQuestions();
       env.simulateRowClick(0);
       env.simulateRowClick(1, id);
@@ -193,8 +194,7 @@ describe('CheckingOverviewComponent', () => {
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
         of({
-          scriptureStart: 'MAT 1:3',
-          scriptureEnd: '',
+          verseRef: VerseRef.parse('MAT 1:3'),
           text: 'Book 1, Q1 Text',
           audio: {}
         })
@@ -212,11 +212,10 @@ describe('CheckingOverviewComponent', () => {
 
     it('should remove audio file when reset', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextDocId('project01', 'MAT', 1);
+      const id = new TextDocId('project01', 40, 1);
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
         of({
-          scriptureStart: 'MAT 1:3',
-          scriptureEnd: '',
+          verseRef: VerseRef.parse('MAT 1:3'),
           text: 'Book 1, Q1 text',
           audio: { status: 'reset' }
         })
@@ -265,8 +264,7 @@ describe('CheckingOverviewComponent', () => {
       env.setCurrentUser(env.checkerUser);
       env.waitForQuestions();
       const [unread, read, answered] = env.component.bookProgress({
-        bookId: 'MAT',
-        name: 'Matthew',
+        bookNum: 40,
         hasSource: false,
         chapters: [{ number: 1, lastVerse: 3 }]
       });
@@ -295,7 +293,7 @@ describe('CheckingOverviewComponent', () => {
   describe('Archive Question', () => {
     it('should display "No archived question" message', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextDocId('project01', 'MAT', 1);
+      const id = new TextDocId('project01', 40, 1);
       env.waitForQuestions();
       expect(env.noArchivedQuestionsLabel).toBeNull();
 
@@ -307,7 +305,7 @@ describe('CheckingOverviewComponent', () => {
 
     it('archives and republishes a question', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextDocId('project01', 'MAT', 1);
+      const id = new TextDocId('project01', 40, 1);
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       expect(env.textArchivedRows.length).toEqual(1);
@@ -364,6 +362,10 @@ class TestEnvironment {
   private adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.adminUser.id,
     projectRef: 'project01',
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    translationSuggestionsEnabled: true,
+    selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
@@ -371,6 +373,10 @@ class TestEnvironment {
   private reviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.checkerUser.id,
     projectRef: 'project01',
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    translationSuggestionsEnabled: true,
+    selectedSegment: '',
     questionRefsRead: ['q1Id', 'q2Id', 'q3Id'],
     answerRefsRead: [],
     commentRefsRead: []
@@ -394,12 +400,11 @@ class TestEnvironment {
     sync: { queuedCount: 0 },
     texts: [
       {
-        bookId: 'MAT',
-        name: 'Matthew',
+        bookNum: 40,
         hasSource: false,
         chapters: [{ number: 1, lastVerse: 25 }, { number: 3, lastVerse: 17 }]
       },
-      { bookId: 'LUK', name: 'Luke', hasSource: false, chapters: [{ number: 1, lastVerse: 80 }] }
+      { bookNum: 42, hasSource: false, chapters: [{ number: 1, lastVerse: 80 }] }
     ],
     userRoles: {
       [this.adminUser.id]: this.adminUser.role,
@@ -416,11 +421,10 @@ class TestEnvironment {
         data: {
           dataId: 'q1Id',
           projectRef: 'project01',
-          scriptureStart: {
-            book: 'MAT',
-            chapter: '1',
-            verse: '3',
-            versification: ScrVersType[ScrVersType.English]
+          verseRef: {
+            bookNum: 40,
+            chapterNum: 1,
+            verseNum: 3
           },
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q1 text',
@@ -454,11 +458,10 @@ class TestEnvironment {
           projectRef: 'project01',
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q2 text',
-          scriptureStart: {
-            book: 'MAT',
-            chapter: '1',
-            verse: '4',
-            versification: ScrVersType[ScrVersType.English]
+          verseRef: {
+            bookNum: 40,
+            chapterNum: 1,
+            verseNum: 4
           },
           answers: [
             {
@@ -489,11 +492,10 @@ class TestEnvironment {
           projectRef: 'project01',
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q3 text',
-          scriptureStart: {
-            book: 'MAT',
-            chapter: '1',
-            verse: '5',
-            versification: ScrVersType[ScrVersType.English]
+          verseRef: {
+            bookNum: 40,
+            chapterNum: 1,
+            verseNum: 5
           },
           answers: [
             {
@@ -524,11 +526,10 @@ class TestEnvironment {
           projectRef: 'project01',
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q4 text',
-          scriptureStart: {
-            book: 'MAT',
-            chapter: '1',
-            verse: '6',
-            versification: ScrVersType[ScrVersType.English]
+          verseRef: {
+            bookNum: 40,
+            chapterNum: 1,
+            verseNum: 6
           },
           answers: [],
           isArchived: false,
@@ -543,11 +544,10 @@ class TestEnvironment {
           projectRef: 'project01',
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q5 text',
-          scriptureStart: {
-            book: 'MAT',
-            chapter: '1',
-            verse: '7',
-            versification: ScrVersType[ScrVersType.English]
+          verseRef: {
+            bookNum: 40,
+            chapterNum: 1,
+            verseNum: 7
           },
           answers: [],
           isArchived: false,
@@ -562,11 +562,10 @@ class TestEnvironment {
           projectRef: 'project01',
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q6 text',
-          scriptureStart: {
-            book: 'MAT',
-            chapter: '1',
-            verse: '8',
-            versification: ScrVersType[ScrVersType.English]
+          verseRef: {
+            bookNum: 40,
+            chapterNum: 1,
+            verseNum: 8
           },
           answers: [],
           isArchived: false,
@@ -581,11 +580,10 @@ class TestEnvironment {
           projectRef: 'project01',
           ownerRef: this.adminUser.id,
           text: 'Book 1, Q7 text',
-          scriptureStart: {
-            book: 'MAT',
-            chapter: '1',
-            verse: '9',
-            versification: ScrVersType[ScrVersType.English]
+          verseRef: {
+            bookNum: 40,
+            chapterNum: 1,
+            verseNum: 9
           },
           answers: [],
           isArchived: true,
@@ -600,11 +598,10 @@ class TestEnvironment {
           projectRef: 'project01',
           ownerRef: this.anotherUserId,
           text: 'Book 2, Q3 text',
-          scriptureStart: {
-            book: 'LUK',
-            chapter: '1',
-            verse: '1',
-            versification: ScrVersType[ScrVersType.English]
+          verseRef: {
+            bookNum: 42,
+            chapterNum: 1,
+            verseNum: 1
           },
           answers: [],
           isArchived: false,
@@ -739,7 +736,7 @@ class TestEnvironment {
     if (id) {
       idStr = id.toString();
     } else {
-      idStr = this.component.texts[index].bookId;
+      idStr = Canon.bookNumberToId(this.component.texts[index].bookNum);
     }
     if (fromArchives) {
       this.component.itemVisibleArchived[idStr] = !this.component.itemVisibleArchived[idStr];

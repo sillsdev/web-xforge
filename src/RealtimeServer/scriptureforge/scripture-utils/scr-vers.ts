@@ -23,7 +23,7 @@ export class ScrVers {
   baseVersification?: ScrVers;
   scriptureBooks?: BookSet;
 
-  private _type: ScrVersType;
+  private _type?: ScrVersType;
   // private versInfo: Versification;
 
   constructor(type?: ScrVersType | string) {

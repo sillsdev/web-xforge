@@ -119,14 +119,14 @@
         </mdc-list-item>
         <mdc-list-item
           *ngFor="let text of texts"
-          [routerLink]="['/projects', selectedProjectId, 'translate', text.bookId]"
+          [routerLink]="['/projects', selectedProjectId, 'translate', getBookId(text)]"
           [activated]="rla.isActive"
           routerLinkActive
           #rla="routerLinkActive"
           (selectionChange)="itemSelected()"
         >
           <mdc-icon mdcListItemGraphic>book</mdc-icon>
-          {{ text.name }}
+          {{ getBookName(text) }}
         </mdc-list-item>
       </div>
       <mdc-list-divider *ngIf="isTranslateEnabled"></mdc-list-divider>
@@ -153,14 +153,14 @@
         </mdc-list-item>
         <mdc-list-item
           *ngFor="let text of texts"
-          [routerLink]="['/projects', selectedProjectId, 'checking', text.bookId]"
+          [routerLink]="['/projects', selectedProjectId, 'checking', getBookId(text)]"
           [activated]="rla.isActive"
           routerLinkActive
           #rla="routerLinkActive"
           (selectionChange)="itemSelected()"
         >
           <mdc-icon mdcListItemGraphic>book</mdc-icon>
-          {{ text.name }}
+          {{ getBookName(text) }}
         </mdc-list-item>
       </div>
       <div *ngIf="(isProjectAdmin$ | async)">
