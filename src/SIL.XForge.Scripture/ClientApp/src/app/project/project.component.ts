@@ -82,10 +82,13 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
               task = 'checking';
             }
             if (task != null) {
-              this.router.navigate(['./', task, Canon.bookNumberToId(project.texts[0].bookNum)], {
-                relativeTo: this.route,
-                replaceUrl: true
-              });
+              this.router.navigate(
+                ['./', task, task === 'checking' ? 'ALL' : Canon.bookNumberToId(project.texts[0].bookNum)],
+                {
+                  relativeTo: this.route,
+                  replaceUrl: true
+                }
+              );
             }
           }
         }
