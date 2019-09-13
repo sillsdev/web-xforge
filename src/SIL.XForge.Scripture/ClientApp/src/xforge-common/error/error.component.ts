@@ -4,7 +4,7 @@ import { environment } from 'src/environments/environment';
 
 export interface ErrorAlert {
   message: string;
-  stack: string;
+  stack?: string;
 }
 
 @Component({
