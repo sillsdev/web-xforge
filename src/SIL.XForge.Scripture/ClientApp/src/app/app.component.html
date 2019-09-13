@@ -152,6 +152,17 @@
           Overview
         </mdc-list-item>
         <mdc-list-item
+          [routerLink]="['/projects', selectedProjectId, 'checking', 'ALL']"
+          [activated]="rlaCheckingAllBooks.isActive"
+          routerLinkActive
+          [routerLinkActiveOptions]="{ exact: true }"
+          #rlaCheckingAllBooks="routerLinkActive"
+          (selectionChange)="itemSelected()"
+        >
+          <mdc-icon mdcListItemGraphic>bookmarks</mdc-icon>
+          All Questions
+        </mdc-list-item>
+        <mdc-list-item
           *ngFor="let text of texts"
           [routerLink]="['/projects', selectedProjectId, 'checking', getBookId(text)]"
           [activated]="rla.isActive"

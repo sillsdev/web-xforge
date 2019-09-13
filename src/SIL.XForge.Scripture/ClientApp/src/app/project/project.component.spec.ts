@@ -50,7 +50,7 @@ describe('ProjectComponent', () => {
     tick();
 
     verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(deepEqual(['./', 'checking', 'MAT']), anything())).once();
+    verify(env.mockedRouter.navigate(deepEqual(['./', 'checking', 'ALL']), anything())).once();
     expect().nothing();
   }));
 
