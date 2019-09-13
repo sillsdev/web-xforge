@@ -5,6 +5,8 @@ import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { QuestionDoc } from 'src/app/core/models/question-doc';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 
@@ -20,19 +22,22 @@ export interface CommentAction {
   templateUrl: './checking-comments.component.html',
   styleUrls: ['./checking-comments.component.scss']
 })
-export class CheckingCommentsComponent implements OnInit {
+export class CheckingCommentsComponent extends SubscriptionDisposable implements OnInit {
   @Input() project: SFProject;
   @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
+  @Input() questionDoc: QuestionDoc;
   @Output() action: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
   @Input() answer: Answer;
 
   activeComment: Comment;
   commentFormVisible: boolean = false;
-  maxCommentsToShow: number = 3;
+  readonly maxCommentsToShow: number = 3;
   showAllComments: boolean = false;
   private initUserCommentRefsRead: string[] = [];
 
-  constructor(private userService: UserService) {}
+  constructor(private userService: UserService) {
+    super();
+  }
 
   get isAdministrator(): boolean {
     if (this.project == null || this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded) {
@@ -105,6 +110,30 @@ export class CheckingCommentsComponent implements OnInit {
 
   ngOnInit(): void {
     this.initUserCommentRefsRead = cloneDeep(this.projectUserConfigDoc.data.commentRefsRead);
+    this.subscribe(this.questionDoc.remoteChanges$, () => {
+      const defaultCommentsToShow =
+        this.answer.comments.length > this.maxCommentsToShow ? this.maxCommentsToShow - 1 : this.answer.comments.length;
+      const commentsToShow = this.showAllComments ? this.answer.comments.length : defaultCommentsToShow;
+      const commentIdsToMarkRead: string[] = [];
+      let commentNumber = 1;
+      // Older comments are displayed above newer comments, so iterate over comments starting with the oldest
+      for (const comment of this.getSortedComments()) {
+        if (!this.projectUserConfigDoc.data.commentRefsRead.includes(comment.dataId)) {
+          commentIdsToMarkRead.push(comment.dataId);
+        }
+        commentNumber++;
+        if (commentNumber > commentsToShow) {
+          break;
+        }
+      }
+      if (commentIdsToMarkRead.length) {
+        this.projectUserConfigDoc.submitJson0Op(op => {
+          for (const commentId of commentIdsToMarkRead) {
+            op.add(puc => puc.commentRefsRead, commentId);
+          }
+        });
+      }
+    });
   }
 
   showComments(): void {
