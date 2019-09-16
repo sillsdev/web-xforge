@@ -34,12 +34,12 @@ export = {
     callback();
   },
 
-  connect: (callback: InteropCallback) => {
+  connect: (callback: InteropCallback, userId?: string) => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
     }
-    const handle = server.connect();
+    const handle = server.connect(userId);
     callback(undefined, handle);
   },
 

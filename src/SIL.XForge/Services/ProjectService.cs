@@ -37,7 +37,7 @@ namespace SIL.XForge.Services
 
         public async Task AddUserAsync(string curUserId, string projectId, string projectRole)
         {
-            using (IConnection conn = await RealtimeService.ConnectAsync())
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
@@ -56,7 +56,7 @@ namespace SIL.XForge.Services
 
         public async Task RemoveUserAsync(string curUserId, string projectId, string projectUserId)
         {
-            using (IConnection conn = await RealtimeService.ConnectAsync())
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
@@ -74,7 +74,7 @@ namespace SIL.XForge.Services
             if (systemRole != SystemRole.SystemAdmin)
                 throw new ForbiddenException();
 
-            using (IConnection conn = await RealtimeService.ConnectAsync())
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 

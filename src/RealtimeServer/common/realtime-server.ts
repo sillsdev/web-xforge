@@ -126,8 +126,8 @@ export abstract class RealtimeServer {
     console.log('Realtime Server stopped.');
   }
 
-  connect(): number {
-    const connection = this.backend.connect();
+  connect(userId?: string): number {
+    const connection = this.backend.connect(undefined, { userId });
     const index = this.connectionIndex++;
     this.connections.set(index, connection);
     return index;
@@ -146,7 +146,7 @@ export abstract class RealtimeServer {
   }
 
   async getUserProjectRole(session: ConnectSession, projectId: string): Promise<string | undefined> {
-    let projectRole = session.projectRoles.get(projectId);
+    let projectRole = session.projectRoles!.get(projectId);
     if (projectRole == null) {
       session.projectRoles = await this.getUserProjectRoles(session.userId);
       projectRole = session.projectRoles.get(projectId);
@@ -218,18 +218,23 @@ export abstract class RealtimeServer {
   }
 
   private async setConnectSession(context: ShareDB.middleware.ConnectContext): Promise<void> {
-    if (context.stream.isServer || context.req.user == null) {
-      context.agent.connectSession = { isServer: true };
+    let session: ConnectSession;
+    if (context.stream.isServer || context.req == null || context.req.user == null) {
+      let userId = '';
+      if (context.req != null && context.req.userId != null) {
+        userId = context.req.userId;
+      }
+      session = { isServer: true, userId };
     } else {
       const userId = context.req.user[XF_USER_ID_CLAIM];
       const role = context.req.user[XF_ROLE_CLAIM];
-      const session: ConnectSession = {
+      session = {
         userId,
         role,
         isServer: false,
         projectRoles: await this.getUserProjectRoles(userId)
       };
-      context.agent.connectSession = session;
     }
+    context.agent.connectSession = session;
   }
 }
