@@ -39,7 +39,7 @@ namespace SIL.XForge.Services
             JObject ptIdentity = identities.OfType<JObject>()
                 .FirstOrDefault(i => (string)i["connection"] == "paratext");
             Regex emailRegex = new Regex(EMAIL_PATTERN);
-            using (IConnection conn = await _realtimeService.ConnectAsync())
+            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 DateTime now = DateTime.UtcNow;
                 string name = (string)userProfile["name"];
@@ -103,7 +103,7 @@ namespace SIL.XForge.Services
             };
             await _userSecrets.UpdateAsync(curUserId, update => update.Set(us => us.ParatextTokens, ptTokens), true);
 
-            using (IConnection conn = await _realtimeService.ConnectAsync())
+            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId)));
@@ -115,7 +115,7 @@ namespace SIL.XForge.Services
             if (systemRole != SystemRole.SystemAdmin && userId != curUserId)
                 throw new ForbiddenException();
 
-            using (IConnection conn = await _realtimeService.ConnectAsync())
+            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
                 await userDoc.DeleteAsync();

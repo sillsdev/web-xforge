@@ -9,7 +9,7 @@ namespace SIL.XForge.Realtime
         void StartServer();
         void StopServer();
 
-        Task<IConnection> ConnectAsync();
+        Task<IConnection> ConnectAsync(string userId = null);
 
         string GetCollectionName<T>() where T : IIdentifiable;
 

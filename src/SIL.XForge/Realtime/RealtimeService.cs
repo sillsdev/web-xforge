@@ -56,12 +56,12 @@ namespace SIL.XForge.Realtime
             Server.Stop();
         }
 
-        public async Task<IConnection> ConnectAsync()
+        public async Task<IConnection> ConnectAsync(string userId = null)
         {
             var conn = new Connection(this);
             try
             {
-                await conn.StartAsync();
+                await conn.StartAsync(userId);
                 return conn;
             }
             catch (Exception)
