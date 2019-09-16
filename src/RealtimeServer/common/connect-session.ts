@@ -3,7 +3,7 @@
  */
 export interface ConnectSession {
   userId: string;
-  role: string;
-  projectRoles: Map<string, string>;
+  role?: string;
+  projectRoles?: Map<string, string>;
   isServer: boolean;
 }

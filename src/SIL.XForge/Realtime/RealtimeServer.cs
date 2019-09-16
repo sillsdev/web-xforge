@@ -34,8 +34,10 @@ namespace SIL.XForge.Realtime
             _started = false;
         }
 
-        public Task<int> ConnectAsync()
+        public Task<int> ConnectAsync(string userId = null)
         {
+            if (userId != null)
+                return InvokeExportAsync<int>("connect", userId);
             return InvokeExportAsync<int>("connect");
         }
 

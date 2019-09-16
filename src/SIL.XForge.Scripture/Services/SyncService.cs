@@ -20,14 +20,14 @@ namespace SIL.XForge.Scripture.Services
             _realtimeService = realtimeService;
         }
 
-        public async Task SyncAsync(string projectId, string userId, bool trainEngine)
+        public async Task SyncAsync(string curUserId, string projectId, bool trainEngine)
         {
-            using (IConnection conn = await _realtimeService.ConnectAsync())
+            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
                 await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
             }
-            _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(projectId, userId, trainEngine));
+            _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(projectId, curUserId, trainEngine));
         }
     }
 }

@@ -39,7 +39,7 @@ namespace SIL.XForge.Realtime
         {
         }
 
-        public Task<IConnection> ConnectAsync()
+        public Task<IConnection> ConnectAsync(string userId = null)
         {
             return Task.FromResult<IConnection>(new MemoryConnection(this));
         }

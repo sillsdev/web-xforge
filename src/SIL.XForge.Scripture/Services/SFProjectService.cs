@@ -96,10 +96,10 @@ namespace SIL.XForge.Scripture.Services
             if (!attempt.TryResult(out string projectRole) || projectRole != SFProjectRole.Administrator)
                 throw new ForbiddenException();
 
-            using (IConnection conn = await RealtimeService.ConnectAsync())
+            string projectId = ObjectId.GenerateNewId().ToString();
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
-                IDocument<SFProject> projectDoc = await conn.CreateAsync<SFProject>(ObjectId.GenerateNewId().ToString(),
-                    project);
+                IDocument<SFProject> projectDoc = await conn.CreateAsync<SFProject>(projectId, project);
                 await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
 
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
@@ -115,14 +115,15 @@ namespace SIL.XForge.Scripture.Services
                     };
                     await _engineService.AddProjectAsync(machineProject);
                 }
-                await _syncService.SyncAsync(projectDoc.Id, curUserId, true);
-                return projectDoc.Id;
             }
+
+            await _syncService.SyncAsync(curUserId, projectId, true);
+            return projectId;
         }
 
         public async Task DeleteProjectAsync(string curUserId, string projectId)
         {
-            using (IConnection conn = await RealtimeService.ConnectAsync())
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
                 if (!projectDoc.IsLoaded)
@@ -178,7 +179,7 @@ namespace SIL.XForge.Scripture.Services
                 };
             }
 
-            using (IConnection conn = await RealtimeService.ConnectAsync())
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
                 if (!projectDoc.IsLoaded)
@@ -232,7 +233,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                     }
 
-                    await _syncService.SyncAsync(projectId, curUserId, trainEngine);
+                    await _syncService.SyncAsync(curUserId, projectId, trainEngine);
                 }
             }
         }
@@ -261,7 +262,7 @@ namespace SIL.XForge.Scripture.Services
             if (!IsProjectAdmin(project, curUserId))
                 throw new ForbiddenException();
 
-            await _syncService.SyncAsync(projectId, curUserId, false);
+            await _syncService.SyncAsync(curUserId, projectId, false);
         }
 
         public async Task<bool> InviteAsync(string curUserId, string projectId, string email)
@@ -365,7 +366,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey = null)
         {
-            using (IConnection conn = await RealtimeService.ConnectAsync())
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
 

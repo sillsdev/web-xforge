@@ -33,9 +33,9 @@ namespace SIL.XForge.Realtime
             return (Document<T>)doc;
         }
 
-        internal async Task StartAsync()
+        internal async Task StartAsync(string userId = null)
         {
-            _handle = await _realtimeService.Server.ConnectAsync();
+            _handle = await _realtimeService.Server.ConnectAsync(userId);
         }
 
         protected override void DisposeManagedResources()
