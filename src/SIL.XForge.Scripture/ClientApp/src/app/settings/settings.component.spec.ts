@@ -146,18 +146,6 @@ describe('SettingsComponent', () => {
         expect(env.statusDone(env.basedOnStatus)).not.toBeNull();
       }));
 
-      it('should display Based On projects sorted', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        env.wait();
-        env.wait();
-        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
-        expect(env.basedOnSelect).not.toBeNull();
-        expect(env.getMenuItems(env.basedOnSelect).length).toEqual(2);
-        expect(env.getMenuItemText(env.basedOnSelect, 0)).toContain('ParatextP1');
-        expect(env.getMenuItemText(env.basedOnSelect, 1)).toContain('ParatextP2');
-      }));
-
       it('should display Based On project even if user is not a member', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
@@ -359,8 +347,8 @@ class TestEnvironment {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     this.paratextProjects$ = new BehaviorSubject<ParatextProject[]>([
       {
-        paratextId: 'paratextId02',
-        name: 'ParatextP2',
+        paratextId: 'paratextId01',
+        name: 'ParatextP1',
         inputSystem: {
           tag: 'qaa',
           languageName: 'unspecified'
@@ -369,8 +357,8 @@ class TestEnvironment {
         isConnected: false
       },
       {
-        paratextId: 'paratextId01',
-        name: 'ParatextP1',
+        paratextId: 'paratextId02',
+        name: 'ParatextP2',
         inputSystem: {
           tag: 'qaa',
           languageName: 'unspecified'
