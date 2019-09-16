@@ -11,6 +11,7 @@ import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -38,6 +39,7 @@ interface Summary {
   styleUrls: ['./checking.component.scss']
 })
 export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
+  userDoc: UserDoc;
   @ViewChild('answerPanelContainer', { static: false }) set answersPanelElement(
     answersPanelContainerElement: ElementRef
   ) {
@@ -173,6 +175,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this._chapter = undefined;
         this.chapter = 1;
 
+        this.userDoc = await this.userService.getCurrentUser();
         this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
         this.loadingFinished();
       }
@@ -497,11 +500,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator;
     const isDiscussionEnabled: boolean = this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses;
     const isInvitingEnabled: boolean = this.projectDoc.data.checkingConfig.shareEnabled;
+    const isNameConfirmed = this.userDoc.data.isDisplayNameConfirmed;
 
     this.helpHeroService.setProperty({
       isAdmin: isProjectAdmin,
       isDiscussionEnabled,
-      isInvitingEnabled
+      isInvitingEnabled,
+      isNameConfirmed
     });
   }
 }
