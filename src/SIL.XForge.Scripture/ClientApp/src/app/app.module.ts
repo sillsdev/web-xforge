@@ -4,9 +4,11 @@ import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { BugsnagProvider, ExceptionHandlingService } from 'xforge-common/exception-handling-service';
+import bugsnag, { Bugsnag } from '@bugsnag/js';
+import { ExceptionHandlingService } from 'xforge-common/exception-handling-service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { xForgeCommonEntryComponents, XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -22,6 +24,22 @@ import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
+
+function createBugsnagClient(): Bugsnag.Client {
+  const config: Bugsnag.IConfig = {
+    apiKey: environment.bugsnagApiKey,
+    appVersion: version,
+    appType: 'angular',
+    notifyReleaseStages: ['live', 'qa'],
+    releaseStage: environment.releaseStage,
+    autoNotify: false,
+    trackInlineScripts: false
+  };
+  if (environment.releaseStage === 'dev') {
+    config.logger = null;
+  }
+  return bugsnag(config);
+}
 
 @NgModule({
   declarations: [
@@ -49,7 +67,11 @@ import { UsersModule } from './users/users.module';
     UICommonModule,
     XForgeCommonModule
   ],
-  providers: [DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }, BugsnagProvider],
+  providers: [
+    DatePipe,
+    { provide: ErrorHandler, useExisting: ExceptionHandlingService },
+    { provide: Bugsnag.Client, useFactory: createBugsnagClient }
+  ],
   entryComponents: [
     DeleteProjectDialogComponent,
     ProjectDeletedDialogComponent,

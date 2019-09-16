@@ -1,4 +1,5 @@
-import { clone, merge } from 'lodash';
+import clone from 'lodash/clone';
+import merge from 'lodash/merge';
 
 const defaults = {
   pwaTest: false,

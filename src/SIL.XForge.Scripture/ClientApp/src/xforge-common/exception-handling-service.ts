@@ -1,11 +1,9 @@
 import { MdcDialog } from '@angular-mdc/web';
 import { ErrorHandler, Injectable } from '@angular/core';
-import { Client as BugsnagClient } from '@bugsnag/core';
-import bugsnag from '@bugsnag/js';
-import { cloneDeep } from 'lodash';
+import { Bugsnag } from '@bugsnag/js';
+import cloneDeep from 'lodash/cloneDeep';
 import { User } from 'realtime-server/lib/common/models/user';
 import { environment } from 'src/environments/environment';
-import { version } from '../../../version.json';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
 import { UserDoc } from './models/user-doc';
 import { UserService } from './user.service';
@@ -13,10 +11,10 @@ import { objectId, promiseTimeout } from './utils';
 
 type BugsnagStyleUser = User & { id: string };
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class ExceptionHandlingService implements ErrorHandler {
-  private static bugsnagClient: BugsnagClient;
-
   private alertQueue: ErrorAlert[] = [];
   private dialogOpen = false;
   private currentUser: UserDoc;
@@ -24,21 +22,9 @@ export class ExceptionHandlingService implements ErrorHandler {
 
   constructor(
     private readonly dialog: MdcDialog,
-    private userService: UserService,
-    private bugsnagProvider: BugsnagProvider
-  ) {
-    if (!ExceptionHandlingService.bugsnagClient) {
-      ExceptionHandlingService.bugsnagClient = bugsnagProvider.bugsnag({
-        apiKey: environment.bugsnagApiKey,
-        appVersion: version,
-        appType: 'angular',
-        notifyReleaseStages: ['live', 'qa'],
-        releaseStage: environment.releaseStage,
-        autoNotify: false,
-        trackInlineScripts: false
-      });
-    }
-  }
+    private readonly userService: UserService,
+    private readonly bugsnagClient: Bugsnag.Client
+  ) {}
 
   async handleError(error: any) {
     if (typeof error !== 'object' || error === null) {
@@ -88,7 +74,7 @@ export class ExceptionHandlingService implements ErrorHandler {
   }
 
   private reportToBugsnag(error: any, user: BugsnagStyleUser, eventId: string) {
-    ExceptionHandlingService.bugsnagClient.notify(
+    this.bugsnagClient.notify(
       error,
       {
         user,
@@ -123,9 +109,4 @@ export class ExceptionHandlingService implements ErrorHandler {
       });
     }
   }
-}
-
-// Wrap bugsnag in class so it can be injected more easily
-export class BugsnagProvider {
-  bugsnag = bugsnag;
 }
