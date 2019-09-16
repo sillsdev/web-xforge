@@ -5,6 +5,7 @@ import { combineLatest, from, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
+import { LocalSettingsService } from './local-settings.service';
 import { RealtimeQuery } from './models/realtime-query';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
@@ -12,6 +13,8 @@ import { Filters, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
 import { USERS_URL } from './url-constants';
 import { getObjPathStr, objProxy } from './utils';
+
+const CURRENT_PROJECT_ID_SETTING = 'current_project_id';
 
 /**
  * Provides operations on user objects.
@@ -23,11 +26,20 @@ export class UserService {
   constructor(
     private readonly realtimeService: RealtimeService,
     private readonly authService: AuthService,
-    private readonly commandService: CommandService
+    private readonly commandService: CommandService,
+    private readonly localSettings: LocalSettingsService
   ) {}
 
   get currentUserId(): string {
     return this.authService.currentUserId;
+  }
+
+  get currentProjectId(): string {
+    return this.localSettings.get(CURRENT_PROJECT_ID_SETTING);
+  }
+
+  setCurrentProjectId(value?: string): void {
+    this.localSettings.set(CURRENT_PROJECT_ID_SETTING, value);
   }
 
   /** Get currently-logged in user. */

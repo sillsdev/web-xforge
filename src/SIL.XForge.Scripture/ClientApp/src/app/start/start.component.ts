@@ -23,13 +23,13 @@ export class StartComponent extends SubscriptionDisposable implements OnInit {
   }
 
   private async navigateToProject(): Promise<void> {
-    const userDoc = await this.userService.getCurrentUser();
-    const site = userDoc.data.sites[environment.siteId];
-    let projectId: string;
-    if (site != null && site.currentProjectId != null) {
-      projectId = site.currentProjectId;
-    } else if (site.projects.length > 0) {
-      projectId = site.projects[0];
+    let projectId = this.userService.currentProjectId;
+    if (projectId == null) {
+      const userDoc = await this.userService.getCurrentUser();
+      const site = userDoc.data.sites[environment.siteId];
+      if (site != null && site.projects.length > 0) {
+        projectId = site.projects[0];
+      }
     }
     if (projectId != null) {
       this.router.navigate(['./', projectId], { relativeTo: this.route, replaceUrl: true });

@@ -157,8 +157,6 @@ namespace SIL.XForge.Services
             {
                 int index = userDoc.Data.Sites[siteId].Projects.IndexOf(projectDoc.Id);
                 op.Remove(u => u.Sites[siteId].Projects, index);
-                if (userDoc.Data.Sites[siteId].CurrentProjectId == projectDoc.Id)
-                    op.Unset(u => u.Sites[siteId].CurrentProjectId);
             });
         }
 

@@ -3,10 +3,11 @@ import { Router } from '@angular/router';
 import { AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
-import { fromEvent, of, Subscription, timer } from 'rxjs';
+import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
+import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
 import { RealtimeOfflineStore } from './realtime-offline-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
@@ -14,6 +15,12 @@ import { USERS_URL } from './url-constants';
 
 const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 const XF_ROLE_CLAIM = 'http://xforge.org/role';
+
+const ACCESS_TOKEN_SETTING = 'access_token';
+const ID_TOKEN_SETTING = 'id_token';
+const USER_ID_SETTING = 'user_id';
+const ROLE_SETTING = 'role';
+const EXPIRES_AT_SETTING = 'expires_at';
 
 interface AuthState {
   returnUrl?: string;
@@ -41,29 +48,30 @@ export class AuthService {
     private readonly offlineStore: RealtimeOfflineStore,
     private readonly locationService: LocationService,
     private readonly commandService: CommandService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly localSettings: LocalSettingsService
   ) {
     // listen for changes to the auth state
     // this indicates that a user has logged in/out on a different tab/window
-    fromEvent<StorageEvent>(window, 'storage')
-      .pipe(filter(event => event.key === 'user_id'))
+    this.localSettings.remoteChanges$
+      .pipe(filter(event => event.key === USER_ID_SETTING))
       .subscribe(() => this.locationService.go('/'));
   }
 
   get currentUserId(): string {
-    return localStorage.getItem('user_id');
+    return this.localSettings.get(USER_ID_SETTING);
   }
 
   get currentUserRole(): SystemRole {
-    return localStorage.getItem('role') as SystemRole;
+    return this.localSettings.get(ROLE_SETTING);
   }
 
   get accessToken(): string {
-    return localStorage.getItem('access_token');
+    return this.localSettings.get(ACCESS_TOKEN_SETTING);
   }
 
   get expiresAt(): number {
-    return Number(localStorage.getItem('expires_at'));
+    return this.localSettings.get(EXPIRES_AT_SETTING);
   }
 
   get isLoggedIn(): Promise<boolean> {
@@ -104,7 +112,7 @@ export class AuthService {
 
   async logOut(): Promise<void> {
     await this.offlineStore.deleteDB();
-    this.clearState();
+    this.localSettings.clear();
     this.auth0.logout({ returnTo: this.locationService.origin + '/' });
   }
 
@@ -129,7 +137,6 @@ export class AuthService {
       return false;
     }
 
-    const prevUserId = this.currentUserId;
     const state: AuthState = JSON.parse(authResult.state);
     let secondaryId: string;
     if (state.linking != null && state.linking) {
@@ -138,14 +145,10 @@ export class AuthService {
         await this.renewTokens();
       }
     } else {
-      this.localLogIn(authResult);
+      await this.localLogIn(authResult);
     }
     this.scheduleRenewal();
-    const isNewUser = prevUserId != null && prevUserId !== this.currentUserId;
     this.remoteStore.init(() => this.accessToken);
-    if (isNewUser) {
-      await this.offlineStore.deleteDB();
-    }
     if (secondaryId != null) {
       await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
     } else if (!environment.production) {
@@ -194,7 +197,7 @@ export class AuthService {
     try {
       const authResult = await this.checkSession();
       if (authResult != null && authResult.accessToken != null && authResult.idToken != null) {
-        this.localLogIn(authResult);
+        await this.localLogIn(authResult);
       }
     } catch (err) {
       await this.logOut();
@@ -225,21 +228,28 @@ export class AuthService {
     });
   }
 
-  private localLogIn(authResult: auth0.Auth0DecodedHash): void {
-    const expiresAt = authResult.expiresIn * 1000 + Date.now();
-    localStorage.setItem('access_token', authResult.accessToken);
-    localStorage.setItem('id_token', authResult.idToken);
-    localStorage.setItem('expires_at', expiresAt.toString());
+  private async localLogIn(authResult: auth0.Auth0DecodedHash): Promise<void> {
     const claims = jwtDecode(authResult.accessToken);
-    localStorage.setItem('user_id', claims[XF_USER_ID_CLAIM]);
-    localStorage.setItem('role', claims[XF_ROLE_CLAIM]);
+    const prevUserId = this.currentUserId;
+    const userId = claims[XF_USER_ID_CLAIM];
+    if (prevUserId != null && prevUserId !== userId) {
+      await this.offlineStore.deleteDB();
+      this.localSettings.clear();
+    }
+
+    const expiresAt = authResult.expiresIn * 1000 + Date.now();
+    this.localSettings.set(ACCESS_TOKEN_SETTING, authResult.accessToken);
+    this.localSettings.set(ID_TOKEN_SETTING, authResult.idToken);
+    this.localSettings.set(EXPIRES_AT_SETTING, expiresAt);
+    this.localSettings.set(USER_ID_SETTING, userId);
+    this.localSettings.set(ROLE_SETTING, claims[XF_ROLE_CLAIM]);
   }
 
   private clearState(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('id_token');
-    localStorage.removeItem('expires_at');
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('role');
+    this.localSettings.remove(ACCESS_TOKEN_SETTING);
+    this.localSettings.remove(ID_TOKEN_SETTING);
+    this.localSettings.remove(EXPIRES_AT_SETTING);
+    this.localSettings.remove(USER_ID_SETTING);
+    this.localSettings.remove(ROLE_SETTING);
   }
 }

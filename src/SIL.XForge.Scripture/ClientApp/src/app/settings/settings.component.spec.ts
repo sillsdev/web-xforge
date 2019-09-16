@@ -13,7 +13,6 @@ import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
-import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
@@ -323,7 +322,7 @@ describe('SettingsComponent', () => {
       env.clickElement(env.deleteProjectButton);
       expect(env.deleteDialog).not.toBeNull();
       env.confirmDialog(true);
-      expect(env.currentProjectId).toBeUndefined();
+      verify(env.mockedUserService.setCurrentProjectId()).once();
       verify(env.mockedSFProjectService.onlineDelete(anything())).once();
     }));
 
@@ -334,7 +333,7 @@ describe('SettingsComponent', () => {
       env.clickElement(env.deleteProjectButton);
       expect(env.deleteDialog).not.toBeNull();
       env.confirmDialog(false);
-      expect(env.currentProjectId).toEqual('project01');
+      verify(env.mockedUserService.setCurrentProjectId()).never();
       verify(env.mockedSFProjectService.onlineDelete(anything())).never();
     }));
   });
@@ -355,7 +354,6 @@ class TestEnvironment {
   private readonly offlineStore = new MemoryRealtimeOfflineStore();
   private projectDoc: SFProjectDoc;
   private readonly paratextProjects$: BehaviorSubject<ParatextProject[]>;
-  private readonly currentUserDoc: UserDoc;
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
@@ -384,13 +382,7 @@ class TestEnvironment {
     when(this.mockedParatextService.getProjects()).thenReturn(this.paratextProjects$);
     when(this.mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(this.mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
-    this.currentUserDoc = new UserDoc(
-      this.offlineStore,
-      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', {
-        sites: { sf: { currentProjectId: 'project01' } }
-      })
-    );
-    when(this.mockedUserService.getCurrentUser()).thenResolve(this.currentUserDoc);
+    when(this.mockedUserService.currentProjectId).thenReturn('project01');
     TestBed.configureTestingModule({
       imports: [DialogTestModule, HttpClientTestingModule, RouterTestingModule, UICommonModule],
       declarations: [SettingsComponent, WriteStatusComponent],
@@ -406,10 +398,6 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
     this.overlayContainer = TestBed.get(OverlayContainer);
-  }
-
-  get currentProjectId(): string {
-    return this.currentUserDoc.data.sites.sf.currentProjectId;
   }
 
   get atLeastOneError(): DebugElement {
