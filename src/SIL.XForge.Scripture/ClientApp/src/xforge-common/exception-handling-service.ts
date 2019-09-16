@@ -1,9 +1,10 @@
 import { MdcDialog } from '@angular-mdc/web';
 import { ErrorHandler, Injectable } from '@angular/core';
-import { Bugsnag } from '@bugsnag/js';
+import bugsnag, { Bugsnag } from '@bugsnag/js';
 import cloneDeep from 'lodash/cloneDeep';
 import { User } from 'realtime-server/lib/common/models/user';
 import { environment } from 'src/environments/environment';
+import { version } from '../../../version.json';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
 import { UserDoc } from './models/user-doc';
 import { UserService } from './user.service';
@@ -15,6 +16,22 @@ type BugsnagStyleUser = User & { id: string };
   providedIn: 'root'
 })
 export class ExceptionHandlingService implements ErrorHandler {
+  static createBugsnagClient(): Bugsnag.Client {
+    const config: Bugsnag.IConfig = {
+      apiKey: environment.bugsnagApiKey,
+      appVersion: version,
+      appType: 'angular',
+      notifyReleaseStages: ['live', 'qa'],
+      releaseStage: environment.releaseStage,
+      autoNotify: false,
+      trackInlineScripts: false
+    };
+    if (environment.releaseStage === 'dev') {
+      config.logger = null;
+    }
+    return bugsnag(config);
+  }
+
   private alertQueue: ErrorAlert[] = [];
   private dialogOpen = false;
   private currentUser: UserDoc;

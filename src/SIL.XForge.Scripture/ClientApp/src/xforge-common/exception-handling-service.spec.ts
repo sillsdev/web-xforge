@@ -1,5 +1,5 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
-import { Client as BugsnagClient, INotifyOpts } from '@bugsnag/core';
+import { Bugsnag } from '@bugsnag/js';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';
 import { anything, instance, mock, reset, when } from 'ts-mockito';
@@ -72,13 +72,6 @@ describe('ExceptionHandlingService', () => {
   });
 });
 
-class MockBugsnagProvider {
-  constructor(private _bugsnag: BugsnagClient) {}
-  bugsnag = () => {
-    return this._bugsnag;
-  };
-}
-
 class MockBugsnagClient {
   notify = (error: any, opts?: any, cb?: any): void => {};
 }
@@ -88,7 +81,6 @@ class TestEnvironment {
   mockedUserService = mock(UserService);
   mockedBugsnagClient = mock(MockBugsnagClient);
   bugsnagReports: { error: any; opts: any; cb: any }[] = [];
-  mockBugsnagProvider = new MockBugsnagProvider(instance(this.mockedBugsnagClient) as BugsnagClient);
   service: ExceptionHandlingService;
   rejectUser = false;
   timeoutUser = false;
@@ -104,12 +96,10 @@ class TestEnvironment {
   } as UserDoc;
 
   constructor() {
-    this.userDoc.data['random'] = Math.random();
-    delete ExceptionHandlingService['bugsnagClient'];
     this.service = new ExceptionHandlingService(
       instance(this.mockedMdcDialog),
       instance(this.mockedUserService),
-      this.mockBugsnagProvider
+      instance(this.mockedBugsnagClient) as Bugsnag.Client
     );
 
     when(this.mockedMdcDialog.open(anything(), anything())).thenReturn({
@@ -131,7 +121,7 @@ class TestEnvironment {
     });
 
     when(this.mockedBugsnagClient.notify(anything(), anything(), anything())).thenCall(
-      (error: any, opts: INotifyOpts, cb: any) => {
+      (error: any, opts: Bugsnag.INotifyOpts, cb: any) => {
         this.bugsnagReports.push({
           error,
           opts,
