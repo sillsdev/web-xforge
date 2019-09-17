@@ -1,4 +1,13 @@
-import { AbstractControl, FormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { ErrorStateMatcher } from '@angular-mdc/web';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  FormGroupDirective,
+  NgForm,
+  ValidationErrors,
+  ValidatorFn
+} from '@angular/forms';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 
@@ -62,5 +71,29 @@ export class SFValidators {
     }
     const isAfterStart: boolean = scriptureStartRef.verseNum <= scriptureEndRef.verseNum;
     return isAfterStart ? null : { verseBeforeStart: true };
+  }
+}
+
+/**
+ * An error state matcher for the end reference text field to match when the field should be styled
+ * with red outline. This prevents the end reference text field from showing red outline if the
+ * start reference is already invalid
+ */
+export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    const invalidCtrl = !!(control && control.invalid && control.parent.dirty);
+    const invalidStart = !!(
+      control &&
+      control.parent &&
+      control.parent.controls &&
+      control.parent.controls['scriptureStart'] &&
+      !control.parent.controls['scriptureStart'].hasError('verseFormat') &&
+      !control.parent.controls['scriptureStart'].hasError('verseRange') &&
+      (control.parent.controls['scriptureStart'].invalid ||
+        control.parent.hasError('verseDifferentBookOrChapter') ||
+        control.parent.hasError('verseBeforeStart'))
+    );
+
+    return control.touched && (invalidCtrl || invalidStart);
   }
 }
