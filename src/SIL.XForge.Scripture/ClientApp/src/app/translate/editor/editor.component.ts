@@ -204,22 +204,6 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     return SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit });
   }
 
-  private get isSelectionAtSegmentEnd(): boolean {
-    const selection = this.target.editor.getSelection();
-    if (selection == null) {
-      return false;
-    }
-
-    // if the segment is blank, then we are always at the end
-    if (this.target.segment.text === '') {
-      return true;
-    }
-
-    const selectionEndIndex = selection.index + selection.length;
-    const segmentEndIndex = this.target.segment.range.index + this.target.segment.range.length;
-    return selectionEndIndex === segmentEndIndex;
-  }
-
   ngOnInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => this.setTextHeight());
     this.subscribe(
@@ -555,7 +539,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   private onStartTranslating(): void {
     this.isTranslating = true;
     this.suggestionWords = [];
-    this.showSuggestion = this.isSelectionAtSegmentEnd;
+    this.showSuggestion = this.target.isSelectionAtSegmentEnd;
   }
 
   private async translateSegment(): Promise<void> {
@@ -593,7 +577,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
 
     // only bother updating the suggestion if the cursor is at the end of the segment
-    if (!this.isTranslating && this.isSelectionAtSegmentEnd) {
+    if (!this.isTranslating && this.target.isSelectionAtSegmentEnd) {
       if (this.translationSession == null) {
         this.suggestionWords = [];
       } else {
@@ -624,7 +608,8 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
         }
       }
     }
-    this.showSuggestion = (this.isTranslating || this.suggestionWords.length > 0) && this.isSelectionAtSegmentEnd;
+    this.showSuggestion =
+      (this.isTranslating || this.suggestionWords.length > 0) && this.target.isSelectionAtSegmentEnd;
   }
 
   private skipInitialWhitespace(range: RangeStatic): RangeStatic {

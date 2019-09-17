@@ -49,12 +49,6 @@ function setAttribute(op: DeltaOperation, attributes: StringMap, name: string, v
   }
 }
 
-function unsetAttribute(op: DeltaOperation, attributes: StringMap, name: string): void {
-  if (op.attributes != null && op.attributes[name] != null) {
-    attributes[name] = false;
-  }
-}
-
 function removeAttribute(op: DeltaOperation, name: string): void {
   if (op.attributes != null && op.attributes[name] != null) {
     delete op.attributes[name];
@@ -132,7 +126,7 @@ export class TextViewModel {
       return;
     }
 
-    if (source === 'user') {
+    if (source === 'user' && this.editor.isEnabled()) {
       const modelDelta = this.viewToData(delta);
       if (modelDelta.ops.length > 0) {
         this.textDoc.submit(modelDelta, this.editor);
@@ -284,10 +278,8 @@ export class TextViewModel {
         if (curSegment != null) {
           paraSegments.push(curSegment);
           curIndex += curSegment.length;
-          setAttribute(op, attrs, 'para-contents', true);
-        } else {
-          unsetAttribute(op, attrs, 'para-contents');
         }
+        setAttribute(op, attrs, 'para-contents', true);
         curIndex += len;
         curSegment = new SegmentInfo('verse_' + chapter + '_' + op.insert.verse.number, curIndex);
       } else {

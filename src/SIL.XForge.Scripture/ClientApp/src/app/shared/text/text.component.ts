@@ -83,11 +83,11 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
           shiftKey: true,
           handler: () => this.movePrevSegment()
         },
-        'move next, blank segment, right arrow': {
+        'move next, segment end, right arrow': {
           key: 'right',
           handler: () => {
-            if (this.segment.text === '') {
-              this.moveNextSegment();
+            if (this.isSelectionAtSegmentEnd) {
+              this.moveNextSegment(false);
               return false;
             }
             return true;
@@ -204,6 +204,22 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.applyEditorStyles();
   }
 
+  get isSelectionAtSegmentEnd(): boolean {
+    const selection = this.editor.getSelection();
+    if (selection == null) {
+      return false;
+    }
+
+    // if the segment is blank, then we are always at the end
+    if (this.segment.text === '') {
+      return true;
+    }
+
+    const selectionEndIndex = selection.index + selection.length;
+    const segmentEndIndex = this.segment.range.index + this.segment.range.length;
+    return selectionEndIndex === segmentEndIndex;
+  }
+
   ngOnDestroy(): void {
     super.ngOnDestroy();
     if (this.viewModel != null) {
@@ -236,7 +252,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
   }
 
-  setSegment(segmentRef: string, checksum?: number, focus: boolean = false): boolean {
+  setSegment(segmentRef: string, checksum?: number, focus: boolean = false, end: boolean = true): boolean {
     if (!this.initialTextFetched) {
       this.initialSegmentRef = segmentRef;
       this.initialSegmentChecksum = checksum;
@@ -244,7 +260,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       return true;
     }
     const prevSegment = this.segment;
-    if (this.tryChangeSegment(segmentRef, checksum, focus)) {
+    if (this.tryChangeSegment(segmentRef, checksum, focus, end)) {
       this.updated.emit({ prevSegment, segment: this._segment });
       return true;
     }
@@ -333,17 +349,17 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     return range.index !== this._segment.range.index + this._segment.range.length;
   }
 
-  private moveNextSegment(): void {
+  private moveNextSegment(end: boolean = true): void {
     const nextRef = this.viewModel.getNextSegmentRef(this._segment.ref);
     if (nextRef != null) {
-      this.setSegment(nextRef, undefined, true);
+      this.setSegment(nextRef, undefined, true, end);
     }
   }
 
-  private movePrevSegment(): void {
+  private movePrevSegment(end: boolean = true): void {
     const prevRef = this.viewModel.getPrevSegmentRef(this._segment.ref);
     if (prevRef != null) {
-      this.setSegment(prevRef, undefined, true);
+      this.setSegment(prevRef, undefined, true, end);
     }
   }
 
@@ -390,7 +406,12 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.updated.emit({ delta, prevSegment, segment: this._segment });
   }
 
-  private tryChangeSegment(segmentRef: string, checksum?: number, focus: boolean = false): boolean {
+  private tryChangeSegment(
+    segmentRef: string,
+    checksum?: number,
+    focus: boolean = false,
+    end: boolean = true
+  ): boolean {
     if (this._segment != null && this._id.bookNum === this._segment.bookNum && segmentRef === this._segment.ref) {
       // the selection has not changed to a different segment
       return false;
@@ -411,7 +432,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       if (selectedSegmentRef !== segmentRef) {
         const range = this.viewModel.getSegmentRange(segmentRef);
         // setTimeout seems necessary to ensure that the editor is focused
-        setTimeout(() => this._editor.setSelection(range.index + range.length, 0, 'user'));
+        setTimeout(() => this._editor.setSelection(end ? range.index + range.length : range.index, 0, 'user'));
       }
     }
 
