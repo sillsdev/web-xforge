@@ -140,9 +140,14 @@ namespace SIL.XForge.Services
         }
 
         protected virtual async Task AddUserToProjectAsync(IConnection conn, IDocument<TModel> projectDoc,
-            IDocument<User> userDoc, string projectRole)
+            IDocument<User> userDoc, string projectRole, bool removeShareKeys = true)
         {
             await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[userDoc.Id], projectRole));
+            if (removeShareKeys)
+            {
+                await ProjectSecrets.UpdateAsync(p => p.Id == projectDoc.Id,
+                    update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == userDoc.Data.Email));
+            }
             string siteId = SiteOptions.Value.Id;
             await userDoc.SubmitJson0OpAsync(op => op.Add(u => u.Sites[siteId].Projects, projectDoc.Id));
         }
