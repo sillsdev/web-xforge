@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -37,7 +38,20 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
         const sharing = this.route.snapshot.queryParams['sharing'] as string;
         if (sharing === 'true') {
           const shareKey = this.route.snapshot.queryParams['shareKey'] as string;
-          await this.projectService.onlineCheckLinkSharing(projectId, shareKey);
+          try {
+            await this.projectService.onlineCheckLinkSharing(projectId, shareKey);
+          } catch (err) {
+            if (
+              err instanceof CommandError &&
+              (err.code === CommandErrorCode.InvalidRequest || err.code === CommandErrorCode.InvalidParams)
+            ) {
+              await this.noticeService.showMessageDialog('The project link is invalid.');
+              this.router.navigateByUrl('/projects', { replaceUrl: true });
+              return;
+            } else {
+              throw err;
+            }
+          }
         }
         const projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
         const projectUserConfig = projectUserConfigDoc.data;

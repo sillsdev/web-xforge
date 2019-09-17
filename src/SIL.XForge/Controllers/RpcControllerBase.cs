@@ -25,14 +25,12 @@ namespace SIL.XForge.Controllers
 
         protected IRpcMethodResult ForbiddenError()
         {
-            return Error((int)RpcErrorCode.InvalidRequest,
-                "The user does not have permission to perform this operation."
-            );
+            return Error((int)RpcErrorCode.InvalidRequest, "Forbidden");
         }
 
-        protected IRpcMethodResult InvalidParamsError()
+        protected IRpcMethodResult NotFoundError()
         {
-            return Error((int)RpcErrorCode.InvalidParams);
+            return Error((int)RpcErrorCode.InvalidParams, "NotFound");
         }
     }
 }
