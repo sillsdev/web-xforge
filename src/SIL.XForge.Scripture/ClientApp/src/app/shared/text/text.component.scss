@@ -17,6 +17,7 @@ quill-editor {
 
 .highlight-segment-target {
   color: black;
+  box-shadow: unset;
 }
 
 .highlight-para-target > usx-para-contents {
@@ -47,7 +48,7 @@ quill-editor {
         color: rgba(0, 0, 0, 0.8);
         background-color: white;
 
-        usx-verse {
+        usx-verse > span > span {
           padding-top: 0.35rem;
           background-color: #f5f3ef;
           border-radius: 8px;

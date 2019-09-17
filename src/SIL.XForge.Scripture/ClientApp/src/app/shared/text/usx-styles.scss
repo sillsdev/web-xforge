@@ -211,7 +211,7 @@ usx-chapter {
 
 usx-verse {
   user-select: none;
-  > span {
+  > span > span > span {
     // superscript
     top: -0.5em;
     position: relative;

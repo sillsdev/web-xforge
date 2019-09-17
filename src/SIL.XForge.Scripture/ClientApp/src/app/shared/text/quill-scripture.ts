@@ -81,7 +81,12 @@ export function registerScripture(): void {
     static create(value: Verse): Node {
       const node = super.create(value) as HTMLElement;
       // add a ZWSP before the verse number, so that it allows breaking
-      node.innerText = ZWSP + NBSP + value.number + NBSP;
+      node.appendChild(document.createTextNode(ZWSP));
+      const containerSpan = document.createElement('span');
+      const verseSpan = document.createElement('span');
+      verseSpan.innerText = NBSP + value.number + NBSP;
+      containerSpan.appendChild(verseSpan);
+      node.appendChild(containerSpan);
       setUsxValue(node, value);
       return node;
     }
@@ -101,7 +106,7 @@ export function registerScripture(): void {
       let text: string;
       switch (value) {
         case 'initial':
-          text = NBSP;
+          text = NBSP.repeat(2);
           break;
         case 'normal':
           text = NBSP.repeat(8);
