@@ -1,8 +1,8 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
-import { Bugsnag } from '@bugsnag/js';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';
-import { anything, instance, mock, reset, when } from 'ts-mockito';
+import { anything, instance, mock, when } from 'ts-mockito';
+import { ErrorReportingService } from './error-reporting.service';
 import { ErrorComponent } from './error/error.component';
 import { ExceptionHandlingService } from './exception-handling-service';
 import { UserDoc } from './models/user-doc';
@@ -13,7 +13,7 @@ describe('ExceptionHandlingService', () => {
     const env = new TestEnvironment();
     const values = [undefined, null, NaN, Infinity, -1, 0, Symbol(), [] as any[], '', new Error()];
     await Promise.all(values.map(value => env.service.handleError(value)));
-    expect(env.bugsnagReports.length).toBe(values.length);
+    expect(env.errorReports.length).toBe(values.length);
   });
 
   it('should unwrap a rejection from a promise', async () => {
@@ -72,15 +72,11 @@ describe('ExceptionHandlingService', () => {
   });
 });
 
-class MockBugsnagClient {
-  notify = (error: any, opts?: any, cb?: any): void => {};
-}
-
 class TestEnvironment {
   mockedMdcDialog = mock(MdcDialog);
   mockedUserService = mock(UserService);
-  mockedBugsnagClient = mock(MockBugsnagClient);
-  bugsnagReports: { error: any; opts: any; cb: any }[] = [];
+  mockedErrorReportingService = mock(ErrorReportingService);
+  errorReports: { error: any; opts: any; cb: any }[] = [];
   service: ExceptionHandlingService;
   rejectUser = false;
   timeoutUser = false;
@@ -99,7 +95,7 @@ class TestEnvironment {
     this.service = new ExceptionHandlingService(
       instance(this.mockedMdcDialog),
       instance(this.mockedUserService),
-      instance(this.mockedBugsnagClient) as Bugsnag.Client
+      instance(this.mockedErrorReportingService)
     );
 
     when(this.mockedMdcDialog.open(anything(), anything())).thenReturn({
@@ -120,9 +116,9 @@ class TestEnvironment {
       });
     });
 
-    when(this.mockedBugsnagClient.notify(anything(), anything(), anything())).thenCall(
-      (error: any, opts: Bugsnag.INotifyOpts, cb: any) => {
-        this.bugsnagReports.push({
+    when(this.mockedErrorReportingService.notify(anything(), anything(), anything())).thenCall(
+      (error: any, opts: any, cb: any) => {
+        this.errorReports.push({
           error,
           opts,
           cb
@@ -132,7 +128,7 @@ class TestEnvironment {
   }
 
   get oneAndOnlyReport() {
-    expect(this.bugsnagReports.length).toEqual(1);
-    return this.bugsnagReports[this.bugsnagReports.length - 1];
+    expect(this.errorReports.length).toEqual(1);
+    return this.errorReports[this.errorReports.length - 1];
   }
 }
