@@ -385,9 +385,9 @@ namespace SIL.XForge.Scripture.Services
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
                 string projectRole = attempt.Result;
+                string currentUserEmail = userDoc.Data.Email;
                 if (projectDoc.Data.CheckingConfig.ShareLevel == CheckingShareLevel.Specific)
                 {
-                    string currentUserEmail = userDoc.Data.Email;
                     SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
                         p => p.Id == projectId
                             && p.ShareKeys.Any(sk => sk.Email == currentUserEmail && sk.Key == shareKey),
@@ -400,6 +400,8 @@ namespace SIL.XForge.Scripture.Services
                 else
                 {
                     await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
+                    await ProjectSecrets.UpdateAsync(p => p.Id == projectId,
+                        update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == currentUserEmail));
                 }
             }
         }
