@@ -143,6 +143,8 @@ namespace SIL.XForge.Services
             IDocument<User> userDoc, string projectRole)
         {
             await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[userDoc.Id], projectRole));
+            await ProjectSecrets.UpdateAsync(p => p.Id == projectDoc.Id,
+                update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == userDoc.Data.Email));
             string siteId = SiteOptions.Value.Id;
             await userDoc.SubmitJson0OpAsync(op => op.Add(u => u.Sites[siteId].Projects, projectDoc.Id));
         }

@@ -14,6 +14,7 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
+using SIL.XForge.Utils;
 using MachineProject = SIL.Machine.WebApi.Models.Project;
 
 namespace SIL.XForge.Scripture.Services
@@ -153,6 +154,25 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task CheckLinkSharingAsync_LinkSharingEnabledAndShareKeyExists_UserJoinedAndKeyRemoved()
+        {
+            var env = new TestEnvironment();
+            SFProject project = env.GetProject(Project03);
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
+
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
+
+            await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings { ShareLevel = CheckingShareLevel.Anyone });
+            await env.Service.CheckLinkSharingAsync(User03, Project03);
+            project = env.GetProject(Project03);
+            projectSecret = env.ProjectSecrets.Get(Project03);
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.False,
+                "Key should have been removed from project");
+        }
+
+        [Test]
         public void CheckLinkSharingAsync_SpecificSharingUnexpectedEmail_ForbiddenError()
         {
             var env = new TestEnvironment();
@@ -197,7 +217,7 @@ namespace SIL.XForge.Scripture.Services
             projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.False,
-                "Code should have been removed from project");
+                "Key should have been removed from project");
         }
 
         [Test]
@@ -358,6 +378,26 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetUser(User04).Role, Is.EqualTo(SystemRole.SystemAdmin), "test setup");
 
             Assert.ThrowsAsync<ForbiddenException>(() => env.Service.UninviteUserAsync(User04, Project03, "bob@example.com"), "should have been forbidden");
+        }
+
+        [Test]
+        public async Task AddUserAsync_ShareKeyExists_AddsUserAndRemovesKey()
+        {
+            var env = new TestEnvironment();
+            SFProject project = env.GetProject(Project03);
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
+
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
+
+            await env.Service.AddUserAsync(User03, Project03, null);
+            project = env.GetProject(Project03);
+            projectSecret = env.ProjectSecrets.Get(Project03);
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.False,
+                "Key should have been removed from project");
         }
 
         [Test]
@@ -601,7 +641,7 @@ namespace SIL.XForge.Scripture.Services
                 SyncService = Substitute.For<ISyncService>();
                 SyncService.SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
                     .Returns(Task.CompletedTask);
-                var paratextService = Substitute.For<IParatextService>();
+                ParatextService = Substitute.For<IParatextService>();
                 IReadOnlyList<ParatextProject> ptProjects = new[]
                 {
                     new ParatextProject
@@ -615,11 +655,12 @@ namespace SIL.XForge.Scripture.Services
                         }
                     }
                 };
-                paratextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(ptProjects));
+                ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(ptProjects));
                 var userSecrets = new MemoryRepository<UserSecret>(new[]
                 {
                     new UserSecret { Id = User01 },
-                    new UserSecret { Id = User02 }
+                    new UserSecret { Id = User02 },
+                    new UserSecret { Id = User03 }
                 });
                 var translateMetrics = new MemoryRepository<TranslateMetrics>();
                 FileSystemService = Substitute.For<IFileSystemService>();
@@ -627,7 +668,7 @@ namespace SIL.XForge.Scripture.Services
                 SecurityService.GenerateKey().Returns("1234abc");
 
                 Service = new SFProjectService(RealtimeService, siteOptions, audioService, EmailService, ProjectSecrets,
-                    SecurityService, FileSystemService, EngineService, SyncService, paratextService, userSecrets,
+                    SecurityService, FileSystemService, EngineService, SyncService, ParatextService, userSecrets,
                     translateMetrics);
             }
 
@@ -639,6 +680,7 @@ namespace SIL.XForge.Scripture.Services
             public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
             public IEmailService EmailService { get; }
             public ISecurityService SecurityService { get; }
+            public IParatextService ParatextService { get; }
 
             public SFProject GetProject(string id)
             {
