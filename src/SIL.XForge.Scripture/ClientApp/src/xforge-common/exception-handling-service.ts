@@ -43,10 +43,7 @@ export class ExceptionHandlingService implements ErrorHandler {
       return;
     }
 
-    console.log(`Error occured. Reporting to Bugsnag with release stage set to ${environment.releaseStage}:`);
-    console.error(error);
-
-    let message = typeof error.message === 'string' ? error.message.split('\n')[0] : 'Unknown error';
+    let message = typeof error.message === 'string' ? (error.message as string).split('\n')[0] : 'Unknown error';
 
     if (
       message.includes('A mutation operation was attempted on a database that did not allow mutations.') &&
@@ -55,9 +52,20 @@ export class ExceptionHandlingService implements ErrorHandler {
       message = 'Firefox private browsing mode is not supported because IndexedDB is not avilable.';
     }
 
-    const eventId = objectId();
-    this.handleAlert({ message, stack: error.stack, eventId });
-    this.sendReport(error, await this.getUserForReporting(), eventId);
+    // try/finally blocks are to prevent an exception from preventing reporting or logging of an error
+    // Since this is the error handler, we're being paranoid. If anything goes wrong here, we may not find out about it
+    try {
+      const eventId = objectId();
+      try {
+        this.handleAlert({ message, stack: error.stack, eventId });
+      } finally {
+        this.sendReport(error, await this.getUserForReporting(), eventId);
+      }
+    } finally {
+      // Error logging occurs after error reporting so it won't show up as noise in Bugsnag's breadcrumbs
+      console.log(`Error occured. Reported to Bugsnag with release stage set to ${environment.releaseStage}:`);
+      console.error(error);
+    }
   }
 
   /**
