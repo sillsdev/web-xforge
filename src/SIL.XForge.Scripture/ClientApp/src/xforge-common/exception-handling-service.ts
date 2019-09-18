@@ -1,37 +1,20 @@
 import { MdcDialog } from '@angular-mdc/web';
 import { ErrorHandler, Injectable } from '@angular/core';
-import bugsnag, { Bugsnag } from '@bugsnag/js';
 import cloneDeep from 'lodash/cloneDeep';
 import { User } from 'realtime-server/lib/common/models/user';
-import { environment } from 'src/environments/environment';
-import { version } from '../../../version.json';
+import { environment } from '../environments/environment';
+import { ErrorReportingService } from './error-reporting.service.js';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
 import { UserDoc } from './models/user-doc';
 import { UserService } from './user.service';
 import { objectId, promiseTimeout } from './utils';
 
-type BugsnagStyleUser = User & { id: string };
+type UserForReport = User & { id: string };
 
 @Injectable({
   providedIn: 'root'
 })
 export class ExceptionHandlingService implements ErrorHandler {
-  static createBugsnagClient(): Bugsnag.Client {
-    const config: Bugsnag.IConfig = {
-      apiKey: environment.bugsnagApiKey,
-      appVersion: version,
-      appType: 'angular',
-      notifyReleaseStages: ['live', 'qa'],
-      releaseStage: environment.releaseStage,
-      autoNotify: false,
-      trackInlineScripts: false
-    };
-    if (environment.releaseStage === 'dev') {
-      config.logger = null;
-    }
-    return bugsnag(config);
-  }
-
   private alertQueue: ErrorAlert[] = [];
   private dialogOpen = false;
   private currentUser: UserDoc;
@@ -40,7 +23,7 @@ export class ExceptionHandlingService implements ErrorHandler {
   constructor(
     private readonly dialog: MdcDialog,
     private readonly userService: UserService,
-    private readonly bugsnagClient: Bugsnag.Client
+    private readonly errorReportingService: ErrorReportingService
   ) {}
 
   async handleError(error: any) {
@@ -63,15 +46,15 @@ export class ExceptionHandlingService implements ErrorHandler {
 
     const eventId = objectId();
     this.handleAlert({ message, stack: error.stack, eventId });
-    this.reportToBugsnag(error, await this.getUserForBugsnag(), eventId);
+    this.sendReport(error, await this.getUserForReporting(), eventId);
   }
 
   /**
-   * Returns a promise that will resolve to a BugsnagStyleUser representing the current user, or, if the user isn't
+   * Returns a promise that will resolve to a ReportStyleUser representing the current user, or, if the user isn't
    * available within a reasonable time (within three seconds of the service being constructed), it will resolve with
    * null.
    */
-  private async getUserForBugsnag(): Promise<BugsnagStyleUser | undefined> {
+  private async getUserForReporting(): Promise<UserForReport | undefined> {
     if (!this.currentUser) {
       try {
         this.currentUser = await promiseTimeout(
@@ -85,13 +68,13 @@ export class ExceptionHandlingService implements ErrorHandler {
         return undefined;
       }
     }
-    const user = cloneDeep(this.currentUser.data);
-    user['id'] = this.currentUser.id;
-    return user as BugsnagStyleUser;
+    const user = cloneDeep(this.currentUser.data) as UserForReport;
+    user.id = this.currentUser.id;
+    return user;
   }
 
-  private reportToBugsnag(error: any, user: BugsnagStyleUser, eventId: string) {
-    this.bugsnagClient.notify(
+  private sendReport(error: any, user: UserForReport, eventId: string) {
+    this.errorReportingService.notify(
       error,
       {
         user,
@@ -101,7 +84,7 @@ export class ExceptionHandlingService implements ErrorHandler {
       },
       err => {
         if (err) {
-          console.error('Reporting error to Bugsnag failed:');
+          console.error('Sending error report failed:');
           console.error(err);
         }
       }
