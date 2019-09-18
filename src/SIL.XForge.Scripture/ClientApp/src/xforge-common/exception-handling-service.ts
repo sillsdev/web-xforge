@@ -1,5 +1,5 @@
 import { MdcDialog } from '@angular-mdc/web';
-import { ErrorHandler, Injectable } from '@angular/core';
+import { ErrorHandler, Injectable, NgZone } from '@angular/core';
 import cloneDeep from 'lodash/cloneDeep';
 import { User } from 'realtime-server/lib/common/models/user';
 import { environment } from '../environments/environment';
@@ -23,6 +23,7 @@ export class ExceptionHandlingService implements ErrorHandler {
 
   constructor(
     private readonly dialog: MdcDialog,
+    private readonly ngZone: NgZone,
     private readonly userService: UserService,
     private readonly errorReportingService: ErrorReportingService,
     private readonly noticeService: NoticeService
@@ -36,7 +37,9 @@ export class ExceptionHandlingService implements ErrorHandler {
 
     // There's no exact science here. We're looking for XMLHttpRequests that failed, but not due to HTTP response codes.
     if (error.error && error.error.target instanceof XMLHttpRequest && error.error.target.status === 0) {
-      this.noticeService.show('A network request failed. Some functionality may be unavailable.');
+      this.ngZone.run(() =>
+        this.noticeService.show('A network request failed. Some functionality may be unavailable.')
+      );
       return;
     }
 
