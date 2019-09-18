@@ -1,12 +1,16 @@
 @import '~quill/dist/quill.snow.css';
+@import '~src/global';
 
 quill-editor {
   height: 100%;
-  .ql-editor {
-    line-height: 1.6;
-    width: 100%;
-    word-break: break-word;
-    padding: 15px 35px;
+  > .ql-container {
+    @include mdc-typography(body1);
+    > .ql-editor {
+      line-height: 1.6;
+      width: 100%;
+      word-break: break-word;
+      padding: 15px 35px;
+    }
   }
 }
 
@@ -17,7 +21,7 @@ quill-editor {
 
 .highlight-segment-target {
   color: black;
-  box-shadow: unset;
+  box-shadow: unset !important;
 }
 
 .highlight-para-target > usx-para-contents {
