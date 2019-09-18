@@ -6,6 +6,7 @@ import { ErrorReportingService } from './error-reporting.service';
 import { ErrorComponent } from './error/error.component';
 import { ExceptionHandlingService } from './exception-handling-service';
 import { UserDoc } from './models/user-doc';
+import { NoticeService } from './notice.service';
 import { UserService } from './user.service';
 
 describe('ExceptionHandlingService', () => {
@@ -76,6 +77,7 @@ class TestEnvironment {
   mockedMdcDialog = mock(MdcDialog);
   mockedUserService = mock(UserService);
   mockedErrorReportingService = mock(ErrorReportingService);
+  mockedNoticeService = mock(NoticeService);
   errorReports: { error: any; opts: any; cb: any }[] = [];
   service: ExceptionHandlingService;
   rejectUser = false;
@@ -95,7 +97,8 @@ class TestEnvironment {
     this.service = new ExceptionHandlingService(
       instance(this.mockedMdcDialog),
       instance(this.mockedUserService),
-      instance(this.mockedErrorReportingService)
+      instance(this.mockedErrorReportingService),
+      instance(this.mockedNoticeService)
     );
 
     when(this.mockedMdcDialog.open(anything(), anything())).thenReturn({
