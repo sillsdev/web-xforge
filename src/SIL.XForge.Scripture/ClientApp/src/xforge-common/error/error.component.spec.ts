@@ -1,6 +1,6 @@
 import { MdcDialog } from '@angular-mdc/web';
 import { OverlayContainer } from '@angular-mdc/web';
-import { Component, NgModule } from '@angular/core';
+import { Component, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ErrorAlert, ErrorComponent } from './error.component';
@@ -58,9 +58,11 @@ class TestEnvironment {
       declarations: [DialogOpenerComponent],
       imports: [DialogTestModule]
     });
-    TestBed.get(MdcDialog).open(ErrorComponent, { data: dialogData });
-    this.fixture = TestBed.createComponent(DialogOpenerComponent);
-    this.element = TestBed.get(OverlayContainer).getContainerElement();
+    TestBed.get(NgZone).run(() => {
+      TestBed.get(MdcDialog).open(ErrorComponent, { data: dialogData });
+      this.fixture = TestBed.createComponent(DialogOpenerComponent);
+      this.element = TestBed.get(OverlayContainer).getContainerElement();
+    });
   }
 
   get errorMessage(): HTMLElement {

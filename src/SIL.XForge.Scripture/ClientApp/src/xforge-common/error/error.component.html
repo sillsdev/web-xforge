@@ -7,7 +7,9 @@
         <p>
           To report an issue, email <a target="_blank" [href]="issueMailTo">{{ issueEmail }}</a>
         </p>
-        <a (click)="toggleStack()" [fxShow]="data.stack">{{ showDetails ? "Hide" : "Show" }} details</a>
+        <a (click)="this.showDetails = !this.showDetails" [fxShow]="data.stack"
+          >{{ showDetails ? "Hide" : "Show" }} details</a
+        >
         <pre [fxShow]="showDetails">{{ data.stack }}</pre>
       </mdc-dialog-content>
       <mdc-dialog-actions> <button default mdcDialogButton mdcDialogAction="close">Close</button> </mdc-dialog-actions>

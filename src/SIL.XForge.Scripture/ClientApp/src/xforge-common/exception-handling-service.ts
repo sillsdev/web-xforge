@@ -111,12 +111,14 @@ export class ExceptionHandlingService implements ErrorHandler {
 
   private showAlert() {
     if (!this.dialogOpen && this.alertQueue.length) {
-      this.dialogOpen = true;
-      const dialog = this.dialog.open(ErrorComponent, { data: this.alertQueue[this.alertQueue.length - 1] });
-      dialog.afterClosed().subscribe(() => {
-        this.alertQueue.pop();
-        this.dialogOpen = false;
-        this.showAlert();
+      this.ngZone.run(() => {
+        this.dialogOpen = true;
+        const dialog = this.dialog.open(ErrorComponent, { data: this.alertQueue[this.alertQueue.length - 1] });
+        dialog.afterClosed().subscribe(() => {
+          this.alertQueue.pop();
+          this.dialogOpen = false;
+          this.showAlert();
+        });
       });
     }
   }
