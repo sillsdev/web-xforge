@@ -9,6 +9,7 @@ import { AvatarComponent } from './avatar/avatar.component';
 import { EditNameDialogComponent } from './edit-name-dialog/edit-name-dialog.component';
 import { ErrorComponent } from './error/error.component';
 import { IndexeddbRealtimeOfflineStore } from './indexeddb-realtime-offline-store';
+import { MessageDialogComponent } from './message-dialog/message-dialog.component';
 import { RealtimeOfflineStore } from './realtime-offline-store';
 import { RealtimeRemoteStore } from './realtime-remote-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
@@ -23,6 +24,7 @@ const componentExports = [
   AvatarComponent,
   EditNameDialogComponent,
   ErrorComponent,
+  MessageDialogComponent,
   SaProjectsComponent,
   SaDeleteDialogComponent,
   SaUsersComponent,
@@ -43,7 +45,7 @@ export const xForgeCommonEntryComponents = [EditNameDialogComponent, SaDeleteDia
   ],
   declarations: componentExports,
   exports: componentExports,
-  entryComponents: [ErrorComponent],
+  entryComponents: [ErrorComponent, MessageDialogComponent],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true },
     { provide: RealtimeRemoteStore, useExisting: SharedbRealtimeRemoteStore },

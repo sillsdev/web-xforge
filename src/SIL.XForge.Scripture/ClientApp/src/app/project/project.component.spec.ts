@@ -9,6 +9,7 @@ import {
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -97,6 +98,36 @@ describe('ProjectComponent', () => {
     verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01', 'secret123')).once();
     expect().nothing();
   }));
+
+  it('check sharing link forbidden', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
+      new CommandError({ code: CommandErrorCode.InvalidRequest, message: 'Forbidden' })
+    );
+    env.setProjectData({ selectedTask: 'translate' });
+    env.setLinkSharing(true);
+    env.fixture.detectChanges();
+    tick();
+
+    verify(env.mockedNoticeService.showMessageDialog(anything())).once();
+    verify(env.mockedRouter.navigateByUrl('/projects', anything())).once();
+    expect().nothing();
+  }));
+
+  it('check sharing link project not found', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
+      new CommandError({ code: CommandErrorCode.InvalidParams, message: 'NotFound' })
+    );
+    env.setProjectData({ selectedTask: 'translate' });
+    env.setLinkSharing(true);
+    env.fixture.detectChanges();
+    tick();
+
+    verify(env.mockedNoticeService.showMessageDialog(anything())).once();
+    verify(env.mockedRouter.navigateByUrl('/projects', anything())).once();
+    expect().nothing();
+  }));
 });
 
 class TestEnvironment {
@@ -119,6 +150,7 @@ class TestEnvironment {
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedSFProjectService.onlineCheckLinkSharing('project01')).thenResolve();
     when(this.mockedSFProjectService.onlineCheckLinkSharing('project01', anything())).thenResolve();
+    when(this.mockedNoticeService.showMessageDialog(anything())).thenResolve();
     this.setLinkSharing(false);
 
     TestBed.configureTestingModule({

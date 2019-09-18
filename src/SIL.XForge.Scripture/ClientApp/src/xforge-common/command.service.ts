@@ -3,6 +3,14 @@ import { Injectable } from '@angular/core';
 import uuidv1 from 'uuid/v1';
 import { COMMAND_API_NAMESPACE } from './url-constants';
 
+export enum CommandErrorCode {
+  ParseError = -32700,
+  InvalidRequest = -32600,
+  MethodNotFound = -32601,
+  InvalidParams = -32602,
+  InternalError = -32603
+}
+
 interface JsonRpcRequest {
   jsonrpc: '2.0';
   method: string;
@@ -17,10 +25,22 @@ interface JsonRpcResponse<T> {
   id: string;
 }
 
-export interface JsonRpcError {
+interface JsonRpcError {
   code: number;
   message: string;
   data?: any;
+}
+
+export class CommandError {
+  readonly code: CommandErrorCode;
+  readonly message: string;
+  readonly data?: any;
+
+  constructor(err: JsonRpcError) {
+    this.code = err.code;
+    this.message = err.message;
+    this.data = err.data;
+  }
 }
 
 /**
@@ -46,7 +66,7 @@ export class CommandService {
       .post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
       .toPromise();
     if (response.error != null) {
-      throw response.error;
+      throw new CommandError(response.error);
     }
     return response.result;
   }

@@ -40,7 +40,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -57,7 +57,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -74,7 +74,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -91,7 +91,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -108,7 +108,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -125,7 +125,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -143,7 +143,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -160,7 +160,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -176,7 +176,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -192,7 +192,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -209,7 +209,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -226,7 +226,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -243,7 +243,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
 
@@ -260,11 +260,11 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
             catch (FormatException)
             {
-                return InvalidParamsError();
+                return NotFoundError();
             }
         }
     }
