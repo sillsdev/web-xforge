@@ -1,5 +1,5 @@
 import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
-import { Component, Inject, NgZone } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { environment } from 'src/environments/environment';
 
 export interface ErrorAlert {
@@ -16,11 +16,7 @@ export class ErrorComponent {
   issueEmail = environment.issueEmail;
   showDetails: boolean = false;
 
-  constructor(
-    public dialogRef: MdcDialogRef<ErrorComponent>,
-    @Inject(MDC_DIALOG_DATA) public data: ErrorAlert,
-    private readonly zone: NgZone
-  ) {}
+  constructor(public dialogRef: MdcDialogRef<ErrorComponent>, @Inject(MDC_DIALOG_DATA) public data: ErrorAlert) {}
 
   get issueMailTo(): string {
     return encodeURI(
@@ -28,11 +24,5 @@ export class ErrorComponent {
         this.data.eventId
       } (included so we can provide better support)`
     );
-  }
-
-  toggleStack() {
-    this.zone.run(() => {
-      this.showDetails = !this.showDetails;
-    });
   }
 }
