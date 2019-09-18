@@ -1,4 +1,5 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
+import { NgZone } from '@angular/core';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
@@ -75,6 +76,7 @@ describe('ExceptionHandlingService', () => {
 
 class TestEnvironment {
   mockedMdcDialog = mock(MdcDialog);
+  mockedNgZone = mock(NgZone);
   mockedUserService = mock(UserService);
   mockedErrorReportingService = mock(ErrorReportingService);
   mockedNoticeService = mock(NoticeService);
@@ -96,6 +98,7 @@ class TestEnvironment {
   constructor() {
     this.service = new ExceptionHandlingService(
       instance(this.mockedMdcDialog),
+      instance(this.mockedNgZone),
       instance(this.mockedUserService),
       instance(this.mockedErrorReportingService),
       instance(this.mockedNoticeService)
