@@ -7,6 +7,7 @@ import { environment } from 'src/environments/environment';
 import { version } from '../../../version.json';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
 import { UserDoc } from './models/user-doc';
+import { NoticeService } from './notice.service.js';
 import { UserService } from './user.service';
 import { objectId, promiseTimeout } from './utils';
 
@@ -40,7 +41,8 @@ export class ExceptionHandlingService implements ErrorHandler {
   constructor(
     private readonly dialog: MdcDialog,
     private readonly userService: UserService,
-    private readonly bugsnagClient: Bugsnag.Client
+    private readonly bugsnagClient: Bugsnag.Client,
+    private readonly noticeService: NoticeService
   ) {}
 
   async handleError(error: any) {
@@ -48,6 +50,12 @@ export class ExceptionHandlingService implements ErrorHandler {
       error = new Error('Unkown error: ' + String(error));
     }
     error = error.rejection && error.rejection.message ? error.rejection : error;
+
+    // There's no exact science here. We're looking for XMLHttpRequests that failed, but not due to HTTP response codes.
+    if (error.error && error.error.target instanceof XMLHttpRequest && error.error.target.status === 0) {
+      this.noticeService.show('A network request failed. Some functionality may be unavailable.');
+      return;
+    }
 
     console.log(`Error occured. Reporting to Bugsnag with release stage set to ${environment.releaseStage}:`);
     console.error(error);
