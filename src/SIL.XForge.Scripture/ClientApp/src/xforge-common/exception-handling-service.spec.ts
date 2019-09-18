@@ -3,6 +3,7 @@ import { Bugsnag } from '@bugsnag/js';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';
 import { anything, instance, mock, reset, when } from 'ts-mockito';
+import { ErrorReportingService } from './error-reporting.service';
 import { ErrorComponent } from './error/error.component';
 import { ExceptionHandlingService } from './exception-handling-service';
 import { UserDoc } from './models/user-doc';
@@ -99,7 +100,7 @@ class TestEnvironment {
     this.service = new ExceptionHandlingService(
       instance(this.mockedMdcDialog),
       instance(this.mockedUserService),
-      instance(this.mockedBugsnagClient) as Bugsnag.Client
+      instance(this.mockedBugsnagClient) as ErrorReportingService
     );
 
     when(this.mockedMdcDialog.open(anything(), anything())).thenReturn({
