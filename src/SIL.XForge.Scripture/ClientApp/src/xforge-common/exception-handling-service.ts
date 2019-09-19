@@ -33,7 +33,7 @@ export class ExceptionHandlingService implements ErrorHandler {
     if (typeof error !== 'object' || error === null) {
       error = new Error('Unkown error: ' + String(error));
     }
-    error = error.rejection && error.rejection.message ? error.rejection : error;
+    error = error.rejection && error.rejection.message && error.rejection.stack ? error.rejection : error;
 
     // There's no exact science here. We're looking for XMLHttpRequests that failed, but not due to HTTP response codes.
     if (error.error && error.error.target instanceof XMLHttpRequest && error.error.target.status === 0) {
