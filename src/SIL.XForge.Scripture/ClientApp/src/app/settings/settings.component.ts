@@ -255,7 +255,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         sourceProjects.unshift({
           paratextId: curSource.paratextId,
           name: curSource.name,
-          inputSystem: curSource.inputSystem,
+          shortName: curSource.shortName,
+          languageTag: curSource.writingSystem.tag,
           isConnectable: false,
           isConnected: false
         });

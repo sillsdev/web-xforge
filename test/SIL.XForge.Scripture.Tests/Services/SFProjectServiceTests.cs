@@ -532,6 +532,7 @@ namespace SIL.XForge.Scripture.Services
                         {
                             Id = Project01,
                             Name = "project01",
+                            ShortName = "P01",
                             TranslateConfig = new TranslateConfig
                             {
                                 TranslationSuggestionsEnabled = true,
@@ -539,10 +540,10 @@ namespace SIL.XForge.Scripture.Services
                                 {
                                     ParatextId = "paratextId",
                                     Name = "Source",
-                                    InputSystem = new InputSystem
+                                    ShortName = "SRC",
+                                    WritingSystem = new WritingSystem
                                     {
-                                        Tag = "qaa",
-                                        LanguageName = "unspecified"
+                                        Tag = "qaa"
                                     }
                                 }
                             },
@@ -577,6 +578,7 @@ namespace SIL.XForge.Scripture.Services
                         {
                             Id = Project02,
                             Name = "project02",
+                            ShortName = "P02",
                             CheckingConfig = new CheckingConfig
                             {
                                 ShareEnabled = true,
@@ -591,6 +593,7 @@ namespace SIL.XForge.Scripture.Services
                         {
                             Id = Project03,
                             Name = "project03",
+                            ShortName = "P03",
                             CheckingConfig = new CheckingConfig
                             {
                                 ShareEnabled = true,
@@ -648,11 +651,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         ParatextId = "changedId",
                         Name = "NewSource",
-                        InputSystem = new InputSystem
-                        {
-                            Tag = "qaa",
-                            LanguageName = "Unknown"
-                        }
+                        LanguageTag = "qaa"
                     }
                 };
                 ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(ptProjects));

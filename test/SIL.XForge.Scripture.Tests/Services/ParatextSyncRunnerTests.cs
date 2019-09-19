@@ -538,6 +538,7 @@ namespace SIL.XForge.Scripture.Services
                         {
                             Id = "project01",
                             Name = "project01",
+                            ShortName = "P01",
                             UserRoles = new Dictionary<string, string>
                             {
                                 { "user01", SFProjectRole.Administrator },
@@ -551,10 +552,10 @@ namespace SIL.XForge.Scripture.Services
                                 {
                                     ParatextId = "source",
                                     Name = "Source",
-                                    InputSystem = new InputSystem
+                                    ShortName = "SRC",
+                                    WritingSystem = new WritingSystem
                                     {
-                                        Tag = "en",
-                                        LanguageName = "English"
+                                        Tag = "en"
                                     }
                                 }
                             },

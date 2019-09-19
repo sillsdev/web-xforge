@@ -209,10 +209,10 @@ class TestEnvironment {
     when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenResolve(projectUserConfigDoc);
     const project: SFProject = {
       name: 'project 01',
+      shortName: 'P01',
       paratextId: 'pt01',
-      inputSystem: {
-        tag: 'qaa',
-        languageName: 'Unspecified'
+      writingSystem: {
+        tag: 'qaa'
       },
       translateConfig: {
         translationSuggestionsEnabled: false

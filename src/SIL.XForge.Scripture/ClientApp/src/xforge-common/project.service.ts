@@ -3,6 +3,7 @@ import merge from 'lodash/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { combineLatest, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import XRegExp from 'xregexp';
 import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
@@ -50,11 +51,9 @@ export abstract class ProjectService<
     const p = objProxy<Project>();
     return combineLatest(debouncedTerm$, queryParameters$).pipe(
       switchMap(([term, queryParameters]) => {
+        term = XRegExp.escape(term);
         const filters: Filters = {
-          $or: [
-            { [getObjPathStr(p.name)]: { $regex: `.*${term}.*`, $options: 'i' } },
-            { [getObjPathStr(p.inputSystem.languageName)]: { $regex: `.*${term}.*`, $options: 'i' } }
-          ]
+          [getObjPathStr(p.name)]: { $regex: `.*${term}.*`, $options: 'i' }
         };
         return this.realtimeService.onlineQuery<TDoc>(this.collection, merge(filters, queryParameters));
       })

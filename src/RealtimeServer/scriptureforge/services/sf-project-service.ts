@@ -19,7 +19,9 @@ export class SFProjectService extends ProjectService<SFProject> {
       this.createPathTemplate(p => p.paratextId),
       this.createPathTemplate(p => p.texts),
       this.createPathTemplate(p => p.translateConfig),
-      this.createPathTemplate(p => p.checkingConfig)
+      this.createPathTemplate(p => p.checkingConfig),
+      this.createPathTemplate(p => p.shortName),
+      this.createPathTemplate(p => p.writingSystem)
     ];
     this.immutableProps.push(...immutableProps);
   }

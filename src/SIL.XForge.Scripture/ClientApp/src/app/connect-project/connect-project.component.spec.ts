@@ -117,10 +117,8 @@ describe('ConnectProjectComponent', () => {
         {
           paratextId: 'pt01',
           name: 'Target1',
-          inputSystem: {
-            tag: 'en',
-            languageName: 'English'
-          },
+          shortName: 'TA1',
+          languageTag: 'en',
           isConnectable: true,
           isConnected: false
         },
@@ -128,10 +126,8 @@ describe('ConnectProjectComponent', () => {
           paratextId: 'pt02',
           projectId: 'project02',
           name: 'Target2',
-          inputSystem: {
-            tag: 'mri',
-            languageName: 'Maori'
-          },
+          shortName: 'TA2',
+          languageTag: 'mri',
           isConnectable: false,
           isConnected: true
         },
@@ -139,10 +135,8 @@ describe('ConnectProjectComponent', () => {
           paratextId: 'pt03',
           projectId: 'project03',
           name: 'Target3',
-          inputSystem: {
-            tag: 'th',
-            languageName: 'Thai'
-          },
+          shortName: 'TA3',
+          languageTag: 'th',
           isConnectable: true,
           isConnected: true
         }
@@ -405,10 +399,8 @@ class TestEnvironment {
         {
           paratextId: 'pt01',
           name: 'English',
-          inputSystem: {
-            tag: 'en',
-            languageName: 'English'
-          },
+          shortName: 'ENG',
+          languageTag: 'en',
           isConnectable: true,
           isConnected: false
         },
@@ -416,20 +408,16 @@ class TestEnvironment {
           paratextId: 'pt02',
           projectId: 'project02',
           name: 'Maori',
-          inputSystem: {
-            tag: 'mri',
-            languageName: 'Maori'
-          },
+          shortName: 'MRI',
+          languageTag: 'mri',
           isConnectable: false,
           isConnected: true
         },
         {
           paratextId: 'pt04',
           name: 'Spanish',
-          inputSystem: {
-            tag: 'es',
-            languageName: 'Spanish'
-          },
+          shortName: 'ESP',
+          languageTag: 'es',
           isConnectable: false,
           isConnected: false
         },
@@ -437,10 +425,8 @@ class TestEnvironment {
           paratextId: 'pt03',
           projectId: 'project03',
           name: 'Thai',
-          inputSystem: {
-            tag: 'th',
-            languageName: 'Thai'
-          },
+          shortName: 'THA',
+          languageTag: 'th',
           isConnectable: true,
           isConnected: true
         }

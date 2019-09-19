@@ -117,9 +117,9 @@ class TestEnvironment {
     this.project = {
       name: 'Sync Test Project',
       paratextId: 'pt01',
-      inputSystem: {
-        tag: 'en',
-        languageName: 'English'
+      shortName: 'P01',
+      writingSystem: {
+        tag: 'en'
       },
       translateConfig: {
         translationSuggestionsEnabled: false

@@ -1,9 +1,8 @@
-import { InputSystem } from 'realtime-server/lib/common/models/input-system';
-
 export interface ParatextProject {
   paratextId: string;
   name: string;
-  inputSystem: InputSystem;
+  shortName: string;
+  languageTag: string;
   projectId?: string;
   isConnectable: boolean;
   isConnected: boolean;

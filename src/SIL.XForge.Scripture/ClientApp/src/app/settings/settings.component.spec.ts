@@ -153,10 +153,8 @@ describe('SettingsComponent', () => {
           {
             paratextId: 'paratextId02',
             name: 'ParatextP2',
-            inputSystem: {
-              tag: 'qaa',
-              languageName: 'unspecified'
-            },
+            shortName: 'PT2',
+            languageTag: 'qaa',
             isConnectable: true,
             isConnected: false
           }
@@ -349,20 +347,16 @@ class TestEnvironment {
       {
         paratextId: 'paratextId01',
         name: 'ParatextP1',
-        inputSystem: {
-          tag: 'qaa',
-          languageName: 'unspecified'
-        },
+        shortName: 'PT1',
+        languageTag: 'qaa',
         isConnectable: true,
         isConnected: false
       },
       {
         paratextId: 'paratextId02',
         name: 'ParatextP2',
-        inputSystem: {
-          tag: 'qaa',
-          languageName: 'unspecified'
-        },
+        shortName: 'PT2',
+        languageTag: 'qaa',
         isConnectable: true,
         isConnected: false
       }
@@ -519,8 +513,8 @@ class TestEnvironment {
       source: {
         paratextId: 'paratextId01',
         name: 'ParatextP1',
-        inputSystem: {
-          languageName: 'unspecified',
+        shortName: 'PT1',
+        writingSystem: {
           tag: 'qaa'
         }
       }
@@ -535,9 +529,9 @@ class TestEnvironment {
     const project: SFProject = {
       name: 'project 01',
       paratextId: 'pt01',
-      inputSystem: {
-        tag: 'en',
-        languageName: 'English'
+      shortName: 'P01',
+      writingSystem: {
+        tag: 'en'
       },
       translateConfig,
       checkingConfig,

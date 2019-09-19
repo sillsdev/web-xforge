@@ -71,17 +71,19 @@ namespace SIL.XForge.Scripture.Services
                     throw new DataNotFoundException("The source paratext project does not exist.");
                 source = new TranslateSource
                 {
-                    Name = sourcePTProject.Name,
                     ParatextId = settings.SourceParatextId,
-                    InputSystem = sourcePTProject.InputSystem
+                    Name = sourcePTProject.Name,
+                    ShortName = sourcePTProject.ShortName,
+                    WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag }
                 };
             }
 
             var project = new SFProject
             {
-                Name = ptProject.Name,
                 ParatextId = settings.ParatextId,
-                InputSystem = ptProject.InputSystem,
+                Name = ptProject.Name,
+                ShortName = ptProject.ShortName,
+                WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
                 TranslateConfig = new TranslateConfig
                 {
                     TranslationSuggestionsEnabled = settings.TranslationSuggestionsEnabled,
@@ -110,8 +112,8 @@ namespace SIL.XForge.Scripture.Services
                     var machineProject = new MachineProject
                     {
                         Id = projectDoc.Id,
-                        SourceLanguageTag = project.TranslateConfig.Source.InputSystem.Tag,
-                        TargetLanguageTag = project.InputSystem.Tag
+                        SourceLanguageTag = project.TranslateConfig.Source.WritingSystem.Tag,
+                        TargetLanguageTag = project.WritingSystem.Tag
                     };
                     await _engineService.AddProjectAsync(machineProject);
                 }
@@ -173,9 +175,10 @@ namespace SIL.XForge.Scripture.Services
                     throw new DataNotFoundException("The source paratext project does not exist.");
                 source = new TranslateSource
                 {
-                    Name = sourcePTProject.Name,
                     ParatextId = settings.SourceParatextId,
-                    InputSystem = sourcePTProject.InputSystem
+                    Name = sourcePTProject.Name,
+                    ShortName = sourcePTProject.ShortName,
+                    WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag }
                 };
             }
 
@@ -220,8 +223,8 @@ namespace SIL.XForge.Scripture.Services
                             var machineProject = new MachineProject
                             {
                                 Id = projectId,
-                                SourceLanguageTag = projectDoc.Data.TranslateConfig.Source.InputSystem.Tag,
-                                TargetLanguageTag = projectDoc.Data.InputSystem.Tag
+                                SourceLanguageTag = projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag,
+                                TargetLanguageTag = projectDoc.Data.WritingSystem.Tag
                             };
                             await _engineService.AddProjectAsync(machineProject);
                             trainEngine = true;

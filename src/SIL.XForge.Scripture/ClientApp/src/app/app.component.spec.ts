@@ -435,9 +435,9 @@ class TestEnvironment {
     const project: SFProject = {
       name: projectId,
       paratextId: projectId,
-      inputSystem: {
-        tag: 'en',
-        languageName: 'English'
+      shortName: projectId,
+      writingSystem: {
+        tag: 'en'
       },
       translateConfig: {
         translationSuggestionsEnabled: false

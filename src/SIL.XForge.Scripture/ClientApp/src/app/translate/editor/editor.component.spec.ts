@@ -46,8 +46,8 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toEqual('Source');
-      expect(env.component.targetLabel).toEqual('Target');
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
       expect(env.component.target.segmentRef).toEqual('');
       const selection = env.component.target.editor.getSelection();
       expect(selection).toBeNull();
@@ -455,8 +455,8 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toEqual('Source');
-      expect(env.component.targetLabel).toEqual('Target');
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
       expect(env.component.target.segmentRef).toEqual('verse_1_1');
       const selection = env.component.target.editor.getSelection();
       expect(selection.index).toBe(29);
@@ -474,8 +474,8 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toEqual('Source');
-      expect(env.component.targetLabel).toEqual('Target');
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
       expect(env.component.target.segmentRef).toEqual('');
       const selection = env.component.target.editor.getSelection();
       expect(selection).toBeNull();
@@ -494,8 +494,8 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toEqual('Source');
-      expect(env.component.targetLabel).toEqual('Target');
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
       expect(env.component.target.segmentRef).toEqual('');
       const selection = env.component.target.editor.getSelection();
       expect(selection).toBeNull();
@@ -529,8 +529,8 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toEqual('Source');
-      expect(env.component.targetLabel).toEqual('Target');
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
       expect(env.component.target.segmentRef).toEqual('');
       const selection = env.component.target.editor.getSelection();
       expect(selection).toBeNull();
@@ -698,16 +698,17 @@ class TestEnvironment {
     const project: SFProject = {
       name: 'project 01',
       paratextId: 'target01',
+      shortName: 'TRG',
       userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
-      inputSystem: { tag: 'qaa', languageName: 'Target' },
+      writingSystem: { tag: 'qaa' },
       translateConfig: {
         translationSuggestionsEnabled,
         source: {
           paratextId: 'source01',
           name: 'source',
-          inputSystem: {
-            tag: 'qaa',
-            languageName: 'Source'
+          shortName: 'SRC',
+          writingSystem: {
+            tag: 'qaa'
           }
         }
       },

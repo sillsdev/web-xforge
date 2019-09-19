@@ -1,8 +1,7 @@
 namespace SIL.XForge.Models
 {
-    public class InputSystem
+    public class WritingSystem
     {
         public string Tag { get; set; }
-        public string LanguageName { get; set; }
     }
 }
