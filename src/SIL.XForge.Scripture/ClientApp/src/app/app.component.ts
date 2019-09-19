@@ -14,12 +14,14 @@ import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { LocationService } from 'xforge-common/location.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
+import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectDoc } from './core/models/sf-project-doc';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
@@ -42,6 +44,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   projectDocs: SFProjectDoc[];
   isProjectAdmin$: Observable<boolean>;
 
+  private _checkingTexts: TextInfo[] = [];
   private currentUserDoc: UserDoc;
   private currentUserAuthType: AuthType;
   private _projectSelect: MdcSelect;
@@ -71,6 +74,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.subscribe(media.media$, (change: MediaChange) => {
       this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg'].includes(change.mqAlias);
     });
+  }
+
+  get checkingTexts(): TextInfo[] {
+    return this._checkingTexts;
   }
 
   get issueMailTo(): string {
@@ -277,6 +284,23 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
 
         this.userService.setCurrentProjectId(this.selectedProjectDoc.id);
+
+        if (this.isCheckingEnabled) {
+          for (const text of this.texts) {
+            this.projectService
+              .getQuestions(this.selectedProjectId, {
+                bookNum: text.bookNum,
+                activeOnly: true,
+                sort: true
+              })
+              .then(questionsQuery => {
+                this.toggleCheckingBook(questionsQuery, text);
+                this.subscribe(questionsQuery.remoteChanges$, () => {
+                  this.toggleCheckingBook(questionsQuery, text);
+                });
+              });
+          }
+        }
       });
       // tell HelpHero to remember this user to make sure we won't show them an identical tour again later
       this.helpHeroService.setIdentity(this.userService.currentUserId);
@@ -305,7 +329,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.noticeService.show(message);
       });
   }
-
   editName(currentDisplayName: string): void {
     const dialogRef = this.accountService.openNameDialog(currentDisplayName, false);
     dialogRef.afterClosed().subscribe(response => {
@@ -393,6 +416,16 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     const isShort = this._isDrawerPermanent && this.selectedProjectDoc != null;
     if (isShort !== this._topAppBar.short) {
       this._topAppBar.setShort(isShort, true);
+    }
+  }
+
+  private toggleCheckingBook(questionsQuery: RealtimeQuery<QuestionDoc>, text: TextInfo) {
+    if (questionsQuery.docs.length) {
+      if (!this._checkingTexts.includes(text)) {
+        this._checkingTexts.push(text);
+      }
+    } else {
+      this._checkingTexts.splice(this._checkingTexts.findIndex(t => text.bookNum === t.bookNum), 1);
     }
   }
 }
