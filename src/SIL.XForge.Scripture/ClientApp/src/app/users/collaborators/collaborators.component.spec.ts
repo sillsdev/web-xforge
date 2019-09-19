@@ -207,6 +207,78 @@ describe('CollaboratorsComponent', () => {
 
     expect(env.userRows.length).toEqual(1);
   }));
+
+  it('should not page if matches are less than pageSize', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.component.pageSize = 2;
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    // Prove initial setup with paging
+    expect(env.userRows.length).toEqual(2);
+    // Filter out 2 out of the 3 entries
+    env.setInputValue(env.filterInput, '02');
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    // Verify that the table is filtered
+    expect(env.userRows.length).toEqual(1);
+
+    // SUT
+    expect(env.nextPageButton.nativeElement.disabled).toBe(true);
+    expect(env.elementTextContent(env.paginatorLabel)).toEqual('1 - 1 of 1');
+  }));
+
+  it('should not reduce page size when using next and prev', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.component.pageSize = 2;
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    // verify that we have 2 items on page one
+    expect(env.userRows.length).toEqual(2);
+    // get to page 2
+    env.clickElement(env.nextPageButton);
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    // verify that we have 1 item on page 2
+    expect(env.userRows.length).toEqual(1);
+    env.clickElement(env.prevPageButton);
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    // SUT
+    expect(env.userRows.length).toEqual(2);
+    expect(env.elementTextContent(env.paginatorLabel)).toEqual('1 - 2 of 3');
+  }));
+
+  it('should reset the page index when the filter is changed', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.component.pageSize = 2;
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    // get to page 2
+    env.clickElement(env.nextPageButton);
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    // Filter for an item on page 1
+    env.setInputValue(env.filterInput, '01');
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    // SUT
+    expect(env.userRows.length).toEqual(1);
+    expect(env.nextPageButton.nativeElement.disabled).toBe(true);
+    expect(env.elementTextContent(env.paginatorLabel)).toEqual('1 - 1 of 1');
+  }));
 });
 
 class TestEnvironment {
@@ -283,8 +355,16 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('mat-paginator'));
   }
 
+  get paginatorLabel(): DebugElement {
+    return this.paginator.query(By.css('.mat-paginator-range-label'));
+  }
+
   get nextPageButton(): DebugElement {
     return this.paginator.query(By.css('.mat-paginator-navigation-next'));
+  }
+
+  get prevPageButton(): DebugElement {
+    return this.paginator.query(By.css('.mat-paginator-navigation-previous'));
   }
 
   cell(row: number, column: number): DebugElement {

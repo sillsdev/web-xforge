@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
@@ -73,22 +74,32 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     return this._userRows.length;
   }
 
+  get filteredLength(): number {
+    if (this.term && this.term.trim()) {
+      return this.filteredRows.length;
+    }
+    return this.totalUsers;
+  }
+
+  get filteredRows(): Row[] {
+    const term = this.term.trim().toLowerCase();
+    return this._userRows.filter(userRow => {
+      return (
+        userRow.user &&
+        ((userRow.user.displayName && userRow.user.displayName.toLowerCase().includes(term)) ||
+          (userRow.roleName && userRow.roleName.toLowerCase().includes(term)) ||
+          (userRow.user.email && userRow.user.email.toLowerCase().includes(term)))
+      );
+    });
+  }
+
   get userRows(): Row[] {
     if (this.isLoading) {
       return [];
     }
 
     const term = this.term && this.term.trim().toLowerCase();
-    const rows: Row[] = term
-      ? this._userRows.filter(userRow => {
-          return (
-            userRow.user &&
-            ((userRow.user.displayName && userRow.user.displayName.toLowerCase().includes(term)) ||
-              (userRow.roleName && userRow.roleName.toLowerCase().includes(term)) ||
-              (userRow.user.email && userRow.user.email.toLowerCase().includes(term)))
-          );
-        })
-      : this._userRows;
+    const rows: Row[] = term ? this.filteredRows : this._userRows;
 
     return this.page(rows);
   }
@@ -124,11 +135,14 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
   updateSearchTerm(term: string): void {
     this.term = term;
+    if (term.trim().length > 0) {
+      this.pageIndex = 0;
+    }
   }
 
-  updatePage(pageIndex: number, pageSize: number): void {
-    this.pageIndex = pageIndex;
-    this.pageSize = pageSize;
+  updatePaginatorData(event: PageEvent): void {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
   }
 
   removeProjectUser(userId: string): void {
