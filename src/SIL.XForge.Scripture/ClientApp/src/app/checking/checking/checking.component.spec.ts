@@ -448,6 +448,21 @@ describe('CheckingComponent', () => {
       expect(env.addAnswerButton).toBeNull();
     }));
 
+    it('shows error messages when answer form is invalid', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.checkerUser);
+      env.selectQuestion(1);
+      env.clickButton(env.addAnswerButton);
+      env.setTextFieldValue(env.yourAnswerField, 'Answer the question');
+      env.clickButton(env.selectTextTab);
+      env.setTextFieldValue(env.scriptureStartField, 'BAD VERSE');
+      env.clickButton(env.answerTextTab);
+      env.clickButton(env.saveAnswerButton);
+      tick(100);
+      expect(env.component.answersPanel.answerForm.invalid).toBe(true);
+      expect(env.answerFormErrors.length).toEqual(1);
+      expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
+    }));
+
     describe('Comments', () => {
       it('can comment on an answer', fakeAsync(() => {
         env.setupData(env.checkerUser);
@@ -825,6 +840,14 @@ class TestEnvironment {
 
   get yourAnswerField(): DebugElement {
     return this.fixture.debugElement.query(By.css('mdc-text-field[formControlName="answerText"]'));
+  }
+
+  get answerTextTab(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(1)'));
+  }
+
+  get answerFormErrors(): DebugElement[] {
+    return this.fixture.debugElement.queryAll(By.css('#answer-form .form-helper-text'));
   }
 
   get scriptureStartField(): DebugElement {
