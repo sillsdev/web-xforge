@@ -102,7 +102,7 @@ describe('ProjectComponent', () => {
   it('check sharing link forbidden', fakeAsync(() => {
     const env = new TestEnvironment();
     when(env.mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
-      new CommandError({ code: CommandErrorCode.InvalidRequest, message: 'Forbidden' })
+      new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
     );
     env.setProjectData({ selectedTask: 'translate' });
     env.setLinkSharing(true);
@@ -117,7 +117,7 @@ describe('ProjectComponent', () => {
   it('check sharing link project not found', fakeAsync(() => {
     const env = new TestEnvironment();
     when(env.mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
-      new CommandError({ code: CommandErrorCode.InvalidParams, message: 'NotFound' })
+      new CommandError(CommandErrorCode.NotFound, 'NotFound')
     );
     env.setProjectData({ selectedTask: 'translate' });
     env.setLinkSharing(true);

@@ -43,7 +43,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
           } catch (err) {
             if (
               err instanceof CommandError &&
-              (err.code === CommandErrorCode.InvalidRequest || err.code === CommandErrorCode.InvalidParams)
+              (err.code === CommandErrorCode.Forbidden || err.code === CommandErrorCode.NotFound)
             ) {
               await this.noticeService.showMessageDialog('The project link is invalid.');
               this.router.navigateByUrl('/projects', { replaceUrl: true });

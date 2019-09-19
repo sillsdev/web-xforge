@@ -8,7 +8,9 @@ export enum CommandErrorCode {
   InvalidRequest = -32600,
   MethodNotFound = -32601,
   InvalidParams = -32602,
-  InternalError = -32603
+  InternalError = -32603,
+  Forbidden = -32000,
+  NotFound = -32001
 }
 
 interface JsonRpcRequest {
@@ -31,15 +33,11 @@ interface JsonRpcError {
   data?: any;
 }
 
-export class CommandError {
-  readonly code: CommandErrorCode;
-  readonly message: string;
-  readonly data?: any;
-
-  constructor(err: JsonRpcError) {
-    this.code = err.code;
-    this.message = err.message;
-    this.data = err.data;
+export class CommandError extends Error {
+  constructor(public readonly code: CommandErrorCode, message: string, public readonly data?: any) {
+    super(message);
+    // this restores the prototype chain, so that the class can properly inherit from the built-in Error class
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
@@ -66,7 +64,7 @@ export class CommandService {
       .post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
       .toPromise();
     if (response.error != null) {
-      throw new CommandError(response.error);
+      throw new CommandError(response.error.code, response.error.message, response.error.data);
     }
     return response.result;
   }

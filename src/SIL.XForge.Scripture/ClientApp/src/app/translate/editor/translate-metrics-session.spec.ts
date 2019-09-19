@@ -3,6 +3,7 @@ import { LatinWordTokenizer } from '@sillsdev/machine';
 import { QuillModule } from 'ngx-quill';
 import * as RichText from 'rich-text';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
 import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -315,6 +316,28 @@ describe('TranslateMetricsSession', () => {
     verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
 
     env.session.dispose();
+  }));
+
+  it('ignore not found error', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(
+      new CommandError(CommandErrorCode.NotFound, 'NotFound')
+    );
+    env.startSession();
+
+    env.keyPress('a');
+    expect(() => env.session.dispose()).not.toThrow();
+  }));
+
+  it('ignore forbidden error', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(
+      new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
+    );
+    env.startSession();
+
+    env.keyPress('a');
+    expect(() => env.session.dispose()).not.toThrow();
   }));
 });
 

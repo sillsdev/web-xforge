@@ -29,7 +29,7 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
 
   init(getAccessToken: () => string): void {
     this.getAccessToken = getAccessToken;
-    this.ws = new ReconnectingWebSocket(() => this.getUrl());
+    this.ws = new ReconnectingWebSocket(() => this.getUrl(), undefined, { maxEnqueuedMessages: 0 });
     this.connection = new Connection(this.ws);
   }
 

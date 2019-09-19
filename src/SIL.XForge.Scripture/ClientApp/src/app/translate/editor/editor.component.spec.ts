@@ -1,4 +1,5 @@
 import { MdcSlider } from '@angular-mdc/web';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -440,6 +441,34 @@ describe('EditorComponent', () => {
       env.wait();
       verify(env.mockedNoticeService.show(anything())).once();
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+
+      env.updateTrainingProgress(0.1);
+      expect(env.trainingProgress).toBeDefined();
+      expect(env.component.showTrainingProgress).toBe(true);
+      expect(env.trainingProgressSpinner).toBeDefined();
+
+      env.dispose();
+    }));
+
+    it('error in training status', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
+      env.wait();
+      expect(env.component.target.segmentRef).toBe('verse_1_1');
+      expect(env.component.showTrainingProgress).toBe(false);
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+
+      resetCalls(env.mockedRemoteTranslationEngine);
+      env.updateTrainingProgress(0.1);
+      expect(env.trainingProgress).toBeDefined();
+      expect(env.component.showTrainingProgress).toBe(true);
+      expect(env.trainingProgressSpinner).toBeDefined();
+      env.throwTrainingProgressError();
+      expect(env.trainingProgress).toBeNull();
+      expect(env.component.showTrainingProgress).toBe(false);
+
+      tick(30000);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).toBeDefined();
       expect(env.component.showTrainingProgress).toBe(true);
@@ -796,6 +825,13 @@ class TestEnvironment {
 
   updateParams(params: Params): void {
     this.params$.next(params);
+  }
+
+  throwTrainingProgressError(): void {
+    const trainingProgress$ = this.trainingProgress$;
+    this.trainingProgress$ = new Subject<ProgressStatus>();
+    trainingProgress$.error(new HttpErrorResponse({ status: 404 }));
+    this.fixture.detectChanges();
   }
 
   updateTrainingProgress(percentCompleted: number): void {

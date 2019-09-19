@@ -3,6 +3,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import { fromEvent, interval, merge, Subject } from 'rxjs';
 import { buffer, debounceTime, filter, map, tap } from 'rxjs/operators';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';
 import { EditEndEvent, TranslateMetrics, TranslateMetricsType } from '../../core/models/translate-metrics';
@@ -220,7 +221,17 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
     }
     if (!this.isMetricsEmpty && !isEqual(this.prevMetrics, this.metrics)) {
       this.prevMetrics = cloneDeep(this.metrics);
-      await this.projectService.onlineAddTranslateMetrics(this.projectId, this.metrics);
+      try {
+        await this.projectService.onlineAddTranslateMetrics(this.projectId, this.metrics);
+      } catch (err) {
+        // ignore "not found" and "forbidden" command errors
+        if (
+          !(err instanceof CommandError) ||
+          (err.code !== CommandErrorCode.NotFound && err.code !== CommandErrorCode.Forbidden)
+        ) {
+          throw err;
+        }
+      }
     }
   }
 

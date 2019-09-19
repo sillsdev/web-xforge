@@ -18,8 +18,8 @@ import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-proj
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { BehaviorSubject, fromEvent, Subject, Subscription } from 'rxjs';
-import { debounceTime, filter, map, repeat, skip, tap } from 'rxjs/operators';
+import { BehaviorSubject, fromEvent, Subject, Subscription, timer } from 'rxjs';
+import { debounceTime, delayWhen, filter, map, repeat, retryWhen, skip, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -444,33 +444,43 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     this.trainingSub = this.translationEngine
       .listenForTrainingStatus()
       .pipe(
-        tap(undefined, undefined, async () => {
-          // training completed successfully
-          if (this.trainingProgressClosed) {
-            this.noticeService.show('Training completed successfully');
+        tap(
+          undefined,
+          () => {
+            // error while listening
+            this.showTrainingProgress = false;
+            this.trainingCompletedTimeout = undefined;
             this.trainingProgressClosed = false;
-          } else {
-            this.trainingMessage = 'Completed successfully';
-            this.trainingCompletedTimeout = setTimeout(() => {
-              this.showTrainingProgress = false;
-              this.trainingCompletedTimeout = undefined;
-            }, 5000);
-          }
+          },
+          async () => {
+            // training completed successfully
+            if (this.trainingProgressClosed) {
+              this.noticeService.show('Training completed successfully');
+              this.trainingProgressClosed = false;
+            } else {
+              this.trainingMessage = 'Completed successfully';
+              this.trainingCompletedTimeout = setTimeout(() => {
+                this.showTrainingProgress = false;
+                this.trainingCompletedTimeout = undefined;
+              }, 5000);
+            }
 
-          // ensure that any changes to the segment will be trained
-          if (this.target.segment != null) {
-            this.target.segment.acceptChanges();
+            // ensure that any changes to the segment will be trained
+            if (this.target.segment != null) {
+              this.target.segment.acceptChanges();
+            }
+            // re-translate current segment
+            this.onStartTranslating();
+            try {
+              await this.translateSegment();
+            } finally {
+              this.onFinishTranslating();
+            }
           }
-          // re-translate current segment
-          this.onStartTranslating();
-          try {
-            await this.translateSegment();
-          } finally {
-            this.onFinishTranslating();
-          }
-        }),
+        ),
         repeat(),
-        filter(progress => progress.percentCompleted > 0)
+        filter(progress => progress.percentCompleted > 0),
+        retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
       )
       .subscribe(progress => {
         if (!this.trainingProgressClosed) {
