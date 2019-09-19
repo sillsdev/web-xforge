@@ -363,8 +363,9 @@ class TestEnvironment {
     return {
       name: 'Project 01',
       paratextId: 'pt01',
+      shortName: 'P01',
       texts: [],
-      inputSystem: { tag: 'en', languageName: 'English' },
+      writingSystem: { tag: 'en' },
       sync: { queuedCount: 0 },
       translateConfig: { translationSuggestionsEnabled: false },
       checkingConfig: {

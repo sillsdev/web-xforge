@@ -6,6 +6,8 @@ namespace SIL.XForge.Scripture.Models
     public class SFProject : Project
     {
         public string ParatextId { get; set; }
+        public string ShortName { get; set; }
+        public WritingSystem WritingSystem { get; set; } = new WritingSystem();
         public TranslateConfig TranslateConfig { get; set; } = new TranslateConfig();
         public CheckingConfig CheckingConfig { get; set; } = new CheckingConfig();
         public List<TextInfo> Texts { get; set; } = new List<TextInfo>();

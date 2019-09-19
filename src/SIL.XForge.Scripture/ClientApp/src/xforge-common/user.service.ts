@@ -3,6 +3,7 @@ import merge from 'lodash/merge';
 import { User } from 'realtime-server/lib/common/models/user';
 import { combineLatest, from, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import XRegExp from 'xregexp';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
 import { LocalSettingsService } from './local-settings.service';
@@ -72,6 +73,7 @@ export class UserService {
     const u = objProxy<User>();
     return combineLatest(debouncedTerm$, queryParameters$, reload$).pipe(
       switchMap(([term, queryParameters]) => {
+        term = XRegExp.escape(term);
         const filters: Filters = {
           $or: [
             { [getObjPathStr(u.name)]: { $regex: `.*${term}.*`, $options: 'i' } },

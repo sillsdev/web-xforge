@@ -1,4 +1,4 @@
-import { InputSystem } from '../../common/models/input-system';
+import { WritingSystem } from '../../common/models/writing-system';
 
 export interface TranslateConfig {
   translationSuggestionsEnabled: boolean;
@@ -8,5 +8,6 @@ export interface TranslateConfig {
 export interface TranslateSource {
   paratextId: string;
   name: string;
-  inputSystem: InputSystem;
+  shortName: string;
+  writingSystem: WritingSystem;
 }

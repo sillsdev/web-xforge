@@ -384,9 +384,9 @@ class TestEnvironment {
   private testProject: SFProject = {
     name: 'Project 01',
     paratextId: 'pt01',
-    inputSystem: {
-      tag: 'en',
-      languageName: 'English'
+    shortName: 'P01',
+    writingSystem: {
+      tag: 'en'
     },
     checkingConfig: {
       usersSeeEachOthersResponses: true,

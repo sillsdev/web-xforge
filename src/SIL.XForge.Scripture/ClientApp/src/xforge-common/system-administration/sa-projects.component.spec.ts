@@ -247,7 +247,6 @@ class TestEnvironment {
         id: 'project01',
         data: {
           name: 'Project 01',
-          inputSystem: { tag: 'qaa', languageName: 'Unspecified' },
           userRoles: { user01: 'admin' }
         }
       },
@@ -255,7 +254,6 @@ class TestEnvironment {
         id: 'project02',
         data: {
           name: 'Project 02',
-          inputSystem: { tag: 'qaa', languageName: 'Unspecified' },
           userRoles: {}
         }
       },
@@ -263,7 +261,6 @@ class TestEnvironment {
         id: 'project03',
         data: {
           name: 'Project 03',
-          inputSystem: { tag: 'qaa', languageName: 'Unspecified' },
           userRoles: { user01: 'user' }
         }
       }

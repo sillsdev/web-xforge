@@ -299,7 +299,6 @@ class TestEnvironment {
         id: 'project01',
         data: {
           name: 'Project 01',
-          inputSystem: { tag: 'qaa', languageName: 'Unspecified' },
           userRoles: { user01: 'admin', user03: 'user' }
         }
       }

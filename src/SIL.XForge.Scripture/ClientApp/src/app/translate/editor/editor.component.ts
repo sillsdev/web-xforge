@@ -120,11 +120,11 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   get sourceLabel(): string {
     return this.projectDoc == null || !this.projectDoc.isLoaded || this.projectDoc.data.translateConfig.source == null
       ? ''
-      : this.projectDoc.data.translateConfig.source.inputSystem.languageName;
+      : this.projectDoc.data.translateConfig.source.shortName;
   }
 
   get targetLabel(): string {
-    return this.projectDoc == null || !this.projectDoc.isLoaded ? '' : this.projectDoc.data.inputSystem.languageName;
+    return this.projectDoc == null || !this.projectDoc.isLoaded ? '' : this.projectDoc.data.shortName;
   }
 
   get isTargetTextRight(): boolean {

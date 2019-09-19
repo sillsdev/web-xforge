@@ -15,7 +15,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using SIL.ObjectModel;
-using SIL.WritingSystems;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -113,19 +112,12 @@ namespace SIL.XForge.Scripture.Services
                     isConnectable = false;
                 }
 
-                var langName = (string)projectObj["language_iso"];
-                if (StandardSubtags.TryGetLanguageFromIso3Code(langName, out LanguageSubtag subtag))
-                    langName = subtag.Name;
-
                 projects.Add(new ParatextProject
                 {
                     ParatextId = paratextId,
                     Name = (string)projectObj["identification_name"],
-                    InputSystem = new InputSystem
-                    {
-                        Tag = (string)projectObj["language_ldml"],
-                        LanguageName = langName
-                    },
+                    ShortName = (string)projectObj["identification_shortName"],
+                    LanguageTag = (string)projectObj["language_ldml"],
                     ProjectId = projectId,
                     IsConnectable = isConnectable,
                     IsConnected = isConnected

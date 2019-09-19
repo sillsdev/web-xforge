@@ -6,6 +6,7 @@ namespace SIL.XForge.Scripture.Models
     {
         public string ParatextId { get; set; }
         public string Name { get; set; }
-        public InputSystem InputSystem { get; set; } = new InputSystem();
+        public string ShortName { get; set; }
+        public WritingSystem WritingSystem { get; set; } = new WritingSystem();
     }
 }
