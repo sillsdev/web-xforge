@@ -372,23 +372,13 @@ namespace SIL.XForge.Scripture.Services
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
-
-                if (!projectDoc.Data.CheckingConfig.ShareEnabled)
-                    throw new ForbiddenException();
-
-                if (projectDoc.Data.CheckingConfig.ShareLevel != CheckingShareLevel.Anyone
-                    && projectDoc.Data.CheckingConfig.ShareLevel != CheckingShareLevel.Specific)
-                {
-                    throw new ForbiddenException();
-                }
-
                 if (projectDoc.Data.UserRoles.ContainsKey(curUserId))
                     return;
 
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
                 string projectRole = attempt.Result;
-                if (projectDoc.Data.CheckingConfig.ShareLevel == CheckingShareLevel.Specific)
+                if (shareKey != null)
                 {
                     string currentUserEmail = userDoc.Data.Email;
                     SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
@@ -396,14 +386,20 @@ namespace SIL.XForge.Scripture.Services
                             && p.ShareKeys.Any(sk => sk.Email == currentUserEmail && sk.Key == shareKey),
                         update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == currentUserEmail));
                     if (projectSecret != null)
+                    {
                         await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, false);
-                    else
-                        throw new ForbiddenException();
+                        return;
+                    }
                 }
-                else
+                if (projectDoc.Data.CheckingConfig.ShareEnabled == true &&
+                    projectDoc.Data.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone)
                 {
+                    // Users with the project link get added to the project. This also covers the case where
+                    // a user was emailed a share key and the invite was cancelled, but link sharing is enabled
                     await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
+                    return;
                 }
+                throw new ForbiddenException();
             }
         }
 
