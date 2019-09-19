@@ -95,10 +95,10 @@
 
       <mat-paginator
         [pageIndex]="pageIndex"
-        [length]="totalUsers"
+        [length]="filteredLength"
         [pageSize]="pageSize"
         [pageSizeOptions]="[5, 10, 20, 50, 100]"
-        (page)="updatePage($event.pageIndex, $event.pageSize)"
+        (page)="updatePaginatorData($event)"
       >
       </mat-paginator>
     </div>
