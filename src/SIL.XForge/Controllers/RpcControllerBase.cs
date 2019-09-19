@@ -23,14 +23,19 @@ namespace SIL.XForge.Controllers
         protected string SystemRole => _userAccessor.SystemRole;
         protected string AuthId => _userAccessor.AuthId;
 
-        protected IRpcMethodResult ForbiddenError()
+        protected IRpcMethodResult InvalidParamsError(string message)
         {
-            return Error((int)RpcErrorCode.InvalidRequest, "Forbidden");
+            return Error((int)RpcErrorCode.InvalidParams, message);
         }
 
-        protected IRpcMethodResult NotFoundError()
+        protected IRpcMethodResult ForbiddenError()
         {
-            return Error((int)RpcErrorCode.InvalidParams, "NotFound");
+            return Error(-32000, "The user does not have permission to perform this operation.");
+        }
+
+        protected IRpcMethodResult NotFoundError(string message)
+        {
+            return Error(-32001, message);
         }
     }
 }
