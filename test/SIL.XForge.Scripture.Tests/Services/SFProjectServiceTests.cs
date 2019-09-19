@@ -133,10 +133,21 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void CheckLinkSharingAsync_LinkSharingDisabled_ForbiddenError()
+        public void CheckLinkSharingAsync_LinkSharingDisabledAndUserOnProject_Success()
         {
             var env = new TestEnvironment();
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User02, Project01));
+            SFProject project = env.GetProject(Project01);
+            Assert.That(project.UserRoles.ContainsKey(User02), Is.True, "setup");
+            Assert.DoesNotThrowAsync(() => env.Service.CheckLinkSharingAsync(User02, Project01));
+        }
+
+        [Test]
+        public void CheckLinkSharingAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
+        {
+            var env = new TestEnvironment();
+            SFProject project = env.GetProject(Project01);
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User03, Project01));
         }
 
         [Test]
@@ -211,6 +222,29 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
             Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(3), "setup");
 
+            await env.Service.CheckLinkSharingAsync(User03, Project03, "key1234");
+
+            project = env.GetProject(Project03);
+            projectSecret = env.ProjectSecrets.Get(Project03);
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.False,
+                "Key should have been removed from project");
+        }
+
+        [Test]
+        public async Task CheckLinkSharingAsync_ShareDisabledAndKeyValid_UserJoined()
+        {
+            var env = new TestEnvironment();
+            SFProject project = env.GetProject(Project03);
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
+
+            Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
+            Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(3), "setup");
+
+            await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings { ShareEnabled = false });
+            project = env.GetProject(Project03);
+            Assert.That(project.CheckingConfig.ShareEnabled, Is.False, "setup");
             await env.Service.CheckLinkSharingAsync(User03, Project03, "key1234");
 
             project = env.GetProject(Project03);
