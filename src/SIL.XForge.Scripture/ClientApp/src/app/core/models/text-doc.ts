@@ -27,7 +27,8 @@ export class TextDocId {
 }
 
 /**
- * This is the real-time doc for a text doc. Texts contain the textual data for a Scripture book.
+ * This is the real-time doc for a text doc. Texts contain the textual data for one particular Scripture book
+ * and chapter.
  */
 export class TextDoc extends RealtimeDoc<TextData, TextData> {
   static readonly COLLECTION = TEXTS_COLLECTION;

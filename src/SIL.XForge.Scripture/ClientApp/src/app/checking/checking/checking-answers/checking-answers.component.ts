@@ -1,14 +1,6 @@
 import { ErrorStateMatcher, MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  FormGroupDirective,
-  NgForm,
-  ValidationErrors,
-  Validators
-} from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
@@ -48,6 +40,8 @@ export interface AnswerAction {
   audio?: AudioAttachment;
 }
 
+/** The part of the checking area UI that handles user answer receiving, editing, and displaying.
+ * Note, the relevant specs are in checking.component.spec.ts. */
 @Component({
   selector: 'app-checking-answers',
   templateUrl: './checking-answers.component.html',
@@ -64,6 +58,8 @@ export class CheckingAnswersComponent implements OnInit {
     }
     this._questionDoc = questionDoc;
     this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
+    // Validation is dependent on the chapter of the current question.
+    this.updateValidationRules();
   }
   @Input() checkingTextComponent: CheckingTextComponent;
   @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
@@ -168,20 +164,23 @@ export class CheckingAnswersComponent implements OnInit {
     }
   }
 
+  /** Fetch a TextsByBookId that only contains the book and chapter that pertains to the question. */
   private get textsByBookId(): TextsByBookId {
     const textsByBook: TextsByBookId = {};
     if (this.projectText) {
-      textsByBook[Canon.bookNumberToId(this.projectText.bookNum)] = this.projectText;
+      const bookId = Canon.bookNumberToId(this.projectText.bookNum);
+      const questionChapterNumber = this.questionDoc.data.verseRef.chapterNum;
+      textsByBook[bookId] = cloneDeep(this.projectText);
+      textsByBook[bookId].chapters = this.projectText.chapters.filter(
+        chapter => chapter.number === questionChapterNumber
+      );
     }
     return textsByBook;
   }
 
   ngOnInit(): void {
     this.userService.getCurrentUser().then(u => (this.user = u));
-    this.scriptureStart.setValidators([SFValidators.verseStr(this.textsByBookId)]);
-    this.scriptureStart.updateValueAndValidity();
-    this.scriptureEnd.setValidators([SFValidators.verseStr(this.textsByBookId)]);
-    this.scriptureEnd.updateValueAndValidity();
+    this.updateValidationRules();
   }
 
   checkScriptureText(): void {
@@ -327,7 +326,7 @@ export class CheckingAnswersComponent implements OnInit {
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
       this.noticeService.show('The recording for your answer was automatically stopped.');
     }
-    this.setValidationRules();
+    this.updateValidationRules();
     this.answerFormSubmitAttempted = true;
     if (this.answerForm.invalid) {
       return;
@@ -372,7 +371,12 @@ export class CheckingAnswersComponent implements OnInit {
     });
   }
 
-  private setValidationRules(): void {
+  private updateValidationRules(): void {
+    this.scriptureStart.setValidators([SFValidators.verseStr(this.textsByBookId)]);
+    this.scriptureStart.updateValueAndValidity();
+    this.scriptureEnd.setValidators([SFValidators.verseStr(this.textsByBookId)]);
+    this.scriptureEnd.updateValueAndValidity();
+
     if (this.audio.url) {
       this.answerForm.get('answerText').clearValidators();
     } else {

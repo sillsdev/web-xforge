@@ -1,4 +1,4 @@
-import { MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialogRef, MdcListItem, MdcMenuSelectedEvent } from '@angular-mdc/web';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -350,6 +350,58 @@ describe('CheckingComponent', () => {
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
       expect(env.getAnswerScriptureText(0)).toBe('target: chapter 1, verse 3. target: chapter 1, verse 4.(JHN 1:3-4)');
+    }));
+
+    it('out-of-chapter reference is invalid', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.checkerUser);
+      env.selectQuestion(1);
+      env.clickButton(env.addAnswerButton);
+      env.setTextFieldValue(env.yourAnswerField, 'Answer question');
+      env.clickButton(env.selectTextTab);
+      expect(env.scriptureText).toBeNull();
+      // Specify reference that is not for chapter of question.
+      env.setTextFieldValue(env.scriptureStartField, 'JHN 2:3');
+      expect(env.scriptureText).toEqual('');
+      expect(env.component.answersPanel.scriptureStart.valid).toBe(false);
+
+      // Typing correct values should clear error and fetch Scripture
+      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:3');
+      expect(env.scriptureText).toEqual('target: chapter 1, verse 3.');
+      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:4');
+      expect(env.scriptureText).toEqual('target: chapter 1, verse 3. target: chapter 1, verse 4.');
+      expect(env.component.answersPanel.scriptureStart.valid).toBe(true);
+
+      env.clickButton(env.saveAnswerButton);
+      env.waitForSliderUpdate();
+      expect(env.getAnswerScriptureText(0)).toBe('target: chapter 1, verse 3. target: chapter 1, verse 4.(JHN 1:3-4)');
+    }));
+
+    it('out-of-chapter detection is based on question chapter, not viewed chapter', fakeAsync(() => {
+      env.setupReviewerScenarioData(env.checkerUser);
+
+      // Answer a question in chapter 2.
+      const questionNumberInWebpageList =
+        env.questions.findIndex(questionElement =>
+          env.getQuestionText(questionElement).includes('Question relating to chapter 2')
+        ) + 1;
+      env.selectQuestion(questionNumberInWebpageList);
+      env.clickButton(env.addAnswerButton);
+      env.setTextFieldValue(env.yourAnswerField, 'Answer question');
+
+      // Set checking area's Scripture view to another chapter than what the question is referencing
+      env.selectChapterFromMenu(1);
+
+      env.clickButton(env.selectTextTab);
+
+      // Enter a Scripture reference that is in the chapter that the question refers to,
+      // but not in the chapter of the Scripture view that the user is seeing on the checking component.
+      env.setTextFieldValue(env.scriptureStartField, 'JHN 2:3');
+      env.setTextFieldValue(env.scriptureEndField, 'JHN 2:4');
+      expect(env.component.answersPanel.scriptureStart.valid).toBe(true);
+      expect(env.component.answersPanel.scriptureEnd.valid).toBe(true);
+
+      env.clickButton(env.saveAnswerButton);
+      env.waitForSliderUpdate();
     }));
 
     it('can remove scripture from an answer', fakeAsync(() => {
@@ -820,7 +872,7 @@ class TestEnvironment {
     return this.getAnswer(answerIndex).query(By.css('mdc-text-field[formControlName="commentText"]'));
   }
 
-  selectQuestion(questionNumber: number, includeReadTimer: boolean = true): DebugElement {
+  selectQuestion(/** indexed starting at 1 */ questionNumber: number, includeReadTimer: boolean = true): DebugElement {
     const question = this.fixture.debugElement.query(
       By.css('#questions-panel .mdc-list-item:nth-child(' + questionNumber + ')')
     );
@@ -873,6 +925,11 @@ class TestEnvironment {
     adapter.insert$.next({ index: 0, docIds: [docId] });
   }
 
+  selectChapterFromMenu(chapter: number) {
+    const eventData: MdcMenuSelectedEvent = { index: null, source: { value: chapter } as MdcListItem };
+    this.component.onChapterSelect(eventData);
+  }
+
   private setupDefaultProjectData(user: UserInfo): void {
     this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
       {
@@ -908,12 +965,12 @@ class TestEnvironment {
     this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
       {
         id: getTextDocId('project01', 43, 1),
-        data: this.createTextData(),
+        data: this.createTextDataForChapter(1),
         type: RichText.type.name
       },
       {
         id: getTextDocId('project01', 43, 2),
-        data: this.createTextData(),
+        data: this.createTextDataForChapter(2),
         type: RichText.type.name
       }
     ]);
@@ -1073,22 +1130,22 @@ class TestEnvironment {
     };
   }
 
-  private createTextData(): TextData {
+  private createTextDataForChapter(chapter: number): TextData {
     const delta = new Delta();
-    delta.insert({ chapter: { number: '1', style: 'c' } });
+    delta.insert({ chapter: { number: chapter.toString(), style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
-    delta.insert('target: chapter 1, verse 1.', { segment: 'verse_1_1' });
+    delta.insert(`target: chapter ${chapter}, verse 1.`, { segment: `verse_${chapter}_1` });
     delta.insert({ verse: { number: '2', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: 'verse_1_2' });
+    delta.insert({ blank: 'normal' }, { segment: `verse_${chapter}_2` });
     delta.insert('\n', { para: { style: 'p' } });
     delta.insert({ verse: { number: '3', style: 'v' } });
-    delta.insert(`target: chapter 1, verse 3.`, { segment: 'verse_1_3' });
+    delta.insert(`target: chapter ${chapter}, verse 3.`, { segment: `verse_${chapter}_3` });
     delta.insert({ verse: { number: '4', style: 'v' } });
-    delta.insert(`target: chapter 1, verse 4.`, { segment: 'verse_1_4' });
+    delta.insert(`target: chapter ${chapter}, verse 4.`, { segment: `verse_${chapter}_4` });
     delta.insert('\n', { para: { style: 'p' } });
-    delta.insert({ blank: 'initial' }, { segment: 'verse_1_4/p_1' });
+    delta.insert({ blank: 'initial' }, { segment: `verse_${chapter}_4/p_1` });
     delta.insert({ verse: { number: '5', style: 'v' } });
-    delta.insert(`target: chapter 1, `, { segment: 'verse_1_5' });
+    delta.insert(`target: chapter ${chapter}, `, { segment: `verse_${chapter}_5` });
     delta.insert('\n', { para: { style: 'p' } });
     return delta;
   }
