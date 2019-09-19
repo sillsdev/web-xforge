@@ -103,7 +103,7 @@ namespace SIL.XForge.Scripture.Services
                 await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
 
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
-                await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRole.Administrator);
+                await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRole.Administrator, false);
 
                 if (project.TranslateConfig.TranslationSuggestionsEnabled)
                 {
@@ -393,7 +393,7 @@ namespace SIL.XForge.Scripture.Services
                             && p.ShareKeys.Any(sk => sk.Email == currentUserEmail && sk.Key == shareKey),
                         update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == currentUserEmail));
                     if (projectSecret != null)
-                        await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
+                        await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, false);
                     else
                         throw new ForbiddenException();
                 }
@@ -405,9 +405,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         protected override async Task AddUserToProjectAsync(IConnection conn, IDocument<SFProject> projectDoc,
-            IDocument<User> userDoc, string projectRole)
+            IDocument<User> userDoc, string projectRole, bool removeShareKeys = true)
         {
-            await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
+            await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, removeShareKeys);
             IDocument<SFProjectUserConfig> projectUserConfigDoc = await conn.CreateAsync<SFProjectUserConfig>(
                 SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
                 new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id });
