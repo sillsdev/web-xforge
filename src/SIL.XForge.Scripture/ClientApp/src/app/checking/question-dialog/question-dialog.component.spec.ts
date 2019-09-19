@@ -144,7 +144,7 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.questionForm.errors).toBeNull();
   }));
 
-  it('should validate start verse is after or same as end verse', fakeAsync(() => {
+  it('should validate start verse is before or same as end verse', fakeAsync(() => {
     const env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('MAT 1:2');
@@ -286,6 +286,20 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.textDocId.toString()).toBe(textDocId.toString());
     verify(env.mockedProjectService.getText(deepEqual(textDocId))).once();
     expect(env.component.selection.verseRef.toString()).toEqual('LUK 1:3');
+  }));
+
+  it('displays error message when editing the scripture reference', fakeAsync(() => {
+    const env = new TestEnvironment(true);
+    flush();
+    expect(env.component.scriptureStart.value).toBe('LUK 1:3');
+    env.component.scriptureEnd.setValue('MAT 1:2');
+    env.component.scriptureEnd.markAsTouched();
+    expect(env.component.scriptureEnd.errors).toBeNull();
+    expect(env.component.scriptureEnd.valid).toBe(true);
+    expect(env.component.questionForm.errors.verseDifferentBookOrChapter).toBe(true);
+    env.clickElement(env.saveButton);
+    expect(env.scriptureEndInput.classList).toContain('mdc-text-field--invalid');
+    expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
   }));
 });
 
@@ -429,6 +443,10 @@ class TestEnvironment {
 
   get scriptureStartValidationMsg(): HTMLElement {
     return this.overlayContainerElement.querySelector('#question-scripture-start-helper-text > div');
+  }
+
+  get scriptureEndValidationMsg(): HTMLElement {
+    return this.overlayContainerElement.querySelector('#question-scripture-end-helper-text > div');
   }
 
   inputValue(element: HTMLElement, value: string) {

@@ -1,7 +1,7 @@
-import { ErrorStateMatcher, MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
+import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
@@ -15,7 +15,7 @@ import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { SFValidators } from '../../shared/sfvalidators';
+import { ParentAndStartErrorStateMatcher, SFValidators } from '../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking/checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
@@ -196,25 +196,5 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       this.questionText.setValidators([Validators.required, XFValidators.someNonWhitespace]);
     }
     this.questionText.updateValueAndValidity();
-  }
-}
-
-class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const invalidCtrl = !!(control && control.invalid && control.parent.dirty);
-    const invalidStart = !!(
-      control &&
-      control.parent &&
-      control.parent.controls &&
-      control.parent.controls['scriptureStart'] &&
-      control.parent.controls['scriptureStart'].dirty &&
-      !control.parent.controls['scriptureStart'].hasError('verseFormat') &&
-      !control.parent.controls['scriptureStart'].hasError('verseRange') &&
-      (control.parent.controls['scriptureStart'].invalid ||
-        control.parent.hasError('verseDifferentBookOrChapter') ||
-        control.parent.hasError('verseBeforeStart'))
-    );
-
-    return control.touched && (invalidCtrl || invalidStart);
   }
 }

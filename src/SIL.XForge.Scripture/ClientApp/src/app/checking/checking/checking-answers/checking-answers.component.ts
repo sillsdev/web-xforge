@@ -1,6 +1,6 @@
-import { ErrorStateMatcher, MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
@@ -25,7 +25,7 @@ import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { SFValidators } from '../../../shared/sfvalidators';
+import { ParentAndStartErrorStateMatcher, SFValidators } from '../../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
@@ -397,25 +397,5 @@ export class CheckingAnswersComponent implements OnInit {
 
     const { verseRef } = VerseRef.tryParse(verseRefStr);
     return verseRef.valid ? verseRef : undefined;
-  }
-}
-
-class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const invalidCtrl = !!(control && control.invalid);
-    const invalidStart = !!(
-      control &&
-      control.parent &&
-      control.parent.controls &&
-      control.parent.controls['scriptureStart'] &&
-      control.parent.controls['scriptureStart'].dirty &&
-      !control.parent.controls['scriptureStart'].hasError('verseFormat') &&
-      !control.parent.controls['scriptureStart'].hasError('verseRange') &&
-      (control.parent.controls['scriptureStart'].invalid ||
-        control.parent.hasError('verseDifferentBookOrChapter') ||
-        control.parent.hasError('verseBeforeStart'))
-    );
-
-    return control.touched && (invalidCtrl || invalidStart);
   }
 }

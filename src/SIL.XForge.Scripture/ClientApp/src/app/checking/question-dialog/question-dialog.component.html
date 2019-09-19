@@ -38,7 +38,7 @@
                   >expand_more</mdc-icon
                 >
               </mdc-text-field>
-              <mdc-helper-text validation>
+              <mdc-helper-text id="question-scripture-end-helper-text" validation>
                 <span *ngIf="scriptureEnd.hasError('verseFormat')">e.g. JHN 3:16</span>
                 <span *ngIf="scriptureEnd.hasError('verseRange')">Must be inside verse range</span>
                 <span *ngIf="questionForm.hasError('verseDifferentBookOrChapter')">
