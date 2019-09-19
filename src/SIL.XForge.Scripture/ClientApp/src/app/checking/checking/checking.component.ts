@@ -1,7 +1,7 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef, MdcList, MdcMenuSelectedEvent } from '@angular-mdc/web';
 import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
@@ -84,6 +84,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private _isDrawerPermanent: boolean = true;
   private _chapter: number;
   private questionsQuery: RealtimeQuery<QuestionDoc>;
+  private questionsSub: Subscription;
   private projectDeleteSub: Subscription;
   private projectRemoteChangesSub: Subscription;
 
@@ -94,7 +95,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly helpHeroService: HelpHeroService,
     private readonly media: MediaObserver,
     private readonly dialog: MdcDialog,
-    noticeService: NoticeService
+    noticeService: NoticeService,
+    private readonly router: Router
   ) {
     super(noticeService);
   }
@@ -117,12 +119,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       this.questionsPanel.activateQuestion(firstQuestion);
       book = firstQuestion.verseRef.bookNum;
       defaultChapter = firstQuestion.verseRef.chapterNum;
+    } else if (this.questionsPanel.activeQuestionDoc) {
+      defaultChapter = this.questionsPanel.activeQuestionChapter;
     }
     this._book = book;
     this.text = this.projectDoc.data.texts.find(t => t.bookNum === this.book);
     this.chapters = this.text.chapters.map(c => c.number);
     this._chapter = undefined;
     this.chapter = defaultChapter;
+    this.checkBookStatus();
   }
 
   get chapter(): number {
@@ -217,6 +222,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           bookNum: this.showAllBooks ? null : bookNum,
           activeOnly: true,
           sort: true
+        });
+        if (this.questionsSub != null) {
+          this.questionsSub.unsubscribe();
+        }
+        this.questionsSub = this.subscribe(this.questionsQuery.remoteChanges$, () => {
+          this.checkBookStatus();
         });
         this.book = bookNum;
         this.userDoc = await this.userService.getCurrentUser();
@@ -418,6 +429,26 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   totalQuestions(): number {
     return this.questionsQuery != null ? this.questionsQuery.docs.length : 0;
+  }
+
+  private checkBookStatus(): void {
+    if (!this.totalQuestions()) {
+      this.router.navigate(['/projects', this.projectDoc.id, 'checking'], {
+        replaceUrl: true
+      });
+    } else if (this.showAllBooks) {
+      const availableBooks: string[] = [];
+      for (const questionDoc of this.questionDocs) {
+        if (!availableBooks.includes(questionDoc.verseRef.book)) {
+          availableBooks.push(questionDoc.verseRef.book);
+        }
+      }
+      if (availableBooks.length === 1) {
+        this.router.navigate(['/projects', this.projectDoc.id, 'checking', availableBooks[0]], {
+          replaceUrl: true
+        });
+      }
+    }
   }
 
   private getAnswerIndex(answer: Answer): number {

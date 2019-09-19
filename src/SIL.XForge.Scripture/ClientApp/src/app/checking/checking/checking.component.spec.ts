@@ -1004,7 +1004,7 @@ class TestEnvironment {
       },
       {
         id: getTextDocId('project01', 40, 1),
-        data: this.createTextData(),
+        data: this.createTextDataForChapter(1),
         type: RichText.type.name
       }
     ]);

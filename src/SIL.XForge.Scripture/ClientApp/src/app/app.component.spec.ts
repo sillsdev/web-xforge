@@ -8,24 +8,30 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
+import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { of } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { LocationService } from 'xforge-common/location.service';
 import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { MemoryRealtimeDocAdapter, MemoryRealtimeQueryAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { objectId } from 'xforge-common/utils';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
+import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectDoc } from './core/models/sf-project-doc';
+import { SF_REALTIME_DOC_TYPES } from './core/models/sf-realtime-doc-types';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
@@ -200,6 +206,50 @@ describe('AppComponent', () => {
       expect(env.currentUserDisplayName).toEqual('Updated Name');
     }));
   });
+
+  describe('Community Checking', () => {
+    it('no books showing in the menu', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.navigate(['/projects', 'project02']);
+      env.init();
+
+      expect(env.isDrawerVisible).toEqual(true);
+      expect(env.selectedProjectId).toEqual('project02');
+      expect(env.component.isCheckingEnabled).toEqual(true);
+      env.selectItem(0);
+      expect(env.menuLength).toEqual(5);
+    }));
+
+    it('only show one book in the menu', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.navigate(['/projects', 'project02']);
+      env.init();
+
+      expect(env.isDrawerVisible).toEqual(true);
+      expect(env.selectedProjectId).toEqual('project02');
+      expect(env.component.isCheckingEnabled).toEqual(true);
+      env.selectItem(0);
+      expect(env.menuLength).toEqual(5);
+      env.addQuestion(env.questions[0]);
+      expect(env.menuLength).toEqual(6);
+    }));
+
+    it('All Questions displays in the menu', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.navigate(['/projects', 'project02']);
+      env.init();
+
+      expect(env.isDrawerVisible).toEqual(true);
+      expect(env.selectedProjectId).toEqual('project02');
+      expect(env.component.isCheckingEnabled).toEqual(true);
+      env.selectItem(0);
+      expect(env.menuLength).toEqual(5);
+      env.addQuestion(env.questions[0]);
+      env.addQuestion(env.questions[1]);
+      expect(env.menuLength).toEqual(8);
+      expect(env.menuList.getListItemByIndex(2).getListItemElement().textContent).toContain('All Questions');
+    }));
+  });
 });
 
 @Component({
@@ -221,6 +271,11 @@ const ROUTES: Route[] = [
   { path: 'connect-project', component: MockComponent }
 ];
 
+interface QuestionQuery {
+  bookNum: number;
+  query: RealtimeQuery<QuestionDoc>;
+}
+
 @NgModule({
   imports: [CommonModule, UICommonModule],
   declarations: [ProjectDeletedDialogComponent],
@@ -235,17 +290,19 @@ class TestEnvironment {
   readonly router: Router;
   readonly location: Location;
   readonly overlayContainer: OverlayContainer;
+  questions: Question[];
 
   readonly mockedAccountService = mock(AccountService);
   readonly mockedAuthService = mock(AuthService);
   readonly mockedUserService = mock(UserService);
   readonly mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
   readonly mockedSFProjectService = mock(SFProjectService);
-  readonly mockedRealtimeService = mock(RealtimeService);
+  readonly mockedRealtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   readonly mockedLocationService = mock(LocationService);
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedNameDialogRef = mock(MdcDialogRef);
 
+  private questionQueries: QuestionQuery[] = [];
   private readonly offlineStore = new MemoryRealtimeOfflineStore();
   private readonly currentUserDoc: UserDoc;
   private readonly project01Doc: SFProjectDoc;
@@ -271,6 +328,26 @@ class TestEnvironment {
       this.offlineStore,
       new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', user)
     );
+
+    this.mockedRealtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
+    for (let bookNum = 40; bookNum <= 47; bookNum++) {
+      const questionQuery: RealtimeQuery<QuestionDoc> = this.mockedRealtimeService.createQuery(
+        QuestionDoc.COLLECTION,
+        {}
+      );
+      questionQuery.subscribe();
+      when(
+        this.mockedSFProjectService.getQuestions(
+          anything(),
+          deepEqual({
+            bookNum: bookNum,
+            activeOnly: true,
+            sort: true
+          })
+        )
+      ).thenResolve(questionQuery);
+      this.questionQueries.push({ bookNum: bookNum, query: questionQuery });
+    }
 
     this.project01Doc = this.addProject('project01', { user01: SFProjectRole.ParatextTranslator }, [
       { bookNum: 40, hasSource: true, chapters: [] },
@@ -316,6 +393,31 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
     this.overlayContainer = TestBed.get(OverlayContainer);
     this.fixture.ngZone.run(() => this.router.initialNavigation());
+
+    this.questions = [
+      {
+        dataId: objectId(),
+        ownerRef: 'u01',
+        projectRef: 'project02',
+        text: 'Question in book of John',
+        answers: [],
+        verseRef: { bookNum: 43, chapterNum: 1, verseNum: 10, verse: '10-11' },
+        isArchived: false,
+        dateCreated: '',
+        dateModified: ''
+      },
+      {
+        dataId: objectId(),
+        ownerRef: 'u01',
+        projectRef: 'project02',
+        text: 'Question in book of Luke',
+        answers: [],
+        verseRef: { bookNum: 42, chapterNum: 1, verseNum: 10, verse: '1-2' },
+        isArchived: false,
+        dateCreated: '',
+        dateModified: ''
+      }
+    ];
   }
 
   get menuDrawer(): DebugElement {
@@ -363,6 +465,19 @@ class TestEnvironment {
 
   get currentUserDisplayName(): string {
     return this.currentUserDoc.data.displayName;
+  }
+
+  addQuestion(newQuestion: Question) {
+    const docId = getQuestionDocId(newQuestion.projectRef, newQuestion.dataId);
+    this.mockedRealtimeService.addSnapshot(QuestionDoc.COLLECTION, {
+      id: docId,
+      data: newQuestion
+    });
+    const adapter = this.questionQueries.find(q => q.bookNum === newQuestion.verseRef.bookNum).query
+      .adapter as MemoryRealtimeQueryAdapter;
+    adapter.insert$.next({ index: 0, docIds: [docId] });
+    adapter.remoteChanges$.next();
+    this.wait();
   }
 
   init(): void {
