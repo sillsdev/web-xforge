@@ -369,6 +369,14 @@ describe('CheckingComponent', () => {
       env.setTextFieldValue(env.yourAnswerField, 'Answer question');
       env.clickButton(env.selectTextTab);
       expect(env.scriptureText).toBe(null);
+
+      // Answer form is invalid if missing the start reference
+      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:4');
+      expect(env.component.answersPanel.answerForm.invalid).toBe(true);
+      expect(env.component.answersPanel.answerForm.hasError('startReferenceRequired'));
+      env.setTextFieldValue(env.scriptureEndField, '');
+      expect(env.component.answersPanel.answerForm.valid).toBe(true);
+
       env.setTextFieldValue(env.scriptureStartField, 'JHN 1:3');
       expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
       env.setTextFieldValue(env.scriptureEndField, 'JHN 1:4');
