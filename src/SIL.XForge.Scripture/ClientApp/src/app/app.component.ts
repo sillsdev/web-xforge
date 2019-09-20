@@ -29,6 +29,11 @@ import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
 
 export const CONNECT_PROJECT_OPTION = '*connect-project*';
 
+export interface QuestionQuery {
+  bookNum: number;
+  query: RealtimeQuery<QuestionDoc>;
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -45,6 +50,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   isProjectAdmin$: Observable<boolean>;
 
   private _checkingTexts: TextInfo[] = [];
+  private questionQueries: QuestionQuery[] = [];
   private currentUserDoc: UserDoc;
   private currentUserAuthType: AuthType;
   private _projectSelect: MdcSelect;
@@ -286,6 +292,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.userService.setCurrentProjectId(this.selectedProjectDoc.id);
 
         if (this.isCheckingEnabled) {
+          this.disposeQuestionQueries();
           for (const text of this.texts) {
             const questionsQuery = await this.projectService.getQuestions(this.selectedProjectId, {
               bookNum: text.bookNum,
@@ -296,6 +303,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
             this.subscribe(questionsQuery.remoteChanges$, () => {
               this.toggleCheckingBook(questionsQuery, text);
             });
+            this.questionQueries.push({ bookNum: text.bookNum, query: questionsQuery });
           }
         }
       });
@@ -313,6 +321,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     if (this.removedFromProjectSub != null) {
       this.removedFromProjectSub.unsubscribe();
     }
+    this.disposeQuestionQueries();
   }
 
   changePassword(): void {
@@ -380,6 +389,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   getBookId(text: TextInfo): string {
     return Canon.bookNumberToId(text.bookNum);
+  }
+
+  private disposeQuestionQueries() {
+    if (this.questionQueries.length) {
+      for (const questionQuery of this.questionQueries) {
+        questionQuery.query.dispose();
+      }
+      this.questionQueries = [];
+    }
   }
 
   private async getProjectDocs(): Promise<SFProjectDoc[]> {

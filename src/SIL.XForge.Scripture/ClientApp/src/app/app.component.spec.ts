@@ -28,7 +28,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
+import { AppComponent, CONNECT_PROJECT_OPTION, QuestionQuery } from './app.component';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectDoc } from './core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from './core/models/sf-realtime-doc-types';
@@ -275,11 +275,6 @@ const ROUTES: Route[] = [
   { path: 'my-account', component: MockComponent },
   { path: 'connect-project', component: MockComponent }
 ];
-
-interface QuestionQuery {
-  bookNum: number;
-  query: RealtimeQuery<QuestionDoc>;
-}
 
 @NgModule({
   imports: [CommonModule, UICommonModule],
