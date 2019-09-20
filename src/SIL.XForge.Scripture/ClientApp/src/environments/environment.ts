@@ -3,7 +3,24 @@
 // `ng build --prod` then `environment.prod.ts` will be used instead. And if you do
 // `ng build --configuration=pwaTest` then `environment.pwa-test.ts` will be used instead.
 // The list of which env maps to which file can be found in `angular.json`.
+// The environment object should not be generated dynamically. This seems to cause problems with production builds.
 
-import { development } from './environment.defaults';
-
-export const environment = development;
+export const environment = {
+  releaseStage: 'dev',
+  pwaTest: false,
+  production: false,
+  issueEmail: 'scriptureforgeissues@sil.org',
+  siteName: 'Scripture Forge',
+  audience: 'https://scriptureforge.org/',
+  scope: 'sf_data',
+  siteId: 'sf',
+  assets: {
+    audio: '/assets/audio/'
+  },
+  helps: 'https://help.scriptureforge.org/#t=Overview/Getting_Started.htm',
+  bugsnagApiKey: 'b72a46a8924a3cd161d4c5534287923c',
+  realtimePort: 5003,
+  realtimeUrl: '/',
+  authDomain: 'sil-appbuilder.auth0.com',
+  authClientId: 'aoAGb9Yx1H5WIsvCW6JJCteJhSa37ftH'
+};
