@@ -202,11 +202,12 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
    * Can be overriden to handle entity inserts. The "listenForUpdates" property must be set to "true" in order for this
    * method to get called.
    *
+   * @param {string} _userId The user id.
    * @param {string} _docId The doc id.
    * @param {number} _projectDomain The project domain of the inserted entity.
    * @param {OwnedData} _entity The inserted entity.
    */
-  protected onInsert(_docId: string, _projectDomain: number, _entity: OwnedData): Promise<void> {
+  protected onInsert(_userId: string, _docId: string, _projectDomain: number, _entity: OwnedData): Promise<void> {
     return Promise.resolve();
   }
 
@@ -214,11 +215,12 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
    * Can be overriden to handle entity updates. The "listenForUpdates" property must be set to "true" in order for this
    * method to get called.
    *
+   * @param {string} _userId The user id.
    * @param {string} _docId The doc id.
    * @param {number} _projectDomain The project domain of the updated entity.
    * @param {OwnedData} _entity The updated entity.
    */
-  protected onUpdate(_docId: string, _projectDomain: number, _entity: OwnedData): Promise<void> {
+  protected onUpdate(_userId: string, _docId: string, _projectDomain: number, _entity: OwnedData): Promise<void> {
     return Promise.resolve();
   }
 
@@ -226,11 +228,12 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
    * Can be overriden to handle entity deletes. The "listenForUpdates" property must be set to "true" in order for this
    * method to get called.
    *
+   * @param {string} _userId The user id.
    * @param {string} _docId The doc id.
    * @param {number} _projectDomain The project domain of the deleted entity.
    * @param {OwnedData} _entity The deleted entity.
    */
-  protected onDelete(_docId: string, _projectDomain: number, _entity: OwnedData): Promise<void> {
+  protected onDelete(_userId: string, _docId: string, _projectDomain: number, _entity: OwnedData): Promise<void> {
     return Promise.resolve();
   }
 
@@ -296,15 +299,16 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   }
 
   private async handleAfterSubmit(context: ShareDB.middleware.SubmitContext): Promise<void> {
+    const connectSession = context.agent.connectSession as ConnectSession;
     if (context.op.create != null) {
       const domain = this.getUpdatedDomain([]);
       if (domain != null) {
-        await this.onInsert(context.id, domain.projectDomain, context.op.create.data);
+        await this.onInsert(connectSession.userId, context.id, domain.projectDomain, context.op.create.data);
       }
     } else if (context.op.del != null) {
       const domain = this.getUpdatedDomain([]);
       if (domain != null) {
-        await this.onDelete(context.id, domain.projectDomain, context.snapshot!.data);
+        await this.onDelete(connectSession.userId, context.id, domain.projectDomain, context.snapshot!.data);
       }
     } else if (context.op.op != null) {
       for (const op of context.op.op) {
@@ -316,14 +320,14 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
         if (domain.pathTemplate.template.length < op.p.length) {
           const entityPath = op.p.slice(0, domain.pathTemplate.template.length);
           const entity = this.deepGet(entityPath, context.snapshot!.data);
-          await this.onUpdate(context.id, domain.projectDomain, entity);
+          await this.onUpdate(connectSession.userId, context.id, domain.projectDomain, entity);
         } else {
           const listOp = op as ShareDB.ListReplaceOp;
           if (listOp.ld != null) {
-            await this.onDelete(context.id, domain.projectDomain, listOp.ld);
+            await this.onDelete(connectSession.userId, context.id, domain.projectDomain, listOp.ld);
           }
           if (listOp.li != null) {
-            await this.onInsert(context.id, domain.projectDomain, listOp.li);
+            await this.onInsert(connectSession.userId, context.id, domain.projectDomain, listOp.li);
           }
         }
       }

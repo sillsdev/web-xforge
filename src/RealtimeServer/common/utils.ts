@@ -1,4 +1,4 @@
-import { Doc } from 'sharedb/lib/client';
+import { Connection, Doc, Query } from 'sharedb/lib/client';
 
 export function docFetch(doc: Doc): Promise<void> {
   return new Promise<void>((resolve, reject) => {
@@ -19,6 +19,18 @@ export function docSubmitOp(doc: Doc, components: any): Promise<void> {
         reject(err);
       } else {
         resolve();
+      }
+    });
+  });
+}
+
+export function createFetchQuery(conn: Connection, collection: string, query: any): Promise<Query> {
+  return new Promise<Query>((resolve, reject) => {
+    const queryObj = conn.createFetchQuery(collection, query, {}, err => {
+      if (err != null) {
+        reject(err);
+      } else {
+        resolve(queryObj);
       }
     });
   });
