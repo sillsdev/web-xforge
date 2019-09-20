@@ -18,6 +18,11 @@ export interface ScriptureChooserDialogData {
    *  A value of null or undefined will cause normal dialog behaviour of
    *  book,chapter,verse selection. */
   rangeStart?: VerseRef;
+
+  /** Can be used to exclude the selection of verses - useful for when only
+   *  wanting to return a book and chapter.
+   */
+  includeVerseSelection?: boolean;
 }
 
 /** Dialog to allow selection of a particular Scripture reference. */
@@ -92,7 +97,11 @@ export class ScriptureChooserDialogComponent implements OnInit {
 
   onClickChapter(event: Event) {
     this.selection.chapter = (event.target as HTMLElement).innerText;
-    this.showVerseSelection();
+    if (this.data.includeVerseSelection === false) {
+      this.dialogRef.close(new VerseRef(this.selection.book, this.selection.chapter, 0));
+    } else {
+      this.showVerseSelection();
+    }
   }
 
   onClickVerse(event: Event) {

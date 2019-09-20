@@ -1,7 +1,7 @@
-import { MdcList, MdcMenuSelectedEvent } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogConfig, MdcDialogRef, MdcList, MdcMenuSelectedEvent } from '@angular-mdc/web';
 import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
@@ -9,6 +9,8 @@ import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/scriptureforge/scripture-utils/verse-ref';
+import { Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -20,7 +22,12 @@ import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
+import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
+import {
+  ScriptureChooserDialogComponent,
+  ScriptureChooserDialogData
+} from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { CheckingUtils } from '../checking.utils';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
@@ -60,6 +67,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   chapters: number[] = [];
   isExpanded: boolean = false;
   resetAnswerPanelHeightOnFormHide: boolean = false;
+  showAllBooks: boolean = false;
   summary: Summary = {
     read: 0,
     unread: 0,
@@ -72,9 +80,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   text: TextInfo;
   textDocId: TextDocId;
 
+  private _book: number = 0;
   private _isDrawerPermanent: boolean = true;
   private _chapter: number;
   private questionsQuery: RealtimeQuery<QuestionDoc>;
+  private questionsSub: Subscription;
+  private projectDeleteSub: Subscription;
+  private projectRemoteChangesSub: Subscription;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -82,9 +94,40 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly userService: UserService,
     private readonly helpHeroService: HelpHeroService,
     private readonly media: MediaObserver,
-    noticeService: NoticeService
+    private readonly dialog: MdcDialog,
+    noticeService: NoticeService,
+    private readonly router: Router
   ) {
     super(noticeService);
+  }
+
+  get book(): number {
+    return this._book;
+  }
+
+  set book(book: number) {
+    if (!this.questionDocs.length) {
+      return;
+    }
+    let defaultChapter = 1;
+    /** Get the book from the first question if showing all the questions
+     *  - Note that this only happens on first load as the book will be changed
+     *    later on via other methods
+     */
+    if (book === 0) {
+      const firstQuestion = this.questionDocs[0];
+      this.questionsPanel.activateQuestion(firstQuestion);
+      book = firstQuestion.verseRef.bookNum;
+      defaultChapter = firstQuestion.verseRef.chapterNum;
+    } else if (this.questionsPanel.activeQuestionDoc) {
+      defaultChapter = this.questionsPanel.activeQuestionChapter;
+    }
+    this._book = book;
+    this.text = this.projectDoc.data.texts.find(t => t.bookNum === this.book);
+    this.chapters = this.text.chapters.map(c => c.number);
+    this._chapter = undefined;
+    this.chapter = defaultChapter;
+    this.checkBookStatus();
   }
 
   get chapter(): number {
@@ -148,44 +191,62 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.splitContainerElement ? this.splitContainerElement.nativeElement.offsetHeight : 0;
   }
 
+  private get textsByBookId(): TextsByBookId {
+    const textsByBook: TextsByBookId = {};
+    if (this.projectDoc) {
+      for (const text of this.projectDoc.data.texts) {
+        textsByBook[Canon.bookNumberToId(text.bookNum)] = text;
+      }
+    }
+    return textsByBook;
+  }
+
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params, async params => {
       this.loadingStarted();
       const projectId = params['projectId'] as string;
       const bookId = params['bookId'] as string;
       const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
-      const prevBookNum = this.text == null ? 0 : this.text.bookNum;
       this.projectDoc = await this.projectService.get(projectId);
       if (!this.projectDoc.isLoaded) {
         return;
       }
       const bookNum = bookId == null ? 0 : Canon.bookIdToNumber(bookId);
-      this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
       this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
-      this.chapters = this.text.chapters.map(c => c.number);
-      if (prevProjectId !== this.projectDoc.id || prevBookNum !== this.text.bookNum) {
+      if (prevProjectId !== this.projectDoc.id || this.book !== bookNum || (bookId !== 'ALL' && this.showAllBooks)) {
         if (this.questionsQuery != null) {
           this.questionsQuery.dispose();
         }
+        this.showAllBooks = bookId === 'ALL';
         this.questionsQuery = await this.projectService.getQuestions(projectId, {
-          bookNum: this.text.bookNum,
+          bookNum: this.showAllBooks ? null : bookNum,
           activeOnly: true,
           sort: true
         });
-        this._chapter = undefined;
-        this.chapter = 1;
-
+        if (this.questionsSub != null) {
+          this.questionsSub.unsubscribe();
+        }
+        this.questionsSub = this.subscribe(this.questionsQuery.remoteChanges$, () => {
+          this.checkBookStatus();
+        });
+        this.book = bookNum;
         this.userDoc = await this.userService.getCurrentUser();
         this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
         this.loadingFinished();
       }
       // Subscribe to the projectDoc now that it is defined
-      this.subscribe(this.projectDoc.remoteChanges$, () => {
+      if (this.projectRemoteChangesSub != null) {
+        this.projectRemoteChangesSub.unsubscribe();
+      }
+      this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
         if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
           this.onRemovedFromProject();
         }
       });
-      this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
+      if (this.projectDeleteSub != null) {
+        this.projectDeleteSub.unsubscribe();
+      }
+      this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
     });
     this.subscribe(this.media.media$, (change: MediaChange) => {
       this.calculateScriptureSliderPosition();
@@ -333,11 +394,31 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
+  openScriptureChooser() {
+    const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
+      data: { booksAndChaptersToShow: this.textsByBookId, includeVerseSelection: false }
+    };
+
+    const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
+      ScriptureChooserDialogComponent,
+      VerseRef | 'close'
+    >;
+    dialogRef.afterClosed().subscribe(result => {
+      if (result !== 'close') {
+        this.book = result.bookNum;
+        this.chapter = result.chapterNum;
+      }
+    });
+  }
+
   questionUpdated(questionDoc: QuestionDoc) {
     this.refreshSummary();
   }
 
   questionChanged(questionDoc: QuestionDoc) {
+    if (questionDoc.verseRef.bookNum !== this.book) {
+      this.book = questionDoc.verseRef.bookNum;
+    }
     if (this.questionsPanel.activeQuestionChapter !== this.chapter) {
       this.chapter = this.questionsPanel.activeQuestionChapter;
     }
@@ -348,6 +429,26 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   totalQuestions(): number {
     return this.questionsQuery != null ? this.questionsQuery.docs.length : 0;
+  }
+
+  private checkBookStatus(): void {
+    if (!this.totalQuestions()) {
+      this.router.navigate(['/projects', this.projectDoc.id, 'checking'], {
+        replaceUrl: true
+      });
+    } else if (this.showAllBooks) {
+      const availableBooks: string[] = [];
+      for (const questionDoc of this.questionDocs) {
+        if (!availableBooks.includes(questionDoc.verseRef.book)) {
+          availableBooks.push(questionDoc.verseRef.book);
+        }
+      }
+      if (availableBooks.length === 1) {
+        this.router.navigate(['/projects', this.projectDoc.id, 'checking', availableBooks[0]], {
+          replaceUrl: true
+        });
+      }
+    }
   }
 
   private getAnswerIndex(answer: Answer): number {
@@ -476,7 +577,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
     this.questionsQuery = undefined;
     this.projectDoc = null;
-    this.text = null;
   }
 
   private refreshSummary() {
