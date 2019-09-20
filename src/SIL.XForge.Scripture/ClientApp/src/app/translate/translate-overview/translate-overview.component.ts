@@ -5,8 +5,8 @@ import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { Subscription } from 'rxjs';
-import { filter, map, repeat, tap } from 'rxjs/operators';
+import { Subscription, timer } from 'rxjs';
+import { delayWhen, filter, map, repeat, retryWhen, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -170,12 +170,17 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
     this.translationEngine = this.projectService.createTranslationEngine(this.projectDoc.id);
     const trainingStatus$ = this.translationEngine.listenForTrainingStatus().pipe(
-      tap(undefined, undefined, () => {
-        this.isTraining = false;
-        this.updateEngineStats();
-      }),
+      tap(
+        undefined,
+        () => (this.isTraining = false),
+        () => {
+          this.isTraining = false;
+          this.updateEngineStats();
+        }
+      ),
       repeat(),
-      filter(progress => progress.percentCompleted > 0)
+      filter(progress => progress.percentCompleted > 0),
+      retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
     );
     this.trainingSub = trainingStatus$.subscribe(async progress => {
       this.trainingPercentage = progress.percentCompleted;

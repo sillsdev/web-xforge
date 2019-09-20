@@ -1,4 +1,5 @@
 import { MdcLinearProgress } from '@angular-mdc/web';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -75,6 +76,24 @@ describe('TranslateOverviewComponent', () => {
       env.completeTrainingProgress();
       expect(env.trainingProgress.open).toBe(false);
       expect(env.component.isTraining).toBe(false);
+      env.updateTrainingProgress(0.1);
+      expect(env.trainingProgress.open).toBe(true);
+      expect(env.component.isTraining).toBe(true);
+    }));
+
+    it('error in training status', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.wait();
+
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      env.updateTrainingProgress(0.1);
+      expect(env.trainingProgress.open).toBe(true);
+      expect(env.component.isTraining).toBe(true);
+      env.throwTrainingProgressError();
+      expect(env.trainingProgress.open).toBe(false);
+      expect(env.component.isTraining).toBe(false);
+
+      tick(30000);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress.open).toBe(true);
       expect(env.component.isTraining).toBe(true);
@@ -246,6 +265,13 @@ class TestEnvironment {
 
   updateTrainingProgress(percentCompleted: number): void {
     this.trainingProgress$.next({ percentCompleted, message: 'message' });
+    this.fixture.detectChanges();
+  }
+
+  throwTrainingProgressError(): void {
+    const trainingProgress$ = this.trainingProgress$;
+    this.trainingProgress$ = new Subject<ProgressStatus>();
+    trainingProgress$.error(new HttpErrorResponse({ status: 404 }));
     this.fixture.detectChanges();
   }
 

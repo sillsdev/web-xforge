@@ -38,9 +38,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -55,9 +55,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -72,9 +72,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -89,9 +89,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -106,9 +106,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -123,9 +123,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -141,9 +141,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -158,9 +158,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -174,9 +174,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -190,9 +190,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -207,9 +207,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -224,9 +224,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -241,9 +241,9 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
         }
 
@@ -258,13 +258,13 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return ForbiddenError();
             }
-            catch (DataNotFoundException)
+            catch (DataNotFoundException dnfe)
             {
-                return NotFoundError();
+                return NotFoundError(dnfe.Message);
             }
-            catch (FormatException)
+            catch (FormatException fe)
             {
-                return NotFoundError();
+                return InvalidParamsError(fe.Message);
             }
         }
     }
