@@ -26,6 +26,7 @@ import { SFProjectDoc } from './core/models/sf-project-doc';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
+declare function gtag(...args: any): void;
 
 export const CONNECT_PROJECT_OPTION = '*connect-project*';
 
@@ -80,6 +81,14 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.subscribe(media.media$, (change: MediaChange) => {
       this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg'].includes(change.mqAlias);
     });
+
+    // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
+    if (environment.releaseStage === 'live') {
+      const navEndEvent$ = router.events.pipe(filter(e => e instanceof NavigationEnd));
+      this.subscribe(navEndEvent$, (e: NavigationEnd) => {
+        gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
+      });
+    }
   }
 
   get checkingTexts(): TextInfo[] {
