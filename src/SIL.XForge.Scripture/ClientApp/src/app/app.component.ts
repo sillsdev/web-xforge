@@ -223,7 +223,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       );
 
       // select the current project
-      this.subscribe(combineLatest(projectDocs$, projectId$), ([projectDocs, projectId]) => {
+      this.subscribe(combineLatest(projectDocs$, projectId$), async ([projectDocs, projectId]) => {
         this.projectDocs = projectDocs;
         // if the project deleted dialog is displayed, don't do anything
         if (this.projectDeletedDialogRef != null) {
@@ -287,18 +287,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
         if (this.isCheckingEnabled) {
           for (const text of this.texts) {
-            this.projectService
-              .getQuestions(this.selectedProjectId, {
-                bookNum: text.bookNum,
-                activeOnly: true,
-                sort: true
-              })
-              .then(questionsQuery => {
-                this.toggleCheckingBook(questionsQuery, text);
-                this.subscribe(questionsQuery.remoteChanges$, () => {
-                  this.toggleCheckingBook(questionsQuery, text);
-                });
-              });
+            const questionsQuery = await this.projectService.getQuestions(this.selectedProjectId, {
+              bookNum: text.bookNum,
+              activeOnly: true,
+              sort: true
+            });
+            this.toggleCheckingBook(questionsQuery, text);
+            this.subscribe(questionsQuery.remoteChanges$, () => {
+              this.toggleCheckingBook(questionsQuery, text);
+            });
           }
         }
       });

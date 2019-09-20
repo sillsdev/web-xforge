@@ -217,6 +217,7 @@ describe('AppComponent', () => {
       expect(env.selectedProjectId).toEqual('project02');
       expect(env.component.isCheckingEnabled).toEqual(true);
       env.selectItem(0);
+      // Expect: Community Checking | Overview | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(5);
     }));
 
@@ -229,8 +230,10 @@ describe('AppComponent', () => {
       expect(env.selectedProjectId).toEqual('project02');
       expect(env.component.isCheckingEnabled).toEqual(true);
       env.selectItem(0);
+      // Expect: Community Checking | Overview | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(5);
       env.addQuestion(env.questions[0]);
+      // Expect: Community Checking | Overview | John | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(6);
     }));
 
@@ -243,9 +246,11 @@ describe('AppComponent', () => {
       expect(env.selectedProjectId).toEqual('project02');
       expect(env.component.isCheckingEnabled).toEqual(true);
       env.selectItem(0);
+      // Expect: Community Checking | Overview | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(5);
       env.addQuestion(env.questions[0]);
       env.addQuestion(env.questions[1]);
+      // Expect: Community Checking | Overview | All Questions | Luke | John | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(8);
       expect(env.menuList.getListItemByIndex(2).getListItemElement().textContent).toContain('All Questions');
     }));
