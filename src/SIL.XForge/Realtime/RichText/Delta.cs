@@ -1,3 +1,4 @@
+using AbrarJahin.DiffMatchPatch;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,7 @@ namespace SIL.XForge.Realtime.RichText
     {
         private static readonly Lazy<DeltaEqualityComparer> _equalityComparer = new Lazy<DeltaEqualityComparer>();
         public static DeltaEqualityComparer EqualityComparer => _equalityComparer.Value;
+        private static readonly diff_match_patch Differ = new diff_match_patch();
 
         public const string InsertType = "insert";
         public const string DeleteType = "delete";
@@ -149,29 +151,30 @@ namespace SIL.XForge.Realtime.RichText
                 throw new InvalidOperationException("Both deltas must be documents.");
 
             var delta = new Delta();
-            List<Diff> diffResult = Differ.Compute(thisStr, otherStr);
+
+            List<Diff> diffResult = Differ.diff_main(thisStr, otherStr);
             var thisIter = new OpIterator(this.Ops);
             var otherIter = new OpIterator(other.Ops);
             foreach (Diff component in diffResult)
             {
-                int length = component.Text.Length;
+                int length = component.text.Length;
                 while (length > 0)
                 {
                     int opLength = 0;
-                    switch (component.Operation)
+                    switch (component.operation)
                     {
-                        case Operation.Insert:
+                        case Operation.INSERT:
                             opLength = Math.Min(otherIter.PeekLength(), length);
                             delta.Add(otherIter.Next(opLength));
                             break;
 
-                        case Operation.Delete:
+                        case Operation.DELETE:
                             opLength = Math.Min(length, thisIter.PeekLength());
                             thisIter.Next(opLength);
                             delta.Delete(opLength);
                             break;
 
-                        case Operation.Equal:
+                        case Operation.EQUAL:
                             opLength = Math.Min(Math.Min(thisIter.PeekLength(), otherIter.PeekLength()), length);
                             JToken thisOp = thisIter.Next(opLength);
                             JToken otherOp = otherIter.Next(opLength);
