@@ -290,7 +290,7 @@ class TestEnvironment {
   readonly router: Router;
   readonly location: Location;
   readonly overlayContainer: OverlayContainer;
-  questions: Question[];
+  readonly questions: Question[];
 
   readonly mockedAccountService = mock(AccountService);
   readonly mockedAuthService = mock(AuthService);
@@ -302,7 +302,7 @@ class TestEnvironment {
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedNameDialogRef = mock(MdcDialogRef);
 
-  private questionQueries: QuestionQuery[] = [];
+  private questionCountQueries: QuestionQuery[] = [];
   private readonly offlineStore = new MemoryRealtimeOfflineStore();
   private readonly currentUserDoc: UserDoc;
   private readonly project01Doc: SFProjectDoc;
@@ -331,22 +331,23 @@ class TestEnvironment {
 
     this.mockedRealtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
     for (let bookNum = 40; bookNum <= 47; bookNum++) {
-      const questionQuery: RealtimeQuery<QuestionDoc> = this.mockedRealtimeService.createQuery(
+      const questionCountQuery: RealtimeQuery<QuestionDoc> = this.mockedRealtimeService.createQuery(
         QuestionDoc.COLLECTION,
-        {}
+        {
+          $count: true
+        }
       );
-      questionQuery.subscribe();
+      questionCountQuery.subscribe();
       when(
-        this.mockedSFProjectService.getQuestions(
+        this.mockedSFProjectService.queryQuestionCount(
           anything(),
           deepEqual({
             bookNum: bookNum,
-            activeOnly: true,
-            sort: true
+            activeOnly: true
           })
         )
-      ).thenResolve(questionQuery);
-      this.questionQueries.push({ bookNum: bookNum, query: questionQuery });
+      ).thenResolve(questionCountQuery);
+      this.questionCountQueries.push({ bookNum: bookNum, query: questionCountQuery });
     }
 
     this.project01Doc = this.addProject('project01', { user01: SFProjectRole.ParatextTranslator }, [
@@ -473,10 +474,9 @@ class TestEnvironment {
       id: docId,
       data: newQuestion
     });
-    const adapter = this.questionQueries.find(q => q.bookNum === newQuestion.verseRef.bookNum).query
+    const adapter = this.questionCountQueries.find(q => q.bookNum === newQuestion.verseRef.bookNum).query
       .adapter as MemoryRealtimeQueryAdapter;
-    adapter.insert$.next({ index: 0, docIds: [docId] });
-    adapter.remoteChanges$.next();
+    adapter.update();
     this.wait();
   }
 

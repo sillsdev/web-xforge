@@ -21,7 +21,6 @@ import { UserService } from 'xforge-common/user.service';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
-import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectDoc } from './core/models/sf-project-doc';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
@@ -32,7 +31,7 @@ export const CONNECT_PROJECT_OPTION = '*connect-project*';
 
 export interface QuestionQuery {
   bookNum: number;
-  query: RealtimeQuery<QuestionDoc>;
+  query: RealtimeQuery;
 }
 
 @Component({
@@ -51,7 +50,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   isProjectAdmin$: Observable<boolean>;
 
   private _checkingTexts: TextInfo[] = [];
-  private questionQueries: QuestionQuery[] = [];
+  private questionCountQueries: QuestionQuery[] = [];
   private currentUserDoc: UserDoc;
   private currentUserAuthType: AuthType;
   private _projectSelect: MdcSelect;
@@ -303,16 +302,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         if (this.isCheckingEnabled) {
           this.disposeQuestionQueries();
           for (const text of this.texts) {
-            const questionsQuery = await this.projectService.getQuestions(this.selectedProjectId, {
+            const questionCountQuery = await this.projectService.queryQuestionCount(this.selectedProjectId, {
               bookNum: text.bookNum,
-              activeOnly: true,
-              sort: true
+              activeOnly: true
             });
-            this.toggleCheckingBook(questionsQuery, text);
-            this.subscribe(questionsQuery.remoteChanges$, () => {
-              this.toggleCheckingBook(questionsQuery, text);
+            this.toggleCheckingBook(questionCountQuery, text);
+            this.subscribe(questionCountQuery.remoteChanges$, () => {
+              this.toggleCheckingBook(questionCountQuery, text);
             });
-            this.questionQueries.push({ bookNum: text.bookNum, query: questionsQuery });
+            this.questionCountQueries.push({ bookNum: text.bookNum, query: questionCountQuery });
           }
         }
       });
@@ -401,11 +399,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   private disposeQuestionQueries() {
-    if (this.questionQueries.length) {
-      for (const questionQuery of this.questionQueries) {
+    if (this.questionCountQueries.length > 0) {
+      for (const questionQuery of this.questionCountQueries) {
         questionQuery.query.dispose();
       }
-      this.questionQueries = [];
+      this.questionCountQueries = [];
     }
   }
 
@@ -443,13 +441,16 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
   }
 
-  private toggleCheckingBook(questionsQuery: RealtimeQuery<QuestionDoc>, text: TextInfo) {
-    if (questionsQuery.docs.length) {
+  private toggleCheckingBook(questionCountQuery: RealtimeQuery, text: TextInfo) {
+    if (questionCountQuery.count > 0) {
       if (!this._checkingTexts.includes(text)) {
         this._checkingTexts.push(text);
       }
     } else {
-      this._checkingTexts.splice(this._checkingTexts.findIndex(t => text.bookNum === t.bookNum), 1);
+      const index = this._checkingTexts.findIndex(t => text.bookNum === t.bookNum);
+      if (index !== -1) {
+        this._checkingTexts.splice(index, 1);
+      }
     }
   }
 }

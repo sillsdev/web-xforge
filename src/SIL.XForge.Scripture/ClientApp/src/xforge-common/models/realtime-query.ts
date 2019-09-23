@@ -14,6 +14,8 @@ import { Snapshot } from './snapshot';
 export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private _docs: T[] = [];
   private unsubscribe$ = new Subject<void>();
+  private initialCount: number = 0;
+  private initialUnpagedCount: number = 0;
 
   constructor(private readonly realtimeService: RealtimeService, public readonly adapter: RealtimeQueryAdapter) {
     this.adapter.ready$.pipe(takeUntil(this.unsubscribe$)).subscribe(() => this.onReady());
@@ -34,8 +36,12 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     return this._docs;
   }
 
-  get totalUnpagedCount(): number {
-    return this.adapter.totalUnpagedCount;
+  get count(): number {
+    return this.adapter.ready ? this.adapter.count : this.initialCount;
+  }
+
+  get unpagedCount(): number {
+    return this.adapter.ready ? this.adapter.unpagedCount : this.initialUnpagedCount;
   }
 
   get remoteChanges$(): Observable<void> {
@@ -47,16 +53,19 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   }
 
   async subscribe(): Promise<void> {
-    const results = await this.localQuery();
-    const promises: Promise<void>[] = [];
-    for (const docId of results) {
-      const doc = this.realtimeService.get<T>(this.adapter.collection, docId);
-      this._docs.push(doc);
-      promises.push(doc.loadFromStore());
+    const [results, unpagedCount] = await this.localQuery();
+    if (this.adapter.parameters.$count == null) {
+      const promises: Promise<void>[] = [];
+      for (const docId of results) {
+        const doc = this.realtimeService.get<T>(this.adapter.collection, docId);
+        this._docs.push(doc);
+        promises.push(doc.loadFromStore());
+      }
+      await Promise.all(promises);
     }
-    await Promise.all(promises);
-
-    this.adapter.subscribe(results);
+    this.initialCount = results.length;
+    this.initialUnpagedCount = unpagedCount;
+    this.adapter.subscribe(this.adapter.parameters.$count == null ? results : undefined);
   }
 
   dispose(): void {
@@ -70,10 +79,10 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     this.adapter.destroy();
   }
 
-  private async localQuery(): Promise<string[]> {
+  private async localQuery(): Promise<[string[], number]> {
     const snapshots: Snapshot[] = await this.realtimeService.offlineStore.getAll(this.collection);
-    const [results] = performQuery(this.adapter.parameters, snapshots);
-    return results.map(s => s.id);
+    const [results, unpagedCount] = performQuery(this.adapter.parameters, snapshots);
+    return [results.map(s => s.id), unpagedCount];
   }
 
   private onReady(): void {

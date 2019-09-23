@@ -218,7 +218,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           this.questionsQuery.dispose();
         }
         this.showAllBooks = bookId === 'ALL';
-        this.questionsQuery = await this.projectService.getQuestions(projectId, {
+        this.questionsQuery = await this.projectService.queryQuestions(projectId, {
           bookNum: this.showAllBooks ? null : bookNum,
           activeOnly: true,
           sort: true

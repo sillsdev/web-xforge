@@ -639,7 +639,7 @@ class TestEnvironment {
     when(this.mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
       this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
     );
-    when(this.mockedProjectService.getQuestions('project01')).thenCall(() =>
+    when(this.mockedProjectService.queryQuestions('project01')).thenCall(() =>
       this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {})
     );
     when(this.mockedProjectService.createQuestion(anything(), anything())).thenCall((id, newQuestion) =>

@@ -58,7 +58,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   ngOnInit() {
     this.loadingStarted();
     this.subscribe(
-      this.userService.onlineSearch(this.searchTerm$, this.queryParameters$, this.reload$),
+      this.userService.onlineQuery(this.searchTerm$, this.queryParameters$, this.reload$),
       async searchResults => {
         // Process the query for users into Rows that can be displayed.
         this.loadingStarted();
@@ -71,7 +71,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
               projectDocs: userDoc.data.sites[environment.siteId].projects.map(id => projectDocs.get(id))
             } as Row)
         );
-        this.totalRecordCount = searchResults.totalUnpagedCount;
+        this.totalRecordCount = searchResults.unpagedCount;
         this.loadingFinished();
       }
     );

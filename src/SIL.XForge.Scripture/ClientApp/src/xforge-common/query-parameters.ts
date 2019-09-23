@@ -25,15 +25,15 @@ export interface QueryParameters extends Filters {
   $sort?: { [field: string]: 1 | -1 };
   $skip?: number;
   $limit?: number;
-  $count?: { applySkipLimit: boolean };
+  $count?: true;
 }
 
 export function performQuery(parameters: QueryParameters, snapshots: Snapshot[]): [Snapshot[], number] {
   let results = snapshots.filter(d => matchFilters(parameters, d.data));
-  const totalUnpagedCount = results.length;
+  const unpagedCount = results.length;
   results = sort(parameters, results);
   results = page(parameters, results);
-  return [results, totalUnpagedCount];
+  return [results, unpagedCount];
 }
 
 function matchFilters(filters: Filters, data: any): boolean {
