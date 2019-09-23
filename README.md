@@ -8,13 +8,13 @@ The existing site details are [here](https://github.com/sillsdev/web-languagefor
 
 To use **Language Forge** go to [languageforge.org](https://languageforge.org).
 
-To use **Scripture Forge** go to [scriptureforge.org](https://scriptureforge.org).
+To use **Scripture Forge** go to [beta.scriptureforge.org](https://beta.scriptureforge.org).
 
 ### User Problems
 
-To report a user issue with the **Language Forge** application, email "issues @ languageforge dot org".
+To report a user issue with the **Language Forge** application, email "languageforgeissues @ sil dot org".
 
-To report a user issue with the **Scripture Forge** application, email "issues @ scriptureforge dot org".
+To report a user issue with the **Scripture Forge** application, email "scriptureforgeissues @ sil dot org".
 
 ## Special Thanks To
 
@@ -32,9 +32,9 @@ For error reporting:
 
 Status of builds from our continuous integration (CI) [server](https://build.palaso.org):
 
-| Site               | Master Unit                                                                                                                                                                                                                                                                                                                                                                                                                           | Master E2E          | QA                                                                                                                                                                                                                                                                    | Live                                                                                                                                                                                                                                                                                                                           |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Scripture Forge v2 | ![Build Status](https://img.shields.io/teamcity/https/build.palaso.org/e/SFv2_ScriptureForgeMasterUnitTests?style=flat) ![Test coverage](<https://img.shields.io/badge/dynamic/xml?label=Test%20coverage&suffix=%&query=/properties/property[@name=%22CodeCoverageS%22]/@value&url=https%3A%2F%2Fbuild.palaso.org%2Fapp%2Frest%2Fbuilds%2FbuildType%3A(id%3ASFv2_ScriptureForgeMasterUnitTests)%2Fstatistics%3Fguest%3D1&style=flat>) | not yet operational | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeV2qaBeta)/statusIcon>) ![Website](https://img.shields.io/website/https/qa.beta.scriptureforge.org?down_message=offline&style=flat&up_message=online&label=website) | not yet live <br /> ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeV2beta)/statusIcon>) <!-- Badge that can be used when live ![Website](https://img.shields.io/website/https/beta.scriptureforge.org?down_message=offline&style=flat&up_message=online&label=website) --> |
+| Site               | Master Unit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Master E2E          | QA                                                                                                                                                                                                                                                       | Live                                                                                                                                                                                                                                                |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Scripture Forge v2 | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:SFv2_ScriptureForgeMasterUnitTests)/statusIcon>) ![Test coverage](<https://img.shields.io/badge/dynamic/xml?label=C%23%20test%20coverage&suffix=%&query=/properties/property[@name=%22CodeCoverageS%22]/@value&url=https%3A%2F%2Fbuild.palaso.org%2Fapp%2Frest%2Fbuilds%2FbuildType%3A(id%3ASFv2_ScriptureForgeMasterUnitTests)%2Fstatistics%3Fguest%3D1&style=flat>) <br />Angular test coverage not reported here but available in TC | not yet operational | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeV2qaBeta)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fqa.beta.scriptureforge.org) | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeV2beta)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fbeta.scriptureforge.org) |
 
 Successful builds from our CI server deploy to:
 
@@ -54,9 +54,9 @@ If you are working on a site _Beta_ then it looks like normal Gitflow and pull r
 
 We merge from `master` to the QA testing branch, then ship from the QA branch to the live production branch.
 
-| Site               | Development Branch | QA Branch | Production Branch |
-| ------------------ | ------------------ | --------- | ----------------- |
-| Scripture Forge v2 | `master`           | `sf-qa`   | `sf-live`         |
+| Site               | Development Branch | QA Branch | Live Branch |
+| ------------------ | ------------------ | --------- | ----------- |
+| Scripture Forge v2 | `master`           | `sf-qa`   | `sf-live`   |
 
 ### Style Guides
 
