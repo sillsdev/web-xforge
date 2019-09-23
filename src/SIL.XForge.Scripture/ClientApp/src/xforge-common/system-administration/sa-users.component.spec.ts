@@ -151,7 +151,7 @@ class TestEnvironment {
 
   constructor() {
     when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));
-    when(this.mockedUserService.onlineSearch(anything(), anything(), anything())).thenCall(
+    when(this.mockedUserService.onlineQuery(anything(), anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>, reload$: Observable<void>) =>
         combineLatest(term$, parameters$, reload$).pipe(
           switchMap(([term, queryParameters]) => {

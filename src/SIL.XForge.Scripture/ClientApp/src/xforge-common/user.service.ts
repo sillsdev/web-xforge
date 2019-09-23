@@ -60,7 +60,7 @@ export class UserService {
     await this.onlineInvoke('delete', { userId: id });
   }
 
-  onlineSearch(
+  onlineQuery(
     term$: Observable<string>,
     queryParameters$: Observable<QueryParameters>,
     reload$: Observable<void>
@@ -73,14 +73,17 @@ export class UserService {
     const u = objProxy<User>();
     return combineLatest(debouncedTerm$, queryParameters$, reload$).pipe(
       switchMap(([term, queryParameters]) => {
-        term = XRegExp.escape(term);
-        const filters: Filters = {
-          $or: [
-            { [getObjPathStr(u.name)]: { $regex: `.*${term}.*`, $options: 'i' } },
-            { [getObjPathStr(u.email)]: { $regex: `.*${term}.*`, $options: 'i' } },
-            { [getObjPathStr(u.displayName)]: { $regex: `.*${term}.*`, $options: 'i' } }
-          ]
-        };
+        term = XRegExp.escape(term.trim());
+        let filters: Filters = {};
+        if (term.length > 0) {
+          filters = {
+            $or: [
+              { [getObjPathStr(u.name)]: { $regex: `.*${term}.*`, $options: 'i' } },
+              { [getObjPathStr(u.email)]: { $regex: `.*${term}.*`, $options: 'i' } },
+              { [getObjPathStr(u.displayName)]: { $regex: `.*${term}.*`, $options: 'i' } }
+            ]
+          };
+        }
         return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.COLLECTION, merge(filters, queryParameters)));
       })
     );

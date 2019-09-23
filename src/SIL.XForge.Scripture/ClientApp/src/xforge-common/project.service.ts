@@ -39,7 +39,7 @@ export abstract class ProjectService<
     return this.realtimeService.subscribe(this.collection, id);
   }
 
-  onlineSearch(
+  onlineQuery(
     term$: Observable<string>,
     queryParameters$: Observable<QueryParameters>
   ): Observable<RealtimeQuery<TDoc>> {
@@ -51,16 +51,22 @@ export abstract class ProjectService<
     const p = objProxy<Project>();
     return combineLatest(debouncedTerm$, queryParameters$).pipe(
       switchMap(([term, queryParameters]) => {
-        term = XRegExp.escape(term);
-        const filters: Filters = {
-          [getObjPathStr(p.name)]: { $regex: `.*${term}.*`, $options: 'i' }
-        };
+        term = XRegExp.escape(term.trim());
+        let filters: Filters = {};
+        if (term.length > 0) {
+          filters = {
+            [getObjPathStr(p.name)]: { $regex: `.*${term}.*`, $options: 'i' }
+          };
+        }
         return this.realtimeService.onlineQuery<TDoc>(this.collection, merge(filters, queryParameters));
       })
     );
   }
 
   async onlineGetMany(projectIds: string[]): Promise<TDoc[]> {
+    if (projectIds.length === 0) {
+      return [];
+    }
     const results = await this.realtimeService.onlineQuery<TDoc>(this.collection, { _id: { $in: projectIds } });
     return results.docs as TDoc[];
   }

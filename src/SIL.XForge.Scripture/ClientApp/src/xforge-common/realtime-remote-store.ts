@@ -51,7 +51,8 @@ export interface RealtimeDocAdapter {
 export interface RealtimeQueryAdapter {
   readonly collection: string;
   readonly subscribed: boolean;
-  readonly totalUnpagedCount: number;
+  readonly count: number;
+  readonly unpagedCount: number;
   readonly docIds: string[];
   readonly parameters: QueryParameters;
   readonly ready: boolean;
@@ -63,7 +64,7 @@ export interface RealtimeQueryAdapter {
   readonly remoteChanges$: Observable<void>;
 
   fetch(): Promise<void>;
-  subscribe(initialDocIds?: string[], initialTotalUnpagedCount?: number): void;
+  subscribe(initialDocIds?: string[]): void;
 
   /*
    * Unsubscribes and destroys this query.

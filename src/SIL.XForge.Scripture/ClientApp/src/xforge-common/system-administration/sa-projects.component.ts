@@ -71,10 +71,10 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
 
   ngOnInit() {
     this.loadingStarted();
-    this.subscribe(this.projectService.onlineSearch(this.searchTerm$, this.queryParameters$), searchResults => {
+    this.subscribe(this.projectService.onlineQuery(this.searchTerm$, this.queryParameters$), searchResults => {
       this.loadingStarted();
       this.projectDocs = searchResults.docs;
-      this.length = searchResults.totalUnpagedCount;
+      this.length = searchResults.unpagedCount;
       this.generateRows();
       this.loadingFinished();
     });

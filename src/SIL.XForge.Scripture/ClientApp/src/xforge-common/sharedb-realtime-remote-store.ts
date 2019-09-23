@@ -225,8 +225,7 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
   private _move$ = new Subject<{ from: number; to: number; length: number }>();
   private _remoteChanges$ = new Subject<void>();
   private resultsQuery: Query;
-  private countQuery: Query;
-  private initialTotalUnpagedCount: number;
+  private unpagedCountQuery: Query;
 
   constructor(
     private readonly conn: Connection,
@@ -239,7 +238,10 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
   }
 
   get ready(): boolean {
-    return this.resultsQuery != null ? this.resultsQuery.ready : false;
+    if (this.resultsQuery == null) {
+      return false;
+    }
+    return this.resultsQuery.ready && (this.unpagedCountQuery == null || this.unpagedCountQuery.ready);
   }
 
   get ready$(): Observable<void> {
@@ -266,17 +268,24 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
     return this.resultsQuery != null ? this.resultsQuery.results.map(d => d.id) : [];
   }
 
-  get totalUnpagedCount(): number {
+  get count(): number {
     if (this.resultsQuery == null) {
       return 0;
     }
-    if (this.countQuery != null && this.countQuery.extra != null) {
-      return this.countQuery.extra;
+    if (this.resultsQuery.extra != null) {
+      return this.resultsQuery.extra;
     }
-    if (this.initialTotalUnpagedCount == null || this.resultsQuery.ready) {
-      return this.resultsQuery.results.length;
+    return this.resultsQuery.results.length;
+  }
+
+  get unpagedCount(): number {
+    if (this.resultsQuery == null) {
+      return 0;
     }
-    return this.initialTotalUnpagedCount;
+    if (this.unpagedCountQuery != null && this.unpagedCountQuery.extra != null) {
+      return this.unpagedCountQuery.extra;
+    }
+    return this.resultsQuery.results.length;
   }
 
   async fetch(): Promise<void> {
@@ -289,12 +298,11 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
         }
       });
     });
-    this.setupListeners();
     if (this.parameters.$skip != null || this.parameters.$limit != null) {
-      const countParameters = cloneDeep(this.parameters);
-      countParameters.$count = { applySkipLimit: false };
-      const countQueryPromise = new Promise<void>((resolve, reject) => {
-        this.countQuery = this.conn.createFetchQuery(this.collection, countParameters, {}, err => {
+      const unpagedCountParameters = cloneDeep(this.parameters) as any;
+      unpagedCountParameters.$count = { applySkipLimit: false };
+      const unpagedCountQueryPromise = new Promise<void>((resolve, reject) => {
+        this.unpagedCountQuery = this.conn.createFetchQuery(this.collection, unpagedCountParameters, {}, err => {
           if (err != null) {
             reject(err);
           } else {
@@ -302,38 +310,51 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
           }
         });
       });
-      await Promise.all([resultsQueryPromise, countQueryPromise]);
+      this.setupListeners();
+      await Promise.all([resultsQueryPromise, unpagedCountQueryPromise]);
     } else {
+      this.setupListeners();
       await resultsQueryPromise;
     }
   }
 
-  subscribe(initialDocIds: string[] = [], initialTotalUnpagedCount?: number): void {
+  subscribe(initialDocIds: string[] = []): void {
     const results = initialDocIds.map(docId => this.conn.get(this.collection, docId));
     this.resultsQuery = this.conn.createSubscribeQuery(this.collection, this.parameters, { results });
-    this.initialTotalUnpagedCount = initialTotalUnpagedCount;
-    this.setupListeners();
     if (this.parameters.$skip != null || this.parameters.$limit != null) {
-      const countParameters = cloneDeep(this.parameters);
-      countParameters.$count = { applySkipLimit: false };
-      this.countQuery = this.conn.createSubscribeQuery(this.collection, countParameters);
+      const unpagedCountParameters = cloneDeep(this.parameters) as any;
+      unpagedCountParameters.$count = { applySkipLimit: false };
+      this.unpagedCountQuery = this.conn.createSubscribeQuery(this.collection, unpagedCountParameters);
     }
+    this.setupListeners();
   }
 
   destroy(): void {
     if (this.resultsQuery != null) {
       this.resultsQuery.destroy();
     }
-    if (this.countQuery != null) {
-      this.countQuery.destroy();
+    if (this.unpagedCountQuery != null) {
+      this.unpagedCountQuery.destroy();
     }
   }
 
   private setupListeners(): void {
-    this.resultsQuery.on('ready', () => this._ready$.next());
+    this.resultsQuery.on('ready', () => {
+      if (this.unpagedCountQuery == null || this.unpagedCountQuery.ready) {
+        this._ready$.next();
+      }
+    });
     this.resultsQuery.on('insert', (docs, index) => this._insert$.next({ index, docIds: docs.map(d => d.id) }));
     this.resultsQuery.on('remove', (docs, index) => this._remove$.next({ index, docIds: docs.map(d => d.id) }));
     this.resultsQuery.on('move', (docs, from, to) => this._move$.next({ from, to, length: docs.length }));
     this.resultsQuery.on('changed', () => this._remoteChanges$.next());
+    this.resultsQuery.on('extra', () => this._remoteChanges$.next());
+    if (this.unpagedCountQuery != null) {
+      this.unpagedCountQuery.on('ready', () => {
+        if (this.resultsQuery.ready) {
+          this._ready$.next();
+        }
+      });
+    }
   }
 }

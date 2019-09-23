@@ -1,3 +1,4 @@
+import arrayDiff, { InsertDiff, MoveDiff, RemoveDiff } from 'arraydiff';
 import * as OTJson0 from 'ot-json0';
 import { EMPTY, Subject } from 'rxjs';
 import { OTType, types } from 'sharedb/lib/client';
@@ -168,8 +169,10 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
 export class MemoryRealtimeQueryAdapter implements RealtimeQueryAdapter {
   subscribed: boolean = false;
   ready: boolean = true;
-  totalUnpagedCount: number = 0;
+  unpagedCount: number = 0;
   docIds: string[] = [];
+  count: number = 0;
+
   readonly ready$ = new Subject<void>();
   readonly insert$ = new Subject<{ index: number; docIds: string[] }>();
   readonly remove$ = new Subject<{ index: number; docIds: string[] }>();
@@ -189,20 +192,59 @@ export class MemoryRealtimeQueryAdapter implements RealtimeQueryAdapter {
     return Promise.resolve();
   }
 
-  subscribe(_initialDocIds?: string[], _initialTotalUnpagedCount?: number): void {
+  subscribe(_initialDocIds?: string[]): void {
     this.performQuery();
     this.subscribed = true;
     this.ready = true;
-    this.insert$.next({ index: 0, docIds: this.docIds });
     this.ready$.next();
+  }
+
+  update(): void {
+    if (this.performQuery()) {
+      this.remoteChanges$.next();
+    }
   }
 
   destroy(): void {}
 
-  private performQuery(): void {
+  private performQuery(): boolean {
+    let changed = false;
     const snapshots = Array.from(this.remoteStore.getSnapshots(this.collection));
-    const [results, totalUnpagedCount] = performQuery(this.parameters, snapshots);
-    this.docIds = results.map(s => s.id);
-    this.totalUnpagedCount = totalUnpagedCount;
+    const [results, unpagedCount] = performQuery(this.parameters, snapshots);
+    if (this.count !== results.length) {
+      this.count = results.length;
+      changed = true;
+    }
+    if (this.parameters.$count == null) {
+      const before = this.docIds;
+      const after = results.map(s => s.id);
+      this.docIds = after;
+      const diffs = arrayDiff(before, after);
+      for (const diff of diffs) {
+        switch (diff.type) {
+          case 'insert':
+            const insertDiff = diff as InsertDiff;
+            this.insert$.next({ index: insertDiff.index, docIds: insertDiff.values });
+            break;
+
+          case 'remove':
+            const removeDiff = diff as RemoveDiff;
+            this.remove$.next({
+              index: removeDiff.index,
+              docIds: before.slice(removeDiff.index, removeDiff.index + removeDiff.howMany)
+            });
+            break;
+
+          case 'move':
+            const moveDiff = diff as MoveDiff;
+            this.move$.next({ from: moveDiff.from, to: moveDiff.to, length: moveDiff.howMany });
+            break;
+        }
+
+        changed = true;
+      }
+    }
+    this.unpagedCount = unpagedCount;
+    return changed;
   }
 }

@@ -55,7 +55,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribe(TextDoc.COLLECTION, textId instanceof TextDocId ? textId.toString() : textId);
   }
 
-  getQuestions(
+  queryQuestions(
     id: string,
     options: { bookNum?: number; activeOnly?: boolean; sort?: boolean } = {}
   ): Promise<RealtimeQuery<QuestionDoc>> {
@@ -71,6 +71,24 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     }
     if (options.sort != null) {
       queryParams.$sort = { [getObjPathStr(q.dateCreated)]: -1 };
+    }
+    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
+  }
+
+  queryQuestionCount(
+    id: string,
+    options: { bookNum?: number; activeOnly?: boolean } = {}
+  ): Promise<RealtimeQuery<QuestionDoc>> {
+    const q = objProxy<Question>();
+    const queryParams: QueryParameters = {
+      $count: true,
+      [getObjPathStr(q.projectRef)]: id
+    };
+    if (options.bookNum != null) {
+      queryParams[getObjPathStr(q.verseRef.bookNum)] = options.bookNum;
+    }
+    if (options.activeOnly != null && options.activeOnly) {
+      queryParams[getObjPathStr(q.isArchived)] = false;
     }
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
   }

@@ -153,8 +153,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         if (this.questionsQuery != null) {
           this.questionsQuery.dispose();
         }
-        this.questionsQuery = await this.projectService.getQuestions(projectId);
-        await this.initTexts();
+        this.questionsQuery = await this.projectService.queryQuestions(projectId);
+        this.initTexts();
       } finally {
         this.loadingFinished();
       }

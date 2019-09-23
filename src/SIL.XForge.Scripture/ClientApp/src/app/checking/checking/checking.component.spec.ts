@@ -36,7 +36,7 @@ import { ProjectService } from 'xforge-common/project.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { objectId } from 'xforge-common/utils';
+import { nameof, objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -174,6 +174,7 @@ describe('CheckingComponent', () => {
       let question = env.selectQuestion(1);
       const questionId = env.component.questionsPanel.activeQuestionDoc.id;
       expect(env.questions.length).toEqual(15);
+      const dateNow = new Date();
       const newQuestion: Question = {
         dataId: objectId(),
         ownerRef: env.adminUser.id,
@@ -182,8 +183,8 @@ describe('CheckingComponent', () => {
         answers: [],
         verseRef: { bookNum: 43, chapterNum: 1, verseNum: 10, verse: '10-11' },
         isArchived: false,
-        dateCreated: '',
-        dateModified: ''
+        dateCreated: dateNow.toJSON(),
+        dateModified: dateNow.toJSON()
       };
       env.insertQuestion(newQuestion);
       env.waitForSliderUpdate();
@@ -950,7 +951,7 @@ class TestEnvironment {
       data: newQuestion
     });
     const adapter = this.questionsQuery.adapter as MemoryRealtimeQueryAdapter;
-    adapter.insert$.next({ index: 0, docIds: [docId] });
+    adapter.update();
   }
 
   selectChapterFromMenu(chapter: number) {
@@ -1012,7 +1013,9 @@ class TestEnvironment {
       this.realtimeService.subscribe<TextDoc>(TextDoc.COLLECTION, id.toString())
     );
 
-    const dateNow: string = new Date().toJSON();
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    const dateCreated = date.toJSON();
     let questions: Partial<Snapshot<Question>>[] = [];
     const johnQuestions: Partial<Snapshot<Question>>[] = [];
     const matthewQuestions: Partial<Snapshot<Question>>[] = [];
@@ -1027,8 +1030,8 @@ class TestEnvironment {
           verseRef: { bookNum: 43, chapterNum: 1, verseNum: 1, verse: '1-2' },
           answers: [],
           isArchived: false,
-          dateCreated: dateNow,
-          dateModified: dateNow
+          dateCreated: dateCreated,
+          dateModified: dateCreated
         }
       });
     }
@@ -1042,8 +1045,8 @@ class TestEnvironment {
         verseRef: { bookNum: 43, chapterNum: 2, verseNum: 1, verse: '1-2' },
         answers: [],
         isArchived: false,
-        dateCreated: dateNow,
-        dateModified: dateNow
+        dateCreated: dateCreated,
+        dateModified: dateCreated
       }
     });
     matthewQuestions.push({
@@ -1056,8 +1059,8 @@ class TestEnvironment {
         verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
         answers: [],
         isArchived: false,
-        dateCreated: dateNow,
-        dateModified: dateNow
+        dateCreated: dateCreated,
+        dateModified: dateCreated
       }
     });
     johnQuestions[3].data.verseRef.verse = '3-4';
@@ -1068,8 +1071,8 @@ class TestEnvironment {
       verseRef: { chapterNum: 1, verseNum: 1, bookNum: 43 },
       scriptureText: 'Quoted scripture',
       likes: [],
-      dateCreated: dateNow,
-      dateModified: dateNow,
+      dateCreated: dateCreated,
+      dateModified: dateCreated,
       audioUrl: 'file://audio.mp3',
       comments: []
     });
@@ -1080,8 +1083,8 @@ class TestEnvironment {
         dataId: 'c' + commentNumber + 'Id',
         ownerRef: this.adminUser.id,
         text: 'Comment ' + commentNumber + ' on question 7',
-        dateCreated: dateNow,
-        dateModified: dateNow
+        dateCreated: dateCreated,
+        dateModified: dateCreated
       });
     }
     johnQuestions[6].data.answers.push({
@@ -1089,8 +1092,8 @@ class TestEnvironment {
       ownerRef: this.adminUser.id,
       text: 'Answer 7 on question',
       likes: [],
-      dateCreated: dateNow,
-      dateModified: dateNow,
+      dateCreated: dateCreated,
+      dateModified: dateCreated,
       comments: a7Comments
     });
 
@@ -1100,8 +1103,8 @@ class TestEnvironment {
         dataId: 'c' + commentNumber + 'Id',
         ownerRef: this.checkerUser.id,
         text: 'Comment ' + commentNumber + ' on question 8',
-        dateCreated: dateNow,
-        dateModified: dateNow
+        dateCreated: dateCreated,
+        dateModified: dateCreated
       });
     }
     johnQuestions[7].data.answers.push({
@@ -1109,8 +1112,8 @@ class TestEnvironment {
       ownerRef: this.adminUser.id,
       text: 'Answer 8 on question',
       likes: [],
-      dateCreated: dateNow,
-      dateModified: dateNow,
+      dateCreated: dateCreated,
+      dateModified: dateCreated,
       comments: a8Comments
     });
     if (this.projectBookRoute === 'JHN') {
@@ -1119,10 +1122,12 @@ class TestEnvironment {
       questions = johnQuestions.concat(matthewQuestions);
     }
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions);
-    this.questionsQuery = this.realtimeService.createQuery(QuestionDoc.COLLECTION, {});
+    this.questionsQuery = this.realtimeService.createQuery(QuestionDoc.COLLECTION, {
+      $sort: { [nameof<Question>('dateCreated')]: -1 }
+    });
     this.questionsQuery.subscribe();
     when(
-      this.mockedProjectService.getQuestions(
+      this.mockedProjectService.queryQuestions(
         'project01',
         deepEqual({
           bookNum: this.projectBookRoute === 'ALL' ? null : Canon.bookIdToNumber(this.projectBookRoute),
