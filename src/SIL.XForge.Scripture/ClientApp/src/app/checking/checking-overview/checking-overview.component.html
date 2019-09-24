@@ -3,7 +3,7 @@
   <h2 fxFlex>Texts with Questions</h2>
   <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart">
     <button *ngIf="!isLoading" mdc-button (click)="questionDialog()" id="add-question-button">
-      <mdc-icon>note_add</mdc-icon> <span fxHide.xs>Add question</span>
+      <mdc-icon>post_add</mdc-icon> <span fxHide.xs>Add question</span>
     </button>
   </div>
   <ng-template #overallProgressChart>
@@ -111,7 +111,7 @@
   id="no-questions-label"
 >
   <p>
-    There are no published questions. <span *ngIf="isProjectAdmin">Click <b>Add question</b>.</span>
+    There are no published questions. <span *ngIf="isProjectAdmin">Click <b>Add question</b>, above.</span>
   </p>
 </div>
 
