@@ -18,6 +18,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { HelpHeroService } from '../../core/help-hero.service';
+import { Anchorable } from '../../core/models/anchorable';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -73,6 +74,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     unread: 0,
     answered: 0
   };
+  bookVerseRefs: Anchorable[] = [];
 
   answersPanelContainerElement: ElementRef;
   projectDoc: SFProjectDoc;
@@ -130,6 +132,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.checkBookStatus();
   }
 
+  get bookName(): string {
+    return this.text != null ? Canon.bookNumberToEnglishName(this.text.bookNum) : '';
+  }
+
   get chapter(): number {
     return this._chapter;
   }
@@ -160,10 +166,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   get questionDocs(): Readonly<QuestionDoc[]> {
     return this.questionsQuery != null ? this.questionsQuery.docs : [];
-  }
-
-  get bookName(): string {
-    return this.text != null ? Canon.bookNumberToEnglishName(this.text.bookNum) : '';
   }
 
   private get answerPanelElementHeight(): number {
@@ -431,6 +433,36 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.questionsQuery != null ? this.questionsQuery.docs.length : 0;
   }
 
+  verseRefClicked(objClicked: Anchorable) {
+    const verseRef = objClicked.verseRef;
+    let bestMatch: QuestionDoc;
+
+    for (const questionDoc of this.questionDocs) {
+      if (questionDoc.verseRef.bookNum !== this.book) {
+        continue;
+      }
+      if (
+        questionDoc.verseRef.chapterNum === verseRef.chapterNum &&
+        questionDoc.verseRef.verseNum === verseRef.verseNum
+      ) {
+        bestMatch = questionDoc;
+        break;
+      } else if (
+        questionDoc.verseRef.chapterNum === verseRef.chapterNum &&
+        questionDoc.verseRef.verseNum <= verseRef.verseNum
+      ) {
+        const allVerses = questionDoc.verseRef.allVerses(true);
+        const endRef = allVerses[allVerses.length - 1];
+        if (endRef.verseNum >= verseRef.verseNum) {
+          bestMatch = questionDoc;
+        }
+      }
+    }
+    if (bestMatch) {
+      this.questionsPanel.activateQuestion(bestMatch);
+    }
+  }
+
   private checkBookStatus(): void {
     if (!this.totalQuestions()) {
       this.router.navigate(['/projects', this.projectDoc.id, 'checking'], {
@@ -447,6 +479,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.router.navigate(['/projects', this.projectDoc.id, 'checking', availableBooks[0]], {
           replaceUrl: true
         });
+      }
+    }
+    // Only pass in relevant verse references to the text component
+    this.bookVerseRefs = [];
+    for (const questionDoc of this.questionDocs) {
+      if (questionDoc.verseRef.bookNum === this.book) {
+        this.bookVerseRefs.push({ verseRef: questionDoc.verseRef });
       }
     }
   }
