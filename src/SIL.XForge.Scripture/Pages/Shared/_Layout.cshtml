@@ -45,10 +45,13 @@
             <div class="mdl-grid">
                 <div class="mdl-cell mdl-cell--12-col flex justify-content-space-between align-items-end">
                     <div id="profile">
-                        <ul>
+                        <ul class="app">
                             <li class="copyright">&copy; @DateTime.Now.Year <a target="_blank" href="http://www.sil.org">SIL International</a></li>
                             <li class="version">@System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion</li>
+                        </ul>
+                        <ul class="links">
                             <li><a href="~/terms_and_conditions">Terms</a></li>
+                            <li><a href="~/privacy">Privacy</a></li>
                         </ul>
                     </div>
                     <div id="logos">
