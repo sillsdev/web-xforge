@@ -15,7 +15,7 @@
         </mdc-top-app-bar-title>
       </mdc-top-app-bar-section>
       <mdc-top-app-bar-section align="end" *ngIf="currentUser">
-        <mdc-icon mdcTopAppBarActionItem title="Notifications">notifications</mdc-icon>
+        <!-- not in MVP <mdc-icon mdcTopAppBarActionItem title="Notifications">notifications</mdc-icon> -->
         <div mdcMenuSurfaceAnchor #helpMenuAnchor>
           <mdc-icon mdcTopAppBarActionItem title="Help" (click)="helpMenu.open = !helpMenu.open">help</mdc-icon>
           <mdc-menu #helpMenu [anchorCorner]="'bottomStart'" [anchorElement]="helpMenuAnchor">
