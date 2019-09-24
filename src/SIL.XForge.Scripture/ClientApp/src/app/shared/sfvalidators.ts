@@ -94,6 +94,6 @@ export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
         control.parent.hasError('verseBeforeStart'))
     );
 
-    return control.touched && (invalidCtrl || invalidStart);
+    return (control.touched || control.parent.controls['scriptureStart'].touched) && (invalidCtrl || invalidStart);
   }
 }

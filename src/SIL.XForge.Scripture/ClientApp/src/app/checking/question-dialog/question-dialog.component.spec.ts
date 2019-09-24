@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
@@ -280,7 +281,16 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('retrieves scripture text on editing a question', fakeAsync(() => {
-    const env = new TestEnvironment(true);
+    const env = new TestEnvironment({
+      dataId: 'question01',
+      ownerRef: 'user01',
+      projectRef: 'project01',
+      verseRef: fromVerseRef(VerseRef.parse('LUK 1:3')),
+      answers: [],
+      isArchived: false,
+      dateCreated: '',
+      dateModified: ''
+    });
     flush();
     const textDocId = new TextDocId('project01', 42, 1, 'target');
     expect(env.component.textDocId.toString()).toBe(textDocId.toString());
@@ -288,14 +298,43 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.selection.verseRef.toString()).toEqual('LUK 1:3');
   }));
 
-  it('displays error message when editing the scripture reference', fakeAsync(() => {
-    const env = new TestEnvironment(true);
+  it('displays error editing end reference to different book', fakeAsync(() => {
+    const env = new TestEnvironment({
+      dataId: 'question01',
+      ownerRef: 'user01',
+      projectRef: 'project01',
+      verseRef: fromVerseRef(VerseRef.parse('LUK 1:3')),
+      answers: [],
+      isArchived: false,
+      dateCreated: '',
+      dateModified: ''
+    });
     flush();
     expect(env.component.scriptureStart.value).toBe('LUK 1:3');
     env.component.scriptureEnd.setValue('MAT 1:2');
     env.component.scriptureEnd.markAsTouched();
     expect(env.component.scriptureEnd.errors).toBeNull();
     expect(env.component.scriptureEnd.valid).toBe(true);
+    expect(env.component.questionForm.errors.verseDifferentBookOrChapter).toBe(true);
+    env.clickElement(env.saveButton);
+    expect(env.scriptureEndInput.classList).toContain('mdc-text-field--invalid');
+    expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
+  }));
+
+  it('displays error editing start reference to a different book', fakeAsync(() => {
+    const env = new TestEnvironment({
+      dataId: 'question01',
+      ownerRef: 'user01',
+      projectRef: 'project01',
+      verseRef: fromVerseRef(VerseRef.parse('LUK 1:3-4')),
+      answers: [],
+      isArchived: false,
+      dateCreated: '',
+      dateModified: ''
+    });
+    flush();
+    env.component.scriptureStart.setValue('MAT 1:2');
+    env.component.scriptureStart.markAsTouched();
     expect(env.component.questionForm.errors.verseDifferentBookOrChapter).toBe(true);
     env.clickElement(env.saveButton);
     expect(env.scriptureEndInput.classList).toContain('mdc-text-field--invalid');
@@ -349,7 +388,7 @@ class TestEnvironment {
 
   private readonly offlineStore = new MemoryRealtimeOfflineStore();
 
-  constructor(editMode: boolean = false) {
+  constructor(question?: Question) {
     TestBed.configureTestingModule({
       imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
       providers: [
@@ -363,18 +402,7 @@ class TestEnvironment {
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     const config: MdcDialogConfig<QuestionDialogData> = {
       data: {
-        question: editMode
-          ? {
-              dataId: 'question01',
-              ownerRef: 'user01',
-              projectRef: 'project01',
-              verseRef: fromVerseRef(VerseRef.parse('LUK 1:3')),
-              answers: [],
-              isArchived: false,
-              dateCreated: '',
-              dateModified: ''
-            }
-          : undefined,
+        question: question ? question : undefined,
         textsByBookId: {
           MAT: {
             id: 'text01',
@@ -399,8 +427,11 @@ class TestEnvironment {
     when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
+    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 40, 1, 'target')))).thenResolve(
+      this.createTextDoc(40)
+    );
     when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 42, 1, 'target')))).thenResolve(
-      this.createTextDoc()
+      this.createTextDoc(42)
     );
     this.fixture.detectChanges();
   }
@@ -473,7 +504,7 @@ class TestEnvironment {
     this.component.processAudio(audio);
   }
 
-  private createTextDoc(): TextDoc {
+  private createTextDoc(bookNum: number): TextDoc {
     const delta = new Delta();
     delta.insert({ chapter: { number: '1', style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
@@ -492,7 +523,7 @@ class TestEnvironment {
     delta.insert('\n', { para: { style: 'p' } });
     const adapter = new MemoryRealtimeDocAdapter(
       TextDoc.COLLECTION,
-      getTextDocId('project01', 42, 1, 'target'),
+      getTextDocId('project01', bookNum, 1, 'target'),
       delta,
       RichText.type
     );
