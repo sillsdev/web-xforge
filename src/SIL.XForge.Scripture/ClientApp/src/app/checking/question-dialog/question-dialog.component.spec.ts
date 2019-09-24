@@ -248,6 +248,14 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureEnd.disabled).toBe(false);
   }));
 
+  it('does not enable end-reference until start-reference is changed', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    expect(env.component.scriptureEnd.disabled).toBe(true);
+    env.inputValue(env.scriptureStartInput, 'LUK 1:1');
+    expect(env.component.scriptureEnd.disabled).toBe(false);
+  }));
+
   it('allows a question without text if audio is provided', fakeAsync(() => {
     const env = new TestEnvironment();
     flush();
