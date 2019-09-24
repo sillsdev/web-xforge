@@ -72,6 +72,12 @@ export class SFValidators {
     const isAfterStart: boolean = scriptureStartRef.verseNum <= scriptureEndRef.verseNum;
     return isAfterStart ? null : { verseBeforeStart: true };
   }
+
+  static requireIfEndReferenceProvided(group: FormGroup): ValidationErrors | null {
+    return group.controls.scriptureEnd.value && !group.controls.scriptureStart.value
+      ? { startReferenceRequired: true }
+      : null;
+  }
 }
 
 /**
@@ -95,5 +101,24 @@ export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
     );
 
     return (control.touched || control.parent.controls['scriptureStart'].touched) && (invalidCtrl || invalidStart);
+  }
+}
+
+/**
+ * An error state matcher for the start reference text field to match when the field should be styled with red outline
+ */
+export class StartReferenceRequiredErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    const invalidCtrl = !!(control && control.invalid);
+    const endReferenceExists = !!(
+      control &&
+      control.parent &&
+      control.parent.controls &&
+      control.parent.controls['scriptureEnd'] &&
+      control.parent.controls['scriptureEnd'].value &&
+      control.parent.controls['scriptureEnd'].dirty &&
+      control.parent.controls['scriptureEnd'].touched
+    );
+    return (control.touched && invalidCtrl) || (endReferenceExists && !control.value);
   }
 }

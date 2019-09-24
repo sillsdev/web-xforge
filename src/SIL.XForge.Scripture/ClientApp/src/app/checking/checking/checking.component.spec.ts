@@ -369,6 +369,14 @@ describe('CheckingComponent', () => {
       env.setTextFieldValue(env.yourAnswerField, 'Answer question');
       env.clickButton(env.selectTextTab);
       expect(env.scriptureText).toBe(null);
+
+      // Answer form is invalid if missing the start reference
+      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:4');
+      expect(env.component.answersPanel.answerForm.invalid).toBe(true);
+      expect(env.component.answersPanel.answerForm.hasError('startReferenceRequired'));
+      env.setTextFieldValue(env.scriptureEndField, '');
+      expect(env.component.answersPanel.answerForm.valid).toBe(true);
+
       env.setTextFieldValue(env.scriptureStartField, 'JHN 1:3');
       expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
       env.setTextFieldValue(env.scriptureEndField, 'JHN 1:4');
@@ -446,6 +454,28 @@ describe('CheckingComponent', () => {
       env.setupData(env.observerUser);
       env.selectQuestion(2);
       expect(env.addAnswerButton).toBeNull();
+    }));
+
+    it('shows error messages when answer form is invalid', fakeAsync(() => {
+      env.setupData(env.checkerUser);
+      env.selectQuestion(1);
+      env.clickButton(env.addAnswerButton);
+      env.setTextFieldValue(env.yourAnswerField, 'Answer the question');
+      env.clickButton(env.selectTextTab);
+      env.setTextFieldValue(env.scriptureStartField, 'BAD VERSE');
+      env.clickButton(env.answerTextTab);
+      env.clickButton(env.saveAnswerButton);
+      tick(100);
+      expect(env.component.answersPanel.answerForm.invalid).toBe(true);
+      expect(env.answerFormErrors.length).toEqual(1);
+      expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
+      env.clickButton(env.selectTextTab);
+      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:2');
+      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:1');
+      env.clickButton(env.answerTextTab);
+      expect(env.answerFormErrors.length).toEqual(1);
+      expect(env.component.answersPanel.answerForm.hasError('verseBeforeStart'));
+      expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
     }));
 
     describe('Comments', () => {
@@ -825,6 +855,14 @@ class TestEnvironment {
 
   get yourAnswerField(): DebugElement {
     return this.fixture.debugElement.query(By.css('mdc-text-field[formControlName="answerText"]'));
+  }
+
+  get answerTextTab(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(1)'));
+  }
+
+  get answerFormErrors(): DebugElement[] {
+    return this.fixture.debugElement.queryAll(By.css('#answer-form .form-helper-text'));
   }
 
   get scriptureStartField(): DebugElement {

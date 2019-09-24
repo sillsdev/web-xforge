@@ -27,7 +27,11 @@ import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { ParentAndStartErrorStateMatcher, SFValidators } from '../../../shared/sfvalidators';
+import {
+  ParentAndStartErrorStateMatcher,
+  SFValidators,
+  StartReferenceRequiredErrorStateMatcher
+} from '../../../shared/sfvalidators';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
@@ -75,11 +79,12 @@ export class CheckingAnswersComponent implements OnInit {
       scriptureEnd: new FormControl(),
       scriptureText: new FormControl()
     },
-    SFValidators.verseStartBeforeEnd
+    [SFValidators.verseStartBeforeEnd, SFValidators.requireIfEndReferenceProvided]
   );
   answerFormVisible: boolean = false;
   answerFormSubmitAttempted: boolean = false;
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
+  startReferenceMatcher = new StartReferenceRequiredErrorStateMatcher();
 
   private user: UserDoc;
   private _questionDoc: QuestionDoc;
@@ -156,6 +161,16 @@ export class CheckingAnswersComponent implements OnInit {
   }
   get scriptureText(): AbstractControl {
     return this.answerForm.controls.scriptureText;
+  }
+
+  get hasScriptureReferenceError(): boolean {
+    return (
+      this.scriptureStart.invalid ||
+      this.scriptureEnd.invalid ||
+      this.answerForm.hasError('verseBeforeStart') ||
+      this.answerForm.hasError('verseDifferentBookOrChapter') ||
+      this.answerForm.hasError('startReferenceRequired')
+    );
   }
 
   get totalAnswersHeading(): string {

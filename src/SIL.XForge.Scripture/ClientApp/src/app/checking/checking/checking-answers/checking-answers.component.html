@@ -58,6 +58,7 @@
           type="text"
           formControlName="scriptureStart"
           outlined
+          [errorStateMatcher]="startReferenceMatcher"
           id="scripture-start"
           (input)="updateScriptureEndEnabled()"
           (change)="extractScriptureText()"
@@ -67,10 +68,9 @@
           >
         </mdc-text-field>
         <mdc-helper-text validation id="question-scripture-start-helper-text">
-          *Required<span *ngIf="scriptureStart.hasError('verseFormat')">, e.g. JHN 3:16</span>
-          <span *ngIf="scriptureStart.hasError('verseRange')"
-            >, must be a verse in the question's book and chapter</span
-          >
+          <span *ngIf="scriptureStart.hasError('verseFormat')">e.g. JHN 3:16</span>
+          <span *ngIf="scriptureStart.hasError('verseRange')">Must be a verse in the question's book and chapter</span>
+          <span *ngIf="answerForm.hasError('startReferenceRequired')">Start reference required</span>
         </mdc-helper-text>
       </mdc-form-field>
       <mdc-form-field class="scripture-end" [fxHide.lt-xl]="canShowScriptureInput">
@@ -90,7 +90,7 @@
         <mdc-helper-text validation>
           <span *ngIf="scriptureEnd.hasError('verseFormat')">e.g. JHN 3:16</span>
           <span *ngIf="scriptureEnd.hasError('verseRange')">Must be inside verse range</span>
-          <span *ngIf="answerForm.hasError('verseDifferentBookOrChapter')"> Must be the same book and chapter </span>
+          <span *ngIf="answerForm.hasError('verseDifferentBookOrChapter')">Must be the same book and chapter </span>
           <span *ngIf="answerForm.hasError('verseBeforeStart')">Must be after <b>Scripture reference</b></span>
         </mdc-helper-text>
       </mdc-form-field>
@@ -116,6 +116,12 @@
     </div>
     <div *ngIf="answerFormSubmitAttempted && answerText.invalid" class="form-helper-text">
       You need to enter your answer or record your answer before saving
+    </div>
+    <div
+      *ngIf="answerFormSubmitAttempted && hasScriptureReferenceError && answerTabs.activeTabIndex !== 2"
+      class="form-helper-text"
+    >
+      Please enter a valid scripture reference in the select text tab
     </div>
     <div class="form-actions">
       <button mdc-button (click)="hideAnswerForm()" id="cancel-answer">Cancel</button>
