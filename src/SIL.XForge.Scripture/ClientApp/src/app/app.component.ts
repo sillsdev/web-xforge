@@ -49,8 +49,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   projectDocs: SFProjectDoc[];
   isProjectAdmin$: Observable<boolean>;
 
-  private _checkingTexts: TextInfo[] = [];
-  private questionCountQueries: QuestionQuery[] = [];
   private currentUserDoc: UserDoc;
   private currentUserAuthType: AuthType;
   private _projectSelect: MdcSelect;
@@ -61,6 +59,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private removedFromProjectSub: Subscription;
   private _isDrawerPermanent: boolean = true;
   private selectedProjectRole: SFProjectRole;
+  private readonly questionCountQueries = new Map<number, RealtimeQuery>();
 
   constructor(
     private readonly router: Router,
@@ -88,10 +87,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
       });
     }
-  }
-
-  get checkingTexts(): TextInfo[] {
-    return this._checkingTexts;
   }
 
   get issueMailTo(): string {
@@ -181,6 +176,19 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
       ? []
       : this.selectedProjectDoc.data.texts;
+  }
+
+  get showAllQuestions(): boolean {
+    let count = 0;
+    for (const text of this.texts) {
+      if (this.hasQuestions(text)) {
+        count++;
+      }
+      if (count > 1) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private get site(): Site {
@@ -301,18 +309,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
         if (this.isCheckingEnabled) {
           this.disposeQuestionQueries();
-          this._checkingTexts = [];
+          const promises: Promise<any>[] = [];
           for (const text of this.texts) {
-            const questionCountQuery = await this.projectService.queryQuestionCount(this.selectedProjectId, {
-              bookNum: text.bookNum,
-              activeOnly: true
-            });
-            this.toggleCheckingBook(questionCountQuery, text);
-            this.subscribe(questionCountQuery.remoteChanges$, () => {
-              this.toggleCheckingBook(questionCountQuery, text);
-            });
-            this.questionCountQueries.push({ bookNum: text.bookNum, query: questionCountQuery });
+            promises.push(
+              this.projectService
+                .queryQuestionCount(this.selectedProjectId, {
+                  bookNum: text.bookNum,
+                  activeOnly: true
+                })
+                .then(query => this.questionCountQueries.set(text.bookNum, query))
+            );
           }
+          await Promise.all(promises);
         }
       });
       // tell HelpHero to remember this user to make sure we won't show them an identical tour again later
@@ -399,13 +407,16 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return Canon.bookNumberToId(text.bookNum);
   }
 
+  hasQuestions(text: TextInfo): boolean {
+    const query = this.questionCountQueries.get(text.bookNum);
+    return query != null && query.count > 0;
+  }
+
   private disposeQuestionQueries() {
-    if (this.questionCountQueries.length > 0) {
-      for (const questionQuery of this.questionCountQueries) {
-        questionQuery.query.dispose();
-      }
-      this.questionCountQueries = [];
+    for (const questionQuery of this.questionCountQueries.values()) {
+      questionQuery.dispose();
     }
+    this.questionCountQueries.clear();
   }
 
   private async getProjectDocs(): Promise<SFProjectDoc[]> {
@@ -439,19 +450,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     const isShort = this._isDrawerPermanent && this.selectedProjectDoc != null;
     if (isShort !== this._topAppBar.short) {
       this._topAppBar.setShort(isShort, true);
-    }
-  }
-
-  private toggleCheckingBook(questionCountQuery: RealtimeQuery, text: TextInfo) {
-    if (questionCountQuery.count > 0) {
-      if (!this._checkingTexts.includes(text)) {
-        this._checkingTexts.push(text);
-      }
-    } else {
-      const index = this._checkingTexts.findIndex(t => text.bookNum === t.bookNum);
-      if (index !== -1) {
-        this._checkingTexts.splice(index, 1);
-      }
     }
   }
 }

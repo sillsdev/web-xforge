@@ -101,6 +101,8 @@ namespace SIL.XForge.Scripture.Services
                         break;
                 }
             }
+            if (curChapter == 0)
+                curChapter = 1;
             ChapterEnded(chapterDeltas, chapterDelta, curChapter, lastVerse, curRef, topLevelVerses);
             return chapterDeltas;
         }

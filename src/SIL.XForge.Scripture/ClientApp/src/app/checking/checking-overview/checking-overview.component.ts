@@ -418,6 +418,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     this.textsByBookId = {};
     this.texts = [];
     for (const text of this.projectDoc.data.texts) {
+      // ignore empty books
+      if (text.chapters.length === 1 && text.chapters[0].lastVerse === 0) {
+        continue;
+      }
       this.textsByBookId[Canon.bookNumberToId(text.bookNum)] = text;
       this.texts.push(text);
       for (const chapter of text.chapters) {
