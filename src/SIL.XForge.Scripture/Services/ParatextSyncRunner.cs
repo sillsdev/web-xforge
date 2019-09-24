@@ -423,11 +423,11 @@ namespace SIL.XForge.Scripture.Services
             var tasks = new List<Task>();
             for (int i = 0; i < questionDocIds.Count; i++)
             {
-                async Task fetchQuestion()
+                async Task fetchQuestion(int index)
                 {
-                    questionDocs[i] = await _conn.FetchAsync<Question>(questionDocIds[i]);
+                    questionDocs[index] = await _conn.FetchAsync<Question>(questionDocIds[index]);
                 }
-                tasks.Add(fetchQuestion());
+                tasks.Add(fetchQuestion(i));
             }
             await Task.WhenAll(tasks);
             return questionDocs;
