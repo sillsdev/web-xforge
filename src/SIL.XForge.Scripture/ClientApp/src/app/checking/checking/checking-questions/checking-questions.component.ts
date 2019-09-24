@@ -1,8 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import sortBy from 'lodash/sortBy';
+import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -42,13 +44,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     return this.questionDocs.findIndex(question => question.id === this.activeQuestionDoc.id);
   }
 
-  get isAdministrator(): boolean {
-    if (this.project == null || this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded) {
-      return false;
-    }
-    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRole.ParatextAdministrator;
-  }
-
   get questionDocs(): Readonly<QuestionDoc[]> {
     return this._questionDocs;
   }
@@ -64,8 +59,22 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     this._questionDocs = questionDocs;
   }
 
+  private get canAddAnswer(): boolean {
+    return SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
+      projectDomain: SFProjectDomain.Answers,
+      operation: Operation.Create
+    });
+  }
+
+  private get projectRole(): SFProjectRole {
+    if (this.project == null || this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded) {
+      return SFProjectRole.None;
+    }
+    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] as SFProjectRole;
+  }
+
   getAnswers(questionDoc: QuestionDoc): Answer[] {
-    if (this.project.checkingConfig.usersSeeEachOthersResponses || this.isAdministrator) {
+    if (this.project.checkingConfig.usersSeeEachOthersResponses || !this.canAddAnswer) {
       return questionDoc.data.answers;
     } else {
       return questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
@@ -74,7 +83,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
 
   getUnreadAnswers(questionDoc: QuestionDoc): number {
     let unread = 0;
-    if (!this.isAdministrator && !this.project.checkingConfig.usersSeeEachOthersResponses) {
+    if (this.canAddAnswer && !this.project.checkingConfig.usersSeeEachOthersResponses) {
       return unread;
     }
     for (const answer of this.getAnswers(questionDoc)) {
@@ -98,7 +107,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
         if (!this.hasUserReadQuestion(questionDoc)) {
           op.add(puc => puc.questionRefsRead, questionDoc.data.dataId);
         }
-        if (this.hasUserAnswered(questionDoc) || this.isAdministrator) {
+        if (this.hasUserAnswered(questionDoc) || !this.canAddAnswer) {
           for (const answer of this.getAnswers(questionDoc)) {
             if (!this.hasUserReadAnswer(answer)) {
               op.add(puc => puc.answerRefsRead, answer.dataId);

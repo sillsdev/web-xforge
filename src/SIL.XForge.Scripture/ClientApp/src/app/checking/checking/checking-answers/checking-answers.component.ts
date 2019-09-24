@@ -2,8 +2,10 @@ import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import cloneDeep from 'lodash/cloneDeep';
+import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import {
@@ -99,7 +101,7 @@ export class CheckingAnswersComponent implements OnInit {
     if (this._questionDoc == null || !this._questionDoc.isLoaded) {
       return [];
     }
-    if (this.canSeeOtherUserResponses || this.isAdministrator) {
+    if (this.canSeeOtherUserResponses || !this.canAddAnswer) {
       return this._questionDoc.data.answers;
     } else {
       return this._questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
@@ -134,11 +136,11 @@ export class CheckingAnswersComponent implements OnInit {
       : false;
   }
 
-  get isAdministrator(): boolean {
-    if (this.project == null || this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded) {
-      return false;
-    }
-    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRole.ParatextAdministrator;
+  get canAddAnswer(): boolean {
+    return SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
+      projectDomain: SFProjectDomain.Answers,
+      operation: Operation.Create
+    });
   }
 
   get questionDoc(): QuestionDoc {
@@ -157,11 +159,18 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   get totalAnswersHeading(): string {
-    if (this.canSeeOtherUserResponses || this.isAdministrator) {
+    if (this.canSeeOtherUserResponses || !this.canAddAnswer) {
       return this.answers.length + ' Answers';
     } else {
       return 'Your Answer';
     }
+  }
+
+  private get projectRole(): SFProjectRole {
+    if (this.project == null || this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded) {
+      return SFProjectRole.None;
+    }
+    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] as SFProjectRole;
   }
 
   /** Fetch a TextsByBookId that only contains the book and chapter that pertains to the question. */
@@ -227,13 +236,22 @@ export class CheckingAnswersComponent implements OnInit {
     this.scriptureStart.valid ? this.scriptureEnd.enable() : this.scriptureEnd.disable();
   }
 
-  hasPermission(answer: Answer, permission: string): boolean {
-    if (this.userService.currentUserId === answer.ownerRef) {
-      return true;
-    } else if (permission === 'delete' && this.isAdministrator) {
-      return true;
-    }
-    return false;
+  canEditAnswer(answer: Answer): boolean {
+    return SF_PROJECT_RIGHTS.hasRight(
+      this.projectRole,
+      { projectDomain: SFProjectDomain.Answers, operation: Operation.Edit },
+      this.userService.currentUserId,
+      answer
+    );
+  }
+
+  canDeleteAnswer(answer: Answer): boolean {
+    return SF_PROJECT_RIGHTS.hasRight(
+      this.projectRole,
+      { projectDomain: SFProjectDomain.Answers, operation: Operation.Delete },
+      this.userService.currentUserId,
+      answer
+    );
   }
 
   hasUserReadAnswer(answer: Answer): boolean {

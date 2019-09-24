@@ -14,7 +14,7 @@
   </div>
   <div *ngIf="!answerFormVisible" class="actions">
     <button
-      *ngIf="!currentUserTotalAnswers && !isAdministrator"
+      *ngIf="currentUserTotalAnswers === 0 && canAddAnswer"
       mdc-button
       primary
       (click)="showAnswerForm()"
@@ -124,7 +124,7 @@
   </form>
 </div>
 <div class="answers-container">
-  <ng-container *ngIf="!answerFormVisible && answers.length && (currentUserTotalAnswers || isAdministrator)">
+  <ng-container *ngIf="!answerFormVisible && answers.length > 0 && (currentUserTotalAnswers > 0 || !canAddAnswer)">
     <h3>{{ totalAnswersHeading }}</h3>
     <div class="answer" *ngFor="let answer of answers" [ngClass]="{ 'answer-unread': !hasUserReadAnswer(answer) }">
       <div class="like">
@@ -140,15 +140,10 @@
         <app-checking-audio-player *ngIf="answer.audioUrl" [source]="answer.audioUrl"></app-checking-audio-player>
         <div class="answer-footer">
           <div class="actions">
-            <button *ngIf="hasPermission(answer, 'edit')" mdc-button (click)="editAnswer(answer)" class="answer-edit">
+            <button *ngIf="canEditAnswer(answer)" mdc-button (click)="editAnswer(answer)" class="answer-edit">
               Edit
             </button>
-            <button
-              *ngIf="hasPermission(answer, 'delete')"
-              mdc-button
-              (click)="deleteAnswer(answer)"
-              class="answer-delete"
-            >
+            <button *ngIf="canDeleteAnswer(answer)" mdc-button (click)="deleteAnswer(answer)" class="answer-delete">
               Delete
             </button>
           </div>

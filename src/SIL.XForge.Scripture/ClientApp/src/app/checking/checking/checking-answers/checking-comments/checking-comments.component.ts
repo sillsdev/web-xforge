@@ -1,9 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import cloneDeep from 'lodash/cloneDeep';
 import sortBy from 'lodash/sortBy';
+import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { QuestionDoc } from 'src/app/core/models/question-doc';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -39,13 +41,6 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     super();
   }
 
-  get isAdministrator(): boolean {
-    if (this.project == null || this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded) {
-      return false;
-    }
-    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] === SFProjectRole.ParatextAdministrator;
-  }
-
   get showMoreCommentsLabel(): string {
     const comments = this.getSortedComments();
     let label = 'Show ' + (comments.length - (this.maxCommentsToShow - 1)) + ' more comments';
@@ -67,6 +62,20 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     return this.answer != null ? this.answer.comments.length : 0;
   }
 
+  get canAddComment(): boolean {
+    return SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
+      projectDomain: SFProjectDomain.AnswerComments,
+      operation: Operation.Create
+    });
+  }
+
+  private get projectRole(): SFProjectRole {
+    if (this.project == null || this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded) {
+      return SFProjectRole.None;
+    }
+    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] as SFProjectRole;
+  }
+
   getSortedComments(): Comment[] {
     return this.answer != null ? sortBy(this.answer.comments, c => c.dateCreated) : [];
   }
@@ -84,13 +93,22 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     });
   }
 
-  hasPermission(comment: Comment, permission: string): boolean {
-    if (this.userService.currentUserId === comment.ownerRef) {
-      return true;
-    } else if (permission === 'delete' && this.isAdministrator) {
-      return true;
-    }
-    return false;
+  canEditComment(comment: Comment): boolean {
+    return SF_PROJECT_RIGHTS.hasRight(
+      this.projectRole,
+      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Edit },
+      this.userService.currentUserId,
+      comment
+    );
+  }
+
+  canDeleteComment(comment: Comment): boolean {
+    return SF_PROJECT_RIGHTS.hasRight(
+      this.projectRole,
+      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Delete },
+      this.userService.currentUserId,
+      comment
+    );
   }
 
   hasUserReadComment(comment: Comment): boolean {

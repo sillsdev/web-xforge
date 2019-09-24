@@ -51,7 +51,9 @@ export class SFProjectRights extends ProjectRights {
     ]);
     this.addRights(SFProjectRole.ParatextTranslator, translatorRights);
 
-    const administratorRights: ProjectRight[] = translatorRights.concat([
+    const administratorRights: ProjectRight[] = observerRights.concat([
+      { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit },
+
       { projectDomain: SFProjectDomain.Questions, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Questions, operation: Operation.Edit },
       { projectDomain: SFProjectDomain.Questions, operation: Operation.Delete },
@@ -59,8 +61,12 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Answers, operation: Operation.Edit },
       { projectDomain: SFProjectDomain.Answers, operation: Operation.Delete },
 
+      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Create },
       { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Edit },
-      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Delete }
+      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Delete },
+
+      { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn }
     ]);
     this.addRights(SFProjectRole.ParatextAdministrator, administratorRights);
   }

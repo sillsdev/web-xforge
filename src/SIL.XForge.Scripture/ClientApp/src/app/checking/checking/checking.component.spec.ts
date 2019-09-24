@@ -94,7 +94,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('responds to remote removed from project', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(1);
       expect(env.component.questionDocs.length).toEqual(15);
       env.component.projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles[env.checkerUser.id]), false);
@@ -107,7 +107,7 @@ describe('CheckingComponent', () => {
 
   describe('Questions', () => {
     it('questions are displaying', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       // A sixteenth question is archived
       expect(env.questions.length).toEqual(15);
       const question = env.selectQuestion(15);
@@ -116,7 +116,7 @@ describe('CheckingComponent', () => {
 
     it('questions are displaying for all books', fakeAsync(() => {
       env.projectBookRoute = 'ALL';
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       // A sixteenth question is archived
       expect(env.questions.length).toEqual(16);
       let question = env.selectQuestion(1);
@@ -128,13 +128,13 @@ describe('CheckingComponent', () => {
     }));
 
     it('can select a question', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       const question = env.selectQuestion(1);
       expect(question.classes['mdc-list-item--activated']).toBeTruthy();
     }));
 
     it('question status change to read', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       let question = env.selectQuestion(2, false);
       expect(question.classes['question-read']).toBeFalsy();
       question = env.selectQuestion(3);
@@ -142,7 +142,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('question status change to answered', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(question.classes['question-answered']).toBeTruthy();
@@ -158,7 +158,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('unread questions badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       expect(env.getUnread(env.questions[6])).toEqual(4);
       env.component.projectDoc.submitJson0Op(
         op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, false),
@@ -170,7 +170,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('responds to remote question added', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       let question = env.selectQuestion(1);
       const questionId = env.component.questionsPanel.activeQuestionDoc.id;
       expect(env.questions.length).toEqual(15);
@@ -197,20 +197,20 @@ describe('CheckingComponent', () => {
 
   describe('Answers', () => {
     it('answer panel is initiated and shows the first question', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       expect(env.answerPanel).toBeDefined();
     }));
 
     it('can answer a question', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
-      const question = env.selectQuestion(2);
+      env.setupData(env.checkerUser);
+      env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answer question 2');
     }));
 
     it('opens dialog if answering a question for the first time', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.cleanCheckerUser);
+      env.setupData(env.cleanCheckerUser);
       env.selectQuestion(2);
       env.answerQuestion('Answering question 2 should pop up a dialog');
       verify(env.mockedAccountService.openNameDialog(env.cleanCheckerUser.user.displayName, true)).once();
@@ -219,7 +219,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('inserts newer answer above older answers', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(7);
       env.answerQuestion('Just added answer');
       expect(env.answers.length).toEqual(2);
@@ -228,8 +228,8 @@ describe('CheckingComponent', () => {
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
-      const question = env.selectQuestion(2);
+      env.setupData(env.checkerUser);
+      env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.waitForSliderUpdate();
       expect(env.yourAnswerField).toBeDefined();
@@ -240,8 +240,8 @@ describe('CheckingComponent', () => {
     }));
 
     it('can change answering tabs', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
-      const question = env.selectQuestion(2);
+      env.setupData(env.checkerUser);
+      env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.waitForSliderUpdate();
       env.clickButton(env.audioTab);
@@ -249,8 +249,8 @@ describe('CheckingComponent', () => {
     }));
 
     it('check answering validation', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
-      const question = env.selectQuestion(2);
+      env.setupData(env.checkerUser);
+      env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
@@ -258,7 +258,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can edit an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(7);
       env.answerQuestion('Answer question 7');
       expect(env.getAnswer(1).classes['answer-unread']).toBe(true);
@@ -271,7 +271,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can remove audio from answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
       env.waitForSliderUpdate();
@@ -284,7 +284,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can delete an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(6);
       expect(env.answers.length).toEqual(1);
       env.clickButton(env.answerDeleteButton(0));
@@ -294,7 +294,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can delete correct answer after changing chapters', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       env.component.chapter = env.component.chapter + 1;
@@ -304,7 +304,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('answers reset when changing questions', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
@@ -313,7 +313,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can like and unlike an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(1);
       env.answerQuestion('Answer question to be liked');
       expect(env.likeTotal).toBe(0);
@@ -326,7 +326,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('do not show answers until current user has submitted an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(7);
       expect(env.answers.length).toBe(0);
       expect(env.getUnread(env.questions[6])).toEqual(4);
@@ -336,7 +336,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('reviewer can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.component.projectDoc.submitJson0Op(
         op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, false),
         false
@@ -352,7 +352,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can add scripture to an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(1);
       env.clickButton(env.addAnswerButton);
       env.setTextFieldValue(env.yourAnswerField, 'Answer question');
@@ -368,7 +368,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('out-of-chapter reference is invalid', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(1);
       env.clickButton(env.addAnswerButton);
       env.setTextFieldValue(env.yourAnswerField, 'Answer question');
@@ -392,7 +392,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('out-of-chapter detection is based on question chapter, not viewed chapter', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
 
       // Answer a question in chapter 2.
       const questionNumberInWebpageList =
@@ -420,7 +420,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can remove scripture from an answer', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(6);
       expect(env.getAnswerScriptureText(0)).toBe('Quoted scripture(JHN 1:1)');
       env.clickButton(env.getAnswerEditButton(0));
@@ -431,9 +431,15 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerScripture(0)).toBeFalsy();
     }));
 
+    it('observer cannot answer a question', fakeAsync(() => {
+      env.setupData(env.observerUser);
+      env.selectQuestion(2);
+      expect(env.addAnswerButton).toBeNull();
+    }));
+
     describe('Comments', () => {
       it('can comment on an answer', fakeAsync(() => {
-        env.setupReviewerScenarioData(env.checkerUser);
+        env.setupData(env.checkerUser);
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -441,7 +447,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('can edit comment on an answer', fakeAsync(() => {
-        env.setupReviewerScenarioData(env.checkerUser);
+        env.setupData(env.checkerUser);
         // Answer a question in a chapter where chapters previous also have comments
         env.selectQuestion(15);
         env.answerQuestion('Answer question to be commented on');
@@ -458,7 +464,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('can delete comment on an answer', fakeAsync(() => {
-        env.setupReviewerScenarioData(env.checkerUser);
+        env.setupData(env.checkerUser);
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -469,7 +475,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('comments only appear on the relevant answer', fakeAsync(() => {
-        env.setupReviewerScenarioData(env.checkerUser);
+        env.setupData(env.checkerUser);
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'First comment');
@@ -517,7 +523,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('displays comments in real-time', fakeAsync(() => {
-        env.setupReviewerScenarioData(env.checkerUser);
+        env.setupData(env.checkerUser);
         env.selectQuestion(1);
         env.answerQuestion('Admin will add a comment to this');
         expect(env.getAnswerComments(0).length).toEqual(0);
@@ -536,6 +542,12 @@ describe('CheckingComponent', () => {
         env.waitForSliderUpdate();
         expect(env.getAnswerComments(0).length).toEqual(1);
         expect(env.component.projectUserConfigDoc.data.commentRefsRead.includes(comment.dataId)).toBe(true);
+      }));
+
+      it('observer cannot comment on an answer', fakeAsync(() => {
+        env.setupData(env.observerUser);
+        env.selectQuestion(6);
+        expect(env.getAddCommentButton(0)).toBeNull();
       }));
     });
   });
@@ -581,11 +593,12 @@ class TestEnvironment {
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedActivatedRoute = mock(ActivatedRoute);
 
-  adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
-  checkerUser = this.createUser('02', SFProjectRole.CommunityChecker);
-  cleanCheckerUser = this.createUser('03', SFProjectRole.CommunityChecker, false);
+  readonly adminUser: UserInfo = this.createUser('01', SFProjectRole.ParatextAdministrator);
+  readonly checkerUser: UserInfo = this.createUser('02', SFProjectRole.CommunityChecker);
+  readonly cleanCheckerUser: UserInfo = this.createUser('03', SFProjectRole.CommunityChecker, false);
+  readonly observerUser: UserInfo = this.createUser('04', SFProjectRole.ParatextObserver);
 
-  private adminProjectUserConfig: SFProjectUserConfig = {
+  private readonly adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.adminUser.id,
     projectRef: 'project01',
     isTargetTextRight: true,
@@ -597,7 +610,7 @@ class TestEnvironment {
     commentRefsRead: []
   };
 
-  private reviewerProjectUserConfig: SFProjectUserConfig = {
+  private readonly reviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.checkerUser.id,
     projectRef: 'project01',
     isTargetTextRight: true,
@@ -609,7 +622,7 @@ class TestEnvironment {
     commentRefsRead: []
   };
 
-  private cleanReviewerProjectUserConfig: SFProjectUserConfig = {
+  private readonly cleanReviewerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.cleanCheckerUser.id,
     projectRef: 'project01',
     isTargetTextRight: true,
@@ -621,7 +634,19 @@ class TestEnvironment {
     commentRefsRead: []
   };
 
-  private testProject: SFProject = {
+  private readonly observerProjectUserConfig: SFProjectUserConfig = {
+    ownerRef: this.observerUser.id,
+    projectRef: 'project01',
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    translationSuggestionsEnabled: true,
+    selectedSegment: '',
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: []
+  };
+
+  private readonly testProject: SFProject = {
     name: 'Project 01',
     paratextId: 'pt01',
     shortName: 'P01',
@@ -655,7 +680,8 @@ class TestEnvironment {
     userRoles: {
       [this.adminUser.id]: this.adminUser.role,
       [this.checkerUser.id]: this.checkerUser.role,
-      [this.cleanCheckerUser.id]: this.cleanCheckerUser.role
+      [this.cleanCheckerUser.id]: this.cleanCheckerUser.role,
+      [this.observerUser.id]: this.observerUser.role
     }
   };
 
@@ -939,7 +965,7 @@ class TestEnvironment {
     this.initComponentEnviroment();
   }
 
-  setupReviewerScenarioData(user: UserInfo): void {
+  setupData(user: UserInfo): void {
     this.setupDefaultProjectData(user);
     this.initComponentEnviroment();
   }
@@ -983,6 +1009,10 @@ class TestEnvironment {
       {
         id: getSFProjectUserConfigDocId('project01', this.cleanCheckerUser.id),
         data: this.cleanReviewerProjectUserConfig
+      },
+      {
+        id: getSFProjectUserConfigDocId('project01', this.observerUser.id),
+        data: this.observerProjectUserConfig
       }
     ]);
     when(this.mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>

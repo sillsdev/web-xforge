@@ -226,6 +226,7 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
   private _remoteChanges$ = new Subject<void>();
   private resultsQuery: Query;
   private unpagedCountQuery: Query;
+  private _ready: boolean = false;
 
   constructor(
     private readonly conn: Connection,
@@ -238,10 +239,7 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
   }
 
   get ready(): boolean {
-    if (this.resultsQuery == null) {
-      return false;
-    }
-    return this.resultsQuery.ready && (this.unpagedCountQuery == null || this.unpagedCountQuery.ready);
+    return this._ready;
   }
 
   get ready$(): Observable<void> {
@@ -341,6 +339,7 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
   private setupListeners(): void {
     this.resultsQuery.on('ready', () => {
       if (this.unpagedCountQuery == null || this.unpagedCountQuery.ready) {
+        this._ready = true;
         this._ready$.next();
       }
     });
@@ -348,10 +347,15 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
     this.resultsQuery.on('remove', (docs, index) => this._remove$.next({ index, docIds: docs.map(d => d.id) }));
     this.resultsQuery.on('move', (docs, from, to) => this._move$.next({ from, to, length: docs.length }));
     this.resultsQuery.on('changed', () => this._remoteChanges$.next());
-    this.resultsQuery.on('extra', () => this._remoteChanges$.next());
+    this.resultsQuery.on('extra', () => {
+      if (this.ready) {
+        this._remoteChanges$.next();
+      }
+    });
     if (this.unpagedCountQuery != null) {
       this.unpagedCountQuery.on('ready', () => {
         if (this.resultsQuery.ready) {
+          this._ready = true;
           this._ready$.next();
         }
       });

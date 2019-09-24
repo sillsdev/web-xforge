@@ -301,6 +301,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
         if (this.isCheckingEnabled) {
           this.disposeQuestionQueries();
+          this._checkingTexts = [];
           for (const text of this.texts) {
             const questionCountQuery = await this.projectService.queryQuestionCount(this.selectedProjectId, {
               bookNum: text.bookNum,

@@ -1,4 +1,4 @@
-import { Observable, Subject } from 'rxjs';
+import { merge, Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { performQuery } from '../query-parameters';
 import { RealtimeQueryAdapter } from '../realtime-remote-store';
@@ -12,6 +12,8 @@ import { Snapshot } from './snapshot';
  * is executed on the server and the client is notified.
  */
 export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
+  readonly remoteChanges$: Observable<void>;
+
   private _docs: T[] = [];
   private unsubscribe$ = new Subject<void>();
   private initialCount: number = 0;
@@ -22,6 +24,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     this.adapter.insert$.pipe(takeUntil(this.unsubscribe$)).subscribe(evt => this.onInsert(evt.index, evt.docIds));
     this.adapter.remove$.pipe(takeUntil(this.unsubscribe$)).subscribe(evt => this.onRemove(evt.index, evt.docIds));
     this.adapter.move$.pipe(takeUntil(this.unsubscribe$)).subscribe(evt => this.onMove(evt.from, evt.to, evt.length));
+    this.remoteChanges$ = merge(this.adapter.ready$, this.adapter.remoteChanges$);
   }
 
   get collection(): string {
@@ -42,10 +45,6 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
 
   get unpagedCount(): number {
     return this.adapter.ready ? this.adapter.unpagedCount : this.initialUnpagedCount;
-  }
-
-  get remoteChanges$(): Observable<void> {
-    return this.adapter.remoteChanges$;
   }
 
   fetch(): Promise<void> {
