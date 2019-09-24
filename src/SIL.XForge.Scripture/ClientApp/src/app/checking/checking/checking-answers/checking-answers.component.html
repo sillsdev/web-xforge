@@ -118,9 +118,7 @@
       You need to enter your answer or record your answer before saving
     </div>
     <div
-      *ngIf="
-        answerFormSubmitAttempted && (scriptureStart.invalid || scriptureEnd.invalid) && answerTabs.activeTabIndex !== 2
-      "
+      *ngIf="answerFormSubmitAttempted && hasScriptureReferenceError && answerTabs.activeTabIndex !== 2"
       class="form-helper-text"
     >
       Please enter a valid scripture reference in the select text tab

@@ -104,6 +104,9 @@ export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
   }
 }
 
+/**
+ * An error state matcher for the start reference text field to match when the field should be styled with red outline
+ */
 export class StartReferenceRequiredErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const invalidCtrl = !!(control && control.invalid);

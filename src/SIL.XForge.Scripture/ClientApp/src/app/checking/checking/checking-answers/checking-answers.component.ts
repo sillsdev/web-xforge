@@ -163,6 +163,16 @@ export class CheckingAnswersComponent implements OnInit {
     return this.answerForm.controls.scriptureText;
   }
 
+  get hasScriptureReferenceError(): boolean {
+    return (
+      this.scriptureStart.invalid ||
+      this.scriptureEnd.invalid ||
+      this.answerForm.hasError('verseBeforeStart') ||
+      this.answerForm.hasError('verseDifferentBookOrChapter') ||
+      this.answerForm.hasError('startReferenceRequired')
+    );
+  }
+
   get totalAnswersHeading(): string {
     if (this.canSeeOtherUserResponses || !this.canAddAnswer) {
       return this.answers.length + ' Answers';

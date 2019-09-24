@@ -457,7 +457,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('shows error messages when answer form is invalid', fakeAsync(() => {
-      env.setupReviewerScenarioData(env.checkerUser);
+      env.setupData(env.checkerUser);
       env.selectQuestion(1);
       env.clickButton(env.addAnswerButton);
       env.setTextFieldValue(env.yourAnswerField, 'Answer the question');
@@ -468,6 +468,13 @@ describe('CheckingComponent', () => {
       tick(100);
       expect(env.component.answersPanel.answerForm.invalid).toBe(true);
       expect(env.answerFormErrors.length).toEqual(1);
+      expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
+      env.clickButton(env.selectTextTab);
+      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:2');
+      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:1');
+      env.clickButton(env.answerTextTab);
+      expect(env.answerFormErrors.length).toEqual(1);
+      expect(env.component.answersPanel.answerForm.hasError('verseBeforeStart'));
       expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
     }));
 
