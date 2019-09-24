@@ -117,6 +117,9 @@
         }
       }
     }
+    .liked {
+      color: var(--mdc-theme-secondary);
+    }
     .answer-detail {
       flex: 1;
       padding-right: 15px;

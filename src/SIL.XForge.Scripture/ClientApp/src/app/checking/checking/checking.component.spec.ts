@@ -321,9 +321,11 @@ describe('CheckingComponent', () => {
       env.clickButton(env.likeButtons[1]);
       env.waitForSliderUpdate();
       expect(env.getLikeTotal(1)).toBe(1);
+      expect(env.likeButtons[1].classes.liked).toBe(true);
       env.clickButton(env.likeButtons[1]);
       env.waitForSliderUpdate();
       expect(env.getLikeTotal(1)).toBe(0);
+      expect(env.likeButtons[1].classes.like).toBeUndefined();
     }));
 
     it('cannot like your own answer', fakeAsync(() => {

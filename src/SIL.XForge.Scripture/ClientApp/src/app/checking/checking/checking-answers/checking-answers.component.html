@@ -134,7 +134,9 @@
     <h3>{{ totalAnswersHeading }}</h3>
     <div class="answer" *ngFor="let answer of answers" [ngClass]="{ 'answer-unread': !hasUserReadAnswer(answer) }">
       <div class="like">
-        <mdc-icon class="like-answer" (click)="likeAnswer(answer)">thumb_up</mdc-icon>
+        <mdc-icon class="like-answer" (click)="likeAnswer(answer)" [ngClass]="{ liked: hasUserLikedAnswer(answer) }"
+          >thumb_up</mdc-icon
+        >
         <span class="like-count">{{ answer.likes.length }}</span>
       </div>
       <div class="answer-detail">
