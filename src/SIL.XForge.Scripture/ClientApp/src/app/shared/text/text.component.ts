@@ -220,6 +220,10 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     return selectionEndIndex === segmentEndIndex;
   }
 
+  get readOnlyEnabled(): boolean {
+    return this.isReadOnly || (this.viewModel != null && this.viewModel.isEmpty);
+  }
+
   ngOnDestroy(): void {
     super.ngOnDestroy();
     if (this.viewModel != null) {
@@ -282,9 +286,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   onContentChanged(delta: DeltaStatic, source: Sources): void {
     this.viewModel.update(delta, source);
-    if (this.viewModel.isEmpty) {
-      this.setPlaceholderText('Book does not exist');
-    }
+    this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
     if (delta.ops.some(op => op.insert != null || op.delete != null)) {
       this.update(delta);
@@ -326,6 +328,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.setPlaceholderText('Loading...');
     const textDoc = await this.projectService.getText(this._id);
     this.viewModel.bind(textDoc);
+    this.updatePlaceholderText();
 
     this.loaded.emit();
     this.applyEditorStyles();
@@ -509,6 +512,14 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     } else {
       this.highlightMarker.style.marginTop = marginTop + 'px';
       this.highlightMarker.style.height = this.highlightMarkerHeight + 'px';
+    }
+  }
+
+  private updatePlaceholderText(): void {
+    if (!this.viewModel.isLoaded) {
+      this.setPlaceholderText('This book does not exist.');
+    } else if (this.viewModel.isEmpty) {
+      this.setPlaceholderText('This book is empty. Add chapters in Paratext.');
     }
   }
 

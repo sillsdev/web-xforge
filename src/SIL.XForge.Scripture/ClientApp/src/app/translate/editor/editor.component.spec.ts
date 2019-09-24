@@ -512,6 +512,22 @@ describe('EditorComponent', () => {
       expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
+
+    it('empty book', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'JHN' });
+      env.wait();
+      expect(env.component.bookName).toEqual('John');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
+      expect(env.component.showSuggestion).toBe(false);
+      expect(env.isSourceAreaHidden).toBe(true);
+      expect(env.component.target.readOnlyEnabled).toBe(true);
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
@@ -659,6 +675,7 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 41, 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 42, 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 42, 2, 'target'));
+    this.addEmptyTextDoc(new TextDocId('project01', 43, 1, 'target'));
 
     when(this.mockedActivatedRoute.params).thenReturn(this.params$);
     this.setCurrentUser('user01');
@@ -758,6 +775,11 @@ class TestEnvironment {
         {
           bookNum: 42,
           chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+          hasSource: false
+        },
+        {
+          bookNum: 43,
+          chapters: [{ number: 1, lastVerse: 0 }],
           hasSource: false
         }
       ]
@@ -911,5 +933,11 @@ class TestEnvironment {
 
   private addTextDoc(id: TextDocId): void {
     when(this.mockedSFProjectService.getText(deepEqual(id))).thenResolve(this.createTextDoc(id));
+  }
+
+  private addEmptyTextDoc(id: TextDocId): void {
+    const adapter = new MemoryRealtimeDocAdapter(TextDoc.COLLECTION, id.toString(), new Delta(), RichText.type);
+    const textDoc = new TextDoc(this.offlineStore, adapter);
+    when(this.mockedSFProjectService.getText(deepEqual(id))).thenResolve(textDoc);
   }
 }

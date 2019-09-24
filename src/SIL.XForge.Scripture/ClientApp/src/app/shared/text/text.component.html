@@ -1,12 +1,12 @@
 <quill-editor
   spellcheck="false"
   placeholder="Loading..."
-  [readOnly]="isReadOnly"
+  [readOnly]="readOnlyEnabled"
   [strict]="false"
   [modules]="modules"
   (onEditorCreated)="onEditorCreated($event)"
   (onContentChanged)="onContentChanged($event.delta, $event.source)"
   (onSelectionChanged)="onSelectionChanged()"
-  [ngClass]="{ 'template-editor': !isReadOnly }"
+  [ngClass]="{ 'template-editor': !readOnlyEnabled }"
 >
 </quill-editor>
