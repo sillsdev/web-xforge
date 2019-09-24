@@ -78,7 +78,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     if (domain == null) {
       return false;
     }
-    return this.checkJsonCreateRight(session.userId, role, domain, doc);
+    return this.hasRight(role, domain, Operation.Create, session.userId, doc);
   }
 
   protected async allowDelete(_docId: string, doc: T, session: ConnectSession): Promise<boolean> {
@@ -98,7 +98,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     if (domain == null) {
       return false;
     }
-    return this.checkJsonDeleteRight(session.userId, role, domain, doc);
+    return this.hasRight(role, domain, Operation.Delete, session.userId, doc);
   }
 
   protected async allowRead(_docId: string, doc: T, session: ConnectSession): Promise<boolean> {
@@ -115,10 +115,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     }
 
     for (const domain of this.domains) {
-      if (
-        !this.hasRight(role, domain, Operation.View) &&
-        (((doc as unknown) as OwnedData).ownerRef !== session.userId || !this.hasRight(role, domain, Operation.ViewOwn))
-      ) {
+      if (!this.hasRight(role, domain, Operation.View, session.userId, doc)) {
         return false;
       }
     }
@@ -128,7 +125,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   protected async allowUpdate(
     _docId: string,
     oldDoc: T,
-    newDoc: T,
+    _newDoc: T,
     ops: ShareDB.Op[],
     session: ConnectSession
   ): Promise<boolean> {
@@ -155,26 +152,25 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
         // property update
         const entityPath = op.p.slice(0, domain.pathTemplate.template.length);
         const oldEntity = this.deepGet(entityPath, oldDoc);
-        const newEntity = this.deepGet(entityPath, newDoc);
-        if (!this.checkJsonEditRight(session.userId, role, domain, oldEntity, newEntity)) {
+        if (!this.hasRight(role, domain, Operation.Edit, session.userId, oldEntity)) {
           return false;
         }
       } else {
         const listOp = op as ShareDB.ListReplaceOp;
         if (listOp.li != null && listOp.ld != null) {
           // replace
-          if (!this.checkJsonEditRight(session.userId, role, domain, listOp.ld, listOp.li)) {
+          if (!this.hasRight(role, domain, Operation.Edit, session.userId, listOp.ld)) {
             return false;
           }
         } else if (listOp.li != null) {
           // create
-          if (!this.checkJsonCreateRight(session.userId, role, domain, listOp.li)) {
+          if (!this.hasRight(role, domain, Operation.Create, session.userId, listOp.li)) {
             return false;
           }
           checkImmutableProps = false;
         } else if (listOp.ld != null) {
           // delete
-          if (!this.checkJsonDeleteRight(session.userId, role, domain, listOp.ld)) {
+          if (!this.hasRight(role, domain, Operation.Delete, session.userId, listOp.ld)) {
             return false;
           }
           checkImmutableProps = false;
@@ -246,48 +242,14 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     return undefined;
   }
 
-  private hasRight(role: string, domainConfig: ProjectDomainConfig, operation: Operation): boolean {
-    return this.projectRights.hasRight(role, { projectDomain: domainConfig.projectDomain, operation });
-  }
-
-  private checkJsonEditRight(
-    userId: string,
+  private hasRight(
     role: string,
-    domain: ProjectDomainConfig,
-    oldEntity: OwnedData,
-    newEntity: OwnedData
-  ): boolean {
-    if (oldEntity.ownerRef !== newEntity.ownerRef) {
-      return false;
-    }
-
-    if (this.hasRight(role, domain, Operation.Edit)) {
-      return true;
-    }
-
-    return this.hasRight(role, domain, Operation.EditOwn) && oldEntity.ownerRef === userId;
-  }
-
-  private checkJsonCreateRight(
+    domainConfig: ProjectDomainConfig,
+    operation: Operation,
     userId: string,
-    role: string,
-    domain: ProjectDomainConfig,
-    newEntity: OwnedData
+    data: OwnedData
   ): boolean {
-    return this.hasRight(role, domain, Operation.Create) && newEntity.ownerRef === userId;
-  }
-
-  private checkJsonDeleteRight(
-    userId: string,
-    role: string,
-    domain: ProjectDomainConfig,
-    oldEntity: OwnedData
-  ): boolean {
-    if (this.hasRight(role, domain, Operation.Delete)) {
-      return true;
-    }
-
-    return this.hasRight(role, domain, Operation.DeleteOwn) && oldEntity.ownerRef === userId;
+    return this.projectRights.hasRight(role, { projectDomain: domainConfig.projectDomain, operation }, userId, data);
   }
 
   private deepGet(path: ShareDB.Path, obj: any): any {
