@@ -84,8 +84,8 @@
                     #textPanel
                     [id]="textDocId"
                     [activeObject]="questionsPanel.activeQuestionDoc"
-                    [objects]="questionDocs"
-                    (objectClicked)="questionsPanel.activateQuestion($event)"
+                    [objects]="bookVerseRefs"
+                    (objectClicked)="verseRefClicked($event)"
                   ></app-checking-text>
                 </div>
               </as-split-area>

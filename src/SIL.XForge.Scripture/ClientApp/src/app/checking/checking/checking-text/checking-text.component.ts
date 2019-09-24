@@ -1,8 +1,9 @@
 import { Component, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { clone } from 'lodash';
 import isEqual from 'lodash/isEqual';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
-import { fromEvent } from 'rxjs';
+import { fromEvent, Subscription } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { Anchorable } from '../../../core/models/anchorable';
 import { TextDocId } from '../../../core/models/text-doc';
@@ -36,12 +37,13 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
   }
   @Output() objectClicked: EventEmitter<Anchorable> = new EventEmitter<Anchorable>();
-  @Input() objects: Readonly<Anchorable[]> = [];
   @Input() mode: 'checking' | 'dialog' = 'checking';
 
+  private clickSubs: Subscription[] = [];
   private _activeObject: Readonly<Anchorable>;
   private _editorLoaded = false;
   private _id: TextDocId;
+  private _objects: Readonly<Anchorable[]>;
 
   get activeObject(): Readonly<Anchorable> {
     return this._activeObject;
@@ -53,6 +55,20 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
   get id() {
     return this._id;
+  }
+
+  @Input() set objects(objects: Readonly<Anchorable[]>) {
+    if (this.isEditorLoaded) {
+      this.resetObjectHighlights(objects);
+    }
+    this._objects = clone(objects);
+    if (this.isEditorLoaded) {
+      this.highlightObjects();
+    }
+  }
+
+  get objects(): Readonly<Anchorable[]> {
+    return this._objects;
   }
 
   applyFontChange(fontSize: string) {
@@ -69,7 +85,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
         for (const obj of this.objects) {
           const referenceSegments = this.getObjectSegments(obj);
           if (referenceSegments.length) {
-            this.setupQuestionSegments([referenceSegments[0]]);
+            this.setupQuestionSegments([referenceSegments[0]], true);
             for (const segment of referenceSegments) {
               if (!segments.includes(segment)) {
                 segments.push(segment);
@@ -124,52 +140,65 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       if (this.mode === 'dialog') {
         continue;
       }
+      if (!toggle) {
+        continue;
+      }
       const element = this.textComponent.editor.container.querySelector('usx-segment[data-segment=' + segment + ']');
-      this.subscribe(fromEvent(element, 'click'), (event: MouseEvent) => {
-        let target = event.target;
-        if (target['offsetParent']['nodeName'] === 'USX-SEGMENT') {
-          target = target['offsetParent'];
+      this.clickSubs.push(
+        this.subscribe(fromEvent(element, 'click'), (event: MouseEvent) => {
+          let target = event.target;
+          if (target['offsetParent']['nodeName'] === 'USX-SEGMENT') {
+            target = target['offsetParent'];
+          }
+          if (target['nodeName'] === 'USX-SEGMENT') {
+            const clickSegment = target['attributes']['data-segment'].value;
+            const segmentParts = clickSegment.split('_', 3);
+            const verseRef = new VerseRef(this._id.bookNum, segmentParts[1], segmentParts[2]);
+            const verseRefData = fromVerseRef(verseRef);
+            this.segmentClicked(verseRefData);
+          }
+        })
+      );
+    }
+  }
+
+  private resetObjectHighlights(objects: Readonly<Anchorable[]>) {
+    // Remove all highlights and question segments
+    for (const obj of this.objects) {
+      if (!objects.includes(obj)) {
+        const segment = this.getSegment(obj.verseRef.chapterNum, obj.verseRef.verseNum);
+        if (!this.textComponent.hasSegmentRange(segment)) {
+          continue;
         }
-        if (target['nodeName'] === 'USX-SEGMENT') {
-          const clickSegment = target['attributes']['data-segment'].value;
-          const segmentParts = clickSegment.split('_', 3);
-          const verseRef = new VerseRef(this._id.bookNum, segmentParts[1], segmentParts[2]);
-          const verseRefData = fromVerseRef(verseRef);
-          this.segmentClicked(verseRefData);
-        }
-      });
+        const range = this.textComponent.getSegmentRange(segment);
+        this.textComponent.toggleHighlight(false, range);
+        this.setupQuestionSegments([segment], false);
+      }
+    }
+    // Un-subscribe from all segment click events as these all get setup again
+    for (const event of this.clickSubs) {
+      event.unsubscribe();
     }
   }
 
   private segmentClicked(verseRefData: VerseRefData) {
-    const verseRef = toVerseRef(verseRefData);
-    let bestMatch: Anchorable = {};
-
-    for (const obj of this.objects) {
-      if (obj.verseRef.chapterNum === verseRef.chapterNum && obj.verseRef.verseNum === verseRef.verseNum) {
-        bestMatch = obj;
-        break;
-      } else if (obj.verseRef.chapterNum === verseRef.chapterNum && obj.verseRef.verseNum <= verseRef.verseNum) {
-        const allVerses = obj.verseRef.allVerses(true);
-        const endRef = allVerses[allVerses.length - 1];
-        if (endRef.verseNum >= verseRef.verseNum) {
-          bestMatch = obj;
-        }
-      }
-    }
-    if (bestMatch) {
-      this.objectClicked.emit(bestMatch);
-    }
+    this.objectClicked.emit({ verseRef: toVerseRef(verseRefData) });
   }
 
-  private setupQuestionSegments(segments: string[]) {
+  private setupQuestionSegments(segments: string[], toggle: boolean) {
     for (const segment of segments) {
       if (!this.textComponent.hasSegmentRange(segment)) {
         continue;
       }
       const range = this.textComponent.getSegmentRange(segment);
       Promise.resolve().then(() => {
-        this.textComponent.editor.formatText(range.index, range.length, 'data-question', 'true', 'silent');
+        this.textComponent.editor.formatText(
+          range.index,
+          range.length,
+          'data-question',
+          toggle ? 'true' : false,
+          'silent'
+        );
       });
     }
   }
