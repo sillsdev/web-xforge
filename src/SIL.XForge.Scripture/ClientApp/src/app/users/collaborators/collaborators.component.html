@@ -10,9 +10,10 @@
 
   <div fxLayout="row" fxLayoutAlign="start center">
     <p class="helper-text">
-      User's roles and permissions can <strong>only</strong> be changed in <strong>Paratext</strong>. Open the project
-      in <strong>Paratext</strong>, click <strong>Project</strong> then <strong>Users, Roles and Permissions</strong>.
-      Their role will come into effect here once that user logs in with their Paratext account.
+      User's roles and permissions can <b>only</b> be changed in <b>Paratext</b>. Open the project in <b>Paratext</b>,
+      on the project window click <mdc-icon>menu</mdc-icon>, then <b>Project settings</b>, then <b>User permissions</b>.
+      After a <i>Send/Receive</i> in <b>Paratext</b> then a <b>Synchronize</b> here, their role will come into effect
+      here once that user logs in with their Paratext account.
     </p>
   </div>
 
@@ -38,8 +39,7 @@
         <ng-container matColumnDef="name">
           <td mat-cell *matCellDef="let userRow">
             <div *ngIf="!userRow.isInvitee" class="display-name-label">
-              {{ userRow.user?.displayName }}
-              <strong *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;me</strong>
+              {{ userRow.user?.displayName }} <b *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;me</b>
             </div>
             <div *ngIf="userRow.isInvitee">
               Awaiting response from

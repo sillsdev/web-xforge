@@ -23,6 +23,11 @@ mdc-text-field {
 
 .helper-text {
   color: var(--mdc-theme-text-hint-on-background);
+  mdc-icon {
+    font-size: inherit;
+    position: relative;
+    top: 3px;
+  }
 }
 
 .text-entry {
