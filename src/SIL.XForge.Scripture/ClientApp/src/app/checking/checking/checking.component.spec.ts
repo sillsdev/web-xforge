@@ -64,7 +64,7 @@ describe('CheckingComponent', () => {
 
   describe('Interface', () => {
     it('can navigate using next button', fakeAsync(() => {
-      env.setupAdminScenarioData();
+      env.setupData(env.adminUser);
       env.selectQuestion(1);
       env.clickButton(env.nextButton);
       tick(env.questionReadTimer);
@@ -73,7 +73,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can navigate using previous button', fakeAsync(() => {
-      env.setupAdminScenarioData();
+      env.setupData(env.adminUser);
       env.selectQuestion(2);
       env.clickButton(env.previousButton);
       tick(env.questionReadTimer);
@@ -82,7 +82,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('check navigate buttons disable at the end of the question list', fakeAsync(() => {
-      env.setupAdminScenarioData();
+      env.setupData(env.adminUser);
       env.selectQuestion(1);
       const prev = env.previousButton;
       const next = env.nextButton;
@@ -149,7 +149,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('question shows answers icon and total', fakeAsync(() => {
-      env.setupAdminScenarioData();
+      env.setupData(env.adminUser);
       const question = env.selectQuestion(6, false);
       expect(env.getUnread(question)).toEqual(1);
       tick(env.questionReadTimer);
@@ -312,17 +312,28 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(0);
     }));
 
-    it('can like and unlike an answer', fakeAsync(() => {
+    it("can like and unlike another's answer", fakeAsync(() => {
+      env.setupData(env.checkerUser);
+      env.selectQuestion(7);
+      env.answerQuestion('Answer question 7');
+      expect(env.getAnswerText(1)).toBe('Answer 7 on question');
+      expect(env.getLikeTotal(1)).toBe(0);
+      env.clickButton(env.likeButtons[1]);
+      env.waitForSliderUpdate();
+      expect(env.getLikeTotal(1)).toBe(1);
+      env.clickButton(env.likeButtons[1]);
+      env.waitForSliderUpdate();
+      expect(env.getLikeTotal(1)).toBe(0);
+    }));
+
+    it('cannot like your own answer', fakeAsync(() => {
       env.setupData(env.checkerUser);
       env.selectQuestion(1);
       env.answerQuestion('Answer question to be liked');
-      expect(env.likeTotal).toBe(0);
-      env.clickButton(env.likeButton);
+      expect(env.getLikeTotal(0)).toBe(0);
+      env.clickButton(env.likeButtons[0]);
       env.waitForSliderUpdate();
-      expect(env.likeTotal).toBe(1);
-      env.clickButton(env.likeButton);
-      env.waitForSliderUpdate();
-      expect(env.likeTotal).toBe(0);
+      expect(env.getLikeTotal(0)).toBe(0);
     }));
 
     it('do not show answers until current user has submitted an answer', fakeAsync(() => {
@@ -330,12 +341,12 @@ describe('CheckingComponent', () => {
       env.selectQuestion(7);
       expect(env.answers.length).toBe(0);
       expect(env.getUnread(env.questions[6])).toEqual(4);
-      env.answerQuestion('Answer from reviewer');
+      env.answerQuestion('Answer from checker');
       expect(env.answers.length).toBe(2);
       expect(env.getUnread(env.questions[6])).toEqual(0);
     }));
 
-    it('reviewer can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
+    it('checker can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
       env.setupData(env.checkerUser);
       env.component.projectDoc.submitJson0Op(
         op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, false),
@@ -347,7 +358,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toBe(1);
       env.selectQuestion(7);
       expect(env.answers.length).toBe(0);
-      env.answerQuestion('Answer from reviewer');
+      env.answerQuestion('Answer from checker');
       expect(env.answers.length).toBe(1);
     }));
 
@@ -491,7 +502,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('comments display show more button', fakeAsync(() => {
-        env.setupAdminScenarioData();
+        env.setupData(env.adminUser);
         // Show maximum of 3 comments before displaying 'show all' button
         env.selectQuestion(7);
         expect(env.getAnswerComments(0).length).toBe(3);
@@ -511,7 +522,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('comments unread only mark as read when the show more button is clicked', fakeAsync(() => {
-        env.setupAdminScenarioData();
+        env.setupData(env.adminUser);
         const question = env.selectQuestion(8, false);
         expect(env.getUnread(question)).toEqual(4);
         tick(env.questionReadTimer);
@@ -554,7 +565,7 @@ describe('CheckingComponent', () => {
 
   describe('Text', () => {
     it('can increase and decrease font size', fakeAsync(() => {
-      env.setupAdminScenarioData();
+      env.setupData(env.adminUser);
       const editor = env.quillEditor;
       expect(editor.style.fontSize).toBe('1rem');
       env.clickButton(env.increaseFontSizeButton);
@@ -564,7 +575,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can select a question from the text', fakeAsync(() => {
-      env.setupAdminScenarioData();
+      env.setupData(env.adminUser);
       env.quillEditor.querySelector('usx-segment[data-segment=verse_1_3]').dispatchEvent(new Event('click'));
       env.waitForSliderUpdate();
       tick(env.questionReadTimer);
@@ -610,7 +621,7 @@ class TestEnvironment {
     commentRefsRead: []
   };
 
-  private readonly reviewerProjectUserConfig: SFProjectUserConfig = {
+  private readonly checkerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.checkerUser.id,
     projectRef: 'project01',
     isTargetTextRight: true,
@@ -622,7 +633,7 @@ class TestEnvironment {
     commentRefsRead: []
   };
 
-  private readonly cleanReviewerProjectUserConfig: SFProjectUserConfig = {
+  private readonly cleanCheckerProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.cleanCheckerUser.id,
     projectRef: 'project01',
     isTargetTextRight: true,
@@ -776,15 +787,8 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('app-font-size mdc-menu-surface button:last-child'));
   }
 
-  get likeButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#like-answer'));
-  }
-
-  get likeTotal(): number {
-    return parseInt(
-      this.fixture.debugElement.query(By.css('.answers-container .answer .like-count')).nativeElement.textContent,
-      10
-    );
+  get likeButtons(): DebugElement[] {
+    return this.fixture.debugElement.queryAll(By.css('.like-answer'));
   }
 
   get nextButton(): DebugElement {
@@ -841,6 +845,14 @@ class TestEnvironment {
 
   get selectTextTab(): DebugElement {
     return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(3)'));
+  }
+
+  getLikeTotal(index: number): number {
+    return parseInt(
+      this.fixture.debugElement.queryAll(By.css('.answers-container .answer .like-count'))[index].nativeElement
+        .textContent,
+      10
+    );
   }
 
   answerQuestion(answer: string): void {
@@ -960,11 +972,6 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setupAdminScenarioData(): void {
-    this.setupDefaultProjectData(this.adminUser);
-    this.initComponentEnviroment();
-  }
-
   setupData(user: UserInfo): void {
     this.setupDefaultProjectData(user);
     this.initComponentEnviroment();
@@ -1004,11 +1011,11 @@ class TestEnvironment {
       },
       {
         id: getSFProjectUserConfigDocId('project01', this.checkerUser.id),
-        data: this.reviewerProjectUserConfig
+        data: this.checkerProjectUserConfig
       },
       {
         id: getSFProjectUserConfigDocId('project01', this.cleanCheckerUser.id),
-        data: this.cleanReviewerProjectUserConfig
+        data: this.cleanCheckerProjectUserConfig
       },
       {
         id: getSFProjectUserConfigDocId('project01', this.observerUser.id),

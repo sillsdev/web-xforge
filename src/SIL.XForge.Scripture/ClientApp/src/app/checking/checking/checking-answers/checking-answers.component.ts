@@ -272,10 +272,12 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   likeAnswer(answer: Answer) {
-    this.action.emit({
-      action: 'like',
-      answer: answer
-    });
+    if (this.userService.currentUserId !== answer.ownerRef) {
+      this.action.emit({
+        action: 'like',
+        answer: answer
+      });
+    }
   }
 
   openScriptureChooser(control: AbstractControl) {
