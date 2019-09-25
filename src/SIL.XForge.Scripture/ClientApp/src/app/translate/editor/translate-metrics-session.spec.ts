@@ -4,8 +4,8 @@ import { QuillModule } from 'ngx-quill';
 import * as RichText from 'rich-text';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { TranslateMetrics } from '../../core/models/translate-metrics';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -350,12 +350,15 @@ class TestEnvironment {
 
   readonly mockedSFProjectService = mock(SFProjectService);
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private readonly tokenizer = new LatinWordTokenizer();
 
   constructor() {
     this.addTextDoc(new TextDocId('project01', 40, 1, 'source'));
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
+    when(this.mockedSFProjectService.getText(anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    );
     when(this.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
 
     TestBed.configureTestingModule({
@@ -421,10 +424,6 @@ class TestEnvironment {
   }
 
   private addTextDoc(id: TextDocId): void {
-    when(this.mockedSFProjectService.getText(deepEqual(id))).thenResolve(this.createTextDoc(id));
-  }
-
-  private createTextDoc(id: TextDocId): TextDoc {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
@@ -432,7 +431,10 @@ class TestEnvironment {
     delta.insert({ verse: { number: '2', style: 'v' } });
     delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2.`, { segment: `verse_${id.chapterNum}_2` });
     delta.insert('\n', { para: { style: 'p' } });
-    const adapter = new MemoryRealtimeDocAdapter(TextDoc.COLLECTION, id.toString(), delta, RichText.type);
-    return new TextDoc(this.offlineStore, adapter);
+    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+      id: id.toString(),
+      type: RichText.type.name,
+      data: delta
+    });
   }
 }

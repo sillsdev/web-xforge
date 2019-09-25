@@ -11,12 +11,12 @@ import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
@@ -374,21 +374,21 @@ class ChildViewContainerComponent {
 class DialogTestModule {}
 
 class TestEnvironment {
-  fixture: ComponentFixture<ChildViewContainerComponent>;
-  currentUserDoc: UserDoc;
-  component: QuestionDialogComponent;
-  dialogRef: MdcDialogRef<QuestionDialogComponent>;
-  overlayContainerElement: HTMLElement;
-  afterCloseCallback: jasmine.Spy;
+  readonly fixture: ComponentFixture<ChildViewContainerComponent>;
+  readonly currentUserDoc: UserDoc;
+  readonly component: QuestionDialogComponent;
+  readonly dialogRef: MdcDialogRef<QuestionDialogComponent>;
+  readonly overlayContainerElement: HTMLElement;
+  readonly afterCloseCallback: jasmine.Spy;
 
-  mockedAuthService: AuthService = mock(AuthService);
-  mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
-  mockedNoticeService = mock(NoticeService);
-  mockedProjectService = mock(SFProjectService);
-  mockedUserService: UserService = mock(UserService);
-  dialogSpy: MdcDialog;
+  readonly mockedAuthService: AuthService = mock(AuthService);
+  readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
+  readonly mockedNoticeService = mock(NoticeService);
+  readonly mockedProjectService = mock(SFProjectService);
+  readonly mockedUserService: UserService = mock(UserService);
+  readonly dialogSpy: MdcDialog;
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor(question?: Question) {
     TestBed.configureTestingModule({
@@ -429,14 +429,11 @@ class TestEnvironment {
     when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
-    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 40, 1, 'target')))).thenResolve(
-      this.createTextDoc(40)
-    );
-    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 42, 1, 'target')))).thenResolve(
-      this.createTextDoc(42)
-    );
-    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 43, 1, 'target')))).thenResolve(
-      this.createEmptyTextDoc(43)
+    this.addTextDoc(40);
+    this.addTextDoc(42);
+    this.addEmptyTextDoc(43);
+    when(this.mockedProjectService.getText(anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     this.fixture.detectChanges();
   }
@@ -509,7 +506,7 @@ class TestEnvironment {
     this.component.processAudio(audio);
   }
 
-  private createTextDoc(bookNum: number): TextDoc {
+  private addTextDoc(bookNum: number): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: '1', style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
@@ -526,22 +523,18 @@ class TestEnvironment {
     delta.insert({ verse: { number: '5', style: 'v' } });
     delta.insert(`target: chapter 1, `, { segment: 'verse_1_5' });
     delta.insert('\n', { para: { style: 'p' } });
-    const adapter = new MemoryRealtimeDocAdapter(
-      TextDoc.COLLECTION,
-      getTextDocId('project01', bookNum, 1, 'target'),
-      delta,
-      RichText.type
-    );
-    return new TextDoc(this.offlineStore, adapter);
+    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+      id: getTextDocId('project01', bookNum, 1, 'target'),
+      type: RichText.type.name,
+      data: delta
+    });
   }
 
-  private createEmptyTextDoc(bookNum: number): TextDoc {
-    const adapter = new MemoryRealtimeDocAdapter(
-      TextDoc.COLLECTION,
-      getTextDocId('project01', bookNum, 1, 'target'),
-      new Delta(),
-      RichText.type
-    );
-    return new TextDoc(this.offlineStore, adapter);
+  private addEmptyTextDoc(bookNum: number): void {
+    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+      id: getTextDocId('project01', bookNum, 1, 'target'),
+      type: RichText.type.name,
+      data: new Delta()
+    });
   }
 }

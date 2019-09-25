@@ -2,11 +2,11 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { instance, mock, when } from 'ts-mockito';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { SF_REALTIME_DOC_TYPES } from '../../../core/models/sf-realtime-doc-types';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from './checking-audio-recorder.component';
 
@@ -44,7 +44,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<CheckingAudioRecorderComponent>;
   readonly mockedUserService = mock(UserService);
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
     TestBed.configureTestingModule({
@@ -55,11 +55,13 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(CheckingAudioRecorderComponent);
     this.component = this.fixture.componentInstance;
 
-    const currentUserDoc = new UserDoc(
-      this.offlineStore,
-      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', { name: 'user' })
+    this.realtimeService.addSnapshot(UserDoc.COLLECTION, {
+      id: 'user01',
+      data: { name: 'user' }
+    });
+    when(this.mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
-    when(this.mockedUserService.getCurrentUser()).thenResolve(currentUserDoc);
     this.fixture.detectChanges();
   }
 

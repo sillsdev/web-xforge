@@ -4,11 +4,11 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
 import { StartComponent } from './start.component';
 
 describe('StartComponent', () => {
@@ -51,9 +51,13 @@ class TestEnvironment {
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedRouter = mock(Router);
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
+    when(this.mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+    );
+
     TestBed.configureTestingModule({
       declarations: [StartComponent],
       imports: [UICommonModule, RouterTestingModule],
@@ -69,20 +73,19 @@ class TestEnvironment {
 
   setCurrentUserProjectData(projectId?: string, projects: string[] = ['project01', 'project02']): void {
     when(this.mockedUserService.currentProjectId).thenReturn(projectId);
-    const user: User = {
-      name: 'User 01',
-      email: 'user1@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      avatarUrl: '',
-      authId: 'auth01',
-      displayName: 'User 01',
-      sites: { sf: { projects } }
-    };
-    const currentUserDoc = new UserDoc(
-      this.offlineStore,
-      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', user)
-    );
-    when(this.mockedUserService.getCurrentUser()).thenResolve(currentUserDoc);
+
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user01',
+      data: {
+        name: 'User 01',
+        email: 'user1@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId: 'auth01',
+        displayName: 'User 01',
+        sites: { sf: { projects } }
+      }
+    });
   }
 }

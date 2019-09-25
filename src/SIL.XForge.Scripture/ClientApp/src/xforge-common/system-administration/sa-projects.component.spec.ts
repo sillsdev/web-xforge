@@ -16,6 +16,7 @@ import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { Filters, QueryParameters } from '../query-parameters';
+import { RealtimeDocTypes } from '../realtime-doc-types';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaProjectsComponent } from './sa-projects.component';
@@ -135,7 +136,7 @@ class TestEnvironment {
   readonly mockedProjectService = mock(ProjectService);
   readonly mockedUserService = mock(UserService);
 
-  private readonly realtimeService = new TestRealtimeService([TestProjectDoc]);
+  private readonly realtimeService = new TestRealtimeService(new RealtimeDocTypes([TestProjectDoc]));
 
   constructor() {
     when(this.mockedUserService.currentUserId).thenReturn('user01');

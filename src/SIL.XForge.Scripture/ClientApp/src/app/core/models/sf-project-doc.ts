@@ -15,18 +15,18 @@ export class SFProjectDoc extends ProjectDoc<SFProject> {
     return names;
   }
 
-  protected onDelete(): void {
-    super.onDelete();
-    this.deleteProjectDocs(SFProjectUserConfigDoc.COLLECTION);
-    this.deleteProjectDocs(TextDoc.COLLECTION);
-    this.deleteProjectDocs(QuestionDoc.COLLECTION);
+  protected async onDelete(): Promise<void> {
+    await super.onDelete();
+    await this.deleteProjectDocs(SFProjectUserConfigDoc.COLLECTION);
+    await this.deleteProjectDocs(TextDoc.COLLECTION);
+    await this.deleteProjectDocs(QuestionDoc.COLLECTION);
   }
 
   private async deleteProjectDocs(collection: string): Promise<void> {
     const tasks: Promise<void>[] = [];
-    for (const id of await this.store.getAllIds(collection)) {
+    for (const id of await this.realtimeService.offlineStore.getAllIds(collection)) {
       if (id.startsWith(this.id)) {
-        tasks.push(this.store.delete(collection, id));
+        tasks.push(this.realtimeService.offlineStore.delete(collection, id));
       }
     }
     await Promise.all(tasks);

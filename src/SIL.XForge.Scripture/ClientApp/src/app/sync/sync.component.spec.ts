@@ -7,11 +7,11 @@ import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/ch
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SyncComponent } from './sync.component';
@@ -98,9 +98,7 @@ class TestEnvironment {
   readonly mockedParatextService = mock(ParatextService);
   readonly mockedProjectService = mock(SFProjectService);
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
-  private readonly project: SFProject;
-  private readonly projectDocAdapter: MemoryRealtimeDocAdapter;
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private isLoading: boolean = false;
 
   constructor(isParatextAccountConnected: boolean = false, isInProgress: boolean = false) {
@@ -114,34 +112,36 @@ class TestEnvironment {
 
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
-    this.project = {
-      name: 'Sync Test Project',
-      paratextId: 'pt01',
-      shortName: 'P01',
-      writingSystem: {
-        tag: 'en'
-      },
-      translateConfig: {
-        translationSuggestionsEnabled: false
-      },
-      checkingConfig: {
-        checkingEnabled: false,
-        usersSeeEachOthersResponses: true,
-        shareEnabled: true,
-        shareLevel: CheckingShareLevel.Specific
-      },
-      sync: {
-        queuedCount: isInProgress ? 1 : 0,
-        percentCompleted: isInProgress ? 0.1 : undefined,
-        lastSyncSuccessful: true,
-        dateLastSuccessfulSync: date.toJSON()
-      },
-      texts: [],
-      userRoles: {}
-    };
-    this.projectDocAdapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'testproject01', this.project);
-    when(this.mockedProjectService.get('testproject01')).thenResolve(
-      new SFProjectDoc(this.offlineStore, this.projectDocAdapter)
+    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+      id: 'testproject01',
+      data: {
+        name: 'Sync Test Project',
+        paratextId: 'pt01',
+        shortName: 'P01',
+        writingSystem: {
+          tag: 'en'
+        },
+        translateConfig: {
+          translationSuggestionsEnabled: false
+        },
+        checkingConfig: {
+          checkingEnabled: false,
+          usersSeeEachOthersResponses: true,
+          shareEnabled: true,
+          shareLevel: CheckingShareLevel.Specific
+        },
+        sync: {
+          queuedCount: isInProgress ? 1 : 0,
+          percentCompleted: isInProgress ? 0.1 : undefined,
+          lastSyncSuccessful: true,
+          dateLastSuccessfulSync: date.toJSON()
+        },
+        texts: [],
+        userRoles: {}
+      }
+    });
+    when(this.mockedProjectService.get('testproject01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'testproject01')
     );
 
     TestBed.configureTestingModule({
@@ -196,20 +196,24 @@ class TestEnvironment {
   }
 
   emitSyncProgress(percentCompleted: number): void {
-    this.project.sync.queuedCount = 1;
-    this.project.sync.percentCompleted = percentCompleted;
-    this.projectDocAdapter.emitRemoteChange();
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'testproject01');
+    projectDoc.submitJson0Op(ops => {
+      ops.set<number>(p => p.sync.queuedCount, 1);
+      ops.set(p => p.sync.percentCompleted, percentCompleted);
+    }, false);
     this.fixture.detectChanges();
   }
 
   emitSyncComplete(successful: boolean): void {
-    this.project.sync.queuedCount = 0;
-    this.project.sync.percentCompleted = undefined;
-    this.project.sync.lastSyncSuccessful = successful;
-    if (successful) {
-      this.project.sync.dateLastSuccessfulSync = new Date().toJSON();
-    }
-    this.projectDocAdapter.emitRemoteChange();
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'testproject01');
+    projectDoc.submitJson0Op(ops => {
+      ops.set<number>(p => p.sync.queuedCount, 0);
+      ops.unset(p => p.sync.percentCompleted);
+      ops.set(p => p.sync.lastSyncSuccessful, successful);
+      if (successful) {
+        ops.set(p => p.sync.dateLastSuccessfulSync, new Date().toJSON());
+      }
+    }, false);
     this.fixture.detectChanges();
   }
 }

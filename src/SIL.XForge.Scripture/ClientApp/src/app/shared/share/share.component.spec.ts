@@ -9,11 +9,11 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { LocationService } from 'xforge-common/location.service';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from './share-control.component';
 import { ShareDialogComponent } from './share-dialog.component';
@@ -136,13 +136,16 @@ class TestEnvironment {
   readonly mockedActivatedRoute = mock(ActivatedRoute);
   readonly mockedLocationService = mock(LocationService);
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
     when(this.mockedProjectService.onlineInvite('project01', anything())).thenResolve();
     when(this.mockedNoticeService.show(anything())).thenResolve();
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
+    when(this.mockedProjectService.get('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    );
     this.setShareConfig(true, CheckingShareLevel.Anyone);
 
     TestBed.configureTestingModule({
@@ -205,26 +208,24 @@ class TestEnvironment {
   }
 
   setShareConfig(shareEnabled: boolean, shareLevel: CheckingShareLevel): void {
-    const project: SFProject = {
-      name: 'project 01',
-      paratextId: 'pt01',
-      shortName: 'P01',
-      writingSystem: { tag: 'qaa' },
-      translateConfig: { translationSuggestionsEnabled: false },
-      checkingConfig: {
-        checkingEnabled: true,
-        usersSeeEachOthersResponses: true,
-        shareEnabled,
-        shareLevel
-      },
-      sync: { queuedCount: 0 },
-      texts: [],
-      userRoles: {}
-    };
-    const projectDoc = new SFProjectDoc(
-      this.offlineStore,
-      new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project)
-    );
-    when(this.mockedProjectService.get(anything())).thenResolve(projectDoc);
+    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+      id: 'project01',
+      data: {
+        name: 'project 01',
+        paratextId: 'pt01',
+        shortName: 'P01',
+        writingSystem: { tag: 'qaa' },
+        translateConfig: { translationSuggestionsEnabled: false },
+        checkingConfig: {
+          checkingEnabled: true,
+          usersSeeEachOthersResponses: true,
+          shareEnabled,
+          shareLevel
+        },
+        sync: { queuedCount: 0 },
+        texts: [],
+        userRoles: {}
+      }
+    });
   }
 }

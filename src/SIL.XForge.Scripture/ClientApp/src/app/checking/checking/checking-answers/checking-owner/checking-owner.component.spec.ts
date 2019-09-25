@@ -2,14 +2,14 @@ import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AvatarService } from 'ngx-avatar';
+import { UserProfile } from 'realtime-server/lib/common/models/user';
 import { instance, mock, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
-import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { SF_REALTIME_DOC_TYPES } from '../../../../core/models/sf-realtime-doc-types';
 import { CheckingOwnerComponent } from './checking-owner.component';
 
 describe('CheckingOwnerComponent', () => {
@@ -78,17 +78,18 @@ class TestEnvironment {
   readonly mockedUserService = mock(UserService);
   readonly mockedAvatarService = mock(AvatarService);
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
-    when(this.mockedUserService.getProfile('user01')).thenResolve(
-      new UserProfileDoc(
-        this.offlineStore,
-        new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', {
-          displayName: 'User 01',
-          role: 'user'
-        })
-      )
+    this.realtimeService.addSnapshot<UserProfile>(UserProfileDoc.COLLECTION, {
+      id: 'user01',
+      data: {
+        displayName: 'User 01',
+        avatarUrl: ''
+      }
+    });
+    when(this.mockedUserService.getProfile('user01')).thenCall(() =>
+      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, 'user01')
     );
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingOwnerComponent],

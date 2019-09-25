@@ -58,9 +58,6 @@ export interface RealtimeQueryAdapter {
   readonly ready: boolean;
 
   readonly ready$: Observable<void>;
-  readonly insert$: Observable<{ index: number; docIds: string[] }>;
-  readonly remove$: Observable<{ index: number; docIds: string[] }>;
-  readonly move$: Observable<{ from: number; to: number; length: number }>;
   readonly remoteChanges$: Observable<void>;
 
   fetch(): Promise<void>;

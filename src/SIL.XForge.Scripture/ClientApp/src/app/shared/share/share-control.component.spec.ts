@@ -5,11 +5,11 @@ import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from './share-control.component';
 
@@ -161,7 +161,7 @@ describe('ShareControlComponent', () => {
     readonly mockedProjectService = mock(SFProjectService);
     readonly mockedNoticeService = mock(NoticeService);
 
-    private readonly offlineStore = new MemoryRealtimeOfflineStore();
+    private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
     constructor(isLinkSharingEnabled?: boolean, projectId?: string) {
       TestBed.configureTestingModule({
@@ -181,11 +181,13 @@ describe('ShareControlComponent', () => {
       this.fixture.componentInstance.isLinkSharingEnabled =
         isLinkSharingEnabled === undefined ? false : isLinkSharingEnabled;
 
-      const projectDoc = new SFProjectDoc(
-        this.offlineStore,
-        new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', {})
+      this.realtimeService.addSnapshot(SFProjectDoc.COLLECTION, {
+        id: 'project01',
+        data: {}
+      });
+      when(this.mockedProjectService.get('project01')).thenCall(() =>
+        this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
       );
-      when(this.mockedProjectService.get(anything())).thenResolve(projectDoc);
       when(this.mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com')).thenResolve(null);
       when(this.mockedProjectService.onlineInvite(anything(), 'already-project-member@example.com')).thenResolve(
         this.component.alreadyProjectMemberResponse

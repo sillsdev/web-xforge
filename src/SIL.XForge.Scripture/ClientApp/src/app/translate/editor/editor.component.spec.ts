@@ -26,13 +26,13 @@ import {
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
@@ -81,7 +81,7 @@ describe('EditorComponent', () => {
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
       expect(env.component.showSuggestion).toBe(false);
 
-      resolve(env.createTextDoc(sourceId));
+      resolve(env.getTextDoc(sourceId));
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_2');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
@@ -660,10 +660,9 @@ class TestEnvironment {
 
   lastApprovedPrefix: string[] = [];
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private readonly params$: BehaviorSubject<Params>;
   private trainingProgress$ = new Subject<ProgressStatus>();
-  private readonly userConfigDocs = new Map<string, SFProjectUserConfigDoc>();
 
   constructor() {
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'MAT' });
@@ -689,6 +688,18 @@ class TestEnvironment {
     );
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(this.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
+    when(this.mockedSFProjectService.get('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    );
+    when(this.mockedSFProjectService.getUserConfig('project01', anything())).thenCall((_projectId, userId) =>
+      this.realtimeService.subscribe(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId('project01', userId)
+      )
+    );
+    when(this.mockedSFProjectService.getText(anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    );
 
     TestBed.configureTestingModule({
       declarations: [EditorComponent, SuggestionComponent],
@@ -741,52 +752,52 @@ class TestEnvironment {
   }
 
   setupProject(translationSuggestionsEnabled: boolean = true): void {
-    const project: SFProject = {
-      name: 'project 01',
-      paratextId: 'target01',
-      shortName: 'TRG',
-      userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
-      writingSystem: { tag: 'qaa' },
-      translateConfig: {
-        translationSuggestionsEnabled,
-        source: {
-          paratextId: 'source01',
-          name: 'source',
-          shortName: 'SRC',
-          writingSystem: {
-            tag: 'qaa'
+    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+      id: 'project01',
+      data: {
+        name: 'project 01',
+        paratextId: 'target01',
+        shortName: 'TRG',
+        userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
+        writingSystem: { tag: 'qaa' },
+        translateConfig: {
+          translationSuggestionsEnabled,
+          source: {
+            paratextId: 'source01',
+            name: 'source',
+            shortName: 'SRC',
+            writingSystem: {
+              tag: 'qaa'
+            }
           }
-        }
-      },
-      checkingConfig: {
-        checkingEnabled: false,
-        usersSeeEachOthersResponses: true,
-        shareEnabled: true,
-        shareLevel: CheckingShareLevel.Specific
-      },
-      sync: { queuedCount: 0 },
-      texts: [
-        {
-          bookNum: 40,
-          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
-          hasSource: true
         },
-        { bookNum: 41, chapters: [{ number: 1, lastVerse: 3 }], hasSource: true },
-        {
-          bookNum: 42,
-          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
-          hasSource: false
+        checkingConfig: {
+          checkingEnabled: false,
+          usersSeeEachOthersResponses: true,
+          shareEnabled: true,
+          shareLevel: CheckingShareLevel.Specific
         },
-        {
-          bookNum: 43,
-          chapters: [{ number: 1, lastVerse: 0 }],
-          hasSource: false
-        }
-      ]
-    };
-    const adapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project);
-    const projectDataDoc = new SFProjectDoc(this.offlineStore, adapter);
-    when(this.mockedSFProjectService.get('project01')).thenResolve(projectDataDoc);
+        sync: { queuedCount: 0 },
+        texts: [
+          {
+            bookNum: 40,
+            chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+            hasSource: true
+          },
+          { bookNum: 41, chapters: [{ number: 1, lastVerse: 3 }], hasSource: true },
+          {
+            bookNum: 42,
+            chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+            hasSource: false
+          },
+          {
+            bookNum: 43,
+            chapters: [{ number: 1, lastVerse: 0 }],
+            hasSource: false
+          }
+        ]
+      }
+    });
   }
 
   setProjectUserConfig(userConfig: Partial<SFProjectUserConfig> = {}): void {
@@ -799,7 +810,14 @@ class TestEnvironment {
   }
 
   getProjectUserConfigDoc(userId: string = 'user01'): SFProjectUserConfigDoc {
-    return this.userConfigDocs.get(userId);
+    return this.realtimeService.get<SFProjectUserConfigDoc>(
+      SFProjectUserConfigDoc.COLLECTION,
+      getSFProjectUserConfigDocId('project01', userId)
+    );
+  }
+
+  getTextDoc(textId: TextDocId): TextDoc {
+    return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
   }
 
   wait(): void {
@@ -886,7 +904,7 @@ class TestEnvironment {
     this.component.metricsSession.dispose();
   }
 
-  createTextDoc(id: TextDocId): TextDoc {
+  addTextDoc(id: TextDocId): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
@@ -916,28 +934,25 @@ class TestEnvironment {
         break;
     }
     delta.insert('\n', { para: { style: 'p' } });
-    const adapter = new MemoryRealtimeDocAdapter(TextDoc.COLLECTION, id.toString(), delta, RichText.type);
-    return new TextDoc(this.offlineStore, adapter);
+    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+      id: id.toString(),
+      type: RichText.type.name,
+      data: delta
+    });
   }
 
   private addProjectUserConfig(userConfig: SFProjectUserConfig): void {
-    const adapter = new MemoryRealtimeDocAdapter(
-      SFProjectUserConfigDoc.COLLECTION,
-      getSFProjectUserConfigDocId('project01', userConfig.ownerRef),
-      userConfig
-    );
-    const projectUserConfigDoc = new SFProjectUserConfigDoc(this.offlineStore, adapter);
-    when(this.mockedSFProjectService.getUserConfig('project01', userConfig.ownerRef)).thenResolve(projectUserConfigDoc);
-    this.userConfigDocs.set(userConfig.ownerRef, projectUserConfigDoc);
-  }
-
-  private addTextDoc(id: TextDocId): void {
-    when(this.mockedSFProjectService.getText(deepEqual(id))).thenResolve(this.createTextDoc(id));
+    this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
+      id: getSFProjectUserConfigDocId('project01', userConfig.ownerRef),
+      data: userConfig
+    });
   }
 
   private addEmptyTextDoc(id: TextDocId): void {
-    const adapter = new MemoryRealtimeDocAdapter(TextDoc.COLLECTION, id.toString(), new Delta(), RichText.type);
-    const textDoc = new TextDoc(this.offlineStore, adapter);
-    when(this.mockedSFProjectService.getText(deepEqual(id))).thenResolve(textDoc);
+    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+      id: id.toString(),
+      type: RichText.type.name,
+      data: new Delta()
+    });
   }
 }

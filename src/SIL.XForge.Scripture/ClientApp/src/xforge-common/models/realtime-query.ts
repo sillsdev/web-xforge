@@ -1,3 +1,4 @@
+import arrayDiff, { InsertDiff, MoveDiff, RemoveDiff } from 'arraydiff';
 import { merge, Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { performQuery } from '../query-parameters';
@@ -8,23 +9,20 @@ import { Snapshot } from './snapshot';
 
 /**
  * This class represents a real-time query. If the query has been subscribed to, then the "remoteChanges$" observable
- * will emit on any changes to the "docs" array. The "docs" array is only updated once the op that affects the results
- * is executed on the server and the client is notified.
+ * will emit on any remote changes to the query results.
  */
 export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
-  readonly remoteChanges$: Observable<void>;
-
   private _docs: T[] = [];
   private unsubscribe$ = new Subject<void>();
-  private initialCount: number = 0;
-  private initialUnpagedCount: number = 0;
+  private _count: number = 0;
+  private _unpagedCount: number = 0;
+  private readonly _remoteChanges$ = new Subject<void>();
 
   constructor(private readonly realtimeService: RealtimeService, public readonly adapter: RealtimeQueryAdapter) {
     this.adapter.ready$.pipe(takeUntil(this.unsubscribe$)).subscribe(() => this.onReady());
-    this.adapter.insert$.pipe(takeUntil(this.unsubscribe$)).subscribe(evt => this.onInsert(evt.index, evt.docIds));
-    this.adapter.remove$.pipe(takeUntil(this.unsubscribe$)).subscribe(evt => this.onRemove(evt.index, evt.docIds));
-    this.adapter.move$.pipe(takeUntil(this.unsubscribe$)).subscribe(evt => this.onMove(evt.from, evt.to, evt.length));
-    this.remoteChanges$ = merge(this.adapter.ready$, this.adapter.remoteChanges$);
+    this.adapter.remoteChanges$
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe(() => this.onChange(true, this.adapter.docIds, this.adapter.count, this.adapter.unpagedCount));
   }
 
   get collection(): string {
@@ -40,11 +38,15 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   }
 
   get count(): number {
-    return this.adapter.ready ? this.adapter.count : this.initialCount;
+    return this._count;
   }
 
   get unpagedCount(): number {
-    return this.adapter.ready ? this.adapter.unpagedCount : this.initialUnpagedCount;
+    return this._unpagedCount;
+  }
+
+  get remoteChanges$(): Observable<void> {
+    return this._remoteChanges$;
   }
 
   fetch(): Promise<void> {
@@ -52,68 +54,117 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   }
 
   async subscribe(): Promise<void> {
-    const [results, unpagedCount] = await this.localQuery();
-    if (this.adapter.parameters.$count == null) {
-      const promises: Promise<void>[] = [];
-      for (const docId of results) {
-        const doc = this.realtimeService.get<T>(this.adapter.collection, docId);
-        this._docs.push(doc);
-        promises.push(doc.loadFromStore());
-      }
-      await Promise.all(promises);
-    }
-    this.initialCount = results.length;
-    this.initialUnpagedCount = unpagedCount;
-    this.adapter.subscribe(this.adapter.parameters.$count == null ? results : undefined);
+    const docIds = await this.localQuery();
+    this.adapter.subscribe(docIds);
+    this.realtimeService.onQuerySubscribe(this);
   }
 
   dispose(): void {
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
-    if (this.subscribed && this.adapter.ready) {
-      for (const doc of this._docs) {
-        doc.removedFromSubscribeQuery();
+    if (this.subscribed) {
+      if (this.adapter.ready) {
+        for (const doc of this._docs) {
+          doc.onRemovedFromSubscribeQuery();
+        }
       }
+      this.realtimeService.onQueryUnsubscribe(this);
     }
     this.adapter.destroy();
   }
 
-  private async localQuery(): Promise<[string[], number]> {
+  localUpdate(): void {
+    if (!this.subscribed) {
+      return;
+    }
+    this.localQuery();
+  }
+
+  private async localQuery(): Promise<string[]> {
     const snapshots: Snapshot[] = await this.realtimeService.offlineStore.getAll(this.collection);
     const [results, unpagedCount] = performQuery(this.adapter.parameters, snapshots);
-    return [results.map(s => s.id), unpagedCount];
+    const docIds = results.map(s => s.id);
+    await this.onChange(false, docIds, docIds.length, unpagedCount);
+    return docIds;
   }
 
   private onReady(): void {
     if (this.subscribed) {
       for (const doc of this._docs) {
-        doc.addedToSubscribeQuery();
+        doc.onAddedToSubscribeQuery();
       }
+      this._remoteChanges$.next();
     } else {
       this._docs = this.adapter.docIds.map(id => this.realtimeService.get<T>(this.collection, id));
+      this._count = this.adapter.count;
+      this._unpagedCount = this.adapter.unpagedCount;
     }
   }
 
-  private onInsert(index: number, docIds: string[]): void {
+  private async onChange(remote: boolean, docIds: string[], count: number, unpagedCount: number): Promise<void> {
+    let changed = false;
+    if (this.count !== count) {
+      this._count = count;
+      changed = true;
+    }
+    if (this.adapter.parameters.$count == null) {
+      const before = this._docs.map(d => d.id);
+      const after = docIds;
+      const diffs = arrayDiff(before, after);
+      for (const diff of diffs) {
+        switch (diff.type) {
+          case 'insert':
+            const insertDiff = diff as InsertDiff;
+            await this.onInsert(insertDiff.index, insertDiff.values);
+            break;
+
+          case 'remove':
+            const removeDiff = diff as RemoveDiff;
+            this.onRemove(removeDiff.index, before.slice(removeDiff.index, removeDiff.index + removeDiff.howMany));
+            break;
+
+          case 'move':
+            const moveDiff = diff as MoveDiff;
+            this.onMove(moveDiff.from, moveDiff.to, moveDiff.howMany);
+            break;
+        }
+      }
+
+      if (diffs.length > 0) {
+        changed = true;
+        this._docs = this._docs.slice();
+      }
+    }
+    this._unpagedCount = unpagedCount;
+
+    if (remote && changed && this.adapter.ready) {
+      this._remoteChanges$.next();
+    }
+  }
+
+  private async onInsert(index: number, docIds: string[]): Promise<void> {
     const newDocs: T[] = [];
+    const promises: Promise<void>[] = [];
     for (const docId of docIds) {
       const newDoc = this.realtimeService.get<T>(this.collection, docId);
+      if (!newDoc.isLoaded) {
+        promises.push(newDoc.loadFromStore());
+      }
       if (this.adapter.ready && this.subscribed) {
-        newDoc.addedToSubscribeQuery();
+        newDoc.onAddedToSubscribeQuery();
       }
       newDocs.push(newDoc);
     }
+    await Promise.all(promises);
     this._docs.splice(index, 0, ...newDocs);
-    this._docs = this._docs.slice();
   }
 
   private onRemove(index: number, docIds: string[]): void {
     const removedDocs = this._docs.splice(index, docIds.length);
-    this._docs = this._docs.slice();
     if (this.subscribed) {
       for (const doc of removedDocs) {
         if (this.adapter.ready) {
-          doc.removedFromSubscribeQuery();
+          doc.onRemovedFromSubscribeQuery();
         } else if (doc.isLoaded) {
           doc.checkExists();
         }
@@ -124,6 +175,5 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private onMove(from: number, to: number, length: number): void {
     const removedDocs = this._docs.splice(from, length);
     this._docs.splice(to, 0, ...removedDocs);
-    this._docs = this._docs.slice();
   }
 }
