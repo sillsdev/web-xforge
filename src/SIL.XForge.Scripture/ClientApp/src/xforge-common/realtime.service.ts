@@ -68,11 +68,11 @@ export class RealtimeService {
    * @param {string} collection The collection name.
    * @param {string} id The id.
    * @param {*} data The initial data.
-   * @returns {Promise<T>} The newly created real-time doc.
+   * @returns {T} The newly created real-time doc.
    */
-  async create<T extends RealtimeDoc>(collection: string, id: string, data: any): Promise<T> {
+  create<T extends RealtimeDoc>(collection: string, id: string, data: any): T {
     const doc = this.get<T>(collection, id);
-    await doc.create(data);
+    doc.create(data);
     return doc;
   }
 

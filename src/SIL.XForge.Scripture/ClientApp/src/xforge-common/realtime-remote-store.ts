@@ -33,7 +33,7 @@ export interface RealtimeDocAdapter {
   /** Fires when there are changes to underlying data. */
   readonly remoteChanges$: Observable<any>;
 
-  create(data: any, type?: OTType): Promise<void>;
+  create(data: any, type?: string): Promise<void>;
   fetch(): Promise<void>;
   ingestSnapshot(snapshot: Snapshot): Promise<void>;
   subscribe(): Promise<void>;

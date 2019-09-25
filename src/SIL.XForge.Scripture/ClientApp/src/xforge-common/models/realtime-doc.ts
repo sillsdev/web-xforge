@@ -111,11 +111,12 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     await this.updateOfflineData(true);
     this.realtimeService.onLocalDocUpdate(this);
     await createPromise;
+    this.updateOfflineData(true);
   }
 
   async delete(): Promise<void> {
     const deletePromise = this.adapter.delete();
-    await this.onDelete();
+    await this.updateOfflineData();
     this.realtimeService.onLocalDocUpdate(this);
     await deletePromise;
   }
@@ -129,6 +130,8 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       if (offlineData.pendingOps.length > 0) {
         await this.adapter.fetch();
         await Promise.all(offlineData.pendingOps.map(op => this.adapter.submitOp(op)));
+      } else if (offlineData.v == null) {
+        await this.adapter.create(offlineData.data, offlineData.type);
       } else {
         await this.adapter.ingestSnapshot(offlineData);
         this.offlineSnapshotVersion = this.adapter.version;
