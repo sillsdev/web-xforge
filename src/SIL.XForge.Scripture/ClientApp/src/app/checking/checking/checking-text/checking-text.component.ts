@@ -5,7 +5,6 @@ import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scri
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent, Subscription } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { Anchorable } from '../../../core/models/anchorable';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
 
@@ -18,15 +17,15 @@ import { TextComponent } from '../../../shared/text/text.component';
 export class CheckingTextComponent extends SubscriptionDisposable {
   @ViewChild(TextComponent, { static: true }) textComponent: TextComponent;
 
-  @Input() set activeObject(obj: Readonly<Anchorable>) {
-    if (this.activeObject && this.isEditorLoaded) {
-      // Removed the highlight on the old active object
-      this.highlightActiveObject(this.activeObject, false);
-      if (obj != null) {
-        this.highlightActiveObject(obj, true);
+  @Input() set activeVerse(verseRef: Readonly<VerseRef>) {
+    if (this.activeVerse && this.isEditorLoaded) {
+      // Removed the highlight on the old active verse
+      this.highlightActiveVerse(this.activeVerse, false);
+      if (verseRef != null) {
+        this.highlightActiveVerse(verseRef, true);
       }
     }
-    this._activeObject = obj;
+    this._activeVerse = verseRef;
   }
   @Input() set id(textDocId: TextDocId) {
     if (textDocId) {
@@ -36,17 +35,17 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       this._id = textDocId;
     }
   }
-  @Output() objectClicked: EventEmitter<Anchorable> = new EventEmitter<Anchorable>();
+  @Output() verseClicked: EventEmitter<VerseRef> = new EventEmitter<VerseRef>();
   @Input() mode: 'checking' | 'dialog' = 'checking';
 
   private clickSubs: Subscription[] = [];
-  private _activeObject: Readonly<Anchorable>;
+  private _activeVerse: Readonly<VerseRef>;
   private _editorLoaded = false;
   private _id: TextDocId;
-  private _objects: Readonly<Anchorable[]>;
+  private _verses: Readonly<VerseRef[]>;
 
-  get activeObject(): Readonly<Anchorable> {
-    return this._activeObject;
+  get activeVerse(): Readonly<VerseRef> {
+    return this._activeVerse;
   }
 
   get isEditorLoaded(): boolean {
@@ -57,18 +56,18 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     return this._id;
   }
 
-  @Input() set objects(objects: Readonly<Anchorable[]>) {
+  @Input() set verses(verseRefs: Readonly<VerseRef[]>) {
     if (this.isEditorLoaded) {
-      this.resetObjectHighlights(objects);
+      this.resetVerseHighlights(verseRefs);
     }
-    this._objects = clone(objects);
+    this._verses = clone(verseRefs);
     if (this.isEditorLoaded) {
-      this.highlightObjects();
+      this.highlightVerses();
     }
   }
 
-  get objects(): Readonly<Anchorable[]> {
-    return this._objects;
+  get verses(): Readonly<VerseRef[]> {
+    return this._verses;
   }
 
   applyFontChange(fontSize: string) {
@@ -77,13 +76,13 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     };
   }
 
-  highlightObjects() {
+  highlightVerses() {
     this._editorLoaded = true;
     if (this.mode === 'checking') {
-      if (this.objects) {
+      if (this.verses) {
         const segments: string[] = [];
-        for (const obj of this.objects) {
-          const referenceSegments = this.getObjectSegments(obj);
+        for (const verse of this.verses) {
+          const referenceSegments = this.getVerseSegments(verse);
           if (referenceSegments.length) {
             this.setupQuestionSegments([referenceSegments[0]], true);
             for (const segment of referenceSegments) {
@@ -94,33 +93,31 @@ export class CheckingTextComponent extends SubscriptionDisposable {
           }
         }
         this.highlightSegments(segments);
-        if (this.activeObject) {
-          this.selectActiveObject(this.activeObject, true);
+        if (this.activeVerse) {
+          this.selectActiveVerse(this.activeVerse, true);
         }
       }
     } else {
-      // In dialog mode, highlight the active object without putting the ? marker before the text
-      this.highlightActiveObject(this._activeObject, true);
+      // In dialog mode, highlight the active verse without putting the ? marker before the text
+      this.highlightActiveVerse(this._activeVerse, true);
     }
   }
 
-  highlightActiveObject(obj: Anchorable, toggle: boolean) {
+  highlightActiveVerse(verseRef: Readonly<VerseRef>, toggle: boolean) {
     if (this.mode === 'dialog') {
-      const segments = this.getObjectSegments(obj);
+      const segments = this.getVerseSegments(verseRef);
       this.highlightSegments(segments, toggle);
     }
-    this.selectActiveObject(obj, toggle);
+    this.selectActiveVerse(verseRef, toggle);
   }
 
-  private getObjectSegments(obj: Anchorable): string[] {
+  private getVerseSegments(verseRef: Readonly<VerseRef>): string[] {
     const segments: string[] = [];
     let segment = '';
-    if (obj.verseRef != null) {
-      for (const verseInRange of obj.verseRef.allVerses()) {
-        segment = this.getSegment(verseInRange.chapterNum, verseInRange.verseNum);
-        if (!segments.includes(segment)) {
-          segments.push(segment);
-        }
+    for (const verseInRange of verseRef.allVerses()) {
+      segment = this.getSegment(verseInRange.chapterNum, verseInRange.verseNum);
+      if (!segments.includes(segment)) {
+        segments.push(segment);
       }
     }
     return segments;
@@ -162,11 +159,11 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
   }
 
-  private resetObjectHighlights(objects: Readonly<Anchorable[]>) {
+  private resetVerseHighlights(verseRefs: Readonly<VerseRef[]>) {
     // Remove all highlights and question segments
-    for (const obj of this.objects) {
-      if (!objects.includes(obj)) {
-        const segment = this.getSegment(obj.verseRef.chapterNum, obj.verseRef.verseNum);
+    for (const verseRef of this.verses) {
+      if (!verseRefs.includes(verseRef)) {
+        const segment = this.getSegment(verseRef.chapterNum, verseRef.verseNum);
         if (!this.textComponent.hasSegmentRange(segment)) {
           continue;
         }
@@ -182,7 +179,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   }
 
   private segmentClicked(verseRefData: VerseRefData) {
-    this.objectClicked.emit({ verseRef: toVerseRef(verseRefData) });
+    this.verseClicked.emit(toVerseRef(verseRefData));
   }
 
   private setupQuestionSegments(segments: string[], toggle: boolean) {
@@ -203,8 +200,8 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
   }
 
-  private selectActiveObject(obj: Anchorable, toggle: boolean) {
-    for (const segment of this.getObjectSegments(obj)) {
+  private selectActiveVerse(verseRef: Readonly<VerseRef>, toggle: boolean) {
+    for (const segment of this.getVerseSegments(verseRef)) {
       if (!this.textComponent.hasSegmentRange(segment)) {
         continue;
       }
