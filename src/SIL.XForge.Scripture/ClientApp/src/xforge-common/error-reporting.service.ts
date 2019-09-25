@@ -19,12 +19,27 @@ export class ErrorReportingService {
       notifyReleaseStages: ['live', 'qa'],
       releaseStage: environment.releaseStage,
       autoNotify: false,
-      trackInlineScripts: false
+      trackInlineScripts: false,
+      beforeSend: ErrorReportingService.beforeSend
     };
     if (environment.releaseStage === 'dev') {
       config.logger = null;
     }
     return bugsnag(config);
+  }
+
+  static beforeSend(report: any) {
+    report.breadcrumbs = report.breadcrumbs.map((breadcrumb: any) => {
+      if (
+        breadcrumb.type === 'navigation' &&
+        breadcrumb.metaData &&
+        typeof breadcrumb.metaData.from === 'string' &&
+        breadcrumb.metaData.from.includes('/projects#access_token=')
+      ) {
+        breadcrumb.metaData.from = '/projects#access_token=redacted_for_error_report';
+      }
+      return breadcrumb;
+    });
   }
 
   private readonly bugsnagClient = ErrorReportingService.createBugsnagClient();
