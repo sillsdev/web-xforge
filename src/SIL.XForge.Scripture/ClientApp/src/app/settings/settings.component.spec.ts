@@ -11,14 +11,14 @@ import { TranslateConfig } from 'realtime-server/lib/scriptureforge/models/trans
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
@@ -337,8 +337,7 @@ class TestEnvironment {
   readonly mockedSFProjectService: SFProjectService = mock(SFProjectService);
   readonly mockedUserService: UserService = mock(UserService);
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
-  private projectDoc: SFProjectDoc;
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private readonly paratextProjects$: BehaviorSubject<ParatextProject[]>;
 
   constructor() {
@@ -365,6 +364,9 @@ class TestEnvironment {
     when(this.mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(this.mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
     when(this.mockedUserService.currentProjectId).thenReturn('project01');
+    when(this.mockedSFProjectService.get('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    );
     TestBed.configureTestingModule({
       imports: [DialogTestModule, HttpClientTestingModule, RouterTestingModule, UICommonModule],
       declarations: [SettingsComponent, WriteStatusComponent],
@@ -458,7 +460,7 @@ class TestEnvironment {
     const oce = this.overlayContainer.getContainerElement();
     if (confirm) {
       const projectInput: HTMLInputElement = oce.querySelector('#project-entry').querySelector('input');
-      projectInput.value = this.projectDoc.data.name;
+      projectInput.value = 'project 01';
       projectInput.dispatchEvent(new Event('input'));
       button = this.confirmDeleteBtn;
     } else {
@@ -526,24 +528,22 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Specific
     }
   ) {
-    const project: SFProject = {
-      name: 'project 01',
-      paratextId: 'pt01',
-      shortName: 'P01',
-      writingSystem: {
-        tag: 'en'
-      },
-      translateConfig,
-      checkingConfig,
-      sync: { queuedCount: 0 },
-      texts: [],
-      userRoles: {}
-    };
-    this.projectDoc = new SFProjectDoc(
-      this.offlineStore,
-      new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project)
-    );
-    when(this.mockedSFProjectService.get('project01')).thenResolve(this.projectDoc);
+    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+      id: 'project01',
+      data: {
+        name: 'project 01',
+        paratextId: 'pt01',
+        shortName: 'P01',
+        writingSystem: {
+          tag: 'en'
+        },
+        translateConfig,
+        checkingConfig,
+        sync: { queuedCount: 0 },
+        texts: [],
+        userRoles: {}
+      }
+    });
   }
 
   setupParatextProjects(paratextProjects: ParatextProject[]) {

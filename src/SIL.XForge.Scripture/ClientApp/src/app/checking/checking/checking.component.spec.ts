@@ -26,8 +26,6 @@ import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
-import { MemoryRealtimeQueryAdapter } from 'xforge-common/memory-realtime-remote-store';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
@@ -729,7 +727,6 @@ class TestEnvironment {
   };
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
-  private questionsQuery: RealtimeQuery<QuestionDoc>;
 
   constructor() {
     TestBed.configureTestingModule({
@@ -1023,8 +1020,7 @@ class TestEnvironment {
       id: docId,
       data: newQuestion
     });
-    const adapter = this.questionsQuery.adapter as MemoryRealtimeQueryAdapter;
-    adapter.update();
+    this.realtimeService.updateAllSubscribeQueries();
   }
 
   selectChapterFromMenu(chapter: number) {
@@ -1041,7 +1037,7 @@ class TestEnvironment {
       }
     ]);
     when(this.mockedProjectService.get(anything())).thenCall(id =>
-      this.realtimeService.subscribe<SFProjectDoc>(SFProjectDoc.COLLECTION, id)
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
     );
 
     this.realtimeService.addSnapshots<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, [
@@ -1063,10 +1059,7 @@ class TestEnvironment {
       }
     ]);
     when(this.mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
-      this.realtimeService.subscribe<SFProjectUserConfigDoc>(
-        SFProjectUserConfigDoc.COLLECTION,
-        getSFProjectUserConfigDocId(id, userId)
-      )
+      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
     );
 
     this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
@@ -1087,7 +1080,7 @@ class TestEnvironment {
       }
     ]);
     when(this.mockedProjectService.getText(anything())).thenCall(id =>
-      this.realtimeService.subscribe<TextDoc>(TextDoc.COLLECTION, id.toString())
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
 
     const date = new Date();
@@ -1199,10 +1192,6 @@ class TestEnvironment {
       questions = johnQuestions.concat(matthewQuestions);
     }
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions);
-    this.questionsQuery = this.realtimeService.createQuery(QuestionDoc.COLLECTION, {
-      $sort: { [nameof<Question>('dateCreated')]: -1 }
-    });
-    this.questionsQuery.subscribe();
     when(
       this.mockedProjectService.queryQuestions(
         'project01',
@@ -1212,7 +1201,11 @@ class TestEnvironment {
           sort: true
         })
       )
-    ).thenResolve(this.questionsQuery);
+    ).thenCall(() =>
+      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {
+        $sort: { [nameof<Question>('dateCreated')]: -1 }
+      })
+    );
     when(this.mockedUserService.currentUserId).thenReturn(user.id);
 
     this.realtimeService.addSnapshots<User>(UserDoc.COLLECTION, [

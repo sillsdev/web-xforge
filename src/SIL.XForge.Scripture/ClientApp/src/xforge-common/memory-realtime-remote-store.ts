@@ -1,27 +1,10 @@
-import arrayDiff, { InsertDiff, MoveDiff, RemoveDiff } from 'arraydiff';
+import isEqual from 'lodash/isEqual';
 import * as OTJson0 from 'ot-json0';
 import { EMPTY, Subject } from 'rxjs';
 import { OTType, types } from 'sharedb/lib/client';
 import { Snapshot } from './models/snapshot';
 import { performQuery, QueryParameters } from './query-parameters';
 import { RealtimeDocAdapter, RealtimeQueryAdapter, RealtimeRemoteStore } from './realtime-remote-store';
-import { objectId } from './utils';
-
-function addSnapshotDefaults(snapshot: Partial<Snapshot>): Snapshot {
-  if (snapshot.id == null) {
-    snapshot.id = objectId();
-  }
-  if (snapshot.data == null) {
-    snapshot.data = {};
-  }
-  if (snapshot.v == null) {
-    snapshot.v = 0;
-  }
-  if (snapshot.type == null) {
-    snapshot.type = OTJson0.type.name;
-  }
-  return snapshot as Snapshot;
-}
 
 /**
  * This is the memory-based implementation of the real-time remote store. It is useful for testing.
@@ -29,24 +12,13 @@ function addSnapshotDefaults(snapshot: Partial<Snapshot>): Snapshot {
 export class MemoryRealtimeRemoteStore extends RealtimeRemoteStore {
   private readonly snapshots = new Map<string, Map<string, Snapshot>>();
 
-  addSnapshots<T>(collection: string, snapshots: Partial<Snapshot<T>>[]): void {
+  addSnapshot<T>(collection: string, snapshot: Snapshot<T>): void {
     let collectionSnapshots = this.snapshots.get(collection);
     if (collectionSnapshots == null) {
       collectionSnapshots = new Map<string, Snapshot>();
       this.snapshots.set(collection, collectionSnapshots);
     }
-    for (const snapshot of snapshots) {
-      collectionSnapshots.set(snapshot.id, addSnapshotDefaults(snapshot));
-    }
-  }
-
-  addSnapshot<T>(collection: string, snapshot: Partial<Snapshot<T>>): void {
-    let collectionSnapshots = this.snapshots.get(collection);
-    if (collectionSnapshots == null) {
-      collectionSnapshots = new Map<string, Snapshot>();
-      this.snapshots.set(collection, collectionSnapshots);
-    }
-    collectionSnapshots.set(snapshot.id, addSnapshotDefaults(snapshot));
+    collectionSnapshots.set(snapshot.id, snapshot);
   }
 
   getSnapshots(collection: string): IterableIterator<Snapshot> {
@@ -104,7 +76,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     }
   }
 
-  create(data: any, type?: OTType): Promise<void> {
+  create(data: any, type: OTType = OTJson0.type): Promise<void> {
     this.data = data;
     this.type = type;
     this.version = 0;
@@ -174,9 +146,6 @@ export class MemoryRealtimeQueryAdapter implements RealtimeQueryAdapter {
   count: number = 0;
 
   readonly ready$ = new Subject<void>();
-  readonly insert$ = new Subject<{ index: number; docIds: string[] }>();
-  readonly remove$ = new Subject<{ index: number; docIds: string[] }>();
-  readonly move$ = new Subject<{ from: number; to: number; length: number }>();
   readonly remoteChanges$ = new Subject<void>();
 
   constructor(
@@ -195,11 +164,12 @@ export class MemoryRealtimeQueryAdapter implements RealtimeQueryAdapter {
   subscribe(_initialDocIds?: string[]): void {
     this.performQuery();
     this.subscribed = true;
+    this.remoteChanges$.next();
     this.ready = true;
     this.ready$.next();
   }
 
-  update(): void {
+  updateResults(): void {
     if (this.performQuery()) {
       this.remoteChanges$.next();
     }
@@ -219,28 +189,7 @@ export class MemoryRealtimeQueryAdapter implements RealtimeQueryAdapter {
       const before = this.docIds;
       const after = results.map(s => s.id);
       this.docIds = after;
-      const diffs = arrayDiff(before, after);
-      for (const diff of diffs) {
-        switch (diff.type) {
-          case 'insert':
-            const insertDiff = diff as InsertDiff;
-            this.insert$.next({ index: insertDiff.index, docIds: insertDiff.values });
-            break;
-
-          case 'remove':
-            const removeDiff = diff as RemoveDiff;
-            this.remove$.next({
-              index: removeDiff.index,
-              docIds: before.slice(removeDiff.index, removeDiff.index + removeDiff.howMany)
-            });
-            break;
-
-          case 'move':
-            const moveDiff = diff as MoveDiff;
-            this.move$.next({ from: moveDiff.from, to: moveDiff.to, length: moveDiff.howMany });
-            break;
-        }
-
+      if (!isEqual(before, after)) {
         changed = true;
       }
     }

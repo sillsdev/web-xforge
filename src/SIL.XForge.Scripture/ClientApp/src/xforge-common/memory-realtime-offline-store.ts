@@ -1,3 +1,5 @@
+import merge from 'lodash/merge';
+import { Snapshot } from './models/snapshot';
 import { RealtimeOfflineData, RealtimeOfflineStore } from './realtime-offline-store';
 
 /**
@@ -5,6 +7,15 @@ import { RealtimeOfflineData, RealtimeOfflineStore } from './realtime-offline-st
  */
 export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
   private readonly map = new Map<string, Map<string, RealtimeOfflineData>>();
+
+  addSnapshot<T>(collection: string, snapshot: Snapshot<T>): void {
+    let collectionSnapshots = this.map.get(collection);
+    if (collectionSnapshots == null) {
+      collectionSnapshots = new Map<string, RealtimeOfflineData>();
+      this.map.set(collection, collectionSnapshots);
+    }
+    collectionSnapshots.set(snapshot.id, merge(snapshot, { pendingOps: [] }));
+  }
 
   getAllIds(collection: string): Promise<string[]> {
     const collectionData = this.map.get(collection);

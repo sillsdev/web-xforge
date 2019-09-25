@@ -11,15 +11,15 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
-import { deepEqual, instance, mock, verify, when } from 'ts-mockito';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { Delta, TextDoc } from '../../core/models/text-doc';
+import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
@@ -124,7 +124,7 @@ class TestEnvironment {
   readonly component: TranslateOverviewComponent;
   readonly fixture: ComponentFixture<TranslateOverviewComponent>;
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private trainingProgress$ = new Subject<ProgressStatus>();
 
   constructor() {
@@ -135,6 +135,12 @@ class TestEnvironment {
     );
     when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
+    when(this.mockedSFProjectService.getText(anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    );
+    when(this.mockedSFProjectService.get('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    );
     this.setCurrentUser();
     TestBed.configureTestingModule({
       declarations: [TranslateOverviewComponent],
@@ -205,53 +211,53 @@ class TestEnvironment {
   }
 
   setupProjectData(translationSuggestionsEnabled: boolean = true): void {
-    const project: SFProject = {
-      name: 'project 01',
-      paratextId: 'pt01',
-      shortName: 'P01',
-      writingSystem: {
-        tag: 'qaa'
-      },
-      translateConfig: {
-        translationSuggestionsEnabled
-      },
-      checkingConfig: {
-        checkingEnabled: false,
-        usersSeeEachOthersResponses: true,
-        shareEnabled: true,
-        shareLevel: CheckingShareLevel.Specific
-      },
-      sync: { queuedCount: 0 },
-      userRoles: {
-        user01: SFProjectRole.ParatextTranslator,
-        user02: SFProjectRole.ParatextConsultant
-      },
-      texts: [
-        {
-          bookNum: 40,
-          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
-          hasSource: true
+    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+      id: 'project01',
+      data: {
+        name: 'project 01',
+        paratextId: 'pt01',
+        shortName: 'P01',
+        writingSystem: {
+          tag: 'qaa'
         },
-        {
-          bookNum: 41,
-          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
-          hasSource: true
+        translateConfig: {
+          translationSuggestionsEnabled
         },
-        {
-          bookNum: 42,
-          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
-          hasSource: true
+        checkingConfig: {
+          checkingEnabled: false,
+          usersSeeEachOthersResponses: true,
+          shareEnabled: true,
+          shareLevel: CheckingShareLevel.Specific
         },
-        {
-          bookNum: 43,
-          chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
-          hasSource: false
-        }
-      ]
-    };
-    const adapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project);
-    const doc = new SFProjectDoc(this.offlineStore, adapter);
-    when(this.mockedSFProjectService.get('project01')).thenResolve(doc);
+        sync: { queuedCount: 0 },
+        userRoles: {
+          user01: SFProjectRole.ParatextTranslator,
+          user02: SFProjectRole.ParatextConsultant
+        },
+        texts: [
+          {
+            bookNum: 40,
+            chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+            hasSource: true
+          },
+          {
+            bookNum: 41,
+            chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+            hasSource: true
+          },
+          {
+            bookNum: 42,
+            chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+            hasSource: true
+          },
+          {
+            bookNum: 43,
+            chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+            hasSource: false
+          }
+        ]
+      }
+    });
 
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
@@ -289,10 +295,6 @@ class TestEnvironment {
   }
 
   private addTextDoc(id: TextDocId): void {
-    when(this.mockedSFProjectService.getText(deepEqual(id))).thenResolve(this.createTextDoc(id));
-  }
-
-  private createTextDoc(id: TextDocId): TextDoc {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ verse: { number: '1', style: 'v' } });
@@ -316,7 +318,10 @@ class TestEnvironment {
     delta.insert({ verse: { number: '10', style: 'v' } });
     delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_10` });
     delta.insert('\n', { para: { style: 'p' } });
-    const adapter = new MemoryRealtimeDocAdapter(TextDoc.COLLECTION, id.toString(), delta, RichText.type);
-    return new TextDoc(this.offlineStore, adapter);
+    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+      id: id.toString(),
+      type: RichText.type.name,
+      data: delta
+    });
   }
 }

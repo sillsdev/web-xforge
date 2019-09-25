@@ -6,18 +6,19 @@ import { AbstractControl } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
-import cloneDeep from 'lodash/cloneDeep';
+import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { defer, of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
+import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ConnectProjectComponent } from './connect-project.component';
@@ -260,21 +261,45 @@ class TestEnvironment {
   readonly mockedUserService = mock(UserService);
   readonly mockedNoticeService = mock(NoticeService);
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
-  private projectDoc: SFProjectDoc;
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
-    when(this.mockedSFProjectService.onlineCreate(anything())).thenCall((project: SFProject) => {
-      const newProject: SFProject = cloneDeep(project);
-      newProject.sync = { queuedCount: 1 };
-
-      this.projectDoc = new SFProjectDoc(
-        this.offlineStore,
-        new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', newProject)
-      );
-      when(this.mockedSFProjectService.get('project01')).thenResolve(this.projectDoc);
+    when(this.mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
+      const newProject: SFProject = {
+        name: 'project 01',
+        shortName: 'P01',
+        paratextId: settings.paratextId,
+        writingSystem: { tag: 'qaa' },
+        translateConfig: {
+          translationSuggestionsEnabled: settings.translationSuggestionsEnabled,
+          source:
+            settings.sourceParatextId == null
+              ? undefined
+              : {
+                  paratextId: settings.sourceParatextId,
+                  name: 'Source',
+                  shortName: 'SRC',
+                  writingSystem: { tag: 'qaa' }
+                }
+        },
+        checkingConfig: {
+          checkingEnabled: settings.checkingEnabled,
+          shareEnabled: true,
+          shareLevel: CheckingShareLevel.Specific,
+          usersSeeEachOthersResponses: true
+        },
+        sync: { queuedCount: 1 },
+        texts: [],
+        userRoles: {
+          user01: SFProjectRole.ParatextAdministrator
+        }
+      };
+      this.realtimeService.create(SFProjectDoc.COLLECTION, 'project01', newProject);
       return Promise.resolve('project01');
     });
+    when(this.mockedSFProjectService.get('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    );
     when(this.mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
     when(this.mockedUserService.currentUserId).thenReturn('user01');
 
@@ -378,13 +403,15 @@ class TestEnvironment {
   }
 
   emitSyncProgress(percentCompleted: number): void {
-    this.projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.percentCompleted, percentCompleted), false);
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+    projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.percentCompleted, percentCompleted), false);
     tick();
     this.fixture.detectChanges();
   }
 
   emitSyncComplete(): void {
-    this.projectDoc.submitJson0Op(op => {
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+    projectDoc.submitJson0Op(op => {
       op.set<number>(p => p.sync.queuedCount, 0);
       op.unset(p => p.sync.percentCompleted);
       op.set<boolean>(p => p.sync.lastSyncSuccessful, true);

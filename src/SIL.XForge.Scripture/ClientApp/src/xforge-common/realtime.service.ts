@@ -19,7 +19,8 @@ function getDocKey(collection: string, id: string): string {
   providedIn: 'root'
 })
 export class RealtimeService {
-  private readonly docs = new Map<string, RealtimeDoc>();
+  protected readonly docs = new Map<string, RealtimeDoc>();
+  protected readonly subscribeQueries = new Map<string, Set<RealtimeQuery>>();
 
   constructor(
     private readonly docTypes: RealtimeDocTypes,
@@ -32,7 +33,7 @@ export class RealtimeService {
     let doc = this.docs.get(key);
     if (doc == null) {
       const RealtimeDocType = this.docTypes.getDocType(collection);
-      doc = new RealtimeDocType(this.offlineStore, this.remoteStore.createDocAdapter(collection, id));
+      doc = new RealtimeDocType(this, this.remoteStore.createDocAdapter(collection, id));
       this.docs.set(key, doc);
     }
     return doc as T;
@@ -105,5 +106,27 @@ export class RealtimeService {
     const query = this.createQuery<T>(collection, parameters);
     await query.fetch();
     return query;
+  }
+
+  onQuerySubscribe(query: RealtimeQuery): void {
+    let collectionQueries = this.subscribeQueries.get(query.collection);
+    if (collectionQueries == null) {
+      collectionQueries = new Set<RealtimeQuery>();
+      this.subscribeQueries.set(query.collection, collectionQueries);
+    }
+    collectionQueries.add(query);
+  }
+
+  onQueryUnsubscribe(query: RealtimeQuery): void {
+    this.subscribeQueries.get(query.collection).delete(query);
+  }
+
+  onLocalDocUpdate(doc: RealtimeDoc): void {
+    const collectionQueries = this.subscribeQueries.get(doc.collection);
+    if (collectionQueries != null) {
+      for (const query of collectionQueries) {
+        query.localUpdate();
+      }
+    }
   }
 }

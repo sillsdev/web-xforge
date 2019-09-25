@@ -21,6 +21,7 @@ import { UserDoc } from '../models/user-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { Filters, QueryParameters } from '../query-parameters';
+import { RealtimeDocTypes } from '../realtime-doc-types';
 import { TestRealtimeService } from '../test-realtime.service';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
@@ -147,7 +148,7 @@ class TestEnvironment {
   readonly mockedUserService = mock(UserService);
   readonly mockedProjectService = mock(ProjectService);
 
-  private readonly realtimeService = new TestRealtimeService([UserDoc, TestProjectDoc]);
+  private readonly realtimeService = new TestRealtimeService(new RealtimeDocTypes([UserDoc, TestProjectDoc]));
 
   constructor() {
     when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));

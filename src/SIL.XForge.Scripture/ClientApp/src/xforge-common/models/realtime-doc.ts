@@ -1,11 +1,12 @@
 import { merge, Observable, Subject, Subscription } from 'rxjs';
-import { RealtimeOfflineData, RealtimeOfflineStore } from '../realtime-offline-store';
+import { RealtimeService } from 'xforge-common/realtime.service';
+import { RealtimeOfflineData } from '../realtime-offline-store';
 import { RealtimeDocAdapter } from '../realtime-remote-store';
 
 export interface RealtimeDocConstructor {
   readonly COLLECTION: string;
 
-  new (store: RealtimeOfflineStore, adapter: RealtimeDocAdapter): RealtimeDoc;
+  new (realtimeService: RealtimeService, adapter: RealtimeDocAdapter): RealtimeDoc;
 }
 
 /**
@@ -24,7 +25,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   private _delete$: Observable<void>;
   private subscribeQueryCount: number = 0;
 
-  constructor(protected readonly store: RealtimeOfflineStore, public readonly adapter: RealtimeDocAdapter) {
+  constructor(protected readonly realtimeService: RealtimeService, public readonly adapter: RealtimeDocAdapter) {
     this._delete$ = merge(this.localDelete$, this.adapter.delete$);
     this.updateOfflineDataSub = merge(this.adapter.remoteChanges$, this.adapter.idle$, this.adapter.create$).subscribe(
       () => this.updateOfflineData()
@@ -98,51 +99,32 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   async submit(ops: Ops, source?: any): Promise<void> {
     const submitPromise = this.adapter.submitOp(ops, source);
     // update offline data when the op is first submitted
-    this.updateOfflineData();
+    await this.updateOfflineData();
+    this.realtimeService.onLocalDocUpdate(this);
     await submitPromise;
     // update again when the op has been acknowledged
     this.updateOfflineData();
   }
 
-  create(data: T): Promise<void> {
-    return this.adapter.create(data);
+  async create(data: T): Promise<void> {
+    const createPromise = this.adapter.create(data);
+    await this.updateOfflineData(true);
+    this.realtimeService.onLocalDocUpdate(this);
+    await createPromise;
   }
 
-  delete(): Promise<void> {
-    return this.adapter.delete();
-  }
-
-  /**
-   * Updates offline storage with the current state of the realtime data.
-   */
-  updateOfflineData(): void {
-    if (!this.isLoaded || !this.subscribed) {
-      return;
-    }
-
-    const pendingOps = this.adapter.pendingOps.map(op => this.prepareDataForStore(op));
-
-    // if the snapshot hasn't changed, then don't bother to update
-    if (pendingOps.length === 0 && this.adapter.version === this.offlineSnapshotVersion) {
-      return;
-    }
-
-    this.offlineSnapshotVersion = this.adapter.version;
-    const offlineData: RealtimeOfflineData = {
-      id: this.id,
-      v: this.adapter.version,
-      data: this.prepareDataForStore(this.adapter.data),
-      type: this.adapter.type.name,
-      pendingOps
-    };
-    this.store.put(this.collection, offlineData);
+  async delete(): Promise<void> {
+    const deletePromise = this.adapter.delete();
+    await this.onDelete();
+    this.realtimeService.onLocalDocUpdate(this);
+    await deletePromise;
   }
 
   async loadFromStore(): Promise<void> {
     if (this.isLoaded) {
       return;
     }
-    const offlineData = await this.store.get(this.collection, this.id);
+    const offlineData = await this.realtimeService.offlineStore.get(this.collection, this.id);
     if (offlineData != null) {
       if (offlineData.pendingOps.length > 0) {
         await this.adapter.fetch();
@@ -154,12 +136,12 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     }
   }
 
-  addedToSubscribeQuery(): void {
+  onAddedToSubscribeQuery(): void {
     this.subscribeQueryCount++;
     this.updateOfflineData();
   }
 
-  removedFromSubscribeQuery(): void {
+  onRemovedFromSubscribeQuery(): void {
     this.updateOfflineData();
     this.subscribeQueryCount--;
   }
@@ -185,12 +167,44 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     await this.adapter.destroy();
   }
 
+  /**
+   * Updates offline storage with the current state of the realtime data.
+   *
+   * @param {boolean} [force=false] Indicates whether force the update to occur even if not subscribed.
+   */
+  protected async updateOfflineData(force: boolean = false): Promise<void> {
+    if (!this.isLoaded) {
+      return;
+    }
+
+    if (!force && !this.subscribed) {
+      return;
+    }
+
+    const pendingOps = this.adapter.pendingOps.map(op => this.prepareDataForStore(op));
+
+    // if the snapshot hasn't changed, then don't bother to update
+    if (pendingOps.length === 0 && this.adapter.version === this.offlineSnapshotVersion) {
+      return;
+    }
+
+    this.offlineSnapshotVersion = this.adapter.version;
+    const offlineData: RealtimeOfflineData = {
+      id: this.id,
+      v: this.adapter.version,
+      data: this.prepareDataForStore(this.adapter.data),
+      type: this.adapter.type.name,
+      pendingOps
+    };
+    await this.realtimeService.offlineStore.put(this.collection, offlineData);
+  }
+
   protected prepareDataForStore(data: T): any {
     return data;
   }
 
-  protected onDelete(): void {
-    this.store.delete(this.collection, this.id);
+  protected onDelete(): Promise<void> {
+    return this.realtimeService.offlineStore.delete(this.collection, this.id);
   }
 
   private async subscribeToChanges(): Promise<void> {

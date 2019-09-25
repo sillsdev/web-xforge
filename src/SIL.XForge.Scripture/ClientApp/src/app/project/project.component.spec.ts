@@ -10,13 +10,13 @@ import {
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
+import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectComponent } from './project.component';
 
@@ -67,7 +67,6 @@ describe('ProjectComponent', () => {
 
   it('do not navigate when project does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setNoProjectData();
     env.fixture.detectChanges();
     tick();
 
@@ -140,7 +139,7 @@ class TestEnvironment {
   readonly mockedSFProjectService = mock(SFProjectService);
   readonly mockedNoticeService = mock(NoticeService);
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
+  readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
@@ -151,6 +150,15 @@ class TestEnvironment {
     when(this.mockedSFProjectService.onlineCheckLinkSharing('project01')).thenResolve();
     when(this.mockedSFProjectService.onlineCheckLinkSharing('project01', anything())).thenResolve();
     when(this.mockedNoticeService.showMessageDialog(anything())).thenResolve();
+    when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenCall(() =>
+      this.realtimeService.subscribe(
+        SFProjectUserConfigDoc.COLLECTION,
+        getSFProjectUserConfigDocId('project01', 'user01')
+      )
+    );
+    when(this.mockedSFProjectService.get('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    );
     this.setLinkSharing(false);
 
     TestBed.configureTestingModule({
@@ -168,73 +176,50 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
   }
 
-  setNoProjectData(): void {
-    const projectUserConfigDoc = new SFProjectUserConfigDoc(
-      this.offlineStore,
-      new MemoryRealtimeDocAdapter(
-        SFProjectUserConfigDoc.COLLECTION,
-        getSFProjectUserConfigDocId('project01', 'user01')
-      )
-    );
-    when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenResolve(projectUserConfigDoc);
-    const projectDoc = new SFProjectDoc(
-      this.offlineStore,
-      new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01')
-    );
-    when(this.mockedSFProjectService.get('project01')).thenResolve(projectDoc);
-  }
-
   setProjectData(args: { hasTexts?: boolean; selectedTask?: string; role?: SFProjectRole } = {}): void {
-    const projectUserConfig: SFProjectUserConfig = {
-      ownerRef: 'user01',
-      projectRef: 'project01',
-      selectedTask: args.selectedTask,
-      selectedBookNum: args.selectedTask == null ? undefined : 41,
-      isTargetTextRight: true,
-      confidenceThreshold: 0.2,
-      translationSuggestionsEnabled: true,
-      selectedSegment: '',
-      questionRefsRead: [],
-      answerRefsRead: [],
-      commentRefsRead: []
-    };
-    const projectUserConfigDoc = new SFProjectUserConfigDoc(
-      this.offlineStore,
-      new MemoryRealtimeDocAdapter(
-        SFProjectUserConfigDoc.COLLECTION,
-        getSFProjectUserConfigDocId('project01', 'user01'),
-        projectUserConfig
-      )
-    );
-    when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenResolve(projectUserConfigDoc);
-    const project: SFProject = {
-      name: 'project 01',
-      shortName: 'P01',
-      paratextId: 'pt01',
-      writingSystem: {
-        tag: 'qaa'
-      },
-      translateConfig: {
-        translationSuggestionsEnabled: false
-      },
-      checkingConfig: {
-        checkingEnabled: true,
-        usersSeeEachOthersResponses: true,
-        shareEnabled: true,
-        shareLevel: CheckingShareLevel.Specific
-      },
-      sync: { queuedCount: 0 },
-      texts:
-        args.hasTexts == null || args.hasTexts
-          ? [{ bookNum: 40, chapters: [], hasSource: false }, { bookNum: 41, chapters: [], hasSource: false }]
-          : [],
-      userRoles: { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }
-    };
-    const projectDoc = new SFProjectDoc(
-      this.offlineStore,
-      new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, 'project01', project)
-    );
-    when(this.mockedSFProjectService.get('project01')).thenResolve(projectDoc);
+    this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
+      id: getSFProjectUserConfigDocId('project01', 'user01'),
+      data: {
+        ownerRef: 'user01',
+        projectRef: 'project01',
+        selectedTask: args.selectedTask,
+        selectedBookNum: args.selectedTask == null ? undefined : 41,
+        isTargetTextRight: true,
+        confidenceThreshold: 0.2,
+        translationSuggestionsEnabled: true,
+        selectedSegment: '',
+        questionRefsRead: [],
+        answerRefsRead: [],
+        commentRefsRead: []
+      }
+    });
+
+    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+      id: 'project01',
+      data: {
+        name: 'project 01',
+        shortName: 'P01',
+        paratextId: 'pt01',
+        writingSystem: {
+          tag: 'qaa'
+        },
+        translateConfig: {
+          translationSuggestionsEnabled: false
+        },
+        checkingConfig: {
+          checkingEnabled: true,
+          usersSeeEachOthersResponses: true,
+          shareEnabled: true,
+          shareLevel: CheckingShareLevel.Specific
+        },
+        sync: { queuedCount: 0 },
+        texts:
+          args.hasTexts == null || args.hasTexts
+            ? [{ bookNum: 40, chapters: [], hasSource: false }, { bookNum: 41, chapters: [], hasSource: false }]
+            : [],
+        userRoles: { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }
+      }
+    });
   }
 
   setLinkSharing(enabled: boolean, shareKey?: string): void {

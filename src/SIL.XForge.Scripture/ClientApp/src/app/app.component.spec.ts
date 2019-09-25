@@ -18,16 +18,14 @@ import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { LocationService } from 'xforge-common/location.service';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter, MemoryRealtimeQueryAdapter } from 'xforge-common/memory-realtime-remote-store';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { objectId } from 'xforge-common/utils';
+import { getObjPathStr, objectId, objProxy } from 'xforge-common/utils';
 import { AppComponent, CONNECT_PROJECT_OPTION, QuestionQuery } from './app.component';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectDoc } from './core/models/sf-project-doc';
@@ -129,7 +127,7 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
-    env.deleteProject01(false);
+    env.deleteProject('project01', false);
     expect(env.projectDeletedDialog).not.toBeNull();
     verify(env.mockedUserService.setCurrentProjectId()).once();
     env.confirmDialog();
@@ -139,7 +137,7 @@ describe('AppComponent', () => {
 
   it('response to remote project deletion when no project selected', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.deleteProject01(false);
+    env.deleteProject('project01', false);
     env.navigate(['/projects', 'project01']);
     env.init();
 
@@ -155,7 +153,7 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
-    env.deleteProject01(true);
+    env.deleteProject('project01', true);
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.location.path()).toEqual('/projects');
   }));
@@ -166,7 +164,7 @@ describe('AppComponent', () => {
     env.init();
 
     expect(env.selectedProjectId).toEqual('project01');
-    env.removesUserFromProject01();
+    env.removesUserFromProject('project01');
     expect(env.projectDeletedDialog).not.toBeNull();
     env.confirmDialog();
     expect(env.location.path()).toEqual('/projects');
@@ -177,7 +175,7 @@ describe('AppComponent', () => {
     env.navigate(['/projects']);
     env.init();
 
-    env.addUserToProject04();
+    env.addUserToProject('project04');
     env.navigate(['/projects', 'project04']);
     env.wait();
     expect(env.isDrawerVisible).toEqual(true);
@@ -232,7 +230,7 @@ describe('AppComponent', () => {
       env.selectItem(0);
       // Expect: Community Checking | Overview | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(5);
-      env.addQuestion(env.questions[0]);
+      env.remoteAddQuestion(env.questions[0]);
       // Expect: Community Checking | Overview | John | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(6);
     }));
@@ -248,11 +246,36 @@ describe('AppComponent', () => {
       env.selectItem(0);
       // Expect: Community Checking | Overview | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(5);
-      env.addQuestion(env.questions[0]);
-      env.addQuestion(env.questions[1]);
+      env.remoteAddQuestion(env.questions[0]);
+      env.remoteAddQuestion(env.questions[1]);
       // Expect: Community Checking | Overview | All Questions | Luke | John | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(8);
       expect(env.menuList.getListItemByIndex(2).getListItemElement().textContent).toContain('All Questions');
+    }));
+
+    it('update books when question added/archived/unarchived locally', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.navigate(['/projects', 'project02']);
+      env.init();
+
+      expect(env.isDrawerVisible).toEqual(true);
+      expect(env.selectedProjectId).toEqual('project02');
+      expect(env.component.isCheckingEnabled).toEqual(true);
+      env.selectItem(0);
+      // Expect: Community Checking | Overview | Synchronize | Settings | Users
+      expect(env.menuLength).toEqual(5);
+
+      env.localAddQuestion(env.questions[0]);
+      // Expect: Community Checking | Overview | John | Synchronize | Settings | Users
+      expect(env.menuLength).toEqual(6);
+
+      env.localSetIsArchived(env.questions[0], true);
+      // Expect: Community Checking | Overview | Synchronize | Settings | Users
+      expect(env.menuLength).toEqual(5);
+
+      env.localSetIsArchived(env.questions[0], false);
+      // Expect: Community Checking | Overview | John | Synchronize | Settings | Users
+      expect(env.menuLength).toEqual(6);
     }));
   });
 });
@@ -297,60 +320,41 @@ class TestEnvironment {
   readonly mockedUserService = mock(UserService);
   readonly mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
   readonly mockedSFProjectService = mock(SFProjectService);
-  readonly mockedRealtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   readonly mockedLocationService = mock(LocationService);
   readonly mockedNoticeService = mock(NoticeService);
   readonly mockedNameDialogRef = mock(MdcDialogRef);
 
-  private questionCountQueries: QuestionQuery[] = [];
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
-  private readonly currentUserDoc: UserDoc;
-  private readonly project01Doc: SFProjectDoc;
-  private readonly project04Doc: SFProjectDoc;
-
   constructor() {
-    const user: User = {
-      name: 'User 01',
-      email: 'user1@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      avatarUrl: '',
-      authId: 'auth01',
-      displayName: 'User 01',
-      sites: {
-        sf: {
-          projects: ['project01', 'project02', 'project03']
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user01',
+      data: {
+        name: 'User 01',
+        email: 'user1@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId: 'auth01',
+        displayName: 'User 01',
+        sites: {
+          sf: {
+            projects: ['project01', 'project02', 'project03']
+          }
         }
       }
-    };
+    });
 
-    this.currentUserDoc = new UserDoc(
-      this.offlineStore,
-      new MemoryRealtimeDocAdapter(UserDoc.COLLECTION, 'user01', user)
-    );
+    this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
+    when(this.mockedSFProjectService.queryQuestionCount(anything(), anything())).thenCall((_projectId, options) => {
+      const parameters: QueryParameters = {
+        $count: true,
+        [getObjPathStr(objProxy<Question>().verseRef.bookNum)]: options.bookNum,
+        [getObjPathStr(objProxy<Question>().isArchived)]: false
+      };
+      return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, parameters);
+    });
 
-    this.mockedRealtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
-    for (let bookNum = 40; bookNum <= 47; bookNum++) {
-      const questionCountQuery: RealtimeQuery<QuestionDoc> = this.mockedRealtimeService.createQuery(
-        QuestionDoc.COLLECTION,
-        {
-          $count: true
-        }
-      );
-      questionCountQuery.subscribe();
-      when(
-        this.mockedSFProjectService.queryQuestionCount(
-          anything(),
-          deepEqual({
-            bookNum: bookNum,
-            activeOnly: true
-          })
-        )
-      ).thenResolve(questionCountQuery);
-      this.questionCountQueries.push({ bookNum: bookNum, query: questionCountQuery });
-    }
-
-    this.project01Doc = this.addProject('project01', { user01: SFProjectRole.ParatextTranslator }, [
+    this.addProject('project01', { user01: SFProjectRole.ParatextTranslator }, [
       { bookNum: 40, hasSource: true, chapters: [] },
       { bookNum: 41, hasSource: false, chapters: [] }
     ]);
@@ -362,14 +366,19 @@ class TestEnvironment {
       { bookNum: 44, hasSource: true, chapters: [] },
       { bookNum: 45, hasSource: true, chapters: [] }
     ]);
-    this.project04Doc = this.addProject('project04', {}, [
+    this.addProject('project04', {}, [
       { bookNum: 46, hasSource: true, chapters: [] },
       { bookNum: 47, hasSource: true, chapters: [] }
     ]);
 
+    when(this.mockedSFProjectService.get(anything())).thenCall(projectId =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    );
     when(this.mockedUserService.currentUserId).thenReturn('user01');
     when(this.mockedAuthService.isLoggedIn).thenResolve(true);
-    when(this.mockedUserService.getCurrentUser()).thenResolve(this.currentUserDoc);
+    when(this.mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+    );
     when(this.mockedUserService.currentProjectId).thenReturn('project01');
     when(this.mockedAccountService.openNameDialog(anything(), false)).thenReturn(instance(this.mockedNameDialogRef));
     when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
@@ -383,7 +392,7 @@ class TestEnvironment {
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: SFAdminAuthGuard, useFactory: () => instance(this.mockedSFAdminAuthGuard) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
-        { provide: RealtimeService, useFactory: () => instance(this.mockedRealtimeService) },
+        { provide: RealtimeService, useFactory: () => instance(this.realtimeService) },
         { provide: LocationService, useFactory: () => instance(this.mockedLocationService) },
         { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
       ]
@@ -468,15 +477,32 @@ class TestEnvironment {
     return this.currentUserDoc.data.displayName;
   }
 
-  addQuestion(newQuestion: Question) {
+  get currentUserDoc(): UserDoc {
+    return this.realtimeService.get(UserDoc.COLLECTION, 'user01');
+  }
+
+  remoteAddQuestion(newQuestion: Question): void {
     const docId = getQuestionDocId(newQuestion.projectRef, newQuestion.dataId);
-    this.mockedRealtimeService.addSnapshot(QuestionDoc.COLLECTION, {
+    this.realtimeService.addSnapshot(QuestionDoc.COLLECTION, {
       id: docId,
       data: newQuestion
     });
-    const adapter = this.questionCountQueries.find(q => q.bookNum === newQuestion.verseRef.bookNum).query
-      .adapter as MemoryRealtimeQueryAdapter;
-    adapter.update();
+    this.realtimeService.updateAllSubscribeQueries();
+    this.wait();
+  }
+
+  localAddQuestion(newQuestion: Question): void {
+    const docId = getQuestionDocId(newQuestion.projectRef, newQuestion.dataId);
+    this.realtimeService.create(QuestionDoc.COLLECTION, docId, newQuestion);
+    this.wait();
+  }
+
+  localSetIsArchived(question: Question, isArchived: boolean): void {
+    const questionDoc = this.realtimeService.get<QuestionDoc>(
+      QuestionDoc.COLLECTION,
+      getQuestionDocId(question.projectRef, question.dataId)
+    );
+    questionDoc.submitJson0Op(ops => ops.set(q => q.isArchived, isArchived));
     this.wait();
   }
 
@@ -513,26 +539,26 @@ class TestEnvironment {
     flush(50);
   }
 
-  deleteProject01(isLocal: boolean): void {
+  deleteProject(projectId: string, isLocal: boolean): void {
     if (isLocal) {
       when(this.mockedUserService.currentProjectId).thenReturn(undefined);
     }
     this.fixture.ngZone.run(() => {
-      this.project01Doc.delete();
+      const projectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);
+      projectDoc.delete();
     });
     this.wait();
   }
 
-  removesUserFromProject01(): void {
-    this.project01Doc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
+  removesUserFromProject(projectId: string): void {
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
     this.wait();
   }
 
-  addUserToProject04(): void {
-    this.project04Doc.submitJson0Op(
-      op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker),
-      false
-    );
+  addUserToProject(projectId: string): void {
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
   }
 
@@ -546,30 +572,29 @@ class TestEnvironment {
     this.component.editName('User 01');
   }
 
-  private addProject(projectId: string, userRoles: { [userRef: string]: string }, texts: TextInfo[]): SFProjectDoc {
-    const project: SFProject = {
-      name: projectId,
-      paratextId: projectId,
-      shortName: projectId,
-      writingSystem: {
-        tag: 'en'
-      },
-      translateConfig: {
-        translationSuggestionsEnabled: false
-      },
-      checkingConfig: {
-        checkingEnabled: true,
-        shareEnabled: true,
-        shareLevel: CheckingShareLevel.Specific,
-        usersSeeEachOthersResponses: true
-      },
-      sync: { queuedCount: 0 },
-      userRoles,
-      texts
-    };
-    const adapter = new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, projectId, project);
-    const doc = new SFProjectDoc(this.offlineStore, adapter);
-    when(this.mockedSFProjectService.get(projectId)).thenResolve(doc);
-    return doc;
+  private addProject(projectId: string, userRoles: { [userRef: string]: string }, texts: TextInfo[]): void {
+    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+      id: projectId,
+      data: {
+        name: projectId,
+        paratextId: projectId,
+        shortName: projectId,
+        writingSystem: {
+          tag: 'en'
+        },
+        translateConfig: {
+          translationSuggestionsEnabled: false
+        },
+        checkingConfig: {
+          checkingEnabled: true,
+          shareEnabled: true,
+          shareLevel: CheckingShareLevel.Specific,
+          usersSeeEachOthersResponses: true
+        },
+        sync: { queuedCount: 0 },
+        userRoles,
+        texts
+      }
+    });
   }
 }

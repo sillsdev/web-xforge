@@ -220,9 +220,6 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
 
 export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
   private _ready$ = new Subject<void>();
-  private _insert$ = new Subject<{ index: number; docIds: string[] }>();
-  private _remove$ = new Subject<{ index: number; docIds: string[] }>();
-  private _move$ = new Subject<{ from: number; to: number; length: number }>();
   private _remoteChanges$ = new Subject<void>();
   private resultsQuery: Query;
   private unpagedCountQuery: Query;
@@ -244,18 +241,6 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
 
   get ready$(): Observable<void> {
     return this._ready$;
-  }
-
-  get insert$(): Observable<{ index: number; docIds: string[] }> {
-    return this._insert$;
-  }
-
-  get remove$(): Observable<{ index: number; docIds: string[] }> {
-    return this._remove$;
-  }
-
-  get move$(): Observable<{ from: number; to: number; length: number }> {
-    return this._move$;
   }
 
   get remoteChanges$(): Observable<void> {
@@ -343,10 +328,11 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
         this._ready$.next();
       }
     });
-    this.resultsQuery.on('insert', (docs, index) => this._insert$.next({ index, docIds: docs.map(d => d.id) }));
-    this.resultsQuery.on('remove', (docs, index) => this._remove$.next({ index, docIds: docs.map(d => d.id) }));
-    this.resultsQuery.on('move', (docs, from, to) => this._move$.next({ from, to, length: docs.length }));
-    this.resultsQuery.on('changed', () => this._remoteChanges$.next());
+    this.resultsQuery.on('changed', () => {
+      if (this.ready) {
+        this._remoteChanges$.next();
+      }
+    });
     this.resultsQuery.on('extra', () => {
       if (this.ready) {
         this._remoteChanges$.next();

@@ -11,15 +11,15 @@ import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { LocationService } from 'xforge-common/location.service';
-import { MemoryRealtimeOfflineStore } from 'xforge-common/memory-realtime-offline-store';
-import { MemoryRealtimeDocAdapter } from 'xforge-common/memory-realtime-remote-store';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
+import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from '../../shared/share/share-control.component';
 import { CollaboratorsComponent } from './collaborators.component';
@@ -27,7 +27,6 @@ import { CollaboratorsComponent } from './collaborators.component';
 describe('CollaboratorsComponent', () => {
   it('should not display no-users label while loading', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupNullProjectData();
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
@@ -292,7 +291,7 @@ class TestEnvironment {
   readonly mockedProjectService = mock(SFProjectService);
   readonly mockedUserService = mock(UserService);
 
-  private readonly offlineStore = new MemoryRealtimeOfflineStore();
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
     when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: this.project01Id }));
@@ -306,9 +305,26 @@ class TestEnvironment {
     when(this.mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
     when(this.mockedNoticeService.show(anything())).thenResolve();
     when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
-    this.addUserProfile('user01', { displayName: 'User 01', avatarUrl: '' });
-    this.addUserProfile('user02', { displayName: 'User 02', avatarUrl: '' });
-    this.addUserProfile('user03', { displayName: 'User 03', avatarUrl: '' });
+    when(this.mockedUserService.getProfile(anything())).thenCall(userId =>
+      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, userId)
+    );
+    when(this.mockedProjectService.get(anything())).thenCall(projectId =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
+    );
+    this.realtimeService.addSnapshots<UserProfile>(UserProfileDoc.COLLECTION, [
+      {
+        id: 'user01',
+        data: { displayName: 'User 01', avatarUrl: '' }
+      },
+      {
+        id: 'user02',
+        data: { displayName: 'User 02', avatarUrl: '' }
+      },
+      {
+        id: 'user03',
+        data: { displayName: 'User 03', avatarUrl: '' }
+      }
+    ]);
     TestBed.configureTestingModule({
       declarations: [CollaboratorsComponent, ShareControlComponent],
       imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
@@ -431,10 +447,6 @@ class TestEnvironment {
     );
   }
 
-  setupNullProjectData(): void {
-    this.setupThisProjectData(this.project01Id, null);
-  }
-
   setupProjectDataWithNoUsers(): void {
     this.setupThisProjectData(this.project01Id, this.createProject({}));
   }
@@ -458,17 +470,10 @@ class TestEnvironment {
     };
   }
 
-  private addUserProfile(id: string, user: UserProfile): void {
-    when(this.mockedUserService.getProfile(id)).thenResolve(
-      new UserProfileDoc(this.offlineStore, new MemoryRealtimeDocAdapter(UserProfileDoc.COLLECTION, id, user))
-    );
-  }
-
   private setupThisProjectData(projectId: string, project: SFProject): void {
-    const projectDoc = new SFProjectDoc(
-      this.offlineStore,
-      new MemoryRealtimeDocAdapter(SFProjectDoc.COLLECTION, projectId, project)
-    );
-    when(this.mockedProjectService.get(projectId)).thenResolve(projectDoc);
+    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+      id: projectId,
+      data: project
+    });
   }
 }
