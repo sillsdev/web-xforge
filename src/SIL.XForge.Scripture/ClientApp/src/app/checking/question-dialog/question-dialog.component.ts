@@ -8,7 +8,6 @@ import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/ver
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { Anchorable } from '../../core/models/anchorable';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import {
@@ -48,7 +47,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     SFValidators.verseStartBeforeEnd
   );
   audio: AudioAttachment = {};
-  _selection: Anchorable;
+  _selection: VerseRef;
 
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
@@ -126,7 +125,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     }
 
     const { verseRef } = VerseRef.tryParse(verseRefStr);
-    this._selection = { verseRef: verseRef.valid ? verseRef : undefined };
+    this._selection = verseRef.valid ? verseRef : undefined;
   }
 
   updateScriptureEndEnabled() {
@@ -143,7 +142,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     }
 
     this.dialogRef.close({
-      verseRef: this._selection.verseRef,
+      verseRef: this._selection,
       text: this.questionText.value,
       audio: this.audio
     });

@@ -9,7 +9,7 @@ import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -18,7 +18,6 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { HelpHeroService } from '../../core/help-hero.service';
-import { Anchorable } from '../../core/models/anchorable';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -74,7 +73,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     unread: 0,
     answered: 0
   };
-  bookVerseRefs: Anchorable[] = [];
+  bookVerseRefs: VerseRef[] = [];
 
   answersPanelContainerElement: ElementRef;
   projectDoc: SFProjectDoc;
@@ -433,8 +432,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.questionsQuery != null ? this.questionsQuery.docs.length : 0;
   }
 
-  verseRefClicked(objClicked: Anchorable) {
-    const verseRef = objClicked.verseRef;
+  verseRefClicked(verseRef: VerseRef) {
     let bestMatch: QuestionDoc;
 
     for (const questionDoc of this.questionDocs) {
@@ -485,7 +483,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.bookVerseRefs = [];
     for (const questionDoc of this.questionDocs) {
       if (questionDoc.verseRef.bookNum === this.book) {
-        this.bookVerseRefs.push({ verseRef: questionDoc.verseRef });
+        this.bookVerseRefs.push(questionDoc.verseRef);
       }
     }
   }

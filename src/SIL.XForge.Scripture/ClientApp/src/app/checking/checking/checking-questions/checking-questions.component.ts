@@ -6,6 +6,7 @@ import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -27,6 +28,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   _questionDocs: Readonly<QuestionDoc[]> = [];
   activeQuestionDoc: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
+  private _activeQuestionVerseRef: VerseRef;
 
   constructor(private userService: UserService) {
     super();
@@ -42,6 +44,10 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
 
   get activeQuestionIndex(): number {
     return this.questionDocs.findIndex(question => question.id === this.activeQuestionDoc.id);
+  }
+
+  get activeQuestionVerseRef(): VerseRef {
+    return this._activeQuestionVerseRef;
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
@@ -175,6 +181,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     this.activeQuestionDoc = questionDoc;
     this.changed.emit(questionDoc);
     this.activeQuestionDoc$.next(questionDoc);
+    this._activeQuestionVerseRef = questionDoc.verseRef;
   }
 
   private changeQuestion(newDifferential: number): void {
