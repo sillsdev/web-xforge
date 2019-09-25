@@ -297,7 +297,7 @@ describe('QuestionDialogComponent', () => {
     const textDocId = new TextDocId('project01', 42, 1, 'target');
     expect(env.component.textDocId.toString()).toBe(textDocId.toString());
     verify(env.mockedProjectService.getText(deepEqual(textDocId))).once();
-    expect(env.component.selection.verseRef.toString()).toEqual('LUK 1:3');
+    expect(env.component.selection.toString()).toEqual('LUK 1:3');
   }));
 
   it('displays error editing end reference to different book', fakeAsync(() => {
