@@ -1,6 +1,7 @@
 <div mdcMenuSurfaceAnchor #fontSizeAnchor>
   <button
     mdc-icon-button
+    type="button"
     (click)="fontSizeSurface.open = !fontSizeSurface.open"
     icon="format_size"
     id="font-size-toggle"
@@ -8,6 +9,7 @@
   <mdc-menu-surface #fontSizeSurface [anchorElement]="fontSizeAnchor" anchorCorner="bottomEnd" id="font-menu-surface">
     <div class="buttons-group">
       <button
+        type="button"
         (click)="decreaseFontSize()"
         [disabled]="fontSize === min"
         mdc-icon-button
@@ -16,6 +18,7 @@
       ></button>
       <button
         mdc-icon-button
+        type="button"
         (click)="increaseFontSize()"
         [disabled]="fontSize === max"
         icon="add"
