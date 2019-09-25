@@ -11,7 +11,7 @@
     <mdc-helper-text validation>You need to enter your comment before saving</mdc-helper-text>
   </mdc-form-field>
   <div class="form-actions">
-    <button mdc-button (click)="submitCancel()" class="cancel-comment">Cancel</button>
-    <button mdc-button primary form="comment-form" class="save-comment">Save Comment</button>
+    <button mdc-button type="button" (click)="submitCancel()" class="cancel-comment">Cancel</button>
+    <button mdc-button primary form="comment-form" type="submit" class="save-comment">Save Comment</button>
   </div>
 </form>

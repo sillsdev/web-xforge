@@ -60,6 +60,7 @@
               icon="clear"
               class="remove-user"
               *ngIf="!userRow.isInvitee && !isCurrentUser(userRow)"
+              type="button"
               (click)="removeProjectUser(userRow.id)"
               title="Remove from project"
             ></button>
@@ -73,6 +74,7 @@
               outlined
               color="warn"
               class="cancel-invite"
+              type="button"
               (click)="uninviteProjectUser(userRow.user.email)"
             >
               Cancel invite
@@ -85,6 +87,7 @@
               *ngIf="userRow.isInvitee"
               fxHide
               fxShow.lt-sm
+              type="button"
               (click)="uninviteProjectUser(userRow.user.email)"
               title="Cancel invite"
             ></button>

@@ -48,7 +48,7 @@
                 Logged in as
                 <div fxLayout="row" fxLayoutAlign="start center">
                   <span fxFlex>&nbsp;</span>
-                  <button id="edit-name-btn" mdcIconButton (click)="editName(currentUser.displayName)">
+                  <button id="edit-name-btn" mdcIconButton type="button" (click)="editName(currentUser.displayName)">
                     <mdc-icon>edit</mdc-icon>
                   </button>
                   <strong class="user-menu-name">{{ currentUser.displayName }}</strong>

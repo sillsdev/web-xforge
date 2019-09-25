@@ -39,7 +39,7 @@
       </ng-container>
       <ng-container matColumnDef="remove">
         <td mat-cell *matCellDef="let userRow" class="remove-cell">
-          <button mdc-icon-button class="remove-user" (click)="removeUser(userRow.id, userRow.user)">
+          <button mdc-icon-button class="remove-user" type="button" (click)="removeUser(userRow.id, userRow.user)">
             <mdc-icon>clear</mdc-icon>
           </button>
         </td>

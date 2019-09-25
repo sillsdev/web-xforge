@@ -108,13 +108,14 @@
         </div>
       </div>
       <div *ngIf="questionsPanel.activeQuestionDoc" id="project-navigation">
-        <button mdc-button *ngIf="!this.isDrawerPermanent" (click)="toggleDrawer()">
+        <button mdc-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()">
           <span class="mdc-button__label">View Questions</span>
         </button>
         <div class="d-flex justify-content-end">
           <button
             mdc-button
             fxHide.xs
+            type="button"
             (click)="questionsPanel.previousQuestion()"
             [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
             class="prev-question"
@@ -124,6 +125,7 @@
           <button
             mdc-button
             fxHide.xs
+            type="button"
             (click)="questionsPanel.nextQuestion()"
             [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
             class="next-question"
@@ -133,6 +135,7 @@
           <button
             mdc-icon-button
             fxHide.gt-xs
+            type="button"
             (click)="questionsPanel.previousQuestion()"
             [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
             class="prev-question"
@@ -141,6 +144,7 @@
           <button
             mdc-icon-button
             fxHide.gt-xs
+            type="button"
             (click)="questionsPanel.nextQuestion()"
             [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
             class="next-question"

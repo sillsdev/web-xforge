@@ -6,6 +6,7 @@
         *ngIf="!isLoggedIntoParatext && !isLoading"
         class="action-button"
         mdc-button
+        type="button"
         (click)="logInWithParatext()"
         id="btn-log-in"
       >
@@ -17,6 +18,7 @@
           class="action-button"
           mdc-button
           primary
+          type="button"
           (click)="syncProject()"
           [disabled]="isLoading"
           id="btn-sync"

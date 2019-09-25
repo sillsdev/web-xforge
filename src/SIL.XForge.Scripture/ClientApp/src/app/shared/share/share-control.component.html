@@ -28,7 +28,7 @@
           <span *ngIf="email.hasError('pattern') || email.hasError('email')">Email address is invalid</span>
         </mdc-helper-text>
       </mdc-form-field>
-      <button id="send-btn" mdc-button (click)="sendEmail()" [disabled]="isSubmitted">
+      <button id="send-btn" mdc-button type="submit" (click)="sendEmail()" [disabled]="isSubmitted">
         {{ isAlreadyInvited ? "Resend" : "Send" }}
       </button>
     </div>

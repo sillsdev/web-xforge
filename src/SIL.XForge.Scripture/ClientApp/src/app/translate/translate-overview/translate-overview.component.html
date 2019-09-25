@@ -66,7 +66,14 @@
     <mdc-list-divider></mdc-list-divider>
     <mdc-card-actions>
       <mdc-card-action-buttons>
-        <button id="retrain-button" mdc-button mdcCardAction="button" [disabled]="isTraining" (click)="startTraining()">
+        <button
+          id="retrain-button"
+          mdc-button
+          mdcCardAction="button"
+          [disabled]="isTraining"
+          type="button"
+          (click)="startTraining()"
+        >
           {{ isTraining ? "Training..." : "Retrain" }}
         </button>
       </mdc-card-action-buttons>
