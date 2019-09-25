@@ -6,6 +6,7 @@
       <div class="toolbar-separator">&nbsp;</div>
       <button
         mdcIconButton
+        type="button"
         title="Enable/disable suggestions"
         [on]="translationSuggestionsUserEnabled"
         (change)="translationSuggestionsUserEnabled = !$event.value"
@@ -19,6 +20,7 @@
           mdc-icon-button
           icon="linear_scale"
           title="Adjust suggestion confidence"
+          type="button"
           (click)="suggestionsMenu.open = !suggestionsMenu.open"
           [class.mdc-icon-button--activated]="suggestionsMenu.open"
         ></button>
@@ -49,6 +51,7 @@
         mdc-icon-button
         appBlurOnClick
         icon="swap_horiz"
+        type="button"
         (click)="isTargetTextRight = !isTargetTextRight"
         title="Swap source and target"
       ></button>
@@ -91,7 +94,13 @@
   <div *ngIf="showTrainingProgress" class="training-progress" mdcElevation="2">
     <div class="training-title" fxLayout="row" fxLayoutAlign="space-between center">
       <div mdcSubtitle1>Training</div>
-      <button id="training-close-button" mdc-icon-button icon="close" (click)="closeTrainingProgress()"></button>
+      <button
+        id="training-close-button"
+        mdc-icon-button
+        icon="close"
+        type="button"
+        (click)="closeTrainingProgress()"
+      ></button>
     </div>
     <mdc-list-divider></mdc-list-divider>
     <div class="training-content" fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="5px">

@@ -99,6 +99,7 @@
         fxHide.xl
         [fxShow]="scriptureText.value"
         [fxHide.lt-xl]="!canShowScriptureInput"
+        type="button"
         (click)="resetScriptureText()"
         icon="refresh"
         class="try-again"
@@ -124,8 +125,10 @@
       Please enter a valid scripture reference in the select text tab
     </div>
     <div class="form-actions">
-      <button mdc-button (click)="hideAnswerForm()" id="cancel-answer">Cancel</button>
-      <button mdc-button primary form="answer-form" id="save-answer" (click)="submit()">Save Answer</button>
+      <button mdc-button type="button" (click)="hideAnswerForm()" id="cancel-answer">Cancel</button>
+      <button mdc-button primary form="answer-form" id="save-answer" type="submit" (click)="submit()">
+        Save Answer
+      </button>
     </div>
   </form>
 </div>
@@ -148,10 +151,22 @@
         <app-checking-audio-player *ngIf="answer.audioUrl" [source]="answer.audioUrl"></app-checking-audio-player>
         <div class="answer-footer">
           <div class="actions">
-            <button *ngIf="canEditAnswer(answer)" mdc-button (click)="editAnswer(answer)" class="answer-edit">
+            <button
+              *ngIf="canEditAnswer(answer)"
+              mdc-button
+              type="button"
+              (click)="editAnswer(answer)"
+              class="answer-edit"
+            >
               Edit
             </button>
-            <button *ngIf="canDeleteAnswer(answer)" mdc-button (click)="deleteAnswer(answer)" class="answer-delete">
+            <button
+              *ngIf="canDeleteAnswer(answer)"
+              mdc-button
+              type="button"
+              (click)="deleteAnswer(answer)"
+              class="answer-delete"
+            >
               Delete
             </button>
           </div>

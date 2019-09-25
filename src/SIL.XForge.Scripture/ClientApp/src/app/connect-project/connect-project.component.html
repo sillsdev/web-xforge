@@ -2,7 +2,7 @@
 <div class="content" [ngSwitch]="state">
   <div *ngSwitchCase="'login'" class="paratext-login-container">
     <div mdcBody1>You must login with your Paratext account to connect to a project.</div>
-    <button mdc-button id="paratext-login-button" (click)="logInWithParatext()">
+    <button mdc-button id="paratext-login-button" type="button" (click)="logInWithParatext()">
       <img src="/assets/paratext_logo.png" alt="Paratext Logo" class="paratext-logo" /> Log in with Paratext
     </button>
   </div>

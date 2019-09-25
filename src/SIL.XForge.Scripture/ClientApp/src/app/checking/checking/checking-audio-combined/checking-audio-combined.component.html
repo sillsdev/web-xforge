@@ -13,6 +13,7 @@
       *ngIf="!source"
       mdc-button
       ngfSelect
+      type="button"
       [(file)]="uploadAudioFile"
       (fileChange)="prepareAudioFileUpload()"
       accept="audio/*"
@@ -21,7 +22,14 @@
       <mdc-icon>cloud_upload</mdc-icon>
       <span fxShow fxHide.lt-sm>Upload Audio File</span> <span fxHide fxShow.xs>Upload</span>
     </button>
-    <button *ngIf="source" fxHide.xs mdc-button (click)="resetAudioAttachment()" class="remove-audio-file">
+    <button
+      *ngIf="source"
+      fxHide.xs
+      mdc-button
+      type="button"
+      (click)="resetAudioAttachment()"
+      class="remove-audio-file"
+    >
       <mdc-icon>delete</mdc-icon>
       Remove Audio File
     </button>
@@ -29,6 +37,7 @@
       *ngIf="source"
       mdc-icon-button
       fxHide.gt-xs
+      type="button"
       (click)="resetAudioAttachment()"
       icon="delete"
       class="remove-audio-file"

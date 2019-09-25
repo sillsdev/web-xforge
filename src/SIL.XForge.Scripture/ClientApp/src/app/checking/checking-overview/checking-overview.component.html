@@ -2,7 +2,7 @@
   <mdc-icon fxFlex="32px">library_books</mdc-icon>
   <h2 fxFlex>Texts with Questions</h2>
   <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart">
-    <button *ngIf="!isLoading" mdc-button (click)="questionDialog()" id="add-question-button">
+    <button *ngIf="!isLoading" mdc-button type="button" (click)="questionDialog()" id="add-question-button">
       <mdc-icon>post_add</mdc-icon> <span fxHide.xs>Add question</span>
     </button>
   </div>
@@ -73,7 +73,7 @@
             <mdc-list-item *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookNum, chapter.number))">
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="16px" class="indent"></span>
-                <button fxFlex="64px" mdc-button (click)="questionDialog(questionDoc)" class="edit-btn">
+                <button fxFlex="64px" mdc-button type="button" (click)="questionDialog(questionDoc)" class="edit-btn">
                   <mdc-icon>edit</mdc-icon>
                 </button>
                 v{{ questionDoc.data?.verseRef.verseNum }} -&nbsp;
@@ -87,6 +87,7 @@
                 <span fxFlex="64px" fxLayoutAlign="end center">
                   <button
                     mdc-button
+                    type="button"
                     (click)="setQuestionArchiveStatus(questionDoc, true)"
                     title="Archive"
                     class="archive-btn"
@@ -241,6 +242,7 @@
                 <span fxFlex="64px" fxLayoutAlign="end center">
                   <button
                     mdc-button
+                    type="button"
                     (click)="setQuestionArchiveStatus(questionDoc, false)"
                     title="Republish"
                     class="publish-btn"

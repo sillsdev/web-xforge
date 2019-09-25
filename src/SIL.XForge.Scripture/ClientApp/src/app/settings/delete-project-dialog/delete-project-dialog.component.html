@@ -16,8 +16,15 @@
         </mdc-form-field>
       </mdc-dialog-content>
       <mdc-dialog-actions>
-        <button mdcDialogButton id="cancel-btn" mdcDialogAction="cancel">Cancel</button>
-        <button mdc-button id="project-delete-btn" outlined mdcDialogAction="accept" [disabled]="deleteDisabled">
+        <button mdcDialogButton type="button" id="cancel-btn" mdcDialogAction="cancel">Cancel</button>
+        <button
+          mdc-button
+          type="button"
+          id="project-delete-btn"
+          outlined
+          mdcDialogAction="accept"
+          [disabled]="deleteDisabled"
+        >
           <span fxHide.lt-sm>I understand the consequences, delete this project</span>
           <span fxHide fxShow.xs>Delete this project</span>
         </button>

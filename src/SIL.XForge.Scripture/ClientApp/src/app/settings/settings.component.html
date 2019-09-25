@@ -35,7 +35,13 @@
               project is setup as a <b>Daughter Translation</b> in Paratext.
             </div>
             <div *ngIf="!isLoading && !isLoggedInToParatext" class="paratext-login-container">
-              <button class="action-button" mdc-button (click)="logInWithParatext()" id="btn-log-in-settings">
+              <button
+                class="action-button"
+                mdc-button
+                type="button"
+                (click)="logInWithParatext()"
+                id="btn-log-in-settings"
+              >
                 <img src="/assets/paratext_logo.png" alt="Paratext Logo" class="paratext-logo" /> Log in to Paratext
               </button>
               <span class="more-options">to enable <b>Translate Suggestions</b> and see more options</span>
@@ -158,7 +164,14 @@
         <a [routerLink]="['/projects', projectId, 'sync']">Synchronize</a> first before deleting.
       </p>
       <div fxLayout="row" fxLayoutAlign="end stretch">
-        <button id="delete-btn" mdc-button unelevated (click)="openDeleteProjectDialog()" [disabled]="isLoading">
+        <button
+          id="delete-btn"
+          mdc-button
+          unelevated
+          type="button"
+          (click)="openDeleteProjectDialog()"
+          [disabled]="isLoading"
+        >
           Delete this project
         </button>
       </div>
