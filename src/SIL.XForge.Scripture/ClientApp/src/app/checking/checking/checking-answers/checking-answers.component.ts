@@ -295,6 +295,10 @@ export class CheckingAnswersComponent implements OnInit {
     }
   }
 
+  hasUserLikedAnswer(answer: Answer) {
+    return answer.likes.some(like => like.ownerRef === this.user.id);
+  }
+
   openScriptureChooser(control: AbstractControl) {
     let currentVerseSelection: VerseRef;
     if (control.value != null) {
