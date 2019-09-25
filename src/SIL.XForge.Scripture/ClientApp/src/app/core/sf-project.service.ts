@@ -93,7 +93,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
   }
 
-  createQuestion(id: string, question: Question): Promise<QuestionDoc> {
+  createQuestion(id: string, question: Question): QuestionDoc {
     return this.realtimeService.create(QuestionDoc.COLLECTION, getQuestionDocId(id, question.dataId), question);
   }
 

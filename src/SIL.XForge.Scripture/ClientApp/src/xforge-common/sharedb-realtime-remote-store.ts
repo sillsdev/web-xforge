@@ -112,7 +112,7 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
     return pendingOps;
   }
 
-  create(data: any, type?: OTType): Promise<void> {
+  create(data: any, type?: string): Promise<void> {
     return new Promise((resolve, reject) => {
       this.doc.create(data, type, undefined, err => {
         if (err != null) {

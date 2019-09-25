@@ -76,9 +76,9 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     }
   }
 
-  create(data: any, type: OTType = OTJson0.type): Promise<void> {
+  create(data: any, type: string = OTJson0.type.name): Promise<void> {
     this.data = data;
-    this.type = type;
+    this.type = types.map[type];
     this.version = 0;
     this.emitCreate();
     return Promise.resolve();

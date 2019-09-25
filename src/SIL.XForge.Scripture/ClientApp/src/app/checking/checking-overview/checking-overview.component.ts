@@ -8,7 +8,6 @@ import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-dat
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { merge, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -395,7 +394,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           dateCreated: currentDate,
           dateModified: currentDate
         };
-        questionDoc = await this.projectService.createQuestion(this.projectId, newQuestion);
+        questionDoc = this.projectService.createQuestion(this.projectId, newQuestion);
         this.addQuestionDoc(questionDoc);
       }
     });
