@@ -469,6 +469,18 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToUsx_EmptyBook()
+        {
+            var deltas = new[] { new Delta() };
+
+            var mapper = new DeltaUsxMapper();
+            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, deltas);
+
+            XElement expected = Usx("PHM");
+            Assert.IsTrue(XNode.DeepEquals(newUsxElem, expected));
+        }
+
+        [Test]
         public void ToDelta_EmptySegments()
         {
             XElement usxElem = Usx("PHM",
@@ -923,6 +935,19 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(newDeltas[1].LastVerse, Is.EqualTo(3));
             Assert.IsTrue(newDeltas[2].Delta.DeepEquals(expected2));
             Assert.That(newDeltas[2].LastVerse, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void ToDelta_EmptyBook()
+        {
+            XElement usxElem = Usx("PHM");
+
+            var mapper = new DeltaUsxMapper();
+            IReadOnlyDictionary<int, (Delta Delta, int LastVerse)> newDeltas = mapper.ToChapterDeltas(usxElem);
+
+            Assert.That(newDeltas.Count, Is.EqualTo(1));
+            Assert.IsTrue(newDeltas[1].Delta.DeepEquals(new Delta()));
+            Assert.That(newDeltas[1].LastVerse, Is.EqualTo(0));
         }
 
         private static XElement Usx(string code, params object[] elems)

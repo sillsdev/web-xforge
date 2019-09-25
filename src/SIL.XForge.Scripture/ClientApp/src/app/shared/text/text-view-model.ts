@@ -83,8 +83,12 @@ export class TextViewModel {
     return this._segments.entries();
   }
 
+  get isLoaded(): boolean {
+    return this.textDoc != null && this.textDoc.isLoaded;
+  }
+
   get isEmpty(): boolean {
-    return this.textDoc == null || this.textDoc.data == null;
+    return !this.isLoaded || this.textDoc.data.ops.length === 0;
   }
 
   bind(textDoc: TextDoc): void {

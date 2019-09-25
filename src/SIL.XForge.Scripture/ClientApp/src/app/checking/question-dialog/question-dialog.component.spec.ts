@@ -101,6 +101,8 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureEnd.errors.verseRange).toBe(true);
     env.component.scriptureEnd.setValue('MAT 1:25');
     expect(env.component.scriptureEnd.errors).toBeNull();
+    env.component.scriptureEnd.setValue('JHN 1:1');
+    expect(env.component.scriptureEnd.errors.verseRange).toBe(true);
   }));
 
   it('should produce error', fakeAsync(() => {
@@ -405,12 +407,12 @@ class TestEnvironment {
         question: question ? question : undefined,
         textsByBookId: {
           MAT: {
-            id: 'text01',
             bookNum: 40,
             hasSource: false,
             chapters: [{ number: 1, lastVerse: 25 }, { number: 2, lastVerse: 23 }]
           },
-          LUK: { id: 'text02', bookNum: 42, hasSource: false, chapters: [{ number: 1, lastVerse: 80 }] }
+          LUK: { bookNum: 42, hasSource: false, chapters: [{ number: 1, lastVerse: 80 }] },
+          JHN: { bookNum: 43, hasSource: false, chapters: [{ number: 1, lastVerse: 0 }] }
         },
         projectId: 'project01'
       } as QuestionDialogData,
@@ -432,6 +434,9 @@ class TestEnvironment {
     );
     when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 42, 1, 'target')))).thenResolve(
       this.createTextDoc(42)
+    );
+    when(this.mockedProjectService.getText(deepEqual(new TextDocId('project01', 43, 1, 'target')))).thenResolve(
+      this.createEmptyTextDoc(43)
     );
     this.fixture.detectChanges();
   }
@@ -525,6 +530,16 @@ class TestEnvironment {
       TextDoc.COLLECTION,
       getTextDocId('project01', bookNum, 1, 'target'),
       delta,
+      RichText.type
+    );
+    return new TextDoc(this.offlineStore, adapter);
+  }
+
+  private createEmptyTextDoc(bookNum: number): TextDoc {
+    const adapter = new MemoryRealtimeDocAdapter(
+      TextDoc.COLLECTION,
+      getTextDocId('project01', bookNum, 1, 'target'),
+      new Delta(),
       RichText.type
     );
     return new TextDoc(this.offlineStore, adapter);
