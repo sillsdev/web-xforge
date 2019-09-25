@@ -1,3 +1,15 @@
+@import '~src/global';
+
+#add-question-button mdc-icon {
+  // Bigger icon if shown without label on smaller devices
+  @include media-breakpoint-only(xs) {
+    font-size: 24px;
+    // Vertically align it better with the 'Texts and Questions' icon.
+    padding-bottom: 10px;
+    box-sizing: initial;
+  }
+}
+
 .mdc-list-item {
   cursor: pointer;
   .audio-icon {
