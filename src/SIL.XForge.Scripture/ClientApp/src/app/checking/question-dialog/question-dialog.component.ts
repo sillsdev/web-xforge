@@ -100,11 +100,15 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       }
       this.updateSelection();
     }
+    // set initial enabled/disabled state for scriptureEnd
+    this.updateScriptureEndEnabled();
 
     this.subscribe(this.scriptureStart.valueChanges, () => {
       if (this.scriptureStart.valid) {
         this.updateSelection();
       }
+      // update enabled/disabled state for scriptureEnd
+      this.updateScriptureEndEnabled();
     });
     this.subscribe(this.scriptureEnd.valueChanges, () => {
       if (this.scriptureEnd.valid) {
@@ -182,7 +186,6 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
         control.markAsTouched();
         control.markAsDirty();
         control.setValue(result.toString());
-        this.updateScriptureEndEnabled();
       }
     });
   }

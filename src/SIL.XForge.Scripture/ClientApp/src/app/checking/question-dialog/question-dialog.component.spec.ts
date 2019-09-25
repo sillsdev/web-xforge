@@ -72,7 +72,8 @@ describe('QuestionDialogComponent', () => {
     flush();
     expect(env.component.questionForm.valid).toBe(false);
     expect(env.component.scriptureStart.valid).toBe(false);
-    expect(env.component.scriptureEnd.valid).toBe(true);
+    // scriptureEnd starts disabled, and therefore invalid
+    expect(env.component.scriptureEnd.valid).toBe(false);
     expect(env.component.scriptureStart.errors.required).toBe(true);
     env.component.scriptureStart.setValue('MAT');
     expect(env.component.scriptureStart.errors.verseFormat).toBe(true);
@@ -88,6 +89,7 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureStart.setValue('MAT 1:25');
     expect(env.component.scriptureStart.errors).toBeNull();
 
+    expect(env.component.scriptureEnd.enabled).toBe(true);
     env.component.scriptureEnd.setValue('MAT');
     expect(env.component.scriptureEnd.errors.verseFormat).toBe(true);
     env.component.scriptureEnd.setValue('MAT 1:1');
@@ -122,6 +124,11 @@ describe('QuestionDialogComponent', () => {
     for (const v of invalidVerses) {
       env.component.scriptureStart.setValue(v);
       expect(env.component.scriptureStart.errors.verseFormat).toBe(true);
+    }
+    // set scriptureStart to valid value so scriptureEnd is enabled
+    env.component.scriptureStart.setValue('MAT 1:1');
+    flush();
+    for (const v of invalidVerses) {
       env.component.scriptureEnd.setValue(v);
       expect(env.component.scriptureEnd.errors.verseFormat).toBe(true);
     }
@@ -246,6 +253,14 @@ describe('QuestionDialogComponent', () => {
     env.inputValue(env.scriptureStartInput, 'LUK 99:1');
     expect(env.component.scriptureEnd.disabled).toBe(true);
     // Gets re-enabled
+    env.inputValue(env.scriptureStartInput, 'LUK 1:1');
+    expect(env.component.scriptureEnd.disabled).toBe(false);
+  }));
+
+  it('does not enable end-reference until start-reference is changed', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    expect(env.component.scriptureEnd.disabled).toBe(true);
     env.inputValue(env.scriptureStartInput, 'LUK 1:1');
     expect(env.component.scriptureEnd.disabled).toBe(false);
   }));
