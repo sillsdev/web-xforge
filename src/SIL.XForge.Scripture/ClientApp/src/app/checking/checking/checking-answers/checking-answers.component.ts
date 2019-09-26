@@ -56,6 +56,7 @@ export interface AnswerAction {
 })
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent: CheckingAudioCombinedComponent;
+  @Input() user: UserDoc;
   @Input() project: SFProject;
   @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
   @Input() projectText: TextInfo;
@@ -87,7 +88,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   startReferenceMatcher = new StartReferenceRequiredErrorStateMatcher();
 
-  private user: UserDoc;
   private _questionDoc: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
@@ -206,11 +206,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
-    this.userService.getCurrentUser().then(u => (this.user = u));
     this.updateValidationRules();
     this.subscribe(this.scriptureStart.valueChanges, () => {
       if (this.scriptureStart.valid) {
         this.extractScriptureText();
+      } else {
+        this.scriptureText.reset();
       }
       // update enabled/disabled state for scriptureEnd
       this.updateScriptureEndEnabled();
@@ -312,7 +313,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   hasUserLikedAnswer(answer: Answer) {
-    return answer.likes.some(like => like.ownerRef === this.user.id);
+    return answer.likes.some(like => like.ownerRef === this.userService.currentUserId);
   }
 
   openScriptureChooser(control: AbstractControl) {
