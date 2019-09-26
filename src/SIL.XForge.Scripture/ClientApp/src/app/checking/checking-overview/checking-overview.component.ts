@@ -394,7 +394,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           dateCreated: currentDate,
           dateModified: currentDate
         };
-        questionDoc = this.projectService.createQuestion(this.projectId, newQuestion);
+        questionDoc = await this.projectService.createQuestion(this.projectId, newQuestion);
         this.addQuestionDoc(questionDoc);
       }
     });

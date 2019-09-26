@@ -88,11 +88,8 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     return docIds;
   }
 
-  private onReady(): void {
+  private async onReady(): Promise<void> {
     if (this.subscribed) {
-      for (const doc of this._docs) {
-        doc.onAddedToSubscribeQuery();
-      }
       this._remoteChanges$.next();
     } else {
       this._docs = this.adapter.docIds.map(id => this.realtimeService.get<T>(this.collection, id));
@@ -147,12 +144,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     const promises: Promise<void>[] = [];
     for (const docId of docIds) {
       const newDoc = this.realtimeService.get<T>(this.collection, docId);
-      if (!newDoc.isLoaded) {
-        promises.push(newDoc.loadFromStore());
-      }
-      if (this.adapter.ready && this.subscribed) {
-        newDoc.onAddedToSubscribeQuery();
-      }
+      promises.push(newDoc.onAddedToSubscribeQuery());
       newDocs.push(newDoc);
     }
     await Promise.all(promises);
@@ -161,14 +153,8 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
 
   private onRemove(index: number, docIds: string[]): void {
     const removedDocs = this._docs.splice(index, docIds.length);
-    if (this.subscribed) {
-      for (const doc of removedDocs) {
-        if (this.adapter.ready) {
-          doc.onRemovedFromSubscribeQuery();
-        } else if (doc.isLoaded) {
-          doc.checkExists();
-        }
-      }
+    for (const doc of removedDocs) {
+      doc.onRemovedFromSubscribeQuery();
     }
   }
 
