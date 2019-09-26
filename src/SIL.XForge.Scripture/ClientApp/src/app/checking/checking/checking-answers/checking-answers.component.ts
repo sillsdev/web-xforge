@@ -17,7 +17,6 @@ import {
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { AccountService } from 'xforge-common/account.service';
-import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
@@ -87,7 +86,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   startReferenceMatcher = new StartReferenceRequiredErrorStateMatcher();
 
-  private user: UserDoc;
   private _questionDoc: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
@@ -185,10 +183,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   private get projectRole(): SFProjectRole {
-    if (this.project == null || this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded) {
+    if (this.project == null) {
       return SFProjectRole.None;
     }
-    return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] as SFProjectRole;
+    return this.project.userRoles[this.userService.currentUserId] as SFProjectRole;
   }
 
   /** Fetch a TextsByBookId that only contains the book and chapter that pertains to the question. */
@@ -206,11 +204,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
-    this.userService.getCurrentUser().then(u => (this.user = u));
     this.updateValidationRules();
     this.subscribe(this.scriptureStart.valueChanges, () => {
       if (this.scriptureStart.valid) {
         this.extractScriptureText();
+      } else {
+        this.scriptureText.reset();
       }
       // update enabled/disabled state for scriptureEnd
       this.updateScriptureEndEnabled();
@@ -286,9 +285,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   hasUserReadAnswer(answer: Answer): boolean {
-    return (
-      this.userAnswerRefsRead.includes(answer.dataId) || this.projectUserConfigDoc.data.ownerRef === answer.ownerRef
-    );
+    return this.userAnswerRefsRead.includes(answer.dataId) || this.userService.currentUserId === answer.ownerRef;
   }
 
   hideAnswerForm() {
@@ -312,7 +309,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   hasUserLikedAnswer(answer: Answer) {
-    return answer.likes.some(like => like.ownerRef === this.user.id);
+    return answer.likes.some(like => like.ownerRef === this.userService.currentUserId);
   }
 
   openScriptureChooser(control: AbstractControl) {
@@ -384,14 +381,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this.answerForm.invalid) {
       return;
     }
-    if (this.user.data.isDisplayNameConfirmed) {
+    const userDoc = await this.userService.getCurrentUser();
+    if (userDoc.data.isDisplayNameConfirmed) {
       this.emitAnswerToSave();
       this.hideAnswerForm();
       return;
     }
-    const dialogRef = this.accountService.openNameDialog(this.user.data.displayName, true);
+    const dialogRef = this.accountService.openNameDialog(userDoc.data.displayName, true);
     dialogRef.afterClosed().subscribe(async response => {
-      await this.user.submitJson0Op(op => {
+      await userDoc.submitJson0Op(op => {
         op.set(u => u.displayName, response as string);
         op.set<boolean>(u => u.isDisplayNameConfirmed, true);
       });
