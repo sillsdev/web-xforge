@@ -533,7 +533,7 @@ describe('CheckingComponent', () => {
       env.setTextFieldValue(env.scriptureEndField, 'JHN 1:');
       expect(env.scriptureEndField.classes['mdc-text-field--invalid']).toBe(false);
       env.setTextFieldValue(env.scriptureEndField, 'JHN 1:1');
-      // Answer form validation will appear even if the end field is untouched but the start field is touched
+      // If start reference is set and touched, and the end reference is valid but incompatible, it should show invalid
       expect(env.scriptureEndField.classes['mdc-text-field--invalid']).toBe(true);
       env.clickButton(env.answerTextTab);
       expect(env.answerFormErrors.length).toEqual(1);
