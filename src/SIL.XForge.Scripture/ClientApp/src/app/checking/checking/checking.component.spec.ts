@@ -1,6 +1,6 @@
 import { MdcDialogRef, MdcListItem, MdcMenuSelectedEvent } from '@angular-mdc/web';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
@@ -422,14 +422,7 @@ describe('CheckingComponent', () => {
       env.setTextFieldValue(env.yourAnswerField, 'Answer question');
       env.clickButton(env.selectTextTab);
       expect(env.scriptureText).toBe(null);
-
-      // Answer form is invalid if missing the start reference
-      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:4');
-      expect(env.component.answersPanel.answerForm.invalid).toBe(true);
-      expect(env.component.answersPanel.answerForm.hasError('startReferenceRequired'));
-      env.setTextFieldValue(env.scriptureEndField, '');
-      expect(env.component.answersPanel.answerForm.valid).toBe(true);
-
+      // Add scripture
       env.setTextFieldValue(env.scriptureStartField, 'JHN 1:3');
       expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
       env.setTextFieldValue(env.scriptureEndField, 'JHN 1:4');
@@ -437,6 +430,18 @@ describe('CheckingComponent', () => {
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
       expect(env.getAnswerScriptureText(0)).toBe('target: chapter 1, verse 3. target: chapter 1, verse 4.(JHN 1:3-4)');
+    }));
+
+    it('starts with end reference disabled', fakeAsync(() => {
+      env.setupData(env.checkerUser);
+      env.selectQuestion(1);
+      env.clickButton(env.addAnswerButton);
+      env.clickButton(env.selectTextTab);
+      expect(env.scriptureText).toBeNull();
+      expect(env.component.answersPanel.scriptureStart.disabled).toBe(false);
+      expect(env.component.answersPanel.scriptureEnd.disabled).toBe(true);
+      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:1');
+      expect(env.component.answersPanel.scriptureEnd.enabled).toBe(true);
     }));
 
     it('out-of-chapter reference is invalid', fakeAsync(() => {
@@ -1005,6 +1010,7 @@ class TestEnvironment {
     inputElem.dispatchEvent(new Event('change'));
     this.fixture.detectChanges();
     tick();
+    flush();
   }
 
   getShowAllCommentsButton(answerIndex: number): DebugElement {

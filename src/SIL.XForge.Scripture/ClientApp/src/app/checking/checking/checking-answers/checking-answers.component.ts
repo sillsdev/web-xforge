@@ -19,6 +19,7 @@ import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/ver
 import { AccountService } from 'xforge-common/account.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
@@ -53,7 +54,7 @@ export interface AnswerAction {
   templateUrl: './checking-answers.component.html',
   styleUrls: ['./checking-answers.component.scss']
 })
-export class CheckingAnswersComponent implements OnInit {
+export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent: CheckingAudioCombinedComponent;
   @Input() project: SFProject;
   @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
@@ -96,7 +97,9 @@ export class CheckingAnswersComponent implements OnInit {
     private userService: UserService,
     readonly dialog: MdcDialog,
     private noticeService: NoticeService
-  ) {}
+  ) {
+    super();
+  }
 
   get answerText(): AbstractControl {
     return this.answerForm.controls.answerText;
@@ -205,6 +208,19 @@ export class CheckingAnswersComponent implements OnInit {
   ngOnInit(): void {
     this.userService.getCurrentUser().then(u => (this.user = u));
     this.updateValidationRules();
+    this.subscribe(this.scriptureStart.valueChanges, () => {
+      if (this.scriptureStart.valid) {
+        this.extractScriptureText();
+      }
+      // update enabled/disabled state for scriptureEnd
+      this.updateScriptureEndEnabled();
+    });
+    this.subscribe(this.scriptureEnd.valueChanges, () => {
+      if (this.scriptureEnd.valid) {
+        this.extractScriptureText();
+      }
+    });
+    this.updateScriptureEndEnabled();
   }
 
   checkScriptureText(): void {
@@ -248,7 +264,7 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   updateScriptureEndEnabled() {
-    this.scriptureStart.valid ? this.scriptureEnd.enable() : this.scriptureEnd.disable();
+    this.scriptureStart.value && this.scriptureStart.valid ? this.scriptureEnd.enable() : this.scriptureEnd.disable();
   }
 
   canEditAnswer(answer: Answer): boolean {
@@ -329,8 +345,6 @@ export class CheckingAnswersComponent implements OnInit {
         control.setValue(result.toString());
         control.markAsTouched();
         control.markAsDirty();
-        this.extractScriptureText();
-        this.updateScriptureEndEnabled();
       }
     });
   }
