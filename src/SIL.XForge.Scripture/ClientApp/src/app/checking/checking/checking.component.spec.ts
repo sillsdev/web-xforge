@@ -377,6 +377,16 @@ describe('CheckingComponent', () => {
       expect(env.getLikeTotal(0)).toBe(0);
     }));
 
+    it('observer cannot like an answer', fakeAsync(() => {
+      env.setupData(env.observerUser);
+      env.selectQuestion(7);
+      expect(env.getAnswerText(0)).toBe('Answer 7 on question');
+      expect(env.getLikeTotal(0)).toBe(0);
+      env.clickButton(env.likeButtons[0]);
+      env.waitForSliderUpdate();
+      expect(env.getLikeTotal(0)).toBe(0);
+    }));
+
     it('do not show answers until current user has submitted an answer', fakeAsync(() => {
       env.setupData(env.checkerUser);
       env.selectQuestion(7);
