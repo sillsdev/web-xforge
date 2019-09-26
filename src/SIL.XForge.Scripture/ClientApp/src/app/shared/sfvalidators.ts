@@ -99,8 +99,10 @@ export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
         control.parent.hasError('verseDifferentBookOrChapter') ||
         control.parent.hasError('verseBeforeStart'))
     );
-
-    return (control.touched || control.parent.controls['scriptureStart'].touched) && (invalidCtrl || invalidStart);
+    return (
+      (control.touched && invalidCtrl) ||
+      ((control.touched || control.parent.controls['scriptureStart'].touched) && invalidStart)
+    );
   }
 }
 

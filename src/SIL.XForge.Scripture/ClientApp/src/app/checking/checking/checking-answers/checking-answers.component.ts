@@ -426,12 +426,15 @@ export class CheckingAnswersComponent implements OnInit {
 
   private getVerseRef(): VerseRef {
     let verseRefStr = this.scriptureStart.value;
+    let scriptureEnd: { success: boolean; verseRef: VerseRef };
     if (!verseRefStr) {
       return undefined;
     }
     if (this.scriptureEnd.value && verseRefStr !== this.scriptureEnd.value) {
-      const scriptureEnd = VerseRef.parse(this.scriptureEnd.value);
-      verseRefStr += `-${scriptureEnd.verse}`;
+      scriptureEnd = VerseRef.tryParse(this.scriptureEnd.value);
+      if (scriptureEnd.verseRef.valid) {
+        verseRefStr += `-${scriptureEnd.verseRef.verse}`;
+      }
     }
 
     const { verseRef } = VerseRef.tryParse(verseRefStr);
