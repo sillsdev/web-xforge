@@ -5,7 +5,6 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { configureTestSuite } from 'ng-bullet';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
@@ -14,7 +13,7 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { of } from 'rxjs';
-import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -23,6 +22,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { getObjPathStr, objectId, objProxy } from 'xforge-common/utils';
@@ -41,35 +41,21 @@ const mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
-const mockedNameDialogRef = mock(MdcDialogRef);
 
 describe('AppComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [AppComponent, MockComponent],
-      imports: [AvatarTestingModule, DialogTestModule, UICommonModule, RouterTestingModule.withRoutes(ROUTES)],
-      providers: [
-        { provide: AccountService, useFactory: () => instance(mockedAccountService) },
-        { provide: AuthService, useFactory: () => instance(mockedAuthService) },
-        { provide: UserService, useFactory: () => instance(mockedUserService) },
-        { provide: SFAdminAuthGuard, useFactory: () => instance(mockedSFAdminAuthGuard) },
-        { provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) },
-        { provide: LocationService, useFactory: () => instance(mockedLocationService) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedAccountService);
-    reset(mockedAuthService);
-    reset(mockedUserService);
-    reset(mockedSFAdminAuthGuard);
-    reset(mockedSFProjectService);
-    reset(mockedLocationService);
-    reset(mockedNoticeService);
-    reset(mockedNameDialogRef);
-  });
+  configureTestingModule(() => ({
+    declarations: [AppComponent, MockComponent],
+    imports: [AvatarTestingModule, DialogTestModule, UICommonModule, RouterTestingModule.withRoutes(ROUTES)],
+    providers: [
+      { provide: AccountService, useMock: mockedAccountService },
+      { provide: AuthService, useMock: mockedAuthService },
+      { provide: UserService, useMock: mockedUserService },
+      { provide: SFAdminAuthGuard, useMock: mockedSFAdminAuthGuard },
+      { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: LocationService, useMock: mockedLocationService },
+      { provide: NoticeService, useMock: mockedNoticeService }
+    ]
+  }));
 
   it('navigate to last project', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -351,6 +337,8 @@ class TestEnvironment {
   readonly overlayContainer: OverlayContainer;
   readonly questions: Question[];
 
+  readonly mockedNameDialogRef = mock(MdcDialogRef);
+
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
@@ -408,7 +396,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
     when(mockedUserService.currentProjectId).thenReturn('project01');
-    when(mockedAccountService.openNameDialog(anything(), false)).thenReturn(instance(mockedNameDialogRef));
+    when(mockedAccountService.openNameDialog(anything(), false)).thenReturn(instance(this.mockedNameDialogRef));
     when(mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
 
     this.router = TestBed.get(Router);
@@ -582,7 +570,7 @@ class TestEnvironment {
   }
 
   updateDisplayName(displayName: string) {
-    when(mockedNameDialogRef.afterClosed()).thenReturn(of(displayName));
+    when(this.mockedNameDialogRef.afterClosed()).thenReturn(of(displayName));
     this.component.editName('User 01');
   }
 

@@ -2,10 +2,10 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ngfModule } from 'angular-file';
-import { configureTestSuite } from 'ng-bullet';
-import { instance, mock, reset, when } from 'ts-mockito';
+import { mock, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SF_REALTIME_DOC_TYPES } from '../../../core/models/sf-realtime-doc-types';
@@ -16,23 +16,20 @@ import { CheckingAudioCombinedComponent } from './checking-audio-combined.compon
 const mockedUserService = mock(UserService);
 
 describe('CheckingAudioCombinedComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [
-        CheckingAudioCombinedComponent,
-        CheckingAudioRecorderComponent,
-        CheckingAudioPlayerComponent,
-        AudioTimePipe
-      ],
-      imports: [UICommonModule, ngfModule],
-      providers: [{ provide: UserService, useFactory: () => instance(mockedUserService) }]
-    });
-  });
+  configureTestingModule(() => ({
+    declarations: [
+      CheckingAudioCombinedComponent,
+      CheckingAudioRecorderComponent,
+      CheckingAudioPlayerComponent,
+      AudioTimePipe
+    ],
+    imports: [UICommonModule, ngfModule],
+    providers: [{ provide: UserService, useMock: mockedUserService }]
+  }));
 
   let env: TestEnvironment;
 
   beforeEach(() => {
-    reset(mockedUserService);
     env = new TestEnvironment();
   });
 

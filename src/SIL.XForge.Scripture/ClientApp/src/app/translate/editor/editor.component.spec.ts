@@ -16,7 +16,6 @@ import {
   WordAlignmentMatrix
 } from '@sillsdev/machine';
 import cloneDeep from 'lodash/cloneDeep';
-import { configureTestSuite } from 'ng-bullet';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -26,9 +25,10 @@ import {
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Subject } from 'rxjs';
-import { anything, deepEqual, instance, mock, reset, resetCalls, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -44,29 +44,18 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
-const mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
 
 describe('EditorComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [EditorComponent, SuggestionComponent],
-      imports: [NoopAnimationsModule, RouterTestingModule, SharedModule, UICommonModule],
-      providers: [
-        { provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) },
-        { provide: UserService, useFactory: () => instance(mockedUserService) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
-        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedSFProjectService);
-    reset(mockedUserService);
-    reset(mockedNoticeService);
-    reset(mockedActivatedRoute);
-    reset(mockedRemoteTranslationEngine);
-  });
+  configureTestingModule(() => ({
+    declarations: [EditorComponent, SuggestionComponent],
+    imports: [NoopAnimationsModule, RouterTestingModule, SharedModule, UICommonModule],
+    providers: [
+      { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: UserService, useMock: mockedUserService },
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute }
+    ]
+  }));
 
   describe('Translation Suggestions enabled', () => {
     it('start with no previous selection', fakeAsync(() => {
@@ -93,7 +82,7 @@ describe('EditorComponent', () => {
       const selection = env.component.target.editor.getSelection();
       expect(selection.index).toBe(29);
       expect(selection.length).toBe(0);
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.component.showSuggestion).toBe(false);
       env.dispose();
     }));
@@ -106,13 +95,13 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_2');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
       expect(env.component.showSuggestion).toBe(false);
 
       resolve(env.getTextDoc(sourceId));
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_2');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.component.showSuggestion).toBe(true);
 
       env.dispose();
@@ -123,10 +112,10 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_1');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.component.showSuggestion).toBe(false);
 
-      resetCalls(mockedRemoteTranslationEngine);
+      resetCalls(env.mockedRemoteTranslationEngine);
       const range = env.component.target.getSegmentRange('verse_1_3');
       env.component.target.editor.setSelection(range.index, 0, 'user');
       env.wait();
@@ -135,7 +124,7 @@ describe('EditorComponent', () => {
       expect(selection.index).toBe(32);
       expect(selection.length).toBe(0);
       expect(env.getProjectUserConfigDoc().data.selectedSegment).toBe('verse_1_3');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.component.showSuggestion).toBe(false);
 
       env.dispose();
@@ -147,7 +136,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_1');
 
-      resetCalls(mockedRemoteTranslationEngine);
+      resetCalls(env.mockedRemoteTranslationEngine);
       const range = env.component.target.getSegmentRange('verse_1_2');
       env.component.target.editor.setSelection(range.index + 1, 0, 'user');
       env.wait();
@@ -156,7 +145,7 @@ describe('EditorComponent', () => {
       expect(selection.index).toBe(30);
       expect(selection.length).toBe(0);
       expect(env.getProjectUserConfigDoc().data.selectedSegment).toBe('verse_1_2');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.component.showSuggestion).toBe(true);
       expect(env.component.suggestionWords).toEqual(['target']);
 
@@ -173,7 +162,7 @@ describe('EditorComponent', () => {
       env.component.target.editor.setSelection(range.index, 0, 'user');
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_5');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.component.showSuggestion).toBe(false);
 
       env.dispose();
@@ -189,7 +178,7 @@ describe('EditorComponent', () => {
       env.component.target.editor.setSelection(range.index + range.length, 0, 'user');
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_5');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.component.showSuggestion).toBe(true);
       expect(env.component.suggestionWords).toEqual(['verse', '5']);
 
@@ -324,21 +313,21 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.bookName).toEqual('Matthew');
       expect(env.component.target.segmentRef).toEqual('verse_1_1');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
 
-      resetCalls(mockedRemoteTranslationEngine);
+      resetCalls(env.mockedRemoteTranslationEngine);
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       expect(env.component.bookName).toEqual('Mark');
       expect(env.component.target.segmentRef).toEqual('');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
 
-      resetCalls(mockedRemoteTranslationEngine);
+      resetCalls(env.mockedRemoteTranslationEngine);
       env.updateParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
       expect(env.component.bookName).toEqual('Matthew');
       expect(env.component.target.segmentRef).toEqual('verse_1_1');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
 
       env.dispose();
     }));
@@ -349,21 +338,21 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.chapter).toBe(1);
       expect(env.component.target.segmentRef).toBe('verse_1_1');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
 
-      resetCalls(mockedRemoteTranslationEngine);
+      resetCalls(env.mockedRemoteTranslationEngine);
       env.component.chapter = 2;
       env.wait();
       const verseText = env.component.target.getSegmentText('verse_2_1');
       expect(verseText).toBe('target: chapter 2, verse 1.');
       expect(env.component.target.segmentRef).toEqual('');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
 
-      resetCalls(mockedRemoteTranslationEngine);
+      resetCalls(env.mockedRemoteTranslationEngine);
       env.component.chapter = 1;
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_1');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
 
       env.dispose();
     }));
@@ -420,10 +409,10 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_1');
       expect(env.component.showTrainingProgress).toBe(false);
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
-      verify(mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
 
-      resetCalls(mockedRemoteTranslationEngine);
+      resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).toBeDefined();
       expect(env.component.showTrainingProgress).toBe(true);
@@ -436,7 +425,7 @@ describe('EditorComponent', () => {
       expect(env.component.showTrainingProgress).toBe(true);
       tick(5000);
       env.wait();
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.trainingProgress).toBeNull();
       expect(env.component.showTrainingProgress).toBe(false);
       env.updateTrainingProgress(0.1);
@@ -453,10 +442,10 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_1');
       expect(env.component.showTrainingProgress).toBe(false);
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
-      verify(mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
 
-      resetCalls(mockedRemoteTranslationEngine);
+      resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).toBeDefined();
       expect(env.component.showTrainingProgress).toBe(true);
@@ -468,7 +457,7 @@ describe('EditorComponent', () => {
       env.completeTrainingProgress();
       env.wait();
       verify(mockedNoticeService.show(anything())).once();
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
 
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).toBeDefined();
@@ -484,10 +473,10 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_1');
       expect(env.component.showTrainingProgress).toBe(false);
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
-      verify(mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
 
-      resetCalls(mockedRemoteTranslationEngine);
+      resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).toBeDefined();
       expect(env.component.showTrainingProgress).toBe(true);
@@ -518,7 +507,7 @@ describe('EditorComponent', () => {
       const selection = env.component.target.editor.getSelection();
       expect(selection.index).toBe(29);
       expect(selection.length).toBe(0);
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
       expect(env.component.showSuggestion).toBe(false);
       expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
@@ -550,7 +539,7 @@ describe('EditorComponent', () => {
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
       expect(env.component.showSuggestion).toBe(false);
       expect(env.isSourceAreaHidden).toBe(true);
       expect(env.component.target.readOnlyEnabled).toBe(true);
@@ -588,7 +577,7 @@ describe('EditorComponent', () => {
       const selection = env.component.target.editor.getSelection();
       expect(selection.index).toBe(29);
       expect(selection.length).toBe(0);
-      verify(mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
+      verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
       expect(env.component.showSuggestion).toBe(false);
       expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
@@ -680,6 +669,8 @@ class TestEnvironment {
   readonly component: EditorComponent;
   readonly fixture: ComponentFixture<EditorComponent>;
 
+  readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
+
   lastApprovedPrefix: string[] = [];
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
@@ -701,14 +692,14 @@ class TestEnvironment {
     when(mockedActivatedRoute.params).thenReturn(this.params$);
     this.setCurrentUser('user01');
     when(mockedSFProjectService.createTranslationEngine('project01')).thenReturn(
-      instance(mockedRemoteTranslationEngine)
+      instance(this.mockedRemoteTranslationEngine)
     );
     this.setupProject();
-    when(mockedRemoteTranslationEngine.translateInteractively(1, anything())).thenCall(
+    when(this.mockedRemoteTranslationEngine.translateInteractively(1, anything())).thenCall(
       (_n: number, segment: string[]) =>
         Promise.resolve(new MockInteractiveTranslationSession(segment, prefix => (this.lastApprovedPrefix = prefix)))
     );
-    when(mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
+    when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')

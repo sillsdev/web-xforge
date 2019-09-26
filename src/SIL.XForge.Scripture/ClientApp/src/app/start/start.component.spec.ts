@@ -1,12 +1,12 @@
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { configureTestSuite } from 'ng-bullet';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
-import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
@@ -17,23 +17,15 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedRouter = mock(Router);
 
 describe('StartComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [StartComponent],
-      imports: [UICommonModule, RouterTestingModule],
-      providers: [
-        { provide: UserService, useFactory: () => instance(mockedUserService) },
-        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
-        { provide: Router, useFactory: () => instance(mockedRouter) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedUserService);
-    reset(mockedActivatedRoute);
-    reset(mockedRouter);
-  });
+  configureTestingModule(() => ({
+    declarations: [StartComponent],
+    imports: [UICommonModule, RouterTestingModule],
+    providers: [
+      { provide: UserService, useMock: mockedUserService },
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: Router, useMock: mockedRouter }
+    ]
+  }));
 
   it('navigate to last project', fakeAsync(() => {
     const env = new TestEnvironment();

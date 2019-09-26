@@ -5,15 +5,15 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { configureTestSuite } from 'ng-bullet';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { TranslateConfig } from 'realtime-server/lib/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
@@ -33,29 +33,18 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 
 describe('SettingsComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      imports: [DialogTestModule, HttpClientTestingModule, RouterTestingModule, UICommonModule],
-      declarations: [SettingsComponent, WriteStatusComponent],
-      providers: [
-        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
-        { provide: AuthService, useFactory: () => instance(mockedAuthService) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
-        { provide: ParatextService, useFactory: () => instance(mockedParatextService) },
-        { provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) },
-        { provide: UserService, useFactory: () => instance(mockedUserService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedActivatedRoute);
-    reset(mockedAuthService);
-    reset(mockedNoticeService);
-    reset(mockedParatextService);
-    reset(mockedSFProjectService);
-    reset(mockedUserService);
-  });
+  configureTestingModule(() => ({
+    imports: [DialogTestModule, HttpClientTestingModule, RouterTestingModule, UICommonModule],
+    declarations: [SettingsComponent, WriteStatusComponent],
+    providers: [
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: AuthService, useMock: mockedAuthService },
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: ParatextService, useMock: mockedParatextService },
+      { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: UserService, useMock: mockedUserService }
+    ]
+  }));
 
   describe('Tasks', () => {
     it('should select Checking and then submit update when clicked', fakeAsync(() => {

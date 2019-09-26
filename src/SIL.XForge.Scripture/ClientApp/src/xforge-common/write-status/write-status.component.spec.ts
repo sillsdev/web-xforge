@@ -1,18 +1,16 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { configureTestSuite } from 'ng-bullet';
 import { ElementState } from '../models/element-state';
+import { configureTestingModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { WriteStatusComponent } from './write-status.component';
 
 describe('WriteStatusComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [WriteStatusComponent, TestHostComponent],
-      imports: [UICommonModule]
-    });
-  });
+  configureTestingModule(() => ({
+    declarations: [WriteStatusComponent, TestHostComponent],
+    imports: [UICommonModule]
+  }));
 
   it('should display done, spinner and error icons', () => {
     const env = new TestEnvironment();
