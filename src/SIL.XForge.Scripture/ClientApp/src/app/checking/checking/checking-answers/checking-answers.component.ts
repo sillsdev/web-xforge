@@ -300,7 +300,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   likeAnswer(answer: Answer) {
-    if (this.userService.currentUserId !== answer.ownerRef) {
+    if (this.canLikeAnswer(answer)) {
       this.action.emit({
         action: 'like',
         answer: answer
@@ -405,6 +405,22 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       answer: action.answer,
       text: action.text
     });
+  }
+
+  private canLikeAnswer(answer: Answer): boolean {
+    return (
+      this.userService.currentUserId !== answer.ownerRef &&
+      SF_PROJECT_RIGHTS.hasRight(
+        this.projectRole,
+        { projectDomain: SFProjectDomain.Answers, operation: Operation.DeleteOwn },
+        this.userService.currentUserId,
+        answer
+      ) &&
+      SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
+        projectDomain: SFProjectDomain.Answers,
+        operation: Operation.Create
+      })
+    );
   }
 
   private emitAnswerToSave() {
