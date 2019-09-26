@@ -529,10 +529,21 @@ describe('CheckingComponent', () => {
       expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
       env.clickButton(env.selectTextTab);
       env.setTextFieldValue(env.scriptureStartField, 'JHN 1:2');
+      env.component.answersPanel.scriptureStart.markAsTouched();
+      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:');
+      expect(env.scriptureEndField.classes['mdc-text-field--invalid']).toBe(false);
       env.setTextFieldValue(env.scriptureEndField, 'JHN 1:1');
+      // Answer form validation will appear even if the end field is untouched but the start field is touched
+      expect(env.scriptureEndField.classes['mdc-text-field--invalid']).toBe(true);
       env.clickButton(env.answerTextTab);
       expect(env.answerFormErrors.length).toEqual(1);
       expect(env.component.answersPanel.answerForm.hasError('verseBeforeStart'));
+      expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
+      env.clickButton(env.selectTextTab);
+      env.setTextFieldValue(env.scriptureEndField, 'BAD FORMAT');
+      env.clickButton(env.answerTextTab);
+      expect(env.answerFormErrors.length).toEqual(1);
+      expect(env.component.answersPanel.scriptureEnd.hasError('verseFormat'));
       expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
     }));
 
