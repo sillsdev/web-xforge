@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { configureTestSuite } from 'ng-bullet';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, spy, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, reset, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -27,7 +28,33 @@ import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 import { QuestionDialogComponent, QuestionDialogData } from './question-dialog.component';
 
+const mockedAuthService = mock(AuthService);
+const mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
+const mockedNoticeService = mock(NoticeService);
+const mockedProjectService = mock(SFProjectService);
+const mockedUserService = mock(UserService);
+
 describe('QuestionDialogComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
+      providers: [
+        { provide: AuthService, useFactory: () => instance(mockedAuthService) },
+        { provide: UserService, useFactory: () => instance(mockedUserService) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
+        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedAuthService);
+    reset(mockedScriptureChooserMdcDialogRef);
+    reset(mockedNoticeService);
+    reset(mockedProjectService);
+    reset(mockedUserService);
+  });
+
   it('should allow user to cancel', fakeAsync(() => {
     const env = new TestEnvironment();
     env.clickElement(env.cancelButton);
@@ -292,7 +319,7 @@ describe('QuestionDialogComponent', () => {
     tick(500);
     const textDocId = new TextDocId('project01', 42, 1, 'target');
     expect(env.component.textDocId.toString()).toBe(textDocId.toString());
-    verify(env.mockedProjectService.getText(deepEqual(textDocId))).once();
+    verify(mockedProjectService.getText(deepEqual(textDocId))).once();
     expect(env.isSegmentHighlighted('1')).toBe(true);
     expect(env.isSegmentHighlighted('2')).toBe(false);
   }));
@@ -311,7 +338,7 @@ describe('QuestionDialogComponent', () => {
     flush();
     const textDocId = new TextDocId('project01', 42, 1, 'target');
     expect(env.component.textDocId.toString()).toBe(textDocId.toString());
-    verify(env.mockedProjectService.getText(deepEqual(textDocId))).once();
+    verify(mockedProjectService.getText(deepEqual(textDocId))).once();
     expect(env.component.selection.toString()).toEqual('LUK 1:3');
   }));
 
@@ -395,26 +422,11 @@ class TestEnvironment {
   readonly dialogRef: MdcDialogRef<QuestionDialogComponent>;
   readonly overlayContainerElement: HTMLElement;
   readonly afterCloseCallback: jasmine.Spy;
-
-  readonly mockedAuthService: AuthService = mock(AuthService);
-  readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
-  readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedProjectService = mock(SFProjectService);
-  readonly mockedUserService: UserService = mock(UserService);
   readonly dialogSpy: MdcDialog;
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor(question?: Question) {
-    TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
-      providers: [
-        { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
-      ]
-    });
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     const config: MdcDialogConfig<QuestionDialogData> = {
@@ -441,13 +453,13 @@ class TestEnvironment {
 
     // Set up MdcDialog mocking after it's already used above in creating the component.
     this.dialogSpy = spy(this.component.dialog);
-    when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
+    when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
-    when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
+    when(mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
     this.addTextDoc(40);
     this.addTextDoc(42);
     this.addEmptyTextDoc(43);
-    when(this.mockedProjectService.getText(anything())).thenCall(id =>
+    when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     this.fixture.detectChanges();

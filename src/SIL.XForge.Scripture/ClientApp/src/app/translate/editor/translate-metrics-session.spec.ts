@@ -1,8 +1,9 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { LatinWordTokenizer } from '@sillsdev/machine';
+import { configureTestSuite } from 'ng-bullet';
 import { QuillModule } from 'ngx-quill';
 import * as RichText from 'rich-text';
-import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, objectContaining, reset, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
@@ -17,7 +18,21 @@ import {
   TranslateMetricsSession
 } from './translate-metrics-session';
 
+const mockedSFProjectService = mock(SFProjectService);
+
 describe('TranslateMetricsSession', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      declarations: [TextComponent],
+      imports: [QuillModule.forRoot()],
+      providers: [{ provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) }]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedSFProjectService);
+  });
+
   describe('edit', () => {
     it('start with edit keystroke', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -36,7 +51,7 @@ describe('TranslateMetricsSession', () => {
         chapterNum: 1,
         keyNavigationCount: 1
       };
-      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
+      verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
       env.keyPress('Backspace');
       env.keyPress('b');
       env.keyPress('Delete');
@@ -73,7 +88,7 @@ describe('TranslateMetricsSession', () => {
         chapterNum: 1,
         mouseClickCount: 2
       };
-      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
+      verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
       env.keyPress('a');
       tick(ACTIVE_EDIT_TIMEOUT);
       expect(env.session.metrics.type).toBe('edit');
@@ -91,14 +106,14 @@ describe('TranslateMetricsSession', () => {
       env.startSession();
 
       env.keyPress('a');
-      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+      verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       tick(ACTIVE_EDIT_TIMEOUT);
       expect(env.session.metrics.type).toBe('edit');
       expect(env.session.metrics.timeEditActive).toBeDefined();
       expect(env.session.metrics.keyCharacterCount).toBe(1);
 
       env.keyPress('ArrowRight');
-      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+      verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       expect(env.session.metrics.type).toBe('edit');
       expect(env.session.metrics.keyNavigationCount).toBe(1);
 
@@ -110,14 +125,14 @@ describe('TranslateMetricsSession', () => {
       env.startSession();
 
       env.keyPress('a');
-      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+      verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       tick(ACTIVE_EDIT_TIMEOUT);
       expect(env.session.metrics.type).toBe('edit');
       expect(env.session.metrics.timeEditActive).toBeDefined();
       expect(env.session.metrics.keyCharacterCount).toBe(1);
 
       env.mouseClick();
-      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+      verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       expect(env.session.metrics.type).toBe('edit');
       expect(env.session.metrics.mouseClickCount).toBe(1);
 
@@ -135,7 +150,7 @@ describe('TranslateMetricsSession', () => {
       expect(env.session.metrics.keyCharacterCount).toBe(1);
 
       tick(SEND_METRICS_INTERVAL);
-      resetCalls(env.mockedSFProjectService);
+      resetCalls(mockedSFProjectService);
 
       tick(EDIT_TIMEOUT);
       const expectedMetrics: TranslateMetrics = {
@@ -150,9 +165,7 @@ describe('TranslateMetricsSession', () => {
         targetWordCount: 8,
         editEndEvent: 'timeout'
       };
-      verify(
-        env.mockedSFProjectService.onlineAddTranslateMetrics('project01', objectContaining(expectedMetrics))
-      ).once();
+      verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', objectContaining(expectedMetrics))).once();
 
       env.keyPress('b');
       tick(ACTIVE_EDIT_TIMEOUT);
@@ -189,9 +202,7 @@ describe('TranslateMetricsSession', () => {
         targetWordCount: 8,
         editEndEvent: 'segment-change'
       };
-      verify(
-        env.mockedSFProjectService.onlineAddTranslateMetrics('project01', objectContaining(expectedMetrics))
-      ).once();
+      verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', objectContaining(expectedMetrics))).once();
       expect(env.session.metrics.type).toBe('navigate');
 
       env.session.dispose();
@@ -236,7 +247,7 @@ describe('TranslateMetricsSession', () => {
       env.target.segmentRef = 'verse_1_2';
       env.targetFixture.detectChanges();
       tick();
-      verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+      verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
       expect(env.session.metrics.type).toBe('navigate');
 
       env.keyPress('ArrowDown');
@@ -256,7 +267,7 @@ describe('TranslateMetricsSession', () => {
     env.keyPress('a');
     env.keyPress('b');
     expect(env.session.metrics.type).toBe('edit');
-    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
 
     const sessionId = env.session.id;
     const metricsId = env.session.metrics.id;
@@ -273,7 +284,7 @@ describe('TranslateMetricsSession', () => {
       targetWordCount: 8,
       editEndEvent: 'task-exit'
     };
-    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', objectContaining(expectedMetrics))).once();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', objectContaining(expectedMetrics))).once();
   }));
 
   it('periodic send', fakeAsync(() => {
@@ -284,7 +295,7 @@ describe('TranslateMetricsSession', () => {
     env.keyPress('ArrowLeft');
     expect(env.session.metrics.type).toBe('navigate');
     expect(env.session.metrics.keyNavigationCount).toBe(2);
-    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
 
     tick(SEND_METRICS_INTERVAL);
     let expectedMetrics: TranslateMetrics = {
@@ -295,13 +306,13 @@ describe('TranslateMetricsSession', () => {
       chapterNum: 1,
       keyNavigationCount: 2
     };
-    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
 
-    resetCalls(env.mockedSFProjectService);
+    resetCalls(mockedSFProjectService);
     env.mouseClick();
     expect(env.session.metrics.type).toBe('navigate');
     expect(env.session.metrics.mouseClickCount).toBe(1);
-    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
 
     tick(SEND_METRICS_INTERVAL);
     expectedMetrics = {
@@ -313,14 +324,14 @@ describe('TranslateMetricsSession', () => {
       keyNavigationCount: 2,
       mouseClickCount: 1
     };
-    verify(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
+    verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
 
     env.session.dispose();
   }));
 
   it('ignore not found error', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(
       new CommandError(CommandErrorCode.NotFound, 'NotFound')
     );
     env.startSession();
@@ -331,7 +342,7 @@ describe('TranslateMetricsSession', () => {
 
   it('ignore forbidden error', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(
       new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
     );
     env.startSession();
@@ -348,24 +359,17 @@ class TestEnvironment {
   readonly targetFixture: ComponentFixture<TextComponent>;
   readonly session: TranslateMetricsSession;
 
-  readonly mockedSFProjectService = mock(SFProjectService);
-
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private readonly tokenizer = new LatinWordTokenizer();
 
   constructor() {
     this.addTextDoc(new TextDocId('project01', 40, 1, 'source'));
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
-    when(this.mockedSFProjectService.getText(anything())).thenCall(id =>
+    when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
-    when(this.mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
+    when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
 
-    TestBed.configureTestingModule({
-      declarations: [TextComponent],
-      imports: [QuillModule.forRoot()],
-      providers: [{ provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) }]
-    });
     this.sourceFixture = TestBed.createComponent(TextComponent);
     this.source = this.sourceFixture.componentInstance;
     this.source.id = new TextDocId('project01', 40, 1, 'source');
@@ -374,7 +378,7 @@ class TestEnvironment {
     this.target = this.targetFixture.componentInstance;
     this.target.id = new TextDocId('project01', 40, 1, 'target');
     this.target.segmentRef = 'verse_1_1';
-    this.session = new TranslateMetricsSession(instance(this.mockedSFProjectService));
+    this.session = new TranslateMetricsSession(instance(mockedSFProjectService));
 
     this.sourceFixture.detectChanges();
     this.targetFixture.detectChanges();

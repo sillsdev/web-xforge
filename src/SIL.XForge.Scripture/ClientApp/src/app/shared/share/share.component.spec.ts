@@ -4,10 +4,11 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import { configureTestSuite } from 'ng-bullet';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -19,7 +20,35 @@ import { ShareControlComponent } from './share-control.component';
 import { ShareDialogComponent } from './share-dialog.component';
 import { ShareComponent } from './share.component';
 
+const mockedMdcDialogRef: MdcDialogRef<ShareDialogComponent> = mock(MdcDialogRef);
+const mockedProjectService = mock(SFProjectService);
+const mockedNoticeService = mock(NoticeService);
+const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedLocationService = mock(LocationService);
+
 describe('ShareComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      imports: [DialogTestModule],
+      declarations: [ShareComponent],
+      providers: [
+        { provide: MdcDialogRef, useFactory: () => instance(mockedMdcDialogRef) },
+        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
+        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
+        { provide: LocationService, useFactory: () => instance(mockedLocationService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedMdcDialogRef);
+    reset(mockedProjectService);
+    reset(mockedNoticeService);
+    reset(mockedActivatedRoute);
+    reset(mockedLocationService);
+  });
+
   it('share button should be hidden when sharing is disabled', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setShareConfig(false, CheckingShareLevel.Anyone);
@@ -39,7 +68,7 @@ describe('ShareComponent', () => {
     env.clickElement(env.shareButton);
 
     env.clickElement(env.closeButton);
-    verify(env.mockedProjectService.onlineInvite('project01', anything())).never();
+    verify(mockedProjectService.onlineInvite('project01', anything())).never();
     expect().nothing();
   }));
 
@@ -55,7 +84,7 @@ describe('ShareComponent', () => {
     env.clickElement(env.sendInviteButton);
 
     env.clickElement(env.closeButton);
-    verify(env.mockedProjectService.onlineInvite('project01', anything())).never();
+    verify(mockedProjectService.onlineInvite('project01', anything())).never();
     expect().nothing();
   }));
 
@@ -72,7 +101,7 @@ describe('ShareComponent', () => {
     env.clickElement(env.sendInviteButton);
 
     env.clickElement(env.closeButton);
-    verify(env.mockedProjectService.onlineInvite('project01', anything())).never();
+    verify(mockedProjectService.onlineInvite('project01', anything())).never();
     expect().nothing();
   }));
 
@@ -89,7 +118,7 @@ describe('ShareComponent', () => {
     env.clickElement(env.sendInviteButton);
 
     env.clickElement(env.closeButton);
-    verify(env.mockedProjectService.onlineInvite('project01', emailAddress)).once();
+    verify(mockedProjectService.onlineInvite('project01', emailAddress)).once();
   }));
 
   it('share link should be hidden if link sharing is turned off', fakeAsync(() => {
@@ -113,7 +142,7 @@ describe('ShareComponent', () => {
     expect(env.shareLink.value).toEqual('https://scriptureforge.org/projects/project01?sharing=true');
     env.clickElement(env.shareLinkCopyIcon);
     // TODO: figure out a way to check the clipboard data
-    verify(env.mockedNoticeService.show(anything())).once();
+    verify(mockedNoticeService.show(anything())).once();
   }));
 });
 
@@ -130,35 +159,18 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ShareComponent>;
   readonly overlayContainer: OverlayContainer;
 
-  readonly mockedMdcDialogRef: MdcDialogRef<ShareDialogComponent> = mock(MdcDialogRef);
-  readonly mockedProjectService = mock(SFProjectService);
-  readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedActivatedRoute = mock(ActivatedRoute);
-  readonly mockedLocationService = mock(LocationService);
-
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
-    when(this.mockedProjectService.onlineInvite('project01', anything())).thenResolve();
-    when(this.mockedNoticeService.show(anything())).thenResolve();
-    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
-    when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
-    when(this.mockedProjectService.get('project01')).thenCall(() =>
+    when(mockedProjectService.onlineInvite('project01', anything())).thenResolve();
+    when(mockedNoticeService.show(anything())).thenResolve();
+    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
+    when(mockedProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
     this.setShareConfig(true, CheckingShareLevel.Anyone);
 
-    TestBed.configureTestingModule({
-      imports: [DialogTestModule],
-      declarations: [ShareComponent],
-      providers: [
-        { provide: MdcDialogRef, useFactory: () => instance(this.mockedMdcDialogRef) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
-        { provide: LocationService, useFactory: () => instance(this.mockedLocationService) }
-      ]
-    });
     this.fixture = TestBed.createComponent(ShareComponent);
     this.component = this.fixture.componentInstance;
     this.overlayContainer = TestBed.get(OverlayContainer);

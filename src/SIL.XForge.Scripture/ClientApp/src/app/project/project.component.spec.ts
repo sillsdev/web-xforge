@@ -1,5 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { configureTestSuite } from 'ng-bullet';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -8,7 +9,7 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { of } from 'rxjs';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -20,15 +21,43 @@ import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectComponent } from './project.component';
 
+const mockedUserService = mock(UserService);
+const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedRouter = mock(Router);
+const mockedSFProjectService = mock(SFProjectService);
+const mockedNoticeService = mock(NoticeService);
+
 describe('ProjectComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      declarations: [ProjectComponent],
+      imports: [UICommonModule],
+      providers: [
+        { provide: UserService, useFactory: () => instance(mockedUserService) },
+        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
+        { provide: Router, useFactory: () => instance(mockedRouter) },
+        { provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedUserService);
+    reset(mockedActivatedRoute);
+    reset(mockedRouter);
+    reset(mockedSFProjectService);
+    reset(mockedNoticeService);
+  });
+
   it('navigate to last text', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setProjectData({ selectedTask: 'translate' });
     env.fixture.detectChanges();
     tick();
 
-    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'MRK']), anything())).once();
+    verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
+    verify(mockedRouter.navigate(deepEqual(['./', 'translate', 'MRK']), anything())).once();
     expect().nothing();
   }));
 
@@ -38,8 +67,8 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'MAT']), anything())).once();
+    verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
+    verify(mockedRouter.navigate(deepEqual(['./', 'translate', 'MAT']), anything())).once();
     expect().nothing();
   }));
 
@@ -49,8 +78,8 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(deepEqual(['./', 'checking', 'ALL']), anything())).once();
+    verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
+    verify(mockedRouter.navigate(deepEqual(['./', 'checking', 'ALL']), anything())).once();
     expect().nothing();
   }));
 
@@ -60,8 +89,8 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(anything(), anything())).never();
+    verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
+    verify(mockedRouter.navigate(anything(), anything())).never();
     expect().nothing();
   }));
 
@@ -70,8 +99,8 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(env.mockedRouter.navigate(anything(), anything())).never();
+    verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
+    verify(mockedRouter.navigate(anything(), anything())).never();
     expect().nothing();
   }));
 
@@ -82,8 +111,8 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).once();
-    verify(env.mockedRouter.navigate(deepEqual(['./', 'translate', 'MRK']), anything())).once();
+    verify(mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).once();
+    verify(mockedRouter.navigate(deepEqual(['./', 'translate', 'MRK']), anything())).once();
     expect().nothing();
   }));
 
@@ -94,13 +123,13 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(env.mockedSFProjectService.onlineCheckLinkSharing('project01', 'secret123')).once();
+    verify(mockedSFProjectService.onlineCheckLinkSharing('project01', 'secret123')).once();
     expect().nothing();
   }));
 
   it('check sharing link forbidden', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
+    when(mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
       new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
     );
     env.setProjectData({ selectedTask: 'translate' });
@@ -108,14 +137,14 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(env.mockedNoticeService.showMessageDialog(anything())).once();
-    verify(env.mockedRouter.navigateByUrl('/projects', anything())).once();
+    verify(mockedNoticeService.showMessageDialog(anything())).once();
+    verify(mockedRouter.navigateByUrl('/projects', anything())).once();
     expect().nothing();
   }));
 
   it('check sharing link project not found', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
+    when(mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
       new CommandError(CommandErrorCode.NotFound, 'NotFound')
     );
     env.setProjectData({ selectedTask: 'translate' });
@@ -123,8 +152,8 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(env.mockedNoticeService.showMessageDialog(anything())).once();
-    verify(env.mockedRouter.navigateByUrl('/projects', anything())).once();
+    verify(mockedNoticeService.showMessageDialog(anything())).once();
+    verify(mockedRouter.navigateByUrl('/projects', anything())).once();
     expect().nothing();
   }));
 });
@@ -133,45 +162,28 @@ class TestEnvironment {
   readonly component: ProjectComponent;
   readonly fixture: ComponentFixture<ProjectComponent>;
 
-  readonly mockedUserService = mock(UserService);
-  readonly mockedActivatedRoute = mock(ActivatedRoute);
-  readonly mockedRouter = mock(Router);
-  readonly mockedSFProjectService = mock(SFProjectService);
-  readonly mockedNoticeService = mock(NoticeService);
-
   readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
-    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     const snapshot = new ActivatedRouteSnapshot();
     snapshot.queryParams = { sharing: 'true' };
-    when(this.mockedActivatedRoute.snapshot).thenReturn(snapshot);
-    when(this.mockedUserService.currentUserId).thenReturn('user01');
-    when(this.mockedSFProjectService.onlineCheckLinkSharing('project01')).thenResolve();
-    when(this.mockedSFProjectService.onlineCheckLinkSharing('project01', anything())).thenResolve();
-    when(this.mockedNoticeService.showMessageDialog(anything())).thenResolve();
-    when(this.mockedSFProjectService.getUserConfig('project01', 'user01')).thenCall(() =>
+    when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
+    when(mockedUserService.currentUserId).thenReturn('user01');
+    when(mockedSFProjectService.onlineCheckLinkSharing('project01')).thenResolve();
+    when(mockedSFProjectService.onlineCheckLinkSharing('project01', anything())).thenResolve();
+    when(mockedNoticeService.showMessageDialog(anything())).thenResolve();
+    when(mockedSFProjectService.getUserConfig('project01', 'user01')).thenCall(() =>
       this.realtimeService.subscribe(
         SFProjectUserConfigDoc.COLLECTION,
         getSFProjectUserConfigDocId('project01', 'user01')
       )
     );
-    when(this.mockedSFProjectService.get('project01')).thenCall(() =>
+    when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
     this.setLinkSharing(false);
 
-    TestBed.configureTestingModule({
-      declarations: [ProjectComponent],
-      imports: [UICommonModule],
-      providers: [
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
-        { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
-        { provide: Router, useFactory: () => instance(this.mockedRouter) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
-      ]
-    });
     this.fixture = TestBed.createComponent(ProjectComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -225,6 +237,6 @@ class TestEnvironment {
   setLinkSharing(enabled: boolean, shareKey?: string): void {
     const snapshot = new ActivatedRouteSnapshot();
     snapshot.queryParams = { sharing: enabled ? 'true' : undefined, shareKey: shareKey ? shareKey : undefined };
-    when(this.mockedActivatedRoute.snapshot).thenReturn(snapshot);
+    when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
   }
 }

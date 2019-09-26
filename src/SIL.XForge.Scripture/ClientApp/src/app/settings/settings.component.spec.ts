@@ -5,11 +5,12 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { configureTestSuite } from 'ng-bullet';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { TranslateConfig } from 'realtime-server/lib/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -24,7 +25,38 @@ import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings.component';
 
+const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedAuthService = mock(AuthService);
+const mockedNoticeService = mock(NoticeService);
+const mockedParatextService = mock(ParatextService);
+const mockedSFProjectService = mock(SFProjectService);
+const mockedUserService = mock(UserService);
+
 describe('SettingsComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      imports: [DialogTestModule, HttpClientTestingModule, RouterTestingModule, UICommonModule],
+      declarations: [SettingsComponent, WriteStatusComponent],
+      providers: [
+        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
+        { provide: AuthService, useFactory: () => instance(mockedAuthService) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
+        { provide: ParatextService, useFactory: () => instance(mockedParatextService) },
+        { provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) },
+        { provide: UserService, useFactory: () => instance(mockedUserService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedActivatedRoute);
+    reset(mockedAuthService);
+    reset(mockedNoticeService);
+    reset(mockedParatextService);
+    reset(mockedSFProjectService);
+    reset(mockedUserService);
+  });
+
   describe('Tasks', () => {
     it('should select Checking and then submit update when clicked', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -60,7 +92,7 @@ describe('SettingsComponent', () => {
     it('error on data submit shows error icon', fakeAsync(() => {
       const env = new TestEnvironment();
       when(
-        env.mockedSFProjectService.onlineUpdateSettings('project01', deepEqual({ usersSeeEachOthersResponses: true }))
+        mockedSFProjectService.onlineUpdateSettings('project01', deepEqual({ usersSeeEachOthersResponses: true }))
       ).thenReject('Network error');
       env.setupProject();
       env.wait();
@@ -308,8 +340,8 @@ describe('SettingsComponent', () => {
       env.clickElement(env.deleteProjectButton);
       expect(env.deleteDialog).not.toBeNull();
       env.confirmDialog(true);
-      verify(env.mockedUserService.setCurrentProjectId()).once();
-      verify(env.mockedSFProjectService.onlineDelete(anything())).once();
+      verify(mockedUserService.setCurrentProjectId()).once();
+      verify(mockedSFProjectService.onlineDelete(anything())).once();
     }));
 
     it('should not delete project if user cancels', fakeAsync(() => {
@@ -319,8 +351,8 @@ describe('SettingsComponent', () => {
       env.clickElement(env.deleteProjectButton);
       expect(env.deleteDialog).not.toBeNull();
       env.confirmDialog(false);
-      verify(env.mockedUserService.setCurrentProjectId()).never();
-      verify(env.mockedSFProjectService.onlineDelete(anything())).never();
+      verify(mockedUserService.setCurrentProjectId()).never();
+      verify(mockedSFProjectService.onlineDelete(anything())).never();
     }));
   });
 });
@@ -330,18 +362,11 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<SettingsComponent>;
   readonly overlayContainer: OverlayContainer;
 
-  readonly mockedActivatedRoute: ActivatedRoute = mock(ActivatedRoute);
-  readonly mockedAuthService: AuthService = mock(AuthService);
-  readonly mockedNoticeService: NoticeService = mock(NoticeService);
-  readonly mockedParatextService: ParatextService = mock(ParatextService);
-  readonly mockedSFProjectService: SFProjectService = mock(SFProjectService);
-  readonly mockedUserService: UserService = mock(UserService);
-
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private readonly paratextProjects$: BehaviorSubject<ParatextProject[]>;
 
   constructor() {
-    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     this.paratextProjects$ = new BehaviorSubject<ParatextProject[]>([
       {
         paratextId: 'paratextId01',
@@ -360,25 +385,14 @@ class TestEnvironment {
         isConnected: false
       }
     ]);
-    when(this.mockedParatextService.getProjects()).thenReturn(this.paratextProjects$);
-    when(this.mockedSFProjectService.onlineDelete(anything())).thenResolve();
-    when(this.mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
-    when(this.mockedUserService.currentProjectId).thenReturn('project01');
-    when(this.mockedSFProjectService.get('project01')).thenCall(() =>
+    when(mockedParatextService.getProjects()).thenReturn(this.paratextProjects$);
+    when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
+    when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
+    when(mockedUserService.currentProjectId).thenReturn('project01');
+    when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
-    TestBed.configureTestingModule({
-      imports: [DialogTestModule, HttpClientTestingModule, RouterTestingModule, UICommonModule],
-      declarations: [SettingsComponent, WriteStatusComponent],
-      providers: [
-        { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
-        { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: ParatextService, useFactory: () => instance(this.mockedParatextService) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
-      ]
-    });
+
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
     this.overlayContainer = TestBed.get(OverlayContainer);

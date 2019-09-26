@@ -6,12 +6,13 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import merge from 'lodash/merge';
+import { configureTestSuite } from 'ng-bullet';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { combineLatest, from, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
 import { getObjPathStr, objProxy } from 'xforge-common/utils';
 import XRegExp from 'xregexp';
 import { environment } from '../../environments/environment';
@@ -28,7 +29,34 @@ import { UserService } from '../user.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
 import { SaUsersComponent } from './sa-users.component';
 
+const mockedMdcDialog = mock(MdcDialog);
+const mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
+const mockedNoticeService = mock(NoticeService);
+const mockedUserService = mock(UserService);
+const mockedProjectService = mock(ProjectService);
+
 describe('SaUsersComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      imports: [NoopAnimationsModule, RouterTestingModule, AvatarTestingModule, UICommonModule, DialogTestModule],
+      declarations: [SaUsersComponent],
+      providers: [
+        { provide: MdcDialog, useFactory: () => instance(mockedMdcDialog) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
+        { provide: UserService, useFactory: () => instance(mockedUserService) },
+        { provide: ProjectService, useFactory: () => instance(mockedProjectService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedMdcDialog);
+    reset(mockedDeleteUserDialogRef);
+    reset(mockedNoticeService);
+    reset(mockedUserService);
+    reset(mockedProjectService);
+  });
+
   it('should not display no-users label while loading', fakeAsync(() => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
@@ -78,15 +106,15 @@ describe('SaUsersComponent', () => {
   it('should delete user', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupUserData();
-    when(env.mockedDeleteUserDialogRef.afterClosed()).thenReturn(of('confirmed'));
+    when(mockedDeleteUserDialogRef.afterClosed()).thenReturn(of('confirmed'));
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
-    verify(env.mockedUserService.onlineDelete(anything())).never();
+    verify(mockedUserService.onlineDelete(anything())).never();
 
     env.clickElement(env.removeUserButtonOnRow(1));
-    verify(env.mockedMdcDialog.open(anything(), anything())).once();
-    verify(env.mockedUserService.onlineDelete(anything())).once();
+    verify(mockedMdcDialog.open(anything(), anything())).once();
+    verify(mockedUserService.onlineDelete(anything())).once();
 
     expect().nothing();
   }));
@@ -142,17 +170,11 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<SaUsersComponent>;
   readonly overlayContainer: OverlayContainer;
 
-  readonly mockedMdcDialog = mock(MdcDialog);
-  readonly mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
-  readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedUserService = mock(UserService);
-  readonly mockedProjectService = mock(ProjectService);
-
   private readonly realtimeService = new TestRealtimeService(new RealtimeDocTypes([UserDoc, TestProjectDoc]));
 
   constructor() {
-    when(this.mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));
-    when(this.mockedUserService.onlineQuery(anything(), anything(), anything())).thenCall(
+    when(mockedMdcDialog.open(anything(), anything())).thenReturn(instance(mockedDeleteUserDialogRef));
+    when(mockedUserService.onlineQuery(anything(), anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>, reload$: Observable<void>) =>
         combineLatest(term$, parameters$, reload$).pipe(
           switchMap(([term, queryParameters]) => {
@@ -163,21 +185,11 @@ class TestEnvironment {
           })
         )
     );
-    when(this.mockedProjectService.onlineGetMany(anything())).thenCall(async () => {
+    when(mockedProjectService.onlineGetMany(anything())).thenCall(async () => {
       const query = await this.realtimeService.onlineQuery<TestProjectDoc>(TestProjectDoc.COLLECTION, {});
       return query.docs;
     });
 
-    TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, RouterTestingModule, AvatarTestingModule, UICommonModule, DialogTestModule],
-      declarations: [SaUsersComponent],
-      providers: [
-        { provide: MdcDialog, useFactory: () => instance(this.mockedMdcDialog) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
-        { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) }
-      ]
-    });
     this.fixture = TestBed.createComponent(SaUsersComponent);
     this.component = this.fixture.componentInstance;
     this.overlayContainer = TestBed.get(OverlayContainer);

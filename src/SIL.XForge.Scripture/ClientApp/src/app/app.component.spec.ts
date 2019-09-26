@@ -5,6 +5,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { configureTestSuite } from 'ng-bullet';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
@@ -13,7 +14,7 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { of } from 'rxjs';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -21,12 +22,11 @@ import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
-import { RealtimeService } from 'xforge-common/realtime.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { getObjPathStr, objectId, objProxy } from 'xforge-common/utils';
-import { AppComponent, CONNECT_PROJECT_OPTION, QuestionQuery } from './app.component';
+import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectDoc } from './core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from './core/models/sf-realtime-doc-types';
@@ -34,7 +34,43 @@ import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
 
+const mockedAccountService = mock(AccountService);
+const mockedAuthService = mock(AuthService);
+const mockedUserService = mock(UserService);
+const mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
+const mockedSFProjectService = mock(SFProjectService);
+const mockedLocationService = mock(LocationService);
+const mockedNoticeService = mock(NoticeService);
+const mockedNameDialogRef = mock(MdcDialogRef);
+
 describe('AppComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      declarations: [AppComponent, MockComponent],
+      imports: [AvatarTestingModule, DialogTestModule, UICommonModule, RouterTestingModule.withRoutes(ROUTES)],
+      providers: [
+        { provide: AccountService, useFactory: () => instance(mockedAccountService) },
+        { provide: AuthService, useFactory: () => instance(mockedAuthService) },
+        { provide: UserService, useFactory: () => instance(mockedUserService) },
+        { provide: SFAdminAuthGuard, useFactory: () => instance(mockedSFAdminAuthGuard) },
+        { provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) },
+        { provide: LocationService, useFactory: () => instance(mockedLocationService) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedAccountService);
+    reset(mockedAuthService);
+    reset(mockedUserService);
+    reset(mockedSFAdminAuthGuard);
+    reset(mockedSFProjectService);
+    reset(mockedLocationService);
+    reset(mockedNoticeService);
+    reset(mockedNameDialogRef);
+  });
+
   it('navigate to last project', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project01']);
@@ -43,7 +79,7 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
     expect(env.menuLength).toEqual(5);
-    verify(env.mockedUserService.setCurrentProjectId('project01')).once();
+    verify(mockedUserService.setCurrentProjectId('project01')).once();
   }));
 
   it('navigate to different project', fakeAsync(() => {
@@ -56,7 +92,7 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(4);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
-    verify(env.mockedUserService.setCurrentProjectId('project02')).once();
+    verify(mockedUserService.setCurrentProjectId('project02')).once();
   }));
 
   it('hide translate tool for community checkers', fakeAsync(() => {
@@ -69,7 +105,7 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(4);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
-    verify(env.mockedUserService.setCurrentProjectId('project03')).once();
+    verify(mockedUserService.setCurrentProjectId('project03')).once();
   }));
 
   it('expand/collapse tool', fakeAsync(() => {
@@ -96,7 +132,7 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project02');
     expect(env.location.path()).toEqual('/projects/project02');
-    verify(env.mockedUserService.setCurrentProjectId('project02')).once();
+    verify(mockedUserService.setCurrentProjectId('project02')).once();
   }));
 
   it('connect project', fakeAsync(() => {
@@ -129,7 +165,7 @@ describe('AppComponent', () => {
     expect(env.selectedProjectId).toEqual('project01');
     env.deleteProject('project01', false);
     expect(env.projectDeletedDialog).not.toBeNull();
-    verify(env.mockedUserService.setCurrentProjectId()).once();
+    verify(mockedUserService.setCurrentProjectId()).once();
     env.confirmDialog();
     expect(env.isDrawerVisible).toEqual(false);
     expect(env.location.path()).toEqual('/projects');
@@ -142,7 +178,7 @@ describe('AppComponent', () => {
     env.init();
 
     expect(env.isDrawerVisible).toEqual(false);
-    verify(env.mockedUserService.setCurrentProjectId()).once();
+    verify(mockedUserService.setCurrentProjectId()).once();
     expect(env.location.path()).toEqual('/projects');
   }));
 
@@ -200,7 +236,7 @@ describe('AppComponent', () => {
       env.init();
       env.updateDisplayName('Updated Name');
       tick();
-      verify(env.mockedAccountService.openNameDialog(anything(), anything()));
+      verify(mockedAccountService.openNameDialog(anything(), anything()));
       expect(env.currentUserDisplayName).toEqual('Updated Name');
     }));
   });
@@ -315,15 +351,7 @@ class TestEnvironment {
   readonly overlayContainer: OverlayContainer;
   readonly questions: Question[];
 
-  readonly mockedAccountService = mock(AccountService);
-  readonly mockedAuthService = mock(AuthService);
-  readonly mockedUserService = mock(UserService);
-  readonly mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
-  readonly mockedSFProjectService = mock(SFProjectService);
-  readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
-  readonly mockedLocationService = mock(LocationService);
-  readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedNameDialogRef = mock(MdcDialogRef);
+  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
@@ -345,7 +373,7 @@ class TestEnvironment {
     });
 
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
-    when(this.mockedSFProjectService.queryQuestionCount(anything(), anything())).thenCall((_projectId, options) => {
+    when(mockedSFProjectService.queryQuestionCount(anything(), anything())).thenCall((_projectId, options) => {
       const parameters: QueryParameters = {
         $count: true,
         [getObjPathStr(objProxy<Question>().verseRef.bookNum)]: options.bookNum,
@@ -371,32 +399,18 @@ class TestEnvironment {
       { bookNum: 47, hasSource: true, chapters: [] }
     ]);
 
-    when(this.mockedSFProjectService.get(anything())).thenCall(projectId =>
+    when(mockedSFProjectService.get(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
     );
-    when(this.mockedUserService.currentUserId).thenReturn('user01');
-    when(this.mockedAuthService.isLoggedIn).thenResolve(true);
-    when(this.mockedUserService.getCurrentUser()).thenCall(() =>
+    when(mockedUserService.currentUserId).thenReturn('user01');
+    when(mockedAuthService.isLoggedIn).thenResolve(true);
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
-    when(this.mockedUserService.currentProjectId).thenReturn('project01');
-    when(this.mockedAccountService.openNameDialog(anything(), false)).thenReturn(instance(this.mockedNameDialogRef));
-    when(this.mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
+    when(mockedUserService.currentProjectId).thenReturn('project01');
+    when(mockedAccountService.openNameDialog(anything(), false)).thenReturn(instance(mockedNameDialogRef));
+    when(mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
 
-    TestBed.configureTestingModule({
-      declarations: [AppComponent, MockComponent],
-      imports: [AvatarTestingModule, DialogTestModule, UICommonModule, RouterTestingModule.withRoutes(ROUTES)],
-      providers: [
-        { provide: AccountService, useFactory: () => instance(this.mockedAccountService) },
-        { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
-        { provide: SFAdminAuthGuard, useFactory: () => instance(this.mockedSFAdminAuthGuard) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
-        { provide: RealtimeService, useFactory: () => instance(this.realtimeService) },
-        { provide: LocationService, useFactory: () => instance(this.mockedLocationService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
-      ]
-    });
     this.router = TestBed.get(Router);
     this.location = TestBed.get(Location);
     this.fixture = TestBed.createComponent(AppComponent);
@@ -541,7 +555,7 @@ class TestEnvironment {
 
   deleteProject(projectId: string, isLocal: boolean): void {
     if (isLocal) {
-      when(this.mockedUserService.currentProjectId).thenReturn(undefined);
+      when(mockedUserService.currentProjectId).thenReturn(undefined);
     }
     this.fixture.ngZone.run(() => {
       const projectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);
@@ -568,7 +582,7 @@ class TestEnvironment {
   }
 
   updateDisplayName(displayName: string) {
-    when(this.mockedNameDialogRef.afterClosed()).thenReturn(of(displayName));
+    when(mockedNameDialogRef.afterClosed()).thenReturn(of(displayName));
     this.component.editName('User 01');
   }
 

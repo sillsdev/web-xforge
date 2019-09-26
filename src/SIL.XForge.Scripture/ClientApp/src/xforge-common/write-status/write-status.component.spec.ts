@@ -1,11 +1,19 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { configureTestSuite } from 'ng-bullet';
 import { ElementState } from '../models/element-state';
 import { UICommonModule } from '../ui-common.module';
 import { WriteStatusComponent } from './write-status.component';
 
 describe('WriteStatusComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      declarations: [WriteStatusComponent, TestHostComponent],
+      imports: [UICommonModule]
+    });
+  });
+
   it('should display done, spinner and error icons', () => {
     const env = new TestEnvironment();
     expect(env.statusDone).toBeNull('InSync-done');
@@ -34,10 +42,6 @@ class TestEnvironment {
   component: TestHostComponent;
 
   constructor() {
-    TestBed.configureTestingModule({
-      declarations: [WriteStatusComponent, TestHostComponent],
-      imports: [UICommonModule]
-    });
     this.fixture = TestBed.createComponent(TestHostComponent);
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();
