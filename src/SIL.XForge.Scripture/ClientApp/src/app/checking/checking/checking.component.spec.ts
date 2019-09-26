@@ -7,6 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
+import { configureTestSuite } from 'ng-bullet';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
@@ -22,7 +23,7 @@ import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/model
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
@@ -54,11 +55,63 @@ import { CheckingTextComponent } from './checking-text/checking-text.component';
 import { CheckingComponent } from './checking.component';
 import { FontSizeComponent } from './font-size/font-size.component';
 
+const mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent> = mock(MdcDialogRef);
+const mockedAccountService = mock(AccountService);
+const mockedUserService = mock(UserService);
+const mockedProjectService = mock(SFProjectService);
+const mockedNoticeService = mock(NoticeService);
+const mockedActivatedRoute = mock(ActivatedRoute);
+
 describe('CheckingComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      declarations: [
+        AudioTimePipe,
+        CheckingAnswersComponent,
+        CheckingAudioCombinedComponent,
+        CheckingAudioPlayerComponent,
+        CheckingAudioRecorderComponent,
+        CheckingCommentFormComponent,
+        CheckingCommentsComponent,
+        CheckingComponent,
+        CheckingOwnerComponent,
+        CheckingQuestionsComponent,
+        CheckingTextComponent,
+        FontSizeComponent
+      ],
+      imports: [
+        AngularSplitModule.forRoot(),
+        ngfModule,
+        NoopAnimationsModule,
+        RouterTestingModule,
+        AvatarTestingModule,
+        SharedModule,
+        UICommonModule
+      ],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useFactory: () => instance(mockedActivatedRoute)
+        },
+        { provide: AccountService, useFactory: () => instance(mockedAccountService) },
+        { provide: UserService, useFactory: () => instance(mockedUserService) },
+        { provide: ProjectService, useFactory: () => instance(mockedProjectService) },
+        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) }
+      ]
+    });
+  });
+
   let env: TestEnvironment;
-  beforeEach(fakeAsync(() => {
+  beforeEach(() => {
+    reset(mockedCheckingNameDialogRef);
+    reset(mockedAccountService);
+    reset(mockedUserService);
+    reset(mockedProjectService);
+    reset(mockedNoticeService);
+    reset(mockedActivatedRoute);
     env = new TestEnvironment();
-  }));
+  });
 
   describe('Interface', () => {
     it('can navigate using next button', fakeAsync(() => {
@@ -211,7 +264,7 @@ describe('CheckingComponent', () => {
       env.setupData(env.cleanCheckerUser);
       env.selectQuestion(2);
       env.answerQuestion('Answering question 2 should pop up a dialog');
-      verify(env.mockedAccountService.openNameDialog(env.cleanCheckerUser.user.displayName, true)).once();
+      verify(mockedAccountService.openNameDialog(env.cleanCheckerUser.user.displayName, true)).once();
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answering question 2 should pop up a dialog');
     }));
@@ -277,7 +330,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.removeAudioButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      verify(env.mockedProjectService.onlineDeleteAudio('project01', 'a6Id', env.checkerUser.id)).once();
+      verify(mockedProjectService.onlineDeleteAudio('project01', 'a6Id', env.checkerUser.id)).once();
       expect().nothing();
     }));
 
@@ -288,7 +341,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.answerDeleteButton(0));
       env.waitForSliderUpdate();
       expect(env.answers.length).toEqual(0);
-      verify(env.mockedProjectService.onlineDeleteAudio('project01', 'a6Id', env.checkerUser.id)).once();
+      verify(mockedProjectService.onlineDeleteAudio('project01', 'a6Id', env.checkerUser.id)).once();
     }));
 
     it('can delete correct answer after changing chapters', fakeAsync(() => {
@@ -627,13 +680,6 @@ class TestEnvironment {
   projectBookRoute: string = 'JHN';
   questionReadTimer: number = 2000;
 
-  readonly mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent> = mock(MdcDialogRef);
-  readonly mockedAccountService = mock(AccountService);
-  readonly mockedUserService = mock(UserService);
-  readonly mockedProjectService = mock(SFProjectService);
-  readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedActivatedRoute = mock(ActivatedRoute);
-
   readonly adminUser: UserInfo = this.createUser('01', SFProjectRole.ParatextAdministrator);
   readonly checkerUser: UserInfo = this.createUser('02', SFProjectRole.CommunityChecker);
   readonly cleanCheckerUser: UserInfo = this.createUser('03', SFProjectRole.CommunityChecker, false);
@@ -727,45 +773,6 @@ class TestEnvironment {
   };
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
-
-  constructor() {
-    TestBed.configureTestingModule({
-      declarations: [
-        AudioTimePipe,
-        CheckingAnswersComponent,
-        CheckingAudioCombinedComponent,
-        CheckingAudioPlayerComponent,
-        CheckingAudioRecorderComponent,
-        CheckingCommentFormComponent,
-        CheckingCommentsComponent,
-        CheckingComponent,
-        CheckingOwnerComponent,
-        CheckingQuestionsComponent,
-        CheckingTextComponent,
-        FontSizeComponent
-      ],
-      imports: [
-        AngularSplitModule.forRoot(),
-        ngfModule,
-        NoopAnimationsModule,
-        RouterTestingModule,
-        AvatarTestingModule,
-        SharedModule,
-        UICommonModule
-      ],
-      providers: [
-        {
-          provide: ActivatedRoute,
-          useFactory: () => instance(this.mockedActivatedRoute)
-        },
-        { provide: AccountService, useFactory: () => instance(this.mockedAccountService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
-        { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
-      ]
-    });
-  }
 
   get answerPanel(): DebugElement {
     return this.fixture.debugElement.query(By.css('#answer-panel'));
@@ -1029,14 +1036,14 @@ class TestEnvironment {
   }
 
   private setupDefaultProjectData(user: UserInfo): void {
-    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01', bookId: this.projectBookRoute }));
+    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01', bookId: this.projectBookRoute }));
     this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
       {
         id: 'project01',
         data: this.testProject
       }
     ]);
-    when(this.mockedProjectService.get(anything())).thenCall(id =>
+    when(mockedProjectService.get(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
     );
 
@@ -1058,7 +1065,7 @@ class TestEnvironment {
         data: this.observerProjectUserConfig
       }
     ]);
-    when(this.mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
+    when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
       this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
     );
 
@@ -1079,7 +1086,7 @@ class TestEnvironment {
         type: RichText.type.name
       }
     ]);
-    when(this.mockedProjectService.getText(anything())).thenCall(id =>
+    when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
 
@@ -1193,7 +1200,7 @@ class TestEnvironment {
     }
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions);
     when(
-      this.mockedProjectService.queryQuestions(
+      mockedProjectService.queryQuestions(
         'project01',
         deepEqual({
           bookNum: this.projectBookRoute === 'ALL' ? null : Canon.bookIdToNumber(this.projectBookRoute),
@@ -1206,7 +1213,7 @@ class TestEnvironment {
         $sort: { [nameof<Question>('dateCreated')]: -1 }
       })
     );
-    when(this.mockedUserService.currentUserId).thenReturn(user.id);
+    when(mockedUserService.currentUserId).thenReturn(user.id);
 
     this.realtimeService.addSnapshots<User>(UserDoc.COLLECTION, [
       {
@@ -1214,9 +1221,7 @@ class TestEnvironment {
         data: user.user
       }
     ]);
-    when(this.mockedUserService.getCurrentUser()).thenReturn(
-      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id)
-    );
+    when(mockedUserService.getCurrentUser()).thenReturn(this.realtimeService.subscribe(UserDoc.COLLECTION, user.id));
 
     this.realtimeService.addSnapshots<User>(UserProfileDoc.COLLECTION, [
       {
@@ -1228,15 +1233,13 @@ class TestEnvironment {
         data: this.checkerUser.user
       }
     ]);
-    when(this.mockedUserService.getProfile(anything())).thenCall(id =>
+    when(mockedUserService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
     );
 
-    when(this.mockedAccountService.openNameDialog(anything(), anything())).thenReturn(
-      instance(this.mockedCheckingNameDialogRef)
-    );
+    when(mockedAccountService.openNameDialog(anything(), anything())).thenReturn(instance(mockedCheckingNameDialogRef));
 
-    when(this.mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.user.displayName));
+    when(mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.user.displayName));
   }
 
   private initComponentEnviroment(): void {

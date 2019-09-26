@@ -3,12 +3,19 @@ import { CommonModule } from '@angular/common';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { configureTestSuite } from 'ng-bullet';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AvatarTestingModule } from '../avatar/avatar-testing.module';
 import { UICommonModule } from '../ui-common.module';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
 
 describe('DeleteDialogComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      imports: [TestModule]
+    });
+  });
+
   it('Confirm Delete button call', fakeAsync(() => {
     const env = new TestEnvironment();
     env.clickElement(env.deleteButton);
@@ -60,9 +67,6 @@ class TestEnvironment {
   afterCloseCallback: jasmine.Spy;
 
   constructor() {
-    TestBed.configureTestingModule({
-      imports: [TestModule]
-    });
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     const config: MdcDialogConfig<SaDeleteUserDialogData> = {

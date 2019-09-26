@@ -6,12 +6,13 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
+import { configureTestSuite } from 'ng-bullet';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -23,7 +24,34 @@ import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
+const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedSFProjectService = mock(SFProjectService);
+const mockedNoticeService = mock(NoticeService);
+const mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
+const mockedUserService = mock(UserService);
+
 describe('TranslateOverviewComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      declarations: [TranslateOverviewComponent],
+      imports: [RouterTestingModule, UICommonModule],
+      providers: [
+        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
+        { provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
+        { provide: UserService, useFactory: () => instance(mockedUserService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedActivatedRoute);
+    reset(mockedSFProjectService);
+    reset(mockedNoticeService);
+    reset(mockedRemoteTranslationEngine);
+    reset(mockedUserService);
+  });
+
   describe('Progress Card', () => {
     it('should list all books in project', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -68,7 +96,7 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress.open).toBe(true);
       expect(env.component.isTraining).toBe(true);
@@ -85,7 +113,7 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress.open).toBe(true);
       expect(env.component.isTraining).toBe(true);
@@ -103,7 +131,7 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.clickRetrainButton();
       expect(env.trainingProgress.open).toBe(true);
       expect(env.trainingProgress.determinate).toBe(false);
@@ -115,12 +143,6 @@ describe('TranslateOverviewComponent', () => {
 });
 
 class TestEnvironment {
-  readonly mockedActivatedRoute = mock(ActivatedRoute);
-  readonly mockedSFProjectService = mock(SFProjectService);
-  readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
-  readonly mockedUserService = mock(UserService);
-
   readonly component: TranslateOverviewComponent;
   readonly fixture: ComponentFixture<TranslateOverviewComponent>;
 
@@ -129,29 +151,19 @@ class TestEnvironment {
 
   constructor() {
     const params = { ['projectId']: 'project01' } as Params;
-    when(this.mockedActivatedRoute.params).thenReturn(of(params));
-    when(this.mockedSFProjectService.createTranslationEngine('project01')).thenReturn(
-      instance(this.mockedRemoteTranslationEngine)
+    when(mockedActivatedRoute.params).thenReturn(of(params));
+    when(mockedSFProjectService.createTranslationEngine('project01')).thenReturn(
+      instance(mockedRemoteTranslationEngine)
     );
-    when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
-    when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
-    when(this.mockedSFProjectService.getText(anything())).thenCall(id =>
+    when(mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
+    when(mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
+    when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
-    when(this.mockedSFProjectService.get('project01')).thenCall(() =>
+    when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
     this.setCurrentUser();
-    TestBed.configureTestingModule({
-      declarations: [TranslateOverviewComponent],
-      imports: [RouterTestingModule, UICommonModule],
-      providers: [
-        { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
-      ]
-    });
 
     this.fixture = TestBed.createComponent(TranslateOverviewComponent);
     this.component = this.fixture.componentInstance;
@@ -192,7 +204,7 @@ class TestEnvironment {
   }
 
   setCurrentUser(userId: string = 'user01'): void {
-    when(this.mockedUserService.currentUserId).thenReturn(userId);
+    when(mockedUserService.currentUserId).thenReturn(userId);
   }
 
   wait(): void {

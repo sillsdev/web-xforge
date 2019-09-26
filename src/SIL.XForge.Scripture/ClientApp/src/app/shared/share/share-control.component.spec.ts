@@ -4,7 +4,8 @@ import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
-import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
+import { configureTestSuite } from 'ng-bullet';
+import { anything, capture, instance, mock, reset, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -13,7 +14,26 @@ import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from './share-control.component';
 
+const mockedProjectService = mock(SFProjectService);
+const mockedNoticeService = mock(NoticeService);
+
 describe('ShareControlComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      declarations: [TestHostComponent],
+      imports: [TestModule],
+      providers: [
+        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedProjectService);
+    reset(mockedNoticeService);
+  });
+
   it('shows Send button when link sharing enabled', () => {
     const env = new TestEnvironment(true);
     expect(env.sendButton).not.toBeNull();
@@ -55,9 +75,9 @@ describe('ShareControlComponent', () => {
     env.setTextFieldValue(env.emailTextField, 'unkno');
     env.setTextFieldValue(env.emailTextField, 'unknown-addres');
     env.setTextFieldValue(env.emailTextField, 'unknown-address@exa');
-    verify(env.mockedProjectService.onlineIsAlreadyInvited(anything(), anything())).never();
+    verify(mockedProjectService.onlineIsAlreadyInvited(anything(), anything())).never();
     env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
-    verify(env.mockedProjectService.onlineIsAlreadyInvited(anything(), anything())).once();
+    verify(mockedProjectService.onlineIsAlreadyInvited(anything(), anything())).once();
     expect().nothing();
   }));
 
@@ -65,19 +85,19 @@ describe('ShareControlComponent', () => {
     const env = new TestEnvironment();
     env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
     env.click(env.sendButton);
-    verify(env.mockedNoticeService.show(anything())).once();
-    verify(env.mockedProjectService.onlineInvite(anything(), anything())).once();
-    expect(capture(env.mockedNoticeService.show).last()[0]).toContain('email has been sent');
+    verify(mockedNoticeService.show(anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).once();
+    expect(capture(mockedNoticeService.show).last()[0]).toContain('email has been sent');
   }));
 
   it('Already-member message shown if invitee is already project member', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setTextFieldValue(env.emailTextField, 'already-project-member@example.com');
     env.click(env.sendButton);
-    verify(env.mockedNoticeService.show(anything())).once();
-    verify(env.mockedProjectService.onlineInvite(anything(), anything())).once();
+    verify(mockedNoticeService.show(anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).once();
 
-    expect(capture(env.mockedNoticeService.show).last()[0]).toContain('is already');
+    expect(capture(mockedNoticeService.show).last()[0]).toContain('is already');
   }));
 
   it('shareLink is for projectId', fakeAsync(() => {
@@ -91,30 +111,30 @@ describe('ShareControlComponent', () => {
 
     // Cannot invite blank or invalid email address
     env.click(env.sendButton);
-    verify(env.mockedProjectService.onlineInvite(anything(), anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).never();
     env.setTextFieldValue(env.emailTextField, '');
     env.click(env.sendButton);
-    verify(env.mockedProjectService.onlineInvite(anything(), anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).never();
     env.setTextFieldValue(env.emailTextField, 'unknown-addre');
     env.click(env.sendButton);
-    verify(env.mockedProjectService.onlineInvite(anything(), anything())).never();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).never();
 
     // Invite
     env.setTextFieldValue(env.emailTextField, 'unknown-address@example.com');
     expect(env.getTextFieldValue(env.emailTextField)).toEqual('unknown-address@example.com', 'test setup');
     env.click(env.sendButton);
-    verify(env.mockedProjectService.onlineInvite(anything(), anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).once();
 
     // Can not immediately request an invite to a blank email address
     expect(env.getTextFieldValue(env.emailTextField)).toEqual('', 'test setup');
     env.click(env.sendButton);
     // Not called a second time
-    verify(env.mockedProjectService.onlineInvite(anything(), anything())).once();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).once();
 
     // Invite
     env.setTextFieldValue(env.emailTextField, 'unknown-address2@example.com');
     env.click(env.sendButton);
-    verify(env.mockedProjectService.onlineInvite(anything(), anything())).twice();
+    verify(mockedProjectService.onlineInvite(anything(), anything())).twice();
   }));
 
   it('Output event fires after invitation is sent', fakeAsync(() => {
@@ -158,20 +178,9 @@ describe('ShareControlComponent', () => {
     readonly hostComponent: TestHostComponent;
     readonly component: ShareControlComponent;
 
-    readonly mockedProjectService = mock(SFProjectService);
-    readonly mockedNoticeService = mock(NoticeService);
-
     private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
     constructor(isLinkSharingEnabled?: boolean, projectId?: string) {
-      TestBed.configureTestingModule({
-        declarations: [TestHostComponent],
-        imports: [TestModule],
-        providers: [
-          { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) },
-          { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
-        ]
-      });
       this.fixture = TestBed.createComponent(TestHostComponent);
       this.fixture.detectChanges();
       this.component = this.fixture.componentInstance.component;
@@ -185,17 +194,15 @@ describe('ShareControlComponent', () => {
         id: 'project01',
         data: {}
       });
-      when(this.mockedProjectService.get('project01')).thenCall(() =>
+      when(mockedProjectService.get('project01')).thenCall(() =>
         this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
       );
-      when(this.mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com')).thenResolve(null);
-      when(this.mockedProjectService.onlineInvite(anything(), 'already-project-member@example.com')).thenResolve(
+      when(mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com')).thenResolve(null);
+      when(mockedProjectService.onlineInvite(anything(), 'already-project-member@example.com')).thenResolve(
         this.component.alreadyProjectMemberResponse
       );
-      when(this.mockedProjectService.onlineIsAlreadyInvited(anything(), 'unknown-address@example.com')).thenResolve(
-        false
-      );
-      when(this.mockedProjectService.onlineIsAlreadyInvited(anything(), 'already@example.com')).thenResolve(true);
+      when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'unknown-address@example.com')).thenResolve(false);
+      when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'already@example.com')).thenResolve(true);
 
       this.fixture.detectChanges();
     }

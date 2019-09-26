@@ -1,7 +1,8 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { instance, mock, when } from 'ts-mockito';
+import { configureTestSuite } from 'ng-bullet';
+import { instance, mock, reset, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -10,10 +11,21 @@ import { SF_REALTIME_DOC_TYPES } from '../../../core/models/sf-realtime-doc-type
 import { AudioTimePipe, CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from './checking-audio-recorder.component';
 
+const mockedUserService = mock(UserService);
+
 describe('CheckingAudioRecorderComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioTimePipe],
+      imports: [UICommonModule],
+      providers: [{ provide: UserService, useFactory: () => instance(mockedUserService) }]
+    });
+  });
+
   let env: TestEnvironment;
 
   beforeEach(() => {
+    reset(mockedUserService);
     env = new TestEnvironment();
   });
 
@@ -42,16 +54,10 @@ describe('CheckingAudioRecorderComponent', () => {
 class TestEnvironment {
   readonly component: CheckingAudioRecorderComponent;
   readonly fixture: ComponentFixture<CheckingAudioRecorderComponent>;
-  readonly mockedUserService = mock(UserService);
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
-    TestBed.configureTestingModule({
-      declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioTimePipe],
-      imports: [UICommonModule],
-      providers: [{ provide: UserService, useFactory: () => instance(this.mockedUserService) }]
-    });
     this.fixture = TestBed.createComponent(CheckingAudioRecorderComponent);
     this.component = this.fixture.componentInstance;
 
@@ -59,7 +65,7 @@ class TestEnvironment {
       id: 'user01',
       data: { name: 'user' }
     });
-    when(this.mockedUserService.getCurrentUser()).thenCall(() =>
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
     this.fixture.detectChanges();

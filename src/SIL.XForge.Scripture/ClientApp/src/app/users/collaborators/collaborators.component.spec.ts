@@ -3,12 +3,13 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import { configureTestSuite } from 'ng-bullet';
 import { UserProfile } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { LocationService } from 'xforge-common/location.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
@@ -24,7 +25,35 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from '../../shared/share/share-control.component';
 import { CollaboratorsComponent } from './collaborators.component';
 
+const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedLocationService = mock(LocationService);
+const mockedNoticeService = mock(NoticeService);
+const mockedProjectService = mock(SFProjectService);
+const mockedUserService = mock(UserService);
+
 describe('CollaboratorsComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      declarations: [CollaboratorsComponent, ShareControlComponent],
+      imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
+      providers: [
+        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
+        { provide: LocationService, useFactory: () => instance(mockedLocationService) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
+        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) },
+        { provide: UserService, useFactory: () => instance(mockedUserService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedActivatedRoute);
+    reset(mockedLocationService);
+    reset(mockedNoticeService);
+    reset(mockedProjectService);
+    reset(mockedUserService);
+  });
+
   it('should not display no-users label while loading', fakeAsync(() => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
@@ -72,7 +101,7 @@ describe('CollaboratorsComponent', () => {
 
   it('displays invited users', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
       'alice@a.aa',
       'bob@b.bb',
       'charles@c.cc'
@@ -101,7 +130,7 @@ describe('CollaboratorsComponent', () => {
 
   it('should refresh user list after inviting a new user', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
     env.setupProjectData();
     env.fixture.detectChanges();
     tick();
@@ -113,7 +142,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
 
     // Simulate invitation event
-    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
       'alice@a.aa',
       'new-invitee@example.com'
     ]);
@@ -128,8 +157,8 @@ describe('CollaboratorsComponent', () => {
 
   it('should uninvite user from project', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedProjectService.onlineUninviteUser(anything(), anything())).thenResolve();
-    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
+    when(mockedProjectService.onlineUninviteUser(anything(), anything())).thenResolve();
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
     env.setupProjectData();
     env.fixture.detectChanges();
     tick();
@@ -149,9 +178,9 @@ describe('CollaboratorsComponent', () => {
     expect(env.cancelInviteButtonOnRow(inviteeRow)).toBeTruthy();
 
     // Uninvite Alice
-    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([]);
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([]);
     env.clickElement(env.cancelInviteButtonOnRow(inviteeRow));
-    verify(env.mockedProjectService.onlineUninviteUser(env.project01Id, 'alice@a.aa')).once();
+    verify(mockedProjectService.onlineUninviteUser(env.project01Id, 'alice@a.aa')).once();
 
     // Alice is not shown as in invitee
     numInvitees = 0;
@@ -168,7 +197,7 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
 
     env.clickElement(env.removeUserButtonOnRow(1));
-    verify(env.mockedProjectService.onlineRemoveUser(anything(), anything())).once();
+    verify(mockedProjectService.onlineRemoveUser(anything(), anything())).once();
 
     expect().nothing();
   }));
@@ -176,7 +205,7 @@ describe('CollaboratorsComponent', () => {
   it('should filter users', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
-    when(env.mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['bob@example.com']);
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['bob@example.com']);
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
@@ -285,30 +314,24 @@ class TestEnvironment {
   readonly component: CollaboratorsComponent;
   readonly project01Id: string = 'project01';
 
-  readonly mockedActivatedRoute = mock(ActivatedRoute);
-  readonly mockedLocationService = mock(LocationService);
-  readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedProjectService = mock(SFProjectService);
-  readonly mockedUserService = mock(UserService);
-
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
-    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: this.project01Id }));
+    when(mockedActivatedRoute.params).thenReturn(of({ projectId: this.project01Id }));
     const roles = new Map<string, ProjectRoleInfo>();
     for (const role of SF_PROJECT_ROLES) {
       roles.set(role.role, role);
     }
     roles.set(NONE_ROLE.role, NONE_ROLE);
-    when(this.mockedProjectService.roles).thenReturn(roles);
-    when(this.mockedProjectService.onlineInvite(this.project01Id, anything())).thenResolve();
-    when(this.mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
-    when(this.mockedNoticeService.show(anything())).thenResolve();
-    when(this.mockedLocationService.origin).thenReturn('https://scriptureforge.org');
-    when(this.mockedUserService.getProfile(anything())).thenCall(userId =>
+    when(mockedProjectService.roles).thenReturn(roles);
+    when(mockedProjectService.onlineInvite(this.project01Id, anything())).thenResolve();
+    when(mockedProjectService.onlineInvitedUsers(this.project01Id)).thenResolve([]);
+    when(mockedNoticeService.show(anything())).thenResolve();
+    when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
+    when(mockedUserService.getProfile(anything())).thenCall(userId =>
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, userId)
     );
-    when(this.mockedProjectService.get(anything())).thenCall(projectId =>
+    when(mockedProjectService.get(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
     );
     this.realtimeService.addSnapshots<UserProfile>(UserProfileDoc.COLLECTION, [
@@ -325,17 +348,6 @@ class TestEnvironment {
         data: { displayName: 'User 03', avatarUrl: '' }
       }
     ]);
-    TestBed.configureTestingModule({
-      declarations: [CollaboratorsComponent, ShareControlComponent],
-      imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
-      providers: [
-        { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
-        { provide: LocationService, useFactory: () => instance(this.mockedLocationService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
-      ]
-    });
 
     this.fixture = TestBed.createComponent(CollaboratorsComponent);
     this.component = this.fixture.componentInstance;

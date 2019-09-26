@@ -3,10 +3,11 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { configureTestSuite } from 'ng-bullet';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -16,7 +17,32 @@ import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SyncComponent } from './sync.component';
 
+const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedNoticeService = mock(NoticeService);
+const mockedParatextService = mock(ParatextService);
+const mockedProjectService = mock(SFProjectService);
+
 describe('SyncComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      declarations: [SyncComponent],
+      imports: [CommonModule, UICommonModule],
+      providers: [
+        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
+        { provide: ParatextService, useFactory: () => instance(mockedParatextService) },
+        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedActivatedRoute);
+    reset(mockedNoticeService);
+    reset(mockedParatextService);
+    reset(mockedProjectService);
+  });
+
   it('should display log in to paratext', fakeAsync(() => {
     const env = new TestEnvironment();
     expect(env.title.textContent).toContain('Synchronize Sync Test Project with Paratext');
@@ -28,7 +54,7 @@ describe('SyncComponent', () => {
   it('should redirect the user to log in to paratext', fakeAsync(() => {
     const env = new TestEnvironment();
     env.clickElement(env.logInButton);
-    verify(env.mockedParatextService.linkParatext(anything())).once();
+    verify(mockedParatextService.linkParatext(anything())).once();
     expect().nothing();
   }));
 
@@ -42,9 +68,9 @@ describe('SyncComponent', () => {
 
   it('should sync project when the button is clicked', fakeAsync(() => {
     const env = new TestEnvironment(true);
-    verify(env.mockedProjectService.get('testproject01')).once();
+    verify(mockedProjectService.get('testproject01')).once();
     env.clickElement(env.syncButton);
-    verify(env.mockedProjectService.onlineSync('testproject01')).once();
+    verify(mockedProjectService.onlineSync('testproject01')).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).toBeDefined();
     expect(env.component.isProgressDeterminate).toBe(false);
@@ -60,14 +86,14 @@ describe('SyncComponent', () => {
     // Simulate sync completed
     env.emitSyncComplete(true);
     expect(env.component.syncActive).toBe(false);
-    verify(env.mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
+    verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
   }));
 
   it('should report error if sync has a problem', fakeAsync(() => {
     const env = new TestEnvironment(true);
-    verify(env.mockedProjectService.get('testproject01')).once();
+    verify(mockedProjectService.get('testproject01')).once();
     env.clickElement(env.syncButton);
-    verify(env.mockedProjectService.onlineSync('testproject01')).once();
+    verify(mockedProjectService.onlineSync('testproject01')).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).toBeDefined();
     // Simulate sync in progress
@@ -76,7 +102,7 @@ describe('SyncComponent', () => {
     env.emitSyncComplete(false);
     expect(env.component.syncActive).toBe(false);
     verify(
-      env.mockedNoticeService.show(
+      mockedNoticeService.show(
         'Something went wrong while synchronizing the Sync Test Project with Paratext. Please try again.'
       )
     ).once();
@@ -93,22 +119,17 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<SyncComponent>;
   readonly component: SyncComponent;
 
-  readonly mockedActivatedRoute = mock(ActivatedRoute);
-  readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedParatextService = mock(ParatextService);
-  readonly mockedProjectService = mock(SFProjectService);
-
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private isLoading: boolean = false;
 
   constructor(isParatextAccountConnected: boolean = false, isInProgress: boolean = false) {
-    when(this.mockedActivatedRoute.params).thenReturn(of({ projectId: 'testproject01' }));
+    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'testproject01' }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
-    when(this.mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
-    when(this.mockedProjectService.onlineSync('testproject01')).thenResolve();
-    when(this.mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
-    when(this.mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
-    when(this.mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);
+    when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
+    when(mockedProjectService.onlineSync('testproject01')).thenResolve();
+    when(mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
+    when(mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
+    when(mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);
 
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
@@ -140,20 +161,9 @@ class TestEnvironment {
         userRoles: {}
       }
     });
-    when(this.mockedProjectService.get('testproject01')).thenCall(() =>
+    when(mockedProjectService.get('testproject01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'testproject01')
     );
-
-    TestBed.configureTestingModule({
-      declarations: [SyncComponent],
-      imports: [CommonModule, UICommonModule],
-      providers: [
-        { provide: ActivatedRoute, useFactory: () => instance(this.mockedActivatedRoute) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: ParatextService, useFactory: () => instance(this.mockedParatextService) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
-      ]
-    });
 
     this.fixture = TestBed.createComponent(SyncComponent);
     this.component = this.fixture.componentInstance;

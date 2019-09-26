@@ -6,11 +6,12 @@ import { AbstractControl } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
+import { configureTestSuite } from 'ng-bullet';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { defer, of } from 'rxjs';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -23,10 +24,38 @@ import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ConnectProjectComponent } from './connect-project.component';
 
+const mockedParatextService = mock(ParatextService);
+const mockedRouter = mock(Router);
+const mockedSFProjectService = mock(SFProjectService);
+const mockedUserService = mock(UserService);
+const mockedNoticeService = mock(NoticeService);
+
 describe('ConnectProjectComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule, NoopAnimationsModule, UICommonModule],
+      declarations: [ConnectProjectComponent],
+      providers: [
+        { provide: ParatextService, useFactory: () => instance(mockedParatextService) },
+        { provide: Router, useFactory: () => instance(mockedRouter) },
+        { provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) },
+        { provide: UserService, useFactory: () => instance(mockedUserService) },
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedParatextService);
+    reset(mockedRouter);
+    reset(mockedSFProjectService);
+    reset(mockedUserService);
+    reset(mockedNoticeService);
+  });
+
   it('should display login button when PT projects is null', () => {
     const env = new TestEnvironment();
-    when(env.mockedParatextService.getProjects()).thenReturn(of(null));
+    when(mockedParatextService.getProjects()).thenReturn(of(null));
     env.fixture.detectChanges();
 
     expect(env.component.state).toEqual('login');
@@ -35,7 +64,7 @@ describe('ConnectProjectComponent', () => {
 
   it('should display form when PT projects is empty', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedParatextService.getProjects()).thenReturn(of([]));
+    when(mockedParatextService.getProjects()).thenReturn(of([]));
     env.fixture.detectChanges();
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
@@ -47,24 +76,24 @@ describe('ConnectProjectComponent', () => {
 
   it('should do nothing when form is invalid', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedParatextService.getProjects()).thenReturn(of([]));
+    when(mockedParatextService.getProjects()).thenReturn(of([]));
     env.fixture.detectChanges();
 
     expect(env.submitButton.nativeElement.disabled).toBe(true);
     env.clickElement(env.submitButton);
 
-    verify(env.mockedSFProjectService.onlineCreate(anything())).never();
-    verify(env.mockedSFProjectService.onlineAddCurrentUser(anything(), anything())).never();
-    verify(env.mockedRouter.navigate(anything())).never();
+    verify(mockedSFProjectService.onlineCreate(anything())).never();
+    verify(mockedSFProjectService.onlineAddCurrentUser(anything(), anything())).never();
+    verify(mockedRouter.navigate(anything())).never();
   }));
 
   it('should display loading when getting PT projects', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedParatextService.getProjects()).thenReturn(defer(() => Promise.resolve([])));
+    when(mockedParatextService.getProjects()).thenReturn(defer(() => Promise.resolve([])));
     env.fixture.detectChanges();
 
     expect(env.component.state).toEqual('loading');
-    verify(env.mockedNoticeService.loadingStarted()).once();
+    verify(mockedNoticeService.loadingStarted()).once();
     expect(env.projectSelect).toBeNull();
     expect(env.noProjectsMessage).toBeNull();
     expect(env.submitButton.nativeElement.disabled).toBe(true);
@@ -74,7 +103,7 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
-    verify(env.mockedNoticeService.loadingFinished()).once();
+    verify(mockedNoticeService.loadingFinished()).once();
   }));
 
   it('should join when existing project is selected', fakeAsync(() => {
@@ -94,8 +123,8 @@ describe('ConnectProjectComponent', () => {
     expect(env.settingsCard).toBeNull();
     env.clickElement(env.submitButton);
 
-    verify(env.mockedSFProjectService.onlineAddCurrentUser('project03')).once();
-    verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project03']))).once();
+    verify(mockedSFProjectService.onlineAddCurrentUser('project03')).once();
+    verify(mockedRouter.navigate(deepEqual(['/projects', 'project03']))).once();
   }));
 
   it('should display non-connectable projects disabled', fakeAsync(() => {
@@ -113,7 +142,7 @@ describe('ConnectProjectComponent', () => {
 
   it('should not display non-administrator message', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(env.mockedParatextService.getProjects()).thenReturn(
+    when(mockedParatextService.getProjects()).thenReturn(
       of<ParatextProject[]>([
         {
           paratextId: 'pt01',
@@ -175,8 +204,8 @@ describe('ConnectProjectComponent', () => {
       translationSuggestionsEnabled: false,
       sourceParatextId: undefined
     };
-    verify(env.mockedSFProjectService.onlineCreate(deepEqual(settings))).once();
-    verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
+    verify(mockedSFProjectService.onlineCreate(deepEqual(settings))).once();
+    verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
   it('should create when non-existent project is selected', fakeAsync(() => {
@@ -214,8 +243,8 @@ describe('ConnectProjectComponent', () => {
       translationSuggestionsEnabled: true,
       sourceParatextId: 'pt04'
     };
-    verify(env.mockedSFProjectService.onlineCreate(deepEqual(settings))).once();
-    verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
+    verify(mockedSFProjectService.onlineCreate(deepEqual(settings))).once();
+    verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 
   it('should create when no setting is selected', fakeAsync(() => {
@@ -246,8 +275,8 @@ describe('ConnectProjectComponent', () => {
       translationSuggestionsEnabled: false,
       sourceParatextId: undefined
     };
-    verify(env.mockedSFProjectService.onlineCreate(deepEqual(project))).once();
-    verify(env.mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
+    verify(mockedSFProjectService.onlineCreate(deepEqual(project))).once();
+    verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
   }));
 });
 
@@ -255,16 +284,10 @@ class TestEnvironment {
   readonly component: ConnectProjectComponent;
   readonly fixture: ComponentFixture<ConnectProjectComponent>;
 
-  readonly mockedParatextService = mock(ParatextService);
-  readonly mockedRouter = mock(Router);
-  readonly mockedSFProjectService = mock(SFProjectService);
-  readonly mockedUserService = mock(UserService);
-  readonly mockedNoticeService = mock(NoticeService);
-
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor() {
-    when(this.mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
+    when(mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
       const newProject: SFProject = {
         name: 'project 01',
         shortName: 'P01',
@@ -297,23 +320,12 @@ class TestEnvironment {
       this.realtimeService.create(SFProjectDoc.COLLECTION, 'project01', newProject);
       return Promise.resolve('project01');
     });
-    when(this.mockedSFProjectService.get('project01')).thenCall(() =>
+    when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
-    when(this.mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
-    when(this.mockedUserService.currentUserId).thenReturn('user01');
+    when(mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
+    when(mockedUserService.currentUserId).thenReturn('user01');
 
-    TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule, NoopAnimationsModule, UICommonModule],
-      declarations: [ConnectProjectComponent],
-      providers: [
-        { provide: ParatextService, useFactory: () => instance(this.mockedParatextService) },
-        { provide: Router, useFactory: () => instance(this.mockedRouter) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedSFProjectService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) }
-      ]
-    });
     this.fixture = TestBed.createComponent(ConnectProjectComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -421,7 +433,7 @@ class TestEnvironment {
   }
 
   setupDefaultProjectData(): void {
-    when(this.mockedParatextService.getProjects()).thenReturn(
+    when(mockedParatextService.getProjects()).thenReturn(
       of<ParatextProject[]>([
         {
           paratextId: 'pt01',

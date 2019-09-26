@@ -4,10 +4,11 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import merge from 'lodash/merge';
+import { configureTestSuite } from 'ng-bullet';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { getObjPathStr, objProxy } from 'xforge-common/utils';
 import XRegExp from 'xregexp';
@@ -21,7 +22,29 @@ import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaProjectsComponent } from './sa-projects.component';
 
+const mockedNoticeService = mock(NoticeService);
+const mockedProjectService = mock(ProjectService);
+const mockedUserService = mock(UserService);
+
 describe('SaProjectsComponent', () => {
+  configureTestSuite(() => {
+    TestBed.configureTestingModule({
+      imports: [NoopAnimationsModule, RouterTestingModule, UICommonModule],
+      declarations: [SaProjectsComponent],
+      providers: [
+        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
+        { provide: ProjectService, useFactory: () => instance(mockedProjectService) },
+        { provide: UserService, useFactory: () => instance(mockedUserService) }
+      ]
+    });
+  });
+
+  beforeEach(() => {
+    reset(mockedNoticeService);
+    reset(mockedProjectService);
+    reset(mockedUserService);
+  });
+
   it('should display projects', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
@@ -61,7 +84,7 @@ describe('SaProjectsComponent', () => {
     env.changeSelectValue(roleSelect, 1);
     expect(env.selectValue(roleSelect)).toEqual('User');
 
-    verify(env.mockedProjectService.onlineUpdateCurrentUserRole('project01', 'user')).once();
+    verify(mockedProjectService.onlineUpdateCurrentUserRole('project01', 'user')).once();
     expect(env.component.rows[0].projectRole.role).toEqual('user');
   }));
 
@@ -78,7 +101,7 @@ describe('SaProjectsComponent', () => {
     env.changeSelectValue(roleSelect, 0);
     expect(env.selectValue(roleSelect)).toEqual('Administrator');
 
-    verify(env.mockedProjectService.onlineAddCurrentUser('project02', 'admin')).once();
+    verify(mockedProjectService.onlineAddCurrentUser('project02', 'admin')).once();
   }));
 
   it('should remove user from project', fakeAsync(() => {
@@ -94,7 +117,7 @@ describe('SaProjectsComponent', () => {
     env.changeSelectValue(roleSelect, 2);
     expect(env.selectValue(roleSelect)).toEqual('None');
 
-    verify(env.mockedProjectService.onlineRemoveUser('project01', 'user01')).once();
+    verify(mockedProjectService.onlineRemoveUser('project01', 'user01')).once();
   }));
 
   it('should filter projects', fakeAsync(() => {
@@ -132,25 +155,21 @@ class TestEnvironment {
   readonly component: SaProjectsComponent;
   readonly fixture: ComponentFixture<SaProjectsComponent>;
 
-  readonly mockedNoticeService = mock(NoticeService);
-  readonly mockedProjectService = mock(ProjectService);
-  readonly mockedUserService = mock(UserService);
-
   private readonly realtimeService = new TestRealtimeService(new RealtimeDocTypes([TestProjectDoc]));
 
   constructor() {
-    when(this.mockedUserService.currentUserId).thenReturn('user01');
-    when(this.mockedProjectService.roles).thenReturn(
+    when(mockedUserService.currentUserId).thenReturn('user01');
+    when(mockedProjectService.roles).thenReturn(
       new Map<string, ProjectRoleInfo>([
         ['admin', { role: 'admin', displayName: 'Administrator' }],
         ['user', { role: 'user', displayName: 'User' }],
         [NONE_ROLE.role, NONE_ROLE]
       ])
     );
-    when(this.mockedProjectService.onlineAddCurrentUser(anything(), anything())).thenResolve();
-    when(this.mockedProjectService.onlineRemoveUser(anything(), 'user01')).thenResolve();
-    when(this.mockedProjectService.onlineUpdateCurrentUserRole(anything(), anything())).thenResolve();
-    when(this.mockedProjectService.onlineQuery(anything(), anything())).thenCall(
+    when(mockedProjectService.onlineAddCurrentUser(anything(), anything())).thenResolve();
+    when(mockedProjectService.onlineRemoveUser(anything(), 'user01')).thenResolve();
+    when(mockedProjectService.onlineUpdateCurrentUserRole(anything(), anything())).thenResolve();
+    when(mockedProjectService.onlineQuery(anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>) =>
         combineLatest(term$, parameters$).pipe(
           switchMap(([term, queryParameters]) => {
@@ -167,15 +186,6 @@ class TestEnvironment {
         )
     );
 
-    TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, RouterTestingModule, UICommonModule],
-      declarations: [SaProjectsComponent],
-      providers: [
-        { provide: NoticeService, useFactory: () => instance(this.mockedNoticeService) },
-        { provide: ProjectService, useFactory: () => instance(this.mockedProjectService) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
-      ]
-    });
     this.fixture = TestBed.createComponent(SaProjectsComponent);
     this.component = this.fixture.componentInstance;
   }

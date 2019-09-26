@@ -98,6 +98,7 @@
     "karma-jasmine-html-reporter": "^1.4.2",
     "karma-teamcity-reporter": "^1.1.0",
     "lint-staged": "^8.1.6",
+    "ng-bullet": "^1.0.3",
     "node-sass": "^4.12.0",
     "npm": "6.10.1",
     "prettier": "1.15.3",
