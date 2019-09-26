@@ -4,13 +4,10 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import merge from 'lodash/merge';
-import { configureTestSuite } from 'ng-bullet';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
-import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { getObjPathStr, objProxy } from 'xforge-common/utils';
+import { anything, mock, verify, when } from 'ts-mockito';
 import XRegExp from 'xregexp';
 import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
@@ -18,8 +15,11 @@ import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { Filters, QueryParameters } from '../query-parameters';
 import { RealtimeDocTypes } from '../realtime-doc-types';
+import { TestRealtimeService } from '../test-realtime.service';
+import { configureTestingModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
+import { getObjPathStr, objProxy } from '../utils';
 import { SaProjectsComponent } from './sa-projects.component';
 
 const mockedNoticeService = mock(NoticeService);
@@ -27,23 +27,15 @@ const mockedProjectService = mock(ProjectService);
 const mockedUserService = mock(UserService);
 
 describe('SaProjectsComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, RouterTestingModule, UICommonModule],
-      declarations: [SaProjectsComponent],
-      providers: [
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
-        { provide: ProjectService, useFactory: () => instance(mockedProjectService) },
-        { provide: UserService, useFactory: () => instance(mockedUserService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedNoticeService);
-    reset(mockedProjectService);
-    reset(mockedUserService);
-  });
+  configureTestingModule(() => ({
+    imports: [NoopAnimationsModule, RouterTestingModule, UICommonModule],
+    declarations: [SaProjectsComponent],
+    providers: [
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: ProjectService, useMock: mockedProjectService },
+      { provide: UserService, useMock: mockedUserService }
+    ]
+  }));
 
   it('should display projects', fakeAsync(() => {
     const env = new TestEnvironment();

@@ -1,11 +1,11 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { LatinWordTokenizer } from '@sillsdev/machine';
-import { configureTestSuite } from 'ng-bullet';
 import { QuillModule } from 'ngx-quill';
 import * as RichText from 'rich-text';
-import { anything, deepEqual, instance, mock, objectContaining, reset, resetCalls, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { TranslateMetrics } from '../../core/models/translate-metrics';
@@ -21,17 +21,11 @@ import {
 const mockedSFProjectService = mock(SFProjectService);
 
 describe('TranslateMetricsSession', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [TextComponent],
-      imports: [QuillModule.forRoot()],
-      providers: [{ provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) }]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedSFProjectService);
-  });
+  configureTestingModule(() => ({
+    declarations: [TextComponent],
+    imports: [QuillModule.forRoot()],
+    providers: [{ provide: SFProjectService, useMock: mockedSFProjectService }]
+  }));
 
   describe('edit', () => {
     it('start with edit keystroke', fakeAsync(() => {

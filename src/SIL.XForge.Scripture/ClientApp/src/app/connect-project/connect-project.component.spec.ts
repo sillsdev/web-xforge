@@ -6,14 +6,14 @@ import { AbstractControl } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
-import { configureTestSuite } from 'ng-bullet';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { defer, of } from 'rxjs';
-import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -31,27 +31,17 @@ const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 
 describe('ConnectProjectComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule, NoopAnimationsModule, UICommonModule],
-      declarations: [ConnectProjectComponent],
-      providers: [
-        { provide: ParatextService, useFactory: () => instance(mockedParatextService) },
-        { provide: Router, useFactory: () => instance(mockedRouter) },
-        { provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) },
-        { provide: UserService, useFactory: () => instance(mockedUserService) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedParatextService);
-    reset(mockedRouter);
-    reset(mockedSFProjectService);
-    reset(mockedUserService);
-    reset(mockedNoticeService);
-  });
+  configureTestingModule(() => ({
+    imports: [HttpClientTestingModule, NoopAnimationsModule, UICommonModule],
+    declarations: [ConnectProjectComponent],
+    providers: [
+      { provide: ParatextService, useMock: mockedParatextService },
+      { provide: Router, useMock: mockedRouter },
+      { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: UserService, useMock: mockedUserService },
+      { provide: NoticeService, useMock: mockedNoticeService }
+    ]
+  }));
 
   it('should display login button when PT projects is null', () => {
     const env = new TestEnvironment();

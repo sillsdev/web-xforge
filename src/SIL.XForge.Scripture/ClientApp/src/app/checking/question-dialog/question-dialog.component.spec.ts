@@ -3,18 +3,18 @@ import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { configureTestSuite } from 'ng-bullet';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, reset, spy, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
@@ -29,31 +29,20 @@ import { AudioAttachment } from '../checking/checking-audio-recorder/checking-au
 import { QuestionDialogComponent, QuestionDialogData } from './question-dialog.component';
 
 const mockedAuthService = mock(AuthService);
-const mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 
 describe('QuestionDialogComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
-      providers: [
-        { provide: AuthService, useFactory: () => instance(mockedAuthService) },
-        { provide: UserService, useFactory: () => instance(mockedUserService) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
-        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedAuthService);
-    reset(mockedScriptureChooserMdcDialogRef);
-    reset(mockedNoticeService);
-    reset(mockedProjectService);
-    reset(mockedUserService);
-  });
+  configureTestingModule(() => ({
+    imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
+    providers: [
+      { provide: AuthService, useMock: mockedAuthService },
+      { provide: UserService, useMock: mockedUserService },
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: SFProjectService, useMock: mockedProjectService }
+    ]
+  }));
 
   it('should allow user to cancel', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -424,6 +413,8 @@ class TestEnvironment {
   readonly afterCloseCallback: jasmine.Spy;
   readonly dialogSpy: MdcDialog;
 
+  readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
+
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   constructor(question?: Question) {
@@ -453,9 +444,9 @@ class TestEnvironment {
 
     // Set up MdcDialog mocking after it's already used above in creating the component.
     this.dialogSpy = spy(this.component.dialog);
-    when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(mockedScriptureChooserMdcDialogRef));
+    when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
-    when(mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
+    when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
     this.addTextDoc(40);
     this.addTextDoc(42);
     this.addEmptyTextDoc(43);

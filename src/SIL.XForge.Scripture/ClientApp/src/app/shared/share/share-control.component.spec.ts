@@ -4,10 +4,10 @@ import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
-import { configureTestSuite } from 'ng-bullet';
-import { anything, capture, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
@@ -18,21 +18,14 @@ const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 
 describe('ShareControlComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [TestHostComponent],
-      imports: [TestModule],
-      providers: [
-        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedProjectService);
-    reset(mockedNoticeService);
-  });
+  configureTestingModule(() => ({
+    declarations: [TestHostComponent],
+    imports: [TestModule],
+    providers: [
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: NoticeService, useMock: mockedNoticeService }
+    ]
+  }));
 
   it('shows Send button when link sharing enabled', () => {
     const env = new TestEnvironment(true);

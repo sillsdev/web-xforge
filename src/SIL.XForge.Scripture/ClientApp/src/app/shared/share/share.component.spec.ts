@@ -4,14 +4,14 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import { configureTestSuite } from 'ng-bullet';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
-import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
@@ -27,27 +27,17 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedLocationService = mock(LocationService);
 
 describe('ShareComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      imports: [DialogTestModule],
-      declarations: [ShareComponent],
-      providers: [
-        { provide: MdcDialogRef, useFactory: () => instance(mockedMdcDialogRef) },
-        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
-        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
-        { provide: LocationService, useFactory: () => instance(mockedLocationService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedMdcDialogRef);
-    reset(mockedProjectService);
-    reset(mockedNoticeService);
-    reset(mockedActivatedRoute);
-    reset(mockedLocationService);
-  });
+  configureTestingModule(() => ({
+    imports: [DialogTestModule],
+    declarations: [ShareComponent],
+    providers: [
+      { provide: MdcDialogRef, useMock: mockedMdcDialogRef },
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: LocationService, useMock: mockedLocationService }
+    ]
+  }));
 
   it('share button should be hidden when sharing is disabled', fakeAsync(() => {
     const env = new TestEnvironment();

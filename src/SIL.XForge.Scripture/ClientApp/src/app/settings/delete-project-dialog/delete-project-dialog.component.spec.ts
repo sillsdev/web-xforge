@@ -1,12 +1,17 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef, OverlayContainer } from '@angular-mdc/web';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
-
 import { AuthService } from 'xforge-common/auth.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
 
 describe('DeleteProjectDialogComponent', () => {
+  configureTestingModule(() => ({
+    imports: [DialogTestModule, UICommonModule],
+    providers: [AuthService]
+  }));
+
   let dialog: MdcDialog;
   let overlayContainer: OverlayContainer;
   let viewContainerFixture: ComponentFixture<ChildViewContainerComponent>;
@@ -83,13 +88,6 @@ describe('DeleteProjectDialogComponent', () => {
       tick();
     }
   }
-
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [DialogTestModule, UICommonModule],
-      providers: [AuthService]
-    });
-  });
 
   beforeEach(inject([MdcDialog, OverlayContainer], (d: MdcDialog, oc: OverlayContainer) => {
     dialog = d;

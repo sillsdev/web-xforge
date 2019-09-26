@@ -6,15 +6,15 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
-import { configureTestSuite } from 'ng-bullet';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
-import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -27,30 +27,19 @@ import { TranslateOverviewComponent } from './translate-overview.component';
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
-const mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
 const mockedUserService = mock(UserService);
 
 describe('TranslateOverviewComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [TranslateOverviewComponent],
-      imports: [RouterTestingModule, UICommonModule],
-      providers: [
-        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
-        { provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
-        { provide: UserService, useFactory: () => instance(mockedUserService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedActivatedRoute);
-    reset(mockedSFProjectService);
-    reset(mockedNoticeService);
-    reset(mockedRemoteTranslationEngine);
-    reset(mockedUserService);
-  });
+  configureTestingModule(() => ({
+    declarations: [TranslateOverviewComponent],
+    imports: [RouterTestingModule, UICommonModule],
+    providers: [
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: UserService, useMock: mockedUserService }
+    ]
+  }));
 
   describe('Progress Card', () => {
     it('should list all books in project', fakeAsync(() => {
@@ -96,7 +85,7 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress.open).toBe(true);
       expect(env.component.isTraining).toBe(true);
@@ -113,7 +102,7 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress.open).toBe(true);
       expect(env.component.isTraining).toBe(true);
@@ -131,7 +120,7 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.clickRetrainButton();
       expect(env.trainingProgress.open).toBe(true);
       expect(env.trainingProgress.determinate).toBe(false);
@@ -146,6 +135,8 @@ class TestEnvironment {
   readonly component: TranslateOverviewComponent;
   readonly fixture: ComponentFixture<TranslateOverviewComponent>;
 
+  readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
+
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private trainingProgress$ = new Subject<ProgressStatus>();
 
@@ -153,10 +144,10 @@ class TestEnvironment {
     const params = { ['projectId']: 'project01' } as Params;
     when(mockedActivatedRoute.params).thenReturn(of(params));
     when(mockedSFProjectService.createTranslationEngine('project01')).thenReturn(
-      instance(mockedRemoteTranslationEngine)
+      instance(this.mockedRemoteTranslationEngine)
     );
-    when(mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
-    when(mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
+    when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });
+    when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
