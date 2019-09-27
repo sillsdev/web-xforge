@@ -437,12 +437,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   private getVerseRef(): VerseRef {
-    let verseRefStr = this.scriptureStart.value;
-    let scriptureEnd: { success: boolean; verseRef: VerseRef };
+    let verseRefStr = this.scriptureStart.value as string;
     if (!verseRefStr) {
       return undefined;
     }
-    if (this.scriptureEnd.value && verseRefStr !== this.scriptureEnd.value) {
+
+    let scriptureEnd: { success: boolean; verseRef: VerseRef };
+    const verseRefEndStr = this.scriptureEnd.value as string;
+    if (verseRefEndStr && verseRefStr.toLowerCase() !== verseRefEndStr.toLowerCase()) {
       scriptureEnd = VerseRef.tryParse(this.scriptureEnd.value);
       if (scriptureEnd.verseRef.valid) {
         verseRefStr += `-${scriptureEnd.verseRef.verse}`;
