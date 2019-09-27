@@ -1,5 +1,5 @@
 import arrayDiff, { InsertDiff, MoveDiff, RemoveDiff } from 'arraydiff';
-import { merge, Observable, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { performQuery } from '../query-parameters';
 import { RealtimeQueryAdapter } from '../realtime-remote-store';
@@ -47,6 +47,10 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
 
   get remoteChanges$(): Observable<void> {
     return this._remoteChanges$;
+  }
+
+  get ready(): boolean {
+    return this.adapter.ready;
   }
 
   fetch(): Promise<void> {
