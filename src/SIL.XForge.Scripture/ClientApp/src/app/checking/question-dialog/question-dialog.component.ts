@@ -78,7 +78,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     return undefined;
   }
 
-  get selection() {
+  get selection(): VerseRef {
     return this._selection;
   }
 
@@ -122,9 +122,10 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       this._selection = null;
     }
 
-    let verseRefStr = this.scriptureStart.value;
-    if (this.scriptureEnd.value !== '' && verseRefStr !== this.scriptureEnd.value) {
-      const scriptureEnd = VerseRef.parse(this.scriptureEnd.value);
+    let verseRefStr = this.scriptureStart.value as string;
+    const verseRefEndStr = this.scriptureEnd.value as string;
+    if (verseRefEndStr !== '' && verseRefStr.toLowerCase() !== verseRefEndStr.toLowerCase()) {
+      const scriptureEnd = VerseRef.parse(verseRefEndStr);
       verseRefStr += `-${scriptureEnd.verse}`;
     }
 
