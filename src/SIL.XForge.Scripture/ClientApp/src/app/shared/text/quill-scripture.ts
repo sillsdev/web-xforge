@@ -140,7 +140,7 @@ export function registerScripture(): void {
     }
 
     format(name: string, value: any): void {
-      if (name === CharInline.blotName) {
+      if (name === CharInline.blotName && value != null) {
         const usxStyle = value as UsxStyle;
         const elem = this.domNode as HTMLElement;
         elem.setAttribute(customAttributeName('style'), usxStyle.style);
@@ -169,7 +169,7 @@ export function registerScripture(): void {
     }
 
     format(name: string, value: any): void {
-      if (name === RefInline.blotName) {
+      if (name === RefInline.blotName && value != null) {
         const ref = value as Ref;
         const elem = this.domNode as HTMLElement;
         elem.setAttribute(customAttributeName('loc'), ref.loc);
@@ -345,7 +345,7 @@ export function registerScripture(): void {
     }
 
     format(name: string, value: any): void {
-      if (name === SegmentInline.blotName) {
+      if (name === SegmentInline.blotName && value != null) {
         const ref = value as string;
         const elem = this.domNode as HTMLElement;
         elem.setAttribute(customAttributeName('segment'), ref);
