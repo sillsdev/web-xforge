@@ -462,6 +462,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private checkBookStatus(): void {
+    if (!this.questionsQuery.ready) {
+      return;
+    }
     if (!this.totalQuestions()) {
       this.router.navigate(['/projects', this.projectDoc.id, 'checking'], {
         replaceUrl: true
