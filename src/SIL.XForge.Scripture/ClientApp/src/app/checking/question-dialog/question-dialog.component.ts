@@ -115,6 +115,8 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     this.subscribe(this.scriptureEnd.valueChanges, () => {
       if (this.scriptureEnd.valid) {
         this.updateSelection();
+      } else {
+        this._selection = null;
       }
     });
   }

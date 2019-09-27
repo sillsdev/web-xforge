@@ -409,6 +409,33 @@ describe('QuestionDialogComponent', () => {
     // verify re-apply of the highlight
     expect(env.isSegmentHighlighted('1')).toBe(true);
   }));
+
+  it('should clear highlight when end ref is invalid', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    env.component.scriptureStart.setValue('LUK 1:1');
+    env.component.scriptureEnd.setValue('LUK 1:2');
+    tick(500);
+    env.fixture.detectChanges();
+    tick(500);
+    // verify initial highlight
+    expect(env.isSegmentHighlighted('1')).toBe(true);
+    // SUT
+    // make scriptureEnd bad
+    env.component.scriptureEnd.setValue('LUK 91:2');
+    tick(500);
+    env.fixture.detectChanges();
+    tick(500);
+    expect(env.isSegmentHighlighted('1')).toBe(false);
+    // clear scriptureEnd
+    flush();
+    env.component.scriptureEnd.setValue('');
+    tick(500);
+    env.fixture.detectChanges();
+    tick(500);
+    // verify re-apply of the highlight
+    expect(env.isSegmentHighlighted('1')).toBe(true);
+  }));
 });
 
 @Directive({
