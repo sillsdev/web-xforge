@@ -512,6 +512,15 @@ describe('CheckingComponent', () => {
       expect(env.addAnswerButton).toBeNull();
     }));
 
+    it('project admins can only edit own answers', fakeAsync(() => {
+      env.setupData(env.adminUser);
+      env.selectQuestion(6);
+      expect(env.answers.length).toEqual(1);
+      expect(env.getAnswerEditButton(0)).toBeNull();
+      env.selectQuestion(7);
+      expect(env.getAnswerEditButton(0)).not.toBeNull();
+    }));
+
     it('shows error messages when answer form is invalid', fakeAsync(() => {
       env.setupData(env.checkerUser);
       env.selectQuestion(1);
@@ -673,6 +682,15 @@ describe('CheckingComponent', () => {
         env.setupData(env.observerUser);
         env.selectQuestion(6);
         expect(env.getAddCommentButton(0)).toBeNull();
+      }));
+
+      it('project admins can only edit own comments', fakeAsync(() => {
+        env.setupData(env.adminUser);
+        env.selectQuestion(7);
+        expect(env.getEditCommentButton(0, 0)).not.toBeNull();
+        env.selectQuestion(8);
+        expect(env.getAnswerComments(0).length).toEqual(2);
+        expect(env.getEditCommentButton(0, 0)).toBeNull();
       }));
     });
   });

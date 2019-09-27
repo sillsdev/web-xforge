@@ -58,11 +58,11 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Questions, operation: Operation.Edit },
       { projectDomain: SFProjectDomain.Questions, operation: Operation.Delete },
 
-      { projectDomain: SFProjectDomain.Answers, operation: Operation.Edit },
+      { projectDomain: SFProjectDomain.Answers, operation: Operation.EditOwn },
       { projectDomain: SFProjectDomain.Answers, operation: Operation.Delete },
 
       { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Edit },
+      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.EditOwn },
       { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Delete },
 
       { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
