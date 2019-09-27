@@ -49,7 +49,7 @@ import { UsersModule } from './users/users.module';
     UICommonModule,
     XForgeCommonModule
   ],
-  providers: [DatePipe, { provide: ErrorHandler, useExisting: ExceptionHandlingService }],
+  providers: [DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
   entryComponents: [
     DeleteProjectDialogComponent,
     ProjectDeletedDialogComponent,
