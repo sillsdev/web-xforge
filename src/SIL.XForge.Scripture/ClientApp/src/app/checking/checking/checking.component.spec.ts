@@ -1,6 +1,6 @@
 import { MdcDialogRef, MdcListItem, MdcMenuSelectedEvent } from '@angular-mdc/web';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
@@ -1009,9 +1009,7 @@ class TestEnvironment {
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
     inputElem.dispatchEvent(new Event('change'));
-    this.fixture.detectChanges();
-    tick();
-    flush();
+    this.waitForSliderUpdate();
   }
 
   getShowAllCommentsButton(answerIndex: number): DebugElement {
@@ -1228,7 +1226,9 @@ class TestEnvironment {
         data: user.user
       }
     ]);
-    when(mockedUserService.getCurrentUser()).thenReturn(this.realtimeService.subscribe(UserDoc.COLLECTION, user.id));
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id)
+    );
 
     this.realtimeService.addSnapshots<User>(UserProfileDoc.COLLECTION, [
       {
