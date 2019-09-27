@@ -1,35 +1,47 @@
 import { MdcDialog } from '@angular-mdc/web';
-import { ErrorHandler, Injectable, NgZone } from '@angular/core';
+import { ErrorHandler, Injectable, Injector, NgZone } from '@angular/core';
 import cloneDeep from 'lodash/cloneDeep';
 import { User } from 'realtime-server/lib/common/models/user';
 import { environment } from '../environments/environment';
-import { ErrorReportingService } from './error-reporting.service.js';
+import { ErrorReportingService } from './error-reporting.service';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
 import { UserDoc } from './models/user-doc';
-import { NoticeService } from './notice.service.js';
+import { NoticeService } from './notice.service';
 import { UserService } from './user.service';
 import { objectId, promiseTimeout } from './utils';
 
 type UserForReport = User & { id: string };
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class ExceptionHandlingService implements ErrorHandler {
   private alertQueue: ErrorAlert[] = [];
   private dialogOpen = false;
   private currentUser: UserDoc;
   private constructionTime = Date.now();
 
-  constructor(
-    private readonly dialog: MdcDialog,
-    private readonly ngZone: NgZone,
-    private readonly userService: UserService,
-    private readonly errorReportingService: ErrorReportingService,
-    private readonly noticeService: NoticeService
-  ) {}
+  constructor(private readonly injector: Injector) {}
 
   async handleError(error: any) {
+    // Angular error handlers are instantiated before all other providers, so we cannot inject dependencies. Instead we
+    // use the "Injector" to get the dependencies in this method. At this point, providers should have been
+    // instantiated.
+    let ngZone: NgZone;
+    let noticeService: NoticeService;
+    let dialog: MdcDialog;
+    let errorReportingService: ErrorReportingService;
+    let userService: UserService;
+    try {
+      ngZone = this.injector.get(NgZone);
+      noticeService = this.injector.get(NoticeService);
+      dialog = this.injector.get(MdcDialog);
+      errorReportingService = this.injector.get(ErrorReportingService);
+      userService = this.injector.get(UserService);
+    } catch (err) {
+      console.log(`Error occured. Unable to report to Bugsnag, because dependency injection failed.`);
+      console.error(error);
+      return;
+    }
+
     if (typeof error !== 'object' || error === null) {
       error = new Error('Unkown error: ' + String(error));
     }
@@ -40,9 +52,7 @@ export class ExceptionHandlingService implements ErrorHandler {
 
     // There's no exact science here. We're looking for XMLHttpRequests that failed, but not due to HTTP response codes.
     if (error.error && error.error.target instanceof XMLHttpRequest && error.error.target.status === 0) {
-      this.ngZone.run(() =>
-        this.noticeService.show('A network request failed. Some functionality may be unavailable.')
-      );
+      ngZone.run(() => noticeService.show('A network request failed. Some functionality may be unavailable.'));
       return;
     }
 
@@ -60,9 +70,9 @@ export class ExceptionHandlingService implements ErrorHandler {
     try {
       const eventId = objectId();
       try {
-        this.handleAlert({ message, stack: error.stack, eventId });
+        this.handleAlert(ngZone, dialog, { message, stack: error.stack, eventId });
       } finally {
-        this.sendReport(error, await this.getUserForReporting(), eventId);
+        this.sendReport(errorReportingService, error, await this.getUserForReporting(userService), eventId);
       }
     } finally {
       // Error logging occurs after error reporting so it won't show up as noise in Bugsnag's breadcrumbs
@@ -76,11 +86,11 @@ export class ExceptionHandlingService implements ErrorHandler {
    * available within a reasonable time (within three seconds of the service being constructed), it will resolve with
    * null.
    */
-  private async getUserForReporting(): Promise<UserForReport | undefined> {
+  private async getUserForReporting(userService: UserService): Promise<UserForReport | undefined> {
     if (!this.currentUser) {
       try {
         this.currentUser = await promiseTimeout(
-          this.userService.getCurrentUser(),
+          userService.getCurrentUser(),
           Math.max(0, this.constructionTime + 3000 - Date.now())
         );
         if (!this.currentUser) {
@@ -95,8 +105,8 @@ export class ExceptionHandlingService implements ErrorHandler {
     return user;
   }
 
-  private sendReport(error: any, user: UserForReport, eventId: string) {
-    this.errorReportingService.notify(
+  private sendReport(errorReportingService: ErrorReportingService, error: any, user: UserForReport, eventId: string) {
+    errorReportingService.notify(
       error,
       {
         user,
@@ -113,22 +123,22 @@ export class ExceptionHandlingService implements ErrorHandler {
     );
   }
 
-  private handleAlert(error: ErrorAlert) {
+  private handleAlert(ngZone: NgZone, dialog: MdcDialog, error: ErrorAlert) {
     if (!this.alertQueue.some(alert => alert.message === error.message)) {
       this.alertQueue.unshift(error);
-      this.showAlert();
+      this.showAlert(ngZone, dialog);
     }
   }
 
-  private showAlert() {
+  private showAlert(ngZone: NgZone, dialog: MdcDialog) {
     if (!this.dialogOpen && this.alertQueue.length) {
-      this.ngZone.run(() => {
+      ngZone.run(() => {
         this.dialogOpen = true;
-        const dialog = this.dialog.open(ErrorComponent, { data: this.alertQueue[this.alertQueue.length - 1] });
-        dialog.afterClosed().subscribe(() => {
+        const dialogRef = dialog.open(ErrorComponent, { data: this.alertQueue[this.alertQueue.length - 1] });
+        dialogRef.afterClosed().subscribe(() => {
           this.alertQueue.pop();
           this.dialogOpen = false;
-          this.showAlert();
+          this.showAlert(ngZone, dialog);
         });
       });
     }
