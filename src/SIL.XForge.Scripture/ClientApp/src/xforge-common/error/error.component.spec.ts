@@ -2,17 +2,15 @@ import { MdcDialog } from '@angular-mdc/web';
 import { OverlayContainer } from '@angular-mdc/web';
 import { Component, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { configureTestSuite } from 'ng-bullet';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { configureTestingModule } from '../test-utils';
+import { UICommonModule } from '../ui-common.module';
 import { ErrorAlert, ErrorComponent } from './error.component';
 
 describe('ErrorComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [DialogOpenerComponent],
-      imports: [DialogTestModule]
-    });
-  });
+  configureTestingModule(() => ({
+    declarations: [DialogOpenerComponent],
+    imports: [DialogTestModule]
+  }));
 
   it('should display error dialog', () => {
     const env = new TestEnvironment({

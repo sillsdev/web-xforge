@@ -3,19 +3,19 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import { configureTestSuite } from 'ng-bullet';
 import { UserProfile } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
-import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { LocationService } from 'xforge-common/location.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -32,27 +32,17 @@ const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 
 describe('CollaboratorsComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [CollaboratorsComponent, ShareControlComponent],
-      imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
-      providers: [
-        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
-        { provide: LocationService, useFactory: () => instance(mockedLocationService) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
-        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) },
-        { provide: UserService, useFactory: () => instance(mockedUserService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedActivatedRoute);
-    reset(mockedLocationService);
-    reset(mockedNoticeService);
-    reset(mockedProjectService);
-    reset(mockedUserService);
-  });
+  configureTestingModule(() => ({
+    declarations: [CollaboratorsComponent, ShareControlComponent],
+    imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
+    providers: [
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: LocationService, useMock: mockedLocationService },
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: UserService, useMock: mockedUserService }
+    ]
+  }));
 
   it('should not display no-users label while loading', fakeAsync(() => {
     const env = new TestEnvironment();

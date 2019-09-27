@@ -1,6 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
-import { configureTestSuite } from 'ng-bullet';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -9,10 +8,11 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { of } from 'rxjs';
-import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, reset, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -28,27 +28,17 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 
 describe('ProjectComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [ProjectComponent],
-      imports: [UICommonModule],
-      providers: [
-        { provide: UserService, useFactory: () => instance(mockedUserService) },
-        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
-        { provide: Router, useFactory: () => instance(mockedRouter) },
-        { provide: SFProjectService, useFactory: () => instance(mockedSFProjectService) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedUserService);
-    reset(mockedActivatedRoute);
-    reset(mockedRouter);
-    reset(mockedSFProjectService);
-    reset(mockedNoticeService);
-  });
+  configureTestingModule(() => ({
+    declarations: [ProjectComponent],
+    imports: [UICommonModule],
+    providers: [
+      { provide: UserService, useMock: mockedUserService },
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: Router, useMock: mockedRouter },
+      { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: NoticeService, useMock: mockedNoticeService }
+    ]
+  }));
 
   it('navigate to last text', fakeAsync(() => {
     const env = new TestEnvironment();

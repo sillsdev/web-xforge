@@ -7,7 +7,6 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
-import { configureTestSuite } from 'ng-bullet';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
@@ -23,7 +22,7 @@ import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/model
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
-import { anything, deepEqual, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AccountService } from 'xforge-common/account.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
@@ -33,6 +32,7 @@ import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ProjectService } from 'xforge-common/project.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof, objectId } from 'xforge-common/utils';
@@ -55,7 +55,6 @@ import { CheckingTextComponent } from './checking-text/checking-text.component';
 import { CheckingComponent } from './checking.component';
 import { FontSizeComponent } from './font-size/font-size.component';
 
-const mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent> = mock(MdcDialogRef);
 const mockedAccountService = mock(AccountService);
 const mockedUserService = mock(UserService);
 const mockedProjectService = mock(SFProjectService);
@@ -63,53 +62,42 @@ const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 
 describe('CheckingComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [
-        AudioTimePipe,
-        CheckingAnswersComponent,
-        CheckingAudioCombinedComponent,
-        CheckingAudioPlayerComponent,
-        CheckingAudioRecorderComponent,
-        CheckingCommentFormComponent,
-        CheckingCommentsComponent,
-        CheckingComponent,
-        CheckingOwnerComponent,
-        CheckingQuestionsComponent,
-        CheckingTextComponent,
-        FontSizeComponent
-      ],
-      imports: [
-        AngularSplitModule.forRoot(),
-        ngfModule,
-        NoopAnimationsModule,
-        RouterTestingModule,
-        AvatarTestingModule,
-        SharedModule,
-        UICommonModule
-      ],
-      providers: [
-        {
-          provide: ActivatedRoute,
-          useFactory: () => instance(mockedActivatedRoute)
-        },
-        { provide: AccountService, useFactory: () => instance(mockedAccountService) },
-        { provide: UserService, useFactory: () => instance(mockedUserService) },
-        { provide: ProjectService, useFactory: () => instance(mockedProjectService) },
-        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) }
-      ]
-    });
-  });
+  configureTestingModule(() => ({
+    declarations: [
+      AudioTimePipe,
+      CheckingAnswersComponent,
+      CheckingAudioCombinedComponent,
+      CheckingAudioPlayerComponent,
+      CheckingAudioRecorderComponent,
+      CheckingCommentFormComponent,
+      CheckingCommentsComponent,
+      CheckingComponent,
+      CheckingOwnerComponent,
+      CheckingQuestionsComponent,
+      CheckingTextComponent,
+      FontSizeComponent
+    ],
+    imports: [
+      AngularSplitModule.forRoot(),
+      ngfModule,
+      NoopAnimationsModule,
+      RouterTestingModule,
+      AvatarTestingModule,
+      SharedModule,
+      UICommonModule
+    ],
+    providers: [
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: AccountService, useMock: mockedAccountService },
+      { provide: UserService, useMock: mockedUserService },
+      { provide: ProjectService, useMock: mockedProjectService },
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: NoticeService, useMock: mockedNoticeService }
+    ]
+  }));
 
   let env: TestEnvironment;
   beforeEach(() => {
-    reset(mockedCheckingNameDialogRef);
-    reset(mockedAccountService);
-    reset(mockedUserService);
-    reset(mockedProjectService);
-    reset(mockedNoticeService);
-    reset(mockedActivatedRoute);
     env = new TestEnvironment();
   });
 
@@ -696,6 +684,8 @@ class TestEnvironment {
   projectBookRoute: string = 'JHN';
   questionReadTimer: number = 2000;
 
+  readonly mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent> = mock(MdcDialogRef);
+
   readonly adminUser: UserInfo = this.createUser('01', SFProjectRole.ParatextAdministrator);
   readonly checkerUser: UserInfo = this.createUser('02', SFProjectRole.CommunityChecker);
   readonly cleanCheckerUser: UserInfo = this.createUser('03', SFProjectRole.CommunityChecker, false);
@@ -1254,9 +1244,11 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
     );
 
-    when(mockedAccountService.openNameDialog(anything(), anything())).thenReturn(instance(mockedCheckingNameDialogRef));
+    when(mockedAccountService.openNameDialog(anything(), anything())).thenReturn(
+      instance(this.mockedCheckingNameDialogRef)
+    );
 
-    when(mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.user.displayName));
+    when(this.mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.user.displayName));
   }
 
   private initComponentEnviroment(): void {

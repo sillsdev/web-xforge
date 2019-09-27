@@ -6,14 +6,12 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import merge from 'lodash/merge';
-import { configureTestSuite } from 'ng-bullet';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { combineLatest, from, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
-import { getObjPathStr, objProxy } from 'xforge-common/utils';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import XRegExp from 'xregexp';
 import { environment } from '../../environments/environment';
 import { AvatarTestingModule } from '../avatar/avatar-testing.module';
@@ -24,38 +22,29 @@ import { ProjectService } from '../project.service';
 import { Filters, QueryParameters } from '../query-parameters';
 import { RealtimeDocTypes } from '../realtime-doc-types';
 import { TestRealtimeService } from '../test-realtime.service';
+import { configureTestingModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
+import { getObjPathStr, objProxy } from '../utils';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
 import { SaUsersComponent } from './sa-users.component';
 
 const mockedMdcDialog = mock(MdcDialog);
-const mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
 const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
 const mockedProjectService = mock(ProjectService);
 
 describe('SaUsersComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      imports: [NoopAnimationsModule, RouterTestingModule, AvatarTestingModule, UICommonModule, DialogTestModule],
-      declarations: [SaUsersComponent],
-      providers: [
-        { provide: MdcDialog, useFactory: () => instance(mockedMdcDialog) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
-        { provide: UserService, useFactory: () => instance(mockedUserService) },
-        { provide: ProjectService, useFactory: () => instance(mockedProjectService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedMdcDialog);
-    reset(mockedDeleteUserDialogRef);
-    reset(mockedNoticeService);
-    reset(mockedUserService);
-    reset(mockedProjectService);
-  });
+  configureTestingModule(() => ({
+    imports: [NoopAnimationsModule, RouterTestingModule, AvatarTestingModule, UICommonModule, DialogTestModule],
+    declarations: [SaUsersComponent],
+    providers: [
+      { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: UserService, useMock: mockedUserService },
+      { provide: ProjectService, useMock: mockedProjectService }
+    ]
+  }));
 
   it('should not display no-users label while loading', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -106,7 +95,7 @@ describe('SaUsersComponent', () => {
   it('should delete user', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupUserData();
-    when(mockedDeleteUserDialogRef.afterClosed()).thenReturn(of('confirmed'));
+    when(env.mockedDeleteUserDialogRef.afterClosed()).thenReturn(of('confirmed'));
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
@@ -170,10 +159,12 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<SaUsersComponent>;
   readonly overlayContainer: OverlayContainer;
 
+  readonly mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
+
   private readonly realtimeService = new TestRealtimeService(new RealtimeDocTypes([UserDoc, TestProjectDoc]));
 
   constructor() {
-    when(mockedMdcDialog.open(anything(), anything())).thenReturn(instance(mockedDeleteUserDialogRef));
+    when(mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));
     when(mockedUserService.onlineQuery(anything(), anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>, reload$: Observable<void>) =>
         combineLatest(term$, parameters$, reload$).pipe(

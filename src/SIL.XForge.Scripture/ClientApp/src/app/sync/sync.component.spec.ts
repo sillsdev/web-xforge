@@ -3,13 +3,13 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
-import { configureTestSuite } from 'ng-bullet';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
-import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
@@ -23,25 +23,16 @@ const mockedParatextService = mock(ParatextService);
 const mockedProjectService = mock(SFProjectService);
 
 describe('SyncComponent', () => {
-  configureTestSuite(() => {
-    TestBed.configureTestingModule({
-      declarations: [SyncComponent],
-      imports: [CommonModule, UICommonModule],
-      providers: [
-        { provide: ActivatedRoute, useFactory: () => instance(mockedActivatedRoute) },
-        { provide: NoticeService, useFactory: () => instance(mockedNoticeService) },
-        { provide: ParatextService, useFactory: () => instance(mockedParatextService) },
-        { provide: SFProjectService, useFactory: () => instance(mockedProjectService) }
-      ]
-    });
-  });
-
-  beforeEach(() => {
-    reset(mockedActivatedRoute);
-    reset(mockedNoticeService);
-    reset(mockedParatextService);
-    reset(mockedProjectService);
-  });
+  configureTestingModule(() => ({
+    declarations: [SyncComponent],
+    imports: [CommonModule, UICommonModule],
+    providers: [
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: ParatextService, useMock: mockedParatextService },
+      { provide: SFProjectService, useMock: mockedProjectService }
+    ]
+  }));
 
   it('should display log in to paratext', fakeAsync(() => {
     const env = new TestEnvironment();
