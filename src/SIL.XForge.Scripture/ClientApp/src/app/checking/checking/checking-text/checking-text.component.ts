@@ -18,12 +18,12 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   @ViewChild(TextComponent, { static: true }) textComponent: TextComponent;
 
   @Input() set activeVerse(verseRef: Readonly<VerseRef>) {
-    if (this.activeVerse && this.isEditorLoaded) {
+    if (this.activeVerse) {
       // Removed the highlight on the old active verse
       this.highlightActiveVerse(this.activeVerse, false);
-      if (verseRef != null) {
-        this.highlightActiveVerse(verseRef, true);
-      }
+    }
+    if (verseRef != null && this.isEditorLoaded) {
+      this.highlightActiveVerse(verseRef, true);
     }
     this._activeVerse = verseRef;
   }

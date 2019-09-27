@@ -383,6 +383,32 @@ describe('QuestionDialogComponent', () => {
     flush();
     expect(env.component.selection.toString()).toEqual('LUK 1:1');
   }));
+
+  it('should clear highlight when starting ref is cleared', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    env.component.scriptureStart.setValue('LUK 1:1');
+    tick(500);
+    env.fixture.detectChanges();
+    tick(500);
+    // verify initial highlight
+    expect(env.isSegmentHighlighted('1')).toBe(true);
+    // SUT
+    // clear scriptureStart
+    env.component.scriptureStart.setValue('');
+    tick(500);
+    env.fixture.detectChanges();
+    tick(500);
+    expect(env.isSegmentHighlighted('1')).toBe(false);
+    // reset scriptureStart
+    flush();
+    env.component.scriptureStart.setValue('LUK 1:1');
+    tick(500);
+    env.fixture.detectChanges();
+    tick(500);
+    // verify re-apply of the highlight
+    expect(env.isSegmentHighlighted('1')).toBe(true);
+  }));
 });
 
 @Directive({
