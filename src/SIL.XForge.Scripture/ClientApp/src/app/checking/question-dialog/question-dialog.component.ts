@@ -130,7 +130,10 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     const verseRefEndStr = this.scriptureEnd.value as string;
     if (verseRefEndStr !== '' && verseRefStr.toLowerCase() !== verseRefEndStr.toLowerCase()) {
       const scriptureEnd = VerseRef.parse(verseRefEndStr);
-      verseRefStr += `-${scriptureEnd.verse}`;
+      const scriptureStart = VerseRef.parse(verseRefStr);
+      if (scriptureStart.verse !== scriptureEnd.verse) {
+        verseRefStr += `-${scriptureEnd.verse}`;
+      }
     }
 
     const { verseRef } = VerseRef.tryParse(verseRefStr);

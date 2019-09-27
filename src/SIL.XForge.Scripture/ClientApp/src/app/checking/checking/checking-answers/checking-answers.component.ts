@@ -462,7 +462,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     const verseRefEndStr = this.scriptureEnd.value as string;
     if (verseRefEndStr && verseRefStr.toLowerCase() !== verseRefEndStr.toLowerCase()) {
       scriptureEnd = VerseRef.tryParse(this.scriptureEnd.value);
-      if (scriptureEnd.verseRef.valid) {
+      let scriptureStart: { success: boolean; verseRef: VerseRef };
+      scriptureStart = VerseRef.tryParse(verseRefStr);
+      if (scriptureEnd.verseRef.valid && scriptureStart.verseRef.verse !== scriptureEnd.verseRef.verse) {
         verseRefStr += `-${scriptureEnd.verseRef.verse}`;
       }
     }

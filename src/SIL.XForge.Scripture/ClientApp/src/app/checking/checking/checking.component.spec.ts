@@ -554,7 +554,7 @@ describe('CheckingComponent', () => {
       expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
     }));
 
-    it('generate correct verse ref when start and end mismatch only by case', fakeAsync(() => {
+    it('generate correct verse ref when start and end mismatch only by case or insignificant zero', fakeAsync(() => {
       env.setupData(env.checkerUser);
       env.selectQuestion(1);
       env.clickButton(env.addAnswerButton);
@@ -564,7 +564,7 @@ describe('CheckingComponent', () => {
       // Add scripture
       env.setTextFieldValue(env.scriptureStartField, 'JHN 1:3');
       expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
-      env.setTextFieldValue(env.scriptureEndField, 'jhn 1:3');
+      env.setTextFieldValue(env.scriptureEndField, 'jhn 1:03');
       expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
