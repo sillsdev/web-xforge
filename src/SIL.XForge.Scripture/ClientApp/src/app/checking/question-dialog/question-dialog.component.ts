@@ -106,6 +106,8 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     this.subscribe(this.scriptureStart.valueChanges, () => {
       if (this.scriptureStart.valid) {
         this.updateSelection();
+      } else {
+        this._selection = null;
       }
       // update enabled/disabled state for scriptureEnd
       this.updateScriptureEndEnabled();
@@ -113,6 +115,8 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     this.subscribe(this.scriptureEnd.valueChanges, () => {
       if (this.scriptureEnd.valid) {
         this.updateSelection();
+      } else {
+        this._selection = null;
       }
     });
   }
