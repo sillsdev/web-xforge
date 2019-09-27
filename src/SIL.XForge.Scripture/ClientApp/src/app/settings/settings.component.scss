@@ -93,3 +93,11 @@
 #delete-btn {
   @include mdc-button-container-fill-color(red);
 }
+
+#based-on-select {
+  width: 100%;
+  max-width: 200px;
+  ::ng-deep .mdc-select__selected-text {
+    min-width: 150px;
+  }
+}
