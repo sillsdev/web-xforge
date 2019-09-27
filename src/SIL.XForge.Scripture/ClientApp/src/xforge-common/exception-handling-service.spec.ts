@@ -1,16 +1,32 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
-import { NgZone } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';
-import { anything, instance, mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { ErrorReportingService } from './error-reporting.service';
 import { ErrorComponent } from './error/error.component';
 import { ExceptionHandlingService } from './exception-handling-service';
 import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
+import { configureTestingModule } from './test-utils';
 import { UserService } from './user.service';
 
+const mockedMdcDialog = mock(MdcDialog);
+const mockedUserService = mock(UserService);
+const mockedErrorReportingService = mock(ErrorReportingService);
+const mockedNoticeService = mock(NoticeService);
+
 describe('ExceptionHandlingService', () => {
+  configureTestingModule(() => ({
+    providers: [
+      ExceptionHandlingService,
+      { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: UserService, useMock: mockedUserService },
+      { provide: ErrorReportingService, useMock: mockedErrorReportingService },
+      { provide: NoticeService, useMock: mockedNoticeService }
+    ]
+  }));
+
   it('should not crash on anything', async () => {
     const env = new TestEnvironment();
     const values = [undefined, null, NaN, Infinity, -1, 0, Symbol(), [] as any[], '', new Error()];
@@ -75,13 +91,8 @@ describe('ExceptionHandlingService', () => {
 });
 
 class TestEnvironment {
-  mockedMdcDialog = mock(MdcDialog);
-  mockedNgZone = mock(NgZone);
-  mockedUserService = mock(UserService);
-  mockedErrorReportingService = mock(ErrorReportingService);
-  mockedNoticeService = mock(NoticeService);
-  errorReports: { error: any; opts: any; cb: any }[] = [];
-  service: ExceptionHandlingService;
+  readonly errorReports: { error: any; opts: any; cb: any }[] = [];
+  readonly service: ExceptionHandlingService;
   rejectUser = false;
   timeoutUser = false;
 
@@ -96,15 +107,9 @@ class TestEnvironment {
   } as UserDoc;
 
   constructor() {
-    this.service = new ExceptionHandlingService(
-      instance(this.mockedMdcDialog),
-      instance(this.mockedNgZone),
-      instance(this.mockedUserService),
-      instance(this.mockedErrorReportingService),
-      instance(this.mockedNoticeService)
-    );
+    this.service = TestBed.get(ExceptionHandlingService);
 
-    when(this.mockedMdcDialog.open(anything(), anything())).thenReturn({
+    when(mockedMdcDialog.open(anything(), anything())).thenReturn({
       afterClosed: () => {
         return {
           subscribe: (cb: () => void) => {
@@ -114,7 +119,7 @@ class TestEnvironment {
       }
     } as MdcDialogRef<ErrorComponent, {}>);
 
-    when(this.mockedUserService.getCurrentUser()).thenCall(() => {
+    when(mockedUserService.getCurrentUser()).thenCall(() => {
       return new Promise((resolve, reject) => {
         if (!this.timeoutUser) {
           this.rejectUser ? reject() : resolve(this.userDoc);
@@ -122,7 +127,7 @@ class TestEnvironment {
       });
     });
 
-    when(this.mockedErrorReportingService.notify(anything(), anything(), anything())).thenCall(
+    when(mockedErrorReportingService.notify(anything(), anything(), anything())).thenCall(
       (error: any, opts: any, cb: any) => {
         this.errorReports.push({
           error,
