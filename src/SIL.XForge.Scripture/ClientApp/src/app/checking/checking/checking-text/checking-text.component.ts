@@ -97,7 +97,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
           this.selectActiveVerse(this.activeVerse, true);
         }
       }
-    } else {
+    } else if (this._activeVerse) {
       // In dialog mode, highlight the active verse without putting the ? marker before the text
       this.highlightActiveVerse(this._activeVerse, true);
     }

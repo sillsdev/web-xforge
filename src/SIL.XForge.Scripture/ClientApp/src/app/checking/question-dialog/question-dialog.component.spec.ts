@@ -388,6 +388,27 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.selection.toString()).toEqual('LUK 1:1');
   }));
 
+  it('should handle start reference being invalid when end reference exists', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    env.component.scriptureStart.setValue('nonsense');
+    env.component.scriptureEnd.setValue('LUK 1:1');
+    expect(() => {
+      env.component.updateSelection();
+    }).not.toThrow();
+  }));
+
+  it('should not highlight range if chapter or book differ', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    env.component.scriptureStart.setValue('MAT 1:1');
+    env.component.scriptureEnd.setValue('LUK 1:2');
+    tick(500);
+    env.fixture.detectChanges();
+    tick(500);
+    expect(env.isSegmentHighlighted('1')).toBe(false);
+  }));
+
   it('should clear highlight when starting ref is cleared', fakeAsync(() => {
     const env = new TestEnvironment();
     flush();
