@@ -8,7 +8,7 @@ import { JsonDocService } from './json-doc-service';
  */
 export abstract class ProjectService<T extends Project = Project> extends JsonDocService<T> {
   protected abstract get projectAdminRole(): string;
-  protected readonly immutableProps = [this.createPathTemplate(p => p.name), this.createPathTemplate(p => p.userRoles)];
+  protected readonly immutableProps = [this.pathTemplate(p => p.name), this.pathTemplate(p => p.userRoles)];
 
   protected allowRead(_docId: string, doc: T, session: ConnectSession): boolean {
     if (session.isServer || session.role === SystemRole.SystemAdmin || Object.keys(doc).length === 0) {

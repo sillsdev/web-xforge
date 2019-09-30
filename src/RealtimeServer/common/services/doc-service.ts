@@ -24,24 +24,24 @@ export abstract class DocService<T = any> {
 
   init(server: RealtimeServer): void {
     this.server = server;
-    server.backend.allowCreate(this.collection, (docId, doc, session) => this.allowCreate(docId, doc, session));
-    server.backend.allowDelete(this.collection, (docId, doc, session) => this.allowDelete(docId, doc, session));
-    server.backend.allowRead(this.collection, (docId, doc, session) => this.allowRead(docId, doc, session));
-    server.backend.allowUpdate(this.collection, (docId, oldDoc, newDoc, ops, session) =>
+    server.allowCreate(this.collection, (docId, doc, session) => this.allowCreate(docId, doc, session));
+    server.allowDelete(this.collection, (docId, doc, session) => this.allowDelete(docId, doc, session));
+    server.allowRead(this.collection, (docId, doc, session) => this.allowRead(docId, doc, session));
+    server.allowUpdate(this.collection, (docId, oldDoc, newDoc, ops, session) =>
       this.allowUpdate(docId, oldDoc, newDoc, ops, session)
     );
   }
 
   getMigration(version: number): Migration {
-    const migrationType = this.migrations.get(version);
-    if (migrationType == null) {
+    const MigrationType = this.migrations.get(version);
+    if (MigrationType == null) {
       throw new Error('The specified migration is not registered.');
     }
-    return new migrationType();
+    return new MigrationType();
   }
 
   protected addUpdateListener(server: RealtimeServer, handler: (docId: string, ops: any) => Promise<void>): void {
-    server.backend.use('afterSubmit', (context, callback) => {
+    server.use('afterSubmit', (context, callback) => {
       if (context.collection === this.collection) {
         handler(context.id, context.op.op)
           .then(() => callback())

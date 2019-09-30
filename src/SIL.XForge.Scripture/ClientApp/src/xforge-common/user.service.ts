@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import merge from 'lodash/merge';
 import { User } from 'realtime-server/lib/common/models/user';
+import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, from, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import XRegExp from 'xregexp';
@@ -13,7 +14,6 @@ import { UserProfileDoc } from './models/user-profile-doc';
 import { Filters, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
 import { USERS_URL } from './url-constants';
-import { getObjPathStr, objProxy } from './utils';
 
 const CURRENT_PROJECT_ID_SETTING = 'current_project_id';
 
@@ -70,7 +70,6 @@ export class UserService {
       distinctUntilChanged()
     );
 
-    const u = objProxy<User>();
     return combineLatest(debouncedTerm$, queryParameters$, reload$).pipe(
       switchMap(([term, queryParameters]) => {
         term = XRegExp.escape(term.trim());
@@ -78,9 +77,9 @@ export class UserService {
         if (term.length > 0) {
           filters = {
             $or: [
-              { [getObjPathStr(u.name)]: { $regex: `.*${term}.*`, $options: 'i' } },
-              { [getObjPathStr(u.email)]: { $regex: `.*${term}.*`, $options: 'i' } },
-              { [getObjPathStr(u.displayName)]: { $regex: `.*${term}.*`, $options: 'i' } }
+              { [obj<User>().pathStr(u => u.name)]: { $regex: `.*${term}.*`, $options: 'i' } },
+              { [obj<User>().pathStr(u => u.email)]: { $regex: `.*${term}.*`, $options: 'i' } },
+              { [obj<User>().pathStr(u => u.displayName)]: { $regex: `.*${term}.*`, $options: 'i' } }
             ]
           };
         }

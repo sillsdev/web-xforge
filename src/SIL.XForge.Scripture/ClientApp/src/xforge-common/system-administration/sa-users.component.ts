@@ -1,6 +1,7 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { User } from 'realtime-server/lib/common/models/user';
+import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -11,7 +12,6 @@ import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { QueryParameters } from '../query-parameters';
 import { UserService } from '../user.service';
-import { getObjPathStr, objProxy } from '../utils';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
 
 interface Row {
@@ -124,7 +124,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
 
   private getQueryParameters(): QueryParameters {
     return {
-      $sort: { [getObjPathStr(objProxy<User>().name)]: 1 },
+      $sort: { [obj<User>().pathStr(u => u.name)]: 1 },
       $skip: this.pageIndex * this.pageSize,
       $limit: this.pageSize
     };

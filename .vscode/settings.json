@@ -11,5 +11,7 @@
       "savePath": "~/../css/"
     }
   ],
-  "liveSassCompile.settings.generateMap": false
+  "liveSassCompile.settings.generateMap": false,
+  "jest.rootPath": "src/RealtimeServer",
+  "jest.debugCodeLens.showWhenTestStateIn": ["fail"]
 }
