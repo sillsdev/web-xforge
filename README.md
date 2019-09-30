@@ -220,13 +220,28 @@ Delete the PR branch after merge.
 
 ### .NET Unit Testing
 
-To run back end unit tests, from the repo (repository) root
+To run .NET backend unit tests, from the repo (repository) root
 
 ```bash
 dotnet test
 ```
 
 See documentation for [running tests](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test?tabs=netcore21) and [writing tests](https://docs.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-nunit).
+
+### Node Unit Testing
+
+To run Node backend unit tests, from the repo root
+
+```bash
+cd src/RealtimeServer
+npm test
+```
+
+[Jest](https://jestjs.io/) is the test framework for the Node backend.
+
+#### Debugging Unit Tests
+
+Unit tests can be debugged easily in VS Code using the [Jest extension](https://github.com/jest-community/vscode-jest). After installing the exension, start the Jest test runner by executing the `Jest: Start Runner` command in the VS Code command palette. The runner will automatically run all of the Node unit tests and display a green or red circle next to each unit test indicating whether the unit test passed. If the unit test failed, a `Debug` code lens command will appear above the test. Set a breakpoint and click on the command.
 
 ### Angular Linting and Prettiering
 

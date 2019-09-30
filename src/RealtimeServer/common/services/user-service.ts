@@ -2,8 +2,8 @@ import ShareDB = require('sharedb');
 import { ConnectSession } from '../connect-session';
 import { SystemRole } from '../models/system-role';
 import { User, USER_PROFILES_COLLECTION, USERS_COLLECTION } from '../models/user';
-import { ANY_KEY, PathTemplate } from '../path-template';
 import { RealtimeServer } from '../realtime-server';
+import { ANY_KEY, ObjPathTemplate } from '../utils/obj-path';
 import { JsonDocService } from './json-doc-service';
 import { USER_MIGRATIONS } from './user-migrations';
 
@@ -18,16 +18,16 @@ const USER_PROFILE_FIELDS: ShareDB.ProjectionFields = {
 export class UserService extends JsonDocService<User> {
   readonly collection = USERS_COLLECTION;
 
-  readonly immutableProps: PathTemplate[] = [
-    this.createPathTemplate(u => u.authId),
-    this.createPathTemplate(u => u.paratextId!),
-    this.createPathTemplate(u => u.role),
-    this.createPathTemplate(u => u.avatarUrl),
-    this.createPathTemplate(u => u.email),
-    this.createPathTemplate(u => u.name),
-    this.createPathTemplate(u => u.sites, false),
-    this.createPathTemplate(u => u.sites[ANY_KEY], false),
-    this.createPathTemplate(u => u.sites[ANY_KEY].projects)
+  protected readonly immutableProps: ObjPathTemplate[] = [
+    this.pathTemplate(u => u.authId),
+    this.pathTemplate(u => u.paratextId!),
+    this.pathTemplate(u => u.role),
+    this.pathTemplate(u => u.avatarUrl),
+    this.pathTemplate(u => u.email),
+    this.pathTemplate(u => u.name),
+    this.pathTemplate(u => u.sites, false),
+    this.pathTemplate(u => u.sites[ANY_KEY], false),
+    this.pathTemplate(u => u.sites[ANY_KEY].projects)
   ];
 
   constructor() {
@@ -35,7 +35,7 @@ export class UserService extends JsonDocService<User> {
   }
 
   init(server: RealtimeServer): void {
-    server.backend.addProjection(USER_PROFILES_COLLECTION, this.collection, USER_PROFILE_FIELDS);
+    server.addProjection(USER_PROFILES_COLLECTION, this.collection, USER_PROFILE_FIELDS);
     super.init(server);
   }
 

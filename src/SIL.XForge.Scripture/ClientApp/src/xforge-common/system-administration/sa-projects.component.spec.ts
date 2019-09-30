@@ -5,6 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import merge from 'lodash/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
+import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, mock, verify, when } from 'ts-mockito';
@@ -19,7 +20,6 @@ import { TestRealtimeService } from '../test-realtime.service';
 import { configureTestingModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
-import { getObjPathStr, objProxy } from '../utils';
 import { SaProjectsComponent } from './sa-projects.component';
 
 const mockedNoticeService = mock(NoticeService);
@@ -166,7 +166,7 @@ class TestEnvironment {
         combineLatest(term$, parameters$).pipe(
           switchMap(([term, queryParameters]) => {
             const filters: Filters = {
-              [getObjPathStr(objProxy<Project>().name)]: { $regex: `.*${XRegExp.escape(term)}.*`, $options: 'i' }
+              [obj<Project>().pathStr(p => p.name)]: { $regex: `.*${XRegExp.escape(term)}.*`, $options: 'i' }
             };
             return from(
               this.realtimeService.onlineQuery<TestProjectDoc>(

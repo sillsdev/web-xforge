@@ -16,8 +16,16 @@ export interface ProjectRight {
   operation: Operation;
 }
 
-export abstract class ProjectRights {
+export class ProjectRights {
   private readonly rights = new Map<string, Set<number>>();
+
+  constructor(rights: { [role: string]: ProjectRight[] } = {}) {
+    for (const role in rights) {
+      if (rights.hasOwnProperty(role)) {
+        this.addRights(role, rights[role]);
+      }
+    }
+  }
 
   hasRight(role: string, right: ProjectRight, userId?: string, data?: OwnedData): boolean {
     const rights = this.rights.get(role);

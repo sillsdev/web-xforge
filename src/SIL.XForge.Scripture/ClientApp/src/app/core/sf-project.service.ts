@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
+import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
@@ -9,7 +10,6 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
-import { getObjPathStr, objProxy } from 'xforge-common/utils';
 import { MachineHttpClient } from './machine-http-client';
 import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
@@ -59,18 +59,17 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     id: string,
     options: { bookNum?: number; activeOnly?: boolean; sort?: boolean } = {}
   ): Promise<RealtimeQuery<QuestionDoc>> {
-    const q = objProxy<Question>();
     const queryParams: QueryParameters = {
-      [getObjPathStr(q.projectRef)]: id
+      [obj<Question>().pathStr(q => q.projectRef)]: id
     };
     if (options.bookNum != null) {
-      queryParams[getObjPathStr(q.verseRef.bookNum)] = options.bookNum;
+      queryParams[obj<Question>().pathStr(q => q.verseRef.bookNum)] = options.bookNum;
     }
     if (options.activeOnly != null && options.activeOnly) {
-      queryParams[getObjPathStr(q.isArchived)] = false;
+      queryParams[obj<Question>().pathStr(q => q.isArchived)] = false;
     }
     if (options.sort != null) {
-      queryParams.$sort = { [getObjPathStr(q.dateCreated)]: -1 };
+      queryParams.$sort = { [obj<Question>().pathStr(q => q.dateCreated)]: -1 };
     }
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
   }
@@ -79,16 +78,15 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     id: string,
     options: { bookNum?: number; activeOnly?: boolean } = {}
   ): Promise<RealtimeQuery<QuestionDoc>> {
-    const q = objProxy<Question>();
     const queryParams: QueryParameters = {
       $count: true,
-      [getObjPathStr(q.projectRef)]: id
+      [obj<Question>().pathStr(q => q.projectRef)]: id
     };
     if (options.bookNum != null) {
-      queryParams[getObjPathStr(q.verseRef.bookNum)] = options.bookNum;
+      queryParams[obj<Question>().pathStr(q => q.verseRef.bookNum)] = options.bookNum;
     }
     if (options.activeOnly != null && options.activeOnly) {
-      queryParams[getObjPathStr(q.isArchived)] = false;
+      queryParams[obj<Question>().pathStr(q => q.isArchived)] = false;
     }
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
   }

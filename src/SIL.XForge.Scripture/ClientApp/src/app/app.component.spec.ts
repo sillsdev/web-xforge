@@ -7,6 +7,7 @@ import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
+import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
@@ -25,7 +26,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { getObjPathStr, objectId, objProxy } from 'xforge-common/utils';
+import { objectId } from 'xforge-common/utils';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectDoc } from './core/models/sf-project-doc';
@@ -364,8 +365,8 @@ class TestEnvironment {
     when(mockedSFProjectService.queryQuestionCount(anything(), anything())).thenCall((_projectId, options) => {
       const parameters: QueryParameters = {
         $count: true,
-        [getObjPathStr(objProxy<Question>().verseRef.bookNum)]: options.bookNum,
-        [getObjPathStr(objProxy<Question>().isArchived)]: false
+        [obj<Question>().pathStr(q => q.verseRef.bookNum)]: options.bookNum,
+        [obj<Question>().pathStr(q => q.isArchived)]: false
       };
       return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, parameters);
     });
