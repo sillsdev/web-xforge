@@ -1,77 +1,105 @@
-import express = require('express');
-import * as http from 'http';
-import { JwtHeader, SigningKeyCallback, verify } from 'jsonwebtoken';
-import jwks = require('jwks-rsa');
-import { Db, MongoClient } from 'mongodb';
 import ShareDB = require('sharedb');
 import shareDBAccess = require('sharedb-access');
-import { Connection, Doc } from 'sharedb/lib/client';
-import WebSocketJSONStream = require('websocket-json-stream');
-import ws = require('ws');
+import { Connection, Doc, RawOp } from 'sharedb/lib/client';
 import { ConnectSession } from './connect-session';
-import { MigrationBackend } from './migration-backend';
+import { Project } from './models/project';
+import { SchemaVersionRepository } from './schema-version-repository';
 import { DocService } from './services/doc-service';
-import { UserService } from './services/user-service';
+import { obj } from './utils/obj-path';
+import { createFetchQuery } from './utils/sharedb-utils';
 
-const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
-const XF_ROLE_CLAIM = 'http://xforge.org/role';
+export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
+export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 
-function isLocalRequest(request: http.IncomingMessage): boolean {
-  const addr = request.connection.remoteAddress;
-  return addr === '127.0.0.1' || addr === '::ffff:127.0.0.1' || addr === '::1';
-}
+export type RealtimeServerConstructor = new (db: ShareDB.DB, schemaVersions: SchemaVersionRepository) => RealtimeServer;
 
-export type RealtimeServerConstructor = new (options: RealtimeServerOptions) => RealtimeServer;
-
-export interface RealtimeServerOptions {
-  appModuleName: string;
-  connectionString: string;
-  port: number;
-  audience: string;
-  scope: string;
-  authority: string;
+/**
+ * This class extends the ShareDB connection class to preserve the migration version property in the request.
+ */
+class MigrationConnection extends Connection {
+  sendOp(doc: Doc, op: RawOp): void {
+    this._addDoc(doc);
+    const message: any = {
+      a: 'op',
+      c: doc.collection,
+      d: doc.id,
+      v: doc.version,
+      src: op.src,
+      seq: op.seq
+    };
+    if (op.op != null) {
+      message.op = op.op;
+    }
+    if (op.create != null) {
+      message.create = op.create;
+    }
+    if (op.del != null) {
+      message.del = op.del;
+    }
+    if (op.mv != null) {
+      message.mv = op.mv;
+    }
+    this.send(message);
+  }
 }
 
 /**
- * This class represents the core real-time server. Each xForge app should provide an implementation of this class in a
- * "realtime-server" module.
+ * This class extends the ShareDB agent class to preserve the migration version property from the request.
  */
-export abstract class RealtimeServer {
-  readonly backend: MigrationBackend & shareDBAccess.AccessControlBackend;
-  database?: Db;
+class MigrationAgent extends ShareDB.Agent {
+  _createOp(request: any): any {
+    const op = super._createOp(request);
+    if (request.mv != null) {
+      op.mv = request.mv;
+    }
+    return op;
+  }
+}
 
-  private readonly connectionString: string;
-  private readonly port: number;
-  private readonly audience: string;
-  private readonly scope: string;
-  private readonly httpServer: http.Server;
-  private readonly jwksClient: jwks.JwksClient;
-  private readonly connections = new Map<number, Connection>();
-  private readonly docServices = new Map<string, DocService>();
-  private connectionIndex = 0;
-
-  constructor(docServices: DocService[], private readonly projectsCollection: string, options: RealtimeServerOptions) {
-    this.connectionString = options.connectionString;
-    this.port = options.port;
-    this.audience = options.audience;
-    this.scope = options.scope;
-
-    // Create web servers to serve files and listen to WebSocket connections
-    const app = express();
-    app.use(express.static('static'));
-    this.httpServer = http.createServer(app);
-
-    this.jwksClient = jwks({
-      cache: true,
-      jwksUri: `${options.authority}.well-known/jwks.json`
+/**
+ * Submits a migration op to the specified doc.
+ *
+ * @param {number} version The migration version.
+ * @param {Doc} doc The doc.
+ * @param {*} component The op.
+ * @returns {Promise<void>}
+ */
+export function submitMigrationOp(version: number, doc: Doc, component: any): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const op: RawOp = { op: component, mv: version };
+    doc._submit(op, undefined, err => {
+      if (err != null) {
+        reject(err);
+      } else {
+        resolve();
+      }
     });
+  });
+}
 
-    docServices = docServices.concat(new UserService());
+export interface RealtimeServer extends ShareDB, shareDBAccess.AccessControlBackend {}
 
-    const backend = new MigrationBackend(this.connectionString, docServices);
-    shareDBAccess(backend);
-    this.backend = backend as MigrationBackend & shareDBAccess.AccessControlBackend;
-    this.backend.use('connect', (context, done) => {
+/**
+ * This class represents the real-time server. It extends ShareDB and adds support for migrations and access control.
+ */
+export class RealtimeServer extends ShareDB {
+  private readonly docServices = new Map<string, DocService>();
+
+  constructor(
+    docServices: DocService[],
+    private readonly projectsCollection: string,
+    db: ShareDB.DB,
+    private readonly schemaVersions: SchemaVersionRepository
+  ) {
+    super({
+      db,
+      disableDocAction: true,
+      disableSpaceDelimitedActions: true
+    });
+    shareDBAccess(this);
+
+    this.use('connect', (context, done) => {
+      context.stream.checkServerAccess = true;
       this.setConnectSession(context)
         .then(() => done())
         .catch(err => done(err));
@@ -82,67 +110,60 @@ export abstract class RealtimeServer {
       this.docServices.set(docService.collection, docService);
     }
 
-    // Connect any incoming WebSocket connection to ShareDB
-    const wss = new ws.Server({
-      server: this.httpServer,
-      verifyClient: (info, done) => this.verifyToken(info, done)
+    this.use('submit', (context, done) => {
+      context.op.c = context.collection;
+      if (context.op.mv != null) {
+        context.op.m.migration = context.op.mv;
+        delete context.op.mv;
+      }
+      done();
     });
-    wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => {
-      const stream = new WebSocketJSONStream(webSocket);
-      this.backend.listen(stream, req);
+
+    const origTransform = ShareDB.ot.transform;
+    ShareDB.ot.transform = (type: string, op: ShareDB.RawOp, appliedOp: ShareDB.RawOp) => {
+      if (op.c != null && op.v != null && appliedOp.m.migration != null) {
+        const docService = this.docServices.get(op.c);
+        const migration = docService!.getMigration(appliedOp.m.migration);
+        try {
+          migration.migrateOp(op);
+          op.v++;
+        } catch (err) {
+          return err;
+        }
+      } else {
+        return origTransform(type, op, appliedOp);
+      }
+    };
+    this.use('apply', (context, done) => {
+      delete context.op.c;
+      done();
     });
   }
 
-  async init(): Promise<RealtimeServer> {
-    this.database = await MongoClient.connect(this.connectionString);
-    await this.backend.migrateIfNecessary(this.database);
-    return this;
+  connect(userId?: string): Connection;
+  connect(connection?: Connection, req?: any): Connection;
+  connect(connectionOrUserId?: Connection | string, req?: any): Connection {
+    let connection: Connection;
+    if (connectionOrUserId instanceof Connection) {
+      connection = connectionOrUserId;
+    } else {
+      connection = new MigrationConnection({ close: () => {} } as WebSocket);
+      if (connectionOrUserId != null) {
+        req = { userId: connectionOrUserId };
+      }
+    }
+    return super.connect(connection, req);
   }
 
-  start(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      this.httpServer.once('error', err => {
-        console.log('Error in Realtime Server:' + err);
-        reject(err);
-      });
-      this.httpServer.once('listening', () => {
-        console.log('Realtime Server is listening on http://localhost:' + this.port);
-        resolve();
-      });
-      this.httpServer.listen(this.port);
+  listen(stream: any, req?: any): ShareDB.Agent {
+    const agent = new MigrationAgent(this, stream);
+    this.trigger('connect', agent, { stream, req }, err => {
+      if (err) {
+        return agent.close(err);
+      }
+      agent._open();
     });
-  }
-
-  stop(): void {
-    if (!this.httpServer.listening) {
-      return;
-    }
-
-    if (this.database != null) {
-      this.database.close();
-    }
-    this.backend.close();
-    this.httpServer.close();
-    console.log('Realtime Server stopped.');
-  }
-
-  connect(userId?: string): number {
-    const connection = this.backend.connect(undefined, { userId });
-    const index = this.connectionIndex++;
-    this.connections.set(index, connection);
-    return index;
-  }
-
-  disconnect(handle: number): void {
-    this.connections.delete(handle);
-  }
-
-  getDoc(handle: number, collection: string, id: string): Doc | undefined {
-    const conn = this.connections.get(handle);
-    if (conn != null) {
-      return conn.get(collection, id);
-    }
-    return undefined;
+    return agent;
   }
 
   async getUserProjectRole(session: ConnectSession, projectId: string): Promise<string | undefined> {
@@ -154,78 +175,52 @@ export abstract class RealtimeServer {
     return projectRole;
   }
 
-  private getKey(header: JwtHeader, done: SigningKeyCallback): void {
-    if (header.kid == null) {
-      done('No key ID.');
-      return;
+  async migrateIfNecessary(): Promise<void> {
+    const versionMap = new Map<string, number>();
+    for (const schemaVersion of await this.schemaVersions.getAll()) {
+      versionMap.set(schemaVersion.collection, schemaVersion.version);
     }
-    this.jwksClient.getSigningKey(header.kid, (err, key) => {
-      if (err) {
-        done(err);
-      } else {
-        const certKey = key as jwks.CertSigningKey;
-        const rsaKey = key as jwks.RsaSigningKey;
-        const signingKey = certKey.publicKey || rsaKey.rsaPublicKey;
-        done(null, signingKey);
+    const conn = this.connect();
+    for (const docService of this.docServices.values()) {
+      let curVersion = versionMap.get(docService.collection);
+      if (curVersion == null) {
+        curVersion = 0;
       }
-    });
-  }
-
-  private verifyToken(
-    info: { origin: string; secure: boolean; req: http.IncomingMessage },
-    done: (res: boolean, code?: number, message?: string, headers?: http.OutgoingHttpHeaders) => void
-  ): void {
-    const url = info.req.url;
-    if (url != null && url.includes('?access_token=')) {
-      const token = url.split('?access_token=')[1];
-      verify(
-        token,
-        (header, verifyDone) => this.getKey(header, verifyDone),
-        { audience: this.audience },
-        (err, decoded: any) => {
-          if (err) {
-            done(false, 401, 'Unauthorized');
-          } else {
-            const scopeClaim = decoded['scope'];
-            if (scopeClaim != null && scopeClaim.split(' ').includes(this.scope)) {
-              (info.req as any).user = decoded;
-              done(true);
-            } else {
-              done(false, 401, 'A required scope has not been granted.');
-            }
-          }
+      const version = docService.schemaVersion;
+      if (curVersion === version) {
+        continue;
+      }
+      const query = await createFetchQuery(conn, docService.collection, {});
+      while (curVersion < version) {
+        curVersion++;
+        const promises: Promise<void>[] = [];
+        const migration = docService.getMigration(curVersion);
+        for (const doc of query.results) {
+          promises.push(migration.migrateDoc(doc));
         }
-      );
-    } else if (isLocalRequest(info.req)) {
-      done(true);
-    } else {
-      done(false, 401, 'Unauthorized');
+        await Promise.all(promises);
+      }
+
+      await this.schemaVersions.set(docService.collection, version);
     }
   }
 
   private async getUserProjectRoles(userId: string): Promise<Map<string, string>> {
-    if (this.database == null) {
-      throw new Error('The server has not been initialized.');
-    }
-    const coll = this.database.collection(this.projectsCollection);
-    const projects = await coll.find({ ['userRoles.' + userId]: { $exists: true } }).toArray();
+    const conn = this.connect();
+    const query = await createFetchQuery(conn, this.projectsCollection, {
+      [obj<Project>().pathStr(p => p.userRoles[userId])]: { $exists: true }
+    });
     const projectRoles = new Map<string, string>();
-    for (const project of projects) {
-      const role = project.userRoles[userId];
-      projectRoles.set(project._id, role);
+    for (const projectDoc of query.results) {
+      const role = projectDoc.data.userRoles[userId];
+      projectRoles.set(projectDoc.id, role);
     }
     return projectRoles;
   }
 
   private async setConnectSession(context: ShareDB.middleware.ConnectContext): Promise<void> {
     let session: ConnectSession;
-    if (context.stream.isServer || context.req == null || context.req.user == null) {
-      let userId = '';
-      if (context.req != null && context.req.userId != null) {
-        userId = context.req.userId;
-      }
-      session = { isServer: true, userId };
-    } else {
+    if (context.req != null && context.req.user != null) {
       const userId = context.req.user[XF_USER_ID_CLAIM];
       const role = context.req.user[XF_ROLE_CLAIM];
       session = {
@@ -234,6 +229,12 @@ export abstract class RealtimeServer {
         isServer: false,
         projectRoles: await this.getUserProjectRoles(userId)
       };
+    } else {
+      let userId = '';
+      if (context.req != null && context.req.userId != null) {
+        userId = context.req.userId;
+      }
+      session = { isServer: true, userId };
     }
     context.agent.connectSession = session;
   }

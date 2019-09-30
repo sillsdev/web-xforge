@@ -4,9 +4,9 @@
   "description": "Real-time Server",
   "license": "MIT",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -b",
-    "clean": "tsc -b --clean",
+    "test": "jest",
+    "build": "tsc -b tsconfig.build.json",
+    "clean": "tsc -b tsconfig.build.json --clean",
     "prepare": "npm run build"
   },
   "author": "SIL",
@@ -29,10 +29,18 @@
     "ws": "^7.1.0"
   },
   "devDependencies": {
+    "@types/jest": "^24.0.18",
+    "@types/jest-expect-message": "^1.0.0",
     "@types/jsonwebtoken": "^8.3.3",
     "@types/lodash": "^4.14.136",
     "@types/mongodb": "^2.2.25",
     "@types/ws": "^6.0.2",
+    "jest": "^24.9.0",
+    "jest-expect-message": "^1.0.2",
+    "jest-teamcity-reporter": "^0.9.0",
+    "sharedb-mingo-memory": "^1.1.0",
+    "ts-jest": "^24.1.0",
+    "ts-mockito": "^2.5.0",
     "tslint": "^5.18.0",
     "typescript": "^3.5.3"
   }

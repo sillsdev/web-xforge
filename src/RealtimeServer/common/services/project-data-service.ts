@@ -4,8 +4,8 @@ import { MigrationConstructor } from '../migration';
 import { OwnedData } from '../models/owned-data';
 import { ProjectData } from '../models/project-data';
 import { Operation, ProjectRights } from '../models/project-rights';
-import { PathTemplate } from '../path-template';
 import { RealtimeServer } from '../realtime-server';
+import { ObjPathTemplate } from '../utils/obj-path';
 import { JsonDocService } from './json-doc-service';
 
 /**
@@ -14,16 +14,16 @@ import { JsonDocService } from './json-doc-service';
  */
 export interface ProjectDomainConfig {
   projectDomain: number;
-  pathTemplate: PathTemplate;
+  pathTemplate: ObjPathTemplate;
 }
 
 /**
  * This is the abstract base class for all doc services that manage JSON0 project data.
  */
 export abstract class ProjectDataService<T extends ProjectData> extends JsonDocService<T> {
-  protected readonly immutableProps: PathTemplate[] = [
-    this.createPathTemplate(pd => pd.projectRef),
-    this.createPathTemplate(pd => pd.ownerRef)
+  protected readonly immutableProps: ObjPathTemplate[] = [
+    this.pathTemplate(pd => pd.projectRef),
+    this.pathTemplate(pd => pd.ownerRef)
   ];
   protected abstract get projectRights(): ProjectRights;
   /**
@@ -49,7 +49,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   init(server: RealtimeServer): void {
     super.init(server);
     if (this.listenForUpdates) {
-      server.backend.use('afterSubmit', (context, callback) => {
+      server.use('afterSubmit', (context, callback) => {
         if (context.collection === this.collection) {
           this.handleAfterSubmit(context)
             .then(() => callback())

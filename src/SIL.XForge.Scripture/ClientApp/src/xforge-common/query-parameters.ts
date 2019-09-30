@@ -1,8 +1,9 @@
 import get from 'lodash/get';
 import orderBy from 'lodash/orderBy';
+import { eq } from 'realtime-server/lib/common/utils/eq';
 import XRegExp from 'xregexp';
 import { Snapshot } from './models/snapshot';
-import { eq, nameof } from './utils';
+import { nameof } from './utils';
 
 export interface RegexFilter {
   $regex: string;

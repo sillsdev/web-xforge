@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": ".",
+    "outDir": "../lib/scriptureforge"
+  },
+  "references": [{ "path": "../common/tsconfig.build.json" }],
+  "exclude": ["**/*.spec.ts"]
+}

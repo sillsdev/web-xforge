@@ -1,6 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import merge from 'lodash/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
+import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import XRegExp from 'xregexp';
@@ -12,7 +13,6 @@ import { RealtimeQuery } from './models/realtime-query';
 import { Filters, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
-import { getObjPathStr, objProxy } from './utils';
 
 export abstract class ProjectService<
   TProj extends Project = Project,
@@ -48,14 +48,13 @@ export abstract class ProjectService<
       distinctUntilChanged()
     );
 
-    const p = objProxy<Project>();
     return combineLatest(debouncedTerm$, queryParameters$).pipe(
       switchMap(([term, queryParameters]) => {
         term = XRegExp.escape(term.trim());
         let filters: Filters = {};
         if (term.length > 0) {
           filters = {
-            [getObjPathStr(p.name)]: { $regex: `.*${term}.*`, $options: 'i' }
+            [obj<Project>().pathStr(p => p.name)]: { $regex: `.*${term}.*`, $options: 'i' }
           };
         }
         return this.realtimeService.onlineQuery<TDoc>(this.collection, merge(filters, queryParameters));

@@ -9,6 +9,7 @@ import merge from 'lodash/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
+import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, from, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -25,7 +26,6 @@ import { TestRealtimeService } from '../test-realtime.service';
 import { configureTestingModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
-import { getObjPathStr, objProxy } from '../utils';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
 import { SaUsersComponent } from './sa-users.component';
 
@@ -170,7 +170,7 @@ class TestEnvironment {
         combineLatest(term$, parameters$, reload$).pipe(
           switchMap(([term, queryParameters]) => {
             const filters: Filters = {
-              [getObjPathStr(objProxy<User>().name)]: { $regex: `.*${XRegExp.escape(term)}.*`, $options: 'i' }
+              [obj<User>().pathStr(u => u.name)]: { $regex: `.*${XRegExp.escape(term)}.*`, $options: 'i' }
             };
             return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.COLLECTION, merge(filters, queryParameters)));
           })
