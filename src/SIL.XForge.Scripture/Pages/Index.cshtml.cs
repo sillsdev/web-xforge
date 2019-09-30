@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using SIL.XForge.Configuration;
 using SIL.XForge.Services;
@@ -32,14 +33,17 @@ namespace SIL.XForge.Scripture.Pages
         private readonly IOptions<AuthOptions> _authOptions;
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IEmailService _emailService;
+        private readonly IStringLocalizer _localizer;
 
         public IndexModel(IHostingEnvironment env, IOptions<AuthOptions> authOptions, IOptions<SiteOptions> siteOptions,
-            IEmailService emailService)
+            IEmailService emailService, IStringLocalizerFactory localizerFactory)
         {
             _env = env;
             _authOptions = authOptions;
             _siteOptions = siteOptions;
             _emailService = emailService;
+            _localizer = localizerFactory.Create("Pages.Index",
+                System.Reflection.Assembly.GetExecutingAssembly().GetName().Name); ;
         }
 
         public void OnGet()
@@ -49,6 +53,12 @@ namespace SIL.XForge.Scripture.Pages
             ViewData["Audience"] = _authOptions.Value.Audience;
             ViewData["Scope"] = _authOptions.Value.Scope;
             ViewData["ReleaseStage"] = _env.IsProduction() ? "live" : (_env.IsStaging() ? "qa" : "dev");
+            ViewData["AboutParatextDescription"] =
+                _localizer["AboutParatextDescription", "<span class=\"highlight\">", "</span>"];
+            ViewData["AboutFlexibleDescription"] =
+                _localizer["AboutFlexibleDescription", "<span class=\"highlight\">", "</span>"];
+            ViewData["AboutUserEngagementDescription"] =
+                _localizer["AboutUserEngagementDescription", "<span class=\"highlight\">", "</span>"];
         }
 
         public async Task<IActionResult> OnPostAsync()

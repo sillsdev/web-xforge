@@ -41,6 +41,16 @@ h3 {
   }
 }
 
+.intro {
+  p {
+    font-size: 22px;
+    line-height: 1.5;
+    @include media-breakpoint-down(sm) {
+      font-size: 18px;
+    }
+  }
+}
+
 img {
   max-width: 100%;
 }
