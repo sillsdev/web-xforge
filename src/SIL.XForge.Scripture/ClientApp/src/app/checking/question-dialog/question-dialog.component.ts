@@ -15,6 +15,7 @@ import {
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { ParentAndStartErrorStateMatcher, SFValidators } from '../../shared/sfvalidators';
+import { combineVerseRefStrs } from '../../shared/utils';
 import { CheckingAudioCombinedComponent } from '../checking/checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
@@ -107,7 +108,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       if (this.scriptureStart.valid) {
         this.updateSelection();
       } else {
-        this._selection = null;
+        this._selection = undefined;
       }
       // update enabled/disabled state for scriptureEnd
       this.updateScriptureEndEnabled();
@@ -116,35 +117,13 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       if (this.scriptureEnd.valid) {
         this.updateSelection();
       } else {
-        this._selection = null;
+        this._selection = undefined;
       }
     });
   }
 
   updateSelection() {
-    if (this.textDocId == null) {
-      this._selection = null;
-    }
-
-    const startStr = this.scriptureStart.value as string;
-    const endStr = this.scriptureEnd.value as string;
-    const start = VerseRef.tryParse(startStr);
-    const end = VerseRef.tryParse(endStr);
-    let verseRefStr = startStr;
-
-    if (
-      start.success &&
-      end.success &&
-      start.verseRef.verse !== end.verseRef.verse &&
-      start.verseRef.BBBCCC === end.verseRef.BBBCCC
-    ) {
-      verseRefStr = `${startStr}-${end.verseRef.verse}`;
-    } else if (end.success && start.verseRef.BBBCCC !== end.verseRef.BBBCCC) {
-      verseRefStr = '';
-    }
-
-    const { verseRef } = VerseRef.tryParse(verseRefStr);
-    this._selection = verseRef.valid ? verseRef : undefined;
+    this._selection = combineVerseRefStrs(this.scriptureStart.value, this.scriptureEnd.value);
   }
 
   updateScriptureEndEnabled() {

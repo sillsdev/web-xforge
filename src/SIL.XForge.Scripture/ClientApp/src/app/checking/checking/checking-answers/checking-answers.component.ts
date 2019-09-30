@@ -32,6 +32,7 @@ import {
   SFValidators,
   StartReferenceRequiredErrorStateMatcher
 } from '../../../shared/sfvalidators';
+import { combineVerseRefStrs } from '../../../shared/utils';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
@@ -452,24 +453,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.answerForm.get('answerText').updateValueAndValidity();
   }
 
-  private getVerseRef(): VerseRef {
-    let verseRefStr = this.scriptureStart.value as string;
-    if (!verseRefStr) {
-      return undefined;
-    }
-
-    let scriptureEnd: { success: boolean; verseRef: VerseRef };
-    const verseRefEndStr = this.scriptureEnd.value as string;
-    if (verseRefEndStr && verseRefStr.toLowerCase() !== verseRefEndStr.toLowerCase()) {
-      scriptureEnd = VerseRef.tryParse(this.scriptureEnd.value);
-      let scriptureStart: { success: boolean; verseRef: VerseRef };
-      scriptureStart = VerseRef.tryParse(verseRefStr);
-      if (scriptureEnd.verseRef.valid && scriptureStart.verseRef.verse !== scriptureEnd.verseRef.verse) {
-        verseRefStr += `-${scriptureEnd.verseRef.verse}`;
-      }
-    }
-
-    const { verseRef } = VerseRef.tryParse(verseRefStr);
-    return verseRef.valid ? verseRef : undefined;
+  private getVerseRef(): VerseRef | undefined {
+    return combineVerseRefStrs(this.scriptureStart.value, this.scriptureEnd.value);
   }
 }

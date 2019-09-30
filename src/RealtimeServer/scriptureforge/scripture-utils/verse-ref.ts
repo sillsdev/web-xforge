@@ -345,6 +345,16 @@ export class VerseRef {
     return `${book} ${this.chapter}:${this.verse}`;
   }
 
+  equals(verseRef: VerseRef): boolean {
+    return (
+      verseRef._bookNum === this._bookNum &&
+      verseRef._chapterNum === this._chapterNum &&
+      verseRef._verseNum === this._verseNum &&
+      verseRef._verse === this._verse &&
+      verseRef._versification === this._versification
+    );
+  }
+
   /**
    * Enumerate all individual verses contained in a VerseRef.
    * Verse ranges are indicated by "-" and consecutive verses by ","s.

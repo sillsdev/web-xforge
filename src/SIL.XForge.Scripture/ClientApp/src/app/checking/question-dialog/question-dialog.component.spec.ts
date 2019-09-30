@@ -374,7 +374,7 @@ describe('QuestionDialogComponent', () => {
     expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
   }));
 
-  it('generate correct verse ref when start and end mismatch only by case or insignificant 0', fakeAsync(() => {
+  it('generate correct verse ref when start and end mismatch only by case or insignificant zero', fakeAsync(() => {
     const env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('LUK 1:1');
@@ -388,7 +388,7 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.selection.toString()).toEqual('LUK 1:1');
   }));
 
-  it('should handle start reference being invalid when end reference exists', fakeAsync(() => {
+  it('should handle invalid start reference when end reference exists', fakeAsync(() => {
     const env = new TestEnvironment();
     flush();
     env.component.scriptureStart.setValue('nonsense');
