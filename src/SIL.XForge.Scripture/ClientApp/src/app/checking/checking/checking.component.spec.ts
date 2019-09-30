@@ -571,6 +571,23 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerScriptureText(0)).toBe('target: chapter 1, verse 3.(JHN 1:3)');
     }));
 
+    it('generate correct verse ref when start and end mismatch only by insignificant zero', fakeAsync(() => {
+      env.setupData(env.checkerUser);
+      env.selectQuestion(1);
+      env.clickButton(env.addAnswerButton);
+      env.setTextFieldValue(env.yourAnswerField, 'Answer question');
+      env.clickButton(env.selectTextTab);
+      expect(env.scriptureText).toBe(null);
+      // Add scripture
+      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:3');
+      expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
+      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:03');
+      expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
+      env.clickButton(env.saveAnswerButton);
+      env.waitForSliderUpdate();
+      expect(env.getAnswerScriptureText(0)).toBe('target: chapter 1, verse 3.(JHN 1:3)');
+    }));
+
     describe('Comments', () => {
       it('can comment on an answer', fakeAsync(() => {
         env.setupData(env.checkerUser);
