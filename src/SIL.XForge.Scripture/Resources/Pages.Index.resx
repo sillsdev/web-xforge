@@ -117,6 +117,36 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AboutCheckingTool" xml:space="preserve">
+    <value>The Community Checking tool facilitates a Scripture checking campaign, portion-by-portion, with the aim of getting broader feedback to the translation committee quickly.</value>
+  </data>
+  <data name="AboutEngaging" xml:space="preserve">
+    <value>Many Scripture projects today are engaging an increasingly geographically diverse group of heart-language speakers.</value>
+  </data>
+  <data name="AboutFlexible" xml:space="preserve">
+    <value>Flexible</value>
+  </data>
+  <data name="AboutFlexibleDescription" xml:space="preserve">
+    <value>2 There's no predefined set of questions that you have to use. {0}Compile questions that fit your context{1}.</value>
+  </data>
+  <data name="AboutHeader" xml:space="preserve">
+    <value>About Scripture Forge</value>
+  </data>
+  <data name="AboutParatext" xml:space="preserve">
+    <value>Works with Paratext</value>
+  </data>
+  <data name="AboutParatextDescription" xml:space="preserve">
+    <value>1 Simply {0}connect your Paratext project{1} to get started. {0}Synchronize{1} your project to keep it up-to-date with Paratext and send users responses back in Paratext Notes.</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>Extend your Reach With Scripture Checking</value>
+  </data>
+  <data name="AboutUserEngagement" xml:space="preserve">
+    <value>User Engagement</value>
+  </data>
+  <data name="AboutUserEngagementDescription" xml:space="preserve">
+    <value>3 Turn on {0}"Share"{1} to enable users to invite a friend to join your campaign or keep feedback to a defined group. Users can answer questions, comment on other's answers and like other's responses.</value>
+  </data>
   <data name="Description" xml:space="preserve">
     <value>A free set of tools to do more with your Paratext project, wherever you are. </value>
   </data>

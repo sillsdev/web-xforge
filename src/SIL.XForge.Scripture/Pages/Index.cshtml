@@ -46,3 +46,40 @@
         </div>
     </div>
 </section>
+<section id="about" class="panel">
+    <div class="container">
+        <div class="mdl-grid">
+            <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet">
+                <div class="section-title">
+                    <h2>@Localizer["AboutHeader"]</h2>
+                    <div class="title">@Localizer["AboutTitle"]</div>
+                </div>
+            </div>
+            <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet intro">
+                <p>@Localizer["AboutEngaging"]</p>
+                <p>@Localizer["AboutCheckingTool"]</p>
+            </div>
+        </div>
+        <div class="mdl-grid">
+            <div class="mdl-cell mdl-cell--12-col">
+                <div class="about-features">
+                    <div class="about-feature">
+                        <img src="~/images/logo-paratext.svg" alt="Paratext">
+                        <span>@Localizer["AboutParatext"]</span>
+                        <p>@(Html.Raw(ViewData["AboutParatextDescription"]))</p>
+                    </div>
+                    <div class="about-feature">
+                        <i class="material-icons">shuffle</i>
+                        <span>@Localizer["AboutFlexible"]</span>
+                        <p>@(Html.Raw(ViewData["AboutFlexibleDescription"]))</p>
+                    </div>
+                    <div class="about-feature">
+                        <i class="material-icons">group</i>
+                        <span>@Localizer["AboutUserEngagement"]</span>
+                        <p>@(Html.Raw(ViewData["AboutUserEngagementDescription"]))</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
