@@ -21,6 +21,7 @@ h1 {
 }
 h2 {
   font-size: 25px;
+  margin: 0.75em 0 0.15em;
   @include media-breakpoint-down(sm) {
     font-size: 20px;
   }
@@ -102,5 +103,20 @@ img {
         padding: 0 16px;
       }
     }
+  }
+}
+
+blockquote {
+  border-left: 5px solid $greenLight;
+  padding: 0 15px;
+  margin: 0 15px;
+  p {
+    font-size: 1.3rem;
+    line-height: 1.75rem;
+  }
+
+  &:before,
+  &:after {
+    display: none;
   }
 }
