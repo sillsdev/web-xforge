@@ -18,7 +18,7 @@
     .question-title {
       display: flex;
       align-items: center;
-      width: 85%;
+      overflow: hidden;
 
       .material-icons {
         margin-right: 5px;
