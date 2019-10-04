@@ -199,12 +199,7 @@ describe('CheckingComponent', () => {
     it('unread questions badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
       env.setupData(env.checkerUser);
       expect(env.getUnread(env.questions[6])).toEqual(4);
-      env.component.projectDoc.submitJson0Op(
-        op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, false),
-        false
-      );
-      tick();
-      env.fixture.detectChanges();
+      env.setSeeOtherUserResponses(false);
       expect(env.getUnread(env.questions[6])).toEqual(0);
     }));
 
@@ -387,6 +382,17 @@ describe('CheckingComponent', () => {
       expect(env.getLikeTotal(0)).toBe(0);
     }));
 
+    it('hides the like icon if see other users responses is disabled', fakeAsync(() => {
+      env.setupData(env.checkerUser);
+      env.selectQuestion(6);
+      expect(env.answers.length).toEqual(1);
+      expect(env.likeButtons.length).toEqual(1);
+      env.setSeeOtherUserResponses(false);
+      expect(env.likeButtons.length).toEqual(0);
+      env.setSeeOtherUserResponses(true);
+      expect(env.likeButtons.length).toEqual(1);
+    }));
+
     it('do not show answers until current user has submitted an answer', fakeAsync(() => {
       env.setupData(env.checkerUser);
       env.selectQuestion(7);
@@ -399,12 +405,7 @@ describe('CheckingComponent', () => {
 
     it('checker can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
       env.setupData(env.checkerUser);
-      env.component.projectDoc.submitJson0Op(
-        op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, false),
-        false
-      );
-      tick();
-      env.fixture.detectChanges();
+      env.setSeeOtherUserResponses(false);
       env.selectQuestion(6);
       expect(env.answers.length).toBe(1);
       env.selectQuestion(7);
@@ -1063,6 +1064,15 @@ class TestEnvironment {
       this.fixture.detectChanges();
     }
     return question;
+  }
+
+  setSeeOtherUserResponses(isEnabled: boolean): void {
+    this.component.projectDoc.submitJson0Op(
+      op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, isEnabled),
+      false
+    );
+    tick();
+    this.fixture.detectChanges();
   }
 
   setTextFieldValue(textField: DebugElement, value: string): void {

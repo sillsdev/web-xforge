@@ -136,7 +136,7 @@
   <ng-container *ngIf="!answerFormVisible && answers.length > 0 && (currentUserTotalAnswers > 0 || !canAddAnswer)">
     <h3>{{ totalAnswersHeading }}</h3>
     <div class="answer" *ngFor="let answer of answers" [ngClass]="{ 'answer-unread': !hasUserReadAnswer(answer) }">
-      <div class="like">
+      <div *ngIf="canSeeOtherUserResponses" class="like">
         <mdc-icon class="like-answer" (click)="likeAnswer(answer)" [ngClass]="{ liked: hasUserLikedAnswer(answer) }"
           >thumb_up</mdc-icon
         >

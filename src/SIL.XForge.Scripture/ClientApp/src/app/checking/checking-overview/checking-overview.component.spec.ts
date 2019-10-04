@@ -308,6 +308,17 @@ describe('CheckingOverviewComponent', () => {
       expect(env.component.myCommentCount).toBe('3');
       expect(env.component.myLikeCount).toBe('4');
     }));
+
+    it('should hide like card if see other user responses is disabled', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser(env.checkerUser);
+      env.waitForQuestions();
+      expect(env.likePanel).not.toBeNull();
+      env.setSeeOtherUserResponses(false);
+      expect(env.likePanel).toBeNull();
+      env.setSeeOtherUserResponses(true);
+      expect(env.likePanel).not.toBeNull();
+    }));
   });
 
   describe('Archive Question', () => {
@@ -720,12 +731,25 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#reviewer-question-panel'));
   }
 
+  get likePanel(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.reviewer-panels .card .card-content-like'));
+  }
+
   getArchivedQuestionsCountByRow(row: number): DebugElement {
     return this.archivedQuestions.queryAll(By.css('mdc-list-item .archived-questions-count'))[row];
   }
 
   waitForQuestions(): void {
     this.fixture.detectChanges();
+    tick();
+    this.fixture.detectChanges();
+  }
+
+  setSeeOtherUserResponses(isEnabled: boolean): void {
+    this.component.projectDoc.submitJson0Op(
+      op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, isEnabled),
+      false
+    );
     tick();
     this.fixture.detectChanges();
   }
