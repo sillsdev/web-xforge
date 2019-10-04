@@ -30,7 +30,7 @@ declare class ShareDB {
     disableDocAction?: boolean;
     disableSpaceDelimitedActions?: boolean;
   });
-  connect(connection?: any, req?: any): Connection;
+  connect(connection?: Connection, req?: any): Connection;
   /**
    * Registers a projection that can be used from clients just like a normal collection.
    *
@@ -39,7 +39,7 @@ declare class ShareDB {
    * @param fields field whitelist for the projection
    */
   addProjection(name: string, collection: string, fields: ShareDB.ProjectionFields): void;
-  listen(stream: any): void;
+  listen(stream: any, req?: any): void;
   close(callback?: (err?: Error) => any): void;
   /**
    * Registers a server middleware function.
@@ -160,6 +160,7 @@ declare namespace ShareDB {
   type SubtypeOp = common.SubtypeOp;
   type RawOp = common.RawOp;
   type Path = common.Path;
+  type Snapshot = common.Snapshot;
 
   interface Projection {
     target: string;

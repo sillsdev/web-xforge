@@ -10,7 +10,7 @@
     {
       "type": "node",
       "request": "attach",
-      "name": "ShareDB",
+      "name": "Node",
       "port": 9229
     },
     {
@@ -50,6 +50,20 @@
       "console": "integratedTerminal",
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "vscode-jest-tests",
+      "program": "${workspaceFolder}/src/RealtimeServer/node_modules/.bin/jest",
+      "args": ["--runInBand"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true,
+      "cwd": "${workspaceFolder}/src/RealtimeServer",
+      "windows": {
+        "program": "${workspaceFolder}/src/RealtimeServer/node_modules/jest/bin/jest"
       }
     }
   ]

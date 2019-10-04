@@ -1,5 +1,6 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { Project } from 'realtime-server/lib/common/models/project';
+import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
@@ -8,7 +9,6 @@ import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { QueryParameters } from '../query-parameters';
 import { UserService } from '../user.service';
-import { getObjPathStr, objProxy } from '../utils';
 
 class Row {
   isUpdatingRole: boolean = false;
@@ -124,7 +124,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
 
   private getQueryParameters(): QueryParameters {
     return {
-      $sort: { [getObjPathStr(objProxy<Project>().name)]: 1 },
+      $sort: { [obj<Project>().pathStr(p => p.name)]: 1 },
       $skip: this.pageIndex * this.pageSize,
       $limit: this.pageSize
     };

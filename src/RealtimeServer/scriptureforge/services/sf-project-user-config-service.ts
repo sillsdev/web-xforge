@@ -15,6 +15,6 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
   }
 
   protected setupDomains(): ProjectDomainConfig[] {
-    return [{ projectDomain: SFProjectDomain.ProjectUserConfigs, pathTemplate: this.createPathTemplate() }];
+    return [{ projectDomain: SFProjectDomain.ProjectUserConfigs, pathTemplate: this.pathTemplate() }];
   }
 }

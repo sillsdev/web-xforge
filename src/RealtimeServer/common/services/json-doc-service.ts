@@ -1,6 +1,6 @@
 import ShareDB = require('sharedb');
-import { getPath, ObjProxyArg } from 'ts-object-path';
-import { PathTemplate } from '../path-template';
+import { ObjProxyArg } from 'ts-object-path';
+import { obj, ObjPathTemplate } from '../utils/obj-path';
 import { DocService } from './doc-service';
 
 /**
@@ -10,13 +10,10 @@ export abstract class JsonDocService<T> extends DocService<T> {
   /**
    * The object paths to the immutable properties in the JSON0 doc.
    */
-  protected readonly immutableProps: PathTemplate[] = [];
+  protected readonly immutableProps: ObjPathTemplate[] = [];
 
-  protected createPathTemplate<TField>(template?: ObjProxyArg<T, TField>, inherit: boolean = true): PathTemplate {
-    if (template == null) {
-      return new PathTemplate();
-    }
-    return new PathTemplate(getPath(template), inherit);
+  protected pathTemplate<TField>(field?: ObjProxyArg<T, TField>, inherit: boolean = true): ObjPathTemplate {
+    return obj<T>().pathTemplate(field, inherit);
   }
 
   protected checkImmutableProps(ops: ShareDB.Op[] | ShareDB.Op): boolean {
@@ -32,7 +29,7 @@ export abstract class JsonDocService<T> extends DocService<T> {
     return this.getMatchingPathTemplate(this.immutableProps, ops.p) === -1;
   }
 
-  protected getMatchingPathTemplate(pathTemplates: PathTemplate[], path: ShareDB.Path): number {
+  protected getMatchingPathTemplate(pathTemplates: ObjPathTemplate[], path: ShareDB.Path): number {
     for (let i = 0; i < pathTemplates.length; i++) {
       if (pathTemplates[i].matches(path)) {
         return i;
