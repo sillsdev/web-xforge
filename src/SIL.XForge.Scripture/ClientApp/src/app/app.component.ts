@@ -58,7 +58,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private selectedProjectDeleteSub: Subscription;
   private removedFromProjectSub: Subscription;
   private _isDrawerPermanent: boolean = true;
-  private selectedProjectRole: SFProjectRole;
   private readonly questionCountQueries = new Map<number, RealtimeQuery>();
 
   constructor(
@@ -147,7 +146,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get isTranslateEnabled(): boolean {
-    return this.selectedProjectRole !== SFProjectRole.CommunityChecker;
+    return this.selectedProjectRole != null && this.selectedProjectRole !== SFProjectRole.CommunityChecker;
   }
 
   get isCheckingEnabled(): boolean {
@@ -170,6 +169,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
       ? undefined
       : this.selectedProjectDoc.id;
+  }
+
+  get selectedProjectRole(): SFProjectRole {
+    return this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
+      ? undefined
+      : (this.selectedProjectDoc.data.userRoles[this.currentUserDoc.id] as SFProjectRole);
   }
 
   get texts(): TextInfo[] {
@@ -266,10 +271,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
         this.selectedProjectDoc = selectedProjectDoc;
         this.setTopAppBarVariant();
-        this.selectedProjectRole =
-          this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
-            ? undefined
-            : (this.selectedProjectDoc.data.userRoles[this.currentUserDoc.id] as SFProjectRole);
         if (this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded) {
           return;
         }
