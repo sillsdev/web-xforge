@@ -65,6 +65,19 @@
       "windows": {
         "program": "${workspaceFolder}/src/RealtimeServer/node_modules/jest/bin/jest"
       }
+    },
+    {
+      "name": "Karma active spec (SF)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "npm test active spec (SF)",
+      "url": "http://localhost:9876/debug.html",
+      "port": 9988,
+      "webRoot": "${workspaceFolder}/src/SIL.XForge.Scripture/ClientApp",
+      "sourceMaps": true,
+      "pathMapping": {
+        "/_karma_webpack_": "${workspaceFolder}/src/SIL.XForge.Scripture/ClientApp"
+      }
     }
   ]
 }

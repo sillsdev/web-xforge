@@ -3,7 +3,7 @@
 
 module.exports = function(config) {
   const isTC =
-    config.browsers && config.browsers.length === 1 && config.browsers[0] === 'ChromeHeadless' && !config.watch;
+    config.browsers && config.browsers.length === 1 && config.browsers[0] === 'xForgeChromiumHeadless' && !config.watch;
 
   config.set({
     basePath: '',
@@ -49,17 +49,24 @@ module.exports = function(config) {
     logLevel: config.LOG_INFO,
     autoWatch: true,
     captureTimeout: 120000, // compile needs to finished otherwise first capture fails
-    browsers: isTC ? ['ChromeHeadless'] : ['xForgeChrome'],
+    browsers: ['xForgeChrome'],
     browserDisconnectTimeout: 10000,
     browserNoActivityTimeout: 60000,
     customLaunchers: {
-      ChromeHeadless: {
+      xForgeChromiumHeadless: {
         base: 'ChromiumHeadless',
         flags: [
           '--no-sandbox',
-          '--headless',
-          '--disable-gpu',
-          '--disable-translate',
+          '--disable-extensions',
+          '--use-fake-device-for-media-stream',
+          '--use-fake-ui-for-media-stream',
+          '--autoplay-policy=no-user-gesture-required'
+        ]
+      },
+      xForgeChromeHeadless: {
+        base: 'ChromeHeadless',
+        flags: [
+          '--no-sandbox',
           '--disable-extensions',
           '--use-fake-device-for-media-stream',
           '--use-fake-ui-for-media-stream',
@@ -70,8 +77,8 @@ module.exports = function(config) {
         base: 'Chrome',
         flags: [
           '--use-fake-ui-for-media-stream',
-          '--autoplay-policy=no-user-gesture-required',
-          '--use-fake-device-for-media-stream'
+          '--use-fake-device-for-media-stream',
+          '--autoplay-policy=no-user-gesture-required'
         ]
       }
     },

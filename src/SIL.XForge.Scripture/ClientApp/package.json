@@ -10,7 +10,7 @@
     "build": "ng build",
     "build:ssr": "npm run build -- --app=ssr --output-hashing=media",
     "test": "ng test --sourceMap=true",
-    "test:tc": "ng test --browsers ChromeHeadless --watch false --code-coverage",
+    "test:tc": "ng test --browsers xForgeChromiumHeadless --watch false --code-coverage",
     "lint": "ng lint",
     "prettier": "prettier --write \"**/*.{ts,js,json,css,scss,less,html,md,yml}\"",
     "prettier:tc": "prettier --list-different \"**/*.{ts,js,json,css,scss,less,html,md,yml}\"",

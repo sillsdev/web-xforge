@@ -286,18 +286,28 @@ src/SIL.XForge.Scripture/ClientApp/monitor-test-headless.sh some.component.spec.
 
 #### Debugging Unit Tests
 
-The best way to debug Angular unit tests is with Chromium.
+The best way to debug Angular unit tests is with Chrome/Chromium.
 
 - Run `npm test` (which will include source maps, `ng test` does not)
-- When the Chromium window appears, press _F12_
+- When the Chrome/Chromium window appears, press _F12_
 - Click the Sources tab
 - Files might show up under `webpack://` or `context/localhost:dddd/src` or elsewhere, but you can always press _CTRL-P_ and type the name of a file to get there faster.
 
 [This video](https://youtu.be/NVqplMyOZTM) has a live demo of the process.
 
+It is also possible to debug Angular unit tests in VS Code.
+
+- Open the spec file that you want to debug in VS Code.
+- Set a breakpoint.
+- Navigate to the Debug view.
+- Select `Karma active spec` from the debug dropdown.
+- Click the `Start Debugging` button.
+
+This will run `ng test` on the active spec file, open Chrome, and attach the VS Code debugger. You can refresh the page by clicking the `Restart` button in the Debug toolbar.
+
 #### Filtering Unit Tests
 
-To run (or not to run) specific tests or fixtures, you can use the prefixes `f`ocus and e`x`clude, as in `fdescribe` or `fit` to run only the specified functions, or `xdescribe` and `xit` to skip running the specified functions (but all functions will still be built). To skip building extra tests, modify the filter in `src/SIL.XForge.Scripture/ClientApp/src/test.ts` per [these instructions](https://stackoverflow.com/a/50636750/3587084).
+To run (or not to run) specific tests or fixtures, you can use the prefixes `f`ocus and e`x`clude, as in `fdescribe` or `fit` to run only the specified functions, or `xdescribe` and `xit` to skip running the specified functions (but all functions will still be built). To skip building extra tests, use the `--include` option when running `ng test`. See the [Angular CLI docs](https://angular.io/cli/test) for more info.
 
 See documentation for [running tests](https://github.com/angular/angular-cli/wiki/test) and [writing tests](https://angular.io/guide/testing#testing).
 
