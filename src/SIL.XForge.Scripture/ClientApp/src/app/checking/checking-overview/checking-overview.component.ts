@@ -42,7 +42,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   projectId: string;
 
   private textsByBookId: TextsByBookId;
-  private _projectDoc: SFProjectDoc;
+  private projectDoc: SFProjectDoc;
   private dataChangesSub: Subscription;
   private projectUserConfigDoc: SFProjectUserConfigDoc;
   private questionsQuery: RealtimeQuery<QuestionDoc>;
@@ -120,19 +120,15 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return '' + count;
   }
 
-  get projectDoc(): SFProjectDoc {
-    return this._projectDoc;
-  }
-
   get canSeeOtherUserResponses(): boolean {
-    return this._projectDoc != null && this._projectDoc.data.checkingConfig.usersSeeEachOthersResponses;
+    return this.projectDoc != null && this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses;
   }
 
   get isProjectAdmin(): boolean {
     return (
-      this._projectDoc != null &&
-      this._projectDoc.data != null &&
-      this._projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
+      this.projectDoc != null &&
+      this.projectDoc.data != null &&
+      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
     );
   }
 
@@ -155,7 +151,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       this.loadingStarted();
       this.projectId = projectId;
       try {
-        this._projectDoc = await this.projectService.get(projectId);
+        this.projectDoc = await this.projectService.get(projectId);
         this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
         if (this.questionsQuery != null) {
           this.questionsQuery.dispose();
@@ -169,7 +165,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       if (this.dataChangesSub != null) {
         this.dataChangesSub.unsubscribe();
       }
-      this.dataChangesSub = merge(this._projectDoc.remoteChanges$, this.questionsQuery.remoteChanges$).subscribe(() => {
+      this.dataChangesSub = merge(this.projectDoc.remoteChanges$, this.questionsQuery.remoteChanges$).subscribe(() => {
         this.loadingStarted();
         try {
           this.initTexts();
@@ -191,7 +187,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   getTextDocId(bookNum: number, chapter: number): string {
-    return getTextDocId(this._projectDoc.id, bookNum, chapter);
+    return getTextDocId(this.projectDoc.id, bookNum, chapter);
   }
 
   getQuestionDocs(textDocId: TextDocId, fromArchive = false): QuestionDoc[] {
@@ -220,7 +216,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   questionCount(bookNum: number, chapterNumber: number, fromArchive = false): number {
-    const id = new TextDocId(this._projectDoc.id, bookNum, chapterNumber);
+    const id = new TextDocId(this.projectDoc.id, bookNum, chapterNumber);
     if (!(id.toString() in this.questionDocs)) {
       return undefined;
     }
@@ -249,7 +245,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   chapterAnswerCount(bookNum: number, chapterNumber: number): number {
-    const id = new TextDocId(this._projectDoc.id, bookNum, chapterNumber);
+    const id = new TextDocId(this.projectDoc.id, bookNum, chapterNumber);
     if (!(id.toString() in this.questionDocs)) {
       return undefined;
     }
@@ -335,7 +331,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       data: {
         question: questionDoc != null ? questionDoc.data : undefined,
         textsByBookId: this.textsByBookId,
-        projectId: this._projectDoc.id
+        projectId: this.projectDoc.id
       }
     };
     const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig) as MdcDialogRef<
@@ -381,7 +377,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         );
         if (deleteAudio) {
           await this.projectService.onlineDeleteAudio(
-            this._projectDoc.id,
+            this.projectDoc.id,
             questionDoc.data.dataId,
             questionDoc.data.ownerRef
           );
@@ -417,14 +413,14 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   private initTexts(): void {
-    if (this._projectDoc == null || this._projectDoc.data == null) {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
       return;
     }
 
     this.questionDocs = {};
     this.textsByBookId = {};
     this.texts = [];
-    for (const text of this._projectDoc.data.texts) {
+    for (const text of this.projectDoc.data.texts) {
       // ignore empty books
       if (text.chapters.length === 1 && text.chapters[0].lastVerse === 0) {
         continue;
@@ -432,7 +428,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       this.textsByBookId[Canon.bookNumberToId(text.bookNum)] = text;
       this.texts.push(text);
       for (const chapter of text.chapters) {
-        const textId = new TextDocId(this._projectDoc.id, text.bookNum, chapter.number);
+        const textId = new TextDocId(this.projectDoc.id, text.bookNum, chapter.number);
         this.questionDocs[textId.toString()] = [];
       }
     }
@@ -444,7 +440,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   private addQuestionDoc(questionDoc: QuestionDoc): void {
     const textId = new TextDocId(
-      this._projectDoc.id,
+      this.projectDoc.id,
       questionDoc.data.verseRef.bookNum,
       questionDoc.data.verseRef.chapterNum
     );
@@ -453,7 +449,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   private removeQuestionDoc(questionDoc: QuestionDoc): void {
     const textId = new TextDocId(
-      this._projectDoc.id,
+      this.projectDoc.id,
       questionDoc.data.verseRef.bookNum,
       questionDoc.data.verseRef.chapterNum
     );
