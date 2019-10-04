@@ -90,7 +90,43 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get issueMailTo(): string {
-    return encodeURI(`mailto:${environment.issueEmail}?subject=${environment.siteName} issue`);
+    return encodeURI(`mailto:${environment.issueEmail}?subject=${
+      environment.siteName
+    } issue&body=Thanks for reporting the issue!
+Please submit as much information below as possible but do submit something.
+Be aware your bug report will be publicly available. Never submit passwords or other secrets.
+
+Bug report
+A clear and concise description of what the bug is.
+
+Steps to reproduce
+1. Go to '...'
+2. Click on '...'
+3. Scroll down to '...'
+4. See error
+
+Actual behavior
+Please describe actual behavior of the issue you are observing.
+
+Expected behavior
+A clear and concise description of what you expected to happen.
+
+Screenshots
+If applicable, add screenshots to help explain your issue.
+
+Your environment:
+Please complete the following information
+Software                 Version(s)
+-----------------------------------------
+Scripture Forge
+Browser
+Operating System
+
+Additional context
+Add any other context about the problem here.
+
+Possible solution
+Add any possible solutions to the problem here.`);
   }
 
   get helpsPage(): string {
