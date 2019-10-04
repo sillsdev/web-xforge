@@ -174,7 +174,7 @@
       <span fxLayoutAlign="start center"> <mdc-icon>comment</mdc-icon> </span>
     </div>
   </mdc-card>
-  <mdc-card class="card" outlined>
+  <mdc-card *ngIf="canSeeOtherUserResponses" class="card" outlined>
     <div class="card-content-like">
       <span fxFlex>
         <div class="stat-total">{{ myLikeCount }}</div>
