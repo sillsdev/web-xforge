@@ -746,7 +746,8 @@ class TestEnvironment {
   }
 
   setSeeOtherUserResponses(isEnabled: boolean): void {
-    this.component.projectDoc.submitJson0Op(
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+    projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, isEnabled),
       false
     );
