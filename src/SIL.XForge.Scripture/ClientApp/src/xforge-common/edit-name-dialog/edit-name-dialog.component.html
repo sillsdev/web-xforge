@@ -13,7 +13,9 @@
         </mdc-form-field>
       </mdc-dialog-content>
       <mdc-dialog-actions>
-        <button mdcDialogButton type="submit" (click)="closeDialog()">Confirm</button>
+        <button mdcDialogButton type="submit" (click)="closeDialog()">
+          {{ data.isConfirmation ? "Confirm" : "Update" }}
+        </button>
       </mdc-dialog-actions>
     </mdc-dialog-surface>
   </mdc-dialog-container>

@@ -10,22 +10,28 @@ import {
   styleUrls: ['./checking-audio-combined.component.scss']
 })
 export class CheckingAudioCombinedComponent {
-  @ViewChild(CheckingAudioRecorderComponent, { static: false }) audioRecorderComponent: CheckingAudioRecorderComponent;
-  @Input() source: string = '';
-  @Output() update: EventEmitter<AudioAttachment> = new EventEmitter<AudioAttachment>();
+  @ViewChild(CheckingAudioRecorderComponent, { static: false }) audioRecorderComponent?: CheckingAudioRecorderComponent;
+  @Input() source = '';
+  @Output() update = new EventEmitter<AudioAttachment>();
 
-  uploadAudioFile: File;
+  uploadAudioFile?: File;
 
   private audio: AudioAttachment = {};
 
   get isRecorderActive(): boolean {
     return (
-      this.audio.status && this.audio.status !== 'denied' && this.audio.status !== 'reset' && !this.isUploaderActive
+      this.audio.status != null &&
+      this.audio.status !== 'denied' &&
+      this.audio.status !== 'reset' &&
+      !this.isUploaderActive
     );
   }
 
   get isUploaderActive(): boolean {
-    return this.audio.status === 'uploaded' || (this.source && this.source !== '' && this.audio.status !== 'processed');
+    return (
+      this.audio.status === 'uploaded' ||
+      (this.source != null && this.source !== '' && this.audio.status !== 'processed')
+    );
   }
 
   prepareAudioFileUpload() {
@@ -49,14 +55,14 @@ export class CheckingAudioCombinedComponent {
         this.audio.url = status.url;
         this.audio.blob = status.blob;
         this.audio.fileName = status.fileName;
-        this.source = this.audio.url;
+        this.source = this.audio.url || '';
         break;
     }
     this.update.emit(this.audio);
   }
 
   resetAudioAttachment() {
-    this.uploadAudioFile = null;
+    this.uploadAudioFile = undefined;
     this.source = '';
     this.audio = { status: 'reset' };
     this.update.emit(this.audio);

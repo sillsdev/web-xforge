@@ -6,16 +6,10 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { FontSizeComponent } from './font-size.component';
 
 describe('FontSizeComponent', () => {
-  let env: TestEnvironment;
-
-  beforeEach(() => {
-    env = new TestEnvironment();
-  });
-
   it('should create', () => {
     const template =
       '<app-font-size (apply)="applyFontChange($event)"></app-font-size><div #container>Lorem ipsum dolor sit .</div>';
-    env.createHostComponent(template);
+    const env = new TestEnvironment(template);
     expect(env.fixture.componentInstance).toBeTruthy();
   });
 
@@ -24,7 +18,7 @@ describe('FontSizeComponent', () => {
       <app-font-size (apply)="applyFontChange($event)"></app-font-size>
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
-    env.createHostComponent(template);
+    const env = new TestEnvironment(template);
     env.clickButton(env.toggleSelectorButton);
     const fontSize = env.fontSize;
     env.clickButton(env.increaseButton);
@@ -37,7 +31,7 @@ describe('FontSizeComponent', () => {
       <app-font-size (apply)="applyFontChange($event)"></app-font-size>
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
-    env.createHostComponent(template);
+    const env = new TestEnvironment(template);
     env.clickButton(env.toggleSelectorButton);
     const fontSize = env.fontSize;
     env.clickButton(env.increaseButton);
@@ -53,9 +47,8 @@ describe('FontSizeComponent', () => {
       <app-font-size (apply)="applyFontChange($event)"></app-font-size>
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
-    env.createHostComponent(template);
+    const env = new TestEnvironment(template);
     env.clickButton(env.toggleSelectorButton);
-    const fontSize = env.fontSize;
     expect(env.decreaseButton.nativeElement.disabled).toBe(true);
     for (let i: number = 0; i < 30; i++) {
       env.clickButton(env.increaseButton);
@@ -69,7 +62,7 @@ describe('FontSizeComponent', () => {
       <app-font-size (apply)="applyFontChange($event)" [min]="2"></app-font-size>
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
-    env.createHostComponent(template);
+    const env = new TestEnvironment(template);
     env.clickButton(env.toggleSelectorButton);
     const fontSize = env.fontSize;
     expect(fontSize).toBe(2);
@@ -81,7 +74,7 @@ describe('FontSizeComponent', () => {
       <app-font-size (apply)="applyFontChange($event)" [min]="0.5"></app-font-size>
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
-    env.createHostComponent(template);
+    const env = new TestEnvironment(template);
     env.clickButton(env.toggleSelectorButton);
     const fontSize = env.fontSize;
     expect(fontSize).toBe(1);
@@ -93,7 +86,7 @@ describe('FontSizeComponent', () => {
       <app-font-size (apply)="applyFontChange($event)" [max]="1.5"></app-font-size>
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
-    env.createHostComponent(template);
+    const env = new TestEnvironment(template);
     env.clickButton(env.toggleSelectorButton);
     for (let i: number = 0; i < 5; i++) {
       env.clickButton(env.increaseButton);
@@ -108,8 +101,8 @@ describe('FontSizeComponent', () => {
       <app-font-size (apply)="applyFontChange($event)" [max]="0.5"></app-font-size>
       <div id="container" #container>Lorem ipsum dolor sit amet.</div>
     `;
-    expect(function() {
-      env.createHostComponent(template);
+    expect(() => {
+      const env = new TestEnvironment(template);
       env.clickButton(env.toggleSelectorButton);
     }).toThrow(new RangeError('min (1) can not be larger than max (0.5)'));
   });
@@ -117,7 +110,7 @@ describe('FontSizeComponent', () => {
 
 @Component({ selector: 'app-host', template: '' })
 class HostComponent {
-  @ViewChild('container', { static: true }) container: ElementRef;
+  @ViewChild('container', { static: true }) container!: ElementRef;
 
   applyFontChange($event: string) {
     this.container.nativeElement.style.fontSize = $event;
@@ -125,17 +118,15 @@ class HostComponent {
 }
 
 class TestEnvironment {
-  fixture: ComponentFixture<HostComponent>;
+  readonly fixture: ComponentFixture<HostComponent>;
 
-  constructor() {
+  constructor(template: string) {
     TestBed.configureTestingModule({
       declarations: [HostComponent, FontSizeComponent],
       imports: [UICommonModule]
     });
-  }
 
-  createHostComponent(template: string): void {
-    TestBed.overrideComponent(HostComponent, { set: { template: template } });
+    TestBed.overrideComponent(HostComponent, { set: { template } });
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();
   }

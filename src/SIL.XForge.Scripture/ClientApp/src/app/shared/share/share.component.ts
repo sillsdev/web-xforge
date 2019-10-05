@@ -12,9 +12,9 @@ import { ShareDialogComponent, ShareDialogData } from './share-dialog.component'
   styleUrls: ['./share.component.scss']
 })
 export class ShareComponent implements OnInit {
-  private projectId: string;
-  private shareEnabled: boolean;
-  private shareLevel: CheckingShareLevel;
+  private projectId?: string;
+  private shareEnabled: boolean = false;
+  private shareLevel: CheckingShareLevel = CheckingShareLevel.Specific;
 
   constructor(
     private readonly dialog: MdcDialog,
@@ -30,8 +30,10 @@ export class ShareComponent implements OnInit {
     this.activatedRoute.params.pipe(map(params => params['projectId'] as string)).subscribe(async projectId => {
       this.projectId = projectId;
       const projectDoc = await this.projectService.get(projectId);
-      this.shareEnabled = projectDoc.data.checkingConfig.shareEnabled;
-      this.shareLevel = projectDoc.data.checkingConfig.shareLevel;
+      if (projectDoc.data != null) {
+        this.shareEnabled = projectDoc.data.checkingConfig.shareEnabled;
+        this.shareLevel = projectDoc.data.checkingConfig.shareLevel;
+      }
     });
   }
 

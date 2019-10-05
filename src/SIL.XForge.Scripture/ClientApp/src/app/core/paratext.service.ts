@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { ParatextProject } from './models/paratext-project';
 
@@ -14,12 +15,16 @@ export class ParatextService {
     this.authService.linkParatext(returnUrl);
   }
 
-  getProjects(): Observable<ParatextProject[]> {
-    return this.http.get<ParatextProject[]>('paratext-api/projects', { headers: this.getHeaders() });
+  getProjects(): Observable<ParatextProject[] | undefined> {
+    return this.http
+      .get<ParatextProject[]>('paratext-api/projects', { headers: this.getHeaders() })
+      .pipe(map(r => (r == null ? undefined : r)));
   }
 
-  getParatextUsername(): Observable<string> {
-    return this.http.get<string>('paratext-api/username', { headers: this.getHeaders() });
+  getParatextUsername(): Observable<string | undefined> {
+    return this.http
+      .get<string>('paratext-api/username', { headers: this.getHeaders() })
+      .pipe(map(r => (r == null ? undefined : r)));
   }
 
   private getHeaders(): HttpHeaders {

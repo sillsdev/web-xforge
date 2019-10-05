@@ -1,17 +1,17 @@
-import { MdcDialog } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { OverlayContainer } from '@angular-mdc/web/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { EditNameDialogComponent } from './edit-name-dialog.component';
+import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
-describe('CheckingNameDialogComponent', () => {
+describe('EditNameDialogComponent', () => {
   it('should display name', () => {
     const env = new TestEnvironment();
     env.openDialog();
     expect(env.component.confirmedName).toBeUndefined();
-    expect(env.nameInput.querySelector('input').value).toBe('Simon Says');
+    expect(env.nameInput.querySelector('input')!.value).toBe('Simon Says');
     env.confirmButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Simon Says');
@@ -74,27 +74,27 @@ class TestEnvironment {
 
   get confirmButton(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('button');
+    return oce.querySelector('button') as HTMLElement;
   }
 
   get nameConfirmDialog(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('mdc-dialog');
+    return oce.querySelector('mdc-dialog') as HTMLElement;
   }
 
   get nameInput(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#name-input');
+    return oce.querySelector('#name-input') as HTMLElement;
   }
 
   get title(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('mdc-dialog-title');
+    return oce.querySelector('mdc-dialog-title') as HTMLElement;
   }
 
   get description(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('p');
+    return oce.querySelector('p') as HTMLElement;
   }
 
   openDialog(): void {
@@ -103,8 +103,8 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setTextFieldValue(element: HTMLElement, value: string) {
-    const inputElem: HTMLInputElement = element.querySelector('input');
+  setTextFieldValue(element: Element, value: string) {
+    const inputElem = element.querySelector('input') as HTMLInputElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();
@@ -127,16 +127,16 @@ class DialogTestModule {}
 class DialogOpenerComponent {
   publicName: string = 'Simon Says';
   isConfirmContext: boolean = false;
-  confirmedName: string;
+  confirmedName?: string;
 
   constructor(private readonly dialog: MdcDialog) {}
 
   openDialog() {
     const dialogRef = this.dialog.open(EditNameDialogComponent, {
       data: { name: this.publicName, isConfirmation: this.isConfirmContext }
-    });
+    }) as MdcDialogRef<EditNameDialogComponent, EditNameDialogResult | 'close'>;
     dialogRef.afterClosed().subscribe(response => {
-      this.confirmedName = response as string;
+      this.confirmedName = response == null || response === 'close' ? undefined : response.displayName;
     });
   }
 }

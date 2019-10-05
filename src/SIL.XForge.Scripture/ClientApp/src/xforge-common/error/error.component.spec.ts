@@ -56,31 +56,30 @@ describe('ErrorComponent', () => {
 class DialogTestModule {}
 
 class TestEnvironment {
-  fixture: ComponentFixture<DialogOpenerComponent>;
-  element: HTMLElement;
+  readonly fixture: ComponentFixture<DialogOpenerComponent>;
+  readonly element: HTMLElement;
 
   constructor(dialogData: ErrorAlert) {
-    TestBed.get(NgZone).run(() => {
-      TestBed.get(MdcDialog).open(ErrorComponent, { data: dialogData });
-      this.fixture = TestBed.createComponent(DialogOpenerComponent);
-      this.element = TestBed.get(OverlayContainer).getContainerElement();
-    });
+    this.fixture = TestBed.createComponent(DialogOpenerComponent);
+    this.element = TestBed.get(OverlayContainer).getContainerElement();
+    const mdcDialog = TestBed.get(MdcDialog);
+    this.fixture.ngZone!.run(() => mdcDialog.open(ErrorComponent, { data: dialogData }));
   }
 
   get errorMessage(): HTMLElement {
-    return this.element.querySelector('mdc-dialog-content p');
+    return this.element.querySelector('mdc-dialog-content p') as HTMLElement;
   }
 
   get showDetails(): HTMLElement {
-    return this.element.querySelector('mdc-dialog-content > a');
+    return this.element.querySelector('mdc-dialog-content > a') as HTMLElement;
   }
 
   get stackTrace(): HTMLElement {
-    return this.element.querySelector('pre');
+    return this.element.querySelector('pre') as HTMLElement;
   }
 
   get closeButton(): HTMLElement {
-    return this.element.querySelector('button');
+    return this.element.querySelector('button') as HTMLElement;
   }
 }
 @Component({

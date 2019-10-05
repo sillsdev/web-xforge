@@ -25,13 +25,13 @@ export interface CommentAction {
   styleUrls: ['./checking-comments.component.scss']
 })
 export class CheckingCommentsComponent extends SubscriptionDisposable implements OnInit {
-  @Input() project: SFProject;
-  @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
-  @Input() questionDoc: QuestionDoc;
+  @Input() project?: SFProject;
+  @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
+  @Input() questionDoc?: QuestionDoc;
   @Output() action: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
-  @Input() answer: Answer;
+  @Input() answer?: Answer;
 
-  activeComment: Comment;
+  activeComment?: Comment;
   commentFormVisible: boolean = false;
   readonly maxCommentsToShow: number = 3;
   showAllComments: boolean = false;
@@ -70,7 +70,7 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
   }
 
   private get projectRole(): SFProjectRole {
-    if (this.project == null || this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded) {
+    if (this.project == null || this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null) {
       return SFProjectRole.None;
     }
     return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] as SFProjectRole;
@@ -114,7 +114,9 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
   hasUserReadComment(comment: Comment): boolean {
     return (
       this.initUserCommentRefsRead.includes(comment.dataId) ||
-      this.projectUserConfigDoc.data.ownerRef === comment.ownerRef
+      (this.projectUserConfigDoc != null &&
+        this.projectUserConfigDoc.data != null &&
+        this.projectUserConfigDoc.data.ownerRef === comment.ownerRef)
     );
   }
 
@@ -127,31 +129,40 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
   }
 
   ngOnInit(): void {
-    this.initUserCommentRefsRead = cloneDeep(this.projectUserConfigDoc.data.commentRefsRead);
-    this.subscribe(this.questionDoc.remoteChanges$, () => {
-      const defaultCommentsToShow =
-        this.answer.comments.length > this.maxCommentsToShow ? this.maxCommentsToShow - 1 : this.answer.comments.length;
-      const commentsToShow = this.showAllComments ? this.answer.comments.length : defaultCommentsToShow;
-      const commentIdsToMarkRead: string[] = [];
-      let commentNumber = 1;
-      // Older comments are displayed above newer comments, so iterate over comments starting with the oldest
-      for (const comment of this.getSortedComments()) {
-        if (!this.projectUserConfigDoc.data.commentRefsRead.includes(comment.dataId)) {
-          commentIdsToMarkRead.push(comment.dataId);
+    if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+      this.initUserCommentRefsRead = cloneDeep(this.projectUserConfigDoc.data.commentRefsRead);
+    }
+    if (this.questionDoc != null) {
+      this.subscribe(this.questionDoc.remoteChanges$, () => {
+        if (this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null || this.answer == null) {
+          return;
         }
-        commentNumber++;
-        if (commentNumber > commentsToShow) {
-          break;
-        }
-      }
-      if (commentIdsToMarkRead.length) {
-        this.projectUserConfigDoc.submitJson0Op(op => {
-          for (const commentId of commentIdsToMarkRead) {
-            op.add(puc => puc.commentRefsRead, commentId);
+        const defaultCommentsToShow =
+          this.answer.comments.length > this.maxCommentsToShow
+            ? this.maxCommentsToShow - 1
+            : this.answer.comments.length;
+        const commentsToShow = this.showAllComments ? this.answer.comments.length : defaultCommentsToShow;
+        const commentIdsToMarkRead: string[] = [];
+        let commentNumber = 1;
+        // Older comments are displayed above newer comments, so iterate over comments starting with the oldest
+        for (const comment of this.getSortedComments()) {
+          if (!this.projectUserConfigDoc.data.commentRefsRead.includes(comment.dataId)) {
+            commentIdsToMarkRead.push(comment.dataId);
           }
-        });
-      }
-    });
+          commentNumber++;
+          if (commentNumber > commentsToShow) {
+            break;
+          }
+        }
+        if (commentIdsToMarkRead.length) {
+          this.projectUserConfigDoc.submitJson0Op(op => {
+            for (const commentId of commentIdsToMarkRead) {
+              op.add(puc => puc.commentRefsRead, commentId);
+            }
+          });
+        }
+      });
+    }
   }
 
   showComments(): void {

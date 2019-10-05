@@ -16,12 +16,12 @@ export interface AudioAttachment {
   styleUrls: ['./checking-audio-recorder.component.scss']
 })
 export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
-  @Output() status: EventEmitter<AudioAttachment> = new EventEmitter<AudioAttachment>();
+  @Output() status = new EventEmitter<AudioAttachment>();
   audioUrl: string = '';
-  microphonePermission: boolean;
-  private stream: MediaStream;
-  private recordRTC: RecordRTC;
-  private user: UserDoc;
+  microphonePermission: boolean = true;
+  private stream?: MediaStream;
+  private recordRTC?: RecordRTC;
+  private user?: UserDoc;
 
   constructor(private userService: UserService) {}
 
@@ -30,11 +30,11 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   }
 
   get isRecording(): boolean {
-    return this.recordRTC && this.recordRTC.state === 'recording';
+    return this.recordRTC != null && this.recordRTC.state === 'recording';
   }
 
   get recodingFileName(): string {
-    return this.user.data.displayName + '.webm';
+    return this.user == null || this.user.data == null ? '' : this.user.data.displayName + '.webm';
   }
 
   ngOnDestroy(): void {
@@ -48,6 +48,10 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   }
 
   processAudio(audioVideoWebMURL: string) {
+    if (this.recordRTC == null) {
+      return;
+    }
+
     this.audioUrl = audioVideoWebMURL;
     this.recordRTC.getDataURL(() => {});
     this.status.emit({
@@ -72,6 +76,10 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   }
 
   async stopRecording() {
+    if (this.recordRTC == null || this.stream == null) {
+      return;
+    }
+
     this.recordRTC.stopRecording(this.processAudio.bind(this));
     this.stream.getAudioTracks().forEach(track => track.stop());
     this.status.emit({ status: 'stopped' });

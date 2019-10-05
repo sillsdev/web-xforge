@@ -8,6 +8,9 @@ export class SFProjectDoc extends ProjectDoc<SFProject> {
   static readonly COLLECTION = SF_PROJECTS_COLLECTION;
 
   get taskNames(): string[] {
+    if (this.data == null) {
+      return [];
+    }
     const names: string[] = ['Translate'];
     if (this.data.checkingConfig.checkingEnabled) {
       names.push('Community Checking');

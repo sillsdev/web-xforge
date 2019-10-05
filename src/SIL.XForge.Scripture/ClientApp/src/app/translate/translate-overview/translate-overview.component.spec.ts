@@ -47,7 +47,7 @@ describe('TranslateOverviewComponent', () => {
       env.wait();
 
       expect(env.progressTitle.textContent).toContain('Progress');
-      expect(env.component.texts.length).toEqual(4);
+      expect(env.component.texts!.length).toEqual(4);
       env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
       env.expectContainsTextProgress(1, 'Mark', '10 of 20 segments');
       env.expectContainsTextProgress(2, 'Luke', '10 of 20 segments');
@@ -208,9 +208,9 @@ class TestEnvironment {
     const items = this.progressTextList.querySelectorAll('mdc-list-item');
     const item = items.item(index);
     const primaryElem = item.querySelector('.mdc-list-item__primary-text');
-    expect(primaryElem.textContent).toBe(primary);
+    expect(primaryElem!.textContent).toBe(primary);
     const secondaryElem = item.querySelector('.mdc-list-item__secondary-text');
-    expect(secondaryElem.textContent).toBe(secondary);
+    expect(secondaryElem!.textContent).toBe(secondary);
   }
 
   setupProjectData(translationSuggestionsEnabled: boolean = true): void {

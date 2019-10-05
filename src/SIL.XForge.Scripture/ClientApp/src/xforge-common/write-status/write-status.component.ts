@@ -8,8 +8,8 @@ import { ElementState } from '../models/element-state';
   styleUrls: ['./write-status.component.scss']
 })
 export class WriteStatusComponent {
-  @Input() state: ElementState;
-  @Input() formGroup: FormGroup;
+  @Input() state?: ElementState;
+  @Input() formGroup?: FormGroup;
 
   ElementState = ElementState;
 }

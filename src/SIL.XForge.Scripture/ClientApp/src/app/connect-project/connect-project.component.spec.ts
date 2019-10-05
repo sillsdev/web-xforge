@@ -45,7 +45,7 @@ describe('ConnectProjectComponent', () => {
 
   it('should display login button when PT projects is null', () => {
     const env = new TestEnvironment();
-    when(mockedParatextService.getProjects()).thenReturn(of(null));
+    when(mockedParatextService.getProjects()).thenReturn(of(undefined));
     env.fixture.detectChanges();
 
     expect(env.component.state).toEqual('login');
@@ -106,7 +106,7 @@ describe('ConnectProjectComponent', () => {
     env.component.paratextIdControl.markAsTouched();
     expect(env.component.paratextIdControl.valid).toBe(true);
     env.clickElement(env.submitButton);
-    expect(env.component.paratextIdControl.errors['required']).toBe(true);
+    expect(env.component.paratextIdControl.errors!.required).toBe(true);
 
     env.changeSelectValue(env.projectSelect, 'pt03');
 
@@ -180,10 +180,10 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
 
     // Simulate touching source project control
-    env.component.sourceParatextIdControl.markAsTouched();
-    expect(env.component.sourceParatextIdControl.valid).toBe(true);
+    env.component.settings.controls.sourceParatextId.markAsTouched();
+    expect(env.component.settings.controls.sourceParatextId.valid).toBe(true);
     env.clickElement(env.submitButton);
-    expect(env.component.sourceParatextIdControl.errors['required']).toBe(true);
+    expect(env.component.settings.controls.sourceParatextId.errors!['required']).toBe(true);
     // Uncheck the translation suggestions checkbox
     env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
     env.clickElement(env.submitButton);
@@ -365,7 +365,7 @@ class TestEnvironment {
   }
 
   get sourceParatextIdControl(): AbstractControl {
-    return this.component.connectProjectForm.get('settings.sourceParatextId');
+    return this.component.settings.controls.sourceParatextId;
   }
 
   get progressBar(): DebugElement {
@@ -406,7 +406,7 @@ class TestEnvironment {
 
   emitSyncProgress(percentCompleted: number): void {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
-    projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.percentCompleted, percentCompleted), false);
+    projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.percentCompleted!, percentCompleted), false);
     tick();
     this.fixture.detectChanges();
   }
@@ -415,9 +415,9 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
     projectDoc.submitJson0Op(op => {
       op.set<number>(p => p.sync.queuedCount, 0);
-      op.unset(p => p.sync.percentCompleted);
-      op.set<boolean>(p => p.sync.lastSyncSuccessful, true);
-      op.set(p => p.sync.dateLastSuccessfulSync, new Date().toJSON());
+      op.unset(p => p.sync.percentCompleted!);
+      op.set<boolean>(p => p.sync.lastSyncSuccessful!, true);
+      op.set(p => p.sync.dateLastSuccessfulSync!, new Date().toJSON());
     }, false);
     this.fixture.detectChanges();
   }

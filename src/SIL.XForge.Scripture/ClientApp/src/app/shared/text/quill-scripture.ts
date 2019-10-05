@@ -18,46 +18,45 @@ function setUsxValue(node: HTMLElement, value: any): void {
 }
 
 interface UsxStyle {
-  style?: string;
+  style: string;
   status?: string;
 }
 
 interface Chapter extends UsxStyle {
-  number?: number;
+  number: number;
   altnumber?: string;
   pubnumber?: string;
 }
 
 interface Verse extends UsxStyle {
-  number?: string;
+  number: string;
   altnumber?: string;
   pubnumber?: string;
 }
 
 interface Note extends UsxStyle {
-  index?: number;
-  caller?: string;
+  caller: string;
   closed?: string;
   contents?: { ops: DeltaOperation[] };
 }
 
 interface Figure extends UsxStyle {
   alt?: string;
-  file?: string;
+  file: string;
   src?: string;
-  size?: string;
+  size: string;
   loc?: string;
   copy?: string;
-  ref?: string;
+  ref: string;
   contents?: { ops: DeltaOperation[] };
 }
 
 interface Ref {
-  loc?: string;
+  loc: string;
 }
 
 interface Unmatched {
-  marker?: string;
+  marker: string;
 }
 
 export function registerScripture(): void {
@@ -104,7 +103,7 @@ export function registerScripture(): void {
     static create(value: string): Node {
       const node = super.create(value) as HTMLElement;
       node.setAttribute(customAttributeName('type'), value);
-      let text: string;
+      let text: string = '';
       switch (value) {
         case 'initial':
           text = NBSP.repeat(2);
@@ -195,7 +194,9 @@ export function registerScripture(): void {
       if (value.caller !== '+' && value.caller !== '-') {
         node.innerText = value.caller;
       }
-      node.title = value.contents.ops.reduce((text, op) => text + op.insert, '');
+      if (value.contents != null) {
+        node.title = value.contents.ops.reduce((text, op) => text + op.insert, '');
+      }
       setUsxValue(node, value);
       return node;
     }
@@ -348,7 +349,7 @@ export function registerScripture(): void {
     }
 
     static value(node: HTMLElement): string {
-      return node.getAttribute(customAttributeName('segment'));
+      return node.getAttribute(customAttributeName('segment'))!;
     }
 
     format(name: string, value: any): void {
@@ -411,10 +412,13 @@ export function registerScripture(): void {
 
   class DisableHtmlClipboard extends QuillClipboard {
     onPaste(e: ClipboardEvent): void {
-      if (e.defaultPrevented || !this.quill.isEnabled()) {
+      if (e.defaultPrevented || !this.quill.isEnabled() || e.clipboardData == null) {
         return;
       }
       const range = this.quill.getSelection();
+      if (range == null) {
+        return;
+      }
       let delta = new Delta().retain(range.index);
       const scrollTop = this.quill.scrollingContainer.scrollTop;
       this.container.focus();

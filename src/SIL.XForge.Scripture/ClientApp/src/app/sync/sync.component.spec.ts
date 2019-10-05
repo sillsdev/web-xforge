@@ -200,7 +200,7 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'testproject01');
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 1);
-      ops.set(p => p.sync.percentCompleted, percentCompleted);
+      ops.set(p => p.sync.percentCompleted!, percentCompleted);
     }, false);
     this.fixture.detectChanges();
   }
@@ -209,10 +209,10 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'testproject01');
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 0);
-      ops.unset(p => p.sync.percentCompleted);
-      ops.set(p => p.sync.lastSyncSuccessful, successful);
+      ops.unset(p => p.sync.percentCompleted!);
+      ops.set(p => p.sync.lastSyncSuccessful!, successful);
       if (successful) {
-        ops.set(p => p.sync.dateLastSuccessfulSync, new Date().toJSON());
+        ops.set(p => p.sync.dateLastSuccessfulSync!, new Date().toJSON());
       }
     }, false);
     this.fixture.detectChanges();

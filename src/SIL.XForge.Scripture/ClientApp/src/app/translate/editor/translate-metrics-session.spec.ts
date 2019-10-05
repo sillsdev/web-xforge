@@ -30,7 +30,6 @@ describe('TranslateMetricsSession', () => {
   describe('edit', () => {
     it('start with edit keystroke', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.startSession();
 
       env.keyPress('ArrowRight');
       expect(env.session.metrics.type).toBe('navigate');
@@ -61,7 +60,6 @@ describe('TranslateMetricsSession', () => {
 
     it('start with accepted suggestion', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.startSession();
 
       env.mouseClick();
       env.showSuggestion();
@@ -97,7 +95,6 @@ describe('TranslateMetricsSession', () => {
 
     it('navigate keystroke', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.startSession();
 
       env.keyPress('a');
       verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
@@ -116,7 +113,6 @@ describe('TranslateMetricsSession', () => {
 
     it('mouse click', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.startSession();
 
       env.keyPress('a');
       verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
@@ -135,7 +131,6 @@ describe('TranslateMetricsSession', () => {
 
     it('timeout', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.startSession();
 
       env.keyPress('a');
       tick(ACTIVE_EDIT_TIMEOUT);
@@ -172,7 +167,6 @@ describe('TranslateMetricsSession', () => {
 
     it('segment change', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.startSession();
 
       env.keyPress('a');
       tick(ACTIVE_EDIT_TIMEOUT);
@@ -181,7 +175,7 @@ describe('TranslateMetricsSession', () => {
       expect(env.session.metrics.keyCharacterCount).toBe(1);
 
       const range = env.target.getSegmentRange('verse_1_2');
-      env.target.editor.setSelection(range.index, 0, 'user');
+      env.target.editor!.setSelection(range!.index, 0, 'user');
       env.targetFixture.detectChanges();
       tick();
       const expectedMetrics: TranslateMetrics = {
@@ -206,7 +200,6 @@ describe('TranslateMetricsSession', () => {
   describe('navigate', () => {
     it('navigate keystroke', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.startSession();
 
       env.keyPress('ArrowRight');
       env.keyPress('ArrowLeft');
@@ -218,7 +211,6 @@ describe('TranslateMetricsSession', () => {
 
     it('mouse click', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.startSession();
 
       env.mouseClick();
       env.mouseClick();
@@ -230,7 +222,6 @@ describe('TranslateMetricsSession', () => {
 
     it('segment change', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.startSession();
 
       env.keyPress('ArrowDown');
       env.mouseClick();
@@ -256,7 +247,6 @@ describe('TranslateMetricsSession', () => {
 
   it('dispose', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.startSession();
 
     env.keyPress('a');
     env.keyPress('b');
@@ -283,7 +273,6 @@ describe('TranslateMetricsSession', () => {
 
   it('periodic send', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.startSession();
 
     env.keyPress('ArrowRight');
     env.keyPress('ArrowLeft');
@@ -328,7 +317,6 @@ describe('TranslateMetricsSession', () => {
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(
       new CommandError(CommandErrorCode.NotFound, 'NotFound')
     );
-    env.startSession();
 
     env.keyPress('a');
     expect(() => env.session.dispose()).not.toThrow();
@@ -339,7 +327,6 @@ describe('TranslateMetricsSession', () => {
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(
       new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
     );
-    env.startSession();
 
     env.keyPress('a');
     expect(() => env.session.dispose()).not.toThrow();
@@ -372,15 +359,18 @@ class TestEnvironment {
     this.target = this.targetFixture.componentInstance;
     this.target.id = new TextDocId('project01', 40, 1, 'target');
     this.target.segmentRef = 'verse_1_1';
-    this.session = new TranslateMetricsSession(instance(mockedSFProjectService));
+    this.session = new TranslateMetricsSession(
+      instance(mockedSFProjectService),
+      'project01',
+      this.source,
+      this.target,
+      this.tokenizer,
+      this.tokenizer
+    );
 
     this.sourceFixture.detectChanges();
     this.targetFixture.detectChanges();
     tick();
-  }
-
-  startSession(): void {
-    this.session.start('project01', this.source, this.target, this.tokenizer, this.tokenizer);
   }
 
   keyPress(key: string): void {
@@ -389,24 +379,24 @@ class TestEnvironment {
     keydownEvent.ctrlKey = false;
     keydownEvent.metaKey = false;
     keydownEvent.initEvent('keydown', true, true);
-    this.target.editor.root.dispatchEvent(keydownEvent);
+    this.target.editor!.root.dispatchEvent(keydownEvent);
 
     const keyupEvent: any = document.createEvent('CustomEvent');
     keyupEvent.key = key;
     keyupEvent.ctrlKey = false;
     keyupEvent.metaKey = false;
     keyupEvent.initEvent('keyup', true, true);
-    this.target.editor.root.dispatchEvent(keyupEvent);
+    this.target.editor!.root.dispatchEvent(keyupEvent);
   }
 
   mouseClick(): void {
     const mousedownEvent: any = document.createEvent('CustomEvent');
     mousedownEvent.initEvent('mousedown', true, true);
-    this.target.editor.root.dispatchEvent(mousedownEvent);
+    this.target.editor!.root.dispatchEvent(mousedownEvent);
 
     const mouseupEvent: any = document.createEvent('CustomEvent');
     mouseupEvent.initEvent('mouseup', true, true);
-    this.target.editor.root.dispatchEvent(mouseupEvent);
+    this.target.editor!.root.dispatchEvent(mouseupEvent);
   }
 
   showSuggestion(): void {
@@ -417,7 +407,7 @@ class TestEnvironment {
     this.mouseClick();
     const clickEvent: any = document.createEvent('CustomEvent');
     clickEvent.initEvent('click', true, true);
-    this.target.editor.root.dispatchEvent(clickEvent);
+    this.target.editor!.root.dispatchEvent(clickEvent);
     this.session.onSuggestionAccepted(clickEvent);
   }
 

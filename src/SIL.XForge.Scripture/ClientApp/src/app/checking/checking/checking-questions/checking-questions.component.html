@@ -8,7 +8,7 @@
       'question-answered': hasUserAnswered(questionDoc),
       'question-has-answers': getUnreadAnswers(questionDoc)
     }"
-    [activated]="activeQuestionDoc && activeQuestionDoc.id === questionDoc.id"
+    [activated]="activeQuestionDoc?.id === questionDoc.id"
   >
     <div class="question-title">
       <mdc-icon *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>

@@ -19,8 +19,8 @@ export interface RealtimeDocConstructor {
 export abstract class RealtimeDoc<T = any, Ops = any> {
   private updateOfflineDataSub: Subscription;
   private onDeleteSub: Subscription;
-  private offlineSnapshotVersion: number;
-  private subscribePromise: Promise<void>;
+  private offlineSnapshotVersion?: number;
+  private subscribePromise?: Promise<void>;
   private localDelete$ = new Subject<void>();
   private _delete$: Observable<void>;
   private subscribeQueryCount: number = 0;
@@ -38,7 +38,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     return this.adapter.id;
   }
 
-  get data(): Readonly<T> {
+  get data(): Readonly<T | undefined> {
     return this.adapter.data;
   }
 
@@ -180,7 +180,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
    * @param {boolean} [force=false] Indicates whether force the update to occur even if not subscribed.
    */
   private async updateOfflineData(force: boolean = false): Promise<void> {
-    if (!this.isLoaded) {
+    if (this.adapter.type == null) {
       return;
     }
 

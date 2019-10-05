@@ -17,14 +17,14 @@ export interface SuggestionSelectedEvent {
   styleUrls: ['./suggestion.component.scss']
 })
 export class SuggestionComponent extends SubscriptionDisposable implements OnInit {
-  @Input() confidence: number;
-  @Input() text: TextComponent;
+  @Input() confidence: number = 0;
+  @Input() text?: TextComponent;
   @Output() selected = new EventEmitter<SuggestionSelectedEvent>();
 
   showHelp: boolean = false;
 
   private _words: string[] = [];
-  private top: number;
+  private top: number = 0;
 
   constructor(private readonly elemRef: ElementRef) {
     super();
@@ -65,8 +65,8 @@ export class SuggestionComponent extends SubscriptionDisposable implements OnIni
     return Math.round(this.confidence * 100);
   }
 
-  private get editor(): Quill {
-    return this.text.editor;
+  private get editor(): Quill | undefined {
+    return this.text == null ? undefined : this.text.editor;
   }
 
   private get root(): HTMLElement {
@@ -78,10 +78,10 @@ export class SuggestionComponent extends SubscriptionDisposable implements OnIni
   }
 
   ngOnInit(): void {
-    if (this.editor != null) {
-      this.init();
+    this.init();
+    if (this.text != null) {
+      this.subscribe(this.text.loaded, () => this.init());
     }
-    this.subscribe(this.text.loaded, () => this.init());
   }
 
   toggleHelp(): void {
@@ -93,6 +93,10 @@ export class SuggestionComponent extends SubscriptionDisposable implements OnIni
   }
 
   private init(): void {
+    if (this.text == null || this.editor == null) {
+      return;
+    }
+
     if (this.editor.root === this.editor.scrollingContainer) {
       this.subscribe(fromEvent(this.editor.root, 'scroll'), () => this.updateVisibility());
     }
@@ -116,6 +120,9 @@ export class SuggestionComponent extends SubscriptionDisposable implements OnIni
   }
 
   private setPosition(): void {
+    if (this.editor == null) {
+      return;
+    }
     const selection = this.editor.getSelection();
     if (selection == null) {
       return;
@@ -149,6 +156,9 @@ export class SuggestionComponent extends SubscriptionDisposable implements OnIni
   }
 
   private updateVisibility(): void {
+    if (this.editor == null) {
+      return;
+    }
     const marginTop = -this.editor.root.scrollTop;
     const offsetTop = marginTop + this.top;
     const offsetBottom = offsetTop + this.root.clientHeight;

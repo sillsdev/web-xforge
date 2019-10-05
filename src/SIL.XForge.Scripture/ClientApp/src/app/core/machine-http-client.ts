@@ -17,12 +17,12 @@ export class MachineHttpClient extends HttpClient {
   get<T>(url: string): Observable<HttpResponse<T>> {
     return this.httpClient
       .get<T>(MACHINE_API_BASE_URL + url, { headers: this.getHeaders(), observe: 'response' })
-      .pipe(map(r => ({ status: r.status, data: r.body })));
+      .pipe(map(r => ({ status: r.status, data: r.body == null ? undefined : r.body })));
   }
 
   post<T>(url: string, body?: any): Observable<HttpResponse<T>> {
     return this.httpClient
       .post<T>(MACHINE_API_BASE_URL + url, body, { headers: this.getHeaders(), observe: 'response' })
-      .pipe(map(r => ({ status: r.status, data: r.body })));
+      .pipe(map(r => ({ status: r.status, data: r.body == null ? undefined : r.body })));
   }
 }

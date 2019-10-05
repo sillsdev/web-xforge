@@ -17,9 +17,9 @@ import { SFProjectService } from '../core/sf-project.service';
 export class SyncComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   syncActive: boolean = false;
 
-  private projectDoc: SFProjectDoc;
-  private paratextUsername: string;
-  private projectDataSub: Subscription;
+  private projectDoc?: SFProjectDoc;
+  private paratextUsername?: string;
+  private projectDataSub?: Subscription;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -31,11 +31,13 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   get isLoggedIntoParatext(): boolean {
-    return this.paratextUsername && this.paratextUsername.length > 0;
+    return this.paratextUsername != null && this.paratextUsername.length > 0;
   }
 
-  get percentComplete(): number {
-    return this.projectDoc == null ? undefined : this.projectDoc.data.sync.percentCompleted;
+  get percentComplete(): number | undefined {
+    return this.projectDoc == null || this.projectDoc.data == null
+      ? undefined
+      : this.projectDoc.data.sync.percentCompleted;
   }
 
   get isProgressDeterminate(): boolean {
@@ -43,7 +45,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   get lastSyncNotice(): string {
-    if (this.projectDoc == null) {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
       return '';
     }
     const dateLastSynced = this.projectDoc.data.sync.dateLastSuccessfulSync;
@@ -55,7 +57,11 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   get lastSyncDate() {
-    if (this.projectDoc == null) {
+    if (
+      this.projectDoc == null ||
+      this.projectDoc.data == null ||
+      this.projectDoc.data.sync.dateLastSuccessfulSync == null
+    ) {
       return '';
     }
     const date = new Date(this.projectDoc.data.sync.dateLastSuccessfulSync);
@@ -63,7 +69,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   get projectName(): string {
-    return this.projectDoc == null ? '' : this.projectDoc.data.name;
+    return this.projectDoc == null || this.projectDoc.data == null ? '' : this.projectDoc.data.name;
   }
 
   ngOnInit() {
@@ -97,16 +103,26 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   logInWithParatext(): void {
+    if (this.projectDoc == null) {
+      return;
+    }
     const url = '/projects/' + this.projectDoc.id + '/sync';
     this.paratextService.linkParatext(url);
   }
 
-  syncProject(): Promise<void> {
+  syncProject(): void {
+    if (this.projectDoc == null) {
+      return;
+    }
     this.syncActive = true;
-    return this.projectService.onlineSync(this.projectDoc.id);
+    this.projectService.onlineSync(this.projectDoc.id);
   }
 
   private checkSyncStatus(): void {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
+      return;
+    }
+
     if (this.projectDoc.data.sync.queuedCount > 0) {
       this.syncActive = true;
     } else if (this.syncActive) {

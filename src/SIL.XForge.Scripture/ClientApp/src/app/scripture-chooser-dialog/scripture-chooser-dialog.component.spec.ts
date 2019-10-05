@@ -63,7 +63,7 @@ describe('ScriptureChooserDialog', () => {
     env.click(env.bookEphesians);
     env.click(env.chapter3);
     env.click(env.verse21);
-    expect(env.dialogResult.toString()).toEqual('EPH 3:21');
+    expect(env.dialogResult!.toString()).toEqual('EPH 3:21');
   }));
 
   it('clicking X closes. dialog reports cancelled.', fakeAsync(() => {
@@ -91,8 +91,8 @@ describe('ScriptureChooserDialog', () => {
     expect(env.chapter3).toBeDefined('missing chapter 3 button');
   }));
 
-  it('book not highlighted, if no (null) incoming reference', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: null });
+  it('book not highlighted, if no incoming reference', fakeAsync(() => {
+    const env = new TestEnvironment();
     expect(env.highlightedButton).toBeNull();
   }));
 
@@ -155,9 +155,9 @@ describe('ScriptureChooserDialog', () => {
 
   it('input is received', fakeAsync(() => {
     const env = new TestEnvironment({ inputScriptureReference: new VerseRef('EPH', '3', '21') });
-    expect(env.component.data.input.book).toEqual('EPH');
-    expect(env.component.data.input.chapter).toEqual('3');
-    expect(env.component.data.input.verse).toEqual('21');
+    expect(env.component.data.input!.book).toEqual('EPH');
+    expect(env.component.data.input!.chapter).toEqual('3');
+    expect(env.component.data.input!.verse).toEqual('21');
   }));
 
   it('only shows books that we seed (from project)', fakeAsync(() => {
@@ -246,7 +246,7 @@ describe('ScriptureChooserDialog', () => {
     expect(env.dialogText).toContain('21');
 
     env.click(env.verse21);
-    expect(env.dialogResult.toString()).toEqual('EPH 3:21');
+    expect(env.dialogResult!.toString()).toEqual('EPH 3:21');
   }));
 
   it('close button works for end-selection chooser', fakeAsync(() => {
@@ -388,7 +388,7 @@ describe('ScriptureChooserDialog', () => {
     template: '<viewContainerDirective></viewContainerDirective>'
   })
   class ChildViewContainerComponent {
-    @ViewChild(ViewContainerDirective, { static: true }) viewContainer: ViewContainerDirective;
+    @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
 
     get childViewContainer(): ViewContainerRef {
       return this.viewContainer.viewContainerRef;
@@ -408,7 +408,7 @@ describe('ScriptureChooserDialog', () => {
     component: ScriptureChooserDialogComponent;
     dialogRef: MdcDialogRef<ScriptureChooserDialogComponent>;
     overlayContainerElement: HTMLElement;
-    dialogResult: 'close' | VerseRef;
+    dialogResult?: 'close' | VerseRef;
     closeIconName = 'close';
     backIconName = 'navigate_before';
 
@@ -465,7 +465,7 @@ describe('ScriptureChooserDialog', () => {
       this.fixture.detectChanges();
     }
 
-    get dialogText(): string {
+    get dialogText(): string | null {
       return this.overlayContainerElement.textContent;
     }
 
@@ -514,7 +514,7 @@ describe('ScriptureChooserDialog', () => {
     buttonWithText(text: string): DebugElement {
       return this.fixture.debugElement
         .queryAll(By.css('button'))
-        .find(button => button.nativeElement.innerText === text);
+        .find(button => button.nativeElement.innerText === text)!;
     }
   }
 });

@@ -19,26 +19,32 @@ types.register(RichText.type);
   providedIn: 'root'
 })
 export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
-  private ws: ReconnectingWebSocket;
-  private connection: Connection;
-  private getAccessToken: () => string;
+  private ws?: ReconnectingWebSocket;
+  private connection?: Connection;
+  private getAccessToken?: () => string | undefined;
 
   constructor(private readonly locationService: LocationService) {
     super();
   }
 
-  init(getAccessToken: () => string): void {
+  init(getAccessToken: () => string | undefined): void {
     this.getAccessToken = getAccessToken;
     this.ws = new ReconnectingWebSocket(() => this.getUrl(), undefined, { maxEnqueuedMessages: 0 });
     this.connection = new Connection(this.ws);
   }
 
   createDocAdapter(collection: string, id: string): RealtimeDocAdapter {
+    if (this.connection == null) {
+      throw new Error('The store has not been initialized.');
+    }
     const doc = this.connection.get(collection, id);
     return new SharedbRealtimeDocAdapter(doc);
   }
 
   createQueryAdapter(collection: string, parameters: QueryParameters): RealtimeQueryAdapter {
+    if (this.connection == null) {
+      throw new Error('The store has not been initialized.');
+    }
     return new SharedbRealtimeQueryAdapter(this.connection, collection, parameters);
   }
 
@@ -48,7 +54,13 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
     if ('realtimePort' in environment && environment.realtimePort != null && environment.realtimePort !== 0) {
       url += `:${environment.realtimePort}`;
     }
-    url += environment.realtimeUrl + '?access_token=' + this.getAccessToken();
+    url += environment.realtimeUrl;
+    if (this.getAccessToken != null) {
+      const accessToken = this.getAccessToken();
+      if (accessToken != null) {
+        url += '?access_token=' + accessToken;
+      }
+    }
     return url;
   }
 }
@@ -221,8 +233,8 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
 export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
   private _ready$ = new Subject<void>();
   private _remoteChanges$ = new Subject<void>();
-  private resultsQuery: Query;
-  private unpagedCountQuery: Query;
+  private resultsQuery?: Query;
+  private unpagedCountQuery?: Query;
   private _ready: boolean = false;
 
   constructor(
@@ -322,6 +334,10 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
   }
 
   private setupListeners(): void {
+    if (this.resultsQuery == null) {
+      return;
+    }
+
     this.resultsQuery.on('ready', () => {
       if (this.unpagedCountQuery == null || this.unpagedCountQuery.ready) {
         this._ready = true;
@@ -332,7 +348,7 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
     this.resultsQuery.on('extra', () => this._remoteChanges$.next());
     if (this.unpagedCountQuery != null) {
       this.unpagedCountQuery.on('ready', () => {
-        if (this.resultsQuery.ready) {
+        if (this.resultsQuery != null && this.resultsQuery.ready) {
           this._ready = true;
           this._ready$.next();
         }

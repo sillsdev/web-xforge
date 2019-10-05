@@ -143,7 +143,7 @@ describe('SaUsersComponent', () => {
 
 class TestProjectDoc extends ProjectDoc {
   static readonly COLLECTION = 'projects';
-  readonly taskNames: string[];
+  readonly taskNames: string[] = [];
 }
 
 @NgModule({
@@ -214,12 +214,12 @@ class TestEnvironment {
 
   get deleteDialogDeleteButton(): HTMLButtonElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#confirm-button-yes');
+    return oce.querySelector('#confirm-button-yes') as HTMLButtonElement;
   }
 
   get deleteDialogCancelButton(): HTMLButtonElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#confirm-button-no');
+    return oce.querySelector('#confirm-button-no') as HTMLButtonElement;
   }
 
   cell(row: number, column: number): DebugElement {

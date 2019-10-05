@@ -18,7 +18,7 @@ export class XFValidators {
   }
 
   /** Pass if control value contains any non-whitespace. Error otherwise. */
-  static someNonWhitespace(control: AbstractControl): ValidationErrors | null {
+  static someNonWhitespace(control: AbstractControl | null): ValidationErrors | null {
     const error = { someNonWhitespace: true };
     const someNonWhitespaceRegex = /\S+/;
 
@@ -29,26 +29,6 @@ export class XFValidators {
       return null;
     }
     return error;
-  }
-
-  static requireOneWithValue(formGroupPaths: string[], value: any): ValidatorFn {
-    return function validate(formGroup: FormGroup) {
-      let checked = 0;
-      for (const formGroupPath of formGroupPaths) {
-        const control = formGroup.get(formGroupPath);
-        if (control.value === value) {
-          checked++;
-        }
-      }
-
-      if (checked < 1) {
-        return {
-          requireAtLeastOneWithValue: true
-        };
-      }
-
-      return null;
-    };
   }
 
   static date(control: AbstractControl): ValidationErrors | null {

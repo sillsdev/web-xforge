@@ -3,7 +3,7 @@
  */
 export interface Snapshot<T = any> {
   id: string;
-  v: number;
+  v?: number;
   data: T;
   type: string;
 }

@@ -17,7 +17,7 @@ export class RealtimeDocTypes {
     return this._docTypes.keys();
   }
 
-  getDocType(collection: string): RealtimeDocConstructor {
+  getDocType(collection: string): RealtimeDocConstructor | undefined {
     return this._docTypes.get(collection);
   }
 }

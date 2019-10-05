@@ -53,7 +53,10 @@ export class SFValidators {
     };
   }
 
-  static verseStartBeforeEnd(group: FormGroup): ValidationErrors | null {
+  static verseStartBeforeEnd(group: AbstractControl): ValidationErrors | null {
+    if (!(group instanceof FormGroup)) {
+      return null;
+    }
     const scriptureStart = group.controls.scriptureStart.value;
     const scriptureEnd = group.controls.scriptureEnd.value;
     const { verseRef: scriptureStartRef } = VerseRef.tryParse(scriptureStart != null ? scriptureStart : '');
@@ -86,19 +89,18 @@ export class SFValidators {
  * start reference is already invalid
  */
 export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const invalidCtrl = !!(control && control.invalid && control.parent.dirty);
-    const invalidStart = !!(
-      control &&
-      control.parent &&
-      control.parent.controls &&
-      control.parent.controls['scriptureStart'] &&
+  isErrorState(control: FormControl | null, _form: FormGroupDirective | NgForm | null): boolean {
+    if (control == null) {
+      return false;
+    }
+
+    const invalidCtrl = control.invalid && control.parent.dirty;
+    const invalidStart =
       !control.parent.controls['scriptureStart'].hasError('verseFormat') &&
       !control.parent.controls['scriptureStart'].hasError('verseRange') &&
       (control.parent.controls['scriptureStart'].invalid ||
         control.parent.hasError('verseDifferentBookOrChapter') ||
-        control.parent.hasError('verseBeforeStart'))
-    );
+        control.parent.hasError('verseBeforeStart'));
     return (
       (control.touched && invalidCtrl) ||
       ((control.touched || control.parent.controls['scriptureStart'].touched) && invalidStart)
@@ -110,17 +112,16 @@ export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
  * An error state matcher for the start reference text field to match when the field should be styled with red outline
  */
 export class StartReferenceRequiredErrorStateMatcher implements ErrorStateMatcher {
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const invalidCtrl = !!(control && control.invalid);
-    const endReferenceExists = !!(
-      control &&
-      control.parent &&
-      control.parent.controls &&
-      control.parent.controls['scriptureEnd'] &&
+  isErrorState(control: FormControl | null, _form: FormGroupDirective | NgForm | null): boolean {
+    if (control == null) {
+      return false;
+    }
+
+    const invalidCtrl = control.invalid;
+    const endReferenceExists =
       control.parent.controls['scriptureEnd'].value &&
       control.parent.controls['scriptureEnd'].dirty &&
-      control.parent.controls['scriptureEnd'].touched
-    );
+      control.parent.controls['scriptureEnd'].touched;
     return (control.touched && invalidCtrl) || (endReferenceExists && !control.value);
   }
 }

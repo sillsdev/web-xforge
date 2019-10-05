@@ -1,6 +1,6 @@
 import { VerseRef } from '../scripture-utils/verse-ref';
 
-export function toVerseRef(verseRefData: VerseRefData): VerseRef | undefined {
+export function toVerseRef(verseRefData?: VerseRefData): VerseRef | undefined {
   if (verseRefData == null) {
     return undefined;
   }
@@ -11,7 +11,7 @@ export function toVerseRef(verseRefData: VerseRefData): VerseRef | undefined {
   );
 }
 
-export function fromVerseRef(input: VerseRef): VerseRefData | undefined {
+export function fromVerseRef(input?: VerseRef): VerseRefData | undefined {
   if (input == null || !input.valid) {
     return undefined;
   }
@@ -24,7 +24,7 @@ export function fromVerseRef(input: VerseRef): VerseRefData | undefined {
 }
 
 export function toStartAndEndVerseRefs(
-  verseRefData: VerseRefData
+  verseRefData?: VerseRefData
 ): { startVerseRef?: VerseRef; endVerseRef?: VerseRef } {
   const verseRef = toVerseRef(verseRefData);
   if (verseRef == null) {

@@ -33,6 +33,9 @@ export class RealtimeService {
     let doc = this.docs.get(key);
     if (doc == null) {
       const RealtimeDocType = this.docTypes.getDocType(collection);
+      if (RealtimeDocType == null) {
+        throw new Error('The collection is unknown.');
+      }
       doc = new RealtimeDocType(this, this.remoteStore.createDocAdapter(collection, id));
       this.docs.set(key, doc);
     }
@@ -118,7 +121,10 @@ export class RealtimeService {
   }
 
   onQueryUnsubscribe(query: RealtimeQuery): void {
-    this.subscribeQueries.get(query.collection).delete(query);
+    const collectionQueries = this.subscribeQueries.get(query.collection);
+    if (collectionQueries != null) {
+      collectionQueries.delete(query);
+    }
   }
 
   onLocalDocUpdate(doc: RealtimeDoc): void {

@@ -41,7 +41,7 @@ function matchFilters(filters: Filters, data: any): boolean {
   for (const key of Object.keys(filters)) {
     if (key === '$or') {
       const orFilter = filters[key] as Filters[];
-      if (orFilter.every(f => !this.matchFilters(data, f))) {
+      if (orFilter.every(f => !matchFilters(data, f))) {
         return false;
       }
     } else if (!key.startsWith('$')) {

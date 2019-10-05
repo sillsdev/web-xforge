@@ -104,7 +104,7 @@ describe('ShareComponent', () => {
 
     env.clickElement(env.shareButton);
     env.setInputValue(env.emailInput, emailAddress);
-    expect(env.emailInput.querySelector('input').value).toBe(emailAddress);
+    expect(env.emailInput.querySelector('input')!.value).toBe(emailAddress);
     env.clickElement(env.sendInviteButton);
 
     env.clickElement(env.closeButton);
@@ -172,27 +172,27 @@ class TestEnvironment {
 
   get sendInviteButton(): HTMLButtonElement {
     const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#send-btn');
+    return overlayContainerElement.querySelector('#send-btn') as HTMLButtonElement;
   }
 
   get closeButton(): HTMLButtonElement {
     const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#close-btn');
+    return overlayContainerElement.querySelector('#close-btn') as HTMLButtonElement;
   }
 
   get emailInput(): HTMLElement {
     const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#email');
+    return overlayContainerElement.querySelector('#email') as HTMLElement;
   }
 
   get shareLink(): HTMLInputElement {
     const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#share-link input');
+    return overlayContainerElement.querySelector('#share-link input') as HTMLInputElement;
   }
 
   get shareLinkCopyIcon(): HTMLElement {
     const overlayContainerElement = this.overlayContainer.getContainerElement();
-    return overlayContainerElement.querySelector('#share-link-copy-icon');
+    return overlayContainerElement.querySelector('#share-link-copy-icon') as HTMLElement;
   }
 
   clickElement(element: HTMLElement): void {
@@ -202,7 +202,7 @@ class TestEnvironment {
   }
 
   setInputValue(textField: HTMLElement, value: string): void {
-    const inputElem: HTMLInputElement = textField.querySelector('input');
+    const inputElem = textField.querySelector('input') as HTMLInputElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();

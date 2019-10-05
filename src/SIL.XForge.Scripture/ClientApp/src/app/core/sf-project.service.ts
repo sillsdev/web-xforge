@@ -35,8 +35,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     super(realtimeService, commandService, SF_PROJECT_ROLES, http);
   }
 
-  onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
-    return this.onlineInvoke('create', { settings });
+  async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
+    return (await this.onlineInvoke<string>('create', { settings }))!;
   }
 
   getUserConfig(id: string, userId: string): Promise<SFProjectUserConfigDoc> {
@@ -103,14 +103,14 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineInvoke('updateSettings', { projectId: id, settings });
   }
 
-  onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
-    return this.onlineInvoke('isAlreadyInvited', { projectId: id, email });
+  async onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
+    return (await this.onlineInvoke<boolean>('isAlreadyInvited', { projectId: id, email }))!;
   }
 
   /** Get list of email addresses that have outstanding invitations on project.
    * Caller must be an admin on the project. */
-  onlineInvitedUsers(projectId: string): Promise<string[]> {
-    return this.onlineInvoke('invitedUsers', { projectId });
+  async onlineInvitedUsers(projectId: string): Promise<string[]> {
+    return (await this.onlineInvoke<string[]>('invitedUsers', { projectId }))!;
   }
 
   /** Get added into project, with optionally specified shareKey code. */
@@ -118,11 +118,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.onlineInvoke('checkLinkSharing', { projectId: id, shareKey });
   }
 
-  onlineInvite(id: string, email: string): Promise<string> {
+  onlineInvite(id: string, email: string): Promise<string | undefined> {
     return this.onlineInvoke('invite', { projectId: id, email });
   }
 
-  onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
-    return this.onlineInvoke('uninviteUser', { projectId, emailToUninvite });
+  async onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
+    return (await this.onlineInvoke<string>('uninviteUser', { projectId, emailToUninvite }))!;
   }
 }
