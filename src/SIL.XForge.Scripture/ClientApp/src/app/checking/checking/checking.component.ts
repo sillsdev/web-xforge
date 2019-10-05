@@ -9,7 +9,7 @@ import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, toVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
@@ -53,7 +53,7 @@ interface Summary {
   styleUrls: ['./checking.component.scss']
 })
 export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
-  userDoc: UserDoc;
+  userDoc?: UserDoc;
   @ViewChild('answerPanelContainer', { static: false }) set answersPanelElement(
     answersPanelContainerElement: ElementRef
   ) {
@@ -63,13 +63,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   @HostBinding('class') classes = 'flex-max';
-  @ViewChild(CheckingAnswersComponent, { static: false }) answersPanel: CheckingAnswersComponent;
-  @ViewChild(CheckingTextComponent, { static: true }) scripturePanel: CheckingTextComponent;
-  @ViewChild(CheckingQuestionsComponent, { static: true }) questionsPanel: CheckingQuestionsComponent;
-  @ViewChild(SplitComponent, { static: true }) splitComponent: SplitComponent;
-  @ViewChild('splitContainer', { static: true }) splitContainerElement: ElementRef;
-  @ViewChild('scripturePanelContainer', { static: true }) scripturePanelContainerElement: ElementRef;
-  @ViewChild('chapterMenuList', { static: true }) chapterMenuList: MdcList;
+  @ViewChild(CheckingAnswersComponent, { static: false }) answersPanel?: CheckingAnswersComponent;
+  @ViewChild(CheckingTextComponent, { static: true }) scripturePanel!: CheckingTextComponent;
+  @ViewChild(CheckingQuestionsComponent, { static: true }) questionsPanel!: CheckingQuestionsComponent;
+  @ViewChild(SplitComponent, { static: true }) splitComponent!: SplitComponent;
+  @ViewChild('splitContainer', { static: true }) splitContainerElement!: ElementRef;
+  @ViewChild('scripturePanelContainer', { static: true }) scripturePanelContainerElement!: ElementRef;
+  @ViewChild('chapterMenuList', { static: true }) chapterMenuList!: MdcList;
 
   chapters: number[] = [];
   isExpanded: boolean = false;
@@ -82,19 +82,19 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   };
   bookVerseRefs: VerseRef[] = [];
 
-  answersPanelContainerElement: ElementRef;
-  projectDoc: SFProjectDoc;
-  projectUserConfigDoc: SFProjectUserConfigDoc;
-  text: TextInfo;
-  textDocId: TextDocId;
+  answersPanelContainerElement?: ElementRef;
+  projectDoc?: SFProjectDoc;
+  projectUserConfigDoc?: SFProjectUserConfigDoc;
+  text?: TextInfo;
+  textDocId?: TextDocId;
 
-  private _book: number;
+  private _book?: number;
   private _isDrawerPermanent: boolean = true;
-  private _chapter: number;
-  private questionsQuery: RealtimeQuery<QuestionDoc>;
-  private questionsSub: Subscription;
-  private projectDeleteSub: Subscription;
-  private projectRemoteChangesSub: Subscription;
+  private _chapter?: number;
+  private questionsQuery?: RealtimeQuery<QuestionDoc>;
+  private questionsSub?: Subscription;
+  private projectDeleteSub?: Subscription;
+  private projectRemoteChangesSub?: Subscription;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -109,32 +109,36 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     super(noticeService);
   }
 
-  private get book(): number {
+  private get book(): number | undefined {
     return this._book;
   }
 
-  private set book(book: number) {
-    if (!this.questionDocs.length || book === this.book) {
+  private set book(book: number | undefined) {
+    if (book === this.book) {
       return;
     }
-    let defaultChapter = 1;
+    const questionDocs = this.questionDocs;
+    if (this.projectDoc == null || this.projectDoc.data == null || questionDocs.length === 0) {
+      return;
+    }
     /** Get the book from the first question if showing all the questions
      *  - Note that this only happens on first load as the book will be changed
      *    later on via other methods
      */
     if (book === 0) {
-      const firstQuestion = this.questionDocs[0];
+      const firstQuestion = questionDocs[0];
       this.questionsPanel.activateQuestion(firstQuestion);
-      book = firstQuestion.verseRef.bookNum;
-      defaultChapter = firstQuestion.verseRef.chapterNum;
-    } else if (this.questionsPanel.activeQuestionDoc) {
-      defaultChapter = this.questionsPanel.activeQuestionChapter;
+      if (firstQuestion.data != null) {
+        book = firstQuestion.data.verseRef.bookNum;
+      } else {
+        book = undefined;
+      }
     }
     this._book = book;
-    this.text = this.projectDoc.data.texts.find(t => t.bookNum === this.book);
-    this.chapters = this.text.chapters.map(c => c.number);
+    this.text = this.projectDoc.data.texts.find(t => t.bookNum === book);
+    this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
     this._chapter = undefined;
-    this.chapter = defaultChapter;
+    this.chapter = this.questionsPanel.activeQuestionChapter;
     this.checkBookStatus();
   }
 
@@ -142,14 +146,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.text != null ? Canon.bookNumberToEnglishName(this.text.bookNum) : '';
   }
 
-  get chapter(): number {
+  get chapter(): number | undefined {
     return this._chapter;
   }
 
-  set chapter(value: number) {
+  set chapter(value: number | undefined) {
     if (this._chapter !== value) {
       this._chapter = value;
-      this.textDocId = new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target');
+      this.textDocId =
+        this.projectDoc != null && this.text != null && this.chapter != null
+          ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
+          : undefined;
     }
   }
 
@@ -183,11 +190,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private get answerPanelElementHeight(): number {
-    return this.answersPanelContainerElement ? this.answersPanelContainerElement.nativeElement.offsetHeight : 0;
+    return this.answersPanelContainerElement != null ? this.answersPanelContainerElement.nativeElement.offsetHeight : 0;
   }
 
   private get answerPanelElementMinimumHeight(): number {
-    return this.answerPanelElementHeight
+    return this.answerPanelElementHeight > 0 && this.answersPanelContainerElement != null
       ? this.answerPanelElementHeight -
           this.answersPanelContainerElement.nativeElement.querySelector('.answers-container').offsetHeight +
           20
@@ -209,7 +216,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   private get textsByBookId(): TextsByBookId {
     const textsByBook: TextsByBookId = {};
-    if (this.projectDoc) {
+    if (this.projectDoc != null && this.projectDoc.data != null) {
       for (const text of this.projectDoc.data.texts) {
         textsByBook[Canon.bookNumberToId(text.bookNum)] = text;
       }
@@ -235,7 +242,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         }
         this.showAllBooks = bookId === 'ALL';
         this.questionsQuery = await this.projectService.queryQuestions(projectId, {
-          bookNum: this.showAllBooks ? null : bookNum,
+          bookNum: this.showAllBooks ? undefined : bookNum,
           activeOnly: true,
           sort: true
         });
@@ -255,7 +262,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.projectRemoteChangesSub.unsubscribe();
       }
       this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
-        if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
+        if (
+          this.projectDoc != null &&
+          this.projectDoc.data != null &&
+          !(this.userService.currentUserId in this.projectDoc.data.userRoles)
+        ) {
           this.onRemovedFromProject();
         }
       });
@@ -280,13 +291,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.scripturePanel.applyFontChange(fontSize);
   }
 
-  async answerAction(answerAction: AnswerAction) {
+  async answerAction(answerAction: AnswerAction): Promise<void> {
+    if (this.projectDoc == null) {
+      return;
+    }
+
     let useMaxAnswersPanelSize: boolean = true;
     switch (answerAction.action) {
       case 'save':
-        let answer: Answer = answerAction.answer;
+        let answer = answerAction.answer;
         const dateNow: string = new Date().toJSON();
-        if (!answer) {
+        if (answer == null) {
           answer = {
             dataId: objectId(),
             ownerRef: this.userService.currentUserId,
@@ -301,24 +316,30 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         answer.scriptureText = answerAction.scriptureText;
         answer.verseRef = answerAction.verseRef;
         answer.dateModified = dateNow;
-        if (answerAction.audio.fileName) {
-          const response = await this.projectService.onlineUploadAudio(
-            this.projectDoc.id,
-            answer.dataId,
-            new File([answerAction.audio.blob], answerAction.audio.fileName)
-          );
-          // Get the amended filename and save it against the answer
-          answer.audioUrl = response;
-        } else if (answerAction.audio.status === 'reset') {
-          answer.audioUrl = undefined;
+        if (answerAction.audio != null) {
+          if (answerAction.audio.fileName != null && answerAction.audio.blob != null) {
+            const response = await this.projectService.onlineUploadAudio(
+              this.projectDoc.id,
+              answer.dataId,
+              new File([answerAction.audio.blob], answerAction.audio.fileName)
+            );
+            // Get the amended filename and save it against the answer
+            answer.audioUrl = response;
+          } else if (answerAction.audio.status === 'reset') {
+            answer.audioUrl = undefined;
+          }
         }
         this.saveAnswer(answer);
         break;
       case 'delete':
-        this.deleteAnswer(answerAction.answer);
+        if (answerAction.answer != null) {
+          this.deleteAnswer(answerAction.answer);
+        }
         break;
       case 'like':
-        this.likeAnswer(answerAction.answer);
+        if (answerAction.answer != null) {
+          this.likeAnswer(answerAction.answer);
+        }
         break;
       case 'show-form':
         this.resetAnswerPanelHeightOnFormHide = true;
@@ -350,7 +371,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     // Focus is lost when the menu closes so need to set it again
     // Need to wait for DOM to update as we can't set the focus until it is visible and no built in method
     setTimeout(() => {
-      this.chapterMenuList.focusItemAtIndex(this.chapter - 1);
+      if (this._chapter != null) {
+        this.chapterMenuList.focusItemAtIndex(this._chapter - 1);
+      }
     }, 10);
   }
 
@@ -358,32 +381,40 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     let useMaxAnswersPanelSize: boolean = true;
     switch (commentAction.action) {
       case 'save':
-        let comment = commentAction.comment;
-        const dateNow: string = new Date().toJSON();
-        if (!comment) {
-          comment = {
-            dataId: objectId(),
-            ownerRef: this.userService.currentUserId,
-            text: '',
-            dateCreated: dateNow,
-            dateModified: dateNow
-          };
+        if (commentAction.answer != null) {
+          let comment = commentAction.comment;
+          const dateNow: string = new Date().toJSON();
+          if (comment == null) {
+            comment = {
+              dataId: objectId(),
+              ownerRef: this.userService.currentUserId,
+              text: '',
+              dateCreated: dateNow,
+              dateModified: dateNow
+            };
+          }
+          comment.text = commentAction.text;
+          comment.dateModified = dateNow;
+          this.saveComment(commentAction.answer, comment);
         }
-        comment.text = commentAction.text;
-        comment.dateModified = dateNow;
-        this.saveComment(commentAction.answer, comment);
         break;
       case 'show-comments':
-        this.projectUserConfigDoc.submitJson0Op(op => {
-          for (const comm of commentAction.answer.comments) {
-            if (!this.questionsPanel.hasUserReadComment(comm)) {
-              op.add(puc => puc.commentRefsRead, comm.dataId);
+        if (this.projectUserConfigDoc != null) {
+          this.projectUserConfigDoc.submitJson0Op(op => {
+            if (commentAction.answer != null) {
+              for (const comm of commentAction.answer.comments) {
+                if (!this.questionsPanel.hasUserReadComment(comm)) {
+                  op.add(puc => puc.commentRefsRead, comm.dataId);
+                }
+              }
             }
-          }
-        });
+          });
+        }
         break;
       case 'delete':
-        this.deleteComment(commentAction.answer, commentAction.comment);
+        if (commentAction.answer != null && commentAction.comment != null) {
+          this.deleteComment(commentAction.answer, commentAction.comment);
+        }
         break;
       case 'show-form':
         this.resetAnswerPanelHeightOnFormHide = true;
@@ -420,19 +451,19 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       VerseRef | 'close'
     >;
     dialogRef.afterClosed().subscribe(result => {
-      if (result !== 'close') {
+      if (result != null && result !== 'close') {
         this.book = result.bookNum;
         this.chapter = result.chapterNum;
       }
     });
   }
 
-  questionUpdated(questionDoc: QuestionDoc) {
+  questionUpdated(_questionDoc: QuestionDoc) {
     this.refreshSummary();
   }
 
   questionChanged(questionDoc: QuestionDoc) {
-    this.book = questionDoc.verseRef.bookNum;
+    this.book = questionDoc.data == null ? undefined : questionDoc.data.verseRef.bookNum;
     this.chapter = this.questionsPanel.activeQuestionChapter;
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
@@ -440,6 +471,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   questionDialog(): void {
+    if (this.projectDoc == null) {
+      return;
+    }
+
     const config: MdcDialogConfig<QuestionDialogData> = {
       data: {
         question: undefined,
@@ -457,10 +492,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     const currentDate = new Date().toJSON();
     let audioUrl: string;
     dialogRef.afterClosed().subscribe(async result => {
-      if (result === 'close') {
+      if (result == null || result === 'close' || this.projectDoc == null) {
         return;
       }
-      if (result.audio.fileName) {
+      if (result.audio.fileName != null && result.audio.blob != null) {
         const response = await this.projectService.onlineUploadAudio(
           this.projectDoc.id,
           questionId,
@@ -490,47 +525,46 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   verseRefClicked(verseRef: VerseRef) {
-    let bestMatch: QuestionDoc;
+    let bestMatch: QuestionDoc | undefined;
 
     for (const questionDoc of this.questionDocs) {
-      if (questionDoc.verseRef.bookNum !== this.book) {
+      const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
+      if (questionVerseRef == null || questionVerseRef.bookNum !== this.book) {
         continue;
       }
-      if (
-        questionDoc.verseRef.chapterNum === verseRef.chapterNum &&
-        questionDoc.verseRef.verseNum === verseRef.verseNum
-      ) {
+      if (questionVerseRef.chapterNum === verseRef.chapterNum && questionVerseRef.verseNum === verseRef.verseNum) {
         bestMatch = questionDoc;
         break;
       } else if (
-        questionDoc.verseRef.chapterNum === verseRef.chapterNum &&
-        questionDoc.verseRef.verseNum <= verseRef.verseNum
+        questionVerseRef.chapterNum === verseRef.chapterNum &&
+        questionVerseRef.verseNum <= verseRef.verseNum
       ) {
-        const allVerses = questionDoc.verseRef.allVerses(true);
+        const allVerses = questionVerseRef.allVerses(true);
         const endRef = allVerses[allVerses.length - 1];
         if (endRef.verseNum >= verseRef.verseNum) {
           bestMatch = questionDoc;
         }
       }
     }
-    if (bestMatch) {
+    if (bestMatch != null) {
       this.questionsPanel.activateQuestion(bestMatch);
     }
   }
 
   private checkBookStatus(): void {
-    if (!this.questionsQuery.ready) {
+    if (this.projectDoc == null || this.questionsQuery == null || !this.questionsQuery.ready) {
       return;
     }
-    if (!this.totalQuestions()) {
+    if (this.totalQuestions() === 0) {
       this.router.navigate(['/projects', this.projectDoc.id, 'checking'], {
         replaceUrl: true
       });
     } else if (this.showAllBooks) {
       const availableBooks: string[] = [];
       for (const questionDoc of this.questionDocs) {
-        if (!availableBooks.includes(questionDoc.verseRef.book)) {
-          availableBooks.push(questionDoc.verseRef.book);
+        const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
+        if (questionVerseRef != null && !availableBooks.includes(questionVerseRef.book)) {
+          availableBooks.push(questionVerseRef.book);
         }
       }
       if (availableBooks.length === 1) {
@@ -542,45 +576,54 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     // Only pass in relevant verse references to the text component
     this.bookVerseRefs = [];
     for (const questionDoc of this.questionDocs) {
-      if (questionDoc.verseRef.bookNum === this.book) {
-        this.bookVerseRefs.push(questionDoc.verseRef);
+      const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
+      if (questionVerseRef != null && questionVerseRef.bookNum === this.book) {
+        this.bookVerseRefs.push(questionVerseRef);
       }
     }
   }
 
   private getAnswerIndex(answer: Answer): number {
-    return this.questionsPanel.activeQuestionDoc.data.answers.findIndex(
-      existingAnswer => existingAnswer.dataId === answer.dataId
-    );
+    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+    return activeQuestionDoc == null || activeQuestionDoc.data == null
+      ? -1
+      : activeQuestionDoc.data.answers.findIndex(existingAnswer => existingAnswer.dataId === answer.dataId);
   }
 
   private deleteAnswer(answer: Answer): void {
+    if (this.questionsPanel.activeQuestionDoc == null) {
+      return;
+    }
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
       this.questionsPanel.activeQuestionDoc
         .submitJson0Op(op => op.remove(q => q.answers, answerIndex))
-        .then(() => this.projectService.onlineDeleteAudio(this.projectDoc.id, answer.dataId, answer.ownerRef));
+        .then(() => {
+          if (this.projectDoc != null) {
+            this.projectService.onlineDeleteAudio(this.projectDoc.id, answer.dataId, answer.ownerRef);
+          }
+        });
       this.refreshSummary();
     }
   }
 
   private saveAnswer(answer: Answer): void {
-    const answers = cloneDeep(this.questionsPanel.activeQuestionDoc.data.answers);
+    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+    if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
+      return;
+    }
+    const answers = cloneDeep(activeQuestionDoc.data.answers);
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
       answers[answerIndex] = answer;
     } else {
       answers.unshift(answer);
     }
-    this.updateQuestionAnswers(answers, answerIndex);
-  }
-
-  private updateQuestionAnswers(answers: Answer[], answerIndex: number): void {
     if (answerIndex >= 0) {
-      const oldAnswer = this.questionsPanel.activeQuestionDoc.data.answers[answerIndex];
+      const oldAnswer = activeQuestionDoc.data.answers[answerIndex];
       const newAnswer = answers[answerIndex];
       const deleteAudio = oldAnswer.audioUrl != null && newAnswer.audioUrl == null;
-      const submitPromise = this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
+      const submitPromise = activeQuestionDoc.submitJson0Op(op =>
         op
           .set(q => q.answers[answerIndex].text, newAnswer.text)
           .set(q => q.answers[answerIndex].scriptureText, newAnswer.scriptureText)
@@ -589,53 +632,64 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           .set(q => q.answers[answerIndex].dateModified, newAnswer.dateModified)
       );
       if (deleteAudio) {
-        submitPromise.then(() =>
-          this.projectService.onlineDeleteAudio(this.projectDoc.id, oldAnswer.dataId, oldAnswer.ownerRef)
-        );
+        submitPromise.then(() => {
+          if (this.projectDoc != null) {
+            this.projectService.onlineDeleteAudio(this.projectDoc.id, oldAnswer.dataId, oldAnswer.ownerRef);
+          }
+        });
       }
     } else {
-      this.questionsPanel.activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
+      activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
     }
-    this.questionsPanel.updateElementsRead(this.questionsPanel.activeQuestionDoc);
+    this.questionsPanel.updateElementsRead(activeQuestionDoc);
   }
 
   private saveComment(answer: Answer, comment: Comment): void {
+    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+    if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
+      return;
+    }
+
     const answerIndex = this.getAnswerIndex(answer);
     const commentIndex = answer.comments.findIndex(c => c.dataId === comment.dataId);
     if (commentIndex >= 0) {
-      this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
+      activeQuestionDoc.submitJson0Op(op =>
         op
           .set(q => q.answers[answerIndex].comments[commentIndex].text, comment.text)
           .set(q => q.answers[answerIndex].comments[commentIndex].dateModified, comment.dateModified)
       );
     } else {
-      this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
-        op.insert(q => q.answers[answerIndex].comments, 0, comment)
-      );
+      activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers[answerIndex].comments, 0, comment));
     }
   }
 
   private deleteComment(answer: Answer, comment: Comment): void {
+    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+    if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
+      return;
+    }
+
     const answerIndex = this.getAnswerIndex(answer);
     const commentIndex = answer.comments.findIndex(c => c.dataId === comment.dataId);
     if (commentIndex >= 0) {
-      this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
-        op.remove(q => q.answers[answerIndex].comments, commentIndex)
-      );
+      activeQuestionDoc.submitJson0Op(op => op.remove(q => q.answers[answerIndex].comments, commentIndex));
     }
   }
 
   private likeAnswer(answer: Answer) {
+    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+    if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
+      return;
+    }
+
     const currentUserId = this.userService.currentUserId;
     const likeIndex = answer.likes.findIndex(like => like.ownerRef === currentUserId);
     const answerIndex = this.getAnswerIndex(answer);
 
     if (likeIndex >= 0) {
-      this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
-        op.remove(q => q.answers[answerIndex].likes, likeIndex)
-      );
+      activeQuestionDoc.submitJson0Op(op => op.remove(q => q.answers[answerIndex].likes, likeIndex));
     } else {
-      this.questionsPanel.activeQuestionDoc.submitJson0Op(op =>
+      activeQuestionDoc.submitJson0Op(op =>
         op.insert(q => q.answers[answerIndex].likes, 0, {
           ownerRef: currentUserId
         })
@@ -667,31 +721,40 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   // Unbind this component from the data when a user is removed from the project, otherwise console
   // errors appear before the app can navigate to the start component
   private onRemovedFromProject() {
-    this.questionsPanel.activeQuestionDoc = null;
-    this.projectUserConfigDoc = null;
+    this.questionsPanel.activeQuestionDoc = undefined;
+    this.projectUserConfigDoc = undefined;
     if (this.questionsQuery != null) {
       this.questionsQuery.dispose();
     }
     this.questionsQuery = undefined;
-    this.projectDoc = null;
+    this.projectDoc = undefined;
   }
 
   private refreshSummary() {
     this.summary.answered = 0;
     this.summary.read = 0;
     this.summary.unread = 0;
-    for (const questionDoc of this.questionsQuery.docs) {
-      if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
-        this.summary.answered++;
-      } else if (CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)) {
-        this.summary.read++;
-      } else {
-        this.summary.unread++;
+    if (this.questionsQuery != null) {
+      for (const questionDoc of this.questionsQuery.docs) {
+        if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
+          this.summary.answered++;
+        } else if (
+          this.projectUserConfigDoc != null &&
+          CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)
+        ) {
+          this.summary.read++;
+        } else {
+          this.summary.unread++;
+        }
       }
     }
   }
 
   private startUserOnboardingTour() {
+    if (this.projectDoc == null || this.projectDoc.data == null || this.userDoc == null || this.userDoc.data == null) {
+      return;
+    }
+
     // HelpHero user-onboarding tour setup
     const isDiscussionEnabled: boolean = this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses;
     const isInvitingEnabled: boolean = this.projectDoc.data.checkingConfig.shareEnabled;

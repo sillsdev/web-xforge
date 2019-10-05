@@ -7,7 +7,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 })
 export class ChapterNavComponent {
   @Input() chapters: number[] = [];
-  @Input() chapter: number;
+  @Input() chapter?: number;
 
   @Output() chapterChange = new EventEmitter<number>();
 

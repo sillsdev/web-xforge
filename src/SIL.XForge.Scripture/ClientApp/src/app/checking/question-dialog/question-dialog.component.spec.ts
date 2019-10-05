@@ -9,9 +9,8 @@ import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-re
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, spy, verify, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, objectContaining, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
-import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -20,10 +19,7 @@ import { UserService } from 'xforge-common/user.service';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import {
-  ScriptureChooserDialogComponent,
-  ScriptureChooserDialogData
-} from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
+import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 import { QuestionDialogComponent, QuestionDialogData } from './question-dialog.component';
@@ -72,15 +68,15 @@ describe('QuestionDialogComponent', () => {
 
     env.inputValue(env.questionInput, '');
     expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors.required).toBeDefined();
+    expect(env.component.questionText.errors!.required).toBeDefined();
 
     env.inputValue(env.questionInput, ' ');
     expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors.someNonWhitespace).toBeDefined();
+    expect(env.component.questionText.errors!.someNonWhitespace).toBeDefined();
 
     env.inputValue(env.questionInput, '\n');
     expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors.someNonWhitespace).toBeDefined();
+    expect(env.component.questionText.errors!.someNonWhitespace).toBeDefined();
   }));
 
   it('should validate verse fields', fakeAsync(() => {
@@ -90,37 +86,37 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.scriptureStart.valid).toBe(false);
     // scriptureEnd starts disabled, and therefore invalid
     expect(env.component.scriptureEnd.valid).toBe(false);
-    expect(env.component.scriptureStart.errors.required).toBe(true);
+    expect(env.component.scriptureStart.errors!.required).toBe(true);
     env.component.scriptureStart.setValue('MAT');
-    expect(env.component.scriptureStart.errors.verseFormat).toBe(true);
+    expect(env.component.scriptureStart.errors!.verseFormat).toBe(true);
     env.component.scriptureStart.setValue('MAT 1:1');
     expect(env.component.scriptureStart.valid).toBe(true);
     expect(env.component.scriptureStart.errors).toBeNull();
     env.component.scriptureStart.setValue('MAT 1:1a');
     expect(env.component.scriptureStart.errors).toBeNull();
     env.component.scriptureStart.setValue('TIT 1:1');
-    expect(env.component.scriptureStart.errors.verseRange).toBe(true);
+    expect(env.component.scriptureStart.errors!.verseRange).toBe(true);
     env.component.scriptureStart.setValue('MAT 1:26');
-    expect(env.component.scriptureStart.errors.verseRange).toBe(true);
+    expect(env.component.scriptureStart.errors!.verseRange).toBe(true);
     env.component.scriptureStart.setValue('MAT 1:25');
     expect(env.component.scriptureStart.errors).toBeNull();
 
     expect(env.component.scriptureEnd.enabled).toBe(true);
     env.component.scriptureEnd.setValue('MAT');
-    expect(env.component.scriptureEnd.errors.verseFormat).toBe(true);
+    expect(env.component.scriptureEnd.errors!.verseFormat).toBe(true);
     env.component.scriptureEnd.setValue('MAT 1:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
     env.component.scriptureEnd.setValue('MAT 1:1a');
     expect(env.component.scriptureEnd.errors).toBeNull();
     env.component.scriptureEnd.setValue('TIT 1:1');
-    expect(env.component.scriptureEnd.errors.verseRange).toBe(true);
+    expect(env.component.scriptureEnd.errors!.verseRange).toBe(true);
     env.component.scriptureEnd.setValue('MAT 1:26');
-    expect(env.component.scriptureEnd.errors.verseRange).toBe(true);
+    expect(env.component.scriptureEnd.errors!.verseRange).toBe(true);
     env.component.scriptureEnd.setValue('MAT 1:25');
     expect(env.component.scriptureEnd.errors).toBeNull();
     env.component.scriptureEnd.setValue('JHN 1:1');
-    expect(env.component.scriptureEnd.errors.verseRange).toBe(true);
+    expect(env.component.scriptureEnd.errors!.verseRange).toBe(true);
   }));
 
   it('should produce error', fakeAsync(() => {
@@ -139,14 +135,14 @@ describe('QuestionDialogComponent', () => {
     ];
     for (const v of invalidVerses) {
       env.component.scriptureStart.setValue(v);
-      expect(env.component.scriptureStart.errors.verseFormat).toBe(true);
+      expect(env.component.scriptureStart.errors!.verseFormat).toBe(true);
     }
     // set scriptureStart to valid value so scriptureEnd is enabled
     env.component.scriptureStart.setValue('MAT 1:1');
     flush();
     for (const v of invalidVerses) {
       env.component.scriptureEnd.setValue(v);
-      expect(env.component.scriptureEnd.errors.verseFormat).toBe(true);
+      expect(env.component.scriptureEnd.errors!.verseFormat).toBe(true);
     }
   }));
 
@@ -166,11 +162,11 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.setValue('LUK 1:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.component.scriptureEnd.setValue('MAT 2:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.component.scriptureEnd.setValue('MAT 1:2');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
@@ -186,7 +182,7 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.setValue('MAT 1:1');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
-    expect(env.component.questionForm.errors.verseBeforeStart).toBe(true);
+    expect(env.component.questionForm.errors!.verseBeforeStart).toBe(true);
     env.component.scriptureEnd.setValue('MAT 1:2');
     expect(env.component.scriptureEnd.valid).toBe(true);
     expect(env.component.scriptureEnd.errors).toBeNull();
@@ -205,8 +201,7 @@ describe('QuestionDialogComponent', () => {
 
     env.clickElement(env.scriptureStartInputIcon);
     flush();
-    verify(env.dialogSpy.open(anything(), anything())).once();
-    expect(env.dataPassedToDialog.input.toString()).toEqual('MAT 3:4');
+    verify(env.dialogSpy.open(anything(), objectContaining({ data: { input: VerseRef.parse('MAT 3:4') } }))).once();
     flush();
     expect(env.component.scriptureStart.value).toEqual('LUK 1:2');
   }));
@@ -244,11 +239,14 @@ describe('QuestionDialogComponent', () => {
 
     env.clickElement(env.scriptureEndInputIcon);
     flush();
-    verify(env.dialogSpy.open(anything(), anything())).once();
     // Dialog receives unhelpful input value that can be ignored.
-    expect(env.dataPassedToDialog.input.toString()).toEqual('GEN 5:6');
     // rangeStart should have been passed in, and from scriptureStart value.
-    expect(env.dataPassedToDialog.rangeStart.toString()).toEqual('LUK 1:1');
+    verify(
+      env.dialogSpy.open(
+        anything(),
+        objectContaining({ data: { input: VerseRef.parse('GEN 5:6'), rangeStart: VerseRef.parse('LUK 1:1') } })
+      )
+    ).once();
     flush();
     expect(env.component.scriptureEnd.value).toEqual('LUK 1:2');
   }));
@@ -260,10 +258,13 @@ describe('QuestionDialogComponent', () => {
 
     env.clickElement(env.scriptureStartInputIcon);
     flush();
-    verify(env.dialogSpy.open(anything(), anything())).once();
-    expect(env.dataPassedToDialog.input.toString()).toEqual('LUK 1:1');
     // rangeStart should not have been passed in.
-    expect(env.dataPassedToDialog.rangeStart).toBeUndefined();
+    verify(
+      env.dialogSpy.open(
+        anything(),
+        objectContaining({ data: { input: VerseRef.parse('LUK 1:1'), rangeStart: undefined } })
+      )
+    ).once();
     flush();
     expect(env.component.scriptureStart.value).toEqual('LUK 1:2');
   }));
@@ -293,7 +294,7 @@ describe('QuestionDialogComponent', () => {
     flush();
     env.inputValue(env.questionInput, '');
     expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors.required).not.toBeNull();
+    expect(env.component.questionText.errors!.required).not.toBeNull();
     // Test that audio recorded results in a valid questionText control
     env.setAudioStatus('processed');
     expect(env.component.questionText.valid).toBe(true);
@@ -301,7 +302,7 @@ describe('QuestionDialogComponent', () => {
     // Removing the audio sets the validators on questionText
     env.setAudioStatus('reset');
     expect(env.component.questionText.valid).toBe(false);
-    expect(env.component.questionText.errors.required).not.toBeNull();
+    expect(env.component.questionText.errors!.required).not.toBeNull();
   }));
 
   it('display quill editor', fakeAsync(() => {
@@ -314,7 +315,7 @@ describe('QuestionDialogComponent', () => {
     env.fixture.detectChanges();
     tick(500);
     const textDocId = new TextDocId('project01', 42, 1, 'target');
-    expect(env.component.textDocId.toString()).toBe(textDocId.toString());
+    expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
     verify(mockedProjectService.getText(deepEqual(textDocId))).once();
     expect(env.isSegmentHighlighted('1')).toBe(true);
     expect(env.isSegmentHighlighted('2')).toBe(false);
@@ -333,9 +334,9 @@ describe('QuestionDialogComponent', () => {
     });
     flush();
     const textDocId = new TextDocId('project01', 42, 1, 'target');
-    expect(env.component.textDocId.toString()).toBe(textDocId.toString());
+    expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
     verify(mockedProjectService.getText(deepEqual(textDocId))).once();
-    expect(env.component.selection.toString()).toEqual('LUK 1:3');
+    expect(env.component.selection!.toString()).toEqual('LUK 1:3');
   }));
 
   it('displays error editing end reference to different book', fakeAsync(() => {
@@ -355,7 +356,7 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.markAsTouched();
     expect(env.component.scriptureEnd.errors).toBeNull();
     expect(env.component.scriptureEnd.valid).toBe(true);
-    expect(env.component.questionForm.errors.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.clickElement(env.saveButton);
     expect(env.scriptureEndInput.classList).toContain('mdc-text-field--invalid');
     expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
@@ -375,7 +376,7 @@ describe('QuestionDialogComponent', () => {
     flush();
     env.component.scriptureStart.setValue('MAT 1:2');
     env.component.scriptureStart.markAsTouched();
-    expect(env.component.questionForm.errors.verseDifferentBookOrChapter).toBe(true);
+    expect(env.component.questionForm.errors!.verseDifferentBookOrChapter).toBe(true);
     env.clickElement(env.saveButton);
     expect(env.scriptureEndInput.classList).toContain('mdc-text-field--invalid');
     expect(env.scriptureEndValidationMsg.textContent).toContain('Must be the same book and chapter');
@@ -388,11 +389,11 @@ describe('QuestionDialogComponent', () => {
     env.component.scriptureEnd.setValue('luk 1:1');
 
     flush();
-    expect(env.component.selection.toString()).toEqual('LUK 1:1');
+    expect(env.component.selection!.toString()).toEqual('LUK 1:1');
 
     env.component.scriptureEnd.setValue('LUK 1:01');
     flush();
-    expect(env.component.selection.toString()).toEqual('LUK 1:1');
+    expect(env.component.selection!.toString()).toEqual('LUK 1:1');
   }));
 
   it('should handle invalid start reference when end reference exists', fakeAsync(() => {
@@ -484,7 +485,7 @@ class ViewContainerDirective {
   template: '<viewContainerDirective></viewContainerDirective>'
 })
 class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective, { static: true }) viewContainer: ViewContainerDirective;
+  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
 
   get childViewContainer(): ViewContainerRef {
     return this.viewContainer.viewContainerRef;
@@ -501,7 +502,6 @@ class DialogTestModule {}
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
-  readonly currentUserDoc: UserDoc;
   readonly component: QuestionDialogComponent;
   readonly dialogRef: MdcDialogRef<QuestionDialogComponent>;
   readonly overlayContainerElement: HTMLElement;
@@ -553,15 +553,11 @@ class TestEnvironment {
   }
 
   get cancelButton(): HTMLButtonElement {
-    return this.overlayContainerElement.querySelector('#question-cancel-btn');
-  }
-
-  get dataPassedToDialog(): ScriptureChooserDialogData {
-    return (capture(this.dialogSpy.open).last()[1] as MdcDialogConfig<ScriptureChooserDialogData>).data;
+    return this.overlayContainerElement.querySelector('#question-cancel-btn') as HTMLButtonElement;
   }
 
   get questionInput(): HTMLTextAreaElement {
-    return this.overlayContainerElement.querySelector('#question-text');
+    return this.overlayContainerElement.querySelector('#question-text') as HTMLTextAreaElement;
   }
 
   get quillEditor(): HTMLElement {
@@ -569,31 +565,31 @@ class TestEnvironment {
   }
 
   get saveButton(): HTMLButtonElement {
-    return this.overlayContainerElement.querySelector('#question-save-btn');
+    return this.overlayContainerElement.querySelector('#question-save-btn') as HTMLButtonElement;
   }
 
   get scriptureEndInput(): HTMLInputElement {
-    return this.overlayContainerElement.querySelector('#scripture-end');
+    return this.overlayContainerElement.querySelector('#scripture-end') as HTMLInputElement;
   }
 
   get scriptureEndInputIcon(): HTMLInputElement {
-    return this.scriptureEndInput.querySelector('mdc-icon');
+    return this.scriptureEndInput.querySelector('mdc-icon') as HTMLInputElement;
   }
 
   get scriptureStartInput(): HTMLInputElement {
-    return this.overlayContainerElement.querySelector('#scripture-start');
+    return this.overlayContainerElement.querySelector('#scripture-start') as HTMLInputElement;
   }
 
   get scriptureStartInputIcon(): HTMLInputElement {
-    return this.scriptureStartInput.querySelector('mdc-icon');
+    return this.scriptureStartInput.querySelector('mdc-icon') as HTMLInputElement;
   }
 
   get scriptureStartValidationMsg(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#question-scripture-start-helper-text > div');
+    return this.overlayContainerElement.querySelector('#question-scripture-start-helper-text > div') as HTMLElement;
   }
 
   get scriptureEndValidationMsg(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#question-scripture-end-helper-text > div');
+    return this.overlayContainerElement.querySelector('#question-scripture-end-helper-text > div') as HTMLElement;
   }
 
   inputValue(element: HTMLElement, value: string) {
@@ -611,7 +607,7 @@ class TestEnvironment {
   }
 
   isSegmentHighlighted(verse: string): boolean {
-    const segment = this.quillEditor.querySelector('usx-segment[data-segment=verse_1_' + verse + ']');
+    const segment = this.quillEditor.querySelector('usx-segment[data-segment=verse_1_' + verse + ']')!;
     return segment.classList.toString().includes('highlight-segment-target');
   }
 

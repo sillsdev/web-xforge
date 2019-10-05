@@ -1,3 +1,4 @@
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
 import { Injectable } from '@angular/core';
 import merge from 'lodash/merge';
 import { User } from 'realtime-server/lib/common/models/user';
@@ -7,6 +8,7 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import XRegExp from 'xregexp';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
+import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog/edit-name-dialog.component';
 import { LocalSettingsService } from './local-settings.service';
 import { RealtimeQuery } from './models/realtime-query';
 import { UserDoc } from './models/user-doc';
@@ -28,14 +30,15 @@ export class UserService {
     private readonly realtimeService: RealtimeService,
     private readonly authService: AuthService,
     private readonly commandService: CommandService,
-    private readonly localSettings: LocalSettingsService
+    private readonly localSettings: LocalSettingsService,
+    private readonly dialog: MdcDialog
   ) {}
 
   get currentUserId(): string {
-    return this.authService.currentUserId;
+    return this.authService.currentUserId == null ? '' : this.authService.currentUserId;
   }
 
-  get currentProjectId(): string {
+  get currentProjectId(): string | undefined {
     return this.localSettings.get(CURRENT_PROJECT_ID_SETTING);
   }
 
@@ -88,7 +91,26 @@ export class UserService {
     );
   }
 
-  private onlineInvoke<T>(method: string, params?: any): Promise<T> {
+  async editDisplayName(isConfirmation: boolean): Promise<void> {
+    const currentUserDoc = await this.getCurrentUser();
+    if (currentUserDoc.data == null) {
+      return;
+    }
+    const dialogRef = this.dialog.open(EditNameDialogComponent, {
+      data: { name: currentUserDoc.data.displayName, isConfirmation },
+      escapeToClose: !isConfirmation,
+      clickOutsideToClose: !isConfirmation
+    }) as MdcDialogRef<EditNameDialogComponent, EditNameDialogResult | 'close'>;
+    const result = await dialogRef.afterClosed().toPromise();
+    if (result != null && result !== 'close') {
+      await currentUserDoc.submitJson0Op(op => {
+        op.set(u => u.displayName, result.displayName);
+        op.set<boolean>(u => u.isDisplayNameConfirmed, true);
+      });
+    }
+  }
+
+  private onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {
     return this.commandService.onlineInvoke<T>(USERS_URL, method, params);
   }
 }

@@ -36,7 +36,7 @@ export class NoticeService {
   }
 
   async show(message: string): Promise<void> {
-    let config: MdcSnackbarConfig<any>;
+    let config: MdcSnackbarConfig<any> | undefined;
     if (!(await this.authService.isLoggedIn)) {
       config = { classes: 'snackbar-above-footer' };
     }

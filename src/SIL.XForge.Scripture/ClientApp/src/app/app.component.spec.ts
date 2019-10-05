@@ -1,7 +1,7 @@
-import { MdcDialogRef, MdcList, OverlayContainer } from '@angular-mdc/web';
+import { MdcList, OverlayContainer } from '@angular-mdc/web';
 import { CommonModule, Location } from '@angular/common';
-import { Component, DebugElement, NgModule } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -14,8 +14,7 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { of } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { AccountService } from 'xforge-common/account.service';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { LocationService } from 'xforge-common/location.service';
@@ -35,7 +34,6 @@ import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
 
-const mockedAccountService = mock(AccountService);
 const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
@@ -48,7 +46,6 @@ describe('AppComponent', () => {
     declarations: [AppComponent, MockComponent],
     imports: [AvatarTestingModule, DialogTestModule, UICommonModule, RouterTestingModule.withRoutes(ROUTES)],
     providers: [
-      { provide: AccountService, useMock: mockedAccountService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
       { provide: SFAdminAuthGuard, useMock: mockedSFAdminAuthGuard },
@@ -218,17 +215,6 @@ describe('AppComponent', () => {
     expect(env.usersItem).toBeDefined();
   }));
 
-  describe('User menu', () => {
-    it('updates user with name', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.init();
-      env.updateDisplayName('Updated Name');
-      tick();
-      verify(mockedAccountService.openNameDialog(anything(), anything()));
-      expect(env.currentUserDisplayName).toEqual('Updated Name');
-    }));
-  });
-
   describe('Community Checking', () => {
     it('no books showing in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -274,7 +260,7 @@ describe('AppComponent', () => {
       env.remoteAddQuestion(env.questions[1]);
       // Expect: Community Checking | Overview | All Questions | Luke | John | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(8);
-      expect(env.menuList.getListItemByIndex(2).getListItemElement().textContent).toContain('All Questions');
+      expect(env.menuList.getListItemByIndex(2)!.getListItemElement().textContent).toContain('All Questions');
     }));
 
     it('update books when question added/archived/unarchived locally', fakeAsync(() => {
@@ -338,8 +324,7 @@ class TestEnvironment {
   readonly location: Location;
   readonly overlayContainer: OverlayContainer;
   readonly questions: Question[];
-
-  readonly mockedNameDialogRef = mock(MdcDialogRef);
+  readonly ngZone: NgZone;
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
@@ -398,15 +383,15 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
     when(mockedUserService.currentProjectId).thenReturn('project01');
-    when(mockedAccountService.openNameDialog(anything(), false)).thenReturn(instance(this.mockedNameDialogRef));
     when(mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
 
     this.router = TestBed.get(Router);
     this.location = TestBed.get(Location);
+    this.ngZone = TestBed.get(NgZone);
     this.fixture = TestBed.createComponent(AppComponent);
     this.component = this.fixture.componentInstance;
     this.overlayContainer = TestBed.get(OverlayContainer);
-    this.fixture.ngZone.run(() => this.router.initialNavigation());
+    this.ngZone.run(() => this.router.initialNavigation());
 
     this.questions = [
       {
@@ -456,7 +441,7 @@ class TestEnvironment {
   }
 
   get selectedProjectId(): string {
-    return this.component.projectSelect.value;
+    return this.component.projectSelect!.value;
   }
 
   get menuLength(): number {
@@ -469,16 +454,16 @@ class TestEnvironment {
 
   get projectDeletedDialog(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('mdc-dialog');
+    return oce.querySelector('mdc-dialog') as HTMLElement;
   }
 
   get okButton(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#ok-button');
+    return oce.querySelector('#ok-button') as HTMLElement;
   }
 
   get currentUserDisplayName(): string {
-    return this.currentUserDoc.data.displayName;
+    return this.currentUserDoc.data!.displayName;
   }
 
   get currentUserDoc(): UserDoc {
@@ -520,18 +505,18 @@ class TestEnvironment {
   }
 
   navigate(commands: any[]): void {
-    this.fixture.ngZone.run(() => this.router.navigate(commands)).then();
+    this.ngZone.run(() => this.router.navigate(commands)).then();
   }
 
   selectItem(index: number): void {
-    const elem = this.menuList.getListItemByIndex(index).getListItemElement();
+    const elem = this.menuList.getListItemByIndex(index)!.getListItemElement();
     elem.click();
     this.wait();
   }
 
   selectProject(projectId: string): void {
-    this.fixture.ngZone.run(() => {
-      this.component.projectSelect.setSelectionByValue(projectId);
+    this.ngZone.run(() => {
+      this.component.projectSelect!.setSelectionByValue(projectId);
     });
     this.wait();
   }
@@ -547,7 +532,7 @@ class TestEnvironment {
     if (isLocal) {
       when(mockedUserService.currentProjectId).thenReturn(undefined);
     }
-    this.fixture.ngZone.run(() => {
+    this.ngZone.run(() => {
       const projectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);
       projectDoc.delete();
     });
@@ -569,11 +554,6 @@ class TestEnvironment {
   confirmDialog(): void {
     this.okButton.click();
     this.wait();
-  }
-
-  updateDisplayName(displayName: string) {
-    when(this.mockedNameDialogRef.afterClosed()).thenReturn(of(displayName));
-    this.component.editName('User 01');
   }
 
   private addProject(projectId: string, userRoles: { [userRef: string]: string }, texts: TextInfo[]): void {

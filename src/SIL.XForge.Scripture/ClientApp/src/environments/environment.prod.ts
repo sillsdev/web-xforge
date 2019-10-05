@@ -12,7 +12,6 @@ export const environment = {
   },
   helps: 'https://help.scriptureforge.org/#t=Overview/Getting_Started.htm',
   bugsnagApiKey: 'b72a46a8924a3cd161d4c5534287923c',
-  realtimePort: undefined as number,
   realtimeUrl: '/realtime-api/',
   authDomain: 'login.languagetechnology.org',
   authClientId: 'tY2wXn40fsL5VsPM4uIHNtU6ZUEXGeFn'

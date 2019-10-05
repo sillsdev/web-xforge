@@ -13,6 +13,9 @@ export abstract class JsonRealtimeDoc<T = any> extends RealtimeDoc<T, OtJson0Op[
    * @param {*} [source] The source.
    */
   async submitJson0Op(build: (op: Json0OpBuilder<T>) => void, source: any = true): Promise<boolean> {
+    if (this.data == null) {
+      return false;
+    }
     const builder = new Json0OpBuilder(this.data);
     build(builder);
     if (builder.op.length > 0) {

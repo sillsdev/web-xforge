@@ -3,7 +3,7 @@ import { fromEvent, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 export interface LocalSettingChangeEvent {
-  key: string;
+  key: string | null;
   oldValue?: any;
   newValue?: any;
 }
@@ -24,12 +24,12 @@ export class LocalSettingsService {
     );
   }
 
-  get<T>(key: string): T {
+  get<T>(key: string): T | undefined {
     const value = localStorage.getItem(key);
     return value != null ? JSON.parse(value) : undefined;
   }
 
-  set<T>(key: string, value: T): void {
+  set<T>(key: string, value?: T): void {
     if (value == null) {
       localStorage.removeItem(key);
     } else {

@@ -60,7 +60,7 @@ function removeAttribute(op: DeltaOperation, name: string): void {
 
 class SegmentInfo {
   length: number = 0;
-  origRef: string;
+  origRef?: string;
   containsBlank: boolean = false;
 
   constructor(public ref: string, public index: number) {}
@@ -72,12 +72,14 @@ class SegmentInfo {
  * consistent and correct.
  */
 export class TextViewModel {
+  editor?: Quill;
+
   private readonly _segments: Map<string, RangeStatic> = new Map<string, RangeStatic>();
   private remoteChangesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
 
-  constructor(private readonly editor: Quill) {}
+  constructor() {}
 
   get segments(): IterableIterator<[string, RangeStatic]> {
     return this._segments.entries();
@@ -88,34 +90,42 @@ export class TextViewModel {
   }
 
   get isEmpty(): boolean {
-    return !this.isLoaded || this.textDoc.data.ops.length === 0;
+    if (this.textDoc == null || this.textDoc.data == null) {
+      return true;
+    }
+    const textData = this.textDoc.data;
+    return textData.ops == null || textData.ops.length === 0;
   }
 
   bind(textDoc: TextDoc): void {
+    const editor = this.checkEditor();
     if (this.textDoc != null) {
       this.unbind();
     }
 
     this.textDoc = textDoc;
-    this.editor.setContents(this.textDoc.data as DeltaStatic);
-    this.editor.history.clear();
-    this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops =>
-      this.editor.updateContents(ops as DeltaStatic)
-    );
+    editor.setContents(this.textDoc.data as DeltaStatic);
+    editor.history.clear();
+    this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => editor.updateContents(ops as DeltaStatic));
     this.onCreateSub = this.textDoc.create$.subscribe(() => {
-      this.editor.setContents(this.textDoc.data as DeltaStatic);
-      this.editor.history.clear();
+      if (textDoc.data != null) {
+        editor.setContents(textDoc.data as DeltaStatic);
+      }
+      editor.history.clear();
     });
   }
 
   unbind(): void {
-    if (this.textDoc == null) {
-      return;
+    if (this.remoteChangesSub != null) {
+      this.remoteChangesSub.unsubscribe();
     }
-    this.remoteChangesSub.unsubscribe();
-    this.onCreateSub.unsubscribe();
+    if (this.onCreateSub != null) {
+      this.onCreateSub.unsubscribe();
+    }
     this.textDoc = undefined;
-    this.editor.setText('', 'silent');
+    if (this.editor != null) {
+      this.editor.setText('', 'silent');
+    }
     this._segments.clear();
   }
 
@@ -126,35 +136,38 @@ export class TextViewModel {
    * @param {Sources} source The source of the change.
    */
   update(delta: DeltaStatic, source: Sources): void {
+    const editor = this.checkEditor();
     if (this.textDoc == null) {
       return;
     }
 
-    if (source === 'user' && this.editor.isEnabled()) {
+    if (source === 'user' && editor.isEnabled()) {
       const modelDelta = this.viewToData(delta);
-      if (modelDelta.ops.length > 0) {
+      if (modelDelta.ops != null && modelDelta.ops.length > 0) {
         this.textDoc.submit(modelDelta, this.editor);
       }
     }
 
-    const updateDelta = this.updateSegments();
-    if (updateDelta.ops.length > 0) {
+    const updateDelta = this.updateSegments(editor);
+    if (updateDelta.ops != null && updateDelta.ops.length > 0) {
       // defer the update, since it might cause the segment ranges to be out-of-sync with the view model
-      Promise.resolve().then(() => this.editor.updateContents(updateDelta, 'user'));
+      Promise.resolve().then(() => editor.updateContents(updateDelta, 'user'));
     }
   }
 
   isHighlighted(segment: Segment): boolean {
-    const formats = this.editor.getFormat(segment.range);
+    const editor = this.checkEditor();
+    const formats = editor.getFormat(segment.range);
     return formats['highlight-segment'] != null;
   }
 
   toggleHighlight(range: RangeStatic, value: TextType | boolean): void {
+    const editor = this.checkEditor();
     if (range.length > 0) {
       // this changes the underlying HTML, which can mess up some Quill events, so defer this call
       Promise.resolve().then(() => {
-        this.editor.formatText(range.index, range.length, 'highlight-segment', value, 'silent');
-        this.editor.formatLine(range.index, range.length, 'highlight-para', value, 'silent');
+        editor.formatText(range.index, range.length, 'highlight-segment', value, 'silent');
+        editor.formatLine(range.index, range.length, 'highlight-para', value, 'silent');
       });
     }
   }
@@ -163,12 +176,18 @@ export class TextViewModel {
     return this._segments.has(ref);
   }
 
-  getSegmentRange(ref: string): RangeStatic {
+  getSegmentRange(ref: string): RangeStatic | undefined {
     return this._segments.get(ref);
   }
 
-  getSegmentRef(range: RangeStatic): string {
-    let segmentRef: string;
+  getSegmentText(ref: string): string {
+    const editor = this.checkEditor();
+    const range = this.getSegmentRange(ref);
+    return range == null ? '' : editor.getText(range.index, range.length);
+  }
+
+  getSegmentRef(range: RangeStatic): string | undefined {
+    let segmentRef: string | undefined;
     let maxOverlap = -1;
     if (range != null) {
       for (const [ref, segmentRange] of this.segments) {
@@ -189,7 +208,7 @@ export class TextViewModel {
     return segmentRef;
   }
 
-  getNextSegmentRef(ref: string): string {
+  getNextSegmentRef(ref: string): string | undefined {
     let found = false;
     for (const segmentRef of this._segments.keys()) {
       if (found) {
@@ -201,8 +220,8 @@ export class TextViewModel {
     return undefined;
   }
 
-  getPrevSegmentRef(ref: string): string {
-    let prevSegmentRef: string;
+  getPrevSegmentRef(ref: string): string | undefined {
+    let prevSegmentRef: string | undefined;
     for (const segmentRef of this._segments.keys()) {
       if (segmentRef === ref) {
         return prevSegmentRef;
@@ -214,101 +233,111 @@ export class TextViewModel {
 
   private viewToData(delta: DeltaStatic): DeltaStatic {
     const modelDelta = new Delta();
-    for (const op of delta.ops) {
-      const modelOp: DeltaOperation = cloneDeep(op);
-      removeAttribute(modelOp, 'highlight-segment');
-      removeAttribute(modelOp, 'highlight-para');
-      removeAttribute(modelOp, 'para-contents');
-      modelDelta.push(modelOp);
+    if (delta.ops != null) {
+      for (const op of delta.ops) {
+        const modelOp: DeltaOperation = cloneDeep(op);
+        removeAttribute(modelOp, 'highlight-segment');
+        removeAttribute(modelOp, 'highlight-para');
+        removeAttribute(modelOp, 'para-contents');
+        (modelDelta as any).push(modelOp);
+      }
     }
     return modelDelta.chop();
   }
 
-  private updateSegments(): DeltaStatic {
+  private updateSegments(editor: Quill): DeltaStatic {
     const convertDelta = new Delta();
     let fixDelta = new Delta();
     let fixOffset = 0;
-    const delta = this.editor.getContents();
+    const delta = editor.getContents();
     this._segments.clear();
     const nextIds = new Map<string, number>();
     let paraSegments: SegmentInfo[] = [];
     let chapter = '';
     let curIndex = 0;
-    let curSegment: SegmentInfo;
-    for (const op of delta.ops) {
-      const attrs: StringMap = {};
-      const len = typeof op.insert === 'string' ? op.insert.length : 1;
-      if (op.insert === '\n' || (op.attributes != null && op.attributes.para != null)) {
-        const style = op.attributes == null || op.attributes.para == null ? null : (op.attributes.para.style as string);
-        if (style == null || isParagraphStyle(style)) {
-          // paragraph
-          for (const _ch of op.insert) {
-            if (curSegment != null) {
-              paraSegments.push(curSegment);
-              curIndex += curSegment.length;
-              curSegment = new SegmentInfo(curSegment.ref, curIndex + 1);
-            }
-
-            for (const paraSegment of paraSegments) {
-              if (this._segments.has(paraSegment.ref)) {
-                paraSegment.ref = getParagraphRef(nextIds, paraSegment.ref, paraSegment.ref + '/' + style);
+    let curSegment: SegmentInfo | undefined;
+    if (delta.ops != null) {
+      for (const op of delta.ops) {
+        const attrs: StringMap = {};
+        const len = typeof op.insert === 'string' ? op.insert.length : 1;
+        if (op.insert === '\n' || (op.attributes != null && op.attributes.para != null)) {
+          const style =
+            op.attributes == null || op.attributes.para == null ? null : (op.attributes.para.style as string);
+          if (style == null || isParagraphStyle(style)) {
+            // paragraph
+            for (const _ch of op.insert) {
+              if (curSegment != null) {
+                paraSegments.push(curSegment);
+                curIndex += curSegment.length;
+                curSegment = new SegmentInfo(curSegment.ref, curIndex + 1);
               }
 
-              [fixDelta, fixOffset] = this.fixSegment(paraSegment, fixDelta, fixOffset);
-              this._segments.set(paraSegment.ref, { index: paraSegment.index, length: paraSegment.length });
+              for (const paraSegment of paraSegments) {
+                if (this._segments.has(paraSegment.ref)) {
+                  paraSegment.ref = getParagraphRef(nextIds, paraSegment.ref, paraSegment.ref + '/' + style);
+                }
+
+                [fixDelta, fixOffset] = this.fixSegment(editor, paraSegment, fixDelta, fixOffset);
+                this._segments.set(paraSegment.ref, { index: paraSegment.index, length: paraSegment.length });
+              }
+              paraSegments = [];
+              curIndex++;
             }
+          } else {
+            // title/header
+            if (curSegment == null) {
+              curSegment = new SegmentInfo('', curIndex);
+            }
+            curSegment.ref = getParagraphRef(nextIds, style, style);
+            [fixDelta, fixOffset] = this.fixSegment(editor, curSegment, fixDelta, fixOffset);
+            this._segments.set(curSegment.ref, { index: curSegment.index, length: curSegment.length });
             paraSegments = [];
-            curIndex++;
+            curIndex += curSegment.length + len;
+            curSegment = undefined;
           }
+        } else if (op.insert.chapter != null) {
+          // chapter
+          chapter = op.insert.chapter.number;
+          curIndex += len;
+          curSegment = undefined;
+        } else if (op.insert.verse != null) {
+          // verse
+          if (curSegment != null) {
+            paraSegments.push(curSegment);
+            curIndex += curSegment.length;
+          }
+          setAttribute(op, attrs, 'para-contents', true);
+          curIndex += len;
+          curSegment = new SegmentInfo('verse_' + chapter + '_' + op.insert.verse.number, curIndex);
         } else {
-          // title/header
+          // segment
+          setAttribute(op, attrs, 'para-contents', true);
           if (curSegment == null) {
             curSegment = new SegmentInfo('', curIndex);
           }
-          curSegment.ref = getParagraphRef(nextIds, style, style);
-          [fixDelta, fixOffset] = this.fixSegment(curSegment, fixDelta, fixOffset);
-          this._segments.set(curSegment.ref, { index: curSegment.index, length: curSegment.length });
-          paraSegments = [];
-          curIndex += curSegment.length + len;
-          curSegment = undefined;
+          const opSegRef = op.attributes != null && op.attributes['segment'] != null ? op.attributes['segment'] : '';
+          if (curSegment.origRef == null) {
+            curSegment.origRef = opSegRef;
+          } else if (curSegment.origRef !== opSegRef) {
+            curSegment.origRef = '';
+          }
+          curSegment.length += len;
+          if (op.insert != null && op.insert.blank != null) {
+            curSegment.containsBlank = true;
+          }
         }
-      } else if (op.insert.chapter != null) {
-        // chapter
-        chapter = op.insert.chapter.number;
-        curIndex += len;
-        curSegment = undefined;
-      } else if (op.insert.verse != null) {
-        // verse
-        if (curSegment != null) {
-          paraSegments.push(curSegment);
-          curIndex += curSegment.length;
-        }
-        setAttribute(op, attrs, 'para-contents', true);
-        curIndex += len;
-        curSegment = new SegmentInfo('verse_' + chapter + '_' + op.insert.verse.number, curIndex);
-      } else {
-        // segment
-        setAttribute(op, attrs, 'para-contents', true);
-        if (curSegment == null) {
-          curSegment = new SegmentInfo('', curIndex);
-        }
-        const opSegRef = op.attributes != null && op.attributes['segment'] != null ? op.attributes['segment'] : '';
-        if (curSegment.origRef == null) {
-          curSegment.origRef = opSegRef;
-        } else if (curSegment.origRef !== opSegRef) {
-          curSegment.origRef = '';
-        }
-        curSegment.length += len;
-        if (op.insert != null && op.insert.blank != null) {
-          curSegment.containsBlank = true;
-        }
+        convertDelta.retain(len, attrs);
       }
-      convertDelta.retain(len, attrs);
     }
     return convertDelta.compose(fixDelta).chop();
   }
 
-  private fixSegment(segment: SegmentInfo, fixDelta: DeltaStatic, fixOffset: number): [DeltaStatic, number] {
+  private fixSegment(
+    editor: Quill,
+    segment: SegmentInfo,
+    fixDelta: DeltaStatic,
+    fixOffset: number
+  ): [DeltaStatic, number] {
     if (segment.length === 0) {
       // insert blank
       const type = segment.ref.includes('/p') || segment.ref.includes('/m') ? 'initial' : 'normal';
@@ -325,12 +354,12 @@ export class TextViewModel {
         .delete(1);
       fixDelta = fixDelta.compose(delta);
       fixOffset--;
-      const sel = this.editor.getSelection();
+      const sel = editor.getSelection();
       if (sel != null && sel.index === segment.index && sel.length === 0) {
         // if the segment is no longer blank, ensure that the selection is at the end of the segment.
         // Sometimes after typing in a blank segment, the selection will be at the beginning. This seems to be a bug
         // in Quill.
-        Promise.resolve().then(() => this.editor.setSelection(segment.index + segment.length, 0, 'user'));
+        Promise.resolve().then(() => editor.setSelection(segment.index + segment.length, 0, 'user'));
       }
     } else if (segment.ref !== segment.origRef) {
       // fix segment ref
@@ -340,5 +369,12 @@ export class TextViewModel {
       fixDelta = fixDelta.compose(delta);
     }
     return [fixDelta, fixOffset];
+  }
+
+  private checkEditor(): Quill {
+    if (this.editor == null) {
+      throw new Error('The editor has not been assigned.');
+    }
+    return this.editor;
   }
 }

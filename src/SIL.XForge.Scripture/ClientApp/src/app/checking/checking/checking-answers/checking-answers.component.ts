@@ -16,7 +16,6 @@ import {
 } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
-import { AccountService } from 'xforge-common/account.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
@@ -55,24 +54,26 @@ export interface AnswerAction {
   styleUrls: ['./checking-answers.component.scss']
 })
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
-  @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent: CheckingAudioCombinedComponent;
-  @Input() project: SFProject;
-  @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
-  @Input() projectText: TextInfo;
-  @Input() set questionDoc(questionDoc: QuestionDoc) {
+  @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent?: CheckingAudioCombinedComponent;
+  @Input() project?: SFProject;
+  @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
+  @Input() projectText?: TextInfo;
+  @Input() set questionDoc(questionDoc: QuestionDoc | undefined) {
     if (questionDoc !== this._questionDoc) {
       this.hideAnswerForm();
     }
     this._questionDoc = questionDoc;
-    this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
+    if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+      this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
+    }
     // Validation is dependent on the chapter of the current question.
     this.updateValidationRules();
   }
-  @Input() checkingTextComponent: CheckingTextComponent;
+  @Input() checkingTextComponent?: CheckingTextComponent;
   @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
   @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
 
-  activeAnswer: Answer;
+  activeAnswer?: Answer;
   answerForm = new FormGroup(
     {
       answerText: new FormControl(),
@@ -87,15 +88,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   startReferenceMatcher = new StartReferenceRequiredErrorStateMatcher();
 
-  private _questionDoc: QuestionDoc;
+  private _questionDoc?: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
 
   constructor(
-    private accountService: AccountService,
-    private userService: UserService,
-    readonly dialog: MdcDialog,
-    private noticeService: NoticeService
+    private readonly userService: UserService,
+    private readonly dialog: MdcDialog,
+    private readonly noticeService: NoticeService
   ) {
     super();
   }
@@ -105,7 +105,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   get answers(): Answer[] {
-    if (this._questionDoc == null || !this._questionDoc.isLoaded) {
+    if (this._questionDoc == null || this._questionDoc.data == null) {
       return [];
     }
     if (this.canSeeOtherUserResponses || !this.canAddAnswer) {
@@ -116,7 +116,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   get canSeeOtherUserResponses(): boolean {
-    return this.project.checkingConfig.usersSeeEachOthersResponses;
+    return this.project == null ? false : this.project.checkingConfig.usersSeeEachOthersResponses;
   }
 
   get canShowScriptureInput(): boolean {
@@ -129,7 +129,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   get currentUserTotalAnswers(): number {
-    if (this._questionDoc == null || !this._questionDoc.isLoaded) {
+    if (this._questionDoc == null || this._questionDoc.data == null) {
       return 0;
     }
     return this._questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length;
@@ -137,9 +137,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   get hasUserRead(): boolean {
     return this.projectUserConfigDoc != null &&
-      this.projectUserConfigDoc.isLoaded &&
-      this.projectUserConfigDoc.data.questionRefsRead
-      ? this.projectUserConfigDoc.data.questionRefsRead.includes(this.questionDoc.data.dataId)
+      this.projectUserConfigDoc.data != null &&
+      this._questionDoc != null &&
+      this._questionDoc.data != null
+      ? this.projectUserConfigDoc.data.questionRefsRead.includes(this._questionDoc.data.dataId)
       : false;
   }
 
@@ -150,7 +151,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
-  get questionDoc(): QuestionDoc {
+  get questionDoc(): QuestionDoc | undefined {
     return this._questionDoc;
   }
 
@@ -193,9 +194,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   /** Fetch a TextsByBookId that only contains the book and chapter that pertains to the question. */
   private get textsByBookId(): TextsByBookId {
     const textsByBook: TextsByBookId = {};
-    if (this.projectText) {
+    if (this.projectText != null && this._questionDoc != null && this._questionDoc.data != null) {
       const bookId = Canon.bookNumberToId(this.projectText.bookNum);
-      const questionChapterNumber = this.questionDoc.data.verseRef.chapterNum;
+      const questionChapterNumber = this._questionDoc.data.verseRef.chapterNum;
       textsByBook[bookId] = cloneDeep(this.projectText);
       textsByBook[bookId].chapters = this.projectText.chapters.filter(
         chapter => chapter.number === questionChapterNumber
@@ -237,6 +238,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   editAnswer(answer: Answer) {
+    if (this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null) {
+      return;
+    }
     // update read answers list so when the answers are rendered again after editing they won't be shown as unread
     this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
     this.activeAnswer = cloneDeep(answer);
@@ -253,6 +257,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   extractScriptureText() {
+    if (this.checkingTextComponent == null) {
+      return;
+    }
     const verseRef = this.getVerseRef();
     const verses = [];
     if (verseRef != null) {
@@ -316,7 +323,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   openScriptureChooser(control: AbstractControl) {
-    let currentVerseSelection: VerseRef;
+    let currentVerseSelection: VerseRef | undefined;
     if (control.value != null) {
       const { verseRef } = VerseRef.tryParse(control.value);
       if (verseRef.valid) {
@@ -324,7 +331,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       }
     }
 
-    let rangeStart: VerseRef;
+    let rangeStart: VerseRef | undefined;
     if (control !== this.scriptureStart && this.scriptureStart.value != null) {
       const { verseRef } = VerseRef.tryParse(this.scriptureStart.value);
       if (verseRef.valid) {
@@ -341,7 +348,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       VerseRef | 'close'
     >;
     dialogRef.afterClosed().subscribe(result => {
-      if (result !== 'close') {
+      if (result != null && result !== 'close') {
         control.setValue(result.toString());
         control.markAsTouched();
         control.markAsDirty();
@@ -375,7 +382,11 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   async submit() {
-    if (this.audio.status === 'recording') {
+    if (
+      this.audio.status === 'recording' &&
+      this.audioCombinedComponent != null &&
+      this.audioCombinedComponent.audioRecorderComponent != null
+    ) {
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
       this.noticeService.show('The recording for your answer was automatically stopped.');
     }
@@ -385,20 +396,11 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return;
     }
     const userDoc = await this.userService.getCurrentUser();
-    if (userDoc.data.isDisplayNameConfirmed) {
-      this.emitAnswerToSave();
-      this.hideAnswerForm();
-      return;
+    if (userDoc.data != null && !userDoc.data.isDisplayNameConfirmed) {
+      await this.userService.editDisplayName(true);
     }
-    const dialogRef = this.accountService.openNameDialog(userDoc.data.displayName, true);
-    dialogRef.afterClosed().subscribe(async response => {
-      await userDoc.submitJson0Op(op => {
-        op.set(u => u.displayName, response as string);
-        op.set<boolean>(u => u.isDisplayNameConfirmed, true);
-      });
-      this.emitAnswerToSave();
-      this.hideAnswerForm();
-    });
+    this.emitAnswerToSave();
+    this.hideAnswerForm();
   }
 
   submitCommentAction(action: CommentAction) {
@@ -427,13 +429,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   private emitAnswerToSave() {
+    const verseRef = this.getVerseRef();
     this.action.emit({
       action: 'save',
       text: this.answerText.value,
       answer: this.activeAnswer,
       audio: this.audio,
       scriptureText: this.scriptureText.value != null ? this.scriptureText.value : undefined,
-      verseRef: fromVerseRef(this.getVerseRef())
+      verseRef: verseRef == null ? undefined : fromVerseRef(verseRef)
     });
   }
 
@@ -444,11 +447,11 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.scriptureEnd.updateValueAndValidity();
 
     if (this.audio.url) {
-      this.answerForm.get('answerText').clearValidators();
+      this.answerText.clearValidators();
     } else {
-      this.answerForm.get('answerText').setValidators(Validators.required);
+      this.answerText.setValidators(Validators.required);
     }
-    this.answerForm.get('answerText').updateValueAndValidity();
+    this.answerText.updateValueAndValidity();
   }
 
   private getVerseRef(): VerseRef | undefined {

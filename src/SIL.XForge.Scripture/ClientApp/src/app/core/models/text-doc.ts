@@ -36,14 +36,16 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
   getSegmentCount(): { translated: number; blank: number } {
     let blank = 0;
     let translated = 0;
-    for (const op of this.data.ops) {
-      if (op.attributes && op.attributes.segment) {
-        if (op.insert.blank) {
-          if (op.insert.blank === 'normal') {
-            blank++;
+    if (this.data != null && this.data.ops != null) {
+      for (const op of this.data.ops) {
+        if (op.attributes && op.attributes.segment) {
+          if (op.insert.blank) {
+            if (op.insert.blank === 'normal') {
+              blank++;
+            }
+          } else {
+            translated++;
           }
-        } else {
-          translated++;
         }
       }
     }

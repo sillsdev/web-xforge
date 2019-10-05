@@ -4,7 +4,7 @@
   <mdc-top-app-bar #topAppBar [scrollTarget]="appContent">
     <mdc-top-app-bar-row>
       <mdc-top-app-bar-section align="start">
-        <a *ngIf="!this.isDrawerPermanent && this.selectedProjectId != null" (click)="toggleDrawer()">
+        <a *ngIf="!isDrawerPermanent && isProjectSelected" (click)="toggleDrawer()">
           <mdc-icon mdcTopAppBarNavIcon>menu</mdc-icon>
         </a>
         <a (click)="goHome()">
@@ -14,7 +14,7 @@
           >Scripture Forge
         </mdc-top-app-bar-title>
       </mdc-top-app-bar-section>
-      <mdc-top-app-bar-section align="end" *ngIf="currentUser">
+      <mdc-top-app-bar-section align="end" *ngIf="currentUser != null">
         <!-- not in MVP <mdc-icon mdcTopAppBarActionItem title="Notifications">notifications</mdc-icon> -->
         <div mdcMenuSurfaceAnchor #helpMenuAnchor>
           <mdc-icon mdcTopAppBarActionItem title="Help" (click)="helpMenu.open = !helpMenu.open">help</mdc-icon>
@@ -39,7 +39,7 @@
           </mdc-menu>
         </div>
         <div mdcMenuSurfaceAnchor #userMenuAnchor>
-          <mdc-icon mdcTopAppBarActionItem [title]="currentUser.displayName" (click)="userMenu.open = !userMenu.open">
+          <mdc-icon mdcTopAppBarActionItem [title]="currentUser?.displayName" (click)="userMenu.open = !userMenu.open">
             <app-avatar id="avatarId" [user]="currentUser" size="32" [round]="true"></app-avatar>
           </mdc-icon>
           <mdc-menu #userMenu [anchorCorner]="'bottomStart'" [anchorElement]="userMenuAnchor">
@@ -48,10 +48,10 @@
                 Logged in as
                 <div fxLayout="row" fxLayoutAlign="start center">
                   <span fxFlex>&nbsp;</span>
-                  <button id="edit-name-btn" mdcIconButton type="button" (click)="editName(currentUser.displayName)">
+                  <button id="edit-name-btn" mdcIconButton type="button" (click)="editName()">
                     <mdc-icon>edit</mdc-icon>
                   </button>
-                  <strong class="user-menu-name">{{ currentUser.displayName }}</strong>
+                  <strong class="user-menu-name">{{ currentUser?.displayName }}</strong>
                 </div>
               </div>
               <mdc-list-divider></mdc-list-divider>
@@ -72,7 +72,7 @@
 </header>
 <mdc-drawer
   id="menu-drawer"
-  *ngIf="selectedProjectId != null"
+  *ngIf="isProjectSelected"
   [drawer]="isDrawerPermanent ? 'permanent' : 'modal'"
   [open]="isExpanded"
   (closed)="drawerCollapsed()"

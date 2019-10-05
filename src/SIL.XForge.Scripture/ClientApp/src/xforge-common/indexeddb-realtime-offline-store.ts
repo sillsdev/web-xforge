@@ -11,17 +11,16 @@ const DATABASE_NAME = 'xforge';
   providedIn: 'root'
 })
 export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
-  private openDBPromise: Promise<void>;
-  private db: IDBDatabase;
+  private openDBPromise?: Promise<IDBDatabase>;
 
   constructor(private readonly domainModel: RealtimeDocTypes) {
     super();
   }
 
   async getAllIds(collection: string): Promise<string[]> {
-    await this.openDB();
+    const db = await this.openDB();
     return await new Promise<string[]>((resolve, reject) => {
-      const transaction = this.db.transaction(collection);
+      const transaction = db.transaction(collection);
       const objectStore = transaction.objectStore(collection);
 
       const request = objectStore.getAllKeys();
@@ -31,9 +30,9 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
   }
 
   async getAll(collection: string): Promise<RealtimeOfflineData[]> {
-    await this.openDB();
+    const db = await this.openDB();
     return await new Promise<RealtimeOfflineData[]>((resolve, reject) => {
-      const transaction = this.db.transaction(collection);
+      const transaction = db.transaction(collection);
       const objectStore = transaction.objectStore(collection);
 
       const request = objectStore.getAll();
@@ -43,9 +42,9 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
   }
 
   async get(collection: string, id: string): Promise<RealtimeOfflineData> {
-    await this.openDB();
+    const db = await this.openDB();
     return await new Promise<RealtimeOfflineData>((resolve, reject) => {
-      const transaction = this.db.transaction(collection);
+      const transaction = db.transaction(collection);
       const objectStore = transaction.objectStore(collection);
 
       const request = objectStore.get(id);
@@ -55,9 +54,9 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
   }
 
   async put(collection: string, offlineData: RealtimeOfflineData): Promise<void> {
-    await this.openDB();
+    const db = await this.openDB();
     await new Promise<void>((resolve, reject) => {
-      const transaction = this.db.transaction(collection, 'readwrite');
+      const transaction = db.transaction(collection, 'readwrite');
       const objectStore = transaction.objectStore(collection);
 
       const request = objectStore.put(offlineData);
@@ -67,9 +66,9 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
   }
 
   async delete(collection: string, id: string): Promise<void> {
-    await this.openDB();
+    const db = await this.openDB();
     await new Promise<void>((resolve, reject) => {
-      const transaction = this.db.transaction(collection, 'readwrite');
+      const transaction = db.transaction(collection, 'readwrite');
       const objectStore = transaction.objectStore(collection);
 
       const request = objectStore.delete(id);
@@ -87,21 +86,21 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
     });
   }
 
-  private openDB(): Promise<void> {
+  private openDB(): Promise<IDBDatabase> {
     if (this.openDBPromise != null) {
       return this.openDBPromise;
     }
-    this.openDBPromise = new Promise<void>((resolve, reject) => {
+    this.openDBPromise = new Promise<IDBDatabase>((resolve, reject) => {
       if (!window.indexedDB) {
         return reject(new Error('IndexedDB is not available in this browser. Please use a different browser.'));
       }
       const request = window.indexedDB.open(DATABASE_NAME);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
-        this.db = request.result;
+        const db = request.result;
         // close on version change so we don't block the deletion of the database from a different tab/window
-        this.db.onversionchange = () => this.closeDB();
-        resolve();
+        db.onversionchange = () => this.closeDB();
+        resolve(db);
       };
       request.onupgradeneeded = () => {
         const db = request.result;
@@ -115,9 +114,8 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
 
   private async closeDB(): Promise<void> {
     if (this.openDBPromise != null) {
-      await this.openDBPromise;
-      this.db.close();
-      this.db = undefined;
+      const db = await this.openDBPromise;
+      db.close();
       this.openDBPromise = undefined;
     }
   }

@@ -6,6 +6,7 @@ import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { toVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -21,14 +22,14 @@ import { CheckingUtils } from '../../checking.utils';
   styleUrls: ['./checking-questions.component.scss']
 })
 export class CheckingQuestionsComponent extends SubscriptionDisposable {
-  @Input() project: SFProject;
-  @Input() projectUserConfigDoc: SFProjectUserConfigDoc;
+  @Input() project?: SFProject;
+  @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Output() update = new EventEmitter<QuestionDoc>();
   @Output() changed = new EventEmitter<QuestionDoc>();
   _questionDocs: Readonly<QuestionDoc[]> = [];
-  activeQuestionDoc: QuestionDoc;
+  activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
-  private _activeQuestionVerseRef: VerseRef;
+  private _activeQuestionVerseRef?: VerseRef;
 
   constructor(private userService: UserService) {
     super();
@@ -38,15 +39,21 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     });
   }
 
-  get activeQuestionChapter(): number {
-    return this.activeQuestionDoc.data.verseRef.chapterNum;
+  get activeQuestionChapter(): number | undefined {
+    return this.activeQuestionDoc == null || this.activeQuestionDoc.data == null
+      ? undefined
+      : this.activeQuestionDoc.data.verseRef.chapterNum;
   }
 
   get activeQuestionIndex(): number {
-    return this.questionDocs.findIndex(question => question.id === this.activeQuestionDoc.id);
+    if (this.activeQuestionDoc == null) {
+      return -1;
+    }
+    const activeQuestionDocId = this.activeQuestionDoc.id;
+    return this.questionDocs.findIndex(question => question.id === activeQuestionDocId);
   }
 
-  get activeQuestionVerseRef(): VerseRef {
+  get activeQuestionVerseRef(): VerseRef | undefined {
     return this._activeQuestionVerseRef;
   }
 
@@ -55,8 +62,12 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   @Input() set questionDocs(questionDocs: Readonly<QuestionDoc[]>) {
-    if (questionDocs.length) {
-      if (this.activeQuestionDoc == null || !questionDocs.some(question => question.id === this.activeQuestionDoc.id)) {
+    if (questionDocs.length > 0) {
+      let activeQuestionDocId: string | undefined;
+      if (this.activeQuestionDoc != null) {
+        activeQuestionDocId = this.activeQuestionDoc.id;
+      }
+      if (activeQuestionDocId == null || !questionDocs.some(question => question.id === activeQuestionDocId)) {
         this.activateQuestion(questionDocs[0]);
       }
     } else {
@@ -73,13 +84,17 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   private get projectRole(): SFProjectRole {
-    if (this.project == null || this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded) {
+    if (this.project == null || this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null) {
       return SFProjectRole.None;
     }
     return this.project.userRoles[this.projectUserConfigDoc.data.ownerRef] as SFProjectRole;
   }
 
   getAnswers(questionDoc: QuestionDoc): Answer[] {
+    if (questionDoc.data == null || this.project == null) {
+      return [];
+    }
+
     if (this.project.checkingConfig.usersSeeEachOthersResponses || !this.canAddAnswer) {
       return questionDoc.data.answers;
     } else {
@@ -88,10 +103,10 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   getUnreadAnswers(questionDoc: QuestionDoc): number {
-    let unread = 0;
-    if (this.canAddAnswer && !this.project.checkingConfig.usersSeeEachOthersResponses) {
-      return unread;
+    if (this.canAddAnswer && (this.project == null || !this.project.checkingConfig.usersSeeEachOthersResponses)) {
+      return 0;
     }
+    let unread = 0;
     for (const answer of this.getAnswers(questionDoc)) {
       if (!this.hasUserReadAnswer(answer)) {
         unread++;
@@ -108,9 +123,13 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   updateElementsRead(questionDoc: QuestionDoc): void {
+    if (this.projectUserConfigDoc == null) {
+      return;
+    }
+
     this.projectUserConfigDoc
       .submitJson0Op(op => {
-        if (!this.hasUserReadQuestion(questionDoc)) {
+        if (questionDoc != null && questionDoc.data != null && !this.hasUserReadQuestion(questionDoc)) {
           op.add(puc => puc.questionRefsRead, questionDoc.data.dataId);
         }
         if (this.hasUserAnswered(questionDoc) || !this.canAddAnswer) {
@@ -152,18 +171,21 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   hasUserReadQuestion(questionDoc: QuestionDoc): boolean {
-    return CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data);
+    return (
+      this.projectUserConfigDoc != null &&
+      CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)
+    );
   }
 
   hasUserReadAnswer(answer: Answer): boolean {
-    return this.projectUserConfigDoc.data.answerRefsRead
+    return this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null
       ? this.projectUserConfigDoc.data.answerRefsRead.includes(answer.dataId) ||
           this.projectUserConfigDoc.data.ownerRef === answer.ownerRef
       : false;
   }
 
   hasUserReadComment(comment: Comment): boolean {
-    return this.projectUserConfigDoc.data.commentRefsRead
+    return this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null
       ? this.projectUserConfigDoc.data.commentRefsRead.includes(comment.dataId) ||
           this.projectUserConfigDoc.data.ownerRef === comment.ownerRef
       : false;
@@ -181,7 +203,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     this.activeQuestionDoc = questionDoc;
     this.changed.emit(questionDoc);
     this.activeQuestionDoc$.next(questionDoc);
-    this._activeQuestionVerseRef = questionDoc.verseRef;
+    this._activeQuestionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
   }
 
   private changeQuestion(newDifferential: number): void {

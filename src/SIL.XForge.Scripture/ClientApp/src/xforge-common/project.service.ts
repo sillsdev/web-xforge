@@ -97,7 +97,7 @@ export abstract class ProjectService<
         observe: 'response'
       })
       .toPromise();
-    const path = response.headers.get('Location');
+    const path = response.headers.get('Location')!;
     return path.replace(environment.assets.audio, '/');
   }
 
@@ -105,7 +105,7 @@ export abstract class ProjectService<
     return this.onlineInvoke('deleteAudio', { projectId: id, ownerId, dataId });
   }
 
-  protected onlineInvoke<T>(method: string, params?: any): Promise<T> {
+  protected onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {
     return this.commandService.onlineInvoke<T>(PROJECTS_URL, method, params);
   }
 }

@@ -15,15 +15,15 @@ import { SFProjectService } from '../../core/sf-project.service';
 export class ShareControlComponent {
   /** Fires when an invitation is sent. */
   @Output() invited = new EventEmitter<void>();
-  @Input() readonly projectId: string;
-  @Input() readonly isLinkSharingEnabled: boolean;
-  @ViewChild('shareLinkField', { static: false }) shareLinkField: MdcTextField;
+  @Input() readonly projectId?: string;
+  @Input() readonly isLinkSharingEnabled: boolean = false;
+  @ViewChild('shareLinkField', { static: false }) shareLinkField?: MdcTextField;
 
   sendInviteForm: FormGroup = new FormGroup({
     email: new FormControl('', [XFValidators.email])
   });
   isSubmitted: boolean = false;
-  isAlreadyInvited: boolean;
+  isAlreadyInvited: boolean = false;
   readonly alreadyProjectMemberResponse: string = 'alreadyProjectMember';
 
   constructor(
@@ -33,7 +33,7 @@ export class ShareControlComponent {
   ) {}
 
   get email(): FormControl {
-    return this.sendInviteForm.get('email') as FormControl;
+    return this.sendInviteForm.controls.email as FormControl;
   }
 
   get shareLink(): string {
@@ -41,6 +41,9 @@ export class ShareControlComponent {
   }
 
   copyShareLink(): void {
+    if (this.shareLinkField == null) {
+      return;
+    }
     this.shareLinkField.focus();
     this.shareLinkField._input.nativeElement.select();
     document.execCommand('copy');
@@ -48,14 +51,14 @@ export class ShareControlComponent {
   }
 
   async onEmailInput(newValue: string): Promise<void> {
-    if (this.sendInviteForm.get('email').invalid) {
+    if (this.projectId == null || this.email.invalid) {
       return;
     }
     this.isAlreadyInvited = await this.projectService.onlineIsAlreadyInvited(this.projectId, newValue);
   }
 
   async sendEmail(): Promise<void> {
-    if (this.email.value === '' || this.email.value == null || !this.sendInviteForm.valid) {
+    if (this.projectId == null || this.email.value === '' || this.email.value == null || !this.sendInviteForm.valid) {
       return;
     }
 

@@ -14,7 +14,7 @@ export interface RealtimeOfflineData extends Snapshot {
 export abstract class RealtimeOfflineStore {
   abstract getAllIds(collection: string): Promise<string[]>;
   abstract getAll(collection: string): Promise<RealtimeOfflineData[]>;
-  abstract get(collection: string, id: string): Promise<RealtimeOfflineData>;
+  abstract get(collection: string, id: string): Promise<RealtimeOfflineData | undefined>;
   abstract put(collection: string, offlineData: RealtimeOfflineData): Promise<void>;
   abstract delete(collection: string, id: string): Promise<void>;
   abstract deleteDB(): Promise<void>;

@@ -24,7 +24,7 @@ class Row {
   }
 
   get name(): string {
-    return this.projectDoc.data.name;
+    return this.projectDoc == null || this.projectDoc.data == null ? '' : this.projectDoc.data.name;
   }
 
   get tasks(): string {
@@ -40,13 +40,13 @@ class Row {
 export class SaProjectsComponent extends DataLoadingComponent implements OnInit {
   @HostBinding('class') classes = 'flex-column';
 
-  rows: Row[];
+  rows: Row[] = [];
 
   length: number = 0;
   pageIndex: number = 0;
   pageSize: number = 50;
 
-  private projectDocs: Readonly<ProjectDoc[]>;
+  private projectDocs?: Readonly<ProjectDoc[]>;
 
   private readonly searchTerm$: BehaviorSubject<string>;
   private readonly queryParameters$: BehaviorSubject<QueryParameters>;
@@ -107,15 +107,17 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
   }
 
   private generateRows(): void {
-    if (this.isLoading) {
+    if (this.projectDocs == null) {
       return;
     }
 
     const rows: Row[] = [];
     for (const projectDoc of this.projectDocs) {
       let projectRole = NONE_ROLE;
-      if (this.userService.currentUserId in projectDoc.data.userRoles) {
-        projectRole = this.projectService.roles.get(projectDoc.data.userRoles[this.userService.currentUserId]);
+      if (projectDoc.data != null && this.userService.currentUserId in projectDoc.data.userRoles) {
+        projectRole = this.projectService.roles.get(
+          projectDoc.data.userRoles[this.userService.currentUserId]
+        ) as ProjectRoleInfo;
       }
       rows.push(new Row(projectDoc, projectRole));
     }

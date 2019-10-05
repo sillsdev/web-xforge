@@ -6,7 +6,7 @@
     type="button"
     (click)="startRecording()"
     class="record"
-    [disabled]="microphonePermission === false"
+    [disabled]="!microphonePermission"
   >
     <mdc-icon>mic</mdc-icon>
     Record

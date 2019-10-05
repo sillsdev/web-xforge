@@ -3,7 +3,7 @@
     class="comment"
     [ngClass]="{ 'comment-unread': !hasUserReadComment(comment) }"
     *ngIf="
-      (!activeComment || (commentFormVisible && activeComment.dataId !== comment.dataId)) &&
+      (activeComment == null || (commentFormVisible && activeComment?.dataId !== comment.dataId)) &&
       (i + 1 < maxCommentsToShow || commentCount == maxCommentsToShow || showAllComments)
     "
   >
@@ -31,14 +31,14 @@
     </div>
   </div>
   <app-checking-comment-form
-    *ngIf="commentFormVisible && activeComment && activeComment.dataId === comment.dataId"
+    *ngIf="commentFormVisible && activeComment?.dataId === comment.dataId"
     (save)="submit($event)"
     (cancel)="hideCommentForm()"
     [text]="comment.text"
   ></app-checking-comment-form>
 </div>
 <app-checking-comment-form
-  *ngIf="commentFormVisible && !activeComment"
+  *ngIf="commentFormVisible && activeComment == null"
   (save)="submit($event)"
   (cancel)="hideCommentForm()"
 ></app-checking-comment-form>

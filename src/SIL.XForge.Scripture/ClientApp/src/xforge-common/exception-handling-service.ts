@@ -16,7 +16,7 @@ type UserForReport = User & { id: string };
 export class ExceptionHandlingService implements ErrorHandler {
   private alertQueue: ErrorAlert[] = [];
   private dialogOpen = false;
-  private currentUser: UserDoc;
+  private currentUser?: UserDoc;
   private constructionTime = Date.now();
 
   constructor(private readonly injector: Injector) {}
@@ -72,7 +72,7 @@ export class ExceptionHandlingService implements ErrorHandler {
       try {
         this.handleAlert(ngZone, dialog, { message, stack: error.stack, eventId });
       } finally {
-        this.sendReport(errorReportingService, error, await this.getUserForReporting(userService), eventId);
+        this.sendReport(errorReportingService, error, eventId, await this.getUserForReporting(userService));
       }
     } finally {
       // Error logging occurs after error reporting so it won't show up as noise in Bugsnag's breadcrumbs
@@ -105,7 +105,7 @@ export class ExceptionHandlingService implements ErrorHandler {
     return user;
   }
 
-  private sendReport(errorReportingService: ErrorReportingService, error: any, user: UserForReport, eventId: string) {
+  private sendReport(errorReportingService: ErrorReportingService, error: any, eventId: string, user?: UserForReport) {
     errorReportingService.notify(
       error,
       {

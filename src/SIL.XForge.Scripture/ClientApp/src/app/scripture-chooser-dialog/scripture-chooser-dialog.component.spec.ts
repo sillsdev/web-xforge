@@ -63,7 +63,7 @@ describe('ScriptureChooserDialog', () => {
     env.click(env.bookEphesians);
     env.click(env.chapter3);
     env.click(env.verse21);
-    expect(env.dialogResult.toString()).toEqual('EPH 3:21');
+    expect(env.dialogResult!.toString()).toEqual('EPH 3:21');
   }));
 
   it('clicking X closes. dialog reports cancelled.', fakeAsync(() => {
@@ -91,8 +91,8 @@ describe('ScriptureChooserDialog', () => {
     expect(env.chapter3).toBeDefined('missing chapter 3 button');
   }));
 
-  it('book not highlighted, if no (null) incoming reference', fakeAsync(() => {
-    const env = new TestEnvironment({ inputScriptureReference: null });
+  it('book not highlighted, if no (undefined) incoming reference', fakeAsync(() => {
+    const env = new TestEnvironment({ inputScriptureReference: undefined });
     expect(env.highlightedButton).toBeNull();
   }));
 
@@ -155,9 +155,9 @@ describe('ScriptureChooserDialog', () => {
 
   it('input is received', fakeAsync(() => {
     const env = new TestEnvironment({ inputScriptureReference: new VerseRef('EPH', '3', '21') });
-    expect(env.component.data.input.book).toEqual('EPH');
-    expect(env.component.data.input.chapter).toEqual('3');
-    expect(env.component.data.input.verse).toEqual('21');
+    expect(env.component.data.input!.book).toEqual('EPH');
+    expect(env.component.data.input!.chapter).toEqual('3');
+    expect(env.component.data.input!.verse).toEqual('21');
   }));
 
   it('only shows books that we seed (from project)', fakeAsync(() => {
@@ -246,7 +246,7 @@ describe('ScriptureChooserDialog', () => {
     expect(env.dialogText).toContain('21');
 
     env.click(env.verse21);
-    expect(env.dialogResult.toString()).toEqual('EPH 3:21');
+    expect(env.dialogResult!.toString()).toEqual('EPH 3:21');
   }));
 
   it('close button works for end-selection chooser', fakeAsync(() => {
@@ -388,7 +388,7 @@ describe('ScriptureChooserDialog', () => {
     template: '<viewContainerDirective></viewContainerDirective>'
   })
   class ChildViewContainerComponent {
-    @ViewChild(ViewContainerDirective, { static: true }) viewContainer: ViewContainerDirective;
+    @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
 
     get childViewContainer(): ViewContainerRef {
       return this.viewContainer.viewContainerRef;
@@ -408,7 +408,7 @@ describe('ScriptureChooserDialog', () => {
     component: ScriptureChooserDialogComponent;
     dialogRef: MdcDialogRef<ScriptureChooserDialogComponent>;
     overlayContainerElement: HTMLElement;
-    dialogResult: 'close' | VerseRef;
+    dialogResult?: 'close' | VerseRef;
     closeIconName = 'close';
     backIconName = 'navigate_before';
 
@@ -465,31 +465,31 @@ describe('ScriptureChooserDialog', () => {
       this.fixture.detectChanges();
     }
 
-    get dialogText(): string {
+    get dialogText(): string | null {
       return this.overlayContainerElement.textContent;
     }
 
-    get bookEphesians(): DebugElement {
+    get bookEphesians(): DebugElement | undefined {
       return this.buttonWithText('EPH');
     }
 
-    get bookRomans(): DebugElement {
+    get bookRomans(): DebugElement | undefined {
       return this.buttonWithText('ROM');
     }
 
-    get chapter3(): DebugElement {
+    get chapter3(): DebugElement | undefined {
       return this.buttonWithText('3');
     }
 
-    get chapter11(): DebugElement {
+    get chapter11(): DebugElement | undefined {
       return this.buttonWithText('11');
     }
 
-    get verse21(): DebugElement {
+    get verse21(): DebugElement | undefined {
       return this.buttonWithText('21');
     }
 
-    get verse33(): DebugElement {
+    get verse33(): DebugElement | undefined {
       return this.buttonWithText('33');
     }
 
@@ -505,16 +505,16 @@ describe('ScriptureChooserDialog', () => {
       return this.fixture.debugElement.query(By.css('.ngx-mdc-button--primary'));
     }
 
-    click(element: DebugElement): void {
-      element.nativeElement.click();
+    click(element: DebugElement | undefined): void {
+      element!.nativeElement.click();
       this.fixture.detectChanges();
       flush();
     }
 
-    buttonWithText(text: string): DebugElement {
+    buttonWithText(text: string): DebugElement | undefined {
       return this.fixture.debugElement
         .queryAll(By.css('button'))
-        .find(button => button.nativeElement.innerText === text);
+        .find(button => button.nativeElement.innerText === text)!;
     }
   }
 });
