@@ -21,17 +21,13 @@ export function promiseTimeout<T>(promise: Promise<T>, timeout: number) {
 }
 
 export function issuesEmailTemplate(errorId?: string): string {
-  const errorIdString: string = errorId ? `${errorId} (included so we can provide better support)` : 'not available';
   const bowser = Bowser.getParser(window.navigator.userAgent);
-  const xForgeVersion: string = version;
   return encodeURI(`mailto:${environment.issueEmail}?subject=${
     environment.siteName
   } issue&body=Thanks for reporting the issue!
 It would help us if you fill out some of the information below, but please submit even if you can't fill out much.
 If you are requesting a feature many of the fields may not be applicable.
 Be aware your bug report will be publicly available. Never submit passwords or other secrets.
-
-Error id: ${errorIdString}
 
 Bug report
 A clear and concise description of what the bug is.
@@ -52,17 +48,19 @@ A clear and concise description of what you expected to happen.
 Screenshots
 If applicable, add screenshots to help explain your issue.
 
-Your environment:
-Please complete the following information
-Software                 Version(s)
------------------------------------------
-Scripture Forge - ${xForgeVersion}
-${bowser.getBrowserName()} - ${bowser.getBrowserVersion()}
-${bowser.getOSName()} - ${bowser.getOSVersion()}
-
 Additional context
 Add any other context about the problem here.
 
 Possible solution
-Add any possible solutions to the problem here.`);
+Add any possible solutions to the problem here.
+
+Your environment:
+Software                 Version
+-----------------------------------------
+Scripture Forge - ${version}
+${bowser.getBrowserName()} - ${bowser.getBrowserVersion()}
+${bowser.getOSName()} - ${bowser.getOSVersion() || 'unknown'}
+
+Error id: ${errorId || 'not applicable'}
+`);
 }
