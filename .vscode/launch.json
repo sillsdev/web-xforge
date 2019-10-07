@@ -77,6 +77,9 @@
       "sourceMaps": true,
       "pathMapping": {
         "/_karma_webpack_": "${workspaceFolder}/src/SIL.XForge.Scripture/ClientApp"
+      },
+      "linux": {
+        "runtimeExecutable": "/usr/bin/chromium-browser"
       }
     }
   ]
