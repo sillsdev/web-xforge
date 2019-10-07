@@ -19,6 +19,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { issuesEmailTemplate } from 'xforge-common/utils';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
@@ -92,45 +93,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get issueMailTo(): string {
-    return encodeURI(`mailto:${environment.issueEmail}?subject=${
-      environment.siteName
-    } issue&body=Thanks for reporting the issue!
-It would help us if you fill out some of the information below, but please submit even if you can't fill out much.
-If you are requesting a feature many of the fields may not be applicable.
-Be aware your bug report will be publicly available. Never submit passwords or other secrets.
-
-Bug report
-A clear and concise description of what the bug is.
-
-Steps to reproduce
-For example:
-1. Go to ...
-2. Click on ...
-3. Scroll down to ...
-4. See error
-
-Actual behavior
-Please describe actual behavior of the issue you are observing.
-
-Expected behavior
-A clear and concise description of what you expected to happen.
-
-Screenshots
-If applicable, add screenshots to help explain your issue.
-
-Your environment:
-Please complete the following information
-Software                 Version(s)
------------------------------------------
-Scripture Forge - ${this.version}
-${this.bowser.getBrowserName()} - ${this.bowser.getBrowserVersion()}
-${this.bowser.getOSName()} - ${this.bowser.getOSVersion()}
-
-Additional context
-Add any other context about the problem here.
-
-Possible solution
-Add any possible solutions to the problem here.`);
+    return issuesEmailTemplate();
   }
 
   get helpsPage(): string {
