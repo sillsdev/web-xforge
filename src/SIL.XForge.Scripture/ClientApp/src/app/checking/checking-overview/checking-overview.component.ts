@@ -120,6 +120,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return '' + count;
   }
 
+  get canSeeOtherUserResponses(): boolean {
+    return this.projectDoc != null && this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses;
+  }
+
   get isProjectAdmin(): boolean {
     return (
       this.projectDoc != null &&
