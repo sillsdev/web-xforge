@@ -47,6 +47,22 @@ Vagrant.configure("2") do |config|
     cd ~/src/web-xforge/deploy
     tryharderto ansible-playbook playbook_bionic.yml --limit localhost
 
+    sudo n lts
+
+    cd ~/src/web-xforge/
+    dotnet clean
+    # Remove orphaned? dotnet process.
+    sleep 10s
+    pkill dotnet
+    rm -rf /tmp/NuGetScratch/lock
+
+    cd ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp
+    npm i
+    cd ~/src/web-xforge/src/RealtimeServer
+    npm i
+    cd ~/src/web-xforge/src/SIL.XForge.Scripture
+    dotnet build
+
     # Remove canary
     rm ~/Desktop/development-tools/warning-not-provisioned.txt
     echo Provisioning finished successfully.
