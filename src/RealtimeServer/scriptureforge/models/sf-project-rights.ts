@@ -14,11 +14,9 @@ export class SFProjectRights extends ProjectRights {
   constructor() {
     super();
 
-    const observerRights: ProjectRight[] = [
+    const communityCheckingObserverBaseRights: ProjectRight[] = [
       { projectDomain: SFProjectDomain.ProjectUserConfigs, operation: Operation.ViewOwn },
       { projectDomain: SFProjectDomain.ProjectUserConfigs, operation: Operation.EditOwn },
-
-      { projectDomain: SFProjectDomain.Texts, operation: Operation.View },
 
       { projectDomain: SFProjectDomain.Questions, operation: Operation.View },
 
@@ -28,9 +26,12 @@ export class SFProjectRights extends ProjectRights {
 
       { projectDomain: SFProjectDomain.Likes, operation: Operation.View }
     ];
+    const observerRights: ProjectRight[] = communityCheckingObserverBaseRights.concat([
+      { projectDomain: SFProjectDomain.Texts, operation: Operation.View }
+    ]);
     this.addRights(SFProjectRole.ParatextObserver, observerRights);
 
-    const reviewerRights: ProjectRight[] = observerRights.concat([
+    const communityCheckingReviewerBaseRights: ProjectRight[] = [
       { projectDomain: SFProjectDomain.Answers, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Answers, operation: Operation.EditOwn },
       { projectDomain: SFProjectDomain.Answers, operation: Operation.DeleteOwn },
@@ -41,10 +42,16 @@ export class SFProjectRights extends ProjectRights {
 
       { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn }
-    ]);
+    ];
+
+    const communityCheckerRights: ProjectRight[] = communityCheckingReviewerBaseRights.concat(
+      communityCheckingObserverBaseRights
+    );
+    this.addRights(SFProjectRole.CommunityChecker, communityCheckerRights);
+
+    const reviewerRights: ProjectRight[] = observerRights.concat(communityCheckingObserverBaseRights);
     this.addRights(SFProjectRole.Reviewer, reviewerRights);
     this.addRights(SFProjectRole.ParatextConsultant, reviewerRights);
-    this.addRights(SFProjectRole.CommunityChecker, reviewerRights);
 
     const translatorRights: ProjectRight[] = reviewerRights.concat([
       { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit }

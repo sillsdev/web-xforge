@@ -2,9 +2,11 @@ import { MdcDialog, MdcSelect, MdcTopAppBar } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Site } from 'realtime-server/lib/common/models/site';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
@@ -146,7 +148,13 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get isTranslateEnabled(): boolean {
-    return this.selectedProjectRole != null && this.selectedProjectRole !== SFProjectRole.CommunityChecker;
+    return (
+      this.selectedProjectRole != null &&
+      SF_PROJECT_RIGHTS.hasRight(this.selectedProjectRole, {
+        projectDomain: SFProjectDomain.Texts,
+        operation: Operation.View
+      })
+    );
   }
 
   get isCheckingEnabled(): boolean {
