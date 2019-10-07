@@ -2,7 +2,6 @@ import { MdcDialog, MdcSelect, MdcTopAppBar } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import Bowser from 'bowser';
 import { Site } from 'realtime-server/lib/common/models/site';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
@@ -62,7 +61,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private _isDrawerPermanent: boolean = true;
   private selectedProjectRole: SFProjectRole;
   private readonly questionCountQueries = new Map<number, RealtimeQuery>();
-  private bowser = Bowser.getParser(window.navigator.userAgent);
 
   constructor(
     private readonly router: Router,
