@@ -2,6 +2,7 @@ import { MdcDialog, MdcSelect, MdcTopAppBar } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import Bowser from 'bowser';
 import { Site } from 'realtime-server/lib/common/models/site';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
@@ -60,6 +61,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private _isDrawerPermanent: boolean = true;
   private selectedProjectRole: SFProjectRole;
   private readonly questionCountQueries = new Map<number, RealtimeQuery>();
+  private bowser = Bowser.getParser(window.navigator.userAgent);
 
   constructor(
     private readonly router: Router,
@@ -93,16 +95,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return encodeURI(`mailto:${environment.issueEmail}?subject=${
       environment.siteName
     } issue&body=Thanks for reporting the issue!
-Please submit as much information below as possible but do submit something.
+It would help us if you fill out some of the information below, but please submit even if you can't fill out much.
+If you are requesting a feature many of the fields may not be applicable.
 Be aware your bug report will be publicly available. Never submit passwords or other secrets.
 
 Bug report
 A clear and concise description of what the bug is.
 
 Steps to reproduce
-1. Go to '...'
-2. Click on '...'
-3. Scroll down to '...'
+For example:
+1. Go to ...
+2. Click on ...
+3. Scroll down to ...
 4. See error
 
 Actual behavior
@@ -118,9 +122,9 @@ Your environment:
 Please complete the following information
 Software                 Version(s)
 -----------------------------------------
-Scripture Forge
-Browser
-Operating System
+Scripture Forge - ${this.version}
+${this.bowser.getBrowserName()} - ${this.bowser.getBrowserVersion()}
+${this.bowser.getOSName()} - ${this.bowser.getOSVersion()}
 
 Additional context
 Add any other context about the problem here.
