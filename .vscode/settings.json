@@ -12,6 +12,8 @@
     }
   ],
   "liveSassCompile.settings.generateMap": false,
+  "angularKarmaTestExplorer.karmaConfFilePath": "src/karma.conf.js",
+  "angularKarmaTestExplorer.projectRootPath": "src/SIL.XForge.Scripture/ClientApp",
   "jest.rootPath": "src/RealtimeServer",
   "jest.debugCodeLens.showWhenTestStateIn": ["fail"]
 }

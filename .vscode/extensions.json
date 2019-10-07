@@ -9,6 +9,7 @@
     "ms-vscode.csharp",
     "ms-vscode.vscode-typescript-tslint-plugin",
     "msjsdiag.debugger-for-chrome",
-    "orta.vscode-jest"
+    "orta.vscode-jest",
+    "raagh.angular-karma-test-explorer"
   ]
 }
