@@ -67,8 +67,19 @@
                   </mdc-menu>
                 </div>
               </div>
-              <app-font-size (apply)="applyFontChange($event)"></app-font-size>
-              <app-share></app-share>
+              <div class="action-icons">
+                <app-font-size (apply)="applyFontChange($event)"></app-font-size>
+                <app-share></app-share>
+                <button
+                  *ngIf="isProjectAdmin"
+                  mdc-icon-button
+                  type="button"
+                  icon="post_add"
+                  title="Add question"
+                  (click)="questionDialog()"
+                  id="add-question-button"
+                ></button>
+              </div>
             </div>
           </div>
           <div id="split-container" #splitContainer>
