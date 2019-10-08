@@ -237,6 +237,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   editAnswer(answer: Answer) {
+    // update read answers list so when the answers are rendered again after editing they won't be shown as unread
+    this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
     this.activeAnswer = cloneDeep(answer);
     this.audio.url = this.activeAnswer.audioUrl;
     if (this.activeAnswer.verseRef != null) {
@@ -425,10 +427,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   private emitAnswerToSave() {
-    if (this.activeAnswer) {
-      // If editing an answer, ensure answers read is current
-      this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
-    }
     this.action.emit({
       action: 'save',
       text: this.answerText.value,
