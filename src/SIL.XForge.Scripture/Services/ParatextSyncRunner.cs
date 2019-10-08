@@ -331,8 +331,6 @@ namespace SIL.XForge.Scripture.Services
             string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId,
                 Canon.BookNumberToId(text.BookNum));
             var bookTextElem = XElement.Parse(bookText);
-
-            await SaveXmlFileAsync(bookTextElem, fileName);
             await UpdateProgress();
 
             IReadOnlyDictionary<int, (Delta Delta, int LastVerse)> deltas = _deltaUsxMapper.ToChapterDeltas(
@@ -349,6 +347,9 @@ namespace SIL.XForge.Scripture.Services
                 chapters.Add(new Chapter { Number = kvp.Key, LastVerse = kvp.Value.LastVerse });
             }
             await Task.WhenAll(tasks);
+
+            await SaveXmlFileAsync(bookTextElem, fileName);
+
             await UpdateProgress();
             return chapters;
         }

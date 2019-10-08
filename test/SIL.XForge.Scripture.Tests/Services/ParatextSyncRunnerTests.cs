@@ -52,15 +52,13 @@ namespace SIL.XForge.Scripture.Services
         public async Task SyncAsync_Error()
         {
             var env = new TestEnvironment();
-            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
-            env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
-            env.ParatextService
-                .When(p => p.GetBooksAsync(Arg.Any<UserSecret>(), "target"))
-                .Do(x => throw new Exception());
+            env.SetupSFData(true, true, false);
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XElement>())).Do(x => throw new Exception());
 
             await env.Runner.RunAsync("project01", "user01", false);
 
+            env.FileSystemService.DidNotReceive().CreateFile(TestEnvironment.GetUsxFileName(TextType.Target, "MAT"));
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.False);
@@ -436,7 +434,6 @@ namespace SIL.XForge.Scripture.Services
         private class TestEnvironment
         {
             private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
-            private readonly IDeltaUsxMapper _deltaUsxMapper;
             private readonly IParatextNotesMapper _notesMapper;
 
             public TestEnvironment()
@@ -467,12 +464,12 @@ namespace SIL.XForge.Scripture.Services
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
                 RealtimeService = new SFMemoryRealtimeService();
                 FileSystemService = Substitute.For<IFileSystemService>();
-                _deltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
+                DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
                 var logger = Substitute.For<ILogger<ParatextSyncRunner>>();
 
                 Runner = new ParatextSyncRunner(siteOptions, userSecrets, _projectSecrets, SFProjectService,
-                    EngineService, ParatextService, RealtimeService, FileSystemService, _deltaUsxMapper, _notesMapper,
+                    EngineService, ParatextService, RealtimeService, FileSystemService, DeltaUsxMapper, _notesMapper,
                     logger);
             }
 
@@ -482,6 +479,7 @@ namespace SIL.XForge.Scripture.Services
             public IParatextService ParatextService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
             public IFileSystemService FileSystemService { get; }
+            public IDeltaUsxMapper DeltaUsxMapper { get; }
 
             public SFProject GetProject()
             {
@@ -649,7 +647,7 @@ namespace SIL.XForge.Scripture.Services
                         && (string)e?.Element("book") == paratextProject;
                 var chapterDeltas = Enumerable.Range(1, chapterCount)
                     .ToDictionary(c => c, c => (Delta.New().InsertText("text"), 10));
-                _deltaUsxMapper.ToChapterDeltas(Arg.Is<XElement>(e => predicate(e))).Returns(chapterDeltas);
+                DeltaUsxMapper.ToChapterDeltas(Arg.Is<XElement>(e => predicate(e))).Returns(chapterDeltas);
             }
 
             private void AddSFBook(string bookId, int chapterCount, TextType textType, bool changed)
@@ -661,7 +659,7 @@ namespace SIL.XForge.Scripture.Services
                     .Returns(new MemoryStream(Encoding.UTF8.GetBytes(oldBookText)));
                 FileSystemService.FileExists(filename).Returns(true);
                 string newBookText = GetBookText(textType, bookId, changed ? 2 : 1);
-                _deltaUsxMapper.ToUsx("2.5", bookId, GetParatextProject(textType), Arg.Any<IEnumerable<Delta>>())
+                DeltaUsxMapper.ToUsx("2.5", bookId, GetParatextProject(textType), Arg.Any<IEnumerable<Delta>>())
                     .Returns(XElement.Parse(newBookText).Element("usx"));
 
                 for (int c = 1; c <= chapterCount; c++)
