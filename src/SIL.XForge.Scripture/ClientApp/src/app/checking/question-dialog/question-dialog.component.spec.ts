@@ -150,6 +150,13 @@ describe('QuestionDialogComponent', () => {
     }
   }));
 
+  it('should set default verse if provided', fakeAsync(() => {
+    const verseRef: VerseRef = VerseRef.parse('LUK 1:1');
+    const env = new TestEnvironment(undefined, verseRef);
+    flush();
+    expect(env.component.scriptureStart.value).toBe('LUK 1:1');
+  }));
+
   it('should validate matching book and chapter', fakeAsync(() => {
     const env = new TestEnvironment();
     flush();
@@ -505,7 +512,7 @@ class TestEnvironment {
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
-  constructor(question?: Question) {
+  constructor(question?: Question, defaultVerseRef?: VerseRef) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     const config: MdcDialogConfig<QuestionDialogData> = {
@@ -520,7 +527,8 @@ class TestEnvironment {
           LUK: { bookNum: 42, hasSource: false, chapters: [{ number: 1, lastVerse: 80 }] },
           JHN: { bookNum: 43, hasSource: false, chapters: [{ number: 1, lastVerse: 0 }] }
         },
-        projectId: 'project01'
+        projectId: 'project01',
+        defaultVerse: defaultVerseRef
       } as QuestionDialogData,
       viewContainerRef
     };
