@@ -107,7 +107,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   set book(book: number) {
-    if (!this.questionDocs.length) {
+    if (!this.questionDocs.length || this._book === book) {
       return;
     }
     let defaultChapter = 1;
@@ -417,12 +417,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   questionChanged(questionDoc: QuestionDoc) {
-    if (questionDoc.verseRef.bookNum !== this.book) {
-      this.book = questionDoc.verseRef.bookNum;
-    }
-    if (this.questionsPanel.activeQuestionChapter !== this.chapter) {
-      this.chapter = this.questionsPanel.activeQuestionChapter;
-    }
+    this.book = questionDoc.verseRef.bookNum;
+    this.chapter = this.questionsPanel.activeQuestionChapter;
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
     this.collapseDrawer();
