@@ -3,7 +3,7 @@ import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
-import { toStartAndEndVerseRefs } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, toStartAndEndVerseRefs } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -23,6 +23,7 @@ export interface QuestionDialogData {
   question?: Question;
   textsByBookId: TextsByBookId;
   projectId: string;
+  defaultVerse?: VerseRef;
 }
 
 export interface QuestionDialogResult {
@@ -98,6 +99,13 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
         this.audio.url = question.audioUrl;
         this.questionText.clearValidators();
         this.questionText.updateValueAndValidity();
+      }
+      this.updateSelection();
+    } else if (this.data.defaultVerse) {
+      const { startVerseRef, endVerseRef } = toStartAndEndVerseRefs(fromVerseRef(this.data.defaultVerse));
+      this.scriptureStart.setValue(startVerseRef.toString());
+      if (endVerseRef != null) {
+        this.scriptureEnd.setValue(endVerseRef.toString());
       }
       this.updateSelection();
     }

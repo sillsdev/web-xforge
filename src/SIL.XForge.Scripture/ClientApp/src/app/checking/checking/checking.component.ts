@@ -448,7 +448,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       data: {
         question: undefined,
         textsByBookId: this.textsByBookId,
-        projectId: this.projectDoc.id
+        projectId: this.projectDoc.id,
+        defaultVerse: new VerseRef(this._book, this._chapter, 1)
       }
     };
     const dialogRef = this.dialog.open(QuestionDialogComponent, config) as MdcDialogRef<
