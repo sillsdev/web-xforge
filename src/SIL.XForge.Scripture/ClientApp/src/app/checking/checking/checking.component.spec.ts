@@ -304,6 +304,19 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerText(0)).toBe('Edited question 7 answer');
     }));
 
+    it('still shows answers as read after canceling an edit', fakeAsync(() => {
+      env.setupData(env.checkerUser);
+      env.selectQuestion(7);
+      env.answerQuestion('Answer question 7');
+      expect(env.getAnswer(1).classes['answer-unread']).toBe(true);
+      env.clickButton(env.getAnswerEditButton(0));
+      env.setTextFieldValue(env.yourAnswerField, 'Edited question 7 answer');
+      env.clickButton(env.cancelAnswerButton);
+      env.waitForSliderUpdate();
+      expect(env.getAnswer(1).classes['answer-unread']).toBe(false);
+      expect(env.getAnswerText(0)).toBe('Answer question 7');
+    }));
+
     it('can remove audio from answer', fakeAsync(() => {
       env.setupData(env.checkerUser);
       env.selectQuestion(6);
