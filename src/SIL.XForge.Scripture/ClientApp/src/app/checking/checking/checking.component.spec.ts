@@ -1,4 +1,4 @@
-import { MdcDialogRef, MdcListItem, MdcMenuSelectedEvent } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogRef, MdcListItem, MdcMenuSelectedEvent } from '@angular-mdc/web';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -43,6 +43,8 @@ import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
+import { combineVerseRefStrs } from '../../shared/utils';
+import { QuestionDialogComponent, QuestionDialogResult } from '../question-dialog/question-dialog.component';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
@@ -60,6 +62,7 @@ const mockedUserService = mock(UserService);
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedMdcDialog = mock(MdcDialog);
 
 describe('CheckingComponent', () => {
   configureTestingModule(() => ({
@@ -92,7 +95,8 @@ describe('CheckingComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: ProjectService, useMock: mockedProjectService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: MdcDialog, useMock: mockedMdcDialog }
     ]
   }));
 
@@ -130,6 +134,52 @@ describe('CheckingComponent', () => {
       env.selectQuestion(15);
       expect(prev.nativeElement.disabled).toBe(false);
       expect(next.nativeElement.disabled).toBe(true);
+    }));
+
+    it('adds a question when requested', fakeAsync(() => {
+      env.setupData(env.adminUser);
+      const dialogResult: QuestionDialogResult = {
+        verseRef: combineVerseRefStrs('JHN 1:2'),
+        text: 'new question',
+        audio: { fileName: '' }
+      };
+      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of(dialogResult));
+
+      env.clickButton(env.addQuestionButton);
+      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
+      verify(mockedProjectService.createQuestion('project01', anything())).once();
+      expect().nothing();
+    }));
+
+    it('uploads an audio file', fakeAsync(() => {
+      env.setupData(env.adminUser);
+      const dialogResult: QuestionDialogResult = {
+        verseRef: combineVerseRefStrs('JHN 1:2'),
+        text: 'new question',
+        audio: { fileName: 'someAudioFile.mp3' }
+      };
+      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of(dialogResult));
+      when(mockedProjectService.onlineUploadAudio('project01', anything(), anything())).thenResolve('anAudioFile.mp3');
+      env.clickButton(env.addQuestionButton);
+      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
+      verify(mockedProjectService.onlineUploadAudio('project01', anything(), anything())).once();
+      tick();
+      verify(mockedProjectService.createQuestion('project01', anything())).once();
+      expect().nothing();
+    }));
+
+    it('does not create question if user cancels', fakeAsync(() => {
+      env.setupData(env.adminUser);
+      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
+      env.clickButton(env.addQuestionButton);
+      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
+      verify(mockedProjectService.createQuestion(anything(), anything())).never();
+      expect().nothing();
+    }));
+
+    it('hides add question button for reviewer', fakeAsync(() => {
+      env.setupData(env.checkerUser);
+      expect(env.addQuestionButton).toBeNull();
     }));
 
     it('responds to remote removed from project', fakeAsync(() => {
@@ -760,6 +810,7 @@ class TestEnvironment {
   projectBookRoute: string = 'JHN';
   questionReadTimer: number = 2000;
 
+  readonly mockedQuestionDialogRef: MdcDialogRef<QuestionDialogComponent> = mock(MdcDialogRef);
   readonly mockedCheckingNameDialogRef: MdcDialogRef<EditNameDialogComponent> = mock(MdcDialogRef);
 
   readonly adminUser: UserInfo = this.createUser('01', SFProjectRole.ParatextAdministrator);
@@ -866,6 +917,10 @@ class TestEnvironment {
 
   get addAnswerButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#add-answer'));
+  }
+
+  get addQuestionButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#add-question-button'));
   }
 
   get cancelAnswerButton(): DebugElement {
@@ -1334,6 +1389,8 @@ class TestEnvironment {
     );
 
     when(this.mockedCheckingNameDialogRef.afterClosed()).thenReturn(of(user.user.displayName));
+
+    when(mockedMdcDialog.open(QuestionDialogComponent, anything())).thenReturn(instance(this.mockedQuestionDialogRef));
   }
 
   private initComponentEnviroment(): void {
