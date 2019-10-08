@@ -277,6 +277,8 @@ namespace SIL.XForge.Scripture.Services
 
         private static bool IsParagraphStyle(string style)
         {
+            if (style == string.Empty)
+                return true;
             if (char.IsDigit(style[style.Length - 1]))
                 style = style.Substring(0, style.Length - 1);
             return ParagraphStyles.Contains(style);

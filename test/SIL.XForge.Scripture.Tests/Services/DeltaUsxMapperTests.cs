@@ -950,6 +950,42 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(newDeltas[1].LastVerse, Is.EqualTo(0));
         }
 
+        [Test]
+        public void ToDelta_EmptyStyle()
+        {
+            XElement usxElem = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    Verse("2")),
+                Para(""),
+                Para("li"),
+                Para("",
+                    Verse("3")));
+
+            var mapper = new DeltaUsxMapper();
+            IReadOnlyDictionary<int, (Delta Delta, int LastVerse)> newDeltas = mapper.ToChapterDeltas(usxElem);
+
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .InsertVerse("1")
+                .InsertBlank("verse_1_1")
+                .InsertVerse("2")
+                .InsertBlank("verse_1_2")
+                .InsertPara("p")
+                .InsertBlank("verse_1_2/_1")
+                .InsertPara("")
+                .InsertBlank("verse_1_2/li_2")
+                .InsertPara("li")
+                .InsertBlank("verse_1_2/_3")
+                .InsertVerse("3")
+                .InsertBlank("verse_1_3")
+                .InsertPara("");
+
+            Assert.IsTrue(newDeltas[1].Delta.DeepEquals(expected));
+            Assert.That(newDeltas[1].LastVerse, Is.EqualTo(3));
+        }
+
         private static XElement Usx(string code, params object[] elems)
         {
             return new XElement("usx", new XAttribute("version", "2.5"),
