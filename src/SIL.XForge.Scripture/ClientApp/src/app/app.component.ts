@@ -18,6 +18,7 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { issuesEmailTemplate } from 'xforge-common/utils';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
@@ -90,7 +91,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get issueMailTo(): string {
-    return encodeURI(`mailto:${environment.issueEmail}?subject=${environment.siteName} issue`);
+    return issuesEmailTemplate();
   }
 
   get helpsPage(): string {
