@@ -94,6 +94,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
 
   private async onReady(): Promise<void> {
     if (this.subscribed) {
+      await this.onChange(true, this.adapter.docIds, this.adapter.count, this.adapter.unpagedCount);
       this._remoteChanges$.next();
     } else {
       this._docs = this.adapter.docIds.map(id => this.realtimeService.get<T>(this.collection, id));
