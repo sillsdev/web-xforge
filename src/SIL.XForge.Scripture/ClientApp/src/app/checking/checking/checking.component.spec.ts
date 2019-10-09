@@ -1,6 +1,6 @@
 import { MdcDialog, MdcDialogRef, MdcListItem, MdcMenuSelectedEvent } from '@angular-mdc/web';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
@@ -630,6 +630,25 @@ describe('CheckingComponent', () => {
       expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
     }));
 
+    it('error about "answer or recording required" goes away after add recording', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(1);
+      env.clickButton(env.addAnswerButton);
+      env.clickButton(env.saveAnswerButton);
+      // Have not given any answer yet, so clicking Save should show a validation error.
+      expect(env.component.answersPanel!.answerForm.invalid).toBe(true, 'setup');
+      expect(env.answerFormErrors.length).toEqual(1, 'setup');
+      expect(env.answerFormErrors[0].nativeElement.textContent).toContain('record', 'setup');
+      env.clickButton(env.audioTab);
+
+      // SUT
+      env.clickButton(env.recordButton);
+      env.simulateAudioRecordingFinishedProcessing();
+
+      // We made a recording, so we should not be showing a validation error.
+      expect(env.component.answersPanel!.answerForm.valid).toBe(true);
+    }));
+
     it('generate correct verse ref when start and end mismatch only by case', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(1);
@@ -1062,6 +1081,7 @@ class TestEnvironment {
 
   clickButton(button: DebugElement): void {
     button.nativeElement.click();
+    flush();
     this.fixture.detectChanges();
   }
 
@@ -1190,6 +1210,16 @@ class TestEnvironment {
   selectChapterFromMenu(chapter: number) {
     const eventData: MdcMenuSelectedEvent = { index: 0, source: { value: chapter } as MdcListItem };
     this.component.onChapterSelect(eventData);
+  }
+
+  /** To use if the Stop Recording button isn't showing up in the test DOM. */
+  simulateAudioRecordingFinishedProcessing(): void {
+    this.component.answersPanel!.audioCombinedComponent!.audioRecorderComponent!.status.emit({
+      status: 'processed',
+      url: 'example.com/foo.mp3'
+    });
+    flush();
+    this.fixture.detectChanges();
   }
 
   private setupDefaultProjectData(user: UserInfo): void {
