@@ -6,8 +6,10 @@ import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
+import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
@@ -29,6 +31,11 @@ import {
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { CheckingUtils } from '../checking.utils';
+import {
+  QuestionDialogComponent,
+  QuestionDialogData,
+  QuestionDialogResult
+} from '../question-dialog/question-dialog.component';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
@@ -161,6 +168,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.collapseDrawer();
       }
     }
+  }
+
+  get isProjectAdmin(): boolean {
+    return (
+      this.projectDoc != null &&
+      this.projectDoc.data != null &&
+      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
+    );
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
@@ -428,6 +443,52 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.collapseDrawer();
   }
 
+  questionDialog(): void {
+    const config: MdcDialogConfig<QuestionDialogData> = {
+      data: {
+        question: undefined,
+        textsByBookId: this.textsByBookId,
+        projectId: this.projectDoc.id,
+        defaultVerse: new VerseRef(this._book, this._chapter, 1)
+      }
+    };
+    const dialogRef = this.dialog.open(QuestionDialogComponent, config) as MdcDialogRef<
+      QuestionDialogComponent,
+      QuestionDialogResult | 'close'
+    >;
+
+    const questionId: string = objectId();
+    const currentDate = new Date().toJSON();
+    let audioUrl: string;
+    dialogRef.afterClosed().subscribe(async result => {
+      if (result === 'close') {
+        return;
+      }
+      if (result.audio.fileName) {
+        const response = await this.projectService.onlineUploadAudio(
+          this.projectDoc.id,
+          questionId,
+          new File([result.audio.blob], result.audio.fileName)
+        );
+        // Get the amended filename and save it against the answer
+        audioUrl = response;
+      }
+      const question: Question = {
+        dataId: questionId,
+        projectRef: this.projectDoc.id,
+        ownerRef: this.userService.currentUserId,
+        verseRef: fromVerseRef(result.verseRef),
+        text: result.text,
+        audioUrl: audioUrl,
+        answers: [],
+        isArchived: false,
+        dateCreated: currentDate,
+        dateModified: currentDate
+      };
+      await this.projectService.createQuestion(this.projectDoc.id, question);
+    });
+  }
+
   totalQuestions(): number {
     return this.questionsQuery != null ? this.questionsQuery.docs.length : 0;
   }
@@ -636,14 +697,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   private startUserOnboardingTour() {
     // HelpHero user-onboarding tour setup
-    const isProjectAdmin: boolean =
-      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator;
     const isDiscussionEnabled: boolean = this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses;
     const isInvitingEnabled: boolean = this.projectDoc.data.checkingConfig.shareEnabled;
     const isNameConfirmed = this.userDoc.data.isDisplayNameConfirmed;
 
     this.helpHeroService.setProperty({
-      isAdmin: isProjectAdmin,
+      isAdmin: this.isProjectAdmin,
       isDiscussionEnabled,
       isInvitingEnabled,
       isNameConfirmed

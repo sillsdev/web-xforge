@@ -58,7 +58,7 @@
             display: flex;
             align-items: center;
             @include media-breakpoint-down(sm) {
-              width: calc(100vw - 120px);
+              width: calc(100vw - 150px);
             }
             span {
               white-space: nowrap;
@@ -70,6 +70,9 @@
               display: flex;
               align-items: center;
             }
+          }
+          &.action-icons {
+            justify-content: flex-end;
           }
         }
       }
