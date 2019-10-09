@@ -200,6 +200,7 @@ describe('AppComponent', () => {
 
     env.addUserToProject('project04');
     env.navigate(['/projects', 'project04']);
+    expect(env.component.isTranslateEnabled).toBe(false);
     env.wait();
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project04');
