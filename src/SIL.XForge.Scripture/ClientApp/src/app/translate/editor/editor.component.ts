@@ -258,6 +258,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled) {
               this.setupTranslationEngine();
             }
+            setTimeout(() => this.setTextHeight());
           });
 
           this.metricsSession.start(
@@ -544,6 +545,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
         this.target.segment.acceptChanges();
       }
     }
+    setTimeout(() => this.setTextHeight());
   }
 
   private onStartTranslating(): void {
