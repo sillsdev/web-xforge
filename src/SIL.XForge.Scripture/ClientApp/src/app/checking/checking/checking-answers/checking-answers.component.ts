@@ -358,6 +358,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   processAudio(audio: AudioAttachment) {
     this.audio = audio;
+    this.updateValidationRules();
   }
 
   resetScriptureText() {
