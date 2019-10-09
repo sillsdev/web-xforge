@@ -10,10 +10,14 @@ namespace SIL.XForge.Scripture.Services
 {
     public class DeltaUsxMapper : IDeltaUsxMapper
     {
-        private static readonly HashSet<string> ParagraphStyles = new HashSet<string>
+        private static readonly HashSet<string> ParagraphPoetryListStyles = new HashSet<string>
         {
-            "p", "m", "pmo", "pm", "pmc", "pmr", "pi", "mi", "cls", "li", "pc", "pr", "ph", "lit", "q", "qc", "qr",
-            "qa", "qm", "b"
+            // Paragraphs
+            "p", "m", "po", "pr", "cls", "pmo", "pm", "pmc", "pmr", "pi", "mi", "pc", "ph", "lit",
+            // Poetry
+            "q", "qr", "qc", "qa", "qm", "qd", "b",
+            // Lists
+            "lh", "li", "lf", "lim", "litl",
         };
 
         public IReadOnlyDictionary<int, (Delta Delta, int LastVerse)> ToChapterDeltas(XElement usxElem)
@@ -44,8 +48,8 @@ namespace SIL.XForge.Scripture.Services
                                     topLevelVerses = false;
                                 }
                                 var style = (string)elem.Attribute("style");
-                                bool paraStyle = IsParagraphStyle(style);
-                                if (paraStyle)
+                                bool canContainVerseText = CanParaContainVerseText(style);
+                                if (canContainVerseText)
                                 {
                                     if (curRef != null)
                                     {
@@ -62,7 +66,7 @@ namespace SIL.XForge.Scripture.Services
                                 ProcessChildNodes(chapterDelta, elem, curChapter, ref lastVerse, ref curRef,
                                     ref tableIndex);
                                 SegmentEnded(chapterDelta, curRef);
-                                if (!paraStyle)
+                                if (!canContainVerseText)
                                     curRef = null;
                                 chapterDelta.InsertPara(GetAttributes(elem));
                                 break;
@@ -275,11 +279,15 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private static bool IsParagraphStyle(string style)
+        private static bool CanParaContainVerseText(string style)
         {
+            // an empty style indicates an improperly formatted paragraph which could contain verse text
+            if (style == string.Empty)
+                return true;
             if (char.IsDigit(style[style.Length - 1]))
                 style = style.Substring(0, style.Length - 1);
-            return ParagraphStyles.Contains(style);
+            // paragraph, poetry, and list styles are the only types of valid paras that can contain verse text
+            return ParagraphPoetryListStyles.Contains(style);
         }
 
         private static string GetParagraphRef(Dictionary<string, int> nextIds, string key, string prefix)

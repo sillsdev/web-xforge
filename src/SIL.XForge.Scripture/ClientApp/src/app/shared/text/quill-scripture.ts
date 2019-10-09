@@ -19,6 +19,7 @@ function setUsxValue(node: HTMLElement, value: any): void {
 
 interface UsxStyle {
   style?: string;
+  status?: string;
 }
 
 interface Chapter extends UsxStyle {
@@ -128,6 +129,7 @@ export function registerScripture(): void {
     static create(value: UsxStyle): Node {
       const node = super.create(value) as HTMLElement;
       node.setAttribute(customAttributeName('style'), value.style);
+      setUsxValue(node, value);
       return node;
     }
 
@@ -136,7 +138,7 @@ export function registerScripture(): void {
     }
 
     static value(node: HTMLElement): UsxStyle {
-      return { style: node.getAttribute(customAttributeName('style')) };
+      return getUsxValue(node);
     }
 
     format(name: string, value: any): void {
@@ -144,6 +146,7 @@ export function registerScripture(): void {
         const usxStyle = value as UsxStyle;
         const elem = this.domNode as HTMLElement;
         elem.setAttribute(customAttributeName('style'), usxStyle.style);
+        setUsxValue(elem, usxStyle);
       } else {
         super.format(name, value);
       }
@@ -157,6 +160,7 @@ export function registerScripture(): void {
     static create(value: Ref): Node {
       const node = super.create(value) as HTMLElement;
       node.setAttribute(customAttributeName('loc'), value.loc);
+      setUsxValue(node, value);
       return node;
     }
 
@@ -165,7 +169,7 @@ export function registerScripture(): void {
     }
 
     static value(node: HTMLElement): Ref {
-      return { loc: node.getAttribute(customAttributeName('loc')) };
+      return getUsxValue(node);
     }
 
     format(name: string, value: any): void {
@@ -173,6 +177,7 @@ export function registerScripture(): void {
         const ref = value as Ref;
         const elem = this.domNode as HTMLElement;
         elem.setAttribute(customAttributeName('loc'), ref.loc);
+        setUsxValue(elem, ref);
       } else {
         super.format(name, value);
       }
@@ -281,6 +286,7 @@ export function registerScripture(): void {
     static create(value: UsxStyle): Node {
       const node = super.create(value) as HTMLElement;
       node.setAttribute(customAttributeName('style'), value.style);
+      setUsxValue(node, value);
       return node;
     }
 
@@ -289,7 +295,7 @@ export function registerScripture(): void {
     }
 
     static value(node: HTMLElement): UsxStyle {
-      return { style: node.getAttribute(customAttributeName('style')) };
+      return getUsxValue(node);
     }
 
     format(name: string, value: any): void {
@@ -297,6 +303,7 @@ export function registerScripture(): void {
         const usxStyle = value as UsxStyle;
         const elem = this.domNode as HTMLElement;
         elem.setAttribute(customAttributeName('style'), usxStyle.style);
+        setUsxValue(elem, usxStyle);
       } else {
         super.format(name, value);
       }

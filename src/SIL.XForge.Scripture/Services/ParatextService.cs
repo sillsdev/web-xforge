@@ -193,7 +193,8 @@ namespace SIL.XForge.Scripture.Services
             string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
                 $"projects/{projectId}/members");
             var members = JArray.Parse(response);
-            return members.OfType<JObject>().Where(m => m["userId"] != null)
+            return members.OfType<JObject>()
+                .Where(m => !string.IsNullOrEmpty((string)m["userId"]) && !string.IsNullOrEmpty((string)m["role"]))
                 .ToDictionary(m => (string)m["userId"], m => (string)m["role"]);
         }
 
