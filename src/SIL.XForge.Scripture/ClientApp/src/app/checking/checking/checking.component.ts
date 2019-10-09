@@ -88,7 +88,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   text: TextInfo;
   textDocId: TextDocId;
 
-  private _book: number = 0;
+  private _book: number;
   private _isDrawerPermanent: boolean = true;
   private _chapter: number;
   private questionsQuery: RealtimeQuery<QuestionDoc>;
@@ -109,12 +109,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     super(noticeService);
   }
 
-  get book(): number {
+  private get book(): number {
     return this._book;
   }
 
-  set book(book: number) {
-    if (!this.questionDocs.length) {
+  private set book(book: number) {
+    if (!this.questionDocs.length || book === this.book) {
       return;
     }
     let defaultChapter = 1;
@@ -432,12 +432,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   questionChanged(questionDoc: QuestionDoc) {
-    if (questionDoc.verseRef.bookNum !== this.book) {
-      this.book = questionDoc.verseRef.bookNum;
-    }
-    if (this.questionsPanel.activeQuestionChapter !== this.chapter) {
-      this.chapter = this.questionsPanel.activeQuestionChapter;
-    }
+    this.book = questionDoc.verseRef.bookNum;
+    this.chapter = this.questionsPanel.activeQuestionChapter;
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
     this.collapseDrawer();
@@ -449,7 +445,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         question: undefined,
         textsByBookId: this.textsByBookId,
         projectId: this.projectDoc.id,
-        defaultVerse: new VerseRef(this._book, this._chapter, 1)
+        defaultVerse: new VerseRef(this.book, this.chapter, 1)
       }
     };
     const dialogRef = this.dialog.open(QuestionDialogComponent, config) as MdcDialogRef<
