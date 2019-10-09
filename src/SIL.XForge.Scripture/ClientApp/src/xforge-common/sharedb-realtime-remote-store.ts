@@ -344,8 +344,16 @@ export class SharedbRealtimeQueryAdapter implements RealtimeQueryAdapter {
         this._ready$.next();
       }
     });
-    this.resultsQuery.on('changed', () => this._remoteChanges$.next());
-    this.resultsQuery.on('extra', () => this._remoteChanges$.next());
+    this.resultsQuery.on('changed', () => {
+      if (this._ready) {
+        this._remoteChanges$.next();
+      }
+    });
+    this.resultsQuery.on('extra', () => {
+      if (this._ready) {
+        this._remoteChanges$.next();
+      }
+    });
     if (this.unpagedCountQuery != null) {
       this.unpagedCountQuery.on('ready', () => {
         if (this.resultsQuery != null && this.resultsQuery.ready) {

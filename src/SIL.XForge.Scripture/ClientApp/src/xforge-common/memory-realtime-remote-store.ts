@@ -168,7 +168,6 @@ export class MemoryRealtimeQueryAdapter implements RealtimeQueryAdapter {
   subscribe(_initialDocIds?: string[]): void {
     this.performQuery();
     this.subscribed = true;
-    this.remoteChanges$.next();
     this.ready = true;
     this.ready$.next();
   }
