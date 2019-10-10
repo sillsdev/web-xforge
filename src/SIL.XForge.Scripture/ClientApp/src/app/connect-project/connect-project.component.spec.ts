@@ -361,7 +361,7 @@ class TestEnvironment {
   }
 
   get sourceProjectSelect(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#based-on-select'));
+    return this.fixture.debugElement.query(By.css('#based-on-field mdc-select'));
   }
 
   get sourceParatextIdControl(): AbstractControl {

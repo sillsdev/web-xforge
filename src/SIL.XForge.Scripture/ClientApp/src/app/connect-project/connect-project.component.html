@@ -78,8 +78,8 @@
           class="indented-field-row"
         >
           <div fxFlex="44px" class="indent"></div>
-          <div fxLayout="column" fxLayoutAlign="start">
-            <mdc-select placeholder="Based on" formControlName="sourceParatextId" id="based-on-select">
+          <mdc-form-field fxLayout="column" fxLayoutAlign="start" id="based-on-field">
+            <mdc-select placeholder="Based on" formControlName="sourceParatextId">
               <mdc-menu>
                 <mdc-list>
                   <mdc-list-item *ngFor="let project of sourceProjects" [value]="project.paratextId">
@@ -89,7 +89,7 @@
               </mdc-menu>
             </mdc-select>
             <div class="helper-text">Choose the Paratext project that your project is based on.</div>
-          </div>
+          </mdc-form-field>
         </div>
       </div>
       <mdc-list-divider></mdc-list-divider>
