@@ -98,21 +98,16 @@ Create a directory to manage the development machine, such as `xforge`. Checkout
 
 Run `vagrant up`. This will download, initialize, and run the development machine. The machine is about 5GB, so expect the download to take a while.
 
-In the guest development machine, do the following additional steps that may not yet be performed by the vagrant provisioner:
+In the guest development machine, do the following additional steps:
 
 ```shell
-sudo n lts
-cd ~/src/web-xforge/
-dotnet clean
-cd ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp
-npm i
-cd ~/src/web-xforge/src/RealtimeServer
-npm i
+sudo apt update
+sudo apt upgrade
 cd ~/src/web-xforge/src/SIL.XForge.Scripture
 dotnet run
 ```
 
-In the guest development machine, after compiling and running Scripture Forge, browse to http://localhost:5000 and log in.
+In the guest development machine, browse to http://localhost:5000/projects and log in.
 
 #### Local Linux Development Setup
 
