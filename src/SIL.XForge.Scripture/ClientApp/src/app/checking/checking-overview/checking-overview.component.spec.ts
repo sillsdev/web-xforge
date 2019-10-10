@@ -8,7 +8,7 @@ import { ngfModule } from 'angular-file';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
-import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
+import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import {
@@ -137,7 +137,6 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(2);
       expect(env.questionEditButtons.length).toEqual(0);
       expect(env.component.itemVisible[id.toString()]).toBeFalsy();
-      expect(env.component.questionDocs[id.toString()].length).toBeGreaterThan(0);
       expect(env.component.questionCount(id.bookNum, id.chapterNum)).toBeGreaterThan(0);
 
       env.simulateRowClick(0);
@@ -361,6 +360,27 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(9);
     }));
   });
+
+  it('should handle question in a book that does not exist', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.addQuestion({
+      dataId: 'qMissingBook',
+      projectRef: 'project01',
+      ownerRef: env.adminUser.id,
+      text: 'In missing book',
+      verseRef: {
+        bookNum: 41,
+        chapterNum: 1,
+        verseNum: 1
+      },
+      answers: [],
+      isArchived: false,
+      dateCreated: '',
+      dateModified: ''
+    });
+    env.waitForQuestions();
+    expect(env.component.questionCount(41, 1)).toEqual(0);
+  }));
 });
 
 @NgModule({
@@ -785,6 +805,13 @@ class TestEnvironment {
 
   setCurrentUser(currentUser: UserInfo): void {
     when(mockedUserService.currentUserId).thenReturn(currentUser.id);
+  }
+
+  addQuestion(question: Question): void {
+    this.realtimeService.addSnapshot<Question>(QUESTIONS_COLLECTION, {
+      id: getQuestionDocId('project01', question.dataId),
+      data: question
+    });
   }
 
   private createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {
