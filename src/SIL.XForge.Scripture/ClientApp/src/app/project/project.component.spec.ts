@@ -73,24 +73,26 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
-  it('do not navigate when no texts', fakeAsync(() => {
+  it('navigate to start when no texts', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setProjectData({ hasTexts: false });
     env.fixture.detectChanges();
     tick();
 
     verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(mockedRouter.navigate(anything(), anything())).never();
+    verify(mockedUserService.setCurrentProjectId()).once();
+    verify(mockedRouter.navigateByUrl('/projects', anything())).once();
     expect().nothing();
   }));
 
-  it('do not navigate when project does not exist', fakeAsync(() => {
+  it('navigate to start when project does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
     tick();
 
     verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
-    verify(mockedRouter.navigate(anything(), anything())).never();
+    verify(mockedUserService.setCurrentProjectId()).once();
+    verify(mockedRouter.navigateByUrl('/projects', anything())).once();
     expect().nothing();
   }));
 

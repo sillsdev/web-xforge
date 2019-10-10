@@ -90,6 +90,9 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
                 }
               );
             }
+          } else {
+            this.userService.setCurrentProjectId();
+            this.router.navigateByUrl('/projects', { replaceUrl: true });
           }
         }
         this.loadingFinished();
