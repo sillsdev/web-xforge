@@ -117,14 +117,13 @@ namespace SIL.XForge.Scripture
             app.UseStaticFiles(new StaticFileOptions
             {
                 // this will allow files without extensions to be served, which is necessary for LetsEncrypt
-                ServeUnknownFileTypes = true
+                ServeUnknownFileTypes = true,
+                OnPrepareResponse = ctx =>
+                {
+                    ctx.Context.Response.Headers.Add("Cache-Control", "must-revalidate");
+                }
             });
             IOptions<SiteOptions> siteOptions = app.ApplicationServices.GetService<IOptions<SiteOptions>>();
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                FileProvider = new PhysicalFileProvider(Path.Combine(siteOptions.Value.SharedDir, "avatars")),
-                RequestPath = "/assets/avatars"
-            });
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(Path.Combine(siteOptions.Value.SiteDir, "audio")),
