@@ -33,7 +33,7 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
     return Promise.resolve(Array.from(collectionData.values()));
   }
 
-  get(collection: string, id: string): Promise<RealtimeOfflineData> {
+  get(collection: string, id: string): Promise<RealtimeOfflineData | undefined> {
     const collectionData = this.map.get(collection);
     if (collectionData == null) {
       return Promise.resolve(undefined);

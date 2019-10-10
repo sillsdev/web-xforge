@@ -32,7 +32,7 @@ export interface ScriptureChooserDialogData {
   styleUrls: ['./scripture-chooser-dialog.component.scss']
 })
 export class ScriptureChooserDialogComponent implements OnInit {
-  showing: 'books' | 'chapters' | 'verses' | 'rangeEnd';
+  showing: 'books' | 'chapters' | 'verses' | 'rangeEnd' = 'books';
   otBooks: string[] = [];
   ntBooks: string[] = [];
   chapters: number[] = [];
@@ -57,26 +57,20 @@ export class ScriptureChooserDialogComponent implements OnInit {
     this.ntBooks = books.filter(book => !this.isOT(book));
 
     if (this.data.rangeStart != null) {
+      const rangeStart = this.data.rangeStart;
       // Is rangeStart for a book and chapter in the list we know about, and
       // with a verse not greater than the last verse of that chapter?
-      if (
-        books.includes(this.data.rangeStart.book) &&
-        this.data.booksAndChaptersToShow[this.data.rangeStart.book].chapters.some(
-          chap => chap.number === +this.data.rangeStart.chapter
-        ) &&
-        +this.data.rangeStart.verse <=
-          this.data.booksAndChaptersToShow[this.data.rangeStart.book].chapters.find(
-            chap => chap.number === +this.data.rangeStart.chapter
-          ).lastVerse
-      ) {
-        this.selection.book = this.data.rangeStart.book;
-        this.selection.chapter = this.data.rangeStart.chapter;
-        this.showRangeEndSelection();
-        return;
+      if (books.includes(rangeStart.book)) {
+        const chapter = this.data.booksAndChaptersToShow[rangeStart.book].chapters.find(
+          c => c.number === rangeStart.chapterNum
+        );
+        if (chapter != null && rangeStart.verseNum <= chapter.lastVerse) {
+          this.selection.book = this.data.rangeStart.book;
+          this.selection.chapter = this.data.rangeStart.chapter;
+          this.showRangeEndSelection();
+        }
       }
     }
-
-    this.showBookSelection();
   }
 
   onCloseFocus(event: Event) {
@@ -147,24 +141,26 @@ export class ScriptureChooserDialogComponent implements OnInit {
 
   /** Returns an array of all chapters for a given book that the dialog was told about.
    * (Not necessarily all possible chapters of a given book.) */
-  chaptersOf(bookId: string): number[] {
+  chaptersOf(bookId: string): number[] | undefined {
     if (!bookId) {
-      return null;
+      return undefined;
     }
     return this.data.booksAndChaptersToShow[bookId].chapters.map(chapter => chapter.number);
   }
 
   /** Returns an array of all verses in a chapter.*/
-  versesOf(bookId: string, chapter: string, startingWithVerse?: number): number[] {
+  versesOf(bookId: string, chapter: string, startingWithVerse?: number): number[] | undefined {
     if (!bookId || !chapter) {
-      return null;
+      return undefined;
     }
 
-    const lastVerse = this.data.booksAndChaptersToShow[bookId].chapters.find(chap => chap.number === +chapter)
-      .lastVerse;
+    const chapterInfo = this.data.booksAndChaptersToShow[bookId].chapters.find(chap => chap.number === +chapter);
+    if (chapterInfo == null) {
+      return undefined;
+    }
     // Array of [1, 2, ... , lastVerse]
-    let verses = Array.from([...Array(lastVerse + 1).keys()]).slice(1);
-    if (!!startingWithVerse) {
+    let verses = Array.from([...Array(chapterInfo.lastVerse + 1).keys()]).slice(1);
+    if (startingWithVerse != null) {
       verses = verses.slice(startingWithVerse - 1);
     }
     return verses;

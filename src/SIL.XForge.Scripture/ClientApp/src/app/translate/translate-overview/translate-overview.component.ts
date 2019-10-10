@@ -41,7 +41,7 @@ class TextProgress extends Progress {
   styleUrls: ['./translate-overview.component.scss']
 })
 export class TranslateOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
-  texts: TextProgress[];
+  texts?: TextProgress[];
   overallProgress = new Progress();
   trainingPercentage: number = 0;
   isTraining: boolean = false;
@@ -50,10 +50,10 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   engineConfidence: number = 0;
   trainedSegmentCount: number = 0;
 
-  private trainingSub: Subscription;
-  private translationEngine: RemoteTranslationEngine;
-  private projectDoc: SFProjectDoc;
-  private projectDataChangesSub: Subscription;
+  private trainingSub?: Subscription;
+  private translationEngine?: RemoteTranslationEngine;
+  private projectDoc?: SFProjectDoc;
+  private projectDataChangesSub?: Subscription;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -71,13 +71,13 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   get translationSuggestionsEnabled(): boolean {
     return (
       this.projectDoc != null &&
-      this.projectDoc.isLoaded &&
+      this.projectDoc.data != null &&
       this.projectDoc.data.translateConfig.translationSuggestionsEnabled
     );
   }
 
   get canEditTexts(): boolean {
-    if (this.projectDoc == null || !this.projectDoc.isLoaded) {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
       return false;
     }
     const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
@@ -123,6 +123,9 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   }
 
   startTraining(): void {
+    if (this.translationEngine == null) {
+      return;
+    }
     this.translationEngine.startTraining();
     this.trainingPercentage = 0;
     this.isTraining = true;
@@ -137,18 +140,21 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   }
 
   private async calculateProgress(): Promise<void> {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
+      return;
+    }
     this.texts = this.projectDoc.data.texts.map(t => new TextProgress(t));
     this.overallProgress = new Progress();
     const updateTextProgressPromises: Promise<void>[] = [];
     for (const textProgress of this.texts) {
-      updateTextProgressPromises.push(this.updateTextProgress(textProgress));
+      updateTextProgressPromises.push(this.updateTextProgress(this.projectDoc.id, textProgress));
     }
     await Promise.all(updateTextProgressPromises);
   }
 
-  private async updateTextProgress(textProgress: TextProgress): Promise<void> {
+  private async updateTextProgress(projectId: string, textProgress: TextProgress): Promise<void> {
     for (const chapter of textProgress.text.chapters) {
-      const textDocId = new TextDocId(this.projectDoc.id, textProgress.text.bookNum, chapter.number, 'target');
+      const textDocId = new TextDocId(projectId, textProgress.text.bookNum, chapter.number, 'target');
       const chapterText = await this.projectService.getText(textDocId);
       const { translated, blank } = chapterText.getSegmentCount();
       textProgress.translated += translated;
@@ -164,7 +170,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       this.trainingSub = undefined;
     }
     this.translationEngine = undefined;
-    if (!this.translationSuggestionsEnabled || !this.canEditTexts) {
+    if (this.projectDoc == null || !this.translationSuggestionsEnabled || !this.canEditTexts) {
       return;
     }
 

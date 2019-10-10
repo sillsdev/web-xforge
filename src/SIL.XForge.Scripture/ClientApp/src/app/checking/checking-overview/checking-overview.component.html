@@ -82,7 +82,7 @@
                   <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
                 </span>
                 <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
-                  {{ answerCountLabel(questionDoc.data.answers.length) }}
+                  {{ answerCountLabel(questionDoc.data?.answers.length) }}
                 </span>
                 <span fxFlex="64px" fxLayoutAlign="end center">
                   <button

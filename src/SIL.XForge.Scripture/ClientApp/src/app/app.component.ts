@@ -10,7 +10,6 @@ import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { combineLatest, from, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
-import { AccountService } from 'xforge-common/account.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { LocationService } from 'xforge-common/location.service';
@@ -47,23 +46,21 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   translateVisible: boolean = false;
   checkingVisible: boolean = false;
 
-  projectDocs: SFProjectDoc[];
-  isProjectAdmin$: Observable<boolean>;
+  projectDocs?: SFProjectDoc[];
+  isProjectAdmin$?: Observable<boolean>;
 
-  private currentUserDoc: UserDoc;
-  private currentUserAuthType: AuthType;
-  private _projectSelect: MdcSelect;
+  private currentUserDoc?: UserDoc;
+  private _projectSelect?: MdcSelect;
   private projectDeletedDialogRef: any;
-  private _topAppBar: MdcTopAppBar;
-  private selectedProjectDoc: SFProjectDoc;
-  private selectedProjectDeleteSub: Subscription;
-  private removedFromProjectSub: Subscription;
+  private _topAppBar!: MdcTopAppBar;
+  private selectedProjectDoc?: SFProjectDoc;
+  private selectedProjectDeleteSub?: Subscription;
+  private removedFromProjectSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
   private readonly questionCountQueries = new Map<number, RealtimeQuery>();
 
   constructor(
     private readonly router: Router,
-    private readonly accountService: AccountService,
     private readonly authService: AuthService,
     private readonly locationService: LocationService,
     private readonly helpHeroService: HelpHeroService,
@@ -82,8 +79,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
     if (environment.releaseStage === 'live') {
-      const navEndEvent$ = router.events.pipe(filter(e => e instanceof NavigationEnd));
-      this.subscribe(navEndEvent$, (e: NavigationEnd) => {
+      const navEndEvent$ = router.events.pipe(
+        filter(e => e instanceof NavigationEnd),
+        map(e => e as NavigationEnd)
+      );
+      this.subscribe(navEndEvent$, e => {
         gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
       });
     }
@@ -103,16 +103,16 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.setTopAppBarVariant();
   }
 
-  get projectSelect(): MdcSelect {
+  get projectSelect(): MdcSelect | undefined {
     return this._projectSelect;
   }
 
   @ViewChild(MdcSelect, { static: false })
-  set projectSelect(value: MdcSelect) {
+  set projectSelect(value: MdcSelect | undefined) {
     this._projectSelect = value;
     if (this._projectSelect != null) {
       setTimeout(() => {
-        if (this.selectedProjectDoc != null) {
+        if (this._projectSelect != null && this.selectedProjectDoc != null) {
           this._projectSelect.reset();
           this._projectSelect.value = this.selectedProjectDoc.id;
         }
@@ -153,33 +153,38 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   get isCheckingEnabled(): boolean {
     return (
       this.selectedProjectDoc != null &&
-      this.selectedProjectDoc.isLoaded &&
+      this.selectedProjectDoc.data != null &&
       this.selectedProjectDoc.data.checkingConfig.checkingEnabled
     );
   }
 
-  get currentUser(): User {
+  get currentUser(): User | undefined {
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }
 
   get canChangePassword(): boolean {
-    return this.currentUserAuthType === AuthType.Account;
+    if (this.currentUser == null) {
+      return false;
+    }
+    return getAuthType(this.currentUser.authId) === AuthType.Account;
   }
 
-  get selectedProjectId(): string {
-    return this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
-      ? undefined
-      : this.selectedProjectDoc.id;
+  get selectedProjectId(): string | undefined {
+    return this.selectedProjectDoc == null ? undefined : this.selectedProjectDoc.id;
   }
 
-  get selectedProjectRole(): SFProjectRole {
-    return this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
+  get isProjectSelected(): boolean {
+    return this.selectedProjectId != null;
+  }
+
+  get selectedProjectRole(): SFProjectRole | undefined {
+    return this.selectedProjectDoc == null || this.selectedProjectDoc.data == null || this.currentUserDoc == null
       ? undefined
       : (this.selectedProjectDoc.data.userRoles[this.currentUserDoc.id] as SFProjectRole);
   }
 
   get texts(): TextInfo[] {
-    return this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded
+    return this.selectedProjectDoc == null || this.selectedProjectDoc.data == null
       ? []
       : this.selectedProjectDoc.data.texts;
   }
@@ -197,16 +202,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return false;
   }
 
-  private get site(): Site {
-    return this.currentUser == null ? undefined : this.currentUser.sites[environment.siteId];
-  }
-
   async ngOnInit(): Promise<void> {
     this.loadingStarted();
-    this.authService.init();
     if (await this.isLoggedIn) {
       this.currentUserDoc = await this.userService.getCurrentUser();
-      this.currentUserAuthType = getAuthType(this.currentUserDoc.data.authId);
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
         startWith(null),
@@ -288,11 +287,14 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           this.removedFromProjectSub.unsubscribe();
         }
         this.removedFromProjectSub = this.selectedProjectDoc.remoteChanges$.subscribe(() => {
-          if (this.selectedProjectDoc != null && this.selectedProjectDoc.isLoaded) {
-            if (!(this.currentUserDoc.id in this.selectedProjectDoc.data.userRoles)) {
-              // The user has been removed from the project
-              this.showProjectDeletedDialog();
-            }
+          if (
+            this.selectedProjectDoc != null &&
+            this.selectedProjectDoc.data != null &&
+            this.currentUserDoc != null &&
+            !(this.currentUserDoc.id in this.selectedProjectDoc.data.userRoles)
+          ) {
+            // The user has been removed from the project
+            this.showProjectDeletedDialog();
           }
         });
 
@@ -315,7 +317,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           for (const text of this.texts) {
             promises.push(
               this.projectService
-                .queryQuestionCount(this.selectedProjectId, {
+                .queryQuestionCount(this.selectedProjectDoc.id, {
                   bookNum: text.bookNum,
                   activeOnly: true
                 })
@@ -343,6 +345,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   changePassword(): void {
+    if (this.currentUser == null) {
+      return;
+    }
+
     this.authService
       .changePassword(this.currentUser.email)
       .then(result => {
@@ -353,11 +359,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.noticeService.show(message);
       });
   }
-  editName(currentDisplayName: string): void {
-    const dialogRef = this.accountService.openNameDialog(currentDisplayName, false);
-    dialogRef.afterClosed().subscribe(response => {
-      this.currentUserDoc.submitJson0Op(op => op.set(u => u.displayName, response as string));
-    });
+
+  async editName(): Promise<void> {
+    this.userService.editDisplayName(false);
   }
 
   logOut(): void {
@@ -422,12 +426,17 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   private async getProjectDocs(): Promise<SFProjectDoc[]> {
+    if (this.currentUser == null) {
+      return [];
+    }
+
     this.loadingStarted();
-    const projectDocs: SFProjectDoc[] = new Array(this.site.projects.length);
+    const projects = this.currentUser.sites[environment.siteId].projects;
+    const projectDocs: SFProjectDoc[] = new Array(projects.length);
     const promises: Promise<any>[] = [];
-    for (let i = 0; i < this.site.projects.length; i++) {
+    for (let i = 0; i < projects.length; i++) {
       const index = i;
-      promises.push(this.projectService.get(this.site.projects[index]).then(p => (projectDocs[index] = p)));
+      promises.push(this.projectService.get(projects[index]).then(p => (projectDocs[index] = p)));
     }
     await Promise.all(promises);
     this.loadingFinished();

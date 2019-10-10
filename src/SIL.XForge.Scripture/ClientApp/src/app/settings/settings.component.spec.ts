@@ -8,7 +8,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { TranslateConfig } from 'realtime-server/lib/scriptureforge/models/translate-config';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -102,7 +102,7 @@ describe('SettingsComponent', () => {
       it('should see login button when Paratext account not connected', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
-        env.setupParatextProjects(null);
+        env.setupParatextProjects(undefined);
         env.wait();
         expect(env.loginButton).not.toBeNull();
         expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(true);
@@ -352,11 +352,16 @@ class TestEnvironment {
   readonly overlayContainer: OverlayContainer;
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
-  private readonly paratextProjects$: BehaviorSubject<ParatextProject[]>;
 
   constructor() {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
-    this.paratextProjects$ = new BehaviorSubject<ParatextProject[]>([
+    when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
+    when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
+    when(mockedUserService.currentProjectId).thenReturn('project01');
+    when(mockedSFProjectService.get('project01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    );
+    this.setupParatextProjects([
       {
         paratextId: 'paratextId01',
         name: 'ParatextP1',
@@ -374,13 +379,6 @@ class TestEnvironment {
         isConnected: false
       }
     ]);
-    when(mockedParatextService.getProjects()).thenReturn(this.paratextProjects$);
-    when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
-    when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
-    when(mockedUserService.currentProjectId).thenReturn('project01');
-    when(mockedSFProjectService.get('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
-    );
 
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
@@ -445,24 +443,24 @@ class TestEnvironment {
 
   get deleteDialog(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('mdc-dialog');
+    return oce.querySelector('mdc-dialog') as HTMLElement;
   }
 
   get confirmDeleteBtn(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#project-delete-btn');
+    return oce.querySelector('#project-delete-btn') as HTMLElement;
   }
 
   get cancelDeleteBtn(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('#cancel-btn');
+    return oce.querySelector('#cancel-btn') as HTMLElement;
   }
 
   confirmDialog(confirm: boolean): void {
     let button: HTMLElement;
     const oce = this.overlayContainer.getContainerElement();
     if (confirm) {
-      const projectInput: HTMLInputElement = oce.querySelector('#project-entry').querySelector('input');
+      const projectInput = oce.querySelector('#project-entry')!.querySelector('input') as HTMLInputElement;
       projectInput.value = 'project 01';
       projectInput.dispatchEvent(new Event('input'));
       button = this.confirmDeleteBtn;
@@ -549,8 +547,8 @@ class TestEnvironment {
     });
   }
 
-  setupParatextProjects(paratextProjects: ParatextProject[]) {
-    this.paratextProjects$.next(paratextProjects);
+  setupParatextProjects(paratextProjects: ParatextProject[] | undefined) {
+    when(mockedParatextService.getProjects()).thenReturn(of(paratextProjects));
   }
 
   getMenuItems(menu: DebugElement): DebugElement[] {

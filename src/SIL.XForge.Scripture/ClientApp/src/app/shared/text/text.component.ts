@@ -15,14 +15,17 @@ const EDITORS = new Set<Quill>();
 function onNativeSelectionChanged(): void {
   // workaround for bug where Quill allows a selection inside of an embed
   const sel = window.document.getSelection();
-  if (sel.rangeCount === 0 || !sel.isCollapsed) {
+  if (sel == null || sel.rangeCount === 0 || !sel.isCollapsed) {
     return;
   }
   const text = sel.getRangeAt(0).commonAncestorContainer.textContent;
   if (text === '\ufeff') {
     for (const editor of EDITORS) {
       if (editor.hasFocus()) {
-        editor.setSelection(editor.getSelection(), 'silent');
+        const editorSel = editor.getSelection();
+        if (editorSel != null) {
+          editor.setSelection(editorSel, 'silent');
+        }
         break;
       }
     }
@@ -35,7 +38,7 @@ window.document.addEventListener('selectionchange', onNativeSelectionChanged);
 export interface TextUpdatedEvent {
   delta?: DeltaStatic;
   prevSegment?: Segment;
-  segment: Segment;
+  segment?: Segment;
 }
 
 /** View of an editable text document. Used for displaying Scripture. */
@@ -102,27 +105,27 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   private _id?: TextDocId;
   private _modules: any = this.DEFAULT_MODULES;
   private _editor?: Quill;
-  private viewModel?: TextViewModel;
+  private viewModel = new TextViewModel();
   private _segment?: Segment;
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
   private initialSegmentChecksum?: number;
   private initialSegmentFocus?: boolean;
   private _highlightSegment: boolean = false;
-  private highlightMarker: HTMLElement;
-  private highlightMarkerTop: number;
-  private highlightMarkerHeight: number;
+  private highlightMarker?: HTMLElement;
+  private highlightMarkerTop: number = 0;
+  private highlightMarkerHeight: number = 0;
 
   constructor(private readonly projectService: SFProjectService) {
     super();
   }
 
-  get id(): TextDocId {
+  get id(): TextDocId | undefined {
     return this._id;
   }
 
   @Input()
-  set id(value: TextDocId) {
+  set id(value: TextDocId | undefined) {
     if (!isEqual(this._id, value)) {
       this._id = value;
       this._segment = undefined;
@@ -131,7 +134,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       this.initialSegmentFocus = undefined;
       this.initialTextFetched = false;
       if (this.editor != null) {
-        this.highlightMarker.style.visibility = 'hidden';
+        if (this.highlightMarker != null) {
+          this.highlightMarker.style.visibility = 'hidden';
+        }
         this.bindQuill();
       }
     }
@@ -178,11 +183,11 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     return this._editor == null ? false : this._editor.hasFocus();
   }
 
-  get editor(): Quill {
+  get editor(): Quill | undefined {
     return this._editor;
   }
 
-  get segment(): Segment {
+  get segment(): Segment | undefined {
     return this._segment;
   }
 
@@ -205,6 +210,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   get isSelectionAtSegmentEnd(): boolean {
+    if (this.editor == null || this.segment == null) {
+      return false;
+    }
     const selection = this.editor.getSelection();
     if (selection == null) {
       return false;
@@ -229,7 +237,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (this.viewModel != null) {
       this.viewModel.unbind();
     }
-    EDITORS.delete(this._editor);
+    if (this._editor != null) {
+      EDITORS.delete(this._editor);
+    }
   }
 
   onEditorCreated(editor: Quill): void {
@@ -237,7 +247,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.highlightMarker = this._editor.addContainer('highlight-marker');
     this.subscribe(fromEvent(this._editor.root, 'scroll'), () => this.updateHighlightMarkerVisibility());
     this.subscribe(fromEvent(window, 'resize'), () => this.setHighlightMarkerPosition());
-    this.viewModel = new TextViewModel(this._editor);
+    this.viewModel.editor = editor;
     if (this.id != null) {
       this.bindQuill();
     }
@@ -271,13 +281,12 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     return false;
   }
 
-  getSegmentRange(ref: string): RangeStatic {
+  getSegmentRange(ref: string): RangeStatic | undefined {
     return this.viewModel.getSegmentRange(ref);
   }
 
   getSegmentText(ref: string): string {
-    const range = this.viewModel.getSegmentRange(ref);
-    return range == null ? '' : this._editor.getText(range.index, range.length);
+    return this.viewModel.getSegmentText(ref);
   }
 
   hasSegmentRange(ref: string): boolean {
@@ -288,7 +297,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.viewModel.update(delta, source);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
-    if (delta.ops.some(op => op.insert != null || op.delete != null)) {
+    if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
       this.update(delta);
     }
   }
@@ -298,9 +307,18 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   toggleHighlight(value: boolean, range?: RangeStatic): void {
-    this.viewModel.toggleHighlight(range ? range : this._segment.range, value ? this._id.textType : false);
+    if (this._id == null) {
+      return;
+    }
+    if (range == null && this._segment != null) {
+      range = this._segment.range;
+    }
+    if (range == null) {
+      return;
+    }
+    this.viewModel.toggleHighlight(range, value ? this._id.textType : false);
 
-    if (this._id.textType === 'target') {
+    if (this._id.textType === 'target' && this.highlightMarker != null) {
       if (value) {
         this.highlightMarker.style.visibility = '';
       } else {
@@ -322,7 +340,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   private async bindQuill(): Promise<void> {
     this.viewModel.unbind();
-    if (this._id == null || this._editor == null) {
+    if (this._id == null) {
       return;
     }
     this.setPlaceholderText('Loading...');
@@ -335,24 +353,35 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private isBackspaceAllowed(range: RangeStatic): boolean {
+    if (this._editor == null) {
+      return false;
+    }
+
     if (range.length > 0) {
       const text = this._editor.getText(range.index, range.length);
       return text !== '';
     }
 
-    return range.index !== this._segment.range.index;
+    return this._segment != null && range.index !== this._segment.range.index;
   }
 
   private isDeleteAllowed(range: RangeStatic): boolean {
+    if (this._editor == null) {
+      return false;
+    }
+
     if (range.length > 0) {
       const text = this._editor.getText(range.index, range.length);
       return text !== '';
     }
 
-    return range.index !== this._segment.range.index + this._segment.range.length;
+    return this._segment != null && range.index !== this._segment.range.index + this._segment.range.length;
   }
 
   private moveNextSegment(end: boolean = true): void {
+    if (this._segment == null) {
+      return;
+    }
     const nextRef = this.viewModel.getNextSegmentRef(this._segment.ref);
     if (nextRef != null) {
       this.setSegment(nextRef, undefined, true, end);
@@ -360,6 +389,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private movePrevSegment(end: boolean = true): void {
+    if (this._segment == null) {
+      return;
+    }
     const prevRef = this.viewModel.getPrevSegmentRef(this._segment.ref);
     if (prevRef != null) {
       this.setSegment(prevRef, undefined, true, end);
@@ -367,9 +399,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private update(delta?: DeltaStatic): void {
-    let segmentRef: string;
-    let checksum: number;
-    let focus: boolean;
+    let segmentRef: string | undefined;
+    let checksum: number | undefined;
+    let focus: boolean | undefined;
     if (delta != null && !this.initialTextFetched) {
       segmentRef = this.initialSegmentRef;
       checksum = this.initialSegmentChecksum;
@@ -381,7 +413,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       this.initialTextFetched = true;
     }
 
-    if (segmentRef == null) {
+    if (this._editor != null && segmentRef == null) {
       // get currently selected segment ref
       const selection = this._editor.getSelection();
       if (selection != null) {
@@ -395,7 +427,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
         // the selection has not changed to a different segment, so update existing segment
         this.updateSegment();
-        if (this._highlightSegment) {
+        if (this._highlightSegment && this._id != null) {
           // ensure that the currently selected segment is highlighted
           if (!this.viewModel.isHighlighted(this._segment)) {
             this.viewModel.toggleHighlight(this._segment.range, this._id.textType);
@@ -415,7 +447,11 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     focus: boolean = false,
     end: boolean = true
   ): boolean {
-    if (this._segment != null && this._id.bookNum === this._segment.bookNum && segmentRef === this._segment.ref) {
+    if (
+      this._id == null ||
+      this._editor == null ||
+      (this._segment != null && this._id.bookNum === this._segment.bookNum && segmentRef === this._segment.ref)
+    ) {
       // the selection has not changed to a different segment
       return false;
     }
@@ -434,8 +470,14 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       const selectedSegmentRef = selection == null ? null : this.viewModel.getSegmentRef(selection);
       if (selectedSegmentRef !== segmentRef) {
         const range = this.viewModel.getSegmentRange(segmentRef);
-        // setTimeout seems necessary to ensure that the editor is focused
-        setTimeout(() => this._editor.setSelection(end ? range.index + range.length : range.index, 0, 'user'));
+        if (range != null) {
+          // setTimeout seems necessary to ensure that the editor is focused
+          setTimeout(() => {
+            if (this._editor != null) {
+              this._editor.setSelection(end ? range.index + range.length : range.index, 0, 'user');
+            }
+          });
+        }
       }
     }
 
@@ -455,13 +497,18 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private updateSegment(): void {
+    if (this._segment == null) {
+      return;
+    }
     const range = this.viewModel.getSegmentRange(this._segment.ref);
-    const text = this._editor.getText(range.index, range.length);
-    this._segment.update(text, range);
+    if (range != null) {
+      const text = this.viewModel.getSegmentText(this._segment.ref);
+      this._segment.update(text, range);
+    }
   }
 
   private adjustSelection(): void {
-    if (!this._editor.hasFocus() || this._segment == null) {
+    if (this._editor == null || !this._editor.hasFocus() || this._segment == null) {
       return;
     }
     const sel = this._editor.getSelection();
@@ -486,18 +533,22 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private setHighlightMarkerPosition(): void {
-    if (this._segment == null) {
+    if (this._editor == null || this.highlightMarker == null || this._segment == null) {
       return;
     }
     const range = this._segment.range;
     const bounds = this._editor.getBounds(range.index, range.length);
-    this.highlightMarkerTop = bounds.top + this.editor.root.scrollTop;
+    this.highlightMarkerTop = bounds.top + this._editor.root.scrollTop;
     this.highlightMarkerHeight = bounds.height;
     this.highlightMarker.style.top = this.highlightMarkerTop + 'px';
     this.updateHighlightMarkerVisibility();
   }
 
   private updateHighlightMarkerVisibility(): void {
+    if (this._editor == null || this.highlightMarker == null) {
+      return;
+    }
+
     const marginTop = -this._editor.root.scrollTop;
     const offsetTop = marginTop + this.highlightMarkerTop;
     const offsetBottom = offsetTop + this.highlightMarkerHeight;
@@ -524,6 +575,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private setPlaceholderText(text: string): void {
+    if (this._editor == null) {
+      return;
+    }
     const editorElem = this._editor.container.getElementsByClassName('ql-editor')[0];
     editorElem.setAttribute('data-placeholder', text);
   }

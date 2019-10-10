@@ -39,13 +39,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   itemVisibleArchived: { [bookIdOrDocId: string]: boolean } = {};
   questionDocs: { [docId: string]: QuestionDoc[] } = {};
   texts: TextInfo[] = [];
-  projectId: string;
+  projectId?: string;
 
-  private textsByBookId: TextsByBookId;
-  private projectDoc: SFProjectDoc;
-  private dataChangesSub: Subscription;
-  private projectUserConfigDoc: SFProjectUserConfigDoc;
-  private questionsQuery: RealtimeQuery<QuestionDoc>;
+  private textsByBookId: TextsByBookId = {};
+  private projectDoc?: SFProjectDoc;
+  private dataChangesSub?: Subscription;
+  private projectUserConfigDoc?: SFProjectUserConfigDoc;
+  private questionsQuery?: RealtimeQuery<QuestionDoc>;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -72,10 +72,12 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
     let count: number = 0;
     for (const questionDoc of this.allPublishedQuestions) {
-      if (this.isProjectAdmin) {
-        count += questionDoc.data.answers.length;
-      } else {
-        count += questionDoc.data.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
+      if (questionDoc.data != null) {
+        if (this.isProjectAdmin) {
+          count += questionDoc.data.answers.length;
+        } else {
+          count += questionDoc.data.answers.filter(a => a.ownerRef === this.userService.currentUserId).length;
+        }
       }
     }
 
@@ -89,11 +91,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
     let count: number = 0;
     for (const questionDoc of this.allPublishedQuestions) {
-      for (const answer of questionDoc.data.answers) {
-        if (this.isProjectAdmin) {
-          count += answer.likes.length;
-        } else {
-          count += answer.likes.filter(l => l.ownerRef === this.userService.currentUserId).length;
+      if (questionDoc.data != null) {
+        for (const answer of questionDoc.data.answers) {
+          if (this.isProjectAdmin) {
+            count += answer.likes.length;
+          } else {
+            count += answer.likes.filter(l => l.ownerRef === this.userService.currentUserId).length;
+          }
         }
       }
     }
@@ -108,11 +112,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
     let count: number = 0;
     for (const questionDoc of this.allPublishedQuestions) {
-      for (const answer of questionDoc.data.answers) {
-        if (this.isProjectAdmin) {
-          count += answer.comments.length;
-        } else {
-          count += answer.comments.filter(c => c.ownerRef === this.userService.currentUserId).length;
+      if (questionDoc.data != null) {
+        for (const answer of questionDoc.data.answers) {
+          if (this.isProjectAdmin) {
+            count += answer.comments.length;
+          } else {
+            count += answer.comments.filter(c => c.ownerRef === this.userService.currentUserId).length;
+          }
         }
       }
     }
@@ -121,7 +127,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get canSeeOtherUserResponses(): boolean {
-    return this.projectDoc != null && this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses;
+    return (
+      this.projectDoc != null &&
+      this.projectDoc.data != null &&
+      this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses
+    );
   }
 
   get isProjectAdmin(): boolean {
@@ -136,14 +146,14 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     if (this.questionsQuery == null) {
       return 0;
     }
-    return this.questionsQuery.docs.filter(qd => qd.data.isArchived === true).length;
+    return this.questionsQuery.docs.filter(qd => qd.data != null && qd.data.isArchived).length;
   }
 
   private get allPublishedQuestions(): QuestionDoc[] {
     if (this.questionsQuery == null) {
       return [];
     }
-    return this.questionsQuery.docs.filter(qd => qd.data.isArchived !== true);
+    return this.questionsQuery.docs.filter(qd => qd.data != null && !qd.data.isArchived);
   }
 
   ngOnInit(): void {
@@ -187,26 +197,24 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   getTextDocId(bookNum: number, chapter: number): string {
+    if (this.projectDoc == null) {
+      return '';
+    }
     return getTextDocId(this.projectDoc.id, bookNum, chapter);
   }
 
   getQuestionDocs(textDocId: TextDocId, fromArchive = false): QuestionDoc[] {
     if (fromArchive) {
-      return this.questionDocs[textDocId.toString()].filter(qd => qd.data.isArchived === true);
+      return this.questionDocs[textDocId.toString()].filter(qd => qd.data != null && qd.data.isArchived);
     }
-    return this.questionDocs[textDocId.toString()].filter(qd => qd.data.isArchived !== true);
+    return this.questionDocs[textDocId.toString()].filter(qd => qd.data != null && !qd.data.isArchived);
   }
 
   bookQuestionCount(text: TextInfo, fromArchive = false): number {
-    let count: number;
+    let count: number = 0;
     for (const chapter of text.chapters) {
       const questionCount = this.questionCount(text.bookNum, chapter.number, fromArchive);
-      if (questionCount) {
-        if (!count) {
-          count = 0;
-        }
-        count += questionCount;
-      }
+      count += questionCount;
     }
     return count;
   }
@@ -216,47 +224,45 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   questionCount(bookNum: number, chapterNumber: number, fromArchive = false): number {
+    if (this.projectDoc == null) {
+      return 0;
+    }
     const id = new TextDocId(this.projectDoc.id, bookNum, chapterNumber);
     if (!(id.toString() in this.questionDocs)) {
-      return undefined;
+      return 0;
     }
     if (fromArchive) {
-      return this.questionDocs[id.toString()].filter(qd => qd.data.isArchived === true).length;
+      return this.questionDocs[id.toString()].filter(qd => qd.data != null && qd.data.isArchived).length;
     }
-    return this.questionDocs[id.toString()].filter(qd => qd.data.isArchived !== true).length;
+    return this.questionDocs[id.toString()].filter(qd => qd.data != null && !qd.data.isArchived).length;
   }
 
   questionCountLabel(count: number): string {
-    return count ? count + ' questions' : '';
+    return count > 0 ? count + ' questions' : '';
   }
 
   bookAnswerCount(text: TextInfo): number {
-    let count: number;
+    let count: number = 0;
     for (const chapter of text.chapters) {
       const answerCount = this.chapterAnswerCount(text.bookNum, chapter.number);
-      if (answerCount) {
-        if (!count) {
-          count = 0;
-        }
-        count += answerCount;
-      }
+      count += answerCount;
     }
     return count;
   }
 
   chapterAnswerCount(bookNum: number, chapterNumber: number): number {
+    if (this.projectDoc == null) {
+      return 0;
+    }
     const id = new TextDocId(this.projectDoc.id, bookNum, chapterNumber);
     if (!(id.toString() in this.questionDocs)) {
-      return undefined;
+      return 0;
     }
 
-    let count: number;
+    let count: number = 0;
     for (const q of this.getQuestionDocs(id)) {
-      const answerCount = q.data.answers.length;
-      if (answerCount) {
-        if (!count) {
-          count = 0;
-        }
+      if (q.data != null) {
+        const answerCount = q.data.answers.length;
         count += answerCount;
       }
     }
@@ -264,17 +270,17 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count;
   }
 
-  answerCountLabel(count: number): string {
-    return count ? count + ' answers' : '';
+  answerCountLabel(count?: number): string {
+    return count != null && count > 0 ? count + ' answers' : '';
   }
 
   setQuestionArchiveStatus(questionDoc: QuestionDoc, archiveStatus: boolean) {
     questionDoc.submitJson0Op(op => {
       op.set(q => q.isArchived, archiveStatus);
       if (archiveStatus) {
-        op.set(q => q.dateArchived, new Date().toJSON());
+        op.set(q => q.dateArchived!, new Date().toJSON());
       } else {
-        op.unset(q => q.dateArchived);
+        op.unset(q => q.dateArchived!);
       }
     });
   }
@@ -297,28 +303,35 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     let unread: number = 0;
     let read: number = 0;
     let answered: number = 0;
-    for (const chapter of text.chapters) {
-      const id = new TextDocId(this.projectId, text.bookNum, chapter.number);
-      if (!(id.toString() in this.questionDocs)) {
-        continue;
-      }
+    if (this.projectId != null) {
+      for (const chapter of text.chapters) {
+        const id = new TextDocId(this.projectId, text.bookNum, chapter.number);
+        if (!(id.toString() in this.questionDocs)) {
+          continue;
+        }
 
-      for (const questionDoc of this.getQuestionDocs(id)) {
-        if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
-          answered++;
-        } else if (CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)) {
-          read++;
-        } else {
-          unread++;
+        for (const questionDoc of this.getQuestionDocs(id)) {
+          if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
+            answered++;
+          } else if (
+            this.projectUserConfigDoc != null &&
+            CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)
+          ) {
+            read++;
+          } else {
+            unread++;
+          }
         }
       }
     }
-
     return [unread, read, answered];
   }
 
   async questionDialog(questionDoc?: QuestionDoc): Promise<void> {
-    if (questionDoc != null) {
+    if (this.projectDoc == null) {
+      return;
+    }
+    if (questionDoc != null && questionDoc.data != null) {
       if (questionDoc.data.answers.length > 0) {
         const answeredDialogRef = this.dialog.open(QuestionAnsweredDialogComponent);
         const response = (await answeredDialogRef.afterClosed().toPromise()) as string;
@@ -340,14 +353,14 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     >;
 
     dialogRef.afterClosed().subscribe(async result => {
-      if (result === 'close') {
+      if (result == null || result === 'close' || this.projectId == null) {
         return;
       }
-      const questionId = questionDoc != null ? questionDoc.data.dataId : objectId();
-      const verseRef = fromVerseRef(result.verseRef);
+      const questionId = questionDoc != null && questionDoc.data != null ? questionDoc.data.dataId : objectId();
+      const verseRefData = fromVerseRef(result.verseRef);
       const text = result.text;
-      let audioUrl = questionDoc != null ? questionDoc.data.audioUrl : undefined;
-      if (result.audio.fileName) {
+      let audioUrl = questionDoc != null && questionDoc.data != null ? questionDoc.data.audioUrl : undefined;
+      if (result.audio.fileName && result.audio.blob != null) {
         const response = await this.projectService.onlineUploadAudio(
           this.projectId,
           questionId,
@@ -360,24 +373,24 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       }
 
       const currentDate = new Date().toJSON();
-      if (questionDoc != null) {
+      if (questionDoc != null && questionDoc.data != null) {
         const deleteAudio = questionDoc.data.audioUrl != null && audioUrl == null;
         const oldVerseRef = questionDoc.data.verseRef;
         const moveToDifferentChapter =
-          oldVerseRef.bookNum !== verseRef.bookNum || oldVerseRef.chapterNum !== verseRef.chapterNum;
+          oldVerseRef.bookNum !== verseRefData.bookNum || oldVerseRef.chapterNum !== verseRefData.chapterNum;
         if (moveToDifferentChapter) {
           this.removeQuestionDoc(questionDoc);
         }
         await questionDoc.submitJson0Op(op =>
           op
-            .set(q => q.verseRef, verseRef)
-            .set(q => q.text, text)
+            .set(q => q.verseRef, verseRefData)
+            .set(q => q.text!, text)
             .set(q => q.audioUrl, audioUrl)
             .set(q => q.dateModified, currentDate)
         );
         if (deleteAudio) {
           await this.projectService.onlineDeleteAudio(
-            this.projectDoc.id,
+            this.projectId,
             questionDoc.data.dataId,
             questionDoc.data.ownerRef
           );
@@ -390,7 +403,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           dataId: questionId,
           projectRef: this.projectId,
           ownerRef: this.userService.currentUserId,
-          verseRef,
+          verseRef: verseRefData,
           text,
           audioUrl,
           answers: [],
@@ -413,7 +426,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   private initTexts(): void {
-    if (this.projectDoc == null || this.projectDoc.data == null) {
+    if (this.projectDoc == null || this.projectDoc.data == null || this.questionsQuery == null) {
       return;
     }
 
@@ -439,6 +452,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   private addQuestionDoc(questionDoc: QuestionDoc): void {
+    if (this.projectDoc == null || questionDoc.data == null) {
+      return;
+    }
     const textId = new TextDocId(
       this.projectDoc.id,
       questionDoc.data.verseRef.bookNum,
@@ -448,6 +464,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   private removeQuestionDoc(questionDoc: QuestionDoc): void {
+    if (this.projectDoc == null || questionDoc.data == null) {
+      return;
+    }
     const textId = new TextDocId(
       this.projectDoc.id,
       questionDoc.data.verseRef.bookNum,

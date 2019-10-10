@@ -30,13 +30,13 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     shareEnabled: new FormControl(false),
     shareLevel: new FormControl(undefined)
   });
-  sourceProjects: ParatextProject[];
+  sourceProjects?: ParatextProject[];
 
-  private projectDoc: SFProjectDoc;
+  private projectDoc?: SFProjectDoc;
   /** Elements in this component and their states. */
   private controlStates = new Map<Extract<keyof SFProjectSettings, string>, ElementState>();
-  private paratextProjects: ParatextProject[];
-  private previousFormValues: SFProjectSettings;
+  private paratextProjects?: ParatextProject[];
+  private previousFormValues: SFProjectSettings = {};
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -96,7 +96,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
         this.loadingStarted();
         this.form.enable();
         this.projectDoc = await this.projectService.get(projectId);
-        this.paratextProjects = paratextProjects;
+        this.paratextProjects = paratextProjects == null ? undefined : paratextProjects;
         if (this.projectDoc != null) {
           this.updateSettingsInfo();
           this.updateSourceProjects();
@@ -108,11 +108,19 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   logInWithParatext(): void {
+    if (this.projectDoc == null) {
+      return;
+    }
+
     const url = '/projects/' + this.projectDoc.id + '/settings';
     this.paratextService.linkParatext(url);
   }
 
   openDeleteProjectDialog(): void {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
+      return;
+    }
+
     const config: MdcDialogConfig = {
       data: { name: this.projectDoc.data.name }
     };
@@ -120,17 +128,19 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result === 'accept') {
         this.userService.setCurrentProjectId();
-        this.projectService.onlineDelete(this.projectDoc.id);
+        if (this.projectDoc != null) {
+          this.projectService.onlineDelete(this.projectDoc.id);
+        }
       }
     });
   }
 
-  getControlState(setting: Extract<keyof SFProjectSettings, string>): ElementState {
+  getControlState(setting: Extract<keyof SFProjectSettings, string>): ElementState | undefined {
     return this.controlStates.get(setting);
   }
 
   private onFormValueChanges(newValue: SFProjectSettings): void {
-    if (this.projectDoc == null) {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
       return;
     }
 
@@ -194,6 +204,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private updateSetting(newValue: SFProjectSettings, setting: Extract<keyof SFProjectSettings, string>): void {
+    if (this.projectDoc == null) {
+      return;
+    }
     const settings: SFProjectSettings = { [setting]: newValue[setting] };
     this.checkUpdateStatus(setting, this.projectService.onlineUpdateSettings(this.projectDoc.id, settings));
     this.previousFormValues = newValue;
@@ -206,7 +219,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       .catch(() => this.controlStates.set(setting, ElementState.Error));
   }
 
-  private updateSettingsInfo() {
+  private updateSettingsInfo(): void {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
+      return;
+    }
+
     const curSource = this.projectDoc.data.translateConfig.source;
     this.previousFormValues = {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
@@ -227,13 +244,20 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.setAllControlsToInSync();
   }
 
-  private setValidators() {
-    this.projectDoc.data.translateConfig.translationSuggestionsEnabled && this.isLoggedInToParatext
-      ? this.form.controls.sourceParatextId.setValidators(Validators.required)
-      : this.form.controls.sourceParatextId.setValidators(null);
+  private setValidators(): void {
+    if (
+      this.projectDoc != null &&
+      this.projectDoc.data != null &&
+      this.projectDoc.data.translateConfig.translationSuggestionsEnabled &&
+      this.isLoggedInToParatext
+    ) {
+      this.form.controls.sourceParatextId.setValidators(Validators.required);
+    } else {
+      this.form.controls.sourceParatextId.setValidators(null);
+    }
   }
 
-  private setAllControlsToInSync() {
+  private setAllControlsToInSync(): void {
     this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
@@ -243,11 +267,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private updateSourceProjects(): void {
-    if (this.projectDoc == null || this.paratextProjects == null) {
+    if (this.projectDoc == null || this.projectDoc.data == null || this.paratextProjects == null) {
       return;
     }
 
-    const sourceProjects = this.paratextProjects.filter(p => p.projectId !== this.projectDoc.id);
+    const projectId = this.projectDoc.id;
+    const sourceProjects = this.paratextProjects.filter(p => p.projectId !== projectId);
     const curSource = this.projectDoc.data.translateConfig.source;
     if (curSource != null) {
       const sourceProject = sourceProjects.find(p => p.paratextId === curSource.paratextId);

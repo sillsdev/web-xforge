@@ -35,7 +35,7 @@ export class MemoryRealtimeRemoteStore extends RealtimeRemoteStore {
 
   createDocAdapter(collection: string, id: string): RealtimeDocAdapter {
     const collectionSnapshots = this.snapshots.get(collection);
-    let snapshot: Snapshot;
+    let snapshot: Snapshot | undefined;
     if (collectionSnapshots != null) {
       snapshot = collectionSnapshots.get(id);
     }
@@ -66,10 +66,10 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     public readonly collection: string,
     public readonly id: string,
     public data?: any,
-    public type: OTType = OTJson0.type,
+    public type: OTType | undefined = OTJson0.type,
     version?: number
   ) {
-    if (this.version != null) {
+    if (version != null) {
       this.version = version;
     } else if (this.data != null) {
       this.version = 0;
@@ -98,6 +98,10 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
   }
 
   submitOp(op: any, source?: any): Promise<void> {
+    if (this.type == null) {
+      throw new Error('The doc has not been loaded.');
+    }
+
     if (op != null && this.type.normalize != null) {
       op = this.type.normalize(op);
     }

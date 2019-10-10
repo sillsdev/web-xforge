@@ -52,7 +52,7 @@ export class CommandError extends Error {
 export class CommandService {
   constructor(private readonly http: HttpClient) {}
 
-  async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T> {
+  async onlineInvoke<T>(url: string, method: string, params: any = {}): Promise<T | undefined> {
     url = `${COMMAND_API_NAMESPACE}/${url}`;
     const request: JsonRpcRequest = {
       jsonrpc: '2.0',

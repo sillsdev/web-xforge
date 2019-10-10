@@ -5,20 +5,14 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player.component';
 
 describe('CheckingAudioPlayerComponent', () => {
-  let env: TestEnvironment;
-  let audioFile: string;
-  let audioFileB: string;
-
-  beforeEach(() => {
-    env = new TestEnvironment();
-    audioFile = 'test-audio-player.webm';
-    audioFileB = 'test-audio-player-b.webm';
-  });
+  const audioFile = 'test-audio-player.webm';
+  const audioFileB = 'test-audio-player-b.webm';
 
   it('should be created', async () => {
     const template =
       '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
-    await env.createHostComponent(template);
+    const env = new TestEnvironment(template);
+    await env.waitForPlayer(1000);
     expect(env.component.player1.enabled).toBe(true);
     expect(env.duration).toBe('0:05');
     expect(env.currentTime).toBe('0:00');
@@ -27,7 +21,8 @@ describe('CheckingAudioPlayerComponent', () => {
   it('can play', async () => {
     const template =
       '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
-    await env.createHostComponent(template);
+    const env = new TestEnvironment(template);
+    await env.waitForPlayer(1000);
     env.clickButton(env.playButton(1));
     await env.waitForPlayer(1500);
     env.fixture.detectChanges();
@@ -43,7 +38,8 @@ describe('CheckingAudioPlayerComponent', () => {
       '<app-checking-audio-player #player2 id="player2" source="' +
       audioFileB +
       '"></app-checking-audio-player>';
-    await env.createHostComponent(template);
+    const env = new TestEnvironment(template);
+    await env.waitForPlayer(1000);
     env.clickButton(env.playButton(1));
     await env.waitForPlayer(500);
     expect(env.component.player1.isPlaying).toBe(true);
@@ -57,7 +53,8 @@ describe('CheckingAudioPlayerComponent', () => {
   it('disables the audio player when audio is reset', async () => {
     const template =
       '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
-    await env.createHostComponent(template);
+    const env = new TestEnvironment(template);
+    await env.waitForPlayer(1000);
     expect(env.component.player1.hasSource).toBe(true);
     env.component.player1.source = '';
     expect(env.component.player1.hasSource).toBe(false);
@@ -66,19 +63,24 @@ describe('CheckingAudioPlayerComponent', () => {
 
 @Component({ selector: 'app-host', template: '' })
 class HostComponent {
-  @ViewChild(CheckingAudioPlayerComponent, { static: false }) player1: CheckingAudioPlayerComponent;
-  @ViewChild(CheckingAudioPlayerComponent, { static: false }) player2: CheckingAudioPlayerComponent;
+  @ViewChild(CheckingAudioPlayerComponent, { static: false }) player1!: CheckingAudioPlayerComponent;
+  @ViewChild(CheckingAudioPlayerComponent, { static: false }) player2!: CheckingAudioPlayerComponent;
 }
 
 class TestEnvironment {
   fixture: ComponentFixture<HostComponent>;
   component: HostComponent;
 
-  constructor() {
+  constructor(template: string) {
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingAudioPlayerComponent, AudioTimePipe],
       imports: [UICommonModule]
     });
+
+    TestBed.overrideComponent(HostComponent, { set: { template: template } });
+    this.fixture = TestBed.createComponent(HostComponent);
+    this.component = this.fixture.componentInstance;
+    this.fixture.detectChanges();
   }
 
   get duration(): string {
@@ -108,15 +110,6 @@ class TestEnvironment {
 
   clickButton(button: DebugElement): void {
     button.nativeElement.click();
-    this.fixture.detectChanges();
-  }
-
-  async createHostComponent(template: string) {
-    TestBed.overrideComponent(HostComponent, { set: { template: template } });
-    this.fixture = TestBed.createComponent(HostComponent);
-    this.component = this.fixture.componentInstance;
-    this.fixture.detectChanges();
-    await this.waitForPlayer(1000);
     this.fixture.detectChanges();
   }
 

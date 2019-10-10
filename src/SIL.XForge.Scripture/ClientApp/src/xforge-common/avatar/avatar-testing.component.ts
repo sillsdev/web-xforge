@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { User } from 'realtime-server/lib/common/models/user';
+import { UserProfile } from 'realtime-server/lib/common/models/user';
 
 @Component({
   selector: 'app-avatar',
@@ -8,5 +8,5 @@ import { User } from 'realtime-server/lib/common/models/user';
 export class AvatarTestingComponent {
   @Input() round: boolean = false;
   @Input() size: number = 32;
-  @Input() user: Partial<User>;
+  @Input() user?: UserProfile;
 }

@@ -11,7 +11,7 @@ import {
   TranslationSuggester
 } from '@sillsdev/machine';
 import isEqual from 'lodash/isEqual';
-import { DeltaStatic, RangeStatic } from 'quill';
+import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -51,36 +51,36 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   showSuggestion: boolean = false;
   displaySlider: boolean = false;
   chapters: number[] = [];
-  readonly metricsSession: TranslateMetricsSession;
-  trainingPercentage: number;
-  trainingMessage: string;
+  metricsSession?: TranslateMetricsSession;
+  trainingPercentage: number = 0;
+  trainingMessage: string = '';
   showTrainingProgress: boolean = false;
   textHeight: string = '';
 
-  @ViewChild('targetContainer', { static: true }) targetContainer: ElementRef;
-  @ViewChild('source', { static: true }) source: TextComponent;
-  @ViewChild('target', { static: true }) target: TextComponent;
-  @ViewChild('suggestionsMenuButton', { static: false }) suggestionsMenuButton: MdcIconButton;
+  @ViewChild('targetContainer', { static: true }) targetContainer!: ElementRef;
+  @ViewChild('source', { static: true }) source!: TextComponent;
+  @ViewChild('target', { static: true }) target!: TextComponent;
+  @ViewChild('suggestionsMenuButton', { static: false }) suggestionsMenuButton?: MdcIconButton;
 
-  private translationEngine: RemoteTranslationEngine;
+  private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;
   private readonly sourceWordTokenizer: Tokenizer;
   private readonly targetWordTokenizer: Tokenizer;
   private translationSession?: InteractiveTranslationSession;
   private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester();
   private insertSuggestionEnd: number = -1;
-  private projectDoc: SFProjectDoc;
-  private projectUserConfigDoc: SFProjectUserConfigDoc;
-  private projectUserConfigChangesSub: Subscription;
-  private text: TextInfo;
+  private projectDoc?: SFProjectDoc;
+  private projectUserConfigDoc?: SFProjectUserConfigDoc;
+  private projectUserConfigChangesSub?: Subscription;
+  private text?: TextInfo;
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
   private confidenceThreshold$: BehaviorSubject<number>;
-  private _chapter: number;
+  private _chapter?: number;
   private lastShownSuggestionWords: string[] = [];
   private readonly segmentUpdated$: Subject<void>;
-  private trainingSub: Subscription;
-  private projectDataChangesSub: Subscription;
+  private trainingSub?: Subscription;
+  private projectDataChangesSub?: Subscription;
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
 
@@ -95,7 +95,6 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     const wordTokenizer = new LatinWordTokenizer();
     this.sourceWordTokenizer = wordTokenizer;
     this.targetWordTokenizer = wordTokenizer;
-    this.metricsSession = new TranslateMetricsSession(this.projectService);
 
     this.confidenceThreshold$ = new BehaviorSubject<number>(20);
     this.translationSuggester.confidenceThreshold = 0.2;
@@ -109,7 +108,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       threshold => {
         this.translationSuggester.confidenceThreshold = threshold;
         this.updateSuggestions();
-        this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold));
+        if (this.projectUserConfigDoc != null) {
+          this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold));
+        }
       }
     );
 
@@ -118,23 +119,25 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   get sourceLabel(): string {
-    return this.projectDoc == null || !this.projectDoc.isLoaded || this.projectDoc.data.translateConfig.source == null
+    return this.projectDoc == null ||
+      this.projectDoc.data == null ||
+      this.projectDoc.data.translateConfig.source == null
       ? ''
       : this.projectDoc.data.translateConfig.source.shortName;
   }
 
   get targetLabel(): string {
-    return this.projectDoc == null || !this.projectDoc.isLoaded ? '' : this.projectDoc.data.shortName;
+    return this.projectDoc == null || this.projectDoc.data == null ? '' : this.projectDoc.data.shortName;
   }
 
   get isTargetTextRight(): boolean {
-    return this.projectUserConfigDoc == null || !this.projectUserConfigDoc.isLoaded
+    return this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null
       ? true
       : this.projectUserConfigDoc.data.isTargetTextRight;
   }
 
   set isTargetTextRight(value: boolean) {
-    if (this.isTargetTextRight !== value) {
+    if (this.projectUserConfigDoc != null && this.isTargetTextRight !== value) {
       this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.isTargetTextRight, value));
     }
   }
@@ -145,14 +148,14 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
 
   get translationSuggestionsUserEnabled(): boolean {
     return this.projectUserConfigDoc == null ||
-      !this.projectUserConfigDoc.isLoaded ||
+      this.projectUserConfigDoc.data == null ||
       this.projectUserConfigDoc.data.translationSuggestionsEnabled == null
       ? true
       : this.projectUserConfigDoc.data.translationSuggestionsEnabled;
   }
 
   set translationSuggestionsUserEnabled(value: boolean) {
-    if (this.translationSuggestionsUserEnabled !== value) {
+    if (this.projectUserConfigDoc != null && this.translationSuggestionsUserEnabled !== value) {
       this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.translationSuggestionsEnabled, value));
     }
   }
@@ -160,7 +163,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   get translationSuggestionsProjectEnabled(): boolean {
     return (
       this.projectDoc != null &&
-      this.projectDoc.isLoaded &&
+      this.projectDoc.data != null &&
       this.projectDoc.data.translateConfig.translationSuggestionsEnabled
     );
   }
@@ -173,11 +176,11 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     this.confidenceThreshold$.next(value);
   }
 
-  get chapter(): number {
+  get chapter(): number | undefined {
     return this._chapter;
   }
 
-  set chapter(value: number) {
+  set chapter(value: number | undefined) {
     if (this._chapter !== value) {
       this.showSuggestion = false;
       this._chapter = value;
@@ -197,7 +200,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   get canEditTexts(): boolean {
-    if (this.projectDoc == null || !this.projectDoc.isLoaded) {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
       return false;
     }
     const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
@@ -232,11 +235,11 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
             this.loadProjectUserConfig()
           );
         }
-        if (!this.projectDoc.isLoaded) {
+        if (this.projectDoc == null || this.projectDoc.data == null) {
           return;
         }
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
-        this.chapters = this.text.chapters.map(c => c.number);
+        this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
 
         this.loadProjectUserConfig();
 
@@ -246,9 +249,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
             this.projectDataChangesSub.unsubscribe();
           }
           this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
-            let sourceId: TextDocId;
-            if (this.hasSource) {
-              sourceId = new TextDocId(this.projectDoc.id, this.text.bookNum, this._chapter, 'source');
+            let sourceId: TextDocId | undefined;
+            if (this.hasSource && this.text != null && this._chapter != null) {
+              sourceId = new TextDocId(this.projectDoc!.id, this.text.bookNum, this._chapter, 'source');
               if (!isEqual(this.source.id, sourceId)) {
                 this.sourceLoaded = false;
                 this.loadingStarted();
@@ -261,7 +264,11 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
             setTimeout(() => this.setTextHeight());
           });
 
-          this.metricsSession.start(
+          if (this.metricsSession != null) {
+            this.metricsSession.dispose();
+          }
+          this.metricsSession = new TranslateMetricsSession(
+            this.projectService,
             this.projectDoc.id,
             this.source,
             this.target,
@@ -290,7 +297,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     if (this.projectDataChangesSub != null) {
       this.projectDataChangesSub.unsubscribe();
     }
-    this.metricsSession.dispose();
+    if (this.metricsSession != null) {
+      this.metricsSession.dispose();
+    }
   }
 
   suggestionsMenuOpened(): void {
@@ -304,7 +313,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
 
   suggestionsMenuClosed(): void {
     this.displaySlider = false;
-    this.suggestionsMenuButton.elementRef.nativeElement.blur();
+    if (this.suggestionsMenuButton != null) {
+      this.suggestionsMenuButton.elementRef.nativeElement.blur();
+    }
   }
 
   closeTrainingProgress(): void {
@@ -312,7 +323,11 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     this.trainingProgressClosed = true;
   }
 
-  async onTargetUpdated(segment: Segment, delta?: DeltaStatic, prevSegment?: Segment): Promise<void> {
+  async onTargetUpdated(segment?: Segment, delta?: DeltaStatic, prevSegment?: Segment): Promise<void> {
+    if (this.target.editor == null) {
+      return;
+    }
+
     if (segment !== prevSegment) {
       this.lastShownSuggestionWords = [];
       this.source.setSegment(this.target.segmentRef);
@@ -323,17 +338,19 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       try {
         if (
           this.projectUserConfigDoc != null &&
+          this.projectUserConfigDoc.data != null &&
+          this.text != null &&
           this.target.segmentRef !== '' &&
           (this.projectUserConfigDoc.data.selectedBookNum !== this.text.bookNum ||
             this.projectUserConfigDoc.data.selectedChapterNum !== this._chapter ||
             this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
           await this.projectUserConfigDoc.submitJson0Op(op => {
-            op.set<string>(puc => puc.selectedTask, 'translate');
-            op.set(puc => puc.selectedBookNum, this.text.bookNum);
-            op.set(puc => puc.selectedChapterNum, this._chapter);
+            op.set<string>(puc => puc.selectedTask!, 'translate');
+            op.set(puc => puc.selectedBookNum!, this.text!.bookNum);
+            op.set(puc => puc.selectedChapterNum!, this._chapter);
             op.set(puc => puc.selectedSegment, this.target.segmentRef);
-            op.set(puc => puc.selectedSegmentChecksum, this.target.segmentChecksum);
+            op.set(puc => puc.selectedSegmentChecksum!, this.target.segmentChecksum);
           });
         }
         await this.trainSegment(prevSegment);
@@ -342,7 +359,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
         this.onFinishTranslating();
       }
     } else {
-      if (delta != null) {
+      if (delta != null && delta.ops != null) {
         // insert a space if the user just inserted a suggestion and started typing
         if (
           delta.ops.length === 2 &&
@@ -396,12 +413,16 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   insertSuggestion(suggestionIndex: number, event: Event): void {
-    if (suggestionIndex >= this.suggestionWords.length) {
+    if (this.target.editor == null || suggestionIndex >= this.suggestionWords.length) {
       return;
     }
 
     this.target.focus();
-    const range = this.skipInitialWhitespace(this.target.editor.getSelection());
+    let range = this.target.editor.getSelection();
+    if (range == null) {
+      return;
+    }
+    range = this.skipInitialWhitespace(this.target.editor, range);
 
     const delta = new Delta();
     delta.retain(range.index);
@@ -412,7 +433,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     const words = suggestionIndex === -1 ? this.suggestionWords : this.suggestionWords.slice(0, suggestionIndex + 1);
     // TODO: use detokenizer to build suggestion text
     let insertText = words.join(' ');
-    if (!this.translationSession.isLastWordComplete) {
+    if (this.translationSession != null && !this.translationSession.isLastWordComplete) {
       const lastWord = this.translationSession.prefix[this.translationSession.prefix.length - 1];
       insertText = insertText.substring(lastWord.length);
     }
@@ -427,7 +448,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     this.target.editor.updateContents(delta, 'user');
     this.target.editor.setSelection(selectIndex, 0, 'user');
 
-    this.metricsSession.onSuggestionAccepted(event);
+    if (this.metricsSession != null) {
+      this.metricsSession.onSuggestionAccepted(event);
+    }
   }
 
   private setupTranslationEngine(): void {
@@ -437,7 +460,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
     this.translationSession = undefined;
     this.translationEngine = undefined;
-    if (!this.translationSuggestionsProjectEnabled || !this.canEditTexts) {
+    if (this.projectDoc == null || !this.translationSuggestionsProjectEnabled || !this.canEditTexts) {
       return;
     }
 
@@ -503,7 +526,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     const bounds = elem.getBoundingClientRect();
     // add bottom padding
     const top = bounds.top + 14;
-    if (this.target.hasFocus) {
+    if (this.target.editor != null && this.target.hasFocus) {
       // reset scroll position
       this.target.editor.scrollingContainer.scrollTop = 0;
     }
@@ -518,10 +541,18 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   private changeText(): void {
-    let selectedSegment: string;
-    let selectedSegmentChecksum: number;
+    if (this.projectDoc == null || this.text == null || this._chapter == null) {
+      this.source.id = undefined;
+      this.target.id = undefined;
+      return;
+    }
+
+    let selectedSegment: string | undefined;
+    let selectedSegmentChecksum: number | undefined;
     if (
       this.projectUserConfigDoc != null &&
+      this.projectUserConfigDoc.data != null &&
+      this.text != null &&
       this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum &&
       this.projectUserConfigDoc.data.selectedChapterNum === this._chapter &&
       this.projectUserConfigDoc.data.selectedSegment !== ''
@@ -540,7 +571,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     this.target.id = targetId;
     if (selectedSegment != null) {
       const segmentChanged = this.target.setSegment(selectedSegment, selectedSegmentChecksum, true);
-      if (!segmentChanged && selectedSegmentChecksum == null) {
+      if (!segmentChanged && selectedSegmentChecksum == null && this.target.segment != null) {
         // the segment checksum was unset on the server, so accept the current segment changes
         this.target.segment.acceptChanges();
       }
@@ -584,7 +615,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   private updateSuggestions(): void {
-    if (this.target.segment == null) {
+    if (this.target.editor == null || this.target.segment == null) {
       return;
     }
 
@@ -593,7 +624,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       if (this.translationSession == null) {
         this.suggestionWords = [];
       } else {
-        const range = this.skipInitialWhitespace(this.target.editor.getSelection());
+        const range = this.skipInitialWhitespace(this.target.editor, this.target.editor.getSelection()!);
         const text = this.target.editor.getText(
           this.target.segment.range.index,
           range.index - this.target.segment.range.index
@@ -614,7 +645,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
           this.suggestionWords = suggestion.targetWordIndices.map(j => result.targetSegment[j]);
           this.suggestionConfidence = suggestion.confidence;
           if (this.suggestionWords.length > 0 && !isEqual(this.lastShownSuggestionWords, this.suggestionWords)) {
-            this.metricsSession.onSuggestionShown();
+            if (this.metricsSession != null) {
+              this.metricsSession.onSuggestionShown();
+            }
             this.lastShownSuggestionWords = this.suggestionWords;
           }
         }
@@ -624,10 +657,10 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       (this.isTranslating || this.suggestionWords.length > 0) && this.target.isSelectionAtSegmentEnd;
   }
 
-  private skipInitialWhitespace(range: RangeStatic): RangeStatic {
+  private skipInitialWhitespace(editor: Quill, range: RangeStatic): RangeStatic {
     let i: number;
     for (i = range.index; i < range.index + range.length; i++) {
-      const ch = this.target.editor.getText(i, 1);
+      const ch = editor.getText(i, 1);
       if (ch === '' || !/\s/.test(ch)) {
         return { index: i, length: range.length - (i - range.index) };
       }
@@ -635,8 +668,8 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     return { index: i, length: 0 };
   }
 
-  private async trainSegment(segment: Segment): Promise<void> {
-    if (this.translationSession == null || !this.canTrainSegment(segment)) {
+  private async trainSegment(segment?: Segment): Promise<void> {
+    if (this.translationSession == null || segment == null || !this.canTrainSegment(segment)) {
       return;
     }
 
@@ -648,19 +681,21 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   private canTrainSegment(segment: Segment): boolean {
-    return segment != null && segment.range.length > 0 && segment.text !== '' && segment.isChanged;
+    return segment.range.length > 0 && segment.text !== '' && segment.isChanged;
   }
 
   private loadProjectUserConfig() {
-    if (this.projectUserConfigDoc.data.confidenceThreshold != null) {
-      const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
-      this.translationSuggester.confidenceThreshold = pcnt / 100;
-      this.confidenceThreshold$.next(pcnt);
-    }
     let chapter = 1;
-    if (this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
-      if (this.projectUserConfigDoc.data.selectedChapterNum != null) {
-        chapter = this.projectUserConfigDoc.data.selectedChapterNum;
+    if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+      if (this.projectUserConfigDoc.data.confidenceThreshold != null) {
+        const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
+        this.translationSuggester.confidenceThreshold = pcnt / 100;
+        this.confidenceThreshold$.next(pcnt);
+      }
+      if (this.text != null && this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
+        if (this.projectUserConfigDoc.data.selectedChapterNum != null) {
+          chapter = this.projectUserConfigDoc.data.selectedChapterNum;
+        }
       }
     }
     this._chapter = chapter;
@@ -668,7 +703,14 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   private syncScroll(): void {
-    if (!this.hasSource || this.source == null || this.source.segment == null || !this.target.hasFocus) {
+    if (
+      !this.hasSource ||
+      this.source.segment == null ||
+      this.source.editor == null ||
+      this.target.segment == null ||
+      this.target.editor == null ||
+      !this.target.hasFocus
+    ) {
       return;
     }
 
@@ -681,6 +723,10 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   private startUserOnboardingTour() {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
+      return;
+    }
+
     // HelpHero user-onboarding tour setup
     const isProjectAdmin: boolean =
       this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator;

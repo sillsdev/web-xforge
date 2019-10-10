@@ -63,15 +63,15 @@ describe('DeleteProjectDialogComponent', () => {
     }
 
     get deleteButton(): HTMLElement {
-      return this.overlayContainerElement.querySelector('#project-delete-btn');
+      return this.overlayContainerElement.querySelector('#project-delete-btn') as HTMLElement;
     }
 
     get cancelButton(): HTMLElement {
-      return this.overlayContainerElement.querySelector('#cancel-btn');
+      return this.overlayContainerElement.querySelector('#cancel-btn') as HTMLElement;
     }
 
     get projectInput(): HTMLElement {
-      return this.overlayContainerElement.querySelector('#project-entry');
+      return this.overlayContainerElement.querySelector('#project-entry') as HTMLElement;
     }
 
     inputValue(element: HTMLElement, value: string) {
@@ -118,7 +118,7 @@ class ViewContainerDirective {
   template: '<viewContainerDirective></viewContainerDirective>'
 })
 class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective, { static: true }) viewContainer: ViewContainerDirective;
+  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
 
   get childViewContainer(): ViewContainerRef {
     return this.viewContainer.viewContainerRef;

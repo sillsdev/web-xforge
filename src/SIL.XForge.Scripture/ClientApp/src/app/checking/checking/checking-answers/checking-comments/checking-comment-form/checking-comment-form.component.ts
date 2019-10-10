@@ -21,7 +21,7 @@ export class CheckingCommentFormComponent {
     if (this.commentForm.invalid) {
       return;
     }
-    this.save.emit(this.commentForm.get('commentText').value);
+    this.save.emit(this.commentForm.controls.commentText.value);
     this.commentForm.reset();
   }
 

@@ -2,11 +2,11 @@ import * as crc from 'crc-32';
 import { RangeStatic } from 'quill';
 
 export class Segment {
-  initialChecksum: number;
+  initialChecksum?: number;
 
-  private _text?: string;
-  private _range?: RangeStatic;
-  private _checksum: number = null;
+  private _text: string = '';
+  private _range: RangeStatic = { index: 0, length: 0 };
+  private _checksum?: number;
   private initialTextLen: number = -1;
 
   constructor(public readonly bookNum: number, public readonly ref: string) {}
@@ -38,7 +38,7 @@ export class Segment {
   update(text: string, range: RangeStatic): void {
     this._text = text;
     this._range = range;
-    this._checksum = null;
+    this._checksum = undefined;
     if (this.initialTextLen === -1) {
       this.initialTextLen = text.length;
     }

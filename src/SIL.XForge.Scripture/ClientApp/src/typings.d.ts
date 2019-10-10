@@ -15,10 +15,6 @@ interface NodeModule {
 }
 
 declare module 'quill' {
-  export interface DeltaStatic {
-    push?(newOp: DeltaOperation): DeltaStatic;
-  }
-
   export interface History {
     clear(): void;
     undo(): void;

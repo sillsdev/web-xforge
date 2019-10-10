@@ -3,7 +3,7 @@ import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
-import { fromVerseRef, toStartAndEndVerseRefs } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { toStartAndEndVerseRefs } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -37,7 +37,7 @@ export interface QuestionDialogResult {
   styleUrls: ['./question-dialog.component.scss']
 })
 export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit {
-  @ViewChild(CheckingAudioCombinedComponent, { static: true }) audioCombinedComponent: CheckingAudioCombinedComponent;
+  @ViewChild(CheckingAudioCombinedComponent, { static: true }) audioCombinedComponent!: CheckingAudioCombinedComponent;
   modeLabel = this.data && this.data.question != null ? 'Edit' : 'New';
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   questionForm: FormGroup = new FormGroup(
@@ -49,7 +49,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     SFValidators.verseStartBeforeEnd
   );
   audio: AudioAttachment = {};
-  _selection: VerseRef;
+  _selection?: VerseRef;
 
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
@@ -72,7 +72,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     return this.questionForm.controls.questionText;
   }
 
-  get textDocId(): TextDocId {
+  get textDocId(): TextDocId | undefined {
     if (this.scriptureStart.value && this.scriptureStart.valid) {
       const verseData = VerseRef.parse(this.scriptureStart.value);
       return new TextDocId(this.data.projectId, verseData.bookNum, verseData.chapterNum);
@@ -80,7 +80,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     return undefined;
   }
 
-  get selection(): VerseRef {
+  get selection(): VerseRef | undefined {
     return this._selection;
   }
 
@@ -101,8 +101,8 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
         this.questionText.updateValueAndValidity();
       }
       this.updateSelection();
-    } else if (this.data.defaultVerse) {
-      const { startVerseRef, endVerseRef } = toStartAndEndVerseRefs(fromVerseRef(this.data.defaultVerse));
+    } else if (this.data.defaultVerse != null) {
+      const { startVerseRef, endVerseRef } = toStartAndEndVerseRefs(this.data.defaultVerse);
       this.scriptureStart.setValue(startVerseRef.toString());
       if (endVerseRef != null) {
         this.scriptureEnd.setValue(endVerseRef.toString());
@@ -139,11 +139,11 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   }
 
   async submit() {
-    if (this.audio.status === 'recording') {
+    if (this.audioCombinedComponent.audioRecorderComponent != null && this.audio.status === 'recording') {
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
       this.noticeService.show('The recording for your question was automatically stopped.');
     }
-    if (this.questionForm.invalid) {
+    if (this.questionForm.invalid || this._selection == null) {
       return;
     }
 
@@ -161,13 +161,13 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       this.scriptureStart.markAsUntouched();
     }
 
-    let currentVerseSelection: VerseRef;
+    let currentVerseSelection: VerseRef | undefined;
     const { verseRef } = VerseRef.tryParse(control.value);
     if (verseRef.valid) {
       currentVerseSelection = verseRef;
     }
 
-    let rangeStart: VerseRef;
+    let rangeStart: VerseRef | undefined;
     if (control !== this.scriptureStart) {
       const { verseRef: scriptureStartRef } = VerseRef.tryParse(this.scriptureStart.value);
       if (scriptureStartRef.valid) {
@@ -184,7 +184,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       VerseRef | 'close'
     >;
     dialogRef.afterClosed().subscribe(result => {
-      if (result !== 'close') {
+      if (result != null && result !== 'close') {
         control.markAsTouched();
         control.markAsDirty();
         control.setValue(result.toString());

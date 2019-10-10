@@ -156,7 +156,7 @@ describe('ShareControlComponent', () => {
     `
   })
   class TestHostComponent {
-    @ViewChild(ShareControlComponent, { static: false }) component: ShareControlComponent;
+    @ViewChild(ShareControlComponent, { static: false }) component!: ShareControlComponent;
     projectId = '';
     isLinkSharingEnabled = false;
     invitedCount = 0;
@@ -190,7 +190,7 @@ describe('ShareControlComponent', () => {
       when(mockedProjectService.get('project01')).thenCall(() =>
         this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
       );
-      when(mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com')).thenResolve(null);
+      when(mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com')).thenResolve(undefined);
       when(mockedProjectService.onlineInvite(anything(), 'already-project-member@example.com')).thenResolve(
         this.component.alreadyProjectMemberResponse
       );
@@ -226,7 +226,7 @@ describe('ShareControlComponent', () => {
       if (element instanceof DebugElement) {
         element = element.nativeElement;
       }
-      const inputElem: HTMLInputElement = (element as HTMLElement).querySelector('input');
+      const inputElem = (element as HTMLElement).querySelector('input') as HTMLInputElement;
       inputElem.value = value;
       inputElem.dispatchEvent(new Event('input'));
       flush();
@@ -237,7 +237,7 @@ describe('ShareControlComponent', () => {
       if (element instanceof DebugElement) {
         element = element.nativeElement;
       }
-      const inputElem: HTMLInputElement = (element as HTMLElement).querySelector('input');
+      const inputElem = (element as HTMLElement).querySelector('input') as HTMLInputElement;
       return inputElem.value;
     }
   }

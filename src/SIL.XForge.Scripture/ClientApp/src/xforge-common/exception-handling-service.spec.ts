@@ -96,7 +96,7 @@ class TestEnvironment {
   rejectUser = false;
   timeoutUser = false;
 
-  userDoc = {
+  userDoc: UserDoc | undefined = {
     data: {
       authId: 'a',
       name: 'b',

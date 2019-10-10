@@ -36,9 +36,9 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   pageIndex: number = 0;
   pageSize: number = 50;
 
-  private projectDoc: SFProjectDoc;
-  private term: string;
-  private _userRows: Row[];
+  private projectDoc?: SFProjectDoc;
+  private term: string = '';
+  private _userRows?: Row[];
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -55,8 +55,8 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
   get isLinkSharingEnabled(): boolean {
     return (
-      this.projectDoc &&
-      this.projectDoc.data &&
+      this.projectDoc != null &&
+      this.projectDoc.data != null &&
       this.projectDoc.data.checkingConfig.shareEnabled &&
       this.projectDoc.data.checkingConfig.shareLevel === CheckingShareLevel.Anyone
     );
@@ -71,7 +71,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   get totalUsers(): number {
-    return this._userRows.length;
+    return this._userRows == null ? 0 : this._userRows.length;
   }
 
   get filteredLength(): number {
@@ -82,6 +82,9 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   get filteredRows(): Row[] {
+    if (this._userRows == null) {
+      return [];
+    }
     const term = this.term.trim().toLowerCase();
     return this._userRows.filter(userRow => {
       return (
@@ -94,7 +97,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   get userRows(): Row[] {
-    if (this.isLoading) {
+    if (this._userRows == null) {
       return [];
     }
 
@@ -181,7 +184,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
           .getProfile(userId)
           .then(
             userProfileDoc =>
-              (userRows[index] = { id: userProfileDoc.id, user: userProfileDoc.data, roleName, isInvitee: false })
+              (userRows[index] = { id: userProfileDoc.id, user: userProfileDoc.data || {}, roleName, isInvitee: false })
           )
       );
     }

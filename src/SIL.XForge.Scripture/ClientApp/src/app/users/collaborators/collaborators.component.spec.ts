@@ -431,7 +431,7 @@ class TestEnvironment {
   }
 
   setTextFieldValue(element: HTMLElement, value: string) {
-    const inputElem: HTMLInputElement = element.querySelector('input');
+    const inputElem = element.querySelector('input') as HTMLInputElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();
