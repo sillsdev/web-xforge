@@ -64,3 +64,11 @@ ${bowser.getOSName()} - ${bowser.getOSVersion() || 'unknown'}
 Error id: ${errorId || 'not applicable'}
 `);
 }
+
+export function parseJSON(str: string): any | undefined {
+  try {
+    return JSON.parse(str);
+  } catch (err) {
+    return undefined;
+  }
+}
