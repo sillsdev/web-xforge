@@ -37,10 +37,10 @@ import {
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   itemVisible: { [bookIdOrDocId: string]: boolean } = {};
   itemVisibleArchived: { [bookIdOrDocId: string]: boolean } = {};
-  questionDocs: { [docId: string]: QuestionDoc[] } = {};
   texts: TextInfo[] = [];
   projectId?: string;
 
+  private questionDocs = new Map<string, QuestionDoc[]>();
   private textsByBookId: TextsByBookId = {};
   private projectDoc?: SFProjectDoc;
   private dataChangesSub?: Subscription;
@@ -58,18 +58,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get allQuestionsCount(): string {
-    if (this.questionDocs == null) {
-      return '-';
-    }
-
     return '' + this.allPublishedQuestions.length;
   }
 
   get myAnswerCount(): string {
-    if (this.questionDocs == null) {
-      return '-';
-    }
-
     let count: number = 0;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
@@ -85,10 +77,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get myLikeCount(): string {
-    if (this.questionDocs == null) {
-      return '-';
-    }
-
     let count: number = 0;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
@@ -106,10 +94,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get myCommentCount(): string {
-    if (this.questionDocs == null) {
-      return '-';
-    }
-
     let count: number = 0;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
@@ -204,10 +188,14 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   getQuestionDocs(textDocId: TextDocId, fromArchive = false): QuestionDoc[] {
-    if (fromArchive) {
-      return this.questionDocs[textDocId.toString()].filter(qd => qd.data != null && qd.data.isArchived);
+    const textQuestionDocs = this.questionDocs.get(textDocId.toString());
+    if (textQuestionDocs == null) {
+      return [];
     }
-    return this.questionDocs[textDocId.toString()].filter(qd => qd.data != null && !qd.data.isArchived);
+    if (fromArchive) {
+      return textQuestionDocs.filter(qd => qd.data != null && qd.data.isArchived);
+    }
+    return textQuestionDocs.filter(qd => qd.data != null && !qd.data.isArchived);
   }
 
   bookQuestionCount(text: TextInfo, fromArchive = false): number {
@@ -228,13 +216,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return 0;
     }
     const id = new TextDocId(this.projectDoc.id, bookNum, chapterNumber);
-    if (!(id.toString() in this.questionDocs)) {
-      return 0;
-    }
-    if (fromArchive) {
-      return this.questionDocs[id.toString()].filter(qd => qd.data != null && qd.data.isArchived).length;
-    }
-    return this.questionDocs[id.toString()].filter(qd => qd.data != null && !qd.data.isArchived).length;
+    const questionDocs = this.getQuestionDocs(id, fromArchive);
+    return questionDocs.length;
   }
 
   questionCountLabel(count: number): string {
@@ -255,10 +238,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return 0;
     }
     const id = new TextDocId(this.projectDoc.id, bookNum, chapterNumber);
-    if (!(id.toString() in this.questionDocs)) {
-      return 0;
-    }
-
     let count: number = 0;
     for (const q of this.getQuestionDocs(id)) {
       if (q.data != null) {
@@ -266,7 +245,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         count += answerCount;
       }
     }
-
     return count;
   }
 
@@ -306,10 +284,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     if (this.projectId != null) {
       for (const chapter of text.chapters) {
         const id = new TextDocId(this.projectId, text.bookNum, chapter.number);
-        if (!(id.toString() in this.questionDocs)) {
-          continue;
-        }
-
         for (const questionDoc of this.getQuestionDocs(id)) {
           if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
             answered++;
@@ -430,7 +404,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return;
     }
 
-    this.questionDocs = {};
+    this.questionDocs.clear();
     this.textsByBookId = {};
     this.texts = [];
     for (const text of this.projectDoc.data.texts) {
@@ -442,7 +416,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       this.texts.push(text);
       for (const chapter of text.chapters) {
         const textId = new TextDocId(this.projectDoc.id, text.bookNum, chapter.number);
-        this.questionDocs[textId.toString()] = [];
+        this.questionDocs.set(textId.toString(), []);
       }
     }
 
@@ -460,7 +434,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       questionDoc.data.verseRef.bookNum,
       questionDoc.data.verseRef.chapterNum
     );
-    this.questionDocs[textId.toString()].push(questionDoc);
+    const textQuestionDocs = this.questionDocs.get(textId.toString());
+    if (textQuestionDocs != null) {
+      textQuestionDocs.push(questionDoc);
+    }
   }
 
   private removeQuestionDoc(questionDoc: QuestionDoc): void {
@@ -472,8 +449,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       questionDoc.data.verseRef.bookNum,
       questionDoc.data.verseRef.chapterNum
     );
-    const chapterQuestionDocs = this.questionDocs[textId.toString()];
-    const index = chapterQuestionDocs.indexOf(questionDoc);
-    chapterQuestionDocs.splice(index, 1);
+    const textQuestionDocs = this.questionDocs.get(textId.toString());
+    if (textQuestionDocs != null) {
+      const index = textQuestionDocs.indexOf(questionDoc);
+      textQuestionDocs.splice(index, 1);
+    }
   }
 }
