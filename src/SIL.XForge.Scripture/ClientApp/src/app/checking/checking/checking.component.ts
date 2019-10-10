@@ -12,7 +12,7 @@ import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { fromVerseRef, toVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
-import { Subscription } from 'rxjs';
+import { merge, Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -249,9 +249,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
         }
-        this.questionsSub = this.subscribe(this.questionsQuery.remoteChanges$, () => {
-          this.checkBookStatus();
-        });
+        this.questionsSub = this.subscribe(merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$), () =>
+          this.checkBookStatus()
+        );
         this.book = bookNum;
         this.userDoc = await this.userService.getCurrentUser();
         this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
@@ -560,27 +560,28 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         replaceUrl: true
       });
     } else if (this.showAllBooks) {
-      const availableBooks: string[] = [];
+      const availableBooks = new Set<string>();
       for (const questionDoc of this.questionDocs) {
         const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
-        if (questionVerseRef != null && !availableBooks.includes(questionVerseRef.book)) {
-          availableBooks.push(questionVerseRef.book);
+        if (questionVerseRef != null && !availableBooks.has(questionVerseRef.book)) {
+          availableBooks.add(questionVerseRef.book);
         }
       }
-      if (availableBooks.length === 1) {
-        this.router.navigate(['/projects', this.projectDoc.id, 'checking', availableBooks[0]], {
+      if (availableBooks.size === 1) {
+        this.router.navigate(['/projects', this.projectDoc.id, 'checking', availableBooks.values().next().value], {
           replaceUrl: true
         });
       }
     }
     // Only pass in relevant verse references to the text component
-    this.bookVerseRefs = [];
+    const bookVerseRefs: VerseRef[] = [];
     for (const questionDoc of this.questionDocs) {
       const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
       if (questionVerseRef != null && questionVerseRef.bookNum === this.book) {
-        this.bookVerseRefs.push(questionVerseRef);
+        bookVerseRefs.push(questionVerseRef);
       }
     }
+    this.bookVerseRefs = bookVerseRefs;
   }
 
   private getAnswerIndex(answer: Answer): number {
