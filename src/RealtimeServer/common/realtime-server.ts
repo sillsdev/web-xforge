@@ -5,8 +5,7 @@ import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { DocService } from './services/doc-service';
-import { obj } from './utils/obj-path';
-import { createFetchQuery } from './utils/sharedb-utils';
+import { createFetchQuery, docFetch } from './utils/sharedb-utils';
 
 export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 export const XF_ROLE_CLAIM = 'http://xforge.org/role';
@@ -167,12 +166,14 @@ export class RealtimeServer extends ShareDB {
   }
 
   async getUserProjectRole(session: ConnectSession, projectId: string): Promise<string | undefined> {
-    let projectRole = session.projectRoles!.get(projectId);
-    if (projectRole == null) {
-      session.projectRoles = await this.getUserProjectRoles(session.userId);
-      projectRole = session.projectRoles.get(projectId);
+    const conn = this.connect();
+    const projectDoc = conn.get(this.projectsCollection, projectId);
+    await docFetch(projectDoc);
+    if (projectDoc.data != null) {
+      const project: Project = projectDoc.data;
+      return project.userRoles[session.userId];
     }
-    return projectRole;
+    return undefined;
   }
 
   async migrateIfNecessary(): Promise<void> {
@@ -205,19 +206,6 @@ export class RealtimeServer extends ShareDB {
     }
   }
 
-  private async getUserProjectRoles(userId: string): Promise<Map<string, string>> {
-    const conn = this.connect();
-    const query = await createFetchQuery(conn, this.projectsCollection, {
-      [obj<Project>().pathStr(p => p.userRoles[userId])]: { $exists: true }
-    });
-    const projectRoles = new Map<string, string>();
-    for (const projectDoc of query.results) {
-      const role = projectDoc.data.userRoles[userId];
-      projectRoles.set(projectDoc.id, role);
-    }
-    return projectRoles;
-  }
-
   private async setConnectSession(context: ShareDB.middleware.ConnectContext): Promise<void> {
     let session: ConnectSession;
     if (context.req != null && context.req.user != null) {
@@ -226,8 +214,7 @@ export class RealtimeServer extends ShareDB {
       session = {
         userId,
         role,
-        isServer: false,
-        projectRoles: await this.getUserProjectRoles(userId)
+        isServer: false
       };
     } else {
       let userId = '';
