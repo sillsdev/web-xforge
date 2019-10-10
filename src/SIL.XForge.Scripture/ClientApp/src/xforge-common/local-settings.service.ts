@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { fromEvent, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { parseJSON } from './utils';
 
 export interface LocalSettingChangeEvent {
   key: string | null;
@@ -18,15 +19,15 @@ export class LocalSettingsService {
     this.remoteChanges$ = fromEvent<StorageEvent>(window, 'storage').pipe(
       map(evt => ({
         key: evt.key,
-        oldValue: evt.oldValue != null ? JSON.parse(evt.oldValue) : undefined,
-        newValue: evt.newValue != null ? JSON.parse(evt.newValue) : undefined
+        oldValue: evt.oldValue != null ? parseJSON(evt.oldValue) : undefined,
+        newValue: evt.newValue != null ? parseJSON(evt.newValue) : undefined
       }))
     );
   }
 
   get<T>(key: string): T | undefined {
     const value = localStorage.getItem(key);
-    return value != null ? JSON.parse(value) : undefined;
+    return value != null ? parseJSON(value) : undefined;
   }
 
   set<T>(key: string, value?: T): void {
