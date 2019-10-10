@@ -12,8 +12,9 @@ import { RealtimeServer, submitMigrationOp } from './realtime-server';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { ProjectService } from './services/project-service';
 import { UserService } from './services/user-service';
+import { Json0OpBuilder } from './utils/json0-op-builder';
 import { docFetch, docSubmitOp } from './utils/sharedb-utils';
-import { allowAll, clientConnect, createDoc, fetchDoc, submitOp } from './utils/test-utils';
+import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op, submitOp } from './utils/test-utils';
 
 const PROJECTS_COLLECTION = 'projects';
 
@@ -66,7 +67,7 @@ describe('RealtimeServer', () => {
     expect(ops.length).toEqual(3);
   });
 
-  it('sets up connect session', async () => {
+  it('gets correct project role', async () => {
     const env = new TestEnvironment();
     await env.createData();
     let session: ConnectSession;
@@ -81,7 +82,7 @@ describe('RealtimeServer', () => {
     expect(env.server.getUserProjectRole(session!, 'project01')).resolves.toEqual('admin');
   });
 
-  it('updates connect session when new project added', async () => {
+  it('gets correct project role when new project added', async () => {
     const env = new TestEnvironment();
     await env.createData();
     let session: ConnectSession;
@@ -100,6 +101,24 @@ describe('RealtimeServer', () => {
     await submitOp(userConn, PROJECTS_COLLECTION, 'project02', []);
     expect(session!.userId).toEqual('user01');
     expect(env.server.getUserProjectRole(session!, 'project02')).resolves.toEqual('user');
+  });
+
+  it('gets correct project role when role changed', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    let session: ConnectSession;
+    env.server.use('submit', (context, callback) => {
+      session = context.agent.connectSession as ConnectSession;
+      callback();
+    });
+
+    const userConn = clientConnect(env.server, 'user01');
+    await env.submitJson0Op<Project>(PROJECTS_COLLECTION, 'project01', ops =>
+      ops.set<string>(p => p.userRoles['user01'], 'user')
+    );
+    await submitOp(userConn, PROJECTS_COLLECTION, 'project01', []);
+    expect(session!.userId).toEqual('user01');
+    expect(env.server.getUserProjectRole(session!, 'project01')).resolves.toEqual('user');
   });
 });
 
@@ -159,5 +178,10 @@ class TestEnvironment {
   createDoc<T>(collection: string, id: string, data: T): Promise<void> {
     const conn = this.server.connect();
     return createDoc(conn, collection, id, data);
+  }
+
+  async submitJson0Op<T>(collection: string, id: string, build: (op: Json0OpBuilder<T>) => void): Promise<boolean> {
+    const conn = this.server.connect();
+    return submitJson0Op(conn, collection, id, build);
   }
 }
