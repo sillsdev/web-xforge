@@ -115,17 +115,13 @@ export class AuthService {
   }
 
   private async tryLogIn(): Promise<boolean> {
-    try {
-      let authResult = await this.parseHash();
+    let authResult = await this.parseHash();
+    if (!(await this.handleAuth(authResult))) {
+      this.clearState();
+      authResult = await this.checkSession();
       if (!(await this.handleAuth(authResult))) {
-        this.clearState();
-        authResult = await this.checkSession();
-        if (!(await this.handleAuth(authResult))) {
-          return false;
-        }
+        return false;
       }
-    } catch (err) {
-      return false;
     }
     return true;
   }
@@ -192,12 +188,10 @@ export class AuthService {
   }
 
   private async renewTokens(): Promise<void> {
-    try {
-      const authResult = await this.checkSession();
-      if (authResult != null && authResult.accessToken != null && authResult.idToken != null) {
-        await this.localLogIn(authResult);
-      }
-    } catch (err) {
+    const authResult = await this.checkSession();
+    if (authResult != null && authResult.accessToken != null && authResult.idToken != null) {
+      await this.localLogIn(authResult);
+    } else {
       await this.logOut();
     }
   }
@@ -214,11 +208,15 @@ export class AuthService {
     });
   }
 
-  private checkSession(): Promise<auth0.Auth0DecodedHash> {
-    return new Promise<auth0.Auth0DecodedHash>((resolve, reject) => {
+  private checkSession(): Promise<auth0.Auth0DecodedHash | null> {
+    return new Promise<auth0.Auth0DecodedHash | null>((resolve, reject) => {
       this.auth0.checkSession({ state: JSON.stringify({}) }, (err, authResult) => {
         if (err != null) {
-          reject(err);
+          if (err.code === 'login_required') {
+            resolve(null);
+          } else {
+            reject(err);
+          }
         } else {
           resolve(authResult);
         }
