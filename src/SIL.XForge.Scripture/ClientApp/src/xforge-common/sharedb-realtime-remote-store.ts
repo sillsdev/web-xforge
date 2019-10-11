@@ -51,7 +51,7 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
   private getUrl(): string {
     const protocol = this.locationService.protocol === 'https:' ? 'wss:' : 'ws:';
     let url = `${protocol}//${this.locationService.hostname}`;
-    if ('realtimePort' in environment && environment.realtimePort != null && environment.realtimePort !== 0) {
+    if (environment.realtimePort !== 0) {
       url += `:${environment.realtimePort}`;
     }
     url += environment.realtimeUrl;
