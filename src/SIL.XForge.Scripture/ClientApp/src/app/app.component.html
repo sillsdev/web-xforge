@@ -217,5 +217,10 @@
   </mdc-drawer-content>
 </mdc-drawer>
 <div #appContent class="app-content mdc-top-app-bar--short-fixed-adjust">
-  <div><router-outlet></router-outlet></div>
+  <div>
+    <router-outlet></router-outlet>
+    <p *ngIf="showCheckingDisabled" class="checking-unavailable">
+      Scripture checking is not available in this project.
+    </p>
+  </div>
 </div>
