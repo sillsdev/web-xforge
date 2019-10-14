@@ -32,7 +32,7 @@ import { SFProjectDoc } from './core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from './core/models/sf-realtime-doc-types';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
-import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
+import { SFAdminAuthGuard } from './shared/project-router.guard';
 
 const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);

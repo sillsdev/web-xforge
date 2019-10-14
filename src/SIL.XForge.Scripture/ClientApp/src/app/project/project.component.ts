@@ -73,10 +73,10 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
           const projectDoc = await this.projectService.get(projectId);
           const project = projectDoc.data;
           if (project != null && project.texts.length > 0) {
-            const projectRole = project.userRoles[this.userService.currentUserId];
+            const projectRole = project.userRoles[this.userService.currentUserId] as SFProjectRole;
             // the user has not navigated anywhere before, so navigate to the default location in the first enabled task
             let task: string | undefined;
-            if (projectRole !== SFProjectRole.CommunityChecker) {
+            if (projectRole != null && projectRole !== SFProjectRole.CommunityChecker) {
               task = 'translate';
             } else if (project.checkingConfig.checkingEnabled) {
               task = 'checking';
