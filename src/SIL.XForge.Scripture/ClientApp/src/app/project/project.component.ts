@@ -7,6 +7,7 @@ import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 
 @Component({
@@ -73,10 +74,10 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
           const projectDoc = await this.projectService.get(projectId);
           const project = projectDoc.data;
           if (project != null && project.texts.length > 0) {
-            const projectRole = project.userRoles[this.userService.currentUserId];
+            const projectRole = project.userRoles[this.userService.currentUserId] as SFProjectRole;
             // the user has not navigated anywhere before, so navigate to the default location in the first enabled task
             let task: string | undefined;
-            if (projectRole !== SFProjectRole.CommunityChecker) {
+            if (canAccessTranslateApp(projectRole)) {
               task = 'translate';
             } else if (project.checkingConfig.checkingEnabled) {
               task = 'checking';

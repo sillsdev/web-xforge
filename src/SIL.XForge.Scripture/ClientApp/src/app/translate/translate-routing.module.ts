@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthGuard } from 'xforge-common/auth.guard';
+import { TranslateAuthGuard } from '../shared/project-router.guard';
 import { EditorComponent } from './editor/editor.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 
 const routes: Routes = [
-  { path: 'projects/:projectId/translate/:bookId', component: EditorComponent, canActivate: [AuthGuard] },
-  { path: 'projects/:projectId/translate', component: TranslateOverviewComponent, canActivate: [AuthGuard] }
+  { path: 'projects/:projectId/translate/:bookId', component: EditorComponent, canActivate: [TranslateAuthGuard] },
+  { path: 'projects/:projectId/translate', component: TranslateOverviewComponent, canActivate: [TranslateAuthGuard] }
 ];
 
 @NgModule({
