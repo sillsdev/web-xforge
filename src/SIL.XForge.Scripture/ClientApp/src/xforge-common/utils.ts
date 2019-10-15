@@ -1,5 +1,6 @@
 import Bowser from 'bowser';
 import { ObjectId } from 'bson';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { environment } from 'src/environments/environment';
 import { version } from '../../../version.json';
 
@@ -71,4 +72,8 @@ export function parseJSON(str: string): any | undefined {
   } catch (err) {
     return undefined;
   }
+}
+
+export function verseSlug(verse: VerseRef) {
+  return 'verse_' + verse.chapterNum + '_' + verse.verseNum;
 }

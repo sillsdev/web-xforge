@@ -49,8 +49,12 @@
             </mdc-form-field>
           </div>
           <div class="text-container">
-            <small>Enter a reference to load text</small>
-            <app-checking-text [id]="textDocId" [activeVerse]="selection" mode="dialog"></app-checking-text>
+            <app-checking-text
+              [id]="textDocId"
+              placeholder="Enter a reference to load text"
+              [activeVerse]="selection"
+              mode="dialog"
+            ></app-checking-text>
           </div>
           <mdc-form-field fluid>
             <mdc-textarea

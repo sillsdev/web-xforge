@@ -1,12 +1,13 @@
 import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { verseSlug } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -18,6 +19,7 @@ import { ParentAndStartErrorStateMatcher, SFValidators } from '../../shared/sfva
 import { combineVerseRefStrs } from '../../shared/utils';
 import { CheckingAudioCombinedComponent } from '../checking/checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
+import { CheckingTextComponent } from '../checking/checking-text/checking-text.component';
 
 export interface QuestionDialogData {
   question?: Question;
@@ -36,7 +38,8 @@ export interface QuestionDialogResult {
   templateUrl: './question-dialog.component.html',
   styleUrls: ['./question-dialog.component.scss']
 })
-export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit {
+export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit, AfterViewChecked {
+  @ViewChild(CheckingTextComponent, { static: true, read: ElementRef }) textElement!: ElementRef;
   @ViewChild(CheckingAudioCombinedComponent, { static: true }) audioCombinedComponent!: CheckingAudioCombinedComponent;
   modeLabel = this.data && this.data.question != null ? 'Edit' : 'New';
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
@@ -50,6 +53,9 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   );
   audio: AudioAttachment = {};
   _selection?: VerseRef;
+
+  // flag indicating whether we need to scroll verse into view at next opportunity
+  private scrollVerseIntoView: boolean = false;
 
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
@@ -132,6 +138,17 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
 
   updateSelection() {
     this._selection = combineVerseRefStrs(this.scriptureStart.value, this.scriptureEnd.value);
+    this.scrollVerseIntoView = true;
+  }
+
+  ngAfterViewChecked() {
+    if (this.scrollVerseIntoView && this.selection != null) {
+      const element = this.textElement.nativeElement.querySelector(`[data-segment="${verseSlug(this.selection)}"]`);
+      if (element != null) {
+        setTimeout(() => element.scrollIntoView());
+        this.scrollVerseIntoView = false;
+      }
+    }
   }
 
   updateScriptureEndEnabled() {

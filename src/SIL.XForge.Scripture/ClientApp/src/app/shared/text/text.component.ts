@@ -50,6 +50,7 @@ export interface TextUpdatedEvent {
 })
 export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Input() isReadOnly: boolean = true;
+  @Input() placeholder = 'Loading...';
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
@@ -343,7 +344,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (this._id == null) {
       return;
     }
-    this.setPlaceholderText('Loading...');
+    this.placeholder = 'Loading...';
     const textDoc = await this.projectService.getText(this._id);
     this.viewModel.bind(textDoc);
     this.updatePlaceholderText();
@@ -568,17 +569,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   private updatePlaceholderText(): void {
     if (!this.viewModel.isLoaded) {
-      this.setPlaceholderText('This book does not exist.');
+      this.placeholder = 'This book does not exist.';
     } else if (this.viewModel.isEmpty) {
-      this.setPlaceholderText('This book is empty. Add chapters in Paratext.');
+      this.placeholder = 'This book is empty. Add chapters in Paratext.';
     }
-  }
-
-  private setPlaceholderText(text: string): void {
-    if (this._editor == null) {
-      return;
-    }
-    const editorElem = this._editor.container.getElementsByClassName('ql-editor')[0];
-    editorElem.setAttribute('data-placeholder', text);
   }
 }
