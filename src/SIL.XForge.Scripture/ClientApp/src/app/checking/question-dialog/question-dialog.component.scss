@@ -18,9 +18,13 @@ mdc-dialog-actions {
 }
 
 .text-container {
-  height: 8em;
-  margin-bottom: 2.5em;
+  height: 10em;
+  margin-bottom: 1em;
   app-checking-text {
     position: relative;
   }
+}
+
+:host ::ng-deep quill-editor > .ql-container > .ql-editor {
+  padding: 0.5em;
 }

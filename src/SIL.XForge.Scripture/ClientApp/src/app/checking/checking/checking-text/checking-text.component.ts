@@ -5,6 +5,7 @@ import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scri
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent, Subscription } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { verseSlug } from 'xforge-common/utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
 
@@ -15,6 +16,7 @@ import { TextComponent } from '../../../shared/text/text.component';
   encapsulation: ViewEncapsulation.None
 })
 export class CheckingTextComponent extends SubscriptionDisposable {
+  @Input() placeholder = 'Loading...';
   @ViewChild(TextComponent, { static: true }) textComponent!: TextComponent;
 
   @Input() set activeVerse(verseRef: Readonly<VerseRef> | undefined) {
@@ -115,16 +117,12 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     const segments: string[] = [];
     let segment = '';
     for (const verseInRange of verseRef.allVerses()) {
-      segment = this.getSegment(verseInRange.chapterNum, verseInRange.verseNum);
+      segment = verseSlug(verseInRange);
       if (!segments.includes(segment)) {
         segments.push(segment);
       }
     }
     return segments;
-  }
-
-  private getSegment(chapter: number, verse: number) {
-    return 'verse_' + chapter + '_' + verse;
   }
 
   private highlightSegments(segments: string[], toggle = true) {
@@ -174,7 +172,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       // Remove all highlights and question segments
       for (const verseRef of this.verses) {
         if (verseRefs == null || !verseRefs.includes(verseRef)) {
-          const segment = this.getSegment(verseRef.chapterNum, verseRef.verseNum);
+          const segment = verseSlug(verseRef);
           if (!this.textComponent.hasSegmentRange(segment)) {
             continue;
           }
