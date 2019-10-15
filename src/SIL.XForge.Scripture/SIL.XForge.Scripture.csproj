@@ -11,7 +11,7 @@
     <!-- Set this to true if you enable server-side prerendering -->
     <BuildServerSideRenderer>false</BuildServerSideRenderer>
     <UserSecretsId>4d0606c3-0fc7-4d76-b43b-236485004e81</UserSecretsId>
-    <MachineVersion>2.1.0-34</MachineVersion>
+    <MachineVersion>2.1.0</MachineVersion>
     <RealtimeServerRoot>..\RealtimeServer\</RealtimeServerRoot>
     <AngularConfig>production</AngularConfig>
   </PropertyGroup>
@@ -21,7 +21,7 @@
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.3.1" />
     <PackageReference Include="Microsoft.AspNetCore.All" />
     <PackageReference Include="SIL.Machine.WebApi" Version="$(MachineVersion)" />
-    <PackageReference Include="SIL.Scripture" Version="6.0.0-212" />
+    <PackageReference Include="SIL.Scripture" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
