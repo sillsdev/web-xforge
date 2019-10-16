@@ -96,9 +96,9 @@ export class AuthService {
     });
   }
 
-  logIn(returnUrl: string): void {
+  logIn(returnUrl: string, defaultEmail?: string): void {
     const state: AuthState = { returnUrl };
-    const options: AuthorizeOptions = { state: JSON.stringify(state) };
+    const options: AuthorizeOptions = { state: JSON.stringify(state), login_hint: defaultEmail };
     this.auth0.authorize(options);
   }
 

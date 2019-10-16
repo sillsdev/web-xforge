@@ -36,6 +36,14 @@ export class LocationService {
     return window.location.search;
   }
 
+  get searchParams(): Map<string, string> {
+    const map = new Map<string, string>();
+    new URLSearchParams(this.search).forEach((value, key) => {
+      map.set(key, value);
+    });
+    return map;
+  }
+
   go(url: string): void {
     window.location.href = url;
   }

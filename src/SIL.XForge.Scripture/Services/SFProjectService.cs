@@ -297,7 +297,7 @@ namespace SIL.XForge.Scripture.Services
                 if (projectSecret == null)
                     projectSecret = await ProjectSecrets.GetAsync(projectId);
                 string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
-                url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}";
+                url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}&email={Uri.EscapeDataString(email)}";
                 additionalMessage = "This link will only work for this email address.";
             }
             else
