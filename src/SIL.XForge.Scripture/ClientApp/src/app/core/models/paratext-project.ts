@@ -6,4 +6,5 @@ export interface ParatextProject {
   projectId?: string;
   isConnectable: boolean;
   isConnected: boolean;
+  isRightToLeft: boolean;
 }

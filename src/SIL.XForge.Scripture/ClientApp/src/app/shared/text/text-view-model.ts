@@ -78,6 +78,7 @@ export class TextViewModel {
   private remoteChangesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
+  private _isRightToLeft: boolean = false;
 
   constructor() {}
 
@@ -97,6 +98,10 @@ export class TextViewModel {
     return textData.ops == null || textData.ops.length === 0;
   }
 
+  set isRightToLeft(value: boolean) {
+    this._isRightToLeft = value;
+  }
+
   bind(textDoc: TextDoc): void {
     const editor = this.checkEditor();
     if (this.textDoc != null) {
@@ -105,6 +110,9 @@ export class TextViewModel {
 
     this.textDoc = textDoc;
     editor.setContents(this.textDoc.data as DeltaStatic);
+    if (this._isRightToLeft) {
+      document.getElementsByClassName('ql-editor')[0].classList.add('rtl-style');
+    }
     editor.history.clear();
     this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => editor.updateContents(ops as DeltaStatic));
     this.onCreateSub = this.textDoc.create$.subscribe(() => {

@@ -83,7 +83,7 @@ namespace SIL.XForge.Scripture.Services
                 ParatextId = settings.ParatextId,
                 Name = ptProject.Name,
                 ShortName = ptProject.ShortName,
-                WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
+                WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag, IsRightToLeft = ptProject.IsRightToLeft },
                 TranslateConfig = new TranslateConfig
                 {
                     TranslationSuggestionsEnabled = settings.TranslationSuggestionsEnabled,

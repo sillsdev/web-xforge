@@ -15,6 +15,10 @@ app-text {
     display: none;
   }
   .ql-editor {
+    &.rtl-style {
+      direction: rtl;
+      text-align: right;
+    }
     .highlight-para-target {
       > usx-para-contents {
         box-shadow: unset;

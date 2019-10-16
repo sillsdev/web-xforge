@@ -9,5 +9,6 @@ namespace SIL.XForge.Scripture.Models
         public string ProjectId { get; set; }
         public bool IsConnectable { get; set; }
         public bool IsConnected { get; set; }
+        public bool IsRightToLeft { get; set; }
     }
 }

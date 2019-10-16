@@ -283,7 +283,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
           shortName: curSource.shortName,
           languageTag: curSource.writingSystem.tag,
           isConnectable: false,
-          isConnected: false
+          isConnected: false,
+          isRightToLeft: curSource.writingSystem.isRightToLeft
         });
       }
     }

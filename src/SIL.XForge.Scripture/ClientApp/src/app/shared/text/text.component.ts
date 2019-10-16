@@ -166,6 +166,14 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
   }
 
+  async isRightToLeft(): Promise<boolean> {
+    if (this._id == null) {
+      return false;
+    }
+    const projectDoc = await this.projectService.get(this._id.projectId);
+    return projectDoc != null ? (projectDoc.data != null ? projectDoc.data.writingSystem.isRightToLeft : false) : false;
+  }
+
   get segmentRef(): string {
     if (this._segment == null) {
       return this.initialSegmentRef == null ? '' : this.initialSegmentRef;
@@ -346,6 +354,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
     this.placeholder = 'Loading...';
     const textDoc = await this.projectService.getText(this._id);
+    this.viewModel.isRightToLeft = await this.isRightToLeft();
     this.viewModel.bind(textDoc);
     this.updatePlaceholderText();
 

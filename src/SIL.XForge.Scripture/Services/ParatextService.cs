@@ -120,7 +120,8 @@ namespace SIL.XForge.Scripture.Services
                     LanguageTag = (string)projectObj["language_ldml"],
                     ProjectId = projectId,
                     IsConnectable = isConnectable,
-                    IsConnected = isConnected
+                    IsConnected = isConnected,
+                    IsRightToLeft = true // This should be looked up for each individual project
                 });
             }
             return projects.OrderBy(p => p.Name, StringComparer.InvariantCulture).ToArray();
