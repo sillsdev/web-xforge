@@ -9,6 +9,7 @@ import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-re
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
+import { SFProjectDoc } from 'src/app/core/models/sf-project-doc';
 import { anything, deepEqual, instance, mock, objectContaining, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -549,6 +550,7 @@ class TestEnvironment {
     when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
+    when(mockedProjectService.get(anything())).thenResolve({} as SFProjectDoc);
     this.fixture.detectChanges();
   }
 

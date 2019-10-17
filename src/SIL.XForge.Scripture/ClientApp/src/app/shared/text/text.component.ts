@@ -54,6 +54,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
+  lang: string = '';
 
   private _editorStyles: any = { fontSize: '1rem' };
   private readonly DEFAULT_MODULES: any = {
@@ -140,6 +141,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
         }
         this.bindQuill();
       }
+      this.setLangFromText();
     }
   }
 
@@ -573,5 +575,18 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     } else if (this.viewModel.isEmpty) {
       this.placeholder = 'This book is empty. Add chapters in Paratext.';
     }
+  }
+
+  private async setLangFromText() {
+    if (this.id == null) {
+      return;
+    }
+
+    const project = (await this.projectService.get(this.id.projectId)).data;
+    if (project == null) {
+      return;
+    }
+
+    this.lang = project.writingSystem.tag;
   }
 }

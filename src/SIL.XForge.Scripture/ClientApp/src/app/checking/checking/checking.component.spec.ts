@@ -826,6 +826,12 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.currentQuestion).toBe(4);
     }));
+
+    it('quill editor element lang attribute is set from project language', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      const quillElementLang = env.quillEditorElement.getAttribute('lang');
+      expect(quillElementLang).toEqual(env.project01WritingSystemTag);
+    }));
   });
 });
 
@@ -839,6 +845,8 @@ class TestEnvironment {
   readonly component: CheckingComponent;
   readonly fixture: ComponentFixture<CheckingComponent>;
   questionReadTimer: number = 2000;
+
+  public project01WritingSystemTag = 'en';
 
   readonly mockedQuestionDialogRef: MdcDialogRef<QuestionDialogComponent> = mock(MdcDialogRef);
   private readonly adminProjectUserConfig: SFProjectUserConfig = {
@@ -894,7 +902,7 @@ class TestEnvironment {
     paratextId: 'pt01',
     shortName: 'P01',
     writingSystem: {
-      tag: 'en'
+      tag: this.project01WritingSystemTag
     },
     sync: {
       queuedCount: 0
@@ -1014,6 +1022,10 @@ class TestEnvironment {
 
   get quillEditor(): HTMLElement {
     return <HTMLElement>document.getElementsByClassName('ql-container')[0];
+  }
+
+  get quillEditorElement(): HTMLElement {
+    return <HTMLElement>document.getElementsByTagName('quill-editor')[0];
   }
 
   get recordButton(): DebugElement {

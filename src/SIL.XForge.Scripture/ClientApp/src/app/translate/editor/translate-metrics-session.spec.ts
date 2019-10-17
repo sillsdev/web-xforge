@@ -2,6 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { LatinWordTokenizer } from '@sillsdev/machine';
 import { QuillModule } from 'ngx-quill';
 import * as RichText from 'rich-text';
+import { SFProjectDoc } from 'src/app/core/models/sf-project-doc';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -350,6 +351,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
+    when(mockedSFProjectService.get(anything())).thenResolve({} as SFProjectDoc);
 
     this.sourceFixture = TestBed.createComponent(TextComponent);
     this.source = this.sourceFixture.componentInstance;
