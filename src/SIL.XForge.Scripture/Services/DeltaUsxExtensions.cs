@@ -23,10 +23,8 @@ namespace SIL.XForge.Scripture.Services
 
         public static Delta InsertBlank(this Delta delta, string segRef)
         {
-            string type = segRef.Contains("/p") || segRef.Contains("/m") ? "initial" : "normal";
-
             var attrs = new JObject(new JProperty("segment", segRef));
-            return delta.Insert(new { blank = type }, attrs);
+            return delta.Insert(new { blank = true }, attrs);
         }
 
         public static Delta InsertEmbed(this Delta delta, string type, JObject obj, string segRef = null,

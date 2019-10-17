@@ -300,26 +300,27 @@ class TestEnvironment {
   private addTextDoc(id: TextDocId): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
+    delta.insert({ blank: true }, { segment: 'p_1' });
     delta.insert({ verse: { number: '1', style: 'v' } });
     delta.insert(`chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
     delta.insert({ verse: { number: '2', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_2` });
+    delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_2` });
     delta.insert({ verse: { number: '3', style: 'v' } });
     delta.insert(`chapter ${id.chapterNum}, verse 3.`, { segment: `verse_${id.chapterNum}_3` });
     delta.insert({ verse: { number: '4', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_4` });
+    delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_4` });
     delta.insert({ verse: { number: '5', style: 'v' } });
     delta.insert(`chapter ${id.chapterNum}, verse 5.`, { segment: `verse_${id.chapterNum}_5` });
     delta.insert({ verse: { number: '6', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_6` });
+    delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_6` });
     delta.insert({ verse: { number: '7', style: 'v' } });
     delta.insert(`chapter ${id.chapterNum}, verse 7.`, { segment: `verse_${id.chapterNum}_7` });
     delta.insert({ verse: { number: '8', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_8` });
+    delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_8` });
     delta.insert({ verse: { number: '9', style: 'v' } });
     delta.insert(`chapter ${id.chapterNum}, verse 9.`, { segment: `verse_${id.chapterNum}_9` });
     delta.insert({ verse: { number: '10', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_10` });
+    delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_10` });
     delta.insert('\n', { para: { style: 'p' } });
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
       id: id.toString(),

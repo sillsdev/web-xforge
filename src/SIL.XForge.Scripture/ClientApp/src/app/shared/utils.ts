@@ -36,3 +36,7 @@ export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRe
   }
   return range.verseRef;
 }
+
+export function isInitialSegment(ref: string): boolean {
+  return /(^|\/)[pmq]\d?_/.test(ref);
+}
