@@ -246,7 +246,8 @@ namespace SIL.XForge.Scripture.Services
                 HttpResponseMessage response = await client.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
-                    return await response.Content.ReadAsStringAsync();
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    return responseContent.Normalize();
                 }
                 else if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {

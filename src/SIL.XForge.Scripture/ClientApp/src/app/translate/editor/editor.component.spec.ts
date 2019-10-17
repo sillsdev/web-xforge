@@ -81,7 +81,7 @@ describe('EditorComponent', () => {
       expect(env.component.chapter).toBe(2);
       expect(env.component.target.segmentRef).toEqual('verse_2_1');
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(29);
+      expect(selection!.index).toBe(30);
       expect(selection!.length).toBe(0);
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.component.showSuggestion).toBe(false);
@@ -122,7 +122,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_3');
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(32);
+      expect(selection!.index).toBe(33);
       expect(selection!.length).toBe(0);
       expect(env.getProjectUserConfigDoc().data!.selectedSegment).toBe('verse_1_3');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
@@ -143,12 +143,68 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target.segmentRef).toBe('verse_1_2');
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(30);
+      expect(selection!.index).toBe(31);
       expect(selection!.length).toBe(0);
       expect(env.getProjectUserConfigDoc().data!.selectedSegment).toBe('verse_1_2');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).once();
       expect(env.component.showSuggestion).toBe(true);
       expect(env.component.suggestionWords).toEqual(['target']);
+
+      env.dispose();
+    }));
+
+    it('delete all text from non-verse paragraph segment', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'p_1' });
+      env.wait();
+      let segmentRange = env.component.target.segment!.range;
+      let segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
+      let op = segmentContents.ops![0];
+      expect(op.insert.blank).toBe(true);
+      expect(op.attributes!.segment).toEqual('p_1');
+
+      const index = env.typeCharacters('t');
+      segmentRange = env.component.target.segment!.range;
+      segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
+      op = segmentContents.ops![0];
+      expect(op.insert.blank).toBeUndefined();
+      expect(op.attributes!.segment).toEqual('p_1');
+
+      env.targetEditor.setSelection(index - 1, 1, 'user');
+      env.deleteCharacters();
+      segmentRange = env.component.target.segment!.range;
+      segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
+      op = segmentContents.ops![0];
+      expect(op.insert.blank).toBe(true);
+      expect(op.attributes!.segment).toEqual('p_1');
+
+      env.dispose();
+    }));
+
+    it('delete all text from verse paragraph segment', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_4/p_1' });
+      env.wait();
+      let segmentRange = env.component.target.segment!.range;
+      let segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
+      let op = segmentContents.ops![0];
+      expect(op.insert.blank).toBe(true);
+      expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
+
+      const index = env.typeCharacters('t');
+      segmentRange = env.component.target.segment!.range;
+      segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
+      op = segmentContents.ops![0];
+      expect(op.insert.blank).toBeUndefined();
+      expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
+
+      env.targetEditor.setSelection(index - 1, 1, 'user');
+      env.deleteCharacters();
+      segmentRange = env.component.target.segment!.range;
+      segmentContents = env.targetEditor.getContents(segmentRange.index, segmentRange.length);
+      op = segmentContents.ops![0];
+      expect(op.insert.blank).toBe(true);
+      expect(op.attributes!.segment).toEqual('verse_1_4/p_1');
 
       env.dispose();
     }));
@@ -506,7 +562,7 @@ describe('EditorComponent', () => {
       expect(env.component.targetLabel).toEqual('TRG');
       expect(env.component.target.segmentRef).toEqual('verse_1_1');
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(29);
+      expect(selection!.index).toBe(30);
       expect(selection!.length).toBe(0);
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
       expect(env.component.showSuggestion).toBe(false);
@@ -576,7 +632,7 @@ describe('EditorComponent', () => {
       expect(env.component.chapter).toBe(2);
       expect(env.component.target.segmentRef).toEqual('verse_2_1');
       const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(29);
+      expect(selection!.index).toBe(30);
       expect(selection!.length).toBe(0);
       verify(env.mockedRemoteTranslationEngine.translateInteractively(1, anything())).never();
       expect(env.component.showSuggestion).toBe(false);
@@ -896,16 +952,24 @@ class TestEnvironment {
   }
 
   typeCharacters(str: string): number {
-    const selection = this.component.target.editor!.getSelection();
+    const selection = this.targetEditor.getSelection()!;
     const delta = new Delta()
-      .retain(selection!.index)
-      .delete(selection!.length)
+      .retain(selection.index)
+      .delete(selection.length)
       .insert(str);
-    this.component.target.editor!.updateContents(delta, 'user');
-    const selectionIndex = selection!.index + str.length;
-    this.component.target.editor!.setSelection(selectionIndex, 0, 'user');
+    this.targetEditor.updateContents(delta, 'user');
+    const selectionIndex = selection.index + str.length;
+    this.targetEditor.setSelection(selectionIndex, 'user');
     this.wait();
     return selectionIndex;
+  }
+
+  deleteCharacters(): number {
+    const selection = this.targetEditor.getSelection()!;
+    this.targetEditor.deleteText(selection.index, selection.length, 'user');
+    this.targetEditor.setSelection(selection.index, 'user');
+    this.wait();
+    return selection.index;
   }
 
   dispose(): void {
@@ -915,6 +979,7 @@ class TestEnvironment {
   addTextDoc(id: TextDocId): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
+    delta.insert({ blank: true }, { segment: 'p_1' });
     delta.insert({ verse: { number: '1', style: 'v' } });
     delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
     delta.insert({ verse: { number: '2', style: 'v' } });
@@ -923,7 +988,7 @@ class TestEnvironment {
         delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2.`, { segment: `verse_${id.chapterNum}_2` });
         break;
       case 'target':
-        delta.insert({ blank: 'normal' }, { segment: `verse_${id.chapterNum}_2` });
+        delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_2` });
         break;
     }
     delta.insert({ verse: { number: '3', style: 'v' } });
@@ -931,7 +996,7 @@ class TestEnvironment {
     delta.insert({ verse: { number: '4', style: 'v' } });
     delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 4.`, { segment: `verse_${id.chapterNum}_4` });
     delta.insert('\n', { para: { style: 'p' } });
-    delta.insert({ blank: 'initial' }, { segment: `verse_${id.chapterNum}_4/p_1` });
+    delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_4/p_1` });
     delta.insert({ verse: { number: '5', style: 'v' } });
     switch (id.textType) {
       case 'source':

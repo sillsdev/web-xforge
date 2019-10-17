@@ -1432,17 +1432,19 @@ class TestEnvironment {
   private createTextDataForChapter(chapter: number): TextData {
     const delta = new Delta();
     delta.insert({ chapter: { number: chapter.toString(), style: 'c' } });
+    delta.insert({ blank: true }, { segment: 'p_1' });
     delta.insert({ verse: { number: '1', style: 'v' } });
     delta.insert(`target: chapter ${chapter}, verse 1.`, { segment: `verse_${chapter}_1` });
     delta.insert({ verse: { number: '2', style: 'v' } });
-    delta.insert({ blank: 'normal' }, { segment: `verse_${chapter}_2` });
+    delta.insert({ blank: true }, { segment: `verse_${chapter}_2` });
     delta.insert('\n', { para: { style: 'p' } });
+    delta.insert({ blank: true }, { segment: `verse_${chapter}_2/p_1` });
     delta.insert({ verse: { number: '3', style: 'v' } });
     delta.insert(`target: chapter ${chapter}, verse 3.`, { segment: `verse_${chapter}_3` });
     delta.insert({ verse: { number: '4', style: 'v' } });
     delta.insert(`target: chapter ${chapter}, verse 4.`, { segment: `verse_${chapter}_4` });
     delta.insert('\n', { para: { style: 'p' } });
-    delta.insert({ blank: 'initial' }, { segment: `verse_${chapter}_4/p_1` });
+    delta.insert({ blank: true }, { segment: `verse_${chapter}_4/p_1` });
     delta.insert({ verse: { number: '5', style: 'v' } });
     delta.insert(`target: chapter ${chapter}, `, { segment: `verse_${chapter}_5` });
     delta.insert('\n', { para: { style: 'p' } });
