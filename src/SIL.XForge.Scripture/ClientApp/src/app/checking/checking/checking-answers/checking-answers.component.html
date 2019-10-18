@@ -11,6 +11,12 @@
     <div *ngIf="questionDoc?.data?.audioUrl" class="question-audio">
       <app-checking-audio-player [source]="questionDoc?.data?.audioUrl"></app-checking-audio-player>
     </div>
+    <div class="question-footer" *ngIf="isProjectAdmin">
+      <div class="actions">
+        <button mdc-button type="button" (click)="questionDialog()" class="edit-question-button">Edit</button>
+        <button mdc-button type="button" (click)="archiveQuestion()" class="archive-question-button">Archive</button>
+      </div>
+    </div>
   </div>
   <div *ngIf="!answerFormVisible" class="actions">
     <button

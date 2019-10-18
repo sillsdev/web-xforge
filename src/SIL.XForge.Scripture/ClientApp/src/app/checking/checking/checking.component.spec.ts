@@ -42,6 +42,7 @@ import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
+import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogComponent, QuestionDialogResult } from '../question-dialog/question-dialog.component';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
@@ -267,6 +268,67 @@ describe('CheckingComponent', () => {
       tick(env.questionReadTimer);
       env.fixture.detectChanges();
       expect(env.getUnread(question)).toEqual(0);
+    }));
+
+    it('allows admin to archive a question', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      env.selectQuestion(1);
+      const question = env.component.answersPanel!.questionDoc!.data!;
+      expect(question.isArchived).toBe(false);
+      // Our mock system doesn't respond to changes to the number of published questions, we must get this manually
+      expect(env.component.questionDocs.filter(q => q.data!.isArchived !== true).length).toEqual(15);
+      env.clickButton(env.archiveQuestionButton);
+      expect(question.isArchived).toBe(true);
+      expect(env.component.questionDocs.filter(q => q.data!.isArchived !== true).length).toEqual(14);
+    }));
+
+    it('opens a dialog and edits a question', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
+      const result: QuestionDialogResult = {
+        verseRef: VerseRef.parse('JHN 1:1-2'),
+        text: 'Book 1, Q1 text - Edited',
+        audio: {}
+      };
+      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of(result));
+      env.selectQuestion(1);
+      expect(env.getQuestionText(env.questions[0])).toEqual('Book 1, Q1 text');
+      env.clickButton(env.editQuestionButton);
+      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).never();
+      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
+      expect(env.getQuestionText(env.questions[0])).toEqual('Book 1, Q1 text - Edited');
+    }));
+
+    it('user must confirm question answered dialog before question dialog appears', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
+      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
+      // Edit a question with answers
+      env.selectQuestion(6);
+      env.clickButton(env.editQuestionButton);
+      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).once();
+      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).never();
+      when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
+      env.clickButton(env.editQuestionButton);
+      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).twice();
+      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
+      expect().nothing();
+    }));
+
+    it('uploads audio when file is provided', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      const result: QuestionDialogResult = {
+        verseRef: VerseRef.parse('JHN 1:1-2'),
+        text: 'Book 1, Q1 Text',
+        audio: { fileName: 'someAudioFile.mp3', blob: new Blob() }
+      };
+      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of(result));
+      when(mockedProjectService.onlineUploadAudio('project01', anything(), anything())).thenResolve('anAudioFile.mp3');
+      env.selectQuestion(1);
+      env.clickButton(env.editQuestionButton);
+      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
+      verify(mockedProjectService.onlineUploadAudio('project01', anything(), anything())).once();
+      expect().nothing();
     }));
 
     it('unread questions badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
@@ -862,6 +924,7 @@ class TestEnvironment {
   public project01WritingSystemTag = 'en';
 
   readonly mockedQuestionDialogRef: MdcDialogRef<QuestionDialogComponent> = mock(MdcDialogRef);
+  readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   private readonly adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: ADMIN_USER.id,
     projectRef: 'project01',
@@ -980,6 +1043,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#add-question-button'));
   }
 
+  get archiveQuestionButton(): DebugElement {
+    return this.answerPanel.query(By.css('.archive-question-button'));
+  }
+
   get cancelAnswerButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#cancel-answer'));
   }
@@ -1011,6 +1078,10 @@ class TestEnvironment {
 
   get decreaseFontSizeButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('app-font-size mdc-menu-surface button:first-child'));
+  }
+
+  get editQuestionButton(): DebugElement {
+    return this.answerPanel.query(By.css('.edit-question-button'));
   }
 
   get increaseFontSizeButton(): DebugElement {
@@ -1455,6 +1526,7 @@ class TestEnvironment {
     );
 
     when(mockedMdcDialog.open(QuestionDialogComponent, anything())).thenReturn(instance(this.mockedQuestionDialogRef));
+    when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
   }
 
   private createTextDataForChapter(chapter: number): TextData {

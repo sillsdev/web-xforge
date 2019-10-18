@@ -22,6 +22,7 @@ import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextsByBookId } from '../../../core/models/texts-by-book-id';
+import { SFProjectService } from '../../../core/sf-project.service';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
@@ -32,6 +33,12 @@ import {
   StartReferenceRequiredErrorStateMatcher
 } from '../../../shared/sfvalidators';
 import { combineVerseRefStrs } from '../../../shared/utils';
+import { QuestionAnsweredDialogComponent } from '../../question-answered-dialog/question-answered-dialog.component';
+import {
+  QuestionDialogComponent,
+  QuestionDialogData,
+  QuestionDialogResult
+} from '../../question-dialog/question-dialog.component';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
@@ -101,7 +108,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   constructor(
     private readonly userService: UserService,
     private readonly dialog: MdcDialog,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private readonly projectService: SFProjectService
   ) {
     super();
   }
@@ -148,6 +156,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       this._questionDoc.data != null
       ? this.projectUserConfigDoc.data.questionRefsRead.includes(this._questionDoc.data.dataId)
       : false;
+  }
+
+  get isProjectAdmin(): boolean {
+    return this.projectRole === SFProjectRole.ParatextAdministrator;
   }
 
   get canAddAnswer(): boolean {
@@ -230,6 +242,13 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.updateScriptureEndEnabled();
   }
 
+  archiveQuestion(): void {
+    this._questionDoc!.submitJson0Op(op => {
+      op.set<boolean>(qd => qd.isArchived, true);
+      op.set(qd => qd.dateArchived!, new Date().toJSON());
+    });
+  }
+
   checkScriptureText(): void {
     if (!this.scriptureText.value) {
       this.resetScriptureText();
@@ -260,6 +279,64 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
     this.scriptureText.setValue(this.activeAnswer.scriptureText);
     this.showAnswerForm();
+  }
+
+  async questionDialog(): Promise<void> {
+    const projectId = this._questionDoc!.data!.projectRef;
+    if (this._questionDoc!.data!.answers.length > 0) {
+      const answeredDialogRef = this.dialog.open(QuestionAnsweredDialogComponent);
+      const dialogResponse = (await answeredDialogRef.afterClosed().toPromise()) as string;
+      if (dialogResponse === 'close') {
+        return;
+      }
+    }
+    const dialogConfig: MdcDialogConfig<QuestionDialogData> = {
+      data: {
+        question: this._questionDoc!.data,
+        textsByBookId: this.textsByBookId,
+        projectId: projectId
+      }
+    };
+
+    const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig) as MdcDialogRef<
+      QuestionDialogComponent,
+      QuestionDialogResult | 'close'
+    >;
+
+    dialogRef.afterClosed().subscribe(async result => {
+      if (result == null || result === 'close') {
+        return;
+      }
+      let audioUrl = this._questionDoc!.data!.audioUrl;
+      if (result.audio.fileName && result.audio.blob != null) {
+        const response = await this.projectService.onlineUploadAudio(
+          projectId,
+          this._questionDoc!.data!.dataId,
+          new File([result.audio.blob], result.audio.fileName)
+        );
+        // Get amended filename and save it against the audio
+        audioUrl = response;
+      } else if (result.audio.status === 'reset') {
+        audioUrl = undefined;
+      }
+
+      const deleteAudio = this._questionDoc!.data!.audioUrl && audioUrl == null;
+      const verseRefData = fromVerseRef(result.verseRef);
+
+      await this._questionDoc!.submitJson0Op(op => {
+        op.set(q => q.verseRef, verseRefData);
+        op.set(q => q.text!, result.text);
+        op.set(q => q.audioUrl!, audioUrl);
+        op.set(q => q.dateModified, new Date().toJSON());
+      });
+      if (deleteAudio) {
+        this.projectService.onlineDeleteAudio(
+          projectId,
+          this._questionDoc!.data!.dataId,
+          this._questionDoc!.data!.ownerRef
+        );
+      }
+    });
   }
 
   extractScriptureText() {
