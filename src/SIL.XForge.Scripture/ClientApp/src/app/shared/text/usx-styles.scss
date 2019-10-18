@@ -6,7 +6,11 @@ usx-para {
   display: block;
 
   &[data-style='p'] {
-    text-indent: 0.125em;
+    text-indent: 0.75em;
+  }
+
+  &[data-style='ip'] {
+    text-indent: 0.75em;
   }
 
   &[data-style='toc1'] {
@@ -94,19 +98,19 @@ usx-para {
 
   &[data-style='io'],
   &[data-style='io1'] {
-    margin-left: 0.5em;
+    margin-left: 3em;
   }
 
   &[data-style='io2'] {
-    margin-left: 0.75em;
+    margin-left: 4.5em;
   }
 
   &[data-style='io3'] {
-    margin-left: 1em;
+    margin-left: 6em;
   }
 
   &[data-style='io4'] {
-    margin-left: 1.25em;
+    margin-left: 7.5em;
   }
 
   &[data-style='s'],
@@ -137,23 +141,23 @@ usx-para {
 
   &[data-style='q'],
   &[data-style='q1'] {
-    margin-left: 1.25em;
-    text-indent: -1em;
+    margin-left: 7.5em;
+    text-indent: -6em;
   }
 
   &[data-style='q2'] {
-    margin-left: 1.25em;
-    text-indent: -0.75em;
+    margin-left: 7.5em;
+    text-indent: -4.5em;
   }
 
   &[data-style='q3'] {
-    margin-left: 1.25em;
-    text-indent: -0.5em;
+    margin-left: 7.5em;
+    text-indent: -3em;
   }
 
   &[data-style='q4'] {
     margin-left: 1.25em;
-    text-indent: -0.25em;
+    text-indent: -1.5em;
   }
 
   &[data-style='qc'] {
@@ -170,18 +174,18 @@ usx-para {
 
   &[data-style='qm'],
   &[data-style='qm1'] {
-    margin-left: 1em;
-    text-indent: -0.75em;
+    margin-left: 6em;
+    text-indent: -4.5em;
   }
 
   &[data-style='qm2'] {
-    margin-left: 1em;
-    text-indent: -0.5em;
+    margin-left: 6em;
+    text-indent: -3em;
   }
 
   &[data-style='qm3'] {
-    margin-left: 1em;
-    text-indent: -0.25em;
+    margin-left: 6em;
+    text-indent: -1.5em;
   }
 
   &[data-style='b'] {
