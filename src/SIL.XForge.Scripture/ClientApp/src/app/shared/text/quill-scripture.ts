@@ -1,5 +1,6 @@
 import Parchment from 'parchment';
 import Quill, { Clipboard, DeltaOperation, DeltaStatic, Module } from 'quill';
+import { isInitialSegment } from '../utils';
 
 const Delta: new () => DeltaStatic = Quill.import('delta');
 
@@ -100,24 +101,28 @@ export function registerScripture(): void {
     static blotName = 'blank';
     static tagName = 'usx-blank';
 
-    static create(value: string): Node {
+    static create(value: boolean): Node {
       const node = super.create(value) as HTMLElement;
-      node.setAttribute(customAttributeName('type'), value);
-      let text: string = '';
-      switch (value) {
-        case 'initial':
-          text = NBSP.repeat(2);
-          break;
-        case 'normal':
-          text = NBSP.repeat(8);
-          break;
-      }
-      node.innerText = text;
+      node.innerText = NBSP.repeat(8);
       return node;
     }
 
-    static value(node: HTMLElement): any {
-      return node.getAttribute(customAttributeName('type'));
+    static value(_node: HTMLElement): boolean {
+      return true;
+    }
+
+    contentNode!: HTMLElement;
+
+    format(name: string, value: any): void {
+      if (name === SegmentInline.blotName && value != null) {
+        const ref = value as string;
+        let text: string = NBSP.repeat(8);
+        if (isInitialSegment(ref)) {
+          text = NBSP;
+        }
+        this.contentNode.innerText = text;
+      }
+      super.format(name, value);
     }
   }
 

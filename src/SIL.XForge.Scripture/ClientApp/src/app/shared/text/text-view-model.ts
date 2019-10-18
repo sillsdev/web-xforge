@@ -6,29 +6,41 @@ import { Delta, TextDoc } from '../../core/models/text-doc';
 import { Segment } from './segment';
 
 const PARA_STYLES: Set<string> = new Set<string>([
+  // Paragraphs
   'p',
   'm',
+  'po',
+  'pr',
+  'cls',
   'pmo',
   'pm',
   'pmc',
   'pmr',
   'pi',
   'mi',
-  'cls',
-  'li',
   'pc',
-  'pr',
   'ph',
   'lit',
+
+  // Poetry
   'q',
-  'qc',
   'qr',
+  'qc',
   'qa',
   'qm',
-  'b'
+  'qd',
+
+  // Lists
+  'lh',
+  'li',
+  'lf',
+  'lim'
 ]);
 
-function isParagraphStyle(style: string): boolean {
+function canParaContainVerseText(style: string): boolean {
+  if (style === '') {
+    return true;
+  }
   style = style.replace(/[0-9]/g, '');
   return PARA_STYLES.has(style);
 }
@@ -263,7 +275,7 @@ export class TextViewModel {
         if (op.insert === '\n' || (op.attributes != null && op.attributes.para != null)) {
           const style =
             op.attributes == null || op.attributes.para == null ? null : (op.attributes.para.style as string);
-          if (style == null || isParagraphStyle(style)) {
+          if (style == null || canParaContainVerseText(style)) {
             // paragraph
             for (const _ch of op.insert) {
               if (curSegment != null) {
@@ -271,9 +283,17 @@ export class TextViewModel {
                 curIndex += curSegment.length;
                 curSegment = new SegmentInfo(curSegment.ref, curIndex + 1);
               }
+              if (style != null) {
+                const paraRef = getParagraphRef(nextIds, style, style);
+                if (paraSegments.length === 0) {
+                  paraSegments.push(new SegmentInfo(paraRef, curIndex));
+                } else if (paraSegments[0].ref === '') {
+                  paraSegments[0].ref = paraRef;
+                }
+              }
 
               for (const paraSegment of paraSegments) {
-                if (this._segments.has(paraSegment.ref)) {
+                if (this._segments.has(paraSegment.ref) && paraSegment.ref.startsWith('verse')) {
                   paraSegment.ref = getParagraphRef(nextIds, paraSegment.ref, paraSegment.ref + '/' + style);
                 }
 
@@ -305,6 +325,8 @@ export class TextViewModel {
           if (curSegment != null) {
             paraSegments.push(curSegment);
             curIndex += curSegment.length;
+          } else if (paraSegments.length === 0) {
+            paraSegments.push(new SegmentInfo('', curIndex));
           }
           setAttribute(op, attrs, 'para-contents', true);
           curIndex += len;
@@ -340,10 +362,9 @@ export class TextViewModel {
   ): [DeltaStatic, number] {
     if (segment.length === 0) {
       // insert blank
-      const type = segment.ref.includes('/p') || segment.ref.includes('/m') ? 'initial' : 'normal';
       const delta = new Delta();
       delta.retain(segment.index + fixOffset);
-      delta.insert({ blank: type }, { segment: segment.index, 'para-contents': true });
+      delta.insert({ blank: true }, { segment: segment.ref, 'para-contents': true });
       fixDelta = fixDelta.compose(delta);
       fixOffset++;
     } else if (segment.containsBlank && segment.length > 1) {

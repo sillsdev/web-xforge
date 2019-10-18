@@ -509,7 +509,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private adjustSelection(): void {
-    if (this._editor == null || !this._editor.hasFocus() || this._segment == null) {
+    if (this._editor == null || this._segment == null) {
       return;
     }
     const sel = this._editor.getSelection();

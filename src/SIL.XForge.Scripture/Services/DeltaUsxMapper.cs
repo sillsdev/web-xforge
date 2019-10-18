@@ -15,9 +15,9 @@ namespace SIL.XForge.Scripture.Services
             // Paragraphs
             "p", "m", "po", "pr", "cls", "pmo", "pm", "pmc", "pmr", "pi", "mi", "pc", "ph", "lit",
             // Poetry
-            "q", "qr", "qc", "qa", "qm", "qd", "b",
+            "q", "qr", "qc", "qa", "qm", "qd",
             // Lists
-            "lh", "li", "lf", "lim", "litl",
+            "lh", "li", "lf", "lim",
         };
 
         public IReadOnlyDictionary<int, (Delta Delta, int LastVerse)> ToChapterDeltas(XElement usxElem)
@@ -58,6 +58,14 @@ namespace SIL.XForge.Scripture.Services
                                             curRef = curRef.Substring(0, slashIndex);
                                         curRef = GetParagraphRef(nextIds, curRef, curRef + "/" + style);
                                     }
+                                    else
+                                    {
+                                        curRef = GetParagraphRef(nextIds, style, style);
+                                    }
+                                }
+                                else if (style == "b")
+                                {
+                                    curRef = null;
                                 }
                                 else
                                 {
@@ -183,19 +191,24 @@ namespace SIL.XForge.Scripture.Services
                             foreach (XElement row in elem.Elements("row"))
                             {
                                 var rowAttributes = new JObject(new JProperty("id", $"row_{tableIndex}_{rowIndex}"));
+                                int cellIndex = 1;
                                 foreach (XElement cell in row.Elements())
                                 {
+                                    curRef = $"cell_{tableIndex}_{rowIndex}_{cellIndex}";
                                     ProcessChildNode(newDelta, cell, curChapter, ref lastVerse, ref curRef,
                                         ref tableIndex);
+                                    SegmentEnded(newDelta, curRef);
                                     var attrs = new JObject(
                                         new JProperty("table", tableAttributes),
                                         new JProperty("row", rowAttributes));
                                     if (cell.Name.LocalName == "cell")
                                         attrs.Add(new JProperty("cell", GetAttributes(cell)));
                                     newDelta.Insert("\n", attrs);
+                                    cellIndex++;
                                 }
                                 rowIndex++;
                             }
+                            curRef = null;
                             break;
 
                         case "cell":
@@ -272,7 +285,7 @@ namespace SIL.XForge.Scripture.Services
                 var embed = lastOp[Delta.InsertType] as JObject;
                 var attrs = (JObject)lastOp[Delta.Attributes];
                 if ((embed != null && (embed["verse"] != null || embed["chapter"] != null))
-                    || (attrs != null && attrs["para"] != null))
+                    || (attrs != null && (attrs["para"] != null || attrs["table"] != null)))
                 {
                     newDelta.InsertBlank(segRef);
                 }
