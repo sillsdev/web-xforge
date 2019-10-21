@@ -69,11 +69,22 @@ export function registerScripture(): void {
   const Scroll = Quill.import('blots/scroll') as typeof Parchment.Scroll;
   const Embed = Quill.import('blots/embed') as typeof Parchment.Embed;
   const BlockEmbed = Quill.import('blots/block/embed') as typeof Parchment.Embed;
+  const Text = Quill.import('blots/text') as typeof Parchment.Text;
 
   // zero width space
   const ZWSP = '\u200b';
   // non-breaking space
   const NBSP = '\u00A0';
+
+  /**
+   * This class overrides the "value" method so that it does not normalize text to NFC. This avoids a bug where Quill
+   * does not properly handle NFD data (https://github.com/quilljs/quill/issues/1976).
+   */
+  class NotNormalizedText extends Text {
+    static value(domNode: Text): string {
+      return domNode.data;
+    }
+  }
 
   class VerseEmbed extends Embed {
     static blotName = 'verse';
@@ -467,6 +478,7 @@ export function registerScripture(): void {
   Quill.register('blots/optbreak', OptBreakEmbed);
   Quill.register('blots/unmatched', UnmatchedEmbed);
   Quill.register('blots/scroll', Scroll, true);
+  Quill.register('blots/text', NotNormalizedText, true);
   Quill.register('modules/clipboard', DisableHtmlClipboard, true);
   Quill.register('modules/keyboard', NoDefaultBindingsKeyboard, true);
 }
