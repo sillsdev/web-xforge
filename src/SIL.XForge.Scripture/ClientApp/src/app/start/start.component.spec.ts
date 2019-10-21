@@ -56,6 +56,30 @@ describe('StartComponent', () => {
     verify(mockedRouter.navigate(anything(), anything())).never();
     expect().nothing();
   }));
+
+  it('do not navigate to last project when it does not exist', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setCurrentUserProjectData('project02', ['project01']);
+    env.fixture.detectChanges();
+    flush();
+
+    verify(mockedRouter.navigate(deepEqual(['./', 'project01']), anything())).once();
+    expect().nothing();
+  }));
+
+  it('navigate to first project when added remotely', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setCurrentUserProjectData(undefined, []);
+    env.fixture.detectChanges();
+    flush();
+
+    verify(mockedRouter.navigate(anything(), anything())).never();
+
+    env.addProject('project01');
+
+    verify(mockedRouter.navigate(deepEqual(['./', 'project01']), anything())).once();
+    expect().nothing();
+  }));
 });
 
 class TestEnvironment {
@@ -89,5 +113,11 @@ class TestEnvironment {
         sites: { sf: { projects } }
       }
     });
+  }
+
+  addProject(projectId: string): void {
+    this.realtimeService
+      .get<UserDoc>(UserDoc.COLLECTION, 'user01')
+      .submitJson0Op(ops => ops.add<string>(u => u.sites.sf.projects, projectId), false);
   }
 }
