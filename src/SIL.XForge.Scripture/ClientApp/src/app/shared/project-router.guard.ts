@@ -9,16 +9,8 @@ import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 
-@Injectable({
-  providedIn: 'root'
-})
 abstract class RouterGuard implements CanActivate {
-  constructor(
-    public readonly authGuard: AuthGuard,
-    public readonly userService: UserService,
-    public readonly projectService: SFProjectService,
-    public readonly router: Router
-  ) {}
+  constructor(protected authGuard: AuthGuard, protected projectService: SFProjectService) {}
 
   canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
     const projectId = 'projectId' in next.params ? next.params['projectId'] : '';
@@ -43,6 +35,10 @@ abstract class RouterGuard implements CanActivate {
   providedIn: 'root'
 })
 export class SFAdminAuthGuard extends RouterGuard {
+  constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
+    super(authGuard, projectService);
+  }
+
   check(projectDoc: SFProjectDoc): boolean {
     return (
       projectDoc.data != null &&
@@ -55,6 +51,10 @@ export class SFAdminAuthGuard extends RouterGuard {
   providedIn: 'root'
 })
 export class CheckingAuthGuard extends RouterGuard {
+  constructor(authGuard: AuthGuard, projectService: SFProjectService, private router: Router) {
+    super(authGuard, projectService);
+  }
+
   check(projectDoc: SFProjectDoc): boolean {
     if (projectDoc.data != null && projectDoc.data.checkingConfig.checkingEnabled) {
       return true;
@@ -68,6 +68,15 @@ export class CheckingAuthGuard extends RouterGuard {
   providedIn: 'root'
 })
 export class TranslateAuthGuard extends RouterGuard {
+  constructor(
+    authGuard: AuthGuard,
+    projectService: SFProjectService,
+    private userService: UserService,
+    private router: Router
+  ) {
+    super(authGuard, projectService);
+  }
+
   check(projectDoc: SFProjectDoc): boolean {
     if (projectDoc.data != null) {
       const role = projectDoc.data.userRoles[this.userService.currentUserId] as SFProjectRole;
