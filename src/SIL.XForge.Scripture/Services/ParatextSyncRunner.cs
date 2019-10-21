@@ -342,8 +342,15 @@ namespace SIL.XForge.Scripture.Services
                 if (chaptersToInclude != null && !chaptersToInclude.Contains(kvp.Key))
                     continue;
 
-                IDocument<Models.TextData> textDataDoc = GetTextDoc(text, kvp.Key, textType);
-                tasks.Add(textDataDoc.CreateAsync(new Models.TextData(kvp.Value.Delta)));
+                async Task createText(int chapterNum, Delta delta)
+                {
+                    IDocument<Models.TextData> textDataDoc = GetTextDoc(text, chapterNum, textType);
+                    await textDataDoc.FetchAsync();
+                    if (textDataDoc.IsLoaded)
+                        await textDataDoc.DeleteAsync();
+                    await textDataDoc.CreateAsync(new Models.TextData(delta));
+                }
+                tasks.Add(createText(kvp.Key, kvp.Value.Delta));
                 chapters.Add(new Chapter { Number = kvp.Key, LastVerse = kvp.Value.LastVerse });
             }
             await Task.WhenAll(tasks);
