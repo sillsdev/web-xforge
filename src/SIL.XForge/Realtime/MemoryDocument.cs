@@ -33,6 +33,8 @@ namespace SIL.XForge.Realtime
 
         public async Task CreateAsync(T data)
         {
+            if (IsLoaded)
+                throw new InvalidOperationException("The doc already exists.");
             data.Id = Id;
             await _repo.InsertAsync(data);
             Data = data;

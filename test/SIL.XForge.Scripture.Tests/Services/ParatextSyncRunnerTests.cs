@@ -412,6 +412,33 @@ namespace SIL.XForge.Scripture.Services
             await env.SFProjectService.Received().RemoveUserAsync("user01", "project01", "user02");
         }
 
+        [Test]
+        public async Task SyncAsync_TextDocAlreadyExists()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(false, false, false, new Book("MAT", 2), new Book("MRK", 2));
+            env.RealtimeService.GetRepository<TextData>()
+                .Add(new TextData(Delta.New().InsertText("old text"))
+                {
+                    Id = TextData.GetTextDocId("project01", 42, 1, TextType.Target)
+                });
+            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            var delta = Delta.New().InsertText("text");
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 1, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("MRK", 2, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("LUK", 1, TextType.Target).DeepEquals(delta), Is.True);
+            Assert.That(env.GetText("LUK", 2, TextType.Target).DeepEquals(delta), Is.True);
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+        }
+
         private class Book
         {
             public Book(string bookId, int chapterCount, bool hasSource = true)
