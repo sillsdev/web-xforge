@@ -516,7 +516,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         dateCreated: currentDate,
         dateModified: currentDate
       };
-      await this.projectService.createQuestion(this.projectDoc.id, question);
+      const newQuestion = await this.projectService.createQuestion(this.projectDoc.id, question);
+      this.questionsPanel.activateQuestion(newQuestion);
     });
   }
 
