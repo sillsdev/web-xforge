@@ -9,3 +9,7 @@ export const SF_PROJECT_ROLES: ProjectRoleInfo[] = [
   { role: SFProjectRole.Reviewer, displayName: 'Reviewer' },
   { role: SFProjectRole.CommunityChecker, displayName: 'Community Checker' }
 ];
+
+export function canAccessTranslateApp(role?: SFProjectRole) {
+  return role != null && role !== SFProjectRole.CommunityChecker;
+}

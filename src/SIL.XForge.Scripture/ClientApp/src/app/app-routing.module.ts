@@ -6,7 +6,7 @@ import { SystemAdministrationComponent } from 'xforge-common/system-administrati
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
 import { ProjectComponent } from './project/project.component';
 import { SettingsComponent } from './settings/settings.component';
-import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
+import { SFAdminAuthGuard } from './shared/project-router.guard';
 import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
 

@@ -2,7 +2,6 @@ import { MdcDialog, MdcSelect, MdcTopAppBar } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { Site } from 'realtime-server/lib/common/models/site';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -22,9 +21,10 @@ import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
 import { SFProjectDoc } from './core/models/sf-project-doc';
+import { canAccessTranslateApp } from './core/models/sf-project-role-info.js';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
-import { SFAdminAuthGuard } from './shared/sfadmin-auth.guard';
+import { SFAdminAuthGuard } from './shared/project-router.guard';
 declare function gtag(...args: any): void;
 
 export const CONNECT_PROJECT_OPTION = '*connect-project*';
@@ -89,6 +89,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
   }
 
+  get showCheckingDisabled(): boolean {
+    return (
+      this.selectedProjectDoc != null &&
+      this.selectedProjectDoc.data != null &&
+      !this.selectedProjectDoc.data.checkingConfig.checkingEnabled &&
+      !canAccessTranslateApp(this.selectedProjectRole)
+    );
+  }
+
   get issueMailTo(): string {
     return issuesEmailTemplate();
   }
@@ -147,7 +156,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get isTranslateEnabled(): boolean {
-    return this.selectedProjectRole != null && this.selectedProjectRole !== SFProjectRole.CommunityChecker;
+    return canAccessTranslateApp(this.selectedProjectRole);
   }
 
   get isCheckingEnabled(): boolean {
