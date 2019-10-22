@@ -41,7 +41,6 @@ namespace SIL.XForge.Services
             Regex emailRegex = new Regex(EMAIL_PATTERN);
             using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
-                DateTime now = DateTime.UtcNow;
                 string name = (string)userProfile["name"];
                 IDocument<User> userDoc = await conn.FetchOrCreateAsync<User>(curUserId, () => new User
                 {

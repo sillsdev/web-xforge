@@ -202,7 +202,7 @@ namespace SIL.XForge.DataAccess
             }
 
             PropertyInfo property = member as PropertyInfo;
-            if (property == null && index != null)
+            if (property == null && member != null && index != null)
                 property = member.DeclaringType.GetProperty("Item");
             return (owners, property, index);
         }
