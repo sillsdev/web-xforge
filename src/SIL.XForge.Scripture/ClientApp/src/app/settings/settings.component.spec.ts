@@ -1,9 +1,10 @@
 import { OverlayContainer } from '@angular-mdc/web';
+import { Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { DebugElement, NgModule } from '@angular/core';
+import { Component, DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
@@ -32,10 +33,19 @@ const mockedParatextService = mock(ParatextService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 
+@Component({
+  template: `
+    <div>Mock</div>
+  `
+})
+class MockComponent {}
+
+const ROUTES: Route[] = [{ path: 'projects', component: MockComponent }];
+
 describe('SettingsComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, HttpClientTestingModule, RouterTestingModule, UICommonModule],
-    declarations: [SettingsComponent, WriteStatusComponent],
+    imports: [DialogTestModule, HttpClientTestingModule, RouterTestingModule.withRoutes(ROUTES), UICommonModule],
+    declarations: [SettingsComponent, WriteStatusComponent, MockComponent],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: AuthService, useMock: mockedAuthService },
@@ -331,6 +341,7 @@ describe('SettingsComponent', () => {
       env.confirmDialog(true);
       verify(mockedUserService.setCurrentProjectId()).once();
       verify(mockedSFProjectService.onlineDelete(anything())).once();
+      expect(env.location.path()).toEqual('/projects');
     }));
 
     it('should not delete project if user cancels', fakeAsync(() => {
@@ -350,6 +361,7 @@ class TestEnvironment {
   readonly component: SettingsComponent;
   readonly fixture: ComponentFixture<SettingsComponent>;
   readonly overlayContainer: OverlayContainer;
+  readonly location: Location;
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
@@ -383,6 +395,7 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
     this.overlayContainer = TestBed.get(OverlayContainer);
+    this.location = TestBed.get(Location);
   }
 
   get atLeastOneError(): DebugElement {

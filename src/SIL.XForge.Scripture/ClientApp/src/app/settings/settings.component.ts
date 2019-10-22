@@ -1,7 +1,7 @@
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -44,7 +44,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     noticeService: NoticeService,
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly router: Router
   ) {
     super(noticeService);
     this.loadingStarted();
@@ -125,11 +126,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       data: { name: this.projectDoc.data.name }
     };
     const dialogRef = this.dialog.open(DeleteProjectDialogComponent, config);
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe(async result => {
       if (result === 'accept') {
         this.userService.setCurrentProjectId();
         if (this.projectDoc != null) {
-          this.projectService.onlineDelete(this.projectDoc.id);
+          await this.projectService.onlineDelete(this.projectDoc.id);
+          this.router.navigateByUrl('/projects', { replaceUrl: true });
         }
       }
     });
