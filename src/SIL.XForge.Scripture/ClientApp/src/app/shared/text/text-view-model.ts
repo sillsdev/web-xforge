@@ -290,6 +290,9 @@ export class TextViewModel {
                 } else if (paraSegments[0].ref === '') {
                   paraSegments[0].ref = paraRef;
                 }
+              } else if (paraSegments.length > 0) {
+                // remove blank at the beginning of an implicit paragraph
+                paraSegments.shift();
               }
 
               for (const paraSegment of paraSegments) {
@@ -303,6 +306,11 @@ export class TextViewModel {
               paraSegments = [];
               curIndex++;
             }
+          } else if (style === 'b') {
+            // blank line
+            paraSegments = [];
+            curIndex += len;
+            curSegment = undefined;
           } else {
             // title/header
             if (curSegment == null) {
