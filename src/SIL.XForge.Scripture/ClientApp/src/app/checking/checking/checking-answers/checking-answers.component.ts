@@ -7,7 +7,6 @@ import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import {
   fromVerseRef,
   toStartAndEndVerseRefs,
@@ -22,7 +21,6 @@ import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextsByBookId } from '../../../core/models/texts-by-book-id';
-import { SFProjectService } from '../../../core/sf-project.service';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
@@ -34,11 +32,8 @@ import {
 } from '../../../shared/sfvalidators';
 import { combineVerseRefStrs } from '../../../shared/utils';
 import { QuestionAnsweredDialogComponent } from '../../question-answered-dialog/question-answered-dialog.component';
-import {
-  QuestionDialogComponent,
-  QuestionDialogData,
-  QuestionDialogResult
-} from '../../question-dialog/question-dialog.component';
+import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
+import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
@@ -70,7 +65,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent?: CheckingAudioCombinedComponent;
   @Input() project?: SFProject;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
-  @Input() projectText?: TextInfo;
+  @Input() textsByBookId?: TextsByBookId;
   @Input() set questionDoc(questionDoc: QuestionDoc | undefined) {
     if (questionDoc !== this._questionDoc) {
       this.hideAnswerForm();
@@ -109,7 +104,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly userService: UserService,
     private readonly dialog: MdcDialog,
     private readonly noticeService: NoticeService,
-    private readonly projectService: SFProjectService
+    private readonly questionDialogService: QuestionDialogService
   ) {
     super();
   }
@@ -210,15 +205,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   /** Fetch a TextsByBookId that only contains the book and chapter that pertains to the question. */
-  private get textsByBookId(): TextsByBookId {
+  private get currentBookAndChapter(): TextsByBookId {
     const textsByBook: TextsByBookId = {};
-    if (this.projectText != null && this._questionDoc != null && this._questionDoc.data != null) {
-      const bookId = Canon.bookNumberToId(this.projectText.bookNum);
+    if (this.textsByBookId != null && this._questionDoc != null && this._questionDoc.data != null) {
+      const bookNum: number = this._questionDoc.data.verseRef.bookNum;
+      const bookId = Canon.bookNumberToId(bookNum);
+      const currentText = this.textsByBookId[bookId];
       const questionChapterNumber = this._questionDoc.data.verseRef.chapterNum;
-      textsByBook[bookId] = cloneDeep(this.projectText);
-      textsByBook[bookId].chapters = this.projectText.chapters.filter(
-        chapter => chapter.number === questionChapterNumber
-      );
+      textsByBook[bookId] = cloneDeep(currentText);
+      textsByBook[bookId].chapters = currentText.chapters.filter(chapter => chapter.number === questionChapterNumber);
     }
     return textsByBook;
   }
@@ -282,61 +277,24 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   async questionDialog(): Promise<void> {
-    const projectId = this._questionDoc!.data!.projectRef;
-    if (this._questionDoc!.data!.answers.length > 0) {
+    if (this._questionDoc == null || this._questionDoc.data == null) {
+      return;
+    }
+    const projectId = this._questionDoc.data.projectRef;
+    if (this._questionDoc.data.answers.length > 0) {
       const answeredDialogRef = this.dialog.open(QuestionAnsweredDialogComponent);
       const dialogResponse = (await answeredDialogRef.afterClosed().toPromise()) as string;
       if (dialogResponse === 'close') {
         return;
       }
     }
-    const dialogConfig: MdcDialogConfig<QuestionDialogData> = {
-      data: {
-        question: this._questionDoc!.data,
-        textsByBookId: this.textsByBookId,
-        projectId: projectId
-      }
+
+    const data: QuestionDialogData = {
+      question: this._questionDoc.data,
+      textsByBookId: this.textsByBookId!,
+      projectId: projectId
     };
-
-    const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig) as MdcDialogRef<
-      QuestionDialogComponent,
-      QuestionDialogResult | 'close'
-    >;
-
-    dialogRef.afterClosed().subscribe(async result => {
-      if (result == null || result === 'close') {
-        return;
-      }
-      let audioUrl = this._questionDoc!.data!.audioUrl;
-      if (result.audio.fileName && result.audio.blob != null) {
-        const response = await this.projectService.onlineUploadAudio(
-          projectId,
-          this._questionDoc!.data!.dataId,
-          new File([result.audio.blob], result.audio.fileName)
-        );
-        // Get amended filename and save it against the audio
-        audioUrl = response;
-      } else if (result.audio.status === 'reset') {
-        audioUrl = undefined;
-      }
-
-      const deleteAudio = this._questionDoc!.data!.audioUrl && audioUrl == null;
-      const verseRefData = fromVerseRef(result.verseRef);
-
-      await this._questionDoc!.submitJson0Op(op => {
-        op.set(q => q.verseRef, verseRefData);
-        op.set(q => q.text!, result.text);
-        op.set(q => q.audioUrl!, audioUrl);
-        op.set(q => q.dateModified, new Date().toJSON());
-      });
-      if (deleteAudio) {
-        this.projectService.onlineDeleteAudio(
-          projectId,
-          this._questionDoc!.data!.dataId,
-          this._questionDoc!.data!.ownerRef
-        );
-      }
-    });
+    await this.questionDialogService.questionDialog(data, this._questionDoc);
   }
 
   extractScriptureText() {
@@ -428,7 +386,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
 
     const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
-      data: { input: currentVerseSelection, booksAndChaptersToShow: this.textsByBookId, rangeStart }
+      data: { input: currentVerseSelection, booksAndChaptersToShow: this.currentBookAndChapter, rangeStart }
     };
 
     const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
@@ -537,9 +495,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   private updateValidationRules(): void {
-    this.scriptureStart.setValidators([SFValidators.verseStr(this.textsByBookId)]);
+    this.scriptureStart.setValidators([SFValidators.verseStr(this.currentBookAndChapter)]);
     this.scriptureStart.updateValueAndValidity();
-    this.scriptureEnd.setValidators([SFValidators.verseStr(this.textsByBookId)]);
+    this.scriptureEnd.setValidators([SFValidators.verseStr(this.currentBookAndChapter)]);
     this.scriptureEnd.updateValueAndValidity();
 
     if (this.audio.url) {

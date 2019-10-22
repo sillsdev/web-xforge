@@ -20,7 +20,6 @@ import {
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -43,7 +42,7 @@ import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
-import { QuestionDialogComponent, QuestionDialogResult } from '../question-dialog/question-dialog.component';
+import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
@@ -61,6 +60,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedMdcDialog = mock(MdcDialog);
+const mockedQuestionDialogService = mock(QuestionDialogService);
 
 function createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {
   return {
@@ -115,7 +115,8 @@ describe('CheckingComponent', () => {
       { provide: ProjectService, useMock: mockedProjectService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: MdcDialog, useMock: mockedMdcDialog }
+      { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: QuestionDialogService, useMock: mockedQuestionDialogService }
     ]
   }));
 
@@ -150,55 +151,10 @@ describe('CheckingComponent', () => {
       expect(next.nativeElement.disabled).toBe(true);
     }));
 
-    it('adds a question when requested', fakeAsync(() => {
+    it('should open question dialog', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
-      const dialogResult: QuestionDialogResult = {
-        verseRef: VerseRef.parse('JHN 1:2'),
-        text: 'new question',
-        audio: { fileName: '' }
-      };
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of(dialogResult));
-
-      const initialQuestionCount = env.questions.length;
-      const locationForNewlyAddedQuestions = 1;
       env.clickButton(env.addQuestionButton);
-      tick(env.questionReadTimer);
-      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
-      verify(mockedProjectService.createQuestion('project01', anything())).once();
-      expect(env.questions.length).toEqual(
-        initialQuestionCount + 1,
-        'number of questions in list should have increased'
-      );
-      expect(env.currentQuestion).toEqual(
-        locationForNewlyAddedQuestions,
-        'should have selected just-added question, to implement SF-614.'
-      );
-    }));
-
-    it('uploads an audio file', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
-      const dialogResult: QuestionDialogResult = {
-        verseRef: VerseRef.parse('JHN 1:2'),
-        text: 'new question',
-        audio: { fileName: 'someAudioFile.mp3', blob: new Blob() }
-      };
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of(dialogResult));
-      when(mockedProjectService.onlineUploadAudio('project01', anything(), anything())).thenResolve('anAudioFile.mp3');
-      env.clickButton(env.addQuestionButton);
-      tick(env.questionReadTimer);
-      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
-      verify(mockedProjectService.onlineUploadAudio('project01', anything(), anything())).once();
-      tick();
-      verify(mockedProjectService.createQuestion('project01', anything())).once();
-      expect().nothing();
-    }));
-
-    it('does not create question if user cancels', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
-      env.clickButton(env.addQuestionButton);
-      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
-      verify(mockedProjectService.createQuestion(anything(), anything())).never();
+      verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
 
@@ -282,52 +238,26 @@ describe('CheckingComponent', () => {
       expect(env.component.questionDocs.filter(q => q.data!.isArchived !== true).length).toEqual(14);
     }));
 
-    it('opens a dialog and edits a question', fakeAsync(() => {
+    it('opens a dialog when edit question is clicked', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
-      when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
-      const result: QuestionDialogResult = {
-        verseRef: VerseRef.parse('JHN 1:1-2'),
-        text: 'Book 1, Q1 text - Edited',
-        audio: {}
-      };
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of(result));
       env.selectQuestion(1);
-      expect(env.getQuestionText(env.questions[0])).toEqual('Book 1, Q1 text');
       env.clickButton(env.editQuestionButton);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).never();
-      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
-      expect(env.getQuestionText(env.questions[0])).toEqual('Book 1, Q1 text - Edited');
+      verify(mockedQuestionDialogService.questionDialog(anything(), anything())).once();
+      expect().nothing();
     }));
 
     it('user must confirm question answered dialog before question dialog appears', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
       // Edit a question with answers
       env.selectQuestion(6);
       env.clickButton(env.editQuestionButton);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).once();
-      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).never();
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
       env.clickButton(env.editQuestionButton);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).twice();
-      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
-      expect().nothing();
-    }));
-
-    it('uploads audio when file is provided', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
-      const result: QuestionDialogResult = {
-        verseRef: VerseRef.parse('JHN 1:1-2'),
-        text: 'Book 1, Q1 Text',
-        audio: { fileName: 'someAudioFile.mp3', blob: new Blob() }
-      };
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of(result));
-      when(mockedProjectService.onlineUploadAudio('project01', anything(), anything())).thenResolve('anAudioFile.mp3');
-      env.selectQuestion(1);
-      env.clickButton(env.editQuestionButton);
-      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
-      verify(mockedProjectService.onlineUploadAudio('project01', anything(), anything())).once();
+      verify(mockedQuestionDialogService.questionDialog(anything(), anything())).once();
       expect().nothing();
     }));
 
@@ -923,7 +853,6 @@ class TestEnvironment {
 
   public project01WritingSystemTag = 'en';
 
-  readonly mockedQuestionDialogRef: MdcDialogRef<QuestionDialogComponent> = mock(MdcDialogRef);
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   private readonly adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: ADMIN_USER.id,
@@ -1525,7 +1454,6 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
     );
 
-    when(mockedMdcDialog.open(QuestionDialogComponent, anything())).thenReturn(instance(this.mockedQuestionDialogRef));
     when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
   }
 

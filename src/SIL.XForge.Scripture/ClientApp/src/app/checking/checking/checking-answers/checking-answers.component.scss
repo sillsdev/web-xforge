@@ -30,16 +30,9 @@
       font-weight: bold;
     }
     .question-footer {
-      display: flex;
-      justify-content: space-between;
-      @include media-breakpoint-down(sm) {
-        flex-direction: column-reverse;
-      }
       .actions {
         display: flex;
-        flex: 1;
         justify-content: flex-end;
-        align-items: flex-end;
         button {
           height: auto;
         }
