@@ -62,18 +62,17 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
           projectUserConfig.selectedTask != null &&
           projectUserConfig.selectedTask !== ''
         ) {
+          const taskRoute = ['./', projectUserConfig.selectedTask];
           // the user has previously navigated to a location in a task
           const bookNum = projectUserConfig.selectedBookNum;
           if (bookNum != null) {
-            this.router.navigate(['./', projectUserConfig.selectedTask, Canon.bookNumberToId(bookNum)], {
-              relativeTo: this.route,
-              replaceUrl: true
-            });
+            taskRoute.push(Canon.bookNumberToId(bookNum));
           }
+          this.router.navigate(taskRoute, { relativeTo: this.route, replaceUrl: true });
         } else {
           const projectDoc = await this.projectService.get(projectId);
           const project = projectDoc.data;
-          if (project != null && project.texts.length > 0) {
+          if (project != null) {
             const projectRole = project.userRoles[this.userService.currentUserId] as SFProjectRole;
             // the user has not navigated anywhere before, so navigate to the default location in the first enabled task
             let task: string | undefined;
@@ -83,17 +82,12 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
               task = 'checking';
             }
             if (task != null) {
-              this.router.navigate(
-                ['./', task, task === 'checking' ? 'ALL' : Canon.bookNumberToId(project.texts[0].bookNum)],
-                {
-                  relativeTo: this.route,
-                  replaceUrl: true
-                }
-              );
+              const taskRoute = ['./', task];
+              if (project.texts.length > 0) {
+                taskRoute.push(task === 'checking' ? 'ALL' : Canon.bookNumberToId(project.texts[0].bookNum));
+              }
+              this.router.navigate(taskRoute, { relativeTo: this.route, replaceUrl: true });
             }
-          } else {
-            this.userService.setCurrentProjectId();
-            this.router.navigateByUrl('/projects', { replaceUrl: true });
           }
         }
         this.loadingFinished();

@@ -267,28 +267,32 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
         const selectedProjectDoc = projectId == null ? undefined : this.projectDocs.find(p => p.id === projectId);
 
+        if (this.selectedProjectDeleteSub != null) {
+          this.selectedProjectDeleteSub.unsubscribe();
+          this.selectedProjectDeleteSub = undefined;
+        }
+
         // check if the currently selected project has been deleted
-        if (projectId != null && selectedProjectDoc != null && !selectedProjectDoc.isLoaded) {
+        if (
+          projectId != null &&
+          projectId === this.userService.currentProjectId &&
+          (selectedProjectDoc == null || !selectedProjectDoc.isLoaded)
+        ) {
           this.userService.setCurrentProjectId();
           this.navigateToStart();
           return;
         }
 
-        if (this.selectedProjectDeleteSub != null) {
-          this.selectedProjectDeleteSub.unsubscribe();
-          this.selectedProjectDeleteSub = undefined;
-        }
         this.selectedProjectDoc = selectedProjectDoc;
         this.setTopAppBarVariant();
         if (this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded) {
           return;
         }
 
+        // handle remotely deleted project
         this.selectedProjectDeleteSub = this.selectedProjectDoc.delete$.subscribe(() => {
           if (this.userService.currentProjectId != null) {
             this.showProjectDeletedDialog();
-          } else {
-            this.navigateToStart();
           }
         });
 

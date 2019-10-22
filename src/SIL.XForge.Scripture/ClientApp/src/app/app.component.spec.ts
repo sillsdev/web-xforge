@@ -41,6 +41,25 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 
+@Component({
+  template: `
+    <div>Mock</div>
+  `
+})
+class MockComponent {}
+
+const ROUTES: Route[] = [
+  { path: 'projects/:projectId/settings', component: MockComponent },
+  { path: 'projects/:projectId', component: MockComponent },
+  { path: 'projects/:projectId/translate/:bookId', component: MockComponent },
+  { path: 'projects/:projectId/translate', component: MockComponent },
+  { path: 'projects/:projectId/checking/:bookId', component: MockComponent },
+  { path: 'projects/:projectId/checking', component: MockComponent },
+  { path: 'projects', component: MockComponent },
+  { path: 'my-account', component: MockComponent },
+  { path: 'connect-project', component: MockComponent }
+];
+
 describe('AppComponent', () => {
   configureTestingModule(() => ({
     declarations: [AppComponent, MockComponent],
@@ -166,18 +185,6 @@ describe('AppComponent', () => {
     expect(env.location.path()).toEqual('/projects');
   }));
 
-  it('response to local project deletion', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
-    env.init();
-
-    expect(env.isDrawerVisible).toEqual(true);
-    expect(env.selectedProjectId).toEqual('project01');
-    env.deleteProject('project01', true);
-    expect(env.isDrawerVisible).toEqual(false);
-    expect(env.location.path()).toEqual('/projects');
-  }));
-
   it('response to removed from project', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project01']);
@@ -289,25 +296,6 @@ describe('AppComponent', () => {
     }));
   });
 });
-
-@Component({
-  template: `
-    <div>Mock</div>
-  `
-})
-class MockComponent {}
-
-const ROUTES: Route[] = [
-  { path: 'projects/:projectId/settings', component: MockComponent },
-  { path: 'projects/:projectId', component: MockComponent },
-  { path: 'projects/:projectId/translate/:bookId', component: MockComponent },
-  { path: 'projects/:projectId/translate', component: MockComponent },
-  { path: 'projects/:projectId/checking/:bookId', component: MockComponent },
-  { path: 'projects/:projectId/checking', component: MockComponent },
-  { path: 'projects', component: MockComponent },
-  { path: 'my-account', component: MockComponent },
-  { path: 'connect-project', component: MockComponent }
-];
 
 @NgModule({
   imports: [CommonModule, UICommonModule],
