@@ -20,16 +20,21 @@ namespace SIL.XForge.Scripture.Services
             "lh", "li", "lf", "lim",
         };
 
+        private class ParseState
+        {
+            public string LastVerse { get; set; } = null;
+            public string CurRef { get; set; } = null;
+            public int CurChapter { get; set; } = 0;
+            public int TableIndex { get; set; } = 0;
+            public bool TopLevelVerses { get; set; } = false;
+        }
+
         public IReadOnlyDictionary<int, (Delta Delta, int LastVerse)> ToChapterDeltas(XElement usxElem)
         {
             var chapterDeltas = new SortedList<int, (Delta Delta, int LastVerse)>();
             var chapterDelta = new Delta();
-            string lastVerse = null;
             var nextIds = new Dictionary<string, int>();
-            string curRef = null;
-            int curChapter = 0;
-            int tableIndex = 0;
-            bool topLevelVerses = false;
+            var state = new ParseState();
             foreach (XNode node in usxElem.Nodes())
             {
                 switch (node)
@@ -41,101 +46,92 @@ namespace SIL.XForge.Scripture.Services
                                 break;
 
                             case "para":
-                                if (topLevelVerses)
+                                if (state.TopLevelVerses)
                                 {
                                     // add implicit paragraph when there are top-level verses
                                     chapterDelta.Insert('\n');
-                                    topLevelVerses = false;
+                                    state.TopLevelVerses = false;
                                 }
                                 var style = (string)elem.Attribute("style");
                                 bool canContainVerseText = CanParaContainVerseText(style);
                                 if (canContainVerseText)
                                 {
-                                    if (curRef != null)
+                                    if (state.CurRef != null)
                                     {
-                                        int slashIndex = curRef.IndexOf("/", StringComparison.Ordinal);
+                                        int slashIndex = state.CurRef.IndexOf("/", StringComparison.Ordinal);
                                         if (slashIndex != -1)
-                                            curRef = curRef.Substring(0, slashIndex);
-                                        curRef = GetParagraphRef(nextIds, curRef, curRef + "/" + style);
+                                            state.CurRef = state.CurRef.Substring(0, slashIndex);
+                                        state.CurRef = GetParagraphRef(nextIds, state.CurRef, state.CurRef + "/" + style);
                                     }
                                     else
                                     {
-                                        curRef = GetParagraphRef(nextIds, style, style);
+                                        state.CurRef = GetParagraphRef(nextIds, style, style);
                                     }
                                 }
                                 else if (style == "b")
                                 {
-                                    curRef = null;
+                                    state.CurRef = null;
                                 }
                                 else
                                 {
-                                    curRef = GetParagraphRef(nextIds, style, style);
+                                    state.CurRef = GetParagraphRef(nextIds, style, style);
                                 }
-                                ProcessChildNodes(chapterDelta, elem, curChapter, ref lastVerse, ref curRef,
-                                    ref tableIndex);
-                                SegmentEnded(chapterDelta, curRef);
+                                ProcessChildNodes(chapterDelta, elem, state);
+                                SegmentEnded(chapterDelta, state.CurRef);
                                 if (!canContainVerseText)
-                                    curRef = null;
+                                    state.CurRef = null;
                                 chapterDelta.InsertPara(GetAttributes(elem));
                                 break;
 
                             case "chapter":
-                                if (curChapter != 0)
+                                if (state.CurChapter != 0)
                                 {
-                                    ChapterEnded(chapterDeltas, chapterDelta, curChapter, lastVerse, curRef,
-                                        topLevelVerses);
+                                    ChapterEnded(chapterDeltas, chapterDelta, state);
                                     nextIds.Clear();
                                     chapterDelta = new Delta();
                                 }
-                                curRef = null;
-                                lastVerse = null;
-                                curChapter = (int)elem.Attribute("number");
+                                state.CurRef = null;
+                                state.LastVerse = null;
+                                state.CurChapter = (int)elem.Attribute("number");
                                 chapterDelta.InsertEmbed("chapter", GetAttributes(elem));
                                 break;
 
                             // according to the USX schema, a verse can only occur within a paragraph, but Paratext 8.0
                             // can still generate USX with verses at the top-level
                             case "verse":
-                                ProcessChildNode(chapterDelta, elem, curChapter, ref lastVerse, ref curRef,
-                                    ref tableIndex);
-                                topLevelVerses = true;
+                                ProcessChildNode(chapterDelta, elem, state);
+                                state.TopLevelVerses = true;
                                 break;
 
                             default:
-                                ProcessChildNode(chapterDelta, elem, curChapter, ref lastVerse, ref curRef,
-                                    ref tableIndex);
+                                ProcessChildNode(chapterDelta, elem, state);
                                 break;
                         }
                         break;
 
                     case XText text:
-                        chapterDelta.InsertText(text.Value, curRef);
+                        chapterDelta.InsertText(text.Value, state.CurRef);
                         break;
                 }
             }
-            if (curChapter == 0)
-                curChapter = 1;
-            ChapterEnded(chapterDeltas, chapterDelta, curChapter, lastVerse, curRef, topLevelVerses);
+            if (state.CurChapter == 0)
+                state.CurChapter = 1;
+            ChapterEnded(chapterDeltas, chapterDelta, state);
             return chapterDeltas;
         }
 
         private void ProcessChildNodes(Delta newDelta, XElement parentElem)
         {
-            string tempRef = null;
-            string tempLastVerse = null;
-            int tempTableIndex = 0;
-            ProcessChildNodes(newDelta, parentElem, 0, ref tempLastVerse, ref tempRef, ref tempTableIndex);
+            ProcessChildNodes(newDelta, parentElem, new ParseState());
         }
 
-        private void ProcessChildNodes(Delta newDelta, XElement parentElem, int curChapter, ref string lastVerse,
-            ref string curRef, ref int tableIndex, JObject attributes = null)
+        private void ProcessChildNodes(Delta newDelta, XElement parentElem, ParseState state, JObject attributes = null)
         {
             foreach (XNode node in parentElem.Nodes())
-                ProcessChildNode(newDelta, node, curChapter, ref lastVerse, ref curRef, ref tableIndex, attributes);
+                ProcessChildNode(newDelta, node, state, attributes);
         }
 
-        private void ProcessChildNode(Delta newDelta, XNode node, int curChapter, ref string lastVerse,
-            ref string curRef, ref int tableIndex, JObject attributes = null)
+        private void ProcessChildNode(Delta newDelta, XNode node, ParseState state, JObject attributes = null)
         {
             switch (node)
             {
@@ -148,14 +144,14 @@ namespace SIL.XForge.Scripture.Services
                             break;
 
                         case "verse":
-                            lastVerse = (string)elem.Attribute("number");
-                            InsertVerse(newDelta, elem, curChapter, ref curRef);
+                            state.LastVerse = (string)elem.Attribute("number");
+                            InsertVerse(newDelta, elem, state);
                             break;
 
                         case "ref":
                             var newRefAttributes = (JObject)attributes?.DeepClone() ?? new JObject();
                             newRefAttributes.Add(new JProperty(elem.Name.LocalName, GetAttributes(elem)));
-                            newDelta.InsertText(elem.Value, curRef, newRefAttributes);
+                            newDelta.InsertText(elem.Value, state.CurRef, newRefAttributes);
                             break;
 
                         case "char":
@@ -179,25 +175,24 @@ namespace SIL.XForge.Scripture.Services
 
                                 }
                             }
-                            ProcessChildNodes(newDelta, elem, curChapter, ref lastVerse, ref curRef, ref tableIndex,
-                                newChildAttributes);
+                            ProcessChildNodes(newDelta, elem, state, newChildAttributes);
                             break;
 
                         case "table":
-                            tableIndex++;
+                            state.TableIndex++;
                             JObject tableAttributes = GetAttributes(elem);
-                            tableAttributes.Add(new JProperty("id", $"table_{tableIndex}"));
+                            tableAttributes.Add(new JProperty("id", $"table_{state.TableIndex}"));
                             int rowIndex = 1;
                             foreach (XElement row in elem.Elements("row"))
                             {
-                                var rowAttributes = new JObject(new JProperty("id", $"row_{tableIndex}_{rowIndex}"));
+                                var rowAttributes = new JObject(
+                                    new JProperty("id", $"row_{state.TableIndex}_{rowIndex}"));
                                 int cellIndex = 1;
                                 foreach (XElement cell in row.Elements())
                                 {
-                                    curRef = $"cell_{tableIndex}_{rowIndex}_{cellIndex}";
-                                    ProcessChildNode(newDelta, cell, curChapter, ref lastVerse, ref curRef,
-                                        ref tableIndex);
-                                    SegmentEnded(newDelta, curRef);
+                                    state.CurRef = $"cell_{state.TableIndex}_{rowIndex}_{cellIndex}";
+                                    ProcessChildNode(newDelta, cell, state);
+                                    SegmentEnded(newDelta, state.CurRef);
                                     var attrs = new JObject(
                                         new JProperty("table", tableAttributes),
                                         new JProperty("row", rowAttributes));
@@ -208,52 +203,52 @@ namespace SIL.XForge.Scripture.Services
                                 }
                                 rowIndex++;
                             }
-                            curRef = null;
+                            state.CurRef = null;
                             break;
 
                         case "cell":
-                            ProcessChildNodes(newDelta, elem, curChapter, ref lastVerse, ref curRef, ref tableIndex);
+                            ProcessChildNodes(newDelta, elem, state);
                             break;
 
                         default:
-                            InsertEmbed(newDelta, elem, curRef, attributes);
+                            InsertEmbed(newDelta, elem, state.CurRef, attributes);
                             break;
                     }
                     break;
 
                 case XText text:
-                    newDelta.InsertText(text.Value, curRef, attributes);
+                    newDelta.InsertText(text.Value, state.CurRef, attributes);
                     break;
             }
         }
 
         private void ChapterEnded(SortedList<int, (Delta Delta, int LastVerse)> chapterDeltas, Delta chapterDelta,
-            int curChapter, string lastVerse, string curRef, bool topLevelVerses)
+            ParseState state)
         {
-            if (topLevelVerses)
+            if (state.TopLevelVerses)
             {
                 // add implicit paragraph when there are top-level verses
-                SegmentEnded(chapterDelta, curRef);
+                SegmentEnded(chapterDelta, state.CurRef);
                 chapterDelta.Insert('\n');
-                topLevelVerses = false;
+                state.TopLevelVerses = false;
             }
             int lastVerseNum = 0;
-            if (lastVerse != null)
+            if (state.LastVerse != null)
             {
-                int dashIndex = lastVerse.IndexOf('-');
+                int dashIndex = state.LastVerse.IndexOf('-');
                 if (dashIndex != -1)
-                    lastVerseNum = int.Parse(lastVerse.Substring(dashIndex + 1), CultureInfo.InvariantCulture);
+                    lastVerseNum = int.Parse(state.LastVerse.Substring(dashIndex + 1), CultureInfo.InvariantCulture);
                 else
-                    lastVerseNum = int.Parse(lastVerse, CultureInfo.InvariantCulture);
+                    lastVerseNum = int.Parse(state.LastVerse, CultureInfo.InvariantCulture);
             }
-            chapterDeltas[curChapter] = (chapterDelta, lastVerseNum);
+            chapterDeltas[state.CurChapter] = (chapterDelta, lastVerseNum);
         }
 
-        private static void InsertVerse(Delta newDelta, XElement elem, int curChapter, ref string curRef)
+        private static void InsertVerse(Delta newDelta, XElement elem, ParseState state)
         {
             var verse = (string)elem.Attribute("number");
-            SegmentEnded(newDelta, curRef);
-            curRef = $"verse_{curChapter}_{verse}";
+            SegmentEnded(newDelta, state.CurRef);
+            state.CurRef = $"verse_{state.CurChapter}_{verse}";
             newDelta.InsertEmbed("verse", GetAttributes(elem));
         }
 

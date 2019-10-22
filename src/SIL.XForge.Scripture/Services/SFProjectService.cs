@@ -407,8 +407,7 @@ namespace SIL.XForge.Scripture.Services
             IDocument<User> userDoc, string projectRole, bool removeShareKeys = true)
         {
             await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, removeShareKeys);
-            IDocument<SFProjectUserConfig> projectUserConfigDoc = await conn.CreateAsync<SFProjectUserConfig>(
-                SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
+            await conn.CreateAsync<SFProjectUserConfig>(SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id),
                 new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id });
         }
 

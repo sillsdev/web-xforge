@@ -57,7 +57,6 @@ namespace Microsoft.Extensions.DependencyInjection
         private static MongoRepository<T> CreateMongoRepository<T>(IServiceProvider sp, string collection,
             Action<IMongoIndexManager<T>> indexSetup) where T : IIdentifiable
         {
-            var options = sp.GetService<IOptions<DataAccessOptions>>();
             return new MongoRepository<T>(sp.GetService<IMongoDatabase>().GetCollection<T>(collection),
                 c => indexSetup?.Invoke(c.Indexes));
         }
