@@ -6,10 +6,9 @@ import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { fromVerseRef, toVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { toVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { merge, Subscription } from 'rxjs';
@@ -31,11 +30,8 @@ import {
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { CheckingUtils } from '../checking.utils';
-import {
-  QuestionDialogComponent,
-  QuestionDialogData,
-  QuestionDialogResult
-} from '../question-dialog/question-dialog.component';
+import { QuestionDialogData } from '../question-dialog/question-dialog.component';
+import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
@@ -85,7 +81,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   answersPanelContainerElement?: ElementRef;
   projectDoc?: SFProjectDoc;
   projectUserConfigDoc?: SFProjectUserConfigDoc;
-  text?: TextInfo;
   textDocId?: TextDocId;
 
   private _book?: number;
@@ -95,6 +90,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private questionsSub?: Subscription;
   private projectDeleteSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
+  private text?: TextInfo;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -104,7 +100,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly media: MediaObserver,
     private readonly dialog: MdcDialog,
     noticeService: NoticeService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly questionDialogService: QuestionDialogService
   ) {
     super(noticeService);
   }
@@ -189,6 +186,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.questionsQuery != null ? this.questionsQuery.docs : [];
   }
 
+  get textsByBookId(): TextsByBookId {
+    const textsByBook: TextsByBookId = {};
+    if (this.projectDoc != null && this.projectDoc.data != null) {
+      for (const text of this.projectDoc.data.texts) {
+        textsByBook[Canon.bookNumberToId(text.bookNum)] = text;
+      }
+    }
+    return textsByBook;
+  }
+
   private get answerPanelElementHeight(): number {
     return this.answersPanelContainerElement != null ? this.answersPanelContainerElement.nativeElement.offsetHeight : 0;
   }
@@ -212,16 +219,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   private get splitContainerElementHeight(): number {
     return this.splitContainerElement ? this.splitContainerElement.nativeElement.offsetHeight : 0;
-  }
-
-  private get textsByBookId(): TextsByBookId {
-    const textsByBook: TextsByBookId = {};
-    if (this.projectDoc != null && this.projectDoc.data != null) {
-      for (const text of this.projectDoc.data.texts) {
-        textsByBook[Canon.bookNumberToId(text.bookNum)] = text;
-      }
-    }
-    return textsByBook;
   }
 
   ngOnInit(): void {
@@ -470,55 +467,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.collapseDrawer();
   }
 
-  questionDialog(): void {
+  async questionDialog(): Promise<void> {
     if (this.projectDoc == null) {
       return;
     }
 
-    const config: MdcDialogConfig<QuestionDialogData> = {
-      data: {
-        question: undefined,
-        textsByBookId: this.textsByBookId,
-        projectId: this.projectDoc.id,
-        defaultVerse: new VerseRef(this.book, this.chapter, 1)
-      }
+    const data: QuestionDialogData = {
+      question: undefined,
+      textsByBookId: this.textsByBookId,
+      projectId: this.projectDoc.id,
+      defaultVerse: new VerseRef(this.book, this.chapter, 1)
     };
-    const dialogRef = this.dialog.open(QuestionDialogComponent, config) as MdcDialogRef<
-      QuestionDialogComponent,
-      QuestionDialogResult | 'close'
-    >;
-
-    const questionId: string = objectId();
-    const currentDate = new Date().toJSON();
-    let audioUrl: string;
-    dialogRef.afterClosed().subscribe(async result => {
-      if (result == null || result === 'close' || this.projectDoc == null) {
-        return;
-      }
-      if (result.audio.fileName != null && result.audio.blob != null) {
-        const response = await this.projectService.onlineUploadAudio(
-          this.projectDoc.id,
-          questionId,
-          new File([result.audio.blob], result.audio.fileName)
-        );
-        // Get the amended filename and save it against the answer
-        audioUrl = response;
-      }
-      const question: Question = {
-        dataId: questionId,
-        projectRef: this.projectDoc.id,
-        ownerRef: this.userService.currentUserId,
-        verseRef: fromVerseRef(result.verseRef),
-        text: result.text,
-        audioUrl: audioUrl,
-        answers: [],
-        isArchived: false,
-        dateCreated: currentDate,
-        dateModified: currentDate
-      };
-      const newQuestion = await this.projectService.createQuestion(this.projectDoc.id, question);
+    const newQuestion = await this.questionDialogService.questionDialog(data);
+    if (newQuestion != null) {
       this.questionsPanel.activateQuestion(newQuestion);
-    });
+    }
   }
 
   totalQuestions(): number {

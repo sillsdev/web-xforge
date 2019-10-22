@@ -1,12 +1,10 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { distanceInWordsToNow } from 'date-fns';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { merge, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -14,7 +12,6 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -23,11 +20,8 @@ import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingUtils } from '../checking.utils';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
-import {
-  QuestionDialogComponent,
-  QuestionDialogData,
-  QuestionDialogResult
-} from '../question-dialog/question-dialog.component';
+import { QuestionDialogData } from '../question-dialog/question-dialog.component';
+import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 
 @Component({
   selector: 'app-checking-overview',
@@ -52,7 +46,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly dialog: MdcDialog,
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly questionDialogService: QuestionDialogService
   ) {
     super(noticeService);
   }
@@ -314,81 +309,19 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         }
       }
     }
-    const dialogConfig: MdcDialogConfig<QuestionDialogData> = {
-      data: {
-        question: questionDoc != null ? questionDoc.data : undefined,
-        textsByBookId: this.textsByBookId,
-        projectId: this.projectDoc.id
-      }
+
+    const data: QuestionDialogData = {
+      question: questionDoc != null ? questionDoc.data : undefined,
+      textsByBookId: this.textsByBookId,
+      projectId: this.projectDoc.id
     };
-    const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig) as MdcDialogRef<
-      QuestionDialogComponent,
-      QuestionDialogResult | 'close'
-    >;
-
-    dialogRef.afterClosed().subscribe(async result => {
-      if (result == null || result === 'close' || this.projectId == null) {
-        return;
-      }
-      const questionId = questionDoc != null && questionDoc.data != null ? questionDoc.data.dataId : objectId();
-      const verseRefData = fromVerseRef(result.verseRef);
-      const text = result.text;
-      let audioUrl = questionDoc != null && questionDoc.data != null ? questionDoc.data.audioUrl : undefined;
-      if (result.audio.fileName && result.audio.blob != null) {
-        const response = await this.projectService.onlineUploadAudio(
-          this.projectId,
-          questionId,
-          new File([result.audio.blob], result.audio.fileName)
-        );
-        // Get the amended filename and save it against the answer
-        audioUrl = response;
-      } else if (result.audio.status === 'reset') {
-        audioUrl = undefined;
-      }
-
-      const currentDate = new Date().toJSON();
-      if (questionDoc != null && questionDoc.data != null) {
-        const deleteAudio = questionDoc.data.audioUrl != null && audioUrl == null;
-        const oldVerseRef = questionDoc.data.verseRef;
-        const moveToDifferentChapter =
-          oldVerseRef.bookNum !== verseRefData.bookNum || oldVerseRef.chapterNum !== verseRefData.chapterNum;
-        if (moveToDifferentChapter) {
-          this.removeQuestionDoc(questionDoc);
-        }
-        await questionDoc.submitJson0Op(op =>
-          op
-            .set(q => q.verseRef, verseRefData)
-            .set(q => q.text!, text)
-            .set(q => q.audioUrl, audioUrl)
-            .set(q => q.dateModified, currentDate)
-        );
-        if (deleteAudio) {
-          await this.projectService.onlineDeleteAudio(
-            this.projectId,
-            questionDoc.data.dataId,
-            questionDoc.data.ownerRef
-          );
-        }
-        if (moveToDifferentChapter) {
-          this.addQuestionDoc(questionDoc);
-        }
-      } else {
-        const newQuestion: Question = {
-          dataId: questionId,
-          projectRef: this.projectId,
-          ownerRef: this.userService.currentUserId,
-          verseRef: verseRefData,
-          text,
-          audioUrl,
-          answers: [],
-          isArchived: false,
-          dateCreated: currentDate,
-          dateModified: currentDate
-        };
-        questionDoc = await this.projectService.createQuestion(this.projectId, newQuestion);
-        this.addQuestionDoc(questionDoc);
-      }
-    });
+    await this.questionDialogService.questionDialog(data, questionDoc);
+    this.loadingStarted();
+    try {
+      this.initTexts();
+    } finally {
+      this.loadingFinished();
+    }
   }
 
   getBookName(text: TextInfo): string {

@@ -16,7 +16,6 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -34,6 +33,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingModule } from '../checking.module';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogComponent } from '../question-dialog/question-dialog.component';
+import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { CheckingOverviewComponent } from './checking-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -42,6 +42,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedAuthService = mock(AuthService);
+const mockedQuestionDialogService = mock(QuestionDialogService);
 
 describe('CheckingOverviewComponent', () => {
   configureTestingModule(() => ({
@@ -52,7 +53,8 @@ describe('CheckingOverviewComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: AuthService, useMock: mockedAuthService }
+      { provide: AuthService, useMock: mockedAuthService },
+      { provide: QuestionDialogService, useMock: mockedQuestionDialogService }
     ]
   }));
 
@@ -89,43 +91,10 @@ describe('CheckingOverviewComponent', () => {
 
     it('should open dialog when "Add question" button is clicked', fakeAsync(() => {
       const env = new TestEnvironment();
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
       env.waitForQuestions();
       env.clickElement(env.addQuestionButton);
-      verify(mockedMdcDialog.open(anything(), anything())).once();
+      verify(mockedQuestionDialogService.questionDialog(anything(), undefined)).once();
       expect().nothing();
-    }));
-
-    it('should not add a question if cancelled', fakeAsync(() => {
-      const env = new TestEnvironment();
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
-      env.waitForQuestions();
-
-      resetCalls(mockedProjectService);
-      env.clickElement(env.addQuestionButton);
-      verify(mockedMdcDialog.open(anything(), anything())).once();
-      expect().nothing();
-    }));
-
-    it('should add a question if requested', fakeAsync(() => {
-      const env = new TestEnvironment();
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
-        of({
-          verseRef: VerseRef.parse('MAT 3:3'),
-          text: '',
-          audio: { fileName: '' }
-        })
-      );
-      env.waitForQuestions();
-      env.simulateRowClick(0);
-      expect(env.textRows.length).toEqual(3);
-
-      resetCalls(mockedProjectService);
-      env.clickElement(env.addQuestionButton);
-      verify(mockedMdcDialog.open(anything(), anything())).once();
-      const id = new TextDocId('project01', 40, 3);
-      env.simulateRowClick(1, id);
-      expect(env.textRows.length).toEqual(5);
     }));
   });
 
@@ -152,16 +121,9 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(2);
     }));
 
-    it('should edit question', fakeAsync(() => {
+    it('should open a dialog to edit a question', fakeAsync(() => {
       const env = new TestEnvironment();
       const id = new TextDocId('project01', 40, 1);
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
-        of({
-          verseRef: VerseRef.parse('MAT 1:3'),
-          text: '',
-          audio: {}
-        })
-      );
       env.waitForQuestions();
       env.simulateRowClick(0);
       env.simulateRowClick(1, id);
@@ -170,32 +132,7 @@ describe('CheckingOverviewComponent', () => {
 
       resetCalls(mockedProjectService);
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedMdcDialog.open(anything(), anything())).once();
-    }));
-
-    it('allows editing scripture reference', fakeAsync(() => {
-      const env = new TestEnvironment();
-      const id = new TextDocId('project01', 40, 1);
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
-        of({
-          verseRef: VerseRef.parse('MAT 3:3'),
-          text: 'scripture reference moved to chapter 3',
-          audio: {}
-        })
-      );
-      env.waitForQuestions();
-      env.simulateRowClick(0);
-      env.simulateRowClick(1, id);
-      expect(env.textRows.length).toEqual(9);
-      const mat3Id = new TextDocId('project01', 40, 3);
-
-      resetCalls(mockedProjectService);
-      expect(env.questionEditButtons.length).toEqual(6);
-      env.clickElement(env.questionEditButtons[0]);
-      env.fixture.detectChanges();
-      expect(env.questionEditButtons.length).toEqual(5);
-      env.simulateRowClick(1, mat3Id);
-      expect(env.textRows.length).toEqual(10);
+      verify(mockedQuestionDialogService.questionDialog(anything(), anything())).once();
     }));
 
     it('should bring up question dialog only if user confirms question answered dialog', fakeAsync(() => {
@@ -204,51 +141,21 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       env.simulateRowClick(0);
       env.simulateRowClick(1, id);
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of('close'));
       // Edit a question with no answers
       env.clickElement(env.questionEditButtons[3]);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).never();
-      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
       resetCalls(mockedMdcDialog);
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
-        of({
-          verseRef: VerseRef.parse('MAT 1:3'),
-          text: 'Book 1, Q1 Text',
-          audio: {}
-        })
-      );
       // Edit a question with answers
       env.clickElement(env.questionEditButtons[0]);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).once();
       verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).never();
+      resetCalls(mockedQuestionDialogService);
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
       env.clickElement(env.questionEditButtons[0]);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).twice();
-      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
+      verify(mockedQuestionDialogService.questionDialog(anything(), anything())).once();
       expect().nothing();
-    }));
-
-    it('should remove audio file when reset', fakeAsync(() => {
-      const env = new TestEnvironment();
-      const id = new TextDocId('project01', 40, 1);
-      when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(
-        of({
-          verseRef: VerseRef.parse('MAT 1:3'),
-          text: 'Book 1, Q1 text',
-          audio: { status: 'reset' }
-        })
-      );
-      env.waitForQuestions();
-      env.simulateRowClick(0);
-      env.simulateRowClick(1, id);
-      expect(env.textRows.length).toEqual(9);
-      expect(env.questionEditButtons.length).toEqual(6);
-
-      resetCalls(mockedProjectService);
-      env.clickElement(env.questionEditButtons[0]);
-      verify(mockedMdcDialog.open(anything(), anything())).once();
-      verify(mockedProjectService.onlineDeleteAudio('project01', 'q1Id', env.adminUser.id)).once();
     }));
   });
 
@@ -384,8 +291,7 @@ describe('CheckingOverviewComponent', () => {
 });
 
 @NgModule({
-  imports: [MdcDialogModule, NoopAnimationsModule, UICommonModule, ngfModule, CheckingModule],
-  entryComponents: [QuestionDialogComponent]
+  imports: [MdcDialogModule, NoopAnimationsModule, UICommonModule, ngfModule, CheckingModule]
 })
 class DialogTestModule {}
 
@@ -399,7 +305,6 @@ class TestEnvironment {
   component: CheckingOverviewComponent;
   fixture: ComponentFixture<CheckingOverviewComponent>;
 
-  readonly mockedQuestionDialogRef: MdcDialogRef<QuestionDialogComponent> = mock(MdcDialogRef);
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
 
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
@@ -674,7 +579,7 @@ class TestEnvironment {
     ]);
 
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
-    when(mockedMdcDialog.open(QuestionDialogComponent, anything())).thenReturn(instance(this.mockedQuestionDialogRef));
+    when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenResolve();
     when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
     when(this.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
     when(mockedProjectService.get(anything())).thenCall(id =>
