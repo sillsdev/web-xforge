@@ -387,14 +387,11 @@ namespace SIL.XForge.Scripture.Services
             IReadOnlyList<IDocument<Question>> allQuestionDocs = await FetchQuestionDocsAsync(text);
 
             // handle deletion of chapters
-            var questionDocs = new List<IDocument<Question>>();
             var chapterNums = new HashSet<int>(newChapters.Select(c => c.Number));
             var tasks = new List<Task>();
             foreach (IDocument<Question> questionDoc in allQuestionDocs)
             {
-                if (chapterNums.Contains(questionDoc.Data.VerseRef.ChapterNum))
-                    questionDocs.Add(questionDoc);
-                else
+                if (!chapterNums.Contains(questionDoc.Data.VerseRef.ChapterNum))
                     tasks.Add(questionDoc.DeleteAsync());
             }
             await Task.WhenAll(tasks);

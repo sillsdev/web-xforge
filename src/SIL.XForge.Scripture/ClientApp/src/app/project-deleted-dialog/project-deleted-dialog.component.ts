@@ -1,10 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 @Component({
   templateUrl: './project-deleted-dialog.component.html'
 })
-export class ProjectDeletedDialogComponent implements OnInit {
-  constructor() {}
-
-  ngOnInit() {}
-}
+export class ProjectDeletedDialogComponent {}

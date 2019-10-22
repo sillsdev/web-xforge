@@ -498,7 +498,7 @@ describe('ScriptureChooserDialog', () => {
     }
 
     get backoutButton(): DebugElement {
-      return this.fixture.debugElement.query(By.css('#backout-button'));
+      return this.fixture.debugElement.query(By.css('.backout-button'));
     }
 
     get highlightedButton(): DebugElement {
