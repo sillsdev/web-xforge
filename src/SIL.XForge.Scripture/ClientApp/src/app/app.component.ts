@@ -305,6 +305,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
             // The user has been removed from the project
             this.showProjectDeletedDialog();
           }
+          // See if we need to enable any books in the checking app
+          if (this.isCheckingEnabled && !this.checkingVisible) {
+            this.checkCheckingBookQuestions();
+          }
         });
 
         if (!this.isTranslateEnabled) {
@@ -320,21 +324,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
         this.userService.setCurrentProjectId(this.selectedProjectDoc.id);
 
-        if (this.isCheckingEnabled) {
-          this.disposeQuestionQueries();
-          const promises: Promise<any>[] = [];
-          for (const text of this.texts) {
-            promises.push(
-              this.projectService
-                .queryQuestionCount(this.selectedProjectDoc.id, {
-                  bookNum: text.bookNum,
-                  activeOnly: true
-                })
-                .then(query => this.questionCountQueries.set(text.bookNum, query))
-            );
-          }
-          await Promise.all(promises);
-        }
+        this.checkCheckingBookQuestions();
       });
       // tell HelpHero to remember this user to make sure we won't show them an identical tour again later
       this.helpHeroService.setIdentity(this.userService.currentUserId);
@@ -425,6 +415,25 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   hasQuestions(text: TextInfo): boolean {
     const query = this.questionCountQueries.get(text.bookNum);
     return query != null && query.count > 0;
+  }
+
+  private async checkCheckingBookQuestions(): Promise<void> {
+    this.disposeQuestionQueries();
+    if (!this.isCheckingEnabled || this.selectedProjectDoc === undefined) {
+      return;
+    }
+    const promises: Promise<any>[] = [];
+    for (const text of this.texts) {
+      promises.push(
+        this.projectService
+          .queryQuestionCount(this.selectedProjectDoc.id, {
+            bookNum: text.bookNum,
+            activeOnly: true
+          })
+          .then(query => this.questionCountQueries.set(text.bookNum, query))
+      );
+    }
+    await Promise.all(promises);
   }
 
   private disposeQuestionQueries() {
