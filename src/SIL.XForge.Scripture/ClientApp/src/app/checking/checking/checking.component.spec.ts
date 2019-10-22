@@ -158,10 +158,20 @@ describe('CheckingComponent', () => {
       };
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of(dialogResult));
 
+      const initialQuestionCount = env.questions.length;
+      const locationForNewlyAddedQuestions = 1;
       env.clickButton(env.addQuestionButton);
+      tick(env.questionReadTimer);
       verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
       verify(mockedProjectService.createQuestion('project01', anything())).once();
-      expect().nothing();
+      expect(env.questions.length).toEqual(
+        initialQuestionCount + 1,
+        'number of questions in list should have increased'
+      );
+      expect(env.currentQuestion).toEqual(
+        locationForNewlyAddedQuestions,
+        'should have selected just-added question, to implement SF-614.'
+      );
     }));
 
     it('uploads an audio file', fakeAsync(() => {
@@ -174,6 +184,7 @@ describe('CheckingComponent', () => {
       when(env.mockedQuestionDialogRef.afterClosed()).thenReturn(of(dialogResult));
       when(mockedProjectService.onlineUploadAudio('project01', anything(), anything())).thenResolve('anAudioFile.mp3');
       env.clickButton(env.addQuestionButton);
+      tick(env.questionReadTimer);
       verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).once();
       verify(mockedProjectService.onlineUploadAudio('project01', anything(), anything())).once();
       tick();
@@ -1412,6 +1423,9 @@ class TestEnvironment {
         $sort: { [nameof<Question>('dateCreated')]: -1 }
       })
     );
+    when(mockedProjectService.createQuestion('project01', anything())).thenCall((id: string, question: Question) => {
+      return this.realtimeService.create(QuestionDoc.COLLECTION, getQuestionDocId(id, question.dataId), question);
+    });
     when(mockedUserService.currentUserId).thenReturn(user.id);
 
     this.realtimeService.addSnapshots<User>(UserDoc.COLLECTION, [
