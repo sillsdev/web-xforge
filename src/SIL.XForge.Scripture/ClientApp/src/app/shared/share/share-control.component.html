@@ -16,19 +16,21 @@
   <div>
     <div mdcSubtitle1>Invite people</div>
     <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="10px">
-      <mdc-form-field fxFlex="fill" [formGroup]="sendInviteForm" id="send-invite-form">
-        <mdc-text-field
-          id="email"
-          label="Email"
-          type="email"
-          formControlName="email"
-          (input)="onEmailInput($event)"
-        ></mdc-text-field>
-        <mdc-helper-text validation>
-          <span *ngIf="email.hasError('pattern') || email.hasError('email')">Email address is invalid</span>
-        </mdc-helper-text>
-      </mdc-form-field>
-      <button id="send-btn" mdc-button type="submit" (click)="sendEmail()" [disabled]="isSubmitted">
+      <form id="email-form">
+        <mdc-form-field fxFlex="fill" [formGroup]="sendInviteForm" id="send-invite-form">
+          <mdc-text-field
+            id="email"
+            label="Email"
+            type="email"
+            formControlName="email"
+            (input)="onEmailInput($event)"
+          ></mdc-text-field>
+          <mdc-helper-text validation>
+            <span *ngIf="email.hasError('pattern') || email.hasError('email')">Email address is invalid</span>
+          </mdc-helper-text>
+        </mdc-form-field>
+      </form>
+      <button id="send-btn" mdc-button form="email-form" type="submit" (click)="sendEmail()" [disabled]="isSubmitted">
         {{ isAlreadyInvited ? "Resend" : "Send" }}
       </button>
     </div>
