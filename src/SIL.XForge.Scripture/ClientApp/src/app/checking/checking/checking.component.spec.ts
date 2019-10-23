@@ -456,6 +456,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.likeButtons[0]);
       env.waitForSliderUpdate();
       expect(env.getLikeTotal(0)).toBe(0);
+      verify(mockedNoticeService.show('You cannot like your own answer.')).once();
     }));
 
     it('observer cannot like an answer', fakeAsync(() => {
@@ -466,6 +467,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.likeButtons[0]);
       env.waitForSliderUpdate();
       expect(env.getLikeTotal(0)).toBe(0);
+      verify(mockedNoticeService.show('Only Community Checkers can like answers.')).once();
     }));
 
     it('hides the like icon if see other users responses is disabled', fakeAsync(() => {

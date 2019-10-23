@@ -9,3 +9,9 @@ export interface Answer extends Comment {
   likes: Like[];
   comments: Comment[];
 }
+
+export enum LikeAnswerResponse {
+  deniedOwnAnswer,
+  deniedNonCommunityChecker,
+  granted
+}

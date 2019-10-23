@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angu
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import cloneDeep from 'lodash/cloneDeep';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
-import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
+import { Answer, LikeAnswerResponse } from 'realtime-server/lib/scriptureforge/models/answer';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -310,11 +310,16 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   likeAnswer(answer: Answer) {
-    if (this.canLikeAnswer(answer)) {
+    const likeAnswerResponse: LikeAnswerResponse = this.canLikeAnswer(answer);
+    if (likeAnswerResponse === LikeAnswerResponse.granted) {
       this.action.emit({
         action: 'like',
         answer: answer
       });
+    } else if (likeAnswerResponse === LikeAnswerResponse.deniedOwnAnswer) {
+      this.noticeService.show('You cannot like your own answer.');
+    } else if (likeAnswerResponse === LikeAnswerResponse.deniedNonCommunityChecker) {
+      this.noticeService.show('Only Community Checkers can like answers.');
     }
   }
 
@@ -413,20 +418,27 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
-  private canLikeAnswer(answer: Answer): boolean {
-    return (
-      this.userService.currentUserId !== answer.ownerRef &&
-      SF_PROJECT_RIGHTS.hasRight(
-        this.projectRole,
-        { projectDomain: SFProjectDomain.Answers, operation: Operation.DeleteOwn },
-        this.userService.currentUserId,
-        answer
-      ) &&
-      SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
-        projectDomain: SFProjectDomain.Answers,
-        operation: Operation.Create
-      })
-    );
+  private canLikeAnswer(answer: Answer): LikeAnswerResponse {
+    let result: LikeAnswerResponse = LikeAnswerResponse.granted;
+    if (this.userService.currentUserId === answer.ownerRef) {
+      result = LikeAnswerResponse.deniedOwnAnswer;
+    } else if (
+      !(
+        SF_PROJECT_RIGHTS.hasRight(
+          this.projectRole,
+          { projectDomain: SFProjectDomain.Answers, operation: Operation.DeleteOwn },
+          this.userService.currentUserId,
+          answer
+        ) &&
+        SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
+          projectDomain: SFProjectDomain.Answers,
+          operation: Operation.Create
+        })
+      )
+    ) {
+      result = LikeAnswerResponse.deniedNonCommunityChecker;
+    }
+    return result;
   }
 
   private emitAnswerToSave() {
