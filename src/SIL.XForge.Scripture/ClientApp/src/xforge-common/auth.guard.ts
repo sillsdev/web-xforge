@@ -15,7 +15,8 @@ export class AuthGuard implements CanActivate {
     return this.allowTransition().pipe(
       tap(isLoggedIn => {
         if (!isLoggedIn) {
-          this.authService.logIn(this.locationService.pathname + this.locationService.search);
+          const signUp = next.queryParams['sharing'] === 'true';
+          this.authService.logIn(this.locationService.pathname + this.locationService.search, signUp);
         }
       })
     );
