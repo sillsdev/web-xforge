@@ -122,7 +122,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
         segments.push(segment);
       }
       // Check for similar segments like this verse i.e. verse_1_2/q1
-      for (const similarSegment of this.textComponent.getSegmentSimilarRange(segment)) {
+      for (const similarSegment of this.textComponent.getRelatedSegmentRefs(segment)) {
         if (!segments.includes(similarSegment)) {
           segments.push(similarSegment);
         }

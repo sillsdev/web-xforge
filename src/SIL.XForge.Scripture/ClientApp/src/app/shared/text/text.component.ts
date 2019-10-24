@@ -301,8 +301,8 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     return this.viewModel.getSegmentRange(ref);
   }
 
-  getSegmentSimilarRange(ref: string): string[] {
-    return this.viewModel.getSegmentSimilarRange(ref);
+  getRelatedSegmentRefs(ref: string): string[] {
+    return this.viewModel.getRelatedSegmentRefs(ref);
   }
 
   getSegmentText(ref: string): string {
