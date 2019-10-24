@@ -17,7 +17,7 @@ namespace SIL.XForge.Scripture.Services
                 .Insert("\n");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Para("h", "Philemon"));
@@ -36,7 +36,7 @@ namespace SIL.XForge.Scripture.Services
                 .Insert("\n");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -68,7 +68,7 @@ namespace SIL.XForge.Scripture.Services
                 .Insert("\n");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -96,7 +96,7 @@ namespace SIL.XForge.Scripture.Services
                 .Insert("\n");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -129,7 +129,7 @@ namespace SIL.XForge.Scripture.Services
                 .Insert("\n");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -162,7 +162,7 @@ namespace SIL.XForge.Scripture.Services
                 .Insert("\n");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -190,7 +190,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("p");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -228,7 +228,7 @@ namespace SIL.XForge.Scripture.Services
                 .Insert("\n");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -261,7 +261,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("p");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -286,7 +286,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("p");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -321,7 +321,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertCell(1, 2, "tc2", "start");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -362,7 +362,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("p");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -416,7 +416,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertCell(2, 2, "tc2", "start");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -447,7 +447,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("p");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Para("p"),
@@ -479,7 +479,7 @@ namespace SIL.XForge.Scripture.Services
             };
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, deltas);
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), deltas);
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -500,7 +500,7 @@ namespace SIL.XForge.Scripture.Services
             var deltas = new[] { new Delta() };
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, deltas);
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), deltas);
 
             XElement expected = Usx("PHM");
             Assert.IsTrue(XNode.DeepEquals(newUsxElem, expected));
@@ -524,7 +524,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("p");
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx("2.5", "PHM", null, new[] { delta });
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), new[] { delta });
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
@@ -534,6 +534,29 @@ namespace SIL.XForge.Scripture.Services
                 Para("b"),
                 Para("p",
                     Verse("3")));
+            Assert.IsTrue(XNode.DeepEquals(newUsxElem, expected));
+        }
+
+        [Test]
+        public void ToUsx_MultipleBookElements()
+        {
+            var delta = Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("Verse text.", "verse_1_1")
+                .InsertPara("p")
+                .Insert("\n");
+
+            var mapper = new DeltaUsxMapper();
+            XElement newUsxElem = mapper.ToUsx(Usx("XXA", Book("PHM"), Chapter("1")), new[] { delta });
+
+            XElement expected = Usx("XXA",
+                Book("PHM"),
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    "Verse text."));
             Assert.IsTrue(XNode.DeepEquals(newUsxElem, expected));
         }
 
@@ -1105,9 +1128,12 @@ namespace SIL.XForge.Scripture.Services
 
         private static XElement Usx(string code, params object[] elems)
         {
-            return new XElement("usx", new XAttribute("version", "2.5"),
-                new XElement("book", new XAttribute("code", code), new XAttribute("style", "id")),
-                elems);
+            return new XElement("usx", new XAttribute("version", "2.5"), Book(code), elems);
+        }
+
+        private static XElement Book(string code)
+        {
+            return new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"));
         }
 
         private static XElement Para(string style, params object[] contents)

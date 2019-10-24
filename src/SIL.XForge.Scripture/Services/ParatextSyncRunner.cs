@@ -251,11 +251,7 @@ namespace SIL.XForge.Scripture.Services
                 XElement oldUsxElem = bookTextElem.Element("usx");
                 if (oldUsxElem == null)
                     throw new InvalidOperationException("Invalid USX data, missing 'usx' element.");
-                XElement bookElem = oldUsxElem.Element("book");
-                if (bookElem == null)
-                    throw new InvalidOperationException("Invalid USX data, missing 'book' element.");
-                XElement newUsxElem = _deltaUsxMapper.ToUsx((string)oldUsxElem.Attribute("version"),
-                    (string)bookElem.Attribute("code"), (string)bookElem, textDocs.Values.Select(d => d.Data));
+                XElement newUsxElem = _deltaUsxMapper.ToUsx(oldUsxElem, textDocs.Values.Select(d => d.Data));
 
                 var revision = (string)bookTextElem.Attribute("revision");
 
