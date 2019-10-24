@@ -96,9 +96,12 @@ export class AuthService {
     });
   }
 
-  logIn(returnUrl: string): void {
+  logIn(returnUrl: string, signUp?: boolean): void {
     const state: AuthState = { returnUrl };
     const options: AuthorizeOptions = { state: JSON.stringify(state) };
+    if (signUp) {
+      options.login_hint = 'signUp';
+    }
     this.auth0.authorize(options);
   }
 
