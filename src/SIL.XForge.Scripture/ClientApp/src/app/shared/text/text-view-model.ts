@@ -192,6 +192,10 @@ export class TextViewModel {
     return this._segments.get(ref);
   }
 
+  getSegmentSimilarRange(ref: string): string[] {
+    return Array.from(this._segments.keys()).filter(r => r.indexOf(ref) === 0);
+  }
+
   getSegmentText(ref: string): string {
     const editor = this.checkEditor();
     const range = this.getSegmentRange(ref);

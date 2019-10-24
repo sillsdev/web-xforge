@@ -135,31 +135,6 @@ usx-para {
     margin-bottom: 0.25em;
   }
 
-  &[data-style='li'] {
-    padding-left: 3em;
-  }
-
-  &[data-style='q'],
-  &[data-style='q1'] {
-    margin-left: 7.5em;
-    text-indent: -6em;
-  }
-
-  &[data-style='q2'] {
-    margin-left: 7.5em;
-    text-indent: -4.5em;
-  }
-
-  &[data-style='q3'] {
-    margin-left: 7.5em;
-    text-indent: -3em;
-  }
-
-  &[data-style='q4'] {
-    margin-left: 1.25em;
-    text-indent: -1.5em;
-  }
-
   &[data-style='qc'] {
     text-align: center;
   }
@@ -172,22 +147,6 @@ usx-para {
     font-style: italic;
   }
 
-  &[data-style='qm'],
-  &[data-style='qm1'] {
-    margin-left: 6em;
-    text-indent: -4.5em;
-  }
-
-  &[data-style='qm2'] {
-    margin-left: 6em;
-    text-indent: -3em;
-  }
-
-  &[data-style='qm3'] {
-    margin-left: 6em;
-    text-indent: -1.5em;
-  }
-
   &[data-style='b'] {
     font-size: 0.8em;
   }
@@ -195,6 +154,94 @@ usx-para {
   &[data-style='r'] {
     font-style: italic;
     text-align: center;
+  }
+}
+.ltr {
+  usx-para {
+    &[data-style='li'] {
+      padding-left: 3em;
+    }
+
+    &[data-style='q'],
+    &[data-style='q1'] {
+      margin-left: 7.5em;
+      text-indent: -6em;
+    }
+
+    &[data-style='q2'] {
+      margin-left: 7.5em;
+      text-indent: -4.5em;
+    }
+
+    &[data-style='q3'] {
+      margin-left: 7.5em;
+      text-indent: -3em;
+    }
+
+    &[data-style='q4'] {
+      margin-left: 1.25em;
+      text-indent: -1.5em;
+    }
+
+    &[data-style='qm'],
+    &[data-style='qm1'] {
+      margin-left: 6em;
+      text-indent: -4.5em;
+    }
+
+    &[data-style='qm2'] {
+      margin-left: 6em;
+      text-indent: -3em;
+    }
+
+    &[data-style='qm3'] {
+      margin-left: 6em;
+      text-indent: -1.5em;
+    }
+  }
+}
+.rtl {
+  usx-para {
+    &[data-style='li'] {
+      padding-right: 3em;
+    }
+
+    &[data-style='q'],
+    &[data-style='q1'] {
+      margin-right: 7.5em;
+      text-indent: 6em;
+    }
+
+    &[data-style='q2'] {
+      margin-right: 7.5em;
+      text-indent: 4.5em;
+    }
+
+    &[data-style='q3'] {
+      margin-right: 7.5em;
+      text-indent: 3em;
+    }
+
+    &[data-style='q4'] {
+      margin-right: 1.25em;
+      text-indent: 1.5em;
+    }
+
+    &[data-style='qm'],
+    &[data-style='qm1'] {
+      margin-right: 6em;
+      text-indent: 4.5em;
+    }
+
+    &[data-style='qm2'] {
+      margin-right: 6em;
+      text-indent: 3em;
+    }
+
+    &[data-style='qm3'] {
+      margin-right: 6em;
+      text-indent: 1.5em;
+    }
   }
 }
 
