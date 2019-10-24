@@ -686,7 +686,9 @@ namespace SIL.XForge.Scripture.Services
                     .Returns(new MemoryStream(Encoding.UTF8.GetBytes(oldBookText)));
                 FileSystemService.FileExists(filename).Returns(true);
                 string newBookText = GetBookText(textType, bookId, changed ? 2 : 1);
-                DeltaUsxMapper.ToUsx("2.5", bookId, GetParatextProject(textType), Arg.Any<IEnumerable<Delta>>())
+                DeltaUsxMapper.ToUsx(
+                    Arg.Is<XElement>(e => (string)e.Element("book").Attribute("code") == bookId
+                        && (string)e.Element("book") == GetParatextProject(textType)), Arg.Any<IEnumerable<Delta>>())
                     .Returns(XElement.Parse(newBookText).Element("usx"));
 
                 for (int c = 1; c <= chapterCount; c++)

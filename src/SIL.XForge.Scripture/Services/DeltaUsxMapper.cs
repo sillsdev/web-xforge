@@ -313,11 +313,10 @@ namespace SIL.XForge.Scripture.Services
             return obj;
         }
 
-        public XElement ToUsx(string usxVersion, string bookId, string desc, IEnumerable<Delta> chapterDeltas)
+        public XElement ToUsx(XElement oldUsxElem, IEnumerable<Delta> chapterDeltas)
         {
-            var newUsxElem = new XElement("usx", new XAttribute("version", usxVersion),
-                new XElement("book", new XAttribute("code", bookId), new XAttribute("style", "id"),
-                    desc == "" ? null : desc));
+            var newUsxElem = new XElement(oldUsxElem);
+            newUsxElem.Elements().Where(e => e.Name.LocalName != "book").Remove();
             foreach (Delta chapterDelta in chapterDeltas)
                 ProcessDelta(newUsxElem, chapterDelta);
             return newUsxElem;
