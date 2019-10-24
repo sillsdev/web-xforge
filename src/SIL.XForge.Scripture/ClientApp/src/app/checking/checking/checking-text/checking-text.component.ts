@@ -143,7 +143,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       const element = this.textComponent.editor.container.querySelector('usx-segment[data-segment="' + segment + '"]');
       if (element == null) {
         continue;
-      } else if (element.querySelector('usx-blank')) {
+      } else if (element.querySelector('usx-blank') !== null) {
         continue;
       }
       const range = this.textComponent.getSegmentRange(segment);
