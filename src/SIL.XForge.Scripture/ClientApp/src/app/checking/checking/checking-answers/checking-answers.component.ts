@@ -46,6 +46,12 @@ export interface AnswerAction {
   audio?: AudioAttachment;
 }
 
+enum LikeAnswerResponse {
+  deniedOwnAnswer,
+  deniedNonCommunityChecker,
+  granted
+}
+
 /** The part of the checking area UI that handles user answer receiving, editing, and displaying.
  * Note, the relevant specs are in checking.component.spec.ts. */
 @Component({
@@ -310,11 +316,16 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   likeAnswer(answer: Answer) {
-    if (this.canLikeAnswer(answer)) {
+    const likeAnswerResponse: LikeAnswerResponse = this.canLikeAnswer(answer);
+    if (likeAnswerResponse === LikeAnswerResponse.granted) {
       this.action.emit({
         action: 'like',
         answer: answer
       });
+    } else if (likeAnswerResponse === LikeAnswerResponse.deniedOwnAnswer) {
+      this.noticeService.show('You cannot like your own answer.');
+    } else if (likeAnswerResponse === LikeAnswerResponse.deniedNonCommunityChecker) {
+      this.noticeService.show('Only Community Checkers can like answers.');
     }
   }
 
@@ -413,20 +424,27 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
-  private canLikeAnswer(answer: Answer): boolean {
-    return (
-      this.userService.currentUserId !== answer.ownerRef &&
-      SF_PROJECT_RIGHTS.hasRight(
-        this.projectRole,
-        { projectDomain: SFProjectDomain.Answers, operation: Operation.DeleteOwn },
-        this.userService.currentUserId,
-        answer
-      ) &&
-      SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
-        projectDomain: SFProjectDomain.Answers,
-        operation: Operation.Create
-      })
-    );
+  private canLikeAnswer(answer: Answer): LikeAnswerResponse {
+    let result: LikeAnswerResponse = LikeAnswerResponse.granted;
+    if (this.userService.currentUserId === answer.ownerRef) {
+      result = LikeAnswerResponse.deniedOwnAnswer;
+    } else if (
+      !(
+        SF_PROJECT_RIGHTS.hasRight(
+          this.projectRole,
+          { projectDomain: SFProjectDomain.Answers, operation: Operation.DeleteOwn },
+          this.userService.currentUserId,
+          answer
+        ) &&
+        SF_PROJECT_RIGHTS.hasRight(this.projectRole, {
+          projectDomain: SFProjectDomain.Answers,
+          operation: Operation.Create
+        })
+      )
+    ) {
+      result = LikeAnswerResponse.deniedNonCommunityChecker;
+    }
+    return result;
   }
 
   private emitAnswerToSave() {
