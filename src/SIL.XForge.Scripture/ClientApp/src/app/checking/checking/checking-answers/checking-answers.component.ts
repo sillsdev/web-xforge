@@ -7,7 +7,6 @@ import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import {
   fromVerseRef,
   toStartAndEndVerseRefs,
@@ -32,6 +31,9 @@ import {
   StartReferenceRequiredErrorStateMatcher
 } from '../../../shared/sfvalidators';
 import { combineVerseRefStrs } from '../../../shared/utils';
+import { QuestionAnsweredDialogComponent } from '../../question-answered-dialog/question-answered-dialog.component';
+import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
+import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
@@ -63,7 +65,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent?: CheckingAudioCombinedComponent;
   @Input() project?: SFProject;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
-  @Input() projectText?: TextInfo;
+  @Input() textsByBookId?: TextsByBookId;
   @Input() set questionDoc(questionDoc: QuestionDoc | undefined) {
     if (questionDoc !== this._questionDoc) {
       this.hideAnswerForm();
@@ -101,7 +103,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   constructor(
     private readonly userService: UserService,
     private readonly dialog: MdcDialog,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private readonly questionDialogService: QuestionDialogService
   ) {
     super();
   }
@@ -148,6 +151,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       this._questionDoc.data != null
       ? this.projectUserConfigDoc.data.questionRefsRead.includes(this._questionDoc.data.dataId)
       : false;
+  }
+
+  get isProjectAdmin(): boolean {
+    return this.projectRole === SFProjectRole.ParatextAdministrator;
   }
 
   get canAddAnswer(): boolean {
@@ -198,15 +205,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   /** Fetch a TextsByBookId that only contains the book and chapter that pertains to the question. */
-  private get textsByBookId(): TextsByBookId {
+  private get currentBookAndChapter(): TextsByBookId {
     const textsByBook: TextsByBookId = {};
-    if (this.projectText != null && this._questionDoc != null && this._questionDoc.data != null) {
-      const bookId = Canon.bookNumberToId(this.projectText.bookNum);
+    if (this.textsByBookId != null && this._questionDoc != null && this._questionDoc.data != null) {
+      const bookNum: number = this._questionDoc.data.verseRef.bookNum;
+      const bookId = Canon.bookNumberToId(bookNum);
+      const currentText = this.textsByBookId[bookId];
       const questionChapterNumber = this._questionDoc.data.verseRef.chapterNum;
-      textsByBook[bookId] = cloneDeep(this.projectText);
-      textsByBook[bookId].chapters = this.projectText.chapters.filter(
-        chapter => chapter.number === questionChapterNumber
-      );
+      textsByBook[bookId] = cloneDeep(currentText);
+      textsByBook[bookId].chapters = currentText.chapters.filter(chapter => chapter.number === questionChapterNumber);
     }
     return textsByBook;
   }
@@ -228,6 +235,13 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       }
     });
     this.updateScriptureEndEnabled();
+  }
+
+  archiveQuestion(): void {
+    this._questionDoc!.submitJson0Op(op => {
+      op.set<boolean>(qd => qd.isArchived, true);
+      op.set(qd => qd.dateArchived!, new Date().toJSON());
+    });
   }
 
   checkScriptureText(): void {
@@ -260,6 +274,27 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
     this.scriptureText.setValue(this.activeAnswer.scriptureText);
     this.showAnswerForm();
+  }
+
+  async questionDialog(): Promise<void> {
+    if (this._questionDoc == null || this._questionDoc.data == null) {
+      return;
+    }
+    const projectId = this._questionDoc.data.projectRef;
+    if (this._questionDoc.data.answers.length > 0) {
+      const answeredDialogRef = this.dialog.open(QuestionAnsweredDialogComponent);
+      const dialogResponse = (await answeredDialogRef.afterClosed().toPromise()) as string;
+      if (dialogResponse === 'close') {
+        return;
+      }
+    }
+
+    const data: QuestionDialogData = {
+      question: this._questionDoc.data,
+      textsByBookId: this.textsByBookId!,
+      projectId: projectId
+    };
+    await this.questionDialogService.questionDialog(data, this._questionDoc);
   }
 
   extractScriptureText() {
@@ -351,7 +386,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
 
     const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
-      data: { input: currentVerseSelection, booksAndChaptersToShow: this.textsByBookId, rangeStart }
+      data: { input: currentVerseSelection, booksAndChaptersToShow: this.currentBookAndChapter, rangeStart }
     };
 
     const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
@@ -460,9 +495,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   private updateValidationRules(): void {
-    this.scriptureStart.setValidators([SFValidators.verseStr(this.textsByBookId)]);
+    this.scriptureStart.setValidators([SFValidators.verseStr(this.currentBookAndChapter)]);
     this.scriptureStart.updateValueAndValidity();
-    this.scriptureEnd.setValidators([SFValidators.verseStr(this.textsByBookId)]);
+    this.scriptureEnd.setValidators([SFValidators.verseStr(this.currentBookAndChapter)]);
     this.scriptureEnd.updateValueAndValidity();
 
     if (this.audio.url) {

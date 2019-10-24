@@ -29,6 +29,15 @@
     .question-text {
       font-weight: bold;
     }
+    .question-footer {
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        button {
+          height: auto;
+        }
+      }
+    }
   }
 }
 #answer-form {
