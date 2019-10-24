@@ -123,8 +123,7 @@ namespace SIL.XForge.Scripture.Services
                     .Insert(". ")
                     .InsertChar("John 1:1", "xt")
                     .Insert(" and ")
-                    .InsertChar("Mark 1:1", "xt")
-                    .Insert("."), "f", "+", "verse_1_1")
+                    .InsertChar("Mark 1:1", "xt"), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p")
                 .Insert("\n");
@@ -144,8 +143,7 @@ namespace SIL.XForge.Scripture.Services
                         ". ",
                         Char("xt", "John 1:1"),
                         " and ",
-                        Char("xt", "Mark 1:1"),
-                        "."),
+                        Char("xt", "Mark 1:1")),
                     ", so that we can test it."));
             Assert.IsTrue(XNode.DeepEquals(newUsxElem, expected));
         }
@@ -653,8 +651,7 @@ namespace SIL.XForge.Scripture.Services
                         ". ",
                         Char("xt", "John 1:1"),
                         " and ",
-                        Char("xt", "Mark 1:1"),
-                        "."),
+                        Char("xt", "Mark 1:1")),
                     ", so that we can test it."));
 
             var mapper = new DeltaUsxMapper();
@@ -672,8 +669,7 @@ namespace SIL.XForge.Scripture.Services
                     .Insert(". ")
                     .InsertChar("John 1:1", "xt")
                     .Insert(" and ")
-                    .InsertChar("Mark 1:1", "xt")
-                    .Insert("."), "f", "+", "verse_1_1")
+                    .InsertChar("Mark 1:1", "xt"), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
 

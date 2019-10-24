@@ -465,6 +465,8 @@ namespace SIL.XForge.Scripture.Services
 
                 }
             }
+            while (curCharAttrs.Count > 0)
+                CharEnded(childNodes, curCharAttrs);
             if (curTableAttrs != null)
             {
                 RowEnded(childNodes, ref curRowAttrs);
