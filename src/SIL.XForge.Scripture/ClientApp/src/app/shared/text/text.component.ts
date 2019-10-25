@@ -338,7 +338,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
     this.viewModel.toggleHighlight(range, value ? this._id.textType : false);
 
-    if (this._id.textType === 'target' && this.highlightMarker != null) {
+    if (!this.isReadOnly && this._id.textType === 'target' && this.highlightMarker != null) {
       if (value) {
         this.highlightMarker.style.visibility = '';
       } else {

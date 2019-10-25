@@ -404,7 +404,7 @@ npm run build
 
 If a model change is made, then a corresponding data migration should be implemented in the Node backend. A data migration is implemented by following these steps:
 
-1. Create a class that extends the `Migration` base class with the name `<collection>Migration<version>` in the appropriate collection migrations file. The version number in the class name should be left padded with zeroes for 6 digits. For example, if you are adding a user migration for schema version 10, then you would add the class `UserMigration000010` to the `src/RealtimeServer/common/services/user-migrations.ts` file.
+1. Create a class that extends the `Migration` base class with the name `<collection>Migration<version>` in the appropriate collection migrations file. For example, if you are adding a user migration for schema version 10, then you would add the class `UserMigration10` to the `src/RealtimeServer/common/services/user-migrations.ts` file.
 2. Implement the `migrateDoc` method. The `submitMigrationOp` function MUST be used to submit any migration changes to the doc.
 3. Implement the `migrateOp` method.
 4. Add the class to the migrations array in the migrations file.
@@ -416,3 +416,18 @@ In Visual Studio Code, in the debug sidebar, choose **Full App (SF)** to debug t
 ## Database
 
 The VS Code extension [Azure Cosmos DB](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-cosmosdb) can be used to inspect our Mongo DB.
+
+## USX Validation
+
+USX data from the Paratext Data Access API is validated in order to ensure that Scripture Forge does not corrupt Scripture data that it does not know how to properly round-trip. If the `DeltaUsxMapper` class is updated to support new USX data, then Scripture Forge's USX schema should be updated to reflect the corresponding change. The schema is based on the [USX Relax NG schema](https://ubsicap.github.io/usx/schema.html) and can be found at `src/SIL.XForge.Scripture/usx-sf.rnc`. Once the schema is updated, it must be converted to an [XML Schema](https://www.w3.org/TR/xmlschema-1/) file. The schema can be converted using [Trang](https://github.com/relaxng/jing-trang). On Linux, install Trang using
+
+```bash
+sudo apt install trang
+```
+
+Convert the schema to XML Schema format by running
+
+```bash
+cd src/SIL.XForge.Scripture
+trang usx-sf.rnc usx-sf.xsd
+```

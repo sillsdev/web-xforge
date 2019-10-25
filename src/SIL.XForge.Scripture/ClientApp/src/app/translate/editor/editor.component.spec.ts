@@ -70,6 +70,7 @@ describe('EditorComponent', () => {
       expect(env.component.target.segmentRef).toEqual('');
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
+      expect(env.invalidWarning).toBeNull();
       env.dispose();
     }));
 
@@ -582,7 +583,7 @@ describe('EditorComponent', () => {
       expect(env.component.target.segmentRef).toEqual('');
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
-      expect(env.component.canEditTexts).toBe(false);
+      expect(env.component.canEdit).toBe(false);
       expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
@@ -600,6 +601,24 @@ describe('EditorComponent', () => {
       expect(env.component.showSuggestion).toBe(false);
       expect(env.isSourceAreaHidden).toBe(true);
       expect(env.component.target.readOnlyEnabled).toBe(true);
+      env.dispose();
+    }));
+
+    it('chapter is invalid', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.wait();
+      expect(env.component.bookName).toEqual('Mark');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(false);
+      expect(env.isSourceAreaHidden).toBe(true);
+      expect(env.invalidWarning).not.toBeNull();
       env.dispose();
     }));
   });
@@ -642,6 +661,7 @@ describe('EditorComponent', () => {
 
     it('user cannot edit', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.setupProject(false);
       env.setCurrentUser('user02');
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
@@ -653,8 +673,27 @@ describe('EditorComponent', () => {
       expect(env.component.target.segmentRef).toEqual('');
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
-      expect(env.component.canEditTexts).toBe(false);
+      expect(env.component.canEdit).toBe(false);
       expect(env.isSourceAreaHidden).toBe(true);
+      env.dispose();
+    }));
+
+    it('chapter is invalid', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject(false);
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.wait();
+      expect(env.component.bookName).toEqual('Mark');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(false);
+      expect(env.isSourceAreaHidden).toBe(true);
+      expect(env.invalidWarning).not.toBeNull();
       env.dispose();
     }));
   });
@@ -803,6 +842,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#source-text-area'));
   }
 
+  get invalidWarning(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.invalid-warning'));
+  }
+
   get isSourceAreaHidden(): boolean {
     return this.sourceTextArea.nativeElement.style.display === 'none';
   }
@@ -845,18 +888,18 @@ class TestEnvironment {
         texts: [
           {
             bookNum: 40,
-            chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+            chapters: [{ number: 1, lastVerse: 3, isValid: true }, { number: 2, lastVerse: 3, isValid: true }],
             hasSource: true
           },
-          { bookNum: 41, chapters: [{ number: 1, lastVerse: 3 }], hasSource: true },
+          { bookNum: 41, chapters: [{ number: 1, lastVerse: 3, isValid: false }], hasSource: true },
           {
             bookNum: 42,
-            chapters: [{ number: 1, lastVerse: 3 }, { number: 2, lastVerse: 3 }],
+            chapters: [{ number: 1, lastVerse: 3, isValid: true }, { number: 2, lastVerse: 3, isValid: true }],
             hasSource: false
           },
           {
             bookNum: 43,
-            chapters: [{ number: 1, lastVerse: 0 }],
+            chapters: [{ number: 1, lastVerse: 0, isValid: true }],
             hasSource: false
           }
         ]

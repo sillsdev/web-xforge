@@ -157,7 +157,7 @@ class TestEnvironment {
   matthewText: TextInfo = {
     bookNum: 40,
     hasSource: false,
-    chapters: [{ number: 1, lastVerse: 25 }, { number: 3, lastVerse: 17 }]
+    chapters: [{ number: 1, lastVerse: 25, isValid: true }, { number: 3, lastVerse: 17, isValid: true }]
   };
   readonly PROJECT01: string = 'project01';
   adminUser: UserInfo = { id: 'user01', role: SFProjectRole.ParatextAdministrator };

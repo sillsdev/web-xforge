@@ -54,7 +54,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-            env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XElement>())).Do(x => throw new Exception());
+            env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XDocument>())).Do(x => throw new Exception());
 
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -339,6 +339,25 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_ChapterValidityChanged()
+        {
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2) { InvalidChapters = { 1 } });
+            env.SetupPTData(new Book("MAT", 2) { InvalidChapters = { 2 } }, new Book("MRK", 2));
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Texts[0].Chapters[0].IsValid, Is.True);
+            Assert.That(project.Texts[0].Chapters[1].IsValid, Is.False);
+            Assert.That(project.Texts[1].Chapters[0].IsValid, Is.True);
+            Assert.That(project.Texts[1].Chapters[1].IsValid, Is.True);
+
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+        }
+
+        [Test]
         public async Task SyncAsync_BooksChanged()
         {
             var env = new TestEnvironment();
@@ -456,6 +475,8 @@ namespace SIL.XForge.Scripture.Services
             public string Id { get; }
             public int TargetChapterCount { get; }
             public int SourceChapterCount { get; }
+
+            public HashSet<int> InvalidChapters { get; } = new HashSet<int>();
         }
 
         private class TestEnvironment
@@ -593,7 +614,12 @@ namespace SIL.XForge.Scripture.Services
                                 {
                                     BookNum = Canon.BookIdToNumber(b.Id),
                                     Chapters = Enumerable.Range(1, b.TargetChapterCount)
-                                        .Select(c => new Chapter { Number = c, LastVerse = 10 }).ToList(),
+                                        .Select(c => new Chapter
+                                        {
+                                            Number = c,
+                                            LastVerse = 10,
+                                            IsValid = !b.InvalidChapters.Contains(c)
+                                        }).ToList(),
                                     HasSource = b.SourceChapterCount > 0
                                 }).ToList(),
                             Sync = new Sync
@@ -644,7 +670,7 @@ namespace SIL.XForge.Scripture.Services
                     .Returns(books.Where(b => b.SourceChapterCount > 0).Select(b => b.Id).ToArray());
                 foreach (Book book in books)
                 {
-                    AddPTBook(book.Id, book.TargetChapterCount, TextType.Target);
+                    AddPTBook(book.Id, book.TargetChapterCount, TextType.Target, book.InvalidChapters);
                     if (book.SourceChapterCount > 0)
                         AddPTBook(book.Id, book.SourceChapterCount, TextType.Source);
                 }
@@ -660,7 +686,8 @@ namespace SIL.XForge.Scripture.Services
                 return Path.Combine("scriptureforge", "sync", "project01", GetParatextProject(textType));
             }
 
-            private void AddPTBook(string bookId, int chapterCount, TextType textType)
+            private void AddPTBook(string bookId, int chapterCount, TextType textType,
+                HashSet<int> invalidChapters = null)
             {
                 string paratextProject = GetParatextProject(textType);
 
@@ -670,11 +697,12 @@ namespace SIL.XForge.Scripture.Services
                 ParatextService.UpdateBookTextAsync(Arg.Any<UserSecret>(), paratextProject, bookId,
                     Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(bookText));
                 FileSystemService.CreateFile(GetUsxFileName(textType, bookId)).Returns(new MemoryStream());
-                Func<XElement, bool> predicate = e => (string)e?.Element("book")?.Attribute("code") == bookId
-                        && (string)e?.Element("book") == paratextProject;
+                Func<XDocument, bool> predicate = d => (string)d?.Root?.Element("book")?.Attribute("code") == bookId
+                        && (string)d?.Root?.Element("book") == paratextProject;
                 var chapterDeltas = Enumerable.Range(1, chapterCount)
-                    .ToDictionary(c => c, c => (Delta.New().InsertText("text"), 10));
-                DeltaUsxMapper.ToChapterDeltas(Arg.Is<XElement>(e => predicate(e))).Returns(chapterDeltas);
+                    .Select(c => new ChapterDelta(c, 10, !(invalidChapters?.Contains(c) ?? false),
+                        Delta.New().InsertText("text")));
+                DeltaUsxMapper.ToChapterDeltas(Arg.Is<XDocument>(d => predicate(d))).Returns(chapterDeltas);
             }
 
             private void AddSFBook(string bookId, int chapterCount, TextType textType, bool changed)
@@ -687,9 +715,10 @@ namespace SIL.XForge.Scripture.Services
                 FileSystemService.FileExists(filename).Returns(true);
                 string newBookText = GetBookText(textType, bookId, changed ? 2 : 1);
                 DeltaUsxMapper.ToUsx(
-                    Arg.Is<XElement>(e => (string)e.Element("book").Attribute("code") == bookId
-                        && (string)e.Element("book") == GetParatextProject(textType)), Arg.Any<IEnumerable<Delta>>())
-                    .Returns(XElement.Parse(newBookText).Element("usx"));
+                    Arg.Is<XDocument>(d => (string)d.Root.Element("book").Attribute("code") == bookId
+                        && (string)d.Root.Element("book") == GetParatextProject(textType)),
+                    Arg.Any<IEnumerable<ChapterDelta>>())
+                    .Returns(new XDocument(XElement.Parse(newBookText).Element("usx")));
 
                 for (int c = 1; c <= chapterCount; c++)
                 {

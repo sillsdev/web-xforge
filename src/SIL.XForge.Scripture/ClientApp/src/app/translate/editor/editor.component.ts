@@ -193,18 +193,32 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   get hasSource(): boolean {
-    if (!this.canEditTexts) {
+    if (!this.canEdit) {
       return false;
     }
     return this.text == null ? false : this.text.hasSource;
   }
 
-  get canEditTexts(): boolean {
+  get hasEditRight(): boolean {
     if (this.projectDoc == null || this.projectDoc.data == null) {
       return false;
     }
+
     const projectRole = this.projectDoc.data.userRoles[this.userService.currentUserId];
     return SF_PROJECT_RIGHTS.hasRight(projectRole, { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit });
+  }
+
+  get canEdit(): boolean {
+    return this.isValid && this.hasEditRight;
+  }
+
+  get isValid(): boolean {
+    if (this.text == null) {
+      return false;
+    }
+
+    const chapter = this.text.chapters.find(c => c.number === this._chapter);
+    return chapter != null && chapter.isValid;
   }
 
   ngOnInit(): void {
@@ -460,7 +474,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
     this.translationSession = undefined;
     this.translationEngine = undefined;
-    if (this.projectDoc == null || !this.translationSuggestionsProjectEnabled || !this.canEditTexts) {
+    if (this.projectDoc == null || !this.translationSuggestionsProjectEnabled || !this.canEdit) {
       return;
     }
 
