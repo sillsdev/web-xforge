@@ -4,5 +4,6 @@ namespace SIL.XForge.Scripture.Models
     {
         public int Number { get; set; }
         public int LastVerse { get; set; }
+        public bool IsValid { get; set; }
     }
 }

@@ -5,10 +5,11 @@ namespace SIL.XForge.Scripture.Services
 {
     public static class DeltaUsxExtensions
     {
-        public static Delta InsertPara(this Delta delta, JObject attributes)
+        public static Delta InsertPara(this Delta delta, JObject paraAttributes, JObject attributes = null)
         {
-            var attrs = new JObject(new JProperty("para", attributes));
-            return delta.Insert("\n", attrs);
+            attributes = (JObject)attributes?.DeepClone() ?? new JObject();
+            attributes.Add(new JProperty("para", paraAttributes));
+            return delta.Insert("\n", attributes);
         }
 
         public static Delta InsertText(this Delta delta, string text, string segRef = null, JObject attributes = null)

@@ -1,0 +1,831 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  usx-sf.rnc
+  The USX 3.0 schema for Scripture Forge
+  This schema defines the USX data that Scripture Forge is capable of handling properly.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="usx">
+    <xs:complexType mixed="true">
+      <xs:sequence>
+        <xs:element minOccurs="0" maxOccurs="unbounded" ref="book"/>
+        <xs:group minOccurs="0" maxOccurs="unbounded" ref="ChapterContent"/>
+      </xs:sequence>
+      <xs:attribute name="version" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="3"/>
+            <xs:pattern value="\d+\.\d+(\.\d+)?"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="book">
+    <xs:complexType mixed="true">
+      <xs:attribute name="code" use="required" type="BookIdentification.book.code.enum"/>
+      <xs:attribute name="style" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="id"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="BookIdentification.book.code.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="GEN"/>
+      <xs:enumeration value="EXO"/>
+      <xs:enumeration value="LEV"/>
+      <xs:enumeration value="NUM"/>
+      <xs:enumeration value="DEU"/>
+      <xs:enumeration value="JOS"/>
+      <xs:enumeration value="JDG"/>
+      <xs:enumeration value="RUT"/>
+      <xs:enumeration value="1SA"/>
+      <xs:enumeration value="2SA"/>
+      <xs:enumeration value="1KI"/>
+      <xs:enumeration value="2KI"/>
+      <xs:enumeration value="1CH"/>
+      <xs:enumeration value="2CH"/>
+      <xs:enumeration value="EZR"/>
+      <xs:enumeration value="NEH"/>
+      <xs:enumeration value="EST"/>
+      <xs:enumeration value="JOB"/>
+      <xs:enumeration value="PSA"/>
+      <xs:enumeration value="PRO"/>
+      <xs:enumeration value="ECC"/>
+      <xs:enumeration value="SNG"/>
+      <xs:enumeration value="ISA"/>
+      <xs:enumeration value="JER"/>
+      <xs:enumeration value="LAM"/>
+      <xs:enumeration value="EZK"/>
+      <xs:enumeration value="DAN"/>
+      <xs:enumeration value="HOS"/>
+      <xs:enumeration value="JOL"/>
+      <xs:enumeration value="AMO"/>
+      <xs:enumeration value="OBA"/>
+      <xs:enumeration value="JON"/>
+      <xs:enumeration value="MIC"/>
+      <xs:enumeration value="NAM"/>
+      <xs:enumeration value="HAB"/>
+      <xs:enumeration value="ZEP"/>
+      <xs:enumeration value="HAG"/>
+      <xs:enumeration value="ZEC"/>
+      <xs:enumeration value="MAL"/>
+      <xs:enumeration value="MAT"/>
+      <xs:enumeration value="MRK"/>
+      <xs:enumeration value="LUK"/>
+      <xs:enumeration value="JHN"/>
+      <xs:enumeration value="ACT"/>
+      <xs:enumeration value="ROM"/>
+      <xs:enumeration value="1CO"/>
+      <xs:enumeration value="2CO"/>
+      <xs:enumeration value="GAL"/>
+      <xs:enumeration value="EPH"/>
+      <xs:enumeration value="PHP"/>
+      <xs:enumeration value="COL"/>
+      <xs:enumeration value="1TH"/>
+      <xs:enumeration value="2TH"/>
+      <xs:enumeration value="1TI"/>
+      <xs:enumeration value="2TI"/>
+      <xs:enumeration value="TIT"/>
+      <xs:enumeration value="PHM"/>
+      <xs:enumeration value="HEB"/>
+      <xs:enumeration value="JAS"/>
+      <xs:enumeration value="1PE"/>
+      <xs:enumeration value="2PE"/>
+      <xs:enumeration value="1JN"/>
+      <xs:enumeration value="2JN"/>
+      <xs:enumeration value="3JN"/>
+      <xs:enumeration value="JUD"/>
+      <xs:enumeration value="REV"/>
+      <xs:enumeration value="TOB"/>
+      <xs:enumeration value="JDT"/>
+      <xs:enumeration value="ESG"/>
+      <xs:enumeration value="WIS"/>
+      <xs:enumeration value="SIR"/>
+      <xs:enumeration value="BAR"/>
+      <xs:enumeration value="LJE"/>
+      <xs:enumeration value="S3Y"/>
+      <xs:enumeration value="SUS"/>
+      <xs:enumeration value="BEL"/>
+      <xs:enumeration value="1MA"/>
+      <xs:enumeration value="2MA"/>
+      <xs:enumeration value="3MA"/>
+      <xs:enumeration value="4MA"/>
+      <xs:enumeration value="1ES"/>
+      <xs:enumeration value="2ES"/>
+      <xs:enumeration value="MAN"/>
+      <xs:enumeration value="PS2"/>
+      <xs:enumeration value="ODA"/>
+      <xs:enumeration value="PSS"/>
+      <xs:enumeration value="EZA"/>
+      <xs:enumeration value="5EZ"/>
+      <xs:enumeration value="6EZ"/>
+      <xs:enumeration value="DAG"/>
+      <xs:enumeration value="PS3"/>
+      <xs:enumeration value="2BA"/>
+      <xs:enumeration value="LBA"/>
+      <xs:enumeration value="JUB"/>
+      <xs:enumeration value="ENO"/>
+      <xs:enumeration value="1MQ"/>
+      <xs:enumeration value="2MQ"/>
+      <xs:enumeration value="3MQ"/>
+      <xs:enumeration value="REP"/>
+      <xs:enumeration value="4BA"/>
+      <xs:enumeration value="LAO"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="para">
+    <xs:complexType mixed="true">
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="ref"/>
+        <xs:element ref="note"/>
+        <xs:group ref="Char"/>
+        <xs:element ref="ms"/>
+        <xs:element ref="figure"/>
+        <xs:element ref="verse"/>
+        <xs:element ref="optbreak"/>
+        <xs:element ref="unmatched"/>
+      </xs:choice>
+      <xs:attribute name="style" use="required">
+        <xs:simpleType>
+          <xs:union memberTypes="Para.para.style.enum BookHeaders.para.style.enum BookTitles.para.style.enum BookIntroduction.para.style.enum List.para.style.enum">
+            <xs:simpleType>
+              <xs:restriction base="xs:token">
+                <xs:enumeration value=""/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:union>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="vid">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z1-4]{3} ?[a-z0-9\-,:]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="status"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="Para.para.style.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="restore"/>
+      <xs:enumeration value="cls"/>
+      <xs:enumeration value="iex"/>
+      <xs:enumeration value="ip"/>
+      <xs:enumeration value="lit"/>
+      <xs:enumeration value="m"/>
+      <xs:enumeration value="mi"/>
+      <xs:enumeration value="nb"/>
+      <xs:enumeration value="p"/>
+      <xs:enumeration value="pb"/>
+      <xs:enumeration value="pc"/>
+      <xs:enumeration value="pi"/>
+      <xs:enumeration value="pi1"/>
+      <xs:enumeration value="pi2"/>
+      <xs:enumeration value="pi3"/>
+      <xs:enumeration value="po"/>
+      <xs:enumeration value="pr"/>
+      <xs:enumeration value="pmo"/>
+      <xs:enumeration value="pm"/>
+      <xs:enumeration value="pmc"/>
+      <xs:enumeration value="pmr"/>
+      <xs:enumeration value="q"/>
+      <xs:enumeration value="q1"/>
+      <xs:enumeration value="q2"/>
+      <xs:enumeration value="q3"/>
+      <xs:enumeration value="q4"/>
+      <xs:enumeration value="qa"/>
+      <xs:enumeration value="qc"/>
+      <xs:enumeration value="qr"/>
+      <xs:enumeration value="qm"/>
+      <xs:enumeration value="qm1"/>
+      <xs:enumeration value="qm2"/>
+      <xs:enumeration value="qm3"/>
+      <xs:enumeration value="qd"/>
+      <xs:enumeration value="b"/>
+      <xs:enumeration value="d"/>
+      <xs:enumeration value="ms"/>
+      <xs:enumeration value="ms1"/>
+      <xs:enumeration value="ms2"/>
+      <xs:enumeration value="ms3"/>
+      <xs:enumeration value="mr"/>
+      <xs:enumeration value="r"/>
+      <xs:enumeration value="s"/>
+      <xs:enumeration value="s1"/>
+      <xs:enumeration value="s2"/>
+      <xs:enumeration value="s3"/>
+      <xs:enumeration value="s4"/>
+      <xs:enumeration value="sr"/>
+      <xs:enumeration value="sp"/>
+      <xs:enumeration value="sd"/>
+      <xs:enumeration value="sd1"/>
+      <xs:enumeration value="sd2"/>
+      <xs:enumeration value="sd3"/>
+      <xs:enumeration value="sd4"/>
+      <xs:enumeration value="ts"/>
+      <xs:enumeration value="lh"/>
+      <xs:enumeration value="li"/>
+      <xs:enumeration value="li1"/>
+      <xs:enumeration value="li2"/>
+      <xs:enumeration value="li3"/>
+      <xs:enumeration value="li4"/>
+      <xs:enumeration value="lf"/>
+      <xs:enumeration value="lim"/>
+      <xs:enumeration value="lim1"/>
+      <xs:enumeration value="lim2"/>
+      <xs:enumeration value="lim3"/>
+      <xs:enumeration value="lim4"/>
+      <xs:enumeration value="cp"/>
+      <xs:enumeration value="cl"/>
+      <xs:enumeration value="cd"/>
+      <xs:enumeration value="mte"/>
+      <xs:enumeration value="mte1"/>
+      <xs:enumeration value="mte2"/>
+      <xs:enumeration value="p"/>
+      <xs:enumeration value="p1"/>
+      <xs:enumeration value="p2"/>
+      <xs:enumeration value="k1"/>
+      <xs:enumeration value="k2"/>
+      <xs:enumeration value="rem"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="BookHeaders.para.style.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="ide"/>
+      <xs:enumeration value="h"/>
+      <xs:enumeration value="h1"/>
+      <xs:enumeration value="h2"/>
+      <xs:enumeration value="h3"/>
+      <xs:enumeration value="toc1"/>
+      <xs:enumeration value="toc2"/>
+      <xs:enumeration value="toc3"/>
+      <xs:enumeration value="toca1"/>
+      <xs:enumeration value="toca2"/>
+      <xs:enumeration value="toca3"/>
+      <xs:enumeration value="rem"/>
+      <xs:enumeration value="usfm"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="BookTitles.para.style.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="mt"/>
+      <xs:enumeration value="mt1"/>
+      <xs:enumeration value="mt2"/>
+      <xs:enumeration value="mt3"/>
+      <xs:enumeration value="mt4"/>
+      <xs:enumeration value="imt"/>
+      <xs:enumeration value="imt1"/>
+      <xs:enumeration value="imt2"/>
+      <xs:enumeration value="rem"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="BookIntroduction.para.style.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="imt"/>
+      <xs:enumeration value="imt1"/>
+      <xs:enumeration value="imt2"/>
+      <xs:enumeration value="imt3"/>
+      <xs:enumeration value="imt4"/>
+      <xs:enumeration value="ib"/>
+      <xs:enumeration value="ie"/>
+      <xs:enumeration value="ili"/>
+      <xs:enumeration value="ili1"/>
+      <xs:enumeration value="ili2"/>
+      <xs:enumeration value="im"/>
+      <xs:enumeration value="imi"/>
+      <xs:enumeration value="imq"/>
+      <xs:enumeration value="io"/>
+      <xs:enumeration value="io1"/>
+      <xs:enumeration value="io2"/>
+      <xs:enumeration value="io3"/>
+      <xs:enumeration value="io4"/>
+      <xs:enumeration value="iot"/>
+      <xs:enumeration value="ip"/>
+      <xs:enumeration value="ipi"/>
+      <xs:enumeration value="ipq"/>
+      <xs:enumeration value="ipr"/>
+      <xs:enumeration value="iq"/>
+      <xs:enumeration value="iq1"/>
+      <xs:enumeration value="iq2"/>
+      <xs:enumeration value="iq3"/>
+      <xs:enumeration value="is"/>
+      <xs:enumeration value="is1"/>
+      <xs:enumeration value="is2"/>
+      <xs:enumeration value="imte"/>
+      <xs:enumeration value="imte1"/>
+      <xs:enumeration value="imte2"/>
+      <xs:enumeration value="iex"/>
+      <xs:enumeration value="rem"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:group name="ChapterContent">
+    <xs:sequence>
+      <xs:choice minOccurs="0">
+        <xs:element ref="chapter"/>
+        <xs:element ref="para"/>
+        <xs:element ref="table"/>
+        <xs:element ref="note"/>
+        <xs:element ref="verse"/>
+        <xs:element ref="unmatched"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:group>
+  <xs:simpleType name="List.para.style.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="lh"/>
+      <xs:enumeration value="li"/>
+      <xs:enumeration value="li1"/>
+      <xs:enumeration value="li2"/>
+      <xs:enumeration value="li3"/>
+      <xs:enumeration value="li4"/>
+      <xs:enumeration value="lf"/>
+      <xs:enumeration value="lim"/>
+      <xs:enumeration value="lim1"/>
+      <xs:enumeration value="lim2"/>
+      <xs:enumeration value="lim3"/>
+      <xs:enumeration value="lim4"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="table">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="row"/>
+      </xs:sequence>
+      <xs:attribute name="vid">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z1-4]{3} ?[a-z0-9\-,:]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="row">
+    <xs:complexType>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element ref="verse"/>
+        <xs:element ref="cell"/>
+      </xs:choice>
+      <xs:attribute name="style" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="tr"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="cell">
+    <xs:complexType mixed="true">
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="note"/>
+        <xs:group ref="Char"/>
+        <xs:element ref="ms"/>
+        <xs:element ref="figure"/>
+        <xs:element ref="verse"/>
+        <xs:element ref="optbreak"/>
+        <xs:element ref="unmatched"/>
+      </xs:choice>
+      <xs:attribute name="style" use="required" type="cell.style.enum"/>
+      <xs:attribute name="align" use="required" type="cell.align.enum"/>
+      <xs:attribute name="colspan" type="xs:integer"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="cell.style.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="th"/>
+      <xs:enumeration value="tc"/>
+      <xs:enumeration value="thr"/>
+      <xs:enumeration value="tcr"/>
+      <xs:enumeration value="thc"/>
+      <xs:enumeration value="tcc"/>
+      <xs:enumeration value="th1"/>
+      <xs:enumeration value="tc1"/>
+      <xs:enumeration value="thr1"/>
+      <xs:enumeration value="tcr1"/>
+      <xs:enumeration value="th2"/>
+      <xs:enumeration value="tc2"/>
+      <xs:enumeration value="thr2"/>
+      <xs:enumeration value="tcr2"/>
+      <xs:enumeration value="th3"/>
+      <xs:enumeration value="tc3"/>
+      <xs:enumeration value="thr3"/>
+      <xs:enumeration value="tcr3"/>
+      <xs:enumeration value="th4"/>
+      <xs:enumeration value="tc4"/>
+      <xs:enumeration value="thr4"/>
+      <xs:enumeration value="tcr4"/>
+      <xs:enumeration value="th5"/>
+      <xs:enumeration value="tc5"/>
+      <xs:enumeration value="thr5"/>
+      <xs:enumeration value="tcr5"/>
+      <xs:enumeration value="rem"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="cell.align.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="start"/>
+      <xs:enumeration value="center"/>
+      <xs:enumeration value="end"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:group name="Char">
+    <xs:sequence>
+      <xs:element name="char">
+        <xs:complexType mixed="true">
+          <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element ref="ref"/>
+            <xs:group ref="Char"/>
+            <xs:element ref="ms"/>
+            <xs:element ref="note"/>
+            <xs:element ref="optbreak"/>
+            <xs:element ref="unmatched"/>
+          </xs:choice>
+          <xs:attribute name="style" use="required">
+            <xs:simpleType>
+              <xs:union memberTypes="Char.char.style.enum IntroChar.char.style.enum ListChar.char.style.enum">
+                <xs:simpleType>
+                  <xs:restriction base="xs:token">
+                    <xs:enumeration value="w"/>
+                  </xs:restriction>
+                </xs:simpleType>
+                <xs:simpleType>
+                  <xs:restriction base="xs:token">
+                    <xs:enumeration value="rb"/>
+                  </xs:restriction>
+                </xs:simpleType>
+                <xs:simpleType>
+                  <xs:restriction base="xs:token">
+                    <xs:enumeration value="fv"/>
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:union>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attributeGroup ref="char.link"/>
+          <xs:attribute name="closed" type="xs:boolean"/>
+          <xs:attribute name="lemma">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:minLength value="1"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="strong">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:pattern value="[HG]\d{4,5}(:[a-z])?"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="srcloc">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:pattern value="[a-z]{3,5}\d?:\d+\.\d+\.\d+\.\d+"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attribute name="gloss">
+            <xs:simpleType>
+              <xs:restriction base="xs:string">
+                <xs:minLength value="1"/>
+              </xs:restriction>
+            </xs:simpleType>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:simpleType name="Char.char.style.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="va"/>
+      <xs:enumeration value="vp"/>
+      <xs:enumeration value="ca"/>
+      <xs:enumeration value="qac"/>
+      <xs:enumeration value="qs"/>
+      <xs:enumeration value="add"/>
+      <xs:enumeration value="addpn"/>
+      <xs:enumeration value="bk"/>
+      <xs:enumeration value="dc"/>
+      <xs:enumeration value="efm"/>
+      <xs:enumeration value="fm"/>
+      <xs:enumeration value="k"/>
+      <xs:enumeration value="nd"/>
+      <xs:enumeration value="ndx"/>
+      <xs:enumeration value="ord"/>
+      <xs:enumeration value="pn"/>
+      <xs:enumeration value="png"/>
+      <xs:enumeration value="pro"/>
+      <xs:enumeration value="qt"/>
+      <xs:enumeration value="rq"/>
+      <xs:enumeration value="sig"/>
+      <xs:enumeration value="sls"/>
+      <xs:enumeration value="tl"/>
+      <xs:enumeration value="wg"/>
+      <xs:enumeration value="wh"/>
+      <xs:enumeration value="wa"/>
+      <xs:enumeration value="wj"/>
+      <xs:enumeration value="xt"/>
+      <xs:enumeration value="jmp"/>
+      <xs:enumeration value="no"/>
+      <xs:enumeration value="it"/>
+      <xs:enumeration value="bd"/>
+      <xs:enumeration value="bdit"/>
+      <xs:enumeration value="em"/>
+      <xs:enumeration value="sc"/>
+      <xs:enumeration value="sup"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="IntroChar.char.style.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="ior"/>
+      <xs:enumeration value="iqt"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ListChar.char.style.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="litl"/>
+      <xs:enumeration value="lik"/>
+      <xs:enumeration value="liv"/>
+      <xs:enumeration value="liv1"/>
+      <xs:enumeration value="liv2"/>
+      <xs:enumeration value="liv3"/>
+      <xs:enumeration value="liv4"/>
+      <xs:enumeration value="liv5"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:attributeGroup name="char.link">
+    <xs:attribute name="link-href">
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="(.*///?(.*/?)+)|((prj:[A-Za-z\-0-9]{3,8} )?[A-Z1-4]{3} \d+:\d+(\-\d+)?)|(#[^\s]+)"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="link-title" type="xs:string"/>
+    <xs:attribute name="link-id">
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="[\w_\-\.:]+"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:attributeGroup>
+  <!-- Unique identifier for this location in the text -->
+  <xs:attributeGroup name="char.closed">
+    <xs:attribute name="closed" use="required" type="xs:boolean"/>
+  </xs:attributeGroup>
+  <!-- Present to allow roundtripping to USFM, not needed for publishing -->
+  <xs:element name="ms">
+    <xs:complexType>
+      <xs:attribute name="style" use="required" type="Milestone.ms.style.enum"/>
+      <xs:attribute name="sid">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[\w_\-\.:]+"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="eid">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[\w_\-\.:]+"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="who">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="2"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="Milestone.ms.style.enum">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="ts?(\-[se])?"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="[Zz].+"/>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:pattern value="qt[1-5]?(\-[se])?"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+  <xs:element name="chapter">
+    <xs:complexType>
+      <xs:attribute name="number" use="required" type="xs:integer"/>
+      <xs:attribute name="style" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="c"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="sid">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:pattern value="[A-Z1-4]{3} ?[0-9]+"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="altnumber">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:pattern value="[0-9]+\w?(‏?[\-,][0-9]+\w?)*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="pubnumber">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="eid">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:pattern value="[A-Z1-4]{3} ?[0-9]+"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <!--
+    E.g. <chapter number="1" style="c" altnumber="2" pubnumber="A" />
+    This schema will not support a chapter:verse string within altnumber
+  -->
+  <xs:element name="verse">
+    <xs:complexType>
+      <xs:attribute name="number" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:pattern value="[0-9]+\w?(‏?[\-,][0-9]+\w?)*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="style" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="v"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="altnumber">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:pattern value="[0-9]+\w?(‏?[\-,:][0-9]+\w?)*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="pubnumber">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="sid">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z1-4]{3} ?[a-z0-9\-,:]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="eid">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z1-4]{3} ?[a-z0-9\-,:]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <!-- E.g. <verse number="1" style="v" altnumber="2" pubnumber="B" sid="GEN 1:22" /> -->
+  <xs:element name="note">
+    <xs:complexType mixed="true">
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:group ref="NoteChar"/>
+        <xs:element ref="unmatched"/>
+      </xs:choice>
+      <xs:attribute name="style" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:token">
+            <xs:enumeration value="f"/>
+            <xs:enumeration value="fe"/>
+            <xs:enumeration value="ef"/>
+            <xs:enumeration value="x"/>
+            <xs:enumeration value="ex"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="caller" use="required"/>
+      <xs:attribute name="category"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="NoteChar">
+    <xs:sequence>
+      <xs:element name="char">
+        <xs:complexType mixed="true">
+          <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:group ref="Char"/>
+            <xs:element ref="ref"/>
+            <xs:element ref="unmatched"/>
+          </xs:choice>
+          <xs:attribute name="style" use="required">
+            <xs:simpleType>
+              <xs:union memberTypes="FootnoteChar.char.style.enum CrossReferenceChar.char.style.enum"/>
+            </xs:simpleType>
+          </xs:attribute>
+          <xs:attributeGroup ref="char.link"/>
+          <xs:attribute name="closed" type="xs:boolean"/>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:simpleType name="FootnoteChar.char.style.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="fr"/>
+      <xs:enumeration value="cat"/>
+      <xs:enumeration value="ft"/>
+      <xs:enumeration value="fk"/>
+      <xs:enumeration value="fq"/>
+      <xs:enumeration value="fqa"/>
+      <xs:enumeration value="fl"/>
+      <xs:enumeration value="fw"/>
+      <xs:enumeration value="fp"/>
+      <xs:enumeration value="fv"/>
+      <xs:enumeration value="fdc"/>
+      <xs:enumeration value="xt"/>
+      <xs:enumeration value="it"/>
+      <xs:enumeration value="bd"/>
+      <xs:enumeration value="bdit"/>
+      <xs:enumeration value="em"/>
+      <xs:enumeration value="sc"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="CrossReferenceChar.char.style.enum">
+    <xs:restriction base="xs:token">
+      <xs:enumeration value="xo"/>
+      <xs:enumeration value="xop"/>
+      <xs:enumeration value="xt"/>
+      <xs:enumeration value="xta"/>
+      <xs:enumeration value="xk"/>
+      <xs:enumeration value="xq"/>
+      <xs:enumeration value="xot"/>
+      <xs:enumeration value="xnt"/>
+      <xs:enumeration value="xdc"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="figure">
+    <xs:complexType mixed="true">
+      <xs:attribute name="style" use="required"/>
+      <xs:attribute name="alt"/>
+      <xs:attribute name="file"/>
+      <xs:attribute name="src"/>
+      <xs:attribute name="size" use="required"/>
+      <xs:attribute name="loc"/>
+      <xs:attribute name="copy"/>
+      <xs:attribute name="ref" use="required"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="ref">
+    <xs:complexType mixed="true">
+      <xs:attribute name="loc" use="required">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z1-4]{3} ?[a-z0-9\-,:]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="optbreak">
+    <xs:complexType/>
+  </xs:element>
+  <xs:element name="unmatched">
+    <xs:complexType>
+      <xs:attribute name="marker" use="required"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

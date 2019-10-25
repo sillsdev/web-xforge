@@ -20,6 +20,10 @@ function setUsxValue(node: HTMLElement, value: any): void {
 
 interface UsxStyle {
   style: string;
+}
+
+interface Para extends UsxStyle {
+  vid?: string;
   status?: string;
 }
 
@@ -27,17 +31,22 @@ interface Chapter extends UsxStyle {
   number: number;
   altnumber?: string;
   pubnumber?: string;
+  sid?: string;
+  eid?: string;
 }
 
 interface Verse extends UsxStyle {
   number: string;
   altnumber?: string;
   pubnumber?: string;
+  sid?: string;
+  eid?: string;
 }
 
 interface Note extends UsxStyle {
   caller: string;
   closed?: string;
+  category?: string;
   contents?: { ops: DeltaOperation[] };
 }
 
@@ -300,27 +309,27 @@ export function registerScripture(): void {
     static blotName = 'para';
     static tagName = 'usx-para';
 
-    static create(value: UsxStyle): Node {
+    static create(value: Para): Node {
       const node = super.create(value) as HTMLElement;
       node.setAttribute(customAttributeName('style'), value.style);
       setUsxValue(node, value);
       return node;
     }
 
-    static formats(node: HTMLElement): UsxStyle {
+    static formats(node: HTMLElement): Para {
       return ParaBlock.value(node);
     }
 
-    static value(node: HTMLElement): UsxStyle {
+    static value(node: HTMLElement): Para {
       return getUsxValue(node);
     }
 
     format(name: string, value: any): void {
       if (name === ParaBlock.blotName) {
-        const usxStyle = value as UsxStyle;
+        const para = value as Para;
         const elem = this.domNode as HTMLElement;
-        elem.setAttribute(customAttributeName('style'), usxStyle.style);
-        setUsxValue(elem, usxStyle);
+        elem.setAttribute(customAttributeName('style'), para.style);
+        setUsxValue(elem, para);
       } else {
         super.format(name, value);
       }
@@ -340,7 +349,7 @@ export function registerScripture(): void {
     }
 
     formatAt(index: number, length: number, name: string, value: any): void {
-      if (name === ParaInline.blotName) {
+      if (name === ParaInline.blotName || name === 'invalid-inline') {
         super.formatAt(index, length, name, value);
       } else {
         this.children.forEachAt(index, length, (child, offset, len) => {
@@ -396,7 +405,9 @@ export function registerScripture(): void {
 
     static create(value: Chapter): Node {
       const node = super.create(value) as HTMLElement;
-      node.innerText = value.number.toString();
+      const span = document.createElement('span');
+      span.innerText = value.number.toString();
+      node.appendChild(span);
       node.contentEditable = 'false';
       setUsxValue(node, value);
       return node;
@@ -423,6 +434,14 @@ export function registerScripture(): void {
   });
 
   const CheckingSelectedData = new QuillParchment.Attributor.Attribute('data-selected', 'data-selected', {
+    scope: Parchment.Scope.INLINE
+  });
+
+  const InvalidBlockAttribute = new QuillParchment.Attributor.Attribute('invalid-block', 'data-invalid-block', {
+    scope: Parchment.Scope.BLOCK
+  });
+
+  const InvalidInlineAttribute = new QuillParchment.Attributor.Attribute('invalid-inline', 'data-invalid-inline', {
     scope: Parchment.Scope.INLINE
   });
 
@@ -465,6 +484,8 @@ export function registerScripture(): void {
   Quill.register('formats/highlight-para', HighlightParaClass);
   Quill.register('formats/data-question', CheckingQuestionData);
   Quill.register('formats/data-selected', CheckingSelectedData);
+  Quill.register('formats/invalid-block', InvalidBlockAttribute);
+  Quill.register('formats/invalid-inline', InvalidInlineAttribute);
   Quill.register('blots/verse', VerseEmbed);
   Quill.register('blots/blank', BlankEmbed);
   Quill.register('blots/note', NoteEmbed);
