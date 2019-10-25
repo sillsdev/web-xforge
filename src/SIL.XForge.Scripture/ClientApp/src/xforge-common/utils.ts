@@ -23,7 +23,7 @@ export function promiseTimeout<T>(promise: Promise<T>, timeout: number) {
 
 export function issuesEmailTemplate(errorId?: string): string {
   const bowser = Bowser.getParser(window.navigator.userAgent);
-  return encodeURI(`mailto:${environment.issueEmail}?subject=${
+  const uri = encodeURI(`mailto:${environment.issueEmail}?subject=${
     environment.siteName
   } issue&body=Thanks for reporting the issue!
 It would help us if you fill out some of the information below, but please submit even if you can't fill out much.
@@ -64,6 +64,8 @@ ${bowser.getOSName()} - ${bowser.getOSVersion() || 'unknown'}
 
 Error id: ${errorId || 'not applicable'}
 `);
+  // Encode commas to avoid the template being truncated when opening ThunderBird from Chromium
+  return uri.replace(/,/g, '%2C');
 }
 
 export function parseJSON(str: string): any | undefined {
