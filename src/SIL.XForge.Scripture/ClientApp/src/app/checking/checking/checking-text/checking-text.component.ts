@@ -121,6 +121,12 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       if (!segments.includes(segment)) {
         segments.push(segment);
       }
+      // Check for similar segments like this verse i.e. verse_1_2/q1
+      for (const similarSegment of this.textComponent.getRelatedSegmentRefs(segment)) {
+        if (!segments.includes(similarSegment)) {
+          segments.push(similarSegment);
+        }
+      }
     }
     return segments;
   }
@@ -134,6 +140,12 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       if (!this.textComponent.hasSegmentRange(segment)) {
         continue;
       }
+      const element = this.textComponent.editor.container.querySelector('usx-segment[data-segment="' + segment + '"]');
+      if (element == null) {
+        continue;
+      } else if (element.querySelector('usx-blank') !== null) {
+        continue;
+      }
       const range = this.textComponent.getSegmentRange(segment);
       this.textComponent.toggleHighlight(toggle, range);
       if (this.mode === 'dialog') {
@@ -141,10 +153,6 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       }
       if (!toggle) {
         continue;
-      }
-      const element = this.textComponent.editor.container.querySelector('usx-segment[data-segment=' + segment + ']');
-      if (element == null) {
-        return;
       }
       this.clickSubs.push(
         this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {

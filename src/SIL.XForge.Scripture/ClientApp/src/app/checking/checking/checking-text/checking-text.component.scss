@@ -10,6 +10,18 @@ app-text {
   flex-direction: column;
   flex: 1;
 }
+.ltr .highlight-segment-target[data-question='true'] {
+  margin-left: 1.5em;
+  &:before {
+    left: -1.75em;
+  }
+}
+.rtl .highlight-segment-target[data-question='true'] {
+  margin-right: 1.5em;
+  &:before {
+    right: -1.75em;
+  }
+}
 .ql-container {
   .highlight-marker {
     display: none;
@@ -26,8 +38,6 @@ app-text {
       cursor: pointer;
 
       &[data-question='true'] {
-        margin-left: 1.5em;
-
         &:before {
           content: '?';
           border-radius: 50%;
@@ -40,8 +50,8 @@ app-text {
           background: var(--mdc-theme-secondary);
           font-weight: bold;
           position: absolute;
-          left: -1.75em;
           top: 0;
+          text-indent: 0;
         }
       }
 

@@ -56,6 +56,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Output() loaded = new EventEmitter(true);
   lang: string = '';
 
+  private _direction: string | null = null;
   private _editorStyles: any = { fontSize: '1rem' };
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
@@ -120,6 +121,10 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   constructor(private readonly projectService: SFProjectService) {
     super();
+  }
+
+  get direction(): string | null {
+    return this._direction;
   }
 
   get id(): TextDocId | undefined {
@@ -212,6 +217,14 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.applyEditorStyles();
   }
 
+  get isLtr(): boolean {
+    return this.direction === 'ltr';
+  }
+
+  get isRtl(): boolean {
+    return this.direction === 'rtl';
+  }
+
   get isSelectionAtSegmentEnd(): boolean {
     if (this.editor == null || this.segment == null) {
       return false;
@@ -288,6 +301,10 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     return this.viewModel.getSegmentRange(ref);
   }
 
+  getRelatedSegmentRefs(ref: string): string[] {
+    return this.viewModel.getRelatedSegmentRefs(ref);
+  }
+
   getSegmentText(ref: string): string {
     return this.viewModel.getSegmentText(ref);
   }
@@ -353,6 +370,8 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
     this.loaded.emit();
     this.applyEditorStyles();
+    // Get the computed direction the browser decided to use for quill for the current text
+    this.setDirection();
   }
 
   private isBackspaceAllowed(range: RangeStatic): boolean {
@@ -398,6 +417,15 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     const prevRef = this.viewModel.getPrevSegmentRef(this._segment.ref);
     if (prevRef != null) {
       this.setSegment(prevRef, undefined, true, end);
+    }
+  }
+
+  private setDirection() {
+    // As the browser is automatically applying ltr/rtl we need to ask it which one it is using
+    // This value can then be used for other purposes i.e. CSS styles
+    const quill = document.querySelector('quill-editor');
+    if (quill !== null) {
+      this._direction = window.getComputedStyle(quill).direction;
     }
   }
 

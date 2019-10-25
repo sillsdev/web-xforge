@@ -7,7 +7,7 @@
   (onEditorCreated)="onEditorCreated($event)"
   (onContentChanged)="onContentChanged($event.delta, $event.source)"
   (onSelectionChanged)="onSelectionChanged()"
-  [ngClass]="{ 'template-editor': !readOnlyEnabled }"
+  [ngClass]="{ 'template-editor': !readOnlyEnabled, ltr: isLtr, rtl: isRtl }"
   dir="auto"
   [lang]="lang"
 >

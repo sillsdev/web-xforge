@@ -188,6 +188,10 @@ export class TextViewModel {
     return this._segments.has(ref);
   }
 
+  getRelatedSegmentRefs(ref: string): string[] {
+    return Array.from(this._segments.keys()).filter(r => r.indexOf(ref + '/') === 0);
+  }
+
   getSegmentRange(ref: string): RangeStatic | undefined {
     return this._segments.get(ref);
   }
