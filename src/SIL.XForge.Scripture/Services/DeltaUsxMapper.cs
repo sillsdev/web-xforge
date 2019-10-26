@@ -316,7 +316,7 @@ namespace SIL.XForge.Scripture.Services
         public XElement ToUsx(XElement oldUsxElem, IEnumerable<Delta> chapterDeltas)
         {
             var newUsxElem = new XElement(oldUsxElem);
-            newUsxElem.Elements().Where(e => e.Name.LocalName != "book").Remove();
+            newUsxElem.Nodes().Where(n => !(n is XElement) || ((XElement)n).Name.LocalName != "book").Remove();
             foreach (Delta chapterDelta in chapterDeltas)
                 ProcessDelta(newUsxElem, chapterDelta);
             return newUsxElem;

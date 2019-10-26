@@ -479,7 +479,7 @@ namespace SIL.XForge.Scripture.Services
             };
 
             var mapper = new DeltaUsxMapper();
-            XElement newUsxElem = mapper.ToUsx(Usx("PHM"), deltas);
+            XElement newUsxElem = mapper.ToUsx(Usx("PHM", Chapter("1"), "Text"), deltas);
 
             XElement expected = Usx("PHM",
                 Chapter("1"),
