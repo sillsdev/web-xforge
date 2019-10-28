@@ -23,6 +23,8 @@ export function promiseTimeout<T>(promise: Promise<T>, timeout: number) {
 
 export function issuesEmailTemplate(errorId?: string): string {
   const bowser = Bowser.getParser(window.navigator.userAgent);
+  // encodeURIComponent would encode all reserved characters, but the result is treated as an href to a component
+  // instead of performing the mailto protocol. We have to encode problem reserved characters on a case by case basis.
   const uri = encodeURI(`mailto:${environment.issueEmail}?subject=${
     environment.siteName
   } issue&body=Thanks for reporting the issue!
@@ -64,8 +66,16 @@ ${bowser.getOSName()} - ${bowser.getOSVersion() || 'unknown'}
 
 Error id: ${errorId || 'not applicable'}
 `);
-  // Encode commas to avoid the template being truncated when opening ThunderBird from Chromium
-  return uri.replace(/,/g, '%2C');
+  // Encode commas to avoid the template being truncated when opening ThunderBird from Chromium.
+  return uri.replace(
+    /[,]/g,
+    c =>
+      '%' +
+      c
+        .charCodeAt(0)
+        .toString(16)
+        .toUpperCase()
+  );
 }
 
 export function parseJSON(str: string): any | undefined {
