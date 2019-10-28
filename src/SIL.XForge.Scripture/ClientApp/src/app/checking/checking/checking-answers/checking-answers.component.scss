@@ -89,6 +89,17 @@
     display: flex;
     justify-content: flex-end;
   }
+  @include media-breakpoint-down(xs) {
+    mdc-tab {
+      padding: 0 10px;
+    }
+    mdc-tab:first-child {
+      padding-left: 0;
+    }
+    mdc-tab:last-child {
+      padding-right: 0;
+    }
+  }
 }
 .answers-container {
   .answer {
