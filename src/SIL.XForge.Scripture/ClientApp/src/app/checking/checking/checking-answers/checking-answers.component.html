@@ -63,80 +63,28 @@
       ></app-checking-audio-combined>
     </div>
     <div
-      [fxShow]="answerTabs.activeTabIndex === 3 || answerTabs.activeTabIndex === 4"
+      [fxHide]="!(answerTabs.activeTabIndex === 3 || answerTabs.activeTabIndex === 4)"
       class="answer-tab answer-select-text"
+      [class.text-selected]="selectedText"
     >
-      <mdc-form-field class="scripture-start" [fxHide.lt-xl]="canShowScriptureInput">
-        <mdc-text-field
-          label="Start reference"
-          type="text"
-          formControlName="scriptureStart"
-          outlined
-          [errorStateMatcher]="startReferenceMatcher"
-          id="scripture-start"
-          (input)="updateScriptureEndEnabled()"
-          (change)="extractScriptureText()"
-        >
-          <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureStart)"
-            >expand_more</mdc-icon
-          >
-        </mdc-text-field>
-        <mdc-helper-text validation id="question-scripture-start-helper-text">
-          <span *ngIf="scriptureStart.hasError('verseFormat')">e.g. JHN 3:16</span>
-          <span *ngIf="scriptureStart.hasError('verseRange')">Must be a verse in the question's book and chapter</span>
-          <span *ngIf="answerForm.hasError('startReferenceRequired')">Start reference required</span>
-        </mdc-helper-text>
-      </mdc-form-field>
-      <mdc-form-field class="scripture-end" [fxHide.lt-xl]="canShowScriptureInput">
-        <mdc-text-field
-          label="End reference"
-          type="text"
-          formControlName="scriptureEnd"
-          outlined
-          [errorStateMatcher]="parentAndStartMatcher"
-          id="scripture-end"
-          (change)="extractScriptureText()"
-        >
-          <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureEnd)"
-            >expand_more</mdc-icon
-          >
-        </mdc-text-field>
-        <mdc-helper-text validation>
-          <span *ngIf="scriptureEnd.hasError('verseFormat')">e.g. JHN 3:16</span>
-          <span *ngIf="scriptureEnd.hasError('verseRange')">Must be inside verse range</span>
-          <span *ngIf="answerForm.hasError('verseDifferentBookOrChapter')">Must be the same book and chapter </span>
-          <span *ngIf="answerForm.hasError('verseBeforeStart')">Must be after <b>Scripture reference</b></span>
-        </mdc-helper-text>
-      </mdc-form-field>
-      <button
-        mdc-icon-button
-        fxHide.xl
-        [fxShow]="scriptureText.value"
-        [fxHide.lt-xl]="!canShowScriptureInput"
-        type="button"
-        (click)="resetScriptureText()"
-        icon="refresh"
-        class="try-again"
-      ></button>
-      <mdc-form-field [fxShow]="scriptureText.value" [fxHide.lt-xl]="!canShowScriptureInput" class="scripture-text">
-        <mdc-text-field
-          label="Scripture"
-          type="text"
-          formControlName="scriptureText"
-          outlined
-          readonly
-          (change)="checkScriptureText()"
-        ></mdc-text-field>
-      </mdc-form-field>
+      <p [fxHide]="!selectedText" [fxHide.lt-xl]="!canShowScriptureInput" class="scripture-text">
+        {{ selectedText }} <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
+      </p>
+      <p [fxHide]="!!selectedText" class="scripture-text-blank">No scripture selected yet.</p>
+      <div class="buttons-wrapper">
+        <button
+          mdc-icon-button
+          *ngIf="selectedText"
+          type="button"
+          (click)="clearSelection()"
+          icon="clear"
+          class="clear-selection"
+        ></button>
+        <button type="button" (click)="selectScripture()" mdc-button primary>Select verses</button>
+      </div>
     </div>
     <div *ngIf="answerFormSubmitAttempted && answerText.invalid" class="form-helper-text">
       You need to enter your answer or record your answer before saving
-    </div>
-    <div
-      *ngIf="answerFormSubmitAttempted && hasScriptureReferenceError && answerTabs.activeTabIndex !== 2"
-      class="form-helper-text"
-    >
-      Please enter a valid scripture reference in the select text tab
     </div>
     <div class="form-actions">
       <button mdc-button type="button" (click)="hideAnswerForm()" id="cancel-answer">Cancel</button>
@@ -169,7 +117,7 @@
         <div *ngIf="answer.text" class="answer-text">{{ answer.text }}</div>
         <div *ngIf="answer.scriptureText" class="answer-scripture">
           <span class="answer-scripture-text">{{ answer.scriptureText }}</span>
-          <span class="answer-scripture-verse">{{ scriptureTextVerseRef(answer) }}</span>
+          <span class="answer-scripture-verse">{{ scriptureTextVerseRef(answer.verseRef) }}</span>
         </div>
         <app-checking-audio-player *ngIf="answer.audioUrl" [source]="answer.audioUrl"></app-checking-audio-player>
         <div class="answer-footer">

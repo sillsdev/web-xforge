@@ -470,7 +470,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       this.setHighlightMarkerPosition();
     }
 
-    Promise.resolve().then(() => this.adjustSelection());
+    if (!this.isReadOnly) {
+      Promise.resolve().then(() => this.adjustSelection());
+    }
     this.updated.emit({ delta, prevSegment, segment: this._segment });
   }
 

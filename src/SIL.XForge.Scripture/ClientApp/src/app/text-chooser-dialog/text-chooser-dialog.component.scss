@@ -1,0 +1,34 @@
+.select-chapter {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  margin: 0.5em 0 0.5em 0;
+  font-size: 0.9em;
+
+  h2 {
+    display: inline;
+    margin: 0 0 0 0.3em;
+  }
+}
+
+app-text {
+  max-height: calc(100vh - 400px);
+  min-height: 300px;
+}
+
+.selection-reference {
+  font-style: italic;
+}
+
+.error-message {
+  color: var(--mdc-theme-error);
+  font-size: 0.85em;
+}
+
+::ng-deep quill-editor {
+  overflow-y: scroll;
+}
+
+::ng-deep app-text quill-editor > .ql-container > .ql-editor {
+  padding: 0 1em 1em;
+}
