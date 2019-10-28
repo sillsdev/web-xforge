@@ -89,6 +89,11 @@
     display: flex;
     justify-content: flex-end;
   }
+  @include media-breakpoint-down(xs) {
+    mdc-tab {
+      padding: 0 10px;
+    }
+  }
 }
 .answers-container {
   .answer {
