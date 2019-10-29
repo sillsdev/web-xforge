@@ -688,6 +688,58 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerScriptureText(0)).toBe('target: chapter 1, verse 3.(JHN 1:3)');
     }));
 
+    it('new answers from other users are buffered', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(7);
+      env.answerQuestion('New answer from current user');
+
+      // Answers in HTML.
+      expect(env.answers.length).toEqual(2, 'setup');
+      // Answers in code.
+      expect(env.component.answersPanel!.answers.length).toEqual(2, 'setup');
+
+      expect(env.showUnreadAnswersButton).toBeNull();
+
+      // Another user on another computer adds a new answer.
+      const date = new Date();
+      date.setDate(date.getDate() - 1);
+      const dateCreated = date.toJSON();
+      env.component.answersPanel!.questionDoc!.submitJson0Op(
+        op =>
+          op.insert(q => q.answers, 0, {
+            dataId: 'newAnswer1',
+            // Another user
+            ownerRef: CLEAN_CHECKER_USER.id,
+            text: 'new answer from another user',
+            verseRef: { chapterNum: 1, verseNum: 1, bookNum: 43 },
+            scriptureText: 'Quoted scripture',
+            likes: [],
+            dateCreated: dateCreated,
+            dateModified: dateCreated,
+            audioUrl: 'file://audio.mp3',
+            comments: []
+          }),
+        // Another user
+        false
+      );
+      tick();
+      env.fixture.detectChanges();
+
+      // The new answer does not show up yet.
+      expect(env.answers.length).toEqual(2);
+      expect(env.component.answersPanel!.answers.length).toEqual(2);
+
+      // But a show-unread-answers control appears.
+      expect(env.showUnreadAnswersButton).not.toBeNull();
+      expect(env.showUnreadAnswersButton.nativeElement.innerText).toContain(' 1 ', 'should have shown unread count');
+
+      // Clicking makes the answer appear and the control go away.
+      env.clickButton(env.showUnreadAnswersButton);
+      expect(env.answers.length).toEqual(3);
+      expect(env.component.answersPanel!.answers.length).toEqual(3);
+      expect(env.showUnreadAnswersButton).toBeNull();
+    }));
+
     describe('Comments', () => {
       it('can comment on an answer', fakeAsync(() => {
         const env = new TestEnvironment(CHECKER_USER);
@@ -1087,6 +1139,10 @@ class TestEnvironment {
 
   get selectTextTab(): DebugElement {
     return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(3)'));
+  }
+
+  get showUnreadAnswersButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#show-unread-answers-button'));
   }
 
   getLikeTotal(index: number): number {
