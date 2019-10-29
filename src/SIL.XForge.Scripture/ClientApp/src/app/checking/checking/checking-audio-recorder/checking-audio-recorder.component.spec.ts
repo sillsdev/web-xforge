@@ -1,8 +1,9 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -12,18 +13,28 @@ import { AudioTimePipe, CheckingAudioPlayerComponent } from '../checking-audio-p
 import { CheckingAudioRecorderComponent } from './checking-audio-recorder.component';
 
 const mockedUserService = mock(UserService);
+const mockedNoticeService = mock(NoticeService);
 
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
     declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioTimePipe],
     imports: [UICommonModule],
-    providers: [{ provide: UserService, useMock: mockedUserService }]
+    providers: [
+      { provide: UserService, useMock: mockedUserService },
+      { provide: NoticeService, useMock: mockedNoticeService }
+    ]
   }));
 
   let env: TestEnvironment;
+  let originalUserMedia: (constraints: MediaStreamConstraints) => Promise<MediaStream>;
 
   beforeEach(() => {
+    originalUserMedia = navigator.mediaDevices.getUserMedia;
     env = new TestEnvironment();
+  });
+
+  afterEach(() => {
+    navigator.mediaDevices.getUserMedia = originalUserMedia;
   });
 
   it('can record', async () => {
@@ -45,6 +56,21 @@ describe('CheckingAudioRecorderComponent', () => {
     await env.waitForRecorder(100);
     env.clickButton(env.tryAgainButton);
     expect(env.recordButton).toBeTruthy();
+  });
+
+  it('should display message if microphone not accessible', async () => {
+    navigator.mediaDevices.getUserMedia = () => Promise.reject();
+    env.clickButton(env.recordButton);
+    await env.waitForRecorder(100);
+    verify(mockedNoticeService.show(anything())).once();
+    navigator.mediaDevices.getUserMedia = originalUserMedia;
+    env.clickButton(env.recordButton);
+    await env.waitForRecorder(1000);
+    expect(env.recordButton).toBeFalsy();
+    expect(env.stopRecordingButton).toBeTruthy();
+    env.clickButton(env.stopRecordingButton);
+    await env.waitForRecorder(100);
+    expect(env.component.hasAudioAttachment).toBe(true);
   });
 });
 
