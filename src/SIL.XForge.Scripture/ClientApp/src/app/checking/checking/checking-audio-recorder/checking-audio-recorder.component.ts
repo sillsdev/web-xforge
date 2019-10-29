@@ -1,6 +1,7 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
 import RecordRTC from 'recordrtc';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 
 export interface AudioAttachment {
@@ -18,12 +19,11 @@ export interface AudioAttachment {
 export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   @Output() status = new EventEmitter<AudioAttachment>();
   audioUrl: string = '';
-  microphonePermission: boolean = true;
   private stream?: MediaStream;
   private recordRTC?: RecordRTC;
   private user?: UserDoc;
 
-  constructor(private userService: UserService) {}
+  constructor(private userService: UserService, private noticeService: NoticeService) {}
 
   get hasAudioAttachment(): boolean {
     return this.audioUrl !== '';
@@ -95,8 +95,8 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   }
 
   private errorCallback() {
-    this.microphonePermission = false;
     this.status.emit({ status: 'denied' });
+    this.noticeService.show('Access to your microphone was denied. Please enable the microphone from your browser.');
   }
 
   private successCallback(stream: MediaStream) {

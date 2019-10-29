@@ -1,13 +1,5 @@
 <ng-container *ngIf="!hasAudioAttachment">
-  <button
-    *ngIf="!isRecording"
-    mdc-button
-    primary
-    type="button"
-    (click)="startRecording()"
-    class="record"
-    [disabled]="!microphonePermission"
-  >
+  <button *ngIf="!isRecording" mdc-button primary type="button" (click)="startRecording()" class="record">
     <mdc-icon>mic</mdc-icon>
     Record
   </button>

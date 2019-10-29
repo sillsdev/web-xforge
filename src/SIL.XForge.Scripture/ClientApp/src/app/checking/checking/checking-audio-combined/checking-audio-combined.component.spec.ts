@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 import { ngfModule } from 'angular-file';
 import { mock, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -14,6 +15,7 @@ import { CheckingAudioRecorderComponent } from '../checking-audio-recorder/check
 import { CheckingAudioCombinedComponent } from './checking-audio-combined.component';
 
 const mockedUserService = mock(UserService);
+const mockedNoticeService = mock(NoticeService);
 
 describe('CheckingAudioCombinedComponent', () => {
   configureTestingModule(() => ({
@@ -24,7 +26,10 @@ describe('CheckingAudioCombinedComponent', () => {
       AudioTimePipe
     ],
     imports: [UICommonModule, ngfModule],
-    providers: [{ provide: UserService, useMock: mockedUserService }]
+    providers: [
+      { provide: UserService, useMock: mockedUserService },
+      { provide: NoticeService, useMock: mockedNoticeService }
+    ]
   }));
 
   let env: TestEnvironment;
