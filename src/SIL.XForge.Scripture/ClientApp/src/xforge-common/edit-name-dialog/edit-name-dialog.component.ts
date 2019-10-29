@@ -21,9 +21,15 @@ export class EditNameDialogComponent {
     this.name.setValue(data.name);
   }
 
-  closeDialog() {
+  submitDialog() {
     if (this.name.valid) {
       this.dialogRef.close({ displayName: this.name.value });
+    }
+  }
+
+  cancelDialog() {
+    if (!this.data.isConfirmation) {
+      this.dialogRef.close();
     }
   }
 }

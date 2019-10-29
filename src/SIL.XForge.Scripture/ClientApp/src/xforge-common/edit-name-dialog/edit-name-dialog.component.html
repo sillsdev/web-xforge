@@ -15,7 +15,17 @@
         </form>
       </mdc-dialog-content>
       <mdc-dialog-actions>
-        <button form="name-form" mdcDialogButton type="submit" (click)="closeDialog()">
+        <button
+          form="name-form"
+          mdcDialogButton
+          type="button"
+          (click)="cancelDialog()"
+          *ngIf="!data.isConfirmation"
+          id="cancel-button"
+        >
+          Cancel
+        </button>
+        <button form="name-form" mdc-button primary type="submit" (click)="submitDialog()" id="submit-button">
           {{ data.isConfirmation ? "Confirm" : "Update" }}
         </button>
       </mdc-dialog-actions>
