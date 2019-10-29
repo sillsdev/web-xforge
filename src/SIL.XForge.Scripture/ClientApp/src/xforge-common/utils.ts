@@ -23,9 +23,10 @@ export function promiseTimeout<T>(promise: Promise<T>, timeout: number) {
 
 export function issuesEmailTemplate(errorId?: string): string {
   const bowser = Bowser.getParser(window.navigator.userAgent);
-  return encodeURI(`mailto:${environment.issueEmail}?subject=${
-    environment.siteName
-  } issue&body=Thanks for reporting the issue!
+  const template = `mailto:${environment.issueEmail}?subject=${encodeURIComponent(
+    environment.siteName + ' issue'
+  )}&body=`;
+  const body = `Thanks for reporting the issue!
 It would help us if you fill out some of the information below, but please submit even if you can't fill out much.
 If you are requesting a feature many of the fields may not be applicable.
 Be aware your bug report will be publicly available. Never submit passwords or other secrets.
@@ -62,8 +63,9 @@ Scripture Forge - ${version}
 ${bowser.getBrowserName()} - ${bowser.getBrowserVersion()}
 ${bowser.getOSName()} - ${bowser.getOSVersion() || 'unknown'}
 
-Error id: ${errorId || 'not applicable'}
-`);
+Error id: ${errorId || 'not applicable'}`;
+  // Encode all reserved characters in the body because some chars cause problems (e.g. truncating the body)
+  return template + encodeURIComponent(body);
 }
 
 export function parseJSON(str: string): any | undefined {
