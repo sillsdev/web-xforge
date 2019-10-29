@@ -7,12 +7,13 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
 describe('EditNameDialogComponent', () => {
-  it('should display name', () => {
+  it('should display name and cancel button', () => {
     const env = new TestEnvironment();
     env.openDialog();
     expect(env.component.confirmedName).toBeUndefined();
     expect(env.nameInput.querySelector('input')!.value).toBe('Simon Says');
-    env.confirmButton.click();
+    expect(env.cancelButton).not.toBe(null);
+    env.submitButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Simon Says');
   });
@@ -22,9 +23,22 @@ describe('EditNameDialogComponent', () => {
     env.openDialog();
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, 'Follow The Leader');
-    env.confirmButton.click();
+    env.submitButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Follow The Leader');
+  });
+
+  it('should not change name when cancelled', () => {
+    const env = new TestEnvironment();
+    env.openDialog();
+    expect(env.component.confirmedName).toBeUndefined();
+    env.setTextFieldValue(env.nameInput, 'Follow The Leader');
+    expect(env.cancelButton).not.toBe(null);
+    if (env.cancelButton != null) {
+      env.cancelButton.click();
+      env.fixture.detectChanges();
+    }
+    expect(env.component.confirmedName).toBeUndefined();
   });
 
   it('should not allow the name to be blank', () => {
@@ -32,15 +46,15 @@ describe('EditNameDialogComponent', () => {
     env.openDialog();
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, '');
-    env.confirmButton.click();
+    env.submitButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, ' ');
-    env.confirmButton.click();
+    env.submitButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, 'Bob');
-    env.confirmButton.click();
+    env.submitButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Bob');
   });
@@ -51,7 +65,17 @@ describe('EditNameDialogComponent', () => {
     env.openDialog();
     expect(env.title.textContent).toBe('Confirm your name');
     expect(env.description.textContent).toContain('Confirm the name that other people on this project will see');
-    env.confirmButton.click();
+    env.submitButton.click();
+    env.fixture.detectChanges();
+    expect(env.component.confirmedName).toBe('Simon Says');
+  });
+
+  it('does not show cancel button in a confirmation context', () => {
+    const env = new TestEnvironment();
+    env.component.isConfirmContext = true;
+    env.openDialog();
+    expect(env.cancelButton).toBe(null);
+    env.submitButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Simon Says');
   });
@@ -72,9 +96,14 @@ class TestEnvironment {
     this.overlayContainer = TestBed.get(OverlayContainer);
   }
 
-  get confirmButton(): HTMLElement {
+  get submitButton(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
-    return oce.querySelector('button') as HTMLElement;
+    return oce.querySelector('#submit-button') as HTMLElement;
+  }
+
+  get cancelButton(): HTMLElement | null {
+    const oce = this.overlayContainer.getContainerElement();
+    return oce.querySelector('#cancel-button') as HTMLElement;
   }
 
   get nameConfirmDialog(): HTMLElement {
