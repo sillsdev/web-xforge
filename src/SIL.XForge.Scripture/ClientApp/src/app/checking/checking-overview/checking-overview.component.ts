@@ -372,20 +372,4 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       textQuestionDocs.push(questionDoc);
     }
   }
-
-  private removeQuestionDoc(questionDoc: QuestionDoc): void {
-    if (this.projectDoc == null || questionDoc.data == null) {
-      return;
-    }
-    const textId = new TextDocId(
-      this.projectDoc.id,
-      questionDoc.data.verseRef.bookNum,
-      questionDoc.data.verseRef.chapterNum
-    );
-    const textQuestionDocs = this.questionDocs.get(textId.toString());
-    if (textQuestionDocs != null) {
-      const index = textQuestionDocs.indexOf(questionDoc);
-      textQuestionDocs.splice(index, 1);
-    }
-  }
 }
