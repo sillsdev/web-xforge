@@ -19,19 +19,19 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   @Output() questionVerseSelected = new EventEmitter<VerseRef>();
 
   private clickSubs: Subscription[] = [];
-  private _activeVerse?: Readonly<VerseRef>;
+  private _activeVerse?: VerseRef;
   private _editorLoaded = false;
   private _id?: TextDocId;
-  private _questionVerses?: Readonly<VerseRef[]>;
+  private _questionVerses?: VerseRef[];
 
-  @Input() set activeVerse(verseRef: Readonly<VerseRef> | undefined) {
+  @Input() set activeVerse(verseRef: VerseRef | undefined) {
     // Removed the highlight on the old active verse
     this.highlightActiveVerse(false);
     this._activeVerse = verseRef;
     this.highlightActiveVerse(true);
   }
 
-  get activeVerse(): Readonly<VerseRef> | undefined {
+  get activeVerse(): VerseRef | undefined {
     return this._activeVerse;
   }
 
@@ -52,13 +52,13 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     return this._id;
   }
 
-  @Input() set questionVerses(verseRefs: Readonly<VerseRef[]> | undefined) {
+  @Input() set questionVerses(verseRefs: VerseRef[] | undefined) {
     this.toggleQuestionVerses(false);
     this._questionVerses = clone(verseRefs);
     this.toggleQuestionVerses(true);
   }
 
-  get questionVerses(): Readonly<VerseRef[]> | undefined {
+  get questionVerses(): VerseRef[] | undefined {
     return this._questionVerses;
   }
 
@@ -113,7 +113,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
   }
 
-  private getVerseSegments(verseRef: Readonly<VerseRef>): string[] {
+  private getVerseSegments(verseRef: VerseRef): string[] {
     const segments: string[] = [];
     let segment = '';
     for (const verseInRange of verseRef.allVerses()) {
