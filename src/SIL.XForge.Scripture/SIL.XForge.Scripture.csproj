@@ -40,6 +40,12 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="usx-sf.xsd">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
   <Target Name="EnsureNodeInstalled">
     <!-- Ensure Node.js is installed -->
     <Exec Command="node --version" ContinueOnError="true">

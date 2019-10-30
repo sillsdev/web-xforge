@@ -925,12 +925,12 @@ class TestEnvironment {
       {
         bookNum: 43,
         hasSource: false,
-        chapters: [{ number: 1, lastVerse: 18 }, { number: 2, lastVerse: 25 }]
+        chapters: [{ number: 1, lastVerse: 18, isValid: true }, { number: 2, lastVerse: 25, isValid: true }]
       },
       {
         bookNum: 40,
         hasSource: false,
-        chapters: [{ number: 1, lastVerse: 28 }]
+        chapters: [{ number: 1, lastVerse: 28, isValid: true }]
       }
     ],
     userRoles: {

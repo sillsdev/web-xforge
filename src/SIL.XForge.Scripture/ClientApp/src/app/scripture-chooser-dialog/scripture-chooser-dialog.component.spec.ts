@@ -217,12 +217,16 @@ describe('ScriptureChooserDialog', () => {
     const onlyNTTexts: TextInfo[] = [
       {
         bookNum: 49,
-        chapters: [{ number: 3, lastVerse: 21 }],
+        chapters: [{ number: 3, lastVerse: 21, isValid: true }],
         hasSource: false
       },
       {
         bookNum: 45,
-        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }],
+        chapters: [
+          { number: 3, lastVerse: 31, isValid: true },
+          { number: 11, lastVerse: 36, isValid: true },
+          { number: 12, lastVerse: 21, isValid: true }
+        ],
         hasSource: false
       }
     ];
@@ -263,12 +267,16 @@ describe('ScriptureChooserDialog', () => {
     const texts: TextInfo[] = [
       {
         bookNum: 49,
-        chapters: [{ number: 3, lastVerse: 21 }],
+        chapters: [{ number: 3, lastVerse: 21, isValid: true }],
         hasSource: false
       },
       {
         bookNum: 45,
-        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }],
+        chapters: [
+          { number: 3, lastVerse: 31, isValid: true },
+          { number: 11, lastVerse: 36, isValid: true },
+          { number: 12, lastVerse: 21, isValid: true }
+        ],
         hasSource: false
       }
       // No RUT text
@@ -302,12 +310,16 @@ describe('ScriptureChooserDialog', () => {
     const texts: TextInfo[] = [
       {
         bookNum: 49,
-        chapters: [{ number: 3, lastVerse: 21 }],
+        chapters: [{ number: 3, lastVerse: 21, isValid: true }],
         hasSource: false
       },
       {
         bookNum: 45,
-        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }],
+        chapters: [
+          { number: 3, lastVerse: 31, isValid: true },
+          { number: 11, lastVerse: 36, isValid: true },
+          { number: 12, lastVerse: 21, isValid: true }
+        ],
         hasSource: false
       }
     ];
@@ -340,12 +352,16 @@ describe('ScriptureChooserDialog', () => {
     const texts: TextInfo[] = [
       {
         bookNum: 49,
-        chapters: [{ number: 3, lastVerse: 21 }],
+        chapters: [{ number: 3, lastVerse: 21, isValid: true }],
         hasSource: false
       },
       {
         bookNum: 45,
-        chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }],
+        chapters: [
+          { number: 3, lastVerse: 31, isValid: true },
+          { number: 11, lastVerse: 36, isValid: true },
+          { number: 12, lastVerse: 21, isValid: true }
+        ],
         hasSource: false
       }
     ];
@@ -426,22 +442,26 @@ describe('ScriptureChooserDialog', () => {
       let textsInProject: TextInfo[] = [
         {
           bookNum: 2,
-          chapters: [{ number: 39, lastVerse: 43 }, { number: 40, lastVerse: 38 }],
+          chapters: [{ number: 39, lastVerse: 43, isValid: true }, { number: 40, lastVerse: 38, isValid: true }],
           hasSource: false
         },
         {
           bookNum: 40,
-          chapters: [{ number: 1, lastVerse: 25 }, { number: 2, lastVerse: 23 }],
+          chapters: [{ number: 1, lastVerse: 25, isValid: true }, { number: 2, lastVerse: 23, isValid: true }],
           hasSource: false
         },
         {
           bookNum: 49,
-          chapters: [{ number: 3, lastVerse: 21 }],
+          chapters: [{ number: 3, lastVerse: 21, isValid: true }],
           hasSource: false
         },
         {
           bookNum: 45,
-          chapters: [{ number: 3, lastVerse: 31 }, { number: 11, lastVerse: 36 }, { number: 12, lastVerse: 21 }],
+          chapters: [
+            { number: 3, lastVerse: 31, isValid: true },
+            { number: 11, lastVerse: 36, isValid: true },
+            { number: 12, lastVerse: 21, isValid: true }
+          ],
           hasSource: false
         }
       ];

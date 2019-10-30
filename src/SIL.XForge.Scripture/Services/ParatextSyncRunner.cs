@@ -248,21 +248,21 @@ namespace SIL.XForge.Scripture.Services
             {
                 bookTextElem = await LoadXmlFileAsync(fileName);
 
-                XElement oldUsxElem = bookTextElem.Element("usx");
-                if (oldUsxElem == null)
-                    throw new InvalidOperationException("Invalid USX data, missing 'usx' element.");
-                XElement newUsxElem = _deltaUsxMapper.ToUsx(oldUsxElem, textDocs.Values.Select(d => d.Data));
+
+                var oldUsxDoc = new XDocument(bookTextElem.Element("usx"));
+                XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
+                    .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
 
                 var revision = (string)bookTextElem.Attribute("revision");
 
-                if (XNode.DeepEquals(oldUsxElem, newUsxElem))
+                if (XNode.DeepEquals(oldUsxDoc, newUsxDoc))
                 {
                     bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
                 }
                 else
                 {
                     bookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
-                        revision, newUsxElem.ToString());
+                        revision, newUsxDoc.Root.ToString());
                 }
             }
             await UpdateProgress();
@@ -270,16 +270,18 @@ namespace SIL.XForge.Scripture.Services
             bookTextElem = XElement.Parse(bookText);
 
             // Merge updated PT cloud data into mongo.
+            var usxDoc = new XDocument(bookTextElem.Element("usx"));
             var tasks = new List<Task>();
-            IReadOnlyDictionary<int, (Delta Delta, int LastVerse)> deltas = _deltaUsxMapper.ToChapterDeltas(
-                bookTextElem.Element("usx"));
+            Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
+                .ToDictionary(cd => cd.Number);
             var chapters = new List<Chapter>();
-            foreach (KeyValuePair<int, (Delta Delta, int LastVerse)> kvp in deltas)
+            foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
             {
                 if (textDocs.TryGetValue(kvp.Key, out IDocument<Models.TextData> textDataDoc))
                 {
                     Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
-                    tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
+                    if (diffDelta.Ops.Count > 0)
+                        tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
                     textDocs.Remove(kvp.Key);
                 }
                 else if (chaptersToInclude == null || chaptersToInclude.Contains(kvp.Key))
@@ -287,7 +289,12 @@ namespace SIL.XForge.Scripture.Services
                     textDataDoc = GetTextDoc(text, kvp.Key, textType);
                     tasks.Add(textDataDoc.CreateAsync(new Models.TextData(kvp.Value.Delta)));
                 }
-                chapters.Add(new Chapter { Number = kvp.Key, LastVerse = kvp.Value.LastVerse });
+                chapters.Add(new Chapter
+                {
+                    Number = kvp.Key,
+                    LastVerse = kvp.Value.LastVerse,
+                    IsValid = kvp.Value.IsValid
+                });
             }
             foreach (KeyValuePair<int, IDocument<Models.TextData>> kvp in textDocs)
                 tasks.Add(kvp.Value.DeleteAsync());
@@ -329,11 +336,12 @@ namespace SIL.XForge.Scripture.Services
             var bookTextElem = XElement.Parse(bookText);
             await UpdateProgress();
 
-            IReadOnlyDictionary<int, (Delta Delta, int LastVerse)> deltas = _deltaUsxMapper.ToChapterDeltas(
-                bookTextElem.Element("usx"));
+            var usxDoc = new XDocument(bookTextElem.Element("usx"));
+            Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
+                .ToDictionary(cd => cd.Number);
             var tasks = new List<Task>();
             var chapters = new List<Chapter>();
-            foreach (KeyValuePair<int, (Delta Delta, int LastVerse)> kvp in deltas)
+            foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
             {
                 if (chaptersToInclude != null && !chaptersToInclude.Contains(kvp.Key))
                     continue;
@@ -347,7 +355,12 @@ namespace SIL.XForge.Scripture.Services
                     await textDataDoc.CreateAsync(new Models.TextData(delta));
                 }
                 tasks.Add(createText(kvp.Key, kvp.Value.Delta));
-                chapters.Add(new Chapter { Number = kvp.Key, LastVerse = kvp.Value.LastVerse });
+                chapters.Add(new Chapter
+                {
+                    Number = kvp.Key,
+                    LastVerse = kvp.Value.LastVerse,
+                    IsValid = kvp.Value.IsValid
+                });
             }
             await Task.WhenAll(tasks);
 
@@ -580,7 +593,7 @@ namespace SIL.XForge.Scripture.Services
         {
             public bool Equals(Chapter x, Chapter y)
             {
-                return x.Number == y.Number && x.LastVerse == y.LastVerse;
+                return x.Number == y.Number && x.LastVerse == y.LastVerse && x.IsValid == y.IsValid;
             }
 
             public int GetHashCode(Chapter obj)
@@ -588,6 +601,7 @@ namespace SIL.XForge.Scripture.Services
                 int code = 23;
                 code = code * 31 + obj.Number.GetHashCode();
                 code = code * 31 + obj.LastVerse.GetHashCode();
+                code = code * 31 + obj.IsValid.GetHashCode();
                 return code;
             }
         }
