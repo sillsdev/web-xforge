@@ -80,7 +80,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     unread: 0,
     answered: 0
   };
-  bookVerseRefs: VerseRef[] = [];
+  questionVerseRefs: VerseRef[] = [];
 
   answersPanelContainerElement?: ElementRef;
   projectDoc?: SFProjectDoc;
@@ -426,6 +426,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           this.deleteAnswer(answerAction.answer);
         }
         break;
+      case 'edit':
+        if (answerAction.questionDoc != null) {
+          this.questionsPanel.activateQuestion(answerAction.questionDoc);
+        }
+        this.checkBookStatus();
+        break;
+      case 'archive':
+        this.checkBookStatus();
+        break;
       case 'like':
         if (answerAction.answer != null) {
           this.likeAnswer(answerAction.answer);
@@ -635,14 +644,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
     }
     // Only pass in relevant verse references to the text component
-    const bookVerseRefs: VerseRef[] = [];
+    const questionVerseRefs: VerseRef[] = [];
     for (const questionDoc of this.questionDocs) {
       const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
       if (questionVerseRef != null && questionVerseRef.bookNum === this.book) {
-        bookVerseRefs.push(questionVerseRef);
+        questionVerseRefs.push(questionVerseRef);
       }
     }
-    this.bookVerseRefs = bookVerseRefs;
+    this.questionVerseRefs = questionVerseRefs;
   }
 
   private getAnswerIndex(answer: Answer): number {
