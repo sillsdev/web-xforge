@@ -191,10 +191,18 @@ export class AuthService {
   }
 
   private async renewTokens(): Promise<void> {
-    const authResult = await this.checkSession();
-    if (authResult != null && authResult.accessToken != null && authResult.idToken != null) {
-      await this.localLogIn(authResult);
-    } else {
+    let success = false;
+    try {
+      const authResult = await this.checkSession();
+      if (authResult != null && authResult.accessToken != null && authResult.idToken != null) {
+        await this.localLogIn(authResult);
+        success = true;
+      }
+    } catch (err) {
+      console.error('Error while renewing access token:', err);
+      success = false;
+    }
+    if (!success) {
       await this.logOut();
     }
   }
