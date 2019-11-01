@@ -83,10 +83,17 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     if (this.mode === 'checking') {
       if (this.verses != null) {
         const segments: string[] = [];
+        const questionsAtSegment: Map<string, number> = new Map();
         for (const verse of this.verses) {
           const referenceSegments = this.getVerseSegments(verse);
           if (referenceSegments.length > 0) {
-            this.setupQuestionSegments([referenceSegments[0]], true);
+            const value = questionsAtSegment.get(referenceSegments[0]);
+            if (value != null) {
+              questionsAtSegment.set(referenceSegments[0], value + 1);
+            } else {
+              questionsAtSegment.set(referenceSegments[0], 1);
+            }
+
             for (const segment of referenceSegments) {
               if (!segments.includes(segment)) {
                 segments.push(segment);
@@ -94,6 +101,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
             }
           }
         }
+        this.setupQuestionSegments(questionsAtSegment, true);
         this.highlightSegments(segments);
         if (this.activeVerse != null) {
           this.selectActiveVerse(this.activeVerse, true);
@@ -186,7 +194,9 @@ export class CheckingTextComponent extends SubscriptionDisposable {
           }
           const range = this.textComponent.getSegmentRange(segment);
           this.textComponent.toggleHighlight(false, range);
-          this.setupQuestionSegments([segment], false);
+          const segmentMap = new Map<string, number>();
+          segmentMap.set(segment, 0);
+          this.setupQuestionSegments(segmentMap, false);
         }
       }
     }
@@ -200,9 +210,9 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this.verseClicked.emit(verseRefData == null ? undefined : toVerseRef(verseRefData));
   }
 
-  private setupQuestionSegments(segments: string[], toggle: boolean): void {
-    for (const segment of segments) {
-      const range = this.textComponent.getSegmentRange(segment);
+  private setupQuestionSegments(segments: Map<string, number>, toggle: boolean): void {
+    for (const key of segments.keys()) {
+      const range = this.textComponent.getSegmentRange(key);
       if (range == null) {
         continue;
       }
@@ -213,6 +223,19 @@ export class CheckingTextComponent extends SubscriptionDisposable {
             range.length,
             'data-question',
             toggle ? 'true' : false,
+            'silent'
+          );
+        }
+      });
+
+      const questionCount = segments.get(key)!;
+      Promise.resolve().then(() => {
+        if (this.textComponent.editor != null) {
+          this.textComponent.editor.formatText(
+            range.index,
+            range.length,
+            'data-question-count',
+            questionCount > 1 ? segments.get(key) : undefined,
             'silent'
           );
         }

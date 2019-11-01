@@ -1,3 +1,5 @@
+@import '../checking-global.scss';
+
 app-checking-text {
   position: absolute;
   height: 100%;
@@ -12,15 +14,21 @@ app-text {
   width: 100%;
 }
 .ltr .highlight-segment-target[data-question='true'] {
-  margin-left: 1.5em;
+  margin-left: 1.75em;
   &:before {
-    left: -1.75em;
+    left: -2.25em;
+  }
+  &:after {
+    left: -1.5em;
   }
 }
 .rtl .highlight-segment-target[data-question='true'] {
-  margin-right: 1.5em;
+  margin-right: 1.75em;
   &:before {
-    right: -1.75em;
+    right: -2.25em;
+  }
+  &:after {
+    right: -1.5em;
   }
 }
 .ql-container {
@@ -53,6 +61,24 @@ app-text {
           position: absolute;
           top: 0;
           text-indent: 0;
+        }
+      }
+
+      &[data-question-count] {
+        &:after {
+          content: attr(data-question-count);
+          border-radius: 50%;
+          width: 1.5em;
+          height: 1.5em;
+          font-size: 0.7em;
+          display: flex;
+          align-content: center;
+          justify-content: center;
+          background: $questionAnswerBubbleBackgroundColor;
+          color: $questionAnswerBubbleColor;
+          font-weight: bold;
+          position: absolute;
+          top: -0.75em;
         }
       }
 
