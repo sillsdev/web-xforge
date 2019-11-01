@@ -433,6 +433,14 @@ export function registerScripture(): void {
     scope: Parchment.Scope.INLINE
   });
 
+  const CheckingQuestionDataCount = new QuillParchment.Attributor.Attribute(
+    'data-question-count',
+    'data-question-count',
+    {
+      scope: Parchment.Scope.INLINE
+    }
+  );
+
   const CheckingSelectedData = new QuillParchment.Attributor.Attribute('data-selected', 'data-selected', {
     scope: Parchment.Scope.INLINE
   });
@@ -483,6 +491,7 @@ export function registerScripture(): void {
   Quill.register('attributors/class/highlight-para', HighlightParaClass);
   Quill.register('formats/highlight-para', HighlightParaClass);
   Quill.register('formats/data-question', CheckingQuestionData);
+  Quill.register('formats/data-question-count', CheckingQuestionDataCount);
   Quill.register('formats/data-selected', CheckingSelectedData);
   Quill.register('formats/invalid-block', InvalidBlockAttribute);
   Quill.register('formats/invalid-inline', InvalidInlineAttribute);
