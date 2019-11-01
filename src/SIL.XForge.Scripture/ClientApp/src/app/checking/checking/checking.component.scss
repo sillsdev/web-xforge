@@ -64,6 +64,9 @@
               text-overflow: ellipsis;
               overflow: hidden;
               margin-right: 5px;
+              &.chapter-dropdown {
+                display: flex;
+              }
             }
             > div {
               display: flex;

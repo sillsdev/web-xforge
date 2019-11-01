@@ -9,6 +9,7 @@ app-text {
   display: flex;
   flex-direction: column;
   flex: 1;
+  width: 100%;
 }
 .ltr .highlight-segment-target[data-question='true'] {
   margin-left: 1.5em;
