@@ -47,7 +47,7 @@
                     (click)="showAllBooks ? openScriptureChooser() : (chapterMenu.open = !chapterMenu.open)"
                   >
                     <span>{{ bookName }}</span>
-                    <span>
+                    <span class="chapter-dropdown">
                       {{ chapter }} <mdc-icon *ngIf="!chapterMenu.open">keyboard_arrow_down</mdc-icon
                       ><mdc-icon *ngIf="chapterMenu.open">keyboard_arrow_up</mdc-icon>
                     </span>
@@ -59,7 +59,7 @@
                     (selected)="onChapterSelect($event)"
                     (opened)="chapterMenuOpened()"
                   >
-                    <mdc-list #chapterMenuList>
+                    <mdc-list #chapterMenuList class="chapter-menu-list">
                       <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
                         >{{ bookName }} {{ cs }}</mdc-list-item
                       >
