@@ -200,21 +200,58 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.answersPanelContainerElement != null ? this.answersPanelContainerElement.nativeElement.offsetHeight : 0;
   }
 
-  private get answerPanelElementMinimumHeight(): number {
-    return this.answerPanelElementHeight > 0 && this.answersPanelContainerElement != null
-      ? this.answerPanelElementHeight -
-          this.answersPanelContainerElement.nativeElement.querySelector('.answers-container').offsetHeight +
-          20
-      : 0;
+  /** Height that would show all or lots of content in the answers area. */
+  private get comfortableAnswerPanelElementHeight(): number {
+    if (this.answersPanelContainerElement == null) {
+      return 0;
+    }
+
+    const actionsAreaHeight = this.offsetHeightOf(this.answersPanelContainerElement, '.actions');
+
+    // Account for the rest of the scrollbar, or maybe margin/padding.
+    const scrollPartExtra = 25;
+    const scrollPartHeight =
+      this.scrollHeightOf(this.answersPanelContainerElement, '.answers-component-scrollable-content') + scrollPartExtra;
+
+    const bottomPartHeight = this.offsetHeightOf(this.answersPanelContainerElement, '.answers-component-footer');
+
+    return bottomPartHeight + scrollPartHeight + actionsAreaHeight;
   }
 
-  private get minAnswerPanelHeight(): number {
+  private get answerPanelElementMinimumHeight(): number {
+    if (this.answersPanelContainerElement == null) {
+      return 0;
+    }
+
+    const actionsAreaHeight = this.offsetHeightOf(this.answersPanelContainerElement, '.actions');
+
+    const bottomPartHeight = this.offsetHeightOf(this.answersPanelContainerElement, '.answers-component-footer');
+
+    const totalAnswersMessageHeight = this.offsetHeightOf(this.answersPanelContainerElement, '#totalAnswersMessage');
+
+    const questionTextHeight = this.offsetHeightOf(this.answersPanelContainerElement, '.question-text');
+    const totalAnswersMessageVerticalMargin = 18.72 * 2;
+
+    return (
+      questionTextHeight +
+      totalAnswersMessageHeight +
+      bottomPartHeight +
+      totalAnswersMessageVerticalMargin +
+      actionsAreaHeight
+    );
+  }
+
+  private get minAnswerPanelPercent(): number {
     // Add 1 extra percentage to allow for gutter (slider toggle) height eating in to calculated space requested
     return Math.ceil((this.answerPanelElementMinimumHeight / this.splitContainerElementHeight) * 100) + 1;
   }
-  private get maxAnswerPanelHeight(): number {
+  private get currentAnswerPanelPercent(): number {
     // Add 1 extra percentage to allow for gutter (slider toggle) height eating in to calculated space requested
     return Math.ceil((this.answerPanelElementHeight / this.splitContainerElementHeight) * 100) + 1;
+  }
+
+  private get comfortableAnswerPanelPercent(): number {
+    return Math.ceil((this.comfortableAnswerPanelElementHeight / this.splitContainerElementHeight) * 100) + 1;
   }
 
   private get splitContainerElementHeight(): number {
@@ -425,7 +462,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   checkSliderPosition(event: any) {
     if (event.hasOwnProperty('sizes')) {
-      if (event.sizes[1] < this.minAnswerPanelHeight) {
+      if (event.sizes[1] < this.minAnswerPanelPercent) {
         this.calculateScriptureSliderPosition();
       }
     }
@@ -663,24 +700,26 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {
+    const waitMs: number = 100;
     // Wait while Angular updates visible DOM elements before we can calculate the height correctly
     setTimeout((): void => {
       let answerPanelHeight: number;
       if (maximizeAnswerPanel) {
-        answerPanelHeight = this.maxAnswerPanelHeight;
+        answerPanelHeight = this.comfortableAnswerPanelPercent;
       } else if (this.resetAnswerPanelHeightOnFormHide) {
         // Default the answers panel size to 50% so the scripture panel shows after answers and comments are added
-        answerPanelHeight = this.maxAnswerPanelHeight < 50 ? this.maxAnswerPanelHeight : 50;
+        answerPanelHeight = this.currentAnswerPanelPercent < 50 ? this.currentAnswerPanelPercent : 50;
         this.resetAnswerPanelHeightOnFormHide = false;
       } else {
-        answerPanelHeight = this.minAnswerPanelHeight;
+        answerPanelHeight = this.minAnswerPanelPercent;
       }
+
       if (answerPanelHeight > 100) {
         answerPanelHeight = 100;
       }
       const scripturePanelHeight = 100 - answerPanelHeight;
       this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
-    }, 100);
+    }, waitMs);
   }
 
   // Unbind this component from the data when a user is removed from the project, otherwise console
@@ -731,5 +770,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       isInvitingEnabled,
       isNameConfirmed
     });
+  }
+
+  private offsetHeightOf(baseElement: ElementRef, selector: string): number {
+    return baseElement.nativeElement.querySelector(selector) == null
+      ? 0
+      : baseElement.nativeElement.querySelector(selector).offsetHeight;
+  }
+
+  private scrollHeightOf(baseElement: ElementRef, selector: string): number {
+    return baseElement.nativeElement.querySelector(selector) == null
+      ? 0
+      : baseElement.nativeElement.querySelector(selector).scrollHeight;
   }
 }
