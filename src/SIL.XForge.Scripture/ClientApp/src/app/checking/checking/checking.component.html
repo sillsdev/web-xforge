@@ -118,6 +118,11 @@
           </div>
         </div>
       </div>
+      <div *ngIf="answersPanel?.hiddenAnswersCount > 0">
+        <button mdc-button id="show-unread-answers-button" (click)="answersPanel?.flushAnswerBuffer()">
+          show {{ answersPanel?.hiddenAnswersCount }} more unread answer(s)
+        </button>
+      </div>
       <div *ngIf="questionsPanel.activeQuestionDoc" id="project-navigation">
         <button mdc-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()">
           <span class="mdc-button__label">View Questions</span>
