@@ -118,7 +118,7 @@
           </div>
         </div>
       </div>
-      <div *ngIf="answersPanel?.hiddenAnswersCount > 0">
+      <div *ngIf="showPanel">
         <button mdc-button id="show-unread-answers-button" (click)="answersPanel?.flushAnswerBuffer()">
           show {{ answersPanel?.hiddenAnswersCount }} more unread answer(s)
         </button>

@@ -66,6 +66,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   @ViewChild('splitContainer', { static: true }) splitContainerElement!: ElementRef;
   @ViewChild('scripturePanelContainer', { static: true }) scripturePanelContainerElement!: ElementRef;
   @ViewChild('chapterMenuList', { static: true }) chapterMenuList!: MdcList;
+  // Seeing if using a property in checking.component itself will help with the ngIf problem, rather than use *ngIf="answersPanel?.hiddenAnswersCount > 0"
+  get showPanel(): boolean {
+    if (this.answersPanel == null) {
+      return false;
+    }
+    //return false;// returning false here  fixes the problem of ngif
+    return this.answersPanel.hiddenAnswersCount > 0;
+  }
 
   chapters: number[] = [];
   isExpanded: boolean = false;

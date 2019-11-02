@@ -81,6 +81,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (questionDoc == null) {
       return;
     }
+    // TODO might the below keep subscribing to a new question each time? Maybe unsubscribe when a new question is set. It at least does not seem to be the cause of the ngIf problem.
     this.subscribe(questionDoc.remoteChanges$, a => {
       // If any answers are added by someone else before this user answers the question
       // to reveal answers, include those new answers in what will be shown when we first

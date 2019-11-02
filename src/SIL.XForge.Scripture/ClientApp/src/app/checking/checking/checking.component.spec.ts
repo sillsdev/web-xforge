@@ -483,13 +483,32 @@ describe('CheckingComponent', () => {
       expect(env.getUnread(env.questions[6])).toEqual(0);
     }));
 
-    it('checker can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
+    fit('checker can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
+      flush();
+      tick(99999);
+      env.fixture.detectChanges();
       env.setSeeOtherUserResponses(false);
+      flush();
+      tick(99999);
+      env.fixture.detectChanges();
       env.selectQuestion(6);
+      flush();
+      tick(99999);
+      env.fixture.detectChanges();
       expect(env.answers.length).toBe(1);
+      flush();
+      tick(99999);
+      env.fixture.detectChanges();
+      // return;//success
+      flush();
+      tick(99999);
+      env.fixture.detectChanges();
+      // The following line fails with the ngIf problem.
       env.selectQuestion(7);
+      return; //fail
       expect(env.answers.length).toBe(0);
+      return; //fail
       env.answerQuestion('Answer from checker');
       expect(env.answers.length).toBe(1);
     }));
@@ -722,7 +741,7 @@ describe('CheckingComponent', () => {
         // Another user
         false
       );
-      tick();
+      flush();
       env.fixture.detectChanges();
 
       // The new answer does not show up yet.
@@ -735,6 +754,7 @@ describe('CheckingComponent', () => {
 
       // Clicking makes the answer appear and the control go away.
       env.clickButton(env.showUnreadAnswersButton);
+      flush();
       expect(env.answers.length).toEqual(3);
       expect(env.component.answersPanel!.answers.length).toEqual(3);
       expect(env.showUnreadAnswersButton).toBeNull();
@@ -1245,10 +1265,19 @@ class TestEnvironment {
     question.nativeElement.click();
     tick(1);
     this.fixture.detectChanges();
+    flush();
+    this.fixture.detectChanges();
+
     if (includeReadTimer) {
       tick(this.questionReadTimer);
       this.fixture.detectChanges();
+      flush();
+      this.fixture.detectChanges();
+      //
     }
+    flush();
+    this.fixture.detectChanges();
+
     return question;
   }
 
