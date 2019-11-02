@@ -85,6 +85,7 @@
       }
     }
     #answer-panel {
+      height: 100%;
       padding: 12px 15px;
       @include media-breakpoint-down(sm) {
         padding-left: 0;

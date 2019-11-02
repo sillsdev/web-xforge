@@ -202,21 +202,101 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.answersPanelContainerElement != null ? this.answersPanelContainerElement.nativeElement.offsetHeight : 0;
   }
 
-  private get answerPanelElementMinimumHeight(): number {
-    return this.answerPanelElementHeight > 0 && this.answersPanelContainerElement != null
-      ? this.answerPanelElementHeight -
-          this.answersPanelContainerElement.nativeElement.querySelector('.answers-container').offsetHeight +
-          20
-      : 0;
+  /** Height in px needed to show all elements in the bottom
+   * half of the answer panel splitter without them needing
+   * to vertically scroll. */
+  private get fullyExpandedAnswerPanelHeight(): number {
+    if (this.answersPanelContainerElement == null) {
+      return 0;
+    }
+
+    const answersPanelVerticalPadding =
+      this.getCSSFloatPropertyOf(this.answersPanelContainerElement, 'padding-top') +
+      this.getCSSFloatPropertyOf(this.answersPanelContainerElement, 'padding-bottom');
+
+    const actionsAreaHeight = this.getOffsetHeight(this.answersPanelContainerElement, '.actions');
+
+    const scrollPartHeight = this.getMinScrollHeight(
+      this.answersPanelContainerElement,
+      '.answers-component-scrollable-content'
+    );
+
+    const totalAnswersMessageTopMargin = this.getCSSFloatProperty(
+      this.answersPanelContainerElement,
+      '#totalAnswersMessage',
+      'margin-top'
+    );
+
+    const showUnreadsBannerHeight = this.getOffsetHeight(
+      this.answersPanelContainerElement,
+      '.answers-component-footer'
+    );
+
+    return (
+      answersPanelVerticalPadding +
+      actionsAreaHeight +
+      scrollPartHeight +
+      totalAnswersMessageTopMargin +
+      showUnreadsBannerHeight
+    );
   }
 
-  private get minAnswerPanelHeight(): number {
-    // Add 1 extra percentage to allow for gutter (slider toggle) height eating in to calculated space requested
-    return Math.ceil((this.answerPanelElementMinimumHeight / this.splitContainerElementHeight) * 100) + 1;
+  /** Minimum height in px to show no more than these
+   * elements in the bottom half of the answer panel splitter:
+   * - Question
+   * - Answer count, if present
+   * - show-more-answers banner, if present
+   * - add-answer button, if present
+   */
+  private get answerPanelElementMinimumHeight(): number {
+    // Note: Alternate implementations can end up showing
+    // the top border of the first answer, if the browser
+    // window is tall. So that can be looked for when modifying
+    // this method.
+
+    if (this.answersPanelContainerElement == null) {
+      return 0;
+    }
+
+    const totalAnswersMessage = document.querySelector('#totalAnswersMessage') as Element;
+    const distanceFromTopToTotalAnswersMessageBottom =
+      totalAnswersMessage == null
+        ? 0
+        : totalAnswersMessage.getBoundingClientRect().bottom -
+          this.answersPanelContainerElement.nativeElement.getBoundingClientRect().top;
+
+    const actionsArea = document.querySelector('.actions') as Element;
+    const distanceFromTopToAddAnswerButtonButtom =
+      actionsArea == null
+        ? 0
+        : actionsArea.getBoundingClientRect().bottom -
+          this.answersPanelContainerElement.nativeElement.getBoundingClientRect().top;
+
+    const showUnreadsBannerHeight = this.getOffsetHeight(
+      this.answersPanelContainerElement,
+      '.answers-component-footer'
+    );
+
+    const answersPanelVerticalPadding =
+      this.getCSSFloatPropertyOf(this.answersPanelContainerElement, 'padding-top') +
+      this.getCSSFloatPropertyOf(this.answersPanelContainerElement, 'padding-bottom');
+
+    return (
+      Math.max(distanceFromTopToTotalAnswersMessageBottom, distanceFromTopToAddAnswerButtonButtom) +
+      answersPanelVerticalPadding +
+      showUnreadsBannerHeight
+    );
   }
-  private get maxAnswerPanelHeight(): number {
-    // Add 1 extra percentage to allow for gutter (slider toggle) height eating in to calculated space requested
-    return Math.ceil((this.answerPanelElementHeight / this.splitContainerElementHeight) * 100) + 1;
+
+  private get minAnswerPanelPercent(): number {
+    return Math.ceil((this.answerPanelElementMinimumHeight / this.splitContainerElementHeight) * 100);
+  }
+  private get currentAnswerPanelPercent(): number {
+    return Math.ceil((this.answerPanelElementHeight / this.splitContainerElementHeight) * 100);
+  }
+
+  private get fullyExpandedAnswerPanelPercent(): number {
+    return Math.ceil((this.fullyExpandedAnswerPanelHeight / this.splitContainerElementHeight) * 100);
   }
 
   private get splitContainerElementHeight(): number {
@@ -427,7 +507,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   checkSliderPosition(event: any) {
     if (event.hasOwnProperty('sizes')) {
-      if (event.sizes[1] < this.minAnswerPanelHeight) {
+      if (event.sizes[1] < this.minAnswerPanelPercent) {
         this.calculateScriptureSliderPosition();
       }
     }
@@ -665,24 +745,26 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {
+    const waitMs: number = 100;
     // Wait while Angular updates visible DOM elements before we can calculate the height correctly
     setTimeout((): void => {
       let answerPanelHeight: number;
       if (maximizeAnswerPanel) {
-        answerPanelHeight = this.maxAnswerPanelHeight;
+        answerPanelHeight = this.fullyExpandedAnswerPanelPercent;
       } else if (this.resetAnswerPanelHeightOnFormHide) {
         // Default the answers panel size to 50% so the scripture panel shows after answers and comments are added
-        answerPanelHeight = this.maxAnswerPanelHeight < 50 ? this.maxAnswerPanelHeight : 50;
+        answerPanelHeight = this.currentAnswerPanelPercent < 50 ? this.currentAnswerPanelPercent : 50;
         this.resetAnswerPanelHeightOnFormHide = false;
       } else {
-        answerPanelHeight = this.minAnswerPanelHeight;
+        answerPanelHeight = this.minAnswerPanelPercent;
       }
+
       if (answerPanelHeight > 100) {
         answerPanelHeight = 100;
       }
       const scripturePanelHeight = 100 - answerPanelHeight;
       this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
-    }, 100);
+    }, waitMs);
   }
 
   // Unbind this component from the data when a user is removed from the project, otherwise console
@@ -733,5 +815,42 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       isInvitingEnabled,
       isNameConfirmed
     });
+  }
+
+  private getCSSFloatPropertyOf(element: ElementRef | Element, propertyName: string): number {
+    const elementStyle: CSSStyleDeclaration = getComputedStyle(
+      element instanceof ElementRef ? element.nativeElement : element
+    );
+    return parseFloat(elementStyle.getPropertyValue(propertyName));
+  }
+
+  /** Get float property without units. eg 3.14 instead of '3.14px'. */
+  private getCSSFloatProperty(baseElement: ElementRef, elementSelector: string, propertyName: string): number {
+    const element: Element | null = baseElement.nativeElement.querySelector(elementSelector);
+    if (element == null) {
+      return 0;
+    }
+    return this.getCSSFloatPropertyOf(element, propertyName);
+  }
+
+  private getOffsetHeight(baseElement: ElementRef, selector: string): number {
+    const element: HTMLElement | null = baseElement.nativeElement.querySelector(selector);
+    return element == null ? 0 : element.offsetHeight;
+  }
+
+  /** Report the needed height in px to fit contents without scrolling.
+   * An element's `scrollHeight` may be taller than needed,
+   * if the `clientHeight` of the scrollable area is already
+   * taller than needed to fit the contents without
+   * scrolling. */
+  private getMinScrollHeight(baseElement: ElementRef, selector: string): number {
+    const element = baseElement.nativeElement.querySelector(selector) as Element | null;
+    if (element == null || element.firstElementChild == null || element.lastElementChild == null) {
+      return 0;
+    }
+
+    return (
+      element.lastElementChild!.getBoundingClientRect().bottom - element.firstElementChild!.getBoundingClientRect().top
+    );
   }
 }

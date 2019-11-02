@@ -1,6 +1,18 @@
 @import '../checking-global-vars';
 @import '~bootstrap/scss/mixins/breakpoints';
 
+.answers-component {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+}
+
+.answers-component-scrollable-content {
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
 .answer-question {
   padding-left: 15px;
   position: relative;
