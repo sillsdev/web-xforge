@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.Extensions.Configuration;
@@ -79,6 +82,8 @@ namespace SIL.XForge.Scripture
 
             services.AddSFDataAccess(Configuration);
 
+            services.AddLocalization(options => options.ResourcesPath = "Resources");
+
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
@@ -113,6 +118,17 @@ namespace SIL.XForge.Scripture
                 app.UseDeveloperExceptionPage();
 
             app.UseExceptionLogging();
+
+            // Add new cultures here as they are localized
+            var supportedCultures = new List<CultureInfo> {new CultureInfo("en-US")};
+            app.UseRequestLocalization(new RequestLocalizationOptions
+            {
+                DefaultRequestCulture = new RequestCulture("en-US"),
+                // Formatting numbers, dates, etc.
+                SupportedCultures = supportedCultures,
+                // UI strings that we have localized.
+                SupportedUICultures = supportedCultures
+            });
 
             app.UseStaticFiles(new StaticFileOptions
             {
