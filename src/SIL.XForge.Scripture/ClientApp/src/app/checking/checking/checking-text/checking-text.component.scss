@@ -1,4 +1,4 @@
-@import '../checking-global.scss';
+@import '../checking-global-vars';
 
 app-checking-text {
   position: absolute;
@@ -79,6 +79,7 @@ app-text {
           font-weight: bold;
           position: absolute;
           top: -0.75em;
+          text-indent: 0;
         }
       }
 
