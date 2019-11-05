@@ -837,6 +837,13 @@ describe('CheckingComponent', () => {
       const quillElementLang = env.quillEditorElement.getAttribute('lang');
       expect(quillElementLang).toEqual(env.project01WritingSystemTag);
     }));
+
+    it('adds question count attribute to element', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      const segment = env.quillEditor.querySelector('usx-segment[data-segment=verse_1_1')!;
+      expect(segment.hasAttribute('data-question-count')).toBe(true);
+      expect(segment.getAttribute('data-question-count')).toBe('13');
+    }));
   });
 });
 
