@@ -15,6 +15,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddNodeServices(options =>
             {
                 options.LaunchWithDebugging = launchWithDebugging;
+                options.DebuggingPort = 9230;
                 options.WatchFileExtensions = new string[0];
                 options.NodeInstanceOutputLogger = new RealtimeServerLogger(
                     loggerFactory.CreateLogger("SIL.XForge.Realtime.RealtimeServer"));

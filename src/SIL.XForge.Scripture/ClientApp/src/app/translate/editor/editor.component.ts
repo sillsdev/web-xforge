@@ -1,4 +1,4 @@
-import { MdcIconButton } from '@angular-mdc/web';
+import { MdcDialog } from '@angular-mdc/web';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -18,8 +18,8 @@ import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-proj
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { BehaviorSubject, fromEvent, Subject, Subscription, timer } from 'rxjs';
-import { debounceTime, delayWhen, filter, map, repeat, retryWhen, skip, tap } from 'rxjs/operators';
+import { fromEvent, Subject, Subscription, timer } from 'rxjs';
+import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -32,10 +32,14 @@ import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { Segment } from '../../shared/text/segment';
 import { TextComponent } from '../../shared/text/text.component';
+import {
+  SuggestionsSettingsDialogComponent,
+  SuggestionsSettingsDialogData
+} from './suggestions-settings-dialog.component';
+import { Suggestion } from './suggestions.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
-export const CONFIDENCE_THRESHOLD_TIMEOUT = 500;
 
 const PUNCT_SPACE_REGEX = XRegExp('^(\\p{P}|\\p{S}|\\p{Cc}|\\p{Z})+$');
 
@@ -46,10 +50,8 @@ const PUNCT_SPACE_REGEX = XRegExp('^(\\p{P}|\\p{S}|\\p{Cc}|\\p{Z})+$');
   styleUrls: ['./editor.component.scss']
 })
 export class EditorComponent extends DataLoadingComponent implements OnInit, OnDestroy, AfterViewInit {
-  suggestionWords: string[] = [];
-  suggestionConfidence: number = 0;
-  showSuggestion: boolean = false;
-  displaySlider: boolean = false;
+  suggestions: Suggestion[] = [];
+  showSuggestions: boolean = false;
   chapters: number[] = [];
   metricsSession?: TranslateMetricsSession;
   trainingPercentage: number = 0;
@@ -60,7 +62,6 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   @ViewChild('targetContainer', { static: true }) targetContainer!: ElementRef;
   @ViewChild('source', { static: true }) source!: TextComponent;
   @ViewChild('target', { static: true }) target!: TextComponent;
-  @ViewChild('suggestionsMenuButton', { static: false }) suggestionsMenuButton?: MdcIconButton;
 
   private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;
@@ -75,9 +76,8 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   private text?: TextInfo;
   private sourceLoaded: boolean = false;
   private targetLoaded: boolean = false;
-  private confidenceThreshold$: BehaviorSubject<number>;
   private _chapter?: number;
-  private lastShownSuggestionWords: string[] = [];
+  private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
   private trainingSub?: Subscription;
   private projectDataChangesSub?: Subscription;
@@ -89,30 +89,15 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     noticeService: NoticeService,
-    private readonly helpHeroService: HelpHeroService
+    private readonly helpHeroService: HelpHeroService,
+    private readonly dialog: MdcDialog
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
     this.sourceWordTokenizer = wordTokenizer;
     this.targetWordTokenizer = wordTokenizer;
 
-    this.confidenceThreshold$ = new BehaviorSubject<number>(20);
     this.translationSuggester.confidenceThreshold = 0.2;
-    this.subscribe(
-      this.confidenceThreshold$.pipe(
-        skip(1),
-        debounceTime(CONFIDENCE_THRESHOLD_TIMEOUT),
-        map(value => value / 100),
-        filter(threshold => threshold !== this.translationSuggester.confidenceThreshold)
-      ),
-      threshold => {
-        this.translationSuggester.confidenceThreshold = threshold;
-        this.updateSuggestions();
-        if (this.projectUserConfigDoc != null) {
-          this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold));
-        }
-      }
-    );
 
     this.segmentUpdated$ = new Subject<void>();
     this.subscribe(this.segmentUpdated$.pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT)), () => this.updateSuggestions());
@@ -147,17 +132,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   }
 
   get translationSuggestionsUserEnabled(): boolean {
-    return this.projectUserConfigDoc == null ||
-      this.projectUserConfigDoc.data == null ||
-      this.projectUserConfigDoc.data.translationSuggestionsEnabled == null
+    return this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null
       ? true
       : this.projectUserConfigDoc.data.translationSuggestionsEnabled;
-  }
-
-  set translationSuggestionsUserEnabled(value: boolean) {
-    if (this.projectUserConfigDoc != null && this.translationSuggestionsUserEnabled !== value) {
-      this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.translationSuggestionsEnabled, value));
-    }
   }
 
   get translationSuggestionsProjectEnabled(): boolean {
@@ -168,12 +145,10 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     );
   }
 
-  get confidenceThreshold(): number {
-    return this.confidenceThreshold$.value;
-  }
-
-  set confidenceThreshold(value: number) {
-    this.confidenceThreshold$.next(value);
+  get numSuggestions(): number {
+    return this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null
+      ? 1
+      : this.projectUserConfigDoc.data.numSuggestions;
   }
 
   get chapter(): number | undefined {
@@ -182,7 +157,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
 
   set chapter(value: number | undefined) {
     if (this._chapter !== value) {
-      this.showSuggestion = false;
+      this.showSuggestions = false;
       this._chapter = value;
       this.changeText();
     }
@@ -214,7 +189,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
 
   get isValid(): boolean {
     if (this.text == null) {
-      return false;
+      return true;
     }
 
     const chapter = this.text.chapters.find(c => c.number === this._chapter);
@@ -226,7 +201,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     this.subscribe(
       this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
       async params => {
-        this.showSuggestion = false;
+        this.showSuggestions = false;
         this.sourceLoaded = false;
         this.targetLoaded = false;
         this.loadingStarted();
@@ -316,22 +291,6 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
   }
 
-  suggestionsMenuOpened(): void {
-    // if the parent element of a slider resizes, then the slider will not be rendered properly. A menu is resized when
-    // it is opened, which triggers this bug. We workaround this bug in MDC Web by waiting to display the slider when
-    // the menu is opened.
-    // https://github.com/trimox/angular-mdc-web/issues/1832
-    // https://github.com/material-components/material-components-web/issues/1017
-    this.displaySlider = true;
-  }
-
-  suggestionsMenuClosed(): void {
-    this.displaySlider = false;
-    if (this.suggestionsMenuButton != null) {
-      this.suggestionsMenuButton.elementRef.nativeElement.blur();
-    }
-  }
-
   closeTrainingProgress(): void {
     this.showTrainingProgress = false;
     this.trainingProgressClosed = true;
@@ -343,7 +302,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
 
     if (segment !== prevSegment) {
-      this.lastShownSuggestionWords = [];
+      this.lastShownSuggestions = [];
       this.source.setSegment(this.target.segmentRef);
       this.syncScroll();
 
@@ -426,8 +385,13 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
   }
 
-  insertSuggestion(suggestionIndex: number, event: Event): void {
-    if (this.target.editor == null || suggestionIndex >= this.suggestionWords.length) {
+  insertSuggestion(suggestionIndex: number, wordIndex: number, event: Event): void {
+    if (this.target.editor == null || suggestionIndex >= this.suggestions.length) {
+      return;
+    }
+
+    const suggestion = this.suggestions[suggestionIndex];
+    if (wordIndex >= suggestion.words.length) {
       return;
     }
 
@@ -444,7 +408,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       delta.delete(range.length);
     }
 
-    const words = suggestionIndex === -1 ? this.suggestionWords : this.suggestionWords.slice(0, suggestionIndex + 1);
+    const words = wordIndex === -1 ? suggestion.words : suggestion.words.slice(0, wordIndex + 1);
     // TODO: use detokenizer to build suggestion text
     let insertText = words.join(' ');
     if (this.translationSession != null && !this.translationSession.isLastWordComplete) {
@@ -455,7 +419,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       insertText = ' ' + insertText;
     }
     delta.insert(insertText);
-    this.showSuggestion = false;
+    this.showSuggestions = false;
 
     const selectIndex = range.index + insertText.length;
     this.insertSuggestionEnd = selectIndex;
@@ -465,6 +429,29 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     if (this.metricsSession != null) {
       this.metricsSession.onSuggestionAccepted(event);
     }
+  }
+
+  openSuggestionsSettings(): void {
+    if (this.projectDoc == null || this.projectUserConfigDoc == null) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open<SuggestionsSettingsDialogComponent, SuggestionsSettingsDialogData>(
+      SuggestionsSettingsDialogComponent,
+      {
+        clickOutsideToClose: true,
+        escapeToClose: true,
+        data: { projectUserConfigDoc: this.projectUserConfigDoc }
+      }
+    );
+    dialogRef.afterClosed().subscribe(() => {
+      this.target.focus();
+      if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+        const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
+        this.translationSuggester.confidenceThreshold = pcnt / 100;
+      }
+      this.updateSuggestions();
+    });
   }
 
   private setupTranslationEngine(): void {
@@ -595,8 +582,8 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
 
   private onStartTranslating(): void {
     this.isTranslating = true;
-    this.suggestionWords = [];
-    this.showSuggestion = this.target.isSelectionAtSegmentEnd;
+    this.suggestions = [];
+    this.showSuggestions = this.target.isSelectionAtSegmentEnd;
   }
 
   private async translateSegment(): Promise<void> {
@@ -615,7 +602,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
 
     const start = performance.now();
-    const translationSession = await this.translationEngine.translateInteractively(1, words);
+    const translationSession = await this.translationEngine.translateInteractively(words);
     if (sourceSegment === this.source.segmentText) {
       this.translationSession = translationSession;
       const finish = performance.now();
@@ -636,7 +623,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     // only bother updating the suggestion if the cursor is at the end of the segment
     if (!this.isTranslating && this.target.isSelectionAtSegmentEnd) {
       if (this.translationSession == null) {
-        this.suggestionWords = [];
+        this.suggestions = [];
       } else {
         const range = this.skipInitialWhitespace(this.target.editor, this.target.editor.getSelection()!);
         const text = this.target.editor.getText(
@@ -650,25 +637,35 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
           this.insertSuggestionEnd !== -1 ||
           tokenRanges.length === 0 ||
           tokenRanges[tokenRanges.length - 1].end !== text.length;
-        const results = this.translationSession.setPrefix(prefix, isLastWordComplete);
-        if (results.length === 0) {
-          this.suggestionWords = [];
+        this.translationSession.setPrefix(prefix, isLastWordComplete);
+        const machineSuggestions = this.translationSuggester.getSuggestions(
+          this.numSuggestions,
+          prefix.length,
+          isLastWordComplete,
+          this.translationSession.getCurrentResults()
+        );
+        if (machineSuggestions.length === 0) {
+          this.suggestions = [];
         } else {
-          const result = results[0];
-          const suggestion = this.translationSuggester.getSuggestion(prefix.length, isLastWordComplete, result);
-          this.suggestionWords = suggestion.targetWordIndices.map(j => result.targetSegment[j]);
-          this.suggestionConfidence = suggestion.confidence;
-          if (this.suggestionWords.length > 0 && !isEqual(this.lastShownSuggestionWords, this.suggestionWords)) {
+          const suggestions: Suggestion[] = [];
+          let confidence = 1;
+          for (const machineSuggestion of machineSuggestions) {
+            const words = machineSuggestion.targetWords;
+            // for display purposes, we ensure that the confidence is less than or equal to "better" suggestions
+            confidence = Math.min(confidence, machineSuggestion.confidence);
+            suggestions.push({ words, confidence });
+          }
+          this.suggestions = suggestions;
+          if (this.suggestions.length > 0 && !isEqual(this.lastShownSuggestions, this.suggestions)) {
             if (this.metricsSession != null) {
               this.metricsSession.onSuggestionShown();
             }
-            this.lastShownSuggestionWords = this.suggestionWords;
+            this.lastShownSuggestions = this.suggestions;
           }
         }
       }
     }
-    this.showSuggestion =
-      (this.isTranslating || this.suggestionWords.length > 0) && this.target.isSelectionAtSegmentEnd;
+    this.showSuggestions = (this.isTranslating || this.suggestions.length > 0) && this.target.isSelectionAtSegmentEnd;
   }
 
   private skipInitialWhitespace(editor: Quill, range: RangeStatic): RangeStatic {
@@ -701,11 +698,8 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   private loadProjectUserConfig() {
     let chapter = 1;
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
-      if (this.projectUserConfigDoc.data.confidenceThreshold != null) {
-        const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
-        this.translationSuggester.confidenceThreshold = pcnt / 100;
-        this.confidenceThreshold$.next(pcnt);
-      }
+      const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
+      this.translationSuggester.confidenceThreshold = pcnt / 100;
       if (this.text != null && this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
         if (this.projectUserConfigDoc.data.selectedChapterNum != null) {
           chapter = this.projectUserConfigDoc.data.selectedChapterNum;

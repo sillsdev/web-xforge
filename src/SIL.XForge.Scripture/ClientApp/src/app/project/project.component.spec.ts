@@ -189,6 +189,7 @@ class TestEnvironment {
         isTargetTextRight: true,
         confidenceThreshold: 0.2,
         translationSuggestionsEnabled: true,
+        numSuggestions: 1,
         selectedSegment: '',
         questionRefsRead: [],
         answerRefsRead: [],

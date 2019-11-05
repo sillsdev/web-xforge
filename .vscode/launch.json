@@ -11,7 +11,7 @@
       "type": "node",
       "request": "attach",
       "name": "Node",
-      "port": 9229
+      "port": 9230
     },
     {
       "type": "chrome",
