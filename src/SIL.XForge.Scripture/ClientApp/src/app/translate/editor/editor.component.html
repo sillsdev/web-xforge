@@ -5,55 +5,20 @@
     <ng-container *ngIf="hasSource">
       <div class="toolbar-separator">&nbsp;</div>
       <button
-        mdcIconButton
-        type="button"
-        title="Enable/disable suggestions"
-        [on]="translationSuggestionsUserEnabled"
-        (change)="translationSuggestionsUserEnabled = !$event.value"
-      >
-        <mdc-icon mdcIconOn>speaker_notes</mdc-icon>
-        <mdc-icon>speaker_notes_off</mdc-icon>
-      </button>
-      <div mdcMenuSurfaceAnchor #suggestionsAnchor>
-        <button
-          #suggestionsMenuButton
-          mdc-icon-button
-          icon="linear_scale"
-          title="Adjust suggestion confidence"
-          type="button"
-          (click)="suggestionsMenu.open = !suggestionsMenu.open"
-          [class.mdc-icon-button--activated]="suggestionsMenu.open"
-        ></button>
-        <mdc-menu-surface
-          class="suggestions-menu"
-          #suggestionsMenu
-          [anchorElement]="suggestionsAnchor"
-          [quickOpen]="true"
-          anchorCorner="bottomStart"
-          (opened)="suggestionsMenuOpened()"
-          (closed)="suggestionsMenuClosed()"
-        >
-          <div mdcSubtitle1 fxLayout="row" fxLayoutAlign="center">Suggestion Confidence</div>
-          <div class="slider-labels" fxLayout="row" fxLayoutAlign="space-between">
-            <span mdcCaption>More</span> <span mdcCaption>{{ confidenceThreshold }}%</span>
-            <span mdcCaption>Better</span>
-          </div>
-          <mdc-slider
-            id="confidence-threshold-slider"
-            *ngIf="displaySlider"
-            [min]="0"
-            [max]="100"
-            [(ngModel)]="confidenceThreshold"
-          ></mdc-slider>
-        </mdc-menu-surface>
-      </div>
-      <button
         mdc-icon-button
         appBlurOnClick
         icon="swap_horiz"
         type="button"
         (click)="isTargetTextRight = !isTargetTextRight"
         title="Swap source and target"
+      ></button>
+      <button
+        mdc-icon-button
+        appBlurOnClick
+        icon="settings"
+        type="button"
+        (click)="openSuggestionsSettings()"
+        title="Configure translation suggestions"
       ></button>
     </ng-container>
   </div>
@@ -83,14 +48,14 @@
           (loaded)="onTextLoaded('target')"
           [highlightSegment]="target.hasFocus"
         ></app-text>
-        <app-suggestion
+        <app-suggestions
           [mdcElevation]="2"
-          [show]="showSuggestion && translationSuggestionsEnabled"
-          [words]="suggestionWords"
-          [confidence]="suggestionConfidence"
+          [show]="showSuggestions && translationSuggestionsEnabled"
+          [suggestions]="suggestions"
           [text]="target"
-          (selected)="insertSuggestion($event.index, $event.event)"
-        ></app-suggestion>
+          (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
+          (showChange)="showSuggestions = $event"
+        ></app-suggestions>
       </div>
     </div>
   </div>

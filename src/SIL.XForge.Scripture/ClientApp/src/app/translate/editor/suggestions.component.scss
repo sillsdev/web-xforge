@@ -1,7 +1,6 @@
 :host {
   background-color: #faf9f7;
   color: #373a3c;
-  padding: 5px;
   position: absolute;
   z-index: 2;
   white-space: nowrap;
@@ -19,7 +18,7 @@
 
 .loading-indicator {
   display: table;
-  padding: 3px 2px 4px 2px;
+  padding: 8px 7px 9px 7px;
 
   span {
     height: 10px;
@@ -44,29 +43,16 @@
   }
 }
 
-.ql-suggest a:hover {
-  text-decoration: underline;
-}
-
-.ql-suggest a {
-  color: black;
+mdc-list {
   padding: 0;
-  margin: 0;
-  font-size: inherit;
-  text-decoration: none;
-}
 
-.ql-suggest ul {
-  margin-bottom: 0.3rem;
-}
+  > mdc-list-item {
+    height: 30px;
+    padding: 0 8px;
 
-.text-muted {
-  opacity: 0.5;
-}
-
-.help-icon {
-  height: 14px;
-  > mdc-icon {
-    font-size: inherit;
+    > div {
+      font-size: smaller;
+      padding-left: 5px;
+    }
   }
 }

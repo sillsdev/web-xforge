@@ -24,7 +24,7 @@ interface ConnectProjectFormValues {
   styleUrls: ['./connect-project.component.scss']
 })
 export class ConnectProjectComponent extends DataLoadingComponent implements OnInit {
-  connectProjectForm = new FormGroup({
+  readonly connectProjectForm = new FormGroup({
     paratextId: new FormControl(undefined),
     settings: new FormGroup({
       translationSuggestions: new FormControl(false),

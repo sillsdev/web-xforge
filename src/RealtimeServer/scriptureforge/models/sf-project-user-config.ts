@@ -13,6 +13,7 @@ export interface SFProjectUserConfig extends ProjectData {
   isTargetTextRight: boolean;
   confidenceThreshold: number;
   translationSuggestionsEnabled: boolean;
+  numSuggestions: number;
   selectedSegment: string;
   selectedSegmentChecksum?: number;
   questionRefsRead: string[];
