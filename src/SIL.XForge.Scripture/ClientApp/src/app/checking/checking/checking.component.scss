@@ -65,10 +65,16 @@
               overflow: hidden;
               margin-right: 5px;
             }
+            .chapter-dropdown {
+              display: flex;
+            }
             > div {
               display: flex;
               align-items: center;
             }
+          }
+          .chapter-menu-list mdc-list-item {
+            white-space: nowrap;
           }
           &.action-icons {
             justify-content: flex-end;
