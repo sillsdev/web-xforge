@@ -10,6 +10,7 @@ import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-proj
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { Subscription } from 'rxjs';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
@@ -63,6 +64,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   @Input() projectId?: string;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
+  questionChangeSubscription?: Subscription = undefined;
   @Input() set questionDoc(questionDoc: QuestionDoc | undefined) {
     if (questionDoc !== this._questionDoc) {
       this.hideAnswerForm();
@@ -76,7 +78,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (questionDoc == null) {
       return;
     }
-    this.subscribe(questionDoc.remoteChanges$, a => {
+    if (this.questionChangeSubscription != null) {
+      this.questionChangeSubscription!.unsubscribe();
+    }
+    this.questionChangeSubscription = this.subscribe(questionDoc.remoteChanges$, () => {
       // If any answers are added by someone else before this user answers the question
       // to reveal answers, include those new answers in what will be shown when we first
       // show the answers.
@@ -90,6 +95,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
   @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
 
+  /** Answer being edited. */
   activeAnswer?: Answer;
   answerForm = new FormGroup({
     answerText: new FormControl(),
