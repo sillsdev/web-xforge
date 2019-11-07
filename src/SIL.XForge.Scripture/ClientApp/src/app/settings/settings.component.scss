@@ -1,4 +1,6 @@
-@import '~src/global';
+@import '~src/variables';
+@import '~bootstrap/scss/mixins/breakpoints';
+@import '~@angular-mdc/theme/scss/button/mixins';
 
 .container {
   margin: 0;

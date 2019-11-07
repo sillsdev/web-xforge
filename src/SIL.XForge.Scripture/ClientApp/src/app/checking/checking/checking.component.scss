@@ -1,5 +1,6 @@
-@import '~src/global';
 @import 'checking-global-vars';
+@import '~bootstrap/scss/mixins/breakpoints';
+@import '~@angular-mdc/theme/scss/icon-button/mixins';
 
 #projects-app {
   #checking-app-container {

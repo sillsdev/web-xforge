@@ -1,5 +1,45 @@
 /* Generic styles for the main html/body page itself */
-@import '~src/global';
+
+@import 'variables';
+@import '~@angular-mdc/theme/material';
+/* Only import relevant Bootstrap 4.x styles */
+@import '~bootstrap/scss/bootstrap-grid';
+@import '~quill/dist/quill.snow.css';
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  .panel-heading {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    height: 56px;
+    .material-icons {
+      margin-right: 10px;
+    }
+    h2 {
+      margin: 0;
+      flex: 1;
+    }
+    .panel-activity {
+      display: flex;
+      align-items: center;
+      > *:not(:first-child) {
+        margin-left: 15px;
+      }
+    }
+  }
+  .panel-content {
+    display: flex;
+    position: relative;
+    flex: 1;
+  }
+}
+
+as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
+  background-image: none !important;
+}
 
 .flex-column {
   display: flex;
