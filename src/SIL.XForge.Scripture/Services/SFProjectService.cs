@@ -4,6 +4,8 @@ using System;
 using System.IO;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using SIL.Machine.WebApi.Services;
@@ -31,12 +33,13 @@ namespace SIL.XForge.Scripture.Services
         private readonly IRepository<TranslateMetrics> _translateMetrics;
         private readonly IEmailService _emailService;
         private readonly ISecurityService _securityService;
+        private readonly IStringLocalizer<SharedResource> _localizer;
 
         public SFProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
             IAudioService audioService, IEmailService emailService, IRepository<SFProjectSecret> projectSecrets,
             ISecurityService securityService, IFileSystemService fileSystemService, IEngineService engineService,
             ISyncService syncService, IParatextService paratextService, IRepository<UserSecret> userSecrets,
-            IRepository<TranslateMetrics> translateMetrics)
+            IRepository<TranslateMetrics> translateMetrics, IStringLocalizer<SharedResource> localizer)
             : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
         {
             _engineService = engineService;
@@ -46,6 +49,7 @@ namespace SIL.XForge.Scripture.Services
             _translateMetrics = translateMetrics;
             _emailService = emailService;
             _securityService = securityService;
+            _localizer = localizer;
         }
 
         protected override string ProjectAdminRole => SFProjectRole.Administrator;
@@ -282,7 +286,7 @@ namespace SIL.XForge.Scripture.Services
             if (project.CheckingConfig.ShareEnabled && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone)
             {
                 url = $"{siteOptions.Origin}projects/{projectId}?sharing=true";
-                additionalMessage = "This link can be shared with others so they can join the project too.";
+                additionalMessage = _localizer[SharedResource.Keys.InviteLinkSharingOn];
             }
             else if ((project.CheckingConfig.ShareEnabled
                 && project.CheckingConfig.ShareLevel == CheckingShareLevel.Specific)
@@ -298,7 +302,7 @@ namespace SIL.XForge.Scripture.Services
                     projectSecret = await ProjectSecrets.GetAsync(projectId);
                 string key = projectSecret.ShareKeys.Single(sk => sk.Email == email).Key;
                 url = $"{siteOptions.Origin}projects/{projectId}?sharing=true&shareKey={key}";
-                additionalMessage = "This link will only work for this email address.";
+                additionalMessage = _localizer[SharedResource.Keys.InviteLinkSharingOff];
             }
             else
             {
@@ -306,19 +310,15 @@ namespace SIL.XForge.Scripture.Services
             }
 
             User inviter = await RealtimeService.GetSnapshotAsync<User>(curUserId);
-            string subject = $"You've been invited to the project {project.Name} on {siteOptions.Name}";
-            string body = "<p>Hello,</p><p></p>" +
-                $"<p>{inviter.Name} invites you to join the {project.Name} project on {siteOptions.Name}." +
-                "</p><p></p>" +
-                "<p>Just click the link below, choose how to log in, and you will be ready to start.</p><p></p>" +
-                $"<p>To join, go to <a href=\"{url}\">{url}</a></p><p></p>" +
-                $"<p>{additionalMessage}</p><p></p>" +
-                $"<p>If you are not already a {siteOptions.Name} user, then after clicking the link, click <b>Sign Up</b> and do one of the following:" +
-                $"<ul><li>Click <b>Sign up with Paratext</b> and follow the instructions to access {siteOptions.Name} using an existing Paratext account, or</li>" +
-                $"<li>Click <b>Sign up with Google</b> and follow the instructions to access {siteOptions.Name} using an existing Google account (such as a Gmail account), or</li>" +
-                $"<li>Enter your email address and a new password for your {siteOptions.Name} account and click Sign up.</li></ul></p><p></p>" +
-                $"<p>Regards,</p><p>The {siteOptions.Name} team</p>";
-            await _emailService.SendEmailAsync(email, subject, body);
+            string subject = _localizer[SharedResource.Keys.InviteSubject, project.Name, siteOptions.Name];
+            var greeting = $"<p>{_localizer[SharedResource.Keys.InviteGreeting, "<p>", inviter.Name, project.Name, siteOptions.Name, $"<a href=\"{url}\">{url}</a><p>"]}";
+            var instructions = $"<p>{_localizer[SharedResource.Keys.InviteInstructions, siteOptions.Name, "<b>", "</b>"]}";
+            var pt = $"<ul><li>{_localizer[SharedResource.Keys.InvitePTOption, "<b>", "</b>", siteOptions.Name]}</li>";
+            var google = $"<li>{_localizer[SharedResource.Keys.InviteGoogleOption, "<b>", "</b>", siteOptions.Name]}</li>";
+            var withemail = $"<li>{_localizer[SharedResource.Keys.InviteEmailOption, siteOptions.Name]}</li></ul></p><p></p>";
+            var signoff = $"<p>{_localizer[SharedResource.Keys.InviteSignature, "<p>", siteOptions.Name]}</p>";
+            var emailBody = $"{greeting}{additionalMessage}{instructions}{pt}{google}{withemail}{signoff}";
+            await _emailService.SendEmailAsync(email, subject, emailBody);
             return true;
         }
 

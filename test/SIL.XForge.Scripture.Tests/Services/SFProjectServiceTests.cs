@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
@@ -16,6 +19,7 @@ using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using MachineProject = SIL.Machine.WebApi.Models.Project;
+using Options = Microsoft.Extensions.Options.Options;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -697,12 +701,15 @@ namespace SIL.XForge.Scripture.Services
                 });
                 var translateMetrics = new MemoryRepository<TranslateMetrics>();
                 FileSystemService = Substitute.For<IFileSystemService>();
+                var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources"});
+                var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
+                Localizer = new StringLocalizer<SharedResource>(factory);
                 SecurityService = Substitute.For<ISecurityService>();
                 SecurityService.GenerateKey().Returns("1234abc");
 
                 Service = new SFProjectService(RealtimeService, siteOptions, audioService, EmailService, ProjectSecrets,
                     SecurityService, FileSystemService, EngineService, SyncService, ParatextService, userSecrets,
-                    translateMetrics);
+                    translateMetrics, Localizer);
             }
 
             public SFProjectService Service { get; }
@@ -714,6 +721,7 @@ namespace SIL.XForge.Scripture.Services
             public IEmailService EmailService { get; }
             public ISecurityService SecurityService { get; }
             public IParatextService ParatextService { get; }
+            public IStringLocalizer<SharedResource> Localizer { get; }
 
             public SFProject GetProject(string id)
             {
