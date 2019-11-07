@@ -149,6 +149,11 @@
 <div class="answers-container">
   <ng-container *ngIf="!answerFormVisible && answers.length > 0 && (currentUserTotalAnswers > 0 || !canAddAnswer)">
     <h3>{{ totalAnswersHeading }}</h3>
+    <div *ngIf="remoteAnswersCount > 0">
+      <button mdc-button id="show-unread-answers-button" (click)="showRemoteAnswers()">
+        show {{ remoteAnswersCount }} more unread answers
+      </button>
+    </div>
     <div class="answer" *ngFor="let answer of answers" [ngClass]="{ 'answer-unread': !hasUserReadAnswer(answer) }">
       <div *ngIf="canSeeOtherUserResponses" class="like">
         <button
