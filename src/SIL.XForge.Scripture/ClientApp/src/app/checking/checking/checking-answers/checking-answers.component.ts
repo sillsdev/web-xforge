@@ -54,8 +54,14 @@ enum LikeAnswerResponse {
   granted
 }
 
-/** The part of the checking area UI that handles user answer receiving, editing, and displaying.
- * Note, the relevant specs are in checking.component.spec.ts. */
+/** The part of the checking area UI that handles user answer adding, editing, and displaying.
+ * Note, the relevant specs are in checking.component.spec.ts.
+ *
+ * While the user is looking at answers to a question, other
+ * users may be adding answers at the same time. These won't
+ * just pop up, but will be stored until the user asks for
+ * them or visits again. These are referred to here
+ * as "remote" answers.*/
 @Component({
   selector: 'app-checking-answers',
   templateUrl: './checking-answers.component.html',
@@ -76,6 +82,20 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
     // Validation is dependent on the chapter of the current question.
     this.updateValidationRules();
+
+    this.showRemoteAnswers();
+    if (questionDoc == null) {
+      return;
+    }
+    this.subscribe(questionDoc.remoteChanges$, a => {
+      // If any answers are added by someone else before this user answers the question
+      // to reveal answers, include those new answers in what will be shown when we first
+      // show the answers.
+      if (this.currentUserTotalAnswers > 0) {
+        return;
+      }
+      this.showRemoteAnswers();
+    });
   }
   @Input() checkingTextComponent?: CheckingTextComponent;
   @Output() action: EventEmitter<AnswerAction> = new EventEmitter<AnswerAction>();
@@ -95,6 +115,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   answerFormSubmitAttempted: boolean = false;
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   startReferenceMatcher = new StartReferenceRequiredErrorStateMatcher();
+  /** IDs of answers to show to user (so, excluding unshown incoming answers). */
+  answersToShow: string[] = [];
 
   private _questionDoc?: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
@@ -113,15 +135,30 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return this.answerForm.controls.answerText;
   }
 
+  /** Answers to display, given contexts of permissions, whether the user has added their own answer yet, etc. */
   get answers(): Answer[] {
     if (this._questionDoc == null || this._questionDoc.data == null) {
       return [];
     }
+
     if (this.canSeeOtherUserResponses || !this.canAddAnswer) {
-      return this._questionDoc.data.answers;
+      return this._questionDoc.data.answers.filter(
+        answer => answer.ownerRef === this.userService.currentUserId || this.answersToShow.includes(answer.dataId)
+      );
     } else {
       return this._questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
     }
+  }
+
+  get remoteAnswersCount(): number {
+    return this.allAnswers.length - this.answers.length;
+  }
+
+  private get allAnswers(): Answer[] {
+    if (this._questionDoc == null || this._questionDoc.data == null) {
+      return [];
+    }
+    return this._questionDoc.data.answers;
   }
 
   get canSeeOtherUserResponses(): boolean {
@@ -457,6 +494,13 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       answer: action.answer,
       text: action.text
     });
+  }
+
+  showRemoteAnswers() {
+    if (this.questionDoc == null || this.questionDoc.data == null) {
+      return;
+    }
+    this.answersToShow = this.questionDoc.data.answers.map(answer => answer.dataId);
   }
 
   private canLikeAnswer(answer: Answer): LikeAnswerResponse {
