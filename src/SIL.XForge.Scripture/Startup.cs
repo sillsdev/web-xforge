@@ -85,7 +85,12 @@ namespace SIL.XForge.Scripture
             services.AddLocalization(options => options.ResourcesPath = "Resources");
 
             services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddViewLocalization()
+                .AddDataAnnotationsLocalization(options => {
+                    options.DataAnnotationLocalizerProvider = (type, factory) =>
+                        factory.Create(typeof(SharedResource));
+                });
 
             services.AddXFJsonRpc();
 

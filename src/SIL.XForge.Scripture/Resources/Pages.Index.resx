@@ -117,52 +117,67 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="EmailBad" xml:space="preserve">
-    <value>Enter a valid email address</value>
+  <data name="ContactEmail" xml:space="preserve">
+    <value>Where can we email you?</value>
   </data>
-  <data name="EmailMissing" xml:space="preserve">
-    <value>Enter your email address</value>
+  <data name="ContactHeader" xml:space="preserve">
+    <value>Want to know more?</value>
   </data>
-  <data name="InviteEmailOption" xml:space="preserve">
-    <value>Enter your email address and a new password for your {0} account and click Sign up.</value>
+  <data name="ContactName" xml:space="preserve">
+    <value>What's your name and last name?</value>
   </data>
-  <data name="InviteGoogleOption" xml:space="preserve">
-    <value>Click {0}Sign up with Google{1} and follow the instructions to access {2} using an existing Google account (such as Gmail), or</value>
+  <data name="ContactPrivacy" xml:space="preserve">
+    <value>Privacy Policy</value>
   </data>
-  <data name="InviteGreeting" xml:space="preserve">
-    <value>Hello,{0}{1} invites you to join the {2} project on {3}.{0}Just click the link below, choose how to log in, and you will be ready to start.{0}{0}To join, go to {4}</value>
+  <data name="ContactPurpose" xml:space="preserve">
+    <value>Why do you want to use Scripture Forge?</value>
   </data>
-  <data name="InviteInstructions" xml:space="preserve">
-    <value>If you are not already a {0} user, then after clicking the link, click {1}Sign Up{2} and do one of the following:</value>
+  <data name="ContactRegister" xml:space="preserve">
+    <value>Send us your information and we will be in contact with you on how to join the beta.</value>
   </data>
-  <data name="InviteLinkSharingOff" xml:space="preserve">
-    <value>This link will only work for this email address.</value>
+  <data name="ContactRegisterButton" xml:space="preserve">
+    <value>Register</value>
   </data>
-  <data name="InviteLinkSharingOn" xml:space="preserve">
-    <value>This link can be shared with others so they can join the project too.</value>
+  <data name="ContactRegisterHeader" xml:space="preserve">
+    <value>When can I start using Scripture Forge?</value>
   </data>
-  <data name="InvitePTOption" xml:space="preserve">
-    <value>Click {0}Sign up with Paratext{1} and follow the instructions to access {2} using an existing Paratext account, or</value>
+  <data name="ContactRoleLabel" xml:space="preserve">
+    <value>What is your language project role?</value>
   </data>
-  <data name="InviteSignature" xml:space="preserve">
-    <value>Regards,{0}The {1} team</value>
+  <data name="ContactRoleLTConsultant" xml:space="preserve">
+    <value>Language Technology Consultant</value>
   </data>
-  <data name="InviteSubject" xml:space="preserve">
-    <value>You've been invited to the project {0} on {1}</value>
+  <data name="ContactRoleManager" xml:space="preserve">
+    <value>Language Program Manager</value>
   </data>
-  <data name="MessageMissing" xml:space="preserve">
-    <value>Let us know why you want to use Scripture Forge</value>
+  <data name="ContactRoleOther" xml:space="preserve">
+    <value>Other</value>
   </data>
-  <data name="NameBadChars" xml:space="preserve">
-    <value>Letters and numbers only</value>
+  <data name="ContactRolePTConsultant" xml:space="preserve">
+    <value>Paratext Consultant</value>
   </data>
-  <data name="NameMissing" xml:space="preserve">
-    <value>Enter your name</value>
+  <data name="ContactRoleTranslator" xml:space="preserve">
+    <value>Translator</value>
   </data>
-  <data name="RoleMissing" xml:space="preserve">
-    <value>Select your language project role</value>
+  <data name="ContactTitle" xml:space="preserve">
+    <value>Get in Touch With Us</value>
   </data>
-  <data name="UserMissing" xml:space="preserve">
-    <value>The user does not exist.</value>
+  <data name="Description" xml:space="preserve">
+    <value>A free set of tools to do more with your Paratext project, wherever you are. </value>
+  </data>
+  <data name="EngageChecking" xml:space="preserve">
+    <value>Do community checking</value>
+  </data>
+  <data name="EngageCollaborate" xml:space="preserve">
+    <value>Collaborate on Scripture</value>
+  </data>
+  <data name="EngageSuggestions" xml:space="preserve">
+    <value>Get suggestions as you type</value>
+  </data>
+  <data name="EngageTitle" xml:space="preserve">
+    <value>Engage with the language community. Collaborate with your peers.</value>
+  </data>
+  <data name="RegisterInterest" xml:space="preserve">
+    <value>Register Your Interest</value>
   </data>
 </root>

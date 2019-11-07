@@ -14,18 +14,18 @@ namespace SIL.XForge.Scripture.Pages
     public class IndexModel : PageModel
     {
         [BindProperty]
-        [Required(ErrorMessage = "Enter your name")]
-        [RegularExpression(@"[A-Za-z0-9\s-']+", ErrorMessage = "Letters and numbers only")]
+        [Required(ErrorMessage = SharedResource.Keys.NameMissing)]
+        [RegularExpression(@"^[\w\s-'\.]+$", ErrorMessage = SharedResource.Keys.NameBadChars)]
         public string Name { get; set; }
         [BindProperty]
-        [Required(ErrorMessage = "Enter your email address")]
-        [RegularExpression("^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$", ErrorMessage = "Enter a valid email address")]
+        [Required(ErrorMessage = SharedResource.Keys.EmailMissing)]
+        [RegularExpression("^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$", ErrorMessage = SharedResource.Keys.EmailBad)]
         public string Email { get; set; }
         [BindProperty]
-        [Required(ErrorMessage = "Select your language project role")]
+        [Required(ErrorMessage = SharedResource.Keys.RoleMissing)]
         public string Role { get; set; }
         [BindProperty]
-        [Required(ErrorMessage = "Let us know why you want to use Scripture Forge")]
+        [Required(ErrorMessage = SharedResource.Keys.MessageMissing)]
         public string Message { get; set; }
 
         private readonly IHostingEnvironment _env;
