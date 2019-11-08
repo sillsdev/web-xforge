@@ -1,4 +1,4 @@
-import { MdcDialog } from '@angular-mdc/web';
+import { MdcDialog } from '@angular-mdc/web/dialog';
 import { ErrorHandler, Injectable, Injector, NgZone } from '@angular/core';
 import cloneDeep from 'lodash/cloneDeep';
 import { User } from 'realtime-server/lib/common/models/user';

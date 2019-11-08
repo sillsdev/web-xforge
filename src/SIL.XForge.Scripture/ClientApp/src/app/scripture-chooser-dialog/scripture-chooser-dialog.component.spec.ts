@@ -1,11 +1,5 @@
-import {
-  MDC_DIALOG_DATA,
-  MdcDialog,
-  MdcDialogConfig,
-  MdcDialogModule,
-  MdcDialogRef,
-  OverlayContainer
-} from '@angular-mdc/web';
+import { MDC_DIALOG_DATA, MdcDialog, MdcDialogConfig, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';

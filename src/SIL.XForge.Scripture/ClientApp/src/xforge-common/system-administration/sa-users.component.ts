@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Component, HostBinding, OnInit } from '@angular/core';
 import { User } from 'realtime-server/lib/common/models/user';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';

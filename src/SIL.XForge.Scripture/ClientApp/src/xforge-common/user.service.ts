@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Injectable } from '@angular/core';
 import merge from 'lodash/merge';
 import { User } from 'realtime-server/lib/common/models/user';

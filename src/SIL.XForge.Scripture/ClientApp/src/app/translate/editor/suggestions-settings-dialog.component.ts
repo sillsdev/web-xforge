@@ -1,4 +1,5 @@
-import { MDC_DIALOG_DATA, MdcDialogRef, MdcSlider } from '@angular-mdc/web';
+import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcSlider } from '@angular-mdc/web/slider';
 import { Component, Inject, ViewChild } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';

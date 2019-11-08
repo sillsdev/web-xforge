@@ -1,4 +1,4 @@
-import { MdcTextField } from '@angular-mdc/web';
+import { MdcTextField } from '@angular-mdc/web/textfield';
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { LocationService } from 'xforge-common/location.service';

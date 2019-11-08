@@ -1,4 +1,4 @@
-import { MdcDialog } from '@angular-mdc/web';
+import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { distanceInWordsToNow } from 'date-fns';

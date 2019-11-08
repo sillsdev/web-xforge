@@ -1,5 +1,4 @@
-import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
-import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
+import { MDC_DIALOG_DATA, MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { AfterViewChecked, Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';

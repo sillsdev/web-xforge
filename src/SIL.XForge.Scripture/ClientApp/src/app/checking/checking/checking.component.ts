@@ -1,4 +1,6 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef, MdcList, MdcMenuSelectedEvent } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcList } from '@angular-mdc/web/list';
+import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';

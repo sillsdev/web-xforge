@@ -1,4 +1,4 @@
-import { MdcLinearProgress } from '@angular-mdc/web';
+import { MdcLinearProgress } from '@angular-mdc/web/linear-progress';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';

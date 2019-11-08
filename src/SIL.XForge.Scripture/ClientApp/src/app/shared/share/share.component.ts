@@ -1,4 +1,4 @@
-import { MdcDialog } from '@angular-mdc/web';
+import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';

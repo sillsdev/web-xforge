@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';

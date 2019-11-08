@@ -1,4 +1,4 @@
-import { MdcSliderChange } from '@angular-mdc/web';
+import { MdcSliderChange } from '@angular-mdc/web/slider';
 import { Component, Input, OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 

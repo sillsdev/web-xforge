@@ -1,4 +1,6 @@
-import { MdcDialog, MdcDialogConfig, MdcSlider, OverlayContainer } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
+import { MdcSlider } from '@angular-mdc/web/slider';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';

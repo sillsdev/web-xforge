@@ -1,4 +1,4 @@
-import { ErrorStateMatcher } from '@angular-mdc/web';
+import { ErrorStateMatcher } from '@angular-mdc/web/form-field';
 import {
   AbstractControl,
   FormControl,

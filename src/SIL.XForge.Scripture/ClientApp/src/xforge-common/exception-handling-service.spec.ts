@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { TestBed } from '@angular/core/testing';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';

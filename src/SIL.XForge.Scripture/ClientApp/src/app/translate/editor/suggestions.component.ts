@@ -1,4 +1,4 @@
-import { MdcList } from '@angular-mdc/web';
+import { MdcList } from '@angular-mdc/web/list';
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import isEqual from 'lodash/isEqual';
 import Quill from 'quill';
