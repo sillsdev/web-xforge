@@ -1,0 +1,42 @@
+<mdc-dialog>
+  <mdc-dialog-container>
+    <mdc-dialog-surface>
+      <mdc-dialog-title>Translation suggestions settings</mdc-dialog-title>
+      <mdc-dialog-content class="content-padding" fxLayout="column" fxLayoutGap="25px">
+        <mdc-form-field>
+          <mdc-switch
+            id="suggestions-enabled-switch"
+            *ngIf="open"
+            [(ngModel)]="translationSuggestionsUserEnabled"
+          ></mdc-switch>
+          <label class="switch-label">Translation suggestions</label>
+        </mdc-form-field>
+        <mdc-select
+          id="num-suggestions-select"
+          [disabled]="!translationSuggestionsUserEnabled"
+          [(ngModel)]="numSuggestions"
+          placeholder="Number of suggestions"
+        >
+          <option>1</option> <option>2</option> <option>3</option> <option>4</option> <option>5</option>
+        </mdc-select>
+        <mdc-form-field>
+          <label mdcSubtitle2>Suggestion confidence</label>
+          <div class="slider-labels" fxLayout="row" fxLayoutAlign="space-between">
+            <span mdcCaption>More</span> <span mdcCaption>{{ confidenceThreshold }}%</span>
+            <span mdcCaption>Better</span>
+          </div>
+          <mdc-slider
+            #confidenceThresholdSlider
+            [disabled]="!translationSuggestionsUserEnabled"
+            [min]="0"
+            [max]="100"
+            [(ngModel)]="confidenceThreshold"
+          ></mdc-slider>
+        </mdc-form-field>
+      </mdc-dialog-content>
+      <mdc-dialog-actions>
+        <button mdcDialogButton default type="button" mdcDialogAction="close">Close</button>
+      </mdc-dialog-actions>
+    </mdc-dialog-surface>
+  </mdc-dialog-container>
+</mdc-dialog>

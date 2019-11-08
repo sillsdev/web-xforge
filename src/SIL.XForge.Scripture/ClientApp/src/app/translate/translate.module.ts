@@ -3,12 +3,14 @@ import { NgModule } from '@angular/core';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SharedModule } from '../shared/shared.module';
 import { EditorComponent } from './editor/editor.component';
-import { SuggestionComponent } from './editor/suggestion.component';
+import { SuggestionsSettingsDialogComponent } from './editor/suggestions-settings-dialog.component';
+import { SuggestionsComponent } from './editor/suggestions.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 import { TranslateRoutingModule } from './translate-routing.module';
 
 @NgModule({
-  declarations: [EditorComponent, SuggestionComponent, TranslateOverviewComponent],
-  imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule]
+  declarations: [EditorComponent, SuggestionsComponent, TranslateOverviewComponent, SuggestionsSettingsDialogComponent],
+  imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule],
+  entryComponents: [SuggestionsSettingsDialogComponent]
 })
 export class TranslateModule {}

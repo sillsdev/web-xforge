@@ -1,0 +1,11 @@
+<div class="loading-indicator" *ngIf="isLoading"><span></span> <span></span> <span></span></div>
+<div *ngIf="!isLoading">
+  <mdc-list #list [dense]="true" [singleSelection]="true" [useSelectedClass]="true" (click)="selectAll($event)">
+    <ng-container *ngFor="let suggestion of suggestions">
+      <mdc-list-item>
+        {{ suggestion.words.join(" ") }}
+        <div mdcListItemMeta>{{ getPercentage(suggestion.confidence) }}%</div>
+      </mdc-list-item>
+    </ng-container>
+  </mdc-list>
+</div>
