@@ -21,12 +21,12 @@ namespace SIL.XForge.Scripture
             public const string InviteLinkSharingOn = "InviteLinkSharingOn";
             public const string InviteLinkSharingOff = "InviteLinkSharingOff";
             public const string NameMissing = "NameMissing";
-            public const string NameBadChars = "NameBadChars";
             public const string EmailMissing = "EmailMissing";
             public const string EmailBad = "EmailBad";
             public const string RoleMissing = "RoleMissing";
             public const string MessageMissing = "MessageMissing";
-
+            public const string Terms = "Terms";
+            public const string Privacy = "Privacy";
         }
     }
 }
