@@ -1,5 +1,5 @@
-@import '~src/global';
 @import '../checking-global-vars';
+@import '~bootstrap/scss/mixins/breakpoints';
 
 .answer-question {
   padding-left: 15px;

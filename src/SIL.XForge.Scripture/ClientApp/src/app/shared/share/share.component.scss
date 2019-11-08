@@ -1,4 +1,4 @@
-@import '~src/global';
+@import '~@angular-mdc/theme/scss/icon-button/mixins';
 
 #share-btn {
   @include mdc-icon-button-size(24px, 24px, 8px);
