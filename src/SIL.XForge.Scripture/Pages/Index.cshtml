@@ -1,17 +1,19 @@
 @page
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
 @model IndexModel
 @section scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
     <script type="text/javascript">
-    document.getElementById("register-interest").addEventListener("click", function() {
-        window.location = "#contact";
-    });
-    webAuth.checkSession({}, function(err, authResult) {
-        if (!err) {
-            var options = { state: JSON.stringify({}) };
-            webAuth.authorize(options);
-        }
-    });
+        document.getElementById("register-interest").addEventListener("click", function () {
+            window.location = "#contact";
+        });
+        webAuth.checkSession({}, function (err, authResult) {
+            if (!err) {
+                var options = { state: JSON.stringify({}) };
+                webAuth.authorize(options);
+            }
+        });
     </script>
 }
 
@@ -20,13 +22,13 @@
         <div class="mdl-grid">
             <div class="mdl-cell mdl-cell--12-col align-center">
                 <img src="~/images/multi-devices.svg" alt="Works on multiple devices" />
-                <h1 class="align-center">A free set of tools to do more with your Paratext project, wherever you are.</h1>
+                <h1 class="align-center">@Localizer["Description"]</h1>
                 <button id="register-interest" class="button">
                     <span class="button-prefix">
                         <span class="beta">Beta</span>
                         <img src="~/images/logo-sf-white.svg" alt="Scripture Forge">
                     </span>
-                    <span class="text">Register Your Interest</span>
+                    <span class="text">@Localizer["RegisterInterest"]</span>
                 </button>
             </div>
         </div>
@@ -36,20 +38,19 @@
     <div class="container">
         <div class="mdl-grid">
             <div class="mdl-cell mdl-cell--12-col flex direction-column justify-content-center">
-                <div class="title align-center">Engage with the language community. Collaborate with your peers.</div>
-                    <div class="engage-features">
-                        <div class="engage-feature">
-                            <img src="~/images/logo-paratext.svg" alt="Paratext">
-                            <span>Collaborate on Scripture</span>
-                        </div>
-                        <div class="engage-feature">
-                            <img src="~/images/community-checking.svg" alt="Community Checking">
-                            <span>Do community checking</span>
-                        </div>
-                        <div class="engage-feature">
-                            <img src="~/images/translate.svg" alt="Translate">
-                            <span>Get suggestions as you type</span>
-                        </div>
+                <div class="title align-center">@Localizer["EngageTitle"]</div>
+                <div class="engage-features">
+                    <div class="engage-feature">
+                        <img src="~/images/logo-paratext.svg" alt="Paratext">
+                        <span>@Localizer["EngageCollaborate"]</span>
+                    </div>
+                    <div class="engage-feature">
+                        <img src="~/images/community-checking.svg" alt="Community Checking">
+                        <span>@Localizer["EngageChecking"]</span>
+                    </div>
+                    <div class="engage-feature">
+                        <img src="~/images/translate.svg" alt="Translate">
+                        <span>@Localizer["EngageTranslate"]</span>
                     </div>
                 </div>
             </div>
@@ -61,19 +62,19 @@
         <div class="mdl-grid">
             <div class="mdl-cell mdl-cell--12-col">
                 <div class="section-title">
-                    <h2>Want to know more?</h2>
-                    <div class="title">Get in Touch With Us</div>
+                    <h2>@Localizer["ContactHeader"]</h2>
+                    <div class="title">@Localizer["ContactTitle"]</div>
                 </div>
                 <div id="register" class="align-center">
-                    <h3>When can I start using Scripture Forge?</h3>
-                    <p>Send us your information and we will be in contact with you on how to join the beta.</p>
+                    <h3>@Localizer["ContactRegisterHeader"]</h3>
+                    <p>@Localizer["ContactRegister"]</p>
                     <div asp-validation-summary="All" class="required"></div>
                     <form method="POST" asp-antiforgery="false">
                         <div class="field-container">
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                                 <input class="mdl-textfield__input" asp-for="Name">
                                 <label class="mdl-textfield__label" for="Name">
-                                    What's your name and last name? <span class="required">*</span>
+                                    @Localizer["ContactName"] <span class="required">*</span>
                                 </label>
                                 <span asp-validation-for="Name"></span>
                             </div>
@@ -82,7 +83,7 @@
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                                 <input class="mdl-textfield__input" asp-for="Email">
                                 <label class="mdl-textfield__label" for="Email">
-                                    Where can we email you? <span class="required">*</span>
+                                    @Localizer["ContactEmail"] <span class="required">*</span>
                                 </label>
                                 <span asp-validation-for="Email"></span>
                             </div>
@@ -91,20 +92,20 @@
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                                 <select class="mdl-textfield__input" asp-for="Role">
                                     <option></option>
-                                    <option value="Language Program Manager">Language Program Manager</option>
-                                    <option value="Translator">Translator</option>
-                                    <option value="Paratext Consultant">Paratext Consultant</option>
-                                    <option value="Language Technology Consultant">Language Technology Consultant</option>
-                                    <option value="Other">Other</option>
+                                    <option value="Language Program Manager">@Localizer["ContactRoleManager"]</option>
+                                    <option value="Translator">@Localizer["ContactRoleTranslator"]</option>
+                                    <option value="Paratext Consultant">@Localizer["ContactRolePTConsultant"]</option>
+                                    <option value="Language Technology Consultant">@Localizer["ContactRoleLTConsultant"]</option>
+                                    <option value="Other">@Localizer["ContactRoleOther"]</option>
                                 </select>
-                                <label class="mdl-textfield__label" for="Role">What is your language project role?</label>
+                                <label class="mdl-textfield__label" for="Role">@Localizer["ContactRoleLabel"]</label>
                                 <span asp-validation-for="Role"></span>
                             </div>
                         </div>
                         <div class="field-container">
                             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                <textarea class="mdl-textfield__input" rows= "3" asp-for="Message"></textarea>
-                                <label class="mdl-textfield__label" for="Message">Why do you want to use Scripture Forge?</label>
+                                <textarea class="mdl-textfield__input" rows="3" asp-for="Message"></textarea>
+                                <label class="mdl-textfield__label" for="Message">@Localizer["ContactPurpose"]</label>
                                 <span asp-validation-for="Message"></span>
                             </div>
                         </div>
@@ -113,10 +114,10 @@
                                 <span class="beta">Beta</span>
                                 <img src="~/images/logo-sf-white.svg" alt="Scripture Forge">
                             </span>
-                            <span class="text">Register</span>
+                            <span class="text">@Localizer["ContactRegisterButton"]</span>
                         </button>
                     </form>
-                    <p><a href="~/privacy" target="_blank">Privacy Policy</a></p>
+                    <p><a href="~/privacy" target="_blank">@Localizer["ContactPrivacy"]</a></p>
                 </div>
             </div>
         </div>

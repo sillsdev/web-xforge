@@ -10,16 +10,23 @@ namespace SIL.XForge.Scripture
     {
         public static class Keys
         {
-            public static string UserMissing = "UserMissing";
-            public static string InviteSubject = "InviteSubject";
-            public static string InviteGreeting = "InviteGreeting";
-            public static string InviteInstructions = "InviteInstructions";
-            public static string InvitePTOption = "InvitePTOption";
-            public static string InviteGoogleOption = "InviteGoogleOption";
-            public static string InviteEmailOption = "InviteEmailOption";
-            public static string InviteSignature = "InviteSignature";
-            public static string InviteLinkSharingOn = "InviteLinkSharingOn";
-            public static string InviteLinkSharingOff = "InviteLinkSharingOff";
+            public const string UserMissing = "UserMissing";
+            public const string InviteSubject = "InviteSubject";
+            public const string InviteGreeting = "InviteGreeting";
+            public const string InviteInstructions = "InviteInstructions";
+            public const string InvitePTOption = "InvitePTOption";
+            public const string InviteGoogleOption = "InviteGoogleOption";
+            public const string InviteEmailOption = "InviteEmailOption";
+            public const string InviteSignature = "InviteSignature";
+            public const string InviteLinkSharingOn = "InviteLinkSharingOn";
+            public const string InviteLinkSharingOff = "InviteLinkSharingOff";
+            public const string NameMissing = "NameMissing";
+            public const string NameBadChars = "NameBadChars";
+            public const string EmailMissing = "EmailMissing";
+            public const string EmailBad = "EmailBad";
+            public const string RoleMissing = "RoleMissing";
+            public const string MessageMissing = "MessageMissing";
+
         }
     }
 }
