@@ -50,6 +50,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Input() isReadOnly: boolean = true;
   @Input() placeholder = 'Loading...';
   @Input() markInvalid: boolean = false;
+  @Input() mode: 'normal' | 'dialog' = 'normal';
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
@@ -470,9 +471,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       this.setHighlightMarkerPosition();
     }
 
-    if (!this.isReadOnly) {
-      Promise.resolve().then(() => this.adjustSelection());
-    }
+    Promise.resolve().then(() => this.adjustSelection());
     this.updated.emit({ delta, prevSegment, segment: this._segment });
   }
 
@@ -554,16 +553,19 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (this._segment.text === '') {
       // always select at the beginning if blank
       newSel = { index: this._segment.range.index, length: 0 };
-    } else {
-      // ensure that selection does not extend across segments
+      if (sel.index !== newSel.index || sel.length !== newSel.length) {
+        this._editor.setSelection(newSel, 'user');
+      }
+    } else if (this.mode === 'normal') {
+      // selections outside of the text chooser dialog are not permitted to extend across segments
       const newStart = Math.max(sel.index, this._segment.range.index);
       const oldEnd = sel.index + sel.length;
       const segEnd = this._segment.range.index + this._segment.range.length;
       const newEnd = Math.min(oldEnd, segEnd);
       newSel = { index: newStart, length: Math.max(0, newEnd - newStart) };
-    }
-    if (sel.index !== newSel.index || sel.length !== newSel.length) {
-      this._editor.setSelection(newSel, 'user');
+      if (sel.index !== newSel.index || sel.length !== newSel.length) {
+        this._editor.setSelection(newSel, 'user');
+      }
     }
   }
 
