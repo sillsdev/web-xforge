@@ -47,6 +47,7 @@
           (updated)="onTargetUpdated($event.segment, $event.delta, $event.prevSegment)"
           (loaded)="onTextLoaded('target')"
           [highlightSegment]="target.hasFocus"
+          [markInvalid]="true"
         ></app-text>
         <app-suggestions
           [mdcElevation]="2"

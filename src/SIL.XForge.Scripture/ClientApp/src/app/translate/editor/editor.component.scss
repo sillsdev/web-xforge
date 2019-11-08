@@ -103,11 +103,3 @@ app-text {
   color: #ff4118;
   margin-bottom: 3px;
 }
-
-::ng-deep usx-para[data-invalid-block='true'] > usx-para-contents,
-::ng-deep usx-chapter[data-invalid-block='true'] > span,
-::ng-deep *[data-invalid-inline='true'] {
-  background: url(data:image/gif;base64,R0lGODlhCgAEAMIEAP9BGP6pl//Wy/7//P///////////////yH5BAEKAAQALAAAAAAKAAQAAAMROCOhK0oA0MIUMmTAZhsWBCYAOw==)
-    repeat-x scroll 0 100% transparent;
-  padding-bottom: 3px;
-}

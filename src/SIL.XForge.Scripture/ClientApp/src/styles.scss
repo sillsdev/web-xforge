@@ -4,7 +4,7 @@
 @import '~@angular-mdc/theme/material';
 /* Only import relevant Bootstrap 4.x styles */
 @import '~bootstrap/scss/bootstrap-grid';
-@import '~quill/dist/quill.snow.css';
+@import 'text';
 
 .panel {
   display: flex;
