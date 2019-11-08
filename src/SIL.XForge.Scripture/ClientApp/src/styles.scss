@@ -78,3 +78,8 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   text-overflow: ellipsis;
   overflow: hidden;
 }
+
+.mdc-icon-button ngx-avatar img {
+  height: unset;
+  width: unset;
+}

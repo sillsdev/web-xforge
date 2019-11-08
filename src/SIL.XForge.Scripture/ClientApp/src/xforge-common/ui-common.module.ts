@@ -1,27 +1,25 @@
-import {
-  MdcButtonModule,
-  MdcCardModule,
-  MdcCheckboxModule,
-  MdcDialogModule,
-  MdcDrawerModule,
-  MdcElevationModule,
-  MdcFormFieldModule,
-  MdcIconButtonModule,
-  MdcIconModule,
-  MdcLinearProgressModule,
-  MdcListModule,
-  MdcMenuModule,
-  MdcMenuSurfaceModule,
-  MdcRadioModule,
-  MdcSelectModule,
-  MdcSliderModule,
-  MdcSnackbarModule,
-  MdcSwitchModule,
-  MdcTabBarModule,
-  MdcTextFieldModule,
-  MdcTopAppBarModule,
-  MdcTypographyModule
-} from '@angular-mdc/web';
+import { MdcButtonModule } from '@angular-mdc/web/button';
+import { MdcCardModule } from '@angular-mdc/web/card';
+import { MdcCheckboxModule } from '@angular-mdc/web/checkbox';
+import { MdcDialogModule } from '@angular-mdc/web/dialog';
+import { MdcDrawerModule } from '@angular-mdc/web/drawer';
+import { MdcElevationModule } from '@angular-mdc/web/elevation';
+import { MdcFormFieldModule } from '@angular-mdc/web/form-field';
+import { MdcIconModule } from '@angular-mdc/web/icon';
+import { MdcIconButtonModule } from '@angular-mdc/web/icon-button';
+import { MdcLinearProgressModule } from '@angular-mdc/web/linear-progress';
+import { MdcListModule } from '@angular-mdc/web/list';
+import { MdcMenuModule } from '@angular-mdc/web/menu';
+import { MdcMenuSurfaceModule } from '@angular-mdc/web/menu-surface';
+import { MdcRadioModule } from '@angular-mdc/web/radio';
+import { MdcSelectModule } from '@angular-mdc/web/select';
+import { MdcSliderModule } from '@angular-mdc/web/slider';
+import { MdcSnackbarModule } from '@angular-mdc/web/snackbar';
+import { MdcSwitchModule } from '@angular-mdc/web/switch';
+import { MdcTabBarModule } from '@angular-mdc/web/tab-bar';
+import { MdcTextFieldModule } from '@angular-mdc/web/textfield';
+import { MdcTopAppBarModule } from '@angular-mdc/web/top-app-bar';
+import { MdcTypographyModule } from '@angular-mdc/web/typography';
 import { NgModule } from '@angular/core';
 import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
