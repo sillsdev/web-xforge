@@ -1,4 +1,5 @@
-import { MdcDialogModule, MdcDialogRef, OverlayContainer } from '@angular-mdc/web';
+import { MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';

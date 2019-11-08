@@ -1,4 +1,4 @@
-import { MdcSelect } from '@angular-mdc/web';
+import { MdcSelect } from '@angular-mdc/web/select';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';

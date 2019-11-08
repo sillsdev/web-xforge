@@ -1,5 +1,6 @@
 @import '~src/variables';
 @import '~bootstrap/scss/mixins/breakpoints';
+@import '~@angular-mdc/theme/scss/icon-button/mixins';
 
 :host {
   display: flex;
@@ -88,4 +89,8 @@ a {
 
 .checking-unavailable {
   text-align: center;
+}
+
+.avatar-icon {
+  @include mdc-icon-button-size(32px, 32px, 8px);
 }

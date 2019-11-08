@@ -1,4 +1,5 @@
-import { MdcDialog, MdcDialogRef, MdcSnackbar, MdcSnackbarConfig } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcSnackbar, MdcSnackbarConfig } from '@angular-mdc/web/snackbar';
 import { Injectable } from '@angular/core';
 import { AuthService } from './auth.service';
 import { MessageDialogComponent, MessageDialogData } from './message-dialog/message-dialog.component';

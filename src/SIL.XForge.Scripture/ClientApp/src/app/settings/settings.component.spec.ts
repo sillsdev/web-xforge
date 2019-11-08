@@ -1,4 +1,4 @@
-import { OverlayContainer } from '@angular-mdc/web';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule } from '@angular/core';

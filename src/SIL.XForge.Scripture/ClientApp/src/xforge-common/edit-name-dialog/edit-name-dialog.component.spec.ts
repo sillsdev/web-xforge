@@ -1,13 +1,13 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
-import { OverlayContainer } from '@angular-mdc/web/overlay';
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, NgModule } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
 describe('EditNameDialogComponent', () => {
-  it('should display name and cancel button', () => {
+  it('should display name and cancel button', fakeAsync(() => {
     const env = new TestEnvironment();
     env.openDialog();
     expect(env.component.confirmedName).toBeUndefined();
@@ -16,9 +16,9 @@ describe('EditNameDialogComponent', () => {
     env.submitButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Simon Says');
-  });
+  }));
 
-  it('should allow user to change name', () => {
+  it('should allow user to change name', fakeAsync(() => {
     const env = new TestEnvironment();
     env.openDialog();
     expect(env.component.confirmedName).toBeUndefined();
@@ -26,9 +26,9 @@ describe('EditNameDialogComponent', () => {
     env.submitButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Follow The Leader');
-  });
+  }));
 
-  it('should not change name when cancelled', () => {
+  it('should not change name when cancelled', fakeAsync(() => {
     const env = new TestEnvironment();
     env.openDialog();
     expect(env.component.confirmedName).toBeUndefined();
@@ -39,9 +39,9 @@ describe('EditNameDialogComponent', () => {
       env.fixture.detectChanges();
     }
     expect(env.component.confirmedName).toBeUndefined();
-  });
+  }));
 
-  it('should not allow the name to be blank', () => {
+  it('should not allow the name to be blank', fakeAsync(() => {
     const env = new TestEnvironment();
     env.openDialog();
     expect(env.component.confirmedName).toBeUndefined();
@@ -57,9 +57,9 @@ describe('EditNameDialogComponent', () => {
     env.submitButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Bob');
-  });
+  }));
 
-  it('shows messages in a confirmation context', () => {
+  it('shows messages in a confirmation context', fakeAsync(() => {
     const env = new TestEnvironment();
     env.component.isConfirmContext = true;
     env.openDialog();
@@ -68,9 +68,9 @@ describe('EditNameDialogComponent', () => {
     env.submitButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Simon Says');
-  });
+  }));
 
-  it('does not show cancel button in a confirmation context', () => {
+  it('does not show cancel button in a confirmation context', fakeAsync(() => {
     const env = new TestEnvironment();
     env.component.isConfirmContext = true;
     env.openDialog();
@@ -78,7 +78,7 @@ describe('EditNameDialogComponent', () => {
     env.submitButton.click();
     env.fixture.detectChanges();
     expect(env.component.confirmedName).toBe('Simon Says');
-  });
+  }));
 });
 
 class TestEnvironment {
@@ -130,6 +130,8 @@ class TestEnvironment {
     const button = this.fixture.nativeElement.querySelector('button');
     button.click();
     this.fixture.detectChanges();
+    // open dialog animation
+    tick(166);
   }
 
   setTextFieldValue(element: Element, value: string) {

@@ -1,4 +1,4 @@
-import { MdcDialog } from '@angular-mdc/web';
+import { MdcDialog } from '@angular-mdc/web/dialog';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {

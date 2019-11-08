@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';

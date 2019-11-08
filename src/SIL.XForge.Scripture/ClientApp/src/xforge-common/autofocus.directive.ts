@@ -1,4 +1,4 @@
-import { MdcTextField } from '@angular-mdc/web';
+import { MdcTextField } from '@angular-mdc/web/textfield';
 import { AfterViewInit, Directive } from '@angular/core';
 
 /**

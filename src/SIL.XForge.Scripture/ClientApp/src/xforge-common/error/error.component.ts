@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web';
+import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Component, Inject } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { issuesEmailTemplate } from 'xforge-common/utils';

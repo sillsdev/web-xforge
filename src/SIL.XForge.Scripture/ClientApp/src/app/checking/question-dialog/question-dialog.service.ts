@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Injectable } from '@angular/core';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';

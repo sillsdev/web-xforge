@@ -1,4 +1,5 @@
-import { MdcList, OverlayContainer } from '@angular-mdc/web';
+import { MdcList } from '@angular-mdc/web/list';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule, Location } from '@angular/common';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';

@@ -1,7 +1,5 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { TestBed } from '@angular/core/testing';
-import { SystemRole } from 'realtime-server/lib/common/models/system-role';
-import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';

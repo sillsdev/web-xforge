@@ -1,4 +1,6 @@
-import { MdcDialog, MdcSelect, MdcTopAppBar } from '@angular-mdc/web';
+import { MdcDialog } from '@angular-mdc/web/dialog';
+import { MdcSelect } from '@angular-mdc/web/select';
+import { MdcTopAppBar } from '@angular-mdc/web/top-app-bar';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';

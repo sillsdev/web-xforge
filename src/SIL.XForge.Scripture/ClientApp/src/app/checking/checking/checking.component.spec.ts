@@ -1,4 +1,6 @@
-import { MdcDialog, MdcDialogRef, MdcListItem, MdcMenuSelectedEvent } from '@angular-mdc/web';
+import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcListItem } from '@angular-mdc/web/list';
+import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
