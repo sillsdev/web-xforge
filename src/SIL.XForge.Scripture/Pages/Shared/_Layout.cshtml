@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<SharedResource> SharedLocalizer
+
+<!DOCTYPE html>
 <html>
 <head>
     <environment include="Production">
@@ -6,7 +9,7 @@
         <script async src="https://www.googletagmanager.com/gtag/js?id=UA-22170471-15"></script>
         <script>
             window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
+            function gtag() { dataLayer.push(arguments); }
             gtag('js', new Date());
 
             gtag('config', 'UA-22170471-15');
@@ -20,7 +23,7 @@
     <link rel="icon" type="image/x-icon" href="~/sf.ico" />
     <link rel="shortcut icon" type="image/x-icon" href="~/sf.ico" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300&display=swap" />
-    <link rel="stylesheet" href="~/lib/material-design-lite/css/material.sf_grey-pt_green.min.css"/>
+    <link rel="stylesheet" href="~/lib/material-design-lite/css/material.sf_grey-pt_green.min.css" />
     <link rel="stylesheet" href="~/css/sf.min.css" />
     @RenderSection("css", required: false)
 </head>
@@ -28,12 +31,12 @@
     <header>
         <div class="container">
             <div class="mdl-grid">
-            <div class="mdl-cell mdl-cell--12-col flex align-items-center">
-                <a href="/">
-                    <img src="~/images/logo-sf.svg" alt="Scripture Forge">
-                    <span>Scripture Forge</span>
-                </a>
-            </div>
+                <div class="mdl-cell mdl-cell--12-col flex align-items-center">
+                    <a href="/">
+                        <img src="~/images/logo-sf.svg" alt="Scripture Forge">
+                        <span>Scripture Forge</span>
+                    </a>
+                </div>
             </div>
         </div>
     </header>
@@ -50,8 +53,8 @@
                             <li class="version">@System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion</li>
                         </ul>
                         <ul class="links">
-                            <li><a href="~/terms">Terms</a></li>
-                            <li><a href="~/privacy">Privacy</a></li>
+                            <li><a href="~/terms">@SharedLocalizer[SharedResource.Keys.Terms]</a></li>
+                            <li><a href="~/privacy">@SharedLocalizer[SharedResource.Keys.Privacy]</a></li>
                         </ul>
                     </div>
                     <div id="logos">

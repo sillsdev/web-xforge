@@ -1,19 +1,21 @@
 @page
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
 
 <section id="hero">
     <div class="container">
         <div class="mdl-grid">
             <div class="mdl-cell mdl-cell--12-col align-center">
-                <h3>You've been registered sucessfully</h3>
-                <P>We will be in touch soon to let you know how you can get connected to the <b>Scripture Forge v2 Beta</b>.</P>
+                <h3>@Localizer["RegisterSuccess"]</h3>
+                <p>@Localizer["RegisterContactMessage"] <b>Scripture Forge v2 Beta</b></p>
                 <a class="button" href="/">
                     <span class="button-prefix">
                         <span class="beta">Beta</span>
                         <img src="/images/logo-sf-white.svg" alt="Scripture Forge">
                     </span>
-                    <span class="text">Return Home</span>
+                    <span class="text">@Localizer["ReturnHome"]</span>
                 </a>
             </div>
         </div>
     </div>
-</div>
+</section>

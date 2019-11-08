@@ -117,57 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="EmailBad" xml:space="preserve">
-    <value>Enter a valid email address</value>
+  <data name="RegisterContactMessage" xml:space="preserve">
+    <value>We will be in touch soon to let you know how you can get connected to the </value>
+    <comment>The contents here will be followed by the phrase: 'Scripture Forge  Beta'</comment>
   </data>
-  <data name="EmailMissing" xml:space="preserve">
-    <value>Enter your email address</value>
+  <data name="RegisterSuccess" xml:space="preserve">
+    <value>You've been registered successfully</value>
   </data>
-  <data name="InviteEmailOption" xml:space="preserve">
-    <value>Enter your email address and a new password for your {0} account and click Sign up.</value>
-  </data>
-  <data name="InviteGoogleOption" xml:space="preserve">
-    <value>Click {0}Sign up with Google{1} and follow the instructions to access {2} using an existing Google account (such as Gmail), or</value>
-  </data>
-  <data name="InviteGreeting" xml:space="preserve">
-    <value>Hello,{0}{1} invites you to join the {2} project on {3}.{0}Just click the link below, choose how to log in, and you will be ready to start.{0}{0}To join, go to {4}</value>
-  </data>
-  <data name="InviteInstructions" xml:space="preserve">
-    <value>If you are not already a {0} user, then after clicking the link, click {1}Sign Up{2} and do one of the following:</value>
-  </data>
-  <data name="InviteLinkSharingOff" xml:space="preserve">
-    <value>This link will only work for this email address.</value>
-  </data>
-  <data name="InviteLinkSharingOn" xml:space="preserve">
-    <value>This link can be shared with others so they can join the project too.</value>
-  </data>
-  <data name="InvitePTOption" xml:space="preserve">
-    <value>Click {0}Sign up with Paratext{1} and follow the instructions to access {2} using an existing Paratext account, or</value>
-  </data>
-  <data name="InviteSignature" xml:space="preserve">
-    <value>Regards,{0}The {1} team</value>
-  </data>
-  <data name="InviteSubject" xml:space="preserve">
-    <value>You've been invited to the project {0} on {1}</value>
-  </data>
-  <data name="MessageMissing" xml:space="preserve">
-    <value>Let us know why you want to use Scripture Forge</value>
-  </data>
-  <data name="NameMissing" xml:space="preserve">
-    <value>Enter your name</value>
-  </data>
-  <data name="Privacy" xml:space="preserve">
-    <value>Privacy</value>
-    <comment>Link to the Privacy policy seen in the page footer</comment>
-  </data>
-  <data name="RoleMissing" xml:space="preserve">
-    <value>Select your language project role</value>
-  </data>
-  <data name="Terms" xml:space="preserve">
-    <value>Terms</value>
-    <comment>Link to the Terms of service seen in the page footer</comment>
-  </data>
-  <data name="UserMissing" xml:space="preserve">
-    <value>The user does not exist.</value>
+  <data name="ReturnHome" xml:space="preserve">
+    <value>Return Home</value>
   </data>
 </root>
