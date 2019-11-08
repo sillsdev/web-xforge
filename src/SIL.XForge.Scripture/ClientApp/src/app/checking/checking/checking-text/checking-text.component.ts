@@ -12,8 +12,7 @@ import { TextComponent } from '../../../shared/text/text.component';
 @Component({
   selector: 'app-checking-text',
   templateUrl: './checking-text.component.html',
-  styleUrls: ['./checking-text.component.scss'],
-  encapsulation: ViewEncapsulation.None
+  styleUrls: ['./checking-text.component.scss']
 })
 export class CheckingTextComponent extends SubscriptionDisposable {
   @Input() placeholder = 'Loading...';

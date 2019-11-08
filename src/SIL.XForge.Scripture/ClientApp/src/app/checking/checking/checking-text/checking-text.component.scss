@@ -1,6 +1,6 @@
 @import '../checking-global-vars';
 
-app-checking-text {
+:host {
   position: absolute;
   height: 100%;
   width: 100%;
@@ -12,80 +12,4 @@ app-text {
   flex-direction: column;
   flex: 1;
   width: 100%;
-}
-.ltr .highlight-segment-target[data-question='true'] {
-  margin-left: 1.75em;
-  &:before {
-    left: -2.25em;
-  }
-  &:after {
-    left: -1.5em;
-  }
-}
-.rtl .highlight-segment-target[data-question='true'] {
-  margin-right: 1.75em;
-  &:before {
-    right: -2.25em;
-  }
-  &:after {
-    right: -1.5em;
-  }
-}
-.ql-container {
-  .highlight-marker {
-    display: none;
-  }
-  .ql-editor {
-    .highlight-para-target {
-      > usx-para-contents {
-        box-shadow: unset;
-      }
-    }
-    .highlight-segment-target {
-      box-shadow: 2px 4px 4px -4px #bfb092;
-      position: relative;
-      cursor: pointer;
-
-      &[data-question='true'] {
-        &:before {
-          content: '?';
-          border-radius: 50%;
-          width: 1.5em;
-          height: 1.5em;
-          font-size: 0.8em;
-          display: flex;
-          align-content: center;
-          justify-content: center;
-          background: var(--mdc-theme-secondary);
-          font-weight: bold;
-          position: absolute;
-          top: 0;
-          text-indent: 0;
-        }
-      }
-
-      &[data-question-count] {
-        &:after {
-          content: attr(data-question-count);
-          border-radius: 50%;
-          width: 1.5em;
-          height: 1.5em;
-          font-size: 0.7em;
-          display: flex;
-          align-content: center;
-          justify-content: center;
-          background: $questionAnswerBubbleBackgroundColor;
-          color: $questionAnswerBubbleColor;
-          font-weight: bold;
-          position: absolute;
-          top: -0.75em;
-          text-indent: 0;
-        }
-      }
-
-      &[data-selected='true'] {
-        background: yellow;
-      }
-    }
-  }
 }

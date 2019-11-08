@@ -44,13 +44,12 @@ export interface TextUpdatedEvent {
 /** View of an editable text document. Used for displaying Scripture. */
 @Component({
   selector: 'app-text',
-  templateUrl: './text.component.html',
-  styleUrls: ['./text.component.scss', './usx-styles.scss'],
-  encapsulation: ViewEncapsulation.None
+  templateUrl: './text.component.html'
 })
 export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Input() isReadOnly: boolean = true;
   @Input() placeholder = 'Loading...';
+  @Input() markInvalid: boolean = false;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
@@ -261,6 +260,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   onEditorCreated(editor: Quill): void {
     this._editor = editor;
     this.highlightMarker = this._editor.addContainer('highlight-marker');
+    if (this.highlightMarker != null) {
+      this.highlightMarker.style.visibility = 'hidden';
+    }
     this.subscribe(fromEvent(this._editor.root, 'scroll'), () => this.updateHighlightMarkerVisibility());
     this.subscribe(fromEvent(window, 'resize'), () => this.setHighlightMarkerPosition());
     this.viewModel.editor = editor;
