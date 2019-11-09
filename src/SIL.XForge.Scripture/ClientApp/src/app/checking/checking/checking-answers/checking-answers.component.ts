@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import cloneDeep from 'lodash/cloneDeep';
@@ -7,12 +7,7 @@ import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import {
-  fromVerseRef,
-  toStartAndEndVerseRefs,
-  toVerseRef,
-  VerseRefData
-} from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -22,15 +17,10 @@ import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextsByBookId } from '../../../core/models/texts-by-book-id';
 import {
-  ScriptureChooserDialogComponent,
-  ScriptureChooserDialogData
-} from '../../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import {
-  ParentAndStartErrorStateMatcher,
-  SFValidators,
-  StartReferenceRequiredErrorStateMatcher
-} from '../../../shared/sfvalidators';
-import { combineVerseRefStrs } from '../../../shared/utils';
+  TextChooserDialogComponent,
+  TextChooserDialogData,
+  TextSelection
+} from '../../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionAnsweredDialogComponent } from '../../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
@@ -70,6 +60,7 @@ enum LikeAnswerResponse {
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent?: CheckingAudioCombinedComponent;
   @Input() project?: SFProject;
+  @Input() projectId?: string;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
   @Input() set questionDoc(questionDoc: QuestionDoc | undefined) {
@@ -80,8 +71,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       this.userAnswerRefsRead = cloneDeep(this.projectUserConfigDoc.data.answerRefsRead);
     }
-    // Validation is dependent on the chapter of the current question.
-    this.updateValidationRules();
 
     this.showRemoteAnswers();
     if (questionDoc == null) {
@@ -102,21 +91,16 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   @Output() commentAction: EventEmitter<CommentAction> = new EventEmitter<CommentAction>();
 
   activeAnswer?: Answer;
-  answerForm = new FormGroup(
-    {
-      answerText: new FormControl(),
-      scriptureStart: new FormControl(),
-      scriptureEnd: new FormControl(),
-      scriptureText: new FormControl()
-    },
-    [SFValidators.verseStartBeforeEnd, SFValidators.requireIfEndReferenceProvided]
-  );
+  answerForm = new FormGroup({
+    answerText: new FormControl(),
+    scriptureText: new FormControl()
+  });
   answerFormVisible: boolean = false;
   answerFormSubmitAttempted: boolean = false;
-  parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
-  startReferenceMatcher = new StartReferenceRequiredErrorStateMatcher();
   /** IDs of answers to show to user (so, excluding unshown incoming answers). */
   answersToShow: string[] = [];
+  selectedText?: string;
+  verseRef?: VerseRef;
 
   private _questionDoc?: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
@@ -166,12 +150,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   get canShowScriptureInput(): boolean {
-    return !!(
-      this.scriptureStart.valid &&
-      this.scriptureEnd.valid &&
-      this.scriptureEnd.value &&
-      this.scriptureText.value
-    );
+    return !!this.selectedText;
   }
 
   get currentUserTotalAnswers(): number {
@@ -205,27 +184,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return this._questionDoc;
   }
 
-  get scriptureStart(): AbstractControl {
-    return this.answerForm.controls.scriptureStart;
-  }
-
-  get scriptureEnd(): AbstractControl {
-    return this.answerForm.controls.scriptureEnd;
-  }
-  get scriptureText(): AbstractControl {
-    return this.answerForm.controls.scriptureText;
-  }
-
-  get hasScriptureReferenceError(): boolean {
-    return (
-      this.scriptureStart.invalid ||
-      this.scriptureEnd.invalid ||
-      this.answerForm.hasError('verseBeforeStart') ||
-      this.answerForm.hasError('verseDifferentBookOrChapter') ||
-      this.answerForm.hasError('startReferenceRequired')
-    );
-  }
-
   get totalAnswersHeading(): string {
     if (this.canSeeOtherUserResponses || !this.canAddAnswer) {
       return this.answers.length + ' Answers';
@@ -256,22 +214,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
-    this.updateValidationRules();
-    this.subscribe(this.scriptureStart.valueChanges, () => {
-      if (this.scriptureStart.valid) {
-        this.extractScriptureText();
-      } else {
-        this.scriptureText.reset();
-      }
-      // update enabled/disabled state for scriptureEnd
-      this.updateScriptureEndEnabled();
-    });
-    this.subscribe(this.scriptureEnd.valueChanges, () => {
-      if (this.scriptureEnd.valid) {
-        this.extractScriptureText();
-      }
-    });
-    this.updateScriptureEndEnabled();
+    this.applyTextAudioValidators();
+  }
+
+  clearSelection() {
+    this.selectedText = '';
+    this.verseRef = undefined;
   }
 
   archiveQuestion(): void {
@@ -279,12 +227,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       op.set<boolean>(qd => qd.isArchived, true);
       op.set(qd => qd.dateArchived!, new Date().toJSON());
     });
-  }
-
-  checkScriptureText(): void {
-    if (!this.scriptureText.value) {
-      this.resetScriptureText();
-    }
   }
 
   deleteAnswer(answer: Answer) {
@@ -303,13 +245,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.activeAnswer = cloneDeep(answer);
     this.audio.url = this.activeAnswer.audioUrl;
     if (this.activeAnswer.verseRef != null) {
-      const { startVerseRef, endVerseRef } = toStartAndEndVerseRefs(this.activeAnswer.verseRef);
-      this.scriptureStart.setValue(startVerseRef.toString());
-      if (endVerseRef != null) {
-        this.scriptureEnd.setValue(endVerseRef.toString());
-      }
+      this.verseRef = toVerseRef(this.activeAnswer.verseRef);
     }
-    this.scriptureText.setValue(this.activeAnswer.scriptureText);
+    this.selectedText = this.activeAnswer.scriptureText;
     this.showAnswerForm();
   }
 
@@ -334,24 +272,24 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     await this.questionDialogService.questionDialog(data, this._questionDoc);
   }
 
-  extractScriptureText() {
-    if (this.checkingTextComponent == null) {
-      return;
-    }
-    const verseRef = this.getVerseRef();
-    const verses = [];
-    if (verseRef != null) {
-      for (const verseInRange of verseRef.allVerses()) {
-        verses.push(
-          this.checkingTextComponent.textComponent.getSegmentText(`verse_${verseInRange.chapter}_${verseInRange.verse}`)
-        );
+  selectScripture() {
+    const verseRef = this._questionDoc!.data!.verseRef;
+    const dialogData: TextChooserDialogData = {
+      bookNum: (this.verseRef && this.verseRef.bookNum) || verseRef.bookNum,
+      chapterNum: (this.verseRef && this.verseRef.chapterNum) || verseRef.chapterNum,
+      textsByBookId: this.textsByBookId!,
+      projectId: this.projectId!,
+      selectedText: this.selectedText || '',
+      selectedVerses: this.verseRef
+    };
+    const dialogRef = this.dialog.open(TextChooserDialogComponent, { data: dialogData });
+    dialogRef.afterClosed().subscribe(result => {
+      if (result != null && result !== 'close') {
+        const selection = result as TextSelection;
+        this.verseRef = toVerseRef(selection.verses);
+        this.selectedText = selection.text;
       }
-    }
-    this.scriptureText.setValue(verses.length ? verses.join(' ') : null);
-  }
-
-  updateScriptureEndEnabled() {
-    this.scriptureStart.value && this.scriptureStart.valid ? this.scriptureEnd.enable() : this.scriptureEnd.disable();
+    });
   }
 
   canEditAnswer(answer: Answer): boolean {
@@ -380,6 +318,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.answerFormVisible = false;
     this.answerFormSubmitAttempted = false;
     this.activeAnswer = undefined;
+    this.clearSelection();
     this.audio = {};
     this.answerForm.reset();
     this.action.emit({
@@ -405,56 +344,16 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return answer.likes.some(like => like.ownerRef === this.userService.currentUserId);
   }
 
-  openScriptureChooser(control: AbstractControl) {
-    let currentVerseSelection: VerseRef | undefined;
-    if (control.value != null) {
-      const { verseRef } = VerseRef.tryParse(control.value);
-      if (verseRef.valid) {
-        currentVerseSelection = verseRef;
-      }
-    }
-
-    let rangeStart: VerseRef | undefined;
-    if (control !== this.scriptureStart && this.scriptureStart.value != null) {
-      const { verseRef } = VerseRef.tryParse(this.scriptureStart.value);
-      if (verseRef.valid) {
-        rangeStart = verseRef;
-      }
-    }
-
-    const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
-      data: { input: currentVerseSelection, booksAndChaptersToShow: this.currentBookAndChapter, rangeStart }
-    };
-
-    const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
-      ScriptureChooserDialogComponent,
-      VerseRef | 'close'
-    >;
-    dialogRef.afterClosed().subscribe(result => {
-      if (result != null && result !== 'close') {
-        control.setValue(result.toString());
-        control.markAsTouched();
-        control.markAsDirty();
-      }
-    });
-  }
-
   processAudio(audio: AudioAttachment) {
     this.audio = audio;
-    this.updateValidationRules();
+    this.applyTextAudioValidators();
   }
 
-  resetScriptureText() {
-    this.scriptureText.reset();
-    this.scriptureStart.reset();
-    this.scriptureEnd.reset();
-  }
-
-  scriptureTextVerseRef(answer: Answer): string {
-    if (answer.verseRef == null) {
+  scriptureTextVerseRef(verse: VerseRef | VerseRefData): string {
+    if (verse == null) {
       return '';
     }
-    const verseRef = toVerseRef(answer.verseRef);
+    const verseRef = verse instanceof VerseRef ? verse : toVerseRef(verse);
     return `(${verseRef.toString()})`;
   }
 
@@ -474,7 +373,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
       this.noticeService.show('The recording for your answer was automatically stopped.');
     }
-    this.updateValidationRules();
+    this.applyTextAudioValidators();
     this.answerFormSubmitAttempted = true;
     if (this.answerForm.invalid) {
       return;
@@ -527,32 +426,22 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   private emitAnswerToSave() {
-    const verseRef = this.getVerseRef();
     this.action.emit({
       action: 'save',
       text: this.answerText.value,
       answer: this.activeAnswer,
       audio: this.audio,
-      scriptureText: this.scriptureText.value != null ? this.scriptureText.value : undefined,
-      verseRef: verseRef == null ? undefined : fromVerseRef(verseRef)
+      scriptureText: this.selectedText || undefined,
+      verseRef: this.verseRef == null ? undefined : fromVerseRef(this.verseRef)
     });
   }
 
-  private updateValidationRules(): void {
-    this.scriptureStart.setValidators([SFValidators.verseStr(this.currentBookAndChapter)]);
-    this.scriptureStart.updateValueAndValidity();
-    this.scriptureEnd.setValidators([SFValidators.verseStr(this.currentBookAndChapter)]);
-    this.scriptureEnd.updateValueAndValidity();
-
+  private applyTextAudioValidators(): void {
     if (this.audio.url) {
       this.answerText.clearValidators();
     } else {
       this.answerText.setValidators(Validators.required);
     }
     this.answerText.updateValueAndValidity();
-  }
-
-  private getVerseRef(): VerseRef | undefined {
-    return combineVerseRefStrs(this.scriptureStart.value, this.scriptureEnd.value);
   }
 }

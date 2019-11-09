@@ -1,6 +1,4 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { MdcListItem } from '@angular-mdc/web/list';
-import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -43,6 +41,7 @@ import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
+import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
@@ -62,6 +61,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedMdcDialog = mock(MdcDialog);
+const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 
 function createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {
@@ -118,6 +118,7 @@ describe('CheckingComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService }
     ]
   }));
@@ -498,83 +499,23 @@ describe('CheckingComponent', () => {
 
     it('can add scripture to an answer', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
+      const selection: TextSelection = {
+        verses: { bookNum: 43, chapterNum: 2, verseNum: 2, verse: '2-5' },
+        text: 'The selected text',
+        startClipped: true,
+        endClipped: false
+      };
+      when(env.mockedTextChooserDialogComponent.afterClosed()).thenReturn(of(selection));
       env.selectQuestion(1);
       env.clickButton(env.addAnswerButton);
       env.setTextFieldValue(env.yourAnswerField, 'Answer question');
       env.clickButton(env.selectTextTab);
-      expect(env.scriptureText).toBe(null);
+      expect(env.scriptureText).toBeFalsy();
       // Add scripture
-      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:3');
-      expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
-      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:4');
-      expect(env.scriptureText).toBe('target: chapter 1, verse 3. target: chapter 1, verse 4.');
+      env.clickButton(env.selectVersesButton);
+      expect(env.scriptureText).toBe('The selected text (JHN 2:2-5)');
       env.clickButton(env.saveAnswerButton);
-      env.waitForSliderUpdate();
-      expect(env.getAnswerScriptureText(0)).toBe('target: chapter 1, verse 3. target: chapter 1, verse 4.(JHN 1:3-4)');
-    }));
-
-    it('starts with end reference disabled', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
-      env.selectQuestion(1);
-      env.clickButton(env.addAnswerButton);
-      env.clickButton(env.selectTextTab);
-      expect(env.scriptureText).toBeNull();
-      expect(env.component.answersPanel!.scriptureStart.disabled).toBe(false);
-      expect(env.component.answersPanel!.scriptureEnd.disabled).toBe(true);
-      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:1');
-      expect(env.component.answersPanel!.scriptureEnd.enabled).toBe(true);
-    }));
-
-    it('out-of-chapter reference is invalid', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
-      env.selectQuestion(1);
-      env.clickButton(env.addAnswerButton);
-      env.setTextFieldValue(env.yourAnswerField, 'Answer question');
-      env.clickButton(env.selectTextTab);
-      expect(env.scriptureText).toBeNull();
-      // Specify reference that is not for chapter of question.
-      env.setTextFieldValue(env.scriptureStartField, 'JHN 2:3');
-      expect(env.scriptureText).toEqual('');
-      expect(env.component.answersPanel!.scriptureStart.valid).toBe(false);
-
-      // Typing correct values should clear error and fetch Scripture
-      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:3');
-      expect(env.scriptureText).toEqual('target: chapter 1, verse 3.');
-      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:4');
-      expect(env.scriptureText).toEqual('target: chapter 1, verse 3. target: chapter 1, verse 4.');
-      expect(env.component.answersPanel!.scriptureStart.valid).toBe(true);
-
-      env.clickButton(env.saveAnswerButton);
-      env.waitForSliderUpdate();
-      expect(env.getAnswerScriptureText(0)).toBe('target: chapter 1, verse 3. target: chapter 1, verse 4.(JHN 1:3-4)');
-    }));
-
-    it('out-of-chapter detection is based on question chapter, not viewed chapter', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
-
-      // Answer a question in chapter 2.
-      const questionNumberInWebpageList =
-        env.questions.findIndex(questionElement =>
-          env.getQuestionText(questionElement).includes('Question relating to chapter 2')
-        ) + 1;
-      env.selectQuestion(questionNumberInWebpageList);
-      env.clickButton(env.addAnswerButton);
-      env.setTextFieldValue(env.yourAnswerField, 'Answer question');
-
-      // Set checking area's Scripture view to another chapter than what the question is referencing
-      env.selectChapterFromMenu(1);
-
-      env.clickButton(env.selectTextTab);
-
-      // Enter a Scripture reference that is in the chapter that the question refers to,
-      // but not in the chapter of the Scripture view that the user is seeing on the checking component.
-      env.setTextFieldValue(env.scriptureStartField, 'JHN 2:3');
-      env.setTextFieldValue(env.scriptureEndField, 'JHN 2:4');
-      expect(env.component.answersPanel!.scriptureStart.valid).toBe(true);
-      expect(env.component.answersPanel!.scriptureEnd.valid).toBe(true);
-
-      env.clickButton(env.saveAnswerButton);
-      env.waitForSliderUpdate();
+      expect(env.getAnswerScriptureText(0)).toBe('The selected text(JHN 2:2-5)');
     }));
 
     it('can remove scripture from an answer', fakeAsync(() => {
@@ -583,9 +524,9 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerScriptureText(0)).toBe('Quoted scripture(JHN 1:1)');
       env.clickButton(env.getAnswerEditButton(0));
       env.clickButton(env.selectTextTab);
-      env.setTextFieldValue(env.scriptureTextField, '');
-      env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
+      env.clickButton(env.clearScriptureButton);
+      env.clickButton(env.saveAnswerButton);
       expect(env.getAnswerScripture(0)).toBeFalsy();
     }));
 
@@ -602,39 +543,6 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerEditButton(0)).toBeNull();
       env.selectQuestion(7);
       expect(env.getAnswerEditButton(0)).not.toBeNull();
-    }));
-
-    it('shows error messages when answer form is invalid', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
-      env.selectQuestion(1);
-      env.clickButton(env.addAnswerButton);
-      env.setTextFieldValue(env.yourAnswerField, 'Answer the question');
-      env.clickButton(env.selectTextTab);
-      env.setTextFieldValue(env.scriptureStartField, 'BAD VERSE');
-      env.clickButton(env.answerTextTab);
-      env.clickButton(env.saveAnswerButton);
-      tick(100);
-      expect(env.component.answersPanel!.answerForm.invalid).toBe(true);
-      expect(env.answerFormErrors.length).toEqual(1);
-      expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
-      env.clickButton(env.selectTextTab);
-      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:2');
-      env.component.answersPanel!.scriptureStart.markAsTouched();
-      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:');
-      expect(env.scriptureEndField.classes['mdc-text-field--invalid']).toBe(false);
-      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:1');
-      // If start reference is set and touched, and the end reference is valid but incompatible, it should show invalid
-      expect(env.scriptureEndField.classes['mdc-text-field--invalid']).toBe(true);
-      env.clickButton(env.answerTextTab);
-      expect(env.answerFormErrors.length).toEqual(1);
-      expect(env.component.answersPanel!.answerForm.hasError('verseBeforeStart'));
-      expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
-      env.clickButton(env.selectTextTab);
-      env.setTextFieldValue(env.scriptureEndField, 'BAD FORMAT');
-      env.clickButton(env.answerTextTab);
-      expect(env.answerFormErrors.length).toEqual(1);
-      expect(env.component.answersPanel!.scriptureEnd.hasError('verseFormat'));
-      expect(env.answerFormErrors[0].nativeElement.textContent).toContain('Please enter a valid scripture reference');
     }));
 
     it('error about "answer or recording required" goes away after add recording', fakeAsync(() => {
@@ -654,40 +562,6 @@ describe('CheckingComponent', () => {
 
       // We made a recording, so we should not be showing a validation error.
       expect(env.component.answersPanel!.answerForm.valid).toBe(true);
-    }));
-
-    it('generate correct verse ref when start and end mismatch only by case', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
-      env.selectQuestion(1);
-      env.clickButton(env.addAnswerButton);
-      env.setTextFieldValue(env.yourAnswerField, 'Answer question');
-      env.clickButton(env.selectTextTab);
-      expect(env.scriptureText).toBe(null);
-      // Add scripture
-      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:3');
-      expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
-      env.setTextFieldValue(env.scriptureEndField, 'jhn 1:3');
-      expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
-      env.clickButton(env.saveAnswerButton);
-      env.waitForSliderUpdate();
-      expect(env.getAnswerScriptureText(0)).toBe('target: chapter 1, verse 3.(JHN 1:3)');
-    }));
-
-    it('generate correct verse ref when start and end mismatch only by insignificant zero', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
-      env.selectQuestion(1);
-      env.clickButton(env.addAnswerButton);
-      env.setTextFieldValue(env.yourAnswerField, 'Answer question');
-      env.clickButton(env.selectTextTab);
-      expect(env.scriptureText).toBe(null);
-      // Add scripture
-      env.setTextFieldValue(env.scriptureStartField, 'JHN 1:3');
-      expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
-      env.setTextFieldValue(env.scriptureEndField, 'JHN 1:03');
-      expect(env.scriptureText).toBe('target: chapter 1, verse 3.');
-      env.clickButton(env.saveAnswerButton);
-      env.waitForSliderUpdate();
-      expect(env.getAnswerScriptureText(0)).toBe('target: chapter 1, verse 3.(JHN 1:3)');
     }));
 
     it('new answers from other users are not displayed until requested', fakeAsync(() => {
@@ -915,6 +789,7 @@ class TestEnvironment {
   public project01WritingSystemTag = 'en';
 
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
+  readonly mockedTextChooserDialogComponent: MdcDialogRef<TextChooserDialogComponent> = mock(MdcDialogRef);
   private readonly adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: ADMIN_USER.id,
     projectRef: 'project01',
@@ -1111,7 +986,7 @@ class TestEnvironment {
   }
 
   get audioTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(2)'));
+    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab[label="Record/Upload"]'));
   }
 
   get removeAudioButton(): DebugElement {
@@ -1126,32 +1001,25 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('mdc-text-field[formControlName="answerText"]'));
   }
 
-  get answerTextTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(1)'));
-  }
-
   get answerFormErrors(): DebugElement[] {
     return this.fixture.debugElement.queryAll(By.css('#answer-form .form-helper-text'));
   }
 
-  get scriptureStartField(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mdc-text-field[formControlName="scriptureStart"]'));
-  }
-
-  get scriptureEndField(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mdc-text-field[formControlName="scriptureEnd"]'));
-  }
-
-  get scriptureTextField(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mdc-text-field[formControlName="scriptureText"]'));
-  }
-
   get scriptureText(): string | null {
-    return this.component.answersPanel!.scriptureText.value;
+    const scriptureText = document.querySelector('.scripture-text');
+    return scriptureText == null ? null : scriptureText.textContent!.trim();
+  }
+
+  get clearScriptureButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.clear-selection'));
   }
 
   get selectTextTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(3)'));
+    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab[label="Select Text"]'));
+  }
+
+  get selectVersesButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.answer-select-text button[primary]'));
   }
 
   get showUnreadAnswersButton(): DebugElement {
@@ -1299,11 +1167,6 @@ class TestEnvironment {
       data: newQuestion
     });
     this.realtimeService.updateAllSubscribeQueries();
-  }
-
-  selectChapterFromMenu(chapter: number) {
-    const eventData: MdcMenuSelectedEvent = { index: 0, source: { value: chapter } as MdcListItem };
-    this.component.onChapterSelect(eventData);
   }
 
   /** To use if the Stop Recording button isn't showing up in the test DOM. */
@@ -1524,6 +1387,9 @@ class TestEnvironment {
     );
 
     when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
+    when(mockedMdcDialog.open(TextChooserDialogComponent, anything())).thenReturn(
+      instance(this.mockedTextChooserDialogComponent)
+    );
   }
 
   private createTextDataForChapter(chapter: number): TextData {

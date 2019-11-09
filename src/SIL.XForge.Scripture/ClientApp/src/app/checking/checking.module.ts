@@ -6,6 +6,7 @@ import { AngularSplitModule } from 'angular-split';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SharedModule } from '../shared/shared.module';
+import { TextChooserDialogComponent } from '../text-chooser-dialog/text-chooser-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview/checking-overview.component';
 import { CheckingRoutingModule } from './checking-routing.module';
 import { CheckingAnswersComponent } from './checking/checking-answers/checking-answers.component';
@@ -42,7 +43,8 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     CheckingAudioPlayerComponent,
     AudioTimePipe,
     CheckingAudioCombinedComponent,
-    QuestionAnsweredDialogComponent
+    QuestionAnsweredDialogComponent,
+    TextChooserDialogComponent
   ],
   imports: [
     CheckingRoutingModule,
@@ -54,6 +56,6 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     ngfModule
   ],
   exports: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent],
-  entryComponents: [QuestionDialogComponent, QuestionAnsweredDialogComponent]
+  entryComponents: [QuestionDialogComponent, QuestionAnsweredDialogComponent, TextChooserDialogComponent]
 })
 export class CheckingModule {}
