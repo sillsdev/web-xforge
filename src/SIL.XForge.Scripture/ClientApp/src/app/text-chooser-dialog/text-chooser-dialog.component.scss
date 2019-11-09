@@ -12,7 +12,8 @@
 }
 
 app-text {
-  max-height: calc(100vh - 400px);
+  display: block;
+  max-height: calc(100vh - 25rem);
   min-height: 300px;
 }
 
