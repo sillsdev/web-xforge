@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import isEqual from 'lodash/isEqual';
 import merge from 'lodash/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';

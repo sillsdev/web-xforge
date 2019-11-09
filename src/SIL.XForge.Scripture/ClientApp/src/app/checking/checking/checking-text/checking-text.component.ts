@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { clone } from 'lodash';
 import isEqual from 'lodash/isEqual';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';

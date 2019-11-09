@@ -1,6 +1,6 @@
 namespace SIL.XForge.Configuration
 {
-    /// <sumary>
+    /// <summary>
     /// This class defines the audio configuration.
     /// </summary>
     public class AudioOptions
