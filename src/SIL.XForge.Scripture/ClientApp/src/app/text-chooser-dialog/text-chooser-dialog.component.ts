@@ -148,7 +148,21 @@ export class TextChooserDialogComponent implements OnDestroy {
     document.removeEventListener('selectionchange', this.selectionChangeHandler);
   }
 
-  private expandSelection(selection: Selection, segments: Element[]) {
+  /**
+   * Given the user's selection and the USX segment dom elements that are part of the selection:
+   * - Expands the selection to the nearest word boundaries
+   * - Determines whether the start and end verses were clipped, so that e.g. ellipses can be displayed at the start
+   *   and/or end the selection. If only white space was clipped it is not counted as being clipped.
+   * - Normalizes whitespace between segments to a single space.
+   */
+  private expandSelection(
+    selection: Selection,
+    segments: Element[]
+  ): {
+    result: string;
+    startClipped: boolean;
+    endClipped: boolean;
+  } {
     // all selected verses except the first and last
     const centralSelection = segments
       .filter((_el, index) => index !== 0 && index !== segments.length - 1)

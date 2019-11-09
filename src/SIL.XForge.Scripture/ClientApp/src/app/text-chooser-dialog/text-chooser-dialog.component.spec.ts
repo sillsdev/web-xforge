@@ -20,7 +20,6 @@ import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc } from '../core/models/text-doc';
 import { SFProjectService } from '../core/sf-project.service';
-import { ScriptureChooserDialogComponent } from '../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from './text-chooser-dialog.component';
 
 const mockedProjectService = mock(SFProjectService);
@@ -286,9 +285,9 @@ class ChildViewContainerComponent {
 
 @NgModule({
   imports: [CommonModule, UICommonModule, CheckingModule],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
-  entryComponents: [ChildViewContainerComponent, TextChooserDialogComponent, ScriptureChooserDialogComponent]
+  exports: [ViewContainerDirective, ChildViewContainerComponent],
+  declarations: [ViewContainerDirective, ChildViewContainerComponent],
+  entryComponents: [ChildViewContainerComponent, TextChooserDialogComponent]
 })
 class DialogTestModule {}
 

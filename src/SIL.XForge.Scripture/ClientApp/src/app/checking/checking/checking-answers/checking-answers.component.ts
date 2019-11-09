@@ -10,17 +10,17 @@ import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-proj
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
-import {
-  TextChooserDialogComponent,
-  TextChooserDialogData,
-  TextSelection
-} from 'src/app/text-chooser-dialog/text-chooser-dialog.component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextsByBookId } from '../../../core/models/texts-by-book-id';
+import {
+  TextChooserDialogComponent,
+  TextChooserDialogData,
+  TextSelection
+} from '../../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionAnsweredDialogComponent } from '../../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
@@ -214,7 +214,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
-    this.updateValidationRules();
+    this.applyTextAudioValidators();
   }
 
   clearSelection() {
@@ -346,7 +346,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   processAudio(audio: AudioAttachment) {
     this.audio = audio;
-    this.updateValidationRules();
+    this.applyTextAudioValidators();
   }
 
   scriptureTextVerseRef(verse: VerseRef | VerseRefData): string {
@@ -373,7 +373,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
       this.noticeService.show('The recording for your answer was automatically stopped.');
     }
-    this.updateValidationRules();
+    this.applyTextAudioValidators();
     this.answerFormSubmitAttempted = true;
     if (this.answerForm.invalid) {
       return;
@@ -436,7 +436,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
-  private updateValidationRules(): void {
+  private applyTextAudioValidators(): void {
     if (this.audio.url) {
       this.answerText.clearValidators();
     } else {

@@ -22,7 +22,6 @@ import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/model
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
-import { TextChooserDialogComponent, TextSelection } from 'src/app/text-chooser-dialog/text-chooser-dialog.component';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { Snapshot } from 'xforge-common/models/snapshot';
@@ -42,6 +41,7 @@ import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
+import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
