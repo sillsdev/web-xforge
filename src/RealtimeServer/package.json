@@ -17,7 +17,6 @@
   "dependencies": {
     "express": "^4.17.1",
     "jwks-rsa": "^1.6.0",
-    "lodash": ">=4.17.14",
     "mongodb": "^2.2.36",
     "ot-json0": "^1.1.0",
     "rich-text": "^3.1.0",
@@ -32,7 +31,6 @@
     "@types/jest": "^24.0.18",
     "@types/jest-expect-message": "^1.0.0",
     "@types/jsonwebtoken": "^8.3.3",
-    "@types/lodash": "^4.14.136",
     "@types/mongodb": "^2.2.25",
     "@types/ws": "^6.0.2",
     "jest": "^24.9.0",
