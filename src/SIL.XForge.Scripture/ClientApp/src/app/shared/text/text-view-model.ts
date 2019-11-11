@@ -173,7 +173,7 @@ export class TextViewModel {
     return formats['highlight-segment'] != null;
   }
 
-  toggleHighlight(range: RangeStatic, value: TextType | boolean): void {
+  toggleHighlight(range: RangeStatic, value: boolean): void {
     const editor = this.checkEditor();
     if (range.length > 0) {
       // this changes the underlying HTML, which can mess up some Quill events, so defer this call
@@ -255,6 +255,8 @@ export class TextViewModel {
         removeAttribute(modelOp, 'highlight-segment');
         removeAttribute(modelOp, 'highlight-para');
         removeAttribute(modelOp, 'para-contents');
+        removeAttribute(modelOp, 'question-segment');
+        removeAttribute(modelOp, 'question-count');
         (modelDelta as any).push(modelOp);
       }
     }

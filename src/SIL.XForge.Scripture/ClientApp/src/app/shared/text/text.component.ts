@@ -339,7 +339,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (range == null) {
       return;
     }
-    this.viewModel.toggleHighlight(range, value ? this._id.textType : false);
+    this.viewModel.toggleHighlight(range, value);
 
     if (!this.isReadOnly && this._id.textType === 'target' && this.highlightMarker != null) {
       if (value) {
@@ -464,7 +464,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
         if (this._highlightSegment && this._id != null) {
           // ensure that the currently selected segment is highlighted
           if (!this.viewModel.isHighlighted(this._segment)) {
-            this.viewModel.toggleHighlight(this._segment.range, this._id.textType);
+            this.viewModel.toggleHighlight(this._segment.range, true);
           }
         }
       }

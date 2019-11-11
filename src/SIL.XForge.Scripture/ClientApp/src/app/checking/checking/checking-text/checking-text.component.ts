@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { clone } from 'lodash';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import clone from 'lodash/clone';
 import isEqual from 'lodash/isEqual';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
@@ -17,33 +17,20 @@ import { TextComponent } from '../../../shared/text/text.component';
 export class CheckingTextComponent extends SubscriptionDisposable {
   @Input() placeholder = 'Loading...';
   @ViewChild(TextComponent, { static: true }) textComponent!: TextComponent;
-
-  @Input() set activeVerse(verseRef: Readonly<VerseRef> | undefined) {
-    if (this.activeVerse != null) {
-      // Removed the highlight on the old active verse
-      this.highlightActiveVerse(this.activeVerse, false);
-    }
-    if (verseRef != null && this.isEditorLoaded) {
-      this.highlightActiveVerse(verseRef, true);
-    }
-    this._activeVerse = verseRef;
-  }
-  @Input() set id(textDocId: TextDocId | undefined) {
-    if (textDocId) {
-      if (this.isEditorLoaded && !isEqual(this._id, textDocId)) {
-        this._editorLoaded = false;
-      }
-      this._id = textDocId;
-    }
-  }
-  @Output() verseClicked: EventEmitter<VerseRef> = new EventEmitter<VerseRef>();
-  @Input() mode: 'checking' | 'dialog' = 'checking';
+  @Output() questionVerseSelected = new EventEmitter<VerseRef>();
 
   private clickSubs: Subscription[] = [];
   private _activeVerse?: Readonly<VerseRef>;
   private _editorLoaded = false;
   private _id?: TextDocId;
-  private _verses?: Readonly<VerseRef[]>;
+  private _questionVerses?: Readonly<VerseRef[]>;
+
+  @Input() set activeVerse(verseRef: Readonly<VerseRef> | undefined) {
+    // Removed the highlight on the old active verse
+    this.highlightActiveVerse(false);
+    this._activeVerse = verseRef;
+    this.highlightActiveVerse(true);
+  }
 
   get activeVerse(): Readonly<VerseRef> | undefined {
     return this._activeVerse;
@@ -53,71 +40,80 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     return this._editorLoaded;
   }
 
+  @Input() set id(textDocId: TextDocId | undefined) {
+    if (textDocId) {
+      if (this.isEditorLoaded && !isEqual(this._id, textDocId)) {
+        this._editorLoaded = false;
+      }
+      this._id = textDocId;
+    }
+  }
+
   get id(): TextDocId | undefined {
     return this._id;
   }
 
-  @Input() set verses(verseRefs: Readonly<VerseRef[]> | undefined) {
-    if (this.isEditorLoaded) {
-      this.resetVerseHighlights(verseRefs);
-    }
-    this._verses = clone(verseRefs);
-    if (this.isEditorLoaded) {
-      this.highlightVerses();
-    }
+  @Input() set questionVerses(verseRefs: Readonly<VerseRef[]> | undefined) {
+    this.toggleQuestionVerses(false);
+    this._questionVerses = clone(verseRefs);
+    this.toggleQuestionVerses(true);
   }
 
-  get verses(): Readonly<VerseRef[]> | undefined {
-    return this._verses;
+  get questionVerses(): Readonly<VerseRef[]> | undefined {
+    return this._questionVerses;
   }
 
-  applyFontChange(fontSize: string) {
+  applyFontChange(fontSize: string): void {
     this.textComponent.editorStyles = {
       fontSize: fontSize
     };
   }
 
-  highlightVerses() {
+  onLoaded(): void {
     this._editorLoaded = true;
-    if (this.mode === 'checking') {
-      if (this.verses != null) {
-        const segments: string[] = [];
-        const questionsAtSegment: Map<string, number> = new Map();
-        for (const verse of this.verses) {
-          const referenceSegments = this.getVerseSegments(verse);
-          if (referenceSegments.length > 0) {
-            const value = questionsAtSegment.get(referenceSegments[0]);
-            if (value != null) {
-              questionsAtSegment.set(referenceSegments[0], value + 1);
-            } else {
-              questionsAtSegment.set(referenceSegments[0], 1);
-            }
-
-            for (const segment of referenceSegments) {
-              if (!segments.includes(segment)) {
-                segments.push(segment);
-              }
-            }
-          }
-        }
-        this.setupQuestionSegments(questionsAtSegment, true);
-        this.highlightSegments(segments);
-        if (this.activeVerse != null) {
-          this.selectActiveVerse(this.activeVerse, true);
-        }
-      }
-    } else if (this._activeVerse != null) {
-      // In dialog mode, highlight the active verse without putting the ? marker before the text
-      this.highlightActiveVerse(this._activeVerse, true);
-    }
+    this.toggleQuestionVerses(true);
+    this.highlightActiveVerse(true);
   }
 
-  highlightActiveVerse(verseRef: Readonly<VerseRef>, toggle: boolean) {
-    if (this.mode === 'dialog') {
-      const segments = this.getVerseSegments(verseRef);
-      this.highlightSegments(segments, toggle);
+  private toggleQuestionVerses(value: boolean): void {
+    if (!this.isEditorLoaded || this.questionVerses == null) {
+      return;
     }
-    this.selectActiveVerse(verseRef, toggle);
+
+    const segments: string[] = [];
+    const questionCounts = new Map<string, number>();
+    for (const verse of this.questionVerses) {
+      const referenceSegments = this.getVerseSegments(verse);
+      if (referenceSegments.length > 0) {
+        const count = questionCounts.get(referenceSegments[0]);
+        if (count != null) {
+          questionCounts.set(referenceSegments[0], count + 1);
+        } else {
+          questionCounts.set(referenceSegments[0], 1);
+        }
+
+        for (const segment of referenceSegments) {
+          if (!segments.includes(segment)) {
+            segments.push(segment);
+          }
+        }
+      }
+    }
+    this.toggleQuestionSegments(questionCounts, segments, value);
+  }
+
+  private highlightActiveVerse(toggle: boolean): void {
+    if (!this.isEditorLoaded || this._activeVerse == null) {
+      return;
+    }
+
+    for (const segment of this.getVerseSegments(this._activeVerse)) {
+      const range = this.textComponent.getSegmentRange(segment);
+      if (range == null) {
+        continue;
+      }
+      this.textComponent.toggleHighlight(toggle, range);
+    }
   }
 
   private getVerseSegments(verseRef: Readonly<VerseRef>): string[] {
@@ -128,137 +124,63 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       if (!segments.includes(segment)) {
         segments.push(segment);
       }
-      // Check for similar segments like this verse i.e. verse_1_2/q1
-      for (const similarSegment of this.textComponent.getRelatedSegmentRefs(segment)) {
-        if (!segments.includes(similarSegment)) {
-          segments.push(similarSegment);
+      // Check for related segments like this verse i.e. verse_1_2/q1
+      for (const relatedSegment of this.textComponent.getRelatedSegmentRefs(segment)) {
+        const text = this.textComponent.getSegmentText(relatedSegment);
+        if (text !== '' && !segments.includes(relatedSegment)) {
+          segments.push(relatedSegment);
         }
       }
     }
     return segments;
   }
 
-  private highlightSegments(segments: string[], toggle = true) {
+  private toggleQuestionSegments(questionCounts: Map<string, number>, segments: string[], value: boolean): void {
     if (this.textComponent.editor == null) {
       return;
     }
 
     for (const segment of segments) {
-      if (!this.textComponent.hasSegmentRange(segment)) {
+      const range = this.textComponent.getSegmentRange(segment);
+      if (range == null) {
         continue;
       }
       const element = this.textComponent.editor.container.querySelector('usx-segment[data-segment="' + segment + '"]');
       if (element == null) {
         continue;
-      } else if (element.querySelector('usx-blank') !== null) {
-        continue;
       }
-      const range = this.textComponent.getSegmentRange(segment);
-      this.textComponent.toggleHighlight(toggle, range);
-      if (this.mode === 'dialog') {
-        continue;
+      const formats: any = {
+        'question-segment': value
+      };
+      const count = questionCounts.get(segment);
+      if (count != null) {
+        formats['question-count'] = value ? count : false;
       }
-      if (!toggle) {
-        continue;
-      }
-      this.clickSubs.push(
-        this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
-          if (this._id == null || event.target == null) {
-            return;
-          }
-          let target = event.target;
-          if (target['offsetParent']['nodeName'] === 'USX-SEGMENT') {
-            target = target['offsetParent'] as EventTarget;
-          }
-          if (target['nodeName'] === 'USX-SEGMENT') {
-            const clickSegment = target['attributes']['data-segment'].value;
-            const segmentParts = clickSegment.split('_', 3);
-            const verseRef = new VerseRef(this._id.bookNum, segmentParts[1], segmentParts[2]);
-            const verseRefData = fromVerseRef(verseRef);
-            this.segmentClicked(verseRefData);
-          }
-        })
-      );
-    }
-  }
-
-  private resetVerseHighlights(verseRefs?: Readonly<VerseRef[]>) {
-    if (this.verses != null) {
-      // Remove all highlights and question segments
-      for (const verseRef of this.verses) {
-        if (verseRefs == null || !verseRefs.includes(verseRef)) {
-          const segment = verseSlug(verseRef);
-          if (!this.textComponent.hasSegmentRange(segment)) {
-            continue;
-          }
-          const range = this.textComponent.getSegmentRange(segment);
-          this.textComponent.toggleHighlight(false, range);
-          const segmentMap = new Map<string, number>();
-          segmentMap.set(segment, 0);
-          this.setupQuestionSegments(segmentMap, false);
+      this.textComponent.editor.formatText(range.index, range.length, formats, 'silent');
+      if (value) {
+        this.clickSubs.push(
+          this.subscribe(fromEvent<MouseEvent>(element, 'click'), event => {
+            if (this._id == null || event.target == null) {
+              return;
+            }
+            let target = event.target;
+            if (target['offsetParent']['nodeName'] === 'USX-SEGMENT') {
+              target = target['offsetParent'] as EventTarget;
+            }
+            if (target['nodeName'] === 'USX-SEGMENT') {
+              const clickSegment = target['attributes']['data-segment'].value;
+              const segmentParts = clickSegment.split('_', 3);
+              const verseRef = new VerseRef(this._id.bookNum, segmentParts[1], segmentParts[2]);
+              this.questionVerseSelected.emit(verseRef);
+            }
+          })
+        );
+      } else {
+        // Un-subscribe from all segment click events as these all get setup again
+        for (const event of this.clickSubs) {
+          event.unsubscribe();
         }
       }
-    }
-    // Un-subscribe from all segment click events as these all get setup again
-    for (const event of this.clickSubs) {
-      event.unsubscribe();
-    }
-  }
-
-  private segmentClicked(verseRefData?: VerseRefData) {
-    this.verseClicked.emit(verseRefData == null ? undefined : toVerseRef(verseRefData));
-  }
-
-  private setupQuestionSegments(segments: Map<string, number>, toggle: boolean): void {
-    for (const key of segments.keys()) {
-      const range = this.textComponent.getSegmentRange(key);
-      if (range == null) {
-        continue;
-      }
-      Promise.resolve().then(() => {
-        if (this.textComponent.editor != null) {
-          this.textComponent.editor.formatText(
-            range.index,
-            range.length,
-            'data-question',
-            toggle ? 'true' : false,
-            'silent'
-          );
-        }
-      });
-
-      const questionCount = segments.get(key)!;
-      Promise.resolve().then(() => {
-        if (this.textComponent.editor != null) {
-          this.textComponent.editor.formatText(
-            range.index,
-            range.length,
-            'data-question-count',
-            questionCount > 1 ? segments.get(key) : undefined,
-            'silent'
-          );
-        }
-      });
-    }
-  }
-
-  private selectActiveVerse(verseRef: Readonly<VerseRef>, toggle: boolean) {
-    for (const segment of this.getVerseSegments(verseRef)) {
-      const range = this.textComponent.getSegmentRange(segment);
-      if (range == null) {
-        continue;
-      }
-      Promise.resolve().then(() => {
-        if (this.textComponent.editor != null) {
-          this.textComponent.editor.formatText(
-            range.index,
-            range.length,
-            'data-selected',
-            toggle ? 'true' : false,
-            'silent'
-          );
-        }
-      });
     }
   }
 }
