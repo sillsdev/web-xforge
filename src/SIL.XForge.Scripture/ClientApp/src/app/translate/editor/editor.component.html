@@ -1,7 +1,6 @@
-<div mdcMenuSurfaceAnchor #trainingProgressAnchor fxLayout="column">
-  <div class="book-label" mdcHeadline4>{{ bookName }}</div>
+<div class="content" mdcMenuSurfaceAnchor #trainingProgressAnchor fxLayout="column">
   <div class="toolbar" fxLayout="row wrap" fxLayoutAlign="start center">
-    <app-chapter-nav [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
+    <app-chapter-nav [bookNum]="bookNum" [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
     <ng-container *ngIf="hasSource">
       <div class="toolbar-separator">&nbsp;</div>
       <button
@@ -11,6 +10,7 @@
         type="button"
         (click)="isTargetTextRight = !isTargetTextRight"
         title="Swap source and target"
+        fxHide.xs
       ></button>
       <button
         mdc-icon-button

@@ -1,6 +1,5 @@
 import Parchment from 'parchment';
 import Quill, { Clipboard, DeltaOperation, DeltaStatic, Module } from 'quill';
-import { isInitialSegment } from '../utils';
 
 const Delta: new () => DeltaStatic = Quill.import('delta');
 
@@ -131,16 +130,16 @@ export function registerScripture(): void {
       return true;
     }
 
+    static formats(node: HTMLElement): any {
+      const contentNode = node.firstElementChild;
+      return contentNode != null && contentNode.textContent === NBSP ? { initial: true } : undefined;
+    }
+
     contentNode!: HTMLElement;
 
     format(name: string, value: any): void {
-      if (name === SegmentInline.blotName && value != null) {
-        const ref = value as string;
-        let text: string = NBSP.repeat(8);
-        if (isInitialSegment(ref)) {
-          text = NBSP;
-        }
-        this.contentNode.innerText = text;
+      if (name === 'initial' && value === true) {
+        this.contentNode.innerText = NBSP;
       }
       super.format(name, value);
     }

@@ -1,5 +1,6 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import {
   InteractiveTranslationSession,
@@ -90,7 +91,8 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     private readonly projectService: SFProjectService,
     noticeService: NoticeService,
     private readonly helpHeroService: HelpHeroService,
-    private readonly dialog: MdcDialog
+    private readonly dialog: MdcDialog,
+    private readonly mediaObserver: MediaObserver
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
@@ -161,6 +163,10 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       this._chapter = value;
       this.changeText();
     }
+  }
+
+  get bookNum(): number | undefined {
+    return this.text == null ? undefined : this.text.bookNum;
   }
 
   get bookName(): string {
@@ -445,7 +451,6 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       }
     );
     dialogRef.afterClosed().subscribe(() => {
-      this.target.focus();
       if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
         const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
         this.translationSuggester.confidenceThreshold = pcnt / 100;
@@ -526,7 +531,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     const elem: HTMLElement = this.targetContainer.nativeElement;
     const bounds = elem.getBoundingClientRect();
     // add bottom padding
-    const top = bounds.top + 14;
+    const top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
     if (this.target.editor != null && this.target.hasFocus) {
       // reset scroll position
       this.target.editor.scrollingContainer.scrollTop = 0;
