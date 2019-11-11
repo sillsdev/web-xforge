@@ -15,7 +15,6 @@
 .mdc-select.chapter-select {
   @include mdc-select-container-fill-color(transparent);
   height: 40px;
-  width: 140px;
   align-items: center;
 
   ::ng-deep .mdc-select__selected-text {

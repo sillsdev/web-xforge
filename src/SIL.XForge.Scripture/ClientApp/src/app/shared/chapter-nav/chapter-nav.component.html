@@ -1,21 +1,3 @@
-<button
-  mdc-icon-button
-  appBlurOnClick
-  icon="keyboard_arrow_left"
-  type="button"
-  (click)="prevChapter()"
-  [disabled]="isPrevChapterDisabled()"
-  title="Previous chapter"
-></button>
-<button
-  mdc-icon-button
-  appBlurOnClick
-  icon="keyboard_arrow_right"
-  type="button"
-  (click)="nextChapter()"
-  [disabled]="isNextChapterDisabled()"
-  title="Next chapter"
-></button>
 <mdc-select
   #chapterSelect
   class="chapter-select"
@@ -25,8 +7,28 @@
   <mdc-menu>
     <mdc-list>
       <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
-        ><span class="chapter-label">Chapter&nbsp;{{ cs }}</span></mdc-list-item
+        ><span class="chapter-label">{{ cs }}</span></mdc-list-item
       >
     </mdc-list>
   </mdc-menu>
 </mdc-select>
+<button
+  mdc-icon-button
+  appBlurOnClick
+  icon="keyboard_arrow_left"
+  type="button"
+  (click)="prevChapter()"
+  [disabled]="isPrevChapterDisabled()"
+  title="Previous chapter"
+  fxHide.xs
+></button>
+<button
+  mdc-icon-button
+  appBlurOnClick
+  icon="keyboard_arrow_right"
+  type="button"
+  (click)="nextChapter()"
+  [disabled]="isNextChapterDisabled()"
+  title="Next chapter"
+  fxHide.xs
+></button>

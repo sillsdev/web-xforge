@@ -1,3 +1,5 @@
+@import '~src/variables';
+@import '~bootstrap/scss/mixins/breakpoints';
 @import '~@angular-mdc/theme/scss/icon-button/mixins';
 
 :host {
@@ -5,8 +7,10 @@
   flex-direction: column;
 }
 
-.book-label {
-  height: 40px;
+.content {
+  @include media-breakpoint-only(xs) {
+    margin: -10px;
+  }
 }
 
 .language-label {
@@ -20,6 +24,12 @@
   border-style: solid;
   border-color: #e0e0e0;
   padding: 5px 10px;
+
+  @include media-breakpoint-only(xs) {
+    margin-top: 0;
+    margin-bottom: 0;
+    border-bottom-width: 0;
+  }
 
   .mdc-icon-button {
     @include mdc-icon-button-size(24px, 24px, 8px);
@@ -102,4 +112,9 @@ app-text {
 .invalid-warning {
   color: #ff4118;
   margin-bottom: 3px;
+
+  @include media-breakpoint-only(xs) {
+    margin-left: 10px;
+    margin-right: 10px;
+  }
 }
