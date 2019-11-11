@@ -421,35 +421,54 @@ export function registerScripture(): void {
   Scroll.allowedChildren.push(ParaBlock);
   Scroll.allowedChildren.push(ChapterEmbed);
 
-  const HighlightSegmentClass = new QuillParchment.Attributor.Class('highlight-segment', 'highlight-segment', {
+  class ClassAttributor extends QuillParchment.Attributor.Class {
+    add(node: HTMLElement, value: any): boolean {
+      if (value === true) {
+        this.remove(node);
+        node.classList.add(this.keyName);
+        return true;
+      }
+      return super.add(node, value);
+    }
+
+    remove(node: HTMLElement): void {
+      node.classList.remove(this.keyName);
+      super.remove(node);
+    }
+
+    value(node: HTMLElement): any {
+      if (node.classList.contains(this.keyName)) {
+        return true;
+      }
+      return super.value(node);
+    }
+  }
+
+  const HighlightSegmentClass = new ClassAttributor('highlight-segment', 'highlight-segment', {
     scope: Parchment.Scope.INLINE
   });
 
-  const HighlightParaClass = new QuillParchment.Attributor.Class('highlight-para', 'highlight-para', {
+  const HighlightParaClass = new ClassAttributor('highlight-para', 'highlight-para', {
     scope: Parchment.Scope.BLOCK
   });
 
-  const CheckingQuestionData = new QuillParchment.Attributor.Attribute('data-question', 'data-question', {
+  const CheckingQuestionSegmentClass = new ClassAttributor('question-segment', 'question-segment', {
     scope: Parchment.Scope.INLINE
   });
 
-  const CheckingQuestionDataCount = new QuillParchment.Attributor.Attribute(
-    'data-question-count',
+  const CheckingQuestionCountAttribute = new QuillParchment.Attributor.Attribute(
+    'question-count',
     'data-question-count',
     {
       scope: Parchment.Scope.INLINE
     }
   );
 
-  const CheckingSelectedData = new QuillParchment.Attributor.Attribute('data-selected', 'data-selected', {
-    scope: Parchment.Scope.INLINE
-  });
-
-  const InvalidBlockAttribute = new QuillParchment.Attributor.Attribute('invalid-block', 'data-invalid-block', {
+  const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK
   });
 
-  const InvalidInlineAttribute = new QuillParchment.Attributor.Attribute('invalid-inline', 'data-invalid-inline', {
+  const InvalidInlineClass = new ClassAttributor('invalid-inline', 'invalid-inline', {
     scope: Parchment.Scope.INLINE
   });
 
@@ -486,15 +505,12 @@ export function registerScripture(): void {
     static DEFAULTS: any = {};
   }
 
-  Quill.register('attributors/class/highlight-segment', HighlightSegmentClass);
   Quill.register('formats/highlight-segment', HighlightSegmentClass);
-  Quill.register('attributors/class/highlight-para', HighlightParaClass);
   Quill.register('formats/highlight-para', HighlightParaClass);
-  Quill.register('formats/data-question', CheckingQuestionData);
-  Quill.register('formats/data-question-count', CheckingQuestionDataCount);
-  Quill.register('formats/data-selected', CheckingSelectedData);
-  Quill.register('formats/invalid-block', InvalidBlockAttribute);
-  Quill.register('formats/invalid-inline', InvalidInlineAttribute);
+  Quill.register('formats/question-segment', CheckingQuestionSegmentClass);
+  Quill.register('formats/question-count', CheckingQuestionCountAttribute);
+  Quill.register('formats/invalid-block', InvalidBlockClass);
+  Quill.register('formats/invalid-inline', InvalidInlineClass);
   Quill.register('blots/verse', VerseEmbed);
   Quill.register('blots/blank', BlankEmbed);
   Quill.register('blots/note', NoteEmbed);

@@ -17,17 +17,23 @@ quill-editor {
 
 .read-only-editor > .ql-container {
   > .ql-editor {
-    .highlight-segment-source {
-      background-color: #ffffce;
-      padding: 0.45rem 0;
+    usx-segment {
+      padding: 0.2em 0;
     }
 
-    .highlight-segment-target {
-      box-shadow: 2px 4px 4px -4px #bfb092;
+    .highlight-segment {
+      background-color: #ffffce;
+    }
+
+    .question-segment {
+      background-image: linear-gradient(to right, gray 75%, transparent 75%);
+      background-position: bottom 0.2em left;
+      background-repeat: repeat-x;
+      background-size: 7px 1px;
       position: relative;
       cursor: pointer;
 
-      &[data-question='true'] {
+      &[data-question-count] {
         &:before {
           content: '?';
           border-radius: 50%;
@@ -40,12 +46,12 @@ quill-editor {
           background: var(--mdc-theme-secondary);
           font-weight: bold;
           position: absolute;
-          top: 0;
+          top: 0.2em;
           text-indent: 0;
         }
       }
 
-      &[data-question-count] {
+      &[data-question-count]:not([data-question-count='1']) {
         &:after {
           content: attr(data-question-count);
           border-radius: 50%;
@@ -59,13 +65,9 @@ quill-editor {
           color: $questionAnswerBubbleColor;
           font-weight: bold;
           position: absolute;
-          top: -0.75em;
+          top: -0.55em;
           text-indent: 0;
         }
-      }
-
-      &[data-selected='true'] {
-        background: yellow;
       }
     }
   }
@@ -75,7 +77,7 @@ quill-editor {
   }
 }
 
-.ltr .highlight-segment-target[data-question='true'] {
+.ltr .question-segment[data-question-count] {
   margin-left: 1.75em;
   &:before {
     left: -2.25em;
@@ -84,7 +86,7 @@ quill-editor {
     left: -1.5em;
   }
 }
-.rtl .highlight-segment-target[data-question='true'] {
+.rtl .question-segment[data-question-count] {
   margin-right: 1.75em;
   &:before {
     right: -2.25em;
@@ -107,7 +109,7 @@ quill-editor {
       margin-bottom: 1em;
 
       > usx-para-contents {
-        padding: 0.45rem 0.3rem;
+        padding: 0.45em 0.3em;
         border-radius: 4px;
         display: inline;
         box-sizing: border-box;
@@ -119,18 +121,18 @@ quill-editor {
         background-color: white;
 
         usx-verse > span > span {
-          padding-top: 0.35rem;
+          padding-top: 0.35em;
           background-color: #f5f3ef;
           border-radius: 8px;
         }
       }
     }
 
-    .highlight-segment-target {
+    .highlight-segment {
       color: black;
     }
 
-    .highlight-para-target > usx-para-contents {
+    .highlight-para > usx-para-contents {
       box-shadow: 2px 4px 4px -4px #bfb092;
     }
   }
@@ -146,9 +148,9 @@ quill-editor {
 }
 
 .mark-invalid {
-  usx-para[data-invalid-block='true'] > usx-para-contents,
-  usx-chapter[data-invalid-block='true'] > span,
-  *[data-invalid-inline='true'] {
+  .invalid-block > usx-para-contents,
+  .invalid-block > span,
+  .invalid-inline {
     background: url(data:image/gif;base64,R0lGODlhCgAEAMIEAP9BGP6pl//Wy/7//P///////////////yH5BAEKAAQALAAAAAAKAAQAAAMROCOhK0oA0MIUMmTAZhsWBCYAOw==)
       repeat-x scroll 0 100% transparent;
     padding-bottom: 3px;

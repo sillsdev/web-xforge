@@ -461,7 +461,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     }
     this.translationSession = undefined;
     this.translationEngine = undefined;
-    if (this.projectDoc == null || !this.translationSuggestionsProjectEnabled || !this.canEdit) {
+    if (this.projectDoc == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
       return;
     }
 
