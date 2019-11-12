@@ -13,6 +13,7 @@
 
 app-text {
   display: block;
+  overflow-y: scroll;
   max-height: calc(100vh - 25rem);
   min-height: 300px;
 }
@@ -24,10 +25,6 @@ app-text {
 .error-message {
   color: var(--mdc-theme-error);
   font-size: 0.85em;
-}
-
-::ng-deep quill-editor {
-  overflow-y: scroll;
 }
 
 ::ng-deep app-text quill-editor > .ql-container > .ql-editor {
