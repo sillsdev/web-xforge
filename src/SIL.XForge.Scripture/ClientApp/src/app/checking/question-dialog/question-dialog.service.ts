@@ -4,10 +4,10 @@ import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { QuestionDoc } from 'src/app/core/models/question-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { QuestionDialogComponent, QuestionDialogData, QuestionDialogResult } from './question-dialog.component';
 
