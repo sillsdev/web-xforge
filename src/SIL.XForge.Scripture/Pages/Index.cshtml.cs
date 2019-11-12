@@ -15,7 +15,7 @@ namespace SIL.XForge.Scripture.Pages
     {
         [BindProperty]
         [Required(ErrorMessage = SharedResource.Keys.NameMissing)]
-        [RegularExpression(@"^[\w\s-'\.]+$", ErrorMessage = SharedResource.Keys.NameBadChars)]
+        [RegularExpression(@"^ *[\S]+( +[\S]+)* *$", ErrorMessage = SharedResource.Keys.NameMissing)]
         public string Name { get; set; }
         [BindProperty]
         [Required(ErrorMessage = SharedResource.Keys.EmailMissing)]
