@@ -1,8 +1,45 @@
 import { Injectable } from '@angular/core';
+import isObjectLike from 'lodash/isObjectLike';
+import { Filter, performQuery, QueryParameters } from './query-parameters';
 import { RealtimeDocTypes } from './realtime-doc-types';
-import { RealtimeOfflineData, RealtimeOfflineStore } from './realtime-offline-store';
+import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore } from './realtime-offline-store';
+import { nameof } from './utils';
 
 const DATABASE_NAME = 'xforge';
+
+function getAllFromCursor(
+  store: IDBObjectStore | IDBIndex,
+  query?: IDBValidKey | IDBKeyRange
+): Promise<RealtimeOfflineData[]> {
+  return new Promise<RealtimeOfflineData[]>((resolve, reject) => {
+    const results: RealtimeOfflineData[] = [];
+    const request = store.openCursor(query);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      const cursor = request.result;
+      if (cursor != null) {
+        results.push(cursor.value);
+        cursor.continue();
+      } else {
+        resolve(results);
+      }
+    };
+  });
+}
+
+function getKeyRange(filter: Filter): IDBKeyRange | undefined {
+  if (filter === undefined) {
+    return undefined;
+  }
+
+  if (isObjectLike(filter)) {
+    if (filter['$eq'] !== undefined) {
+      return IDBKeyRange.only(filter['$eq']);
+    }
+    return undefined;
+  }
+  return IDBKeyRange.only(filter);
+}
 
 /**
  * This class is an IndexedDB-based implementation of the real-time offline store.
@@ -19,46 +56,77 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
 
   async getAllIds(collection: string): Promise<string[]> {
     const db = await this.openDB();
-    return await new Promise<string[]>((resolve, reject) => {
-      const transaction = db.transaction(collection);
-      const objectStore = transaction.objectStore(collection);
 
-      const request = objectStore.getAllKeys();
+    const transaction = db.transaction(collection);
+    const objectStore = transaction.objectStore(collection);
+
+    return await new Promise<string[]>((resolve, reject) => {
+      const results: string[] = [];
+      const request = objectStore.openKeyCursor();
       request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result.map(k => k.toString()));
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (cursor != null) {
+          results.push(cursor.key.toString());
+          cursor.continue();
+        } else {
+          resolve(results);
+        }
+      };
     });
   }
 
   async getAll(collection: string): Promise<RealtimeOfflineData[]> {
     const db = await this.openDB();
-    return await new Promise<RealtimeOfflineData[]>((resolve, reject) => {
-      const transaction = db.transaction(collection);
-      const objectStore = transaction.objectStore(collection);
 
-      const request = objectStore.getAll();
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-    });
+    const transaction = db.transaction(collection);
+    const objectStore = transaction.objectStore(collection);
+
+    return await getAllFromCursor(objectStore);
   }
 
   async get(collection: string, id: string): Promise<RealtimeOfflineData> {
     const db = await this.openDB();
-    return await new Promise<RealtimeOfflineData>((resolve, reject) => {
-      const transaction = db.transaction(collection);
-      const objectStore = transaction.objectStore(collection);
 
+    const transaction = db.transaction(collection);
+    const objectStore = transaction.objectStore(collection);
+
+    return await new Promise<RealtimeOfflineData>((resolve, reject) => {
       const request = objectStore.get(id);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
     });
   }
 
+  async query(collection: string, parameters: QueryParameters): Promise<RealtimeOfflineQueryResults> {
+    const db = await this.openDB();
+    const transaction = db.transaction(collection);
+    const objectStore = transaction.objectStore(collection);
+    let snapshots: RealtimeOfflineData[] | undefined;
+    for (const key of Object.keys(parameters)) {
+      if (objectStore.indexNames.contains(key)) {
+        const filter = parameters[key] as Filter;
+        const keyRange = getKeyRange(filter);
+        if (keyRange !== undefined) {
+          const index = objectStore.index(key);
+          snapshots = await getAllFromCursor(index, keyRange);
+          break;
+        }
+      }
+    }
+    if (snapshots == null) {
+      snapshots = await this.getAll(collection);
+    }
+    return performQuery(parameters, snapshots);
+  }
+
   async put(collection: string, offlineData: RealtimeOfflineData): Promise<void> {
     const db = await this.openDB();
-    await new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction(collection, 'readwrite');
-      const objectStore = transaction.objectStore(collection);
 
+    const transaction = db.transaction(collection, 'readwrite');
+    const objectStore = transaction.objectStore(collection);
+
+    await new Promise<void>((resolve, reject) => {
       const request = objectStore.put(offlineData);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve();
@@ -67,10 +135,11 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
 
   async delete(collection: string, id: string): Promise<void> {
     const db = await this.openDB();
-    await new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction(collection, 'readwrite');
-      const objectStore = transaction.objectStore(collection);
 
+    const transaction = db.transaction(collection, 'readwrite');
+    const objectStore = transaction.objectStore(collection);
+
+    await new Promise<void>((resolve, reject) => {
       const request = objectStore.delete(id);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve();
@@ -104,8 +173,11 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
       };
       request.onupgradeneeded = () => {
         const db = request.result;
-        for (const collection of this.domainModel.collections) {
-          db.createObjectStore(collection, { keyPath: 'id' });
+        for (const docType of this.domainModel.docTypes) {
+          const objectStore = db.createObjectStore(docType.COLLECTION, { keyPath: 'id' });
+          for (const path of docType.INDEX_PATHS) {
+            objectStore.createIndex(path, `${nameof<RealtimeOfflineData>('data')}.${path}`);
+          }
         }
       };
     });

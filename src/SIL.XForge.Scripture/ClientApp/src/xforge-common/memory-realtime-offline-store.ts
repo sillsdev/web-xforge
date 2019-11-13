@@ -1,6 +1,7 @@
 import merge from 'lodash/merge';
 import { Snapshot } from './models/snapshot';
-import { RealtimeOfflineData, RealtimeOfflineStore } from './realtime-offline-store';
+import { performQuery, QueryParameters } from './query-parameters';
+import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore } from './realtime-offline-store';
 
 /**
  * This class is a memory-based implementation of the real-time offline store. It is useful for testing.
@@ -39,6 +40,11 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
       return Promise.resolve(undefined);
     }
     return Promise.resolve(collectionData.get(id));
+  }
+
+  async query(collection: string, parameters: QueryParameters): Promise<RealtimeOfflineQueryResults> {
+    const snapshots = await this.getAll(collection);
+    return performQuery(parameters, snapshots);
   }
 
   put(collection: string, offlineData: RealtimeOfflineData): Promise<void> {

@@ -1,7 +1,10 @@
 import { Site } from './site';
 
-export const USERS_COLLECTION = 'users';
 export const USER_PROFILES_COLLECTION = 'user_profiles';
+export const USER_PROFILE_INDEX_PATHS: string[] = [];
+
+export const USERS_COLLECTION = 'users';
+export const USER_INDEX_PATHS: string[] = USER_PROFILE_INDEX_PATHS;
 
 export enum AuthType {
   Unknown,

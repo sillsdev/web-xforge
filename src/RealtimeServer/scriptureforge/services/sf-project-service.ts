@@ -1,5 +1,5 @@
 import { ProjectService } from '../../common/services/project-service';
-import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
+import { SF_PROJECT_INDEX_PATHS, SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 
@@ -9,6 +9,7 @@ import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 export class SFProjectService extends ProjectService<SFProject> {
   readonly collection = SF_PROJECTS_COLLECTION;
 
+  protected readonly indexPaths = SF_PROJECT_INDEX_PATHS;
   protected readonly projectAdminRole = SFProjectRole.ParatextAdministrator;
 
   constructor() {

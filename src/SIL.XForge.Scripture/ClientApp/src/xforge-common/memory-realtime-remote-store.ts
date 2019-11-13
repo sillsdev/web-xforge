@@ -183,18 +183,22 @@ export class MemoryRealtimeQueryAdapter implements RealtimeQueryAdapter {
   private performQuery(): boolean {
     let changed = false;
     const snapshots = Array.from(this.remoteStore.getSnapshots(this.collection));
-    const [results, unpagedCount] = performQuery(this.parameters, snapshots);
-    if (this.count !== results.length) {
-      this.count = results.length;
-      changed = true;
-    }
-    if (this.parameters.$count == null) {
+    const { results, unpagedCount } = performQuery(this.parameters, snapshots);
+    let count: number;
+    if (results instanceof Array) {
       const before = this.docIds;
       const after = results.map(s => s.id);
       this.docIds = after;
       if (!isEqual(before, after)) {
         changed = true;
       }
+      count = results.length;
+    } else {
+      count = results;
+    }
+    if (this.count !== count) {
+      this.count = count;
+      changed = true;
     }
     this.unpagedCount = unpagedCount;
     return changed;

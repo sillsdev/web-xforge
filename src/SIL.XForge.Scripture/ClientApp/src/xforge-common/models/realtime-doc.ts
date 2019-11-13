@@ -5,6 +5,7 @@ import { RealtimeDocAdapter } from '../realtime-remote-store';
 
 export interface RealtimeDocConstructor {
   readonly COLLECTION: string;
+  readonly INDEX_PATHS: string[];
 
   new (realtimeService: RealtimeService, adapter: RealtimeDocAdapter): RealtimeDoc;
 }

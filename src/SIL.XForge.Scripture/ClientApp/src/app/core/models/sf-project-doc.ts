@@ -1,4 +1,8 @@
-import { SF_PROJECTS_COLLECTION, SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import {
+  SF_PROJECT_INDEX_PATHS,
+  SF_PROJECTS_COLLECTION,
+  SFProject
+} from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { ProjectDoc } from 'xforge-common/models/project-doc';
 import { QuestionDoc } from './question-doc';
 import { SFProjectUserConfigDoc } from './sf-project-user-config-doc';
@@ -6,6 +10,7 @@ import { TextDoc } from './text-doc';
 
 export class SFProjectDoc extends ProjectDoc<SFProject> {
   static readonly COLLECTION = SF_PROJECTS_COLLECTION;
+  static readonly INDEX_PATHS = SF_PROJECT_INDEX_PATHS;
 
   get taskNames(): string[] {
     if (this.data == null) {

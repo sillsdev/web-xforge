@@ -140,6 +140,8 @@ describe('SaProjectsComponent', () => {
 
 class TestProjectDoc extends ProjectDoc {
   static readonly COLLECTION = 'projects';
+  static readonly INDEX_PATHS = [];
+
   readonly taskNames: string[] = ['Task1', 'Task2'];
 }
 
