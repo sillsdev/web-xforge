@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import clone from 'lodash/clone';
 import isEqual from 'lodash/isEqual';
-import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent, Subscription } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
