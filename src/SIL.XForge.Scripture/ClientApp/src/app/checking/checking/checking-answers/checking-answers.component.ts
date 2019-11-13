@@ -240,6 +240,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       action: 'delete',
       answer: answer
     });
+    // All answers should show next time any do.
+    this.showRemoteAnswers();
   }
 
   editAnswer(answer: Answer) {
