@@ -82,13 +82,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       this.questionChangeSubscription!.unsubscribe();
     }
     this.questionChangeSubscription = this.subscribe(questionDoc.remoteChanges$, () => {
-      // If any answers are added by someone else before this user answers the question
-      // to reveal answers, include those new answers in what will be shown when we first
-      // show the answers.
-      if (this.currentUserTotalAnswers > 0) {
-        return;
+      // If the user hasn't added an answer yet and is able to, then
+      // don't hold back any incoming answers from appearing right away
+      // as soon as the user adds their answer.
+      if (this.currentUserTotalAnswers === 0 && this.canAddAnswer) {
+        this.showRemoteAnswers();
       }
-      this.showRemoteAnswers();
     });
   }
   @Input() checkingTextComponent?: CheckingTextComponent;

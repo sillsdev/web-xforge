@@ -620,6 +620,34 @@ describe('CheckingComponent', () => {
       expect(env.showUnreadAnswersButton).toBeNull();
     }));
 
+    it('new remote answers from other users are not displayed to proj admin until requested', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      // Select a question with at least one answer, but with no answers
+      // authored by the project admin since that was hindering this test.
+      env.selectQuestion(6);
+
+      expect(env.answers.length).toEqual(1, 'setup');
+      expect(env.component.answersPanel!.answers.length).toEqual(1, 'setup');
+      expect(env.showUnreadAnswersButton).toBeNull();
+
+      env.simulateNewRemoteAnswer();
+
+      // New remote answer is buffered rather than shown immediately.
+      expect(env.answers.length).toEqual(1);
+      expect(env.component.answersPanel!.answers.length).toEqual(1);
+
+      // show-unread-answers banner appears.
+      expect(env.showUnreadAnswersButton).not.toBeNull();
+      expect(env.showUnreadAnswersButton.nativeElement.innerText).toContain(' 1 ', 'should have shown unread count');
+
+      // Clicking makes the answer appear and the control go away.
+      env.clickButton(env.showUnreadAnswersButton);
+      flush();
+      expect(env.answers.length).toEqual(2);
+      expect(env.component.answersPanel!.answers.length).toEqual(2);
+      expect(env.showUnreadAnswersButton).toBeNull();
+    }));
+
     it('new remote answers and banner dont show, if user has not yet answered the question', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);
