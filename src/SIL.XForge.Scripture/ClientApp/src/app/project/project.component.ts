@@ -67,6 +67,8 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
           const bookNum = projectUserConfig.selectedBookNum;
           if (bookNum != null) {
             taskRoute.push(Canon.bookNumberToId(bookNum));
+          } else if (projectUserConfig.selectedTask === 'checking') {
+            taskRoute.push('ALL');
           }
           this.router.navigate(taskRoute, { relativeTo: this.route, replaceUrl: true });
         } else {
