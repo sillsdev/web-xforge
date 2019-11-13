@@ -102,6 +102,7 @@
         justify-content: space-between;
       }
       @include media-breakpoint-down(xs) {
+        margin: -10px;
         .next-question,
         .prev-question {
           @include mdc-icon-button-size(24px, 24px, 8px);

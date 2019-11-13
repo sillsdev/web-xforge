@@ -71,7 +71,7 @@
       flex: 1;
       padding: 14px 20px;
       @include media-breakpoint-only(xs) {
-        padding: 14px 14px;
+        padding: 10px;
       }
       display: flex;
       flex-direction: column;

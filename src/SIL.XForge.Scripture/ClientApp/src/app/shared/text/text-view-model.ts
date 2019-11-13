@@ -1,6 +1,5 @@
 import cloneDeep from 'lodash/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
-import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { Subscription } from 'rxjs';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { Segment } from './segment';
@@ -74,6 +73,12 @@ class SegmentInfo {
   length: number = 0;
   origRef?: string;
   containsBlank: boolean = false;
+  isVerseNext: boolean = false;
+  hasInitialFormat: boolean = false;
+
+  get isInitial(): boolean {
+    return this.isVerseNext && (!this.ref.startsWith('verse') || this.ref.includes('/'));
+  }
 
   constructor(public ref: string, public index: number) {}
 }
@@ -257,6 +262,7 @@ export class TextViewModel {
         removeAttribute(modelOp, 'para-contents');
         removeAttribute(modelOp, 'question-segment');
         removeAttribute(modelOp, 'question-count');
+        removeAttribute(modelOp, 'initial');
         (modelDelta as any).push(modelOp);
       }
     }
@@ -290,10 +296,12 @@ export class TextViewModel {
                 curSegment = new SegmentInfo(curSegment.ref, curIndex + 1);
               }
               if (style != null) {
-                const paraRef = getParagraphRef(nextIds, style, style);
+                // only get the paragraph ref if it is needed, since it updates the nextIds map
                 if (paraSegments.length === 0) {
+                  const paraRef = getParagraphRef(nextIds, style, style);
                   paraSegments.push(new SegmentInfo(paraRef, curIndex));
                 } else if (paraSegments[0].ref === '') {
+                  const paraRef = getParagraphRef(nextIds, style, style);
                   paraSegments[0].ref = paraRef;
                 }
               } else if (paraSegments.length > 0) {
@@ -315,6 +323,9 @@ export class TextViewModel {
           } else if (style === 'b') {
             // blank line
             paraSegments = [];
+            if (curSegment != null) {
+              curIndex += curSegment.length;
+            }
             curIndex += len;
             curSegment = undefined;
           } else {
@@ -337,6 +348,7 @@ export class TextViewModel {
         } else if (op.insert.verse != null) {
           // verse
           if (curSegment != null) {
+            curSegment.isVerseNext = true;
             paraSegments.push(curSegment);
             curIndex += curSegment.length;
           } else if (paraSegments.length === 0) {
@@ -360,6 +372,9 @@ export class TextViewModel {
           curSegment.length += len;
           if (op.insert != null && op.insert.blank != null) {
             curSegment.containsBlank = true;
+            if (op.attributes != null && op.attributes['initial'] === true) {
+              curSegment.hasInitialFormat = true;
+            }
           }
         }
         convertDelta.retain(len, attrs);
@@ -378,7 +393,11 @@ export class TextViewModel {
       // insert blank
       const delta = new Delta();
       delta.retain(segment.index + fixOffset);
-      delta.insert({ blank: true }, { segment: segment.ref, 'para-contents': true });
+      const attrs: any = { segment: segment.ref, 'para-contents': true };
+      if (segment.isInitial) {
+        attrs.initial = true;
+      }
+      delta.insert({ blank: true }, attrs);
       fixDelta = fixDelta.compose(delta);
       fixOffset++;
     } else if (segment.containsBlank && segment.length > 1) {
@@ -394,8 +413,13 @@ export class TextViewModel {
         // if the segment is no longer blank, ensure that the selection is at the end of the segment.
         // Sometimes after typing in a blank segment, the selection will be at the beginning. This seems to be a bug
         // in Quill.
-        Promise.resolve().then(() => editor.setSelection(segment.index + segment.length, 0, 'user'));
+        Promise.resolve().then(() => editor.setSelection(segment.index + segment.length - 1, 0, 'user'));
       }
+    } else if (segment.containsBlank && segment.length === 1 && !segment.hasInitialFormat && segment.isInitial) {
+      const delta = new Delta();
+      delta.retain(segment.index + fixOffset);
+      delta.retain(1, { initial: true });
+      fixDelta = fixDelta.compose(delta);
     } else if (segment.ref !== segment.origRef) {
       // fix segment ref
       const delta = new Delta()

@@ -6,7 +6,6 @@ import {
   TextType
 } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
-import { isInitialSegment } from '../../shared/utils';
 
 export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
@@ -38,11 +37,18 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
     let blank = 0;
     let translated = 0;
     if (this.data != null && this.data.ops != null) {
-      for (const op of this.data.ops) {
+      for (let i = 0; i < this.data.ops.length; i++) {
+        const op = this.data.ops[i];
+        const nextOp = i < this.data.ops.length - 1 ? this.data.ops[i + 1] : undefined;
         if (op.attributes && op.attributes.segment) {
           if (op.insert.blank != null) {
             const segRef: string = op.attributes != null ? op.attributes.segment : '';
-            if (!isInitialSegment(segRef)) {
+            if (
+              nextOp == null ||
+              nextOp.insert == null ||
+              nextOp.insert.verse == null ||
+              (segRef.startsWith('verse_') && !segRef.includes('/'))
+            ) {
               blank++;
             }
           } else {
