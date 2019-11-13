@@ -16,7 +16,7 @@ cat <<EOF > src/SIL.XForge.Scripture/version.json
 EOF
 
 rm -rf $BUILD_OUTPUT/app/*
-dotnet publish src/$PROJECT/$PROJECT.csproj -c $CONFIGURATION -r $DEPLOY_RUNTIME -o ../../$BUILD_OUTPUT/app /p:Version=$BUILD_NUMBER /p:AngularConfig=$ANGULAR_CONFIG || exit 1
+dotnet publish src/$PROJECT/$PROJECT.csproj -c $CONFIGURATION -r $DEPLOY_RUNTIME -o $BUILD_OUTPUT/app /p:Version=$BUILD_NUMBER /p:AngularConfig=$ANGULAR_CONFIG || exit 1
 
 cat <<EOF > $BUILD_OUTPUT/app/secrets.json
 {
