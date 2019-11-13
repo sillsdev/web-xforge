@@ -42,7 +42,7 @@ describe('ProjectComponent', () => {
 
   it('navigate to last text', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ selectedTask: 'translate' });
+    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41 });
     env.fixture.detectChanges();
     tick();
 
@@ -73,6 +73,24 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
+  it('navigates to last checking question if question stored but bookNum is null', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setProjectData({ selectedTask: 'checking' });
+    env.fixture.detectChanges();
+    tick();
+
+    verify(mockedRouter.navigate(deepEqual(['./', 'checking', 'ALL']), anything())).once();
+  }));
+
+  it('navigates to last checking book if the last book was saved', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setProjectData({ selectedTask: 'checking', selectedBooknum: 41 });
+    env.fixture.detectChanges();
+    tick();
+
+    verify(mockedRouter.navigate(deepEqual(['./', 'checking', 'MRK']), anything())).once();
+  }));
+
   it('navigate to overview when no texts', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setProjectData({ hasTexts: false });
@@ -96,7 +114,7 @@ describe('ProjectComponent', () => {
 
   it('check sharing link', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ selectedTask: 'translate' });
+    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41 });
     env.setLinkSharing(true);
     env.fixture.detectChanges();
     tick();
@@ -108,7 +126,7 @@ describe('ProjectComponent', () => {
 
   it('check sharing link passes shareKey', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ selectedTask: 'translate' });
+    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41 });
     env.setLinkSharing(true, 'secret123');
     env.fixture.detectChanges();
     tick();
@@ -122,7 +140,7 @@ describe('ProjectComponent', () => {
     when(mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
       new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
     );
-    env.setProjectData({ selectedTask: 'translate' });
+    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41 });
     env.setLinkSharing(true);
     env.fixture.detectChanges();
     tick();
@@ -137,7 +155,7 @@ describe('ProjectComponent', () => {
     when(mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
       new CommandError(CommandErrorCode.NotFound, 'NotFound')
     );
-    env.setProjectData({ selectedTask: 'translate' });
+    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41 });
     env.setLinkSharing(true);
     env.fixture.detectChanges();
     tick();
@@ -178,14 +196,16 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
   }
 
-  setProjectData(args: { hasTexts?: boolean; selectedTask?: string; role?: SFProjectRole } = {}): void {
+  setProjectData(
+    args: { hasTexts?: boolean; selectedTask?: string; selectedBooknum?: number; role?: SFProjectRole } = {}
+  ): void {
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: getSFProjectUserConfigDocId('project01', 'user01'),
       data: {
         ownerRef: 'user01',
         projectRef: 'project01',
         selectedTask: args.selectedTask,
-        selectedBookNum: args.selectedTask == null ? undefined : 41,
+        selectedBookNum: args.selectedTask == null ? undefined : args.selectedBooknum,
         isTargetTextRight: true,
         confidenceThreshold: 0.2,
         translationSuggestionsEnabled: true,
