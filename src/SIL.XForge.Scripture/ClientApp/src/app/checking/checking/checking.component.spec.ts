@@ -590,7 +590,7 @@ describe('CheckingComponent', () => {
       expect(env.component.answersPanel!.answerForm.valid).toBe(true);
     }));
 
-    it('new answers from other users are not displayed until requested', fakeAsync(() => {
+    it('new remote answers from other users are not displayed until requested', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);
       env.answerQuestion('New answer from current user');
@@ -602,30 +602,7 @@ describe('CheckingComponent', () => {
 
       expect(env.showUnreadAnswersButton).toBeNull();
 
-      // Another user on another computer adds a new answer.
-      const date = new Date();
-      date.setDate(date.getDate() - 1);
-      const dateCreated = date.toJSON();
-      env.component.answersPanel!.questionDoc!.submitJson0Op(
-        op =>
-          op.insert(q => q.answers, 0, {
-            dataId: 'newAnswer1',
-            // Another user
-            ownerRef: CLEAN_CHECKER_USER.id,
-            text: 'new answer from another user',
-            verseRef: { chapterNum: 1, verseNum: 1, bookNum: 43 },
-            scriptureText: 'Quoted scripture',
-            likes: [],
-            dateCreated: dateCreated,
-            dateModified: dateCreated,
-            audioUrl: 'file://audio.mp3',
-            comments: []
-          }),
-        // Another user
-        false
-      );
-      tick();
-      env.fixture.detectChanges();
+      env.simulateNewRemoteAnswer();
 
       // The new answer does not show up yet.
       expect(env.answers.length).toEqual(2);
@@ -637,9 +614,89 @@ describe('CheckingComponent', () => {
 
       // Clicking makes the answer appear and the control go away.
       env.clickButton(env.showUnreadAnswersButton);
+      flush();
       expect(env.answers.length).toEqual(3);
       expect(env.component.answersPanel!.answers.length).toEqual(3);
       expect(env.showUnreadAnswersButton).toBeNull();
+    }));
+
+    it('new remote answers and banner dont show, if user has not yet answered the question', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(7);
+      expect(env.answers.length).toEqual(0, 'setup (no answers in DOM yet)');
+      expect(env.component.answersPanel!.answers.length).toEqual(1, 'setup');
+
+      // Another user adds an answer, but with no impact on the current user's screen yet.
+      env.simulateNewRemoteAnswer();
+      expect(env.showUnreadAnswersButton).toBeNull();
+      expect(env.answers.length).toEqual(0, 'broken unrelated functionality');
+      // Incoming remote answer should have been absorbed into the set of i
+      // answers pending to show, since user was looking at the Add Answer button
+      expect(env.component.answersPanel!.answers.length).toEqual(2);
+
+      // Current user adds her answer, and all answers show.
+      env.answerQuestion('New answer from current user');
+      expect(env.showUnreadAnswersButton).toBeNull();
+      expect(env.answers.length).toEqual(3);
+      expect(env.component.answersPanel!.answers.length).toEqual(3);
+    }));
+
+    it('show-remote-answer banner disappears if user deletes their answer', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(7);
+      // User answers a question
+      env.answerQuestion('New answer from current user');
+      expect(env.answers.length).toEqual(2, 'setup');
+      expect(env.component.answersPanel!.answers.length).toEqual(2, 'setup');
+      expect(env.showUnreadAnswersButton).toBeNull();
+
+      // A remote answer is added, but the current user does not click the banner to show the remote answer.
+      env.simulateNewRemoteAnswer();
+      expect(env.answers.length).toEqual(2);
+      expect(env.component.answersPanel!.answers.length).toEqual(2);
+      expect(env.showUnreadAnswersButton).not.toBeNull();
+
+      // The current user deletes her own answer, which puts her back to just seeing the Add answer button. She
+      // should not see any other answers or the show-remote banner.
+      // This spec is not concerning itself with other interesting ways for the current user's answer to be deleted,
+      // other than them deleting their own answer on the current checking-answers.component.
+      env.deleteAnswerOwnedBy();
+      expect(env.addAnswerButton).not.toBeNull();
+      expect(env.showUnreadAnswersButton).toBeNull();
+      expect(env.answers.length).toEqual(0);
+      // Behind the scenes, the showable answer list should have absorbed any pending remote answers, but also lost the
+      // current users answer. So it was 2, lost 1 (deleted), and gained 1 (which was pending), and so stayed at 2.
+      expect(env.component.answersPanel!.answers.length).toEqual(2);
+
+      // Adding an answer should result in seeing all answers, and no banner.
+      env.answerQuestion('New/replaced answer from current user');
+      expect(env.answers.length).toEqual(3);
+      expect(env.component.answersPanel!.answers.length).toEqual(3);
+      expect(env.showUnreadAnswersButton).toBeNull();
+
+      // A remote answer at this point makes the banner show, tho.
+      env.simulateNewRemoteAnswer('answerId12345', 'another remote answer');
+      expect(env.answers.length).toEqual(3);
+      expect(env.component.answersPanel!.answers.length).toEqual(3);
+      expect(env.showUnreadAnswersButton).not.toBeNull();
+    }));
+
+    it('show-remote-answer banner disappears if the unshown remote answer is deleted', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(7);
+      // User answers a question
+      env.answerQuestion('New answer from current user');
+      expect(env.answers.length).toEqual(2, 'setup');
+      expect(env.component.answersPanel!.answers.length).toEqual(2, 'setup');
+      expect(env.showUnreadAnswersButton).toBeNull();
+
+      // A remote answer is added and then deleted, before the current user clicks the banner to show the remote answer.
+      env.simulateNewRemoteAnswer('remoteAnswerId123');
+      expect(env.showUnreadAnswersButton).not.toBeNull();
+      env.deleteAnswer('remoteAnswerId123');
+      expect(env.showUnreadAnswersButton).toBeNull();
+      expect(env.answers.length).toEqual(2);
+      expect(env.component.answersPanel!.answers.length).toEqual(2);
     }));
 
     describe('Comments', () => {
@@ -1203,6 +1260,55 @@ class TestEnvironment {
       status: 'processed',
       url: 'example.com/foo.mp3'
     });
+    flush();
+    this.fixture.detectChanges();
+  }
+
+  /** Delete user's answer via the checking-answers.component. */
+  deleteAnswerOwnedBy(userId: string = CHECKER_USER.id) {
+    const usersAnswer = this.component.answersPanel!.questionDoc!.data!.answers.filter(
+      answer => answer.ownerRef === userId
+    )[0];
+    this.component.answersPanel!.deleteAnswer(usersAnswer);
+    flush();
+    this.fixture.detectChanges();
+  }
+
+  /** Delete answer by id behind the scenes */
+  deleteAnswer(answerIdToDelete: string) {
+    const questionDoc = this.component.answersPanel!.questionDoc!;
+    const answers = questionDoc.data!.answers;
+    const answerIndex = answers.findIndex(existingAnswer => existingAnswer.dataId === answerIdToDelete);
+
+    questionDoc.submitJson0Op(op => op.remove(q => q.answers, answerIndex));
+
+    flush();
+    this.fixture.detectChanges();
+  }
+
+  simulateNewRemoteAnswer(dataId: string = 'newAnswer1', text: string = 'new answer from another user') {
+    // Another user on another computer adds a new answer.
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    const dateCreated = date.toJSON();
+    this.component.answersPanel!.questionDoc!.submitJson0Op(
+      op =>
+        op.insert(q => q.answers, 0, {
+          dataId: dataId,
+          // Another user
+          ownerRef: CLEAN_CHECKER_USER.id,
+          text: text,
+          verseRef: { chapterNum: 1, verseNum: 1, bookNum: 43 },
+          scriptureText: 'Quoted scripture',
+          likes: [],
+          dateCreated: dateCreated,
+          dateModified: dateCreated,
+          audioUrl: 'file://audio.mp3',
+          comments: []
+        }),
+      // Another user
+      false
+    );
     flush();
     this.fixture.detectChanges();
   }
