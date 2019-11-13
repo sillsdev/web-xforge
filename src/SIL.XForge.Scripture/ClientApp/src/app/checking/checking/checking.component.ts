@@ -125,10 +125,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
      *    later on via other methods
      */
     if (book === 0) {
-      const firstQuestion = questionDocs[0];
-      this.questionsPanel.activateQuestion(firstQuestion);
-      if (firstQuestion.data != null) {
-        book = firstQuestion.data.verseRef.bookNum;
+      const question = this.questionsPanel.activateStoredQuestion(questionDocs);
+      if (question.data != null) {
+        book = question.data.verseRef.bookNum;
       } else {
         book = undefined;
       }
@@ -689,6 +688,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
     }
     this.questionsPanel.updateElementsRead(activeQuestionDoc);
+    this.storeMostRecentQuestion(activeQuestionDoc.data.verseRef.bookNum);
   }
 
   private saveComment(answer: Answer, comment: Comment): void {
@@ -741,6 +741,22 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           ownerRef: currentUserId
         })
       );
+    }
+  }
+
+  private async storeMostRecentQuestion(bookNum: number): Promise<void> {
+    if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+      const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+      if (activeQuestionDoc != null && activeQuestionDoc.data != null) {
+        await this.projectUserConfigDoc.submitJson0Op(op => {
+          op.set<string>(puc => puc.selectedTask!, 'checking');
+          op.set(puc => puc.selectedQuestionDocRef!, activeQuestionDoc.id);
+          this.showAllBooks ? op.unset(puc => puc.selectedBookNum!) : op.set(puc => puc.selectedBookNum!, bookNum);
+          op.unset(puc => puc.selectedChapterNum!);
+          op.unset(puc => puc.selectedSegment);
+          op.unset(puc => puc.selectedSegmentChecksum!);
+        });
+      }
     }
   }
 

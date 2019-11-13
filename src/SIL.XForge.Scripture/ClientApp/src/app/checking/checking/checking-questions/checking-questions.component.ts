@@ -63,13 +63,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
 
   @Input() set questionDocs(questionDocs: Readonly<QuestionDoc[]>) {
     if (questionDocs.length > 0) {
-      let activeQuestionDocId: string | undefined;
-      if (this.activeQuestionDoc != null) {
-        activeQuestionDocId = this.activeQuestionDoc.id;
-      }
-      if (activeQuestionDocId == null || !questionDocs.some(question => question.id === activeQuestionDocId)) {
-        this.activateQuestion(questionDocs[0]);
-      }
+      this.activateStoredQuestion(questionDocs);
     } else {
       this.activeQuestionDoc = undefined;
     }
@@ -120,6 +114,31 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       }
     }
     return unread;
+  }
+  /**
+   * Activates the question that a user has most recently answered
+   */
+  activateStoredQuestion(questionDocs: Readonly<QuestionDoc[]>): QuestionDoc {
+    let questionToActivate: QuestionDoc | undefined;
+    let activeQuestionDocId: string | undefined;
+    if (this.activeQuestionDoc != null) {
+      activeQuestionDocId = this.activeQuestionDoc.id;
+    }
+    if (activeQuestionDocId == null || !questionDocs.some(question => question.id === activeQuestionDocId)) {
+      if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+        const lastQuestionDocId = this.projectUserConfigDoc.data.selectedQuestionDocRef;
+        if (lastQuestionDocId != null) {
+          questionToActivate = questionDocs.find(qd => qd.id === lastQuestionDocId);
+        }
+      }
+    } else {
+      return this.activeQuestionDoc!;
+    }
+    if (questionToActivate == null) {
+      questionToActivate = questionDocs[0];
+    }
+    this.activateQuestion(questionToActivate);
+    return questionToActivate;
   }
 
   updateElementsRead(questionDoc: QuestionDoc): void {

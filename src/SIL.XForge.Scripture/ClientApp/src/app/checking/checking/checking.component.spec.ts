@@ -181,6 +181,8 @@ describe('CheckingComponent', () => {
   describe('Questions', () => {
     it('questions are displaying', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
+      // Question 5 has been stored as the last question to start at
+      expect(env.component.questionsPanel.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       // A sixteenth question is archived
       expect(env.questions.length).toEqual(15);
       const question = env.selectQuestion(15);
@@ -189,6 +191,8 @@ describe('CheckingComponent', () => {
 
     it('questions are displaying for all books', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER, 'ALL');
+      // Question 5 has been stored as the question to start at
+      expect(env.component.questionsPanel.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       // A sixteenth question is archived
       expect(env.questions.length).toEqual(16);
       let question = env.selectQuestion(1);
@@ -327,6 +331,26 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(2);
       expect(env.getAnswerText(0)).toBe('Just added answer');
       expect(env.getAnswerText(1)).toBe('Answer 7 on question');
+    }));
+
+    it('saves the location of the last answered question', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(4);
+      env.answerQuestion('Answer to question 4');
+      const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
+      expect(projectUserConfigDoc.selectedTask).toBe('checking');
+      expect(projectUserConfigDoc.selectedQuestionDocRef).toBe('project01:q4Id');
+      expect(projectUserConfigDoc.selectedBookNum).toBe(43);
+    }));
+
+    it('saves the last question answered in all question context', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER, 'ALL');
+      env.selectQuestion(4);
+      env.answerQuestion('Answer question 4 in all question context');
+      const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
+      expect(projectUserConfigDoc.selectedTask).toBe('checking');
+      expect(projectUserConfigDoc.selectedQuestionDocRef).toBe('project01:q4Id');
+      expect(projectUserConfigDoc.selectedBookNum).toBeUndefined();
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
@@ -811,6 +835,7 @@ class TestEnvironment {
     translationSuggestionsEnabled: true,
     numSuggestions: 1,
     selectedSegment: '',
+    selectedQuestionDocRef: 'project01:q5Id',
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
@@ -836,6 +861,7 @@ class TestEnvironment {
     confidenceThreshold: 0.2,
     translationSuggestionsEnabled: true,
     numSuggestions: 1,
+    selectedQuestionDocRef: 'project01:q5Id',
     selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
