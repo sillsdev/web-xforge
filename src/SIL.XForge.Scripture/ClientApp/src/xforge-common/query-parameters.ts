@@ -1,9 +1,8 @@
-import get from 'lodash/get';
-import orderBy from 'lodash/orderBy';
-import { eq } from 'realtime-server/lib/common/utils/eq';
-import XRegExp from 'xregexp';
+import mingo from 'mingo';
 import { Snapshot } from './models/snapshot';
 import { nameof } from './utils';
+
+export type PrimitiveType = number | string | boolean;
 
 export interface RegexFilter {
   $regex: string;
@@ -11,81 +10,104 @@ export interface RegexFilter {
 }
 
 export interface InFilter {
-  $in: any[];
+  $in: PrimitiveType[];
 }
 
+export interface EqFilter {
+  $eq: PrimitiveType;
+}
+
+export type Filter = PrimitiveType | RegexFilter | InFilter | EqFilter;
+
 export interface Filters {
-  [field: string]: any | RegexFilter | InFilter;
+  [path: string]: Filter | Filters[] | undefined;
+  $and?: Filters[];
   $or?: Filters[];
+  $nor?: Filters[];
+}
+
+export interface Sort {
+  [path: string]: 1 | -1;
 }
 
 /**
  * This interface represents the parameters for a real-time query. It includes options for filter, sorting, and paging.
  */
-export interface QueryParameters extends Filters {
-  $sort?: { [field: string]: 1 | -1 };
+export interface QueryParameters {
+  [path: string]: Filter | Sort | undefined;
+  $sort?: Sort;
   $skip?: number;
   $limit?: number;
   $count?: true;
 }
 
-export function performQuery(parameters: QueryParameters, snapshots: Snapshot[]): [Snapshot[], number] {
-  let results = snapshots.filter(d => matchFilters(parameters, d.data));
-  const unpagedCount = results.length;
-  results = sort(parameters, results);
-  results = page(parameters, results);
-  return [results, unpagedCount];
+export interface QueryResults<T extends Snapshot = Snapshot> {
+  results: T[] | number;
+  unpagedCount: number;
 }
 
-function matchFilters(filters: Filters, data: any): boolean {
+export function performQuery<T extends Snapshot = Snapshot>(
+  parameters: QueryParameters,
+  snapshots: T[]
+): QueryResults<T> {
+  const query = new mingo.Query(toMingoCriteria(parameters));
+  const cursor = query.find(snapshots);
+  if (parameters.$sort != null) {
+    cursor.sort(toMingoSort(parameters.$sort));
+  }
+  let unpagedCursor: mingo.Cursor<T>;
+  if (parameters.$skip != null || parameters.$limit != null) {
+    unpagedCursor = query.find(snapshots);
+
+    if (parameters.$skip != null) {
+      cursor.skip(parameters.$skip);
+    }
+    if (parameters.$limit != null) {
+      cursor.limit(parameters.$limit);
+    }
+  } else {
+    unpagedCursor = cursor;
+  }
+
+  if (parameters.$count != null) {
+    return { results: cursor.count(), unpagedCount: unpagedCursor.count() };
+  }
+  return { results: cursor.all(), unpagedCount: unpagedCursor.count() };
+}
+
+function toMingoCriteria(filters: QueryParameters | Filters): any {
+  const criteria: any = {};
   for (const key of Object.keys(filters)) {
-    if (key === '$or') {
-      const orFilter = filters[key] as Filters[];
-      if (orFilter.every(f => !matchFilters(data, f))) {
-        return false;
-      }
-    } else if (!key.startsWith('$')) {
-      const objValue = get(data, key);
-      const filter = filters[key];
-      if (filter != null && filter.$regex != null) {
-        const regexFilter = filter as RegexFilter;
-        const regex = XRegExp(regexFilter.$regex, regexFilter.$options);
-        if (!regex.test(objValue)) {
-          return false;
+    switch (key) {
+      case '$and':
+      case '$or':
+      case '$nor':
+        const subFiltersArray = filters[key] as Filters[];
+        criteria[key] = subFiltersArray.map(f => toMingoCriteria(f));
+        break;
+
+      case '_id':
+        criteria['id'] = filters[key];
+        break;
+
+      default:
+        if (!key.startsWith('$')) {
+          criteria[convertPath(key)] = filters[key];
         }
-      } else if (filter != null && filter.$in != null) {
-        const inFilter = filter as InFilter;
-        if (!inFilter.$in.includes(objValue)) {
-          return false;
-        }
-      } else if (!eq(objValue, filter)) {
-        return false;
-      }
+        break;
     }
   }
-
-  return true;
+  return criteria;
 }
 
-function sort(parameters: QueryParameters, results: Snapshot[]): Snapshot[] {
-  if (parameters.$sort == null) {
-    return results;
+function toMingoSort(sort: Sort): any {
+  const mingoSort: any = {};
+  for (const field of Object.keys(sort)) {
+    mingoSort[convertPath(field)] = sort[field];
   }
-  const fields: string[] = [];
-  const orders: Array<'asc' | 'desc'> = [];
-  for (const field of Object.keys(parameters.$sort)) {
-    const order = parameters.$sort[field];
-    fields.push(`${nameof<Snapshot>('data')}.${field}`);
-    orders.push(order === 1 ? 'asc' : 'desc');
-  }
-  return orderBy(results, fields, orders);
+  return mingoSort;
 }
 
-function page(parameters: QueryParameters, results: Snapshot[]): Snapshot[] {
-  if (parameters.$skip == null && parameters.$limit == null) {
-    return results;
-  }
-  const start = parameters.$skip != null ? parameters.$skip : 0;
-  const end = parameters.$limit != null ? start + parameters.$limit : undefined;
-  return results.slice(start, end);
+function convertPath(path: string): string {
+  return `${nameof<Snapshot>('data')}.${path}`;
 }

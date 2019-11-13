@@ -5,7 +5,7 @@ import { ANY_INDEX } from '../../common/utils/obj-path';
 import { createFetchQuery, docSubmitJson0Op } from '../../common/utils/sharedb-utils';
 import { Answer } from '../models/answer';
 import { Comment } from '../models/comment';
-import { Question, QUESTIONS_COLLECTION } from '../models/question';
+import { Question, QUESTION_INDEX_PATHS, QUESTIONS_COLLECTION } from '../models/question';
 import { SFProjectDomain } from '../models/sf-project-rights';
 import { SF_PROJECT_USER_CONFIGS_COLLECTION, SFProjectUserConfig } from '../models/sf-project-user-config';
 import { QUESTION_MIGRATIONS } from './question-migrations';
@@ -16,7 +16,9 @@ import { SFProjectDataService } from './sf-project-data-service';
  */
 export class QuestionService extends SFProjectDataService<Question> {
   readonly collection = QUESTIONS_COLLECTION;
-  readonly listenForUpdates = true;
+
+  protected readonly indexPaths = QUESTION_INDEX_PATHS;
+  protected readonly listenForUpdates = true;
 
   constructor() {
     super(QUESTION_MIGRATIONS);

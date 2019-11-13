@@ -83,6 +83,8 @@ describe('ProjectService', () => {
 
 class TestProjectService extends ProjectService {
   readonly collection = PROJECTS_COLLECTION;
+
+  protected readonly indexPaths = [];
   protected readonly projectAdminRole = 'admin';
 
   constructor() {

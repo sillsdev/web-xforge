@@ -6,6 +6,7 @@ import { TextInfo } from './text-info';
 import { TranslateConfig } from './translate-config';
 
 export const SF_PROJECTS_COLLECTION = 'sf_projects';
+export const SF_PROJECT_INDEX_PATHS: string[] = [];
 
 export interface SFProject extends Project {
   paratextId: string;

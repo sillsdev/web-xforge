@@ -13,8 +13,8 @@ export class RealtimeDocTypes {
     );
   }
 
-  get collections(): IterableIterator<string> {
-    return this._docTypes.keys();
+  get docTypes(): IterableIterator<RealtimeDocConstructor> {
+    return this._docTypes.values();
   }
 
   getDocType(collection: string): RealtimeDocConstructor | undefined {

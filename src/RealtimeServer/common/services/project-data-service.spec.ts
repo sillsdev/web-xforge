@@ -226,6 +226,7 @@ interface TestData extends ProjectData {
 class TestDataService extends ProjectDataService<TestData> {
   readonly collection = 'test_data';
 
+  protected readonly indexPaths = [];
   protected readonly immutableProps: ObjPathTemplate[] = [this.pathTemplate(d => d.immutable!)];
 
   protected readonly projectRights = new ProjectRights({

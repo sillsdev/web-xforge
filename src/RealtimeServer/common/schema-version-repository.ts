@@ -8,7 +8,7 @@ export class SchemaVersionRepository {
     this.collection = database.collection<SchemaVersion>('schema_versions');
   }
 
-  async init(): Promise<void> {
+  async createIndex(): Promise<void> {
     await this.collection.createIndex({ collection: 1 });
   }
 

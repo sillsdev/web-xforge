@@ -1,4 +1,8 @@
-import { Question, QUESTIONS_COLLECTION } from 'realtime-server/lib/scriptureforge/models/question';
+import {
+  Question,
+  QUESTION_INDEX_PATHS,
+  QUESTIONS_COLLECTION
+} from 'realtime-server/lib/scriptureforge/models/question';
 import { JsonRealtimeDoc } from 'xforge-common/models/json-realtime-doc';
 
 /**
@@ -6,4 +10,5 @@ import { JsonRealtimeDoc } from 'xforge-common/models/json-realtime-doc';
  */
 export class QuestionDoc extends JsonRealtimeDoc<Question> {
   static readonly COLLECTION = QUESTIONS_COLLECTION;
+  static readonly INDEX_PATHS = QUESTION_INDEX_PATHS;
 }

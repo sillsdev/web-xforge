@@ -39,6 +39,7 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
     const DBType = MetadataDB(ShareDBMongo);
     const db = await MongoClient.connect(options.connectionString);
     server = new RealtimeServerType(new DBType(options.connectionString), new SchemaVersionRepository(db));
+    await server.createIndexes(db);
     await server.migrateIfNecessary();
 
     streamListener = new WebSocketStreamListener(options.audience, options.scope, options.authority, options.port);
