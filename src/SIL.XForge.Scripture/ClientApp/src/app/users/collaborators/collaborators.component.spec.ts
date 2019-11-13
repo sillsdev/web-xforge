@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { UserProfile } from 'realtime-server/lib/common/models/user';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
+import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
@@ -297,6 +297,37 @@ describe('CollaboratorsComponent', () => {
     expect(env.nextPageButton.nativeElement.disabled).toBe(true);
     expect(env.elementTextContent(env.paginatorLabel)).toEqual('1 - 1 of 1');
   }));
+
+  it('should hide link sharing if checking is unavailable', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    // Disable checking
+    const checkingConfig: CheckingConfig = {
+      checkingEnabled: false,
+      shareEnabled: true,
+      shareLevel: CheckingShareLevel.Anyone,
+      usersSeeEachOthersResponses: false
+    };
+    env.updateCheckingProperties(checkingConfig);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.linkSharingTextbox).toBeNull();
+    // Enable checking
+    checkingConfig.checkingEnabled = true;
+    env.updateCheckingProperties(checkingConfig);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.linkSharingTextbox).not.toBeNull();
+    // Disable link sharing
+    checkingConfig.shareLevel = CheckingShareLevel.Specific;
+    env.updateCheckingProperties(checkingConfig);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.linkSharingTextbox).toBeNull();
+  }));
 });
 
 class TestEnvironment {
@@ -349,6 +380,10 @@ class TestEnvironment {
 
   get inviteButton(): HTMLElement {
     return this.fixture.nativeElement.querySelector('#btn-invite');
+  }
+
+  get linkSharingTextbox(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('#share-link');
   }
 
   get noUsersLabel(): DebugElement {
@@ -451,6 +486,13 @@ class TestEnvironment {
 
   setupProjectDataWithNoUsers(): void {
     this.setupThisProjectData(this.project01Id, this.createProject({}));
+  }
+
+  updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
+    const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, this.project01Id);
+    return projectDoc.submitJson0Op(op => {
+      op.set(p => p.checkingConfig, config);
+    });
   }
 
   private createProject(userRoles: { [userRef: string]: string }): SFProject {
