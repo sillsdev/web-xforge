@@ -5,6 +5,7 @@ import { User } from 'realtime-server/lib/common/models/user';
 import { environment } from '../environments/environment';
 import { ErrorReportingService } from './error-reporting.service';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
+import { I18nService } from './i18n.service';
 import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
 import { UserService } from './user.service';
@@ -30,20 +31,22 @@ export class ExceptionHandlingService implements ErrorHandler {
     let dialog: MdcDialog;
     let errorReportingService: ErrorReportingService;
     let userService: UserService;
+    let i18nService: I18nService;
     try {
       ngZone = this.injector.get(NgZone);
       noticeService = this.injector.get(NoticeService);
       dialog = this.injector.get(MdcDialog);
       errorReportingService = this.injector.get(ErrorReportingService);
       userService = this.injector.get(UserService);
+      i18nService = this.injector.get(I18nService);
     } catch (err) {
-      console.log(`Error occured. Unable to report to Bugsnag, because dependency injection failed.`);
+      console.log(`Error occurred. Unable to report to Bugsnag, because dependency injection failed.`);
       console.error(error);
       return;
     }
 
     if (typeof error !== 'object' || error === null) {
-      error = new Error('Unkown error: ' + String(error));
+      error = new Error('Unknown error: ' + String(error));
     }
 
     // If a promise was rejected with an error, we want to report that error, because it has a useful stack trace
@@ -62,7 +65,7 @@ export class ExceptionHandlingService implements ErrorHandler {
       message.includes('A mutation operation was attempted on a database that did not allow mutations.') &&
       window.navigator.userAgent.includes('Gecko/')
     ) {
-      message = 'Firefox private browsing mode is not supported because IndexedDB is not avilable.';
+      message = 'Firefox private browsing mode is not supported because IndexedDB is not available.';
     }
 
     // try/finally blocks are to prevent an exception from preventing reporting or logging of an error
@@ -72,11 +75,12 @@ export class ExceptionHandlingService implements ErrorHandler {
       try {
         this.handleAlert(ngZone, dialog, { message, stack: error.stack, eventId });
       } finally {
-        this.sendReport(errorReportingService, error, eventId, await this.getUserForReporting(userService));
+        const locale = i18nService ? i18nService.localeCode : 'unknown';
+        this.sendReport(errorReportingService, error, eventId, locale, await this.getUserForReporting(userService));
       }
     } finally {
       // Error logging occurs after error reporting so it won't show up as noise in Bugsnag's breadcrumbs
-      console.log(`Error occured. Reported to Bugsnag with release stage set to ${environment.releaseStage}:`);
+      console.log(`Error occurred. Reported to Bugsnag with release stage set to ${environment.releaseStage}:`);
       console.error(error);
     }
   }
@@ -105,13 +109,20 @@ export class ExceptionHandlingService implements ErrorHandler {
     return user;
   }
 
-  private sendReport(errorReportingService: ErrorReportingService, error: any, eventId: string, user?: UserForReport) {
+  private sendReport(
+    errorReportingService: ErrorReportingService,
+    error: any,
+    eventId: string,
+    locale: string,
+    user?: UserForReport
+  ) {
     errorReportingService.notify(
       error,
       {
         user,
         metaData: {
-          eventId
+          eventId,
+          locale
         }
       },
       err => {

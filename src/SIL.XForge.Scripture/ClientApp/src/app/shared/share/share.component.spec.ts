@@ -12,7 +12,7 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
@@ -148,7 +148,14 @@ describe('ShareComponent', () => {
 });
 
 @NgModule({
-  imports: [FormsModule, MdcDialogModule, ReactiveFormsModule, NoopAnimationsModule, UICommonModule],
+  imports: [
+    FormsModule,
+    MdcDialogModule,
+    ReactiveFormsModule,
+    NoopAnimationsModule,
+    UICommonModule,
+    TestTranslocoModule
+  ],
   exports: [ShareDialogComponent, ShareControlComponent],
   declarations: [ShareDialogComponent, ShareControlComponent],
   entryComponents: [ShareDialogComponent, ShareControlComponent]

@@ -30,7 +30,7 @@ import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ProjectService } from 'xforge-common/project.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { nameof, objectId } from 'xforge-common/utils';
@@ -109,7 +109,8 @@ describe('CheckingComponent', () => {
       RouterTestingModule,
       AvatarTestingModule,
       SharedModule,
-      UICommonModule
+      UICommonModule,
+      TestTranslocoModule
     ],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },

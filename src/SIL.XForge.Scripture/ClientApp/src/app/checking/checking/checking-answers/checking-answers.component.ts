@@ -2,6 +2,7 @@ import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
+import { translate } from '@ngneat/transloco';
 import cloneDeep from 'lodash/cloneDeep';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
@@ -347,9 +348,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
         answer: answer
       });
     } else if (likeAnswerResponse === LikeAnswerResponse.deniedOwnAnswer) {
-      this.noticeService.show('You cannot like your own answer.');
+      this.noticeService.show(translate('checking_answers.cannot_like_own_answer'));
     } else if (likeAnswerResponse === LikeAnswerResponse.deniedNonCommunityChecker) {
-      this.noticeService.show('Only Community Checkers can like answers.');
+      this.noticeService.show(translate('checking_answers.only_community_checkers_can_like'));
     }
   }
 
@@ -384,7 +385,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       this.audioCombinedComponent.audioRecorderComponent != null
     ) {
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
-      this.noticeService.show('The recording for your answer was automatically stopped.');
+      this.noticeService.show(translate('checking_answers.recording_automatically_stopped'));
     }
     this.applyTextAudioValidators();
     this.answerFormSubmitAttempted = true;

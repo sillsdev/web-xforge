@@ -1,38 +1,40 @@
-<div fxLayout="column" fxLayoutGap="20px">
-  <div *ngIf="isLinkSharingEnabled">
-    <div mdcSubtitle1>Link sharing</div>
-    <mdc-text-field id="share-link" #shareLinkField outlined [value]="shareLink" [readonly]="true">
-      <mdc-icon
-        id="share-link-copy-icon"
-        mdcTextFieldIcon
-        trailing
-        clickable
-        (click)="copyShareLink()"
-        title="Copy link"
-        >file_copy
-      </mdc-icon>
-    </mdc-text-field>
-  </div>
-  <div>
-    <div mdcSubtitle1>Invite people</div>
-    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="10px">
-      <form fxFlex id="email-form">
-        <mdc-form-field fxFlex="fill" [formGroup]="sendInviteForm" id="send-invite-form">
-          <mdc-text-field
-            id="email"
-            label="Email"
-            type="email"
-            formControlName="email"
-            (input)="onEmailInput($event)"
-          ></mdc-text-field>
-          <mdc-helper-text validation>
-            <span *ngIf="email.hasError('pattern') || email.hasError('email')">Email address is invalid</span>
-          </mdc-helper-text>
-        </mdc-form-field>
-      </form>
-      <button id="send-btn" mdc-button form="email-form" type="submit" (click)="sendEmail()" [disabled]="isSubmitted">
-        {{ isAlreadyInvited ? "Resend" : "Send" }}
-      </button>
+<ng-container *transloco="let t; read: 'share_control'">
+  <div fxLayout="column" fxLayoutGap="20px">
+    <div *ngIf="isLinkSharingEnabled">
+      <div mdcSubtitle1>{{ t("link_sharing") }}</div>
+      <mdc-text-field id="share-link" #shareLinkField outlined [value]="shareLink" [readonly]="true">
+        <mdc-icon
+          id="share-link-copy-icon"
+          mdcTextFieldIcon
+          trailing
+          clickable
+          (click)="copyShareLink()"
+          title="{{ t('copy_link') }}"
+          >file_copy
+        </mdc-icon>
+      </mdc-text-field>
+    </div>
+    <div>
+      <div mdcSubtitle1>{{ t("invite_people") }}</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="10px">
+        <form fxFlex id="email-form">
+          <mdc-form-field fxFlex="fill" [formGroup]="sendInviteForm" id="send-invite-form">
+            <mdc-text-field
+              id="email"
+              label="{{ t('email') }}"
+              type="email"
+              formControlName="email"
+              (input)="onEmailInput($event)"
+            ></mdc-text-field>
+            <mdc-helper-text validation>
+              <span *ngIf="email.hasError('pattern') || email.hasError('email')">{{ t("email_invalid") }}</span>
+            </mdc-helper-text>
+          </mdc-form-field>
+        </form>
+        <button id="send-btn" mdc-button form="email-form" type="submit" (click)="sendEmail()" [disabled]="isSubmitted">
+          {{ isAlreadyInvited ? t("resend") : t("send") }}
+        </button>
+      </div>
     </div>
   </div>
-</div>
+</ng-container>

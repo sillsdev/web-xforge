@@ -7,7 +7,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
@@ -139,7 +139,7 @@ describe('ShareControlComponent', () => {
   }));
 
   @NgModule({
-    imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule],
+    imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, TestTranslocoModule],
     declarations: [ShareControlComponent],
     exports: [ShareControlComponent],
     entryComponents: [ShareControlComponent]

@@ -1,6 +1,7 @@
 import { MdcTextField } from '@angular-mdc/web/textfield';
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { translate } from '@ngneat/transloco';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
@@ -47,7 +48,7 @@ export class ShareControlComponent {
     this.shareLinkField.focus();
     this.shareLinkField._input.nativeElement.select();
     document.execCommand('copy');
-    this.noticeService.show('Link copied to clipboard');
+    this.noticeService.show(translate('share_control.link_copied'));
   }
 
   async onEmailInput(newValue: string): Promise<void> {
@@ -68,9 +69,9 @@ export class ShareControlComponent {
     this.isAlreadyInvited = false;
     let message = '';
     if (response === this.alreadyProjectMemberResponse) {
-      message = 'Not inviting: User is already a member of this project';
+      message = translate('share_control.not_inviting_already_member');
     } else {
-      message = 'An invitation email has been sent to ' + this.sendInviteForm.value.email;
+      message = translate('share_control.invitation_sent', { email: this.sendInviteForm.value.email });
       this.invited.emit();
     }
 

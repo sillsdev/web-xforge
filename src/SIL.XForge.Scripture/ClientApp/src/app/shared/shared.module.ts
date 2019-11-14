@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { TranslocoModule } from '@ngneat/transloco';
 import { QuillModule } from 'ngx-quill';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ChapterNavComponent } from './chapter-nav/chapter-nav.component';
@@ -17,7 +18,7 @@ const componentExports = [
 ];
 
 @NgModule({
-  imports: [CommonModule, QuillModule.forRoot(), UICommonModule],
+  imports: [CommonModule, QuillModule.forRoot(), UICommonModule, TranslocoModule],
   declarations: componentExports,
   exports: componentExports,
   entryComponents: [ShareDialogComponent]

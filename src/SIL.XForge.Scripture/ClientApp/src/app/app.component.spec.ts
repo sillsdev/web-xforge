@@ -23,7 +23,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -64,7 +64,13 @@ const ROUTES: Route[] = [
 describe('AppComponent', () => {
   configureTestingModule(() => ({
     declarations: [AppComponent, MockComponent],
-    imports: [AvatarTestingModule, DialogTestModule, UICommonModule, RouterTestingModule.withRoutes(ROUTES)],
+    imports: [
+      AvatarTestingModule,
+      DialogTestModule,
+      UICommonModule,
+      RouterTestingModule.withRoutes(ROUTES),
+      TestTranslocoModule
+    ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },

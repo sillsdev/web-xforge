@@ -4,6 +4,7 @@ import { MdcTopAppBar } from '@angular-mdc/web/top-app-bar';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -13,6 +14,7 @@ import { combineLatest, from, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -23,7 +25,7 @@ import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
 import { SFProjectDoc } from './core/models/sf-project-doc';
-import { canAccessTranslateApp } from './core/models/sf-project-role-info.js';
+import { canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/project-router.guard';
@@ -72,7 +74,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly projectService: SFProjectService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
-    private readonly dialog: MdcDialog
+    private readonly dialog: MdcDialog,
+    readonly i18n: I18nService
   ) {
     super(noticeService);
     this.subscribe(media.media$, (change: MediaChange) => {
@@ -360,7 +363,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.noticeService.show(result);
       })
       .catch(() => {
-        const message = "Can't change password at this time. Try again later or report an issue in the Help menu.";
+        const message = translate('app.cannot_change_password');
         this.noticeService.show(message);
       });
   }
