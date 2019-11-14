@@ -42,9 +42,9 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
       for (let i = 0; i < this.data.ops.length; i++) {
         const op = this.data.ops[i];
         const nextOp = i < this.data.ops.length - 1 ? this.data.ops[i + 1] : undefined;
-        if (op.attributes && op.attributes.segment) {
+        if (op.attributes != null && op.attributes.segment != null) {
           if (op.insert.blank != null) {
-            const segRef: string = op.attributes != null ? op.attributes.segment : '';
+            const segRef = op.attributes.segment;
             if (
               nextOp == null ||
               nextOp.insert == null ||
@@ -60,6 +60,27 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
       }
     }
     return { translated, blank };
+  }
+
+  getSegmentText(ref: string): string {
+    if (this.data == null || this.data.ops == null) {
+      return '';
+    }
+
+    let text = '';
+    let inSegment = false;
+    for (const op of this.data.ops) {
+      if (op.attributes != null && op.attributes.segment === ref) {
+        if (op.insert != null && typeof op.insert === 'string') {
+          text += op.insert;
+          inSegment = true;
+        }
+      } else if (inSegment) {
+        break;
+      }
+    }
+
+    return text;
   }
 
   protected prepareDataForStore(data: TextData): any {

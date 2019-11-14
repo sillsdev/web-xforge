@@ -135,7 +135,6 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   set id(value: TextDocId | undefined) {
     if (!isEqual(this._id, value)) {
       this._id = value;
-      this._segment = undefined;
       this.initialSegmentRef = undefined;
       this.initialSegmentChecksum = undefined;
       this.initialSegmentFocus = undefined;
@@ -481,11 +480,14 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     focus: boolean = false,
     end: boolean = true
   ): boolean {
-    if (
-      this._id == null ||
-      this._editor == null ||
-      (this._segment != null && this._id.bookNum === this._segment.bookNum && segmentRef === this._segment.ref)
-    ) {
+    if (this._id == null || this._editor == null) {
+      return false;
+    }
+
+    if (this._segment != null && this._id.bookNum === this._segment.bookNum && segmentRef === this._segment.ref) {
+      if (focus) {
+        this._editor.focus();
+      }
       // the selection has not changed to a different segment
       return false;
     }
@@ -518,7 +520,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (this._segment != null && this.highlightSegment) {
       this.toggleHighlight(false);
     }
-    this._segment = new Segment(this._id.bookNum, segmentRef);
+    this._segment = new Segment(this._id.bookNum, this._id.chapterNum, segmentRef);
     if (checksum != null) {
       this._segment.initialChecksum = checksum;
     }

@@ -341,6 +341,7 @@ describe('CheckingComponent', () => {
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBe(43);
+      verify(mockedProjectService.trainSelectedSegment(anything())).once();
     }));
 
     it('saves the last question answered in all question context', fakeAsync(() => {
@@ -351,6 +352,7 @@ describe('CheckingComponent', () => {
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBeUndefined();
+      verify(mockedProjectService.trainSelectedSegment(anything())).once();
     }));
 
     it('can cancel answering a question', fakeAsync(() => {

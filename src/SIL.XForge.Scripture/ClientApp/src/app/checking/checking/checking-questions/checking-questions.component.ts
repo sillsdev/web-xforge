@@ -14,6 +14,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { CheckingUtils } from '../../checking.utils';
 
 @Component({
@@ -33,7 +34,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   private _activeQuestionVerseRef?: VerseRef;
   private storeQuestion: boolean = true;
 
-  constructor(private userService: UserService) {
+  constructor(private readonly userService: UserService, private readonly projectService: SFProjectService) {
     super();
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
     this.subscribe(this.activeQuestionDoc$.pipe(debounceTime(2000)), questionDoc => {
@@ -242,6 +243,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       const activeQuestionDoc = this.activeQuestionDoc;
       if (activeQuestionDoc != null && activeQuestionDoc.data != null) {
+        await this.projectService.trainSelectedSegment(this.projectUserConfigDoc.data);
         await this.projectUserConfigDoc.submitJson0Op(op => {
           op.set<string>(puc => puc.selectedTask!, 'checking');
           op.set(puc => puc.selectedQuestionRef!, activeQuestionDoc.id);
