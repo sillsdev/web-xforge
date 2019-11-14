@@ -1,47 +1,49 @@
-<div
-  class="record-upload-container"
-  [ngClass]="{
-    'recorder-active': isRecorderActive,
-    'uploader-active': isUploaderActive
-  }"
->
-  <ng-container *ngIf="!isUploaderActive">
-    <app-checking-audio-recorder (status)="recorderStatus($event)"></app-checking-audio-recorder>
-  </ng-container>
-  <ng-container class="audio-uploader" *ngIf="!isRecorderActive">
-    <button
-      *ngIf="!source"
-      mdc-button
-      ngfSelect
-      type="button"
-      [(file)]="uploadAudioFile"
-      (fileChange)="prepareAudioFileUpload()"
-      accept="audio/*"
-      class="upload-audio-file"
-    >
-      <mdc-icon>cloud_upload</mdc-icon>
-      <span fxShow fxHide.lt-sm>Upload Audio File</span> <span fxHide fxShow.xs>Upload</span>
-    </button>
-    <button
-      *ngIf="source"
-      fxHide.xs
-      mdc-button
-      type="button"
-      (click)="resetAudioAttachment()"
-      class="remove-audio-file"
-    >
-      <mdc-icon>delete</mdc-icon>
-      Remove Audio File
-    </button>
-    <button
-      *ngIf="source"
-      mdc-icon-button
-      fxHide.gt-xs
-      type="button"
-      (click)="resetAudioAttachment()"
-      icon="delete"
-      class="remove-audio-file"
-    ></button>
-    <app-checking-audio-player [source]="source"></app-checking-audio-player>
-  </ng-container>
-</div>
+<ng-container *transloco="let t; read: 'checking_audio_combined'">
+  <div
+    class="record-upload-container"
+    [ngClass]="{
+      'recorder-active': isRecorderActive,
+      'uploader-active': isUploaderActive
+    }"
+  >
+    <ng-container *ngIf="!isUploaderActive">
+      <app-checking-audio-recorder (status)="recorderStatus($event)"></app-checking-audio-recorder>
+    </ng-container>
+    <ng-container class="audio-uploader" *ngIf="!isRecorderActive">
+      <button
+        *ngIf="!source"
+        mdc-button
+        ngfSelect
+        type="button"
+        [(file)]="uploadAudioFile"
+        (fileChange)="prepareAudioFileUpload()"
+        accept="audio/*"
+        class="upload-audio-file"
+      >
+        <mdc-icon>cloud_upload</mdc-icon>
+        <span fxShow fxHide.lt-sm>{{ t("upload_audio_file") }}</span> <span fxHide fxShow.xs>{{ t("upload") }}</span>
+      </button>
+      <button
+        *ngIf="source"
+        fxHide.xs
+        mdc-button
+        type="button"
+        (click)="resetAudioAttachment()"
+        class="remove-audio-file"
+      >
+        <mdc-icon>delete</mdc-icon>
+        {{ t("remove_audio_file") }}
+      </button>
+      <button
+        *ngIf="source"
+        mdc-icon-button
+        fxHide.gt-xs
+        type="button"
+        (click)="resetAudioAttachment()"
+        icon="delete"
+        class="remove-audio-file"
+      ></button>
+      <app-checking-audio-player [source]="source"></app-checking-audio-player>
+    </ng-container>
+  </div>
+</ng-container>

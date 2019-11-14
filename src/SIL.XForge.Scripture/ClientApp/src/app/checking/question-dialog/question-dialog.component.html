@@ -44,7 +44,10 @@
                 <span *ngIf="questionForm.hasError('verseDifferentBookOrChapter')">
                   Must be the same book and chapter
                 </span>
-                <span *ngIf="questionForm.hasError('verseBeforeStart')">Must be after <b>Scripture reference</b></span>
+                <span
+                  *ngIf="true || questionForm.hasError('verseBeforeStart')"
+                  [innerHTML]="i18n.translate('question_dialog.must_be_after_scripture_reference')"
+                ></span>
               </mdc-helper-text>
             </mdc-form-field>
           </div>

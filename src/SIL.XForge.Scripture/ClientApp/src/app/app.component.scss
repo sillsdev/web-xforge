@@ -94,3 +94,21 @@ a {
 .avatar-icon {
   @include mdc-icon-button-size(32px, 32px, 8px);
 }
+
+.locale-menu mdc-list-item {
+  justify-content: space-between;
+}
+
+.locale-disabled {
+  text-decoration: line-through;
+  color: gray;
+}
+
+.locale-code {
+  font-size: 0.9em;
+  font-family: monospace;
+}
+
+.active-locale {
+  font-weight: bold;
+}

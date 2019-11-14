@@ -1,25 +1,27 @@
-<ng-container *ngIf="!hasAudioAttachment">
-  <button *ngIf="!isRecording" mdc-button primary type="button" (click)="startRecording()" class="record">
-    <mdc-icon>mic</mdc-icon>
-    Record
-  </button>
-  <button *ngIf="isRecording" mdc-button type="button" (click)="stopRecording()" class="stop-recording">
-    <mdc-icon>stop</mdc-icon>
-    Stop Recording
-  </button>
+<ng-container *transloco="let t; read: 'checking_audio_recorder'">
+  <ng-container *ngIf="!hasAudioAttachment">
+    <button *ngIf="!isRecording" mdc-button primary type="button" (click)="startRecording()" class="record">
+      <mdc-icon>mic</mdc-icon>
+      {{ t("record") }}
+    </button>
+    <button *ngIf="isRecording" mdc-button type="button" (click)="stopRecording()" class="stop-recording">
+      <mdc-icon>stop</mdc-icon>
+      {{ t("stop_recording") }}
+    </button>
+  </ng-container>
+  <div *ngIf="hasAudioAttachment" class="has-attachment">
+    <button mdc-button fxHide.xs type="button" (click)="resetRecording()" class="try-again">
+      <mdc-icon>refresh</mdc-icon>
+      {{ t("try_again") }}
+    </button>
+    <button
+      mdc-icon-button
+      fxHide.gt-xs
+      type="button"
+      (click)="resetRecording()"
+      icon="refresh"
+      class="try-again"
+    ></button>
+    <app-checking-audio-player [source]="audioUrl"></app-checking-audio-player>
+  </div>
 </ng-container>
-<div *ngIf="hasAudioAttachment" class="has-attachment">
-  <button mdc-button fxHide.xs type="button" (click)="resetRecording()" class="try-again">
-    <mdc-icon>refresh</mdc-icon>
-    Try Again
-  </button>
-  <button
-    mdc-icon-button
-    fxHide.gt-xs
-    type="button"
-    (click)="resetRecording()"
-    icon="refresh"
-    class="try-again"
-  ></button>
-  <app-checking-audio-player [source]="audioUrl"></app-checking-audio-player>
-</div>

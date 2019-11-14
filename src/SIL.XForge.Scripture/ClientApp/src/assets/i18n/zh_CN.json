@@ -1,0 +1,47 @@
+{
+  "app": {
+    "log_out": "Log out",
+    "report_an_issue": "Report an Issue"
+  },
+  "checking_answers": {
+    "add_answer": "添加用户",
+    "answer_required_before_saving": "You need to enter your answer or record your answer before saving",
+    "answer": "解答",
+    "answers": "{{ count }} Answers",
+    "archive": "Archive",
+    "cancel": "取消",
+    "cannot_like_own_answer": "You cannot like your own answer.",
+    "delete": "删除",
+    "edit": "编辑",
+    "no_scripture_selected": "No scripture selected yet.",
+    "only_community_checkers_can_like": "Only Community Checkers can like answers.",
+    "record_upload": "Record/Upload",
+    "record": "Record",
+    "recording_automatically_stopped": "The recording for your answer was automatically stopped.",
+    "save_answer": "Save Answer",
+    "select_text": "选择文本",
+    "select_verses": "Select verses",
+    "select": "Select",
+    "show_more_unread": "show {{ count }} more unread answers",
+    "your_answer": "你的答案"
+  },
+  "checking_audio_combined": {
+    "remove_audio_file": "Remove Audio File",
+    "upload_audio_file": "Upload Audio File",
+    "upload": "Upload"
+  },
+  "checking_audio_recorder": {
+    "record": "录制音频",
+    "stop_recording": "Stop Recording",
+    "try_again": "Try Again"
+  },
+  "question_dialog": {
+    "must_be_after_scripture_reference": "Must be after {{ strongStart }}Scripture reference{{ strongEnd }}"
+  },
+  "questions": {
+    "me": "我",
+    "next": "下一个",
+    "previous": "上一个",
+    "questions": "问题"
+  }
+}

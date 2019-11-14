@@ -8,7 +8,7 @@ import { ErrorComponent } from './error/error.component';
 import { ExceptionHandlingService } from './exception-handling-service';
 import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
-import { configureTestingModule } from './test-utils';
+import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { UserService } from './user.service';
 
 const mockedMdcDialog = mock(MdcDialog);
@@ -24,7 +24,8 @@ describe('ExceptionHandlingService', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: NoticeService, useMock: mockedNoticeService }
-    ]
+    ],
+    imports: [TestTranslocoModule]
   }));
 
   it('should not crash on anything', async () => {

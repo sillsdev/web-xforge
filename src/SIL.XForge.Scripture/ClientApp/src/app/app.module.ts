@@ -4,7 +4,9 @@ import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
+import { TRANSLOCO_CONFIG, TRANSLOCO_LOADER, TranslocoModule } from '@ngneat/transloco';
 import { ExceptionHandlingService } from 'xforge-common/exception-handling-service';
+import { I18nService, TranslationLoader } from 'xforge-common/i18n.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { xForgeCommonEntryComponents, XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { environment } from '../environments/environment';
@@ -47,9 +49,15 @@ import { UsersModule } from './users/users.module';
     CheckingModule,
     UsersModule,
     UICommonModule,
-    XForgeCommonModule
+    XForgeCommonModule,
+    TranslocoModule
   ],
-  providers: [DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
+  providers: [
+    DatePipe,
+    { provide: ErrorHandler, useClass: ExceptionHandlingService },
+    { provide: TRANSLOCO_CONFIG, useValue: I18nService.translocoConfig },
+    { provide: TRANSLOCO_LOADER, useClass: TranslationLoader }
+  ],
   entryComponents: [
     DeleteProjectDialogComponent,
     ProjectDeletedDialogComponent,

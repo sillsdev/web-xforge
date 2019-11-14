@@ -4,6 +4,7 @@ import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/fo
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { verseSlug } from 'xforge-common/utils';
@@ -60,6 +61,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
     @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData,
     private noticeService: NoticeService,
+    readonly i18n: I18nService,
     readonly dialog: MdcDialog
   ) {
     super();

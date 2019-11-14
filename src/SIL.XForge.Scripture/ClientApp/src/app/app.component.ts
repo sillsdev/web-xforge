@@ -13,6 +13,7 @@ import { combineLatest, from, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service.js';
 import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -72,7 +73,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly projectService: SFProjectService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
-    private readonly dialog: MdcDialog
+    private readonly dialog: MdcDialog,
+    readonly i18n: I18nService
   ) {
     super(noticeService);
     this.subscribe(media.media$, (change: MediaChange) => {

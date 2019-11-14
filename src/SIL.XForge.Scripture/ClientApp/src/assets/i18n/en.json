@@ -1,0 +1,47 @@
+{
+  "app": {
+    "log_out": "Log out",
+    "report_an_issue": "Report an Issue"
+  },
+  "checking_answers": {
+    "add_answer": "Add answer",
+    "answer_required_before_saving": "You need to enter your answer or record your answer before saving",
+    "answer": "Answer",
+    "answers": "{{ count }} Answers",
+    "archive": "Archive",
+    "cancel": "Cancel",
+    "cannot_like_own_answer": "You cannot like your own answer.",
+    "delete": "Delete",
+    "edit": "Edit",
+    "no_scripture_selected": "No scripture selected yet.",
+    "only_community_checkers_can_like": "Only Community Checkers can like answers.",
+    "record_upload": "Record/Upload",
+    "record": "Record",
+    "recording_automatically_stopped": "The recording for your answer was automatically stopped.",
+    "save_answer": "Save Answer",
+    "select_text": "Select Text",
+    "select_verses": "Select verses",
+    "select": "Select",
+    "show_more_unread": "show {{ count }} more unread answers",
+    "your_answer": "Your answer"
+  },
+  "checking_audio_combined": {
+    "remove_audio_file": "Remove Audio File",
+    "upload_audio_file": "Upload Audio File",
+    "upload": "Upload"
+  },
+  "checking_audio_recorder": {
+    "record": "Record",
+    "stop_recording": "Stop Recording",
+    "try_again": "Try Again"
+  },
+  "question_dialog": {
+    "must_be_after_scripture_reference": "Must be after {{ strongStart }}Scripture reference{{ strongEnd }}"
+  },
+  "questions": {
+    "me": "Me",
+    "next": "Next",
+    "previous": "Previous",
+    "questions": "Questions"
+  }
+}
