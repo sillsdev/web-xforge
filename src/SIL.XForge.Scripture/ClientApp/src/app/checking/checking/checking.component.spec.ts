@@ -772,6 +772,32 @@ describe('CheckingComponent', () => {
       expect(env.totalAnswersMessageCount).toEqual(2);
     }));
 
+    it('show-remote-answer banner not shown if user is editing their answer', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(7);
+      // User answers a question
+      env.answerQuestion('New answer from current user');
+      expect(env.showUnreadAnswersButton).toBeNull('setup');
+      expect(env.answers.length).toEqual(2, 'setup');
+      // A remote answer is added, but the current user does not click the banner to show the remote answer.
+      env.simulateNewRemoteAnswer();
+      expect(env.showUnreadAnswersButton).not.toBeNull('setup');
+      // The current user edits their own answer.
+      env.clickButton(env.getAnswerEditButton(0));
+      //  They should not see the show-more banner.
+      expect(env.showUnreadAnswersButton).toBeNull();
+
+      env.setTextFieldValue(env.yourAnswerField, 'edited answer value');
+      env.clickButton(env.saveAnswerButton);
+      env.waitForSliderUpdate();
+      // After done editing their answer, they should see the banner
+      // again. And buffered answers should not have been released.
+      expect(env.showUnreadAnswersButton).not.toBeNull();
+      expect(env.answers.length).toEqual(2);
+      expect(env.totalAnswersMessageCount).toEqual(3);
+      expect(env.unreadAnswersBannerCount).toEqual(1);
+    }));
+
     describe('Comments', () => {
       it('can comment on an answer', fakeAsync(() => {
         const env = new TestEnvironment(CHECKER_USER);
