@@ -9,6 +9,7 @@ import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -52,6 +53,18 @@ describe('TranslateOverviewComponent', () => {
       env.expectContainsTextProgress(1, 'Mark', '10 of 20 segments');
       env.expectContainsTextProgress(2, 'Luke', '10 of 20 segments');
       env.expectContainsTextProgress(3, 'John', '10 of 20 segments');
+    }));
+
+    it('should update books when texts changed in project', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.wait();
+
+      expect(env.progressTitle.textContent).toContain('Progress');
+      expect(env.component.texts!.length).toEqual(4);
+      env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
+
+      env.deleteText(40, 1);
+      env.expectContainsTextProgress(0, 'Matthew', '5 of 10 segments');
     }));
   });
 
@@ -295,6 +308,16 @@ class TestEnvironment {
   clickRetrainButton(): void {
     this.retrainButton.nativeElement.click();
     this.fixture.detectChanges();
+  }
+
+  deleteText(bookNum: number, chapter: number): void {
+    const textDoc = this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, getTextDocId('project01', bookNum, chapter));
+    textDoc.delete();
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+    const textIndex = projectDoc.data!.texts.findIndex(t => t.bookNum === bookNum);
+    const chapterIndex = projectDoc.data!.texts[textIndex].chapters.findIndex(c => c.number === chapter);
+    projectDoc.submitJson0Op(ops => ops.remove(p => p.texts[textIndex].chapters, chapterIndex), false);
+    this.wait();
   }
 
   private addTextDoc(id: TextDocId): void {
