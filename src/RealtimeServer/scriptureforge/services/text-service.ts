@@ -2,7 +2,7 @@ import { ConnectSession } from '../../common/connect-session';
 import { Operation } from '../../common/models/project-rights';
 import { DocService } from '../../common/services/doc-service';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
-import { TextData, TEXTS_COLLECTION } from '../models/text-data';
+import { TEXT_INDEX_PATHS, TextData, TEXTS_COLLECTION } from '../models/text-data';
 import { TEXT_MIGRATIONS } from './text-migrations';
 
 /**
@@ -10,6 +10,8 @@ import { TEXT_MIGRATIONS } from './text-migrations';
  */
 export class TextService extends DocService<TextData> {
   readonly collection = TEXTS_COLLECTION;
+
+  protected readonly indexPaths = TEXT_INDEX_PATHS;
 
   constructor() {
     super(TEXT_MIGRATIONS);

@@ -1,11 +1,9 @@
 import arrayDiff, { InsertDiff, MoveDiff, RemoveDiff } from 'arraydiff';
 import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { performQuery } from '../query-parameters';
 import { RealtimeQueryAdapter } from '../realtime-remote-store';
 import { RealtimeService } from '../realtime.service';
 import { RealtimeDoc } from './realtime-doc';
-import { Snapshot } from './snapshot';
 
 /**
  * This class represents a real-time query. If the query has been subscribed to, then the "remoteChanges$" observable
@@ -89,11 +87,20 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     this.localQuery();
   }
 
-  private async localQuery(): Promise<string[]> {
-    const snapshots: Snapshot[] = await this.realtimeService.offlineStore.getAll(this.collection);
-    const [results, unpagedCount] = performQuery(this.adapter.parameters, snapshots);
-    const docIds = results.map(s => s.id);
-    await this.onChange(false, docIds, docIds.length, unpagedCount);
+  private async localQuery(): Promise<string[] | undefined> {
+    const { results, unpagedCount } = await this.realtimeService.offlineStore.query(
+      this.collection,
+      this.adapter.parameters
+    );
+    let docIds: string[] | undefined;
+    let count: number;
+    if (results instanceof Array) {
+      docIds = results.map(s => s.id);
+      count = docIds.length;
+    } else {
+      count = results;
+    }
+    await this.onChange(false, docIds, count, unpagedCount);
     return docIds;
   }
 
@@ -110,7 +117,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
 
   private async onChange(
     emitRemoteChanges: boolean,
-    docIds: string[],
+    docIds: string[] | undefined,
     count: number,
     unpagedCount: number
   ): Promise<void> {
@@ -119,7 +126,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       this._count = count;
       changed = true;
     }
-    if (this.adapter.parameters.$count == null) {
+    if (docIds != null) {
       const before = this._docs.map(d => d.id);
       const after = docIds;
       const diffs = arrayDiff(before, after);

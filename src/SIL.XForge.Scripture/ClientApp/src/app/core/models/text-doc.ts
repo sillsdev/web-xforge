@@ -1,6 +1,7 @@
 import Quill, { DeltaOperation, DeltaStatic } from 'quill';
 import {
   getTextDocId,
+  TEXT_INDEX_PATHS,
   TextData,
   TEXTS_COLLECTION,
   TextType
@@ -32,6 +33,7 @@ export class TextDocId {
  */
 export class TextDoc extends RealtimeDoc<TextData, TextData> {
   static readonly COLLECTION = TEXTS_COLLECTION;
+  static readonly INDEX_PATHS = TEXT_INDEX_PATHS;
 
   getSegmentCount(): { translated: number; blank: number } {
     let blank = 0;

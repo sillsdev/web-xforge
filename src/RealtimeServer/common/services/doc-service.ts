@@ -1,3 +1,4 @@
+import { Db } from 'mongodb';
 import { ConnectSession } from '../connect-session';
 import { Migration, MigrationConstructor } from '../migration';
 import { RealtimeServer } from '../realtime-server';
@@ -21,6 +22,7 @@ export abstract class DocService<T = any> {
   }
 
   abstract get collection(): string;
+  protected abstract get indexPaths(): string[];
 
   init(server: RealtimeServer): void {
     this.server = server;
@@ -38,6 +40,13 @@ export abstract class DocService<T = any> {
       throw new Error('The specified migration is not registered.');
     }
     return new MigrationType();
+  }
+
+  async createIndexes(db: Db): Promise<void> {
+    for (const path of this.indexPaths) {
+      const collection = db.collection(this.collection);
+      await collection.createIndex({ [path]: 1 });
+    }
   }
 
   protected addUpdateListener(server: RealtimeServer, handler: (docId: string, ops: any) => Promise<void>): void {

@@ -1,3 +1,4 @@
+import { Db } from 'mongodb';
 import ShareDB = require('sharedb');
 import shareDBAccess = require('sharedb-access');
 import { Connection, Doc, RawOp } from 'sharedb/lib/client';
@@ -137,6 +138,13 @@ export class RealtimeServer extends ShareDB {
       delete context.op.c;
       done();
     });
+  }
+
+  async createIndexes(db: Db): Promise<void> {
+    await this.schemaVersions.createIndex();
+    for (const docService of this.docServices.values()) {
+      await docService.createIndexes(db);
+    }
   }
 
   connect(userId?: string): Connection;
