@@ -798,6 +798,37 @@ describe('CheckingComponent', () => {
       expect(env.unreadAnswersBannerCount).toEqual(1);
     }));
 
+    it('show-remote-answer banner not shown to user if see-others-answers is disabled', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.setSeeOtherUserResponses(false);
+      expect(env.component.projectDoc!.data!.checkingConfig.usersSeeEachOthersResponses).toBe(false, 'setup');
+      env.selectQuestion(7);
+      // User answers a question
+      env.answerQuestion('New answer from current user');
+      expect(env.totalAnswersMessageText).toEqual('Your answer', 'setup');
+
+      // A remote answer is added.
+      env.simulateNewRemoteAnswer();
+      expect(env.totalAnswersMessageText).toEqual('Your answer');
+      // Banner is not shown
+      expect(env.showUnreadAnswersButton).toBeNull();
+    }));
+
+    it('show-remote-answer banner still shown to proj admin if see-others-answers is disabled', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      env.setSeeOtherUserResponses(false);
+      expect(env.component.projectDoc!.data!.checkingConfig.usersSeeEachOthersResponses).toBe(false, 'setup');
+      // Select a question with no answers authored by the project admin, in case that hinders this test.
+      env.selectQuestion(6);
+      expect(env.totalAnswersMessageCount).toEqual(1, 'setup');
+
+      // A remote answer is added.
+      env.simulateNewRemoteAnswer();
+      expect(env.totalAnswersMessageCount).toEqual(2);
+      // Banner is shown
+      expect(env.showUnreadAnswersButton).not.toBeNull();
+    }));
+
     describe('Comments', () => {
       it('can comment on an answer', fakeAsync(() => {
         const env = new TestEnvironment(CHECKER_USER);
@@ -1208,6 +1239,14 @@ class TestEnvironment {
 
   get showUnreadAnswersButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#show-unread-answers-button'));
+  }
+
+  get totalAnswersMessageText(): string | null {
+    const element = document.querySelector('#totalAnswersMessage');
+    if (element == null) {
+      return null;
+    }
+    return element.textContent;
   }
 
   get totalAnswersMessageCount(): number | null {
