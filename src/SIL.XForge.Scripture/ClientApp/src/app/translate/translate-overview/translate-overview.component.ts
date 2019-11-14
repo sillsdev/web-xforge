@@ -2,6 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
+import { ANY_INDEX, obj } from 'realtime-server/lib/common/utils/obj-path';
+import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
@@ -15,6 +17,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 
 const ENGINE_QUALITY_STAR_COUNT = 3;
+const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]);
 
 class Progress {
   translated: number = 0;
@@ -98,15 +101,17 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       if (this.projectDataChangesSub != null) {
         this.projectDataChangesSub.unsubscribe();
       }
-      this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(async () => {
-        this.loadingStarted();
-        if (this.translationEngine == null || !this.translationSuggestionsEnabled) {
-          this.setupTranslationEngine();
-        }
-        try {
-          await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
-        } finally {
-          this.loadingFinished();
+      this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(async ops => {
+        if (ops.some(op => TEXT_PATH_TEMPLATE.matches(op.p))) {
+          this.loadingStarted();
+          if (this.translationEngine == null || !this.translationSuggestionsEnabled) {
+            this.setupTranslationEngine();
+          }
+          try {
+            await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
+          } finally {
+            this.loadingFinished();
+          }
         }
       });
     });
@@ -137,6 +142,10 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
 
   getBookId(text: TextInfo): string {
     return Canon.bookNumberToId(text.bookNum);
+  }
+
+  trackTextByBookNum(_index: number, item: TextProgress): number {
+    return item.text.bookNum;
   }
 
   private async calculateProgress(): Promise<void> {

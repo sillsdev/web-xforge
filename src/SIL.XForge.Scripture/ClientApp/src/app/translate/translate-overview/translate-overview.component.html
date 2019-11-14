@@ -19,7 +19,10 @@
     </div>
     <mdc-list-divider></mdc-list-divider>
     <mdc-list *ngIf="texts != null" twoLine [interactive]="false">
-      <mdc-list-item *ngFor="let textProgress of texts" [routerLink]="['./', getBookId(textProgress.text)]">
+      <mdc-list-item
+        *ngFor="let textProgress of texts; trackBy: trackTextByBookNum"
+        [routerLink]="['./', getBookId(textProgress.text)]"
+      >
         <mdc-icon mdcListItemGraphic>book</mdc-icon>
         <mdc-list-item-text [secondaryText]="textProgress.translated + ' of ' + textProgress.total + ' segments'">{{
           getBookName(textProgress.text)
