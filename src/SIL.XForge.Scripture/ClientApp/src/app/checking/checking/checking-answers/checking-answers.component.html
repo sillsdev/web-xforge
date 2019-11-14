@@ -105,7 +105,7 @@
       <div class="answers-container">
         <ng-container *ngIf="shouldShowAnswers">
           <h3 id="totalAnswersMessage">
-            <div *ngIf="shouldReportAnswerCountInHeading; else noAnswerCountReport">
+            <div *ngIf="shouldSeeAnswersList; else noAnswerCountReport">
               {{ t("answers", { count: totalAnswers }) }}
             </div>
             <ng-template #noAnswerCountReport
@@ -174,7 +174,7 @@
         </ng-container>
       </div>
     </div>
-    <div class="answers-component-footer" *ngIf="remoteAnswersCount > 0 && !answerFormVisible">
+    <div class="answers-component-footer" *ngIf="remoteAnswersCount > 0 && !answerFormVisible && shouldSeeAnswersList">
       <button mdc-button id="show-unread-answers-button" (click)="showRemoteAnswers()">
         {{ t("show_more_unread", { count: remoteAnswersCount }) }}
       </button>
