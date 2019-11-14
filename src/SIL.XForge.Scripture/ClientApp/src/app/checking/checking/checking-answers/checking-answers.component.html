@@ -39,10 +39,10 @@
         <mdc-tab-bar #answerTabs fixed>
           <mdc-tab-scroller>
             <mdc-tab icon="title" label="Answer"></mdc-tab>
-            <mdc-tab icon="library_music" label="Record/Upload" fxHide.xs></mdc-tab>
-            <mdc-tab icon="library_music" label="Record" fxShow.xs fxHide></mdc-tab>
-            <mdc-tab icon="text_rotation_none" label="Select Text" fxHide.xs></mdc-tab>
-            <mdc-tab icon="text_rotation_none" label="Select" fxShow.xs fxHide></mdc-tab>
+            <mdc-tab icon="library_music" label="Record/Upload" fxShow.sm fxShow.xl fxHide></mdc-tab>
+            <mdc-tab icon="library_music" label="Record" fxHide.sm fxHide.xl></mdc-tab>
+            <mdc-tab icon="text_rotation_none" label="Select Text" fxShow.sm fxShow.xl fxHide></mdc-tab>
+            <mdc-tab icon="text_rotation_none" label="Select" fxHide.sm fxHide.xl></mdc-tab>
           </mdc-tab-scroller>
         </mdc-tab-bar>
         <div [fxShow]="answerTabs.activeTabIndex === 0" class="answer-tab answer-text">
