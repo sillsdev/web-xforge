@@ -657,6 +657,28 @@ describe('CheckingComponent', () => {
       expect(env.totalAnswersMessageCount).toEqual(2);
     }));
 
+    it('proj admin sees total answer count if >0 answers', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      // Select a question with at least one answer, but with no answers
+      // authored by the project admin, in case that hinders this test.
+      env.selectQuestion(6);
+
+      expect(env.answers.length).toEqual(1, 'setup');
+      expect(env.component.answersPanel!.answers.length).toEqual(1, 'setup');
+      expect(env.showUnreadAnswersButton).toBeNull();
+      expect(env.totalAnswersMessageCount).toEqual(1);
+      // Delete only answer on question.
+      env.deleteAnswer('a6Id');
+
+      // Total answers header goes away.
+      expect(env.totalAnswersMessageCount).toEqual(-1);
+
+      // A remote answer is added
+      env.simulateNewRemoteAnswer('remoteAnswerId123');
+      // The total answers header comes back.
+      expect(env.totalAnswersMessageCount).toEqual(1);
+    }));
+
     it('new remote answers and banner dont show, if user has not yet answered the question', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);

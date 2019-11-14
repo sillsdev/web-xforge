@@ -94,7 +94,7 @@
       </form>
     </div>
     <div class="answers-container">
-      <ng-container *ngIf="!answerFormVisible && answers.length > 0 && (currentUserTotalAnswers > 0 || !canAddAnswer)">
+      <ng-container *ngIf="shouldShowAnswers">
         <h3 id="totalAnswersMessage">
           <div *ngIf="shouldReportAnswerCountInHeading; else noAnswerCountReport">{{ totalAnswers }} Answers</div>
           <ng-template #noAnswerCountReport><div>Your Answer</div></ng-template>
