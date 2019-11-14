@@ -5,7 +5,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
+import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
@@ -47,6 +47,16 @@ describe('ShareComponent', () => {
     tick();
     env.fixture.detectChanges();
 
+    expect(env.shareButton).toBeNull();
+
+    env.updateSharingProperties(true, CheckingShareLevel.Anyone);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.shareButton).not.toBeNull();
+
+    env.updateSharingProperties(false, CheckingShareLevel.Anyone);
+    tick();
+    env.fixture.detectChanges();
     expect(env.shareButton).toBeNull();
   }));
 
@@ -229,6 +239,20 @@ class TestEnvironment {
         texts: [],
         userRoles: {}
       }
+    });
+  }
+
+  updateSharingProperties(shareEnabled: boolean, shareLevel: CheckingShareLevel): void {
+    const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, 'project01');
+    const oldConfig = projectDoc.data!.checkingConfig;
+    const newConfig: CheckingConfig = {
+      checkingEnabled: oldConfig.checkingEnabled,
+      usersSeeEachOthersResponses: oldConfig.usersSeeEachOthersResponses,
+      shareEnabled,
+      shareLevel
+    };
+    projectDoc.submitJson0Op(op => {
+      op.set(p => p.checkingConfig, newConfig);
     });
   }
 }
