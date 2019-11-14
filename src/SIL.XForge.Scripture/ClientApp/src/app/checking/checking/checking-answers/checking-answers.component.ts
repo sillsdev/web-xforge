@@ -191,12 +191,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return this._questionDoc;
   }
 
-  get totalAnswersHeading(): string {
-    if (this.canSeeOtherUserResponses || !this.canAddAnswer) {
-      return this.answers.length + ' Answers';
-    } else {
-      return 'Your Answer';
-    }
+  get shouldReportAnswerCountInHeading(): boolean {
+    return this.canSeeOtherUserResponses || !this.canAddAnswer;
+  }
+
+  get totalAnswers(): number {
+    return this.allAnswers.length;
   }
 
   private get projectRole(): SFProjectRole {
