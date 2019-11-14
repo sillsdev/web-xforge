@@ -57,6 +57,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     return (
       this.projectDoc != null &&
       this.projectDoc.data != null &&
+      this.projectDoc.data.checkingConfig.checkingEnabled &&
       this.projectDoc.data.checkingConfig.shareEnabled &&
       this.projectDoc.data.checkingConfig.shareLevel === CheckingShareLevel.Anyone
     );
