@@ -592,10 +592,14 @@ describe('CheckingComponent', () => {
 
     it('new remote answers from other users are not displayed until requested', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
+
       env.selectQuestion(7);
+      expect(env.totalAnswersMessageCount).toBeNull('setup');
       env.answerQuestion('New answer from current user');
 
-      // Answers in HTML.
+      // Answers count as displayed in HTML.
+      expect(env.totalAnswersMessageCount).toEqual(2);
+      // Individual answers in HTML.
       expect(env.answers.length).toEqual(2, 'setup');
       // Answers in code.
       expect(env.component.answersPanel!.answers.length).toEqual(2, 'setup');
@@ -607,10 +611,11 @@ describe('CheckingComponent', () => {
       // The new answer does not show up yet.
       expect(env.answers.length).toEqual(2);
       expect(env.component.answersPanel!.answers.length).toEqual(2);
+      expect(env.totalAnswersMessageCount).toEqual(3);
 
       // But a show-unread-answers control appears.
       expect(env.showUnreadAnswersButton).not.toBeNull();
-      expect(env.showUnreadAnswersButton.nativeElement.innerText).toContain(' 1 ', 'should have shown unread count');
+      expect(env.unreadAnswersBannerCount).toEqual(1);
 
       // Clicking makes the answer appear and the control go away.
       env.clickButton(env.showUnreadAnswersButton);
@@ -618,6 +623,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(3);
       expect(env.component.answersPanel!.answers.length).toEqual(3);
       expect(env.showUnreadAnswersButton).toBeNull();
+      expect(env.totalAnswersMessageCount).toEqual(3);
     }));
 
     it('new remote answers from other users are not displayed to proj admin until requested', fakeAsync(() => {
@@ -629,16 +635,18 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(1, 'setup');
       expect(env.component.answersPanel!.answers.length).toEqual(1, 'setup');
       expect(env.showUnreadAnswersButton).toBeNull();
+      expect(env.totalAnswersMessageCount).toEqual(1);
 
       env.simulateNewRemoteAnswer();
 
       // New remote answer is buffered rather than shown immediately.
       expect(env.answers.length).toEqual(1);
       expect(env.component.answersPanel!.answers.length).toEqual(1);
+      expect(env.totalAnswersMessageCount).toEqual(2);
 
       // show-unread-answers banner appears.
       expect(env.showUnreadAnswersButton).not.toBeNull();
-      expect(env.showUnreadAnswersButton.nativeElement.innerText).toContain(' 1 ', 'should have shown unread count');
+      expect(env.unreadAnswersBannerCount).toEqual(1);
 
       // Clicking makes the answer appear and the control go away.
       env.clickButton(env.showUnreadAnswersButton);
@@ -646,6 +654,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(2);
       expect(env.component.answersPanel!.answers.length).toEqual(2);
       expect(env.showUnreadAnswersButton).toBeNull();
+      expect(env.totalAnswersMessageCount).toEqual(2);
     }));
 
     it('new remote answers and banner dont show, if user has not yet answered the question', fakeAsync(() => {
@@ -653,6 +662,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(7);
       expect(env.answers.length).toEqual(0, 'setup (no answers in DOM yet)');
       expect(env.component.answersPanel!.answers.length).toEqual(1, 'setup');
+      expect(env.totalAnswersMessageCount).toBeNull();
 
       // Another user adds an answer, but with no impact on the current user's screen yet.
       env.simulateNewRemoteAnswer();
@@ -661,6 +671,8 @@ describe('CheckingComponent', () => {
       // Incoming remote answer should have been absorbed into the set of i
       // answers pending to show, since user was looking at the Add Answer button
       expect(env.component.answersPanel!.answers.length).toEqual(2);
+      // We don't show the total answer count in the heading until the user adds her answer.
+      expect(env.totalAnswersMessageCount).toBeNull();
 
       // Current user adds her answer, and all answers show.
       env.answerQuestion('New answer from current user');
@@ -683,6 +695,8 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(2);
       expect(env.component.answersPanel!.answers.length).toEqual(2);
       expect(env.showUnreadAnswersButton).not.toBeNull();
+      expect(env.unreadAnswersBannerCount).toEqual(1);
+      expect(env.totalAnswersMessageCount).toEqual(3);
 
       // The current user deletes her own answer, which puts her back to just seeing the Add answer button. She
       // should not see any other answers or the show-remote banner.
@@ -695,18 +709,23 @@ describe('CheckingComponent', () => {
       // Behind the scenes, the showable answer list should have absorbed any pending remote answers, but also lost the
       // current users answer. So it was 2, lost 1 (deleted), and gained 1 (which was pending), and so stayed at 2.
       expect(env.component.answersPanel!.answers.length).toEqual(2);
+      // Total answers heading is not shown if user deleted her answer.
+      expect(env.totalAnswersMessageCount).toBeNull();
 
       // Adding an answer should result in seeing all answers, and no banner.
       env.answerQuestion('New/replaced answer from current user');
       expect(env.answers.length).toEqual(3);
       expect(env.component.answersPanel!.answers.length).toEqual(3);
       expect(env.showUnreadAnswersButton).toBeNull();
+      expect(env.totalAnswersMessageCount).toEqual(3);
 
       // A remote answer at this point makes the banner show, tho.
       env.simulateNewRemoteAnswer('answerId12345', 'another remote answer');
       expect(env.answers.length).toEqual(3);
       expect(env.component.answersPanel!.answers.length).toEqual(3);
       expect(env.showUnreadAnswersButton).not.toBeNull();
+      expect(env.unreadAnswersBannerCount).toEqual(1);
+      expect(env.totalAnswersMessageCount).toEqual(4);
     }));
 
     it('show-remote-answer banner disappears if the unshown remote answer is deleted', fakeAsync(() => {
@@ -717,14 +736,17 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(2, 'setup');
       expect(env.component.answersPanel!.answers.length).toEqual(2, 'setup');
       expect(env.showUnreadAnswersButton).toBeNull();
+      expect(env.totalAnswersMessageCount).toEqual(2);
 
       // A remote answer is added and then deleted, before the current user clicks the banner to show the remote answer.
       env.simulateNewRemoteAnswer('remoteAnswerId123');
       expect(env.showUnreadAnswersButton).not.toBeNull();
+      expect(env.totalAnswersMessageCount).toEqual(3);
       env.deleteAnswer('remoteAnswerId123');
       expect(env.showUnreadAnswersButton).toBeNull();
       expect(env.answers.length).toEqual(2);
       expect(env.component.answersPanel!.answers.length).toEqual(2);
+      expect(env.totalAnswersMessageCount).toEqual(2);
     }));
 
     describe('Comments', () => {
@@ -1137,6 +1159,27 @@ class TestEnvironment {
 
   get showUnreadAnswersButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#show-unread-answers-button'));
+  }
+
+  get totalAnswersMessageCount(): number | null {
+    return this.getFirstNumberFromElementText('#totalAnswersMessage');
+  }
+
+  get unreadAnswersBannerCount(): number | null {
+    return this.getFirstNumberFromElementText('#show-unread-answers-button');
+  }
+
+  /** Fetch first sequence of numbers (without spaces between) from an element's text. */
+  getFirstNumberFromElementText(selector: string): number | null {
+    const element = document.querySelector(selector);
+    if (element == null || element.textContent == null) {
+      return null;
+    }
+    const numberMatches = element.textContent.match(/\d+/);
+    if (numberMatches == null || numberMatches.length === 0) {
+      return null;
+    }
+    return parseInt(numberMatches[0], 10);
   }
 
   getLikeTotal(index: number): number {
