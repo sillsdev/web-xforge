@@ -1,161 +1,167 @@
-<div
-  class="answer-question"
-  [ngClass]="{
-    'question-read': hasUserRead,
-    'question-unread': !hasUserRead,
-    'question-answered': currentUserTotalAnswers
-  }"
->
-  <div class="question">
-    <div class="question-text">{{ questionDoc?.data?.text }}</div>
-    <div *ngIf="questionDoc?.data?.audioUrl" class="question-audio">
-      <app-checking-audio-player [source]="questionDoc?.data?.audioUrl"></app-checking-audio-player>
-    </div>
-    <div class="question-footer" *ngIf="isProjectAdmin">
-      <div class="actions">
-        <button mdc-button type="button" (click)="questionDialog()" class="edit-question-button">Edit</button>
-        <button mdc-button type="button" (click)="archiveQuestion()" class="archive-question-button">Archive</button>
-      </div>
-    </div>
-  </div>
-  <div *ngIf="!answerFormVisible" class="actions">
-    <button
-      *ngIf="currentUserTotalAnswers === 0 && canAddAnswer"
-      mdc-button
-      primary
-      (click)="showAnswerForm()"
-      id="add-answer"
-    >
-      Add Answer
-    </button>
-  </div>
-</div>
-<div *ngIf="answerFormVisible">
-  <form [formGroup]="answerForm" autocomplete="off" id="answer-form">
-    <mdc-tab-bar #answerTabs fixed>
-      <mdc-tab-scroller>
-        <mdc-tab icon="title" label="Answer"></mdc-tab>
-        <mdc-tab icon="library_music" label="Record/Upload" fxHide.xs></mdc-tab>
-        <mdc-tab icon="library_music" label="Record" fxShow.xs fxHide></mdc-tab>
-        <mdc-tab icon="text_rotation_none" label="Select Text" fxHide.xs></mdc-tab>
-        <mdc-tab icon="text_rotation_none" label="Select" fxShow.xs fxHide></mdc-tab>
-      </mdc-tab-scroller>
-    </mdc-tab-bar>
-    <div [fxShow]="answerTabs.activeTabIndex === 0" class="answer-tab answer-text">
-      <mdc-form-field>
-        <mdc-text-field
-          appAutofocus
-          label="Your Answer"
-          type="text"
-          formControlName="answerText"
-          outlined
-          [value]="activeAnswer?.text"
-        ></mdc-text-field>
-      </mdc-form-field>
-    </div>
+<div class="answers-component">
+  <div class="answers-component-scrollable-content">
     <div
-      [fxShow]="answerTabs.activeTabIndex === 1 || answerTabs.activeTabIndex === 2"
-      class="answer-tab answer-record-upload"
+      class="answer-question"
+      [ngClass]="{
+        'question-read': hasUserRead,
+        'question-unread': !hasUserRead,
+        'question-answered': currentUserTotalAnswers
+      }"
     >
-      <app-checking-audio-combined
-        [source]="activeAnswer?.audioUrl"
-        (update)="processAudio($event)"
-      ></app-checking-audio-combined>
-    </div>
-    <div
-      [fxHide]="!(answerTabs.activeTabIndex === 3 || answerTabs.activeTabIndex === 4)"
-      class="answer-tab answer-select-text"
-      [class.text-selected]="selectedText"
-    >
-      <p [fxHide]="!selectedText" [fxHide.lt-xl]="!canShowScriptureInput" class="scripture-text">
-        {{ selectedText }} <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
-      </p>
-      <p [fxHide]="!!selectedText" class="scripture-text-blank">No scripture selected yet.</p>
-      <div class="buttons-wrapper">
-        <button
-          mdc-icon-button
-          *ngIf="selectedText"
-          type="button"
-          (click)="clearSelection()"
-          icon="clear"
-          class="clear-selection"
-        ></button>
-        <button type="button" (click)="selectScripture()" mdc-button primary>Select verses</button>
-      </div>
-    </div>
-    <div *ngIf="answerFormSubmitAttempted && answerText.invalid" class="form-helper-text">
-      You need to enter your answer or record your answer before saving
-    </div>
-    <div class="form-actions">
-      <button mdc-button type="button" (click)="hideAnswerForm()" id="cancel-answer">Cancel</button>
-      <button mdc-button primary form="answer-form" id="save-answer" type="submit" (click)="submit()">
-        Save Answer
-      </button>
-    </div>
-  </form>
-</div>
-<div class="answers-container">
-  <ng-container *ngIf="!answerFormVisible && answers.length > 0 && (currentUserTotalAnswers > 0 || !canAddAnswer)">
-    <h3>{{ totalAnswersHeading }}</h3>
-    <div *ngIf="remoteAnswersCount > 0">
-      <button mdc-button id="show-unread-answers-button" (click)="showRemoteAnswers()">
-        show {{ remoteAnswersCount }} more unread answers
-      </button>
-    </div>
-    <div class="answer" *ngFor="let answer of answers" [ngClass]="{ 'answer-unread': !hasUserReadAnswer(answer) }">
-      <div *ngIf="canSeeOtherUserResponses" class="like">
-        <button
-          mdc-icon-button
-          class="like-answer"
-          icon="thumb_up"
-          (click)="likeAnswer(answer)"
-          [ngClass]="{ liked: hasUserLikedAnswer(answer) }"
-        ></button>
-        <span class="like-count">{{ answer.likes.length }}</span>
-      </div>
-      <div class="answer-detail">
-        <div *ngIf="answer.text" class="answer-text">{{ answer.text }}</div>
-        <div *ngIf="answer.scriptureText" class="answer-scripture">
-          <span class="answer-scripture-text">{{ answer.scriptureText }}</span>
-          <span class="answer-scripture-verse">{{ scriptureTextVerseRef(answer.verseRef) }}</span>
+      <div class="question">
+        <div class="question-text">{{ questionDoc?.data?.text }}</div>
+        <div *ngIf="questionDoc?.data?.audioUrl" class="question-audio">
+          <app-checking-audio-player [source]="questionDoc?.data?.audioUrl"></app-checking-audio-player>
         </div>
-        <app-checking-audio-player *ngIf="answer.audioUrl" [source]="answer.audioUrl"></app-checking-audio-player>
-        <div class="answer-footer">
+        <div class="question-footer" *ngIf="isProjectAdmin">
           <div class="actions">
-            <button
-              *ngIf="canEditAnswer(answer)"
-              mdc-button
-              type="button"
-              (click)="editAnswer(answer)"
-              class="answer-edit"
-            >
-              Edit
-            </button>
-            <button
-              *ngIf="canDeleteAnswer(answer)"
-              mdc-button
-              type="button"
-              (click)="deleteAnswer(answer)"
-              class="answer-delete"
-            >
-              Delete
+            <button mdc-button type="button" (click)="questionDialog()" class="edit-question-button">Edit</button>
+            <button mdc-button type="button" (click)="archiveQuestion()" class="archive-question-button">
+              Archive
             </button>
           </div>
-          <app-checking-owner
-            [ownerRef]="answer.ownerRef"
-            [includeAvatar]="true"
-            [layoutStacked]="true"
-            [dateTime]="answer.dateCreated"
-          ></app-checking-owner>
         </div>
-        <app-checking-comments
-          [project]="project"
-          [projectUserConfigDoc]="projectUserConfigDoc"
-          [questionDoc]="questionDoc"
-          (action)="submitCommentAction($event)"
-          [answer]="answer"
-        ></app-checking-comments>
+      </div>
+      <div *ngIf="!answerFormVisible" class="actions">
+        <button
+          *ngIf="currentUserTotalAnswers === 0 && canAddAnswer"
+          mdc-button
+          primary
+          (click)="showAnswerForm()"
+          id="add-answer"
+        >
+          Add Answer
+        </button>
       </div>
     </div>
-  </ng-container>
+    <div *ngIf="answerFormVisible">
+      <form [formGroup]="answerForm" autocomplete="off" id="answer-form">
+        <mdc-tab-bar #answerTabs fixed>
+          <mdc-tab-scroller>
+            <mdc-tab icon="title" label="Answer"></mdc-tab>
+            <mdc-tab icon="library_music" label="Record/Upload" fxHide.xs></mdc-tab>
+            <mdc-tab icon="library_music" label="Record" fxShow.xs fxHide></mdc-tab>
+            <mdc-tab icon="text_rotation_none" label="Select Text" fxHide.xs></mdc-tab>
+            <mdc-tab icon="text_rotation_none" label="Select" fxShow.xs fxHide></mdc-tab>
+          </mdc-tab-scroller>
+        </mdc-tab-bar>
+        <div [fxShow]="answerTabs.activeTabIndex === 0" class="answer-tab answer-text">
+          <mdc-form-field>
+            <mdc-text-field
+              appAutofocus
+              label="Your Answer"
+              type="text"
+              formControlName="answerText"
+              outlined
+              [value]="activeAnswer?.text"
+            ></mdc-text-field>
+          </mdc-form-field>
+        </div>
+        <div
+          [fxShow]="answerTabs.activeTabIndex === 1 || answerTabs.activeTabIndex === 2"
+          class="answer-tab answer-record-upload"
+        >
+          <app-checking-audio-combined
+            [source]="activeAnswer?.audioUrl"
+            (update)="processAudio($event)"
+          ></app-checking-audio-combined>
+        </div>
+        <div
+          [fxHide]="!(answerTabs.activeTabIndex === 3 || answerTabs.activeTabIndex === 4)"
+          class="answer-tab answer-select-text"
+          [class.text-selected]="selectedText"
+        >
+          <p [fxHide]="!selectedText" [fxHide.lt-xl]="!canShowScriptureInput" class="scripture-text">
+            {{ selectedText }} <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
+          </p>
+          <p [fxHide]="!!selectedText" class="scripture-text-blank">No scripture selected yet.</p>
+          <div class="buttons-wrapper">
+            <button
+              mdc-icon-button
+              *ngIf="selectedText"
+              type="button"
+              (click)="clearSelection()"
+              icon="clear"
+              class="clear-selection"
+            ></button>
+            <button type="button" (click)="selectScripture()" mdc-button primary>Select verses</button>
+          </div>
+        </div>
+        <div *ngIf="answerFormSubmitAttempted && answerText.invalid" class="form-helper-text">
+          You need to enter your answer or record your answer before saving
+        </div>
+        <div class="form-actions">
+          <button mdc-button type="button" (click)="hideAnswerForm()" id="cancel-answer">Cancel</button>
+          <button mdc-button primary form="answer-form" id="save-answer" type="submit" (click)="submit()">
+            Save Answer
+          </button>
+        </div>
+      </form>
+    </div>
+    <div class="answers-container">
+      <ng-container *ngIf="!answerFormVisible && answers.length > 0 && (currentUserTotalAnswers > 0 || !canAddAnswer)">
+        <h3 id="totalAnswersMessage">{{ totalAnswersHeading }}</h3>
+        <div class="answer" *ngFor="let answer of answers" [ngClass]="{ 'answer-unread': !hasUserReadAnswer(answer) }">
+          <div *ngIf="canSeeOtherUserResponses" class="like">
+            <button
+              mdc-icon-button
+              class="like-answer"
+              icon="thumb_up"
+              (click)="likeAnswer(answer)"
+              [ngClass]="{ liked: hasUserLikedAnswer(answer) }"
+            ></button>
+            <span class="like-count">{{ answer.likes.length }}</span>
+          </div>
+          <div class="answer-detail">
+            <div *ngIf="answer.text" class="answer-text">{{ answer.text }}</div>
+            <div *ngIf="answer.scriptureText" class="answer-scripture">
+              <span class="answer-scripture-text">{{ answer.scriptureText }}</span>
+              <span class="answer-scripture-verse">{{ scriptureTextVerseRef(answer.verseRef) }}</span>
+            </div>
+            <app-checking-audio-player *ngIf="answer.audioUrl" [source]="answer.audioUrl"></app-checking-audio-player>
+            <div class="answer-footer">
+              <div class="actions">
+                <button
+                  *ngIf="canEditAnswer(answer)"
+                  mdc-button
+                  type="button"
+                  (click)="editAnswer(answer)"
+                  class="answer-edit"
+                >
+                  Edit
+                </button>
+                <button
+                  *ngIf="canDeleteAnswer(answer)"
+                  mdc-button
+                  type="button"
+                  (click)="deleteAnswer(answer)"
+                  class="answer-delete"
+                >
+                  Delete
+                </button>
+              </div>
+              <app-checking-owner
+                [ownerRef]="answer.ownerRef"
+                [includeAvatar]="true"
+                [layoutStacked]="true"
+                [dateTime]="answer.dateCreated"
+              ></app-checking-owner>
+            </div>
+            <app-checking-comments
+              [project]="project"
+              [projectUserConfigDoc]="projectUserConfigDoc"
+              [questionDoc]="questionDoc"
+              (action)="submitCommentAction($event)"
+              [answer]="answer"
+            ></app-checking-comments>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+  <div class="answers-component-footer" *ngIf="remoteAnswersCount > 0">
+    <button mdc-button id="show-unread-answers-button" (click)="showRemoteAnswers()">
+      show {{ remoteAnswersCount }} more unread answers
+    </button>
+  </div>
 </div>
