@@ -1,83 +1,88 @@
-<mdc-dialog>
-  <mdc-dialog-container>
-    <mdc-dialog-surface class="dialog-size">
-      <mdc-dialog-title fxLayoutAlign="start center">
-        <i class="material-icons">live_help</i> {{ modeLabel }} Question
-      </mdc-dialog-title>
-      <mdc-dialog-content class="content-padding">
-        <form [formGroup]="questionForm" autocomplete="off" id="question-form">
-          <div fxLayout="row wrap" fxLayoutAlign="space-around start" fxLayoutGap.gt-xs="1em">
-            <mdc-form-field>
-              <mdc-text-field
-                label="Scripture reference"
-                type="text"
-                formControlName="scriptureStart"
-                outlined
-                id="scripture-start"
-                (input)="updateScriptureEndEnabled()"
-              >
-                <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureStart)"
-                  >expand_more</mdc-icon
+<ng-container *transloco="let t">
+  <mdc-dialog>
+    <mdc-dialog-container>
+      <mdc-dialog-surface class="dialog-size">
+        <mdc-dialog-title fxLayoutAlign="start center">
+          <i class="material-icons">live_help</i> {{ modeLabel }} Question
+        </mdc-dialog-title>
+        <mdc-dialog-content class="content-padding">
+          <form [formGroup]="questionForm" autocomplete="off" id="question-form">
+            <div fxLayout="row wrap" fxLayoutAlign="space-around start" fxLayoutGap.gt-xs="1em">
+              <mdc-form-field>
+                <mdc-text-field
+                  label="Scripture reference"
+                  type="text"
+                  formControlName="scriptureStart"
+                  outlined
+                  id="scripture-start"
+                  (input)="updateScriptureEndEnabled()"
                 >
-              </mdc-text-field>
-              <mdc-helper-text validation id="question-scripture-start-helper-text" class="scripture-helper-text">
-                *Required<span *ngIf="scriptureStart.hasError('verseFormat')">, e.g. JHN 3:16</span>
-                <span *ngIf="scriptureStart.hasError('verseRange')">, must be inside verse range</span>
-              </mdc-helper-text>
-            </mdc-form-field>
-            <mdc-form-field>
-              <mdc-text-field
-                label="End reference"
-                type="text"
-                formControlName="scriptureEnd"
-                outlined
-                [errorStateMatcher]="parentAndStartMatcher"
-                id="scripture-end"
-              >
-                <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureEnd)"
-                  >expand_more</mdc-icon
+                  <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureStart)"
+                    >expand_more</mdc-icon
+                  >
+                </mdc-text-field>
+                <mdc-helper-text validation id="question-scripture-start-helper-text" class="scripture-helper-text">
+                  *Required<span *ngIf="scriptureStart.hasError('verseFormat')">, e.g. JHN 3:16</span>
+                  <span *ngIf="scriptureStart.hasError('verseRange')">, must be inside verse range</span>
+                </mdc-helper-text>
+              </mdc-form-field>
+              <mdc-form-field>
+                <mdc-text-field
+                  label="End reference"
+                  type="text"
+                  formControlName="scriptureEnd"
+                  outlined
+                  [errorStateMatcher]="parentAndStartMatcher"
+                  id="scripture-end"
                 >
-              </mdc-text-field>
-              <mdc-helper-text id="question-scripture-end-helper-text" validation>
-                <span *ngIf="scriptureEnd.hasError('verseFormat')">e.g. JHN 3:16</span>
-                <span *ngIf="scriptureEnd.hasError('verseRange')">Must be inside verse range</span>
-                <span *ngIf="questionForm.hasError('verseDifferentBookOrChapter')">
-                  Must be the same book and chapter
-                </span>
-                <span *ngIf="questionForm.hasError('verseBeforeStart')">Must be after <b>Scripture reference</b></span>
-              </mdc-helper-text>
+                  <mdc-icon mdcTextFieldIcon trailing clickable (click)="openScriptureChooser(scriptureEnd)"
+                    >expand_more</mdc-icon
+                  >
+                </mdc-text-field>
+                <mdc-helper-text id="question-scripture-end-helper-text" validation>
+                  <span *ngIf="scriptureEnd.hasError('verseFormat')">e.g. JHN 3:16</span>
+                  <span *ngIf="scriptureEnd.hasError('verseRange')">Must be inside verse range</span>
+                  <span *ngIf="questionForm.hasError('verseDifferentBookOrChapter')">
+                    Must be the same book and chapter
+                  </span>
+                  <span
+                    *ngIf="questionForm.hasError('verseBeforeStart')"
+                    [innerHTML]="i18n.translateAndInsertTags('question_dialog.must_be_after_scripture_reference')"
+                  ></span>
+                </mdc-helper-text>
+              </mdc-form-field>
+            </div>
+            <div class="text-container">
+              <app-checking-text
+                [id]="textDocId"
+                placeholder="Enter a reference to load text"
+                [activeVerse]="selection"
+              ></app-checking-text>
+            </div>
+            <mdc-form-field fluid>
+              <mdc-textarea
+                label="Question"
+                type="text"
+                formControlName="questionText"
+                rows="2"
+                [helperText]="questionHelper"
+                id="question-text"
+              ></mdc-textarea>
+              <mdc-helper-text #questionHelper validation>*Required</mdc-helper-text>
             </mdc-form-field>
-          </div>
-          <div class="text-container">
-            <app-checking-text
-              [id]="textDocId"
-              placeholder="Enter a reference to load text"
-              [activeVerse]="selection"
-            ></app-checking-text>
-          </div>
-          <mdc-form-field fluid>
-            <mdc-textarea
-              label="Question"
-              type="text"
-              formControlName="questionText"
-              rows="2"
-              [helperText]="questionHelper"
-              id="question-text"
-            ></mdc-textarea>
-            <mdc-helper-text #questionHelper validation>*Required</mdc-helper-text>
-          </mdc-form-field>
-          <app-checking-audio-combined
-            [source]="audio.url"
-            (update)="processAudio($event)"
-          ></app-checking-audio-combined>
-        </form>
-      </mdc-dialog-content>
-      <mdc-dialog-actions>
-        <button mdcDialogButton mdcDialogAction="close" type="button" id="question-cancel-btn">Cancel</button>
-        <button mdc-button primary form="question-form" type="submit" id="question-save-btn" (click)="submit()">
-          Save
-        </button>
-      </mdc-dialog-actions>
-    </mdc-dialog-surface>
-  </mdc-dialog-container>
-</mdc-dialog>
+            <app-checking-audio-combined
+              [source]="audio.url"
+              (update)="processAudio($event)"
+            ></app-checking-audio-combined>
+          </form>
+        </mdc-dialog-content>
+        <mdc-dialog-actions>
+          <button mdcDialogButton mdcDialogAction="close" type="button" id="question-cancel-btn">Cancel</button>
+          <button mdc-button primary form="question-form" type="submit" id="question-save-btn" (click)="submit()">
+            Save
+          </button>
+        </mdc-dialog-actions>
+      </mdc-dialog-surface>
+    </mdc-dialog-container>
+  </mdc-dialog>
+</ng-container>

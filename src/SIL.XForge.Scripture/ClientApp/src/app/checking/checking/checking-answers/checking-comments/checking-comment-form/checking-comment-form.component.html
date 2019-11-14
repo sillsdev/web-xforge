@@ -1,17 +1,19 @@
-<form [formGroup]="commentForm" (ngSubmit)="submit()" autocomplete="off" id="comment-form">
-  <mdc-form-field fluid>
-    <mdc-text-field
-      appAutofocus
-      label="Your Comment"
-      type="text"
-      formControlName="commentText"
-      outlined
-      [value]="text"
-    ></mdc-text-field>
-    <mdc-helper-text validation>You need to enter your comment before saving</mdc-helper-text>
-  </mdc-form-field>
-  <div class="form-actions">
-    <button mdc-button type="button" (click)="submitCancel()" class="cancel-comment">Cancel</button>
-    <button mdc-button primary form="comment-form" type="submit" class="save-comment">Save Comment</button>
-  </div>
-</form>
+<ng-container *transloco="let t; read: 'checking_comment_form'">
+  <form [formGroup]="commentForm" (ngSubmit)="submit()" autocomplete="off" id="comment-form">
+    <mdc-form-field fluid>
+      <mdc-text-field
+        appAutofocus
+        label="{{ t('your_comment') }}"
+        type="text"
+        formControlName="commentText"
+        outlined
+        [value]="text"
+      ></mdc-text-field>
+      <mdc-helper-text validation>{{ t("comment_cannot_be_blank") }}</mdc-helper-text>
+    </mdc-form-field>
+    <div class="form-actions">
+      <button mdc-button type="button" (click)="submitCancel()" class="cancel-comment">{{ t("cancel") }}</button>
+      <button mdc-button primary form="comment-form" type="submit" class="save-comment">{{ t("save_comment") }}</button>
+    </div>
+  </form>
+</ng-container>

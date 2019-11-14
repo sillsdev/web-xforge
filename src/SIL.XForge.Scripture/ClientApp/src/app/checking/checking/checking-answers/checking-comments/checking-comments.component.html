@@ -1,62 +1,64 @@
-<div *ngFor="let comment of getSortedComments(); index as i">
-  <div
-    class="comment"
-    [ngClass]="{ 'comment-unread': !hasUserReadComment(comment) }"
-    *ngIf="
-      (activeComment == null || (commentFormVisible && activeComment?.dataId !== comment.dataId)) &&
-      (i + 1 < maxCommentsToShow || commentCount == maxCommentsToShow || showAllComments)
-    "
-  >
-    <span class="comment-text">{{ comment.text }}</span> <span class="divider">-</span>
-    <app-checking-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-checking-owner>
-    <div class="actions">
-      <button
-        *ngIf="canEditComment(comment)"
-        mdc-button
-        type="button"
-        (click)="editComment(comment)"
-        class="comment-edit"
-      >
-        Edit
-      </button>
-      <button
-        *ngIf="canDeleteComment(comment)"
-        mdc-button
-        type="button"
-        (click)="deleteComment(comment)"
-        class="comment-delete"
-      >
-        Delete
-      </button>
+<ng-container *transloco="let t; read: 'checking_comments'">
+  <div *ngFor="let comment of getSortedComments(); index as i">
+    <div
+      class="comment"
+      [ngClass]="{ 'comment-unread': !hasUserReadComment(comment) }"
+      *ngIf="
+        (activeComment == null || (commentFormVisible && activeComment?.dataId !== comment.dataId)) &&
+        (i + 1 < maxCommentsToShow || commentCount == maxCommentsToShow || showAllComments)
+      "
+    >
+      <span class="comment-text">{{ comment.text }}</span> <span class="divider">-</span>
+      <app-checking-owner [ownerRef]="comment.ownerRef" [dateTime]="comment.dateCreated"></app-checking-owner>
+      <div class="actions">
+        <button
+          *ngIf="canEditComment(comment)"
+          mdc-button
+          type="button"
+          (click)="editComment(comment)"
+          class="comment-edit"
+        >
+          {{ t("edit") }}
+        </button>
+        <button
+          *ngIf="canDeleteComment(comment)"
+          mdc-button
+          type="button"
+          (click)="deleteComment(comment)"
+          class="comment-delete"
+        >
+          {{ t("delete") }}
+        </button>
+      </div>
     </div>
+    <app-checking-comment-form
+      *ngIf="commentFormVisible && activeComment?.dataId === comment.dataId"
+      (save)="submit($event)"
+      (cancel)="hideCommentForm()"
+      [text]="comment.text"
+    ></app-checking-comment-form>
   </div>
   <app-checking-comment-form
-    *ngIf="commentFormVisible && activeComment?.dataId === comment.dataId"
+    *ngIf="commentFormVisible && activeComment == null"
     (save)="submit($event)"
     (cancel)="hideCommentForm()"
-    [text]="comment.text"
   ></app-checking-comment-form>
-</div>
-<app-checking-comment-form
-  *ngIf="commentFormVisible && activeComment == null"
-  (save)="submit($event)"
-  (cancel)="hideCommentForm()"
-></app-checking-comment-form>
-<button
-  *ngIf="!commentFormVisible && commentCount > maxCommentsToShow && !showAllComments"
-  mdc-button
-  type="button"
-  (click)="showComments()"
-  class="show-all-comments"
->
-  {{ showMoreCommentsLabel }}
-</button>
-<button
-  *ngIf="!commentFormVisible && (commentCount <= maxCommentsToShow || showAllComments) && canAddComment"
-  mdc-button
-  type="button"
-  (click)="showCommentForm()"
-  class="add-comment"
->
-  Add a comment
-</button>
+  <button
+    *ngIf="!commentFormVisible && commentCount > maxCommentsToShow && !showAllComments"
+    mdc-button
+    type="button"
+    (click)="showComments()"
+    class="show-all-comments"
+  >
+    {{ showMoreCommentsLabel }}
+  </button>
+  <button
+    *ngIf="!commentFormVisible && (commentCount <= maxCommentsToShow || showAllComments) && canAddComment"
+    mdc-button
+    type="button"
+    (click)="showCommentForm()"
+    class="add-comment"
+  >
+    {{ t("add_a_comment") }}
+  </button>
+</ng-container>

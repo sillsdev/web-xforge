@@ -2,12 +2,14 @@ import { CommonModule } from '@angular/common';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { TRANSLOCO_CONFIG, TRANSLOCO_LOADER } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
 import { AvatarModule } from 'ngx-avatar';
 import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
 import { EditNameDialogComponent } from './edit-name-dialog/edit-name-dialog.component';
 import { ErrorComponent } from './error/error.component';
+import { I18nService, TranslationLoader } from './i18n.service';
 import { IndexeddbRealtimeOfflineStore } from './indexeddb-realtime-offline-store';
 import { MessageDialogComponent } from './message-dialog/message-dialog.component';
 import { RealtimeOfflineStore } from './realtime-offline-store';
@@ -49,7 +51,9 @@ export const xForgeCommonEntryComponents = [EditNameDialogComponent, SaDeleteDia
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true },
     { provide: RealtimeRemoteStore, useExisting: SharedbRealtimeRemoteStore },
-    { provide: RealtimeOfflineStore, useExisting: IndexeddbRealtimeOfflineStore }
+    { provide: RealtimeOfflineStore, useExisting: IndexeddbRealtimeOfflineStore },
+    { provide: TRANSLOCO_CONFIG, useValue: I18nService.translocoConfig },
+    { provide: TRANSLOCO_LOADER, useClass: TranslationLoader }
   ]
 })
 export class XForgeCommonModule {}

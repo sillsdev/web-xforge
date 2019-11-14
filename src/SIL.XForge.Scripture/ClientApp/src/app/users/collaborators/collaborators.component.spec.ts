@@ -15,7 +15,7 @@ import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-in
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -34,7 +34,7 @@ const mockedUserService = mock(UserService);
 describe('CollaboratorsComponent', () => {
   configureTestingModule(() => ({
     declarations: [CollaboratorsComponent, ShareControlComponent],
-    imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule],
+    imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule, TestTranslocoModule],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: LocationService, useMock: mockedLocationService },

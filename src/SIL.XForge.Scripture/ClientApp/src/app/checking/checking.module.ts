@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 
+import { TranslocoModule } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -53,7 +54,8 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     UICommonModule,
     XForgeCommonModule,
     AngularSplitModule.forRoot(),
-    ngfModule
+    ngfModule,
+    TranslocoModule
   ],
   exports: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent],
   entryComponents: [QuestionDialogComponent, QuestionAnsweredDialogComponent, TextChooserDialogComponent]
