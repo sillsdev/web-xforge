@@ -9,7 +9,7 @@ export function getSFProjectUserConfigDocId(projectId: string, userId: string): 
 
 export interface SFProjectUserConfig extends ProjectData {
   selectedTask?: string;
-  selectedQuestionDocRef?: string;
+  selectedQuestionRef?: string;
   selectedBookNum?: number;
   selectedChapterNum?: number;
   isTargetTextRight: boolean;

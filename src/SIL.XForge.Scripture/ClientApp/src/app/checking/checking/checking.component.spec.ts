@@ -335,21 +335,21 @@ describe('CheckingComponent', () => {
 
     it('saves the location of the last answered question', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
-      env.selectQuestion(4);
-      env.answerQuestion('Answer to question 4');
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
+      expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
+      env.selectQuestion(4);
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
-      expect(projectUserConfigDoc.selectedQuestionDocRef).toBe('project01:q4Id');
+      expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBe(43);
     }));
 
     it('saves the last question answered in all question context', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER, 'ALL');
-      env.selectQuestion(4);
-      env.answerQuestion('Answer question 4 in all question context');
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
+      expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
+      env.selectQuestion(4);
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
-      expect(projectUserConfigDoc.selectedQuestionDocRef).toBe('project01:q4Id');
+      expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBeUndefined();
     }));
 
@@ -835,7 +835,7 @@ class TestEnvironment {
     translationSuggestionsEnabled: true,
     numSuggestions: 1,
     selectedSegment: '',
-    selectedQuestionDocRef: 'project01:q5Id',
+    selectedQuestionRef: 'project01:q5Id',
     questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
@@ -861,7 +861,7 @@ class TestEnvironment {
     confidenceThreshold: 0.2,
     translationSuggestionsEnabled: true,
     numSuggestions: 1,
-    selectedQuestionDocRef: 'project01:q5Id',
+    selectedQuestionRef: 'project01:q5Id',
     selectedSegment: '',
     questionRefsRead: [],
     answerRefsRead: [],
