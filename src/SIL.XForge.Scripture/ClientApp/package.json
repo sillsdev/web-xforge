@@ -8,13 +8,14 @@
     "start": "ng serve",
     "start:no-progress": "ng serve --progress=false",
     "build": "ng build",
-    "build:ssr": "npm run build -- --app=ssr --output-hashing=media",
     "test": "ng test --sourceMap=true",
     "test:tc": "ng test --browsers xForgeChromiumHeadless --watch false --code-coverage",
     "lint": "ng lint",
     "prettier": "prettier --write \"**/*.{ts,js,json,css,scss,less,html,md,yml}\"",
     "prettier:tc": "prettier --list-different \"**/*.{ts,js,json,css,scss,less,html,md,yml}\"",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "bundle-report": "webpack-bundle-analyzer dist/stats.json",
+    "build:stats": "ng build --prod --stats-json"
   },
   "private": true,
   "dependencies": {
@@ -39,12 +40,11 @@
     "auth0-js": "^9.10.4",
     "bootstrap": "^4.3.1",
     "bowser": "^2.7.0",
-    "bson": "^3.0.2",
+    "bson-objectid": "^1.3.0",
     "buffer": "^5.2.1",
     "core-js": "^2.6.5",
     "crc-32": "^1.2.0",
     "date-fns": "^1.30.1",
-    "hammerjs": "^2.0.8",
     "helphero": "^1.3.0",
     "jwt-decode": "^2.2.0",
     "lodash": "^4.17.15",
@@ -72,7 +72,6 @@
     "@angular/compiler-cli": "^8.2.4",
     "@angular/language-service": "^8.2.4",
     "@types/auth0-js": "^9.10.2",
-    "@types/bson": "^1.0.11",
     "@types/jasmine": "~3.3.12",
     "@types/jasminewd2": "~2.0.6",
     "@types/jwt-decode": "^2.2.1",
@@ -100,7 +99,8 @@
     "ts-mockito": "^2.3.1",
     "ts-node": "~7.0.1",
     "tslint": "~5.11.0",
-    "typescript": "~3.5.3"
+    "typescript": "~3.5.3",
+    "webpack-bundle-analyzer": "^3.6.0"
   },
   "husky": {
     "hooks": {
@@ -112,5 +112,8 @@
       "prettier --write",
       "git add"
     ]
+  },
+  "browser": {
+    "moment": false
   }
 }

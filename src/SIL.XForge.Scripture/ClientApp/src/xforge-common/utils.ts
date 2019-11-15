@@ -1,5 +1,5 @@
 import Bowser from 'bowser';
-import { ObjectId } from 'bson';
+import ObjectID from 'bson-objectid';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
@@ -9,7 +9,7 @@ export function nameof<T>(name: Extract<keyof T, string>): string {
 }
 
 export function objectId(): string {
-  return new ObjectId().toHexString();
+  return ObjectID.generate();
 }
 
 export function promiseTimeout<T>(promise: Promise<T>, timeout: number) {
