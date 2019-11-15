@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
+import { browserValidated } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 
 @Component({
@@ -20,6 +21,10 @@ export class StartComponent extends SubscriptionDisposable implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    if (!browserValidated()) {
+      this.router.navigateByUrl('/supported-browsers', { replaceUrl: true });
+      return;
+    }
     const userDoc = await this.userService.getCurrentUser();
     this.subscribe(userDoc.remoteChanges$, () => this.navigateToProject(userDoc));
     this.navigateToProject(userDoc);
