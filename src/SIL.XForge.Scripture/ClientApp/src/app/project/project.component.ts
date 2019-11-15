@@ -7,6 +7,7 @@ import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { browserValidated } from 'xforge-common/utils';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 
@@ -27,6 +28,10 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (!browserValidated()) {
+      this.router.navigateByUrl('/supported-browsers', { replaceUrl: true });
+      return;
+    }
     this.subscribe(
       this.route.params.pipe(
         map(params => params['projectId'] as string),
