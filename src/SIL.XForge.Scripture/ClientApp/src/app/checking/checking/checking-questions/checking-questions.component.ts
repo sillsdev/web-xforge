@@ -24,18 +24,24 @@ import { CheckingUtils } from '../../checking.utils';
 export class CheckingQuestionsComponent extends SubscriptionDisposable {
   @Input() project?: SFProject;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
+  @Input() isAllBooksShown: boolean = false;
   @Output() update = new EventEmitter<QuestionDoc>();
   @Output() changed = new EventEmitter<QuestionDoc>();
   _questionDocs: Readonly<QuestionDoc[]> = [];
   activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
   private _activeQuestionVerseRef?: VerseRef;
+  private storeQuestion: boolean = true;
 
   constructor(private userService: UserService) {
     super();
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
     this.subscribe(this.activeQuestionDoc$.pipe(debounceTime(2000)), questionDoc => {
       this.updateElementsRead(questionDoc);
+      if (this.storeQuestion && questionDoc != null && questionDoc.data != null) {
+        this.storeMostRecentQuestion(questionDoc.data.verseRef.bookNum);
+      }
+      this.storeQuestion = true;
     });
   }
 
@@ -63,13 +69,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
 
   @Input() set questionDocs(questionDocs: Readonly<QuestionDoc[]>) {
     if (questionDocs.length > 0) {
-      let activeQuestionDocId: string | undefined;
-      if (this.activeQuestionDoc != null) {
-        activeQuestionDocId = this.activeQuestionDoc.id;
-      }
-      if (activeQuestionDocId == null || !questionDocs.some(question => question.id === activeQuestionDocId)) {
-        this.activateQuestion(questionDocs[0]);
-      }
+      this.activateStoredQuestion(questionDocs);
     } else {
       this.activeQuestionDoc = undefined;
     }
@@ -120,6 +120,32 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       }
     }
     return unread;
+  }
+  /**
+   * Activates the question that a user has most recently viewed if available
+   */
+  activateStoredQuestion(questionDocs: Readonly<QuestionDoc[]>): QuestionDoc {
+    let questionToActivate: QuestionDoc | undefined;
+    let activeQuestionDocId: string | undefined;
+    if (this.activeQuestionDoc != null) {
+      activeQuestionDocId = this.activeQuestionDoc.id;
+    }
+    if (activeQuestionDocId == null || !questionDocs.some(question => question.id === activeQuestionDocId)) {
+      if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+        const lastQuestionDocId = this.projectUserConfigDoc.data.selectedQuestionRef;
+        if (lastQuestionDocId != null) {
+          questionToActivate = questionDocs.find(qd => qd.id === lastQuestionDocId);
+          this.storeQuestion = false;
+        }
+      }
+    } else {
+      return this.activeQuestionDoc!;
+    }
+    if (questionToActivate == null) {
+      questionToActivate = questionDocs[0];
+    }
+    this.activateQuestion(questionToActivate);
+    return questionToActivate;
   }
 
   updateElementsRead(questionDoc: QuestionDoc): void {
@@ -209,6 +235,22 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   private changeQuestion(newDifferential: number): void {
     if (this.activeQuestionDoc && this.checkCanChangeQuestion(newDifferential)) {
       this.activateQuestion(this.questionDocs[this.activeQuestionIndex + newDifferential]);
+    }
+  }
+
+  private async storeMostRecentQuestion(bookNum: number): Promise<void> {
+    if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+      const activeQuestionDoc = this.activeQuestionDoc;
+      if (activeQuestionDoc != null && activeQuestionDoc.data != null) {
+        await this.projectUserConfigDoc.submitJson0Op(op => {
+          op.set<string>(puc => puc.selectedTask!, 'checking');
+          op.set(puc => puc.selectedQuestionRef!, activeQuestionDoc.id);
+          this.isAllBooksShown ? op.unset(puc => puc.selectedBookNum!) : op.set(puc => puc.selectedBookNum!, bookNum);
+          op.unset(puc => puc.selectedChapterNum!);
+          op.unset(puc => puc.selectedSegment);
+          op.unset(puc => puc.selectedSegmentChecksum!);
+        });
+      }
     }
   }
 }

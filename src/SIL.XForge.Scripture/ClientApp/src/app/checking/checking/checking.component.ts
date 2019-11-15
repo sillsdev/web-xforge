@@ -125,10 +125,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
      *    later on via other methods
      */
     if (book === 0) {
-      const firstQuestion = questionDocs[0];
-      this.questionsPanel.activateQuestion(firstQuestion);
-      if (firstQuestion.data != null) {
-        book = firstQuestion.data.verseRef.bookNum;
+      const question = this.questionsPanel.activateStoredQuestion(questionDocs);
+      if (question.data != null) {
+        book = question.data.verseRef.bookNum;
       } else {
         book = undefined;
       }
