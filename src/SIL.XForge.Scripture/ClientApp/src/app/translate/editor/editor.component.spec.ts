@@ -80,6 +80,7 @@ describe('EditorComponent', () => {
       expect(env.component.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(2);
       expect(env.component.target.segmentRef).toEqual('verse_2_1');
+      verify(mockedSFProjectService.trainSelectedSegment(anything())).never();
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(30);
       expect(selection!.length).toBe(0);
@@ -360,6 +361,57 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('train a modified segment after switching to another text and back', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
+      env.wait();
+      expect(env.component.target.segmentRef).toBe('verse_1_5');
+      expect(env.component.showSuggestions).toBe(true);
+
+      env.insertSuggestion();
+      expect(env.component.target.segmentText).toBe('target: chapter 1, verse 5');
+
+      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.wait();
+      expect(env.component.bookName).toEqual('Mark');
+      expect(env.component.target.segmentRef).toEqual('verse_1_5');
+      expect(env.lastApprovedPrefix).toEqual([]);
+
+      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.wait();
+      expect(env.component.bookName).toEqual('Matthew');
+      expect(env.component.target.segmentRef).toEqual('verse_1_5');
+      const range = env.component.target.getSegmentRange('verse_1_1');
+      env.targetEditor.setSelection(range!.index, 0, 'user');
+      env.wait();
+      expect(env.component.target.segmentRef).toBe('verse_1_1');
+      expect(env.lastApprovedPrefix).toEqual(['target', ':', 'chapter', '1', ',', 'verse', '5']);
+
+      env.dispose();
+    }));
+
+    it('train a modified segment after selecting a segment in a different text', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({
+        selectedBookNum: 40,
+        selectedChapterNum: 1,
+        selectedSegment: 'verse_1_5',
+        selectedSegmentChecksum: 0
+      });
+      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.wait();
+      expect(env.component.target.segmentRef).toBe('');
+      expect(env.component.showSuggestions).toBe(false);
+
+      const range = env.component.target.getSegmentRange('verse_1_1');
+      env.targetEditor.setSelection(range!.index, 0, 'user');
+      env.wait();
+      expect(env.component.target.segmentRef).toBe('verse_1_1');
+      verify(mockedSFProjectService.trainSelectedSegment(anything())).once();
+
+      env.dispose();
+    }));
+
     it('do not train an unmodified segment after selecting a different segment', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
@@ -396,7 +448,7 @@ describe('EditorComponent', () => {
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       expect(env.component.bookName).toEqual('Mark');
-      expect(env.component.target.segmentRef).toEqual('');
+      expect(env.component.target.segmentRef).toEqual('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).never();
 
       resetCalls(env.mockedRemoteTranslationEngine);
@@ -422,7 +474,7 @@ describe('EditorComponent', () => {
       env.wait();
       const verseText = env.component.target.getSegmentText('verse_2_1');
       expect(verseText).toBe('target: chapter 2, verse 1.');
-      expect(env.component.target.segmentRef).toEqual('');
+      expect(env.component.target.segmentRef).toEqual('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).never();
 
       resetCalls(env.mockedRemoteTranslationEngine);

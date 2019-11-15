@@ -324,6 +324,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
             this.projectUserConfigDoc.data.selectedChapterNum !== this._chapter ||
             this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
+          if (prevSegment == null) {
+            await this.projectService.trainSelectedSegment(this.projectUserConfigDoc.data);
+          }
           await this.projectUserConfigDoc.submitJson0Op(op => {
             op.set<string>(puc => puc.selectedTask!, 'translate');
             op.set(puc => puc.selectedBookNum!, this.text!.bookNum);
@@ -338,6 +341,10 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
         this.onFinishTranslating();
       }
     } else {
+      if (this.source.segmentRef !== this.target.segmentRef) {
+        this.source.setSegment(this.target.segmentRef);
+      }
+
       if (delta != null && delta.ops != null) {
         // insert a space if the user just inserted a suggestion and started typing
         if (
@@ -369,11 +376,17 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       return;
     }
     this.syncScroll();
-    this.onStartTranslating();
-    try {
-      await this.translateSegment();
-    } finally {
-      this.onFinishTranslating();
+    if (
+      this.target.segment != null &&
+      this.target.segment.bookNum === this.bookNum &&
+      this.target.segment.chapter === this._chapter
+    ) {
+      this.onStartTranslating();
+      try {
+        await this.translateSegment();
+      } finally {
+        this.onFinishTranslating();
+      }
     }
   }
 
@@ -684,7 +697,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     return { index: i, length: 0 };
   }
 
-  private async trainSegment(segment?: Segment): Promise<void> {
+  private async trainSegment(segment: Segment | undefined): Promise<void> {
     if (this.translationSession == null || segment == null || !this.canTrainSegment(segment)) {
       return;
     }
