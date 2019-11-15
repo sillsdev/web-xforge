@@ -80,6 +80,7 @@ describe('ProjectComponent', () => {
     tick();
 
     verify(mockedRouter.navigate(deepEqual(['./', 'checking', 'ALL']), anything())).once();
+    expect().nothing();
   }));
 
   it('navigates to last checking book if the last book was saved', fakeAsync(() => {
@@ -89,6 +90,7 @@ describe('ProjectComponent', () => {
     tick();
 
     verify(mockedRouter.navigate(deepEqual(['./', 'checking', 'MRK']), anything())).once();
+    expect().nothing();
   }));
 
   it('navigate to overview when no texts', fakeAsync(() => {
