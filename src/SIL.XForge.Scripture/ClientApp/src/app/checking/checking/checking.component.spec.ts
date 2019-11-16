@@ -296,7 +296,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.component.questionsPanel.activeQuestionDoc!.id).toBe(questionId);
       expect(env.questions.length).toEqual(16);
-      question = env.selectQuestion(1);
+      question = env.selectQuestion(16);
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
     }));
   });
@@ -1516,7 +1516,8 @@ class TestEnvironment {
       )
     ).thenCall(() =>
       this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {
-        $sort: { [nameof<Question>('dateCreated')]: -1 }
+        // Sort questions in order from oldest to newest
+        $sort: { [nameof<Question>('dateCreated')]: 1 }
       })
     );
     when(mockedProjectService.createQuestion('project01', anything())).thenCall((id: string, question: Question) => {
