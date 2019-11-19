@@ -96,6 +96,69 @@ describe('CheckingOverviewComponent', () => {
       verify(mockedQuestionDialogService.questionDialog(anything(), undefined)).once();
       expect().nothing();
     }));
+
+    it('should show new question after adding', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const dateNow = new Date();
+      const newQuestion: Question = {
+        dataId: 'newQId1',
+        ownerRef: env.adminUser.id,
+        projectRef: 'project01',
+        text: 'Admin just added a question.',
+        answers: [],
+        verseRef: { bookNum: 42, chapterNum: 1, verseNum: 10, verse: '10-11' },
+        isArchived: false,
+        dateCreated: dateNow.toJSON(),
+        dateModified: dateNow.toJSON()
+      };
+
+      const questionDocId = getQuestionDocId('project01', newQuestion.dataId);
+      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenReturn(
+        env.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, questionDocId, newQuestion)
+      );
+
+      env.waitForQuestions();
+      expect(env.textRows.length).toEqual(2);
+
+      // Click on Luke and then Luke 1
+      env.simulateRowClick(1);
+      const id = new TextDocId('project01', 42, 1);
+      env.simulateRowClick(2, id);
+      expect(env.questionEditButtons.length).toEqual(1);
+
+      env.clickElement(env.addQuestionButton);
+      verify(mockedQuestionDialogService.questionDialog(anything(), undefined)).once();
+      env.fixture.detectChanges();
+      expect(env.textRows.length).toEqual(5); // Matthew, Luke, Luke 1, Question 1, Question 2
+      expect(env.questionEditButtons.length).toEqual(2);
+    }));
+
+    it('should show new question after adding to a project with no questions', fakeAsync(() => {
+      const env = new TestEnvironment(false);
+      const dateNow = new Date();
+      const newQuestion: Question = {
+        dataId: 'newQId1',
+        ownerRef: env.adminUser.id,
+        projectRef: 'project01',
+        text: 'Admin just added a question.',
+        answers: [],
+        verseRef: { bookNum: 42, chapterNum: 1, verseNum: 10, verse: '10-11' },
+        isArchived: false,
+        dateCreated: dateNow.toJSON(),
+        dateModified: dateNow.toJSON()
+      };
+
+      const docId = getQuestionDocId('project01', newQuestion.dataId);
+      when(mockedQuestionDialogService.questionDialog(anything(), undefined)).thenReturn(
+        env.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, newQuestion)
+      );
+      env.waitForQuestions();
+      expect(env.textRows.length).toEqual(0);
+      env.clickElement(env.addQuestionButton);
+      verify(mockedQuestionDialogService.questionDialog(anything(), undefined)).once();
+      env.waitForQuestions();
+      expect(env.textRows.length).toEqual(1);
+    }));
   });
 
   describe('Edit Question', () => {
@@ -306,6 +369,7 @@ class TestEnvironment {
   fixture: ComponentFixture<CheckingOverviewComponent>;
 
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
+  readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
   checkerUser = this.createUser('02', SFProjectRole.CommunityChecker);
@@ -364,205 +428,207 @@ class TestEnvironment {
       [this.checkerUser.id]: this.checkerUser.role
     }
   };
-  private readonly anotherUserId = 'anotherUserId';
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
-  constructor() {
-    this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, [
-      {
-        id: getQuestionDocId('project01', 'q1Id'),
-        data: {
-          dataId: 'q1Id',
-          projectRef: 'project01',
-          verseRef: {
-            bookNum: 40,
-            chapterNum: 1,
-            verseNum: 3
-          },
-          ownerRef: this.adminUser.id,
-          text: 'Book 1, Q1 text',
-          answers: [
-            {
-              dataId: 'a1Id',
-              ownerRef: this.checkerUser.id,
-              likes: [{ ownerRef: this.checkerUser.id }, { ownerRef: this.anotherUserId }],
-              dateCreated: '',
-              dateModified: '',
-              comments: [
-                {
-                  dataId: 'c1Id',
-                  ownerRef: this.checkerUser.id,
-                  dateCreated: '',
-                  dateModified: ''
-                }
-              ]
-            }
-          ],
-          audioUrl: '/audio.mp3',
-          isArchived: false,
-          dateCreated: '',
-          dateModified: ''
+  private readonly anotherUserId = 'anotherUserId';
+
+  constructor(withQuestionData: boolean = true) {
+    if (withQuestionData) {
+      this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, [
+        {
+          id: getQuestionDocId('project01', 'q1Id'),
+          data: {
+            dataId: 'q1Id',
+            projectRef: 'project01',
+            verseRef: {
+              bookNum: 40,
+              chapterNum: 1,
+              verseNum: 3
+            },
+            ownerRef: this.adminUser.id,
+            text: 'Book 1, Q1 text',
+            answers: [
+              {
+                dataId: 'a1Id',
+                ownerRef: this.checkerUser.id,
+                likes: [{ ownerRef: this.checkerUser.id }, { ownerRef: this.anotherUserId }],
+                dateCreated: '',
+                dateModified: '',
+                comments: [
+                  {
+                    dataId: 'c1Id',
+                    ownerRef: this.checkerUser.id,
+                    dateCreated: '',
+                    dateModified: ''
+                  }
+                ]
+              }
+            ],
+            audioUrl: '/audio.mp3',
+            isArchived: false,
+            dateCreated: '',
+            dateModified: ''
+          }
+        },
+        {
+          id: getQuestionDocId('project01', 'q2Id'),
+          data: {
+            dataId: 'q2Id',
+            projectRef: 'project01',
+            ownerRef: this.adminUser.id,
+            text: 'Book 1, Q2 text',
+            verseRef: {
+              bookNum: 40,
+              chapterNum: 1,
+              verseNum: 4
+            },
+            answers: [
+              {
+                dataId: 'a2Id',
+                ownerRef: this.anotherUserId,
+                likes: [{ ownerRef: this.checkerUser.id }],
+                dateCreated: '',
+                dateModified: '',
+                comments: [
+                  {
+                    dataId: 'c2Id',
+                    ownerRef: this.checkerUser.id,
+                    dateCreated: '',
+                    dateModified: ''
+                  }
+                ]
+              }
+            ],
+            isArchived: false,
+            dateModified: '',
+            dateCreated: ''
+          }
+        },
+        {
+          id: getQuestionDocId('project01', 'q3Id'),
+          data: {
+            dataId: 'q3Id',
+            projectRef: 'project01',
+            ownerRef: this.adminUser.id,
+            text: 'Book 1, Q3 text',
+            verseRef: {
+              bookNum: 40,
+              chapterNum: 1,
+              verseNum: 5
+            },
+            answers: [
+              {
+                dataId: 'a3Id',
+                ownerRef: this.anotherUserId,
+                likes: [{ ownerRef: this.checkerUser.id }],
+                dateCreated: '',
+                dateModified: '',
+                comments: [
+                  {
+                    dataId: 'c3Id',
+                    ownerRef: this.anotherUserId,
+                    dateCreated: '',
+                    dateModified: ''
+                  }
+                ]
+              }
+            ],
+            isArchived: false,
+            dateCreated: '',
+            dateModified: ''
+          }
+        },
+        {
+          id: getQuestionDocId('project01', 'q4Id'),
+          data: {
+            dataId: 'q4Id',
+            projectRef: 'project01',
+            ownerRef: this.adminUser.id,
+            text: 'Book 1, Q4 text',
+            verseRef: {
+              bookNum: 40,
+              chapterNum: 1,
+              verseNum: 6
+            },
+            answers: [],
+            isArchived: false,
+            dateCreated: '',
+            dateModified: ''
+          }
+        },
+        {
+          id: getQuestionDocId('project01', 'q5Id'),
+          data: {
+            dataId: 'q5Id',
+            projectRef: 'project01',
+            ownerRef: this.adminUser.id,
+            text: 'Book 1, Q5 text',
+            verseRef: {
+              bookNum: 40,
+              chapterNum: 1,
+              verseNum: 7
+            },
+            answers: [],
+            isArchived: false,
+            dateCreated: '',
+            dateModified: ''
+          }
+        },
+        {
+          id: getQuestionDocId('project01', 'q6Id'),
+          data: {
+            dataId: 'q6Id',
+            projectRef: 'project01',
+            ownerRef: this.adminUser.id,
+            text: 'Book 1, Q6 text',
+            verseRef: {
+              bookNum: 40,
+              chapterNum: 1,
+              verseNum: 8
+            },
+            answers: [],
+            isArchived: false,
+            dateCreated: '',
+            dateModified: ''
+          }
+        },
+        {
+          id: getQuestionDocId('project01', 'q7Id'),
+          data: {
+            dataId: 'q7Id',
+            projectRef: 'project01',
+            ownerRef: this.adminUser.id,
+            text: 'Book 1, Q7 text',
+            verseRef: {
+              bookNum: 40,
+              chapterNum: 1,
+              verseNum: 9
+            },
+            answers: [],
+            isArchived: true,
+            dateCreated: '',
+            dateModified: ''
+          }
+        },
+        {
+          id: getQuestionDocId('project01', 'q8Id'),
+          data: {
+            dataId: 'q8Id',
+            projectRef: 'project01',
+            ownerRef: this.anotherUserId,
+            text: 'Book 2, Q3 text',
+            verseRef: {
+              bookNum: 42,
+              chapterNum: 1,
+              verseNum: 1
+            },
+            answers: [],
+            isArchived: false,
+            dateCreated: '',
+            dateModified: ''
+          }
         }
-      },
-      {
-        id: getQuestionDocId('project01', 'q2Id'),
-        data: {
-          dataId: 'q2Id',
-          projectRef: 'project01',
-          ownerRef: this.adminUser.id,
-          text: 'Book 1, Q2 text',
-          verseRef: {
-            bookNum: 40,
-            chapterNum: 1,
-            verseNum: 4
-          },
-          answers: [
-            {
-              dataId: 'a2Id',
-              ownerRef: this.anotherUserId,
-              likes: [{ ownerRef: this.checkerUser.id }],
-              dateCreated: '',
-              dateModified: '',
-              comments: [
-                {
-                  dataId: 'c2Id',
-                  ownerRef: this.checkerUser.id,
-                  dateCreated: '',
-                  dateModified: ''
-                }
-              ]
-            }
-          ],
-          isArchived: false,
-          dateModified: '',
-          dateCreated: ''
-        }
-      },
-      {
-        id: getQuestionDocId('project01', 'q3Id'),
-        data: {
-          dataId: 'q3Id',
-          projectRef: 'project01',
-          ownerRef: this.adminUser.id,
-          text: 'Book 1, Q3 text',
-          verseRef: {
-            bookNum: 40,
-            chapterNum: 1,
-            verseNum: 5
-          },
-          answers: [
-            {
-              dataId: 'a3Id',
-              ownerRef: this.anotherUserId,
-              likes: [{ ownerRef: this.checkerUser.id }],
-              dateCreated: '',
-              dateModified: '',
-              comments: [
-                {
-                  dataId: 'c3Id',
-                  ownerRef: this.anotherUserId,
-                  dateCreated: '',
-                  dateModified: ''
-                }
-              ]
-            }
-          ],
-          isArchived: false,
-          dateCreated: '',
-          dateModified: ''
-        }
-      },
-      {
-        id: getQuestionDocId('project01', 'q4Id'),
-        data: {
-          dataId: 'q4Id',
-          projectRef: 'project01',
-          ownerRef: this.adminUser.id,
-          text: 'Book 1, Q4 text',
-          verseRef: {
-            bookNum: 40,
-            chapterNum: 1,
-            verseNum: 6
-          },
-          answers: [],
-          isArchived: false,
-          dateCreated: '',
-          dateModified: ''
-        }
-      },
-      {
-        id: getQuestionDocId('project01', 'q5Id'),
-        data: {
-          dataId: 'q5Id',
-          projectRef: 'project01',
-          ownerRef: this.adminUser.id,
-          text: 'Book 1, Q5 text',
-          verseRef: {
-            bookNum: 40,
-            chapterNum: 1,
-            verseNum: 7
-          },
-          answers: [],
-          isArchived: false,
-          dateCreated: '',
-          dateModified: ''
-        }
-      },
-      {
-        id: getQuestionDocId('project01', 'q6Id'),
-        data: {
-          dataId: 'q6Id',
-          projectRef: 'project01',
-          ownerRef: this.adminUser.id,
-          text: 'Book 1, Q6 text',
-          verseRef: {
-            bookNum: 40,
-            chapterNum: 1,
-            verseNum: 8
-          },
-          answers: [],
-          isArchived: false,
-          dateCreated: '',
-          dateModified: ''
-        }
-      },
-      {
-        id: getQuestionDocId('project01', 'q7Id'),
-        data: {
-          dataId: 'q7Id',
-          projectRef: 'project01',
-          ownerRef: this.adminUser.id,
-          text: 'Book 1, Q7 text',
-          verseRef: {
-            bookNum: 40,
-            chapterNum: 1,
-            verseNum: 9
-          },
-          answers: [],
-          isArchived: true,
-          dateCreated: '',
-          dateModified: ''
-        }
-      },
-      {
-        id: getQuestionDocId('project01', 'q8Id'),
-        data: {
-          dataId: 'q8Id',
-          projectRef: 'project01',
-          ownerRef: this.anotherUserId,
-          text: 'Book 2, Q3 text',
-          verseRef: {
-            bookNum: 42,
-            chapterNum: 1,
-            verseNum: 1
-          },
-          answers: [],
-          isArchived: false,
-          dateCreated: '',
-          dateModified: ''
-        }
-      }
-    ]);
+      ]);
+    }
     this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
       {
         id: 'project01',
@@ -592,13 +658,6 @@ class TestEnvironment {
     );
     when(mockedProjectService.queryQuestions('project01')).thenCall(() =>
       this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {})
-    );
-    when(mockedProjectService.createQuestion(anything(), anything())).thenCall((id, newQuestion) =>
-      this.realtimeService.create<QuestionDoc>(
-        QuestionDoc.COLLECTION,
-        getQuestionDocId(id, newQuestion.dataId),
-        newQuestion
-      )
     );
     this.setCurrentUser(this.adminUser);
 
