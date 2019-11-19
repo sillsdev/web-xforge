@@ -1099,7 +1099,7 @@ class TestEnvironment {
   }
 
   get audioTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab[label="Record/Upload"]'));
+    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(2)'));
   }
 
   get removeAudioButton(): DebugElement {
@@ -1128,7 +1128,7 @@ class TestEnvironment {
   }
 
   get selectTextTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab[label="Select Text"]'));
+    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(3)'));
   }
 
   get selectVersesButton(): DebugElement {

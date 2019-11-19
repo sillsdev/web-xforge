@@ -1,5 +1,6 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { MediaObserver } from '@angular/flex-layout';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import cloneDeep from 'lodash/cloneDeep';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
@@ -115,7 +116,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly userService: UserService,
     private readonly dialog: MdcDialog,
     private readonly noticeService: NoticeService,
-    private readonly questionDialogService: QuestionDialogService
+    private readonly questionDialogService: QuestionDialogService,
+    public media: MediaObserver
   ) {
     super();
   }

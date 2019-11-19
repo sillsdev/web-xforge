@@ -92,15 +92,9 @@
     display: flex;
     justify-content: flex-end;
   }
-  @include media-breakpoint-down(xs) {
+  @include media-breakpoint-down(lg) {
     mdc-tab {
       padding: 0 10px;
-    }
-    mdc-tab:first-child {
-      padding-left: 0;
-    }
-    mdc-tab:last-child {
-      padding-right: 0;
     }
   }
 }
