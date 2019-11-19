@@ -15,7 +15,7 @@ import { MessageDialogComponent } from './message-dialog/message-dialog.componen
 import { RealtimeOfflineStore } from './realtime-offline-store';
 import { RealtimeRemoteStore } from './realtime-remote-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
-import { SupportedBrowsersComponent } from './supported-browsers/supported-browsers.component';
+import { SupportedBrowsersDialogComponent } from './supported-browsers-dialog/supported-browsers-dialog.component';
 import { SaDeleteDialogComponent } from './system-administration/sa-delete-dialog.component';
 import { SaProjectsComponent } from './system-administration/sa-projects.component';
 import { SaUsersComponent } from './system-administration/sa-users.component';
@@ -31,12 +31,16 @@ const componentExports = [
   SaProjectsComponent,
   SaDeleteDialogComponent,
   SaUsersComponent,
-  SupportedBrowsersComponent,
+  SupportedBrowsersDialogComponent,
   SystemAdministrationComponent,
   WriteStatusComponent
 ];
 
-export const xForgeCommonEntryComponents = [EditNameDialogComponent, SaDeleteDialogComponent];
+export const xForgeCommonEntryComponents = [
+  EditNameDialogComponent,
+  SaDeleteDialogComponent,
+  SupportedBrowsersDialogComponent
+];
 
 @NgModule({
   imports: [
