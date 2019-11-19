@@ -1,3 +1,4 @@
+import { MdcDialog } from '@angular-mdc/web';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -6,8 +7,9 @@ import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
+import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
-import { browserValidated } from 'xforge-common/utils';
+import { supportedBrowser } from 'xforge-common/utils';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 
@@ -19,6 +21,7 @@ import { SFProjectService } from '../core/sf-project.service';
 export class ProjectComponent extends DataLoadingComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
+    private readonly dialog: MdcDialog,
     private readonly projectService: SFProjectService,
     private readonly router: Router,
     private readonly userService: UserService,
@@ -28,9 +31,8 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (!browserValidated()) {
-      this.router.navigateByUrl('/supported-browsers', { replaceUrl: true });
-      return;
+    if (!supportedBrowser()) {
+      this.dialog.open(SupportedBrowsersDialogComponent);
     }
     this.subscribe(
       this.route.params.pipe(

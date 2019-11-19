@@ -21,11 +21,11 @@ export function promiseTimeout<T>(promise: Promise<T>, timeout: number) {
   ]);
 }
 
-export function browserValidated(): boolean {
+export function supportedBrowser(): boolean {
   const bowser = Bowser.getParser(window.navigator.userAgent);
 
   // See https://caniuse.com/#feat=indexeddb2 for browsers supporting IndexedDB 2.0
-  const isValidBrowser = bowser.satisfies({
+  const isSupportedBrowser = bowser.satisfies({
     chrome: '>=58',
     chromium: '>=58',
     edge: '>=76',
@@ -41,7 +41,7 @@ export function browserValidated(): boolean {
       'samsung internet': '>=7.2'
     }
   });
-  return isValidBrowser ? true : false;
+  return isSupportedBrowser ? true : false;
 }
 
 export function issuesEmailTemplate(errorId?: string): string {

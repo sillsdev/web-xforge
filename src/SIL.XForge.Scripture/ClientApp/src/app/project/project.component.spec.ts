@@ -1,3 +1,4 @@
+import { MdcDialog } from '@angular-mdc/web';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
@@ -8,7 +9,7 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { of } from 'rxjs';
-import { anything, deepEqual, mock, reset, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -26,6 +27,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
+const mockedDialog = mock(MdcDialog);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
@@ -36,7 +38,8 @@ describe('ProjectComponent', () => {
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: MdcDialog, useMock: mockedDialog }
     ]
   }));
 
