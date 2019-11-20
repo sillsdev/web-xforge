@@ -39,10 +39,8 @@
         <mdc-tab-bar #answerTabs fixed>
           <mdc-tab-scroller>
             <mdc-tab icon="title" label="Answer"></mdc-tab>
-            <mdc-tab icon="library_music" label="Record/Upload" fxHide.xs></mdc-tab>
-            <mdc-tab icon="library_music" label="Record" fxShow.xs fxHide></mdc-tab>
-            <mdc-tab icon="text_rotation_none" label="Select Text" fxHide.xs></mdc-tab>
-            <mdc-tab icon="text_rotation_none" label="Select" fxShow.xs fxHide></mdc-tab>
+            <mdc-tab icon="library_music" label="{{ media.isActive('xs') ? 'Record' : 'Record/Upload' }}"></mdc-tab>
+            <mdc-tab icon="text_rotation_none" label="{{ media.isActive('xs') ? 'Select' : 'Select Text' }}"></mdc-tab>
           </mdc-tab-scroller>
         </mdc-tab-bar>
         <div [fxShow]="answerTabs.activeTabIndex === 0" class="answer-tab answer-text">
@@ -57,17 +55,14 @@
             ></mdc-text-field>
           </mdc-form-field>
         </div>
-        <div
-          [fxShow]="answerTabs.activeTabIndex === 1 || answerTabs.activeTabIndex === 2"
-          class="answer-tab answer-record-upload"
-        >
+        <div [fxShow]="answerTabs.activeTabIndex === 1" class="answer-tab answer-record-upload">
           <app-checking-audio-combined
             [source]="activeAnswer?.audioUrl"
             (update)="processAudio($event)"
           ></app-checking-audio-combined>
         </div>
         <div
-          [fxHide]="!(answerTabs.activeTabIndex === 3 || answerTabs.activeTabIndex === 4)"
+          [fxHide]="answerTabs.activeTabIndex !== 2"
           class="answer-tab answer-select-text"
           [class.text-selected]="selectedText"
         >
