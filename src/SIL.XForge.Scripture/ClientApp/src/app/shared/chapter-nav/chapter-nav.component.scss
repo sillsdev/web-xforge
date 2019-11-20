@@ -16,6 +16,7 @@
   @include mdc-select-container-fill-color(transparent);
   height: 40px;
   align-items: center;
+  padding-right: 1.25em;
 
   ::ng-deep .mdc-select__selected-text {
     border: none;
@@ -29,4 +30,8 @@
   ::ng-deep .mdc-line-ripple {
     display: none;
   }
+}
+
+.chapter-label {
+  white-space: nowrap;
 }
