@@ -1,6 +1,8 @@
 import { TestBed, TestModuleMetadata } from '@angular/core/testing';
+import { TranslocoTestingModule } from '@ngneat/transloco';
 import { configureTestSuite } from 'ng-bullet';
 import { instance, reset } from 'ts-mockito';
+import { en } from './i18n.service';
 
 /**
  * Configures the testing module so that it is setup only once for a test fixture instead of once for each test. Setting
@@ -36,3 +38,13 @@ export const configureTestingModule = (createModuleDef: () => TestModuleMetadata
     }
   });
 };
+
+export const TestTranslocoModule = TranslocoTestingModule.withLangs(
+  { en },
+  {
+    availableLangs: ['en'],
+    reRenderOnLangChange: true,
+    fallbackLang: 'en',
+    defaultLang: 'en'
+  }
+);

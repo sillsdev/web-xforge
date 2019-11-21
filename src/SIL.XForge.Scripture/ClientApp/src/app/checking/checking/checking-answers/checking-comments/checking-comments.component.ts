@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { translate } from '@ngneat/transloco';
 import cloneDeep from 'lodash/cloneDeep';
 import sortBy from 'lodash/sortBy';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
@@ -43,7 +44,7 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
 
   get showMoreCommentsLabel(): string {
     const comments = this.getSortedComments();
-    let label = 'Show ' + (comments.length - (this.maxCommentsToShow - 1)) + ' more comments';
+    const count = comments.length - (this.maxCommentsToShow - 1);
     let counter = 1;
     let unread = 0;
     for (const comment of comments) {
@@ -54,8 +55,12 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
       }
       counter++;
     }
-    label += unread ? ' - ' + unread + ' unread' : '';
-    return label;
+
+    if (unread > 0) {
+      return translate('checking_comments.show_more_comments_and_unread', { count, unread });
+    } else {
+      return translate('checking_comments.show_more_comments', { count });
+    }
   }
 
   get commentCount(): number {

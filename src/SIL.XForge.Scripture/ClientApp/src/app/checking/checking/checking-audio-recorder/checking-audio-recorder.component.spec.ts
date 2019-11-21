@@ -5,7 +5,7 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SF_REALTIME_DOC_TYPES } from '../../../core/models/sf-realtime-doc-types';
@@ -18,7 +18,7 @@ const mockedNoticeService = mock(NoticeService);
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
     declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioTimePipe],
-    imports: [UICommonModule],
+    imports: [UICommonModule, TestTranslocoModule],
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService }

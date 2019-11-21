@@ -1,0 +1,82 @@
+{
+  "app": {
+    "all_questions": "All Questions",
+    "cannot_change_password": "Can't change password at this time. Try again later or report an issue in the Help menu.",
+    "change_password": "Change password",
+    "community_checking": "Community Checking",
+    "help": "Help",
+    "log_out": "Log out",
+    "logged_in_as": "Logged in as",
+    "overview": "Overview",
+    "product_version": "Product version: v{{ version }}",
+    "project_home": "Project home",
+    "report_issue_email": "email {{ email }}",
+    "report_issue": "Report an issue",
+    "scripture_checking_not_available": "Scripture checking is not available in this project."
+  },
+  "checking_answers": {
+    "add_answer": "添加用户",
+    "answer_required_before_saving": "You need to enter your answer or record your answer before saving",
+    "answer": "解答",
+    "answers": "{{ count }} Answers",
+    "cancel": "取消",
+    "cannot_like_own_answer": "You cannot like your own answer.",
+    "delete": "删除",
+    "edit": "编辑",
+    "no_scripture_selected": "No scripture selected yet.",
+    "record_upload": "Record/Upload",
+    "record": "Record",
+    "recording_automatically_stopped": "The recording for your answer was automatically stopped.",
+    "save_answer": "Save Answer",
+    "select_text": "选择文本",
+    "select_verses": "Select verses",
+    "select": "Select",
+    "show_more_unread": "Show {{ count }} more unread answers",
+    "your_answer": "你的答案"
+  },
+  "checking_audio_combined": {
+    "remove_audio_file": "Remove Audio File",
+    "upload_audio_file": "Upload Audio File",
+    "upload": "Upload"
+  },
+  "checking_audio_recorder": {
+    "record": "录制音频",
+    "stop_recording": "Stop Recording",
+    "try_again": "Try Again"
+  },
+  "checking_comment_form": {
+    "cancel": "Cancel",
+    "comment_cannot_be_blank": "You need to enter your comment before saving",
+    "save_comment": "Save comment",
+    "your_comment": "Your comment"
+  },
+  "checking_comments": {
+    "add_a_comment": "Add a comment",
+    "delete": "Delete",
+    "edit": "Edit",
+    "show_more_comments_and_unread": "Show {{ count }} more comments - {{ unread }} unread",
+    "show_more_comments": "Show {{ count }} more comments"
+  },
+  "share_control": {
+    "copy_link": "Copy link",
+    "email_invalid": "Email address is invalid",
+    "email": "Email",
+    "invitation_sent": "An invitation email has been sent to {{ email }}",
+    "invite_people": "Invite people",
+    "link_copied": "Link copied to clipboard",
+    "link_sharing": "Link sharing",
+    "not_inviting_already_member": "Not inviting: User is already a member of this project",
+    "resend": "Resend",
+    "send": "Send"
+  },
+  "share_dialog": {
+    "done": "Done",
+    "share_with_others": "Share with others"
+  },
+  "questions": {
+    "me": "我",
+    "next": "下一个",
+    "previous": "上一个",
+    "questions": "问题"
+  }
+}

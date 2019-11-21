@@ -11,7 +11,7 @@
           <div class="panel">
             <div class="panel-heading">
               <mdc-icon>help</mdc-icon>
-              <h2>Questions ({{ totalQuestions() }})</h2>
+              <h2>{{ "questions.questions" | transloco }} ({{ totalQuestions() }})</h2>
               <button
                 mdc-icon-button
                 class="collapse-question-menu"
@@ -133,7 +133,7 @@
             [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
             class="prev-question"
           >
-            <mdc-icon>chevron_left</mdc-icon>Previous
+            <mdc-icon>chevron_left</mdc-icon>{{ "questions.previous" | transloco }}
           </button>
           <button
             mdc-button
@@ -143,7 +143,7 @@
             [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
             class="next-question"
           >
-            Next<mdc-icon>chevron_right</mdc-icon>
+            {{ "questions.next" | transloco }}<mdc-icon>chevron_right</mdc-icon>
           </button>
           <button
             mdc-icon-button

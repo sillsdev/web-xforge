@@ -1,16 +1,18 @@
-<mdc-dialog>
-  <mdc-dialog-container>
-    <mdc-dialog-surface class="dialog-size">
-      <mdc-dialog-title>Share with others</mdc-dialog-title>
-      <mdc-dialog-content>
-        <app-share-control
-          [projectId]="data.projectId"
-          [isLinkSharingEnabled]="data.isLinkSharingEnabled"
-        ></app-share-control>
-      </mdc-dialog-content>
-      <mdc-dialog-actions align="end">
-        <button id="close-btn" mdcDialogButton type="button" mdcDialogAction="close">Done</button>
-      </mdc-dialog-actions>
-    </mdc-dialog-surface>
-  </mdc-dialog-container>
-</mdc-dialog>
+<ng-container *transloco="let t; read: 'share_dialog'">
+  <mdc-dialog>
+    <mdc-dialog-container>
+      <mdc-dialog-surface class="dialog-size">
+        <mdc-dialog-title>{{ t("share_with_others") }}</mdc-dialog-title>
+        <mdc-dialog-content>
+          <app-share-control
+            [projectId]="data.projectId"
+            [isLinkSharingEnabled]="data.isLinkSharingEnabled"
+          ></app-share-control>
+        </mdc-dialog-content>
+        <mdc-dialog-actions align="end">
+          <button id="close-btn" mdcDialogButton type="button" mdcDialogAction="close">{{ t("done") }}</button>
+        </mdc-dialog-actions>
+      </mdc-dialog-surface>
+    </mdc-dialog-container>
+  </mdc-dialog>
+</ng-container>

@@ -4,6 +4,7 @@ import { ErrorHandler, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
+import { TranslocoModule } from '@ngneat/transloco';
 import { ExceptionHandlingService } from 'xforge-common/exception-handling-service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { xForgeCommonEntryComponents, XForgeCommonModule } from 'xforge-common/xforge-common.module';
@@ -47,7 +48,8 @@ import { UsersModule } from './users/users.module';
     CheckingModule,
     UsersModule,
     UICommonModule,
-    XForgeCommonModule
+    XForgeCommonModule,
+    TranslocoModule
   ],
   providers: [DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
   entryComponents: [

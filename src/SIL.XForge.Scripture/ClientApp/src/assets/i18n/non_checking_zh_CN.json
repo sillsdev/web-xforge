@@ -1,0 +1,9 @@
+{
+  "checking_answers": {
+    "archive": "Archive",
+    "only_community_checkers_can_like": "Only Community Checkers can like answers."
+  },
+  "question_dialog": {
+    "must_be_after_scripture_reference": "Must be after {{ strongStart }}Scripture reference{{ strongEnd }}"
+  }
+}
