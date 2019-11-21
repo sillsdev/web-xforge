@@ -104,6 +104,12 @@
         margin: 0 -20px -14px;
         justify-content: space-between;
       }
+      .next-question {
+        margin-right: 8px;
+        mdc-icon {
+          margin-right: 0;
+        }
+      }
       @include media-breakpoint-down(xs) {
         margin: -10px;
         .next-question,

@@ -26,6 +26,7 @@ import {
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { CONSOLE } from 'xforge-common/browser-globals';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -45,6 +46,18 @@ const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 
+class MockConsole {
+  log(val: any) {
+    if (
+      typeof val !== 'string' ||
+      (!/(Translated|Trained) segment, length: \d+, time: \d+\.\d+ms/.test(val) &&
+        !/Segment \w+ of document \w+ was trained successfully\./.test(val))
+    ) {
+      console.log(val);
+    }
+  }
+}
+
 describe('EditorComponent', () => {
   configureTestingModule(() => ({
     declarations: [EditorComponent, SuggestionsComponent],
@@ -53,7 +66,8 @@ describe('EditorComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: ActivatedRoute, useMock: mockedActivatedRoute }
+      { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: CONSOLE, useValue: new MockConsole() }
     ]
   }));
 

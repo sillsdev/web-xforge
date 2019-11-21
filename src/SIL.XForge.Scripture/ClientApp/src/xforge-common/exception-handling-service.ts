@@ -3,6 +3,7 @@ import { ErrorHandler, Injectable, Injector, NgZone } from '@angular/core';
 import cloneDeep from 'lodash/cloneDeep';
 import { User } from 'realtime-server/lib/common/models/user';
 import { environment } from '../environments/environment';
+import { CONSOLE } from './browser-globals';
 import { ErrorReportingService } from './error-reporting.service';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
 import { UserDoc } from './models/user-doc';
@@ -14,6 +15,7 @@ type UserForReport = User & { id: string };
 
 @Injectable()
 export class ExceptionHandlingService implements ErrorHandler {
+  private console = window.console; // use injected console when possible; falling back to window.console if necessary
   private alertQueue: ErrorAlert[] = [];
   private dialogOpen = false;
   private currentUser?: UserDoc;
@@ -36,14 +38,15 @@ export class ExceptionHandlingService implements ErrorHandler {
       dialog = this.injector.get(MdcDialog);
       errorReportingService = this.injector.get(ErrorReportingService);
       userService = this.injector.get(UserService);
+      this.console = this.injector.get(CONSOLE);
     } catch (err) {
-      console.log(`Error occured. Unable to report to Bugsnag, because dependency injection failed.`);
-      console.error(error);
+      this.console.log(`Error occurred. Unable to report to Bugsnag, because dependency injection failed.`);
+      this.console.error(error);
       return;
     }
 
-    if (typeof error !== 'object' || error === null) {
-      error = new Error('Unkown error: ' + String(error));
+    if (typeof error !== 'object' || error === null || Array.isArray(error)) {
+      error = new Error('Unknown error: ' + String(error));
     }
 
     // If a promise was rejected with an error, we want to report that error, because it has a useful stack trace
@@ -62,7 +65,7 @@ export class ExceptionHandlingService implements ErrorHandler {
       message.includes('A mutation operation was attempted on a database that did not allow mutations.') &&
       window.navigator.userAgent.includes('Gecko/')
     ) {
-      message = 'Firefox private browsing mode is not supported because IndexedDB is not avilable.';
+      message = 'Firefox private browsing mode is not supported because IndexedDB is not available.';
     }
 
     // try/finally blocks are to prevent an exception from preventing reporting or logging of an error
@@ -76,8 +79,8 @@ export class ExceptionHandlingService implements ErrorHandler {
       }
     } finally {
       // Error logging occurs after error reporting so it won't show up as noise in Bugsnag's breadcrumbs
-      console.log(`Error occured. Reported to Bugsnag with release stage set to ${environment.releaseStage}:`);
-      console.error(error);
+      this.console.log(`Error occurred. Reported to Bugsnag with release stage set to ${environment.releaseStage}:`);
+      this.console.error(error);
     }
   }
 
@@ -116,8 +119,8 @@ export class ExceptionHandlingService implements ErrorHandler {
       },
       err => {
         if (err) {
-          console.error('Sending error report failed:');
-          console.error(err);
+          this.console.error('Sending error report failed:');
+          this.console.error(err);
         }
       }
     );

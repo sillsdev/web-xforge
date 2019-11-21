@@ -1,5 +1,5 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -21,6 +21,7 @@ import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
+import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -92,7 +93,8 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     noticeService: NoticeService,
     private readonly helpHeroService: HelpHeroService,
     private readonly dialog: MdcDialog,
-    private readonly mediaObserver: MediaObserver
+    private readonly mediaObserver: MediaObserver,
+    @Inject(CONSOLE) private readonly console: ConsoleInterface
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
@@ -624,7 +626,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
     if (sourceSegment === this.source.segmentText) {
       this.translationSession = translationSession;
       const finish = performance.now();
-      console.log(`Translated segment, length: ${words.length}, time: ${finish - start}ms`);
+      this.console.log(`Translated segment, length: ${words.length}, time: ${finish - start}ms`);
     }
   }
 
@@ -704,7 +706,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
 
     await this.translationSession.approve(true);
     segment.acceptChanges();
-    console.log(
+    this.console.log(
       'Segment ' + segment.ref + ' of document ' + Canon.bookNumberToId(segment.bookNum) + ' was trained successfully.'
     );
   }

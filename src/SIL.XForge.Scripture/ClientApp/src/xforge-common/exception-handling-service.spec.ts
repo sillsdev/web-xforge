@@ -1,8 +1,9 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
+import { CONSOLE } from './browser-globals';
 import { ErrorReportingService } from './error-reporting.service';
 import { ErrorComponent } from './error/error.component';
 import { ExceptionHandlingService } from './exception-handling-service';
@@ -16,6 +17,23 @@ const mockedUserService = mock(UserService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedNoticeService = mock(NoticeService);
 
+// suppress any expected logging so it won't be shown in the test results
+class MockConsole {
+  log(val: any) {
+    if (val !== 'Error occurred. Reported to Bugsnag with release stage set to dev:') {
+      console.log(val);
+    }
+  }
+  error(val: any) {
+    if (
+      !['', 'Test error', 'Original error'].includes(val.message) &&
+      !(val.message != null && val.message.startsWith('Unknown error: '))
+    ) {
+      console.error(val);
+    }
+  }
+}
+
 describe('ExceptionHandlingService', () => {
   configureTestingModule(() => ({
     providers: [
@@ -23,7 +41,9 @@ describe('ExceptionHandlingService', () => {
       { provide: MdcDialog, useMock: mockedMdcDialog },
       { provide: UserService, useMock: mockedUserService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: CONSOLE, useValue: new MockConsole() }
     ]
   }));
 
@@ -55,7 +75,7 @@ describe('ExceptionHandlingService', () => {
     const env = new TestEnvironment();
     env.userDoc = undefined;
     await env.service.handleError({
-      message: 'Error message',
+      message: 'Test error',
       stack: 'Some stack trace'
     });
 
@@ -64,25 +84,20 @@ describe('ExceptionHandlingService', () => {
     expect(env.oneAndOnlyReport.opts.user).toBeUndefined();
   });
 
-  it('should handle user object being unavailable', done => {
-    jasmine.clock().install();
-    jasmine.clock().mockDate();
+  it('should handle user object being unavailable', fakeAsync(() => {
     const env = new TestEnvironment();
     env.timeoutUser = true;
-    env.service.handleError(new Error('Some error')).then(() => {
-      expect(env.oneAndOnlyReport.error).toBeDefined();
-      expect(env.oneAndOnlyReport.opts).toBeDefined();
-      expect(env.oneAndOnlyReport.opts.user).toBeUndefined();
-      done();
-    });
-    jasmine.clock().tick(3000);
-    jasmine.clock().uninstall();
-  });
+    env.service.handleError(new Error('Test error'));
+    tick(3000);
+    expect(env.oneAndOnlyReport.error).toBeDefined();
+    expect(env.oneAndOnlyReport.opts).toBeDefined();
+    expect(env.oneAndOnlyReport.opts.user).toBeUndefined();
+  }));
 
   it('should handle promise for user being rejected', async () => {
     const env = new TestEnvironment();
     env.rejectUser = true;
-    await env.service.handleError(new Error('Misspelled word error'));
+    await env.service.handleError(new Error('Test error'));
 
     expect(env.oneAndOnlyReport.error).toBeDefined();
     expect(env.oneAndOnlyReport.opts).toBeDefined();
