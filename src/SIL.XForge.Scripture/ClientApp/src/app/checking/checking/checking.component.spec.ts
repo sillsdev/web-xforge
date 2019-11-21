@@ -671,7 +671,7 @@ describe('CheckingComponent', () => {
       env.deleteAnswer('a6Id');
 
       // Total answers header goes away.
-      expect(env.totalAnswersMessageCount).toEqual(-1);
+      expect(env.totalAnswersMessageCount).toBeNull();
 
       // A remote answer is added
       env.simulateNewRemoteAnswer('remoteAnswerId123');
