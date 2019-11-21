@@ -195,6 +195,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return this.canSeeOtherUserResponses || !this.canAddAnswer;
   }
 
+  get shouldShowAnswers(): boolean {
+    return !this.answerFormVisible && this.totalAnswers > 0 && (this.currentUserTotalAnswers > 0 || !this.canAddAnswer);
+  }
+
   get totalAnswers(): number {
     return this.allAnswers.length;
   }
