@@ -1,5 +1,6 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Inject, OnDestroy, OnInit, Output } from '@angular/core';
 import RecordRTC from 'recordrtc';
+import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -23,7 +24,11 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   private recordRTC?: RecordRTC;
   private user?: UserDoc;
 
-  constructor(private userService: UserService, private noticeService: NoticeService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly noticeService: NoticeService,
+    @Inject(NAVIGATOR) private readonly navigator: Navigator
+  ) {}
 
   get hasAudioAttachment(): boolean {
     return this.audioUrl !== '';
@@ -69,7 +74,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
 
   startRecording() {
     const mediaConstraints: MediaStreamConstraints = { audio: true };
-    navigator.mediaDevices
+    this.navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then(this.successCallback.bind(this), this.errorCallback.bind(this));
     this.status.emit({ status: 'recording' });

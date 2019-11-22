@@ -12,6 +12,7 @@ import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/ver
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
+import { DOCUMENT } from 'xforge-common/browser-globals';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -23,46 +24,34 @@ import { SFProjectService } from '../core/sf-project.service';
 import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from './text-chooser-dialog.component';
 
 const mockedProjectService = mock(SFProjectService);
-const originalAddEventListener = document.addEventListener;
-const originalGetSelection = document.getSelection;
+const mockedDocument = mock(Document);
 
 describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule],
-    providers: [{ provide: SFProjectService, useMock: mockedProjectService }]
+    providers: [
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: DOCUMENT, useMock: mockedDocument }
+    ]
   }));
-
-  afterEach(() => {
-    document.addEventListener = originalAddEventListener;
-    document.getSelection = originalGetSelection;
-  });
 
   it('allows switching chapters', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.fixture.detectChanges();
-    flush();
     expect(env.headingText).toEqual('Matthew 1');
-    env.selectChapter.click();
-    env.fixture.detectChanges();
+    env.click(env.selectChapter);
     expect(env.headingText).toEqual('Luke 1');
-    env.cancelButton.click();
-    flush();
+    env.closeDialog();
   }));
 
   it('shows an error if save is clicked with no text selected', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.fixture.detectChanges();
-    flush();
     expect(env.errorMessage).toBeNull();
-    env.saveButton.click();
-    env.fixture.detectChanges();
+    env.click(env.saveButton);
     expect(env.errorMessage.textContent).toEqual('Select text to attach to your answer.');
-    env.cancelButton.click();
-    flush();
+    env.closeDialog();
   }));
 
   it('allows selecting text', fakeAsync(async () => {
-    const selectionChangedPromise = TestEnvironment.setUpSelectionChange();
     const env = new TestEnvironment(
       TestEnvironment.defaultDialogData,
       [
@@ -75,14 +64,10 @@ describe('TextChooserDialogComponent', () => {
       'verse_1_3',
       'changed'
     );
-    env.fixture.detectChanges();
-    flush();
     expect(env.selectedText).toEqual('');
-    (await selectionChangedPromise)();
-    env.fixture.detectChanges();
+    env.fireSelectionChange();
     expect(env.selectedText).toEqual('target: chapter (MAT 1:3)');
-    env.cancelButton.click();
-    flush();
+    env.closeDialog();
   }));
 
   it("doesn't require the user to modify an existing selection", fakeAsync(async () => {
@@ -99,24 +84,18 @@ describe('TextChooserDialogComponent', () => {
         verse: '2-3'
       }
     });
-    env.fixture.detectChanges();
-    flush();
     expect(env.selectedText).toEqual('previously selected text (JHN 1:2-3)');
-    env.saveButton.click();
+    env.click(env.saveButton);
     expect(await env.resultPromise).toEqual('close');
   }));
 
   it('is cancelable', fakeAsync(async () => {
     const env = new TestEnvironment();
-    env.fixture.detectChanges();
-    flush();
-    env.cancelButton.click();
-    flush();
+    env.closeDialog();
     expect(await env.resultPromise).toEqual('close');
   }));
 
   it("doesn't clear the selection if the user selects nothing or white space", fakeAsync(async () => {
-    const selectionChangedPromise = TestEnvironment.setUpSelectionChange();
     const env = new TestEnvironment(
       {
         bookNum: 40,
@@ -145,17 +124,12 @@ describe('TextChooserDialogComponent', () => {
       'verse_1_3',
       '\n '
     );
-    env.fixture.detectChanges();
-    flush();
-    (await selectionChangedPromise)();
-    env.fixture.detectChanges();
+    env.fireSelectionChange();
     expect(env.selectedText).toEqual('previously selected text (MRK 1:2-3)');
-    env.cancelButton.click();
-    flush();
+    env.closeDialog();
   }));
 
   it('expands the selection to whole words', fakeAsync(async () => {
-    const selectionChangedPromise = TestEnvironment.setUpSelectionChange();
     const env = new TestEnvironment(
       TestEnvironment.defaultDialogData,
       [
@@ -168,17 +142,12 @@ describe('TextChooserDialogComponent', () => {
       'verse_1_5',
       'changed'
     );
-    env.fixture.detectChanges();
-    flush();
-    (await selectionChangedPromise)();
-    env.fixture.detectChanges();
+    env.fireSelectionChange();
     expect(env.selectedText).toEqual('chapter 1, verse 4. rest of verse 4 target (MAT 1:4-5)');
-    env.cancelButton.click();
-    flush();
+    env.closeDialog();
   }));
 
   it('indicates when not all segments of the end verse were selected', fakeAsync(async () => {
-    const selectionChangedPromise = TestEnvironment.setUpSelectionChange();
     const env = new TestEnvironment(
       TestEnvironment.defaultDialogData,
       [
@@ -191,12 +160,9 @@ describe('TextChooserDialogComponent', () => {
       'verse_1_4',
       'changed'
     );
-    env.fixture.detectChanges();
-    flush();
-    (await selectionChangedPromise)();
-    env.fixture.detectChanges();
+    env.fireSelectionChange();
     expect(env.selectedText).toEqual('target: chapter 1, verse 3. target: chapter 1, verse 4. (MAT 1:3-4)');
-    env.saveButton.click();
+    env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 3, verse: '3-4' },
       text: 'target: chapter 1, verse 3. target: chapter 1, verse 4.',
@@ -206,7 +172,6 @@ describe('TextChooserDialogComponent', () => {
   }));
 
   it('indicates when not all segments of the start verse were selected', fakeAsync(async () => {
-    const selectionChangedPromise = TestEnvironment.setUpSelectionChange();
     const env = new TestEnvironment(
       TestEnvironment.defaultDialogData,
       [
@@ -219,12 +184,9 @@ describe('TextChooserDialogComponent', () => {
       'verse_1_5',
       'changed'
     );
-    env.fixture.detectChanges();
-    flush();
-    (await selectionChangedPromise)();
-    env.fixture.detectChanges();
+    env.fireSelectionChange();
     expect(env.selectedText).toEqual('rest of verse 4 target: chapter 1, (MAT 1:4-5)');
-    env.saveButton.click();
+    env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 4, verse: '4-5' },
       text: 'rest of verse 4 target: chapter 1,',
@@ -234,7 +196,6 @@ describe('TextChooserDialogComponent', () => {
   }));
 
   it('indicates when the segments were only partially selected', fakeAsync(async () => {
-    const selectionChangedPromise = TestEnvironment.setUpSelectionChange();
     const env = new TestEnvironment(
       TestEnvironment.defaultDialogData,
       [
@@ -247,12 +208,9 @@ describe('TextChooserDialogComponent', () => {
       'verse_1_5',
       'changed'
     );
-    env.fixture.detectChanges();
-    flush();
-    (await selectionChangedPromise)();
-    env.fixture.detectChanges();
+    env.fireSelectionChange();
     expect(env.selectedText).toEqual(': chapter 1, verse 4. rest of verse 4 target: chapter 1 (MAT 1:4-5)');
-    env.saveButton.click();
+    env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 4, verse: '4-5' },
       text: ': chapter 1, verse 4. rest of verse 4 target: chapter 1',
@@ -325,18 +283,6 @@ class TestEnvironment {
     textsByBookId: TestEnvironment.textsByBookId
   };
 
-  static setUpSelectionChange(): Promise<() => any> {
-    return new Promise(resolve => {
-      document.addEventListener = (_event: string, handler: any) => {
-        if (_event === 'selectionchange') {
-          resolve(handler);
-        } else {
-          originalAddEventListener.bind(document)(_event, handler);
-        }
-      };
-    });
-  }
-
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly overlayContainerElement: HTMLElement;
   readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
@@ -344,6 +290,7 @@ class TestEnvironment {
   readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
 
   readonly resultPromise: Promise<TextSelection | 'close'>;
+  selectionChangeHandler!: () => any;
 
   constructor(
     dialogData?: TextChooserDialogData,
@@ -352,29 +299,33 @@ class TestEnvironment {
     endSegment = 'verse_1_2',
     selection = ''
   ) {
-    document.getSelection = () => {
-      return {
-        toString: () => selection,
-        rangeCount: ranges.length,
-        getRangeAt: (index: number) => ranges[index],
-        containsNode: (node: Node): boolean => {
-          const segments = Array.from(this.editor.querySelectorAll(`usx-segment[data-segment^="verse_"]`));
-          let startingSegmentReached = false;
-          for (const segment of segments) {
-            if (segment.getAttribute('data-segment') === startSegment) {
-              startingSegmentReached = true;
-            }
-            if (startingSegmentReached && segment.contains(node)) {
-              return true;
-            }
-            if (segment.getAttribute('data-segment') === endSegment) {
-              break;
-            }
+    when(mockedDocument.getSelection()).thenReturn({
+      toString: () => selection,
+      rangeCount: ranges.length,
+      getRangeAt: (index: number) => ranges[index],
+      containsNode: (node: Node): boolean => {
+        const segments = Array.from(this.editor.querySelectorAll(`usx-segment[data-segment^="verse_"]`));
+        let startingSegmentReached = false;
+        for (const segment of segments) {
+          if (segment.getAttribute('data-segment') === startSegment) {
+            startingSegmentReached = true;
           }
-          return false;
+          if (startingSegmentReached && segment.contains(node)) {
+            return true;
+          }
+          if (segment.getAttribute('data-segment') === endSegment) {
+            break;
+          }
         }
-      } as Selection;
-    };
+        return false;
+      }
+    } as Selection);
+
+    when(mockedDocument.addEventListener('selectionchange', anything())).thenCall(
+      (_event: string, callback: () => any) => {
+        this.selectionChangeHandler = callback;
+      }
+    );
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
 
@@ -404,6 +355,9 @@ class TestEnvironment {
     when(dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
+
+    this.fixture.detectChanges();
+    flush();
   }
 
   get saveButton(): HTMLButtonElement {
@@ -437,6 +391,21 @@ class TestEnvironment {
 
   select(query: string) {
     return this.overlayContainerElement.querySelector(query)!;
+  }
+
+  fireSelectionChange() {
+    this.selectionChangeHandler();
+    this.fixture.detectChanges();
+  }
+
+  closeDialog() {
+    this.cancelButton.click();
+    flush();
+  }
+
+  click(button: HTMLButtonElement) {
+    button.click();
+    this.fixture.detectChanges();
   }
 
   private addTextDoc(bookNum: number): void {

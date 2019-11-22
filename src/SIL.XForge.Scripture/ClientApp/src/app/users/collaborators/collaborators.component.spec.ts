@@ -15,7 +15,7 @@ import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-in
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -40,7 +40,8 @@ describe('CollaboratorsComponent', () => {
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      emptyHammerLoader
     ]
   }));
 

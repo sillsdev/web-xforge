@@ -23,7 +23,7 @@ import { ProjectService } from '../project.service';
 import { Filters, QueryParameters } from '../query-parameters';
 import { RealtimeDocTypes } from '../realtime-doc-types';
 import { TestRealtimeService } from '../test-realtime.service';
-import { configureTestingModule } from '../test-utils';
+import { configureTestingModule, emptyHammerLoader } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
@@ -42,7 +42,8 @@ describe('SaUsersComponent', () => {
       { provide: MdcDialog, useMock: mockedMdcDialog },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: ProjectService, useMock: mockedProjectService }
+      { provide: ProjectService, useMock: mockedProjectService },
+      emptyHammerLoader
     ]
   }));
 

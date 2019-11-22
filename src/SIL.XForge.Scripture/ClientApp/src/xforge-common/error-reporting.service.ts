@@ -44,7 +44,7 @@ export class ErrorReportingService {
 
   private readonly bugsnagClient = ErrorReportingService.createBugsnagClient();
 
-  notify(error: any, opts?: any, cb?: (err: any, report: any) => void): void {
-    this.bugsnagClient.notify(error, opts, cb);
+  notify(error: any, opts?: any, callback?: (err: any, report: any) => void): void {
+    this.bugsnagClient.notify(error, opts, callback);
   }
 }
