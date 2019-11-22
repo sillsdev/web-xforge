@@ -174,7 +174,7 @@
         </ng-container>
       </div>
     </div>
-    <div class="answers-component-footer" *ngIf="remoteAnswersCount > 0">
+    <div class="answers-component-footer" *ngIf="remoteAnswersCount > 0 && !answerFormVisible">
       <button mdc-button id="show-unread-answers-button" (click)="showRemoteAnswers()">
         {{ t("show_more_unread", { count: remoteAnswersCount }) }}
       </button>
