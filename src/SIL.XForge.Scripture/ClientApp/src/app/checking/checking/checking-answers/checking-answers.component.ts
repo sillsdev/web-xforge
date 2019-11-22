@@ -133,7 +133,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return [];
     }
 
-    if (this.canSeeOtherUserResponses || !this.canAddAnswer) {
+    if (this.shouldSeeAnswersList) {
       return this._questionDoc.data.answers.filter(
         answer => answer.ownerRef === this.userService.currentUserId || this.answersToShow.includes(answer.dataId)
       );
@@ -192,7 +192,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return this._questionDoc;
   }
 
-  get shouldReportAnswerCountInHeading(): boolean {
+  get shouldSeeAnswersList(): boolean {
     return this.canSeeOtherUserResponses || !this.canAddAnswer;
   }
 
