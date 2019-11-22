@@ -19,8 +19,9 @@ import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
-import { issuesEmailTemplate } from 'xforge-common/utils';
+import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
@@ -219,6 +220,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   async ngOnInit(): Promise<void> {
     this.loadingStarted();
     if (await this.isLoggedIn) {
+      if ((await this.authService.isNewlyLoggedIn) && !supportedBrowser()) {
+        this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false });
+      }
+
       this.currentUserDoc = await this.userService.getCurrentUser();
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
