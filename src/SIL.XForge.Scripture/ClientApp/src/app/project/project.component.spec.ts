@@ -1,4 +1,3 @@
-import { MdcDialog } from '@angular-mdc/web';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
@@ -27,7 +26,6 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
-const mockedDialog = mock(MdcDialog);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
@@ -38,8 +36,7 @@ describe('ProjectComponent', () => {
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: MdcDialog, useMock: mockedDialog }
+      { provide: NoticeService, useMock: mockedNoticeService }
     ]
   }));
 

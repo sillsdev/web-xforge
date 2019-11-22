@@ -27,11 +27,16 @@ interface AuthState {
   linking?: boolean;
 }
 
+interface LoginResult {
+  loggedIn: boolean;
+  newlyLoggedIn: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private tryLogInPromise: Promise<boolean>;
+  private tryLogInPromise: Promise<LoginResult>;
   private refreshSubscription?: Subscription;
 
   private readonly auth0 = new WebAuth({
@@ -77,7 +82,11 @@ export class AuthService {
   }
 
   get isLoggedIn(): Promise<boolean> {
-    return this.tryLogInPromise;
+    return this.tryLogInPromise.then(result => result.loggedIn);
+  }
+
+  get isNewlyLoggedIn(): Promise<boolean> {
+    return this.tryLogInPromise.then(result => result.newlyLoggedIn);
   }
 
   private get isAuthenticated(): boolean {
@@ -117,16 +126,18 @@ export class AuthService {
     this.auth0.logout({ returnTo: this.locationService.origin + '/' });
   }
 
-  private async tryLogIn(): Promise<boolean> {
+  private async tryLogIn(): Promise<LoginResult> {
     let authResult = await this.parseHash();
     if (!(await this.handleAuth(authResult))) {
       this.clearState();
       authResult = await this.checkSession();
       if (!(await this.handleAuth(authResult))) {
-        return false;
+        return { loggedIn: false, newlyLoggedIn: false };
       }
+    } else {
+      return { loggedIn: true, newlyLoggedIn: true };
     }
-    return true;
+    return { loggedIn: true, newlyLoggedIn: false };
   }
 
   private async handleAuth(authResult: auth0.Auth0DecodedHash | null): Promise<boolean> {
@@ -168,7 +179,7 @@ export class AuthService {
     if (!this.isAuthenticated) {
       return;
     }
-    this.unscheduleRenwewal();
+    this.unscheduleRenewal();
 
     const expiresAt = this.expiresAt!;
     const expiresIn$ = of(expiresAt).pipe(
@@ -184,7 +195,7 @@ export class AuthService {
     });
   }
 
-  private unscheduleRenwewal(): void {
+  private unscheduleRenewal(): void {
     if (this.refreshSubscription != null) {
       this.refreshSubscription.unsubscribe();
     }
