@@ -182,13 +182,16 @@ export class TextChooserDialogComponent implements OnDestroy {
 
     let startTrimLength = startText.length - startText.trimLeft().length;
     if (startTrimLength === 0 && startText !== '') {
+      // [\s\S] matches ANY character including \n, unlike .
+      // \u200B is zero width space
       // Find the last word boundary that isn't the end of the string. This works because * is greedy.
       startTrimLength =
-        /[\s\S]*\b(?=[\s\S])/.exec(startNodeText.substring(0, startOffset + 1))![0].length - startOffset;
+        /[\s\S]*(?:\u200B|\b|\s|^)(?=[\s\S])/.exec(startNodeText.substring(0, startOffset + 1))![0].length -
+        startOffset;
     }
     let endTrimLength = endText.length - endText.trimRight().length;
     if (endTrimLength === 0 && endText !== '') {
-      endTrimLength = -Math.max(0, endNodeText.substring(endOffset - 1).search(/[\s\S]\b/));
+      endTrimLength = -Math.max(0, endNodeText.substring(endOffset - 1).search(/[\s\S](?:\u200B|\b|\s|$)/));
     }
 
     let result = [startNodeText, centralSelection, segments.length === 1 ? '' : endNodeText].filter(s => s).join(' ');
