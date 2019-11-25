@@ -147,6 +147,24 @@ describe('TextChooserDialogComponent', () => {
     env.closeDialog();
   }));
 
+  it('can handle Arabic', fakeAsync(async () => {
+    const env = new TestEnvironment(
+      TestEnvironment.defaultDialogData,
+      [
+        {
+          startOffset: 2,
+          endOffset: 38 // 26 Unicode code points, but 38 JavaScript chars
+        }
+      ],
+      'verse_1_6',
+      'verse_1_6',
+      'changed'
+    );
+    env.fireSelectionChange();
+    expect(env.selectedText).toEqual('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ (MAT 1:6)');
+    env.closeDialog();
+  }));
+
   it('indicates when not all segments of the end verse were selected', fakeAsync(async () => {
     const env = new TestEnvironment(
       TestEnvironment.defaultDialogData,
@@ -427,6 +445,8 @@ class TestEnvironment {
     delta.insert({ verse: { number: '5', style: 'v' } });
     delta.insert(`target: chapter 1, `, { segment: 'verse_1_5' });
     delta.insert('\n', { para: { style: 'p' } });
+    delta.insert({ verse: { number: '6', style: 'v' } });
+    delta.insert(`وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ أحَشْوِيرُوشَ.`, { segment: 'verse_1_6' });
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
       id: getTextDocId(TestEnvironment.PROJECT01, bookNum, 1, 'target'),
       type: RichText.type.name,
