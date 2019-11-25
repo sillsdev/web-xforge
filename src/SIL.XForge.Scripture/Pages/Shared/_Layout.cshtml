@@ -65,6 +65,15 @@
             </div>
         </div>
     </footer>
+    <script src="https://d2wy8f7a9ursnm.cloudfront.net/v6/bugsnag.min.js"></script>
+    <script>
+        window.bugsnagClient = bugsnag({
+            apiKey: 'b72a46a8924a3cd161d4c5534287923c',
+            appVersion: '@System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion',
+            notifyReleaseStages: ['live', 'qa'],
+            releaseStage: '@ViewData["ReleaseStage"]'
+        });
+    </script>
     <script src="~/lib/material-design-lite/js/material.min.js"></script>
     <script src="https://cdn.auth0.com/js/auth0/9.10/auth0.min.js"></script>
     <script type="text/javascript">
