@@ -48,6 +48,7 @@ namespace SIL.XForge.Scripture.Pages
             ViewData["ClientId"] = _authOptions.Value.FrontendClientId;
             ViewData["Audience"] = _authOptions.Value.Audience;
             ViewData["Scope"] = _authOptions.Value.Scope;
+            ViewData["ReleaseStage"] = _env.IsProduction() ? "live" : (_env.IsStaging() ? "qa" : "dev");
         }
 
         public async Task<IActionResult> OnPostAsync()
