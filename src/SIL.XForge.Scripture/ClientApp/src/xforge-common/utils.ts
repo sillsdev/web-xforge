@@ -21,6 +21,29 @@ export function promiseTimeout<T>(promise: Promise<T>, timeout: number) {
   ]);
 }
 
+export function supportedBrowser(): boolean {
+  const bowser = Bowser.getParser(window.navigator.userAgent);
+
+  // See https://caniuse.com/#feat=indexeddb2 for browsers supporting IndexedDB 2.0
+  const isSupportedBrowser = bowser.satisfies({
+    chrome: '>=58',
+    chromium: '>=58',
+    edge: '>=76',
+    firefox: '>=51',
+    safari: '>=10.1',
+
+    mobile: {
+      chrome: '>=78',
+      firefox: '>=68',
+      opera: '>=46',
+      safari: '>=10.3',
+      'android browser': '>=76',
+      'samsung internet': '>=7.2'
+    }
+  });
+  return isSupportedBrowser ? true : false;
+}
+
 export function issuesEmailTemplate(errorId?: string): string {
   const bowser = Bowser.getParser(window.navigator.userAgent);
   const template = `mailto:${environment.issueEmail}?subject=${encodeURIComponent(
