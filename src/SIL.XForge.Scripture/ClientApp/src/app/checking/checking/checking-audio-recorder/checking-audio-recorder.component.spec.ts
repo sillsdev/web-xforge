@@ -2,6 +2,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -14,6 +15,7 @@ import { CheckingAudioRecorderComponent } from './checking-audio-recorder.compon
 
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
+const mockedNavigator = mock(Navigator);
 
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
@@ -21,20 +23,15 @@ describe('CheckingAudioRecorderComponent', () => {
     imports: [UICommonModule, TestTranslocoModule],
     providers: [
       { provide: UserService, useMock: mockedUserService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: NAVIGATOR, useMock: mockedNavigator }
     ]
   }));
 
   let env: TestEnvironment;
-  let originalUserMedia: (constraints: MediaStreamConstraints) => Promise<MediaStream>;
 
   beforeEach(() => {
-    originalUserMedia = navigator.mediaDevices.getUserMedia;
     env = new TestEnvironment();
-  });
-
-  afterEach(() => {
-    navigator.mediaDevices.getUserMedia = originalUserMedia;
   });
 
   it('can record', async () => {
@@ -59,11 +56,11 @@ describe('CheckingAudioRecorderComponent', () => {
   });
 
   it('should display message if microphone not accessible', async () => {
-    navigator.mediaDevices.getUserMedia = () => Promise.reject();
+    env.rejectUserMedia = true;
     env.clickButton(env.recordButton);
     await env.waitForRecorder(100);
     verify(mockedNoticeService.show(anything())).once();
-    navigator.mediaDevices.getUserMedia = originalUserMedia;
+    env.rejectUserMedia = false;
     env.clickButton(env.recordButton);
     await env.waitForRecorder(1000);
     expect(env.recordButton).toBeFalsy();
@@ -75,6 +72,7 @@ describe('CheckingAudioRecorderComponent', () => {
 });
 
 class TestEnvironment {
+  rejectUserMedia = false;
   readonly component: CheckingAudioRecorderComponent;
   readonly fixture: ComponentFixture<CheckingAudioRecorderComponent>;
 
@@ -91,6 +89,11 @@ class TestEnvironment {
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
+    when(mockedNavigator.mediaDevices).thenReturn({
+      getUserMedia: (mediaConstraints: MediaStreamConstraints) => {
+        return this.rejectUserMedia ? Promise.reject() : navigator.mediaDevices.getUserMedia(mediaConstraints);
+      }
+    } as MediaDevices);
     this.fixture.detectChanges();
   }
 

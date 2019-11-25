@@ -3,6 +3,7 @@ import { ErrorHandler, Injectable, Injector, NgZone } from '@angular/core';
 import cloneDeep from 'lodash/cloneDeep';
 import { User } from 'realtime-server/lib/common/models/user';
 import { environment } from '../environments/environment';
+import { CONSOLE } from './browser-globals';
 import { ErrorReportingService } from './error-reporting.service';
 import { ErrorAlert, ErrorComponent } from './error/error.component';
 import { I18nService } from './i18n.service';
@@ -15,6 +16,8 @@ type UserForReport = User & { id: string };
 
 @Injectable()
 export class ExceptionHandlingService implements ErrorHandler {
+  // Use injected console when it's available, for the sake of tests, but fall back to window.console if injection fails
+  private console = window.console;
   private alertQueue: ErrorAlert[] = [];
   private dialogOpen = false;
   private currentUser?: UserDoc;
@@ -39,13 +42,14 @@ export class ExceptionHandlingService implements ErrorHandler {
       errorReportingService = this.injector.get(ErrorReportingService);
       userService = this.injector.get(UserService);
       i18nService = this.injector.get(I18nService);
+      this.console = this.injector.get(CONSOLE);
     } catch (err) {
-      console.log(`Error occurred. Unable to report to Bugsnag, because dependency injection failed.`);
-      console.error(error);
+      this.console.log(`Error occurred. Unable to report to Bugsnag, because dependency injection failed.`);
+      this.console.error(error);
       return;
     }
 
-    if (typeof error !== 'object' || error === null) {
+    if (typeof error !== 'object' || error === null || Array.isArray(error)) {
       error = new Error('Unknown error: ' + String(error));
     }
 
@@ -80,8 +84,8 @@ export class ExceptionHandlingService implements ErrorHandler {
       }
     } finally {
       // Error logging occurs after error reporting so it won't show up as noise in Bugsnag's breadcrumbs
-      console.log(`Error occurred. Reported to Bugsnag with release stage set to ${environment.releaseStage}:`);
-      console.error(error);
+      this.console.log(`Error occurred. Reported to Bugsnag with release stage set to ${environment.releaseStage}:`);
+      this.console.error(error);
     }
   }
 
@@ -127,8 +131,8 @@ export class ExceptionHandlingService implements ErrorHandler {
       },
       err => {
         if (err) {
-          console.error('Sending error report failed:');
-          console.error(err);
+          this.console.error('Sending error report failed:');
+          this.console.error(err);
         }
       }
     );

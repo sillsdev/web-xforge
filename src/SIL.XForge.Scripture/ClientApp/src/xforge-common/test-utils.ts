@@ -1,4 +1,5 @@
 import { TestBed, TestModuleMetadata } from '@angular/core/testing';
+import { HAMMER_LOADER } from '@angular/platform-browser';
 import { TranslocoTestingModule } from '@ngneat/transloco';
 import { configureTestSuite } from 'ng-bullet';
 import { instance, reset } from 'ts-mockito';
@@ -48,3 +49,9 @@ export const TestTranslocoModule = TranslocoTestingModule.withLangs(
     defaultLang: 'en'
   }
 );
+
+// used to prevent Angular from complaining that HammerJS isn't available
+export const emptyHammerLoader = {
+  provide: HAMMER_LOADER,
+  useValue: () => new Promise(() => {})
+};

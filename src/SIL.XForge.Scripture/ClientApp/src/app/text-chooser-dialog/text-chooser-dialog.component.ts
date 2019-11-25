@@ -3,6 +3,7 @@ import { Component, ElementRef, Inject, OnDestroy, Optional, ViewChild } from '@
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { DOCUMENT } from 'xforge-common/browser-globals';
 import { TextDocId } from '../core/models/text-doc';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import {
@@ -51,13 +52,14 @@ export class TextChooserDialogComponent implements OnDestroy {
   constructor(
     private readonly dialogRef: MdcDialogRef<TextChooserDialogComponent>,
     readonly dialog: MdcDialog,
+    @Inject(DOCUMENT) private readonly document: Document,
     @Optional() @Inject(MDC_DIALOG_DATA) private readonly data: TextChooserDialogData
   ) {
     // caniuse doesn't have complete data for the selection events api, but testing on BrowserStack shows the event is
     // fired at least as far back as iOS v7 on Safari 7.
     // Edge 42 with EdgeHTML 17 also fires the events.
     // Firefox and Chrome also support it. We can degrade gracefully by getting the selection when the dialog closes.
-    document.addEventListener('selectionchange', this.selectionChangeHandler);
+    this.document.addEventListener('selectionchange', this.selectionChangeHandler);
 
     this.bookNum = this.data.bookNum;
     this.chapterNum = this.data.chapterNum;
@@ -72,7 +74,7 @@ export class TextChooserDialogComponent implements OnDestroy {
   }
 
   updateSelection() {
-    const selection = document.getSelection();
+    const selection = this.document.getSelection();
     const rawSelection = (selection || '').toString();
     if (selection != null && rawSelection.trim() !== '' && rawSelection !== this.rawTextSelection) {
       // all non-empty verse elements in the selection
@@ -145,7 +147,7 @@ export class TextChooserDialogComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
-    document.removeEventListener('selectionchange', this.selectionChangeHandler);
+    this.document.removeEventListener('selectionchange', this.selectionChangeHandler);
   }
 
   /**
