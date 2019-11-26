@@ -14,6 +14,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -26,6 +27,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedLocationService = mock(LocationService);
+const mockedUserService = mock(UserService);
 
 describe('ShareComponent', () => {
   configureTestingModule(() => ({
@@ -36,7 +38,8 @@ describe('ShareComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
-      { provide: LocationService, useMock: mockedLocationService }
+      { provide: LocationService, useMock: mockedLocationService },
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 
