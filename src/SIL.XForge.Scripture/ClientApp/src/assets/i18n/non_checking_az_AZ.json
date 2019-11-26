@@ -4,6 +4,6 @@
     "only_community_checkers_can_like": "Yalnız Dil Daşıyıcıları cavablara \"bəyən\" işarəsini qoya bilərlər."
   },
   "question_dialog": {
-    "must_be_after_scripture_reference": "Kəlama istinaddan {{ strongEnd }} sonra olmalıdır. {{ strongStart }}"
+    "must_be_after_scripture_reference": "{{ strongStart }}Kəlama istinaddan{{ strongEnd }} sonra olmalıdır."
   }
 }
