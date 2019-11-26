@@ -462,6 +462,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       {
         clickOutsideToClose: true,
         escapeToClose: true,
+        autoFocus: false,
         data: { projectUserConfigDoc: this.projectUserConfigDoc }
       }
     );

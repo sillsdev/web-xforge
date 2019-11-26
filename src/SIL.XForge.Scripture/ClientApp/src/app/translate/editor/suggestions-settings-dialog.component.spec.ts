@@ -58,6 +58,12 @@ describe('SuggestionsSettingsDialogComponent', () => {
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.numSuggestions).toEqual(2);
   }));
+
+  it('shows correct confidence threshold even when suggestions disabled', fakeAsync(() => {
+    const env = new TestEnvironment(false);
+    env.openDialog();
+    expect(env.component!.confidenceThresholdSlider!.value).toEqual(50);
+  }));
 });
 
 @Directive({
@@ -96,10 +102,10 @@ class TestEnvironment {
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
-  constructor() {
+  constructor(translationSuggestionsEnabled = true) {
     this.setProjectUserConfig({
       confidenceThreshold: 0.5,
-      translationSuggestionsEnabled: true,
+      translationSuggestionsEnabled,
       numSuggestions: 1
     });
 

@@ -33,6 +33,9 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
     dialogRef.afterOpened().subscribe(() => {
       if (this.confidenceThresholdSlider != null) {
         this.confidenceThresholdSlider.layout();
+        this.confidenceThresholdSlider.disabled = false; // cannot set value when slider is disabled
+        this.confidenceThresholdSlider.setValue(this.projectUserConfigDoc.data!.confidenceThreshold * 100);
+        this.confidenceThresholdSlider.disabled = !this.translationSuggestionsUserEnabled;
       }
       this.open = true;
     });
