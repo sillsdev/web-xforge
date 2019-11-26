@@ -54,14 +54,15 @@
           </mdc-tab-bar>
           <div [fxShow]="answerTabs.activeTabIndex === 0" class="answer-tab answer-text">
             <mdc-form-field>
-              <mdc-text-field
+              <mdc-textarea
                 appAutofocus
+                class="your-answer"
                 label="{{ t('your_answer') }}"
                 type="text"
                 formControlName="answerText"
                 outlined
                 [value]="activeAnswer?.text"
-              ></mdc-text-field>
+              ></mdc-textarea>
             </mdc-form-field>
           </div>
           <div [fxShow]="answerTabs.activeTabIndex === 1" class="answer-tab answer-record-upload">
