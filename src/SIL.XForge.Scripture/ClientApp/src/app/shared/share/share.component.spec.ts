@@ -7,6 +7,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { LocationService } from 'xforge-common/location.service';
@@ -46,28 +47,28 @@ describe('ShareComponent', () => {
   it('share button should be hidden when sharing is disabled', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setShareConfig(false, CheckingShareLevel.Anyone);
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
+    env.wait();
 
     expect(env.shareButton).toBeNull();
 
     env.updateSharingProperties(true, CheckingShareLevel.Anyone);
-    tick();
-    env.fixture.detectChanges();
     expect(env.shareButton).not.toBeNull();
 
     env.updateSharingProperties(false, CheckingShareLevel.Anyone);
-    tick();
-    env.fixture.detectChanges();
     expect(env.shareButton).toBeNull();
+  }));
+
+  it('share button should be shown to project admin even when sharing is turned off', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setShareConfig(false, CheckingShareLevel.Anyone, SFProjectRole.ParatextAdministrator);
+    env.wait();
+
+    expect(env.shareButton).not.toBeNull();
   }));
 
   it('dialog should open when sharing is enabled', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
+    env.wait();
 
     env.clickElement(env.shareButton);
 
@@ -78,9 +79,7 @@ describe('ShareComponent', () => {
 
   it('dialog should not send when email is invalid', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
+    env.wait();
 
     env.clickElement(env.shareButton);
     env.clickElement(env.emailInput);
@@ -94,9 +93,7 @@ describe('ShareComponent', () => {
 
   it('dialog should not send when email is empty', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
+    env.wait();
 
     env.clickElement(env.shareButton);
     env.setInputValue(env.emailInput, 'notAnEmailAddress');
@@ -112,9 +109,7 @@ describe('ShareComponent', () => {
   it('dialog should send when email is valid', fakeAsync(() => {
     const emailAddress = 'me@example.com';
     const env = new TestEnvironment();
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
+    env.wait();
 
     env.clickElement(env.shareButton);
     env.setInputValue(env.emailInput, emailAddress);
@@ -128,9 +123,7 @@ describe('ShareComponent', () => {
   it('share link should be hidden if link sharing is turned off', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setShareConfig(true, CheckingShareLevel.Specific);
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
+    env.wait();
 
     env.clickElement(env.shareButton);
     expect(env.shareLink).toBeNull();
@@ -138,9 +131,7 @@ describe('ShareComponent', () => {
 
   it('clicking copy link icon should copy link to clipboard', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
+    env.wait();
 
     env.clickElement(env.shareButton);
     expect(env.shareLink.value).toEqual('https://scriptureforge.org/projects/project01?sharing=true');
@@ -180,6 +171,7 @@ class TestEnvironment {
     when(mockedProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
+    when(mockedUserService.currentUserId).thenReturn('user01');
     this.setShareConfig(true, CheckingShareLevel.Anyone);
 
     this.fixture = TestBed.createComponent(ShareComponent);
@@ -230,7 +222,7 @@ class TestEnvironment {
     tick();
   }
 
-  setShareConfig(shareEnabled: boolean, shareLevel: CheckingShareLevel): void {
+  setShareConfig(shareEnabled: boolean, shareLevel: CheckingShareLevel, role = SFProjectRole.CommunityChecker): void {
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
       data: {
@@ -247,9 +239,17 @@ class TestEnvironment {
         },
         sync: { queuedCount: 0 },
         texts: [],
-        userRoles: {}
+        userRoles: {
+          user01: role
+        }
       }
     });
+  }
+
+  wait() {
+    this.fixture.detectChanges();
+    tick();
+    this.fixture.detectChanges();
   }
 
   updateSharingProperties(shareEnabled: boolean, shareLevel: CheckingShareLevel): void {
@@ -264,5 +264,7 @@ class TestEnvironment {
     projectDoc.submitJson0Op(op => {
       op.set(p => p.checkingConfig, newConfig);
     });
+    tick();
+    this.fixture.detectChanges();
   }
 }
