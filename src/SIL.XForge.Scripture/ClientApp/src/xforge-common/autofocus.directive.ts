@@ -1,5 +1,5 @@
-import { MdcTextField } from '@angular-mdc/web/textfield';
-import { AfterViewInit, Directive } from '@angular/core';
+import { MdcTextarea, MdcTextField } from '@angular-mdc/web/textfield';
+import { AfterViewInit, Directive, Host, Optional, Self } from '@angular/core';
 
 /**
  * Auto focuses MdcTextField and MdcTextarea. HTML autofocus attribute does not work for dynamically generated content.
@@ -8,7 +8,16 @@ import { AfterViewInit, Directive } from '@angular/core';
   selector: '[appAutofocus]'
 })
 export class AutofocusDirective implements AfterViewInit {
-  constructor(private readonly component: MdcTextField) {}
+  private component: { focus: () => void };
+
+  // Angular allows injecting the component or element but doesn't have a good way to handle components of variable type
+  // See https://github.com/angular/angular/issues/8277#issuecomment-323678013 for this workaround
+  constructor(
+    @Host() @Self() @Optional() private readonly textField: MdcTextField,
+    @Host() @Self() @Optional() private readonly textArea: MdcTextarea
+  ) {
+    this.component = (textField || textArea)!;
+  }
 
   ngAfterViewInit() {
     setTimeout(() => this.component.focus(), 0);
