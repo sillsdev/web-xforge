@@ -7,7 +7,7 @@ import { of, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
 import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
-import { environment } from '../environments/environment.pwa-test';
+import { environment } from '../environments/environment';
 
 export type LocaleCode = 'en' | 'zh_CN';
 

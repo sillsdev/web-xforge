@@ -17,7 +17,7 @@
         </mdc-top-app-bar-section>
         <mdc-top-app-bar-section align="end" *ngIf="currentUser != null">
           <!-- not in MVP <mdc-icon mdcTopAppBarActionItem title="Notifications">notifications</mdc-icon> -->
-          <div mdcMenuSurfaceAnchor #langMenuAnchor>
+          <div mdcMenuSurfaceAnchor #langMenuAnchor *ngIf="i18n.locales.length >= 2">
             <mdc-icon mdcTopAppBarActionItem title="Language" (click)="langMenu.open = !langMenu.open">
               translate
             </mdc-icon>
