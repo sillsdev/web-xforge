@@ -17,6 +17,7 @@ interface Locale {
   localeCode: LocaleCode;
   direction: 'ltr' | 'rtl';
   production: boolean;
+  dateFormatOptions?: Intl.DateTimeFormatOptions;
 }
 
 export const en = merge(enChecking, enNonChecking);
@@ -48,6 +49,7 @@ export class I18nService {
       englishName: 'English',
       localeCode: 'en',
       direction: 'ltr',
+      dateFormatOptions: { month: 'short', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' },
       production: true
     },
     {
@@ -102,5 +104,13 @@ export class I18nService {
       spanStart: params['spanClass'] ? `<span class="${params['spanClass']}">` : '<span>',
       spanEnd: '</span>'
     });
+  }
+
+  formatDate(date: Date) {
+    // fall back to en in the event the language code isn't valid
+    return date.toLocaleString(
+      [this.localeCode.replace('_', '-'), I18nService.defaultLocale.localeCode],
+      this.currentLocale.dateFormatOptions || I18nService.defaultLocale.dateFormatOptions
+    );
   }
 }
