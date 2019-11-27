@@ -149,7 +149,10 @@ export class ExceptionHandlingService implements ErrorHandler {
     if (!this.dialogOpen && this.alertQueue.length) {
       ngZone.run(() => {
         this.dialogOpen = true;
-        const dialogRef = dialog.open(ErrorComponent, { data: this.alertQueue[this.alertQueue.length - 1] });
+        const dialogRef = dialog.open(ErrorComponent, {
+          autoFocus: false,
+          data: this.alertQueue[this.alertQueue.length - 1]
+        });
         dialogRef.afterClosed().subscribe(() => {
           this.alertQueue.pop();
           this.dialogOpen = false;

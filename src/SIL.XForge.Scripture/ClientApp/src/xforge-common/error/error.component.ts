@@ -1,6 +1,6 @@
 import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Component, Inject } from '@angular/core';
-import { issuesEmailTemplate } from 'xforge-common/utils';
+import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import { environment } from '../../environments/environment';
 
 export interface ErrorAlert {
@@ -16,6 +16,7 @@ export interface ErrorAlert {
 export class ErrorComponent {
   issueEmail = environment.issueEmail;
   showDetails: boolean = false;
+  browserUnsupported = !supportedBrowser();
 
   constructor(public dialogRef: MdcDialogRef<ErrorComponent>, @Inject(MDC_DIALOG_DATA) public data: ErrorAlert) {}
 
