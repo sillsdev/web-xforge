@@ -1213,7 +1213,7 @@ class TestEnvironment {
   }
 
   get yourAnswerField(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mdc-text-field[formControlName="answerText"]'));
+    return this.fixture.debugElement.query(By.css('mdc-textarea[formControlName="answerText"]'));
   }
 
   get answerFormErrors(): DebugElement[] {
@@ -1387,7 +1387,7 @@ class TestEnvironment {
   }
 
   setTextFieldValue(textField: DebugElement, value: string): void {
-    const input = textField.query(By.css('input'));
+    const input = textField.query(By.css('input, textarea'));
     const inputElem = input.nativeElement as HTMLInputElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
