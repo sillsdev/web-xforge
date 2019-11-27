@@ -60,7 +60,9 @@ export class I18nService {
   ];
 
   static readonly defaultLocale = I18nService.getLocale('en');
-  static readonly availableLocales = I18nService.locales.filter(locale => locale.production || !environment.production);
+  static readonly availableLocales = I18nService.locales.filter(
+    locale => locale.production || !['live', 'qa'].includes(environment.releaseStage)
+  );
 
   static readonly translocoConfig: TranslocoConfig = {
     availableLangs: I18nService.availableLocales.map(locale => locale.localeCode),
