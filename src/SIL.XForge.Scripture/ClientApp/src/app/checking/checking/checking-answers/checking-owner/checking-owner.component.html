@@ -8,8 +8,6 @@
   <div class="avatar" *ngIf="includeAvatar"><app-avatar [user]="owner" size="32" [round]="false"></app-avatar></div>
   <div>
     <div class="name">{{ name }}</div>
-    <div class="date-time" *ngIf="dateTime">
-      {{ date | date: "d MMM yy" }} at <span class="time">{{ dateTime | date: "h:mma" }}</span>
-    </div>
+    <small class="date-time" *ngIf="dateTime">{{ i18n.formatDate(date) }}</small>
   </div>
 </div>
