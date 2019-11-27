@@ -122,60 +122,60 @@
     <comment>Language picker option: Translate 'Azerbaijani'</comment>
   </data>
   <data name="EmailBad" xml:space="preserve">
-    <value>Enter a valid email address</value>
+    <value>İstifadə edə bilən e-poçt ünvanını daxil edin</value>
   </data>
   <data name="EmailMissing" xml:space="preserve">
-    <value>Enter your email address</value>
+    <value>E-poçt ünvanınızı daxil edin. </value>
   </data>
   <data name="en-US" xml:space="preserve">
-    <value>English</value>
+    <value>İngilis</value>
     <comment>Language picker option: Translate 'English'</comment>
   </data>
   <data name="InviteEmailOption" xml:space="preserve">
-    <value>Enter your email address and a new password for your {0} account and click Sign up.</value>
+    <value>{0} hesabınız üçün e-poçt ünvanınızı və yeni gizli şifrənizi daxil edin, sonra qeydiyyatdan keçin. </value>
   </data>
   <data name="InviteGoogleOption" xml:space="preserve">
-    <value>Click {0}Sign up with Google{1} and follow the instructions to access {2} using an existing Google account (such as Gmail), or</value>
+    <value>{0} basın və {1} Google-da qeydiyyatdan keçin, sonra {2} daxil olmaq üçün mövcud olan Google hesabından (məsələn, Gmail), yaxud başqasından istifadə edərək göstərişlərə əməl edin.  </value>
   </data>
   <data name="InviteGreeting" xml:space="preserve">
-    <value>Hello,{0}{1} invites you to join the {2} project on {3}.{0}Just click the link below, choose how to log in, and you will be ready to start.{0}{0}To join, go to {4}</value>
+    <value>Salam, {0}{1} sizi {3} -də olan {2} layihəyə dəvət edir. {0} Sadəcə aşağıdakı keçidə basın, necə daxil olacağınızı təyin edin və bundan sonra siz artıq başlaya bilərsiniz. {0}{0} qoşulmaq üçün {4} daxil olun. </value>
   </data>
   <data name="InviteInstructions" xml:space="preserve">
-    <value>If you are not already a {0} user, then after clicking the link, click {1}Sign Up{2} and do one of the following:</value>
+    <value>Əgər siz hələ {0} istifadəçi deyilsinizsə, keçidin üzərinə basandan sonra {1} basın, {2} qeydiyyatdan keçin və aşağıdakılardan birini edin: </value>
   </data>
   <data name="InviteLinkSharingOff" xml:space="preserve">
-    <value>This link will only work for this email address.</value>
+    <value>Bu keçid yalnız bu e-poçt ünvanı üçün işləyəcək. </value>
   </data>
   <data name="InviteLinkSharingOn" xml:space="preserve">
-    <value>This link can be shared with others so they can join the project too.</value>
+    <value>Bu keçidi başqaları ilə də paylaşmaq olar ki, onlar da layihəyə qoşula bilsinlər.  </value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
-    <value>Click {0}Sign up with Paratext{1} and follow the instructions to access {2} using an existing Paratext account, or</value>
+    <value>{0} basın, Paratext ilə {1} qeydiyyatdan keçin və mövcud olan Paratext hesabınızdan və ya başqasından istifadə edərək {2} daxil olmaq üçün göstərişlərə əməl edin</value>
   </data>
   <data name="InviteSignature" xml:space="preserve">
-    <value>Regards,{0}The {1} team</value>
+    <value>Hörmətlə, {0} {1} heyəti </value>
   </data>
   <data name="InviteSubject" xml:space="preserve">
-    <value>You've been invited to the project {0} on {1}</value>
+    <value>Siz {1} -da olan {0} layihəsinə dəvət olunmusunuz</value>
   </data>
   <data name="MessageMissing" xml:space="preserve">
-    <value>Let us know why you want to use Scripture Forge</value>
+    <value>Kəlamın Yoxlanması proqramından niyə istifadə etmək istədiyinizi bizə bildirin. </value>
   </data>
   <data name="NameMissing" xml:space="preserve">
-    <value>Enter your name</value>
+    <value>Adınızı daxil edin</value>
   </data>
   <data name="Privacy" xml:space="preserve">
-    <value>Privacy</value>
+    <value>Məxfilik</value>
     <comment>Link to the Privacy policy seen in the page footer</comment>
   </data>
   <data name="RoleMissing" xml:space="preserve">
-    <value>Select your language project role</value>
+    <value>Dil layihəsində gördüyünüz işi seçin. </value>
   </data>
   <data name="Terms" xml:space="preserve">
-    <value>Terms</value>
+    <value>Şərtlər və qaydalar</value>
     <comment>Link to the Terms of service seen in the page footer</comment>
   </data>
   <data name="UserMissing" xml:space="preserve">
-    <value>The user does not exist.</value>
+    <value>İstifadəçi mövcud deyil. </value>
   </data>
 </root>
