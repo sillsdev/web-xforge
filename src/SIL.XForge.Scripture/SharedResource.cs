@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace SIL.XForge.Scripture
 {
     /// <summary>
@@ -28,5 +30,14 @@ namespace SIL.XForge.Scripture
             public const string Terms = "Terms";
             public const string Privacy = "Privacy";
         }
+
+        /// <summary>
+        /// Map of culture identifier (language tag) to culture name (displayed in the chooser)
+        /// </summary>
+        public static Dictionary<string,string> Cultures = new Dictionary<string, string>
+        {
+            { "en", "English" },
+            {"az", "Azərbaycanca" }
+        };
     }
 }
