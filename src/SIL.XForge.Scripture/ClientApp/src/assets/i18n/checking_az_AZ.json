@@ -1,0 +1,82 @@
+{
+  "app": {
+    "all_questions": "Bütün Suallar",
+    "cannot_change_password": "Hal hazırda gizli şifrə dəyişilmir. Az sonra yenidən çalışın və ya bu problemi Kömək menyusuna bildirin. ",
+    "change_password": "Gizli şifrəni dəyişin. ",
+    "community_checking": "Dil daşıyıcıları tərəfindən yoxlanma",
+    "help": "Kömək",
+    "log_out": "Çıxış",
+    "logged_in_as": "Bu adla daxil oldu.",
+    "overview": "Ümumi baxış",
+    "product_version": "Yekun variant: {{ version }}",
+    "project_home": "Layihənin ana səhifəsi",
+    "report_issue_email": "e-poçt {{ email }}",
+    "report_issue": "Problemi bildirin.",
+    "scripture_checking_not_available": "Bu layihədə Kəlamın yoxlanması mövcud deyil. "
+  },
+  "checking_answers": {
+    "add_answer": "Cavabı əlavə edin.",
+    "answer_required_before_saving": "Siz kompüterin yaddaşında saxlamazdan əvvəl cavabınızı daxil etməlisiniz və ya səsinizi yazmalısınız.",
+    "answer": "Cavab",
+    "answers": "{{ count }} Cavablar",
+    "cancel": "Ləğv etmək",
+    "cannot_like_own_answer": "Siz öz cavabınız üçün \"bəyən\" işarəsini seçə bilməzsiniz.",
+    "delete": "Silmək",
+    "edit": "Düzəliş etmək",
+    "no_scripture_selected": "Hələ Kəlam seçilməyib. ",
+    "record_upload": "Səs yazın/Yükləyin.",
+    "record": "Səs yazın",
+    "recording_automatically_stopped": "Sizin cavabınız səslə yazılarkən öz-özünə dayandı.",
+    "save_answer": "Cavabınızı kömpüterin yaddaşında saxlamaq",
+    "select_text": "Mətni seçmək",
+    "select_verses": "Ayələri seçmək",
+    "select": "Seçmək",
+    "show_more_unread": "oxunmamış başqa cavabları {{ count }} göstərmək",
+    "your_answer": "Sizin cavabınız"
+  },
+  "checking_audio_combined": {
+    "remove_audio_file": "Audio Faylı çıxarmaq",
+    "upload_audio_file": "Audio Faylı yükləmək",
+    "upload": "Yükləmək"
+  },
+  "checking_audio_recorder": {
+    "record": "Səs yazmaq",
+    "stop_recording": "Səs yazmanı dayandırmaq",
+    "try_again": "Yenidən çalışın"
+  },
+  "checking_comment_form": {
+    "cancel": "Ləğv etmək",
+    "comment_cannot_be_blank": "Yaddaşda saxlamazdan qabaq rəyinizi buraya daxil edin",
+    "save_comment": "Rəyinizi yaddaşda saxlayın. ",
+    "your_comment": "Sizin rəyiniz"
+  },
+  "checking_comments": {
+    "add_a_comment": "Rəyinizi əlavə edin",
+    "delete": "Silmək",
+    "edit": "Düzəliş edin. ",
+    "show_more_comments_and_unread": "Oxunmamış {{ unread }} başqa rəyləri {{ count }} göstərmək",
+    "show_more_comments": "Başqa rəyləri {{ count }} göstərin"
+  },
+  "share_control": {
+    "copy_link": "Keçidi yaddaşa nüsxələyin. ",
+    "email_invalid": "E-poçt ünvanı yanlışdır.",
+    "email": "E-poçt",
+    "invitation_sent": "Dəvət e-məktubu bu ünvana {{ email }} göndərildi. ",
+    "invite_people": "Başqalarını dəvət edin.",
+    "link_copied": "Keçid mübadilə buferinə nüsxələndi. ",
+    "link_sharing": "Keçid paylaşımı",
+    "not_inviting_already_member": "Dəvət olunmur: İstifadəçi artıq bu layihənin üzvüdür. ",
+    "resend": "Yenidən göndərmək",
+    "send": "Göndərmək"
+  },
+  "share_dialog": {
+    "done": "Yerinə yetirildi",
+    "share_with_others": "Başqaları ilə paylaşın. "
+  },
+  "questions": {
+    "me": "Mən",
+    "next": "Növbəti",
+    "previous": "Əvvəlki",
+    "questions": "Suallar"
+  }
+}
