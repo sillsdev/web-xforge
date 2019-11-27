@@ -1,6 +1,7 @@
 import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { TranslocoService } from '@ngneat/transloco';
 import { AvatarService } from 'ngx-avatar';
 import { UserProfile } from 'realtime-server/lib/common/models/user';
 import { instance, mock, when } from 'ts-mockito';
@@ -46,7 +47,7 @@ describe('CheckingOwnerComponent', () => {
     expect(env.fixture.debugElement.query(By.css('.layout .date-time'))).toBeNull();
     env.fixture.componentInstance.checkingOwner.dateTime = '2019-04-25T12:30:00';
     env.fixture.detectChanges();
-    expect(env.dateTime).toBe(' 25 Apr 19 at 12:30PM');
+    expect(env.dateTime).toBe('Apr 25, 2019, 12:30 PM');
   });
 
   it('layout set correctly', () => {
@@ -72,6 +73,7 @@ class TestEnvironment {
 
   readonly mockedUserService = mock(UserService);
   readonly mockedAvatarService = mock(AvatarService);
+  readonly mockedTransloco = mock(TranslocoService);
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
@@ -91,7 +93,8 @@ class TestEnvironment {
       imports: [AvatarTestingModule, UICommonModule],
       providers: [
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
-        { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) }
+        { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) },
+        { provide: TranslocoService, useFactory: () => instance(this.mockedTransloco) }
       ]
     });
 
