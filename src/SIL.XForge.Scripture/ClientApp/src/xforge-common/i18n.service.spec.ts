@@ -43,4 +43,12 @@ describe('I18nService', () => {
       )
     ).once();
   });
+
+  it('should localize dates', () => {
+    const date = new Date('November 25, 1991 17:28');
+    const service = new I18nService(instance(mockedTranslocoService));
+    expect(service.formatDate(date)).toEqual('Nov 25, 1991, 5:28 PM');
+    service.setLocale('zh_CN');
+    expect(service.formatDate(date)).toEqual('1991年11月25日 下午5:28');
+  });
 });
