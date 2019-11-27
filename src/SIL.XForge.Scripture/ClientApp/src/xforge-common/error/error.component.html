@@ -7,13 +7,18 @@
         <p>
           To report an issue, email <a target="_blank" [href]="issueMailTo">{{ issueEmail }}</a>
         </p>
+        <p *ngIf="browserUnsupported">
+          You are using an unsupported browser, which may be the reason for this error. We recommend upgrading to the
+          latest <a target="_blank" href="https://www.google.com/chrome/">Chrome</a> or
+          <a target="_blank" href="https://www.mozilla.org">Firefox.</a>
+        </p>
         <a (click)="this.showDetails = !this.showDetails" [fxShow]="data.stack"
           >{{ showDetails ? "Hide" : "Show" }} details</a
         >
         <pre [fxShow]="showDetails">{{ data.stack }}</pre>
       </mdc-dialog-content>
       <mdc-dialog-actions>
-        <button default mdcDialogButton type="button" mdcDialogAction="close">Close</button>
+        <button mdcDialogButton type="button" mdcDialogAction="close">Close</button>
       </mdc-dialog-actions>
     </mdc-dialog-surface>
   </mdc-dialog-container>
