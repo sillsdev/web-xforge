@@ -9,7 +9,7 @@ import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { environment } from '../environments/environment';
 
-export type LocaleCode = 'en' | 'zh_CN';
+export type LocaleCode = 'en' | 'az_AZ' | 'zh_CN';
 
 interface Locale {
   localName: string;
@@ -49,6 +49,13 @@ export class I18nService {
       localeCode: 'en',
       direction: 'ltr',
       production: true
+    },
+    {
+      localName: 'Azərbaycanca',
+      englishName: 'Azerbaijani',
+      localeCode: 'az_AZ',
+      direction: 'ltr',
+      production: false
     },
     {
       localName: '简体中文',
