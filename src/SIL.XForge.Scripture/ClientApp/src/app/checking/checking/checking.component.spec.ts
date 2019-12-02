@@ -388,30 +388,86 @@ describe('CheckingComponent', () => {
       expect(env.yourAnswerField.classes['mdc-text-field--invalid']).toBeTruthy();
     }));
 
-    it('can edit an answer', fakeAsync(() => {
+    it('can edit a new answer', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);
       env.answerQuestion('Answer question 7');
-      expect(env.getAnswer(1).classes['answer-unread']).toBe(true);
-      env.clickButton(env.getAnswerEditButton(0));
+      const myAnswerIndex = 0;
+      const otherAnswerIndex = 1;
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      env.clickButton(env.getAnswerEditButton(myAnswerIndex));
       env.setTextFieldValue(env.yourAnswerField, 'Edited question 7 answer');
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.getAnswer(1).classes['answer-unread']).toBe(false);
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
       expect(env.getAnswerText(0)).toBe('Edited question 7 answer');
+    }));
+
+    it('can edit an existing answer', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      // Open up question where user already has an answer
+      env.selectQuestion(9);
+      expect(env.answers.length).toBeGreaterThan(1, 'setup problem');
+      expect(env.component.answersPanel!.answers.some(answer => answer.ownerRef === CHECKER_USER.id)).toBe(
+        true,
+        'setup problem'
+      );
+      const myAnswerIndex = 0;
+      const otherAnswerIndex = 1;
+      expect(env.getAnswerText(myAnswerIndex)).toEqual('Answer 0 on question', 'setup problem');
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false, 'have already read this answer');
+
+      // Edit, save
+      env.clickButton(env.getAnswerEditButton(myAnswerIndex));
+      env.setTextFieldValue(env.yourAnswerField, 'Edited answer');
+      env.clickButton(env.saveAnswerButton);
+      env.waitForSliderUpdate();
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswerText(myAnswerIndex)).toEqual('Edited answer');
+
+      // Edit, cancel
+      env.clickButton(env.getAnswerEditButton(myAnswerIndex));
+      env.setTextFieldValue(env.yourAnswerField, 'Different edit, to cancel');
+      env.clickButton(env.cancelAnswerButton);
+      env.waitForSliderUpdate();
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(
+        false,
+        'dont spotlight own answer on cancelled edit'
+      );
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswerText(myAnswerIndex)).toEqual('Edited answer', 'should not have been changed');
     }));
 
     it('still shows answers as read after canceling an edit', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);
       env.answerQuestion('Answer question 7');
-      expect(env.getAnswer(1).classes['answer-unread']).toBe(true);
+      const myAnswerIndex = 0;
+      const otherAnswerIndex = 1;
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
       env.clickButton(env.getAnswerEditButton(0));
       env.setTextFieldValue(env.yourAnswerField, 'Edited question 7 answer');
       env.clickButton(env.cancelAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.getAnswer(1).classes['answer-unread']).toBe(false);
-      expect(env.getAnswerText(0)).toBe('Answer question 7');
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswerText(0)).toEqual('Answer question 7');
+    }));
+
+    it('only my answer is highlighted after I add an answer', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(7);
+      env.answerQuestion('My answer');
+      expect(env.answers.length).toBeGreaterThan(1, 'setup problem');
+      const myAnswerIndex = 0;
+      const otherAnswerIndex = 1;
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
     }));
 
     it('can remove audio from answer', fakeAsync(() => {
@@ -1028,7 +1084,7 @@ class TestEnvironment {
     selectedSegment: '',
     selectedQuestionRef: 'project01:q5Id',
     questionRefsRead: [],
-    answerRefsRead: [],
+    answerRefsRead: ['a0Id', 'a1Id'],
     commentRefsRead: []
   };
 
@@ -1117,6 +1173,7 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#answer-panel'));
   }
 
+  /** Answers rendered in the DOM. */
   get answers(): DebugElement[] {
     return this.fixture.debugElement.queryAll(By.css('#answer-panel .answers-container .answer'));
   }
@@ -1300,7 +1357,8 @@ class TestEnvironment {
     this.waitForSliderUpdate();
   }
 
-  getAnswer(index: number): DebugElement {
+  /** Fetch answer from DOM. */
+  getAnswer(/** Zero-based */ index: number): DebugElement {
     return this.answers[index];
   }
 
@@ -1632,6 +1690,31 @@ class TestEnvironment {
       dateModified: dateCreated,
       comments: a8Comments
     });
+    johnQuestions[8].data!.answers.push({
+      dataId: 'a0Id',
+      ownerRef: CHECKER_USER.id,
+      text: 'Answer 0 on question',
+      verseRef: { chapterNum: 1, verseNum: 1, bookNum: 43 },
+      scriptureText: 'Quoted scripture',
+      likes: [],
+      dateCreated: dateCreated,
+      dateModified: dateCreated,
+      audioUrl: 'file://audio.mp3',
+      comments: []
+    });
+    johnQuestions[8].data!.answers.push({
+      dataId: 'a1Id',
+      ownerRef: CLEAN_CHECKER_USER.id,
+      text: 'Answer 1 on question',
+      verseRef: { chapterNum: 1, verseNum: 1, bookNum: 43 },
+      scriptureText: 'Quoted scripture',
+      likes: [],
+      dateCreated: dateCreated,
+      dateModified: dateCreated,
+      audioUrl: 'file://audio.mp3',
+      comments: []
+    });
+
     if (this.projectBookRoute === 'JHN') {
       questions = johnQuestions;
     } else if (this.projectBookRoute === 'ALL') {
