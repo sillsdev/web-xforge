@@ -122,14 +122,14 @@
     padding: 10px 0;
     border-top: 1px solid $borderColor;
 
-    &.answer-unread {
-      animation-name: answer-unread;
+    &.attention {
+      animation-name: attention;
       animation-duration: 10s;
       animation-fill-mode: forwards;
 
-      @keyframes answer-unread {
+      @keyframes attention {
         from {
-          background: $answerUnread;
+          background: $attention;
         }
         to {
           background: #fff;
