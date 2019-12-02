@@ -112,6 +112,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   private _questionDoc?: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
+  /** If the user has recently added or edited their answer since opening up the question. */
+  private justEditedAnswer: boolean = false;
 
   constructor(
     private readonly userService: UserService,
@@ -166,6 +168,20 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return 0;
     }
     return this._questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length;
+  }
+
+  /** Answer belonging to current user, if any. Assumes they have 0 or 1 answer. */
+  get currentUserAnswer(): Answer | null {
+    if (this._questionDoc == null || this._questionDoc.data == null) {
+      return null;
+    }
+    const ownerAnswers = this._questionDoc.data.answers.filter(
+      answer => answer.ownerRef === this.userService.currentUserId
+    );
+    if (ownerAnswers.length < 1) {
+      return null;
+    }
+    return ownerAnswers[0];
   }
 
   get hasUserRead(): boolean {
@@ -262,6 +278,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       this.verseRef = toVerseRef(this.activeAnswer.verseRef);
     }
     this.selectedText = this.activeAnswer.scriptureText;
+    this.justEditedAnswer = false;
     this.showAnswerForm();
   }
 
@@ -398,6 +415,23 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
     this.emitAnswerToSave();
     this.hideAnswerForm();
+    this.justEditedAnswer = true;
+  }
+
+  /** If a given answer should have attention drawn to it in the UI. */
+  shouldDrawAttentionToAnswer(answer: Answer): boolean {
+    // If user added or edited their answer since navigating to this question, spotlight it and only it.
+    if (this.justEditedAnswer === true) {
+      return answer === this.currentUserAnswer;
+    }
+
+    // If there are any not-hidden, un-read answers, spotlight them.
+    if (this.answers.some(ans => !this.hasUserReadAnswer(ans))) {
+      return !this.hasUserReadAnswer(answer);
+    }
+
+    // Don't spotlight anything.
+    return false;
   }
 
   submitCommentAction(action: CommentAction) {
@@ -414,6 +448,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return;
     }
     this.answersToShow = this.questionDoc.data.answers.map(answer => answer.dataId);
+    this.justEditedAnswer = false;
   }
 
   private canLikeAnswer(answer: Answer): LikeAnswerResponse {
