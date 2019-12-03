@@ -337,23 +337,25 @@ describe('CheckingComponent', () => {
     it('saves the location of the last answered question', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
+      verify(mockedProjectService.trainSelectedSegment(anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
       env.selectQuestion(4);
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBe(43);
-      verify(mockedProjectService.trainSelectedSegment(anything())).once();
+      verify(mockedProjectService.trainSelectedSegment(anything())).twice();
     }));
 
     it('saves the last question answered in all question context', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER, 'ALL');
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
+      verify(mockedProjectService.trainSelectedSegment(anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
       env.selectQuestion(4);
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBeUndefined();
-      verify(mockedProjectService.trainSelectedSegment(anything())).once();
+      verify(mockedProjectService.trainSelectedSegment(anything())).twice();
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
