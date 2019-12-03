@@ -1,0 +1,28 @@
+@using Microsoft.AspNetCore.Builder
+@using Microsoft.AspNetCore.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.Extensions.Options
+@inject IHtmlLocalizer<SharedResource> SharedLocalizer;
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@inject IOptions<RequestLocalizationOptions> LocOptions
+
+@{
+    var requestCulture = Context.Features.Get<IRequestCultureFeature>();
+    var cultureItems = LocOptions.Value.SupportedUICultures
+        .Select(c => new SelectListItem { Value = c.Name, Text = SharedResource.Cultures[c.IetfLanguageTag] })
+        .ToList();
+}
+
+<div title="@SharedLocalizer["Request culture provider:"] @requestCulture?.Provider?.GetType().Name">
+    <form id="selectLanguage" asp-controller="Language"
+          asp-action="SetLanguage" method="post" class="form-horizontal" role="form">
+        <input type="hidden" name="returnUrl" value="@Context.Request.Path"/>
+        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <select name="culture"
+                    class="mdl-textfield__input"
+                    onchange="this.form.submit();"
+                    asp-for="@requestCulture.RequestCulture.UICulture.Name" asp-items="cultureItems">
+            </select>
+        </div>
+    </form>
+</div>

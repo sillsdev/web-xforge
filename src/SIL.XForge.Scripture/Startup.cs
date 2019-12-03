@@ -82,6 +82,23 @@ namespace SIL.XForge.Scripture
 
             services.AddSFDataAccess(Configuration);
 
+            services.Configure<RequestLocalizationOptions>(
+                opts =>
+                {
+                    // Add new cultures here as they are localized
+                    var supportedCultures = new List<CultureInfo>();
+                    foreach(var culture in SharedResource.Cultures)
+                    {
+                        supportedCultures.Add(new CultureInfo(culture.Key));
+                    }
+
+                    opts.DefaultRequestCulture = new RequestCulture("en");
+                    // Formatting numbers, dates, etc.
+                    opts.SupportedCultures = supportedCultures;
+                    // UI strings that we have localized.
+                    opts.SupportedUICultures = supportedCultures;
+                });
+
             services.AddLocalization(options => options.ResourcesPath = "Resources");
 
             services.AddMvc()
@@ -124,16 +141,7 @@ namespace SIL.XForge.Scripture
 
             app.UseExceptionLogging();
 
-            // Add new cultures here as they are localized
-            var supportedCultures = new List<CultureInfo> {new CultureInfo("en-US")};
-            app.UseRequestLocalization(new RequestLocalizationOptions
-            {
-                DefaultRequestCulture = new RequestCulture("en-US"),
-                // Formatting numbers, dates, etc.
-                SupportedCultures = supportedCultures,
-                // UI strings that we have localized.
-                SupportedUICultures = supportedCultures
-            });
+            app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
 
             app.UseStaticFiles(new StaticFileOptions
             {

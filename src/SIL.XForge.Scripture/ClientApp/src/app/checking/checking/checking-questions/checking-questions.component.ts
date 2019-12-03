@@ -32,17 +32,15 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
   private _activeQuestionVerseRef?: VerseRef;
-  private storeQuestion: boolean = true;
 
   constructor(private readonly userService: UserService, private readonly projectService: SFProjectService) {
     super();
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
     this.subscribe(this.activeQuestionDoc$.pipe(debounceTime(2000)), questionDoc => {
       this.updateElementsRead(questionDoc);
-      if (this.storeQuestion && questionDoc != null && questionDoc.data != null) {
+      if (questionDoc != null && questionDoc.data != null) {
         this.storeMostRecentQuestion(questionDoc.data.verseRef.bookNum);
       }
-      this.storeQuestion = true;
     });
   }
 
@@ -136,7 +134,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
         const lastQuestionDocId = this.projectUserConfigDoc.data.selectedQuestionRef;
         if (lastQuestionDocId != null) {
           questionToActivate = questionDocs.find(qd => qd.id === lastQuestionDocId);
-          this.storeQuestion = false;
         }
       }
     } else {
