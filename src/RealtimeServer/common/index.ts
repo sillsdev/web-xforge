@@ -37,8 +37,9 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
   try {
     const RealtimeServerType: RealtimeServerConstructor = require(`../${options.appModuleName}/realtime-server`);
     const DBType = MetadataDB(ShareDBMongo);
-    const db = await MongoClient.connect(options.connectionString);
-    server = new RealtimeServerType(new DBType(options.connectionString), new SchemaVersionRepository(db));
+    const client = await MongoClient.connect(options.connectionString, { useUnifiedTopology: true });
+    const db = client.db();
+    server = new RealtimeServerType(new DBType(callback => callback(null, client)), new SchemaVersionRepository(db));
     await server.createIndexes(db);
     await server.migrateIfNecessary();
 
