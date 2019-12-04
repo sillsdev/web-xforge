@@ -37,7 +37,7 @@ export class TextChooserDialogComponent implements OnDestroy {
   @ViewChild(TextComponent, { static: true }) textComponent?: TextComponent;
   @ViewChild(TextComponent, { static: false, read: ElementRef }) scriptureText!: ElementRef;
   selectedText?: string;
-  errorMessage?: string;
+  showError = false;
   bookNum: number;
   chapterNum: number;
   textDocId: TextDocId;
@@ -101,7 +101,7 @@ export class TextChooserDialogComponent implements OnDestroy {
       };
       this.rawTextSelection = rawSelection;
       this.selectionChanged = true;
-      this.errorMessage = '';
+      this.showError = false;
     }
   }
 
@@ -142,7 +142,7 @@ export class TextChooserDialogComponent implements OnDestroy {
         this.dialogRef.close('close');
       }
     } else {
-      this.errorMessage = 'Select text to attach to your answer.';
+      this.showError = true;
     }
   }
 

@@ -3,7 +3,7 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { configureTestingModule } from '../test-utils';
+import { configureTestingModule, TestTranslocoModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { ErrorAlert, ErrorComponent } from './error.component';
 
@@ -69,7 +69,7 @@ class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [CommonModule, UICommonModule],
+  imports: [CommonModule, UICommonModule, TestTranslocoModule],
   declarations: [ViewContainerDirective, ChildViewContainerComponent, ErrorComponent],
   exports: [ViewContainerDirective, ChildViewContainerComponent, ErrorComponent],
   entryComponents: [ChildViewContainerComponent, ErrorComponent]
