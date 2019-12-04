@@ -1,269 +1,271 @@
-<div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !isProjectAdmin }">
-  <mdc-icon fxFlex="32px">library_books</mdc-icon>
-  <h2 fxFlex>Texts with Questions</h2>
-  <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart">
-    <button *ngIf="!isLoading" mdc-button type="button" (click)="questionDialog()" id="add-question-button">
-      <mdc-icon>post_add</mdc-icon> <span fxHide.xs>Add question</span>
-    </button>
-  </div>
-  <ng-template #overallProgressChart>
-    <div id="overall-progress-chart">
-      <canvas
-        baseChart
-        width="36"
-        height="36"
-        chartType="doughnut"
-        [legend]="false"
-        [labels]="['Unread', 'Read', 'Answered']"
-        [data]="overallProgress()"
-        [colors]="[{ backgroundColor: ['#3a3a3a', '#edecec', '#B8D332'] }]"
-        [options]="{ events: [] }"
-      ></canvas>
+<ng-container *transloco="let t; read: 'checking_overview'">
+  <div fxLayout="row" fxLayoutAlign="start center" [ngClass]="{ 'reviewer-panels': !isProjectAdmin }">
+    <mdc-icon fxFlex="32px">library_books</mdc-icon>
+    <h2 fxFlex>{{ t("texts_with_questions") }}</h2>
+    <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart">
+      <button *ngIf="!isLoading" mdc-button type="button" (click)="questionDialog()" id="add-question-button">
+        <mdc-icon>post_add</mdc-icon> <span fxHide.xs>Add question</span>
+      </button>
     </div>
-  </ng-template>
-</div>
+    <ng-template #overallProgressChart>
+      <div id="overall-progress-chart">
+        <canvas
+          baseChart
+          width="36"
+          height="36"
+          chartType="doughnut"
+          [legend]="false"
+          [labels]="['Unread', 'Read', 'Answered']"
+          [data]="overallProgress()"
+          [colors]="[{ backgroundColor: ['#3a3a3a', '#edecec', '#B8D332'] }]"
+          [options]="{ events: [] }"
+        ></canvas>
+      </div>
+    </ng-template>
+  </div>
 
-<div fxLayout="column" fxLayoutAlign="space-around" *ngIf="isProjectAdmin; else reviewerQuestionPanel">
-  <mdc-list dense id="text-with-questions-list">
-    <ng-container *ngFor="let text of texts">
-      <mdc-list-item
-        *ngIf="bookQuestionCount(text) > 0"
-        (selectionChange)="itemVisible[getBookId(text)] = !itemVisible[getBookId(text)]"
-      >
-        <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-          <mdc-icon fxFlex="24px" mdcListItemMeta>
-            keyboard_arrow_{{ itemVisible[getBookId(text)] ? "down" : "right" }}
-          </mdc-icon>
-          <span fxFlex>{{ getBookName(text) }}</span>
-          <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
-            {{ questionCountLabel(bookQuestionCount(text)) }}
-          </span>
-          <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
-            {{ answerCountLabel(bookAnswerCount(text)) }}
-          </span>
-          <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
-        </div>
-      </mdc-list-item>
-      <ng-container *ngIf="itemVisible[getBookId(text)]">
-        <ng-container *ngFor="let chapter of text.chapters">
-          <mdc-list-item
-            *ngIf="questionCount(text.bookNum, chapter.number) > 0"
-            (selectionChange)="
-              itemVisible[getTextDocId(text.bookNum, chapter.number)] = !itemVisible[
-                getTextDocId(text.bookNum, chapter.number)
-              ]
-            "
-          >
-            <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-              <span fxFlex="16px" class="indent"></span>
-              <mdc-icon fxFlex="24px" mdcListItemMeta>
-                keyboard_arrow_{{ itemVisible[getTextDocId(text.bookNum, chapter.number)] ? "down" : "right" }}
-              </mdc-icon>
-              <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
-              <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
-                {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
-              </span>
-              <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
-                {{ answerCountLabel(chapterAnswerCount(text.bookNum, chapter.number)) }}
-              </span>
-              <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
-            </div>
-          </mdc-list-item>
-          <ng-container *ngIf="itemVisible[getTextDocId(text.bookNum, chapter.number)]">
-            <mdc-list-item *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookNum, chapter.number))">
-              <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                <span fxFlex="16px" class="indent"></span>
-                <button fxFlex="64px" mdc-button type="button" (click)="questionDialog(questionDoc)" class="edit-btn">
-                  <mdc-icon>edit</mdc-icon>
-                </button>
-                v{{ questionDoc.data?.verseRef.verseNum }} -&nbsp;
-                <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
-                <span fxFlex class="no-overflow-ellipsis">
-                  <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
-                </span>
-                <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
-                  {{ answerCountLabel(questionDoc.data?.answers.length) }}
-                </span>
-                <span fxFlex="64px" fxLayoutAlign="end center">
-                  <button
-                    mdc-button
-                    type="button"
-                    (click)="setQuestionArchiveStatus(questionDoc, true)"
-                    title="Archive"
-                    class="archive-btn"
-                  >
-                    <mdc-icon>archive</mdc-icon>
-                  </button>
-                </span>
-              </div>
-            </mdc-list-item>
-          </ng-container>
-        </ng-container>
-      </ng-container>
-    </ng-container>
-  </mdc-list>
-</div>
-
-<div
-  fxLayout="row"
-  fxLayoutAlign="space-around"
-  class="reviewer-panels"
-  *ngIf="allQuestionsCount === '-' || allQuestionsCount === '0'"
-  id="no-questions-label"
->
-  <p>
-    There are no published questions. <span *ngIf="isProjectAdmin">Click <b>Add question</b>, above.</span>
-  </p>
-</div>
-
-<ng-template #reviewerQuestionPanel>
-  <div fxLayout="column" fxLayoutAlign="space-around" class="reviewer-panels" id="reviewer-question-panel">
-    <mdc-list dense id="reviewer-questions-list">
+  <div fxLayout="column" fxLayoutAlign="space-around" *ngIf="isProjectAdmin; else reviewerQuestionPanel">
+    <mdc-list dense id="text-with-questions-list">
       <ng-container *ngFor="let text of texts">
         <mdc-list-item
           *ngIf="bookQuestionCount(text) > 0"
-          [routerLink]="['/projects', projectId, 'checking', getBookId(text)]"
+          (selectionChange)="itemVisible[getBookId(text)] = !itemVisible[getBookId(text)]"
         >
           <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+            <mdc-icon fxFlex="24px" mdcListItemMeta>
+              keyboard_arrow_{{ itemVisible[getBookId(text)] ? "down" : "right" }}
+            </mdc-icon>
             <span fxFlex>{{ getBookName(text) }}</span>
-            <span>
-              <canvas
-                baseChart
-                width="36"
-                height="36"
-                chartType="doughnut"
-                [legend]="false"
-                [labels]="['Unread', 'Read', 'Answered']"
-                [data]="bookProgress(text)"
-                [colors]="[{ backgroundColor: ['#3a3a3a', '#edecec', '#B8D332'] }]"
-                [options]="{ events: [] }"
-              ></canvas>
+            <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
+              {{ questionCountLabel(bookQuestionCount(text)) }}
             </span>
+            <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
+              {{ answerCountLabel(bookAnswerCount(text)) }}
+            </span>
+            <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
           </div>
         </mdc-list-item>
-      </ng-container>
-    </mdc-list>
-  </div>
-</ng-template>
-
-<div fxLayout="row wrap" fxLayoutAlign="space-between" class="reviewer-panels stat-panels">
-  <mdc-card class="card" outlined>
-    <div class="card-content-question">
-      <span fxFlex>
-        <div class="stat-total">{{ allQuestionsCount }}</div>
-        <div class="stat-label">Questions</div>
-      </span>
-      <span fxLayoutAlign="start center"> <mdc-icon>help</mdc-icon> </span>
-    </div>
-  </mdc-card>
-  <mdc-card class="card" outlined>
-    <div class="card-content-answer">
-      <span fxFlex>
-        <div class="stat-total">{{ myAnswerCount }}</div>
-        <div class="stat-label">Answers</div>
-      </span>
-      <span fxLayoutAlign="start center"> <mdc-icon>question_answer</mdc-icon> </span>
-    </div>
-  </mdc-card>
-  <mdc-card class="card" outlined>
-    <div class="card-content-comment">
-      <span fxFlex>
-        <div class="stat-total">{{ myCommentCount }}</div>
-        <div class="stat-label">Comments</div>
-      </span>
-      <span fxLayoutAlign="start center"> <mdc-icon>comment</mdc-icon> </span>
-    </div>
-  </mdc-card>
-  <mdc-card *ngIf="canSeeOtherUserResponses" class="card" outlined>
-    <div class="card-content-like">
-      <span fxFlex>
-        <div class="stat-total">{{ myLikeCount }}</div>
-        <div class="stat-label">Likes</div>
-      </span>
-      <span fxLayoutAlign="start center"> <mdc-icon>thumb_up</mdc-icon> </span>
-    </div>
-  </mdc-card>
-</div>
-
-<div fxLayout="row" fxLayoutAlign="start center" *ngIf="isProjectAdmin">
-  <mdc-icon fxFlex="32px">archive</mdc-icon>
-  <h2 fxFlex>Archived Questions</h2>
-</div>
-
-<div fxLayout="column" *ngIf="isProjectAdmin">
-  <mdc-list dense id="text-with-archived-questions">
-    <ng-container *ngFor="let text of texts">
-      <mdc-list-item
-        *ngIf="bookQuestionCount(text, true) > 0"
-        (selectionChange)="itemVisibleArchived[getBookId(text)] = !itemVisibleArchived[getBookId(text)]"
-      >
-        <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-          <mdc-icon fxFlex="24px" mdcListItemMeta
-            >keyboard_arrow_{{ itemVisibleArchived[getBookId(text)] ? "down" : "right" }}</mdc-icon
-          ><span fxFlex>{{ getBookName(text) }}</span>
-          <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center" class="archived-questions-count">
-            {{ questionCountLabel(bookQuestionCount(text, true)) }}
-          </span>
-          <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
-        </div>
-      </mdc-list-item>
-      <ng-container *ngIf="itemVisibleArchived[getBookId(text)]">
-        <ng-container *ngFor="let chapter of text.chapters">
-          <mdc-list-item
-            *ngIf="questionCount(text.bookNum, chapter.number, true) > 0"
-            (selectionChange)="
-              itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] = !itemVisibleArchived[
-                getTextDocId(text.bookNum, chapter.number)
-              ]
-            "
-            ><div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-              <span fxFlex="16px" class="indent"></span>
-              <mdc-icon fxFlex="24px" mdcListItemMeta
-                >keyboard_arrow_{{
-                  itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] ? "down" : "right"
-                }}</mdc-icon
-              >
-              <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
-            </div>
-          </mdc-list-item>
-          <ng-container *ngIf="itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)]">
+        <ng-container *ngIf="itemVisible[getBookId(text)]">
+          <ng-container *ngFor="let chapter of text.chapters">
             <mdc-list-item
-              *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookNum, chapter.number), true)"
+              *ngIf="questionCount(text.bookNum, chapter.number) > 0"
+              (selectionChange)="
+                itemVisible[getTextDocId(text.bookNum, chapter.number)] = !itemVisible[
+                  getTextDocId(text.bookNum, chapter.number)
+                ]
+              "
             >
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                <span fxFlex="40px" class="indent"></span> v{{ questionDoc.data?.verseRef.verseNum }} -&nbsp;
-                <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
-                <span fxFlex class="no-overflow-ellipsis">
-                  <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
+                <span fxFlex="16px" class="indent"></span>
+                <mdc-icon fxFlex="24px" mdcListItemMeta>
+                  keyboard_arrow_{{ itemVisible[getTextDocId(text.bookNum, chapter.number)] ? "down" : "right" }}
+                </mdc-icon>
+                <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
+                <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
+                  {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
                 </span>
-                <span fxFlex="200px" fxHide.lt-sm fxLayoutAlign="end center" class="date-archived"
-                  >Archived {{ dateInWords(questionDoc.data?.dateArchived) }} ago</span
-                >
-                <span fxFlex="64px" fxLayoutAlign="end center">
-                  <button
-                    mdc-button
-                    type="button"
-                    (click)="setQuestionArchiveStatus(questionDoc, false)"
-                    title="Republish"
-                    class="publish-btn"
-                  >
-                    <mdc-icon>public</mdc-icon>
-                  </button>
+                <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
+                  {{ answerCountLabel(chapterAnswerCount(text.bookNum, chapter.number)) }}
                 </span>
+                <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
               </div>
             </mdc-list-item>
+            <ng-container *ngIf="itemVisible[getTextDocId(text.bookNum, chapter.number)]">
+              <mdc-list-item *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookNum, chapter.number))">
+                <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+                  <span fxFlex="16px" class="indent"></span>
+                  <button fxFlex="64px" mdc-button type="button" (click)="questionDialog(questionDoc)" class="edit-btn">
+                    <mdc-icon>edit</mdc-icon>
+                  </button>
+                  v{{ questionDoc.data?.verseRef.verseNum }} -&nbsp;
+                  <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
+                  <span fxFlex class="no-overflow-ellipsis">
+                    <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
+                  </span>
+                  <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
+                    {{ answerCountLabel(questionDoc.data?.answers.length) }}
+                  </span>
+                  <span fxFlex="64px" fxLayoutAlign="end center">
+                    <button
+                      mdc-button
+                      type="button"
+                      (click)="setQuestionArchiveStatus(questionDoc, true)"
+                      title="Archive"
+                      class="archive-btn"
+                    >
+                      <mdc-icon>archive</mdc-icon>
+                    </button>
+                  </span>
+                </div>
+              </mdc-list-item>
+            </ng-container>
           </ng-container>
         </ng-container>
       </ng-container>
-    </ng-container>
-  </mdc-list>
+    </mdc-list>
+  </div>
+
   <div
     fxLayout="row"
     fxLayoutAlign="space-around"
     class="reviewer-panels"
-    *ngIf="allArchivedQuestionsCount === 0"
-    id="no-archived-questions-label"
+    *ngIf="allQuestionsCount === '-' || allQuestionsCount === '0'"
+    id="no-questions-label"
   >
-    <p>There are no archived questions.</p>
+    <p>
+      There are no published questions. <span *ngIf="isProjectAdmin">Click <b>Add question</b>, above.</span>
+    </p>
   </div>
-</div>
+
+  <ng-template #reviewerQuestionPanel>
+    <div fxLayout="column" fxLayoutAlign="space-around" class="reviewer-panels" id="reviewer-question-panel">
+      <mdc-list dense id="reviewer-questions-list">
+        <ng-container *ngFor="let text of texts">
+          <mdc-list-item
+            *ngIf="bookQuestionCount(text) > 0"
+            [routerLink]="['/projects', projectId, 'checking', getBookId(text)]"
+          >
+            <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+              <span fxFlex>{{ getBookName(text) }}</span>
+              <span>
+                <canvas
+                  baseChart
+                  width="36"
+                  height="36"
+                  chartType="doughnut"
+                  [legend]="false"
+                  [labels]="['Unread', 'Read', 'Answered']"
+                  [data]="bookProgress(text)"
+                  [colors]="[{ backgroundColor: ['#3a3a3a', '#edecec', '#B8D332'] }]"
+                  [options]="{ events: [] }"
+                ></canvas>
+              </span>
+            </div>
+          </mdc-list-item>
+        </ng-container>
+      </mdc-list>
+    </div>
+  </ng-template>
+
+  <div fxLayout="row wrap" fxLayoutAlign="space-between" class="reviewer-panels stat-panels">
+    <mdc-card class="card" outlined>
+      <div class="card-content-question">
+        <span fxFlex>
+          <div class="stat-total">{{ allQuestionsCount }}</div>
+          <div class="stat-label">{{ t("questions") }}</div>
+        </span>
+        <span fxLayoutAlign="start center"> <mdc-icon>help</mdc-icon> </span>
+      </div>
+    </mdc-card>
+    <mdc-card class="card" outlined>
+      <div class="card-content-answer">
+        <span fxFlex>
+          <div class="stat-total">{{ myAnswerCount }}</div>
+          <div class="stat-label">{{ t("answers") }}</div>
+        </span>
+        <span fxLayoutAlign="start center"> <mdc-icon>question_answer</mdc-icon> </span>
+      </div>
+    </mdc-card>
+    <mdc-card class="card" outlined>
+      <div class="card-content-comment">
+        <span fxFlex>
+          <div class="stat-total">{{ myCommentCount }}</div>
+          <div class="stat-label">{{ t("comments") }}</div>
+        </span>
+        <span fxLayoutAlign="start center"> <mdc-icon>comment</mdc-icon> </span>
+      </div>
+    </mdc-card>
+    <mdc-card *ngIf="canSeeOtherUserResponses" class="card" outlined>
+      <div class="card-content-like">
+        <span fxFlex>
+          <div class="stat-total">{{ myLikeCount }}</div>
+          <div class="stat-label">{{ t("likes") }}</div>
+        </span>
+        <span fxLayoutAlign="start center"> <mdc-icon>thumb_up</mdc-icon> </span>
+      </div>
+    </mdc-card>
+  </div>
+
+  <div fxLayout="row" fxLayoutAlign="start center" *ngIf="isProjectAdmin">
+    <mdc-icon fxFlex="32px">archive</mdc-icon>
+    <h2 fxFlex>Archived Questions</h2>
+  </div>
+
+  <div fxLayout="column" *ngIf="isProjectAdmin">
+    <mdc-list dense id="text-with-archived-questions">
+      <ng-container *ngFor="let text of texts">
+        <mdc-list-item
+          *ngIf="bookQuestionCount(text, true) > 0"
+          (selectionChange)="itemVisibleArchived[getBookId(text)] = !itemVisibleArchived[getBookId(text)]"
+        >
+          <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+            <mdc-icon fxFlex="24px" mdcListItemMeta
+              >keyboard_arrow_{{ itemVisibleArchived[getBookId(text)] ? "down" : "right" }}</mdc-icon
+            ><span fxFlex>{{ getBookName(text) }}</span>
+            <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center" class="archived-questions-count">
+              {{ questionCountLabel(bookQuestionCount(text, true)) }}
+            </span>
+            <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
+          </div>
+        </mdc-list-item>
+        <ng-container *ngIf="itemVisibleArchived[getBookId(text)]">
+          <ng-container *ngFor="let chapter of text.chapters">
+            <mdc-list-item
+              *ngIf="questionCount(text.bookNum, chapter.number, true) > 0"
+              (selectionChange)="
+                itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] = !itemVisibleArchived[
+                  getTextDocId(text.bookNum, chapter.number)
+                ]
+              "
+              ><div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+                <span fxFlex="16px" class="indent"></span>
+                <mdc-icon fxFlex="24px" mdcListItemMeta
+                  >keyboard_arrow_{{
+                    itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] ? "down" : "right"
+                  }}</mdc-icon
+                >
+                <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
+              </div>
+            </mdc-list-item>
+            <ng-container *ngIf="itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)]">
+              <mdc-list-item
+                *ngFor="let questionDoc of getQuestionDocs(getTextDocId(text.bookNum, chapter.number), true)"
+              >
+                <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+                  <span fxFlex="40px" class="indent"></span> v{{ questionDoc.data?.verseRef.verseNum }} -&nbsp;
+                  <mdc-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
+                  <span fxFlex class="no-overflow-ellipsis">
+                    <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
+                  </span>
+                  <span fxFlex="200px" fxHide.lt-sm fxLayoutAlign="end center" class="date-archived"
+                    >Archived {{ dateInWords(questionDoc.data?.dateArchived) }} ago</span
+                  >
+                  <span fxFlex="64px" fxLayoutAlign="end center">
+                    <button
+                      mdc-button
+                      type="button"
+                      (click)="setQuestionArchiveStatus(questionDoc, false)"
+                      title="Republish"
+                      class="publish-btn"
+                    >
+                      <mdc-icon>public</mdc-icon>
+                    </button>
+                  </span>
+                </div>
+              </mdc-list-item>
+            </ng-container>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+    </mdc-list>
+    <div
+      fxLayout="row"
+      fxLayoutAlign="space-around"
+      class="reviewer-panels"
+      *ngIf="allArchivedQuestionsCount === 0"
+      id="no-archived-questions-label"
+    >
+      <p>There are no archived questions.</p>
+    </div>
+  </div>
+</ng-container>

@@ -1,23 +1,25 @@
-<mdc-dialog>
-  <mdc-dialog-container>
-    <mdc-dialog-surface>
-      <mdc-dialog-title>Select scripture to attach to your answer</mdc-dialog-title>
-      <mdc-dialog-content>
-        <div class="select-chapter" (click)="openScriptureChooser()">
-          <mdc-icon>library_books</mdc-icon>
-          <h2>{{ bookName }} {{ chapterNum }}</h2>
-          <mdc-icon>keyboard_arrow_down</mdc-icon>
-        </div>
-        <app-text #scriptureText [id]="textDocId" multiSegmentSelection="true"></app-text>
-        <p class="selection-preview">
-          {{ selectedText }} <span class="selection-reference">{{ referenceForDisplay }}</span>
-        </p>
-        <span class="error-message" *ngIf="errorMessage">{{ errorMessage }}</span>
-      </mdc-dialog-content>
-      <mdc-dialog-actions>
-        <button mdcDialogAction="close" type="button" mdc-button>Cancel</button>
-        <button type="submit" mdc-button primary default (click)="submit()">Save</button>
-      </mdc-dialog-actions>
-    </mdc-dialog-surface>
-  </mdc-dialog-container>
-</mdc-dialog>
+<ng-container *transloco="let t; read: 'text_chooser_dialog'">
+  <mdc-dialog>
+    <mdc-dialog-container>
+      <mdc-dialog-surface>
+        <mdc-dialog-title>{{ t("select_scripture") }}</mdc-dialog-title>
+        <mdc-dialog-content>
+          <div class="select-chapter" (click)="openScriptureChooser()">
+            <mdc-icon>library_books</mdc-icon>
+            <h2>{{ bookName }} {{ chapterNum }}</h2>
+            <mdc-icon>keyboard_arrow_down</mdc-icon>
+          </div>
+          <app-text #scriptureText [id]="textDocId" multiSegmentSelection="true"></app-text>
+          <p class="selection-preview">
+            {{ selectedText }} <span class="selection-reference">{{ referenceForDisplay }}</span>
+          </p>
+          <span class="error-message" *ngIf="showError">{{ t("select_text_error_message") }}</span>
+        </mdc-dialog-content>
+        <mdc-dialog-actions>
+          <button mdcDialogAction="close" type="button" mdc-button>{{ t("cancel") }}</button>
+          <button type="submit" mdc-button primary default (click)="submit()">{{ t("save") }}</button>
+        </mdc-dialog-actions>
+      </mdc-dialog-surface>
+    </mdc-dialog-container>
+  </mdc-dialog>
+</ng-container>

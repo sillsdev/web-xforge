@@ -7,8 +7,6 @@ import { ngfModule } from 'angular-file';
 import { AvatarModule } from 'ngx-avatar';
 import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
-import { EditNameDialogComponent } from './edit-name-dialog/edit-name-dialog.component';
-import { ErrorComponent } from './error/error.component';
 import { I18nService, TranslationLoader } from './i18n.service';
 import { IndexeddbRealtimeOfflineStore } from './indexeddb-realtime-offline-store';
 import { MessageDialogComponent } from './message-dialog/message-dialog.component';
@@ -24,8 +22,6 @@ import { WriteStatusComponent } from './write-status/write-status.component';
 
 const componentExports = [
   AvatarComponent,
-  EditNameDialogComponent,
-  ErrorComponent,
   MessageDialogComponent,
   SaProjectsComponent,
   SaDeleteDialogComponent,
@@ -34,7 +30,7 @@ const componentExports = [
   WriteStatusComponent
 ];
 
-export const xForgeCommonEntryComponents = [EditNameDialogComponent, SaDeleteDialogComponent];
+export const xForgeCommonEntryComponents = [SaDeleteDialogComponent];
 
 @NgModule({
   imports: [
@@ -47,7 +43,7 @@ export const xForgeCommonEntryComponents = [EditNameDialogComponent, SaDeleteDia
   ],
   declarations: componentExports,
   exports: componentExports,
-  entryComponents: [ErrorComponent, MessageDialogComponent],
+  entryComponents: [MessageDialogComponent],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true },
     { provide: RealtimeRemoteStore, useExisting: SharedbRealtimeRemoteStore },
