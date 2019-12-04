@@ -102,7 +102,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   getUnreadAnswers(questionDoc: QuestionDoc): number {
-    if (this.canAddAnswer && (this.project == null || !this.project.checkingConfig.usersSeeEachOthersResponses)) {
+    if (this.canAddAnswer || this.project == null || !this.project.checkingConfig.usersSeeEachOthersResponses) {
       return 0;
     }
     let unread = 0;
