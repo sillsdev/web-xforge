@@ -4,6 +4,7 @@
     "cannot_change_password": "Can't change password at this time. Try again later or report an issue in the Help menu.",
     "change_password": "Change password",
     "community_checking": "Community Checking",
+    "connect_project": "Connect project",
     "help": "Help",
     "log_out": "Log out",
     "logged_in_as": "Logged in as",
@@ -13,6 +14,13 @@
     "report_issue_email": "email {{ email }}",
     "report_issue": "Report an issue",
     "scripture_checking_not_available": "Scripture checking is not available in this project."
+  },
+  "checking": {
+    "me": "Me",
+    "next": "Next",
+    "previous": "Previous",
+    "questions": "Questions ({{ count }})",
+    "view_questions": "View Questions"
   },
   "checking_answers": {
     "add_answer": "Add answer",
@@ -57,6 +65,39 @@
     "show_more_comments_and_unread": "Show {{ count }} more comments - {{ unread }} unread",
     "show_more_comments": "Show {{ count }} more comments"
   },
+  "checking_overview": {
+    "answers": "Answers",
+    "comments": "Comments",
+    "likes": "Likes",
+    "questions": "Questions",
+    "texts_with_questions": "Texts with Questions"
+  },
+  "edit_name_dialog": {
+    "cancel": "Cancel",
+    "confirm_name": "Confirm the name that other people on this project will see when you post answers and comments",
+    "confirm_your_name": "Confirm your name",
+    "confirm": "Confirm",
+    "enter_name": "Please enter your name",
+    "update_your_name": "Update your name",
+    "update": "Update",
+    "your_name": "Your name"
+  },
+  "error": {
+    "chrome": "Chrome",
+    "close": "Close",
+    "error_occurred": "An error has occurred",
+    "firefox": "Firefox",
+    "hide_details": "Hide details",
+    "show_details": "Show details",
+    "to_report_issue_email": "To report an issue, email {{ issueEmailLink }}.",
+    "unsupported_browser": "You are using an unsupported browser, which may be the reason for this error. We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}."
+  },
+  "scripture_chooser_dialog": {
+    "choose_book": "Choose book",
+    "choose_chapter": "Choose chapter",
+    "choose_end_verse": "Choose end verse",
+    "choose_verse": "Choose verse"
+  },
   "share_control": {
     "copy_link": "Copy link",
     "email_invalid": "Email address is invalid",
@@ -73,10 +114,10 @@
     "done": "Done",
     "share_with_others": "Share with others"
   },
-  "questions": {
-    "me": "Me",
-    "next": "Next",
-    "previous": "Previous",
-    "questions": "Questions"
+  "text_chooser_dialog": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "select_scripture": "Select scripture to attach to your answer",
+    "select_text_error_message": "Select text to attach to your answer."
   }
 }

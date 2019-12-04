@@ -21,7 +21,7 @@ import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -354,7 +354,7 @@ describe('CheckingOverviewComponent', () => {
 });
 
 @NgModule({
-  imports: [MdcDialogModule, NoopAnimationsModule, UICommonModule, ngfModule, CheckingModule]
+  imports: [MdcDialogModule, NoopAnimationsModule, UICommonModule, ngfModule, CheckingModule, TestTranslocoModule]
 })
 class DialogTestModule {}
 

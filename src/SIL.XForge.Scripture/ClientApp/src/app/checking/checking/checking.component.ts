@@ -52,6 +52,7 @@ interface Summary {
 })
 export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   userDoc?: UserDoc;
+  scriptureFontSize?: string;
   @ViewChild('answerPanelContainer', { static: false }) set answersPanelElement(
     answersPanelContainerElement: ElementRef
   ) {
@@ -62,12 +63,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   @HostBinding('class') classes = 'flex-max';
   @ViewChild(CheckingAnswersComponent, { static: false }) answersPanel?: CheckingAnswersComponent;
-  @ViewChild(CheckingTextComponent, { static: true }) scripturePanel!: CheckingTextComponent;
-  @ViewChild(CheckingQuestionsComponent, { static: true }) questionsPanel!: CheckingQuestionsComponent;
-  @ViewChild(SplitComponent, { static: true }) splitComponent!: SplitComponent;
-  @ViewChild('splitContainer', { static: true }) splitContainerElement!: ElementRef;
-  @ViewChild('scripturePanelContainer', { static: true }) scripturePanelContainerElement!: ElementRef;
-  @ViewChild('chapterMenuList', { static: true }) chapterMenuList!: MdcList;
+  @ViewChild(CheckingTextComponent, { static: false }) scripturePanel!: CheckingTextComponent;
+  @ViewChild(CheckingQuestionsComponent, { static: false }) questionsPanel!: CheckingQuestionsComponent;
+  @ViewChild(SplitComponent, { static: false }) splitComponent!: SplitComponent;
+  @ViewChild('splitContainer', { static: false }) splitContainerElement!: ElementRef;
+  @ViewChild('scripturePanelContainer', { static: false }) scripturePanelContainerElement!: ElementRef;
+  @ViewChild('chapterMenuList', { static: false }) chapterMenuList!: MdcList;
 
   chapters: number[] = [];
   isExpanded: boolean = false;
@@ -366,7 +367,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   applyFontChange(fontSize: string) {
-    this.scripturePanel.applyFontChange(fontSize);
+    this.scriptureFontSize = fontSize;
   }
 
   async answerAction(answerAction: AnswerAction): Promise<void> {
