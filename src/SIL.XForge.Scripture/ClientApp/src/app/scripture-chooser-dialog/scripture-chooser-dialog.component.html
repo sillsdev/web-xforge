@@ -1,114 +1,116 @@
-<mdc-dialog>
-  <mdc-dialog-container class="dialogContainer">
-    <mdc-dialog-surface id="bookPane" *ngIf="showing === 'books'">
-      <mdc-dialog-title>
-        <button
-          mdcIconButton
-          class="backout-button"
-          (click)="onClickBackoutButton($event)"
-          (focus)="onCloseFocus($event)"
-        >
-          <mdc-icon>close</mdc-icon>
-        </button>
-        <span>Choose book</span>
-      </mdc-dialog-title>
-      <mdc-dialog-content>
-        <div class="upperBookSet">
+<ng-container *transloco="let t; read: 'scripture_chooser_dialog'">
+  <mdc-dialog>
+    <mdc-dialog-container class="dialogContainer">
+      <mdc-dialog-surface id="bookPane" *ngIf="showing === 'books'">
+        <mdc-dialog-title>
           <button
-            *ngFor="let book of otBooks"
+            mdcIconButton
+            class="backout-button"
+            (click)="onClickBackoutButton($event)"
+            (focus)="onCloseFocus($event)"
+          >
+            <mdc-icon>close</mdc-icon>
+          </button>
+          <span>{{ t("choose_book") }}</span>
+        </mdc-dialog-title>
+        <mdc-dialog-content>
+          <div class="upperBookSet">
+            <button
+              *ngFor="let book of otBooks"
+              mdc-button
+              [primary]="data.input?.book === book"
+              (click)="onClickBook($event)"
+            >
+              {{ book }}
+            </button>
+          </div>
+          <button
+            *ngFor="let book of ntBooks"
             mdc-button
             [primary]="data.input?.book === book"
             (click)="onClickBook($event)"
           >
             {{ book }}
           </button>
-        </div>
-        <button
-          *ngFor="let book of ntBooks"
-          mdc-button
-          [primary]="data.input?.book === book"
-          (click)="onClickBook($event)"
-        >
-          {{ book }}
-        </button>
-      </mdc-dialog-content>
-    </mdc-dialog-surface>
+        </mdc-dialog-content>
+      </mdc-dialog-surface>
 
-    <mdc-dialog-surface id="chapterPane" *ngIf="showing === 'chapters'">
-      <mdc-dialog-title>
-        <button mdcIconButton class="backout-button" (click)="onClickBackoutButton($event)">
-          <mdc-icon>navigate_before</mdc-icon>
-        </button>
-        <span>Choose chapter</span>
-      </mdc-dialog-title>
-      <mdc-dialog-content>
-        <div class="reference">{{ getBookName(data.booksAndChaptersToShow[selection.book]) }}</div>
-        <button
-          *ngFor="let chapter of chaptersOf(selection?.book)"
-          mdc-button
-          [primary]="data.input?.book === selection?.book && +data.input?.chapterNum === +chapter"
-          (click)="onClickChapter($event)"
-        >
-          {{ chapter }}
-        </button>
-      </mdc-dialog-content>
-    </mdc-dialog-surface>
+      <mdc-dialog-surface id="chapterPane" *ngIf="showing === 'chapters'">
+        <mdc-dialog-title>
+          <button mdcIconButton class="backout-button" (click)="onClickBackoutButton($event)">
+            <mdc-icon>navigate_before</mdc-icon>
+          </button>
+          <span>{{ t("choose_chapter") }}</span>
+        </mdc-dialog-title>
+        <mdc-dialog-content>
+          <div class="reference">{{ getBookName(data.booksAndChaptersToShow[selection.book]) }}</div>
+          <button
+            *ngFor="let chapter of chaptersOf(selection?.book)"
+            mdc-button
+            [primary]="data.input?.book === selection?.book && +data.input?.chapterNum === +chapter"
+            (click)="onClickChapter($event)"
+          >
+            {{ chapter }}
+          </button>
+        </mdc-dialog-content>
+      </mdc-dialog-surface>
 
-    <mdc-dialog-surface id="versePane" *ngIf="showing === 'verses'">
-      <mdc-dialog-title>
-        <button mdcIconButton class="backout-button" (click)="onClickBackoutButton($event)">
-          <mdc-icon>navigate_before</mdc-icon>
-        </button>
-        <span>Choose verse</span>
-      </mdc-dialog-title>
-      <mdc-dialog-content>
-        <div class="reference">
-          {{ getBookName(data.booksAndChaptersToShow[selection.book]) }} {{ selection.chapter }}
-        </div>
-        <button
-          *ngFor="let verse of versesOf(selection?.book, selection?.chapter)"
-          mdc-button
-          [primary]="
-            data.input?.book === selection?.book &&
-            data.input?.chapter === selection?.chapter &&
-            +data.input?.verseNum === +verse
-          "
-          (click)="onClickVerse($event)"
-        >
-          {{ verse }}
-        </button>
-      </mdc-dialog-content>
-    </mdc-dialog-surface>
+      <mdc-dialog-surface id="versePane" *ngIf="showing === 'verses'">
+        <mdc-dialog-title>
+          <button mdcIconButton class="backout-button" (click)="onClickBackoutButton($event)">
+            <mdc-icon>navigate_before</mdc-icon>
+          </button>
+          <span>{{ t("choose_verse") }}</span>
+        </mdc-dialog-title>
+        <mdc-dialog-content>
+          <div class="reference">
+            {{ getBookName(data.booksAndChaptersToShow[selection.book]) }} {{ selection.chapter }}
+          </div>
+          <button
+            *ngFor="let verse of versesOf(selection?.book, selection?.chapter)"
+            mdc-button
+            [primary]="
+              data.input?.book === selection?.book &&
+              data.input?.chapter === selection?.chapter &&
+              +data.input?.verseNum === +verse
+            "
+            (click)="onClickVerse($event)"
+          >
+            {{ verse }}
+          </button>
+        </mdc-dialog-content>
+      </mdc-dialog-surface>
 
-    <mdc-dialog-surface id="rangeEndPane" *ngIf="showing === 'rangeEnd'">
-      <mdc-dialog-title>
-        <button
-          mdcIconButton
-          class="backout-button"
-          (click)="onClickBackoutButton($event)"
-          (focus)="onCloseFocus($event)"
-        >
-          <mdc-icon>close</mdc-icon>
-        </button>
-        <span>Choose end verse</span>
-      </mdc-dialog-title>
-      <mdc-dialog-content>
-        <div class="reference">
-          {{ getBookName(data.booksAndChaptersToShow[(data.rangeStart?.book)]) }} {{ data.rangeStart?.chapter }}
-        </div>
-        <button
-          *ngFor="let verse of versesOf(data.rangeStart?.book, data.rangeStart?.chapter, data.rangeStart?.verse)"
-          mdc-button
-          [primary]="
-            data.input?.book === data.rangeStart?.book &&
-            data.input?.chapter === data.rangeStart?.chapter &&
-            +data.input?.verseNum === +verse
-          "
-          (click)="onClickVerse($event)"
-        >
-          {{ verse }}
-        </button>
-      </mdc-dialog-content>
-    </mdc-dialog-surface>
-  </mdc-dialog-container>
-</mdc-dialog>
+      <mdc-dialog-surface id="rangeEndPane" *ngIf="showing === 'rangeEnd'">
+        <mdc-dialog-title>
+          <button
+            mdcIconButton
+            class="backout-button"
+            (click)="onClickBackoutButton($event)"
+            (focus)="onCloseFocus($event)"
+          >
+            <mdc-icon>close</mdc-icon>
+          </button>
+          <span>{{ t("choose_end_verse") }}</span>
+        </mdc-dialog-title>
+        <mdc-dialog-content>
+          <div class="reference">
+            {{ getBookName(data.booksAndChaptersToShow[(data.rangeStart?.book)]) }} {{ data.rangeStart?.chapter }}
+          </div>
+          <button
+            *ngFor="let verse of versesOf(data.rangeStart?.book, data.rangeStart?.chapter, data.rangeStart?.verse)"
+            mdc-button
+            [primary]="
+              data.input?.book === data.rangeStart?.book &&
+              data.input?.chapter === data.rangeStart?.chapter &&
+              +data.input?.verseNum === +verse
+            "
+            (click)="onClickVerse($event)"
+          >
+            {{ verse }}
+          </button>
+        </mdc-dialog-content>
+      </mdc-dialog-surface>
+    </mdc-dialog-container>
+  </mdc-dialog>
+</ng-container>

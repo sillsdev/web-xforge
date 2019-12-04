@@ -1,34 +1,34 @@
-<mdc-dialog>
-  <mdc-dialog-container>
-    <mdc-dialog-surface>
-      <mdc-dialog-title *ngIf="data.isConfirmation">Confirm your name</mdc-dialog-title>
-      <mdc-dialog-title *ngIf="!data.isConfirmation">Update your name</mdc-dialog-title>
-      <mdc-dialog-content>
-        <form id="name-form">
-          <p *ngIf="data.isConfirmation">
-            Confirm the name that other people on this project will see when you post answers and comments
-          </p>
-          <p *ngIf="!data.isConfirmation">Please enter your name</p>
-          <mdc-form-field fluid>
-            <mdc-text-field [formControl]="name" id="name-input" label="Your name"></mdc-text-field>
-          </mdc-form-field>
-        </form>
-      </mdc-dialog-content>
-      <mdc-dialog-actions>
-        <button
-          form="name-form"
-          mdcDialogButton
-          type="button"
-          (click)="cancelDialog()"
-          *ngIf="!data.isConfirmation"
-          id="cancel-button"
-        >
-          Cancel
-        </button>
-        <button form="name-form" mdc-button primary type="submit" (click)="submitDialog()" id="submit-button">
-          {{ data.isConfirmation ? "Confirm" : "Update" }}
-        </button>
-      </mdc-dialog-actions>
-    </mdc-dialog-surface>
-  </mdc-dialog-container>
-</mdc-dialog>
+<ng-container *transloco="let t; read: 'edit_name_dialog'">
+  <mdc-dialog>
+    <mdc-dialog-container>
+      <mdc-dialog-surface>
+        <mdc-dialog-title *ngIf="data.isConfirmation">{{ t("confirm_your_name") }}</mdc-dialog-title>
+        <mdc-dialog-title *ngIf="!data.isConfirmation">{{ t("update_your_name") }}</mdc-dialog-title>
+        <mdc-dialog-content>
+          <form id="name-form">
+            <p *ngIf="data.isConfirmation">{{ t("confirm_name") }}</p>
+            <p *ngIf="!data.isConfirmation">{{ t("enter_name") }}</p>
+            <mdc-form-field fluid>
+              <mdc-text-field [formControl]="name" id="name-input" label="{{ t('your_name') }}"></mdc-text-field>
+            </mdc-form-field>
+          </form>
+        </mdc-dialog-content>
+        <mdc-dialog-actions>
+          <button
+            form="name-form"
+            mdcDialogButton
+            type="button"
+            (click)="cancelDialog()"
+            *ngIf="!data.isConfirmation"
+            id="cancel-button"
+          >
+            {{ t("cancel") }}
+          </button>
+          <button form="name-form" mdc-button primary type="submit" (click)="submitDialog()" id="submit-button">
+            {{ data.isConfirmation ? t("confirm") : t("update") }}
+          </button>
+        </mdc-dialog-actions>
+      </mdc-dialog-surface>
+    </mdc-dialog-container>
+  </mdc-dialog>
+</ng-container>

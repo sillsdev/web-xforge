@@ -62,10 +62,8 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     return this._questionVerses;
   }
 
-  applyFontChange(fontSize: string): void {
-    this.textComponent.editorStyles = {
-      fontSize: fontSize
-    };
+  @Input() set fontSize(fontSize: string) {
+    this.textComponent.editorStyles = { fontSize };
   }
 
   onLoaded(): void {
