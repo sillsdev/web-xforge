@@ -319,6 +319,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (this.questionsQuery != null) {
           this.questionsQuery.dispose();
         }
+        const prevShowAllBooks = this.showAllBooks;
         this.showAllBooks = bookId === 'ALL';
         this.questionsQuery = await this.projectService.queryQuestions(projectId, {
           bookNum: this.showAllBooks ? undefined : bookNum,
@@ -331,8 +332,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.questionsSub = this.subscribe(merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$), () =>
           this.checkBookStatus()
         );
+        const prevBook = this.book;
         this.book = bookNum;
         this.userDoc = await this.userService.getCurrentUser();
+        // refresh the summary when switching between all questions and the current book
+        if (this.showAllBooks !== prevShowAllBooks && this.book === prevBook) {
+          this.refreshSummary();
+        }
         this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
         this.loadingFinished();
       }

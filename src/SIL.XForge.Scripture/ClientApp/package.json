@@ -53,7 +53,6 @@
     "jwt-decode": "^2.2.0",
     "lodash": "^4.17.15",
     "mingo": "^2.4.0",
-    "ng2-charts": "^1.6.0",
     "ngx-avatar": "^3.4.0",
     "ngx-quill": "^7.2.0",
     "ot-json0": "^1.1.0",
