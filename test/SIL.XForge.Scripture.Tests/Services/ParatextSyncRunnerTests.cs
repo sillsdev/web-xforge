@@ -432,6 +432,31 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_CheckerWithPTAccountNotRemoved()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, false, books);
+            env.SetupPTData(books);
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Administrator }
+            };
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+
+            await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
+            SFProject project = env.GetProject();
+            Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.CommunityChecker));
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            await env.SFProjectService.DidNotReceiveWithAnyArgs().RemoveUserAsync("user01", "project01", "user02");
+        }
+
+        [Test]
         public async Task SyncAsync_TextDocAlreadyExists()
         {
             var env = new TestEnvironment();
@@ -684,6 +709,12 @@ namespace SIL.XForge.Scripture.Services
             public static string GetProjectPath(TextType textType)
             {
                 return Path.Combine("scriptureforge", "sync", "project01", GetParatextProject(textType));
+            }
+
+            public Task SetUserRole(string userId, string role)
+            {
+                return RealtimeService.GetRepository<SFProject>().UpdateAsync(p => p.Id == "project01", u =>
+                    u.Set(pr => pr.UserRoles[userId], role));
             }
 
             private void AddPTBook(string bookId, int chapterCount, TextType textType,

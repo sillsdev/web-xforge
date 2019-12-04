@@ -518,7 +518,10 @@ namespace SIL.XForge.Scripture.Services
                 }
             });
             foreach (var userId in userIdsToRemove)
-                await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
+            {
+                if (_projectDoc.Data.UserRoles[userId].StartsWith("pt"))
+                    await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
+            }
             if (_notesMapper.NewSyncUsers.Count > 0)
             {
                 await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>
