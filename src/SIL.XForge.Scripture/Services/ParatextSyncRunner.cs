@@ -513,15 +513,12 @@ namespace SIL.XForge.Scripture.Services
                 {
                     if (ptUserRoles.TryGetValue(projectUser.ParatextId, out string role))
                         op.Set(p => p.UserRoles[projectUser.UserId], role);
-                    else
+                    else if (_projectDoc.Data.UserRoles[projectUser.UserId].StartsWith("pt"))
                         userIdsToRemove.Add(projectUser.UserId);
                 }
             });
             foreach (var userId in userIdsToRemove)
-            {
-                if (_projectDoc.Data.UserRoles[userId].StartsWith("pt"))
-                    await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
-            }
+                await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
             if (_notesMapper.NewSyncUsers.Count > 0)
             {
                 await _projectSecrets.UpdateAsync(_projectSecret.Id, u =>
