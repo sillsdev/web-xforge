@@ -513,7 +513,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     if (ptUserRoles.TryGetValue(projectUser.ParatextId, out string role))
                         op.Set(p => p.UserRoles[projectUser.UserId], role);
-                    else
+                    else if (_projectDoc.Data.UserRoles[projectUser.UserId].StartsWith("pt"))
                         userIdsToRemove.Add(projectUser.UserId);
                 }
             });
