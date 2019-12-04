@@ -270,10 +270,10 @@ describe('CheckingComponent', () => {
     }));
 
     it('unread questions badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
-      expect(env.getUnread(env.questions[6])).toEqual(4);
+      const env = new TestEnvironment(ADMIN_USER);
+      expect(env.getUnread(env.questions[5])).toEqual(1);
       env.setSeeOtherUserResponses(false);
-      expect(env.getUnread(env.questions[6])).toEqual(0);
+      expect(env.getUnread(env.questions[5])).toEqual(0);
     }));
 
     it('responds to remote question added', fakeAsync(() => {
@@ -563,12 +563,11 @@ describe('CheckingComponent', () => {
 
     it('do not show answers until current user has submitted an answer', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
+      expect(env.getUnread(env.questions[6])).toEqual(0);
       env.selectQuestion(7);
       expect(env.answers.length).toBe(0);
-      expect(env.getUnread(env.questions[6])).toEqual(4);
       env.answerQuestion('Answer from checker');
       expect(env.answers.length).toBe(2);
-      expect(env.getUnread(env.questions[6])).toEqual(0);
     }));
 
     it('checker can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
