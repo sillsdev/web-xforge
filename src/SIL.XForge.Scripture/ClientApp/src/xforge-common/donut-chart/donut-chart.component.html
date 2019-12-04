@@ -1,0 +1,21 @@
+<svg [attr.viewBox]="viewBox">
+  <circle
+    [attr.r]="radius"
+    [attr.cx]="cx"
+    [attr.cy]="cy"
+    fill="transparent"
+    [attr.stroke]="backgroundColor"
+    [attr.stroke-width]="thickness"
+  ></circle>
+  <ng-container *ngFor="let v of data; let i = index">
+    <circle
+      #segmentCircle
+      [attr.r]="radius"
+      [attr.cx]="cx"
+      [attr.cy]="cy"
+      fill="transparent"
+      [attr.stroke]="colors[i]"
+      [attr.stroke-width]="segmentWidth"
+    ></circle>
+  </ng-container>
+</svg>

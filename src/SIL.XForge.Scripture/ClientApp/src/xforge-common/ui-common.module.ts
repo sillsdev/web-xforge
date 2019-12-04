@@ -29,12 +29,12 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
-import { ChartsModule } from 'ng2-charts';
 import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
+import { DonutChartModule } from './donut-chart/donut-chart.module';
 
 const modules = [
-  ChartsModule,
+  DonutChartModule,
   FlexLayoutModule,
   FormsModule,
   MatFormFieldModule,

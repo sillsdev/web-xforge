@@ -4,17 +4,13 @@
     <div id="translate-overview-title" class="books-card-title" fxLayout="row" fxLayoutAlign="space-between center">
       <div mdcHeadline6 fxLayout="row" fxLayoutAlign="start center">Progress</div>
       <div class="progress" [title]="overallProgress.percentage + '%'">
-        <canvas
-          baseChart
-          width="32"
-          height="32"
-          chartType="doughnut"
-          [legend]="false"
-          [labels]="['Translated', 'Blank']"
+        <app-donut-chart
+          [colors]="['#b8d332', 'transparent']"
           [data]="[overallProgress.translated, overallProgress.blank]"
-          [colors]="[{ backgroundColor: ['#b8d332', '#ececec'] }]"
-          [options]="{ events: [], elements: { arc: { borderWidth: 0 } } }"
-        ></canvas>
+          backgroundColor="#ececec"
+          innerThicknessDelta="0"
+          thickness="22"
+        ></app-donut-chart>
       </div>
     </div>
     <mdc-list-divider></mdc-list-divider>
@@ -28,17 +24,13 @@
           getBookName(textProgress.text)
         }}</mdc-list-item-text>
         <div class="progress" mdcListItemMeta [title]="textProgress.percentage + '%'">
-          <canvas
-            baseChart
-            width="32"
-            height="32"
-            chartType="doughnut"
-            [legend]="false"
-            [labels]="['Translated', 'Blank']"
+          <app-donut-chart
+            [colors]="['#b8d332', 'transparent']"
             [data]="[textProgress.translated, textProgress.blank]"
-            [colors]="[{ backgroundColor: ['#b8d332', '#ececec'] }]"
-            [options]="{ events: [], elements: { arc: { borderWidth: 0 } } }"
-          ></canvas>
+            backgroundColor="#ececec"
+            innerThicknessDelta="0"
+            thickness="22"
+          ></app-donut-chart>
         </div>
       </mdc-list-item>
     </mdc-list>
