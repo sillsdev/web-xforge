@@ -201,7 +201,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   get texts(): TextInfo[] {
     return this.selectedProjectDoc == null || this.selectedProjectDoc.data == null
       ? []
-      : this.selectedProjectDoc.data.texts;
+      : this.selectedProjectDoc.data.texts.sort((a, b) => a.bookNum - b.bookNum);
   }
 
   get showAllQuestions(): boolean {
