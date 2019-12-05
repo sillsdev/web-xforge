@@ -606,9 +606,9 @@ describe('CheckingComponent', () => {
       expect(env.scriptureText).toBeFalsy();
       // Add scripture
       env.clickButton(env.selectVersesButton);
-      expect(env.scriptureText).toBe('The selected text (JHN 2:2-5)');
+      expect(env.scriptureText).toBe('…The selected text (JHN 2:2-5)');
       env.clickButton(env.saveAnswerButton);
-      expect(env.getAnswerScriptureText(0)).toBe('The selected text(JHN 2:2-5)');
+      expect(env.getAnswerScriptureText(0)).toBe('…The selected text(JHN 2:2-5)');
     }));
 
     it('can remove scripture from an answer', fakeAsync(() => {

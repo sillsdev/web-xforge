@@ -400,6 +400,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         answer.text = answerAction.text;
         answer.scriptureText = answerAction.scriptureText;
         answer.verseRef = answerAction.verseRef;
+        answer.selectionStartClipped = answerAction.selectionStartClipped;
+        answer.selectionEndClipped = answerAction.selectionEndClipped;
         answer.dateModified = dateNow;
         if (answerAction.audio != null) {
           if (answerAction.audio.fileName != null && answerAction.audio.blob != null) {
@@ -681,6 +683,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           .set(q => q.answers[answerIndex].text, newAnswer.text)
           .set(q => q.answers[answerIndex].scriptureText, newAnswer.scriptureText)
           .set(q => q.answers[answerIndex].verseRef, newAnswer.verseRef)
+          .set(q => q.answers[answerIndex].selectionStartClipped, newAnswer.selectionStartClipped)
+          .set(q => q.answers[answerIndex].selectionEndClipped, newAnswer.selectionEndClipped)
           .set(q => q.answers[answerIndex].audioUrl, newAnswer.audioUrl)
           .set(q => q.answers[answerIndex].dateModified, newAnswer.dateModified)
       );

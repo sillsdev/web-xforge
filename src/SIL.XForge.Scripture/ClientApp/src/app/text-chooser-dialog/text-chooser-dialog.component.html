@@ -11,7 +11,8 @@
           </div>
           <app-text #scriptureText [id]="textDocId" multiSegmentSelection="true"></app-text>
           <p class="selection-preview">
-            {{ selectedText }} <span class="selection-reference">{{ referenceForDisplay }}</span>
+            {{ (startClipped ? "…" : "") + (selectedText || "") + (endClipped ? "…" : "") }}
+            <span class="selection-reference">{{ referenceForDisplay }}</span>
           </p>
           <span class="error-message" *ngIf="showError">{{ t("select_text_error_message") }}</span>
         </mdc-dialog-content>

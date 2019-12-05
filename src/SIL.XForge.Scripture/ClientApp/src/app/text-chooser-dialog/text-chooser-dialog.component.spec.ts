@@ -56,7 +56,7 @@ describe('TextChooserDialogComponent', () => {
     const env = new TestEnvironment({ start: 1, end: 10 }, 'verse_1_2/p_1', 'verse_1_3');
     expect(env.selectedText).toEqual('');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('target: chapter (MAT 1:3)');
+    expect(env.selectedText).toEqual('target: chapter… (MAT 1:3)');
     env.closeDialog();
   }));
 
@@ -123,7 +123,7 @@ describe('TextChooserDialogComponent', () => {
   it('expands the selection to whole words', fakeAsync(async () => {
     const env = new TestEnvironment({ start: 13, end: 1 }, 'verse_1_4', 'verse_1_5');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('chapter 1, verse 4. rest of verse 4 target (MAT 1:4-5)');
+    expect(env.selectedText).toEqual('…chapter 1, verse 4. rest of verse 4 target… (MAT 1:4-5)');
     env.closeDialog();
   }));
 
@@ -131,14 +131,14 @@ describe('TextChooserDialogComponent', () => {
     // 26 Unicode code points, but 38 JavaScript chars
     const env = new TestEnvironment({ start: 2, end: 38 }, 'verse_1_6', 'verse_1_6');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ (MAT 1:6)');
+    expect(env.selectedText).toEqual('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ… (MAT 1:6)');
     env.closeDialog();
   }));
 
   it('indicates when not all segments of the end verse were selected', fakeAsync(async () => {
     const env = new TestEnvironment({ start: 3, end: TestEnvironment.segmentLen(4) }, 'verse_1_3', 'verse_1_4');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('target: chapter 1, verse 3. target: chapter 1, verse 4. (MAT 1:3-4)');
+    expect(env.selectedText).toEqual('target: chapter 1, verse 3. target: chapter 1, verse 4.… (MAT 1:3-4)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 3, verse: '3-4' },
@@ -151,7 +151,7 @@ describe('TextChooserDialogComponent', () => {
   it('indicates when not all segments of the start verse were selected', fakeAsync(async () => {
     const env = new TestEnvironment({ start: 0, end: TestEnvironment.segmentLen(5) }, 'verse_1_4/p_1', 'verse_1_5');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('rest of verse 4 target: chapter 1, (MAT 1:4-5)');
+    expect(env.selectedText).toEqual('…rest of verse 4 target: chapter 1, (MAT 1:4-5)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 4, verse: '4-5' },
@@ -164,7 +164,7 @@ describe('TextChooserDialogComponent', () => {
   it('indicates when the segments were only partially selected', fakeAsync(async () => {
     const env = new TestEnvironment({ start: 6, end: TestEnvironment.segmentLen(5) - 2 }, 'verse_1_4', 'verse_1_5');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual(': chapter 1, verse 4. rest of verse 4 target: chapter 1 (MAT 1:4-5)');
+    expect(env.selectedText).toEqual('…: chapter 1, verse 4. rest of verse 4 target: chapter 1… (MAT 1:4-5)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 4, verse: '4-5' },
