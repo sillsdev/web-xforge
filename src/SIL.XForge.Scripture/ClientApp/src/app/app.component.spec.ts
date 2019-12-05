@@ -277,6 +277,22 @@ describe('AppComponent', () => {
       expect(env.menuList.getListItemByIndex(2)!.getListItemElement().textContent).toContain('All Questions');
     }));
 
+    it('books displayed in canonical order', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.navigate(['/projects', 'project02']);
+      env.init();
+
+      expect(env.component.isCheckingEnabled).toBe(true);
+      env.selectItem(0);
+      env.remoteAddQuestion(env.questions[0]);
+      env.remoteAddQuestion(env.questions[1]);
+      // Expect: Community Checking | Overview | All Questions | Luke | John | Synchronize | Settings | Users
+      expect(env.menuLength).toEqual(8);
+      // Books should be sorted in canonical order
+      expect(env.getMenuItemText(3)).toContain('Luke');
+      expect(env.getMenuItemText(4)).toContain('John');
+    }));
+
     it('update books when question added/archived/unarchived locally', fakeAsync(() => {
       const env = new TestEnvironment();
       env.navigate(['/projects', 'project02']);
@@ -356,9 +372,10 @@ class TestEnvironment {
       { bookNum: 40, hasSource: true, chapters: [] },
       { bookNum: 41, hasSource: false, chapters: [] }
     ]);
+    // Books are out-of-order on purpose so that we can test that books are displayed in canonical order
     this.addProject('project02', { user01: SFProjectRole.CommunityChecker }, [
-      { bookNum: 42, hasSource: false, chapters: [] },
-      { bookNum: 43, hasSource: false, chapters: [] }
+      { bookNum: 43, hasSource: false, chapters: [] },
+      { bookNum: 42, hasSource: false, chapters: [] }
     ]);
     this.addProject('project03', { user01: SFProjectRole.CommunityChecker }, [
       { bookNum: 44, hasSource: true, chapters: [] },
@@ -463,6 +480,11 @@ class TestEnvironment {
 
   get currentUserDoc(): UserDoc {
     return this.realtimeService.get(UserDoc.COLLECTION, 'user01');
+  }
+
+  getMenuItemText(index: number): string {
+    const menuItem = this.fixture.debugElement.query(By.css('#menu-list div mdc-list-item:nth-child(' + index + ')'));
+    return menuItem.nativeElement.textContent;
   }
 
   remoteAddQuestion(newQuestion: Question): void {
