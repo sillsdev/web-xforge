@@ -1,5 +1,6 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { ErrorHandler, Injectable, Injector, NgZone } from '@angular/core';
+import { translate } from '@ngneat/transloco';
 import cloneDeep from 'lodash/cloneDeep';
 import { User } from 'realtime-server/lib/common/models/user';
 import { environment } from '../environments/environment';
@@ -59,11 +60,14 @@ export class ExceptionHandlingService implements ErrorHandler {
 
     // There's no exact science here. We're looking for XMLHttpRequests that failed, but not due to HTTP response codes.
     if (error.error && error.error.target instanceof XMLHttpRequest && error.error.target.status === 0) {
-      ngZone.run(() => noticeService.show('A network request failed. Some functionality may be unavailable.'));
+      ngZone.run(() => noticeService.show(translate('exception_handling_service.network_request_failed')));
       return;
     }
 
-    let message = typeof error.message === 'string' ? (error.message as string).split('\n')[0] : 'Unknown error';
+    let message =
+      typeof error.message === 'string'
+        ? (error.message as string).split('\n')[0]
+        : translate('exception_handling_service.unknown_error');
 
     if (
       message.includes('A mutation operation was attempted on a database that did not allow mutations.') &&
