@@ -2,6 +2,6 @@
 
 $questionUnread: $sf_grey;
 $questionAnswered: $mdc-theme-secondary;
-$answerUnread: lighten($mdc-theme-secondary, 20%);
-$commentUnread: $answerUnread;
+$attention: lighten($mdc-theme-secondary, 20%);
+$commentUnread: $attention;
 $borderColor: rgba(0, 0, 0, 0.1);

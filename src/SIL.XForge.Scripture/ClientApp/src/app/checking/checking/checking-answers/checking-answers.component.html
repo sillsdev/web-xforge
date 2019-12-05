@@ -116,7 +116,7 @@
           <div
             class="answer"
             *ngFor="let answer of answers"
-            [ngClass]="{ 'answer-unread': !hasUserReadAnswer(answer) }"
+            [ngClass]="{ attention: shouldDrawAttentionToAnswer(answer) }"
           >
             <div *ngIf="canSeeOtherUserResponses" class="like">
               <button
