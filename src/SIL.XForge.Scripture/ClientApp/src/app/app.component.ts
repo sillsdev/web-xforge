@@ -364,12 +364,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
     this.authService
       .changePassword(this.currentUser.email)
-      .then(result => {
-        this.noticeService.show(result);
+      .then(() => {
+        this.noticeService.show(translate('app.password_reset_email_sent'));
       })
       .catch(() => {
-        const message = translate('app.cannot_change_password');
-        this.noticeService.show(message);
+        this.noticeService.show(translate('app.cannot_change_password'));
       });
   }
 

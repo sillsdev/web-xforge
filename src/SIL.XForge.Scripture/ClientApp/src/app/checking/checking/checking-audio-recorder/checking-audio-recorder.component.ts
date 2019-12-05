@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Inject, OnDestroy, OnInit, Output } from '@angular/core';
+import { translate } from '@ngneat/transloco';
 import RecordRTC from 'recordrtc';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -101,7 +102,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
 
   private errorCallback() {
     this.status.emit({ status: 'denied' });
-    this.noticeService.show('Access to your microphone was denied. Please enable the microphone from your browser.');
+    this.noticeService.show(translate('checking_audio_recorder.mic_access_denied'));
   }
 
   private successCallback(stream: MediaStream) {
