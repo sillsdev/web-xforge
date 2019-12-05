@@ -66,7 +66,7 @@ describe('TextChooserDialogComponent', () => {
     );
     expect(env.selectedText).toEqual('');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('target: chapter (MAT 1:3)');
+    expect(env.selectedText).toEqual('target: chapter… (MAT 1:3)');
     env.closeDialog();
   }));
 
@@ -143,7 +143,7 @@ describe('TextChooserDialogComponent', () => {
       'changed'
     );
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('chapter 1, verse 4. rest of verse 4 target (MAT 1:4-5)');
+    expect(env.selectedText).toEqual('…chapter 1, verse 4. rest of verse 4 target… (MAT 1:4-5)');
     env.closeDialog();
   }));
 
@@ -161,7 +161,7 @@ describe('TextChooserDialogComponent', () => {
       'changed'
     );
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ (MAT 1:6)');
+    expect(env.selectedText).toEqual('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ… (MAT 1:6)');
     env.closeDialog();
   }));
 
@@ -179,7 +179,7 @@ describe('TextChooserDialogComponent', () => {
       'changed'
     );
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('target: chapter 1, verse 3. target: chapter 1, verse 4. (MAT 1:3-4)');
+    expect(env.selectedText).toEqual('target: chapter 1, verse 3. target: chapter 1, verse 4.… (MAT 1:3-4)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 3, verse: '3-4' },
@@ -203,7 +203,7 @@ describe('TextChooserDialogComponent', () => {
       'changed'
     );
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('rest of verse 4 target: chapter 1, (MAT 1:4-5)');
+    expect(env.selectedText).toEqual('…rest of verse 4 target: chapter 1, (MAT 1:4-5)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 4, verse: '4-5' },
@@ -227,7 +227,7 @@ describe('TextChooserDialogComponent', () => {
       'changed'
     );
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual(': chapter 1, verse 4. rest of verse 4 target: chapter 1 (MAT 1:4-5)');
+    expect(env.selectedText).toEqual('…: chapter 1, verse 4. rest of verse 4 target: chapter 1… (MAT 1:4-5)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 4, verse: '4-5' },
