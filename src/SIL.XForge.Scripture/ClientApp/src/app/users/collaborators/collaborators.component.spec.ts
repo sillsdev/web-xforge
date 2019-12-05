@@ -10,6 +10,7 @@ import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-proj
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { CommandError } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
@@ -116,8 +117,43 @@ describe('CollaboratorsComponent', () => {
     expect(env.cancelInviteButtonOnRow(inviteeRow)).toBeTruthy();
   }));
 
-  // Not specifying behaviour for when current user is not a project admin, with respect to displaying invited users,
-  // since currently this component is only accessed by admins.
+  it('handle error from invited users query, when user is not on project', fakeAsync(() => {
+    // If an admin user is removed from the project, or loses admin
+    // priviliges, while looking at the component, they will run loadUsers
+    // and throw an error calling onlineInvitedUsers.
+    // Handle that error.
+
+    const env = new TestEnvironment();
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(new CommandError(1, 'error', null));
+    env.setupProjectData({
+      // No user01
+      user02: SFProjectRole.ParatextTranslator,
+      user03: SFProjectRole.CommunityChecker
+    });
+    env.fixture.detectChanges();
+    expect(() => {
+      tick();
+    }).not.toThrow();
+    verify(mockedNoticeService.show(anything())).once();
+    tick();
+  }));
+
+  it('handle error from invited users query, when user is not an admin', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(new CommandError(1, 'error', null));
+    env.setupProjectData({
+      // user01 is not an admin
+      user01: SFProjectRole.CommunityChecker,
+      user02: SFProjectRole.ParatextTranslator,
+      user03: SFProjectRole.CommunityChecker
+    });
+    env.fixture.detectChanges();
+    expect(() => {
+      tick();
+    }).not.toThrow();
+    verify(mockedNoticeService.show(anything())).once();
+    tick();
+  }));
 
   it('should refresh user list after inviting a new user', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -474,15 +510,15 @@ class TestEnvironment {
     tick();
   }
 
-  setupProjectData(): void {
-    this.setupThisProjectData(
-      this.project01Id,
-      this.createProject({
+  setupProjectData(userRoles?: { [userRef: string]: string }): void {
+    if (userRoles === undefined) {
+      userRoles = {
         user01: SFProjectRole.ParatextAdministrator,
         user02: SFProjectRole.ParatextTranslator,
         user03: SFProjectRole.CommunityChecker
-      })
-    );
+      };
+    }
+    this.setupThisProjectData(this.project01Id, this.createProject(userRoles));
   }
 
   setupProjectDataWithNoUsers(): void {
