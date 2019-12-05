@@ -269,11 +269,19 @@ describe('CheckingComponent', () => {
       expect().nothing();
     }));
 
-    it('unread questions badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
+    it('unread answers badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
       expect(env.getUnread(env.questions[5])).toEqual(1);
       env.setSeeOtherUserResponses(false);
       expect(env.getUnread(env.questions[5])).toEqual(0);
+    }));
+
+    it('unread answers badge always hidden from community checkers', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      // One unread answer and three comments are hidden
+      expect(env.getUnread(env.questions[6])).toEqual(0);
+      env.setSeeOtherUserResponses(false);
+      expect(env.getUnread(env.questions[6])).toEqual(0);
     }));
 
     it('responds to remote question added', fakeAsync(() => {
