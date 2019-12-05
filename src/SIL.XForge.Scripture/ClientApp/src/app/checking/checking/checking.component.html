@@ -1,183 +1,180 @@
-<div id="projects-app" class="flex-max">
-  <div id="checking-app-container" class="d-flex flex-fill flex-nowrap">
-    <mdc-drawer
-      id="question-drawer"
-      [drawer]="isDrawerPermanent ? 'permanent' : 'modal'"
-      [open]="isExpanded"
-      (closed)="drawerCollapsed()"
-    >
-      <div class="d-flex flex-max" id="questions-panel">
-        <div class="flex-max">
+<ng-container *transloco="let t; read: 'checking'">
+  <div id="projects-app" class="flex-max">
+    <div id="checking-app-container" class="d-flex flex-fill flex-nowrap">
+      <mdc-drawer
+        id="question-drawer"
+        [drawer]="isDrawerPermanent ? 'permanent' : 'modal'"
+        [open]="isExpanded"
+        (closed)="drawerCollapsed()"
+      >
+        <div class="d-flex flex-max" id="questions-panel">
+          <div class="flex-max">
+            <div class="panel">
+              <div class="panel-heading">
+                <mdc-icon>help</mdc-icon>
+                <h2>{{ t("questions", { count: totalQuestions() }) }}</h2>
+                <button mdc-icon-button class="collapse-question-menu" (click)="collapseDrawer()" icon="clear"></button>
+              </div>
+              <div class="panel-content">
+                <app-checking-questions
+                  #questionsPanel
+                  (update)="questionUpdated($event)"
+                  (changed)="questionChanged($event)"
+                  [questionDocs]="questionDocs"
+                  [project]="projectDoc?.data"
+                  [projectUserConfigDoc]="projectUserConfigDoc"
+                  [isAllBooksShown]="showAllBooks"
+                ></app-checking-questions>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mdc-drawer>
+      <div id="text-panel">
+        <div class="flex-max" id="scripture-panel">
           <div class="panel">
             <div class="panel-heading">
-              <mdc-icon>help</mdc-icon>
-              <h2>{{ "questions.questions" | transloco }} ({{ totalQuestions() }})</h2>
-              <button
-                mdc-icon-button
-                class="collapse-question-menu"
-                (click)="collapseDrawer()"
-                icon="clear"
-                title="Close questions menu"
-              ></button>
+              <div class="panel-nav">
+                <div>
+                  <mdc-icon fxHide.lt-md>library_books</mdc-icon>
+                  <div #textNameAnchor mdcMenuSurfaceAnchor>
+                    <h2
+                      class="chapter-select"
+                      (click)="showAllBooks ? openScriptureChooser() : (chapterMenu.open = !chapterMenu.open)"
+                    >
+                      <span>{{ bookName }}</span>
+                      <span class="chapter-dropdown">
+                        {{ chapter }} <mdc-icon *ngIf="!chapterMenu.open">keyboard_arrow_down</mdc-icon
+                        ><mdc-icon *ngIf="chapterMenu.open">keyboard_arrow_up</mdc-icon>
+                      </span>
+                    </h2>
+                    <mdc-menu
+                      #chapterMenu
+                      anchorCorner="bottomStart"
+                      [anchorElement]="textNameAnchor"
+                      (selected)="onChapterSelect($event)"
+                      (opened)="chapterMenuOpened()"
+                    >
+                      <mdc-list #chapterMenuList class="chapter-menu-list">
+                        <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
+                          >{{ bookName }} {{ cs }}</mdc-list-item
+                        >
+                      </mdc-list>
+                    </mdc-menu>
+                  </div>
+                </div>
+                <div class="action-icons">
+                  <button
+                    *ngIf="isProjectAdmin"
+                    mdc-icon-button
+                    type="button"
+                    icon="post_add"
+                    title="Add question"
+                    (click)="questionDialog()"
+                    id="add-question-button"
+                  ></button>
+                  <app-font-size (apply)="applyFontChange($event)"></app-font-size>
+                  <app-share></app-share>
+                </div>
+              </div>
             </div>
-            <div class="panel-content">
-              <app-checking-questions
-                #questionsPanel
-                (update)="questionUpdated($event)"
-                (changed)="questionChanged($event)"
-                [questionDocs]="questionDocs"
-                [project]="projectDoc?.data"
-                [projectUserConfigDoc]="projectUserConfigDoc"
-                [isAllBooksShown]="showAllBooks"
-              ></app-checking-questions>
+            <div id="split-container" #splitContainer>
+              <as-split
+                direction="vertical"
+                [disabled]="!questionsPanel.activeQuestionDoc"
+                (dragEnd)="checkSliderPosition($event)"
+                useTransition="true"
+              >
+                <as-split-area size="100">
+                  <div class="panel-content" #scripturePanelContainer>
+                    <app-checking-text
+                      #textPanel
+                      [id]="textDocId"
+                      [fontSize]="scriptureFontSize"
+                      [activeVerse]="questionsPanel.activeQuestionVerseRef"
+                      [questionVerses]="bookVerseRefs"
+                      (questionVerseSelected)="verseRefClicked($event)"
+                    ></app-checking-text>
+                  </div>
+                </as-split-area>
+                <as-split-area size="0">
+                  <div *ngIf="questionsPanel.activeQuestionDoc" id="answer-panel" #answerPanelContainer>
+                    <app-checking-answers
+                      #answersPanel
+                      [checkingTextComponent]="textPanel"
+                      [project]="projectDoc?.data"
+                      [textsByBookId]="textsByBookId"
+                      [projectId]="projectDoc?.id"
+                      [questionDoc]="questionsPanel.activeQuestionDoc"
+                      [projectUserConfigDoc]="projectUserConfigDoc"
+                      (action)="answerAction($event)"
+                      (commentAction)="commentAction($event)"
+                    ></app-checking-answers>
+                  </div>
+                </as-split-area>
+              </as-split>
             </div>
           </div>
         </div>
-      </div>
-    </mdc-drawer>
-    <div id="text-panel">
-      <div class="flex-max" id="scripture-panel">
-        <div class="panel">
-          <div class="panel-heading">
-            <div class="panel-nav">
-              <div>
-                <mdc-icon fxHide.lt-md>library_books</mdc-icon>
-                <div #textNameAnchor mdcMenuSurfaceAnchor>
-                  <h2
-                    class="chapter-select"
-                    (click)="showAllBooks ? openScriptureChooser() : (chapterMenu.open = !chapterMenu.open)"
-                  >
-                    <span>{{ bookName }}</span>
-                    <span class="chapter-dropdown">
-                      {{ chapter }} <mdc-icon *ngIf="!chapterMenu.open">keyboard_arrow_down</mdc-icon
-                      ><mdc-icon *ngIf="chapterMenu.open">keyboard_arrow_up</mdc-icon>
-                    </span>
-                  </h2>
-                  <mdc-menu
-                    #chapterMenu
-                    anchorCorner="bottomStart"
-                    [anchorElement]="textNameAnchor"
-                    (selected)="onChapterSelect($event)"
-                    (opened)="chapterMenuOpened()"
-                  >
-                    <mdc-list #chapterMenuList class="chapter-menu-list">
-                      <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
-                        >{{ bookName }} {{ cs }}</mdc-list-item
-                      >
-                    </mdc-list>
-                  </mdc-menu>
-                </div>
-              </div>
-              <div class="action-icons">
-                <button
-                  *ngIf="isProjectAdmin"
-                  mdc-icon-button
-                  type="button"
-                  icon="post_add"
-                  title="Add question"
-                  (click)="questionDialog()"
-                  id="add-question-button"
-                ></button>
-                <app-font-size (apply)="applyFontChange($event)"></app-font-size>
-                <app-share></app-share>
-              </div>
-            </div>
-          </div>
-          <div id="split-container" #splitContainer>
-            <as-split
-              direction="vertical"
-              [disabled]="!questionsPanel.activeQuestionDoc"
-              (dragEnd)="checkSliderPosition($event)"
-              useTransition="true"
+        <div *ngIf="questionsPanel.activeQuestionDoc" id="project-navigation">
+          <button mdc-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()">
+            <span class="mdc-button__label">{{ t("view_questions") }}</span>
+          </button>
+          <div class="d-flex justify-content-end">
+            <button
+              mdc-button
+              fxHide.xs
+              type="button"
+              (click)="questionsPanel.previousQuestion()"
+              [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
+              class="prev-question"
             >
-              <as-split-area size="100">
-                <div class="panel-content" #scripturePanelContainer>
-                  <app-checking-text
-                    #textPanel
-                    [id]="textDocId"
-                    [activeVerse]="questionsPanel.activeQuestionVerseRef"
-                    [questionVerses]="bookVerseRefs"
-                    (questionVerseSelected)="verseRefClicked($event)"
-                  ></app-checking-text>
-                </div>
-              </as-split-area>
-              <as-split-area size="0">
-                <div *ngIf="questionsPanel.activeQuestionDoc" id="answer-panel" #answerPanelContainer>
-                  <app-checking-answers
-                    #answersPanel
-                    [checkingTextComponent]="textPanel"
-                    [project]="projectDoc?.data"
-                    [textsByBookId]="textsByBookId"
-                    [projectId]="projectDoc?.id"
-                    [questionDoc]="questionsPanel.activeQuestionDoc"
-                    [projectUserConfigDoc]="projectUserConfigDoc"
-                    (action)="answerAction($event)"
-                    (commentAction)="commentAction($event)"
-                  ></app-checking-answers>
-                </div>
-              </as-split-area>
-            </as-split>
+              <mdc-icon>chevron_left</mdc-icon>{{ t("previous") }}
+            </button>
+            <button
+              mdc-button
+              fxHide.xs
+              type="button"
+              (click)="questionsPanel.nextQuestion()"
+              [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
+              class="next-question"
+            >
+              {{ t("next") }}<mdc-icon>chevron_right</mdc-icon>
+            </button>
+            <button
+              mdc-icon-button
+              fxHide.gt-xs
+              type="button"
+              (click)="questionsPanel.previousQuestion()"
+              [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
+              class="prev-question"
+              icon="chevron_left"
+            ></button>
+            <button
+              mdc-icon-button
+              fxHide.gt-xs
+              type="button"
+              (click)="questionsPanel.nextQuestion()"
+              [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
+              class="next-question"
+              icon="chevron_right"
+            ></button>
+            <a [routerLink]="['/projects', projectDoc?.id, 'checking']" id="project-summary">
+              <canvas
+                baseChart
+                width="36"
+                height="36"
+                chartType="doughnut"
+                [legend]="false"
+                [labels]="['Unread', 'Read', 'Answered']"
+                [data]="[summary.unread, summary.read, summary.answered]"
+                [colors]="[{ backgroundColor: ['#3a3a3a', '#fff', '#B8D332'] }]"
+                [options]="{ events: [] }"
+              ></canvas>
+            </a>
           </div>
-        </div>
-      </div>
-      <div *ngIf="questionsPanel.activeQuestionDoc" id="project-navigation">
-        <button mdc-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()">
-          <span class="mdc-button__label">View Questions</span>
-        </button>
-        <div class="d-flex justify-content-end">
-          <button
-            mdc-button
-            fxHide.xs
-            type="button"
-            (click)="questionsPanel.previousQuestion()"
-            [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
-            class="prev-question"
-          >
-            <mdc-icon>chevron_left</mdc-icon>{{ "questions.previous" | transloco }}
-          </button>
-          <button
-            mdc-button
-            fxHide.xs
-            type="button"
-            (click)="questionsPanel.nextQuestion()"
-            [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
-            class="next-question"
-          >
-            {{ "questions.next" | transloco }}<mdc-icon>chevron_right</mdc-icon>
-          </button>
-          <button
-            mdc-icon-button
-            fxHide.gt-xs
-            type="button"
-            (click)="questionsPanel.previousQuestion()"
-            [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
-            class="prev-question"
-            icon="chevron_left"
-          ></button>
-          <button
-            mdc-icon-button
-            fxHide.gt-xs
-            type="button"
-            (click)="questionsPanel.nextQuestion()"
-            [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
-            class="next-question"
-            icon="chevron_right"
-          ></button>
-          <a [routerLink]="['/projects', projectDoc?.id, 'checking']" id="project-summary">
-            <canvas
-              baseChart
-              width="36"
-              height="36"
-              chartType="doughnut"
-              [legend]="false"
-              [labels]="['Unread', 'Read', 'Answered']"
-              [data]="[summary.unread, summary.read, summary.answered]"
-              [colors]="[{ backgroundColor: ['#3a3a3a', '#fff', '#B8D332'] }]"
-              [options]="{ events: [] }"
-            ></canvas>
-          </a>
         </div>
       </div>
     </div>
   </div>
-</div>
+</ng-container>

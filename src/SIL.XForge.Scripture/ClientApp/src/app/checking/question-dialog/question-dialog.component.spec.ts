@@ -15,7 +15,7 @@ import { anything, deepEqual, instance, mock, objectContaining, spy, verify, whe
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -498,7 +498,7 @@ class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, CheckingModule],
+  imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule],
   declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
   exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
   entryComponents: [ChildViewContainerComponent, QuestionDialogComponent, ScriptureChooserDialogComponent]

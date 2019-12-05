@@ -41,7 +41,7 @@
         <form [formGroup]="answerForm" autocomplete="off" id="answer-form">
           <mdc-tab-bar #answerTabs fixed>
             <mdc-tab-scroller>
-              <mdc-tab icon="title" label="Answer"></mdc-tab>
+              <mdc-tab icon="title" label="{{ t('answer') }}"></mdc-tab>
               <mdc-tab
                 icon="library_music"
                 label="{{ media.isActive('xs') ? t('record') : t('record_upload') }}"

@@ -1,25 +1,24 @@
-<mdc-dialog>
-  <mdc-dialog-container>
-    <mdc-dialog-surface>
-      <mdc-dialog-title>An error has occurred</mdc-dialog-title>
-      <mdc-dialog-content>
-        <p>{{ data.message }}</p>
-        <p>
-          To report an issue, email <a target="_blank" [href]="issueMailTo">{{ issueEmail }}</a>
-        </p>
-        <p *ngIf="browserUnsupported">
-          You are using an unsupported browser, which may be the reason for this error. We recommend upgrading to the
-          latest <a target="_blank" href="https://www.google.com/chrome/">Chrome</a> or
-          <a target="_blank" href="https://www.mozilla.org">Firefox.</a>
-        </p>
-        <a (click)="this.showDetails = !this.showDetails" [fxShow]="data.stack"
-          >{{ showDetails ? "Hide" : "Show" }} details</a
-        >
-        <pre [fxShow]="showDetails">{{ data.stack }}</pre>
-      </mdc-dialog-content>
-      <mdc-dialog-actions>
-        <button mdcDialogButton type="button" mdcDialogAction="close">Close</button>
-      </mdc-dialog-actions>
-    </mdc-dialog-surface>
-  </mdc-dialog-container>
-</mdc-dialog>
+<ng-container *transloco="let t; read: 'error'">
+  <mdc-dialog>
+    <mdc-dialog-container>
+      <mdc-dialog-surface>
+        <mdc-dialog-title>{{ t("error_occurred") }}</mdc-dialog-title>
+        <mdc-dialog-content>
+          <p>{{ data.message }}</p>
+          <p [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></p>
+          <p
+            *ngIf="browserUnsupported"
+            [innerHTML]="t('unsupported_browser', { chromeLink: chromeLink, firefoxLink: firefoxLink })"
+          ></p>
+          <a (click)="this.showDetails = !this.showDetails" [fxShow]="data.stack">{{
+            showDetails ? t("hide_details") : t("show_details")
+          }}</a>
+          <pre [fxShow]="showDetails">{{ data.stack }}</pre>
+        </mdc-dialog-content>
+        <mdc-dialog-actions>
+          <button mdcDialogButton type="button" mdcDialogAction="close">{{ t("close") }}</button>
+        </mdc-dialog-actions>
+      </mdc-dialog-surface>
+    </mdc-dialog-container>
+  </mdc-dialog>
+</ng-container>

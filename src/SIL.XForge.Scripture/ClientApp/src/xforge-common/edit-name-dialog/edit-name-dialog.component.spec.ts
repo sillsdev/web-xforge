@@ -3,6 +3,7 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
@@ -143,7 +144,7 @@ class TestEnvironment {
 }
 
 @NgModule({
-  imports: [UICommonModule, CommonModule],
+  imports: [UICommonModule, CommonModule, TestTranslocoModule],
   declarations: [EditNameDialogComponent],
   entryComponents: [EditNameDialogComponent],
   exports: [EditNameDialogComponent]

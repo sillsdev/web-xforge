@@ -27,7 +27,7 @@ export class CheckingOwnerComponent implements OnInit {
       return '';
     }
     return this.userService.currentUserId === this.ownerDoc.id
-      ? translate('questions.me')
+      ? translate('checking.me')
       : this.ownerDoc.data.displayName;
   }
 

@@ -14,7 +14,7 @@ import { of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { CheckingModule } from '../checking/checking.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -260,7 +260,7 @@ class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, CheckingModule],
+  imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule],
   exports: [ViewContainerDirective, ChildViewContainerComponent],
   declarations: [ViewContainerDirective, ChildViewContainerComponent],
   entryComponents: [ChildViewContainerComponent, TextChooserDialogComponent]

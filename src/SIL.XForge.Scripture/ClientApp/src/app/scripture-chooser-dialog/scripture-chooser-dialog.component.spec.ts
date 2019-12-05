@@ -9,7 +9,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './scripture-chooser-dialog.component';
@@ -406,7 +406,14 @@ describe('ScriptureChooserDialog', () => {
   }
 
   @NgModule({
-    imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, MdcDialogModule],
+    imports: [
+      BrowserModule,
+      HttpClientTestingModule,
+      RouterTestingModule,
+      UICommonModule,
+      MdcDialogModule,
+      TestTranslocoModule
+    ],
     declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
     exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
     entryComponents: [ChildViewContainerComponent, ScriptureChooserDialogComponent]
