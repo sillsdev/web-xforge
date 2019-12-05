@@ -102,7 +102,8 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   getUnreadAnswers(questionDoc: QuestionDoc): number {
-    if (this.canAddAnswer && (this.project == null || !this.project.checkingConfig.usersSeeEachOthersResponses)) {
+    if (this.canAddAnswer || this.project == null || !this.project.checkingConfig.usersSeeEachOthersResponses) {
+      // Non-admin users will not see unread answers badge because it may be distracting
       return 0;
     }
     let unread = 0;
