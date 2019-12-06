@@ -189,15 +189,20 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
           )
       );
     }
-    const invitees: Row[] = (await this.projectService.onlineInvitedUsers(this.projectId)).map(invitee => {
-      return {
-        id: '',
-        user: { email: invitee },
-        roleName: '',
-        isInvitee: true
-      } as Row;
-    });
     await Promise.all(tasks);
-    this._userRows = userRows.concat(invitees);
+
+    try {
+      const invitees: Row[] = (await this.projectService.onlineInvitedUsers(this.projectId)).map(invitee => {
+        return {
+          id: '',
+          user: { email: invitee },
+          roleName: '',
+          isInvitee: true
+        } as Row;
+      });
+      this._userRows = userRows.concat(invitees);
+    } catch {
+      this.noticeService.show('There was a problem loading the list of invited users.');
+    }
   }
 }
