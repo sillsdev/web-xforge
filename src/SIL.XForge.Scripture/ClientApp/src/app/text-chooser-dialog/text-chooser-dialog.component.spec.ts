@@ -2,7 +2,8 @@ import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
+import clone from 'lodash/clone';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -60,7 +61,7 @@ describe('TextChooserDialogComponent', () => {
           endOffset: 10
         }
       ],
-      'verse_1_2',
+      'verse_1_2/p_1',
       'verse_1_3',
       'changed'
     );
@@ -236,6 +237,42 @@ describe('TextChooserDialogComponent', () => {
       endClipped: true
     });
   }));
+
+  it('shows the correct verse range when first or last segment has only white space selected', fakeAsync(async () => {
+    const env = new TestEnvironment(
+      TestEnvironment.defaultDialogData,
+      [
+        {
+          startOffset: 27,
+          endOffset: 1
+        }
+      ],
+      'verse_1_7',
+      'verse_1_9',
+      'changed'
+    );
+    env.fireSelectionChange();
+    expect(env.selectedText).toEqual('target: chapter 1, verse 8. (MAT 1:8)');
+    env.closeDialog();
+  }));
+
+  it('it correctly deals with the last selected segment being blank', fakeAsync(async () => {
+    const env = new TestEnvironment(
+      TestEnvironment.defaultDialogData,
+      [
+        {
+          startOffset: 0,
+          endOffset: 2
+        }
+      ],
+      'verse_1_8',
+      'verse_1_9',
+      'changed'
+    );
+    expect(() => env.fireSelectionChange()).not.toThrow();
+    expect(env.selectedText).toEqual('target: chapter 1, verse 8. (MAT 1:8)');
+    env.closeDialog();
+  }));
 });
 
 @Directive({
@@ -317,27 +354,34 @@ class TestEnvironment {
     endSegment = 'verse_1_2',
     selection = ''
   ) {
-    when(mockedDocument.getSelection()).thenReturn({
-      toString: () => selection,
-      rangeCount: ranges.length,
-      getRangeAt: (index: number) => ranges[index],
-      containsNode: (node: Node): boolean => {
-        const segments = Array.from(this.editor.querySelectorAll(`usx-segment[data-segment^="verse_"]`));
-        let startingSegmentReached = false;
-        for (const segment of segments) {
-          if (segment.getAttribute('data-segment') === startSegment) {
-            startingSegmentReached = true;
+    when(mockedDocument.getSelection()).thenCall(() => {
+      return {
+        toString: () => selection,
+        rangeCount: ranges.length,
+        getRangeAt: (index: number) => {
+          const range = clone(ranges[index]) as any;
+          range.startContainer = this.editor.querySelector(`usx-segment[data-segment="${startSegment}"]`);
+          range.endContainer = this.editor.querySelector(`usx-segment[data-segment="${endSegment}"]`);
+          return range;
+        },
+        containsNode: (node: Node): boolean => {
+          const segments = Array.from(this.editor.querySelectorAll(`usx-segment[data-segment^="verse_"]`));
+          let startingSegmentReached = false;
+          for (const segment of segments) {
+            if (segment.getAttribute('data-segment') === startSegment) {
+              startingSegmentReached = true;
+            }
+            if (startingSegmentReached && segment.contains(node)) {
+              return true;
+            }
+            if (segment.getAttribute('data-segment') === endSegment) {
+              break;
+            }
           }
-          if (startingSegmentReached && segment.contains(node)) {
-            return true;
-          }
-          if (segment.getAttribute('data-segment') === endSegment) {
-            break;
-          }
+          return false;
         }
-        return false;
-      }
-    } as Selection);
+      } as Selection;
+    });
 
     when(mockedDocument.addEventListener('selectionchange', anything())).thenCall(
       (_event: string, callback: () => any) => {
@@ -447,6 +491,12 @@ class TestEnvironment {
     delta.insert('\n', { para: { style: 'p' } });
     delta.insert({ verse: { number: '6', style: 'v' } });
     delta.insert(`وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ أحَشْوِيرُوشَ.`, { segment: 'verse_1_6' });
+    delta.insert({ verse: { number: '7', style: 'v' } });
+    delta.insert(`target: chapter 1, verse 7. `, { segment: 'verse_1_7' });
+    delta.insert({ verse: { number: '8', style: 'v' } });
+    delta.insert(` target: chapter 1, verse 8. `, { segment: 'verse_1_8' });
+    delta.insert({ verse: { number: '9', style: 'v' } });
+    delta.insert({ blank: true }, { segment: 'verse_1_9' });
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
       id: getTextDocId(TestEnvironment.PROJECT01, bookNum, 1, 'target'),
       type: RichText.type.name,
