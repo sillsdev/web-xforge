@@ -236,6 +236,24 @@ describe('TextChooserDialogComponent', () => {
       endClipped: true
     });
   }));
+
+  it('shows the correct verse range when first or last segment has only white space selected', fakeAsync(async () => {
+    const env = new TestEnvironment(
+      TestEnvironment.defaultDialogData,
+      [
+        {
+          startOffset: 27,
+          endOffset: 0
+        }
+      ],
+      'verse_1_3',
+      'verse_1_5',
+      'changed'
+    );
+    env.fireSelectionChange();
+    expect(env.selectedText).toEqual('target: chapter 1, verse 4. rest of verse 4 (MAT 1:4)');
+    env.closeDialog();
+  }));
 });
 
 @Directive({

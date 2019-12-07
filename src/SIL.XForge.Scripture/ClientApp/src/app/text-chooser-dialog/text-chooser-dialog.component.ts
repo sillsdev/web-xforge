@@ -86,12 +86,12 @@ export class TextChooserDialogComponent implements OnDestroy {
         return;
       }
 
-      const firstVerseNum = this.getVerseFromElement(segments[0]);
-      const lastVerseNum = this.getVerseFromElement(segments[segments.length - 1]);
       const expansion = this.expandSelection(selection, segments);
       this.selectedText = expansion.result;
       this.startClipped = expansion.startClipped;
       this.endClipped = expansion.endClipped;
+      const firstVerseNum = expansion.firstVerseNum;
+      const lastVerseNum = expansion.lastVerseNum;
 
       this.selectedVerses = {
         bookNum: this.bookNum,
@@ -157,14 +157,7 @@ export class TextChooserDialogComponent implements OnDestroy {
    *   and/or end the selection. If only white space was clipped it is not counted as being clipped.
    * - Normalizes whitespace between segments to a single space.
    */
-  private expandSelection(
-    selection: Selection,
-    segments: Element[]
-  ): {
-    result: string;
-    startClipped: boolean;
-    endClipped: boolean;
-  } {
+  private expandSelection(selection: Selection, segments: Element[]) {
     // all selected verses except the first and last
     const centralSelection = segments
       .filter((_el, index) => index !== 0 && index !== segments.length - 1)
@@ -217,10 +210,19 @@ export class TextChooserDialogComponent implements OnDestroy {
       (lastVerseSegments.length !== 0 &&
         !lastVerseSegments[lastVerseSegments.length - 1].contains(segments[segments.length - 1]));
 
+    const firstVerseNum =
+      startText.trim() === '' ? this.getVerseFromElement(segments[1]) : this.getVerseFromElement(segments[0]);
+    const lastVerseNum =
+      endText.trim() === ''
+        ? this.getVerseFromElement(segments[segments.length - 2])
+        : this.getVerseFromElement(segments[segments.length - 1]);
+
     return {
-      result,
       startClipped,
-      endClipped
+      endClipped,
+      firstVerseNum,
+      lastVerseNum,
+      result
     };
   }
 
