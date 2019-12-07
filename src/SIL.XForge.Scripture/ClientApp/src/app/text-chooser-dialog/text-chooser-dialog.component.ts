@@ -78,20 +78,21 @@ export class TextChooserDialogComponent implements OnDestroy {
     const rawSelection = (selection || '').toString();
     if (selection != null && rawSelection.trim() !== '' && rawSelection !== this.rawTextSelection) {
       // all non-empty verse elements in the selection
-      const segments = Array.from(this.getSegments()).filter(
-        segment => selection.containsNode(segment, true) && segment.querySelector('usx-blank') == null
-      );
+      const segments = Array.from(this.getSegments()).filter(segment => selection.containsNode(segment, true));
 
-      if (segments.length === 0) {
+      if (segments.filter(segment => segment.querySelector('usx-blank') == null).length === 0) {
         return;
       }
 
-      const firstVerseNum = this.getVerseFromElement(segments[0]);
-      const lastVerseNum = this.getVerseFromElement(segments[segments.length - 1]);
       const expansion = this.expandSelection(selection, segments);
+      if (expansion.result === '') {
+        return;
+      }
       this.selectedText = expansion.result;
       this.startClipped = expansion.startClipped;
       this.endClipped = expansion.endClipped;
+      const firstVerseNum = expansion.firstVerseNum;
+      const lastVerseNum = expansion.lastVerseNum;
 
       this.selectedVerses = {
         bookNum: this.bookNum,
@@ -157,14 +158,7 @@ export class TextChooserDialogComponent implements OnDestroy {
    *   and/or end the selection. If only white space was clipped it is not counted as being clipped.
    * - Normalizes whitespace between segments to a single space.
    */
-  private expandSelection(
-    selection: Selection,
-    segments: Element[]
-  ): {
-    result: string;
-    startClipped: boolean;
-    endClipped: boolean;
-  } {
+  private expandSelection(selection: Selection, segments: Element[]) {
     // all selected verses except the first and last
     const centralSelection = segments
       .filter((_el, index) => index !== 0 && index !== segments.length - 1)
@@ -173,8 +167,10 @@ export class TextChooserDialogComponent implements OnDestroy {
 
     const startRange = selection.getRangeAt(0);
     const endRange = selection.getRangeAt(selection.rangeCount - 1);
-    const startOffset = startRange.startOffset;
-    const endOffset = endRange.endOffset;
+    const startOffset = this.isInASegment(startRange.startContainer) ? startRange.startOffset : 0;
+    const endOffset = this.isInASegment(endRange.endContainer)
+      ? endRange.endOffset
+      : segments[segments.length - 1].textContent!.length;
     const startNodeText = segments[0].textContent!;
     const endNodeText = segments[segments.length - 1].textContent!;
     const startText = startNodeText.substring(startOffset);
@@ -217,10 +213,21 @@ export class TextChooserDialogComponent implements OnDestroy {
       (lastVerseSegments.length !== 0 &&
         !lastVerseSegments[lastVerseSegments.length - 1].contains(segments[segments.length - 1]));
 
+    const firstVerseNum =
+      startText.trim() === '' && segments.length > 1
+        ? this.getVerseFromElement(segments[1])
+        : this.getVerseFromElement(segments[0]);
+    const lastVerseNum =
+      endText.trim() === '' && segments.length > 1
+        ? this.getVerseFromElement(segments[segments.length - 2])
+        : this.getVerseFromElement(segments[segments.length - 1]);
+
     return {
-      result,
       startClipped,
-      endClipped
+      endClipped,
+      firstVerseNum,
+      lastVerseNum,
+      result
     };
   }
 
@@ -229,8 +236,16 @@ export class TextChooserDialogComponent implements OnDestroy {
   }
 
   private getSegments(verse?: number) {
+    return this.segments().filter(el => (verse == null ? true : verse === this.getVerseFromElement(el)));
+  }
+
+  private isInASegment(node: Node) {
+    return this.segments().some(segment => segment.contains(node));
+  }
+
+  private segments() {
     return Array.from(
       (this.scriptureText.nativeElement as HTMLElement).querySelectorAll('usx-segment[data-segment^=verse_]')
-    ).filter(el => (verse == null ? true : verse === this.getVerseFromElement(el)));
+    );
   }
 }
