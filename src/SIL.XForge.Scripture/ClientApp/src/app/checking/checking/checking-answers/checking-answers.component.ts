@@ -10,7 +10,6 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -220,20 +219,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return SFProjectRole.None;
     }
     return this.project.userRoles[this.userService.currentUserId] as SFProjectRole;
-  }
-
-  /** Fetch a TextsByBookId that only contains the book and chapter that pertains to the question. */
-  private get currentBookAndChapter(): TextsByBookId {
-    const textsByBook: TextsByBookId = {};
-    if (this.textsByBookId != null && this._questionDoc != null && this._questionDoc.data != null) {
-      const bookNum: number = this._questionDoc.data.verseRef.bookNum;
-      const bookId = Canon.bookNumberToId(bookNum);
-      const currentText = this.textsByBookId[bookId];
-      const questionChapterNumber = this._questionDoc.data.verseRef.chapterNum;
-      textsByBook[bookId] = cloneDeep(currentText);
-      textsByBook[bookId].chapters = currentText.chapters.filter(chapter => chapter.number === questionChapterNumber);
-    }
-    return textsByBook;
   }
 
   ngOnInit(): void {
