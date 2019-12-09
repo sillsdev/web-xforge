@@ -7,6 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
+import clone from 'lodash/clone';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
@@ -984,21 +985,35 @@ describe('CheckingComponent', () => {
         env.selectQuestion(1);
         env.answerQuestion('Admin will add a comment to this');
         expect(env.getAnswerComments(0).length).toEqual(0);
-        const date: string = new Date().toJSON();
-        const comment: Comment = {
-          dataId: objectId(),
-          ownerRef: ADMIN_USER.id,
-          text: 'Comment left by admin',
-          dateCreated: date,
-          dateModified: date
-        };
-        env.component.questionsPanel.activeQuestionDoc!.submitJson0Op(
-          op => op.insert(q => q.answers[0].comments, 0, comment),
-          false
+        const commentId: string = env.commentOnAnswerRemotely(
+          'Comment left by admin',
+          env.component.questionsPanel.activeQuestionDoc!
         );
-        env.waitForSliderUpdate();
+        tick(env.questionReadTimer);
+        env.fixture.detectChanges();
         expect(env.getAnswerComments(0).length).toEqual(1);
-        expect(env.component.projectUserConfigDoc!.data!.commentRefsRead.includes(comment.dataId)).toBe(true);
+        expect(env.component.projectUserConfigDoc!.data!.commentRefsRead.includes(commentId)).toBe(true);
+      }));
+
+      it('does not mark third comment read if fourth comment also added', fakeAsync(() => {
+        const env = new TestEnvironment(CHECKER_USER);
+        env.selectQuestion(1);
+        env.answerQuestion('Admin will add four comments');
+        env.commentOnAnswer(0, 'First comment');
+        const questionDoc: QuestionDoc = clone(env.component.questionsPanel.activeQuestionDoc!);
+        env.selectQuestion(2);
+        env.commentOnAnswerRemotely('Comment #2', questionDoc);
+        env.commentOnAnswerRemotely('Comment #3', questionDoc);
+        env.commentOnAnswerRemotely('Comment #4', questionDoc);
+        env.selectQuestion(1);
+        expect(env.component.answersPanel!.answers.length).toEqual(1);
+        expect(env.component.answersPanel!.answers[0].comments.length).toEqual(4);
+        expect(env.getAnswerComments(0).length).toEqual(2);
+        expect(env.getShowAllCommentsButton(0)).not.toBeNull();
+        expect(env.component.projectUserConfigDoc!.data!.commentRefsRead.length).toEqual(1);
+        env.clickButton(env.getShowAllCommentsButton(0));
+        expect(env.component.projectUserConfigDoc!.data!.commentRefsRead.length).toEqual(3);
+        expect(env.getAnswerComments(0).length).toEqual(4);
       }));
 
       it('observer cannot comment on an answer', fakeAsync(() => {
@@ -1364,6 +1379,20 @@ class TestEnvironment {
     this.waitForSliderUpdate();
   }
 
+  commentOnAnswerRemotely(text: string, questionDoc: QuestionDoc): string {
+    const commentId: string = objectId();
+    const date = new Date().toJSON();
+    const comment: Comment = {
+      dataId: commentId,
+      ownerRef: ADMIN_USER.id,
+      text: text,
+      dateCreated: date,
+      dateModified: date
+    };
+    questionDoc.submitJson0Op(op => op.insert(q => q.answers[0].comments, 0, comment), false);
+    return commentId;
+  }
+
   /** Fetch answer from DOM. */
   getAnswer(/** Zero-based */ index: number): DebugElement {
     return this.answers[index];
@@ -1535,7 +1564,7 @@ class TestEnvironment {
       // Another user
       false
     );
-    flush();
+    tick(this.questionReadTimer);
     this.fixture.detectChanges();
   }
 
