@@ -1,6 +1,7 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { distanceInWordsToNow } from 'date-fns';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
@@ -216,7 +217,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   questionCountLabel(count: number): string {
-    return count > 0 ? count + ' questions' : '';
+    return count > 0 ? translate('checking_overview.question_count_label', { count: count }) : '';
+  }
+
+  timeArchivedStamp(date: string): string {
+    return translate('checking_overview.time_archived_stamp', { timeMessage: this.dateInWords(date) });
   }
 
   bookAnswerCount(text: TextInfo): number {
@@ -244,7 +249,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   answerCountLabel(count?: number): string {
-    return count != null && count > 0 ? count + ' answers' : '';
+    return count != null && count > 0 ? translate('checking_overview.answer_count_label', { count: count }) : '';
   }
 
   setQuestionArchiveStatus(questionDoc: QuestionDoc, archiveStatus: boolean) {

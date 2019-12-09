@@ -4,7 +4,7 @@
     <h2 fxFlex>{{ t("texts_with_questions") }}</h2>
     <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart">
       <button *ngIf="!isLoading" mdc-button type="button" (click)="questionDialog()" id="add-question-button">
-        <mdc-icon>post_add</mdc-icon> <span fxHide.xs>Add question</span>
+        <mdc-icon>post_add</mdc-icon> <span fxHide.xs>{{ t("add_question") }}</span>
       </button>
     </div>
     <ng-template #overallProgressChart>
@@ -113,7 +113,7 @@
     id="no-questions-label"
   >
     <p>
-      There are no published questions. <span *ngIf="isProjectAdmin">Click <b>Add question</b>, above.</span>
+      {{ t("no_questions") }}<span *ngIf="isProjectAdmin">{{ t("click_add_question") }}</span>
     </p>
   </div>
 
@@ -188,7 +188,7 @@
 
   <div fxLayout="row" fxLayoutAlign="start center" *ngIf="isProjectAdmin">
     <mdc-icon fxFlex="32px">archive</mdc-icon>
-    <h2 fxFlex>Archived Questions</h2>
+    <h2 fxFlex>{{ t("archived_questions") }}</h2>
   </div>
 
   <div fxLayout="column" *ngIf="isProjectAdmin">
@@ -237,9 +237,9 @@
                   <span fxFlex class="no-overflow-ellipsis">
                     <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
                   </span>
-                  <span fxFlex="200px" fxHide.lt-sm fxLayoutAlign="end center" class="date-archived"
-                    >Archived {{ dateInWords(questionDoc.data?.dateArchived) }} ago</span
-                  >
+                  <span fxFlex="200px" fxHide.lt-sm fxLayoutAlign="end center" class="date-archived">{{
+                    timeArchivedStamp(questionDoc.data?.dateArchived)
+                  }}</span>
                   <span fxFlex="64px" fxLayoutAlign="end center">
                     <button
                       mdc-button
@@ -265,7 +265,7 @@
       *ngIf="allArchivedQuestionsCount === 0"
       id="no-archived-questions-label"
     >
-      <p>There are no archived questions.</p>
+      <p>{{ t("no_archived_questions") }}</p>
     </div>
   </div>
 </ng-container>

@@ -68,11 +68,20 @@
     "show_more_comments": "Show {{ count }} more comments"
   },
   "checking_overview": {
+    "add_question": "Add Question",
     "answers": "Answers",
+    "answer_count_label": "{{ count }} answers",
+    "archived_questions": "Archived Questions",
+    "click_add_question": "Click add question, above.",
     "comments": "Comments",
     "likes": "Likes",
+    "no_questions": "There are no published questions. ",
+    "no_archived_questions": "There are no archived questions.",
     "questions": "Questions",
-    "texts_with_questions": "Texts with Questions"
+    "question_count_label": "{{ count }} questions",
+    "republish": "Republish",
+    "texts_with_questions": "Texts with Questions",
+    "time_archived_stamp": "Archived {{ timeMessage }} ago."
   },
   "edit_name_dialog": {
     "cancel": "Cancel",
