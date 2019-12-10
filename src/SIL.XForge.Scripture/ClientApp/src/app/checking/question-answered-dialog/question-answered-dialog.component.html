@@ -1,12 +1,14 @@
-<mdc-dialog>
-  <mdc-dialog-container>
-    <mdc-dialog-surface>
-      <mdc-dialog-title>Question already has an answer</mdc-dialog-title>
-      <mdc-dialog-content>Consider creating a new question instead of editing this question.</mdc-dialog-content>
-      <mdc-dialog-actions>
-        <button mdcDialogButton type="button" mdcDialogAction="accept">Edit Anyway</button>
-        <button mdcDialogButton type="button" mdcDialogAction="close">cancel</button>
-      </mdc-dialog-actions>
-    </mdc-dialog-surface>
-  </mdc-dialog-container>
-</mdc-dialog>
+<ng-container *transloco="let t; read: 'question_answered_dialog'">
+  <mdc-dialog>
+    <mdc-dialog-container>
+      <mdc-dialog-surface>
+        <mdc-dialog-title>{{ t("question_has_answer") }}</mdc-dialog-title>
+        <mdc-dialog-content>{{ t("consider_creating_new_question") }}</mdc-dialog-content>
+        <mdc-dialog-actions>
+          <button mdcDialogButton type="button" mdcDialogAction="accept">Edit Anyway</button>
+          <button mdcDialogButton type="button" mdcDialogAction="close">cancel</button>
+        </mdc-dialog-actions>
+      </mdc-dialog-surface>
+    </mdc-dialog-container>
+  </mdc-dialog>
+</ng-container>

@@ -90,7 +90,7 @@
                       mdc-button
                       type="button"
                       (click)="setQuestionArchiveStatus(questionDoc, true)"
-                      title="Archive"
+                      title="{{ t('archive') }}"
                       class="archive-btn"
                     >
                       <mdc-icon>archive</mdc-icon>
@@ -113,7 +113,11 @@
     id="no-questions-label"
   >
     <p>
-      {{ t("no_questions") }}<span *ngIf="isProjectAdmin">{{ t("click_add_question") }}</span>
+      {{ t("no_questions") }}
+      <span
+        *ngIf="isProjectAdmin"
+        [innerHtml]="i18n.translateAndInsertTags('checking_overview.click_add_question')"
+      ></span>
     </p>
   </div>
 
@@ -245,7 +249,7 @@
                       mdc-button
                       type="button"
                       (click)="setQuestionArchiveStatus(questionDoc, false)"
-                      title="Republish"
+                      title="{{ t('republish') }}"
                       class="publish-btn"
                     >
                       <mdc-icon>public</mdc-icon>
