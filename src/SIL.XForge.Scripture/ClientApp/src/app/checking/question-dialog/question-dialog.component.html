@@ -63,7 +63,7 @@
                 [helperText]="questionHelper"
                 id="question-text"
               ></mdc-textarea>
-              <mdc-helper-text #questionHelper validation>{{ t("required") }}</mdc-helper-text>
+              <mdc-helper-text #questionHelper validation>{{ t("required_with_asterisk") }}</mdc-helper-text>
             </mdc-form-field>
             <app-checking-audio-combined
               [source]="audio.url"

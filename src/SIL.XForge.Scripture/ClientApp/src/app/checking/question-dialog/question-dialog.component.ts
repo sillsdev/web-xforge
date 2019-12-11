@@ -96,14 +96,12 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   }
 
   get scriptureInputErrorMessages(): { startError: string; endError: string } {
-    const start: string[] = [translate('question_dialog.required')];
+    let start: string = translate('question_dialog.required_with_asterisk');
     if (this.scriptureStart.hasError('verseFormat')) {
-      const exampleVerse: string = translate('question_dialog.example_verse');
-      start.push(exampleVerse.toLocaleLowerCase());
+      start = translate('question_dialog.example_verse');
     }
     if (this.scriptureStart.hasError('verseRange')) {
-      const rangeError: string = translate('question_dialog.must_be_inside_verse_range');
-      start.push(rangeError.toLocaleLowerCase());
+      start = translate('question_dialog.must_be_inside_verse_range');
     }
     let end: string = '';
     if (this.scriptureEnd.hasError('verseFormat')) {
@@ -115,7 +113,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     if (this.questionForm.hasError('verseDifferentBookOrChapter')) {
       end = translate('question_dialog.must_be_same_book_and_chapter');
     }
-    return { startError: start.join(translate('question_dialog.separator')), endError: end };
+    return { startError: start, endError: end };
   }
 
   ngOnInit(): void {
