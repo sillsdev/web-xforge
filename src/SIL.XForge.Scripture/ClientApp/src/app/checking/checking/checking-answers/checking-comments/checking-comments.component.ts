@@ -8,6 +8,7 @@ import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
+import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../../core/models/question-doc';
@@ -138,7 +139,9 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
       this.initUserCommentRefsRead = cloneDeep(this.projectUserConfigDoc.data.commentRefsRead);
     }
     if (this.questionDoc != null) {
-      this.subscribe(this.questionDoc.remoteChanges$, () => {
+      // Give the user two seconds before marking the comment as read. This also prevents SF-624 - prematurely
+      // marking a remotely added comment as read
+      this.subscribe(this.questionDoc.remoteChanges$.pipe(debounceTime(2000)), () => {
         if (this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null || this.answer == null) {
           return;
         }
