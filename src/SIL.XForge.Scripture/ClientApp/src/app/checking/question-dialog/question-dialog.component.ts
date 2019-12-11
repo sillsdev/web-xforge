@@ -99,18 +99,15 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     let start: string = translate('question_dialog.required_with_asterisk');
     if (this.scriptureStart.hasError('verseFormat')) {
       start = translate('question_dialog.example_verse');
-    }
-    if (this.scriptureStart.hasError('verseRange')) {
+    } else if (this.scriptureStart.hasError('verseRange')) {
       start = translate('question_dialog.must_be_inside_verse_range');
     }
     let end: string = '';
     if (this.scriptureEnd.hasError('verseFormat')) {
       end = translate('question_dialog.example_verse');
-    }
-    if (this.scriptureEnd.hasError('verseRange')) {
+    } else if (this.scriptureEnd.hasError('verseRange')) {
       end = translate('question_dialog.must_be_inside_verse_range');
-    }
-    if (this.questionForm.hasError('verseDifferentBookOrChapter')) {
+    } else if (this.questionForm.hasError('verseDifferentBookOrChapter')) {
       end = translate('question_dialog.must_be_same_book_and_chapter');
     }
     return { startError: start, endError: end };
