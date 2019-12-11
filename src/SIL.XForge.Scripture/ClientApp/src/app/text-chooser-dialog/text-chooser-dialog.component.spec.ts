@@ -2,7 +2,7 @@ import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -45,6 +45,7 @@ describe('TextChooserDialogComponent', () => {
 
   it('shows an error if save is clicked with no text selected', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.selection = '';
     expect(env.errorMessage).toBeNull();
     env.click(env.saveButton);
     expect(env.errorMessage.textContent).toEqual('Select text to attach to your answer.');
@@ -52,18 +53,7 @@ describe('TextChooserDialogComponent', () => {
   }));
 
   it('allows selecting text', fakeAsync(async () => {
-    const env = new TestEnvironment(
-      TestEnvironment.defaultDialogData,
-      [
-        {
-          startOffset: 1,
-          endOffset: 10
-        }
-      ],
-      'verse_1_2',
-      'verse_1_3',
-      'changed'
-    );
+    const env = new TestEnvironment({ start: 1, end: 10 }, 'verse_1_2/p_1', 'verse_1_3');
     expect(env.selectedText).toEqual('');
     env.fireSelectionChange();
     expect(env.selectedText).toEqual('target: chapter (MAT 1:3)');
@@ -71,7 +61,7 @@ describe('TextChooserDialogComponent', () => {
   }));
 
   it("doesn't require the user to modify an existing selection", fakeAsync(async () => {
-    const env = new TestEnvironment({
+    const env = new TestEnvironment([], '', '', {
       bookNum: 40,
       chapterNum: 1,
       projectId: TestEnvironment.PROJECT01,
@@ -84,6 +74,7 @@ describe('TextChooserDialogComponent', () => {
         verse: '2-3'
       }
     });
+    env.selection = '';
     expect(env.selectedText).toEqual('previously selected text (JHN 1:2-3)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual('close');
@@ -97,6 +88,18 @@ describe('TextChooserDialogComponent', () => {
 
   it("doesn't clear the selection if the user selects nothing or white space", fakeAsync(async () => {
     const env = new TestEnvironment(
+      [
+        {
+          start: 0,
+          end: 1
+        },
+        {
+          start: 0,
+          end: 0
+        }
+      ],
+      'verse_1_2',
+      'verse_1_3',
       {
         bookNum: 40,
         chapterNum: 1,
@@ -109,75 +112,31 @@ describe('TextChooserDialogComponent', () => {
           verseNum: 2,
           verse: '2-3'
         }
-      },
-      [
-        {
-          startOffset: 0,
-          endOffset: 1
-        },
-        {
-          startOffset: 0,
-          endOffset: 0
-        }
-      ],
-      'verse_1_2',
-      'verse_1_3',
-      '\n '
+      }
     );
+    env.selection = '\n ';
     env.fireSelectionChange();
     expect(env.selectedText).toEqual('previously selected text (MRK 1:2-3)');
     env.closeDialog();
   }));
 
   it('expands the selection to whole words', fakeAsync(async () => {
-    const env = new TestEnvironment(
-      TestEnvironment.defaultDialogData,
-      [
-        {
-          startOffset: 13,
-          endOffset: 1
-        }
-      ],
-      'verse_1_4',
-      'verse_1_5',
-      'changed'
-    );
+    const env = new TestEnvironment({ start: 13, end: 1 }, 'verse_1_4', 'verse_1_5');
     env.fireSelectionChange();
     expect(env.selectedText).toEqual('chapter 1, verse 4. rest of verse 4 target (MAT 1:4-5)');
     env.closeDialog();
   }));
 
   it('can handle Arabic', fakeAsync(async () => {
-    const env = new TestEnvironment(
-      TestEnvironment.defaultDialogData,
-      [
-        {
-          startOffset: 2,
-          endOffset: 38 // 26 Unicode code points, but 38 JavaScript chars
-        }
-      ],
-      'verse_1_6',
-      'verse_1_6',
-      'changed'
-    );
+    // 26 Unicode code points, but 38 JavaScript chars
+    const env = new TestEnvironment({ start: 2, end: 38 }, 'verse_1_6', 'verse_1_6');
     env.fireSelectionChange();
     expect(env.selectedText).toEqual('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ (MAT 1:6)');
     env.closeDialog();
   }));
 
   it('indicates when not all segments of the end verse were selected', fakeAsync(async () => {
-    const env = new TestEnvironment(
-      TestEnvironment.defaultDialogData,
-      [
-        {
-          startOffset: 3,
-          endOffset: 28
-        }
-      ],
-      'verse_1_3',
-      'verse_1_4',
-      'changed'
-    );
+    const env = new TestEnvironment({ start: 3, end: TestEnvironment.segmentLen(4) }, 'verse_1_3', 'verse_1_4');
     env.fireSelectionChange();
     expect(env.selectedText).toEqual('target: chapter 1, verse 3. target: chapter 1, verse 4. (MAT 1:3-4)');
     env.click(env.saveButton);
@@ -190,18 +149,7 @@ describe('TextChooserDialogComponent', () => {
   }));
 
   it('indicates when not all segments of the start verse were selected', fakeAsync(async () => {
-    const env = new TestEnvironment(
-      TestEnvironment.defaultDialogData,
-      [
-        {
-          startOffset: 0,
-          endOffset: 19
-        }
-      ],
-      'verse_1_4/p_1',
-      'verse_1_5',
-      'changed'
-    );
+    const env = new TestEnvironment({ start: 0, end: TestEnvironment.segmentLen(5) }, 'verse_1_4/p_1', 'verse_1_5');
     env.fireSelectionChange();
     expect(env.selectedText).toEqual('rest of verse 4 target: chapter 1, (MAT 1:4-5)');
     env.click(env.saveButton);
@@ -214,18 +162,7 @@ describe('TextChooserDialogComponent', () => {
   }));
 
   it('indicates when the segments were only partially selected', fakeAsync(async () => {
-    const env = new TestEnvironment(
-      TestEnvironment.defaultDialogData,
-      [
-        {
-          startOffset: 6,
-          endOffset: 17
-        }
-      ],
-      'verse_1_4',
-      'verse_1_5',
-      'changed'
-    );
+    const env = new TestEnvironment({ start: 6, end: TestEnvironment.segmentLen(5) - 2 }, 'verse_1_4', 'verse_1_5');
     env.fireSelectionChange();
     expect(env.selectedText).toEqual(': chapter 1, verse 4. rest of verse 4 target: chapter 1 (MAT 1:4-5)');
     env.click(env.saveButton);
@@ -235,6 +172,50 @@ describe('TextChooserDialogComponent', () => {
       startClipped: true,
       endClipped: true
     });
+  }));
+
+  it('shows the correct verse range when first or last segment has only white space selected', fakeAsync(async () => {
+    const env = new TestEnvironment({ start: TestEnvironment.segmentLen(7) - 1, end: 1 }, 'verse_1_7', 'verse_1_9');
+    env.fireSelectionChange();
+    expect(env.selectedText).toEqual('target: chapter 1, verse 8. (MAT 1:8)');
+    env.closeDialog();
+  }));
+
+  it('it correctly deals with the last selected segment being blank', fakeAsync(async () => {
+    const env = new TestEnvironment({ start: 0, end: 2 }, 'verse_1_8', 'verse_1_9');
+    expect(() => env.fireSelectionChange()).not.toThrow();
+    expect(env.selectedText).toEqual('target: chapter 1, verse 8. (MAT 1:8)');
+    env.closeDialog();
+  }));
+
+  it("doesn't allow selecting whitespace", fakeAsync(() => {
+    const env = new TestEnvironment({ start: TestEnvironment.segmentLen(7) - 1, end: 1 }, 'verse_1_7', 'verse_1_8');
+    env.fireSelectionChange();
+    expect(env.selectedText).toEqual('');
+    env.closeDialog();
+  }));
+
+  it('can handle selection of only whitespace', fakeAsync(() => {
+    const env = new TestEnvironment(
+      { start: TestEnvironment.segmentLen(7) - 1, end: TestEnvironment.segmentLen(7) },
+      'verse_1_7',
+      'verse_1_7'
+    );
+    expect(() => env.fireSelectionChange()).not.toThrow();
+    expect(env.selectedText).toEqual('');
+    env.closeDialog();
+  }));
+
+  it('can handle selections starting or ending outside the text', fakeAsync(() => {
+    const env = new TestEnvironment(
+      { start: 25, end: 3 },
+      // this isn't the same as the selection starting and ending outside the text, but it will be handled the same
+      'selector that will not select anything',
+      'another selector that will not select anything'
+    );
+    expect(() => env.fireSelectionChange()).not.toThrow();
+    expect(env.selectedText).toEqual('');
+    env.closeDialog();
   }));
 });
 
@@ -266,6 +247,11 @@ class ChildViewContainerComponent {
   entryComponents: [ChildViewContainerComponent, TextChooserDialogComponent]
 })
 class DialogTestModule {}
+
+interface Range {
+  start: number;
+  end: number;
+}
 
 class TestEnvironment {
   static PROJECT01: string = 'project01';
@@ -301,6 +287,12 @@ class TestEnvironment {
     textsByBookId: TestEnvironment.textsByBookId
   };
 
+  static segmentLen(verseNumber: number): number {
+    return TestEnvironment.delta.filter(op => {
+      return op.attributes != null && op.attributes.segment === 'verse_1_' + verseNumber;
+    })[0].insert.length;
+  }
+
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly overlayContainerElement: HTMLElement;
   readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
@@ -309,35 +301,45 @@ class TestEnvironment {
 
   readonly resultPromise: Promise<TextSelection | 'close'>;
   selectionChangeHandler!: () => any;
+  selection = 'changed'; // could be anything other than white space; just has to make it appear selection has changed
 
   constructor(
-    dialogData?: TextChooserDialogData,
-    ranges: { startOffset: number; endOffset: number }[] = [],
+    ranges: Range | Range[] = [],
     startSegment = 'verse_1_1',
     endSegment = 'verse_1_2',
-    selection = ''
+    dialogData?: TextChooserDialogData
   ) {
-    when(mockedDocument.getSelection()).thenReturn({
-      toString: () => selection,
-      rangeCount: ranges.length,
-      getRangeAt: (index: number) => ranges[index],
-      containsNode: (node: Node): boolean => {
-        const segments = Array.from(this.editor.querySelectorAll(`usx-segment[data-segment^="verse_"]`));
-        let startingSegmentReached = false;
-        for (const segment of segments) {
-          if (segment.getAttribute('data-segment') === startSegment) {
-            startingSegmentReached = true;
+    ranges = Array.isArray(ranges) ? ranges : [ranges];
+    when(mockedDocument.getSelection()).thenCall(() => {
+      return {
+        toString: () => this.selection,
+        rangeCount: (ranges as Range[]).length,
+        getRangeAt: (index: number) => {
+          return {
+            startOffset: ranges[index].start,
+            endOffset: ranges[index].end,
+            startContainer: this.editor.querySelector(`usx-segment[data-segment="${startSegment}"]`),
+            endContainer: this.editor.querySelector(`usx-segment[data-segment="${endSegment}"]`)
+          } as any;
+        },
+        containsNode: (node: Node): boolean => {
+          const segments = Array.from(this.editor.querySelectorAll('usx-segment[data-segment^="verse_"]'));
+          let startingSegmentReached = false;
+          for (const segment of segments) {
+            if (segment.getAttribute('data-segment') === startSegment) {
+              startingSegmentReached = true;
+            }
+            if (startingSegmentReached && segment.contains(node)) {
+              return true;
+            }
+            if (segment.getAttribute('data-segment') === endSegment) {
+              break;
+            }
           }
-          if (startingSegmentReached && segment.contains(node)) {
-            return true;
-          }
-          if (segment.getAttribute('data-segment') === endSegment) {
-            break;
-          }
+          return false;
         }
-        return false;
-      }
-    } as Selection);
+      } as Selection;
+    });
 
     when(mockedDocument.addEventListener('selectionchange', anything())).thenCall(
       (_event: string, callback: () => any) => {
@@ -426,7 +428,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  private addTextDoc(bookNum: number): void {
+  static get delta() {
     const delta = new Delta();
     delta.insert({ chapter: { number: '1', style: 'c' } });
     delta.insert({ blank: true }, { segment: 'p_1' });
@@ -437,20 +439,30 @@ class TestEnvironment {
     delta.insert('\n', { para: { style: 'p' } });
     delta.insert({ blank: true }, { segment: 'verse_1_2/p_1' });
     delta.insert({ verse: { number: '3', style: 'v' } });
-    delta.insert(`target: chapter 1, verse 3.`, { segment: 'verse_1_3' });
+    delta.insert('target: chapter 1, verse 3.', { segment: 'verse_1_3' });
     delta.insert({ verse: { number: '4', style: 'v' } });
-    delta.insert(`target: chapter 1, verse 4.`, { segment: 'verse_1_4' });
+    delta.insert('target: chapter 1, verse 4.', { segment: 'verse_1_4' });
     delta.insert('\n', { para: { style: 'p' } });
-    delta.insert(`rest of verse 4`, { segment: 'verse_1_4/p_1' });
+    delta.insert('rest of verse 4', { segment: 'verse_1_4/p_1' });
     delta.insert({ verse: { number: '5', style: 'v' } });
-    delta.insert(`target: chapter 1, `, { segment: 'verse_1_5' });
+    delta.insert('target: chapter 1, ', { segment: 'verse_1_5' });
     delta.insert('\n', { para: { style: 'p' } });
     delta.insert({ verse: { number: '6', style: 'v' } });
-    delta.insert(`وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ أحَشْوِيرُوشَ.`, { segment: 'verse_1_6' });
+    delta.insert('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ أحَشْوِيرُوشَ.', { segment: 'verse_1_6' });
+    delta.insert({ verse: { number: '7', style: 'v' } });
+    delta.insert('target: chapter 1, verse 7. ', { segment: 'verse_1_7' });
+    delta.insert({ verse: { number: '8', style: 'v' } });
+    delta.insert(' target: chapter 1, verse 8. ', { segment: 'verse_1_8' });
+    delta.insert({ verse: { number: '9', style: 'v' } });
+    delta.insert({ blank: true }, { segment: 'verse_1_9' });
+    return delta;
+  }
+
+  private addTextDoc(bookNum: number): void {
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
       id: getTextDocId(TestEnvironment.PROJECT01, bookNum, 1, 'target'),
       type: RichText.type.name,
-      data: delta
+      data: TestEnvironment.delta
     });
   }
 }
