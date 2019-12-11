@@ -1,6 +1,7 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { distanceInWordsToNow } from 'date-fns';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
@@ -9,6 +10,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { merge, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -45,6 +47,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly activatedRoute: ActivatedRoute,
     private readonly dialog: MdcDialog,
     noticeService: NoticeService,
+    readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService
@@ -216,7 +219,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   questionCountLabel(count: number): string {
-    return count > 0 ? count + ' questions' : '';
+    return count > 0 ? translate('checking_overview.question_count_label', { count: count }) : '';
+  }
+
+  timeArchivedStamp(date: string): string {
+    return translate('checking_overview.time_archived_stamp', { timeMessage: this.dateInWords(date) });
   }
 
   bookAnswerCount(text: TextInfo): number {
@@ -244,7 +251,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   answerCountLabel(count?: number): string {
-    return count != null && count > 0 ? count + ' answers' : '';
+    return count != null && count > 0 ? translate('checking_overview.answer_count_label', { count: count }) : '';
   }
 
   setQuestionArchiveStatus(questionDoc: QuestionDoc, archiveStatus: boolean) {

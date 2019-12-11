@@ -1,9 +1,46 @@
 {
+  "app": {
+    "settings": "Settings",
+    "system_administration": "System Administration",
+    "synchronize": "Synchronize",
+    "users": "Users"
+  },
+  "checking": {
+    "add_question": "Add question"
+  },
   "checking_answers": {
     "archive": "Archive",
     "only_community_checkers_can_like": "Only Community Checkers can like answers."
   },
+  "checking_overview": {
+    "add_question": "Add Question",
+    "answer_count_label": "{{ count }} answers",
+    "archive": "Archive",
+    "archived_questions": "Archived Questions",
+    "click_add_question": "Click {{ strongStart }}Add question{{ strongEnd }}, above.",
+    "no_questions": "There are no published questions. ",
+    "no_archived_questions": "There are no archived questions.",
+    "question_count_label": "{{ count }} questions",
+    "republish": "Republish",
+    "time_archived_stamp": "Archived {{ timeMessage }} ago"
+  },
+  "question_answered_dialog": {
+    "cancel": "Cancel",
+    "consider_creating_new_question": "Consider creating a new question instead of editing this question.",
+    "edit_anyway": "Edit anyway",
+    "question_has_answer": "Question already has an answer"
+  },
   "question_dialog": {
-    "must_be_after_scripture_reference": "Must be after {{ strongStart }}Scripture reference{{ strongEnd }}"
+    "add_question_denied": "Permission denied: only project administrator can add and edit questions.",
+    "cancel": "Cancel",
+    "edit_question": "Edit Question",
+    "example_verse": "e.g. JHN 3:16",
+    "must_be_after_scripture_reference": "Must be after {{ strongStart }}Scripture reference{{ strongEnd }}",
+    "must_be_inside_verse_range": "Must be inside verse range",
+    "must_be_same_book_and_chapter": "Must be the same book and chapter",
+    "new_question": "New Question",
+    "recording_stopped": "The recording for your question was automatically stopped.",
+    "required_with_asterisk": "*Required",
+    "save": "Save"
   }
 }

@@ -1,6 +1,7 @@
 import { MDC_DIALOG_DATA, MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { AfterViewChecked, Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
+import { translate } from '@ngneat/transloco';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
@@ -41,7 +42,10 @@ export interface QuestionDialogResult {
 export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit, AfterViewChecked {
   @ViewChild(CheckingTextComponent, { static: false, read: ElementRef }) textElement!: ElementRef;
   @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent!: CheckingAudioCombinedComponent;
-  modeLabel = this.data && this.data.question != null ? 'Edit' : 'New';
+  modeLabel =
+    this.data && this.data.question != null
+      ? translate('question_dialog.edit_question')
+      : translate('question_dialog.new_question');
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
   questionForm: FormGroup = new FormGroup(
     {
@@ -89,6 +93,24 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
 
   get selection(): VerseRef | undefined {
     return this._selection;
+  }
+
+  get scriptureInputErrorMessages(): { startError: string; endError: string } {
+    let start: string = translate('question_dialog.required_with_asterisk');
+    if (this.scriptureStart.hasError('verseFormat')) {
+      start = translate('question_dialog.example_verse');
+    } else if (this.scriptureStart.hasError('verseRange')) {
+      start = translate('question_dialog.must_be_inside_verse_range');
+    }
+    let end: string = '';
+    if (this.scriptureEnd.hasError('verseFormat')) {
+      end = translate('question_dialog.example_verse');
+    } else if (this.scriptureEnd.hasError('verseRange')) {
+      end = translate('question_dialog.must_be_inside_verse_range');
+    } else if (this.questionForm.hasError('verseDifferentBookOrChapter')) {
+      end = translate('question_dialog.must_be_same_book_and_chapter');
+    }
+    return { startError: start, endError: end };
   }
 
   ngOnInit(): void {
@@ -159,7 +181,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   async submit() {
     if (this.audioCombinedComponent.audioRecorderComponent != null && this.audio.status === 'recording') {
       await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
-      this.noticeService.show('The recording for your question was automatically stopped.');
+      this.noticeService.show(translate('question_dialog.recording_stopped'));
     }
     if (this.questionForm.invalid || this._selection == null) {
       return;

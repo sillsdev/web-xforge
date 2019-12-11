@@ -18,7 +18,7 @@
         <mdc-top-app-bar-section align="end" *ngIf="currentUser != null">
           <!-- not in MVP <mdc-icon mdcTopAppBarActionItem title="Notifications">notifications</mdc-icon> -->
           <div mdcMenuSurfaceAnchor #langMenuAnchor *ngIf="i18n.locales.length >= 2">
-            <mdc-icon mdcTopAppBarActionItem title="Language" (click)="langMenu.open = !langMenu.open">
+            <mdc-icon mdcTopAppBarActionItem title="{{ t('language') }}" (click)="langMenu.open = !langMenu.open">
               translate
             </mdc-icon>
             <mdc-menu #langMenu [anchorCorner]="'bottomStart'" [anchorElement]="langMenuAnchor" class="locale-menu">
@@ -39,7 +39,9 @@
             </mdc-menu>
           </div>
           <div mdcMenuSurfaceAnchor #helpMenuAnchor>
-            <mdc-icon mdcTopAppBarActionItem title="Help" (click)="helpMenu.open = !helpMenu.open">help</mdc-icon>
+            <mdc-icon mdcTopAppBarActionItem title="{{ t('help') }}" (click)="helpMenu.open = !helpMenu.open"
+              >help</mdc-icon
+            >
             <mdc-menu #helpMenu [anchorCorner]="'bottomStart'" [anchorElement]="helpMenuAnchor">
               <mdc-list-group>
                 <mdc-list>
@@ -86,7 +88,7 @@
                 <mdc-list-divider></mdc-list-divider>
                 <mdc-list>
                   <mdc-list-item *ngIf="isSystemAdmin" routerLink="/system-administration">
-                    System Administration
+                    {{ t("system_administration") }}
                   </mdc-list-item>
                   <mdc-list-item routerLink="/projects">{{ t("project_home") }}</mdc-list-item>
                   <mdc-list-item *ngIf="canChangePassword" (click)="changePassword()">
@@ -146,7 +148,7 @@
             (selectionChange)="itemSelected()"
           >
             <mdc-icon mdcListItemGraphic>apps</mdc-icon>
-            Overview
+            {{ t("overview") }}
           </mdc-list-item>
           <mdc-list-item
             *ngFor="let text of texts"
@@ -219,7 +221,7 @@
             (selectionChange)="itemSelected()"
           >
             <mdc-icon mdcListItemGraphic>sync</mdc-icon>
-            Synchronize
+            {{ t("synchronize") }}
           </mdc-list-item>
           <mdc-list-item
             [routerLink]="['/projects', selectedProjectId, 'settings']"
@@ -230,7 +232,7 @@
             (selectionChange)="itemSelected()"
           >
             <mdc-icon mdcListItemGraphic>settings</mdc-icon>
-            Settings
+            {{ t("settings") }}
           </mdc-list-item>
           <mdc-list-item
             [routerLink]="['/projects', selectedProjectId, 'users']"
@@ -241,7 +243,7 @@
             (selectionChange)="itemSelected()"
           >
             <mdc-icon mdcListItemGraphic>people</mdc-icon>
-            Users
+            {{ t("users") }}
           </mdc-list-item>
         </div>
       </mdc-list>

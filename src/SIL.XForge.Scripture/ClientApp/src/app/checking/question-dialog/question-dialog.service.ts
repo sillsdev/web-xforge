@@ -1,5 +1,6 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Injectable } from '@angular/core';
+import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
@@ -34,7 +35,7 @@ export class QuestionDialogService {
       return questionDoc;
     }
     if (!(await this.canCreateAndEditQuestions(config.projectId))) {
-      this.noticeService.show('Permission denied: only project administrator can add and edit questions.');
+      this.noticeService.show(translate('question_dialog.add_question_denied'));
       return undefined;
     }
     const questionId = questionDoc != null && questionDoc.data != null ? questionDoc.data.dataId : objectId();
