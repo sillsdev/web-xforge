@@ -77,7 +77,8 @@
             [class.text-selected]="selectedText"
           >
             <p [fxHide]="!selectedText" [fxHide.lt-xl]="!canShowScriptureInput" class="scripture-text">
-              {{ selectedText }} <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
+              {{ (selectionStartClipped ? "…" : "") + (selectedText || "") + (selectionEndClipped ? "…" : "") }}
+              <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
             </p>
             <p [fxHide]="!!selectedText" class="scripture-text-blank">{{ t("no_scripture_selected") }}</p>
             <div class="buttons-wrapper">
@@ -131,7 +132,11 @@
             <div class="answer-detail">
               <div *ngIf="answer.text" class="answer-text">{{ answer.text }}</div>
               <div *ngIf="answer.scriptureText" class="answer-scripture">
-                <span class="answer-scripture-text">{{ answer.scriptureText }}</span>
+                <span class="answer-scripture-text">{{
+                  (answer.selectionStartClipped ? "…" : "") +
+                    (answer.scriptureText || "") +
+                    (answer.selectionEndClipped ? "…" : "")
+                }}</span>
                 <span class="answer-scripture-verse">{{ scriptureTextVerseRef(answer.verseRef) }}</span>
               </div>
               <app-checking-audio-player *ngIf="answer.audioUrl" [source]="answer.audioUrl"></app-checking-audio-player>

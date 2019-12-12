@@ -195,8 +195,7 @@ export class TextChooserDialogComponent implements OnDestroy {
       .substring(startOffset + startTrimLength, result.length - endNodeText.length + endOffset - endTrimLength)
       .trim();
 
-    const startStartSegmentClipped =
-      startOffset + startTrimLength > startNodeText.length - startNodeText.trimLeft().length;
+    const startSegmentClipped = startOffset + startTrimLength > startNodeText.length - startNodeText.trimLeft().length;
     const endSegmentClipped = endOffset + endTrimLength < endNodeText.trimRight().length;
 
     const firstVerseSegments = Array.from(this.getSegments(this.getVerseFromElement(segments[0]))).filter(
@@ -207,9 +206,10 @@ export class TextChooserDialogComponent implements OnDestroy {
     ).filter(el => (el.textContent || '').trim() !== '');
 
     const startClipped =
-      startStartSegmentClipped || (firstVerseSegments.length !== 0 && !firstVerseSegments[0].contains(segments[0]));
+      (startSegmentClipped && startText.trim() !== '') ||
+      (firstVerseSegments.length !== 0 && !firstVerseSegments[0].contains(segments[0]));
     const endClipped =
-      endSegmentClipped ||
+      (endSegmentClipped && endText.trim() !== '') ||
       (lastVerseSegments.length !== 0 &&
         !lastVerseSegments[lastVerseSegments.length - 1].contains(segments[segments.length - 1]));
 

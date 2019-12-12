@@ -37,6 +37,8 @@ export interface AnswerAction {
   text?: string;
   verseRef?: VerseRefData;
   scriptureText?: string;
+  selectionStartClipped?: boolean;
+  selectionEndClipped?: boolean;
   audio?: AudioAttachment;
 }
 
@@ -106,6 +108,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   /** IDs of answers to show to user (so, excluding unshown incoming answers). */
   answersToShow: string[] = [];
   selectedText?: string;
+  selectionStartClipped?: boolean;
+  selectionEndClipped?: boolean;
   verseRef?: VerseRef;
 
   private _questionDoc?: QuestionDoc;
@@ -228,6 +232,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   clearSelection() {
     this.selectedText = '';
     this.verseRef = undefined;
+    this.selectionStartClipped = undefined;
+    this.selectionEndClipped = undefined;
   }
 
   archiveQuestion(): void {
@@ -259,6 +265,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
     this.selectedText = this.activeAnswer.scriptureText;
     this.justEditedAnswer = false;
+    this.selectionStartClipped = this.activeAnswer.selectionStartClipped;
+    this.selectionEndClipped = this.activeAnswer.selectionEndClipped;
     this.showAnswerForm();
   }
 
@@ -299,6 +307,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
         const selection = result as TextSelection;
         this.verseRef = toVerseRef(selection.verses);
         this.selectedText = selection.text;
+        this.selectionStartClipped = selection.startClipped;
+        this.selectionEndClipped = selection.endClipped;
       }
     });
   }
@@ -456,6 +466,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       answer: this.activeAnswer,
       audio: this.audio,
       scriptureText: this.selectedText || undefined,
+      selectionStartClipped: this.selectionStartClipped,
+      selectionEndClipped: this.selectionEndClipped,
       verseRef: this.verseRef == null ? undefined : fromVerseRef(this.verseRef)
     });
   }
