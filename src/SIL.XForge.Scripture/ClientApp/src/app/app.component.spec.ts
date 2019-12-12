@@ -6,6 +6,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testi
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
@@ -39,6 +40,7 @@ const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedSFAdminAuthGuard = mock(SFAdminAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
+const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 
@@ -76,6 +78,7 @@ describe('AppComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: SFAdminAuthGuard, useMock: mockedSFAdminAuthGuard },
       { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: CookieService, useMock: mockedCookieService },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService }
     ]

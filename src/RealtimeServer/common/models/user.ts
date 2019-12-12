@@ -42,6 +42,7 @@ export interface User extends UserProfile {
   paratextId?: string;
   role: string;
   isDisplayNameConfirmed: boolean;
+  interfaceLanguage?: string;
   authId: string;
   sites: { [key: string]: Site };
 }

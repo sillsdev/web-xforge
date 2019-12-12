@@ -105,6 +105,10 @@ export function verseSlug(verse: VerseRef) {
 
 export const ASP_CULTURE_COOKIE_NAME = '.AspNetCore.Culture';
 
+export function setAspCultureCookieValue(language: string): string {
+  return `c=${language}|uic=${language}`;
+}
+
 /**
  * @param {string} cookie expect string of form "c=<tag>|uic=<tag>" where <tag> is a language tag
  */

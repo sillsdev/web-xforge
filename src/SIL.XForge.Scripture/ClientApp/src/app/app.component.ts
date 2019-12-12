@@ -5,6 +5,7 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
+import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -21,7 +22,12 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
-import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
+import {
+  ASP_CULTURE_COOKIE_NAME,
+  issuesEmailTemplate,
+  setAspCultureCookieValue,
+  supportedBrowser
+} from 'xforge-common/utils';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
@@ -73,6 +79,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     noticeService: NoticeService,
     media: MediaObserver,
     private readonly projectService: SFProjectService,
+    private readonly cookieService: CookieService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,
@@ -220,11 +227,20 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   async ngOnInit(): Promise<void> {
     this.loadingStarted();
     if (await this.isLoggedIn) {
-      if ((await this.authService.isNewlyLoggedIn) && !supportedBrowser()) {
+      const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
+      if (isNewlyLoggedIn && !supportedBrowser()) {
         this.dialog.open(SupportedBrowsersDialogComponent, { autoFocus: false });
       }
 
       this.currentUserDoc = await this.userService.getCurrentUser();
+      if (isNewlyLoggedIn) {
+        const interfaceLanguage = this.currentUserDoc.data!.interfaceLanguage || 'en';
+        const locale = I18nService.findLocale(interfaceLanguage);
+        if (locale != null) {
+          this.cookieService.set(ASP_CULTURE_COOKIE_NAME, setAspCultureCookieValue(interfaceLanguage));
+          this.i18n.setLocale(locale.localeCode);
+        }
+      }
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
         startWith(null),
