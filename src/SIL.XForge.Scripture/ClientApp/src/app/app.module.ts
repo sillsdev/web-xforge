@@ -5,6 +5,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { TranslocoModule } from '@ngneat/transloco';
+import { CookieService } from 'ngx-cookie-service';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
 import { ErrorComponent } from 'xforge-common/error/error.component';
 import { ExceptionHandlingService } from 'xforge-common/exception-handling-service';
@@ -57,7 +58,7 @@ import { UsersModule } from './users/users.module';
     XForgeCommonModule,
     TranslocoModule
   ],
-  providers: [DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
+  providers: [CookieService, DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
   entryComponents: [
     EditNameDialogComponent,
     ErrorComponent,

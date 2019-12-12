@@ -54,6 +54,7 @@
     "lodash": "^4.17.15",
     "mingo": "^2.4.0",
     "ngx-avatar": "^3.4.0",
+    "ngx-cookie-service": "^2.2.0",
     "ngx-quill": "^7.2.0",
     "ot-json0": "^1.1.0",
     "process": "^0.11.10",
