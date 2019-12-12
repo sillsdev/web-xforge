@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
+import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
@@ -12,6 +13,7 @@ import { LocationService } from './location.service';
 import { RealtimeOfflineStore } from './realtime-offline-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
+import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage } from './utils';
 
 const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 const XF_ROLE_CLAIM = 'http://xforge.org/role';
@@ -53,6 +55,7 @@ export class AuthService {
     private readonly offlineStore: RealtimeOfflineStore,
     private readonly locationService: LocationService,
     private readonly commandService: CommandService,
+    private readonly cookieService: CookieService,
     private readonly router: Router,
     private readonly localSettings: LocalSettingsService
   ) {
@@ -107,7 +110,8 @@ export class AuthService {
 
   logIn(returnUrl: string, signUp?: boolean): void {
     const state: AuthState = { returnUrl };
-    const options: AuthorizeOptions = { state: JSON.stringify(state) };
+    const language = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
+    const options: AuthorizeOptions = { state: JSON.stringify(state), language };
     if (signUp) {
       options.login_hint = 'signUp';
     }
