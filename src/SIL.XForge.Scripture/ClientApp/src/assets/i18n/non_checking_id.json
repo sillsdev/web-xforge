@@ -1,0 +1,46 @@
+{
+  "app": {
+    "settings": "Pengaturan",
+    "system_administration": "Administrasi Sistem",
+    "synchronize": "Sinkronkan",
+    "users": "Pengguna"
+  },
+  "checking": {
+    "add_question": "Tambah pertanyaan"
+  },
+  "checking_answers": {
+    "archive": "Arsip",
+    "only_community_checkers_can_like": "Hanya Pemeriksa Komunitas dapat menyukai jawaban."
+  },
+  "checking_overview": {
+    "add_question": "Tambah Pertanyaan",
+    "answer_count_label": "{{ count }} jawaban",
+    "archive": "Arsip",
+    "archived_questions": "Arsipkan Pertanyaan",
+    "click_add_question": "Klik {{ strongStart }}Tambah pertanyaan{{ strongEnd }}, diatas.",
+    "no_questions": "Tidak ada pertanyaan yang dipublikasikan. ",
+    "no_archived_questions": "Tidak ada pertanyaan yang diarsipkan.",
+    "question_count_label": "{{ count }} pertanyaan",
+    "republish": "Dipublikasikan ulang",
+    "time_archived_stamp": "Diarsipkan {{ timeMessage }} lalu"
+  },
+  "question_answered_dialog": {
+    "cancel": "Batal",
+    "consider_creating_new_question": "Pertimbangkan untuk membuat pertanyaan baru daripada menyunting pertanyaan ini.",
+    "edit_anyway": "Tetap sunting",
+    "question_has_answer": "Pertanyaan sudah mempunyai jawaban"
+  },
+  "question_dialog": {
+    "add_question_denied": "Izin ditolak: hanya administrator proyek yang dapat menambah dan menyunting pertanyaan.",
+    "cancel": "Batal",
+    "edit_question": "Sunting Pertanyaan",
+    "example_verse": "contoh. YOH 3:16",
+    "must_be_after_scripture_reference": "Harus setelah {{ strongStart }}Referensi Alkitab{{ strongEnd }}",
+    "must_be_inside_verse_range": "Harus dalam cakupan ayat",
+    "must_be_same_book_and_chapter": "Harus kitab dab pasal yang sama",
+    "new_question": "Pertanyaan Baru",
+    "recording_stopped": "Perekaman jawaban Anda dihentikan otomatis.",
+    "required_with_asterisk": "*Harus diisi",
+    "save": "Simpan"
+  }
+}
