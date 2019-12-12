@@ -102,3 +102,22 @@ export function parseJSON(str: string): any | undefined {
 export function verseSlug(verse: VerseRef) {
   return 'verse_' + verse.chapterNum + '_' + verse.verseNum;
 }
+
+export const ASP_CULTURE_COOKIE_NAME = '.AspNetCore.Culture';
+
+/**
+ * @param {string} cookie expect string of form "c=<tag>|uic=<tag>" where <tag> is a language tag
+ */
+export function getAspCultureCookieLanguage(cookie: string): string {
+  const parts = cookie.split('|');
+  let c: string;
+  let uic: string;
+  parts.forEach(value => {
+    if (value.startsWith('c=')) {
+      c = value.slice('c='.length);
+    } else if (value.startsWith('uic=')) {
+      uic = value.slice('uic='.length);
+    }
+  });
+  return c! || uic! || 'en';
+}
