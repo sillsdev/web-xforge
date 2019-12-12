@@ -9,7 +9,7 @@ import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { environment } from '../environments/environment';
 
-export type LocaleCode = 'en' | 'az_AZ' | 'zh_CN';
+export type LocaleCode = 'en' | 'en_GB' | 'az' | 'zh_CN';
 
 interface Locale {
   localName: string;
@@ -17,6 +17,7 @@ interface Locale {
   localeCode: LocaleCode;
   direction: 'ltr' | 'rtl';
   production: boolean;
+  dateFormatOptions?: Intl.DateTimeFormatOptions;
 }
 
 export const en = merge(enChecking, enNonChecking);
@@ -26,7 +27,7 @@ export class TranslationLoader implements TranslocoLoader {
   constructor(private http: HttpClient) {}
 
   getTranslation(code: string) {
-    if (code === 'en') {
+    if (code.startsWith('en')) {
       // statically load English so there will always be keys to fall back to
       return of(en);
     } else {
@@ -48,12 +49,21 @@ export class I18nService {
       englishName: 'English',
       localeCode: 'en',
       direction: 'ltr',
+      dateFormatOptions: { month: 'short', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' },
       production: true
+    },
+    {
+      localName: 'English (GB)',
+      englishName: 'English (GB)',
+      localeCode: 'en_GB',
+      direction: 'ltr',
+      dateFormatOptions: { month: 'short', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' },
+      production: false
     },
     {
       localName: 'Azərbaycanca',
       englishName: 'Azerbaijani',
-      localeCode: 'az_AZ',
+      localeCode: 'az',
       direction: 'ltr',
       production: false
     },
@@ -109,5 +119,20 @@ export class I18nService {
       spanStart: params['spanClass'] ? `<span class="${params['spanClass']}">` : '<span>',
       spanEnd: '</span>'
     });
+  }
+
+  formatDate(date: Date) {
+    // fall back to en in the event the language code isn't valid
+    return date.toLocaleString(
+      [this.localeCode.replace('_', '-'), I18nService.defaultLocale.localeCode],
+      // Browser default is all numeric, but includes seconds. So this fallback is same as default, but without seconds.
+      this.currentLocale.dateFormatOptions || {
+        month: 'numeric',
+        year: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric'
+      }
+    );
   }
 }

@@ -1,6 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { UserProfile } from 'realtime-server/lib/common/models/user';
+import { I18nService } from 'xforge-common/i18n.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { UserService } from 'xforge-common/user.service';
 
@@ -16,7 +17,7 @@ export class CheckingOwnerComponent implements OnInit {
   @Input() layoutStacked: boolean = false;
   private ownerDoc?: UserProfileDoc;
 
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService, readonly i18n: I18nService) {}
 
   get date(): Date {
     return new Date(this.dateTime);
