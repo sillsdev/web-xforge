@@ -9,17 +9,7 @@
     </div>
     <ng-template #overallProgressChart>
       <div id="overall-progress-chart">
-        <canvas
-          baseChart
-          width="36"
-          height="36"
-          chartType="doughnut"
-          [legend]="false"
-          [labels]="['Unread', 'Read', 'Answered']"
-          [data]="overallProgress()"
-          [colors]="[{ backgroundColor: ['#3a3a3a', '#edecec', '#B8D332'] }]"
-          [options]="{ events: [] }"
-        ></canvas>
+        <app-donut-chart [colors]="['#3a3a3a', '#edecec', '#B8D332']" [data]="overallProgress()"></app-donut-chart>
       </div>
     </ng-template>
   </div>
@@ -132,17 +122,10 @@
             <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
               <span fxFlex>{{ getBookName(text) }}</span>
               <span>
-                <canvas
-                  baseChart
-                  width="36"
-                  height="36"
-                  chartType="doughnut"
-                  [legend]="false"
-                  [labels]="['Unread', 'Read', 'Answered']"
+                <app-donut-chart
+                  [colors]="['#3a3a3a', '#edecec', '#B8D332']"
                   [data]="bookProgress(text)"
-                  [colors]="[{ backgroundColor: ['#3a3a3a', '#edecec', '#B8D332'] }]"
-                  [options]="{ events: [] }"
-                ></canvas>
+                ></app-donut-chart>
               </span>
             </div>
           </mdc-list-item>

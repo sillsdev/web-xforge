@@ -160,17 +160,10 @@
               icon="chevron_right"
             ></button>
             <a [routerLink]="['/projects', projectDoc?.id, 'checking']" id="project-summary">
-              <canvas
-                baseChart
-                width="36"
-                height="36"
-                chartType="doughnut"
-                [legend]="false"
-                [labels]="['Unread', 'Read', 'Answered']"
+              <app-donut-chart
+                [colors]="['#3a3a3a', '#fff', '#B8D332']"
                 [data]="[summary.unread, summary.read, summary.answered]"
-                [colors]="[{ backgroundColor: ['#3a3a3a', '#fff', '#B8D332'] }]"
-                [options]="{ events: [] }"
-              ></canvas>
+              ></app-donut-chart>
             </a>
           </div>
         </div>
