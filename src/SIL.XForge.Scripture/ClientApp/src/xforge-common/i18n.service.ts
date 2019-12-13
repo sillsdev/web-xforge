@@ -16,6 +16,7 @@ interface Locale {
   englishName: string;
   localeCode: LocaleCode;
   direction: 'ltr' | 'rtl';
+  tags: string[];
   production: boolean;
   dateFormatOptions?: Intl.DateTimeFormatOptions;
 }
@@ -45,18 +46,20 @@ export class TranslationLoader implements TranslocoLoader {
 export class I18nService {
   static readonly locales: Locale[] = [
     {
-      localName: 'English',
-      englishName: 'English',
+      localName: 'English (US)',
+      englishName: 'English (US)',
       localeCode: 'en',
       direction: 'ltr',
+      tags: ['en', 'en-US'],
       dateFormatOptions: { month: 'short', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' },
       production: true
     },
     {
-      localName: 'English (GB)',
-      englishName: 'English (GB)',
+      localName: 'English (UK)',
+      englishName: 'English (UK)',
       localeCode: 'en_GB',
       direction: 'ltr',
+      tags: ['en-GB'],
       dateFormatOptions: { month: 'short', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' },
       production: false
     },
@@ -65,6 +68,7 @@ export class I18nService {
       englishName: 'Azerbaijani',
       localeCode: 'az',
       direction: 'ltr',
+      tags: ['az', 'az-AZ'],
       production: false
     },
     {
@@ -72,6 +76,7 @@ export class I18nService {
       englishName: 'Indonesian',
       localeCode: 'id',
       direction: 'ltr',
+      tags: ['id', 'id-ID'],
       production: false
     },
     {
@@ -79,6 +84,7 @@ export class I18nService {
       englishName: 'Chinese (Simplified)',
       localeCode: 'zh_CN',
       direction: 'ltr',
+      tags: ['zh', 'zh-CN'],
       production: false
     }
   ];
@@ -98,6 +104,12 @@ export class I18nService {
 
   static getLocale(code: LocaleCode) {
     return this.locales.find(locale => locale.localeCode === code)!;
+  }
+
+  static findLocale(tag: string): Locale | undefined {
+    return this.locales.find(locale =>
+      locale.tags.find(canonicalTag => canonicalTag.toLowerCase() === tag.toLowerCase())
+    );
   }
 
   private currentLocale: Locale = I18nService.defaultLocale;

@@ -11,6 +11,7 @@ namespace SIL.XForge.Models
         public string ParatextId { get; set; }
         public string DisplayName { get; set; }
         public bool IsDisplayNameConfirmed { get; set; }
+        public string InterfaceLanguage { get; set; }
         public string AuthId { get; set; }
         public Dictionary<string, Site> Sites { get; set; } = new Dictionary<string, Site>();
     }

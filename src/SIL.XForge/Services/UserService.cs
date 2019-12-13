@@ -59,6 +59,10 @@ namespace SIL.XForge.Services
                             var ptId = (string)ptIdentity["user_id"];
                             op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId));
                         }
+                        string language = userProfile["user_metadata"] == null ? null :
+                            (string)userProfile["user_metadata"]["interface_language"];
+                        string interfaceLanguage = string.IsNullOrWhiteSpace(language) ? "en" : language;
+                        op.Set(u => u.InterfaceLanguage, interfaceLanguage);
                         string key = _siteOptions.Value.Id;
                         if (!userDoc.Data.Sites.ContainsKey(key))
                             op.Set(u => u.Sites[key], new Site());
