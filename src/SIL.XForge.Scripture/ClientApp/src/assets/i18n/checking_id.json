@@ -1,0 +1,130 @@
+{
+  "app": {
+    "all_questions": "Semua Pertanyaan",
+    "cannot_change_password": "Tidak dapat mengganti kata kunci saat ini. Coba lagi nanti atau laporkan masalah dalam menu Bantuan.",
+    "change_password": "Ganti kata kunci",
+    "community_checking": "Pemeriksaan Komunitas",
+    "connect_project": "Menghubungkan proyek",
+    "help": "Bantuan",
+    "language": "Bahasa",
+    "log_out": "Keluar",
+    "logged_in_as": "Masuk sebagai",
+    "overview": "Ringkasan",
+    "password_reset_email_sent": "Kami baru saja mengirimi Anda surel untuk mengatur ulang kata sandi Anda.",
+    "product_version": "Versi produk: v{{ version }}",
+    "project_home": "Beranda Proyek",
+    "report_issue_email": "surel {{ email }}",
+    "report_issue": "Laporkan masalah",
+    "scripture_checking_not_available": "Pemeriksaan Alkitab tidak tersedia pada proyek ini."
+  },
+  "checking": {
+    "me": "Saya",
+    "next": "Berikutnya",
+    "previous": "Sebelumnya",
+    "questions": "Pertanyaan ({{ count }})",
+    "view_questions": "Tampilkan Pertanyaan"
+  },
+  "checking_answers": {
+    "add_answer": "Tambah jawaban",
+    "answer_required_before_saving": "Anda perlu memasukkan jawaban atau merekam jawaban sebelum menyimpan",
+    "answer": "Jawaban",
+    "answers": "{{ count }} Jawaban",
+    "cancel": "Batal",
+    "cannot_like_own_answer": "Anda tidak dapat menyukai jawaban Anda sendiri.",
+    "delete": "Hapus",
+    "edit": "Sunting",
+    "no_scripture_selected": "Belum ada Alkitab yang dipilih.",
+    "record_upload": "Rekam/Unggah",
+    "record": "Rekam",
+    "recording_automatically_stopped": "Perekaman jawaban Anda dihentikan otomatis.",
+    "save_answer": "Simpan Jawaban",
+    "select_text": "Pilih Teks",
+    "select_verses": "Pilih ayat-ayat",
+    "select": "Pilih",
+    "show_more_unread": "tampilkan {{ count }} lebih banyak jawaban yang belum dibaca",
+    "your_answer": "Jawaban Anda"
+  },
+  "checking_audio_combined": {
+    "remove_audio_file": "Hapus File Suara",
+    "upload_audio_file": "Unggah File Suara",
+    "upload": "Unggah"
+  },
+  "checking_audio_recorder": {
+    "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
+    "record": "Rekam",
+    "stop_recording": "Hentikan Perekaman",
+    "try_again": "Coba Lagi"
+  },
+  "checking_comment_form": {
+    "cancel": "Batal",
+    "comment_cannot_be_blank": "Anda perlu mengisi komentar sebelum menyimpannya",
+    "save_comment": "Simpan komentar",
+    "your_comment": "Komentar Anda"
+  },
+  "checking_comments": {
+    "add_a_comment": "Tambahkan komentar",
+    "delete": "Hapus",
+    "edit": "Sunting",
+    "show_more_comments_and_unread": "Tampilkan {{ count }} lebih banyak komentar - {{ unread }} belum dibaca",
+    "show_more_comments": "Tampilkan {{ count }} lebih banyak komentar"
+  },
+  "checking_overview": {
+    "answers": "Jawaban",
+    "comments": "Komentar",
+    "likes": "Suka",
+    "questions": "Pertanyaan",
+    "texts_with_questions": "Teks dengan Pertanyaan"
+  },
+  "edit_name_dialog": {
+    "cancel": "Batal",
+    "confirm_name": "Pastikan nama yang akan dilihat orang lain di proyek ini ketika Anda memposting jawaban dan komentar",
+    "confirm_your_name": "Memastikan Nama Anda",
+    "confirm": "Pastikan",
+    "enter_name": "Silahkan masukkan nama Anda",
+    "update_your_name": "Perbarui nama Anda",
+    "update": "Pembaruan",
+    "your_name": "Nama Anda"
+  },
+  "error": {
+    "chrome": "Chrome",
+    "close": "Tutup",
+    "error_occurred": "Kesalahan terjadi",
+    "firefox": "Firefox",
+    "hide_details": "Sembunyikan detail",
+    "show_details": "Tampilkan detail",
+    "to_report_issue_email": "Untuk melaporkan sebuah masalah, kirim surel {{ issueEmailLink }}.",
+    "unsupported_browser": "Anda menggunakan peramban yang tidak didukung, yang mungkin menyebabkan masalah ini. Kami menyarankan menggunakan yang terbaru dari {{ chromeLink }} atau {{ firefoxLink }}."
+  },
+  "exception_handling_service": {
+    "network_request_failed": "Permintaan jaringan gagal. Beberapa fungsi mungkin tidak tersedia.",
+    "unknown_error": "Kesalahan yang tidak diketahui"
+  },
+  "scripture_chooser_dialog": {
+    "choose_book": "Pilih Kitab",
+    "choose_chapter": "Pilih Pasal",
+    "choose_end_verse": "Pilih ayat akhir",
+    "choose_verse": "Pilih ayat"
+  },
+  "share_control": {
+    "copy_link": "Salin tautan",
+    "email_invalid": "Alamat surel tidak valid",
+    "email": "Surel",
+    "invitation_sent": "Surel Undangan sudah dikirim ke {{ email }}",
+    "invite_people": "Undang orang",
+    "link_copied": "Tautan telah disalin ke Papan-klip",
+    "link_sharing": "Berbagi tautan",
+    "not_inviting_already_member": "Tidak mengundang: Pengguna sudah menjadi anggota proyek ini",
+    "resend": "Kirim ulang",
+    "send": "Kirim"
+  },
+  "share_dialog": {
+    "done": "Selesai",
+    "share_with_others": "Bagikan dengan orang lain"
+  },
+  "text_chooser_dialog": {
+    "cancel": "Batal",
+    "save": "Simpan",
+    "select_scripture": "Pilih Alkitab untuk dilampirkan dalam jawaban Anda",
+    "select_text_error_message": "Pilih teks untuk dilampirkan dalam jawaban Anda."
+  }
+}
