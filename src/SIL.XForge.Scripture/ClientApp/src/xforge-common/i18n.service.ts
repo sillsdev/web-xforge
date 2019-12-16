@@ -3,18 +3,18 @@ import { Injectable } from '@angular/core';
 import { TranslocoConfig, TranslocoService } from '@ngneat/transloco';
 import { Translation, TranslocoLoader } from '@ngneat/transloco';
 import merge from 'lodash/merge';
+import { CookieService } from 'ngx-cookie-service';
 import { of, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
 import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { environment } from '../environments/environment';
-
-export type LocaleCode = 'en' | 'en_GB' | 'az' | 'id' | 'zh_CN';
+import { ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue, getAspCultureCookieLanguage } from './utils';
 
 interface Locale {
   localName: string;
   englishName: string;
-  localeCode: LocaleCode;
+  canonicalTag: string;
   direction: 'ltr' | 'rtl';
   tags: string[];
   production: boolean;
@@ -32,6 +32,7 @@ export class TranslationLoader implements TranslocoLoader {
       // statically load English so there will always be keys to fall back to
       return of(en);
     } else {
+      code = code.replace(/-/g, '_');
       return zip(
         this.http.get<Translation>(`/assets/i18n/checking_${code}.json`),
         this.http.get<Translation>(`/assets/i18n/non_checking_${code}.json`)
@@ -48,7 +49,6 @@ export class I18nService {
     {
       localName: 'English (US)',
       englishName: 'English (US)',
-      localeCode: 'en',
       direction: 'ltr',
       tags: ['en', 'en-US'],
       dateFormatOptions: { month: 'short', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' },
@@ -57,7 +57,6 @@ export class I18nService {
     {
       localName: 'English (UK)',
       englishName: 'English (UK)',
-      localeCode: 'en_GB',
       direction: 'ltr',
       tags: ['en-GB'],
       dateFormatOptions: { month: 'short', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' },
@@ -66,7 +65,6 @@ export class I18nService {
     {
       localName: 'Azərbaycanca',
       englishName: 'Azerbaijani',
-      localeCode: 'az',
       direction: 'ltr',
       tags: ['az', 'az-AZ'],
       production: false
@@ -74,7 +72,6 @@ export class I18nService {
     {
       localName: 'Bahasa Indonesia',
       englishName: 'Indonesian',
-      localeCode: 'id',
       direction: 'ltr',
       tags: ['id', 'id-ID'],
       production: false
@@ -82,55 +79,69 @@ export class I18nService {
     {
       localName: '简体中文',
       englishName: 'Chinese (Simplified)',
-      localeCode: 'zh_CN',
       direction: 'ltr',
-      tags: ['zh', 'zh-CN'],
+      tags: ['zh-CN', 'zh'],
       production: false
     }
-  ];
+  ].map(locale => {
+    (locale as Locale).canonicalTag = locale.tags[0];
+    return locale as Locale;
+  });
 
-  static readonly defaultLocale = I18nService.getLocale('en');
+  static readonly defaultLocale = I18nService.getLocale('en')!;
   static readonly availableLocales = I18nService.locales.filter(locale => locale.production || !environment.production);
 
   static readonly translocoConfig: TranslocoConfig = {
-    availableLangs: I18nService.availableLocales.map(locale => locale.localeCode),
+    availableLangs: I18nService.availableLocales.map(locale => locale.canonicalTag),
     reRenderOnLangChange: true,
-    fallbackLang: 'en',
-    defaultLang: I18nService.defaultLocale.localeCode,
+    fallbackLang: I18nService.defaultLocale.canonicalTag,
+    defaultLang: I18nService.defaultLocale.canonicalTag,
     missingHandler: {
       useFallbackTranslation: true
     }
   };
 
-  static getLocale(code: LocaleCode): Locale {
-    return this.locales.find(locale => locale.localeCode === code)!;
-  }
-
-  static findLocale(tag: string): Locale | undefined {
+  static getLocale(tag: string): Locale | undefined {
     return this.locales.find(locale =>
       locale.tags.some(canonicalTag => canonicalTag.toLowerCase() === tag.toLowerCase())
     );
   }
 
-  static getTag(code: LocaleCode): string {
-    return code.replace('_', '-');
-  }
-
   private currentLocale: Locale = I18nService.defaultLocale;
 
-  constructor(private readonly transloco: TranslocoService) {}
+  constructor(private readonly transloco: TranslocoService, private readonly cookieService: CookieService) {
+    const language = this.cookieService.get(ASP_CULTURE_COOKIE_NAME);
+    if (language != null) {
+      this.trySetLocale(getAspCultureCookieLanguage(language));
+    }
+  }
 
   get localeCode() {
-    return this.currentLocale.localeCode;
+    return this.currentLocale.canonicalTag;
   }
 
   get locales() {
     return I18nService.availableLocales;
   }
 
-  setLocale(code: LocaleCode) {
-    this.currentLocale = I18nService.getLocale(code);
-    this.transloco.setActiveLang(this.currentLocale.localeCode);
+  setLocale(tag: string) {
+    const locale = I18nService.getLocale(tag);
+    if (locale == null) {
+      throw new Error(`Cannot set locale to non-existent locale ${tag}`);
+    }
+    this.trySetLocale(tag);
+  }
+
+  trySetLocale(tag: string) {
+    const locale = I18nService.getLocale(tag);
+    if (locale != null) {
+      this.currentLocale = locale;
+      this.transloco.setActiveLang(locale.canonicalTag);
+      this.cookieService.set(ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue(locale.canonicalTag));
+      // TODO save to Auth0
+    } else {
+      console.warn(`Failed attempt to set locale to unsupported locale ${tag}`);
+    }
   }
 
   translateAndInsertTags(key: string, params: object = {}) {
@@ -148,7 +159,7 @@ export class I18nService {
   formatDate(date: Date) {
     // fall back to en in the event the language code isn't valid
     return date.toLocaleString(
-      [I18nService.getTag(this.localeCode), I18nService.getTag(I18nService.defaultLocale.localeCode)],
+      [this.localeCode, I18nService.defaultLocale.canonicalTag],
       // Browser default is all numeric, but includes seconds. So this fallback is same as default, but without seconds.
       this.currentLocale.dateFormatOptions || {
         month: 'numeric',

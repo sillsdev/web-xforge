@@ -3,6 +3,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { TranslocoService } from '@ngneat/transloco';
 import { AvatarService } from 'ngx-avatar';
+import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'realtime-server/lib/common/models/user';
 import { instance, mock, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -74,6 +75,7 @@ class TestEnvironment {
   readonly mockedUserService = mock(UserService);
   readonly mockedAvatarService = mock(AvatarService);
   readonly mockedTransloco = mock(TranslocoService);
+  readonly mockedCookieService = mock(CookieService);
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
@@ -94,7 +96,8 @@ class TestEnvironment {
       providers: [
         { provide: UserService, useFactory: () => instance(this.mockedUserService) },
         { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) },
-        { provide: TranslocoService, useFactory: () => instance(this.mockedTransloco) }
+        { provide: TranslocoService, useFactory: () => instance(this.mockedTransloco) },
+        { provide: CookieService, useFactory: () => instance(this.mockedCookieService) }
       ]
     });
 

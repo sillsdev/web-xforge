@@ -15,20 +15,14 @@ import { combineLatest, from, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { I18nService, LocaleCode } from 'xforge-common/i18n.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
-import {
-  ASP_CULTURE_COOKIE_NAME,
-  aspCultureCookieValue,
-  getAspCultureCookieLanguage,
-  issuesEmailTemplate,
-  supportedBrowser
-} from 'xforge-common/utils';
+import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { HelpHeroService } from './core/help-hero.service';
@@ -235,16 +229,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
       this.currentUserDoc = await this.userService.getCurrentUser();
       if (isNewlyLoggedIn) {
-        const interfaceLanguage = this.currentUserDoc.data!.interfaceLanguage || 'en';
-        const locale = I18nService.findLocale(interfaceLanguage);
-        if (locale != null) {
-          this.setLocale(locale.localeCode);
-        }
-      } else {
-        const interfaceLanguage = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
-        const locale = I18nService.findLocale(interfaceLanguage);
-        if (locale != null) {
-          this.i18n.setLocale(locale.localeCode);
+        const languageTag = this.currentUserDoc.data!.interfaceLanguage;
+        if (languageTag != null) {
+          this.i18n.trySetLocale(languageTag);
         }
       }
 
@@ -404,11 +391,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   async goHome(): Promise<void> {
     (await this.isLoggedIn) ? this.router.navigateByUrl('/projects') : this.locationService.go('/');
-  }
-
-  setLocale(localeCode: LocaleCode): void {
-    this.cookieService.set(ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue(I18nService.getTag(localeCode)));
-    this.i18n.setLocale(localeCode);
   }
 
   projectChanged(value: string): void {
