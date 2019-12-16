@@ -15,7 +15,7 @@ import { combineLatest, from, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { I18nService } from 'xforge-common/i18n.service';
+import { I18nService, LocaleCode } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -24,8 +24,9 @@ import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browse
 import { UserService } from 'xforge-common/user.service';
 import {
   ASP_CULTURE_COOKIE_NAME,
+  aspCultureCookieValue,
+  getAspCultureCookieLanguage,
   issuesEmailTemplate,
-  setAspCultureCookieValue,
   supportedBrowser
 } from 'xforge-common/utils';
 import { version } from '../../../version.json';
@@ -237,7 +238,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         const interfaceLanguage = this.currentUserDoc.data!.interfaceLanguage || 'en';
         const locale = I18nService.findLocale(interfaceLanguage);
         if (locale != null) {
-          this.cookieService.set(ASP_CULTURE_COOKIE_NAME, setAspCultureCookieValue(interfaceLanguage));
+          this.setLocale(locale.localeCode);
+        }
+      } else {
+        const interfaceLanguage = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
+        const locale = I18nService.findLocale(interfaceLanguage);
+        if (locale != null) {
           this.i18n.setLocale(locale.localeCode);
         }
       }
@@ -400,6 +406,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     (await this.isLoggedIn) ? this.router.navigateByUrl('/projects') : this.locationService.go('/');
   }
 
+  setLocale(localeCode: LocaleCode): void {
+    this.cookieService.set(ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue(I18nService.getTag(localeCode)));
+    this.i18n.setLocale(localeCode);
+  }
+
   projectChanged(value: string): void {
     if (value === CONNECT_PROJECT_OPTION) {
       if (!this.isDrawerPermanent) {
@@ -417,15 +428,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
   }
 
-  collapseDrawer() {
+  collapseDrawer(): void {
     this.isExpanded = false;
   }
 
-  openDrawer() {
+  openDrawer(): void {
     this.isExpanded = true;
   }
 
-  toggleDrawer() {
+  toggleDrawer(): void {
     this.isExpanded = !this.isExpanded;
   }
 
@@ -465,7 +476,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     await Promise.all(promises);
   }
 
-  private disposeQuestionQueries() {
+  private disposeQuestionQueries(): void {
     for (const questionQuery of this.questionCountQueries.values()) {
       questionQuery.dispose();
     }

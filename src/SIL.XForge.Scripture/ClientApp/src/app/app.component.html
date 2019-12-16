@@ -27,7 +27,7 @@
                   *ngFor="let locale of i18n.locales"
                   [class.locale-disabled]="!locale.production"
                   [class.active-locale]="locale.localeCode === i18n.localeCode"
-                  (click)="i18n.setLocale(locale.localeCode)"
+                  (click)="setLocale(locale.localeCode)"
                 >
                   {{ locale.localName }}
                   <!-- click handler is workaround for menu not closing when click is on the span element -->
