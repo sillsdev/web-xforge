@@ -399,6 +399,7 @@ class TestEnvironment {
     );
     when(mockedUserService.currentProjectId).thenReturn('project01');
     when(mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
+    when(mockedCookieService.get(anything())).thenReturn('en');
 
     this.router = TestBed.get(Router);
     this.location = TestBed.get(Location);

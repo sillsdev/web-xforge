@@ -102,17 +102,22 @@ export class I18nService {
     }
   };
 
-  static getLocale(code: LocaleCode) {
+  static getLocale(code: LocaleCode): Locale {
     return this.locales.find(locale => locale.localeCode === code)!;
   }
 
   static findLocale(tag: string): Locale | undefined {
     return this.locales.find(locale =>
-      locale.tags.find(canonicalTag => canonicalTag.toLowerCase() === tag.toLowerCase())
+      locale.tags.some(canonicalTag => canonicalTag.toLowerCase() === tag.toLowerCase())
     );
   }
 
+  static getTag(code: LocaleCode): string {
+    return code.replace('_', '-');
+  }
+
   private currentLocale: Locale = I18nService.defaultLocale;
+
   constructor(private readonly transloco: TranslocoService) {}
 
   get localeCode() {
@@ -123,8 +128,8 @@ export class I18nService {
     return I18nService.availableLocales;
   }
 
-  setLocale(newLocale: LocaleCode) {
-    this.currentLocale = I18nService.getLocale(newLocale);
+  setLocale(code: LocaleCode) {
+    this.currentLocale = I18nService.getLocale(code);
     this.transloco.setActiveLang(this.currentLocale.localeCode);
   }
 
@@ -143,7 +148,7 @@ export class I18nService {
   formatDate(date: Date) {
     // fall back to en in the event the language code isn't valid
     return date.toLocaleString(
-      [this.localeCode.replace('_', '-'), I18nService.defaultLocale.localeCode],
+      [I18nService.getTag(this.localeCode), I18nService.getTag(I18nService.defaultLocale.localeCode)],
       // Browser default is all numeric, but includes seconds. So this fallback is same as default, but without seconds.
       this.currentLocale.dateFormatOptions || {
         month: 'numeric',

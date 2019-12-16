@@ -110,7 +110,7 @@ export class AuthService {
 
   logIn(returnUrl: string, signUp?: boolean): void {
     const state: AuthState = { returnUrl };
-    const language = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
+    const language = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME)).toLowerCase();
     const options: AuthorizeOptions = { state: JSON.stringify(state), language };
     if (signUp) {
       options.login_hint = 'signUp';
