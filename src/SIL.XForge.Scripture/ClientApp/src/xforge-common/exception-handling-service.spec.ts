@@ -1,5 +1,6 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
@@ -16,6 +17,7 @@ const mockedMdcDialog = mock(MdcDialog);
 const mockedUserService = mock(UserService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedNoticeService = mock(NoticeService);
+const mockedCookieService = mock(CookieService);
 
 // suppress any expected logging so it won't be shown in the test results
 class MockConsole {
@@ -42,7 +44,8 @@ describe('ExceptionHandlingService', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: CONSOLE, useValue: new MockConsole() }
+      { provide: CONSOLE, useValue: new MockConsole() },
+      { provide: CookieService, useMock: mockedCookieService }
     ],
     imports: [TestTranslocoModule]
   }));

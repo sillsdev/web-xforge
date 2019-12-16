@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CookieService } from 'ngx-cookie-service';
 import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
@@ -32,6 +33,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedHttpClient = mock(HttpClient);
+const mockedCookieService = mock(CookieService);
 
 describe('QuestionDialogComponent', () => {
   configureTestingModule(() => ({
@@ -41,7 +43,8 @@ describe('QuestionDialogComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: HttpClient, useMock: mockedHttpClient }
+      { provide: HttpClient, useMock: mockedHttpClient },
+      { provide: CookieService, useMock: mockedCookieService }
     ]
   }));
 

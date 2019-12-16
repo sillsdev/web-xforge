@@ -5,6 +5,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { ngfModule } from 'angular-file';
+import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
@@ -43,6 +44,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedAuthService = mock(AuthService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
+const mockedCookieService = mock(CookieService);
 
 describe('CheckingOverviewComponent', () => {
   configureTestingModule(() => ({
@@ -54,7 +56,8 @@ describe('CheckingOverviewComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: AuthService, useMock: mockedAuthService },
-      { provide: QuestionDialogService, useMock: mockedQuestionDialogService }
+      { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
+      { provide: CookieService, useMock: mockedCookieService }
     ]
   }));
 
