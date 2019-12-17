@@ -8,6 +8,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import clone from 'lodash/clone';
+import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
@@ -64,6 +65,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedMdcDialog = mock(MdcDialog);
 const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
+const mockedCookieService = mock(CookieService);
 
 function createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {
   return {
@@ -121,7 +123,8 @@ describe('CheckingComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: MdcDialog, useMock: mockedMdcDialog },
       { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
-      { provide: QuestionDialogService, useMock: mockedQuestionDialogService }
+      { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
+      { provide: CookieService, useMock: mockedCookieService }
     ]
   }));
 
