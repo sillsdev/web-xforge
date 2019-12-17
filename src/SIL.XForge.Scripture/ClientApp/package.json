@@ -76,7 +76,7 @@
     "@angular/compiler-cli": "^8.2.4",
     "@angular/language-service": "^8.2.4",
     "@ngneat/transloco-keys-manager": "^1.0.0",
-    "@types/auth0-js": "^9.10.2",
+    "@types/auth0-js": "^9.10.7",
     "@types/jasmine": "~3.3.12",
     "@types/jasminewd2": "~2.0.6",
     "@types/jwt-decode": "^2.2.1",
