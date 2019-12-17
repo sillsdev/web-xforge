@@ -18,7 +18,7 @@ interface Locale {
   direction: 'ltr' | 'rtl';
   tags: string[];
   production: boolean;
-  dateFormatOptions?: Intl.DateTimeFormatOptions;
+  dateFormat?: Intl.DateTimeFormatOptions | ((date: Date) => string);
 }
 
 export const en = merge(enChecking, enNonChecking);
@@ -41,6 +41,10 @@ export class TranslationLoader implements TranslocoLoader {
   }
 }
 
+function pad(number: number) {
+  return number.toString().padStart(2, '0');
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -51,7 +55,7 @@ export class I18nService {
       englishName: 'English (US)',
       direction: 'ltr',
       tags: ['en', 'en-US'],
-      dateFormatOptions: { month: 'short', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' },
+      dateFormat: { month: 'short' },
       production: true
     },
     {
@@ -59,7 +63,7 @@ export class I18nService {
       englishName: 'English (UK)',
       direction: 'ltr',
       tags: ['en-GB'],
-      dateFormatOptions: { month: 'short', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' },
+      dateFormat: { month: 'short', hour12: true },
       production: false
     },
     {
@@ -67,6 +71,9 @@ export class I18nService {
       englishName: 'Azerbaijani',
       direction: 'ltr',
       tags: ['az', 'az-AZ'],
+      // Chrome formats az dates as en-US. This manual override is the format Firefox uses for az
+      dateFormat: (d: Date) =>
+        `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
       production: false
     },
     {
@@ -158,16 +165,13 @@ export class I18nService {
 
   formatDate(date: Date) {
     // fall back to en in the event the language code isn't valid
-    return date.toLocaleString(
-      [this.localeCode, I18nService.defaultLocale.canonicalTag],
-      // Browser default is all numeric, but includes seconds. So this fallback is same as default, but without seconds.
-      this.currentLocale.dateFormatOptions || {
-        month: 'numeric',
-        year: 'numeric',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric'
-      }
-    );
+    const format = this.currentLocale.dateFormat;
+    return typeof format === 'function'
+      ? format(date)
+      : date.toLocaleString(
+          [this.localeCode, I18nService.defaultLocale.canonicalTag],
+          // Browser default is all numeric, but includes seconds. This is same as default, but without seconds
+          merge({ month: 'numeric', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' }, format)
+        );
   }
 }

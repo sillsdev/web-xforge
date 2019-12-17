@@ -51,8 +51,10 @@ describe('I18nService', () => {
     const service = new I18nService(instance(mockedTranslocoService), instance(mockedCookieService));
     expect(service.formatDate(date)).toEqual('Nov 25, 1991, 5:28 PM');
     service.setLocale('en-GB');
-    expect(service.formatDate(date)).toEqual('25 Nov 1991, 17:28');
+    expect(service.formatDate(date)).toEqual('25 Nov 1991, 5:28 pm');
     service.setLocale('zh-CN');
     expect(service.formatDate(date)).toEqual('1991/11/25 下午5:28');
+    service.setLocale('az');
+    expect(service.formatDate(date)).toEqual('25.11.1991 17:28');
   });
 });
