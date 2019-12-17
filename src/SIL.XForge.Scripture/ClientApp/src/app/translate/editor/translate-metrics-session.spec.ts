@@ -355,11 +355,11 @@ class TestEnvironment {
 
     this.sourceFixture = TestBed.createComponent(TextComponent);
     this.source = this.sourceFixture.componentInstance;
-    this.source.id = new TextDocId('project01', 40, 1, 'source');
+    this.source.textDocId = new TextDocId('project01', 40, 1, 'source');
     this.source.segmentRef = 'verse_1_1';
     this.targetFixture = TestBed.createComponent(TextComponent);
     this.target = this.targetFixture.componentInstance;
-    this.target.id = new TextDocId('project01', 40, 1, 'target');
+    this.target.textDocId = new TextDocId('project01', 40, 1, 'target');
     this.target.segmentRef = 'verse_1_1';
     this.session = new TranslateMetricsSession(
       instance(mockedSFProjectService),

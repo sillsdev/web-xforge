@@ -52,6 +52,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Input() placeholder = translate('text.loading');
   @Input() markInvalid: boolean = false;
   @Input() multiSegmentSelection = false;
+  @Input() elementId: string | undefined;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
@@ -115,7 +116,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       userOnly: true
     }
   };
-  private _id?: TextDocId;
+  private _textDocId?: TextDocId;
   private _modules: any = this.DEFAULT_MODULES;
   private _editor?: Quill;
   private viewModel = new TextViewModel();
@@ -137,14 +138,14 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     return this._direction;
   }
 
-  get id(): TextDocId | undefined {
-    return this._id;
+  get textDocId(): TextDocId | undefined {
+    return this._textDocId;
   }
 
   @Input()
-  set id(value: TextDocId | undefined) {
-    if (!isEqual(this._id, value)) {
-      this._id = value;
+  set textDocId(value: TextDocId | undefined) {
+    if (!isEqual(this._textDocId, value)) {
+      this._textDocId = value;
       this.initialSegmentRef = undefined;
       this.initialSegmentChecksum = undefined;
       this.initialSegmentFocus = undefined;
@@ -276,7 +277,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.subscribe(fromEvent(this._editor.root, 'scroll'), () => this.updateHighlightMarkerVisibility());
     this.subscribe(fromEvent(window, 'resize'), () => this.setHighlightMarkerPosition());
     this.viewModel.editor = editor;
-    if (this.id != null) {
+    if (this.textDocId != null) {
       this.bindQuill();
     }
     EDITORS.add(this._editor);
@@ -339,7 +340,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   toggleHighlight(value: boolean, range?: RangeStatic): void {
-    if (this._id == null) {
+    if (this._textDocId == null) {
       return;
     }
     if (range == null && this._segment != null) {
@@ -350,7 +351,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
     this.viewModel.toggleHighlight(range, value);
 
-    if (!this.isReadOnly && this._id.textType === 'target' && this.highlightMarker != null) {
+    if (!this.isReadOnly && this._textDocId.textType === 'target' && this.highlightMarker != null) {
       if (value) {
         this.highlightMarker.style.visibility = '';
       } else {
@@ -372,11 +373,11 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   private async bindQuill(): Promise<void> {
     this.viewModel.unbind();
-    if (this._id == null) {
+    if (this._textDocId == null) {
       return;
     }
     this.placeholder = translate('text.loading');
-    const textDoc = await this.projectService.getText(this._id);
+    const textDoc = await this.projectService.getText(this._textDocId);
     this.viewModel.bind(textDoc);
     this.updatePlaceholderText();
 
@@ -435,9 +436,12 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   private setDirection() {
     // As the browser is automatically applying ltr/rtl we need to ask it which one it is using
     // This value can then be used for other purposes i.e. CSS styles
-    const quill = document.querySelector('quill-editor');
-    if (quill !== null) {
-      this._direction = window.getComputedStyle(quill).direction;
+    const quill =
+      this.elementId != null
+        ? document.querySelector(`#${this.elementId} quill-editor`)
+        : document.querySelector('quill-editor');
+    if (quill != null) {
+      this._direction = getComputedStyle(quill).direction;
     }
   }
 
@@ -470,7 +474,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
         // the selection has not changed to a different segment, so update existing segment
         this.updateSegment();
-        if (this._highlightSegment && this._id != null) {
+        if (this._highlightSegment && this._textDocId != null) {
           // ensure that the currently selected segment is highlighted
           if (!this.viewModel.isHighlighted(this._segment)) {
             this.viewModel.toggleHighlight(this._segment.range, true);
@@ -490,11 +494,15 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     focus: boolean = false,
     end: boolean = true
   ): boolean {
-    if (this._id == null || this._editor == null) {
+    if (this._textDocId == null || this._editor == null) {
       return false;
     }
 
-    if (this._segment != null && this._id.bookNum === this._segment.bookNum && segmentRef === this._segment.ref) {
+    if (
+      this._segment != null &&
+      this._textDocId.bookNum === this._segment.bookNum &&
+      segmentRef === this._segment.ref
+    ) {
       if (focus) {
         this._editor.focus();
       }
@@ -530,7 +538,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (this._segment != null && this.highlightSegment) {
       this.toggleHighlight(false);
     }
-    this._segment = new Segment(this._id.bookNum, this._id.chapterNum, segmentRef);
+    this._segment = new Segment(this._textDocId.bookNum, this._textDocId.chapterNum, segmentRef);
     if (checksum != null) {
       this._segment.initialChecksum = checksum;
     }
@@ -621,11 +629,11 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   }
 
   private async setLangFromText() {
-    if (this.id == null) {
+    if (this.textDocId == null) {
       return;
     }
 
-    const project = (await this.projectService.get(this.id.projectId)).data;
+    const project = (await this.projectService.get(this.textDocId.projectId)).data;
     if (project == null) {
       return;
     }

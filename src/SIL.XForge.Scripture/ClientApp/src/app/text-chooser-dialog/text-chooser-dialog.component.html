@@ -9,7 +9,7 @@
             <h2>{{ bookName }} {{ chapterNum }}</h2>
             <mdc-icon>keyboard_arrow_down</mdc-icon>
           </div>
-          <app-text #scriptureText [id]="textDocId" multiSegmentSelection="true"></app-text>
+          <app-text #scriptureText [textDocId]="textDocId" multiSegmentSelection="true"></app-text>
           <p class="selection-preview">
             {{ (startClipped ? "…" : "") + (selectedText || "") + (endClipped ? "…" : "") }}
             <span class="selection-reference">{{ referenceForDisplay }}</span>

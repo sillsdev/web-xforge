@@ -760,6 +760,18 @@ describe('EditorComponent', () => {
       expect(env.invalidWarning).not.toBeNull();
       env.dispose();
     }));
+
+    it('correctly detects right to left language', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject(false);
+      env.setProjectUserConfig();
+      env.addArabicTextDoc(new TextDocId('project01', 44, 1, 'target'));
+      env.updateParams({ projectId: 'project01', bookId: 'ACT' });
+      env.wait();
+      expect(env.isSourceAreaHidden).toBe(true);
+      expect(env.component.target.isRtl).toBe(true);
+      env.dispose();
+    }));
   });
 });
 
@@ -972,6 +984,11 @@ class TestEnvironment {
             bookNum: 43,
             chapters: [{ number: 1, lastVerse: 0, isValid: true }],
             hasSource: false
+          },
+          {
+            bookNum: 44,
+            chapters: [{ number: 1, lastVerse: 3, isValid: true }],
+            hasSource: false
           }
         ]
       }
@@ -1113,6 +1130,26 @@ class TestEnvironment {
         delta.insert(`${id.textType}: chapter ${id.chapterNum}, `, { segment: `verse_${id.chapterNum}_5` });
         break;
     }
+    delta.insert('\n', { para: { style: 'p' } });
+    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+      id: id.toString(),
+      type: RichText.type.name,
+      data: delta
+    });
+  }
+
+  addArabicTextDoc(id: TextDocId): void {
+    const delta = new Delta();
+    delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
+    delta.insert({ blank: true }, { segment: 'p_1' });
+    delta.insert({ verse: { number: '1', style: 'v' } });
+    delta.insert('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ أحَشْوِيرُوشَ.', { segment: `verse_${id.chapterNum}_1` });
+    delta.insert({ verse: { number: '2', style: 'v' } });
+    delta.insert('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ أحَشْوِيرُوشَ.', { segment: `verse_${id.chapterNum}_2` });
+    delta.insert({ verse: { number: '3', style: 'v' } });
+    delta.insert('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ أحَشْوِيرُوشَ.', { segment: `verse_${id.chapterNum}_3` });
+    delta.insert({ verse: { number: '4', style: 'v' } });
+    delta.insert('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ أحَشْوِيرُوشَ.', { segment: `verse_${id.chapterNum}_4` });
     delta.insert('\n', { para: { style: 'p' } });
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
       id: id.toString(),
