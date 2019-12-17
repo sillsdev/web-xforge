@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture
 {
@@ -32,12 +33,37 @@ namespace SIL.XForge.Scripture
         }
 
         /// <summary>
-        /// Map of culture identifier (language tag) to culture name (displayed in the chooser)
+        /// Map of culture identifier (language tag) to interface language object (local name displayed in the chooser)
         /// </summary>
-        public static Dictionary<string, string> Cultures = new Dictionary<string, string>
+        public static Dictionary<string, InterfaceLanguage> Cultures = new Dictionary<string, InterfaceLanguage>
         {
-            { "en", "English (US)" },
-            { "az", "Azərbaycanca" }
+            { "en", new InterfaceLanguage
+                {
+                    LocalName = "English (US)",
+                    EnglishName = "English (US)",
+                    CanonicalTag = "en",
+                    Tags = new string[]{ "en", "en-US" },
+                    Production = true
+                }
+            },
+            { "en-GB", new InterfaceLanguage
+                {
+                    LocalName = "English (UK)",
+                    EnglishName = "English (UK)",
+                    CanonicalTag = "en-GB",
+                    Tags = new string[]{ "en-GB" },
+                    Production = true
+                }
+            },
+            { "az", new InterfaceLanguage
+                {
+                    LocalName = "Azərbaycanca",
+                    EnglishName = "Azerbaijani",
+                    CanonicalTag = "az",
+                    Tags = new string[]{ "az", "az-AZ" },
+                    Production = false
+                }
+            }
         };
     }
 }
