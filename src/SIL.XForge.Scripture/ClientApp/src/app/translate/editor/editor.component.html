@@ -29,6 +29,8 @@
         <div #sourceContainer class="text-container" [style.height]="textHeight">
           <app-text
             #source
+            id="translate-source-text"
+            [elementId]="'translate-source-text'"
             [isReadOnly]="true"
             [highlightSegment]="target.hasFocus"
             (loaded)="onTextLoaded('source')"
@@ -44,6 +46,8 @@
         <div #targetContainer class="text-container" [style.height]="textHeight">
           <app-text
             #target
+            id="translate-target-text"
+            [elementId]="'translate-target-text'"
             [isReadOnly]="!canEdit"
             (updated)="onTargetUpdated($event.segment, $event.delta, $event.prevSegment)"
             (loaded)="onTextLoaded('target')"
