@@ -98,6 +98,15 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
             }
             return true;
           }
+        },
+        redo: {
+          key: 'Y',
+          shortKey: true,
+          handler: () => {
+            if (this.editor != null) {
+              this.editor.history.redo();
+            }
+          }
         }
       }
     },
