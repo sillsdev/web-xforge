@@ -6,9 +6,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { fakeAsync, flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
+import { CookieService } from 'ngx-cookie-service';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { mock } from 'ts-mockito';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
@@ -17,14 +19,14 @@ import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './s
 describe('ScriptureChooserDialog', () => {
   configureTestingModule(() => ({
     imports: [TestModule],
-    providers: [{ provide: MDC_DIALOG_DATA }]
+    providers: [{ provide: MDC_DIALOG_DATA }, { provide: CookieService, useMock: mock(CookieService) }]
   }));
 
   it('initially shows book chooser, close button', () => {
     const env = new TestEnvironment();
     expect(env.dialogText).toContain(env.closeIconName);
     expect(env.dialogText).toContain('book');
-    expect(env.dialogText).toContain('MAT');
+    expect(env.dialogText).toContain('Matthew');
   });
 
   it('clicking book goes to chapter chooser, shows back button', fakeAsync(() => {
@@ -33,7 +35,7 @@ describe('ScriptureChooserDialog', () => {
     expect(env.reference.trim()).toEqual('Ephesians');
     expect(env.dialogText).not.toContain(env.closeIconName);
     expect(env.dialogText).not.toContain('book');
-    expect(env.dialogText).not.toContain('MAT');
+    expect(env.dialogText).not.toContain('Matthew');
     expect(env.dialogText).toContain(env.backIconName);
     expect(env.dialogText).toContain('chapter');
     expect(env.chapter3).toBeDefined('missing chapter 3 button');
@@ -46,7 +48,7 @@ describe('ScriptureChooserDialog', () => {
     expect(env.reference).toEqual('Ephesians 3');
     expect(env.dialogText).not.toContain(env.closeIconName);
     expect(env.dialogText).not.toContain('book');
-    expect(env.dialogText).not.toContain('MAT');
+    expect(env.dialogText).not.toContain('Matthew');
     expect(env.dialogText).not.toContain('chapter');
     expect(env.dialogText).toContain(env.backIconName);
     expect(env.verse21).toBeDefined('missing verse 21 button');
@@ -72,7 +74,7 @@ describe('ScriptureChooserDialog', () => {
     env.click(env.backoutButton);
     expect(env.dialogText).toContain(env.closeIconName);
     expect(env.dialogText).toContain('book');
-    expect(env.dialogText).toContain('MAT');
+    expect(env.dialogText).toContain('Matthew');
   }));
 
   it('clicking back at verse selection goes to chapter selection', fakeAsync(() => {
@@ -156,10 +158,10 @@ describe('ScriptureChooserDialog', () => {
 
   it('only shows books that we seed (from project)', fakeAsync(() => {
     const env = new TestEnvironment();
-    expect(env.dialogText).toContain('EXO');
-    expect(env.dialogText).toContain('MAT');
-    expect(env.dialogText).not.toContain('GEN');
-    expect(env.dialogText).not.toContain('ACT');
+    expect(env.dialogText).toContain('Exodus');
+    expect(env.dialogText).toContain('Matthew');
+    expect(env.dialogText).not.toContain('Genesis');
+    expect(env.dialogText).not.toContain('Acts');
   }));
 
   it('only shows chapters that we seed (from project)', fakeAsync(() => {
@@ -289,11 +291,11 @@ describe('ScriptureChooserDialog', () => {
     expect(env.dialogText).toContain(env.closeIconName);
     expect(env.dialogText).toContain('book');
     // Other books are shown to select from other than inputScriptureReference and rangeStart books.
-    expect(env.dialogText).toContain('ROM');
+    expect(env.dialogText).toContain('Romans');
 
     // Should not contain a Scripture reference
-    expect(env.dialogText).not.toContain('Ephesians');
-    expect(env.dialogText).not.toContain('Ruth');
+    expect(env.dialogText).not.toContain('Ephesians 3:17');
+    expect(env.dialogText).not.toContain('Ruth 3:15');
 
     // Did not pre-select rangeStart values.
     expect(env.component.selection.book).toBeUndefined();
@@ -330,12 +332,12 @@ describe('ScriptureChooserDialog', () => {
 
     expect(env.dialogText).toContain(env.closeIconName);
     expect(env.dialogText).toContain('book');
-    expect(env.dialogText).toContain('ROM');
-    expect(env.dialogText).toContain('EPH');
+    expect(env.dialogText).toContain('Romans');
+    expect(env.dialogText).toContain('Ephesians');
 
     // Should not contain a Scripture reference
-    expect(env.dialogText).not.toContain('Ephesians');
-    expect(env.dialogText).not.toContain('Romans');
+    expect(env.dialogText).not.toContain('Ephesians 3:17');
+    expect(env.dialogText).not.toContain('Romans 4:15');
 
     // Did not pre-select rangeStart values.
     expect(env.component.selection.book).toBeUndefined();
@@ -372,12 +374,12 @@ describe('ScriptureChooserDialog', () => {
 
     expect(env.dialogText).toContain(env.closeIconName);
     expect(env.dialogText).toContain('book');
-    expect(env.dialogText).toContain('ROM');
-    expect(env.dialogText).toContain('EPH');
+    expect(env.dialogText).toContain('Romans');
+    expect(env.dialogText).toContain('Ephesians');
 
     // Should not contain a Scripture reference
-    expect(env.dialogText).not.toContain('Ephesians');
-    expect(env.dialogText).not.toContain('Romans');
+    expect(env.dialogText).not.toContain('Ephesians 3:17');
+    expect(env.dialogText).not.toContain('Romans 3:99');
 
     // Did not pre-select rangeStart values.
     expect(env.component.selection.book).toBeUndefined();
@@ -491,11 +493,11 @@ describe('ScriptureChooserDialog', () => {
     }
 
     get bookEphesians(): DebugElement | undefined {
-      return this.buttonWithText('EPH');
+      return this.buttonWithText('EPHESIANS');
     }
 
     get bookRomans(): DebugElement | undefined {
-      return this.buttonWithText('ROM');
+      return this.buttonWithText('ROMANS');
     }
 
     get chapter3(): DebugElement | undefined {

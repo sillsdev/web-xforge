@@ -12,6 +12,7 @@ import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-proj
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
@@ -123,6 +124,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly dialog: MdcDialog,
     private readonly noticeService: NoticeService,
     private readonly questionDialogService: QuestionDialogService,
+    private readonly i18n: I18nService,
     public media: MediaObserver
   ) {
     super();
@@ -375,7 +377,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return '';
     }
     const verseRef = verse instanceof VerseRef ? verse : toVerseRef(verse);
-    return `(${verseRef.toString()})`;
+    return `(${this.i18n.translateReference(verseRef)})`;
   }
 
   showAnswerForm() {

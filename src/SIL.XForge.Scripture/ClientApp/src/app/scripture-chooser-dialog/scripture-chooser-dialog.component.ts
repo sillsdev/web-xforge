@@ -3,6 +3,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { I18nService } from 'xforge-common/i18n.service';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 
 export interface ScriptureChooserDialogData {
@@ -44,6 +45,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
 
   constructor(
     public dialogRef: MdcDialogRef<ScriptureChooserDialogComponent>,
+    readonly i18n: I18nService,
     @Inject(MDC_DIALOG_DATA) public data: ScriptureChooserDialogData
   ) {}
 
@@ -84,13 +86,13 @@ export class ScriptureChooserDialogComponent implements OnInit {
     }, 1);
   }
 
-  onClickBook(event: Event) {
-    this.selection.book = (event.target as HTMLElement).innerText;
+  onClickBook(book: string) {
+    this.selection.book = book;
     this.showChapterSelection();
   }
 
-  onClickChapter(event: Event) {
-    this.selection.chapter = (event.target as HTMLElement).innerText;
+  onClickChapter(chapter: number) {
+    this.selection.chapter = chapter.toString();
     if (this.data.includeVerseSelection === false) {
       this.dialogRef.close(new VerseRef(this.selection.book, this.selection.chapter, 0));
     } else {
@@ -98,8 +100,8 @@ export class ScriptureChooserDialogComponent implements OnInit {
     }
   }
 
-  onClickVerse(event: Event) {
-    this.selection.verse = (event.target as HTMLElement).innerText;
+  onClickVerse(verse: number) {
+    this.selection.verse = verse.toString();
     this.dialogRef.close(new VerseRef(this.selection.book, this.selection.chapter, this.selection.verse));
   }
 
@@ -167,6 +169,6 @@ export class ScriptureChooserDialogComponent implements OnInit {
   }
 
   getBookName(text: TextInfo): string {
-    return Canon.bookNumberToEnglishName(text.bookNum);
+    return this.i18n.translateBook(text.bookNum);
   }
 }

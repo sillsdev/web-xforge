@@ -10,6 +10,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { Subscription, timer } from 'rxjs';
 import { delayWhen, filter, map, repeat, retryWhen, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -62,7 +63,8 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     private readonly activatedRoute: ActivatedRoute,
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly i18n: I18nService
   ) {
     super(noticeService);
     this.engineQualityStars = [];
@@ -137,7 +139,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   }
 
   getBookName(text: TextInfo): string {
-    return Canon.bookNumberToEnglishName(text.bookNum);
+    return this.i18n.translateBook(text.bookNum);
   }
 
   getBookId(text: TextInfo): string {
