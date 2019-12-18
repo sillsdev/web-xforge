@@ -210,6 +210,12 @@ namespace SIL.XForge.Scripture.Services
                 new JProperty("refresh_token", userSecret.ParatextTokens.RefreshToken));
             request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
             HttpResponseMessage response = await _registryClient.SendAsync(request);
+            if ((int)response.StatusCode >= 400)
+            {
+                Console.WriteLine($"ParatextService.RefreshAccessTokenAsync got HTTP response {response.StatusCode}");
+                Console.WriteLine("Response content:");
+                Console.WriteLine(await response.Content.ReadAsStringAsync());
+            }
             response.EnsureSuccessStatusCode();
 
             string responseJson = await response.Content.ReadAsStringAsync();
