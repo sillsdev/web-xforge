@@ -5,6 +5,10 @@
     "synchronize": "Synchronize",
     "users": "Users"
   },
+  "chapter_nav": {
+    "previous_chapter": "Previous chapter",
+    "next_chapter": "Next chapter"
+  },
   "checking": {
     "add_question": "Add question"
   },
@@ -24,6 +28,15 @@
     "republish": "Republish",
     "time_archived_stamp": "Archived {{ timeMessage }} ago"
   },
+  "editor": {
+    "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
+    "completed_successfully": "Completed successfully",
+    "configure_translation_suggestions": "Configure translation suggestions",
+    "swap_source_and_target": "Swap source and target",
+    "training": "Training",
+    "training_completed_successfully": "Training completed successfully",
+    "verse_too_long_for_suggestions": "This verse is too long to generate suggestions."
+  },
   "question_answered_dialog": {
     "cancel": "Cancel",
     "consider_creating_new_question": "Consider creating a new question instead of editing this question.",
@@ -42,5 +55,24 @@
     "recording_stopped": "The recording for your question was automatically stopped.",
     "required_with_asterisk": "*Required",
     "save": "Save"
+  },
+  "suggestions_settings_dialog": {
+    "better": "Better",
+    "close": "Close",
+    "more": "More",
+    "number_of_suggestions": "Number of suggestions",
+    "suggestion_confidence": "Suggestion confidence",
+    "translation_suggestions": "Translation suggestions",
+    "translation_suggestions_settings": "Translation suggestions settings"
+  },
+  "translate_overview": {
+    "progress": "Progress",
+    "quality": "Quality",
+    "retrain": "Retrain",
+    "suggestion_engine": "Suggestion Engine",
+    "trained_segments": "trained segments",
+    "training": "Training...",
+    "translate_overview": "Translate Overview",
+    "translated_segments": "{{ translatedSegments }} of {{ total }} segments"
   }
 }
