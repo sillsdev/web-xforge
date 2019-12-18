@@ -6,6 +6,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
+import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -38,7 +39,8 @@ describe('TranslateOverviewComponent', () => {
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: CookieService, useMock: mock(CookieService) }
     ]
   }));
 

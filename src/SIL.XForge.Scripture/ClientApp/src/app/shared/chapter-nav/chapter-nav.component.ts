@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { I18nService } from 'xforge-common/i18n.service';
 
 @Component({
   selector: 'app-chapter-nav',
@@ -13,26 +13,7 @@ export class ChapterNavComponent {
 
   @Output() chapterChange = new EventEmitter<number>();
 
-  get bookName(): string {
-    return this.bookNum == null ? '' : Canon.bookNumberToEnglishName(this.bookNum);
-  }
-
-  get chapterString(): string {
-    return this.chapter == null ? '' : `${this.bookName} ${this.chapter.toString()}`;
-  }
-
-  set chapterString(value: string) {
-    const numString = value.substring(this.bookName.length + 1);
-    const chapter = parseInt(numString, 10);
-    if (this.chapter !== chapter) {
-      this.chapter = chapter;
-      this.chapterChange.emit(this.chapter);
-    }
-  }
-
-  get chapterStrings(): string[] {
-    return this.chapters.map(c => `${this.bookName} ${c.toString()}`);
-  }
+  constructor(readonly i18n: I18nService) {}
 
   prevChapter(): void {
     const index = this.chapters.findIndex(c => c === this.chapter);

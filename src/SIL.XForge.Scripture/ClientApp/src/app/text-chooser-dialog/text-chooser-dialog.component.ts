@@ -1,9 +1,9 @@
 import { MDC_DIALOG_DATA, MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, ElementRef, Inject, OnDestroy, Optional, ViewChild } from '@angular/core';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { DOCUMENT } from 'xforge-common/browser-globals';
+import { I18nService } from 'xforge-common/i18n.service';
 import { TextDocId } from '../core/models/text-doc';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import {
@@ -52,6 +52,7 @@ export class TextChooserDialogComponent implements OnDestroy {
   constructor(
     private readonly dialogRef: MdcDialogRef<TextChooserDialogComponent>,
     readonly dialog: MdcDialog,
+    private readonly i18n: I18nService,
     @Inject(DOCUMENT) private readonly document: Document,
     @Optional() @Inject(MDC_DIALOG_DATA) private readonly data: TextChooserDialogData
   ) {
@@ -70,7 +71,7 @@ export class TextChooserDialogComponent implements OnDestroy {
   }
 
   get bookName(): string {
-    return Canon.bookNumberToEnglishName(this.bookNum);
+    return this.i18n.translateBook(this.bookNum);
   }
 
   updateSelection() {
@@ -125,7 +126,7 @@ export class TextChooserDialogComponent implements OnDestroy {
   }
 
   get referenceForDisplay() {
-    return this.selectedVerses ? `(${toVerseRef(this.selectedVerses)})` : '';
+    return this.selectedVerses ? `(${this.i18n.translateReference(toVerseRef(this.selectedVerses))})` : '';
   }
 
   submit() {
