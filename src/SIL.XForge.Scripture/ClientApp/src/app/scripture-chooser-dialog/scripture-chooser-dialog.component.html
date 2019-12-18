@@ -19,18 +19,18 @@
               *ngFor="let book of otBooks"
               mdc-button
               [primary]="data.input?.book === book"
-              (click)="onClickBook($event)"
+              (click)="onClickBook(book)"
             >
-              {{ book }}
+              {{ i18n.translateBook(book) }}
             </button>
           </div>
           <button
             *ngFor="let book of ntBooks"
             mdc-button
             [primary]="data.input?.book === book"
-            (click)="onClickBook($event)"
+            (click)="onClickBook(book)"
           >
-            {{ book }}
+            {{ i18n.translateBook(book) }}
           </button>
         </mdc-dialog-content>
       </mdc-dialog-surface>
@@ -48,7 +48,7 @@
             *ngFor="let chapter of chaptersOf(selection?.book)"
             mdc-button
             [primary]="data.input?.book === selection?.book && +data.input?.chapterNum === +chapter"
-            (click)="onClickChapter($event)"
+            (click)="onClickChapter(chapter)"
           >
             {{ chapter }}
           </button>
@@ -74,7 +74,7 @@
               data.input?.chapter === selection?.chapter &&
               +data.input?.verseNum === +verse
             "
-            (click)="onClickVerse($event)"
+            (click)="onClickVerse(verse)"
           >
             {{ verse }}
           </button>
@@ -105,7 +105,7 @@
               data.input?.chapter === data.rangeStart?.chapter &&
               +data.input?.verseNum === +verse
             "
-            (click)="onClickVerse($event)"
+            (click)="onClickVerse(verse)"
           >
             {{ verse }}
           </button>
