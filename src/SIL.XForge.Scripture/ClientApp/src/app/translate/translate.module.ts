@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { TranslocoModule } from '@ngneat/transloco';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SharedModule } from '../shared/shared.module';
 import { EditorComponent } from './editor/editor.component';
@@ -10,7 +11,7 @@ import { TranslateRoutingModule } from './translate-routing.module';
 
 @NgModule({
   declarations: [EditorComponent, SuggestionsComponent, TranslateOverviewComponent, SuggestionsSettingsDialogComponent],
-  imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule],
+  imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, TranslocoModule],
   entryComponents: [SuggestionsSettingsDialogComponent]
 })
 export class TranslateModule {}

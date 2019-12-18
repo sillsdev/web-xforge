@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { ANY_INDEX, obj } from 'realtime-server/lib/common/utils/obj-path';

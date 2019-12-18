@@ -2,6 +2,7 @@ import { MdcDialog } from '@angular-mdc/web/dialog';
 import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import {
   InteractiveTranslationSession,
   LatinWordTokenizer,
@@ -61,9 +62,9 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
   showTrainingProgress: boolean = false;
   textHeight: string = '';
 
-  @ViewChild('targetContainer', { static: true }) targetContainer!: ElementRef;
-  @ViewChild('source', { static: true }) source!: TextComponent;
-  @ViewChild('target', { static: true }) target!: TextComponent;
+  @ViewChild('targetContainer', { static: false }) targetContainer!: ElementRef;
+  @ViewChild('source', { static: false }) source!: TextComponent;
+  @ViewChild('target', { static: false }) target!: TextComponent;
 
   private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;
@@ -501,10 +502,10 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
           async () => {
             // training completed successfully
             if (this.trainingProgressClosed) {
-              this.noticeService.show('Training completed successfully');
+              this.noticeService.show(translate('editor.training_completed_successfully'));
               this.trainingProgressClosed = false;
             } else {
-              this.trainingMessage = 'Completed successfully';
+              this.trainingMessage = translate('editor.completed_successfully');
               this.trainingCompletedTimeout = setTimeout(() => {
                 this.showTrainingProgress = false;
                 this.trainingCompletedTimeout = undefined;
@@ -537,6 +538,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
           this.trainingCompletedTimeout = undefined;
         }
         this.trainingPercentage = Math.round(progress.percentCompleted * 100);
+        // ToDo: internationalize message
         this.trainingMessage = progress.message;
       });
   }
@@ -618,7 +620,7 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       return;
     } else if (words.length > MAX_SEGMENT_LENGTH) {
       this.translationSession = undefined;
-      this.noticeService.show('This verse is too long to generate suggestions.');
+      this.noticeService.show(translate('editor.verse_too_long_for_suggestions'));
       return;
     }
 

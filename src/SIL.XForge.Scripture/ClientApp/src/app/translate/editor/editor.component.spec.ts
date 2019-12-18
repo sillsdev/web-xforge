@@ -29,7 +29,7 @@ import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 't
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -61,7 +61,7 @@ class MockConsole {
 describe('EditorComponent', () => {
   configureTestingModule(() => ({
     declarations: [EditorComponent, SuggestionsComponent],
-    imports: [NoopAnimationsModule, RouterTestingModule, SharedModule, UICommonModule],
+    imports: [NoopAnimationsModule, RouterTestingModule, SharedModule, UICommonModule, TestTranslocoModule],
     providers: [
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
