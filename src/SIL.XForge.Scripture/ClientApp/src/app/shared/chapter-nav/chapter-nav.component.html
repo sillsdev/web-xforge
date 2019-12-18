@@ -1,34 +1,36 @@
-<mdc-select
-  #chapterSelect
-  class="chapter-select"
-  [(ngModel)]="chapterString"
-  (selectionChange)="chapterSelect._selectedText.nativeElement.blur()"
->
-  <mdc-menu>
-    <mdc-list>
-      <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
-        ><span class="chapter-label">{{ cs }}</span></mdc-list-item
-      >
-    </mdc-list>
-  </mdc-menu>
-</mdc-select>
-<button
-  mdc-icon-button
-  appBlurOnClick
-  icon="keyboard_arrow_left"
-  type="button"
-  (click)="prevChapter()"
-  [disabled]="isPrevChapterDisabled()"
-  title="Previous chapter"
-  fxHide.xs
-></button>
-<button
-  mdc-icon-button
-  appBlurOnClick
-  icon="keyboard_arrow_right"
-  type="button"
-  (click)="nextChapter()"
-  [disabled]="isNextChapterDisabled()"
-  title="Next chapter"
-  fxHide.xs
-></button>
+<ng-container *transloco="let t; read: 'chapter_nav'">
+  <mdc-select
+    #chapterSelect
+    class="chapter-select"
+    [(ngModel)]="chapterString"
+    (selectionChange)="chapterSelect._selectedText.nativeElement.blur()"
+  >
+    <mdc-menu>
+      <mdc-list>
+        <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
+          ><span class="chapter-label">{{ cs }}</span></mdc-list-item
+        >
+      </mdc-list>
+    </mdc-menu>
+  </mdc-select>
+  <button
+    mdc-icon-button
+    appBlurOnClick
+    icon="keyboard_arrow_left"
+    type="button"
+    (click)="prevChapter()"
+    [disabled]="isPrevChapterDisabled()"
+    title="{{ t('previous_chapter') }}"
+    fxHide.xs
+  ></button>
+  <button
+    mdc-icon-button
+    appBlurOnClick
+    icon="keyboard_arrow_right"
+    type="button"
+    (click)="nextChapter()"
+    [disabled]="isNextChapterDisabled()"
+    title="{{ t('next_chapter') }}"
+    fxHide.xs
+  ></button>
+</ng-container>

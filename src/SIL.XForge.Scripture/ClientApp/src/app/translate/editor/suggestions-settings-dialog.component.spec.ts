@@ -11,7 +11,7 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
@@ -88,7 +88,7 @@ class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [CommonModule, UICommonModule],
+  imports: [CommonModule, UICommonModule, TestTranslocoModule],
   declarations: [ViewContainerDirective, ChildViewContainerComponent, SuggestionsSettingsDialogComponent],
   exports: [ViewContainerDirective, ChildViewContainerComponent, SuggestionsSettingsDialogComponent],
   entryComponents: [ChildViewContainerComponent, SuggestionsSettingsDialogComponent]

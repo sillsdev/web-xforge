@@ -1,91 +1,93 @@
-<div class="content" mdcMenuSurfaceAnchor #trainingProgressAnchor fxLayout="column">
-  <div class="toolbar" fxLayout="row wrap" fxLayoutAlign="start center">
-    <app-chapter-nav [bookNum]="bookNum" [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
-    <ng-container *ngIf="hasSource">
-      <div class="toolbar-separator">&nbsp;</div>
-      <button
-        mdc-icon-button
-        appBlurOnClick
-        icon="swap_horiz"
-        type="button"
-        (click)="isTargetTextRight = !isTargetTextRight"
-        title="Swap source and target"
-        fxHide.xs
-      ></button>
-      <button
-        mdc-icon-button
-        appBlurOnClick
-        icon="settings"
-        type="button"
-        (click)="openSuggestionsSettings()"
-        title="Configure translation suggestions"
-      ></button>
-    </ng-container>
+<ng-container *transloco="let t; read: 'editor'">
+  <div class="content" mdcMenuSurfaceAnchor #trainingProgressAnchor fxLayout="column">
+    <div class="toolbar" fxLayout="row wrap" fxLayoutAlign="start center">
+      <app-chapter-nav [bookNum]="bookNum" [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
+      <ng-container *ngIf="hasSource">
+        <div class="toolbar-separator">&nbsp;</div>
+        <button
+          mdc-icon-button
+          appBlurOnClick
+          icon="swap_horiz"
+          type="button"
+          (click)="isTargetTextRight = !isTargetTextRight"
+          title="{{ t('swap_source_and_target') }}"
+          fxHide.xs
+        ></button>
+        <button
+          mdc-icon-button
+          appBlurOnClick
+          icon="settings"
+          type="button"
+          (click)="openSuggestionsSettings()"
+          title="{{ t('configure_translation_suggestions') }}"
+        ></button>
+      </ng-container>
+    </div>
+    <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" fxLayoutGap="5px">
+      <div id="source-text-area" [fxShow.gt-xs]="hasSource" fxHide.xs class="text-area">
+        <div class="language-label" mdcSubtitle1>{{ sourceLabel }}</div>
+        <div #sourceContainer class="text-container" [style.height]="textHeight">
+          <app-text
+            #source
+            [isReadOnly]="true"
+            [highlightSegment]="target.hasFocus"
+            (loaded)="onTextLoaded('source')"
+            (updated)="onSourceUpdated($event.delta != null)"
+          ></app-text>
+        </div>
+      </div>
+      <div class="text-area" [ngClass.gt-xs]="{ 'text-area-full-width': !hasSource }" ngClass.xs="text-area-full-width">
+        <div class="language-label" [fxShow.gt-xs]="hasSource" fxHide.xs mdcSubtitle1>{{ targetLabel }}</div>
+        <div *ngIf="!isValid && hasEditRight" class="invalid-warning">
+          {{ t("cannot_edit_chapter_formatting_invalid") }}
+        </div>
+        <div #targetContainer class="text-container" [style.height]="textHeight">
+          <app-text
+            #target
+            [isReadOnly]="!canEdit"
+            (updated)="onTargetUpdated($event.segment, $event.delta, $event.prevSegment)"
+            (loaded)="onTextLoaded('target')"
+            [highlightSegment]="target.hasFocus"
+            [markInvalid]="true"
+          ></app-text>
+          <app-suggestions
+            [mdcElevation]="2"
+            [show]="showSuggestions && translationSuggestionsEnabled"
+            [suggestions]="suggestions"
+            [text]="target"
+            (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
+            (showChange)="showSuggestions = $event"
+          ></app-suggestions>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="showTrainingProgress" class="training-progress" mdcElevation="2">
+      <div class="training-title" fxLayout="row" fxLayoutAlign="space-between center">
+        <div mdcSubtitle1>{{ t("training") }}</div>
+        <button
+          id="training-close-button"
+          mdc-icon-button
+          icon="close"
+          type="button"
+          (click)="closeTrainingProgress()"
+        ></button>
+      </div>
+      <mdc-list-divider></mdc-list-divider>
+      <div class="training-content" fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="5px">
+        <div class="text-ellipsis" mdcBody2>{{ trainingMessage }}</div>
+        <div>
+          <app-donut-chart
+            id="training-progress-spinner"
+            *ngIf="trainingPercentage < 100"
+            [colors]="['#b8d332', 'transparent']"
+            [data]="[trainingPercentage, 100 - trainingPercentage]"
+            backgroundColor="#ececec"
+            innerThicknessDelta="0"
+            thickness="22"
+          ></app-donut-chart>
+          <mdc-icon id="training-complete-icon" *ngIf="trainingPercentage === 100">check_circle_outline</mdc-icon>
+        </div>
+      </div>
+    </div>
   </div>
-  <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" fxLayoutGap="5px">
-    <div id="source-text-area" [fxShow.gt-xs]="hasSource" fxHide.xs class="text-area">
-      <div class="language-label" mdcSubtitle1>{{ sourceLabel }}</div>
-      <div #sourceContainer class="text-container" [style.height]="textHeight">
-        <app-text
-          #source
-          [isReadOnly]="true"
-          [highlightSegment]="target.hasFocus"
-          (loaded)="onTextLoaded('source')"
-          (updated)="onSourceUpdated($event.delta != null)"
-        ></app-text>
-      </div>
-    </div>
-    <div class="text-area" [ngClass.gt-xs]="{ 'text-area-full-width': !hasSource }" ngClass.xs="text-area-full-width">
-      <div class="language-label" [fxShow.gt-xs]="hasSource" fxHide.xs mdcSubtitle1>{{ targetLabel }}</div>
-      <div *ngIf="!isValid && hasEditRight" class="invalid-warning">
-        This chapter cannot be edited, because the formatting is invalid. Please fix the formatting in Paratext.
-      </div>
-      <div #targetContainer class="text-container" [style.height]="textHeight">
-        <app-text
-          #target
-          [isReadOnly]="!canEdit"
-          (updated)="onTargetUpdated($event.segment, $event.delta, $event.prevSegment)"
-          (loaded)="onTextLoaded('target')"
-          [highlightSegment]="target.hasFocus"
-          [markInvalid]="true"
-        ></app-text>
-        <app-suggestions
-          [mdcElevation]="2"
-          [show]="showSuggestions && translationSuggestionsEnabled"
-          [suggestions]="suggestions"
-          [text]="target"
-          (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
-          (showChange)="showSuggestions = $event"
-        ></app-suggestions>
-      </div>
-    </div>
-  </div>
-  <div *ngIf="showTrainingProgress" class="training-progress" mdcElevation="2">
-    <div class="training-title" fxLayout="row" fxLayoutAlign="space-between center">
-      <div mdcSubtitle1>Training</div>
-      <button
-        id="training-close-button"
-        mdc-icon-button
-        icon="close"
-        type="button"
-        (click)="closeTrainingProgress()"
-      ></button>
-    </div>
-    <mdc-list-divider></mdc-list-divider>
-    <div class="training-content" fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="5px">
-      <div class="text-ellipsis" mdcBody2>{{ trainingMessage }}</div>
-      <div>
-        <app-donut-chart
-          id="training-progress-spinner"
-          *ngIf="trainingPercentage < 100"
-          [colors]="['#b8d332', 'transparent']"
-          [data]="[trainingPercentage, 100 - trainingPercentage]"
-          backgroundColor="#ececec"
-          innerThicknessDelta="0"
-          thickness="22"
-        ></app-donut-chart>
-        <mdc-icon id="training-complete-icon" *ngIf="trainingPercentage === 100">check_circle_outline</mdc-icon>
-      </div>
-    </div>
-  </div>
-</div>
+</ng-container>
