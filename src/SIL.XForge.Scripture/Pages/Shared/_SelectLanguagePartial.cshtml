@@ -1,15 +1,24 @@
 @using Microsoft.AspNetCore.Builder
+@using Microsoft.AspNetCore.Hosting;
 @using Microsoft.AspNetCore.Localization
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Microsoft.Extensions.Options
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer;
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 @inject IOptions<RequestLocalizationOptions> LocOptions
+@inject IHostingEnvironment env
 
 @{
     var requestCulture = Context.Features.Get<IRequestCultureFeature>();
     var cultureItems = LocOptions.Value.SupportedUICultures
-        .Select(c => new SelectListItem { Value = c.Name, Text = SharedResource.Cultures[c.IetfLanguageTag] })
+        .Where(c => SharedResource.Cultures[c.IetfLanguageTag].Production || !env.IsStaging() && !env.IsProduction())
+        .Select(c => new SelectListItem
+            {
+                Value = c.Name,
+                Text = SharedResource.Cultures[c.IetfLanguageTag].LocalName +
+                    (SharedResource.Cultures[c.IetfLanguageTag].Production ? "" : " *")
+            }
+        )
         .ToList();
 }
 

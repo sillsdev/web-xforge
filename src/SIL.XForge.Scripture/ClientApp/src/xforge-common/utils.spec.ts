@@ -9,10 +9,10 @@ describe('Utils', () => {
     expect(language).toEqual('cd');
 
     language = getAspCultureCookieLanguage('c=ab|uic=cd');
-    expect(language).toEqual('ab');
+    expect(language).toEqual('cd');
 
     language = getAspCultureCookieLanguage('uic=cd|c=ab');
-    expect(language).toEqual('ab');
+    expect(language).toEqual('cd');
 
     language = getAspCultureCookieLanguage('');
     expect(language).toEqual('en');

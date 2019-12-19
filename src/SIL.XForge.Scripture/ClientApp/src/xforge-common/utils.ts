@@ -123,5 +123,5 @@ export function getAspCultureCookieLanguage(cookie: string): string {
       uic = value.slice('uic='.length);
     }
   });
-  return c! || uic! || 'en';
+  return uic! || c! || 'en';
 }
