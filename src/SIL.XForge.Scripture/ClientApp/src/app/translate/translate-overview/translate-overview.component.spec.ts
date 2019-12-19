@@ -15,7 +15,7 @@ import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -33,7 +33,7 @@ const mockedUserService = mock(UserService);
 describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
     declarations: [TranslateOverviewComponent],
-    imports: [RouterTestingModule, UICommonModule],
+    imports: [RouterTestingModule, UICommonModule, TestTranslocoModule],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: SFProjectService, useMock: mockedSFProjectService },
