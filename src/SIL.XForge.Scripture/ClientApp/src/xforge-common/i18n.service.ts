@@ -144,7 +144,9 @@ export class I18nService {
     if (locale != null) {
       this.currentLocale = locale;
       this.transloco.setActiveLang(locale.canonicalTag);
-      this.cookieService.set(ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue(locale.canonicalTag));
+      const date = new Date();
+      date.setFullYear(date.getFullYear() + 1);
+      this.cookieService.set(ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue(locale.canonicalTag), date, '/');
       // TODO save to Auth0
     } else {
       console.warn(`Failed attempt to set locale to unsupported locale ${tag}`);
