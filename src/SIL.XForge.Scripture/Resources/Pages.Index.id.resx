@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string"/>
+              <xsd:attribute name="type" type="xsd:string"/>
+              <xsd:attribute name="mimetype" type="xsd:string"/>
+              <xsd:attribute ref="xml:space"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string"/>
+              <xsd:attribute name="name" type="xsd:string"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
+              <xsd:attribute ref="xml:space"/>
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required"/>
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="ContactEmail" xml:space="preserve">
+    <value>Di mana kami dapat mengirimkan email kepada Anda?</value>
+  </data>
+  <data name="ContactHeader" xml:space="preserve">
+    <value>Ingin mengetahui lebih banyak?</value>
+  </data>
+  <data name="ContactName" xml:space="preserve">
+    <value>Apa nama depan dan belakang Anda?</value>
+  </data>
+  <data name="ContactPrivacy" xml:space="preserve">
+    <value>Kebijakan privasi</value>
+  </data>
+  <data name="ContactPurpose" xml:space="preserve">
+    <value>Mengapa Anda ingin menggunakan Scripture Forge?</value>
+  </data>
+  <data name="ContactRegister" xml:space="preserve">
+    <value>Kirimkan informasi Anda dan kami akan menghubungi Anda bagaimana bergabung program Beta.</value>
+  </data>
+  <data name="ContactRegisterButton" xml:space="preserve">
+    <value>Terdaftar</value>
+  </data>
+  <data name="ContactRegisterHeader" xml:space="preserve">
+    <value>Kapan saya dapat mulai menggunakan Scripture Forge?</value>
+  </data>
+  <data name="ContactRoleLabel" xml:space="preserve">
+    <value>Apa peran Anda di proyek kebahasaan?</value>
+  </data>
+  <data name="ContactRoleLTConsultant" xml:space="preserve">
+    <value>Konsultan Teknologi Bahasa</value>
+  </data>
+  <data name="ContactRoleManager" xml:space="preserve">
+    <value>Manajer Program Bahasa</value>
+  </data>
+  <data name="ContactRoleOther" xml:space="preserve">
+    <value>Lainnya</value>
+  </data>
+  <data name="ContactRolePTConsultant" xml:space="preserve">
+    <value>Konsultan Paratext</value>
+  </data>
+  <data name="ContactRoleTranslator" xml:space="preserve">
+    <value>Penerjemah</value>
+  </data>
+  <data name="ContactTitle" xml:space="preserve">
+    <value>Hubungi Kami</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Seperangkat alat gratis untuk berbuat lebih banyak dengan proyek Paratext Anda, di mana pun Anda berada. </value>
+  </data>
+  <data name="EngageChecking" xml:space="preserve">
+    <value>Pemeriksaan Komunitas</value>
+  </data>
+  <data name="EngageCollaborate" xml:space="preserve">
+    <value>Kolaborasi di Alkitab</value>
+  </data>
+  <data name="EngageSuggestions" xml:space="preserve">
+    <value>Dapatkan saran saat Anda mengetik</value>
+  </data>
+  <data name="EngageTitle" xml:space="preserve">
+    <value>Terlibat dengan komunitas bahasa. Berkolaborasi dengan rekan-rekan Anda.</value>
+  </data>
+  <data name="RegisterInterest" xml:space="preserve">
+    <value>Daftarkan Minat Anda</value>
+  </data>
+</root>

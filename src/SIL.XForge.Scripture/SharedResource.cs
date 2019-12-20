@@ -64,6 +64,15 @@ namespace SIL.XForge.Scripture
                     Production = false
                 }
             },
+            { "id", new InterfaceLanguage
+                {
+                    LocalName = "Bahasa Indonesia",
+                    EnglishName = "Indonesian",
+                    CanonicalTag = "id",
+                    Tags = new string[]{ "id", "id-ID" },
+                    Production = false
+                }
+            },
             { "az", new InterfaceLanguage
                 {
                     LocalName = "Azərbaycanca",
