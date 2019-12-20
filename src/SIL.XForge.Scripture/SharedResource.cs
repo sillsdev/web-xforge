@@ -55,6 +55,15 @@ namespace SIL.XForge.Scripture
                     Production = true
                 }
             },
+            { "es", new InterfaceLanguage
+                {
+                    LocalName = "Español",
+                    EnglishName = "Spanish",
+                    CanonicalTag = "es",
+                    Tags = new string[]{ "es", "es-ES" },
+                    Production = false
+                }
+            },
             { "az", new InterfaceLanguage
                 {
                     LocalName = "Azərbaycanca",

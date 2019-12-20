@@ -69,6 +69,13 @@ export class I18nService {
       production: false
     },
     {
+      localName: 'Español',
+      englishName: 'Spanish',
+      direction: 'ltr',
+      tags: ['es', 'es-ES'],
+      production: false
+    },
+    {
       localName: 'Azərbaycanca',
       englishName: 'Azerbaijani',
       direction: 'ltr',
