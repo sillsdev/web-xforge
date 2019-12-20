@@ -64,6 +64,15 @@ namespace SIL.XForge.Scripture
                     Production = false
                 }
             },
+            { "zh-CN", new InterfaceLanguage
+                {
+                    LocalName = "简体中文",
+                    EnglishName = "Chinese (Simplified)",
+                    Direction = "ltr",
+                    Tags = new string[]{ "zh-CN", "zh" },
+                    Production = false
+                }
+            },
             { "az", new InterfaceLanguage
                 {
                     LocalName = "Azərbaycanca",
