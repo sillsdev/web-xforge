@@ -15,6 +15,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { merge, Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -104,7 +105,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly dialog: MdcDialog,
     noticeService: NoticeService,
     private readonly router: Router,
-    private readonly questionDialogService: QuestionDialogService
+    private readonly questionDialogService: QuestionDialogService,
+    private readonly i18n: I18nService
   ) {
     super(noticeService);
   }
@@ -142,7 +144,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get bookName(): string {
-    return this.text != null ? Canon.bookNumberToEnglishName(this.text.bookNum) : '';
+    return this.text == null ? '' : this.i18n.translateBook(this.text.bookNum);
   }
 
   get chapter(): number | undefined {

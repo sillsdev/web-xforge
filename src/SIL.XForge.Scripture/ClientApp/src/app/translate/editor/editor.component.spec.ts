@@ -15,6 +15,7 @@ import {
   WordAlignmentMatrix
 } from '@sillsdev/machine';
 import cloneDeep from 'lodash/cloneDeep';
+import { CookieService } from 'ngx-cookie-service';
 import Quill from 'quill';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
@@ -23,6 +24,7 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
@@ -45,6 +47,7 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedCookieService = mock(CookieService);
 
 class MockConsole {
   log(val: any) {
@@ -67,7 +70,8 @@ describe('EditorComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
-      { provide: CONSOLE, useValue: new MockConsole() }
+      { provide: CONSOLE, useValue: new MockConsole() },
+      { provide: CookieService, useMock: mockedCookieService }
     ]
   }));
 
@@ -76,7 +80,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      expect(env.component.bookName).toEqual('Matthew');
+      expect(env.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
@@ -91,7 +95,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 2, selectedSegment: 'verse_2_1' });
       env.wait();
-      expect(env.component.bookName).toEqual('Matthew');
+      expect(env.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(2);
       expect(env.component.target.segmentRef).toEqual('verse_2_1');
       verify(mockedSFProjectService.trainSelectedSegment(anything())).never();
@@ -387,13 +391,13 @@ describe('EditorComponent', () => {
 
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
-      expect(env.component.bookName).toEqual('Mark');
+      expect(env.bookName).toEqual('Mark');
       expect(env.component.target.segmentRef).toEqual('verse_1_5');
       expect(env.lastApprovedPrefix).toEqual([]);
 
       env.updateParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
-      expect(env.component.bookName).toEqual('Matthew');
+      expect(env.bookName).toEqual('Matthew');
       expect(env.component.target.segmentRef).toEqual('verse_1_5');
       const range = env.component.target.getSegmentRange('verse_1_1');
       env.targetEditor.setSelection(range!.index, 0, 'user');
@@ -454,21 +458,21 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
-      expect(env.component.bookName).toEqual('Matthew');
+      expect(env.bookName).toEqual('Matthew');
       expect(env.component.target.segmentRef).toEqual('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
-      expect(env.component.bookName).toEqual('Mark');
+      expect(env.bookName).toEqual('Mark');
       expect(env.component.target.segmentRef).toEqual('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).never();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
-      expect(env.component.bookName).toEqual('Matthew');
+      expect(env.bookName).toEqual('Matthew');
       expect(env.component.target.segmentRef).toEqual('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
 
@@ -617,7 +621,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
-      expect(env.component.bookName).toEqual('Luke');
+      expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
@@ -636,7 +640,7 @@ describe('EditorComponent', () => {
       env.setCurrentUser('user02');
       env.setProjectUserConfig();
       env.wait();
-      expect(env.component.bookName).toEqual('Matthew');
+      expect(env.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
@@ -653,7 +657,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'JHN' });
       env.wait();
-      expect(env.component.bookName).toEqual('John');
+      expect(env.bookName).toEqual('John');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
@@ -669,7 +673,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
-      expect(env.component.bookName).toEqual('Mark');
+      expect(env.bookName).toEqual('Mark');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
@@ -690,7 +694,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
-      expect(env.component.bookName).toEqual('Luke');
+      expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
@@ -707,7 +711,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2, selectedSegment: 'verse_2_1' });
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
-      expect(env.component.bookName).toEqual('Luke');
+      expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(2);
       expect(env.component.target.segmentRef).toEqual('verse_2_1');
       const selection = env.targetEditor.getSelection();
@@ -726,7 +730,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
-      expect(env.component.bookName).toEqual('Luke');
+      expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
@@ -744,7 +748,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
-      expect(env.component.bookName).toEqual('Mark');
+      expect(env.bookName).toEqual('Mark');
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
@@ -879,6 +883,10 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(EditorComponent);
     this.component = this.fixture.componentInstance;
+  }
+
+  get bookName(): string {
+    return Canon.bookNumberToEnglishName(this.component.bookNum!);
   }
 
   get suggestions(): DebugElement {

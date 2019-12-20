@@ -3,6 +3,7 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -31,7 +32,8 @@ describe('TextChooserDialogComponent', () => {
     imports: [DialogTestModule],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: DOCUMENT, useMock: mockedDocument }
+      { provide: DOCUMENT, useMock: mockedDocument },
+      { provide: CookieService, useMock: mock(CookieService) }
     ]
   }));
 
@@ -56,7 +58,7 @@ describe('TextChooserDialogComponent', () => {
     const env = new TestEnvironment({ start: 1, end: 10 }, 'verse_1_2/p_1', 'verse_1_3');
     expect(env.selectedText).toEqual('');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('target: chapter… (MAT 1:3)');
+    expect(env.selectedText).toEqual('target: chapter… (Matthew 1:3)');
     env.closeDialog();
   }));
 
@@ -75,7 +77,7 @@ describe('TextChooserDialogComponent', () => {
       }
     });
     env.selection = '';
-    expect(env.selectedText).toEqual('previously selected text (JHN 1:2-3)');
+    expect(env.selectedText).toEqual('previously selected text (John 1:2-3)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual('close');
   }));
@@ -116,14 +118,14 @@ describe('TextChooserDialogComponent', () => {
     );
     env.selection = '\n ';
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('previously selected text (MRK 1:2-3)');
+    expect(env.selectedText).toEqual('previously selected text (Mark 1:2-3)');
     env.closeDialog();
   }));
 
   it('expands the selection to whole words', fakeAsync(async () => {
     const env = new TestEnvironment({ start: 13, end: 1 }, 'verse_1_4', 'verse_1_5');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('…chapter 1, verse 4. rest of verse 4 target… (MAT 1:4-5)');
+    expect(env.selectedText).toEqual('…chapter 1, verse 4. rest of verse 4 target… (Matthew 1:4-5)');
     env.closeDialog();
   }));
 
@@ -131,14 +133,14 @@ describe('TextChooserDialogComponent', () => {
     // 26 Unicode code points, but 38 JavaScript chars
     const env = new TestEnvironment({ start: 2, end: 38 }, 'verse_1_6', 'verse_1_6');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ… (MAT 1:6)');
+    expect(env.selectedText).toEqual('وَقَعَتِ الأحْداثُ التّالِيَةُ فَي أيّامِ… (Matthew 1:6)');
     env.closeDialog();
   }));
 
   it('indicates when not all segments of the end verse were selected', fakeAsync(async () => {
     const env = new TestEnvironment({ start: 3, end: TestEnvironment.segmentLen(4) }, 'verse_1_3', 'verse_1_4');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('target: chapter 1, verse 3. target: chapter 1, verse 4.… (MAT 1:3-4)');
+    expect(env.selectedText).toEqual('target: chapter 1, verse 3. target: chapter 1, verse 4.… (Matthew 1:3-4)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 3, verse: '3-4' },
@@ -151,7 +153,7 @@ describe('TextChooserDialogComponent', () => {
   it('indicates when not all segments of the start verse were selected', fakeAsync(async () => {
     const env = new TestEnvironment({ start: 0, end: TestEnvironment.segmentLen(5) }, 'verse_1_4/p_1', 'verse_1_5');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('…rest of verse 4 target: chapter 1, (MAT 1:4-5)');
+    expect(env.selectedText).toEqual('…rest of verse 4 target: chapter 1, (Matthew 1:4-5)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 4, verse: '4-5' },
@@ -164,7 +166,7 @@ describe('TextChooserDialogComponent', () => {
   it('indicates when the segments were only partially selected', fakeAsync(async () => {
     const env = new TestEnvironment({ start: 6, end: TestEnvironment.segmentLen(5) - 2 }, 'verse_1_4', 'verse_1_5');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('…: chapter 1, verse 4. rest of verse 4 target: chapter 1… (MAT 1:4-5)');
+    expect(env.selectedText).toEqual('…: chapter 1, verse 4. rest of verse 4 target: chapter 1… (Matthew 1:4-5)');
     env.click(env.saveButton);
     expect(await env.resultPromise).toEqual({
       verses: { bookNum: 40, chapterNum: 1, verseNum: 4, verse: '4-5' },
@@ -177,14 +179,14 @@ describe('TextChooserDialogComponent', () => {
   it('shows the correct verse range when first or last segment has only white space selected', fakeAsync(async () => {
     const env = new TestEnvironment({ start: TestEnvironment.segmentLen(7) - 1, end: 1 }, 'verse_1_7', 'verse_1_9');
     env.fireSelectionChange();
-    expect(env.selectedText).toEqual('target: chapter 1, verse 8. (MAT 1:8)');
+    expect(env.selectedText).toEqual('target: chapter 1, verse 8. (Matthew 1:8)');
     env.closeDialog();
   }));
 
   it('it correctly deals with the last selected segment being blank', fakeAsync(async () => {
     const env = new TestEnvironment({ start: 0, end: 2 }, 'verse_1_8', 'verse_1_9');
     expect(() => env.fireSelectionChange()).not.toThrow();
-    expect(env.selectedText).toEqual('target: chapter 1, verse 8. (MAT 1:8)');
+    expect(env.selectedText).toEqual('target: chapter 1, verse 8. (Matthew 1:8)');
     env.closeDialog();
   }));
 

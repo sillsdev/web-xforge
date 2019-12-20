@@ -4,6 +4,8 @@ import { TranslocoConfig, TranslocoService } from '@ngneat/transloco';
 import { Translation, TranslocoLoader } from '@ngneat/transloco';
 import merge from 'lodash/merge';
 import { CookieService } from 'ngx-cookie-service';
+import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { of, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
 import enChecking from '../assets/i18n/checking_en.json';
@@ -151,6 +153,17 @@ export class I18nService {
     } else {
       console.warn(`Failed attempt to set locale to unsupported locale ${tag}`);
     }
+  }
+
+  translateBook(book: number | string) {
+    if (typeof book === 'number') {
+      book = Canon.bookNumberToId(book);
+    }
+    return this.transloco.translate(`canon.book_names.${book}`);
+  }
+
+  translateReference(verse: VerseRef) {
+    return `${this.translateBook(verse.bookNum)} ${verse.chapterNum}:${verse.verse}`;
   }
 
   translateAndInsertTags(key: string, params: object = {}) {

@@ -427,7 +427,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   getBookName(text: TextInfo): string {
-    return Canon.bookNumberToEnglishName(text.bookNum);
+    return this.i18n.translateBook(text.bookNum);
   }
 
   getBookId(text: TextInfo): string {

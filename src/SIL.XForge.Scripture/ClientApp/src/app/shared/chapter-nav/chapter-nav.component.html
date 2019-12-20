@@ -2,13 +2,13 @@
   <mdc-select
     #chapterSelect
     class="chapter-select"
-    [(ngModel)]="chapterString"
+    [(ngModel)]="chapter"
     (selectionChange)="chapterSelect._selectedText.nativeElement.blur()"
   >
     <mdc-menu>
       <mdc-list>
-        <mdc-list-item *ngFor="let cs of chapterStrings" [value]="cs"
-          ><span class="chapter-label">{{ cs }}</span></mdc-list-item
+        <mdc-list-item *ngFor="let chapter of chapters" [value]="chapter"
+          ><span class="chapter-label">{{ i18n.translateBook(bookNum) }} {{ chapter }}</span></mdc-list-item
         >
       </mdc-list>
     </mdc-menu>
