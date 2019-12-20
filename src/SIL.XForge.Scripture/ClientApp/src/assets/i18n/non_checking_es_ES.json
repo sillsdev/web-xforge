@@ -1,0 +1,46 @@
+{
+  "app": {
+    "settings": "Configuración",
+    "system_administration": "Administración del sistema",
+    "synchronize": "Sincronizar",
+    "users": "Usuarios"
+  },
+  "checking": {
+    "add_question": "Agregar pregunta"
+  },
+  "checking_answers": {
+    "archive": "Archivar",
+    "only_community_checkers_can_like": "Sólo a los revisores les pueden gustar las respuestas."
+  },
+  "checking_overview": {
+    "add_question": "Agregar pregunta",
+    "answer_count_label": "{{ count }} respuestas",
+    "archive": "Archivar",
+    "archived_questions": "Preguntas archivadas",
+    "click_add_question": "Haga clic en {{ strongStart }}Añadir pregunta{{ strongEnd }}, arriba.",
+    "no_questions": "No hay preguntas publicadas. ",
+    "no_archived_questions": "No hay preguntas archivadas.",
+    "question_count_label": "{{ count }} preguntas",
+    "republish": "Publicar de nuevo",
+    "time_archived_stamp": "Archivado hace {{ timeMessage }}"
+  },
+  "question_answered_dialog": {
+    "cancel": "Cancelar",
+    "consider_creating_new_question": "Considere la posibilidad de crear una nueva pregunta en lugar de editarla.",
+    "edit_anyway": "Editar de todos modos",
+    "question_has_answer": "La pregunta ya tiene una respuesta"
+  },
+  "question_dialog": {
+    "add_question_denied": "Permiso denegado: sólo el administrador del proyecto puede añadir y editar preguntas.",
+    "cancel": "Cancelar",
+    "edit_question": "Editar pregunta",
+    "example_verse": "p.ej. JHN 3:16",
+    "must_be_after_scripture_reference": "Debe ser después de {{ strongStart }}Referencia bíblica{{ strongEnd }}",
+    "must_be_inside_verse_range": "Debe estar dentro del rango de versículos",
+    "must_be_same_book_and_chapter": "Debe ser el mismo libro y capítulo",
+    "new_question": "Nueva pregunta",
+    "recording_stopped": "La grabación de su pregunta se detuvo automáticamente.",
+    "required_with_asterisk": "*Requerido",
+    "save": "Guardar"
+  }
+}

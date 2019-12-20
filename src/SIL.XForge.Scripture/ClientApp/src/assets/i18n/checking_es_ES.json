@@ -1,0 +1,130 @@
+{
+  "app": {
+    "all_questions": "Todas las preguntas",
+    "cannot_change_password": "No se puede cambiar la contraseña en este momento. Inténtalo de nuevo más tarde o informe de un problema en el menú Ayuda.",
+    "change_password": "Cambiar la contraseña",
+    "community_checking": "Comprobación por la comunidad",
+    "connect_project": "Conectar el proyecto",
+    "help": "Ayuda",
+    "language": "Idioma",
+    "log_out": "Cerrar sesión",
+    "logged_in_as": "Conectado como",
+    "overview": "Panorama general",
+    "password_reset_email_sent": "Acabamos de enviarle un correo electrónico para restablecer su contraseña.",
+    "product_version": "Versión del producto: v{{ version }}",
+    "project_home": "Página de inicio del proyecto",
+    "report_issue_email": "correo electrónico {{ email }}",
+    "report_issue": "Informar de un problema",
+    "scripture_checking_not_available": "La verificación de las Escrituras no está disponible en este proyecto."
+  },
+  "checking": {
+    "me": "Yo",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "questions": "Preguntas ({{ count }})",
+    "view_questions": "Ver preguntas"
+  },
+  "checking_answers": {
+    "add_answer": "Añadir respuesta",
+    "answer_required_before_saving": "Necesita escribir su respuesta o grabarla antes de guardarla",
+    "answer": "Respuesta",
+    "answers": "{{ count }} Respuestas",
+    "cancel": "Cancelar",
+    "cannot_like_own_answer": "No le puede gustar su propia respuesta.",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "no_scripture_selected": "Todavía no se ha seleccionado ninguna escritura.",
+    "record_upload": "Grabar/Cargar",
+    "record": "Grabar",
+    "recording_automatically_stopped": "La grabación de su respuesta se detuvo automáticamente.",
+    "save_answer": "Guardar respuesta",
+    "select_text": "Seleccionar texto",
+    "select_verses": "Seleccionar versículos",
+    "select": "Seleccionar",
+    "show_more_unread": "Mostrar {{ count }} más respuestas no leídas",
+    "your_answer": "Su respuesta"
+  },
+  "checking_audio_combined": {
+    "remove_audio_file": "Quitar archivo de audio",
+    "upload_audio_file": "Cargar archivo de audio",
+    "upload": "Cargar"
+  },
+  "checking_audio_recorder": {
+    "mic_access_denied": "El acceso a su micrófono fue denegado. Por favor, habilite el micrófono desde su navegador.",
+    "record": "Grabar",
+    "stop_recording": "Detener grabación",
+    "try_again": "Inténtelo de nuevo"
+  },
+  "checking_comment_form": {
+    "cancel": "Cancelar",
+    "comment_cannot_be_blank": "Necesita introducir su comentario antes de guardar",
+    "save_comment": "Guardar comentario",
+    "your_comment": "Su comentario"
+  },
+  "checking_comments": {
+    "add_a_comment": "Añadir un comentario",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "show_more_comments_and_unread": "Mostrar {{ count }} más comentarios - {{ unread }} no leído",
+    "show_more_comments": "Mostrar {{ count }} más comentarios"
+  },
+  "checking_overview": {
+    "answers": "Respuestas",
+    "comments": "Comentarios",
+    "likes": "Me gusta",
+    "questions": "Preguntas",
+    "texts_with_questions": "Textos con preguntas"
+  },
+  "edit_name_dialog": {
+    "cancel": "Cancelar",
+    "confirm_name": "Confirme el nombre que otras personas en este proyecto verán cuando usted publique sus respuestas y comentarios",
+    "confirm_your_name": "Confirme su nombre",
+    "confirm": "Confirmar",
+    "enter_name": "Por favor ingrese su nombre",
+    "update_your_name": "Actualice su nombre",
+    "update": "Actualizar",
+    "your_name": "Su nombre"
+  },
+  "error": {
+    "chrome": "Chrome",
+    "close": "Cerrar",
+    "error_occurred": "Se ha producido un error",
+    "firefox": "Firefox",
+    "hide_details": "Ocultar detalles",
+    "show_details": "Mostrar detalles",
+    "to_report_issue_email": "Para informar de un problema, envíe un correo electrónico {{ issueEmailLink }}.",
+    "unsupported_browser": "Está utilizando un navegador que no es compatible, lo que puede ser la razón de este error. Recomendamos actualizar a la última versión de {{ chromeLink }} o {{ firefoxLink }}."
+  },
+  "exception_handling_service": {
+    "network_request_failed": "Una solicitud de red falló. Algunas funciones pueden no estar disponibles.",
+    "unknown_error": "Error desconocido"
+  },
+  "scripture_chooser_dialog": {
+    "choose_book": "Elegir libro",
+    "choose_chapter": "Eligir un capítulo",
+    "choose_end_verse": "Elegir versículo final",
+    "choose_verse": "Elegir versículo"
+  },
+  "share_control": {
+    "copy_link": "Copiar enlace",
+    "email_invalid": "La dirección de correo electrónico no es válida",
+    "email": "Correo electrónico",
+    "invitation_sent": "Se ha enviado un correo electrónico de invitación a {{ email }}",
+    "invite_people": "Invitar a otras personas",
+    "link_copied": "Enlace copiado al portapapeles",
+    "link_sharing": "Compartir enlaces",
+    "not_inviting_already_member": "No se invitó: El usuario ya es miembro de este proyecto",
+    "resend": "Reenviar",
+    "send": "Enviar"
+  },
+  "share_dialog": {
+    "done": "Terminado",
+    "share_with_others": "Compartir con otros"
+  },
+  "text_chooser_dialog": {
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "select_scripture": "Seleccione la escritura para adjuntar a su respuesta",
+    "select_text_error_message": "Seleccione el texto para adjuntar a su respuesta."
+  }
+}
