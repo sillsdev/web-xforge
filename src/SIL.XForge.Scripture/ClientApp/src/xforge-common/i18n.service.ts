@@ -180,6 +180,9 @@ export class I18nService {
       strongEnd: '</strong>',
       emStart: '<em>',
       emEnd: '</em>',
+      italicsStart: '<i>',
+      italicsEnd: '</i>',
+      break: '<br />',
       spanStart: params['spanClass'] ? `<span class="${params['spanClass']}">` : '<span>',
       spanEnd: '</span>'
     });

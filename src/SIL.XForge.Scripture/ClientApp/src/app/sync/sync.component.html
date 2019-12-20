@@ -1,43 +1,52 @@
-<div fxLayout="column" class="base-container">
-  <h2 id="title">Synchronize {{ projectName }} with Paratext</h2>
-  <mdc-card outlined class="sync-card">
-    <div fxLayout="column" class="card-content">
-      <button
-        *ngIf="!isLoggedIntoParatext && !isLoading"
-        class="action-button"
-        mdc-button
-        type="button"
-        (click)="logInWithParatext()"
-        id="btn-log-in"
-      >
-        <img src="/assets/paratext_logo.png" alt="Paratext Logo" class="paratext-logo" /> Log in to Paratext
-      </button>
-      <ng-container *ngIf="isLoggedIntoParatext || isLoading">
+<ng-container *transloco="let t; read: 'sync'">
+  <div fxLayout="column" class="base-container">
+    <h2 id="title">{{ t("synchronize_project", { projectName: projectName }) }}</h2>
+    <mdc-card outlined class="sync-card">
+      <div fxLayout="column" class="card-content">
         <button
-          *ngIf="!syncActive"
+          *ngIf="!isLoggedIntoParatext && !isLoading"
           class="action-button"
           mdc-button
-          primary
           type="button"
-          (click)="syncProject()"
-          [disabled]="isLoading"
-          id="btn-sync"
+          (click)="logInWithParatext()"
+          id="btn-log-in"
         >
-          <mdc-icon>sync</mdc-icon>
-          Synchronize
+          <img src="/assets/paratext_logo.png" alt="Paratext Logo" class="paratext-logo" />{{ t("log_in_to_paratext") }}
         </button>
-        <span *ngIf="syncActive" id="sync-message" class="sync-info">Your project is being synchronized...</span>
-        <mdc-linear-progress
-          *ngIf="syncActive"
-          class="progress-bar"
-          [secondary]="true"
-          [determinate]="isProgressDeterminate"
-          [progress]="percentComplete"
-        ></mdc-linear-progress>
-        <span *ngIf="isLoggedIntoParatext && !syncActive" [title]="lastSyncDate" id="date-last-sync" class="sync-info">
-          {{ lastSyncNotice }}
-        </span>
-      </ng-container>
-    </div>
-  </mdc-card>
-</div>
+        <ng-container *ngIf="isLoggedIntoParatext || isLoading">
+          <button
+            *ngIf="!syncActive"
+            class="action-button"
+            mdc-button
+            primary
+            type="button"
+            (click)="syncProject()"
+            [disabled]="isLoading"
+            id="btn-sync"
+          >
+            <mdc-icon>sync</mdc-icon>
+            {{ t("synchronize") }}
+          </button>
+          <span *ngIf="syncActive" id="sync-message" class="sync-info">{{
+            t("your_project_is_being_synchronized")
+          }}</span>
+          <mdc-linear-progress
+            *ngIf="syncActive"
+            class="progress-bar"
+            [secondary]="true"
+            [determinate]="isProgressDeterminate"
+            [progress]="percentComplete"
+          ></mdc-linear-progress>
+          <span
+            *ngIf="isLoggedIntoParatext && !syncActive"
+            [title]="lastSyncDate"
+            id="date-last-sync"
+            class="sync-info"
+          >
+            {{ lastSyncNotice }}
+          </span>
+        </ng-container>
+      </div>
+    </mdc-card>
+  </div>
+</ng-container>

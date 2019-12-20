@@ -6,6 +6,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { CookieService } from 'ngx-cookie-service';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { TranslateConfig } from 'realtime-server/lib/scriptureforge/models/translate-config';
@@ -14,7 +15,7 @@ import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
@@ -32,6 +33,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedCookieService = mock(CookieService);
 
 @Component({
   template: `
@@ -44,7 +46,13 @@ const ROUTES: Route[] = [{ path: 'projects', component: MockComponent }];
 
 describe('SettingsComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, HttpClientTestingModule, RouterTestingModule.withRoutes(ROUTES), UICommonModule],
+    imports: [
+      DialogTestModule,
+      HttpClientTestingModule,
+      RouterTestingModule.withRoutes(ROUTES),
+      UICommonModule,
+      TestTranslocoModule
+    ],
     declarations: [SettingsComponent, WriteStatusComponent, MockComponent],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
@@ -52,7 +60,8 @@ describe('SettingsComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: CookieService, useMock: mockedCookieService }
     ]
   }));
 
@@ -317,6 +326,7 @@ describe('SettingsComponent', () => {
     it('should display Danger Zone', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject();
+      env.fixture.detectChanges();
       expect(env.dangerZoneTitle.textContent).toContain('Danger Zone');
       expect(env.deleteProjectButton.textContent).toContain('Delete this project');
     }));
@@ -574,7 +584,7 @@ class TestEnvironment {
 }
 
 @NgModule({
-  imports: [UICommonModule],
+  imports: [UICommonModule, TestTranslocoModule],
   declarations: [DeleteProjectDialogComponent],
   entryComponents: [DeleteProjectDialogComponent],
   exports: [DeleteProjectDialogComponent]

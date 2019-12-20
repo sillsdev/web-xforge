@@ -10,6 +10,7 @@ import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { I18nService } from 'xforge-common/i18n.service';
 
 interface UserInfo {
   displayName?: string;
@@ -44,7 +45,8 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     private readonly activatedRoute: ActivatedRoute,
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    readonly i18n: I18nService
   ) {
     super(noticeService);
   }
