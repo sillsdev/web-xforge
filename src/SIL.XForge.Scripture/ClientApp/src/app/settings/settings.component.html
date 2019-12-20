@@ -1,180 +1,176 @@
-<div fxLayout="column" fxLayoutGap="2rem" class="container">
-  <div mdcHeadline4>Settings</div>
-  <div>
-    <div mdcHeadline6>Tools</div>
-    <p mdcBody2>Select which additional tools and features are available.</p>
-    <mdc-card class="card" outlined>
-      <form [formGroup]="form">
-        <div class="card-content">
-          <div class="tool-setting">
-            <mdc-form-field>
-              <mdc-checkbox [disabled]="true" [checked]="true" class="checkbox-placeholder"></mdc-checkbox>
-              <label mdcSubtitle1>Translate</label>
-            </mdc-form-field>
-            <div class="helper-text checkbox-helper-text">
-              The translate tool is always available to collaborate with other translators working on the same text.
-            </div>
-          </div>
-          <div class="tool-setting indent">
-            <div class="tool-setting-field checkbox-field">
+<ng-container *transloco="let t; read: 'settings'">
+  <div fxLayout="column" fxLayoutGap="2rem" class="container">
+    <div mdcHeadline4>{{ t("settings") }}</div>
+    <div>
+      <div mdcHeadline6>{{ t("tools") }}</div>
+      <p mdcBody2>{{ t("select_additional_tools_and_features") }}</p>
+      <mdc-card class="card" outlined>
+        <form [formGroup]="form">
+          <div class="card-content">
+            <div class="tool-setting">
               <mdc-form-field>
-                <mdc-checkbox
-                  formControlName="translationSuggestionsEnabled"
-                  id="checkbox-translation-suggestions"
-                ></mdc-checkbox>
-                <label>Translation Suggestions</label>
+                <mdc-checkbox [disabled]="true" [checked]="true" class="checkbox-placeholder"></mdc-checkbox>
+                <label mdcSubtitle1>{{ t("translate") }}</label>
               </mdc-form-field>
-              <app-write-status
-                [state]="getControlState('translationSuggestionsEnabled')"
-                [formGroup]="form"
-                id="translation-suggestions-status"
-              ></app-write-status>
+              <div class="helper-text checkbox-helper-text">{{ t("translate_tool_is_always_available") }}</div>
             </div>
-            <div class="helper-text checkbox-helper-text">
-              Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your
-              project is setup as a <b>Daughter Translation</b> in Paratext.
-            </div>
-            <div *ngIf="!isLoading && !isLoggedInToParatext" class="paratext-login-container">
-              <button
-                class="action-button"
-                mdc-button
-                type="button"
-                (click)="logInWithParatext()"
-                id="btn-log-in-settings"
-              >
-                <img src="/assets/paratext_logo.png" alt="Paratext Logo" class="paratext-logo" /> Log in to Paratext
-              </button>
-              <span class="more-options">to enable <b>Translate Suggestions</b> and see more options</span>
-            </div>
-            <ng-container *ngIf="translationSuggestionsEnabled && isLoggedInToParatext">
-              <div class="tool-setting select-indent">
-                <div class="tool-setting-field">
-                  <mdc-form-field fxFlexFill>
-                    <mdc-select placeholder="Based on" formControlName="sourceParatextId" id="based-on-select">
-                      <mdc-menu>
-                        <mdc-list>
-                          <mdc-list-item *ngFor="let project of sourceProjects" [value]="project.paratextId">
-                            {{ project.name }}
-                          </mdc-list-item>
-                        </mdc-list>
-                      </mdc-menu>
-                    </mdc-select>
-                  </mdc-form-field>
-                  <app-write-status
-                    [state]="getControlState('sourceParatextId')"
-                    [formGroup]="form"
-                    id="based-on-status"
-                  ></app-write-status>
-                </div>
-                <div class="helper-text select-helper-text">
-                  Choose the Paratext project that your project is based on.
-                </div>
-              </div>
-            </ng-container>
-          </div>
-        </div>
-        <mdc-list-divider></mdc-list-divider>
-        <div class="card-content">
-          <div class="tool-setting">
-            <div class="tool-setting-field checkbox-field">
-              <mdc-form-field>
-                <mdc-checkbox formControlName="checkingEnabled" id="checkbox-community-checking"></mdc-checkbox>
-                <label mdcSubtitle1>Community Checking</label>
-              </mdc-form-field>
-              <app-write-status
-                [state]="getControlState('checkingEnabled')"
-                [formGroup]="form"
-                id="checking-status"
-              ></app-write-status>
-            </div>
-            <div class="helper-text checkbox-helper-text">
-              Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses,
-              ask targeted questions, allow discussion of answers.
-            </div>
-          </div>
-          <ng-container *ngIf="checkingEnabled">
             <div class="tool-setting indent">
               <div class="tool-setting-field checkbox-field">
                 <mdc-form-field>
                   <mdc-checkbox
-                    formControlName="usersSeeEachOthersResponses"
-                    id="checkbox-see-others-responses"
+                    formControlName="translationSuggestionsEnabled"
+                    id="checkbox-translation-suggestions"
                   ></mdc-checkbox>
-                  <label>See other's answers and comments</label>
+                  <label>{{ t("translation_suggestions") }}</label>
                 </mdc-form-field>
                 <app-write-status
-                  [state]="getControlState('usersSeeEachOthersResponses')"
+                  [state]="getControlState('translationSuggestionsEnabled')"
                   [formGroup]="form"
-                  id="see-others-responses-status"
+                  id="translation-suggestions-status"
                 ></app-write-status>
               </div>
-              <div class="helper-text checkbox-helper-text">
-                Users can see each other's answers and comments to interact with each other.
+              <div
+                class="helper-text checkbox-helper-text"
+                [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
+              ></div>
+              <div *ngIf="!isLoading && !isLoggedInToParatext" class="paratext-login-container">
+                <button
+                  class="action-button"
+                  mdc-button
+                  type="button"
+                  (click)="logInWithParatext()"
+                  id="btn-log-in-settings"
+                >
+                  <img src="/assets/paratext_logo.png" alt="Paratext Logo" class="paratext-logo" />{{
+                    t("log_in_with_paratext")
+                  }}
+                </button>
+                <span
+                  class="more-options"
+                  [innerHTML]="i18n.translateAndInsertTags('settings.enable_translation_suggestions')"
+                ></span>
               </div>
+              <ng-container *ngIf="translationSuggestionsEnabled && isLoggedInToParatext">
+                <div class="tool-setting select-indent">
+                  <div class="tool-setting-field">
+                    <mdc-form-field fxFlexFill>
+                      <mdc-select
+                        placeholder="{{ t('based_on') }}"
+                        formControlName="sourceParatextId"
+                        id="based-on-select"
+                      >
+                        <mdc-menu>
+                          <mdc-list>
+                            <mdc-list-item *ngFor="let project of sourceProjects" [value]="project.paratextId">
+                              {{ project.name }}
+                            </mdc-list-item>
+                          </mdc-list>
+                        </mdc-menu>
+                      </mdc-select>
+                    </mdc-form-field>
+                    <app-write-status
+                      [state]="getControlState('sourceParatextId')"
+                      [formGroup]="form"
+                      id="based-on-status"
+                    ></app-write-status>
+                  </div>
+                  <div class="helper-text select-helper-text">{{ t("choose_the_paratext_project") }}</div>
+                </div>
+              </ng-container>
             </div>
-            <div class="tool-setting indent">
+          </div>
+          <mdc-list-divider></mdc-list-divider>
+          <div class="card-content">
+            <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">
                 <mdc-form-field>
-                  <mdc-checkbox formControlName="shareEnabled" id="checkbox-share"></mdc-checkbox>
-                  <label>Share</label>
+                  <mdc-checkbox formControlName="checkingEnabled" id="checkbox-community-checking"></mdc-checkbox>
+                  <label mdcSubtitle1>{{ t("community_checking") }}</label>
                 </mdc-form-field>
                 <app-write-status
-                  [state]="getControlState('shareEnabled')"
+                  [state]="getControlState('checkingEnabled')"
                   [formGroup]="form"
-                  id="share-status"
+                  id="checking-status"
                 ></app-write-status>
               </div>
-              <div class="helper-text checkbox-helper-text">
-                Users can share by inviting a friend to join the project.<br />
-                <i>Administrator's</i> can always invite others to the project in
-                <a [routerLink]="['/projects', projectId, 'users']">Users</a>.
-              </div>
-              <mdc-radio-group id="share-level-radio-group" formControlName="shareLevel" class="tool-setting indent">
-                <div class="tool-setting-field">
-                  <mdc-form-field id="share-level-anyone-field">
-                    <mdc-radio id="radio-shareLevel-anyone" value="anyone"></mdc-radio>
-                    <label>Anyone with a link</label>
-                  </mdc-form-field>
+              <div class="helper-text checkbox-helper-text">{{ t("engage_the_wider_community") }}</div>
+            </div>
+            <ng-container *ngIf="checkingEnabled">
+              <div class="tool-setting indent">
+                <div class="tool-setting-field checkbox-field">
                   <mdc-form-field>
-                    <mdc-radio id="radio-shareLevel-specific" value="specific"></mdc-radio>
-                    <label>Specific people</label>
+                    <mdc-checkbox
+                      formControlName="usersSeeEachOthersResponses"
+                      id="checkbox-see-others-responses"
+                    ></mdc-checkbox>
+                    <label>{{ t("see_others_answers_and_comments") }}</label>
                   </mdc-form-field>
                   <app-write-status
-                    [state]="getControlState('shareLevel')"
+                    [state]="getControlState('usersSeeEachOthersResponses')"
                     [formGroup]="form"
-                    id="shareLevel-status"
+                    id="see-others-responses-status"
                   ></app-write-status>
                 </div>
-              </mdc-radio-group>
-            </div>
-          </ng-container>
-        </div>
-      </form>
-    </mdc-card>
-  </div>
+                <div class="helper-text checkbox-helper-text">{{ t("users_can_interact_with_each_other") }}</div>
+              </div>
+              <div class="tool-setting indent">
+                <div class="tool-setting-field checkbox-field">
+                  <mdc-form-field>
+                    <mdc-checkbox formControlName="shareEnabled" id="checkbox-share"></mdc-checkbox>
+                    <label>{{ t("share") }}</label>
+                  </mdc-form-field>
+                  <app-write-status
+                    [state]="getControlState('shareEnabled')"
+                    [formGroup]="form"
+                    id="share-status"
+                  ></app-write-status>
+                </div>
+                <div class="helper-text checkbox-helper-text" fxLayout="row">
+                  <div [innerHTML]="i18n.translateAndInsertTags('settings.users_can_share_the_project')"></div>
+                </div>
+                <mdc-radio-group id="share-level-radio-group" formControlName="shareLevel" class="tool-setting indent">
+                  <div class="tool-setting-field">
+                    <mdc-form-field id="share-level-anyone-field">
+                      <mdc-radio id="radio-shareLevel-anyone" value="anyone"></mdc-radio>
+                      <label>{{ t("anyone_with_a_link") }}</label>
+                    </mdc-form-field>
+                    <mdc-form-field>
+                      <mdc-radio id="radio-shareLevel-specific" value="specific"></mdc-radio>
+                      <label>{{ t("specific_people") }}</label>
+                    </mdc-form-field>
+                    <app-write-status
+                      [state]="getControlState('shareLevel')"
+                      [formGroup]="form"
+                      id="shareLevel-status"
+                    ></app-write-status>
+                  </div>
+                </mdc-radio-group>
+              </div>
+            </ng-container>
+          </div>
+        </form>
+      </mdc-card>
+    </div>
 
-  <div id="danger-zone">
-    <div mdcHeadline6>Danger Zone</div>
-    <mdc-card class="card-content" id="delete-project">
-      <h4>Delete this project</h4>
-      <p>Once you delete a project, there is no going back. Please be certain.</p>
-      <p>
-        This will <strong>not</strong> delete your Paratext project, but it will delete any unsynchronized data stored
-        in Scripture Forge. It is recommended to
-        <a [routerLink]="['/projects', projectId, 'sync']">Synchronize</a> first before deleting.
-      </p>
-      <div fxLayout="row" fxLayoutAlign="end stretch">
-        <button
-          id="delete-btn"
-          mdc-button
-          unelevated
-          type="button"
-          (click)="openDeleteProjectDialog()"
-          [disabled]="isLoading"
-        >
-          Delete this project
-        </button>
-      </div>
-    </mdc-card>
+    <div id="danger-zone">
+      <div mdcHeadline6>{{ t("danger_zone") }}</div>
+      <mdc-card class="card-content" id="delete-project">
+        <h4>{{ t("delete_this_project") }}</h4>
+        <p>{{ t("delete_project_cannot_be_undone") }}</p>
+        <p [innerHTML]="i18n.translateAndInsertTags('settings.will_not_delete_paratext_project')"></p>
+        <div fxLayout="row" fxLayoutAlign="end stretch">
+          <button
+            id="delete-btn"
+            mdc-button
+            unelevated
+            type="button"
+            (click)="openDeleteProjectDialog()"
+            [disabled]="isLoading"
+          >
+            {{ t("delete_this_project") }}
+          </button>
+        </div>
+      </mdc-card>
+    </div>
   </div>
-</div>
+</ng-container>

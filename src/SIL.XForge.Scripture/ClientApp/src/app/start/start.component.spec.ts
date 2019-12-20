@@ -6,7 +6,7 @@ import { User } from 'realtime-server/lib/common/models/user';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
@@ -19,7 +19,7 @@ const mockedRouter = mock(Router);
 describe('StartComponent', () => {
   configureTestingModule(() => ({
     declarations: [StartComponent],
-    imports: [UICommonModule, RouterTestingModule],
+    imports: [UICommonModule, RouterTestingModule, TestTranslocoModule],
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },

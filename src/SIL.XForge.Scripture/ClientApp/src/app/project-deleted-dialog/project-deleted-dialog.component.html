@@ -1,10 +1,12 @@
-<mdc-dialog>
-  <mdc-dialog-container>
-    <mdc-dialog-surface>
-      <mdc-dialog-title>The project has been deleted or is no longer accessible.</mdc-dialog-title>
-      <mdc-dialog-actions>
-        <button id="ok-button" mdcDialogButton type="button" mdcDialogAction="accept">OK</button>
-      </mdc-dialog-actions>
-    </mdc-dialog-surface>
-  </mdc-dialog-container>
-</mdc-dialog>
+<ng-container *transloco="let t; read: 'project_deleted_dialog'">
+  <mdc-dialog>
+    <mdc-dialog-container>
+      <mdc-dialog-surface>
+        <mdc-dialog-title>{{ t("project_has_been_deleted") }}</mdc-dialog-title>
+        <mdc-dialog-actions>
+          <button id="ok-button" mdcDialogButton type="button" mdcDialogAction="accept">{{ t("ok") }}</button>
+        </mdc-dialog-actions>
+      </mdc-dialog-surface>
+    </mdc-dialog-container>
+  </mdc-dialog>
+</ng-container>
