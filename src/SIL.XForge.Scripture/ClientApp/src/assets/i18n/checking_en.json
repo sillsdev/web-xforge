@@ -248,6 +248,10 @@
     "done": "Done",
     "share_with_others": "Share with others"
   },
+  "start": {
+    "connect_project": "Connect project",
+    "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet."
+  },
   "text_chooser_dialog": {
     "cancel": "Cancel",
     "save": "Save",

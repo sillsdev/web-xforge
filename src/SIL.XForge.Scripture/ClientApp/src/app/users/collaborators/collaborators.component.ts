@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
@@ -44,7 +45,8 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     private readonly activatedRoute: ActivatedRoute,
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    readonly i18n: I18nService
   ) {
     super(noticeService);
   }
