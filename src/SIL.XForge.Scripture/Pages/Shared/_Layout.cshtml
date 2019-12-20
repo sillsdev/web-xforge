@@ -1,8 +1,5 @@
-@using Microsoft.AspNetCore.Builder
-@using Microsoft.AspNetCore.Localization
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
-@using Microsoft.Extensions.Options
 
 <!DOCTYPE html>
 <html>
@@ -40,7 +37,7 @@
                         <span>Scripture Forge</span>
                     </a>
                 </div>
-					 <div class="mdl-cell mdl-cell--4-col mdl-cell--hide-phone"></div>
+                    <div class="mdl-cell mdl-cell--4-col mdl-cell--hide-phone"></div>
                 <div class="mdl-cell mdl-cell--4-col mdl-cell--2-col-phone flex align-items-end">
                     @await Html.PartialAsync("_SelectLanguagePartial")
                 </div>

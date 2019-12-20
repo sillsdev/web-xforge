@@ -268,7 +268,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           this.answersPanelContainerElement.nativeElement.getBoundingClientRect().top;
 
     const actionsArea = document.querySelector('.actions') as Element;
-    const distanceFromTopToAddAnswerButtonButtom =
+    const distanceFromTopToAddAnswerButtonBottom =
       actionsArea == null
         ? 0
         : actionsArea.getBoundingClientRect().bottom -
@@ -284,7 +284,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       this.getCSSFloatPropertyOf(this.answersPanelContainerElement, 'padding-bottom');
 
     return (
-      Math.max(distanceFromTopToTotalAnswersMessageBottom, distanceFromTopToAddAnswerButtonButtom) +
+      Math.max(distanceFromTopToTotalAnswersMessageBottom, distanceFromTopToAddAnswerButtonBottom) +
       answersPanelVerticalPadding +
       showUnreadsBannerHeight
     );
