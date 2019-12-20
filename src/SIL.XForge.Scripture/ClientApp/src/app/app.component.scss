@@ -99,9 +99,8 @@ a {
   justify-content: space-between;
 }
 
-.locale-disabled {
-  text-decoration: line-through;
-  color: gray;
+.locale-disabled::after {
+  content: ' *';
 }
 
 .locale-code {
