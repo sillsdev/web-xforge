@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { distanceInWordsToNow } from 'date-fns';
 import { combineLatest, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -50,9 +51,10 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
     }
     const dateLastSynced = this.projectDoc.data.sync.dateLastSuccessfulSync;
     if (dateLastSynced == null || dateLastSynced === '' || Date.parse(dateLastSynced) <= 0) {
-      return 'Never been synced';
+      return translate('sync.never_been_synced');
     } else {
-      return 'Last sync was ' + distanceInWordsToNow(dateLastSynced) + ' ago';
+      // ToDo: translate the time message
+      return translate('sync.last_synced_time_stamp', { timeMessage: distanceInWordsToNow(dateLastSynced) });
     }
   }
 
@@ -128,10 +130,12 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
     } else if (this.syncActive) {
       this.syncActive = false;
       if (this.projectDoc.data.sync.lastSyncSuccessful) {
-        this.noticeService.show(`Successfully synchronized ${this.projectName} with Paratext.`);
+        this.noticeService.show(
+          translate('sync.successfully_synchronized_with_paratext', { projectName: this.projectName })
+        );
       } else {
         this.noticeService.show(
-          `Something went wrong while synchronizing the ${this.projectName} with Paratext. Please try again.`
+          translate('sync.something_went_wrong_synchronizing_this_project', { projectName: this.projectName })
         );
       }
     }

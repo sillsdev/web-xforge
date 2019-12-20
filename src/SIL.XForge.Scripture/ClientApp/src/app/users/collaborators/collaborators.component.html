@@ -1,111 +1,111 @@
-<div class="invite-user">
-  <h3>Share with others</h3>
-  <app-share-control
-    [projectId]="projectId"
-    [isLinkSharingEnabled]="isLinkSharingEnabled"
-    (invited)="onInvitationSent()"
-  ></app-share-control>
+<ng-container *transloco="let t; read: 'collaborators'">
+  <div class="invite-user">
+    <h3>{{ t("share_with_others") }}</h3>
+    <app-share-control
+      [projectId]="projectId"
+      [isLinkSharingEnabled]="isLinkSharingEnabled"
+      (invited)="onInvitationSent()"
+    ></app-share-control>
 
-  <mdc-list-divider></mdc-list-divider>
+    <mdc-list-divider></mdc-list-divider>
 
-  <div fxLayout="row" fxLayoutAlign="start center">
-    <p class="helper-text">
-      Users' roles and permissions can <b>only</b> be changed in <b>Paratext</b>. Open the project in <b>Paratext</b>,
-      on the project window click <mdc-icon><b>menu</b></mdc-icon
-      >, then <b>Project settings</b>, then <b>User permissions</b>. After a <i>Send/Receive</i> in <b>Paratext</b> and
-      then a <i>Synchronize</i> in <b>Scripture Forge</b>, their role will come into effect here, once that user logs in
-      with their <b>Paratext</b> account.
-    </p>
-  </div>
-
-  <div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
-    <mdc-form-field fxFlex>
-      <mdc-text-field
-        label="Filter users..."
-        (keyup)="updateSearchTerm($event.target.value)"
-        id="project-user-filter"
-      ></mdc-text-field>
-    </mdc-form-field>
-  </div>
-  <div *ngIf="!isLoading">
-    <div *ngIf="totalUsers > 0">
-      <table mat-table fxFill id="project-users-table" [dataSource]="userRows">
-        <ng-container matColumnDef="avatar">
-          <td mat-cell *matCellDef="let userRow; let i = index">
-            <div *ngIf="!userRow.isInvitee">
-              <app-avatar [user]="userRow.user" size="32" [round]="false"></app-avatar>
-            </div>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="name">
-          <td mat-cell *matCellDef="let userRow">
-            <div *ngIf="!userRow.isInvitee" class="display-name-label">
-              {{ userRow.user?.displayName }} <b *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;me</b>
-            </div>
-            <div *ngIf="userRow.isInvitee">
-              Awaiting response from
-              <div>{{ userRow.user?.email }}</div>
-            </div>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="projects">
-          <td fxHide.xs mat-cell *matCellDef="let userRow">
-            <em>{{ userRow.roleName }}</em>
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="remove">
-          <td mat-cell *matCellDef="let userRow" class="remove-cell">
-            <button
-              mdc-icon-button
-              icon="clear"
-              class="remove-user"
-              *ngIf="!userRow.isInvitee && !isCurrentUser(userRow)"
-              type="button"
-              (click)="removeProjectUser(userRow.id)"
-              title="Remove from project"
-            ></button>
-
-            <!-- 2 buttons below are 1 button displayed mutually exclusively, different style on breakpoints -->
-            <button
-              *ngIf="userRow.isInvitee"
-              fxHide.lt-sm
-              fxShow
-              mdc-button
-              outlined
-              color="warn"
-              class="cancel-invite"
-              type="button"
-              (click)="uninviteProjectUser(userRow.user.email)"
-            >
-              Cancel invite
-            </button>
-            <button
-              mdc-icon-button
-              icon="clear"
-              color="warn"
-              class="cancel-invite"
-              *ngIf="userRow.isInvitee"
-              fxHide
-              fxShow.lt-sm
-              type="button"
-              (click)="uninviteProjectUser(userRow.user.email)"
-              title="Cancel invite"
-            ></button>
-          </td>
-        </ng-container>
-
-        <tr mat-row *matRowDef="let userRow; columns: ['avatar', 'name', 'projects', 'remove']"></tr>
-      </table>
-
-      <mat-paginator
-        [pageIndex]="pageIndex"
-        [length]="filteredLength"
-        [pageSize]="pageSize"
-        [pageSizeOptions]="[5, 10, 20, 50, 100]"
-        (page)="updatePaginatorData($event)"
-      >
-      </mat-paginator>
+    <div fxLayout="row" fxLayoutAlign="start center">
+      <p
+        class="helper-text"
+        [innerHTML]="i18n.translateAndInsertTags('collaborators.change_roles_and_permissions')"
+      ></p>
     </div>
-    <div *ngIf="totalUsers === 0" class="no-users-label">No users found</div>
+
+    <div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
+      <mdc-form-field fxFlex>
+        <mdc-text-field
+          label="{{ t('filter_users') }}"
+          (keyup)="updateSearchTerm($event.target.value)"
+          id="project-user-filter"
+        ></mdc-text-field>
+      </mdc-form-field>
+    </div>
+    <div *ngIf="!isLoading">
+      <div *ngIf="totalUsers > 0">
+        <table mat-table fxFill id="project-users-table" [dataSource]="userRows">
+          <ng-container matColumnDef="avatar">
+            <td mat-cell *matCellDef="let userRow; let i = index">
+              <div *ngIf="!userRow.isInvitee">
+                <app-avatar [user]="userRow.user" size="32" [round]="false"></app-avatar>
+              </div>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="name">
+            <td mat-cell *matCellDef="let userRow">
+              <div *ngIf="!userRow.isInvitee" class="display-name-label">
+                {{ userRow.user?.displayName }}
+                <b *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;{{ t("me") }}</b>
+              </div>
+              <div *ngIf="userRow.isInvitee">
+                {{ t("awaiting_response_from") }}
+                <div>{{ userRow.user?.email }}</div>
+              </div>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="projects">
+            <td fxHide.xs mat-cell *matCellDef="let userRow">
+              <em>{{ userRow.roleName }}</em>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="remove">
+            <td mat-cell *matCellDef="let userRow" class="remove-cell">
+              <button
+                mdc-icon-button
+                icon="clear"
+                class="remove-user"
+                *ngIf="!userRow.isInvitee && !isCurrentUser(userRow)"
+                type="button"
+                (click)="removeProjectUser(userRow.id)"
+                title="{{ t('remove_from_project') }}"
+              ></button>
+
+              <!-- 2 buttons below are 1 button displayed mutually exclusively, different style on breakpoints -->
+              <button
+                *ngIf="userRow.isInvitee"
+                fxHide.lt-sm
+                fxShow
+                mdc-button
+                outlined
+                color="warn"
+                class="cancel-invite"
+                type="button"
+                (click)="uninviteProjectUser(userRow.user.email)"
+              >
+                {{ t("cancel_invite") }}
+              </button>
+              <button
+                mdc-icon-button
+                icon="clear"
+                color="warn"
+                class="cancel-invite"
+                *ngIf="userRow.isInvitee"
+                fxHide
+                fxShow.lt-sm
+                type="button"
+                (click)="uninviteProjectUser(userRow.user.email)"
+                title="{{ t('cancel_invite') }}"
+              ></button>
+            </td>
+          </ng-container>
+
+          <tr mat-row *matRowDef="let userRow; columns: ['avatar', 'name', 'projects', 'remove']"></tr>
+        </table>
+
+        <mat-paginator
+          [pageIndex]="pageIndex"
+          [length]="filteredLength"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="[5, 10, 20, 50, 100]"
+          (page)="updatePaginatorData($event)"
+        >
+        </mat-paginator>
+      </div>
+      <div *ngIf="totalUsers === 0" class="no-users-label">{{ t("no_users_found") }}</div>
+    </div>
   </div>
-</div>
+</ng-container>

@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -45,7 +46,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    private readonly router: Router
+    private readonly router: Router,
+    readonly i18n: I18nService
   ) {
     super(noticeService);
     this.loadingStarted();

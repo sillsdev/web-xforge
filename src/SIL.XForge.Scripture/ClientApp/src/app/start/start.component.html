@@ -1,8 +1,10 @@
-<div fxLayout="column" fxLayoutAlign="center center">
-  <p mdcBody1>Looks like you aren't connected to any projects yet.</p>
-  <p>
-    <button mdc-button primary type="button" [routerLink]="['/connect-project']">
-      <mdc-icon>add</mdc-icon>Connect Project
-    </button>
-  </p>
-</div>
+<ng-container *transloco="let t; read: 'start'">
+  <div fxLayout="column" fxLayoutAlign="center center">
+    <p mdcBody1>{{ t("not_connected_to_any_projects") }}</p>
+    <p>
+      <button mdc-button primary type="button" [routerLink]="['/connect-project']">
+        <mdc-icon>add</mdc-icon>{{ t("connect_project") }}
+      </button>
+    </p>
+  </div>
+</ng-container>

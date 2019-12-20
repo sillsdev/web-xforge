@@ -2,15 +2,16 @@ import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialo
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
+import { CookieService } from 'ngx-cookie-service';
 import { AuthService } from 'xforge-common/auth.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
 
 describe('DeleteProjectDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, UICommonModule],
-    providers: [AuthService]
+    providers: [AuthService, CookieService]
   }));
 
   let dialog: MdcDialog;
@@ -127,7 +128,7 @@ class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [UICommonModule],
+  imports: [UICommonModule, TestTranslocoModule],
   declarations: [ViewContainerDirective, ChildViewContainerComponent, DeleteProjectDialogComponent],
   exports: [ViewContainerDirective, ChildViewContainerComponent, DeleteProjectDialogComponent],
   entryComponents: [ChildViewContainerComponent, DeleteProjectDialogComponent]

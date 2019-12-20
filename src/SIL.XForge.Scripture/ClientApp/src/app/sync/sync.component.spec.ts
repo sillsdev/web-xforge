@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
@@ -25,7 +25,7 @@ const mockedProjectService = mock(SFProjectService);
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
     declarations: [SyncComponent],
-    imports: [CommonModule, UICommonModule],
+    imports: [CommonModule, UICommonModule, TestTranslocoModule],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: NoticeService, useMock: mockedNoticeService },
