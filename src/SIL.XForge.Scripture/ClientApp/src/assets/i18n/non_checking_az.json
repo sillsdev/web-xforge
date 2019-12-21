@@ -1,9 +1,46 @@
 {
+  "app": {
+    "settings": "Parametrlər",
+    "system_administration": "Sistem inzibatçılıq",
+    "synchronize": "Sinxronlaşdırmaq",
+    "users": "İstifadəçilər"
+  },
+  "checking": {
+    "add_question": "Sual əlavə etmək"
+  },
   "checking_answers": {
     "archive": "Arxiv",
     "only_community_checkers_can_like": "Yalnız Dil Daşıyıcıları cavablara \"bəyən\" işarəsini qoya bilərlər."
   },
+  "checking_overview": {
+    "add_question": "Sual əlavə etmək",
+    "answer_count_label": "{{ count }} cavablar",
+    "archive": "Arxiv",
+    "archived_questions": "Arxivda saxlanmış suallar",
+    "click_add_question": "Yuxarıdakı {{ strongStart }} Sual əlavə etmək {{ strongEnd }} vurun.",
+    "no_questions": "Dərc edilmiş suallar yoxdur. ",
+    "no_archived_questions": "Arxivləşdirilən suallar yoxdur.",
+    "question_count_label": "{{ count }} suallar",
+    "republish": "Yenidən dərc etmək",
+    "time_archived_stamp": "{{ timeMessage }} əvvəl arxivləşdirildi"
+  },
+  "question_answered_dialog": {
+    "cancel": "Ləğv etmək",
+    "consider_creating_new_question": "Bu sualı redaktə etmək əvəzinə yeni bir sual yaratmağı düşünün.",
+    "edit_anyway": "Hərhalda redaktə etmək",
+    "question_has_answer": "Sual üçün artıq cavab vardır"
+  },
   "question_dialog": {
-    "must_be_after_scripture_reference": "{{ strongStart }}Kəlama istinaddan{{ strongEnd }} sonra olmalıdır."
+    "add_question_denied": "İcazə rədd edildi: yalnız layihə inzibatçısı sualları əlavə edə və düzəldə bilər.",
+    "cancel": "Ləğv etmək",
+    "edit_question": "Sual redaktə etmək",
+    "example_verse": "misal ücün, Yəh 3:16",
+    "must_be_after_scripture_reference": "{{ strongStart }}Kəlama istinaddan{{ strongEnd }} sonra olmalıdır",
+    "must_be_inside_verse_range": "Ayə diapazonun içərisində olmalıdır",
+    "must_be_same_book_and_chapter": "Eyni kitab və fəsil olmalıdır",
+    "new_question": "Yeni sual",
+    "recording_stopped": "Sualınız üçün səs yazısı avtomatik olaraq dayandırıldı.",
+    "required_with_asterisk": "*Tələb olunur",
+    "save": "Yadda saxlamaq"
   }
 }
