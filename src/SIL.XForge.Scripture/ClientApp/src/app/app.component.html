@@ -30,7 +30,6 @@
                 >
                   <!-- `langMenu.open = false` is workaround for menu not closing when click is on a span element -->
                   <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
-                  <span class="locale-code" (click)="langMenu.open = false">{{ locale.canonicalTag }}</span>
                 </mdc-list-item>
               </mdc-list>
             </mdc-menu>

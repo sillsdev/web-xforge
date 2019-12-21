@@ -66,7 +66,7 @@ export class I18nService {
       direction: 'ltr',
       tags: ['en-GB'],
       dateFormat: { month: 'short', hour12: true },
-      production: false
+      production: true
     },
     {
       localName: 'Español',
