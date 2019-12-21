@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using SIL.XForge.Models;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace SIL.XForge.Scripture
 {
@@ -35,62 +37,18 @@ namespace SIL.XForge.Scripture
         /// <summary>
         /// Map of culture identifier (language tag) to interface language object (local name displayed in the chooser)
         /// </summary>
-        public static Dictionary<string, InterfaceLanguage> Cultures = new Dictionary<string, InterfaceLanguage>
+        public static Dictionary<string, InterfaceLanguage> Cultures = SharedResource.getCultures();
+
+        static Dictionary<string, InterfaceLanguage> getCultures()
         {
-            { "en", new InterfaceLanguage
-                {
-                    LocalName = "English (US)",
-                    EnglishName = "English (US)",
-                    CanonicalTag = "en",
-                    Tags = new string[]{ "en", "en-US" },
-                    Production = true
-                }
-            },
-            { "en-GB", new InterfaceLanguage
-                {
-                    LocalName = "English (UK)",
-                    EnglishName = "English (UK)",
-                    CanonicalTag = "en-GB",
-                    Tags = new string[]{ "en-GB" },
-                    Production = true
-                }
-            },
-            { "es", new InterfaceLanguage
-                {
-                    LocalName = "Español",
-                    EnglishName = "Spanish",
-                    CanonicalTag = "es",
-                    Tags = new string[]{ "es", "es-ES" },
-                    Production = false
-                }
-            },
-            { "zh-CN", new InterfaceLanguage
-                {
-                    LocalName = "简体中文",
-                    EnglishName = "Chinese (Simplified)",
-                    Direction = "ltr",
-                    Tags = new string[]{ "zh-CN", "zh" },
-                    Production = false
-                }
-            },
-            { "id", new InterfaceLanguage
-                {
-                    LocalName = "Bahasa Indonesia",
-                    EnglishName = "Indonesian",
-                    CanonicalTag = "id",
-                    Tags = new string[]{ "id", "id-ID" },
-                    Production = false
-                }
-            },
-            { "az", new InterfaceLanguage
-                {
-                    LocalName = "Azərbaycanca",
-                    EnglishName = "Azerbaijani",
-                    CanonicalTag = "az",
-                    Tags = new string[]{ "az", "az-AZ" },
-                    Production = false
-                }
+            // TODO consider making file path relative to current file rather than CWD
+            var cultureData = JsonConvert.DeserializeObject<List<InterfaceLanguage>>(File.ReadAllText("locales.json"));
+            var cultures = new Dictionary<string, InterfaceLanguage> { };
+            foreach (var culture in cultureData)
+            {
+                cultures.Add(culture.CanonicalTag, culture);
             }
-        };
+            return cultures;
+        }
     }
 }
