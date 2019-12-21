@@ -1,0 +1,34 @@
+[
+  {
+    "localName": "English (US)",
+    "englishName": "English (US)",
+    "tags": ["en", "en-US"],
+    "production": true
+  },
+  {
+    "localName": "English (UK)",
+    "englishName": "English (UK)",
+    "tags": ["en-GB"],
+    "production": true
+  },
+  {
+    "localName": "简体中文",
+    "englishName": "Chinese (Simplified)",
+    "tags": ["zh-CN", "zh"]
+  },
+  {
+    "localName": "Español",
+    "englishName": "Spanish",
+    "tags": ["es", "es-ES"]
+  },
+  {
+    "localName": "Bahasa Indonesia",
+    "englishName": "Indonesian",
+    "tags": ["id", "id-ID"]
+  },
+  {
+    "localName": "Azərbaycanca",
+    "englishName": "Azerbaijani",
+    "tags": ["az", "az-AZ"]
+  }
+]

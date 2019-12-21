@@ -85,9 +85,8 @@ namespace SIL.XForge.Scripture
             services.Configure<RequestLocalizationOptions>(
                 opts =>
                 {
-                    // Add new cultures here as they are localized
                     var supportedCultures = new List<CultureInfo>();
-                    foreach(var culture in SharedResource.Cultures)
+                    foreach (var culture in SharedResource.Cultures)
                     {
                         supportedCultures.Add(new CultureInfo(culture.Key));
                     }
@@ -104,7 +103,8 @@ namespace SIL.XForge.Scripture
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddViewLocalization()
-                .AddDataAnnotationsLocalization(options => {
+                .AddDataAnnotationsLocalization(options =>
+                {
                     options.DataAnnotationLocalizerProvider = (type, factory) =>
                         factory.Create(typeof(SharedResource));
                 });

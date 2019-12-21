@@ -8,6 +8,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { of, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
+import locales from '../../../locales.json';
 import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { environment } from '../environments/environment';
@@ -20,8 +21,9 @@ interface Locale {
   direction: 'ltr' | 'rtl';
   tags: string[];
   production: boolean;
-  dateFormat?: Intl.DateTimeFormatOptions | ((date: Date) => string);
 }
+
+type DateFormat = Intl.DateTimeFormatOptions | ((date: Date) => string);
 
 export const en = merge(enChecking, enNonChecking);
 
@@ -51,58 +53,22 @@ function pad(number: number) {
   providedIn: 'root'
 })
 export class I18nService {
-  static readonly locales: Locale[] = [
-    {
-      localName: 'English (US)',
-      englishName: 'English (US)',
-      direction: 'ltr',
-      tags: ['en', 'en-US'],
-      dateFormat: { month: 'short' },
-      production: true
-    },
-    {
-      localName: 'English (UK)',
-      englishName: 'English (UK)',
-      direction: 'ltr',
-      tags: ['en-GB'],
-      dateFormat: { month: 'short', hour12: true },
-      production: true
-    },
-    {
-      localName: 'Español',
-      englishName: 'Spanish',
-      direction: 'ltr',
-      tags: ['es', 'es-ES'],
-      production: false
-    },
-    {
-      localName: 'Azərbaycanca',
-      englishName: 'Azerbaijani',
-      direction: 'ltr',
-      tags: ['az', 'az-AZ'],
-      // Chrome formats az dates as en-US. This manual override is the format Firefox uses for az
-      dateFormat: (d: Date) =>
-        `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
-      production: false
-    },
-    {
-      localName: 'Bahasa Indonesia',
-      englishName: 'Indonesian',
-      direction: 'ltr',
-      tags: ['id', 'id-ID'],
-      production: false
-    },
-    {
-      localName: '简体中文',
-      englishName: 'Chinese (Simplified)',
-      direction: 'ltr',
-      tags: ['zh-CN', 'zh'],
-      production: false
-    }
-  ].map(locale => {
-    (locale as Locale).canonicalTag = locale.tags[0];
-    return locale as Locale;
+  static readonly locales: Locale[] = locales.map(locale => {
+    return {
+      ...locale,
+      canonicalTag: locale.tags[0],
+      production: !!locale.production,
+      direction: locale['direction'] || 'ltr'
+    };
   });
+
+  static dateFormats: { [key: string]: DateFormat } = {
+    en: { month: 'short' },
+    'en-GB': { month: 'short', hour12: true },
+    // Chrome formats az dates as en-US. This manual override is the format Firefox uses for az
+    az: (d: Date) =>
+      `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  };
 
   static readonly defaultLocale = I18nService.getLocale('en')!;
   static readonly availableLocales = I18nService.locales.filter(locale => locale.production || !environment.production);
@@ -187,13 +153,13 @@ export class I18nService {
 
   formatDate(date: Date) {
     // fall back to en in the event the language code isn't valid
-    const format = this.currentLocale.dateFormat;
+    const format = I18nService.dateFormats[this.localeCode] || {};
     return typeof format === 'function'
       ? format(date)
       : date.toLocaleString(
           [this.localeCode, I18nService.defaultLocale.canonicalTag],
           // Browser default is all numeric, but includes seconds. This is same as default, but without seconds
-          merge({ month: 'numeric', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' }, format)
+          { month: 'numeric', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', ...format }
         );
   }
 }
