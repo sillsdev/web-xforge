@@ -126,7 +126,11 @@
                   ></app-write-status>
                 </div>
                 <div class="helper-text checkbox-helper-text" fxLayout="row">
-                  <div [innerHTML]="i18n.translateAndInsertTags('settings.users_can_share_the_project')"></div>
+                  <span>
+                    <span [innerHTML]="shareDescription?.before"></span>
+                    <a [routerLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
+                    <span>{{ shareDescription?.after }}</span>
+                  </span>
                 </div>
                 <mdc-radio-group id="share-level-radio-group" formControlName="shareLevel" class="tool-setting indent">
                   <div class="tool-setting-field">
@@ -157,7 +161,11 @@
       <mdc-card class="card-content" id="delete-project">
         <h4>{{ t("delete_this_project") }}</h4>
         <p>{{ t("delete_project_cannot_be_undone") }}</p>
-        <p [innerHTML]="i18n.translateAndInsertTags('settings.will_not_delete_paratext_project')"></p>
+        <p>
+          <span [innerHTML]="synchronizeWarning?.before"></span>
+          <a [routerLink]="['/projects', projectId, 'sync']">{{ synchronizeWarning?.templateTagText }}</a>
+          <span>{{ synchronizeWarning?.after }}</span>
+        </p>
         <div fxLayout="row" fxLayoutAlign="end stretch">
           <button
             id="delete-btn"

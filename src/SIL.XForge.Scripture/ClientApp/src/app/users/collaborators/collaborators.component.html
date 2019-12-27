@@ -10,10 +10,10 @@
     <mdc-list-divider></mdc-list-divider>
 
     <div fxLayout="row" fxLayoutAlign="start center">
-      <p
-        class="helper-text"
-        [innerHTML]="i18n.translateAndInsertTags('collaborators.change_roles_and_permissions')"
-      ></p>
+      <p class="helper-text">
+        <span [innerHtml]="rolesText?.before"></span><strong><mdc-icon>menu</mdc-icon></strong
+        ><span [innerHtml]="rolesText?.after"></span>
+      </p>
     </div>
 
     <div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
