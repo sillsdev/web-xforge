@@ -21,7 +21,7 @@
     "answer_count_label": "{{ count }} answers",
     "archive": "Archive",
     "archived_questions": "Archived Questions",
-    "click_add_question": "Click {{ strongStart }}Add question{{ strongEnd }}, above.",
+    "click_add_question": "Click {{ boldStart }}Add question{{ boldEnd }}, above.",
     "no_questions": "There are no published questions. ",
     "no_archived_questions": "There are no archived questions.",
     "question_count_label": "{{ count }} questions",
@@ -31,7 +31,7 @@
   "collaborators": {
     "awaiting_response_from": "Awaiting response from",
     "cancel_invite": "Cancel invite",
-    "change_roles_and_permissions": "Users' roles and permissions can {{ strongStart }}only{{ strongEnd }} be changed in {{ strongStart }}Paratext{{ strongEnd }}. Open the project in {{ strongStart }}Paratext{{ strongEnd }}, on the project window click {{ strongStart }}menu{{ strongEnd }}, then {{ strongStart }}Project settings{{ strongEnd }}, then {{ strongStart }}User permissions{{ strongEnd }}. After a {{ italicsStart }}Send/Receive{{ italicsEnd }} in {{ strongStart }}Paratext{{ strongEnd }} and then a {{ italicsStart }}Synchronize{{ italicsEnd }} in {{ strongStart }}Scripture Forge{{ strongEnd }}, their role will come into effect here, once that user logs in with their {{ strongStart }}Paratext{{ strongEnd }} account.",
+    "change_roles_and_permissions": "Users' roles and permissions can {{ boldStart }}only{{ boldEnd }} be changed in {{ boldStart }}Paratext{{ boldEnd }}. Open the project in {{ boldStart }}Paratext{{ boldEnd }}, on the project window click {{ templateTagBoundary }}{{ templateTagBoundary }}, then {{ boldStart }}Project settings{{ boldEnd }}, then {{ boldStart }}User permissions{{ boldEnd }}. After a {{ italicsStart }}Send/Receive{{ italicsEnd }} in {{ boldStart }}Paratext{{ boldEnd }} and then a {{ italicsStart }}Synchronize{{ italicsEnd }} in {{ boldStart }}Scripture Forge{{ boldEnd }}, their role will come into effect here, once that user logs in with their {{ boldStart }}Paratext{{ boldEnd }} account.",
     "filter_users": "Filter users...",
     "me": "me",
     "no_users_found": "No users found",
@@ -41,7 +41,7 @@
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Are you sure you want to delete this project?",
     "cancel": "Cancel",
-    "delete_cannot_be_undone": "This action {{ strongStart }}cannot{{ strongEnd }} be undone. This will permanently delete the {{ strongStart }}{{ projectName }}{{ strongEnd }} project, translation data, questions, answers, and comments.",
+    "delete_cannot_be_undone": "This action {{ boldStart }}cannot{{ boldEnd }} be undone. This will permanently delete the {{ boldStart }}{{ projectName }}{{ boldEnd }} project, translation data, questions, answers, and comments.",
     "delete_this_project": "Delete this project",
     "i_understand_the_consequences": "I understand the consequences, delete this project",
     "please_type_project_name": "Please type in the name of the project to confirm.",
@@ -71,7 +71,7 @@
     "cancel": "Cancel",
     "edit_question": "Edit Question",
     "example_verse": "e.g. JHN 3:16",
-    "must_be_after_scripture_reference": "Must be after {{ strongStart }}Scripture reference{{ strongEnd }}",
+    "must_be_after_scripture_reference": "Must be after {{ boldStart }}Scripture reference{{ boldEnd }}",
     "must_be_inside_verse_range": "Must be inside verse range",
     "must_be_same_book_and_chapter": "Must be the same book and chapter",
     "new_question": "New Question",
@@ -87,7 +87,7 @@
     "delete_this_project": "Delete this project",
     "delete_project_cannot_be_undone": "Once you delete a project, there is no going back. Please be certain.",
     "engage_the_wider_community": "Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses, ask targeted questions, allow discussion of answers.",
-    "enable_translation_suggestions": "to enable {{ strongStart }}Translate Suggestions{{ strongEnd }} and see more options",
+    "enable_translation_suggestions": "to enable {{ boldStart }}Translate Suggestions{{ boldEnd }} and see more options",
     "community_checking": "Community Checking",
     "log_in_with_paratext": "Log in to Paratext",
     "see_others_answers_and_comments": "See other's answers and comments",
@@ -99,10 +99,10 @@
     "translate": "Translate",
     "translate_tool_is_always_available": "The translate tool is always available to collaborate with other translators working on the same text.",
     "translation_suggestions": "Translation Suggestions",
-    "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your project is setup as a {{ strongStart }}Daughter Translation{{ strongEnd }} in Paratext.",
+    "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your project is setup as a {{ boldStart }}Daughter Translation{{ boldEnd }} in Paratext.",
     "users_can_interact_with_each_other": "Users can see each other's answers and comments to interact with each other.",
-    "users_can_share_the_project": "Users can share by inviting a friend to join the project.{{ break }}{{ italicsStart }}Administrators{{ italicsEnd }} can always invite others to the project in {{ strongStart }}Users{{ strongEnd}}.",
-    "will_not_delete_paratext_project": "This will {{ strongStart }}not{{ strongEnd }} delete your Paratext project, but it will delete any unsynchronized data stored in Scripture Forge. It is recommended to {{ strongStart }}Synchronize{{ strongEnd }} first before deleting."
+    "users_can_share_the_project": "Users can share by inviting a friend to join the project.{{ break }}{{ italicsStart }}Administrators{{ italicsEnd }} can always invite others to the project in {{ templateTagBoundary }}Users{{ templateTagBoundary }}.",
+    "will_not_delete_paratext_project": "This will {{ boldStart }}not{{ boldEnd }} delete your Paratext project, but it will delete any unsynchronized data stored in Scripture Forge. It is recommended to {{ templateTagBoundary }}Synchronize{{ templateTagBoundary }} first before deleting."
   },
   "suggestions_settings_dialog": {
     "better": "Better",

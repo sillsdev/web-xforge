@@ -333,7 +333,7 @@ describe('AppComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule],
+  imports: [CommonModule, UICommonModule, TestTranslocoModule],
   declarations: [ProjectDeletedDialogComponent],
   entryComponents: [ProjectDeletedDialogComponent],
   exports: [ProjectDeletedDialogComponent]
