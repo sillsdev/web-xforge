@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { I18nService } from 'xforge-common/i18n.service';
+import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
@@ -32,6 +32,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     shareLevel: new FormControl(undefined)
   });
   sourceProjects?: ParatextProject[];
+  synchronizeWarning?: TextAroundTemplate = this.i18n.translateTextAroundTemplateTags(
+    'settings.will_not_delete_paratext_project'
+  );
+  shareDescription?: TextAroundTemplate = this.i18n.translateTextAroundTemplateTags(
+    'settings.users_can_share_the_project'
+  );
 
   private projectDoc?: SFProjectDoc;
   /** Elements in this component and their states. */
