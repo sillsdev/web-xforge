@@ -681,6 +681,7 @@ describe('CheckingComponent', () => {
       // The new answer does not show up yet.
       expect(env.answers.length).toEqual(2);
       expect(env.component.answersPanel!.answers.length).toEqual(2);
+      expect(env.component.answersPanel!.projectUserConfigDoc!.data!.answerRefsRead.length).toEqual(3);
       expect(env.totalAnswersMessageCount).toEqual(3);
 
       // But a show-unread-answers control appears.
@@ -689,10 +690,11 @@ describe('CheckingComponent', () => {
 
       // Clicking makes the answer appear and the control go away.
       env.clickButton(env.showUnreadAnswersButton);
-      flush();
+      tick(env.questionReadTimer);
       expect(env.answers.length).toEqual(3);
       expect(env.component.answersPanel!.answers.length).toEqual(3);
       expect(env.showUnreadAnswersButton).toBeNull();
+      expect(env.component.answersPanel!.projectUserConfigDoc!.data!.answerRefsRead.length).toEqual(4);
       expect(env.totalAnswersMessageCount).toEqual(3);
     }));
 
@@ -718,9 +720,12 @@ describe('CheckingComponent', () => {
       expect(env.showUnreadAnswersButton).not.toBeNull();
       expect(env.unreadAnswersBannerCount).toEqual(1);
 
+      // clicking on the unread answer badge does not show the question
+      expect(env.getUnread(env.selectQuestion(6))).toEqual(1);
+
       // Clicking makes the answer appear and the control go away.
       env.clickButton(env.showUnreadAnswersButton);
-      flush();
+      tick(env.questionReadTimer);
       expect(env.answers.length).toEqual(2);
       expect(env.component.answersPanel!.answers.length).toEqual(2);
       expect(env.showUnreadAnswersButton).toBeNull();

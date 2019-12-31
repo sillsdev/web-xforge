@@ -225,6 +225,9 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   activateQuestion(questionDoc: QuestionDoc): void {
+    if (this.activeQuestionDoc != null && this.activeQuestionDoc.id === questionDoc.id) {
+      return;
+    }
     this.activeQuestionDoc = questionDoc;
     this.changed.emit(questionDoc);
     this.activeQuestionDoc$.next(questionDoc);
