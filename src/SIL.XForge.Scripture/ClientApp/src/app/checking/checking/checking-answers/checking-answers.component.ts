@@ -33,7 +33,7 @@ import { CheckingTextComponent } from '../checking-text/checking-text.component'
 import { CommentAction } from './checking-comments/checking-comments.component';
 
 export interface AnswerAction {
-  action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'like' | 'recorder';
+  action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'like' | 'recorder' | 'show-unread';
   answer?: Answer;
   text?: string;
   verseRef?: VerseRefData;
@@ -430,12 +430,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
-  showRemoteAnswers() {
+  showRemoteAnswers(showUnreadClicked?: boolean) {
     if (this.questionDoc == null || this.questionDoc.data == null) {
       return;
     }
     this.answersToShow = this.questionDoc.data.answers.map(answer => answer.dataId);
     this.justEditedAnswer = false;
+    if (showUnreadClicked) {
+      this.action.emit({ action: 'show-unread' });
+    }
   }
 
   private canLikeAnswer(answer: Answer): LikeAnswerResponse {

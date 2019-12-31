@@ -187,7 +187,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
-    return this.questionsQuery != null ? this.questionsQuery.docs : [];
+    // Wait until the question query is ready before showing any question
+    return this.questionsQuery != null && this.questionsQuery.ready ? this.questionsQuery.docs : [];
   }
 
   get textsByBookId(): TextsByBookId {
@@ -429,6 +430,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (answerAction.answer != null) {
           this.likeAnswer(answerAction.answer);
         }
+        break;
+      case 'show-unread':
+        // Emit the question doc so that answers and comments get marked as read
+        this.questionsPanel.activeQuestionDoc$.next(this.questionsPanel.activeQuestionDoc);
         break;
       case 'show-form':
         this.resetAnswerPanelHeightOnFormHide = true;
