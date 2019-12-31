@@ -169,6 +169,15 @@ describe('AppComponent', () => {
     expect(env.component.selectedProjectId).toBeUndefined();
   }));
 
+  it('top nav bar should have classes', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/connect-project']);
+    env.init();
+
+    expect(env.navBar).not.toBeNull();
+    expect(env.navBar.classes['mdc-top-app-bar--short']).toBe(true);
+  }));
+
   it('response to remote project deletion', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project01']);
@@ -442,6 +451,10 @@ class TestEnvironment {
   get menuList(): MdcList {
     const listElem = this.fixture.debugElement.query(By.css('#menu-list'));
     return listElem.componentInstance;
+  }
+
+  get navBar(): DebugElement {
+    return this.fixture.debugElement.query(By.css('mdc-top-app-bar'));
   }
 
   get syncItem(): DebugElement {
