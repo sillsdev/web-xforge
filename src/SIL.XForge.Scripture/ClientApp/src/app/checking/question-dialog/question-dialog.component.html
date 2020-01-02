@@ -54,12 +54,13 @@
                 [activeVerse]="selection"
               ></app-checking-text>
             </div>
-            <mdc-form-field fluid>
+            <mdc-form-field>
               <mdc-textarea
                 label="Question"
                 type="text"
                 formControlName="questionText"
                 rows="2"
+                fullwidth
                 [helperText]="questionHelper"
                 id="question-text"
               ></mdc-textarea>
