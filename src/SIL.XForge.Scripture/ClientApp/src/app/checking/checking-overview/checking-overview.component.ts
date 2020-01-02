@@ -2,7 +2,6 @@ import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { distanceInWordsToNow } from 'date-fns';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
@@ -205,10 +204,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count;
   }
 
-  dateInWords(date: string): string {
-    return distanceInWordsToNow(new Date(date));
-  }
-
   questionCount(bookNum: number, chapterNumber: number, fromArchive = false): number {
     if (this.projectDoc == null) {
       return 0;
@@ -223,7 +218,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   timeArchivedStamp(date: string): string {
-    return translate('checking_overview.time_archived_stamp', { timeMessage: this.dateInWords(date) });
+    return translate('checking_overview.time_archived_stamp', { timeStamp: this.i18n.formatDate(new Date(date)) });
   }
 
   bookAnswerCount(text: TextInfo): number {

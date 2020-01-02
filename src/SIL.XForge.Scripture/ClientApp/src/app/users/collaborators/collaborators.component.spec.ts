@@ -3,6 +3,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'realtime-server/lib/common/models/user';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
@@ -31,6 +32,7 @@ const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
+const mockedCookieService = mock(CookieService);
 
 describe('CollaboratorsComponent', () => {
   configureTestingModule(() => ({
@@ -42,6 +44,7 @@ describe('CollaboratorsComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
+      { provide: CookieService, useMock: mockedCookieService },
       emptyHammerLoader
     ]
   }));

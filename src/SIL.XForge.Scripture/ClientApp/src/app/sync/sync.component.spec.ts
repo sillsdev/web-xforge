@@ -3,13 +3,14 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
@@ -21,16 +22,18 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
 const mockedProjectService = mock(SFProjectService);
+const mockedCookieService = mock(CookieService);
 
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
     declarations: [SyncComponent],
-    imports: [CommonModule, UICommonModule],
+    imports: [CommonModule, UICommonModule, TestTranslocoModule],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ParatextService, useMock: mockedParatextService },
-      { provide: SFProjectService, useMock: mockedProjectService }
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: CookieService, useMock: mockedCookieService }
     ]
   }));
 
@@ -54,7 +57,7 @@ describe('SyncComponent', () => {
     expect(env.title.textContent).toContain('Synchronize Sync Test Project with Paratext');
     expect(env.logInButton).toBeNull();
     expect(env.syncButton.nativeElement.textContent).toContain('Synchronize');
-    expect(env.lastSyncDate.textContent).toContain(' 2 months ago');
+    expect(env.lastSyncDate.textContent).toContain('Last synced on');
   }));
 
   it('should sync project when the button is clicked', fakeAsync(() => {

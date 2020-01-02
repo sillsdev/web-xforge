@@ -25,6 +25,12 @@ interface Locale {
 
 type DateFormat = Intl.DateTimeFormatOptions | ((date: Date) => string);
 
+export interface TextAroundTemplate {
+  before: string;
+  templateTagText: string;
+  after: string;
+}
+
 export const en = merge(enChecking, enNonChecking);
 
 @Injectable()
@@ -142,10 +148,11 @@ export class I18nService {
   translateAndInsertTags(key: string, params: object = {}) {
     return this.transloco.translate(key, {
       ...params,
-      strongStart: '<strong>',
-      strongEnd: '</strong>',
-      emStart: '<em>',
-      emEnd: '</em>',
+      boldStart: '<strong>',
+      boldEnd: '</strong>',
+      italicsStart: '<em>',
+      italicsEnd: '</em>',
+      newLine: '<br />',
       spanStart: params['spanClass'] ? `<span class="${params['spanClass']}">` : '<span>',
       spanEnd: '</span>'
     });
@@ -161,5 +168,18 @@ export class I18nService {
           // Browser default is all numeric, but includes seconds. This is same as default, but without seconds
           { month: 'numeric', year: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', ...format }
         );
+  }
+
+  translateTextAroundTemplateTags(key: string, params: object = {}): TextAroundTemplate | undefined {
+    const boundary = '{{ boundary }}';
+    const text: string = this.translateAndInsertTags(key, {
+      ...params,
+      templateTagBoundary: boundary
+    });
+    const textParts: string[] = text.split(boundary);
+    if (textParts != null) {
+      return { before: textParts[0], templateTagText: textParts[1], after: textParts[2] };
+    }
+    return undefined;
   }
 }

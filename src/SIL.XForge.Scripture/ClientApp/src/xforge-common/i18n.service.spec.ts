@@ -35,15 +35,28 @@ describe('I18nService', () => {
         deepEqual({
           value: 2,
           spanClass: 'text',
-          strongStart: '<strong>',
-          strongEnd: '</strong>',
-          emStart: '<em>',
-          emEnd: '</em>',
+          boldStart: '<strong>',
+          boldEnd: '</strong>',
+          italicsStart: '<em>',
+          italicsEnd: '</em>',
+          newLine: '<br />',
           spanStart: '<span class="text">',
           spanEnd: '</span>'
         })
       )
     ).once();
+  });
+
+  it('should translate text around a template tag', () => {
+    when(mockedTranslocoService.translate<string>(anything(), anything())).thenReturn(
+      'translated key with {{ boundary }}tag text{{ boundary }} in template'
+    );
+    const service = new I18nService(instance(mockedTranslocoService), instance(mockedCookieService));
+    expect(service.translateTextAroundTemplateTags('namespace.key')).toEqual({
+      before: 'translated key with ',
+      templateTagText: 'tag text',
+      after: ' in template'
+    });
   });
 
   it('should localize dates', () => {
