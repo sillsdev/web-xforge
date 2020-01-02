@@ -3,6 +3,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
+import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
@@ -21,6 +22,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
 const mockedProjectService = mock(SFProjectService);
+const mockedCookieService = mock(CookieService);
 
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
@@ -30,7 +32,8 @@ describe('SyncComponent', () => {
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ParatextService, useMock: mockedParatextService },
-      { provide: SFProjectService, useMock: mockedProjectService }
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: CookieService, useMock: mockedCookieService }
     ]
   }));
 
@@ -54,7 +57,7 @@ describe('SyncComponent', () => {
     expect(env.title.textContent).toContain('Synchronize Sync Test Project with Paratext');
     expect(env.logInButton).toBeNull();
     expect(env.syncButton.nativeElement.textContent).toContain('Synchronize');
-    expect(env.lastSyncDate.textContent).toContain(' 2 months ago');
+    expect(env.lastSyncDate.textContent).toContain('Last synced on');
   }));
 
   it('should sync project when the button is clicked', fakeAsync(() => {

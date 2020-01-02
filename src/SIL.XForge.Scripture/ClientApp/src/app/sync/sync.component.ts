@@ -1,10 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { distanceInWordsToNow } from 'date-fns';
 import { combineLatest, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
@@ -26,7 +26,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
     private readonly route: ActivatedRoute,
     noticeService: NoticeService,
     private readonly paratextService: ParatextService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    readonly i18n: I18nService
   ) {
     super(noticeService);
   }
@@ -53,8 +54,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
     if (dateLastSynced == null || dateLastSynced === '' || Date.parse(dateLastSynced) <= 0) {
       return translate('sync.never_been_synced');
     } else {
-      // ToDo: translate the time message
-      return translate('sync.last_synced_time_stamp', { timeMessage: distanceInWordsToNow(dateLastSynced) });
+      return translate('sync.last_synced_time_stamp', { timeStamp: this.i18n.formatDate(new Date(dateLastSynced)) });
     }
   }
 
