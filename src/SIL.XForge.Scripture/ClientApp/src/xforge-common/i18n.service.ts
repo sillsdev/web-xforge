@@ -152,7 +152,7 @@ export class I18nService {
       boldEnd: '</strong>',
       italicsStart: '<em>',
       italicsEnd: '</em>',
-      break: '<br />',
+      newLine: '<br />',
       spanStart: params['spanClass'] ? `<span class="${params['spanClass']}">` : '<span>',
       spanEnd: '</span>'
     });

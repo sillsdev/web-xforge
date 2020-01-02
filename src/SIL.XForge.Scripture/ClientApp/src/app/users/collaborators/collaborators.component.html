@@ -41,10 +41,14 @@
                 {{ userRow.user?.displayName }}
                 <b *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;{{ t("me") }}</b>
               </div>
-              <div *ngIf="userRow.isInvitee">
-                {{ t("awaiting_response_from") }}
-                <div>{{ userRow.user?.email }}</div>
-              </div>
+              <div
+                *ngIf="userRow.isInvitee"
+                [innerHtml]="
+                  i18n.translateAndInsertTags('collaborators.awaiting_response_from', {
+                    email: userRow.user?.email
+                  })
+                "
+              ></div>
             </td>
           </ng-container>
           <ng-container matColumnDef="projects">

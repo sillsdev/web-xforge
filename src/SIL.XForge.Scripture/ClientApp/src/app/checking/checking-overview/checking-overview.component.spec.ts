@@ -326,7 +326,7 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(0, undefined, true);
       env.simulateRowClick(1, id, true);
       const archivedQuestion: HTMLElement = env.archivedQuestionDates[0].nativeElement;
-      expect(archivedQuestion.textContent).toBe('Archived less than a minute ago');
+      expect(archivedQuestion.textContent).toContain('Archived on');
       env.clickElement(env.questionPublishButtons[0]);
       expect(env.textArchivedRows.length).toEqual(3);
       expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toContain('1 questions');

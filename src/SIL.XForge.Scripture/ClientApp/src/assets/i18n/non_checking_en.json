@@ -26,10 +26,10 @@
     "no_archived_questions": "There are no archived questions.",
     "question_count_label": "{{ count }} questions",
     "republish": "Republish",
-    "time_archived_stamp": "Archived {{ timeMessage }} ago"
+    "time_archived_stamp": "Archived on {{ timeStamp }}"
   },
   "collaborators": {
-    "awaiting_response_from": "Awaiting response from",
+    "awaiting_response_from": "Awaiting response from{{ newLine }}{{ email }}",
     "cancel_invite": "Cancel invite",
     "change_roles_and_permissions": "Users' roles and permissions can {{ boldStart }}only{{ boldEnd }} be changed in {{ boldStart }}Paratext{{ boldEnd }}. Open the project in {{ boldStart }}Paratext{{ boldEnd }}, on the project window click {{ templateTagBoundary }}{{ templateTagBoundary }}, then {{ boldStart }}Project settings{{ boldEnd }}, then {{ boldStart }}User permissions{{ boldEnd }}. After a {{ italicsStart }}Send/Receive{{ italicsEnd }} in {{ boldStart }}Paratext{{ boldEnd }} and then a {{ italicsStart }}Synchronize{{ italicsEnd }} in {{ boldStart }}Scripture Forge{{ boldEnd }}, their role will come into effect here, once that user logs in with their {{ boldStart }}Paratext{{ boldEnd }} account.",
     "filter_users": "Filter users...",
@@ -101,7 +101,7 @@
     "translation_suggestions": "Translation Suggestions",
     "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your project is setup as a {{ boldStart }}Daughter Translation{{ boldEnd }} in Paratext.",
     "users_can_interact_with_each_other": "Users can see each other's answers and comments to interact with each other.",
-    "users_can_share_the_project": "Users can share by inviting a friend to join the project.{{ break }}{{ italicsStart }}Administrators{{ italicsEnd }} can always invite others to the project in {{ templateTagBoundary }}Users{{ templateTagBoundary }}.",
+    "users_can_share_the_project": "Users can share by inviting a friend to join the project.{{ newLine }}{{ italicsStart }}Administrators{{ italicsEnd }} can always invite others to the project in {{ templateTagBoundary }}Users{{ templateTagBoundary }}.",
     "will_not_delete_paratext_project": "This will {{ boldStart }}not{{ boldEnd }} delete your Paratext project, but it will delete any unsynchronized data stored in Scripture Forge. It is recommended to {{ templateTagBoundary }}Synchronize{{ templateTagBoundary }} first before deleting."
   },
   "suggestions_settings_dialog": {
@@ -114,7 +114,7 @@
     "translation_suggestions_settings": "Translation suggestions settings"
   },
   "sync": {
-    "last_synced_time_stamp": "Last synced {{ timeMessage }} ago",
+    "last_synced_time_stamp": "Last synced on {{ timeStamp }}",
     "log_in_to_paratext": "Log in to Paratext",
     "never_been_synced": "Never been synced",
     "something_went_wrong_synchronizing_this_project": "Something went wrong while synchronizing the {{ projectName }} with Paratext. Please try again.",
