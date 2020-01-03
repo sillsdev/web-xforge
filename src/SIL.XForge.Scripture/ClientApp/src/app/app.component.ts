@@ -5,7 +5,6 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
