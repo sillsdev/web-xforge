@@ -169,15 +169,6 @@ describe('AppComponent', () => {
     expect(env.component.selectedProjectId).toBeUndefined();
   }));
 
-  it('top nav bar should have classes', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/connect-project']);
-    env.init();
-
-    expect(env.navBar).not.toBeNull();
-    expect(env.navBar.classes['mdc-top-app-bar--short']).toBe(true);
-  }));
-
   it('response to remote project deletion', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project01']);
