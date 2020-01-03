@@ -2,7 +2,7 @@
   <mdc-linear-progress [secondary]="true" *ngIf="isAppLoading != null" [open]="isAppLoading" fxFlex="none">
   </mdc-linear-progress>
   <header [class.overlay-drawer]="isDrawerPermanent">
-    <mdc-top-app-bar short #topAppBar [scrollTarget]="appContent">
+    <mdc-top-app-bar [short]="media.isActive(['lg', 'xl'])" #topAppBar [scrollTarget]="appContent">
       <mdc-top-app-bar-row>
         <mdc-top-app-bar-section align="start">
           <a *ngIf="!isDrawerPermanent && isProjectSelected" (click)="toggleDrawer()">
