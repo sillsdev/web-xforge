@@ -35,7 +35,10 @@
     #split-container {
       display: flex;
       flex: 1;
-      height: 100%;
+      max-height: calc(100vh - 200px);
+      @include media-breakpoint-down(sm) {
+        max-height: calc(100vh - 180px);
+      }
     }
     #scripture-panel {
       > .panel {
