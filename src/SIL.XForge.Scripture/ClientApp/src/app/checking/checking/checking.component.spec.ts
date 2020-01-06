@@ -1074,6 +1074,17 @@ describe('CheckingComponent', () => {
       expect(segment.hasAttribute('data-question-count')).toBe(true);
       expect(segment.getAttribute('data-question-count')).toBe('13');
     }));
+
+    it('sets text direction to auto', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      // the dir property is needed on the Quill editor because chapters don't always have paragraphs
+      expect(env.quillEditorElement.getAttribute('dir')).toEqual('auto');
+      // ensure multiple paragraphs were found, otherwise the test is meaningless
+      expect(env.paragraphs.length).toBeGreaterThan(1);
+      for (const paragraph of env.paragraphs) {
+        expect(paragraph.getAttribute('dir')).toEqual('auto');
+      }
+    }));
   });
 });
 
@@ -1284,6 +1295,10 @@ class TestEnvironment {
 
   get quillEditorElement(): HTMLElement {
     return <HTMLElement>document.getElementsByTagName('quill-editor')[0];
+  }
+
+  get paragraphs(): HTMLElement[] {
+    return this.fixture.debugElement.nativeElement.querySelectorAll('usx-para');
   }
 
   get recordButton(): DebugElement {
