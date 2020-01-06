@@ -311,6 +311,7 @@ export function registerScripture(): void {
     static create(value: Para): Node {
       const node = super.create(value) as HTMLElement;
       node.setAttribute(customAttributeName('style'), value.style);
+      node.setAttribute('dir', 'auto');
       setUsxValue(node, value);
       return node;
     }
