@@ -10,7 +10,7 @@
   },
   "checking_answers": {
     "archive": "Archivar",
-    "only_community_checkers_can_like": "Sólo a los revisores les pueden gustar las respuestas."
+    "only_community_checkers_can_like": "Sólo los revisores de la comunidad pueden dar \"Me gusta\" a las respuestas."
   },
   "checking_overview": {
     "add_question": "Agregar pregunta",
@@ -33,7 +33,7 @@
   "question_dialog": {
     "add_question_denied": "Permiso denegado: sólo el administrador del proyecto puede añadir y editar preguntas.",
     "cancel": "Cancelar",
-    "edit_question": "Editar pregunta",
+    "edit_question": "Editar Pregunta",
     "example_verse": "p.ej. JHN 3:16",
     "must_be_after_scripture_reference": "Debe ser después de {{ boldStart }}Referencia bíblica{{ boldEnd }}",
     "must_be_inside_verse_range": "Debe estar dentro del rango de versículos",
