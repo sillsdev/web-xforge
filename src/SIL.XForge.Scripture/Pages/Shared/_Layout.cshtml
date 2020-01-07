@@ -31,14 +31,13 @@
     <header>
         <div class="container">
             <div class="mdl-grid">
-                <div class="mdl-cell mdl-cell--4-col mdl-cell--2-col-phone flex align-items-center">
-                    <a href="/">
-                        <img src="~/images/logo-sf.svg" alt="Scripture Forge">
-                        <span>Scripture Forge</span>
-                    </a>
-                </div>
-                    <div class="mdl-cell mdl-cell--4-col mdl-cell--hide-phone"></div>
-                <div class="mdl-cell mdl-cell--4-col mdl-cell--2-col-phone flex align-items-end">
+                <div class="mdl-cell mdl-cell--12-col flex justify-content-space-between">
+                    <div class="flex align-items-center">
+                        <a href="/">
+                            <img src="~/images/logo-sf.svg" alt="Scripture Forge">
+                            <span>Scripture Forge</span>
+                        </a>
+                    </div>
                     @await Html.PartialAsync("_SelectLanguagePartial")
                 </div>
             </div>
