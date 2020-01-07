@@ -148,7 +148,7 @@
     <value>Consultor de Tecnología de Idiomas</value>
   </data>
   <data name="ContactRoleManager" xml:space="preserve">
-    <value>Gerente del Programa de Idiomas</value>
+    <value>Administrador del Programa de Idiomas</value>
   </data>
   <data name="ContactRoleOther" xml:space="preserve">
     <value>Otro</value>

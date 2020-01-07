@@ -19,7 +19,8 @@
   {
     "localName": "Español",
     "englishName": "Spanish",
-    "tags": ["es", "es-ES"]
+    "tags": ["es", "es-ES"],
+    "production": true
   },
   {
     "localName": "Bahasa Indonesia",
