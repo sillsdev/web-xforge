@@ -23,6 +23,11 @@
     "production": true
   },
   {
+    "localName": "Русский",
+    "englishName": "Russian",
+    "tags": ["ru", "ru-RU"]
+  },
+  {
     "localName": "Bahasa Indonesia",
     "englishName": "Indonesian",
     "tags": ["id", "id-ID"]
