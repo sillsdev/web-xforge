@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { TRANSLOCO_CONFIG, TRANSLOCO_LOADER } from '@ngneat/transloco';
+import { TRANSLOCO_CONFIG, TRANSLOCO_LOADER, TranslocoModule } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
 import { AvatarModule } from 'ngx-avatar';
 import { AuthHttpInterceptor } from './auth-http-interceptor';
@@ -39,7 +39,8 @@ export const xForgeCommonEntryComponents = [SaDeleteDialogComponent];
     CommonModule,
     ngfModule,
     RouterModule,
-    UICommonModule
+    UICommonModule,
+    TranslocoModule
   ],
   declarations: componentExports,
   exports: componentExports,

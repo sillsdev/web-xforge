@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoService } from '@ngneat/transloco';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
@@ -21,6 +22,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly projectService: SFProjectService,
     private readonly router: Router,
     private readonly userService: UserService,
+    private readonly transloco: TranslocoService,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -46,7 +48,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
               err instanceof CommandError &&
               (err.code === CommandErrorCode.Forbidden || err.code === CommandErrorCode.NotFound)
             ) {
-              await this.noticeService.showMessageDialog('The project link is invalid.');
+              await this.noticeService.showMessageDialog(this.transloco.translate('project.project_link_is_invalid'));
               this.router.navigateByUrl('/projects', { replaceUrl: true });
               return;
             } else {

@@ -10,7 +10,7 @@
             <div fxLayout="row wrap" fxLayoutAlign="space-around start" fxLayoutGap.gt-xs="1em">
               <mdc-form-field>
                 <mdc-text-field
-                  label="Scripture reference"
+                  label="{{ t('scripture_reference') }}"
                   type="text"
                   formControlName="scriptureStart"
                   outlined
@@ -27,7 +27,7 @@
               </mdc-form-field>
               <mdc-form-field>
                 <mdc-text-field
-                  label="End reference"
+                  label="{{ t('end_reference') }}"
                   type="text"
                   formControlName="scriptureEnd"
                   outlined
@@ -50,13 +50,13 @@
             <div class="text-container">
               <app-checking-text
                 [id]="textDocId"
-                placeholder="Enter a reference to load text"
+                placeholder="{{ t('enter_a_reference_to_load_text') }}"
                 [activeVerse]="selection"
               ></app-checking-text>
             </div>
             <mdc-form-field>
               <mdc-textarea
-                label="Question"
+                label="{{ t('question') }}"
                 type="text"
                 formControlName="questionText"
                 rows="2"

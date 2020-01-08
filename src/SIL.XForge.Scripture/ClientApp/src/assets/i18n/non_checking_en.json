@@ -56,10 +56,6 @@
     "training_completed_successfully": "Training completed successfully",
     "verse_too_long_for_suggestions": "This verse is too long to generate suggestions."
   },
-  "project_deleted_dialog": {
-    "ok": "OK",
-    "project_has_been_deleted": "The project has been deleted or is no longer accessible."
-  },
   "question_answered_dialog": {
     "cancel": "Cancel",
     "consider_creating_new_question": "Consider creating a new question instead of editing this question.",
@@ -70,14 +66,18 @@
     "add_question_denied": "Permission denied: only project administrator can add and edit questions.",
     "cancel": "Cancel",
     "edit_question": "Edit Question",
+    "end_reference": "End reference",
+    "enter_a_reference_to_load_text": "Enter a reference to load text",
     "example_verse": "e.g. JHN 3:16",
     "must_be_after_scripture_reference": "Must be after {{ boldStart }}Scripture reference{{ boldEnd }}",
     "must_be_inside_verse_range": "Must be inside verse range",
     "must_be_same_book_and_chapter": "Must be the same book and chapter",
     "new_question": "New Question",
+    "question": "Question",
     "recording_stopped": "The recording for your question was automatically stopped.",
     "required_with_asterisk": "*Required",
-    "save": "Save"
+    "save": "Save",
+    "scripture_reference": "Scripture reference"
   },
   "settings": {
     "anyone_with_a_link": "Anyone with a link",
@@ -122,6 +122,11 @@
     "synchronize": "Synchronize",
     "synchronize_project": "Synchronize {{ projectName }} with Paratext",
     "your_project_is_being_synchronized": "Your project is being synchronized..."
+  },
+  "text": {
+    "book_does_not_exist": "This book does not exist.",
+    "book_is_empty": "This book is empty. Add chapters in Paratext.",
+    "loading": "Loading..."
   },
   "translate_overview": {
     "progress": "Progress",
