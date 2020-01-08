@@ -50,7 +50,7 @@ describe('TextChooserDialogComponent', () => {
     env.selection = '';
     expect(env.errorMessage).toBeNull();
     env.click(env.saveButton);
-    expect(env.errorMessage.textContent).toEqual('Select text to attach to your answer.');
+    expect(env.errorMessage.textContent).toEqual('Select verses to attach to your answer.');
     env.closeDialog();
   }));
 

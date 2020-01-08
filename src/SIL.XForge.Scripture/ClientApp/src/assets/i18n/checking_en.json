@@ -269,6 +269,6 @@
     "cancel": "Cancel",
     "save": "Save",
     "select_scripture": "Select scripture to attach to your answer",
-    "select_text_error_message": "Select text to attach to your answer."
+    "select_text_error_message": "Select verses to attach to your answer."
   }
 }
