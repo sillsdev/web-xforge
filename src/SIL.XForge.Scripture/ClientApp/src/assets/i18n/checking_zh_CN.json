@@ -248,6 +248,10 @@
     "done": "完成",
     "share_with_others": "与他人分享"
   },
+  "start": {
+    "connect_project": "Connect project",
+    "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet."
+  },
   "text_chooser_dialog": {
     "cancel": "取消",
     "save": "保存",

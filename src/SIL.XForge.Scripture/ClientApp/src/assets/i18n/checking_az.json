@@ -248,6 +248,10 @@
     "done": "Yerinə yetirildi",
     "share_with_others": "Başqaları ilə paylaşın. "
   },
+  "start": {
+    "connect_project": "Connect project",
+    "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet."
+  },
   "text_chooser_dialog": {
     "cancel": "Ləğv etmək",
     "save": "Yadda saxlamaq",
