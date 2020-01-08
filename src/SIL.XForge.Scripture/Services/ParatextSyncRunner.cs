@@ -234,15 +234,15 @@ namespace SIL.XForge.Scripture.Services
         private async Task<List<Chapter>> SyncBookUsxAsync(TextInfo text, TextType textType, string paratextId,
             string fileName, bool isReadOnly, ISet<int> chaptersToInclude)
         {
-            SortedList<int, IDocument<Models.TextData>> textDocs = await FetchTextDocsAsync(text, textType);
+            SortedList<int, IDocument<Models.TextData>> dbChapterDocs = await FetchTextDocsAsync(text, textType);
 
             string bookId = Canon.BookNumberToId(text.BookNum);
             // Merge mongo data to PT cloud.
             XElement bookTextElem;
-            string bookText;
+            string cloudBookText;
             if (isReadOnly)
             {
-                bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
+                cloudBookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
             }
             else
             {
@@ -251,52 +251,72 @@ namespace SIL.XForge.Scripture.Services
 
                 var oldUsxDoc = new XDocument(bookTextElem.Element("usx"));
                 XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
-                    .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
+                    .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, dbChapterDocs[c.Number].Data)));
 
                 var revision = (string)bookTextElem.Attribute("revision");
 
                 if (XNode.DeepEquals(oldUsxDoc, newUsxDoc))
                 {
-                    bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
+                    cloudBookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
                 }
                 else
                 {
-                    bookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
+                    cloudBookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
                         revision, newUsxDoc.Root.ToString());
                 }
             }
             await UpdateProgress();
 
-            bookTextElem = XElement.Parse(bookText);
+            bookTextElem = XElement.Parse(cloudBookText);
 
             // Merge updated PT cloud data into mongo.
             var usxDoc = new XDocument(bookTextElem.Element("usx"));
             var tasks = new List<Task>();
-            Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
+            Dictionary<int, ChapterDelta> cloudChapters = _deltaUsxMapper.ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
             var chapters = new List<Chapter>();
-            foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
+            foreach (KeyValuePair<int, ChapterDelta> cloudChapter in cloudChapters)
             {
-                if (textDocs.TryGetValue(kvp.Key, out IDocument<Models.TextData> textDataDoc))
+                if (cloudChapter.Value.Delta == null)
                 {
-                    Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
-                    if (diffDelta.Ops.Count > 0)
-                        tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
-                    textDocs.Remove(kvp.Key);
+                    // PT cloud is missing chapter. Delete it locally.
+                    continue;
                 }
-                else if (chaptersToInclude == null || chaptersToInclude.Contains(kvp.Key))
+                if (dbChapterDocs.TryGetValue(cloudChapter.Key, out IDocument<Models.TextData> dbChapterDoc))
                 {
-                    textDataDoc = GetTextDoc(text, kvp.Key, textType);
-                    tasks.Add(textDataDoc.CreateAsync(new Models.TextData(kvp.Value.Delta)));
+                    Delta diffDelta;
+                    if (dbChapterDoc.Data != null)
+                    {
+                        // Merge PT cloud into database.
+                        diffDelta = dbChapterDoc.Data.Diff(cloudChapter.Value.Delta);
+                        if (diffDelta.Ops.Count > 0)
+                        {
+                            tasks.Add(dbChapterDoc.SubmitOpAsync(diffDelta));
+                        }
+                    }
+                    else
+                    {
+                        // Set database to content from PT cloud.
+                        dbChapterDoc = GetTextDoc(text, cloudChapter.Key, textType);
+                        tasks.Add(dbChapterDoc.CreateAsync(new Models.TextData(cloudChapter.Value.Delta)));
+                    }
+
+                    dbChapterDocs.Remove(cloudChapter.Key);
+                }
+                else if (chaptersToInclude == null || chaptersToInclude.Contains(cloudChapter.Key))
+                {
+                    // Set database to content from PT cloud.
+                    dbChapterDoc = GetTextDoc(text, cloudChapter.Key, textType);
+                    tasks.Add(dbChapterDoc.CreateAsync(new Models.TextData(cloudChapter.Value.Delta)));
                 }
                 chapters.Add(new Chapter
                 {
-                    Number = kvp.Key,
-                    LastVerse = kvp.Value.LastVerse,
-                    IsValid = kvp.Value.IsValid
+                    Number = cloudChapter.Key,
+                    LastVerse = cloudChapter.Value.LastVerse,
+                    IsValid = cloudChapter.Value.IsValid
                 });
             }
-            foreach (KeyValuePair<int, IDocument<Models.TextData>> kvp in textDocs)
+            foreach (KeyValuePair<int, IDocument<Models.TextData>> kvp in dbChapterDocs)
                 tasks.Add(kvp.Value.DeleteAsync());
             await Task.WhenAll(tasks);
 
