@@ -5,7 +5,6 @@ import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -72,9 +71,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly helpHeroService: HelpHeroService,
     private readonly userService: UserService,
     noticeService: NoticeService,
-    media: MediaObserver,
+    public media: MediaObserver,
     private readonly projectService: SFProjectService,
-    private readonly cookieService: CookieService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,
