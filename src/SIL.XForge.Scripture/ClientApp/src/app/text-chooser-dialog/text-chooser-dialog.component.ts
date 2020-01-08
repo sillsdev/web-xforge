@@ -1,9 +1,12 @@
 import { MDC_DIALOG_DATA, MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
-import { Component, ElementRef, Inject, OnDestroy, Optional, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { fromEvent } from 'rxjs';
+import { throttleTime } from 'rxjs/operators';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { I18nService } from 'xforge-common/i18n.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../core/models/text-doc';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import {
@@ -33,7 +36,7 @@ export interface TextSelection {
   templateUrl: './text-chooser-dialog.component.html',
   styleUrls: ['./text-chooser-dialog.component.scss']
 })
-export class TextChooserDialogComponent implements OnDestroy {
+export class TextChooserDialogComponent extends SubscriptionDisposable {
   @ViewChild(TextComponent, { static: true }) textComponent?: TextComponent;
   @ViewChild(TextComponent, { static: false, read: ElementRef }) scriptureText!: ElementRef;
   selectedText?: string;
@@ -43,7 +46,6 @@ export class TextChooserDialogComponent implements OnDestroy {
   textDocId: TextDocId;
 
   private rawTextSelection = '';
-  private selectionChangeHandler = this.updateSelection.bind(this);
   private selectedVerses?: VerseRefData;
   private selectionChanged = false;
   private startClipped = false;
@@ -56,11 +58,12 @@ export class TextChooserDialogComponent implements OnDestroy {
     @Inject(DOCUMENT) private readonly document: Document,
     @Optional() @Inject(MDC_DIALOG_DATA) private readonly data: TextChooserDialogData
   ) {
+    super();
     // caniuse doesn't have complete data for the selection events api, but testing on BrowserStack shows the event is
     // fired at least as far back as iOS v7 on Safari 7.
     // Edge 42 with EdgeHTML 17 also fires the events.
     // Firefox and Chrome also support it. We can degrade gracefully by getting the selection when the dialog closes.
-    this.document.addEventListener('selectionchange', this.selectionChangeHandler);
+    this.subscribe(fromEvent(this.document, 'selectionchange').pipe(throttleTime(100)), () => this.updateSelection());
 
     this.bookNum = this.data.bookNum;
     this.chapterNum = this.data.chapterNum;
@@ -146,10 +149,6 @@ export class TextChooserDialogComponent implements OnDestroy {
     } else {
       this.showError = true;
     }
-  }
-
-  ngOnDestroy() {
-    this.document.removeEventListener('selectionchange', this.selectionChangeHandler);
   }
 
   /**
