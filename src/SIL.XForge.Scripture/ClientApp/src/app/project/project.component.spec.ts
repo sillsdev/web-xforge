@@ -1,5 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { TranslocoService } from '@ngneat/transloco';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
@@ -26,6 +27,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
+const mockedTranslocoService = mock(TranslocoService);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
@@ -36,7 +38,8 @@ describe('ProjectComponent', () => {
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: TranslocoService, useMock: mockedTranslocoService }
     ]
   }));
 
@@ -192,6 +195,7 @@ class TestEnvironment {
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
+    when(mockedTranslocoService.translate<string>(anything())).thenReturn('The project link is invalid.');
     this.setLinkSharing(false);
 
     this.fixture = TestBed.createComponent(ProjectComponent);

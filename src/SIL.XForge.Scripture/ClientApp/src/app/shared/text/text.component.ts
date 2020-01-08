@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { translate } from '@ngneat/transloco';
 import isEqual from 'lodash/isEqual';
 import merge from 'lodash/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
@@ -48,7 +49,7 @@ export interface TextUpdatedEvent {
 })
 export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Input() isReadOnly: boolean = true;
-  @Input() placeholder = 'Loading...';
+  @Input() placeholder = translate('text.loading');
   @Input() markInvalid: boolean = false;
   @Input() multiSegmentSelection = false;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
@@ -374,7 +375,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (this._id == null) {
       return;
     }
-    this.placeholder = 'Loading...';
+    this.placeholder = translate('text.loading');
     const textDoc = await this.projectService.getText(this._id);
     this.viewModel.bind(textDoc);
     this.updatePlaceholderText();
@@ -613,9 +614,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   private updatePlaceholderText(): void {
     if (!this.viewModel.isLoaded) {
-      this.placeholder = 'This book does not exist.';
+      this.placeholder = translate('text.book_does_not_exist');
     } else if (this.viewModel.isEmpty) {
-      this.placeholder = 'This book is empty. Add chapters in Paratext.';
+      this.placeholder = translate('text.book_is_empty');
     }
   }
 

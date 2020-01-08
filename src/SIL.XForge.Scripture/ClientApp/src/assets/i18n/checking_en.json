@@ -226,11 +226,24 @@
     "network_request_failed": "A network request failed. Some functionality may be unavailable.",
     "unknown_error": "Unknown error"
   },
+  "message_dialog": {
+    "dismiss": "Dismiss"
+  },
+  "project": {
+    "project_link_is_invalid": "The project link is invalid."
+  },
+  "project_deleted_dialog": {
+    "ok": "OK",
+    "project_has_been_deleted": "The project has been deleted or is no longer accessible."
+  },
   "scripture_chooser_dialog": {
     "choose_book": "Choose book",
     "choose_chapter": "Choose chapter",
     "choose_end_verse": "Choose end verse",
     "choose_verse": "Choose verse"
+  },
+  "share": {
+    "share": "Share"
   },
   "share_control": {
     "copy_link": "Copy link",

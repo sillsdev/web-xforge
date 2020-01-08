@@ -1,9 +1,11 @@
-<button
-  *ngIf="isSharingEnabled"
-  type="button"
-  (click)="openDialog()"
-  mdc-icon-button
-  icon="share"
-  title="Share"
-  id="share-btn"
-></button>
+<ng-container *transloco="let t; read: 'share'">
+  <button
+    *ngIf="isSharingEnabled"
+    type="button"
+    (click)="openDialog()"
+    mdc-icon-button
+    icon="share"
+    title="{{ t('share') }}"
+    id="share-btn"
+  ></button>
+</ng-container>
