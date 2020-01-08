@@ -343,7 +343,7 @@ class TestEnvironment {
       } as Selection;
     });
 
-    when(mockedDocument.addEventListener('selectionchange', anything())).thenCall(
+    when(mockedDocument.addEventListener('selectionchange', anything(), anything())).thenCall(
       (_event: string, callback: () => any) => {
         this.selectionChangeHandler = callback;
       }

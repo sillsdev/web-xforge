@@ -22,6 +22,11 @@ app-text {
   font-style: italic;
 }
 
+.selection-preview {
+  height: 6em;
+  overflow-y: scroll;
+}
+
 .error-message {
   color: var(--mdc-theme-error);
   font-size: 0.85em;
