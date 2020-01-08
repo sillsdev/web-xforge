@@ -483,6 +483,80 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
         }
 
+        [Test]
+        public async Task SyncAsync_DbMissingChapter()
+        {
+            // The project in the DB has a book, but a chapter is missing from that book. PT can create this situation.
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, new Book("MAT", 3, true) { MissingChapters = { 2 } });
+            env.SetupPTData(new Book("MAT", 3, true));
+
+            // DB should start without chapter 2.
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), Arg.Any<string>(), Arg.Any<string>());
+
+            var chapterContent = Delta.New().InsertText("text");
+            // DB should contain chapter now from PT cloud.
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(chapterContent), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(chapterContent), Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_CloudMissingChapter()
+        {
+            // The project in the PT cloud has a book, but a chapter is missing from that book.
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, new Book("MAT", 3, true));
+            env.SetupPTData(new Book("MAT", 3, true) { MissingChapters = { 2 } });
+
+
+            var chapterContent = Delta.New().InsertText("text");
+            // DB should start with a chapter 2.
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(chapterContent), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(chapterContent), Is.True);
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), Arg.Any<string>(), Arg.Any<string>());
+
+            // DB should now be missing the chapter.
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
+        }
+
+
+        [Test]
+        public async Task SyncAsync_DbAndCloudMissingChapter()
+        {
+            // The project has a book, but a chapter is missing from that book. Both in the DB and in the PT cloud.
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, new Book("MAT", 3, true) { MissingChapters = { 2 } });
+            env.SetupPTData(new Book("MAT", 3, true) { MissingChapters = { 2 } });
+
+            // DB should start without chapter 2.
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), Arg.Any<string>(), Arg.Any<string>());
+
+            // DB should still be missing the chapter.
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
+        }
+
         private class Book
         {
             public Book(string bookId, int chapterCount, bool hasSource = true)
@@ -502,6 +576,7 @@ namespace SIL.XForge.Scripture.Services
             public int SourceChapterCount { get; }
 
             public HashSet<int> InvalidChapters { get; } = new HashSet<int>();
+            public HashSet<int> MissingChapters { get; } = new HashSet<int>();
         }
 
         private class TestEnvironment
@@ -539,11 +614,11 @@ namespace SIL.XForge.Scripture.Services
                 FileSystemService = Substitute.For<IFileSystemService>();
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
-                var logger = Substitute.For<ILogger<ParatextSyncRunner>>();
+                Logger = Substitute.For<ILogger<ParatextSyncRunner>>();
 
                 Runner = new ParatextSyncRunner(siteOptions, userSecrets, _projectSecrets, SFProjectService,
                     EngineService, ParatextService, RealtimeService, FileSystemService, DeltaUsxMapper, _notesMapper,
-                    logger);
+                    Logger);
             }
 
             public ParatextSyncRunner Runner { get; }
@@ -553,6 +628,7 @@ namespace SIL.XForge.Scripture.Services
             public SFMemoryRealtimeService RealtimeService { get; }
             public IFileSystemService FileSystemService { get; }
             public IDeltaUsxMapper DeltaUsxMapper { get; }
+            public ILogger<ParatextSyncRunner> Logger { get; }
 
             public SFProject GetProject()
             {
@@ -669,9 +745,9 @@ namespace SIL.XForge.Scripture.Services
                 RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
                 foreach (Book book in books)
                 {
-                    AddSFBook(book.Id, book.TargetChapterCount, TextType.Target, changed);
+                    AddSFBook(book.Id, book.TargetChapterCount, TextType.Target, changed, book.MissingChapters);
                     if (book.SourceChapterCount > 0)
-                        AddSFBook(book.Id, book.SourceChapterCount, TextType.Source, changed);
+                        AddSFBook(book.Id, book.SourceChapterCount, TextType.Source, changed, book.MissingChapters);
                 }
 
                 var notesElem = new XElement("notes");
@@ -687,19 +763,22 @@ namespace SIL.XForge.Scripture.Services
                 _notesMapper.NewSyncUsers.Returns(newSyncUsers);
             }
 
+
             public void SetupPTData(params Book[] books)
             {
                 ParatextService.GetBooksAsync(Arg.Any<UserSecret>(), "target")
-                    .Returns(books.Select(b => b.Id).ToArray());
+                                    .Returns(books.Select(b => b.Id).ToArray());
                 ParatextService.GetBooksAsync(Arg.Any<UserSecret>(), "source")
                     .Returns(books.Where(b => b.SourceChapterCount > 0).Select(b => b.Id).ToArray());
                 foreach (Book book in books)
                 {
-                    AddPTBook(book.Id, book.TargetChapterCount, TextType.Target, book.InvalidChapters);
+                    AddPTBook(book.Id, book.TargetChapterCount, TextType.Target, book.MissingChapters, book.InvalidChapters);
                     if (book.SourceChapterCount > 0)
-                        AddPTBook(book.Id, book.SourceChapterCount, TextType.Source);
+                        AddPTBook(book.Id, book.SourceChapterCount, TextType.Source, book.MissingChapters);
                 }
             }
+
+
 
             public static string GetUsxFileName(TextType textType, string bookId)
             {
@@ -717,7 +796,7 @@ namespace SIL.XForge.Scripture.Services
                     u.Set(pr => pr.UserRoles[userId], role));
             }
 
-            private void AddPTBook(string bookId, int chapterCount, TextType textType,
+            private void AddPTBook(string bookId, int chapterCount, TextType textType, HashSet<int> missingChapters,
                 HashSet<int> invalidChapters = null)
             {
                 string paratextProject = GetParatextProject(textType);
@@ -731,12 +810,12 @@ namespace SIL.XForge.Scripture.Services
                 Func<XDocument, bool> predicate = d => (string)d?.Root?.Element("book")?.Attribute("code") == bookId
                         && (string)d?.Root?.Element("book") == paratextProject;
                 var chapterDeltas = Enumerable.Range(1, chapterCount)
-                    .Select(c => new ChapterDelta(c, 10, !(invalidChapters?.Contains(c) ?? false),
+                    .Select(c => new ChapterDelta(c, 10, !(invalidChapters?.Contains(c) ?? false), (missingChapters?.Contains(c) ?? false) ? null :
                         Delta.New().InsertText("text")));
                 DeltaUsxMapper.ToChapterDeltas(Arg.Is<XDocument>(d => predicate(d))).Returns(chapterDeltas);
             }
 
-            private void AddSFBook(string bookId, int chapterCount, TextType textType, bool changed)
+            private void AddSFBook(string bookId, int chapterCount, TextType textType, bool changed, HashSet<int> missingChapters = null)
             {
                 int bookNum = Canon.BookIdToNumber(bookId);
                 string oldBookText = GetBookText(textType, bookId, 1);
@@ -754,8 +833,11 @@ namespace SIL.XForge.Scripture.Services
                 for (int c = 1; c <= chapterCount; c++)
                 {
                     string id = TextData.GetTextDocId("project01", bookNum, c, textType);
-                    RealtimeService.GetRepository<TextData>()
-                        .Add(new TextData(Delta.New().InsertText(changed ? "changed" : "text")) { Id = id });
+                    if (!(missingChapters?.Contains(c) ?? false))
+                    {
+                        RealtimeService.GetRepository<TextData>()
+                            .Add(new TextData(Delta.New().InsertText(changed ? "changed" : "text")) { Id = id });
+                    }
                     RealtimeService.GetRepository<Question>().Add(new[]
                     {
                         new Question

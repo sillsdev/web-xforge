@@ -147,6 +147,11 @@ namespace SIL.XForge.Realtime.RichText
             if (this == other)
                 return new Delta();
 
+            if (other == null)
+            {
+                other = new Delta();
+            }
+
             if (!TryConcatInserts(this, out string thisStr) || !TryConcatInserts(other, out string otherStr))
                 throw new InvalidOperationException("Both deltas must be documents.");
 
