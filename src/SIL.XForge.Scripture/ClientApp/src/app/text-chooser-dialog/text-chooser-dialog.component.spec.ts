@@ -163,6 +163,40 @@ describe('TextChooserDialogComponent', () => {
     });
   }));
 
+  it(
+    'indicates when not all of the start verse was selected ' +
+      'because only whitespace was selected in the first segment',
+    fakeAsync(async () => {
+      const env = new TestEnvironment({ start: TestEnvironment.segmentLen(4), end: 15 }, 'verse_1_4', 'verse_1_4/p_1');
+      env.fireSelectionChange();
+      expect(env.selectedText).toEqual('…rest of verse 4 (Matthew 1:4)');
+      env.click(env.saveButton);
+      expect(await env.resultPromise).toEqual({
+        verses: { bookNum: 40, chapterNum: 1, verseNum: 4, verse: '4' },
+        text: 'rest of verse 4',
+        startClipped: true,
+        endClipped: false
+      });
+    })
+  );
+
+  it(
+    'indicates when not all of the end verse was selected ' +
+      'because only whitespace was selected in the last segment',
+    fakeAsync(async () => {
+      const env = new TestEnvironment({ start: 0, end: 0 }, 'verse_1_3', 'verse_1_4/p_1');
+      env.fireSelectionChange();
+      expect(env.selectedText).toEqual('target: chapter 1, verse 3. target: chapter 1, verse 4.… (Matthew 1:3-4)');
+      env.click(env.saveButton);
+      expect(await env.resultPromise).toEqual({
+        verses: { bookNum: 40, chapterNum: 1, verseNum: 3, verse: '3-4' },
+        text: 'target: chapter 1, verse 3. target: chapter 1, verse 4.',
+        startClipped: false,
+        endClipped: true
+      });
+    })
+  );
+
   it('indicates when the segments were only partially selected', fakeAsync(async () => {
     const env = new TestEnvironment({ start: 6, end: TestEnvironment.segmentLen(5) - 2 }, 'verse_1_4', 'verse_1_5');
     env.fireSelectionChange();
