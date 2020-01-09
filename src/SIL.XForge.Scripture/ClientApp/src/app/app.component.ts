@@ -173,6 +173,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     );
   }
 
+  get hasSingleAppEnabled(): boolean {
+    const appStatus: boolean[] = [this.isTranslateEnabled, this.isCheckingEnabled];
+    return appStatus.filter(enabled => enabled).length === 1;
+  }
+
   get currentUser(): User | undefined {
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }

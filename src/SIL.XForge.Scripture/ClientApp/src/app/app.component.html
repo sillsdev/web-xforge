@@ -132,11 +132,11 @@
         >
           <mdc-icon mdcListItemGraphic>translate</mdc-icon>
           Translate
-          <mdc-icon *ngIf="isCheckingEnabled" mdcListItemMeta>
+          <mdc-icon *ngIf="!hasSingleAppEnabled" mdcListItemMeta>
             keyboard_arrow_{{ translateVisible ? "down" : "right" }}
           </mdc-icon>
         </mdc-list-item>
-        <div *ngIf="(isTranslateEnabled && translateVisible) || !isCheckingEnabled">
+        <div *ngIf="isTranslateEnabled && (translateVisible || hasSingleAppEnabled)">
           <mdc-list-item
             [routerLink]="['/projects', selectedProjectId, 'translate']"
             [activated]="rlaTranslateOverview.isActive"
@@ -168,11 +168,11 @@
         >
           <mdc-icon mdcListItemGraphic>question_answer</mdc-icon>
           {{ t("community_checking") }}
-          <mdc-icon *ngIf="isTranslateEnabled" mdcListItemMeta>
+          <mdc-icon *ngIf="!hasSingleAppEnabled" mdcListItemMeta>
             keyboard_arrow_{{ checkingVisible ? "down" : "right" }}
           </mdc-icon>
         </mdc-list-item>
-        <div *ngIf="(isCheckingEnabled && checkingVisible) || !isTranslateEnabled">
+        <div *ngIf="isCheckingEnabled && (checkingVisible || hasSingleAppEnabled)">
           <mdc-list-item
             [routerLink]="['/projects', selectedProjectId, 'checking']"
             [activated]="rlaCheckingOverview.isActive"
