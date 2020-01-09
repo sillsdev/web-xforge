@@ -102,7 +102,8 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project02');
-    expect(env.menuLength).toEqual(4);
+    // Expect: Community Checking | Overview | Sync | Settings | Users
+    expect(env.menuLength).toEqual(5);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
     verify(mockedUserService.setCurrentProjectId('project02')).once();
@@ -115,10 +116,16 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project03');
-    expect(env.menuLength).toEqual(4);
+    // Expect: Community Checking | Overview | Synchronize | Settings | Users
+    expect(env.menuLength).toEqual(5);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
     verify(mockedUserService.setCurrentProjectId('project03')).once();
+
+    // Does not collapse Community Checking item when translate is disabled
+    env.selectItem(0);
+    // Expect: Community Checking | Overview | Synchronize | Settings | Users
+    expect(env.menuLength).toEqual(5);
   }));
 
   it('expand/collapse tool', fakeAsync(() => {
@@ -132,6 +139,22 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(8);
     env.selectItem(0);
     expect(env.menuLength).toEqual(5);
+  }));
+
+  it('Translate item is never collapsed when Community Checking is disabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+    // Expect: Translate | Community Checking | Synchronize | Settings | Users
+    expect(env.menuLength).toEqual(5);
+    const projectDoc = env.component.projectDocs![0];
+    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, false));
+    env.wait();
+    // Expect: Translate | Overview | Matthew | Mark | Synchronize | Settings | Users
+    expect(env.menuLength).toEqual(7);
+    // No affect when clicking Translate
+    env.selectItem(0);
+    expect(env.menuLength).toEqual(7);
   }));
 
   it('change project', fakeAsync(() => {
