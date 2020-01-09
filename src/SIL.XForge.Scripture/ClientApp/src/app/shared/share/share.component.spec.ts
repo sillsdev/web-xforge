@@ -32,7 +32,7 @@ const mockedUserService = mock(UserService);
 
 describe('ShareComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [DialogTestModule, TestTranslocoModule],
     declarations: [ShareComponent],
     providers: [
       { provide: MdcDialogRef, useMock: mockedMdcDialogRef },
