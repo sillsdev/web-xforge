@@ -1,12 +1,21 @@
+/* Design colors */
+$greyLight: #a3a3a3;
+$greyDark: #343a31;
+$purpleMedium: #5a465f;
+$purpleLight: #a065e3;
+$purpleDark: #47314e;
+$greenLight: #b8d432;
+$greenDark: #5f7333;
+
 /* App specific */
-$sf_grey: #3a3a3a;
+$sf_grey: $greyDark;
 $sf_header: $sf_grey;
 
-$pt-button-green: #648047;
+$pt-button-green: $greenDark;
 
 /* Overwrite Material */
 $mdc-theme-primary: $sf_grey;
-$mdc-theme-secondary: #b8d332;
+$mdc-theme-secondary: $greenLight;
 
 $grid-breakpoints: (
   xs: 0,

@@ -23,6 +23,16 @@
 
     .mdc-list-item {
       cursor: pointer;
+      &:hover,
+      &.mdc-list-item--activated {
+        mdc-icon {
+          color: $greenLight;
+        }
+      }
+      mdc-icon {
+        color: $purpleDark;
+        transition: color 0.15s;
+      }
     }
   }
 
@@ -81,6 +91,10 @@
 
 .user-menu-name {
   white-space: nowrap;
+  color: $purpleDark;
+}
+#edit-name-btn {
+  color: $purpleDark;
 }
 
 a {
