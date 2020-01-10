@@ -33,7 +33,8 @@ import { CheckingTextComponent } from '../checking-text/checking-text.component'
 import { CommentAction } from './checking-comments/checking-comments.component';
 
 export interface AnswerAction {
-  action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'like' | 'recorder' | 'show-unread';
+  action: 'delete' | 'save' | 'edit' | 'archive' | 'show-form' | 'hide-form' | 'like' | 'recorder' | 'show-unread';
+  questionDoc?: QuestionDoc;
   answer?: Answer;
   text?: string;
   verseRef?: VerseRefData;
@@ -238,11 +239,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.selectionEndClipped = undefined;
   }
 
-  archiveQuestion(): void {
-    this._questionDoc!.submitJson0Op(op => {
+  async archiveQuestion(): Promise<void> {
+    await this._questionDoc!.submitJson0Op(op => {
       op.set<boolean>(qd => qd.isArchived, true);
       op.set(qd => qd.dateArchived!, new Date().toJSON());
     });
+    this.action.emit({ action: 'archive' });
   }
 
   deleteAnswer(answer: Answer) {
@@ -290,7 +292,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       textsByBookId: this.textsByBookId!,
       projectId: projectId
     };
-    await this.questionDialogService.questionDialog(data, this._questionDoc);
+    const questionDialogResponse = await this.questionDialogService.questionDialog(data, this._questionDoc);
+    if (questionDialogResponse != null) {
+      this.action.emit({ action: 'edit', questionDoc: questionDialogResponse });
+    }
   }
 
   selectScripture() {
