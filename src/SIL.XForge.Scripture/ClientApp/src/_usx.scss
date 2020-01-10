@@ -168,126 +168,122 @@ usx-para {
     text-align: center;
   }
 }
-.ltr {
-  usx-para {
-    &[data-style='li'],
-    &[data-style='li1'] {
-      margin-left: 10%;
-      text-indent: -7.5%;
-    }
+usx-para[dir='ltr'] {
+  &[data-style='li'],
+  &[data-style='li1'] {
+    margin-left: 10%;
+    text-indent: -7.5%;
+  }
 
-    &[data-style='li2'] {
-      margin-left: 15%;
-      text-indent: -7.5%;
-    }
+  &[data-style='li2'] {
+    margin-left: 15%;
+    text-indent: -7.5%;
+  }
 
-    &[data-style='li3'] {
-      margin-left: 20%;
-      text-indent: -7.5%;
-    }
+  &[data-style='li3'] {
+    margin-left: 20%;
+    text-indent: -7.5%;
+  }
 
-    &[data-style='li4'] {
-      margin-left: 25%;
-      text-indent: -7.5%;
-    }
+  &[data-style='li4'] {
+    margin-left: 25%;
+    text-indent: -7.5%;
+  }
 
-    &[data-style='q'],
-    &[data-style='q1'] {
-      margin-left: 25%;
-      text-indent: -20%;
-    }
+  &[data-style='q'],
+  &[data-style='q1'] {
+    margin-left: 25%;
+    text-indent: -20%;
+  }
 
-    &[data-style='q2'] {
-      margin-left: 25%;
-      text-indent: -15%;
-    }
+  &[data-style='q2'] {
+    margin-left: 25%;
+    text-indent: -15%;
+  }
 
-    &[data-style='q3'] {
-      margin-left: 25%;
-      text-indent: -10%;
-    }
+  &[data-style='q3'] {
+    margin-left: 25%;
+    text-indent: -10%;
+  }
 
-    &[data-style='q4'] {
-      margin-left: 25%;
-      text-indent: -5%;
-    }
+  &[data-style='q4'] {
+    margin-left: 25%;
+    text-indent: -5%;
+  }
 
-    &[data-style='qm'],
-    &[data-style='qm1'] {
-      margin-left: 20%;
-      text-indent: -15%;
-    }
+  &[data-style='qm'],
+  &[data-style='qm1'] {
+    margin-left: 20%;
+    text-indent: -15%;
+  }
 
-    &[data-style='qm2'] {
-      margin-left: 20%;
-      text-indent: -10%;
-    }
+  &[data-style='qm2'] {
+    margin-left: 20%;
+    text-indent: -10%;
+  }
 
-    &[data-style='qm3'] {
-      margin-left: 20%;
-      text-indent: -5%;
-    }
+  &[data-style='qm3'] {
+    margin-left: 20%;
+    text-indent: -5%;
   }
 }
-.rtl {
-  usx-para {
-    &[data-style='li'],
-    &[data-style='li1'] {
-      margin-right: 10%;
-      text-indent: -7.5%;
-    }
+usx-para[dir='rtl'] {
+  &[data-style='li'],
+  &[data-style='li1'] {
+    margin-right: 10%;
+    text-indent: -7.5%;
+  }
 
-    &[data-style='li2'] {
-      margin-right: 15%;
-      text-indent: -7.5%;
-    }
+  &[data-style='li2'] {
+    margin-right: 15%;
+    text-indent: -7.5%;
+  }
 
-    &[data-style='li3'] {
-      margin-right: 20%;
-      text-indent: -7.5%;
-    }
+  &[data-style='li3'] {
+    margin-right: 20%;
+    text-indent: -7.5%;
+  }
 
-    &[data-style='li4'] {
-      margin-right: 25%;
-      text-indent: -7.5%;
-    }
+  &[data-style='li4'] {
+    margin-right: 25%;
+    text-indent: -7.5%;
+  }
 
-    &[data-style='q'],
-    &[data-style='q1'] {
-      margin-right: 25%;
-      text-indent: -20%;
-    }
+  &[data-style='q'],
+  &[data-style='q1'] {
+    margin-right: 25%;
+    text-indent: -20%;
+  }
 
-    &[data-style='q2'] {
-      margin-right: 25%;
-      text-indent: -15%;
-    }
+  &[data-style='q2'] {
+    margin-right: 25%;
+    text-indent: -15%;
+  }
 
-    &[data-style='q3'] {
-      margin-right: 25%;
-      text-indent: -10%;
-    }
+  &[data-style='q3'] {
+    margin-right: 25%;
+    text-indent: -10%;
+  }
 
-    &[data-style='q4'] {
-      margin-right: 25%;
-      text-indent: -5%;
-    }
+  &[data-style='q4'] {
+    margin-right: 25%;
+    text-indent: -5%;
+  }
 
-    &[data-style='qm'],
-    &[data-style='qm1'] {
-      margin-right: 20%;
-      text-indent: -15%;
-    }
+  &[data-style='qm'],
+  &[data-style='qm1'] {
+    margin-right: 20%;
+    text-indent: -15%;
+  }
 
-    &[data-style='qm2'] {
-      margin-right: 20%;
-      text-indent: -10%;
-    }
+  &[data-style='qm2'] {
+    margin-right: 20%;
+    text-indent: -10%;
+  }
 
-    &[data-style='qm3'] {
-      margin-right: 20%;
-      text-indent: -5%;
-    }
+  &[data-style='qm3'] {
+    margin-right: 20%;
+    text-indent: -5%;
   }
 }
 
@@ -312,10 +308,14 @@ usx-verse {
     // superscript
     top: -0.5em;
     position: relative;
+    display: inline-block;
     font-size: 75%;
-    line-height: 0;
-    vertical-align: baseline;
-    padding-right: 0.12em;
+    line-height: 1;
+    padding: 0.3em 0.4em;
+    background-color: #f5f3ef;
+    border-radius: 8px;
+    white-space: nowrap;
+    margin: 0 0.2em 0 0.3em;
   }
 }
 

@@ -685,6 +685,49 @@ describe('EditorComponent', () => {
       expect(env.invalidWarning).not.toBeNull();
       env.dispose();
     }));
+
+    it('set chapter, paragraph, and segment direction when new text is added and deleted', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
+      env.wait();
+
+      // Chapter and paragraph set to language of the first segment
+      expect(env.getChapterDirection(0)).toBe('ltr');
+      expect(env.getParagraphDirection(0)).toBe('ltr');
+      expect(env.getSegmentDirection('verse_1_1')).toBe('ltr');
+
+      // Set segment to blank so dir="auto"
+      // - chapter and paragraph will remain as ltr as the next valid segment has ltr text
+      // - verse 1 & 2 are blank which makes verse 3 the next valid segment to check the direction on
+      env.targetEditor.setSelection(3, 27, 'user');
+      env.deleteCharacters();
+      expect(env.component.target!.segmentText).toBe('');
+      expect(env.getSegmentDirection('verse_1_1')).toBe('auto');
+      expect(env.getSegmentDirection('verse_1_2')).toBe('auto');
+      expect(env.getSegmentDirection('verse_1_3')).toBe('ltr');
+      expect(env.getChapterDirection(0)).toBe('ltr');
+      expect(env.getParagraphDirection(0)).toBe('ltr');
+
+      // Set segment to LTR text so dir="ltr"
+      // - chapter and paragraph remains as ltr but takes it from the first verse segment
+      const index = env.typeCharacters('ltr');
+      expect(env.component.target!.segmentText).toBe('ltr');
+      expect(env.getSegmentDirection('verse_1_1')).toBe('ltr');
+      expect(env.getChapterDirection(0)).toBe('ltr');
+      expect(env.getParagraphDirection(0)).toBe('ltr');
+      env.targetEditor.setSelection(index - 3, 3, 'user');
+      env.deleteCharacters();
+
+      // Set segment to RTL text so dir="rtl"
+      // - chapter and paragraph switches to rtl as well
+      env.typeCharacters('ישע');
+      expect(env.component.target!.segmentText).toBe('ישע');
+      expect(env.getSegmentDirection('verse_1_1')).toBe('rtl');
+      expect(env.getChapterDirection(0)).toBe('rtl');
+      expect(env.getParagraphDirection(0)).toBe('rtl');
+
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
@@ -994,6 +1037,38 @@ class TestEnvironment {
     );
   }
 
+  getChapterDirection(index: number): string | null {
+    return this.getChapterElement(index)!.getAttribute('dir');
+  }
+
+  getChapterElement(index: number): Element | null {
+    const chapters = this.targetEditor.container.querySelectorAll('usx-chapter');
+    if (chapters.hasOwnProperty(index) !== undefined) {
+      return chapters[index];
+    }
+    return null;
+  }
+
+  getParagraphDirection(index: number): string | null {
+    return this.getParagraphElement(index)!.getAttribute('dir');
+  }
+
+  getParagraphElement(index: number): Element | null {
+    const paragraphs = this.targetEditor.container.querySelectorAll('usx-para');
+    if (paragraphs.hasOwnProperty(index) !== undefined) {
+      return paragraphs[index];
+    }
+    return null;
+  }
+
+  getSegmentDirection(segmentRef: string): string | null {
+    return this.getSegmentElement(segmentRef)!.getAttribute('dir');
+  }
+
+  getSegmentElement(segmentRef: string): HTMLElement | null {
+    return this.targetEditor.container.querySelector('usx-segment[data-segment="' + segmentRef + '"]');
+  }
+
   getTextDoc(textId: TextDocId): TextDoc {
     return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
   }
@@ -1067,6 +1142,11 @@ class TestEnvironment {
     this.targetEditor.updateContents(delta, 'user');
     const selectionIndex = selection.index + str.length;
     this.targetEditor.setSelection(selectionIndex, 'user');
+    const keyEvent: any = document.createEvent('CustomEvent');
+    this.wait();
+    keyEvent.key = str.substring(0, 1);
+    keyEvent.initEvent('keyup', true, true);
+    this.component.target!.editor!.root.dispatchEvent(keyEvent);
     this.wait();
     return selectionIndex;
   }
