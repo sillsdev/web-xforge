@@ -104,7 +104,7 @@ export function registerScripture(): void {
       node.appendChild(document.createTextNode(ZWSP));
       const containerSpan = document.createElement('span');
       const verseSpan = document.createElement('span');
-      verseSpan.innerText = NBSP + value.number + NBSP;
+      verseSpan.innerText = value.number;
       containerSpan.appendChild(verseSpan);
       node.appendChild(containerSpan);
       setUsxValue(node, value);
@@ -311,6 +311,7 @@ export function registerScripture(): void {
     static create(value: Para): Node {
       const node = super.create(value) as HTMLElement;
       node.setAttribute(customAttributeName('style'), value.style);
+      node.setAttribute('dir', 'auto');
       setUsxValue(node, value);
       return node;
     }
@@ -365,6 +366,7 @@ export function registerScripture(): void {
     static create(value: string): Node {
       const node = super.create(value) as HTMLElement;
       node.setAttribute(customAttributeName('segment'), value);
+      node.setAttribute('dir', 'auto');
       return node;
     }
 
