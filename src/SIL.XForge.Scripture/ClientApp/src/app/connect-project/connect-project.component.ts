@@ -29,7 +29,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     settings: new FormGroup({
       translationSuggestions: new FormControl(false),
       sourceParatextId: new FormControl(undefined),
-      checking: new FormControl(false)
+      checking: new FormControl(true)
     })
   });
   projects?: ParatextProject[];
