@@ -1,14 +1,15 @@
 <ng-container *transloco="let t; read: 'chapter_nav'">
   <mdc-select
     #chapterSelect
+    id="chapter-select-control"
     class="chapter-select"
     [(ngModel)]="chapter"
-    (selectionChange)="chapterSelect._selectedText.nativeElement.blur()"
+    (selectionChange)="chapterSelect._selectedText.nativeElement.blur(); chapterChange.emit($event.value)"
   >
     <mdc-menu>
       <mdc-list>
         <mdc-list-item *ngFor="let chapter of chapters" [value]="chapter"
-          ><span class="chapter-label">{{ i18n.translateBook(bookNum) }} {{ chapter }}</span></mdc-list-item
+          ><span class="chapter-label">{{ bookName }} {{ chapter }}</span></mdc-list-item
         >
       </mdc-list>
     </mdc-menu>
