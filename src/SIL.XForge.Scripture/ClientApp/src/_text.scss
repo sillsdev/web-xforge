@@ -13,6 +13,14 @@ quill-editor {
       text-align: start;
     }
   }
+  usx-verse > span > span {
+    padding-left: 0.3em;
+    padding-right: 0.2em;
+  }
+  usx-segment {
+    margin-left: 0.2em;
+    margin-right: 0.2em;
+  }
 }
 
 .read-only-editor > .ql-container {
