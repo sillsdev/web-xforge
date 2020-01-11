@@ -16,12 +16,11 @@
   @include mdc-select-container-fill-color(transparent);
   height: 40px;
   align-items: center;
-  padding-right: 1.25em;
 
   ::ng-deep .mdc-select__selected-text {
     border: none;
     min-width: 140px;
-    padding: 8px;
+    padding: 8px 2em 8px 8px;
     height: 40px;
   }
   ::ng-deep .mdc-select__dropdown-icon {
