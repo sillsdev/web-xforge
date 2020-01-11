@@ -1,6 +1,6 @@
 import { MdcSelect } from '@angular-mdc/web';
 import { Component, DebugElement, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -35,8 +35,8 @@ describe('ChapterNavComponent', () => {
   it('should change chapter if selected', fakeAsync(() => {
     const env = new TestEnvironment();
     expect(env.component.chapter).toEqual(1);
-    env.changeSelectValue(env.chapterSelect, 2);
-    expect(env.component.chapter).toEqual(2);
+    env.changeSelectValue(env.chapterSelect, 'Book 1 2');
+    expect(env.component.chapterString).toEqual('Book 1 2');
   }));
 });
 
@@ -74,7 +74,7 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#chapter-select-control'));
   }
 
-  changeSelectValue(element: DebugElement, value: number): void {
+  changeSelectValue(element: DebugElement, value: string): void {
     const select: MdcSelect = element.componentInstance;
     select.value = value;
     this.wait();

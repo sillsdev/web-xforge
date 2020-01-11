@@ -7,33 +7,33 @@ import { I18nService } from 'xforge-common/i18n.service';
   styleUrls: ['./chapter-nav.component.scss']
 })
 export class ChapterNavComponent {
+  @Input() bookNum?: number;
   @Input() chapters: number[] = [];
   @Input() chapter?: number;
 
   @Output() chapterChange = new EventEmitter<number>();
 
-  private _bookNum?: number;
-
-  constructor(readonly i18n: I18nService) {}
-
-  @Input() set bookNum(value: number | undefined) {
-    if (this._bookNum == null) {
-      this._bookNum = value;
-      return;
-    }
-    this.chapter = undefined;
-    this._bookNum = value;
-    // Wait for bookNum to update so we get the updated book and chapter in the select control
-    setTimeout(() => {
-      this.chapter = 1;
-    });
-  }
+  constructor(private i18n: I18nService) {}
 
   get bookName(): string {
-    if (this._bookNum == null) {
-      return '';
+    return this.bookNum == null ? '' : this.i18n.translateBook(this.bookNum);
+  }
+
+  get chapterString(): string {
+    return this.chapter == null ? '' : `${this.bookName} ${this.chapter.toString()}`;
+  }
+
+  set chapterString(value: string) {
+    const numString = value.match(/\d+$/)![0];
+    const chapter = parseInt(numString, 10);
+    if (this.chapter !== chapter) {
+      this.chapter = chapter;
+      this.chapterChange.emit(this.chapter);
     }
-    return this.i18n.translateBook(this._bookNum);
+  }
+
+  get chapterStrings(): string[] {
+    return this.chapters.map(c => `${this.bookName} ${c.toString()}`);
   }
 
   prevChapter(): void {
