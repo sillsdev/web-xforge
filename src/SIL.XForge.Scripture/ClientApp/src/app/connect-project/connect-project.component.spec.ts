@@ -190,7 +190,7 @@ describe('ConnectProjectComponent', () => {
     env.emitSyncComplete();
     const settings: SFProjectCreateSettings = {
       paratextId: 'pt01',
-      checkingEnabled: false,
+      checkingEnabled: true,
       translationSuggestionsEnabled: false,
       sourceParatextId: undefined
     };
@@ -229,7 +229,7 @@ describe('ConnectProjectComponent', () => {
 
     const settings: SFProjectCreateSettings = {
       paratextId: 'pt01',
-      checkingEnabled: true,
+      checkingEnabled: false,
       translationSuggestionsEnabled: true,
       sourceParatextId: 'pt04'
     };
@@ -244,7 +244,7 @@ describe('ConnectProjectComponent', () => {
     expect(env.component.state).toEqual('input');
     env.changeSelectValue(env.projectSelect, 'pt01');
     expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
-    expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
+    expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
 
     env.clickElement(env.submitButton);
     tick();
@@ -261,7 +261,7 @@ describe('ConnectProjectComponent', () => {
 
     const project: SFProjectCreateSettings = {
       paratextId: 'pt01',
-      checkingEnabled: false,
+      checkingEnabled: true,
       translationSuggestionsEnabled: false,
       sourceParatextId: undefined
     };
