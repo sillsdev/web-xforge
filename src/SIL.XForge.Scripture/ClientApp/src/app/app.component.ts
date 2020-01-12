@@ -330,6 +330,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           ) {
             // The user has been removed from the project
             this.showProjectDeletedDialog();
+            this.projectService.localDelete(this.selectedProjectDoc.id);
           }
           // See if we need to enable any books in the checking app
           if (this.isCheckingEnabled && !this.checkingVisible) {
