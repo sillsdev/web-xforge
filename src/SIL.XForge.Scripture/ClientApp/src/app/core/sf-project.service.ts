@@ -4,7 +4,7 @@ import { LatinWordTokenizer, MAX_SEGMENT_LENGTH, RemoteTranslationEngine } from 
 import * as crc from 'crc-32';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
-import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
+import { SF_PROJECTS_COLLECTION, SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
@@ -51,6 +51,13 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   createTranslationEngine(projectId: string): RemoteTranslationEngine {
     return new RemoteTranslationEngine(projectId, this.machineHttp);
+  }
+
+  /**
+   * Remove project from local storage which is useful when a project is no longer accessible by a user
+   */
+  localDelete(projectId: string): Promise<void> {
+    return this.realtimeService.offlineStore.delete(SF_PROJECTS_COLLECTION, projectId);
   }
 
   onlineAddTranslateMetrics(id: string, metrics: TranslateMetrics): Promise<void> {
