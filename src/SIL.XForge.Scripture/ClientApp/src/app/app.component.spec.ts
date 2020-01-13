@@ -343,6 +343,17 @@ describe('AppComponent', () => {
       // Expect: Community Checking | Overview | John | Synchronize | Settings | Users
       expect(env.menuLength).toEqual(6);
     }));
+
+    it('ensure local storage is cleared when removed from project', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.navigate(['/projects', 'project01']);
+      env.init();
+
+      const projectId = 'project01';
+      expect(env.selectedProjectId).toEqual(projectId);
+      env.removesUserFromProject(projectId);
+      verify(mockedSFProjectService.localDelete(projectId)).once();
+    }));
   });
 });
 
