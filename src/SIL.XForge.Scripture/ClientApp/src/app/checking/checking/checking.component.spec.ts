@@ -315,9 +315,9 @@ describe('CheckingComponent', () => {
       await flushPromises();
 
       expect(env.segmentHasQuestion(1, 1)).toBe(true);
-      // ToDo: PENDING: code functionality is working, the following tests are not
-      // expect(env.isSegmentHighlighted(1, 1)).toBe(false);
-      // expect(env.isSegmentHighlighted(1, 5)).toBe(true);
+      expect(env.isSegmentHighlighted(1, 1)).toBe(false);
+      expect(env.isSegmentHighlighted(1, 5)).toBe(true);
+      // ToDo: PENDING: code functionality is working, the following test is not
       // expect(env.segmentHasQuestion(1, 5)).toBe(true); // fails
     }));
 
@@ -1147,12 +1147,12 @@ class TestEnvironment {
   readonly component: CheckingComponent;
   readonly fixture: ComponentFixture<CheckingComponent>;
   readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
-  questionReadTimer: number = 2000;
-
-  public project01WritingSystemTag = 'en';
-
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   readonly mockedTextChooserDialogComponent: MdcDialogRef<TextChooserDialogComponent> = mock(MdcDialogRef);
+
+  questionReadTimer: number = 2000;
+  project01WritingSystemTag = 'en';
+
   private readonly adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: ADMIN_USER.id,
     projectRef: 'project01',
