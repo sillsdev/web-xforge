@@ -1,7 +1,6 @@
 <ng-container *transloco="let t; read: 'chapter_nav'">
   <mdc-select
     #chapterSelect
-    id="chapter-select-control"
     class="chapter-select"
     [(ngModel)]="chapterString"
     (selectionChange)="chapterSelect._selectedText.nativeElement.blur()"

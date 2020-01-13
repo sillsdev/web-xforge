@@ -1,6 +1,6 @@
 import { MdcSelect } from '@angular-mdc/web';
 import { Component, DebugElement, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -35,14 +35,21 @@ describe('ChapterNavComponent', () => {
   it('should change chapter if selected', fakeAsync(() => {
     const env = new TestEnvironment();
     expect(env.component.chapter).toEqual(1);
+    expect(env.hostComponent.hasChangeEmitted).toBe(false);
     env.changeSelectValue(env.chapterSelect, 'Book 1 2');
     expect(env.component.chapterString).toEqual('Book 1 2');
+    expect(env.hostComponent.hasChangeEmitted).toBe(true);
   }));
 });
 
 @Component({
   template: `
-    <app-chapter-nav [bookNum]="activeBookNum" [(chapter)]="activeChapter" (chapters)="(allChapters)"></app-chapter-nav>
+    <app-chapter-nav
+      [bookNum]="activeBookNum"
+      [(chapter)]="activeChapter"
+      (chapters)="(allChapters)"
+      (chapterChange)="hasChangeEmitted = true"
+    ></app-chapter-nav>
   `
 })
 class ChapterNavHostComponent {
@@ -50,6 +57,7 @@ class ChapterNavHostComponent {
   activeBookNum?: number;
   activeChapter?: number;
   allChapters: number[] = [1, 2];
+  hasChangeEmitted = false;
 }
 
 class TestEnvironment {
@@ -71,7 +79,7 @@ class TestEnvironment {
   }
 
   get chapterSelect(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#chapter-select-control'));
+    return this.fixture.debugElement.query(By.css('.chapter-select'));
   }
 
   changeSelectValue(element: DebugElement, value: string): void {
