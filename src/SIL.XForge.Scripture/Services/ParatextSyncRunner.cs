@@ -246,7 +246,24 @@ namespace SIL.XForge.Scripture.Services
             SortedList<int, IDocument<Models.TextData>> dbChapterDocs = await _FetchTextDocsAsync(text, textType);
 
             string bookId = Canon.BookNumberToId(text.BookNum);
-            // Merge mongo data to PT cloud.
+            string cloudBookText = await FetchFromAndUpdatePtCloudAsync(text, paratextId, fileName, isReadOnly, bookId, dbChapterDocs);
+            await UpdateProgress();
+
+            XElement bookTextElem = XElement.Parse(cloudBookText);
+
+            // Merge updated PT cloud data into mongo.
+            List<Chapter> chapters = await MergeUsxToDbAsync(text, textType, chaptersToInclude, dbChapterDocs, bookTextElem);
+
+            // Save to disk
+            await SaveXmlFileAsync(bookTextElem, fileName);
+
+            await UpdateProgress();
+            return chapters;
+        }
+
+        private async Task<string> FetchFromAndUpdatePtCloudAsync(TextInfo text, string paratextId,
+            string fileName, bool isReadOnly, string bookId, SortedList<int, IDocument<Models.TextData>> dbChapterDocs)
+        {
             XElement bookTextElem;
             string cloudBookText;
             if (isReadOnly)
@@ -274,18 +291,7 @@ namespace SIL.XForge.Scripture.Services
                         revision, newUsxDoc.Root.ToString());
                 }
             }
-            await UpdateProgress();
-
-            bookTextElem = XElement.Parse(cloudBookText);
-
-            // Merge updated PT cloud data into mongo.
-            List<Chapter> chapters = await MergeUsxToDbAsync(text, textType, chaptersToInclude, dbChapterDocs, bookTextElem);
-
-            // Save to disk
-            await SaveXmlFileAsync(bookTextElem, fileName);
-
-            await UpdateProgress();
-            return chapters;
+            return cloudBookText;
         }
 
         private async Task<List<Chapter>> MergeUsxToDbAsync(TextInfo text, TextType textType, ISet<int> chaptersToInclude, SortedList<int, IDocument<TextData>> dbChapterDocs, XElement bookTextElem)
