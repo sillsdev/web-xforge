@@ -279,6 +279,17 @@ namespace SIL.XForge.Scripture.Services
             bookTextElem = XElement.Parse(cloudBookText);
 
             // Merge updated PT cloud data into mongo.
+            List<Chapter> chapters = await MergeUsxToDbAsync(text, textType, chaptersToInclude, dbChapterDocs, bookTextElem);
+
+            // Save to disk
+            await SaveXmlFileAsync(bookTextElem, fileName);
+
+            await UpdateProgress();
+            return chapters;
+        }
+
+        private async Task<List<Chapter>> MergeUsxToDbAsync(TextInfo text, TextType textType, ISet<int> chaptersToInclude, SortedList<int, IDocument<TextData>> dbChapterDocs, XElement bookTextElem)
+        {
             var usxDoc = new XDocument(bookTextElem.Element("usx"));
             var tasks = new List<Task>();
             Dictionary<int, ChapterDelta> cloudChapters = _deltaUsxMapper.ToChapterDeltas(usxDoc)
@@ -330,11 +341,6 @@ namespace SIL.XForge.Scripture.Services
                 tasks.Add(dbChapterDoc.Value.DeleteAsync());
             }
             await Task.WhenAll(tasks);
-
-            // Save to disk
-            await SaveXmlFileAsync(bookTextElem, fileName);
-
-            await UpdateProgress();
             return chapters;
         }
 
