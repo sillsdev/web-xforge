@@ -37,6 +37,10 @@ namespace SIL.XForge.Scripture.Services
     /// 1. The current notes are retrieved from the PT data access API.
     /// 2. A notes changelist XML is generated from the real-time question docs.
     /// 3. The notes changelist is sent to the PT data access API.
+    ///
+    /// Target and source refer to child and mother translation data. Not
+    /// to be confused with a target or source for where data is coming
+    /// from or going to when fetching or syncing.
     /// </summary>
     public class ParatextSyncRunner
     {
@@ -92,7 +96,7 @@ namespace SIL.XForge.Scripture.Services
         {
             try
             {
-                if (!await InitAsync(projectId, userId))
+                if (!await _InitAsync(projectId, userId))
                 {
                     await CompleteSync(false);
                     return;
@@ -191,11 +195,11 @@ namespace SIL.XForge.Scripture.Services
             }
             finally
             {
-                _conn?.Dispose();
+                _CloseConnection();
             }
         }
 
-        private async Task<bool> InitAsync(string projectId, string userId)
+        public async Task<bool> _InitAsync(string projectId, string userId)
         {
             _conn = await _realtimeService.ConnectAsync();
             _projectDoc = await _conn.FetchAsync<SFProject>(projectId);
@@ -217,6 +221,11 @@ namespace SIL.XForge.Scripture.Services
             return true;
         }
 
+        public void _CloseConnection()
+        {
+            _conn?.Dispose();
+        }
+
         private async Task<List<Chapter>> SyncOrCloneBookUsxAsync(TextInfo text, TextType textType, string paratextId,
             bool isReadOnly, ISet<int> chaptersToInclude = null)
         {
@@ -234,7 +243,7 @@ namespace SIL.XForge.Scripture.Services
         private async Task<List<Chapter>> SyncBookUsxAsync(TextInfo text, TextType textType, string paratextId,
             string fileName, bool isReadOnly, ISet<int> chaptersToInclude)
         {
-            SortedList<int, IDocument<Models.TextData>> dbChapterDocs = await FetchTextDocsAsync(text, textType);
+            SortedList<int, IDocument<Models.TextData>> dbChapterDocs = await _FetchTextDocsAsync(text, textType);
 
             string bookId = Canon.BookNumberToId(text.BookNum);
             // Merge mongo data to PT cloud.
@@ -316,8 +325,10 @@ namespace SIL.XForge.Scripture.Services
                     IsValid = cloudChapter.Value.IsValid
                 });
             }
-            foreach (KeyValuePair<int, IDocument<Models.TextData>> kvp in dbChapterDocs)
-                tasks.Add(kvp.Value.DeleteAsync());
+            foreach (KeyValuePair<int, IDocument<Models.TextData>> dbChapterDoc in dbChapterDocs)
+            {
+                tasks.Add(dbChapterDoc.Value.DeleteAsync());
+            }
             await Task.WhenAll(tasks);
 
             // Save to disk
@@ -328,9 +339,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Fetches all text docs from the database for a book.
+        /// Fetches all text docs from the database for a book. Missing text docs may just be created, even for invalid requests.
         /// </summary>
-        private async Task<SortedList<int, IDocument<Models.TextData>>> FetchTextDocsAsync(TextInfo text,
+        public async Task<SortedList<int, IDocument<Models.TextData>>> _FetchTextDocsAsync(TextInfo text,
             TextType textType)
         {
             var textDocs = new SortedList<int, IDocument<Models.TextData>>();

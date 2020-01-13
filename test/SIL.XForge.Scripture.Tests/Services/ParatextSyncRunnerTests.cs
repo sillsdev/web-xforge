@@ -516,7 +516,6 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, false, new Book("MAT", 3, true));
             env.SetupPTData(new Book("MAT", 3, true) { MissingChapters = { 2 } });
 
-
             var chapterContent = Delta.New().InsertText("text");
             // DB should start with a chapter 2.
             Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
@@ -557,6 +556,84 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
         }
 
+        [Test]
+        public async Task FetchTextDocsAsync_FetchesExistingChapters()
+        {
+            var env = new TestEnvironment();
+            var numberChapters = 3;
+            var book = new Book("MAT", numberChapters, true);
+            env.SetupSFData(true, true, false, book);
+            await env.Runner._InitAsync("project01", "user01");
+
+            // SUT
+            var targetFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Target);
+            var sourceFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Source);
+            env.Runner._CloseConnection();
+
+            // Fetched numberChapters chapters, none of which are missing their chapter content.
+            Assert.That(targetFetch.Count, Is.EqualTo(numberChapters));
+            Assert.That(sourceFetch.Count, Is.EqualTo(numberChapters));
+            Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+            Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+        }
+
+
+        [Test]
+        public async Task FetchTextDocsAsync_MissingChapters()
+        {
+            var env = new TestEnvironment();
+            var numberChapters = 3;
+            var missingChapters = new HashSet<int>() { 2, 3 };
+            var book = new Book("MAT", numberChapters, true) { MissingChapters = missingChapters };
+            env.SetupSFData(true, true, false, book);
+            await env.Runner._InitAsync("project01", "user01");
+
+            // SUT
+            var targetFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Target);
+            var sourceFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Source);
+            env.Runner._CloseConnection();
+
+            // Fetched numberChapters chapters, but some of them are missing any content.
+            Assert.That(targetFetch.Count, Is.EqualTo(numberChapters));
+            Assert.That(sourceFetch.Count, Is.EqualTo(numberChapters));
+            Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(missingChapters.Count));
+            Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(missingChapters.Count));
+            Assert.That(env.ContainsText("MAT", missingChapters.First(), TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", missingChapters.First(), TextType.Source), Is.False);
+        }
+
+
+        [Test]
+        public async Task FetchTextDocsAsync_MissingDocs()
+        {
+            var env = new TestEnvironment();
+            var numberChapters = 28;
+            var bookInDb = new Book("MAT", numberChapters, true);
+            env.SetupSFData(true, true, false, bookInDb);
+            await env.Runner._InitAsync("project01", "user01");
+            var imaginaryChapters = 3;
+            var incorrectlyTooManyChapters = numberChapters + imaginaryChapters;
+            var bookWeThoughtWasInDb = new Book("MAT", incorrectlyTooManyChapters, true);
+
+            Assert.That(env.ContainsText("MAT", numberChapters + 1, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", numberChapters + 1, TextType.Source), Is.False);
+
+            // SUT
+            var targetFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(bookWeThoughtWasInDb), TextType.Target);
+            var sourceFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(bookWeThoughtWasInDb), TextType.Source);
+            env.Runner._CloseConnection();
+
+            // Fetched lots of docs. Docs that weren't in the database are returned to us, tho not necessarily created into the database, and without any chapter content.
+            Assert.That(targetFetch.Count, Is.EqualTo(incorrectlyTooManyChapters));
+            Assert.That(sourceFetch.Count, Is.EqualTo(incorrectlyTooManyChapters));
+            // Imaginary chapters, that aren't in database, have null Data.
+            Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(imaginaryChapters));
+            Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(imaginaryChapters));
+            // The imaginary texts aren't actually added to database.
+            Assert.That(env.ContainsText("MAT", numberChapters + 1, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", numberChapters + 1, TextType.Source), Is.False);
+        }
+
         private class Book
         {
             public Book(string bookId, int chapterCount, bool hasSource = true)
@@ -576,7 +653,7 @@ namespace SIL.XForge.Scripture.Services
             public int SourceChapterCount { get; }
 
             public HashSet<int> InvalidChapters { get; } = new HashSet<int>();
-            public HashSet<int> MissingChapters { get; } = new HashSet<int>();
+            public HashSet<int> MissingChapters { get; set; } = new HashSet<int>();
         }
 
         private class TestEnvironment
@@ -710,19 +787,7 @@ namespace SIL.XForge.Scripture.Services
                             {
                                 CheckingEnabled = checkingEnabled
                             },
-                            Texts = books.Select(b =>
-                                new TextInfo
-                                {
-                                    BookNum = Canon.BookIdToNumber(b.Id),
-                                    Chapters = Enumerable.Range(1, b.TargetChapterCount)
-                                        .Select(c => new Chapter
-                                        {
-                                            Number = c,
-                                            LastVerse = 10,
-                                            IsValid = !b.InvalidChapters.Contains(c)
-                                        }).ToList(),
-                                    HasSource = b.SourceChapterCount > 0
-                                }).ToList(),
+                            Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                             Sync = new Sync
                             {
                                 QueuedCount = 1
@@ -761,6 +826,22 @@ namespace SIL.XForge.Scripture.Services
                 _notesMapper.GetNotesChangelistAsync(Arg.Any<XElement>(),
                     Arg.Any<IEnumerable<IDocument<Question>>>()).Returns(Task.FromResult(notesElem));
                 _notesMapper.NewSyncUsers.Returns(newSyncUsers);
+            }
+
+            public TextInfo TextInfoFromBook(Book book)
+            {
+                return new TextInfo
+                {
+                    BookNum = Canon.BookIdToNumber(book.Id),
+                    Chapters = Enumerable.Range(1, book.TargetChapterCount)
+                        .Select(c => new Chapter
+                        {
+                            Number = c,
+                            LastVerse = 10,
+                            IsValid = !book.InvalidChapters.Contains(c)
+                        }).ToList(),
+                    HasSource = book.SourceChapterCount > 0
+                };
             }
 
 
