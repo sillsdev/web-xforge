@@ -13,7 +13,28 @@ export class ChapterNavComponent {
 
   @Output() chapterChange = new EventEmitter<number>();
 
-  constructor(readonly i18n: I18nService) {}
+  constructor(private i18n: I18nService) {}
+
+  get bookName(): string {
+    return this.bookNum == null ? '' : this.i18n.translateBook(this.bookNum);
+  }
+
+  get chapterString(): string {
+    return this.chapter == null ? '' : `${this.bookName} ${this.chapter.toString()}`;
+  }
+
+  set chapterString(value: string) {
+    const numString = value.match(/\d+$/)![0];
+    const chapter = parseInt(numString, 10);
+    if (this.chapter !== chapter) {
+      this.chapter = chapter;
+      this.chapterChange.emit(this.chapter);
+    }
+  }
+
+  get chapterStrings(): string[] {
+    return this.chapters.map(c => `${this.bookName} ${c.toString()}`);
+  }
 
   prevChapter(): void {
     const index = this.chapters.findIndex(c => c === this.chapter);
