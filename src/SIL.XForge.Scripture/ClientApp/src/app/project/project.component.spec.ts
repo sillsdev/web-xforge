@@ -169,6 +169,21 @@ describe('ProjectComponent', () => {
     verify(mockedRouter.navigateByUrl('/projects', anything())).once();
     expect().nothing();
   }));
+
+  it('ensure local storage is cleared when sharing a project fails', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const projectId = 'project01';
+    when(mockedSFProjectService.onlineCheckLinkSharing(projectId, undefined)).thenReject(
+      new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
+    );
+    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41 });
+    env.setLinkSharing(true);
+    env.fixture.detectChanges();
+    tick();
+
+    verify(mockedSFProjectService.localDelete(projectId)).once();
+    expect().nothing();
+  }));
 });
 
 class TestEnvironment {
