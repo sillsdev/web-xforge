@@ -502,6 +502,18 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerText(myAnswerIndex)).toEqual('Edited answer', 'should not have been changed');
     }));
 
+    it('highlights remotely edited answer', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(9);
+      const otherAnswerIndex = 1;
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswerText(otherAnswerIndex)).toBe('Answer 1 on question');
+
+      env.simmulateRemoteEditAnswer(otherAnswerIndex, 'Question 9 edited answer');
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(true);
+      expect(env.getAnswerText(otherAnswerIndex)).toBe('Question 9 edited answer');
+    }));
+
     it('still shows answers as read after canceling an edit', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);
@@ -1634,6 +1646,16 @@ class TestEnvironment {
       // Another user
       false
     );
+    tick(this.questionReadTimer);
+    this.fixture.detectChanges();
+  }
+
+  simmulateRemoteEditAnswer(index: number, text: string): void {
+    const questionDoc = this.component.questionsPanel.activeQuestionDoc!;
+    questionDoc.submitJson0Op(op => {
+      op.set(q => q.answers[index].text!, text);
+      op.set(q => q.answers[index].dateModified, new Date().toJSON());
+    }, false);
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
   }
