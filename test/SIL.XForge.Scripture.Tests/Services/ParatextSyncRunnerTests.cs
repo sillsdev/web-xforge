@@ -634,6 +634,56 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("MAT", numberChapters + 1, TextType.Source), Is.False);
         }
 
+        [Test]
+        public async Task ChangeDbToNewSnapshotAsync_Works()
+        {
+            var env = new TestEnvironment();
+            var numberChapters = 4;
+            // SF DB has chapter data for chapters 1 and 2, and accounts for chapters 3 and 4 but with null chapter data.
+            var missingDbChapters = new HashSet<int>() { 3, 4 };
+            var book = new Book("MAT", numberChapters, true) { MissingChapters = missingDbChapters };
+            env.SetupSFData(true, true, false, book);
+
+            await env.Runner._InitAsync("project01", "user01");
+            var textInfo = env.TextInfoFromBook(book);
+            var targetTextDocs = await env.Runner._FetchTextDocsAsync(textInfo, TextType.Target);
+
+            var insertTextDelta = Delta.New().InsertText("text");
+            var insertCloudyDelta = Delta.New().InsertText("cloudy");
+            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(insertTextDelta), Is.True);
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(insertCloudyDelta), Is.False);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 4, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 5, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 6, TextType.Target), Is.False);
+
+            // PT cloud has chapters 1, 4 and 6, with text.
+            // Here also including chapter 5 in the list of chapter deltas, but with a null Data.
+            var chapterDeltas = new int[] { 1, 4, 5, 6 }
+                .Select(c => new ChapterDelta(c, 10, false,
+                c == 5 ? null : Delta.New().InsertText("cloudy")))
+                .ToDictionary(cd => cd.Number);
+
+            // SUT
+            await env.Runner._ChangeDbToNewSnapshotAsync(textInfo, TextType.Target, null, targetTextDocs, chapterDeltas);
+
+            env.Runner._CloseConnection();
+
+            // SF DB should now have just text in chapters 1, 4 and 6, matching PT cloud. Note that chapter 2 is now missing.
+
+            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
+            // Content change to Chapter 1.
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(insertTextDelta), Is.False);
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(insertCloudyDelta), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 4, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 5, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 6, TextType.Target), Is.True);
+        }
+
         private class Book
         {
             public Book(string bookId, int chapterCount, bool hasSource = true)
