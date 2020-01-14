@@ -436,7 +436,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     // As the browser is automatically applying ltr/rtl we need to ask it which one it is using
     // This value can then be used for other purposes i.e. CSS styles
     const quill = document.querySelector('quill-editor');
-    if (quill !== null && this.editor !== undefined) {
+    if (quill !== null) {
       this._direction = window.getComputedStyle(quill).direction;
       // Direction can also applied to segments and paragraphs so check them as well
       const elements = document.querySelectorAll('quill-editor *[dir=auto]');
@@ -446,6 +446,10 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
             continue;
           }
           const element = elements[index];
+          const dir = window.getComputedStyle(element).direction;
+          if (dir === null) {
+            continue;
+          }
           const segmentRef = element.getAttribute('data-segment');
           if (segmentRef === null) {
             continue;
@@ -454,12 +458,12 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
           if (range === undefined) {
             continue;
           }
-          const dir = window.getComputedStyle(element).direction;
-          if (dir === null) {
-            continue;
-          }
-          console.log(segmentRef, range, dir);
-          this.editor.formatText(range.index, range.length, { dir: dir }, 'silent');
+          Promise.resolve().then(() => {
+            console.log(segmentRef, range, dir);
+            if (this.editor !== undefined) {
+              this.editor.formatText(range.index, range.length, { dir: dir }, 'silent');
+            }
+          });
         }
       }
     }
