@@ -12,6 +12,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
+import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
@@ -32,6 +33,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ProjectService } from 'xforge-common/project.service';
+import { QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -252,18 +254,11 @@ describe('CheckingComponent', () => {
       expect(env.component.questionVerseRefs.length).toEqual(15);
 
       env.clickButton(env.archiveQuestionButton);
-
-      // grasp at several straws
-      env.waitForSliderUpdate();
-      tick(2000);
-      await flushPromises();
-      env.realtimeService.updateAllSubscribeQueries();
-      await flushPromises();
+      tick(env.questionReadTimer);
 
       expect(question.isArchived).toBe(true);
       expect(env.component.questionDocs.filter(q => q.data!.isArchived !== true).length).toEqual(14);
-      // ToDo: PENDING: code functionality is working, the following test is not
-      // expect(env.component.questionVerseRefs.length).toEqual(14); // fails
+      expect(env.component.questionVerseRefs.length).toEqual(14);
     }));
 
     it('opens a dialog when edit question is clicked', fakeAsync(() => {
@@ -1849,6 +1844,10 @@ class TestEnvironment {
       questions = johnQuestions.concat(matthewQuestions);
     }
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions);
+    const queryParams: QueryParameters = {
+      $sort: { [nameof<Question>('dateCreated')]: 1 }
+    };
+    queryParams[obj<Question>().pathStr(q => q.isArchived)] = false;
     when(
       mockedProjectService.queryQuestions(
         'project01',
@@ -1858,12 +1857,7 @@ class TestEnvironment {
           sort: true
         })
       )
-    ).thenCall(() =>
-      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {
-        // Sort questions in order from oldest to newest
-        $sort: { [nameof<Question>('dateCreated')]: 1 }
-      })
-    );
+    ).thenCall(() => this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams));
     when(mockedProjectService.createQuestion('project01', anything())).thenCall((id: string, question: Question) => {
       return this.realtimeService.create(QuestionDoc.COLLECTION, getQuestionDocId(id, question.dataId), question);
     });

@@ -433,7 +433,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.checkBookStatus();
         break;
       case 'archive':
-        this.checkBookStatus();
+        this.checkBookStatusAfterTime();
         break;
       case 'like':
         if (answerAction.answer != null) {
@@ -652,6 +652,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
     }
     this.questionVerseRefs = questionVerseRefs;
+  }
+
+  private checkBookStatusAfterTime(time: number = 50): void {
+    setTimeout(() => this.checkBookStatus(), time);
   }
 
   private getAnswerIndex(answer: Answer): number {
