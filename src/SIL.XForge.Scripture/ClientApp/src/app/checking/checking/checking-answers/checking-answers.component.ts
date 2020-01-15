@@ -86,12 +86,24 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this.questionChangeSubscription != null) {
       this.questionChangeSubscription!.unsubscribe();
     }
-    this.questionChangeSubscription = this.subscribe(questionDoc.remoteChanges$, () => {
+    this.questionChangeSubscription = this.subscribe(questionDoc.remoteChanges$, ops => {
       // If the user hasn't added an answer yet and is able to, then
       // don't hold back any incoming answers from appearing right away
       // as soon as the user adds their answer.
       if (this.currentUserTotalAnswers === 0 && this.canAddAnswer) {
         this.showRemoteAnswers();
+        return;
+      }
+      // If any answers have been edited, identify which ones and highlight it
+      for (const op of ops) {
+        // 'oi' is an insert i.e. when replacing the dateModified on an answer
+        if (op['oi'] != null && op.p[0] === 'answers') {
+          const answer = this.allAnswers[op.p[1]];
+          if (this.answersHighlightStatus.has(answer.dataId)) {
+            this.answersHighlightStatus.set(answer.dataId, false);
+            setTimeout(() => this.answersHighlightStatus.set(answer.dataId, true));
+          }
+        }
       }
     });
   }
@@ -107,13 +119,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   });
   answerFormVisible: boolean = false;
   answerFormSubmitAttempted: boolean = false;
-  /** IDs of answers to show to user (so, excluding unshown incoming answers). */
-  answersToShow: string[] = [];
   selectedText?: string;
   selectionStartClipped?: boolean;
   selectionEndClipped?: boolean;
   verseRef?: VerseRef;
+  answersHighlightStatus: Map<string, boolean> = new Map<string, boolean>();
 
+  /** IDs of answers to show to user (so, excluding unshown incoming answers). */
+  private _answersToShow: string[] = [];
   private _questionDoc?: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
@@ -143,7 +156,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
     if (this.shouldSeeAnswersList) {
       return this._questionDoc.data.answers.filter(
-        answer => answer.ownerRef === this.userService.currentUserId || this.answersToShow.includes(answer.dataId)
+        answer => answer.ownerRef === this.userService.currentUserId || this._answersToShow.includes(answer.dataId)
       );
     } else {
       return this._questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
@@ -352,6 +365,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.action.emit({
       action: 'hide-form'
     });
+    this.refreshAnswersHighlightStatus();
   }
 
   likeAnswer(answer: Answer) {
@@ -439,7 +453,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this.questionDoc == null || this.questionDoc.data == null) {
       return;
     }
-    this.answersToShow = this.questionDoc.data.answers.map(answer => answer.dataId);
+    this._answersToShow = this.questionDoc.data.answers.map(answer => answer.dataId);
+    this.refreshAnswersHighlightStatus();
     this.justEditedAnswer = false;
     if (showUnreadClicked) {
       this.action.emit({ action: 'show-unread' });
@@ -467,6 +482,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       result = LikeAnswerResponse.deniedNonCommunityChecker;
     }
     return result;
+  }
+
+  private refreshAnswersHighlightStatus(): void {
+    this.answersHighlightStatus.clear();
+    setTimeout(() => {
+      for (const answer of this.answers) {
+        this.answersHighlightStatus.set(answer.dataId, this.shouldDrawAttentionToAnswer(answer));
+      }
+    });
   }
 
   private emitAnswerToSave() {

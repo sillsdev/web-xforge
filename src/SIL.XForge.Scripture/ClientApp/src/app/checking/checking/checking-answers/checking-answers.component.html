@@ -117,7 +117,7 @@
           <div
             class="answer"
             *ngFor="let answer of answers"
-            [ngClass]="{ attention: shouldDrawAttentionToAnswer(answer) }"
+            [ngClass]="{ attention: answersHighlightStatus.get(answer.dataId) }"
           >
             <div *ngIf="canSeeOtherUserResponses" class="like">
               <button
