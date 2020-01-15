@@ -465,10 +465,6 @@ export function registerScripture(): void {
     }
   );
 
-  const DirectionAttribute = new QuillParchment.Attributor.Attribute('dir', 'data-dir', {
-    scope: Parchment.Scope.INLINE
-  });
-
   const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK
   });
@@ -512,7 +508,6 @@ export function registerScripture(): void {
 
   Quill.register('formats/highlight-segment', HighlightSegmentClass);
   Quill.register('formats/highlight-para', HighlightParaClass);
-  Quill.register('formats/dir', DirectionAttribute);
   Quill.register('formats/question-segment', CheckingQuestionSegmentClass);
   Quill.register('formats/question-count', CheckingQuestionCountAttribute);
   Quill.register('formats/invalid-block', InvalidBlockClass);

@@ -262,7 +262,6 @@ export class TextViewModel {
         removeAttribute(modelOp, 'para-contents');
         removeAttribute(modelOp, 'question-segment');
         removeAttribute(modelOp, 'question-count');
-        removeAttribute(modelOp, 'dir');
         removeAttribute(modelOp, 'initial');
         (modelDelta as any).push(modelOp);
       }
