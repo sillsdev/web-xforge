@@ -438,8 +438,8 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     const quill = document.querySelector('quill-editor');
     if (quill !== null) {
       this._direction = window.getComputedStyle(quill).direction;
-      // Direction can also applied to segments and paragraphs so check them as well
-      const elements = document.querySelectorAll('quill-editor *[dir=auto]');
+      // Set the browser calculated direction on the segments so we can action elsewhere i.e. CSS
+      const elements = document.querySelectorAll('quill-editor usx-segment[dir=auto]');
       if (elements !== null) {
         for (const index in elements) {
           if (!elements.hasOwnProperty(index)) {
@@ -458,12 +458,37 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
           if (range === undefined) {
             continue;
           }
-          Promise.resolve().then(() => {
-            console.log(segmentRef, range, dir);
-            if (this.editor !== undefined) {
-              this.editor.formatText(range.index, range.length, { dir: dir }, 'silent');
+          element.setAttribute('dir', dir);
+        }
+      }
+      // Loop through the paragraphs to see what direction it should be set to based off the first valid segment
+      const paragraphs = document.querySelectorAll('quill-editor usx-para[dir=auto]');
+      if (paragraphs !== null) {
+        for (const index in paragraphs) {
+          if (!paragraphs.hasOwnProperty(index)) {
+            continue;
+          }
+          const paragraph = paragraphs[index];
+          let paraDir = 'auto';
+          // Locate the first segment that isn't blank to see what direction the paragraph should be set to
+          const segments = paragraph.querySelectorAll('usx-segment');
+          for (const segmentIndex in segments) {
+            if (!segments.hasOwnProperty(segmentIndex)) {
+              continue;
             }
-          });
+            const segment = segments[segmentIndex];
+            const dir = window.getComputedStyle(segment).direction;
+            if (dir === null) {
+              continue;
+            }
+            const blanks = segment.querySelectorAll('usx-blank');
+            if (blanks.length === 0) {
+              paraDir = dir;
+              break;
+            }
+          }
+          // Set the paragraph dir
+          paragraph.setAttribute('dir', paraDir);
         }
       }
     }
