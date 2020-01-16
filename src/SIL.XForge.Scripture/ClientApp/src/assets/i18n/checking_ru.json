@@ -226,11 +226,24 @@
     "network_request_failed": "Ошибка сетевого запроса. Некоторые функции могут быть недоступны.",
     "unknown_error": "Неизвестная ошибка"
   },
+  "message_dialog": {
+    "dismiss": "Dismiss"
+  },
+  "project": {
+    "project_link_is_invalid": "The project link is invalid."
+  },
+  "project_deleted_dialog": {
+    "ok": "OK",
+    "project_has_been_deleted": "The project has been deleted or is no longer accessible."
+  },
   "scripture_chooser_dialog": {
     "choose_book": "Выберите книгу",
     "choose_chapter": "Выберите главу",
     "choose_end_verse": "Выберите конец стиха",
     "choose_verse": "Выберите стих"
+  },
+  "share": {
+    "share": "Share"
   },
   "share_control": {
     "copy_link": "Скопировать ссылку",
@@ -249,13 +262,13 @@
     "share_with_others": "Поделиться с другими"
   },
   "start": {
-    "connect_project": "Connect project",
+    "connect_project": "Подключить проект",
     "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet."
   },
   "text_chooser_dialog": {
     "cancel": "Отменить",
     "save": "Сохранить",
     "select_scripture": "Выберите текст Писания для прикрепления к вашему ответу",
-    "select_text_error_message": "Выберите текст для прикрепления к ответу."
+    "select_text_error_message": "Select verses to attach to your answer."
   }
 }

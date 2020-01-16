@@ -160,10 +160,10 @@
     <value>Traductor</value>
   </data>
   <data name="ContactTitle" xml:space="preserve">
-    <value>Póngase en contacto con nosotros</value>
+    <value>Contáctese con nosotros</value>
   </data>
   <data name="Description" xml:space="preserve">
-    <value>Un conjunto gratuito de herramientas para hacer más con su proyecto Paratext, dondequiera que esté. </value>
+    <value>Un conjunto de herramientas gratuitas para hacer más con su proyecto de Paratext, dondequiera que esté. </value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
     <value>Realizar la comprobación con la comunidad</value>
@@ -175,7 +175,7 @@
     <value>Reciba sugerencias mientras escribe</value>
   </data>
   <data name="EngageTitle" xml:space="preserve">
-    <value>Comprometerse con la comunidad lingüística. Colabore con sus compañeros.</value>
+    <value>Interactuar con la comunidad lingüística. Colabore con sus compañeros.</value>
   </data>
   <data name="RegisterInterest" xml:space="preserve">
     <value>Registre su interés</value>

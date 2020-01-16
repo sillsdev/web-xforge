@@ -85,13 +85,13 @@
       "3JN": "3 Juan",
       "JUD": "Judas",
       "REV": "Apocalipsis",
-      "TOB": "Tobit",
-      "JDT": "Judith",
-      "ESG": "Esther Greek",
-      "WIS": "Wisdom of Solomon",
+      "TOB": "Tobías",
+      "JDT": "Judit",
+      "ESG": "Ester (griego)",
+      "WIS": "Sabiduría de Salomón",
       "SIR": "Sirach (Ecclesiasticus)",
-      "BAR": "Baruch",
-      "LJE": "Letter of Jeremiah",
+      "BAR": "Baruc",
+      "LJE": "Carta de Jeremías",
       "S3Y": "Song of 3 Young Men",
       "SUS": "Susanna",
       "BEL": "Bel and the Dragon",
@@ -226,11 +226,24 @@
     "network_request_failed": "Una solicitud de red falló. Algunas funciones pueden no estar disponibles.",
     "unknown_error": "Error desconocido"
   },
+  "message_dialog": {
+    "dismiss": "Descartar"
+  },
+  "project": {
+    "project_link_is_invalid": "El enlace del proyecto no es válido."
+  },
+  "project_deleted_dialog": {
+    "ok": "OK",
+    "project_has_been_deleted": "El proyecto ha sido borrado o ya no es accesible."
+  },
   "scripture_chooser_dialog": {
     "choose_book": "Elegir libro",
     "choose_chapter": "Eligir un capítulo",
     "choose_end_verse": "Elegir versículo final",
     "choose_verse": "Elegir versículo"
+  },
+  "share": {
+    "share": "Compartir"
   },
   "share_control": {
     "copy_link": "Copiar enlace",
@@ -249,13 +262,13 @@
     "share_with_others": "Compartir con otros"
   },
   "start": {
-    "connect_project": "Connect project",
-    "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet."
+    "connect_project": "Conectar el proyecto",
+    "not_connected_to_any_projects": "Parece que aún no estás conectado a ningún proyecto."
   },
   "text_chooser_dialog": {
     "cancel": "Cancelar",
     "save": "Guardar",
     "select_scripture": "Seleccione la escritura para adjuntar a su respuesta",
-    "select_text_error_message": "Seleccione el texto para adjuntar a su respuesta."
+    "select_text_error_message": "Seleccione los versículos para adjuntar a su respuesta."
   }
 }

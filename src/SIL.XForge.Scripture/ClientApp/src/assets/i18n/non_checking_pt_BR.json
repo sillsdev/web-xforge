@@ -6,8 +6,8 @@
     "users": "Usuários"
   },
   "chapter_nav": {
-    "previous_chapter": "Previous chapter",
-    "next_chapter": "Next chapter"
+    "previous_chapter": "Capítulo Anterior",
+    "next_chapter": "Próximo capítulo"
   },
   "checking": {
     "add_question": "Adicionar pergunta"
@@ -21,44 +21,44 @@
     "answer_count_label": "{{ count }} respostas",
     "archive": "Arquivo",
     "archived_questions": "Perguntas Arquivadas",
-    "click_add_question": "Clique em {{ boldStart }}Adicionar pergunta {{ boldEnd }}, acima.",
+    "click_add_question": "Clique em {{ boldStart }}Adicionar pergunta{{ boldEnd }}, acima.",
     "no_questions": "Não há perguntas publicadas. ",
     "no_archived_questions": "Não há perguntas arquivadas.",
     "question_count_label": "{{ count }} perguntas",
     "republish": "Republicar",
-    "time_archived_stamp": "Archived on {{ timeStamp }}"
+    "time_archived_stamp": "Arquivado em {{ timeStamp }}"
   },
   "collaborators": {
-    "awaiting_response_from": "Awaiting response from{{ newLine }}{{ email }}",
-    "cancel_invite": "Cancel invite",
-    "change_roles_and_permissions": "Users' roles and permissions can {{ boldStart }}only{{ boldEnd }} be changed in {{ boldStart }}Paratext{{ boldEnd }}. Open the project in {{ boldStart }}Paratext{{ boldEnd }}, on the project window click {{ templateTagBoundary }}{{ templateTagBoundary }}, then {{ boldStart }}Project settings{{ boldEnd }}, then {{ boldStart }}User permissions{{ boldEnd }}. After a {{ italicsStart }}Send/Receive{{ italicsEnd }} in {{ boldStart }}Paratext{{ boldEnd }} and then a {{ italicsStart }}Synchronize{{ italicsEnd }} in {{ boldStart }}Scripture Forge{{ boldEnd }}, their role will come into effect here, once that user logs in with their {{ boldStart }}Paratext{{ boldEnd }} account.",
-    "filter_users": "Filter users...",
-    "me": "me",
-    "no_users_found": "No users found",
-    "remove_from_project": "Remove from project",
-    "share_with_others": "Share with others"
+    "awaiting_response_from": "Aguardando resposta de{{ newLine }}{{ email }}",
+    "cancel_invite": "Cancelar convite",
+    "change_roles_and_permissions": "Usuários, Funções e Permissões pode {{ boldStart }}apenas{{ boldEnd }} ser alterado no{{ boldStart }}Paratext{{ boldEnd }}. Abra o projeto no {{ boldStart }}Paratext{{ boldEnd }}, na janela do projeto, clique em {{ templateTagBoundary }}{{ templateTagBoundary }}, depois{{ boldStart }}Propriedades e Configurações do Projeto{{ boldEnd }}, em seguida {{ boldStart }}Usuários, Funções e Permissões{{ boldEnd }}. Depois de um {{ italicsStart }}Enviar/Receber{{ italicsEnd }} no {{ boldStart }}Paratext{{ boldEnd }} e em seguida uma {{ italicsStart }}Sincronização{{ italicsEnd }} no {{ boldStart }}Scripture Forge{{ boldEnd }}, a função do usuário entrará em vigor aqui, assim que fizer o login com sua {{ boldStart }}Paratext{{ boldEnd }} conta.",
+    "filter_users": "Filtrar usuários...",
+    "me": "eu",
+    "no_users_found": "Nenhum usuário encontrado",
+    "remove_from_project": "Remover do projeto",
+    "share_with_others": "Compartilhar com outros"
   },
   "delete_project_dialog": {
-    "are_you_sure_you_want_to_delete": "Are you sure you want to delete this project?",
-    "cancel": "Cancel",
-    "delete_cannot_be_undone": "This action {{ boldStart }}cannot{{ boldEnd }} be undone. This will permanently delete the {{ boldStart }}{{ projectName }}{{ boldEnd }} project, translation data, questions, answers, and comments.",
-    "delete_this_project": "Delete this project",
-    "i_understand_the_consequences": "I understand the consequences, delete this project",
-    "please_type_project_name": "Please type in the name of the project to confirm.",
-    "project_name": "Project Name"
+    "are_you_sure_you_want_to_delete": "Tem certeza de que deseja excluir este projeto?",
+    "cancel": "Cancelar",
+    "delete_cannot_be_undone": "Esta ação {{ boldStart }}não pode{{ boldEnd }} ser desfeita. Isso excluirá permanentemente o projeto {{ boldStart }}{{ projectName }}{{ boldEnd }} , dados de tradução, perguntas, respostas e comentários.",
+    "delete_this_project": "Excluir este projeto",
+    "i_understand_the_consequences": "Entendo as consequências. Excluir este projecto",
+    "please_type_project_name": "Por favor, digite o nome do projeto para confirmar.",
+    "project_name": "Nome do Projeto"
   },
   "editor": {
-    "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
-    "completed_successfully": "Completed successfully",
-    "configure_translation_suggestions": "Configure translation suggestions",
-    "swap_source_and_target": "Swap source and target",
-    "training": "Training",
-    "training_completed_successfully": "Training completed successfully",
-    "verse_too_long_for_suggestions": "This verse is too long to generate suggestions."
+    "cannot_edit_chapter_formatting_invalid": "Este capítulo não pode ser editado porque a formatação é inválida. Por favor, corrija a formatação no Paratext.",
+    "completed_successfully": "Concluído com sucesso",
+    "configure_translation_suggestions": "Configurar sugestões de tradução",
+    "swap_source_and_target": "Trocar fonte e destino",
+    "training": "Treinamento",
+    "training_completed_successfully": "Treinamento concluído com sucesso",
+    "verse_too_long_for_suggestions": "Este versículo é muito longo para gerar sugestões."
   },
   "project_deleted_dialog": {
     "ok": "OK",
-    "project_has_been_deleted": "The project has been deleted or is no longer accessible."
+    "project_has_been_deleted": "O projeto foi excluído ou não está mais acessível."
   },
   "question_answered_dialog": {
     "cancel": "Cancelar",
@@ -80,61 +80,61 @@
     "save": "Salvar"
   },
   "settings": {
-    "anyone_with_a_link": "Anyone with a link",
-    "based_on": "Based on",
-    "choose_the_paratext_project": "Choose the Paratext project that your project is based on.",
-    "danger_zone": "Danger Zone",
-    "delete_this_project": "Delete this project",
-    "delete_project_cannot_be_undone": "Once you delete a project, there is no going back. Please be certain.",
-    "engage_the_wider_community": "Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses, ask targeted questions, allow discussion of answers.",
-    "enable_translation_suggestions": "to enable {{ boldStart }}Translate Suggestions{{ boldEnd }} and see more options",
-    "community_checking": "Community Checking",
-    "log_in_with_paratext": "Log in to Paratext",
-    "see_others_answers_and_comments": "See other's answers and comments",
-    "select_additional_tools_and_features": "Select which additional tools and features are available.",
-    "settings": "Settings",
-    "share": "Share",
-    "specific_people": "Specific people",
-    "tools": "Tools",
-    "translate": "Translate",
-    "translate_tool_is_always_available": "The translate tool is always available to collaborate with other translators working on the same text.",
-    "translation_suggestions": "Translation Suggestions",
-    "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your project is setup as a {{ boldStart }}Daughter Translation{{ boldEnd }} in Paratext.",
-    "users_can_interact_with_each_other": "Users can see each other's answers and comments to interact with each other.",
-    "users_can_share_the_project": "Users can share by inviting a friend to join the project.{{ newLine }}{{ italicsStart }}Administrators{{ italicsEnd }} can always invite others to the project in {{ templateTagBoundary }}Users{{ templateTagBoundary }}.",
-    "will_not_delete_paratext_project": "This will {{ boldStart }}not{{ boldEnd }} delete your Paratext project, but it will delete any unsynchronized data stored in Scripture Forge. It is recommended to {{ templateTagBoundary }}Synchronize{{ templateTagBoundary }} first before deleting."
+    "anyone_with_a_link": "Qualquer pessoa com um link",
+    "based_on": "Baseado em",
+    "choose_the_paratext_project": "Escolha o projeto do Paratext no qual seu projeto se baseia.",
+    "danger_zone": "Zona de Perigo",
+    "delete_this_project": "Excluir este projeto",
+    "delete_project_cannot_be_undone": "Depois de excluir um projeto, não há como voltar atrás. Por favor, verifique se tem certeza.",
+    "engage_the_wider_community": "Envolva a comunidade em geral para garantir que a tradução seja clara, precisa e natural. Selecione versículos, faça perguntas específicas, permita a discussão das respostas.",
+    "enable_translation_suggestions": "para habilitar {{ boldStart }}Traduzir Sugestões{{ boldEnd }} e ver mais opções",
+    "community_checking": "Verificação da Comunidade",
+    "log_in_with_paratext": "Entrar no Paratext",
+    "see_others_answers_and_comments": "Ver respostas e comentários dos outros",
+    "select_additional_tools_and_features": "Selecionar quais ferramentas e recursos adicionais estão disponíveis.",
+    "settings": "Configurações",
+    "share": "Compartilhar",
+    "specific_people": "Pessoas específicas",
+    "tools": "Ferramentas",
+    "translate": "Traduzir",
+    "translate_tool_is_always_available": "A ferramenta de tradução está sempre disponível para colaborar com outros tradutores que trabalham com o mesmo texto.",
+    "translation_suggestions": "Sugestões de Tradução",
+    "translations_will_be_suggested": "Traduções para palavras e frases serão sugeridas enquanto você edita o Texto Bíblico. É recomendável que seu projeto seja configurado como uma {{ boldStart }}Tradução Derivada{{ boldEnd }} no Paratext.",
+    "users_can_interact_with_each_other": "Os usuários podem ver as respostas e comentários uns dos outros para interagirem entre si.",
+    "users_can_share_the_project": "Os usuários podem compartilhar, convidando um amigo a participar do projeto.{{ newLine }}{{ italicsStart }}Administradores{{ italicsEnd }} podem sempre convidar outros para o projecto em {{ templateTagBoundary }}Usuários{{ templateTagBoundary }}.",
+    "will_not_delete_paratext_project": "Isso {{ boldStart }}não{{ boldEnd }} excluirá seu projeto do Paratext, mas excluirá todos os dados não sincronizados armazenados no Scripture Forge. É recomendável {{ templateTagBoundary }}Sincronizar{{ templateTagBoundary }} primeiro antes de excluir."
   },
   "suggestions_settings_dialog": {
-    "better": "Better",
-    "close": "Close",
-    "more": "More",
-    "number_of_suggestions": "Number of suggestions",
-    "suggestion_confidence": "Suggestion confidence",
-    "translation_suggestions": "Translation suggestions",
-    "translation_suggestions_settings": "Translation suggestions settings"
+    "better": "Melhor",
+    "close": "Fechar",
+    "more": "Mais",
+    "number_of_suggestions": "Número de sugestões",
+    "suggestion_confidence": "Confiança da sugestão",
+    "translation_suggestions": "Sugestões de tradução",
+    "translation_suggestions_settings": "Configurações de sugestões de tradução"
   },
   "sync": {
-    "last_synced_time_stamp": "Last synced on {{ timeStamp }}",
-    "log_in_to_paratext": "Log in to Paratext",
-    "never_been_synced": "Never been synced",
-    "something_went_wrong_synchronizing_this_project": "Something went wrong while synchronizing the {{ projectName }} with Paratext. Please try again.",
-    "successfully_synchronized_with_paratext": "Successfully synchronized {{ projectName }} with Paratext.",
-    "synchronize": "Synchronize",
-    "synchronize_project": "Synchronize {{ projectName }} with Paratext",
-    "your_project_is_being_synchronized": "Your project is being synchronized..."
+    "last_synced_time_stamp": "Última sincronização em {{ timeStamp }}",
+    "log_in_to_paratext": "Entrar no Paratext",
+    "never_been_synced": "Nunca foi sincronizado",
+    "something_went_wrong_synchronizing_this_project": "Algo deu errado ao sincronizar {{ projectName }} com o Paratext. Por favor, tente novamente.",
+    "successfully_synchronized_with_paratext": "Sincronizado {{ projectName }} com o Paratext com sucesso.",
+    "synchronize": "Sincronizar",
+    "synchronize_project": "Sincronizar {{ projectName }} com o Paratext",
+    "your_project_is_being_synchronized": "Seu projeto está sendo sincronizado..."
   },
   "translate_overview": {
-    "progress": "Progress",
-    "quality": "Quality",
-    "retrain": "Retrain",
-    "suggestion_engine": "Suggestion Engine",
-    "trained_segments": "trained segments",
-    "training": "Training...",
-    "translate_overview": "Translate Overview",
-    "translated_segments": "{{ translatedSegments }} of {{ total }} segments"
+    "progress": "Progresso",
+    "quality": "Qualidade",
+    "retrain": "Treinar novamente",
+    "suggestion_engine": "Mecanismo de Sugestão",
+    "trained_segments": "segmentos treinados",
+    "training": "Treinando...",
+    "translate_overview": "Traduzir Visão Geral",
+    "translated_segments": "{{ translatedSegments }} de {{ total }} segmentos"
   },
   "users": {
-    "collaborators": "Collaborators",
-    "users": "Users"
+    "collaborators": "Colaboradores",
+    "users": "Usuários"
   }
 }
