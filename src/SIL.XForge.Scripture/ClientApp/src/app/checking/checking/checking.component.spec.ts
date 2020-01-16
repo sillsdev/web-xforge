@@ -8,7 +8,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import clone from 'lodash/clone';
-import cloneDeep from 'lodash/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
@@ -23,6 +22,7 @@ import {
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -297,28 +297,24 @@ describe('CheckingComponent', () => {
       expect(env.isSegmentHighlighted(1, 1)).toBe(true);
       expect(env.segmentHasQuestion(1, 5)).toBe(false);
       expect(env.isSegmentHighlighted(1, 5)).toBe(false);
-      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenCall((_config, questionDoc) => {
-        const editedQuestion: QuestionDoc = cloneDeep(questionDoc);
-        editedQuestion.submitJson0Op(op =>
-          op.set(q => q.verseRef, { bookNum: 43, chapterNum: 1, verseNum: 5, verse: '5' })
-        );
-        return editedQuestion;
-      });
+      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenCall(
+        (_config, questionDoc: QuestionDoc) => {
+          questionDoc.submitJson0Op(op =>
+            op.set(q => q.verseRef, { bookNum: 43, chapterNum: 1, verseNum: 5, verse: '5' })
+          );
+          return questionDoc;
+        }
+      );
 
       env.clickButton(env.editQuestionButton);
-
-      // grasp at several straws
-      env.waitForSliderUpdate();
-      tick(2000); // not sure why this amount seems to work
-      await flushPromises();
       env.realtimeService.updateAllSubscribeQueries();
       await flushPromises();
 
       expect(env.segmentHasQuestion(1, 1)).toBe(true);
       expect(env.isSegmentHighlighted(1, 1)).toBe(false);
       expect(env.isSegmentHighlighted(1, 5)).toBe(true);
-      // ToDo: PENDING: code functionality is working, the following test is not
-      // expect(env.segmentHasQuestion(1, 5)).toBe(true); // fails
+      expect(env.segmentHasQuestion(1, 5)).toBe(true);
+      expect(env.component.questionVerseRefs[0]).toEqual(VerseRef.parse('JHN 1:5'));
     }));
 
     it('unread answers badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
