@@ -85,7 +85,8 @@ quill-editor {
   }
 }
 
-.ltr .question-segment[data-question-count] {
+.ltr .ql-editor > p .question-segment[data-question-count],
+usx-para[dir='ltr'] .question-segment[data-question-count] {
   margin-left: 1.75em;
   &:before {
     left: -2.25em;
@@ -94,7 +95,8 @@ quill-editor {
     left: -1.5em;
   }
 }
-.rtl .question-segment[data-question-count] {
+.rtl .ql-editor > .question-segment[data-question-count],
+usx-para[dir='rtl'] .question-segment[data-question-count] {
   margin-right: 1.75em;
   &:before {
     right: -2.25em;
