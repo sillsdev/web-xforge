@@ -192,7 +192,7 @@ describe('CheckingComponent', () => {
     it('questions are displaying', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       // Question 5 has been stored as the last question to start at
-      expect(env.component.questionsPanel.activeQuestionDoc!.data!.dataId).toBe('q5Id');
+      expect(env.component.questionsPanel!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       // A sixteenth question is archived
       expect(env.questions.length).toEqual(15);
       const question = env.selectQuestion(15);
@@ -202,7 +202,7 @@ describe('CheckingComponent', () => {
     it('questions are displaying for all books', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER, 'ALL');
       // Question 5 has been stored as the question to start at
-      expect(env.component.questionsPanel.activeQuestionDoc!.data!.dataId).toBe('q5Id');
+      expect(env.component.questionsPanel!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       // A sixteenth question is archived
       expect(env.questions.length).toEqual(16);
       let question = env.selectQuestion(1);
@@ -339,7 +339,7 @@ describe('CheckingComponent', () => {
     it('responds to remote question added', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       let question = env.selectQuestion(1);
-      const questionId = env.component.questionsPanel.activeQuestionDoc!.id;
+      const questionId = env.component.questionsPanel!.activeQuestionDoc!.id;
       expect(env.questions.length).toEqual(15);
       const dateNow = new Date();
       const newQuestion: Question = {
@@ -355,7 +355,7 @@ describe('CheckingComponent', () => {
       };
       env.insertQuestion(newQuestion);
       env.waitForSliderUpdate();
-      expect(env.component.questionsPanel.activeQuestionDoc!.id).toBe(questionId);
+      expect(env.component.questionsPanel!.activeQuestionDoc!.id).toBe(questionId);
       expect(env.questions.length).toEqual(16);
       question = env.selectQuestion(16);
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
@@ -1056,7 +1056,7 @@ describe('CheckingComponent', () => {
         expect(env.getAnswerComments(0).length).toEqual(0);
         const commentId: string = env.commentOnAnswerRemotely(
           'Comment left by admin',
-          env.component.questionsPanel.activeQuestionDoc!
+          env.component.questionsPanel!.activeQuestionDoc!
         );
         tick(env.questionReadTimer);
         env.fixture.detectChanges();
@@ -1069,7 +1069,7 @@ describe('CheckingComponent', () => {
         env.selectQuestion(1);
         env.answerQuestion('Admin will add four comments');
         env.commentOnAnswer(0, 'First comment');
-        const questionDoc: QuestionDoc = clone(env.component.questionsPanel.activeQuestionDoc!);
+        const questionDoc: QuestionDoc = clone(env.component.questionsPanel!.activeQuestionDoc!);
         env.selectQuestion(2);
         env.commentOnAnswerRemotely('Comment #2', questionDoc);
         env.commentOnAnswerRemotely('Comment #3', questionDoc);
@@ -1651,7 +1651,7 @@ class TestEnvironment {
   }
 
   simmulateRemoteEditAnswer(index: number, text: string): void {
-    const questionDoc = this.component.questionsPanel.activeQuestionDoc!;
+    const questionDoc = this.component.questionsPanel!.activeQuestionDoc!;
     questionDoc.submitJson0Op(op => {
       op.set(q => q.answers[index].text!, text);
       op.set(q => q.answers[index].dateModified, new Date().toJSON());
