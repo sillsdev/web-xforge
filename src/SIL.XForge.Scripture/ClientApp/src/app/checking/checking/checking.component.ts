@@ -64,12 +64,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   @HostBinding('class') classes = 'flex-max';
   @ViewChild(CheckingAnswersComponent, { static: false }) answersPanel?: CheckingAnswersComponent;
-  @ViewChild(CheckingTextComponent, { static: false }) scripturePanel!: CheckingTextComponent;
-  @ViewChild(CheckingQuestionsComponent, { static: false }) questionsPanel!: CheckingQuestionsComponent;
-  @ViewChild(SplitComponent, { static: false }) splitComponent!: SplitComponent;
-  @ViewChild('splitContainer', { static: false }) splitContainerElement!: ElementRef;
-  @ViewChild('scripturePanelContainer', { static: false }) scripturePanelContainerElement!: ElementRef;
-  @ViewChild('chapterMenuList', { static: false }) chapterMenuList!: MdcList;
+  @ViewChild(CheckingTextComponent, { static: false }) scripturePanel?: CheckingTextComponent;
+  @ViewChild(CheckingQuestionsComponent, { static: false }) questionsPanel?: CheckingQuestionsComponent;
+  @ViewChild(SplitComponent, { static: false }) splitComponent?: SplitComponent;
+  @ViewChild('splitContainer', { static: false }) splitContainerElement?: ElementRef;
+  @ViewChild('scripturePanelContainer', { static: false }) scripturePanelContainerElement?: ElementRef;
+  @ViewChild('chapterMenuList', { static: false }) chapterMenuList?: MdcList;
 
   chapters: number[] = [];
   isExpanded: boolean = false;
@@ -128,18 +128,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
      *    later on via other methods
      */
     if (book === 0) {
-      const question = this.questionsPanel.activateStoredQuestion(questionDocs);
-      if (question.data != null) {
-        book = question.data.verseRef.bookNum;
-      } else {
-        book = undefined;
+      book = undefined;
+      if (this.questionsPanel != null) {
+        const question = this.questionsPanel.activateStoredQuestion(questionDocs);
+        if (question.data != null) {
+          book = question.data.verseRef.bookNum;
+        }
       }
     }
     this._book = book;
     this.text = this.projectDoc.data.texts.find(t => t.bookNum === book);
     this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
     this._chapter = undefined;
-    this.chapter = this.questionsPanel.activeQuestionChapter;
+    if (this.questionsPanel != null) {
+      this.chapter = this.questionsPanel.activeQuestionChapter;
+    }
     this.checkBookStatus();
   }
 
@@ -380,7 +383,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   async answerAction(answerAction: AnswerAction): Promise<void> {
-    if (this.projectDoc == null) {
+    if (this.projectDoc == null || this.questionsPanel == null) {
       return;
     }
 
@@ -454,15 +457,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.calculateScriptureSliderPosition(useMaxAnswersPanelSize);
   }
 
-  collapseDrawer() {
+  collapseDrawer(): void {
     this.isExpanded = false;
   }
 
-  openDrawer() {
+  openDrawer(): void {
     this.isExpanded = true;
   }
 
-  toggleDrawer() {
+  toggleDrawer(): void {
     this.isExpanded = !this.isExpanded;
   }
 
@@ -470,17 +473,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.isExpanded = false;
   }
 
-  chapterMenuOpened() {
+  chapterMenuOpened(): void {
     // Focus is lost when the menu closes so need to set it again
     // Need to wait for DOM to update as we can't set the focus until it is visible and no built in method
     setTimeout(() => {
-      if (this._chapter != null) {
+      if (this.chapterMenuList != null && this._chapter != null) {
         this.chapterMenuList.focusItemAtIndex(this._chapter - 1);
       }
     }, 10);
   }
 
-  commentAction(commentAction: CommentAction) {
+  commentAction(commentAction: CommentAction): void {
+    if (this.questionsPanel == null) {
+      return;
+    }
+
     let useMaxAnswersPanelSize: boolean = true;
     switch (commentAction.action) {
       case 'save':
@@ -506,7 +513,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           this.projectUserConfigDoc.submitJson0Op(op => {
             if (commentAction.answer != null) {
               for (const comm of commentAction.answer.comments) {
-                if (!this.questionsPanel.hasUserReadComment(comm)) {
+                if (!this.questionsPanel!.hasUserReadComment(comm)) {
                   op.add(puc => puc.commentRefsRead, comm.dataId);
                 }
               }
@@ -561,11 +568,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     });
   }
 
-  questionUpdated(_questionDoc: QuestionDoc) {
+  questionUpdated(_questionDoc: QuestionDoc): void {
     this.refreshSummary();
   }
 
-  questionChanged(questionDoc: QuestionDoc) {
+  questionChanged(questionDoc: QuestionDoc): void {
+    if (this.questionsPanel == null) {
+      return;
+    }
+
     this.book = questionDoc.data == null ? undefined : questionDoc.data.verseRef.bookNum;
     this.chapter = this.questionsPanel.activeQuestionChapter;
     this.calculateScriptureSliderPosition(true);
@@ -574,7 +585,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   async questionDialog(): Promise<void> {
-    if (this.projectDoc == null) {
+    if (this.projectDoc == null || this.questionsPanel == null) {
       return;
     }
 
@@ -594,7 +605,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.questionsQuery != null ? this.questionsQuery.docs.length : 0;
   }
 
-  verseRefClicked(verseRef: VerseRef) {
+  verseRefClicked(verseRef: VerseRef): void {
+    if (this.questionsPanel == null) {
+      return;
+    }
+
     let bestMatch: QuestionDoc | undefined;
 
     for (const questionDoc of this.questionDocs) {
@@ -655,6 +670,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private getAnswerIndex(answer: Answer): number {
+    if (this.questionsPanel == null) {
+      return -1;
+    }
     const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
     return activeQuestionDoc == null || activeQuestionDoc.data == null
       ? -1
@@ -662,12 +680,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private deleteAnswer(answer: Answer): void {
-    if (this.questionsPanel.activeQuestionDoc == null) {
+    if (this.questionsPanel == null) {
+      return;
+    }
+    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+    if (activeQuestionDoc == null) {
       return;
     }
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
-      this.questionsPanel.activeQuestionDoc
+      activeQuestionDoc
         .submitJson0Op(op => op.remove(q => q.answers, answerIndex))
         .then(() => {
           if (this.projectDoc != null) {
@@ -679,6 +701,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private saveAnswer(answer: Answer): void {
+    if (this.questionsPanel == null) {
+      return;
+    }
     const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
     if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
       return;
@@ -718,6 +743,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private saveComment(answer: Answer, comment: Comment): void {
+    if (this.questionsPanel == null) {
+      return;
+    }
     const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
     if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
       return;
@@ -737,6 +765,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private deleteComment(answer: Answer, comment: Comment): void {
+    if (this.questionsPanel == null) {
+      return;
+    }
     const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
     if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
       return;
@@ -749,7 +780,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  private likeAnswer(answer: Answer) {
+  private likeAnswer(answer: Answer): void {
+    if (this.questionsPanel == null) {
+      return;
+    }
     const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
     if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
       return;
@@ -773,7 +807,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {
     const waitMs: number = 100;
     // Wait while Angular updates visible DOM elements before we can calculate the height correctly
-    setTimeout((): void => {
+    setTimeout(() => {
+      if (this.splitComponent == null) {
+        return;
+      }
+
       let answerPanelHeight: number;
       if (maximizeAnswerPanel) {
         answerPanelHeight = this.fullyExpandedAnswerPanelPercent;
@@ -795,8 +833,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   // Unbind this component from the data when a user is removed from the project, otherwise console
   // errors appear before the app can navigate to the start component
-  private onRemovedFromProject() {
-    this.questionsPanel.activeQuestionDoc = undefined;
+  private onRemovedFromProject(): void {
+    if (this.questionsPanel != null) {
+      this.questionsPanel.activeQuestionDoc = undefined;
+    }
     this.projectUserConfigDoc = undefined;
     if (this.questionsQuery != null) {
       this.questionsQuery.dispose();
@@ -805,7 +845,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.projectDoc = undefined;
   }
 
-  private refreshSummary() {
+  private refreshSummary(): void {
     this.summary.answered = 0;
     this.summary.read = 0;
     this.summary.unread = 0;
@@ -825,7 +865,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  private startUserOnboardingTour() {
+  private startUserOnboardingTour(): void {
     if (this.projectDoc == null || this.projectDoc.data == null || this.userDoc == null || this.userDoc.data == null) {
       return;
     }
