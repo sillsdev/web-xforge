@@ -462,7 +462,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
         }
       }
       // Loop through the paragraphs to see what direction it should be set to based off the first valid segment
-      const paragraphs = document.querySelectorAll('quill-editor usx-para[dir=auto]');
+      const paragraphs = document.querySelectorAll('quill-editor usx-para[dir=auto],quill-editor .ql-editor > p');
       if (paragraphs !== null) {
         for (const index in paragraphs) {
           if (!paragraphs.hasOwnProperty(index)) {
@@ -489,6 +489,24 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
           }
           // Set the paragraph dir
           paragraph.setAttribute('dir', paraDir);
+        }
+      }
+      // Chapters needs its direction set on the paragraph that follows
+      const chapters = document.querySelectorAll('quill-editor usx-chapter');
+      if (chapters !== null) {
+        for (const index in chapters) {
+          if (!chapters.hasOwnProperty(index)) {
+            continue;
+          }
+          const chapter = chapters[index];
+          if (chapter.nextElementSibling === null) {
+            continue;
+          }
+          const dir = window.getComputedStyle(chapter.nextElementSibling).direction;
+          if (dir === null) {
+            continue;
+          }
+          chapter.setAttribute('dir', dir);
         }
       }
     }
