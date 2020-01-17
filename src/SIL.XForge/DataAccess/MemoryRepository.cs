@@ -171,8 +171,11 @@ namespace SIL.XForge.DataAccess
         public Task<T> DeleteAsync(Expression<Func<T, bool>> filter)
         {
             T entity = Query().FirstOrDefault(filter);
-            if (entity != null)
-                Remove(entity);
+            if (entity == null)
+            {
+                throw new Microsoft.AspNetCore.NodeServices.HostingModels.NodeInvocationException("Document does not exist", "Would be received in production.");
+            }
+            Remove(entity);
             return Task.FromResult(entity);
         }
 

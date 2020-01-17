@@ -577,7 +577,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
         }
 
-
         [Test]
         public async Task FetchTextDocsAsync_MissingChapters()
         {
@@ -601,7 +600,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("MAT", missingChapters.First(), TextType.Target), Is.False);
             Assert.That(env.ContainsText("MAT", missingChapters.First(), TextType.Source), Is.False);
         }
-
 
         [Test]
         public async Task FetchTextDocsAsync_MissingDocs()
@@ -682,6 +680,51 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("MAT", 4, TextType.Target), Is.True);
             Assert.That(env.ContainsText("MAT", 5, TextType.Target), Is.False);
             Assert.That(env.ContainsText("MAT", 6, TextType.Target), Is.True);
+        }
+
+        [Test]
+        public async Task ChangeDbToNewSnapshotAsync_BadDbChapterDocs()
+        {
+            // PT cloud is missing some chapters.
+            // SF DB is missing some textdocs for those chapters.
+            // SF DB has a projectdoc that knows those chapters should/can exist.
+            // Don't crash.
+            var env = new TestEnvironment();
+            var numberChapters = 2;
+            var book = new Book("MAT", numberChapters, true);
+            env.SetupSFData(true, true, false, book);
+            await env.Runner._InitAsync("project01", "user01");
+            var textInfo = env.TextInfoFromBook(book);
+            // Add additional chapters to the book description that we are working with. The SF DB will not have these chapter textdocs. But it might have expectations for the chapters listed in the textInfo from the project doc Data.Texts[book_number].
+            textInfo.Chapters.Add(new Chapter() { Number = 3, IsValid = true, LastVerse = 10 });
+            textInfo.Chapters.Add(new Chapter() { Number = 4, IsValid = true, LastVerse = 10 });
+            textInfo.Chapters.Add(new Chapter() { Number = 5, IsValid = true, LastVerse = 10 });
+            int extraChapters = 3;
+            var targetTextDocs = await env.Runner._FetchTextDocsAsync(textInfo, TextType.Target);
+            // targetTextDocs contains additional values with a null Data.
+            Assert.That(targetTextDocs.Values.Where(doc => doc.Data == null).Count(), Is.EqualTo(extraChapters));
+
+            // Incoming data from PT cloud
+            var chapterDeltas = new int[] { 1, 2 }
+                .Select(c => new ChapterDelta(c, 10, false,
+                c == 5 ? null : Delta.New().InsertText("cloudy")))
+                .ToDictionary(cd => cd.Number);
+
+            // SUT
+            Assert.DoesNotThrowAsync(() => env.Runner._ChangeDbToNewSnapshotAsync(textInfo, TextType.Target, null, targetTextDocs, chapterDeltas));
+
+            env.Runner._CloseConnection();
+
+            // Did not crash. Chapters 3-5 are not in db since it did not come in thru chapterDeltas.
+            // Chapter 1 text was still updated.
+            var insertTextDelta = Delta.New().InsertText("text");
+            var insertCloudyDelta = Delta.New().InsertText("cloudy");
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(insertTextDelta), Is.False);
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(insertCloudyDelta), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 4, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 5, TextType.Target), Is.False);
         }
 
         private class Book
