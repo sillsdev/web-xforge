@@ -80,11 +80,11 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     this.adapter.destroy();
   }
 
-  localUpdate(): void {
+  async localUpdate(): Promise<void> {
     if (!this.subscribed) {
       return;
     }
-    this.localQuery();
+    await this.localQuery();
   }
 
   private async localQuery(): Promise<string[] | undefined> {
