@@ -11,6 +11,7 @@ import clone from 'lodash/clone';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
+import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
@@ -36,7 +37,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { nameof, objectId } from 'xforge-common/utils';
+import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -253,17 +254,11 @@ describe('CheckingComponent', () => {
 
       env.clickButton(env.archiveQuestionButton);
 
-      // grasp at several straws
-      env.waitForSliderUpdate();
-      tick(2000);
-      await flushPromises();
-      env.realtimeService.updateAllSubscribeQueries();
-      await flushPromises();
+      tick(env.questionReadTimer);
 
       expect(question.isArchived).toBe(true);
       expect(env.component.questionDocs.filter(q => q.data!.isArchived !== true).length).toEqual(14);
-      // ToDo: PENDING: code functionality is working, the following test is not
-      // expect(env.component.questionVerseRefs.length).toEqual(14); // fails
+      expect(env.component.questionVerseRefs.length).toEqual(14);
     }));
 
     it('opens a dialog when edit question is clicked', fakeAsync(() => {
@@ -1856,8 +1851,9 @@ class TestEnvironment {
       )
     ).thenCall(() =>
       this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {
+        [obj<Question>().pathStr(q => q.isArchived)]: false,
         // Sort questions in order from oldest to newest
-        $sort: { [nameof<Question>('dateCreated')]: 1 }
+        $sort: { [obj<Question>().pathStr(q => q.dateCreated)]: 1 }
       })
     );
     when(mockedProjectService.createQuestion('project01', anything())).thenCall((id: string, question: Question) => {

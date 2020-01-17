@@ -127,12 +127,14 @@ export class RealtimeService {
     }
   }
 
-  onLocalDocUpdate(doc: RealtimeDoc): void {
+  async onLocalDocUpdate(doc: RealtimeDoc): Promise<void> {
     const collectionQueries = this.subscribeQueries.get(doc.collection);
     if (collectionQueries != null) {
+      const promises: Promise<void>[] = [];
       for (const query of collectionQueries) {
-        query.localUpdate();
+        promises.push(query.localUpdate());
       }
+      await Promise.all(promises);
     }
   }
 }

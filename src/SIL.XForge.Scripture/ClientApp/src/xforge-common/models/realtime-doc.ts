@@ -103,20 +103,20 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     this.adapter.submitOp(ops, source).then(() => this.updateOfflineData());
     // update offline data when the op is first submitted
     await this.updateOfflineData();
-    this.realtimeService.onLocalDocUpdate(this);
+    await this.realtimeService.onLocalDocUpdate(this);
   }
 
   async create(data: T): Promise<void> {
     this.adapter.create(data).then(() => this.updateOfflineData(true));
     await this.updateOfflineData(true);
     this.isOfflineDataLoaded = true;
-    this.realtimeService.onLocalDocUpdate(this);
+    await this.realtimeService.onLocalDocUpdate(this);
   }
 
   async delete(): Promise<void> {
     this.adapter.delete();
     await this.updateOfflineData();
-    this.realtimeService.onLocalDocUpdate(this);
+    await this.realtimeService.onLocalDocUpdate(this);
   }
 
   async onAddedToSubscribeQuery(): Promise<void> {
