@@ -37,8 +37,7 @@ export interface TextSelection {
   styleUrls: ['./text-chooser-dialog.component.scss']
 })
 export class TextChooserDialogComponent extends SubscriptionDisposable {
-  @ViewChild(TextComponent, { static: true }) textComponent?: TextComponent;
-  @ViewChild(TextComponent, { static: false, read: ElementRef }) scriptureText!: ElementRef;
+  @ViewChild(TextComponent, { static: false, read: ElementRef }) scriptureText?: ElementRef;
   selectedText?: string;
   showError = false;
   bookNum: number;
@@ -336,9 +335,9 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     return this.segments().some(segment => segment.contains(node));
   }
 
-  private segments() {
+  private segments(): Element[] {
     return Array.from(
-      (this.scriptureText.nativeElement as HTMLElement).querySelectorAll('usx-segment[data-segment^=verse_]')
+      (this.scriptureText!.nativeElement as HTMLElement).querySelectorAll('usx-segment[data-segment^=verse_]')
     );
   }
 }

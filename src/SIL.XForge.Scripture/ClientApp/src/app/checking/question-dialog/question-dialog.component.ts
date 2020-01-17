@@ -40,8 +40,8 @@ export interface QuestionDialogResult {
   styleUrls: ['./question-dialog.component.scss']
 })
 export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit, AfterViewChecked {
-  @ViewChild(CheckingTextComponent, { static: false, read: ElementRef }) textElement!: ElementRef;
-  @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent!: CheckingAudioCombinedComponent;
+  @ViewChild(CheckingTextComponent, { static: false, read: ElementRef }) textElement?: ElementRef;
+  @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent?: CheckingAudioCombinedComponent;
   modeLabel =
     this.data && this.data.question != null
       ? translate('question_dialog.edit_question')
@@ -166,7 +166,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
 
   ngAfterViewChecked() {
     if (this.scrollVerseIntoView && this.selection != null) {
-      const element = this.textElement.nativeElement.querySelector(`[data-segment="${verseSlug(this.selection)}"]`);
+      const element = this.textElement!.nativeElement.querySelector(`[data-segment="${verseSlug(this.selection)}"]`);
       if (element != null) {
         setTimeout(() => element.scrollIntoView());
         this.scrollVerseIntoView = false;
@@ -179,8 +179,8 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   }
 
   async submit() {
-    if (this.audioCombinedComponent.audioRecorderComponent != null && this.audio.status === 'recording') {
-      await this.audioCombinedComponent.audioRecorderComponent.stopRecording();
+    if (this.audioCombinedComponent!.audioRecorderComponent != null && this.audio.status === 'recording') {
+      await this.audioCombinedComponent!.audioRecorderComponent.stopRecording();
       this.noticeService.show(translate('question_dialog.recording_stopped'));
     }
     if (this.questionForm.invalid || this._selection == null) {
