@@ -1,8 +1,4 @@
-# web-xforge
-
-The existing site details are [here](https://github.com/sillsdev/web-languageforge/blob/master/README-legacy.md). This document is for the **Beta** sites.
-
-[Language Forge](https://languageforge.org) and [Scripture Forge](https://scriptureforge.org) represent different websites, but have the same code base stored in one [repository](https://github.com/sillsdev/web-languageforge).
+# web-xforge <!-- omit in toc -->
 
 ## Users
 
@@ -10,11 +6,53 @@ To use **Language Forge** go to [languageforge.org](https://languageforge.org).
 
 To use **Scripture Forge** go to [beta.scriptureforge.org](https://beta.scriptureforge.org).
 
-### User Problems
+### Report problems
 
-To report a user issue with the **Language Forge** application, email "languageforgeissues @ sil dot org".
+To report an issue with the **Language Forge** application, email "languageforgeissues @ sil dot org".
 
-To report a user issue with the **Scripture Forge** application, email "scriptureforgeissues @ sil dot org".
+To report an issue with the **Scripture Forge** application, email "scriptureforgeissues @ sil dot org".
+
+The rest of this document discusses the development of the underlying software.
+
+## Contents <!-- omit in toc -->
+<!-- The table of contents is automatically updated by VSCode extension
+"yzhang.markdown-all-in-one" when saving. -->
+
+- [Users](#users)
+  - [Report problems](#report-problems)
+- [Sites](#sites)
+- [Special Thanks To](#special-thanks-to)
+- [Developers](#developers)
+  - [Builds](#builds)
+  - [Gitflow](#gitflow)
+  - [Style Guides](#style-guides)
+  - [Layout](#layout)
+  - [Recommended Development Environment](#recommended-development-environment)
+    - [Vagrant GUI Setup](#vagrant-gui-setup)
+    - [Local Linux Development Setup](#local-linux-development-setup)
+    - [Manual Setup](#manual-setup)
+  - [Development Process](#development-process)
+  - [Reference](#reference)
+- [Testing](#testing)
+  - [.NET Unit Testing](#net-unit-testing)
+  - [Node Unit Testing](#node-unit-testing)
+    - [Debugging Unit Tests](#debugging-unit-tests)
+  - [Angular Linting and Prettiering](#angular-linting-and-prettiering)
+  - [Angular Unit Testing](#angular-unit-testing)
+    - [Debugging Unit Tests](#debugging-unit-tests-1)
+    - [Filtering Unit Tests](#filtering-unit-tests)
+  - [Angular End-To-End (E2E) Testing](#angular-end-to-end-e2e-testing)
+    - [Debugging E2E Tests](#debugging-e2e-tests)
+  - [PWA Testing](#pwa-testing)
+- [Backend Development](#backend-development)
+  - [Model Changes](#model-changes)
+- [Debugging](#debugging)
+- [Database](#database)
+- [USX Validation](#usx-validation)
+
+## Sites
+
+This repository is for Scripture Forge version 2. See also the [repository](https://github.com/sillsdev/web-languageforge) for Language Forge and Scripture Forge version 1.
 
 ## Special Thanks To
 
@@ -34,7 +72,7 @@ Status of builds from our continuous integration (CI) [server](https://build.pal
 
 | Site               | Master Unit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Master E2E          | QA                                                                                                                                                                                                                                                       | Live                                                                                                                                                                                                                                                |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Scripture Forge v2 | [![Build Status](https://build.palaso.org/app/rest/builds/buildType:(id:SFv2_ScriptureForgeMasterUnitTests)/statusIcon)](https://build.palaso.org/viewType.html?buildTypeId=SFv2_ScriptureForgeMasterUnitTests) [![Total alerts](https://img.shields.io/lgtm/alerts/g/sillsdev/web-xforge.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sillsdev/web-xforge/alerts/) [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/sillsdev/web-xforge.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sillsdev/web-xforge/context:javascript) ![Test coverage](<https://img.shields.io/badge/dynamic/xml?label=C%23%20test%20coverage&suffix=%&query=/properties/property[@name=%22CodeCoverageS%22]/@value&url=https%3A%2F%2Fbuild.palaso.org%2Fapp%2Frest%2Fbuilds%2FbuildType%3A(id%3ASFv2_ScriptureForgeMasterUnitTests)%2Fstatistics%3Fguest%3D1&style=flat>) <br />Angular test coverage not reported here but available in TC | not yet operational | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeV2qaBeta)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fqa.beta.scriptureforge.org) | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeV2beta)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fbeta.scriptureforge.org) |
+| Scripture Forge v2 | [![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:SFv2_ScriptureForgeMasterUnitTests)/statusIcon>)](https://build.palaso.org/viewType.html?buildTypeId=SFv2_ScriptureForgeMasterUnitTests) [![Total alerts](https://img.shields.io/lgtm/alerts/g/sillsdev/web-xforge.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sillsdev/web-xforge/alerts/) [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/sillsdev/web-xforge.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/sillsdev/web-xforge/context:javascript) ![Test coverage](<https://img.shields.io/badge/dynamic/xml?label=C%23%20test%20coverage&suffix=%&query=/properties/property[@name=%22CodeCoverageS%22]/@value&url=https%3A%2F%2Fbuild.palaso.org%2Fapp%2Frest%2Fbuilds%2FbuildType%3A(id%3ASFv2_ScriptureForgeMasterUnitTests)%2Fstatistics%3Fguest%3D1&style=flat>) <br />Angular test coverage not reported here but available in TC | not yet operational | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeV2qaBeta)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fqa.beta.scriptureforge.org) | ![Build Status](<https://build.palaso.org/app/rest/builds/buildType:(id:xForgeDeploy_ScriptureForgeV2beta)/statusIcon>) ![Website](https://img.shields.io/website?down_message=offline&up_message=online&url=https%3A%2F%2Fbeta.scriptureforge.org) |
 
 Successful builds from our CI server deploy to:
 
@@ -220,6 +258,8 @@ To run .NET backend unit tests, from the repo (repository) root
 ```bash
 dotnet test
 ```
+
+.NET backend unit tests can also be run using the .NET Test Explorer area of the Test sidebar, or by clicking "Run Test" above a test in a code window. Clicking "Debug Test" will allow debugging.
 
 See documentation for [running tests](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test?tabs=netcore21) and [writing tests](https://docs.microsoft.com/en-us/dotnet/core/testing/unit-testing-with-nunit).
 
