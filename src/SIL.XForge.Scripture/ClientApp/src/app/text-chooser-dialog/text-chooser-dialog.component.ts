@@ -336,8 +336,11 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
   }
 
   private segments(): Element[] {
+    if (this.scriptureText == null) {
+      return [];
+    }
     return Array.from(
-      (this.scriptureText!.nativeElement as HTMLElement).querySelectorAll('usx-segment[data-segment^=verse_]')
+      (this.scriptureText.nativeElement as HTMLElement).querySelectorAll('usx-segment[data-segment^=verse_]')
     );
   }
 }
