@@ -247,18 +247,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.projectDataChangesSub.unsubscribe();
           }
           this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
-            if (this.source == null) {
-              return;
-            }
             let sourceId: TextDocId | undefined;
             if (this.hasSource && this.text != null && this._chapter != null) {
               sourceId = new TextDocId(this.projectDoc!.id, this.text.bookNum, this._chapter, 'source');
-              if (!isEqual(this.source.id, sourceId)) {
+              if (!isEqual(this.source!.id, sourceId)) {
                 this.sourceLoaded = false;
                 this.loadingStarted();
               }
             }
-            this.source.id = sourceId;
+            this.source!.id = sourceId;
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled) {
               this.setupTranslationEngine();
             }
@@ -574,12 +571,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private changeText(): void {
     if (this.projectDoc == null || this.text == null || this._chapter == null) {
-      if (this.source != null) {
-        this.source.id = undefined;
-      }
-      if (this.target != null) {
-        this.target.id = undefined;
-      }
+      this.source!.id = undefined;
+      this.target!.id = undefined;
       return;
     }
     if (this.target == null) {
