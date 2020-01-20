@@ -284,8 +284,8 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       id: objectId(),
       type,
       sessionId: this.id,
-      bookNum: this.target.textDocId == null ? 0 : this.target.textDocId.bookNum,
-      chapterNum: this.target.textDocId == null ? 0 : this.target.textDocId.chapterNum
+      bookNum: this.target.id == null ? 0 : this.target.id.bookNum,
+      chapterNum: this.target.id == null ? 0 : this.target.id.chapterNum
     };
     if (type === 'edit') {
       if (this.target.segment != null) {

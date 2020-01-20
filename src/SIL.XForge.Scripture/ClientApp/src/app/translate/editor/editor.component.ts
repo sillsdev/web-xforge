@@ -250,12 +250,12 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
             let sourceId: TextDocId | undefined;
             if (this.hasSource && this.text != null && this._chapter != null) {
               sourceId = new TextDocId(this.projectDoc!.id, this.text.bookNum, this._chapter, 'source');
-              if (!isEqual(this.source.textDocId, sourceId)) {
+              if (!isEqual(this.source.id, sourceId)) {
                 this.sourceLoaded = false;
                 this.loadingStarted();
               }
             }
-            this.source.textDocId = sourceId;
+            this.source.id = sourceId;
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled) {
               this.setupTranslationEngine();
             }
@@ -566,8 +566,8 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
 
   private changeText(): void {
     if (this.projectDoc == null || this.text == null || this._chapter == null) {
-      this.source.textDocId = undefined;
-      this.target.textDocId = undefined;
+      this.source.id = undefined;
+      this.target.id = undefined;
       return;
     }
 
@@ -584,15 +584,15 @@ export class EditorComponent extends DataLoadingComponent implements OnInit, OnD
       selectedSegment = this.projectUserConfigDoc.data.selectedSegment;
       selectedSegmentChecksum = this.projectUserConfigDoc.data.selectedSegmentChecksum;
     }
-    this.source.textDocId = this.hasSource
+    this.source.id = this.hasSource
       ? new TextDocId(this.projectDoc.id, this.text.bookNum, this._chapter, 'source')
       : undefined;
     const targetId = new TextDocId(this.projectDoc.id, this.text.bookNum, this._chapter, 'target');
-    if (!isEqual(targetId, this.target.textDocId)) {
+    if (!isEqual(targetId, this.target.id)) {
       // blur the target before switching so that scrolling is reset to the top
       this.target.blur();
     }
-    this.target.textDocId = targetId;
+    this.target.id = targetId;
     if (selectedSegment != null) {
       const segmentChanged = this.target.setSegment(selectedSegment, selectedSegmentChecksum, true);
       if (!segmentChanged && selectedSegmentChecksum == null && this.target.segment != null) {
