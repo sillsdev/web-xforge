@@ -39,6 +39,9 @@
       @include media-breakpoint-down(sm) {
         max-height: calc(100vh - 180px);
       }
+      > as-split {
+        height: auto; /* fix for SF-754 */
+      }
     }
     #scripture-panel {
       > .panel {
