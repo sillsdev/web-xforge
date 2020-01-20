@@ -1126,14 +1126,22 @@ describe('CheckingComponent', () => {
       expect(segment.getAttribute('data-question-count')).toBe('13');
     }));
 
-    it('sets text direction to auto', fakeAsync(() => {
+    it('sets text and paragraph direction ', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
       // the dir property is needed on the Quill editor because chapters don't always have paragraphs
       expect(env.quillEditorElement.getAttribute('dir')).toEqual('auto');
       // ensure multiple paragraphs were found, otherwise the test is meaningless
       expect(env.paragraphs.length).toBeGreaterThan(1);
-      for (const paragraph of env.paragraphs) {
-        expect(paragraph.getAttribute('dir')).toEqual('auto');
+      for (const index in env.paragraphs) {
+        if (env.paragraphs.hasOwnProperty(index)) {
+          const paragraph = env.paragraphs[index];
+          // Ensure the correct direction has been applied to each paragraph
+          let expected = 'ltr';
+          if (index === '3') {
+            expected = 'rtl';
+          }
+          expect(paragraph.getAttribute('dir')).toEqual(expected);
+        }
       }
     }));
   });
@@ -1924,6 +1932,9 @@ class TestEnvironment {
     delta.insert({ blank: true }, { segment: `verse_${chapter}_4/p_1` });
     delta.insert({ verse: { number: '5', style: 'v' } });
     delta.insert(`target: chapter ${chapter}, `, { segment: `verse_${chapter}_5` });
+    delta.insert('\n', { para: { style: 'p' } });
+    delta.insert({ verse: { number: '6', style: 'v' } });
+    delta.insert(`ישע`, { segment: `verse_${chapter}_6` });
     delta.insert('\n', { para: { style: 'p' } });
     return delta;
   }
