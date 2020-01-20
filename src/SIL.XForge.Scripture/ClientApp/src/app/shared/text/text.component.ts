@@ -384,6 +384,15 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.applyEditorStyles();
     // Get the computed direction the browser decided to use for quill for the current text
     this.setDirection();
+    // Track key and paste events so we can trigger the direction logic
+    if (this.editor !== undefined) {
+      this.editor.root.addEventListener('keyup', evt => {
+        this.setDirection();
+      });
+      this.editor.root.addEventListener('paste', evt => {
+        this.setDirection();
+      });
+    }
   }
 
   private isBackspaceAllowed(range: RangeStatic): boolean {
@@ -432,25 +441,32 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
   }
 
+  /**
+   * Not all browsers appear to be consistent with how child elements determine the value of dir="auto" i.e. paragraphs
+   * with child segments both having dir="auto" set.
+   * To get around this we apply dir="auto" to both paragraphs (when available) and segments. We then query
+   * each paragraph/segment and then specifically set the paragraph to what the direction of the first segment that
+   * contains text i.e. is not blank. For chapters we use the same direction value as the paragraph that follows it.
+   */
   private setDirection() {
     // As the browser is automatically applying ltr/rtl we need to ask it which one it is using
     // This value can then be used for other purposes i.e. CSS styles
     const quill = document.querySelector('quill-editor');
-    if (quill !== null) {
+    if (quill !== null && this.editor !== undefined) {
       this._direction = window.getComputedStyle(quill).direction;
       // Set the browser calculated direction on the segments so we can action elsewhere i.e. CSS
-      const elements = document.querySelectorAll('quill-editor usx-segment[dir=auto]');
-      if (elements !== null) {
-        for (const index in elements) {
-          if (!elements.hasOwnProperty(index)) {
+      let segments = document.querySelectorAll('quill-editor usx-segment');
+      if (segments !== null) {
+        for (const index in segments) {
+          if (!segments.hasOwnProperty(index)) {
             continue;
           }
-          const element = elements[index];
-          const dir = window.getComputedStyle(element).direction;
+          const segment = segments[index];
+          let dir = window.getComputedStyle(segment).direction;
           if (dir === null) {
             continue;
           }
-          const segmentRef = element.getAttribute('data-segment');
+          const segmentRef = segment.getAttribute('data-segment');
           if (segmentRef === null) {
             continue;
           }
@@ -458,11 +474,17 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
           if (range === undefined) {
             continue;
           }
-          element.setAttribute('dir', dir);
+          const blanks = segment.querySelectorAll('usx-blank');
+          // Set the direction back to auto for bank segments so the browser can work it out when something is added
+          // or pasted in through the Translate app
+          if (blanks.length > 0) {
+            dir = 'auto';
+          }
+          segment.setAttribute('dir', dir);
         }
       }
       // Loop through the paragraphs to see what direction it should be set to based off the first valid segment
-      const paragraphs = document.querySelectorAll('quill-editor usx-para[dir=auto],quill-editor .ql-editor > p');
+      const paragraphs = document.querySelectorAll('quill-editor usx-para,quill-editor .ql-editor > p');
       if (paragraphs !== null) {
         for (const index in paragraphs) {
           if (!paragraphs.hasOwnProperty(index)) {
@@ -471,7 +493,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
           const paragraph = paragraphs[index];
           let paraDir = 'auto';
           // Locate the first segment that isn't blank to see what direction the paragraph should be set to
-          const segments = paragraph.querySelectorAll('usx-segment');
+          segments = paragraph.querySelectorAll('usx-segment');
           for (const segmentIndex in segments) {
             if (!segments.hasOwnProperty(segmentIndex)) {
               continue;
@@ -482,6 +504,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
               continue;
             }
             const blanks = segment.querySelectorAll('usx-blank');
+            // Only use the segment direction if this isn't a blank segment
             if (blanks.length === 0) {
               paraDir = dir;
               break;
@@ -491,7 +514,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
           paragraph.setAttribute('dir', paraDir);
         }
       }
-      // Chapters needs its direction set on the paragraph that follows
+      // Chapters need its direction set on the paragraph that follows
       const chapters = document.querySelectorAll('quill-editor usx-chapter');
       if (chapters !== null) {
         for (const index in chapters) {
