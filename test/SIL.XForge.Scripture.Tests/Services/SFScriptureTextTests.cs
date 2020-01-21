@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using MongoDB.Bson;
 using NUnit.Framework;
@@ -149,6 +150,41 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
             Assert.That(text.Segments.Count(), Is.EqualTo(numberSegments));
+        }
+
+        [Test]
+        public void Create_MissingOps_EmptySegments()
+        {
+            var doc = new BsonDocument
+            {
+                {"_id", "abc123:MAT:1:target"},
+                // Missing ops
+            };
+            var numberSegments = 0;
+            var bookNumber = 40;
+            var chapterNumber = 1;
+            var projectId = "myProject";
+            Assert.That(doc.Contains("ops"), Is.False, "Setup");
+            var tokenizer = new LatinWordTokenizer();
+
+            // SUT
+            var text = new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc);
+
+            Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
+            Assert.That(text.Segments.Count(), Is.EqualTo(numberSegments));
+        }
+
+        [Test]
+        public void Create_NullDoc_Crash()
+        {
+            BsonDocument doc = null;
+            var bookNumber = 40;
+            var chapterNumber = 1;
+            var projectId = "myProject";
+            var tokenizer = new LatinWordTokenizer();
+
+            // SUT
+            Assert.Throws<ArgumentNullException>(() => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc));
         }
     }
 }
