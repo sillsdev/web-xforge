@@ -698,6 +698,7 @@ describe('EditorComponent', () => {
 
       // Set segment to blank so dir="auto"
       // - chapter and paragraph will remain as ltr as the next valid segment has ltr text
+      // - verse 1 & 2 are blank which makes verse 3 the next valid segment to check the direction on
       env.targetEditor.setSelection(3, 27, 'user');
       env.deleteCharacters();
       expect(env.component.target.segmentText).toBe('');

@@ -331,6 +331,10 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
       this.update(delta);
+      // Update direction logic for the text
+      Promise.resolve().then(() => {
+        this.setDirection();
+      });
     }
   }
 
@@ -384,15 +388,6 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.applyEditorStyles();
     // Get the computed direction the browser decided to use for quill for the current text
     this.setDirection();
-    // Track key and paste events so we can trigger the direction logic
-    if (this.editor !== undefined) {
-      this.editor.root.addEventListener('keyup', evt => {
-        this.setDirection();
-      });
-      this.editor.root.addEventListener('paste', evt => {
-        this.setDirection();
-      });
-    }
   }
 
   private isBackspaceAllowed(range: RangeStatic): boolean {
@@ -457,11 +452,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       // Set the browser calculated direction on the segments so we can action elsewhere i.e. CSS
       let segments = document.querySelectorAll('quill-editor usx-segment');
       if (segments !== null) {
-        for (const index in segments) {
-          if (!segments.hasOwnProperty(index)) {
-            continue;
-          }
-          const segment = segments[index];
+        for (const segment of Array.from(segments)) {
           let dir = window.getComputedStyle(segment).direction;
           if (dir === null) {
             continue;
@@ -486,19 +477,11 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       // Loop through the paragraphs to see what direction it should be set to based off the first valid segment
       const paragraphs = document.querySelectorAll('quill-editor usx-para,quill-editor .ql-editor > p');
       if (paragraphs !== null) {
-        for (const index in paragraphs) {
-          if (!paragraphs.hasOwnProperty(index)) {
-            continue;
-          }
-          const paragraph = paragraphs[index];
+        for (const paragraph of Array.from(paragraphs)) {
           let paraDir = 'auto';
           // Locate the first segment that isn't blank to see what direction the paragraph should be set to
           segments = paragraph.querySelectorAll('usx-segment');
-          for (const segmentIndex in segments) {
-            if (!segments.hasOwnProperty(segmentIndex)) {
-              continue;
-            }
-            const segment = segments[segmentIndex];
+          for (const segment of Array.from(segments)) {
             const dir = window.getComputedStyle(segment).direction;
             if (dir === null) {
               continue;
@@ -514,18 +497,15 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
           paragraph.setAttribute('dir', paraDir);
         }
       }
-      // Chapters need its direction set on the paragraph that follows
+      // Chapters need its direction set from the paragraph that follows
       const chapters = document.querySelectorAll('quill-editor usx-chapter');
       if (chapters !== null) {
-        for (const index in chapters) {
-          if (!chapters.hasOwnProperty(index)) {
+        for (const chapter of Array.from(chapters)) {
+          const sibling = chapter.nextElementSibling;
+          if (sibling === null) {
             continue;
           }
-          const chapter = chapters[index];
-          if (chapter.nextElementSibling === null) {
-            continue;
-          }
-          const dir = window.getComputedStyle(chapter.nextElementSibling).direction;
+          const dir = window.getComputedStyle(sibling).direction;
           if (dir === null) {
             continue;
           }
