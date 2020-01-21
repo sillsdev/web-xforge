@@ -692,7 +692,7 @@ describe('EditorComponent', () => {
       env.wait();
 
       // Chapter and paragraph set to language of the first segment
-      expect(env.geChapterDirection(0)).toBe('ltr');
+      expect(env.getChapterDirection(0)).toBe('ltr');
       expect(env.getParagraphDirection(0)).toBe('ltr');
       expect(env.getSegmentDirection('verse_1_1')).toBe('ltr');
 
@@ -701,19 +701,19 @@ describe('EditorComponent', () => {
       // - verse 1 & 2 are blank which makes verse 3 the next valid segment to check the direction on
       env.targetEditor.setSelection(3, 27, 'user');
       env.deleteCharacters();
-      expect(env.component.target.segmentText).toBe('');
+      expect(env.component.target!.segmentText).toBe('');
       expect(env.getSegmentDirection('verse_1_1')).toBe('auto');
       expect(env.getSegmentDirection('verse_1_2')).toBe('auto');
       expect(env.getSegmentDirection('verse_1_3')).toBe('ltr');
-      expect(env.geChapterDirection(0)).toBe('ltr');
+      expect(env.getChapterDirection(0)).toBe('ltr');
       expect(env.getParagraphDirection(0)).toBe('ltr');
 
       // Set segment to LTR text so dir="ltr"
       // - chapter and paragraph remains as ltr but takes it from the first verse segment
       const index = env.typeCharacters('ltr');
-      expect(env.component.target.segmentText).toBe('ltr');
+      expect(env.component.target!.segmentText).toBe('ltr');
       expect(env.getSegmentDirection('verse_1_1')).toBe('ltr');
-      expect(env.geChapterDirection(0)).toBe('ltr');
+      expect(env.getChapterDirection(0)).toBe('ltr');
       expect(env.getParagraphDirection(0)).toBe('ltr');
       env.targetEditor.setSelection(index - 3, 3, 'user');
       env.deleteCharacters();
@@ -721,9 +721,9 @@ describe('EditorComponent', () => {
       // Set segment to RTL text so dir="rtl"
       // - chapter and paragraph switches to rtl as well
       env.typeCharacters('ישע');
-      expect(env.component.target.segmentText).toBe('ישע');
+      expect(env.component.target!.segmentText).toBe('ישע');
       expect(env.getSegmentDirection('verse_1_1')).toBe('rtl');
-      expect(env.geChapterDirection(0)).toBe('rtl');
+      expect(env.getChapterDirection(0)).toBe('rtl');
       expect(env.getParagraphDirection(0)).toBe('rtl');
 
       env.dispose();
@@ -1037,7 +1037,7 @@ class TestEnvironment {
     );
   }
 
-  geChapterDirection(index: number): string | null {
+  getChapterDirection(index: number): string | null {
     return this.getChapterElement(index)!.getAttribute('dir');
   }
 
@@ -1146,7 +1146,7 @@ class TestEnvironment {
     this.wait();
     keyEvent.key = str.substring(0, 1);
     keyEvent.initEvent('keyup', true, true);
-    this.component.target.editor!.root.dispatchEvent(keyEvent);
+    this.component.target!.editor!.root.dispatchEvent(keyEvent);
     this.wait();
     return selectionIndex;
   }
