@@ -7,8 +7,10 @@ using SIL.Machine.Tokenization;
 
 namespace SIL.XForge.Scripture.Services
 {
+    /// <summary>Set of Scripture text segments.</summary>
     public class SFScriptureText : IText
     {
+        /// <remarks>Builds segments from insert text ops that have attributes.segments references.</remarks>
         public SFScriptureText(ITokenizer<string, int> wordTokenizer, string projectId, int book, int chapter,
             BsonDocument doc)
         {
