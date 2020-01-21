@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import isEqual from 'lodash/isEqual';
 import merge from 'lodash/merge';
@@ -48,6 +48,7 @@ export interface TextUpdatedEvent {
   templateUrl: './text.component.html'
 })
 export class TextComponent extends SubscriptionDisposable implements OnDestroy {
+  @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
   @Input() isReadOnly: boolean = true;
   @Input() placeholder = translate('text.loading');
   @Input() markInvalid: boolean = false;
