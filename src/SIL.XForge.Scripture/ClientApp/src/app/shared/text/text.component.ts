@@ -451,66 +451,60 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       this._direction = window.getComputedStyle(quill).direction;
       // Set the browser calculated direction on the segments so we can action elsewhere i.e. CSS
       let segments = document.querySelectorAll('quill-editor usx-segment');
-      if (segments !== null) {
-        for (const segment of Array.from(segments)) {
-          let dir = window.getComputedStyle(segment).direction;
-          if (dir === null) {
-            continue;
-          }
-          const segmentRef = segment.getAttribute('data-segment');
-          if (segmentRef === null) {
-            continue;
-          }
-          const range = this.viewModel.getSegmentRange(segmentRef);
-          if (range === undefined) {
-            continue;
-          }
-          const blanks = segment.querySelectorAll('usx-blank');
-          // Set the direction back to auto for bank segments so the browser can work it out when something is added
-          // or pasted in through the Translate app
-          if (blanks.length > 0) {
-            dir = 'auto';
-          }
-          segment.setAttribute('dir', dir);
+      for (const segment of Array.from(segments)) {
+        let dir = window.getComputedStyle(segment).direction;
+        if (dir === null) {
+          continue;
         }
+        const segmentRef = segment.getAttribute('data-segment');
+        if (segmentRef === null) {
+          continue;
+        }
+        const range = this.viewModel.getSegmentRange(segmentRef);
+        if (range === undefined) {
+          continue;
+        }
+        const blanks = segment.querySelectorAll('usx-blank');
+        // Set the direction back to auto for blank segments so the browser can work it out when something is added
+        // or pasted in through the Translate app
+        if (blanks.length > 0) {
+          dir = 'auto';
+        }
+        segment.setAttribute('dir', dir);
       }
       // Loop through the paragraphs to see what direction it should be set to based off the first valid segment
       const paragraphs = document.querySelectorAll('quill-editor usx-para,quill-editor .ql-editor > p');
-      if (paragraphs !== null) {
-        for (const paragraph of Array.from(paragraphs)) {
-          let paraDir = 'auto';
-          // Locate the first segment that isn't blank to see what direction the paragraph should be set to
-          segments = paragraph.querySelectorAll('usx-segment');
-          for (const segment of Array.from(segments)) {
-            const dir = window.getComputedStyle(segment).direction;
-            if (dir === null) {
-              continue;
-            }
-            const blanks = segment.querySelectorAll('usx-blank');
-            // Only use the segment direction if this isn't a blank segment
-            if (blanks.length === 0) {
-              paraDir = dir;
-              break;
-            }
-          }
-          // Set the paragraph dir
-          paragraph.setAttribute('dir', paraDir);
-        }
-      }
-      // Chapters need its direction set from the paragraph that follows
-      const chapters = document.querySelectorAll('quill-editor usx-chapter');
-      if (chapters !== null) {
-        for (const chapter of Array.from(chapters)) {
-          const sibling = chapter.nextElementSibling;
-          if (sibling === null) {
-            continue;
-          }
-          const dir = window.getComputedStyle(sibling).direction;
+      for (const paragraph of Array.from(paragraphs)) {
+        let paraDir = 'auto';
+        // Locate the first segment that isn't blank to see what direction the paragraph should be set to
+        segments = paragraph.querySelectorAll('usx-segment');
+        for (const segment of Array.from(segments)) {
+          const dir = window.getComputedStyle(segment).direction;
           if (dir === null) {
             continue;
           }
-          chapter.setAttribute('dir', dir);
+          const blanks = segment.querySelectorAll('usx-blank');
+          // Only use the segment direction if this isn't a blank segment
+          if (blanks.length === 0) {
+            paraDir = dir;
+            break;
+          }
         }
+        // Set the paragraph dir
+        paragraph.setAttribute('dir', paraDir);
+      }
+      // Chapters need its direction set from the paragraph that follows
+      const chapters = document.querySelectorAll('quill-editor usx-chapter');
+      for (const chapter of Array.from(chapters)) {
+        const sibling = chapter.nextElementSibling;
+        if (sibling === null) {
+          continue;
+        }
+        const dir = window.getComputedStyle(sibling).direction;
+        if (dir === null) {
+          continue;
+        }
+        chapter.setAttribute('dir', dir);
       }
     }
   }
