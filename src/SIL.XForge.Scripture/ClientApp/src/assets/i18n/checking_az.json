@@ -218,12 +218,12 @@
     "error_occurred": "Bir səhv baş verib",
     "firefox": "Firefox",
     "hide_details": "Detalları gizlət",
-    "show_details": "Detallar göstər",
-    "to_report_issue_email": "Bir məsələni bildirmək üçün, e-poçt {{ issueEmailLink }} göndərin.",
-    "unsupported_browser": "Bu xətanın səbəbi dəstəklənməyən brauzerdən istifadə edirsiniz ola bilər. Məsləhət görürük ki ən sonuna {{ chromeLink }} və ya {{ firefoxLink }} yüksəltin."
+    "show_details": "Detalları göstər",
+    "to_report_issue_email": "Problemi bildirmək üçün {{ issueEmailLink }}-a e-poçt göndərin.",
+    "unsupported_browser": "Bu xətaya səbəb dəstəklənməyən brauzerdən istifadə etməyiniz ola bilər. Məsləhət görürük ki, onu {{ chromeLink }}-un və ya {{ firefoxLink }}-un ən son versiyası ilə yeniləyəsiniz."
   },
   "exception_handling_service": {
-    "network_request_failed": "Şəbəkə sorğusu alınmadı. Bəzi funksionallıq əlçatmaz ola bilər.",
+    "network_request_failed": "Şəbəkə sorğusu baş tutmadı. Bəzi funksionallıq mövcud olmaya bilər.",
     "unknown_error": "Naməlum səhv"
   },
   "message_dialog": {
@@ -237,10 +237,10 @@
     "project_has_been_deleted": "Layihə silinib və ya artıq mövcud deyil."
   },
   "scripture_chooser_dialog": {
-    "choose_book": "Kitab seçin",
-    "choose_chapter": "Fəsil seçin",
-    "choose_end_verse": "Ən sonuncu ayəni seçin",
-    "choose_verse": "Ayə seçin"
+    "choose_book": "Kitabı seçin",
+    "choose_chapter": "Fəsli seçin",
+    "choose_end_verse": "Sonuncu ayəni seçin",
+    "choose_verse": "Ayəni seçin"
   },
   "share": {
     "share": "Paylaş"
@@ -268,7 +268,7 @@
   "text_chooser_dialog": {
     "cancel": "Ləğv etmək",
     "save": "Yadda saxlamaq",
-    "select_scripture": "Cavabınıza əlavə etmək üçün müqaddes yazını seçin",
+    "select_scripture": "Cavabınıza əlavə etmək üçün Müqəddəs Yazını seçin",
     "select_text_error_message": "Cavabınıza bənd etmək üçün ayələr seçin."
   }
 }

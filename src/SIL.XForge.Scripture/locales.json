@@ -40,6 +40,12 @@
   {
     "localName": "Azərbaycanca",
     "englishName": "Azerbaijani",
-    "tags": ["az", "az-AZ"]
+    "tags": ["az", "az-AZ"],
+    "production": true
+  },
+  {
+    "localName": "ພາສາລາວ",
+    "englishName": "Lao",
+    "tags": ["lo", "lo-LA"]
   }
 ]
