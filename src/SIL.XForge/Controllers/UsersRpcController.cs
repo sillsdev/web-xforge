@@ -4,7 +4,6 @@ using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Newtonsoft.Json.Linq;
-using SIL.XForge.Models;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Controllers
@@ -53,6 +52,12 @@ namespace SIL.XForge.Controllers
         public async Task<IRpcMethodResult> LinkParatextAccount(string authId)
         {
             await _userService.LinkParatextAccountAsync(UserId, AuthId, authId);
+            return Ok();
+        }
+
+        public async Task<IRpcMethodResult> UpdateInterfaceLanguage(string language)
+        {
+            await _userService.UpdateInterfaceLanguageAsync(UserId, AuthId, language);
             return Ok();
         }
 

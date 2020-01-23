@@ -130,6 +130,12 @@ export class AuthService {
     this.auth0.logout({ returnTo: this.locationService.origin + '/' });
   }
 
+  async updateInterfaceLanguage(language: string): Promise<void> {
+    if (await this.isLoggedIn) {
+      await this.commandService.onlineInvoke(USERS_URL, 'updateInterfaceLanguage', { language });
+    }
+  }
+
   private async tryLogIn(): Promise<LoginResult> {
     let authResult = await this.parseHash();
     if (!(await this.handleAuth(authResult))) {

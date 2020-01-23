@@ -11,6 +11,7 @@ import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { mock } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
@@ -19,7 +20,11 @@ import { ScriptureChooserDialogComponent, ScriptureChooserDialogData } from './s
 describe('ScriptureChooserDialog', () => {
   configureTestingModule(() => ({
     imports: [TestModule],
-    providers: [{ provide: MDC_DIALOG_DATA }, { provide: CookieService, useMock: mock(CookieService) }]
+    providers: [
+      { provide: AuthService, useMock: mock(AuthService) },
+      { provide: MDC_DIALOG_DATA },
+      { provide: CookieService, useMock: mock(CookieService) }
+    ]
   }));
 
   it('initially shows book chooser, close button', () => {
@@ -209,7 +214,7 @@ describe('ScriptureChooserDialog', () => {
     expect(env.component.hasOTBooks).toBe(true);
   });
 
-  it('knows if project doesnt have any OT books', () => {
+  it("knows if project doesn't have any OT books", () => {
     const onlyNTTexts: TextInfo[] = [
       {
         bookNum: 49,
@@ -472,13 +477,13 @@ describe('ScriptureChooserDialog', () => {
         textsInProject = args.textsInProject;
       }
 
-      const booksAndChaptersToshow: TextsByBookId = {};
-      textsInProject.forEach(text => (booksAndChaptersToshow[Canon.bookNumberToId(text.bookNum)] = text));
+      const booksAndChaptersToShow: TextsByBookId = {};
+      textsInProject.forEach(text => (booksAndChaptersToShow[Canon.bookNumberToId(text.bookNum)] = text));
 
       const config: MdcDialogConfig<ScriptureChooserDialogData> = {
         scrollable: true,
         viewContainerRef: viewContainerRef,
-        data: { input: inputScriptureReference, booksAndChaptersToShow: booksAndChaptersToshow, rangeStart: rangeStart }
+        data: { input: inputScriptureReference, booksAndChaptersToShow: booksAndChaptersToShow, rangeStart: rangeStart }
       };
       this.dialogRef = TestBed.get(MdcDialog).open(ScriptureChooserDialogComponent, config);
       this.dialogRef.afterClosed().subscribe(result => (this.dialogResult = result));

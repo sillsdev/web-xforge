@@ -53,6 +53,16 @@ namespace SIL.XForge.Services
             return CallApiAsync(HttpMethod.Post, $"users/{primaryAuthId}/identities", content);
         }
 
+        public Task UpdateInterfaceLanguage(string authId, string language)
+        {
+            var content = new JObject(
+                new JProperty("user_metadata", new JObject(
+                    new JProperty("interface_language", language))
+                ));
+            // Since .NET Std 2.0 see https://stackoverflow.com/a/23600004/5501739
+            return CallApiAsync(new HttpMethod("PATCH"), $"users/{authId}", content);
+        }
+
         private async Task<string> CallApiAsync(HttpMethod method, string url, JToken content = null)
         {
             bool refreshed = false;

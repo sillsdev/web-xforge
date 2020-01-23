@@ -13,6 +13,7 @@ import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/ver
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -31,6 +32,7 @@ describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule],
     providers: [
+      { provide: AuthService, useMock: mock(AuthService) },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: DOCUMENT, useMock: mockedDocument },
       { provide: CookieService, useMock: mock(CookieService) }

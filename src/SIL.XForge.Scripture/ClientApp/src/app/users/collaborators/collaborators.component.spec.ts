@@ -10,6 +10,7 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { CommandError } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -27,6 +28,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from '../../shared/share/share-control.component';
 import { CollaboratorsComponent } from './collaborators.component';
 
+const mockedAuthService = mock(AuthService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
@@ -39,6 +41,7 @@ describe('CollaboratorsComponent', () => {
     declarations: [CollaboratorsComponent, ShareControlComponent],
     imports: [NoopAnimationsModule, AvatarTestingModule, UICommonModule, TestTranslocoModule],
     providers: [
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -122,7 +125,7 @@ describe('CollaboratorsComponent', () => {
 
   it('handle error from invited users query, when user is not on project', fakeAsync(() => {
     // If an admin user is removed from the project, or loses admin
-    // priviliges, while looking at the component, they will run loadUsers
+    // privileges, while looking at the component, they will run loadUsers
     // and throw an error calling onlineInvitedUsers.
     // Handle that error.
 
@@ -185,7 +188,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
   }));
 
-  it('should uninvite user from project', fakeAsync(() => {
+  it('should un-invite user from project', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineUninviteUser(anything(), anything())).thenResolve();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
