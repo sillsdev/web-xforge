@@ -563,12 +563,12 @@ namespace SIL.XForge.Scripture.Services
             var numberChapters = 3;
             var book = new Book("MAT", numberChapters, true);
             env.SetupSFData(true, true, false, book);
-            await env.Runner._InitAsync("project01", "user01");
+            await env.Runner.InitAsync("project01", "user01");
 
             // SUT
-            var targetFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Target);
-            var sourceFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Source);
-            env.Runner._CloseConnection();
+            var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Target);
+            var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Source);
+            env.Runner.CloseConnection();
 
             // Fetched numberChapters chapters, none of which are missing their chapter content.
             Assert.That(targetFetch.Count, Is.EqualTo(numberChapters));
@@ -585,12 +585,12 @@ namespace SIL.XForge.Scripture.Services
             var missingChapters = new HashSet<int>() { 2, 3 };
             var book = new Book("MAT", numberChapters, true) { MissingChapters = missingChapters };
             env.SetupSFData(true, true, false, book);
-            await env.Runner._InitAsync("project01", "user01");
+            await env.Runner.InitAsync("project01", "user01");
 
             // SUT
-            var targetFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Target);
-            var sourceFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Source);
-            env.Runner._CloseConnection();
+            var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Target);
+            var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Source);
+            env.Runner.CloseConnection();
 
             // Fetched numberChapters chapters, but some of them are missing any content.
             Assert.That(targetFetch.Count, Is.EqualTo(numberChapters));
@@ -608,7 +608,7 @@ namespace SIL.XForge.Scripture.Services
             var numberChapters = 28;
             var bookInDb = new Book("MAT", numberChapters, true);
             env.SetupSFData(true, true, false, bookInDb);
-            await env.Runner._InitAsync("project01", "user01");
+            await env.Runner.InitAsync("project01", "user01");
             var imaginaryChapters = 3;
             var incorrectlyTooManyChapters = numberChapters + imaginaryChapters;
             var bookWeThoughtWasInDb = new Book("MAT", incorrectlyTooManyChapters, true);
@@ -617,9 +617,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("MAT", numberChapters + 1, TextType.Source), Is.False);
 
             // SUT
-            var targetFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(bookWeThoughtWasInDb), TextType.Target);
-            var sourceFetch = await env.Runner._FetchTextDocsAsync(env.TextInfoFromBook(bookWeThoughtWasInDb), TextType.Source);
-            env.Runner._CloseConnection();
+            var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(bookWeThoughtWasInDb), TextType.Target);
+            var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(bookWeThoughtWasInDb), TextType.Source);
+            env.Runner.CloseConnection();
 
             // Fetched lots of docs. Docs that weren't in the database are returned to us, tho not necessarily created into the database, and without any chapter content.
             Assert.That(targetFetch.Count, Is.EqualTo(incorrectlyTooManyChapters));
@@ -642,9 +642,9 @@ namespace SIL.XForge.Scripture.Services
             var book = new Book("MAT", numberChapters, true) { MissingChapters = missingDbChapters };
             env.SetupSFData(true, true, false, book);
 
-            await env.Runner._InitAsync("project01", "user01");
+            await env.Runner.InitAsync("project01", "user01");
             var textInfo = env.TextInfoFromBook(book);
-            var targetTextDocs = await env.Runner._FetchTextDocsAsync(textInfo, TextType.Target);
+            var targetTextDocs = await env.Runner.FetchTextDocsAsync(textInfo, TextType.Target);
 
             var insertTextDelta = Delta.New().InsertText("text");
             var insertCloudyDelta = Delta.New().InsertText("cloudy");
@@ -665,9 +665,9 @@ namespace SIL.XForge.Scripture.Services
                 .ToDictionary(cd => cd.Number);
 
             // SUT
-            await env.Runner._ChangeDbToNewSnapshotAsync(textInfo, TextType.Target, null, targetTextDocs, chapterDeltas);
+            await env.Runner.ChangeDbToNewSnapshotAsync(textInfo, TextType.Target, null, targetTextDocs, chapterDeltas);
 
-            env.Runner._CloseConnection();
+            env.Runner.CloseConnection();
 
             // SF DB should now have just text in chapters 1, 4 and 6, matching PT cloud. Note that chapter 2 is now missing.
 
@@ -693,14 +693,14 @@ namespace SIL.XForge.Scripture.Services
             var numberChapters = 2;
             var book = new Book("MAT", numberChapters, true);
             env.SetupSFData(true, true, false, book);
-            await env.Runner._InitAsync("project01", "user01");
+            await env.Runner.InitAsync("project01", "user01");
             var textInfo = env.TextInfoFromBook(book);
             // Add additional chapters to the book description that we are working with. The SF DB will not have these chapter textdocs. But it might have expectations for the chapters listed in the textInfo from the project doc Data.Texts[book_number].
             textInfo.Chapters.Add(new Chapter() { Number = 3, IsValid = true, LastVerse = 10 });
             textInfo.Chapters.Add(new Chapter() { Number = 4, IsValid = true, LastVerse = 10 });
             textInfo.Chapters.Add(new Chapter() { Number = 5, IsValid = true, LastVerse = 10 });
             int extraChapters = 3;
-            var targetTextDocs = await env.Runner._FetchTextDocsAsync(textInfo, TextType.Target);
+            var targetTextDocs = await env.Runner.FetchTextDocsAsync(textInfo, TextType.Target);
             // targetTextDocs contains additional values with a null Data.
             Assert.That(targetTextDocs.Values.Where(doc => doc.Data == null).Count(), Is.EqualTo(extraChapters));
 
@@ -711,9 +711,9 @@ namespace SIL.XForge.Scripture.Services
                 .ToDictionary(cd => cd.Number);
 
             // SUT
-            Assert.DoesNotThrowAsync(() => env.Runner._ChangeDbToNewSnapshotAsync(textInfo, TextType.Target, null, targetTextDocs, chapterDeltas));
+            Assert.DoesNotThrowAsync(() => env.Runner.ChangeDbToNewSnapshotAsync(textInfo, TextType.Target, null, targetTextDocs, chapterDeltas));
 
-            env.Runner._CloseConnection();
+            env.Runner.CloseConnection();
 
             // Did not crash. Chapters 3-5 are not in db since it did not come in thru chapterDeltas.
             // Chapter 1 text was still updated.

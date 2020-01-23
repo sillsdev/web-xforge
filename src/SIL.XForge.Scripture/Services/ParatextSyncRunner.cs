@@ -96,7 +96,7 @@ namespace SIL.XForge.Scripture.Services
         {
             try
             {
-                if (!await _InitAsync(projectId, userId))
+                if (!await InitAsync(projectId, userId))
                 {
                     await CompleteSync(false);
                     return;
@@ -195,11 +195,11 @@ namespace SIL.XForge.Scripture.Services
             }
             finally
             {
-                _CloseConnection();
+                CloseConnection();
             }
         }
 
-        public async Task<bool> _InitAsync(string projectId, string userId)
+        internal async Task<bool> InitAsync(string projectId, string userId)
         {
             _conn = await _realtimeService.ConnectAsync();
             _projectDoc = await _conn.FetchAsync<SFProject>(projectId);
@@ -221,7 +221,7 @@ namespace SIL.XForge.Scripture.Services
             return true;
         }
 
-        public void _CloseConnection()
+        internal void CloseConnection()
         {
             _conn?.Dispose();
         }
@@ -243,7 +243,7 @@ namespace SIL.XForge.Scripture.Services
         private async Task<List<Chapter>> SyncBookUsxAsync(TextInfo text, TextType textType, string paratextId,
             string fileName, bool isReadOnly, ISet<int> chaptersToInclude)
         {
-            SortedList<int, IDocument<Models.TextData>> dbChapterDocs = await _FetchTextDocsAsync(text, textType);
+            SortedList<int, IDocument<Models.TextData>> dbChapterDocs = await FetchTextDocsAsync(text, textType);
 
             string bookId = Canon.BookNumberToId(text.BookNum);
             string cloudBookText = await FetchFromAndUpdatePtCloudAsync(text, paratextId, fileName, isReadOnly, bookId, dbChapterDocs);
@@ -255,7 +255,7 @@ namespace SIL.XForge.Scripture.Services
                 .ToDictionary(cd => cd.Number);
 
             // Set SF DB to snapshot from PT cloud.
-            List<Chapter> chapters = await _ChangeDbToNewSnapshotAsync(text, textType, chaptersToInclude, dbChapterDocs, incomingChapters);
+            List<Chapter> chapters = await ChangeDbToNewSnapshotAsync(text, textType, chaptersToInclude, dbChapterDocs, incomingChapters);
 
             // Save to disk
             await SaveXmlFileAsync(bookTextElem, fileName);
@@ -297,7 +297,7 @@ namespace SIL.XForge.Scripture.Services
             return cloudBookText;
         }
 
-        public async Task<List<Chapter>> _ChangeDbToNewSnapshotAsync(TextInfo text, TextType textType, ISet<int> chaptersToInclude, SortedList<int, IDocument<TextData>> dbChapterDocs, Dictionary<int, ChapterDelta> incomingChapters)
+        internal async Task<List<Chapter>> ChangeDbToNewSnapshotAsync(TextInfo text, TextType textType, ISet<int> chaptersToInclude, SortedList<int, IDocument<TextData>> dbChapterDocs, Dictionary<int, ChapterDelta> incomingChapters)
         {
             var tasks = new List<Task>();
 
@@ -357,7 +357,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Fetches all text docs from the database for a book. Missing text docs may just be created, even for invalid requests.
         /// </summary>
-        public async Task<SortedList<int, IDocument<Models.TextData>>> _FetchTextDocsAsync(TextInfo text,
+        internal async Task<SortedList<int, IDocument<Models.TextData>>> FetchTextDocsAsync(TextInfo text,
             TextType textType)
         {
             var textDocs = new SortedList<int, IDocument<Models.TextData>>();
