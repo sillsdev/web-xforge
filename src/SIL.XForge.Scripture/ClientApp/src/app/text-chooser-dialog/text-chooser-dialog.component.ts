@@ -3,7 +3,7 @@ import { Component, ElementRef, Inject, Optional, ViewChild } from '@angular/cor
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { fromEvent } from 'rxjs';
-import { throttleTime } from 'rxjs/operators';
+import { auditTime } from 'rxjs/operators';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -62,7 +62,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     // fired at least as far back as iOS v7 on Safari 7.
     // Edge 42 with EdgeHTML 17 also fires the events.
     // Firefox and Chrome also support it. We can degrade gracefully by getting the selection when the dialog closes.
-    this.subscribe(fromEvent(this.document, 'selectionchange').pipe(throttleTime(100)), () => this.updateSelection());
+    this.subscribe(fromEvent(this.document, 'selectionchange').pipe(auditTime(100)), () => this.updateSelection());
 
     this.bookNum = this.data.bookNum;
     this.chapterNum = this.data.chapterNum;
@@ -151,6 +151,72 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
   }
 
   /**
+   * Calculate where in a segment the selection starts and ends. The selection object (first param, obtained by calling
+   * document.getSelection()) specifies where in the DOM the selection starts and ends. Some elements in the DOM (e.g.
+   * notes) should not be included in the selection. This function determines at what index in the first and last
+   * segment the selection starts and ends, taking into account hidden elements.
+   */
+  rangeOffsets(selection: Selection, segments: Element[]): { startOffset: number; endOffset: number } {
+    // The selection consists of one or more "ranges." Chrome considers the entire selection to be in a single "range",
+    // while Firefox looks at it as a number of ranges. We need to find the start of the first range, and the end of the
+    // last range, and don't need to be concerned whether there are multiple ranges or not.
+    const startRange = selection.getRangeAt(0);
+    const endRange = selection.getRangeAt(selection.rangeCount - 1);
+    let startOffset = 0;
+    const lastSegment = segments[segments.length - 1];
+    let endOffset = this.textContent(lastSegment).length;
+    if (this.isInASegment(startRange.startContainer)) {
+      startOffset = this.textContent(segments[0], startRange.startContainer, startRange.startOffset, false).length;
+    }
+    if (this.isInASegment(endRange.endContainer)) {
+      endOffset = this.textContent(lastSegment, endRange.endContainer, endRange.endOffset, false).length;
+    }
+    return { startOffset, endOffset };
+  }
+
+  /**
+   * Get the text content of a node, not including any text in any ignored elements. May optionally find the text up to
+   * a dividing point, or after a dividing point, i.e. a specific index of a specific node.
+   * @example Calling textContent(mainNode, dividingNode, 2, true) should return "sum dolor" where mainNode is:
+   * <span>Lorem <span>ipsum</span> dolor</span>
+   * and dividingNode is:
+   * <span>ipsum</span>
+   * Note: The first parameter is not optional, but the last three are. However, the optional parameters must all be
+   * supplied, or none of them supplied.
+   * @param mainNode The node to find the text content of
+   * @param dividingNode The node at which to start getting text, or stop getting text (optional)
+   * @param offset The index in the dividing node at which to start getting text, or stop getting text (optional)
+   * @param afterDivider true to fetch the text after the dividing point, false to fetch the text before the dividing
+   * point (optional)
+   */
+  textContent(mainNode: Node, dividingNode?: Node, offset?: number, afterDivider?: boolean): string {
+    let includeText = dividingNode == null || afterDivider === false;
+    const ignoredTags = ['usx-note'];
+    let text = '';
+    for (const node of Array.from(mainNode.childNodes)) {
+      const isTextNode = node.nodeType === node.TEXT_NODE;
+      const tagName = node.nodeType === node.ELEMENT_NODE ? (node as Element).tagName.toLowerCase() : '';
+      const ignore = ignoredTags.includes(tagName);
+
+      if (dividingNode != null && node.contains(dividingNode)) {
+        if (!ignore && node.isSameNode(dividingNode)) {
+          text += afterDivider ? node.textContent!.substring(offset!) : node.textContent!.substring(0, offset);
+        } else if (!ignore) {
+          text += this.textContent(node, dividingNode, offset, afterDivider);
+        }
+        includeText = afterDivider!;
+      } else if (includeText) {
+        if (isTextNode) {
+          text += node.textContent;
+        } else if (tagName !== '' && !ignore) {
+          text += this.textContent(node);
+        }
+      }
+    }
+    return text;
+  }
+
+  /**
    * Given the user's selection and the USX segment dom elements that are part of the selection:
    * - Expands the selection to the nearest word boundaries
    * - Determines whether the start and end verses were clipped, so that e.g. ellipses can be displayed at the start
@@ -167,7 +233,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
       // Filter for the elements that are not first and last, because those could be only partially selected
       .filter((_el, index) => index !== 0 && index !== segments.length - 1)
       // Trim white space because some segments may end with it and others may not
-      .map(el => (el.textContent || '').trim())
+      .map(el => this.textContent(el).trim())
       // discard any segments that were only whitespace
       .filter(s => s !== '')
       // Join with a single space to finish normalizing white space
@@ -179,23 +245,14 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     // verse numbers in the selection, and Firefox does not. Instead, we want to use the selection object to determine
     // where the user's selection starts and ends, and then determine on our own what text should be considered
     // selected.
-    // The selection consists of one or more "ranges." Chrome considers the entire selection to be in a single "range",
-    // while Firefox looks at it as a number of ranges. We need to find the start of the first range, and the end of the
-    // last range, and don't need to be concerned whether there are multiple ranges or not.
-    const startRange = selection.getRangeAt(0);
-    const endRange = selection.getRangeAt(selection.rangeCount - 1);
-    // The startOffset is the number of characters into the segment where the selection starts. It's possible the
-    // selection doesn't start inside a segment (perhaps on a verse number, or outside the Quill editor), in which case
-    // the selection effectively starts at the beginning of the first segment that is fully within the selection.
-    const startOffset = this.isInASegment(startRange.startContainer) ? startRange.startOffset : 0;
-    // Similarly for the endOffset, if selection doesn't actually end inside a segment, then the whole of the last
-    // segment must have been selected.
-    const endOffset = this.isInASegment(endRange.endContainer)
-      ? endRange.endOffset
-      : segments[segments.length - 1].textContent!.length;
+
+    // The startOffset is the number of characters into the first segment where the selection starts, endOffset the
+    // number of characters into the last segment where the selection ends
+    const { startOffset, endOffset } = this.rangeOffsets(selection, segments);
+
     // the full text of the first and last segments of the selection
-    const startNodeText = segments[0].textContent!;
-    const endNodeText = segments[segments.length - 1].textContent!;
+    const startNodeText = this.textContent(segments[0]);
+    const endNodeText = this.textContent(segments[segments.length - 1]);
     // the portion of the text in the starting and ending segment that was actually selected
     const startText = startNodeText.substring(startOffset);
     const endText = endNodeText.substring(0, endOffset);
@@ -276,11 +333,11 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     // for that verse. Assemble a list of segments that are in the same verse as the selection's first segment's verse.
     // Filter out those that have only white space.
     const firstVerseSegments = Array.from(this.getSegments(this.getVerseFromElement(segments[0]))).filter(
-      el => (el.textContent || '').trim() !== ''
+      el => this.textContent(el).trim() !== ''
     );
     const lastVerseSegments = Array.from(
       this.getSegments(this.getVerseFromElement(segments[segments.length - 1]))
-    ).filter(el => (el.textContent || '').trim() !== '');
+    ).filter(el => this.textContent(el).trim() !== '');
 
     // Determine whether ellipses should be shown before the selected text. If some but not all of the first
     // segment has been selected, then only part of the verse has been selected. If all of the segment was selected,
@@ -331,8 +388,18 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     return this.segments().filter(el => (verse == null ? true : verse === this.getVerseFromElement(el)));
   }
 
-  private isInASegment(node: Node) {
-    return this.segments().some(segment => segment.contains(node));
+  private isInASegment(node: Node): boolean {
+    if (this.isSegment(node)) {
+      return true;
+    } else if (node.parentNode != null) {
+      return this.isInASegment(node.parentNode);
+    } else {
+      return false;
+    }
+  }
+
+  private isSegment(node: Node) {
+    return node.nodeType === node.ELEMENT_NODE && (node as Element).tagName.toLowerCase() === 'usx-segment';
   }
 
   private segments(): Element[] {

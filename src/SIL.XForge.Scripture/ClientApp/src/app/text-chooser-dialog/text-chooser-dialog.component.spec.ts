@@ -2,7 +2,7 @@ import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
@@ -253,6 +253,48 @@ describe('TextChooserDialogComponent', () => {
     expect(env.selectedText).toEqual('');
     env.closeDialog();
   }));
+
+  it('calculates text content correctly', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const node = env.nodeFromHtml('<usx-segment>Here <usx-note>be</usx-note> text</usx-segment>');
+    expect(env.component.textContent(node)).toEqual('Here  text');
+    let dividingNode = node.childNodes[1];
+    expect(dividingNode.textContent).toEqual('be');
+    expect(env.component.textContent(node, dividingNode, 0, true)).toEqual(' text');
+    expect(env.component.textContent(node, dividingNode, 0, false)).toEqual('Here ');
+    dividingNode = node.childNodes[2];
+    expect(dividingNode.textContent).toEqual(' text');
+    expect(env.component.textContent(node, dividingNode, 3, true)).toEqual('xt');
+    expect(env.component.textContent(node, dividingNode, 3, false)).toEqual('Here  te');
+  }));
+
+  it('calculates range offsets correctly', fakeAsync(() => {
+    const env = new TestEnvironment();
+    let node = env.nodeFromHtml('<usx-segment>Here <usx-note>be</usx-note> text</usx-segment>') as Element;
+    const mockedSelection = mock(Selection);
+    when(mockedSelection.getRangeAt(anything())).thenReturn({
+      startContainer: node.childNodes[0] as Node,
+      endContainer: node.childNodes[2] as Node,
+      startOffset: 'Her'.length,
+      endOffset: ' text'.length
+    } as Range);
+    expect(env.component.rangeOffsets(instance(mockedSelection), [node])).toEqual({
+      startOffset: 'Her'.length,
+      endOffset: 'Here  text'.length
+    });
+
+    node = env.nodeFromHtml('<usx-segment>Lorem ipsum</usx-segment>') as Element;
+    when(mockedSelection.getRangeAt(anything())).thenReturn({
+      startContainer: node.firstChild as Node,
+      endContainer: node.firstChild as Node,
+      startOffset: 'Lor'.length,
+      endOffset: 'Lorem ipsum'.length
+    } as Range);
+    expect(env.component.rangeOffsets(instance(mockedSelection), [node])).toEqual({
+      startOffset: 'Lor'.length,
+      endOffset: 'Lorem ipsum'.length
+    });
+  }));
 });
 
 @Directive({
@@ -284,7 +326,7 @@ class ChildViewContainerComponent {
 })
 class DialogTestModule {}
 
-interface Range {
+interface SimpleRange {
   start: number;
   end: number;
 }
@@ -339,8 +381,10 @@ class TestEnvironment {
   selectionChangeHandler!: () => any;
   selection = 'changed'; // could be anything other than white space; just has to make it appear selection has changed
 
+  component: TextChooserDialogComponent;
+
   constructor(
-    ranges: Range | Range[] = [],
+    ranges: SimpleRange | SimpleRange[] = [],
     startSegment = 'verse_1_1',
     endSegment = 'verse_1_2',
     dialogData?: TextChooserDialogData
@@ -349,13 +393,13 @@ class TestEnvironment {
     when(mockedDocument.getSelection()).thenCall(() => {
       return {
         toString: () => this.selection,
-        rangeCount: (ranges as Range[]).length,
+        rangeCount: (ranges as SimpleRange[]).length,
         getRangeAt: (index: number) => {
           return {
             startOffset: ranges[index].start,
             endOffset: ranges[index].end,
-            startContainer: this.editor.querySelector(`usx-segment[data-segment="${startSegment}"]`),
-            endContainer: this.editor.querySelector(`usx-segment[data-segment="${endSegment}"]`)
+            startContainer: this.editor.querySelector(`usx-segment[data-segment="${startSegment}"]`)!.firstChild,
+            endContainer: this.editor.querySelector(`usx-segment[data-segment="${endSegment}"]`)!.firstChild
           } as any;
         },
         containsNode: (node: Node): boolean => {
@@ -402,12 +446,13 @@ class TestEnvironment {
     );
 
     const dialogRef = TestBed.get(MdcDialog).open(TextChooserDialogComponent, { data: config });
+    this.component = dialogRef.componentInstance;
     this.resultPromise = dialogRef.afterClosed().toPromise();
 
     this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
 
     // Set up MdcDialog mocking after it's already used above in creating the component.
-    const dialogSpy = spy(dialogRef.componentInstance.dialog);
+    const dialogSpy = spy(this.component.dialog);
     when(dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
@@ -451,6 +496,7 @@ class TestEnvironment {
 
   fireSelectionChange() {
     this.selectionChangeHandler();
+    tick(100); // event handler debounce time
     this.fixture.detectChanges();
   }
 
@@ -462,6 +508,12 @@ class TestEnvironment {
   click(button: HTMLButtonElement) {
     button.click();
     this.fixture.detectChanges();
+  }
+
+  nodeFromHtml(html: string) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.firstChild!;
   }
 
   static get delta() {
