@@ -15,10 +15,7 @@
   "angularKarmaTestExplorer.karmaConfFilePath": "src/karma.conf.js",
   "angularKarmaTestExplorer.projectRootPath": "src/SIL.XForge.Scripture/ClientApp",
   "jest.rootPath": "src/RealtimeServer",
-  "jest.debugCodeLens.showWhenTestStateIn": [
-    "fail"
-  ],
-  "angularKarmaTestExplorer.angularProcessArguments": [
-    "--sourceMap=true"
-  ]
+  "jest.debugCodeLens.showWhenTestStateIn": ["fail"],
+  "angularKarmaTestExplorer.angularProcessArguments": ["--sourceMap=true"],
+  "cSpell.words": ["bson", "xforge"]
 }
