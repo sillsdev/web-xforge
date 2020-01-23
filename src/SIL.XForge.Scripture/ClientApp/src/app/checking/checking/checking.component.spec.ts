@@ -27,6 +27,7 @@ import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/ver
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -60,6 +61,7 @@ import { CheckingTextComponent } from './checking-text/checking-text.component';
 import { CheckingComponent } from './checking.component';
 import { FontSizeComponent } from './font-size/font-size.component';
 
+const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
@@ -122,6 +124,7 @@ describe('CheckingComponent', () => {
       TestTranslocoModule
     ],
     providers: [
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: UserService, useMock: mockedUserService },
       { provide: ProjectService, useMock: mockedProjectService },
@@ -500,7 +503,7 @@ describe('CheckingComponent', () => {
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
       expect(env.getAnswerText(otherAnswerIndex)).toBe('Answer 1 on question');
 
-      env.simmulateRemoteEditAnswer(otherAnswerIndex, 'Question 9 edited answer');
+      env.simulateRemoteEditAnswer(otherAnswerIndex, 'Question 9 edited answer');
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(true);
       expect(env.getAnswerText(otherAnswerIndex)).toBe('Question 9 edited answer');
     }));
@@ -877,7 +880,7 @@ describe('CheckingComponent', () => {
       expect(env.totalAnswersMessageCount).toEqual(4);
     }));
 
-    it('show-remote-answer banner disappears if the unshown remote answer is deleted', fakeAsync(() => {
+    it('show-remote-answer banner disappears if the un-shown remote answer is deleted', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);
       // User answers a question
@@ -1664,7 +1667,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  simmulateRemoteEditAnswer(index: number, text: string): void {
+  simulateRemoteEditAnswer(index: number, text: string): void {
     const questionDoc = this.component.questionsPanel!.activeQuestionDoc!;
     questionDoc.submitJson0Op(op => {
       op.set(q => q.answers[index].text!, text);

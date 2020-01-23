@@ -113,6 +113,20 @@ namespace SIL.XForge.Services
             }
         }
 
+        /// <summary>
+        /// Updates the interface language in the specified user's Auth0 account in their userMetadata.
+        /// </summary>
+        public async Task UpdateInterfaceLanguageAsync(string curUserId, string authId, string language)
+        {
+            await _authService.UpdateInterfaceLanguage(authId, language);
+
+            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            {
+                IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+                await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.InterfaceLanguage, language));
+            }
+        }
+
         public async Task DeleteAsync(string curUserId, string systemRole, string userId)
         {
             if (systemRole != SystemRole.SystemAdmin && userId != curUserId)

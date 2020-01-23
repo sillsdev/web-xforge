@@ -14,6 +14,7 @@ import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-dat
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -36,6 +37,7 @@ describe('TranslateOverviewComponent', () => {
     declarations: [TranslateOverviewComponent],
     imports: [RouterTestingModule, UICommonModule, TestTranslocoModule],
     providers: [
+      { provide: AuthService, useMock: mock(AuthService) },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },

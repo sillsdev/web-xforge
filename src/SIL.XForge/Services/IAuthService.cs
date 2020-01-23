@@ -8,5 +8,6 @@ namespace SIL.XForge.Services
         bool ValidateWebhookCredentials(string username, string password);
         Task<JObject> GetUserAsync(string authId);
         Task LinkAccounts(string primaryAuthId, string secondaryAuthId);
+        Task UpdateInterfaceLanguage(string authId, string language);
     }
 }

@@ -6,6 +6,7 @@ import { AvatarService } from 'ngx-avatar';
 import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'realtime-server/lib/common/models/user';
 import { instance, mock, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -72,10 +73,11 @@ class HostComponent {
 class TestEnvironment {
   readonly fixture: ComponentFixture<HostComponent>;
 
-  readonly mockedUserService = mock(UserService);
+  readonly mockedAuthService = mock(AuthService);
   readonly mockedAvatarService = mock(AvatarService);
-  readonly mockedTransloco = mock(TranslocoService);
   readonly mockedCookieService = mock(CookieService);
+  readonly mockedTransloco = mock(TranslocoService);
+  readonly mockedUserService = mock(UserService);
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
@@ -94,10 +96,11 @@ class TestEnvironment {
       declarations: [HostComponent, CheckingOwnerComponent],
       imports: [AvatarTestingModule, UICommonModule],
       providers: [
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) },
+        { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
         { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) },
+        { provide: CookieService, useFactory: () => instance(this.mockedCookieService) },
         { provide: TranslocoService, useFactory: () => instance(this.mockedTransloco) },
-        { provide: CookieService, useFactory: () => instance(this.mockedCookieService) }
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
       ]
     });
 

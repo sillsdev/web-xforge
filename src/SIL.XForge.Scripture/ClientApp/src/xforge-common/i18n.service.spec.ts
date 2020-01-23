@@ -1,8 +1,10 @@
 import { TranslocoService } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { AuthService } from './auth.service';
 import { I18nService } from './i18n.service';
 
+const mockedAuthService = mock(AuthService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedCookieService = mock(CookieService);
 
@@ -13,16 +15,25 @@ describe('I18nService', () => {
   });
 
   it('should set locale', () => {
-    const service = new I18nService(instance(mockedTranslocoService), instance(mockedCookieService));
+    const service = new I18nService(
+      instance(mockedAuthService),
+      instance(mockedTranslocoService),
+      instance(mockedCookieService)
+    );
     expect(service).toBeTruthy();
     service.setLocale('zh-CN');
     verify(mockedTranslocoService.setActiveLang('zh-CN')).called();
+    verify(mockedAuthService.updateInterfaceLanguage('zh-CN')).called();
     expect(service.localeCode).toEqual('zh-CN');
   });
 
   it('should wrap text with HTML tags', () => {
     when(mockedTranslocoService.translate<string>(anything(), anything())).thenReturn('translated key');
-    const service = new I18nService(instance(mockedTranslocoService), instance(mockedCookieService));
+    const service = new I18nService(
+      instance(mockedAuthService),
+      instance(mockedTranslocoService),
+      instance(mockedCookieService)
+    );
     expect(
       service.translateAndInsertTags('namespace.key', {
         value: 2,
@@ -51,7 +62,11 @@ describe('I18nService', () => {
     when(mockedTranslocoService.translate<string>(anything(), anything())).thenReturn(
       'translated key with {{ boundary }}tag text{{ boundary }} in template'
     );
-    const service = new I18nService(instance(mockedTranslocoService), instance(mockedCookieService));
+    const service = new I18nService(
+      instance(mockedAuthService),
+      instance(mockedTranslocoService),
+      instance(mockedCookieService)
+    );
     expect(service.translateTextAroundTemplateTags('namespace.key')).toEqual({
       before: 'translated key with ',
       templateTagText: 'tag text',
@@ -61,7 +76,11 @@ describe('I18nService', () => {
 
   it('should localize dates', () => {
     const date = new Date('November 25, 1991 17:28');
-    const service = new I18nService(instance(mockedTranslocoService), instance(mockedCookieService));
+    const service = new I18nService(
+      instance(mockedAuthService),
+      instance(mockedTranslocoService),
+      instance(mockedCookieService)
+    );
     expect(service.formatDate(date)).toEqual('Nov 25, 1991, 5:28 PM');
     service.setLocale('en-GB');
     expect(service.formatDate(date)).toEqual('25 Nov 1991, 5:28 pm');

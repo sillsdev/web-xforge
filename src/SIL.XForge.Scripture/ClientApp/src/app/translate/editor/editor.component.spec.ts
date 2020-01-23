@@ -28,6 +28,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -43,6 +44,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { SuggestionsComponent } from './suggestions.component';
 
+const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
@@ -66,6 +68,7 @@ describe('EditorComponent', () => {
     declarations: [EditorComponent, SuggestionsComponent],
     imports: [NoopAnimationsModule, RouterTestingModule, SharedModule, UICommonModule, TestTranslocoModule],
     providers: [
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },

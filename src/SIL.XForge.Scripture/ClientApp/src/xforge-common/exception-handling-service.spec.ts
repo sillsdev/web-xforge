@@ -4,6 +4,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
+import { AuthService } from './auth.service';
 import { CONSOLE } from './browser-globals';
 import { ErrorReportingService } from './error-reporting.service';
 import { ErrorComponent } from './error/error.component';
@@ -13,6 +14,7 @@ import { NoticeService } from './notice.service';
 import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { UserService } from './user.service';
 
+const mockedAuthService = mock(AuthService);
 const mockedMdcDialog = mock(MdcDialog);
 const mockedUserService = mock(UserService);
 const mockedErrorReportingService = mock(ErrorReportingService);
@@ -40,6 +42,7 @@ describe('ExceptionHandlingService', () => {
   configureTestingModule(() => ({
     providers: [
       ExceptionHandlingService,
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: MdcDialog, useMock: mockedMdcDialog },
       { provide: UserService, useMock: mockedUserService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
