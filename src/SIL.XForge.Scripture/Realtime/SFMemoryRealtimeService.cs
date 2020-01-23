@@ -19,7 +19,7 @@ namespace SIL.XForge.Scripture.Realtime
             {
                 await GetRepository<SFProject>().DeleteAsync(projectId);
             }
-            catch (NodeInvocationException e)
+            catch (NodeInvocationException)
             {
                 Console.WriteLine($"Warning: {nameof(SFMemoryRealtimeService)}.{nameof(DeleteProjectAsync)} ignoring {nameof(NodeInvocationException)} for projectId {projectId} to mimic production behavior.");
             }
