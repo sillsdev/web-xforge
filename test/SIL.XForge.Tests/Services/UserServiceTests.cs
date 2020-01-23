@@ -101,6 +101,19 @@ namespace SIL.XForge.Services
             Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
         }
 
+        [Test]
+        public async Task UpdateInterfaceLanguageAsync()
+        {
+            var env = new TestEnvironment();
+            env.AuthService.UpdateInterfaceLanguage("auth02", "mri").Returns(Task.CompletedTask);
+            JObject userProfile = env.CreateUserProfile("user02", "auth02", env.IssuedAt);
+            env.AuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile));
+
+            await env.Service.UpdateInterfaceLanguageAsync("user02", "auth02", "mri");
+            User user2 = env.GetUser("user02");
+            Assert.That(user2.InterfaceLanguage, Is.EqualTo("mri"));
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment()

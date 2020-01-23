@@ -12,6 +12,7 @@ import locales from '../../../locales.json';
 import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { environment } from '../environments/environment';
+import { AuthService } from './auth.service';
 import { ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue, getAspCultureCookieLanguage } from './utils';
 
 interface Locale {
@@ -97,7 +98,11 @@ export class I18nService {
 
   private currentLocale: Locale = I18nService.defaultLocale;
 
-  constructor(private readonly transloco: TranslocoService, private readonly cookieService: CookieService) {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly transloco: TranslocoService,
+    private readonly cookieService: CookieService
+  ) {
     const language = this.cookieService.get(ASP_CULTURE_COOKIE_NAME);
     if (language != null) {
       this.trySetLocale(getAspCultureCookieLanguage(language));
@@ -122,16 +127,17 @@ export class I18nService {
 
   trySetLocale(tag: string) {
     const locale = I18nService.getLocale(tag);
-    if (locale != null) {
-      this.currentLocale = locale;
-      this.transloco.setActiveLang(locale.canonicalTag);
-      const date = new Date();
-      date.setFullYear(date.getFullYear() + 1);
-      this.cookieService.set(ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue(locale.canonicalTag), date, '/');
-      // TODO save to Auth0
-    } else {
+    if (locale == null) {
       console.warn(`Failed attempt to set locale to unsupported locale ${tag}`);
+      return;
     }
+
+    this.currentLocale = locale;
+    this.transloco.setActiveLang(locale.canonicalTag);
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + 1);
+    this.cookieService.set(ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue(locale.canonicalTag), date, '/');
+    this.authService.updateInterfaceLanguage(locale.canonicalTag);
   }
 
   translateBook(book: number | string) {

@@ -7,6 +7,7 @@ namespace SIL.XForge.Services
     {
         Task UpdateUserFromProfileAsync(string curUserId, JObject userProfile);
         Task LinkParatextAccountAsync(string curUserId, string primaryAuthId, string secondaryAuthId);
+        Task UpdateInterfaceLanguageAsync(string curUserId, string authId, string language);
         Task DeleteAsync(string curUserId, string systemRole, string userId);
     }
 }

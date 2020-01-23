@@ -8,6 +8,7 @@ import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/ch
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -18,6 +19,7 @@ import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SyncComponent } from './sync.component';
 
+const mockedAuthService = mock(AuthService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
@@ -29,6 +31,7 @@ describe('SyncComponent', () => {
     declarations: [SyncComponent],
     imports: [CommonModule, UICommonModule, TestTranslocoModule],
     providers: [
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ParatextService, useMock: mockedParatextService },
@@ -62,9 +65,9 @@ describe('SyncComponent', () => {
 
   it('should sync project when the button is clicked', fakeAsync(() => {
     const env = new TestEnvironment(true);
-    verify(mockedProjectService.get('testproject01')).once();
+    verify(mockedProjectService.get('testProject01')).once();
     env.clickElement(env.syncButton);
-    verify(mockedProjectService.onlineSync('testproject01')).once();
+    verify(mockedProjectService.onlineSync('testProject01')).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).toBeDefined();
     expect(env.component.isProgressDeterminate).toBe(false);
@@ -85,9 +88,9 @@ describe('SyncComponent', () => {
 
   it('should report error if sync has a problem', fakeAsync(() => {
     const env = new TestEnvironment(true);
-    verify(mockedProjectService.get('testproject01')).once();
+    verify(mockedProjectService.get('testProject01')).once();
     env.clickElement(env.syncButton);
-    verify(mockedProjectService.onlineSync('testproject01')).once();
+    verify(mockedProjectService.onlineSync('testProject01')).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).toBeDefined();
     // Simulate sync in progress
@@ -117,10 +120,10 @@ class TestEnvironment {
   private isLoading: boolean = false;
 
   constructor(isParatextAccountConnected: boolean = false, isInProgress: boolean = false) {
-    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'testproject01' }));
+    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'testProject01' }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
-    when(mockedProjectService.onlineSync('testproject01')).thenResolve();
+    when(mockedProjectService.onlineSync('testProject01')).thenResolve();
     when(mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
     when(mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
     when(mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);
@@ -128,7 +131,7 @@ class TestEnvironment {
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
-      id: 'testproject01',
+      id: 'testProject01',
       data: {
         name: 'Sync Test Project',
         paratextId: 'pt01',
@@ -155,8 +158,8 @@ class TestEnvironment {
         userRoles: {}
       }
     });
-    when(mockedProjectService.get('testproject01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'testproject01')
+    when(mockedProjectService.get('testProject01')).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'testProject01')
     );
 
     this.fixture = TestBed.createComponent(SyncComponent);
@@ -200,7 +203,7 @@ class TestEnvironment {
   }
 
   emitSyncProgress(percentCompleted: number): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'testproject01');
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'testProject01');
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 1);
       ops.set(p => p.sync.percentCompleted!, percentCompleted);
@@ -209,7 +212,7 @@ class TestEnvironment {
   }
 
   emitSyncComplete(successful: boolean): void {
-    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'testproject01');
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'testProject01');
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 0);
       ops.unset(p => p.sync.percentCompleted!);
