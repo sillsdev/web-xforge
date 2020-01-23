@@ -32,12 +32,14 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     shareLevel: new FormControl(undefined)
   });
   sourceProjects?: ParatextProject[];
-  synchronizeWarning?: TextAroundTemplate = this.i18n.translateTextAroundTemplateTags(
-    'settings.will_not_delete_paratext_project'
-  );
-  shareDescription?: TextAroundTemplate = this.i18n.translateTextAroundTemplateTags(
-    'settings.users_can_share_the_project'
-  );
+
+  get synchronizeWarning(): TextAroundTemplate | undefined {
+    return this.i18n.translateTextAroundTemplateTags('settings.will_not_delete_paratext_project');
+  }
+
+  get shareDescription(): TextAroundTemplate | undefined {
+    return this.i18n.translateTextAroundTemplateTags('settings.users_can_share_the_project');
+  }
 
   private projectDoc?: SFProjectDoc;
   /** Elements in this component and their states. */

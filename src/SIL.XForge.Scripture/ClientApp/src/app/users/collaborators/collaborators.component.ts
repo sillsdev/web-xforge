@@ -36,9 +36,10 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   });
   pageIndex: number = 0;
   pageSize: number = 50;
-  rolesText?: TextAroundTemplate = this.i18n.translateTextAroundTemplateTags(
-    'collaborators.change_roles_and_permissions'
-  );
+
+  get rolesText(): TextAroundTemplate | undefined {
+    return this.i18n.translateTextAroundTemplateTags('collaborators.change_roles_and_permissions');
+  }
 
   private projectDoc?: SFProjectDoc;
   private term: string = '';
