@@ -1,4 +1,5 @@
 <quill-editor
+  #quillEditor
   spellcheck="false"
   [placeholder]="placeholder"
   [readOnly]="readOnlyEnabled"
@@ -10,8 +11,6 @@
   [ngClass]="{
     'read-only-editor': readOnlyEnabled,
     'template-editor': !readOnlyEnabled,
-    ltr: isLtr,
-    rtl: isRtl,
     'mark-invalid': markInvalid
   }"
   dir="auto"
