@@ -37,11 +37,11 @@ export class NoticeService {
   }
 
   async show(message: string): Promise<void> {
-    let config: MdcSnackbarConfig<any> | undefined;
-    if (!(await this.authService.isLoggedIn)) {
-      config = { classes: 'snackbar-above-footer' };
-    }
-    this.snackbar.open(message, undefined, config);
+    return this.showSnackBar(message);
+  }
+
+  async showError(message: string): Promise<void> {
+    return this.showSnackBar(message, ['snackbar-error']);
   }
 
   showMessageDialog(message: string): Promise<void> {
@@ -50,5 +50,14 @@ export class NoticeService {
     }) as MdcDialogRef<MessageDialogComponent, any>;
 
     return dialogRef.afterClosed().toPromise();
+  }
+
+  private async showSnackBar(message: string, classes: string[] = []): Promise<void> {
+    let config: MdcSnackbarConfig<any> | undefined;
+    if (!(await this.authService.isLoggedIn)) {
+      classes.push('snackbar-above-footer');
+    }
+    config = { classes: classes.join(' ') };
+    this.snackbar.open(message, undefined, config);
   }
 }

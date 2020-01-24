@@ -54,20 +54,23 @@ export class ExceptionHandlingService implements ErrorHandler {
       error = new Error('Unknown error: ' + String(error));
     }
 
-    // If a promise was rejected with an error, we want to report that error, because it has a useful stack trace
-    // If it was rejected with something other than an error we can't just report that object to Bugsnag
-    error = error.rejection && error.rejection.message && error.rejection.stack ? error.rejection : error;
+    // If a promise was rejected with an error, we want to report that error, because it is more likely to have a useful
+    // stack trace.
+    error = error.rejection ? error.rejection : error;
 
     // There's no exact science here. We're looking for XMLHttpRequests that failed, but not due to HTTP response codes.
     if (error.error && error.error.target instanceof XMLHttpRequest && error.error.target.status === 0) {
-      ngZone.run(() => noticeService.show(translate('exception_handling_service.network_request_failed')));
+      ngZone.run(() => noticeService.showError(translate('exception_handling_service.network_request_failed')));
       return;
     }
 
+    // some rejection objects from Auth0 use errorDescription or error_description for the rejection message
+    const messageKeys = ['message', 'errorDescription', 'error_description'];
+    const messageKey = messageKeys.find(key => typeof error[key] === 'string');
     let message =
-      typeof error.message === 'string'
-        ? (error.message as string).split('\n')[0]
-        : translate('exception_handling_service.unknown_error');
+      messageKey == null
+        ? translate('exception_handling_service.unknown_error')
+        : (error[messageKey] as string).split('\n')[0];
 
     if (
       message.includes('A mutation operation was attempted on a database that did not allow mutations.') &&
