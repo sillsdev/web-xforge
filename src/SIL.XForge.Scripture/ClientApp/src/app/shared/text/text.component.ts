@@ -436,7 +436,6 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     // This value can then be used for other purposes i.e. CSS styles
     if (this.editor !== undefined) {
       // Set the browser calculated direction on the segments so we can action elsewhere i.e. CSS
-      // let segments = document.querySelectorAll('quill-editor usx-segment');
       let segments: NodeListOf<Element> = this.quill.nativeElement.querySelectorAll('usx-segment');
       for (const segment of Array.from(segments)) {
         let dir = window.getComputedStyle(segment).direction;
