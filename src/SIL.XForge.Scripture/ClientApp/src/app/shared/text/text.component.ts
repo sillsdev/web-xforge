@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import isEqual from 'lodash/isEqual';
 import merge from 'lodash/merge';
@@ -48,6 +48,7 @@ export interface TextUpdatedEvent {
   templateUrl: './text.component.html'
 })
 export class TextComponent extends SubscriptionDisposable implements OnDestroy {
+  @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
   @Input() isReadOnly: boolean = true;
   @Input() placeholder = translate('text.loading');
   @Input() markInvalid: boolean = false;
@@ -57,7 +58,6 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Output() loaded = new EventEmitter(true);
   lang: string = '';
 
-  private _direction: string | null = null;
   private _editorStyles: any = { fontSize: '1rem' };
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
@@ -131,10 +131,6 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   constructor(private readonly projectService: SFProjectService) {
     super();
-  }
-
-  get direction(): string | null {
-    return this._direction;
   }
 
   get id(): TextDocId | undefined {
@@ -224,14 +220,6 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   set editorStyles(styles: object) {
     this._editorStyles = styles;
     this.applyEditorStyles();
-  }
-
-  get isLtr(): boolean {
-    return this.direction === 'ltr';
-  }
-
-  get isRtl(): boolean {
-    return this.direction === 'rtl';
   }
 
   get isSelectionAtSegmentEnd(): boolean {
@@ -446,11 +434,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   private setDirection() {
     // As the browser is automatically applying ltr/rtl we need to ask it which one it is using
     // This value can then be used for other purposes i.e. CSS styles
-    const quill = document.querySelector('quill-editor');
-    if (quill !== null && this.editor !== undefined) {
-      this._direction = window.getComputedStyle(quill).direction;
+    if (this.editor !== undefined) {
       // Set the browser calculated direction on the segments so we can action elsewhere i.e. CSS
-      let segments = document.querySelectorAll('quill-editor usx-segment');
+      let segments: NodeListOf<Element> = this.quill.nativeElement.querySelectorAll('usx-segment');
       for (const segment of Array.from(segments)) {
         let dir = window.getComputedStyle(segment).direction;
         if (dir === null) {
@@ -473,7 +459,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
         segment.setAttribute('dir', dir);
       }
       // Loop through the paragraphs to see what direction it should be set to based off the first valid segment
-      const paragraphs = document.querySelectorAll('quill-editor usx-para,quill-editor .ql-editor > p');
+      const paragraphs: NodeListOf<Element> = this.quill.nativeElement.querySelectorAll('usx-para,.ql-editor > p');
       for (const paragraph of Array.from(paragraphs)) {
         let paraDir = 'auto';
         // Locate the first segment that isn't blank to see what direction the paragraph should be set to
@@ -494,7 +480,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
         paragraph.setAttribute('dir', paraDir);
       }
       // Chapters need its direction set from the paragraph that follows
-      const chapters = document.querySelectorAll('quill-editor usx-chapter');
+      const chapters: NodeListOf<Element> = this.quill.nativeElement.querySelectorAll('usx-chapter');
       for (const chapter of Array.from(chapters)) {
         const sibling = chapter.nextElementSibling;
         if (sibling === null) {
