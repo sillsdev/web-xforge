@@ -58,6 +58,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Output() loaded = new EventEmitter(true);
   lang: string = '';
 
+  private direction: string | null = null;
   private _editorStyles: any = { fontSize: '1rem' };
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
@@ -220,6 +221,14 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   set editorStyles(styles: object) {
     this._editorStyles = styles;
     this.applyEditorStyles();
+  }
+
+  get isLtr(): boolean {
+    return this.direction === 'ltr';
+  }
+
+  get isRtl(): boolean {
+    return this.direction === 'rtl';
   }
 
   get isSelectionAtSegmentEnd(): boolean {
@@ -435,6 +444,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     // As the browser is automatically applying ltr/rtl we need to ask it which one it is using
     // This value can then be used for other purposes i.e. CSS styles
     if (this.editor !== undefined) {
+      this.direction = window.getComputedStyle(this.quill.nativeElement).direction;
       // Set the browser calculated direction on the segments so we can action elsewhere i.e. CSS
       let segments: NodeListOf<Element> = this.quill.nativeElement.querySelectorAll('usx-segment');
       for (const segment of Array.from(segments)) {
