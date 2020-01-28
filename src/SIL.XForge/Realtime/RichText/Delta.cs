@@ -149,7 +149,7 @@ namespace SIL.XForge.Realtime.RichText
 
             if (other == null)
             {
-                other = new Delta();
+                throw new ArgumentNullException(nameof(other));
             }
 
             if (!TryConcatInserts(this, out string thisStr) || !TryConcatInserts(other, out string otherStr))

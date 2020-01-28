@@ -399,9 +399,9 @@ namespace SIL.XForge.Realtime.RichText
         {
             var a = Delta.New().Insert("AB");
             Delta b = null;
-            var expected = Delta.New().Delete("AB".Length);
-            Assert.That(a.Diff(b), Is.EqualTo(expected).Using(Delta.EqualityComparer));
+            Assert.That(() => a.Diff(b), Throws.ArgumentNullException);
         }
+
         [Test]
         public void Diff_Retain()
         {
