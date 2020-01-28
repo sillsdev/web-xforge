@@ -202,25 +202,6 @@
     "questions": "Questions",
     "texts_with_questions": "Texts with Questions"
   },
-  "connect_project": {
-    "additional_settings": "Additional Settings",
-    "already_connected": "already connected",
-    "based_on": "Based on",
-    "choose_the_mother_project": "Choose the Paratext project that your project is based on.",
-    "community_checking": "Community Checking",
-    "connect": "Connect",
-    "connect_paratext_project": "Connect Paratext Project",
-    "connecting_to_project": "Connecting to {{ projectName }}...",
-    "engage_the_wider_community_to_check_scripture": "Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses, ask targeted questions, allow discussion of answers.",
-    "log_in_with_paratext": "Log in with Paratext",
-    "no_connectable_projects": "Looks like there are no connectable projects for you.{{ newLine }}Please go to Paratext to register a project to connect to.",
-    "only_paratext_admins_can_start": "** You must be the Paratext Administrator of a project to start it here. Ask your Administrator to connect to your project then you can also connect to it here after that.",
-    "paratext_project": "Paratext Project",
-    "translation_suggestions": "Translation Suggestions",
-    "translations_will_be_suggested_as_you_edit": "Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your project is setup as a {{ boldStart }}Daughter Translation{{ boldEnd }} in Paratext.",
-    "you_can_change_later": "You can change these later.",
-    "you_must_be_logged_in_to_paratext": "You must login with your Paratext account to connect to a project."
-  },
   "edit_name_dialog": {
     "cancel": "Cancel",
     "confirm_name": "Confirm the name that other people on this project will see when you post answers and comments",

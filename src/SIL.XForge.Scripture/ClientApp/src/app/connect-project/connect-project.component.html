@@ -18,7 +18,7 @@
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
       <ng-container *ngIf="projects?.length > 0; else noProjectMsg">
         <p *ngIf="hasNonAdministratorProject && !showSettings" id="connect-non-admin-msg">
-          {{ t("only_paratext_admins_can_start") }}
+          **&nbsp;{{ t("only_paratext_admins_can_start") }}
         </p>
         <mdc-form-field>
           <mdc-select
@@ -38,7 +38,7 @@
                   <span>
                     {{ project.name }}
                     <span *ngIf="!project.isConnectable && project.isConnected"
-                      >&nbsp;({{ t("already_connected") }})</span
+                      >&nbsp;{{ t("already_connected") }}</span
                     >
                     <span *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</span>
                   </span>
