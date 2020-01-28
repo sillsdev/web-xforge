@@ -1,17 +1,13 @@
-<mdc-dialog>
-  <mdc-dialog-container>
-    <mdc-dialog-surface>
-      <mdc-dialog-title>This browser is unsupported</mdc-dialog-title>
-      <mdc-dialog-content>
-        <p>
-          Some of the features of this website may not work correctly with your browser. We recommend upgrading to the
-          latest <a target="_blank" href="https://www.google.com/chrome/">Chrome</a> or
-          <a target="_blank" href="https://www.mozilla.org">Firefox.</a>
-        </p>
-      </mdc-dialog-content>
-      <mdc-dialog-actions>
-        <button mdcDialogButton type="button" mdcDialogAction="close">Dismiss</button>
-      </mdc-dialog-actions>
-    </mdc-dialog-surface>
-  </mdc-dialog-container>
-</mdc-dialog>
+<ng-container *transloco="let t; read: 'supported_browsers_dialog'">
+  <mdc-dialog>
+    <mdc-dialog-container>
+      <mdc-dialog-surface>
+        <mdc-dialog-title>{{ t("browser_unsupported") }}</mdc-dialog-title>
+        <mdc-dialog-content> <p [innerHTML]="t('upgrade_chrome_firefox', browserLinks)"></p> </mdc-dialog-content>
+        <mdc-dialog-actions>
+          <button mdcDialogButton type="button" mdcDialogAction="close">{{ t("dismiss") }}</button>
+        </mdc-dialog-actions>
+      </mdc-dialog-surface>
+    </mdc-dialog-container>
+  </mdc-dialog>
+</ng-container>

@@ -6,10 +6,7 @@
         <mdc-dialog-content>
           <p>{{ data.message }}</p>
           <p [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></p>
-          <p
-            *ngIf="browserUnsupported"
-            [innerHTML]="t('unsupported_browser', { chromeLink: chromeLink, firefoxLink: firefoxLink })"
-          ></p>
+          <p *ngIf="browserUnsupported" [innerHTML]="t('unsupported_browser', browserLinks)"></p>
           <a (click)="this.showDetails = !this.showDetails" [fxShow]="data.stack">{{
             showDetails ? t("hide_details") : t("show_details")
           }}</a>

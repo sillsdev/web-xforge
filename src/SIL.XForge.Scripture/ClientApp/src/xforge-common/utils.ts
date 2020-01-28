@@ -1,3 +1,4 @@
+import { translate } from '@ngneat/transloco';
 import Bowser from 'bowser';
 import ObjectID from 'bson-objectid';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
@@ -124,4 +125,19 @@ export function getAspCultureCookieLanguage(cookie: string): string {
     }
   });
   return uic! || c! || 'en';
+}
+
+export function browserLinks() {
+  return {
+    chromeLink: getLinkHTML(translate('error.chrome'), 'https://www.google.com/chrome/'),
+    firefoxLink: getLinkHTML(translate('error.firefox'), 'https://firefox.com')
+  };
+}
+
+export function getLinkHTML(text: string, href: string) {
+  const a = document.createElement('a');
+  a.href = href;
+  a.setAttribute('target', '_blank');
+  a.textContent = text;
+  return a.outerHTML;
 }

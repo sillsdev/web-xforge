@@ -265,6 +265,11 @@
     "connect_project": "Connect project",
     "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet."
   },
+  "supported_browsers_dialog": {
+    "dismiss": "Dismiss",
+    "browser_unsupported": "This browser is unsupported",
+    "upgrade_chrome_firefox": "Some of the features of this website may not work correctly with your browser. We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}."
+  },
   "text_chooser_dialog": {
     "cancel": "Cancel",
     "save": "Save",

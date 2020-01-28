@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { browserLinks } from 'xforge-common/utils';
 
 @Component({
   selector: 'app-supported-browsers-dialog',
@@ -6,4 +7,8 @@ import { Component } from '@angular/core';
 })
 export class SupportedBrowsersDialogComponent {
   constructor() {}
+
+  get browserLinks() {
+    return browserLinks();
+  }
 }
