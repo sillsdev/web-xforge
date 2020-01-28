@@ -246,10 +246,10 @@ namespace SIL.XForge.Scripture.Services
             SortedList<int, IDocument<Models.TextData>> dbChapterDocs = await FetchTextDocsAsync(text, textType);
 
             string bookId = Canon.BookNumberToId(text.BookNum);
-            string cloudBookText = await FetchFromAndUpdatePtCloudAsync(text, paratextId, fileName, isReadOnly, bookId, dbChapterDocs);
+            string ptBookText = await FetchFromAndUpdateParatextAsync(text, paratextId, fileName, isReadOnly, bookId, dbChapterDocs);
             await UpdateProgress();
 
-            XElement bookTextElem = XElement.Parse(cloudBookText);
+            XElement bookTextElem = XElement.Parse(ptBookText);
             var usxDoc = new XDocument(bookTextElem.Element("usx"));
             Dictionary<int, ChapterDelta> incomingChapters = _deltaUsxMapper.ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
@@ -265,7 +265,7 @@ namespace SIL.XForge.Scripture.Services
                 incomingChapters.Remove(1);
             }
 
-            // Set SF DB to snapshot from PT cloud.
+            // Set SF DB to snapshot from Paratext.
             List<Chapter> chapters = await ChangeDbToNewSnapshotAsync(text, textType, chaptersToInclude, dbChapterDocs, incomingChapters);
 
             // Save to disk
@@ -275,14 +275,14 @@ namespace SIL.XForge.Scripture.Services
             return chapters;
         }
 
-        private async Task<string> FetchFromAndUpdatePtCloudAsync(TextInfo text, string paratextId,
+        private async Task<string> FetchFromAndUpdateParatextAsync(TextInfo text, string paratextId,
             string fileName, bool isReadOnly, string bookId, SortedList<int, IDocument<Models.TextData>> dbChapterDocs)
         {
             XElement bookTextElem;
-            string cloudBookText;
+            string ptBookText;
             if (isReadOnly)
             {
-                cloudBookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
+                ptBookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
             }
             else
             {
@@ -297,15 +297,15 @@ namespace SIL.XForge.Scripture.Services
 
                 if (XNode.DeepEquals(oldUsxDoc, newUsxDoc))
                 {
-                    cloudBookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
+                    ptBookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
                 }
                 else
                 {
-                    cloudBookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
+                    ptBookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
                         revision, newUsxDoc.Root.ToString());
                 }
             }
-            return cloudBookText;
+            return ptBookText;
         }
 
         internal async Task<List<Chapter>> ChangeDbToNewSnapshotAsync(TextInfo text, TextType textType, ISet<int> chaptersToInclude, SortedList<int, IDocument<TextData>> dbChapterDocs, Dictionary<int, ChapterDelta> incomingChapters)
@@ -323,7 +323,7 @@ namespace SIL.XForge.Scripture.Services
                     Delta diffDelta;
                     if (dbChapterDoc.Data != null)
                     {
-                        // Change to new PT cloud snapshot, by sending a diff to the database.
+                        // Change to new Paratext snapshot, by sending a diff to the database.
                         diffDelta = dbChapterDoc.Data.Diff(incomingChapter.Value.Delta);
                         if (diffDelta.Ops.Count > 0)
                         {
@@ -332,7 +332,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                     else
                     {
-                        // Set database to content from PT cloud.
+                        // Set database to content from Paratext.
                         dbChapterDoc = GetTextDoc(text, incomingChapter.Key, textType);
                         tasks.Add(dbChapterDoc.CreateAsync(new Models.TextData(incomingChapter.Value.Delta)));
                     }
@@ -341,7 +341,7 @@ namespace SIL.XForge.Scripture.Services
                 }
                 else if (chaptersToInclude == null || chaptersToInclude.Contains(incomingChapter.Key))
                 {
-                    // Set database to content from PT cloud.
+                    // Set database to content from Paratext.
                     dbChapterDoc = GetTextDoc(text, incomingChapter.Key, textType);
                     tasks.Add(dbChapterDoc.CreateAsync(new Models.TextData(incomingChapter.Value.Delta)));
                 }
