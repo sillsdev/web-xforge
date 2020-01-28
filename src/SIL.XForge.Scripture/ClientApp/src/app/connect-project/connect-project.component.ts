@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
@@ -44,6 +45,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly router: Router,
+    readonly i18n: I18nService,
     noticeService: NoticeService
   ) {
     super(noticeService);

@@ -11,9 +11,10 @@ import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project'
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { defer, of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
@@ -29,17 +30,18 @@ const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
+const mockedI18nService = mock(I18nService);
 
 describe('ConnectProjectComponent', () => {
   configureTestingModule(() => ({
-    imports: [HttpClientTestingModule, NoopAnimationsModule, UICommonModule],
+    imports: [HttpClientTestingModule, NoopAnimationsModule, UICommonModule, TestTranslocoModule],
     declarations: [ConnectProjectComponent],
     providers: [
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: UserService, useMock: mockedUserService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: I18nService, useMock: mockedI18nService }
     ]
   }));
 
@@ -59,9 +61,7 @@ describe('ConnectProjectComponent', () => {
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
     expect(env.projectSelect).toBeNull();
-    expect(env.noProjectsMessage.nativeElement.textContent).toContain(
-      'Looks like there are no connectable projects for you.'
-    );
+    expect(env.noProjectsMessage.nativeElement.textContent).toBe('A translated string.');
   }));
 
   it('should do nothing when form is invalid', fakeAsync(() => {
@@ -315,6 +315,7 @@ class TestEnvironment {
     );
     when(mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
     when(mockedUserService.currentUserId).thenReturn('user01');
+    when(mockedI18nService.translateAndInsertTags(anything())).thenReturn('A translated string.');
 
     this.fixture = TestBed.createComponent(ConnectProjectComponent);
     this.component = this.fixture.componentInstance;
