@@ -254,6 +254,17 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, ChapterDelta> incomingChapters = _deltaUsxMapper.ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
 
+            // Remove the dummy incoming chapter, if there are no incoming chapters.
+            var noIncomingChapters = incomingChapters.Count == 1 && incomingChapters.Any((chapter) =>
+                chapter.Key == 1
+                && chapter.Value.Number == 1
+                && chapter.Value.LastVerse == 0
+                && chapter.Value.Delta.Ops.Count == 0);
+            if (noIncomingChapters)
+            {
+                incomingChapters.Remove(1);
+            }
+
             // Set SF DB to snapshot from PT cloud.
             List<Chapter> chapters = await ChangeDbToNewSnapshotAsync(text, textType, chaptersToInclude, dbChapterDocs, incomingChapters);
 
@@ -300,14 +311,12 @@ namespace SIL.XForge.Scripture.Services
         internal async Task<List<Chapter>> ChangeDbToNewSnapshotAsync(TextInfo text, TextType textType, ISet<int> chaptersToInclude, SortedList<int, IDocument<TextData>> dbChapterDocs, Dictionary<int, ChapterDelta> incomingChapters)
         {
             var tasks = new List<Task>();
-
             var chapters = new List<Chapter>();
             foreach (KeyValuePair<int, ChapterDelta> incomingChapter in incomingChapters)
             {
                 if (incomingChapter.Value.Delta == null)
                 {
-                    // PT cloud is missing chapter. Delete it locally.
-                    continue;
+                    throw new ArgumentException("An incoming ChapterDelta has a null Delta. Maybe DeltaUsxMapper.ToChapterDeltas() has a bug?", nameof(incomingChapters));
                 }
                 if (dbChapterDocs.TryGetValue(incomingChapter.Key, out IDocument<Models.TextData> dbChapterDoc))
                 {

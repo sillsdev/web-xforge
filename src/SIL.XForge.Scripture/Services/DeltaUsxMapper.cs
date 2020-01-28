@@ -41,6 +41,18 @@ namespace SIL.XForge.Scripture.Services
             public bool TopLevelVerses { get; set; }
         }
 
+        /// <summary>
+        /// Create list of ChapterDelta objects from USX.
+        ///
+        /// PT Data Access gives USX with chapters for each chapter that is
+        /// present in its project content. It will skip over chapters that are
+        /// not present in its project content. If there are no chapters present
+        /// in the project content, PT Data Access will return USX with no chapters.
+        ///
+        /// ToChapterDeltas will return a ChapterDelta for each chapter in USX.
+        /// If there are no chapters in USX, return a single ChapterDelta with a
+        /// non-null Delta with an empty Ops list.
+        /// </summary>
         public IEnumerable<ChapterDelta> ToChapterDeltas(XDocument usxDoc)
         {
             var invalidNodes = new HashSet<XNode>();
