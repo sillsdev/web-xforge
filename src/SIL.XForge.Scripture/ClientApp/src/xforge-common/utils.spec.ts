@@ -1,4 +1,4 @@
-import { getAspCultureCookieLanguage } from './utils';
+import { getAspCultureCookieLanguage, getLinkHTML } from './utils';
 
 describe('Utils', () => {
   it('should parse ASP Culture cookie', () => {
@@ -16,5 +16,11 @@ describe('Utils', () => {
 
     language = getAspCultureCookieLanguage('');
     expect(language).toEqual('en');
+  });
+
+  it('should correctly generate links', () => {
+    expect(getLinkHTML('example', 'https://example.com')).toEqual(
+      `<a href="https://example.com" target="_blank">example</a>`
+    );
   });
 });
