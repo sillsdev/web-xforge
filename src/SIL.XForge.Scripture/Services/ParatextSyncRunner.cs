@@ -354,7 +354,7 @@ namespace SIL.XForge.Scripture.Services
             }
             foreach (KeyValuePair<int, IDocument<Models.TextData>> dbChapterDoc in dbChapterDocs)
             {
-                if (dbChapterDoc.Value.Data != null)
+                if (dbChapterDoc.Value.IsLoaded)
                 {
                     tasks.Add(dbChapterDoc.Value.DeleteAsync());
                 }
