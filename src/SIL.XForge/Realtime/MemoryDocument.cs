@@ -6,12 +6,11 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Realtime
 {
-    public class MemoryDocument<T> : IDocument<T> where T : IIdentifiable
+    public class MemoryDocument : IDocument<T> where T : IIdentifiable
     {
         private readonly MemoryRepository<T> _repo;
 
-        internal MemoryDocument(MemoryRepository<T> repo, string otTypeName, string collection,
-            string id)
+        internal MemoryDocument(MemoryRepository<T> repo, string otTypeName, string collection, string id)
         {
             _repo = repo;
             OTTypeName = otTypeName;
@@ -33,8 +32,7 @@ namespace SIL.XForge.Realtime
 
         public async Task CreateAsync(T data)
         {
-            if (IsLoaded)
-                throw new InvalidOperationException("The doc already exists.");
+            if (IsLoaded) throw new InvalidOperationException("The doc already exists.");
             data.Id = Id;
             await _repo.InsertAsync(data);
             Data = data;
@@ -45,7 +43,8 @@ namespace SIL.XForge.Realtime
         {
             if (!_repo.Contains(Id))
             {
-                throw new Microsoft.AspNetCore.NodeServices.HostingModels.NodeInvocationException("Document does not exist", "Would be received in production.");
+                throw new Microsoft.AspNetCore.NodeServices.HostingModels.NodeInvocationException("Document does not exist",
+                    "Would be received in production.");
             }
             await _repo.DeleteAsync(Id);
             Data = default(T);
@@ -65,8 +64,7 @@ namespace SIL.XForge.Realtime
         public async Task FetchOrCreateAsync(Func<T> createData)
         {
             await FetchAsync();
-            if (!IsLoaded)
-                await CreateAsync(createData());
+            if (!IsLoaded) await CreateAsync(createData());
         }
 
         public async Task SubmitOpAsync(object op)

@@ -13,9 +13,9 @@ namespace SIL.XForge.Services
             byte[] data = new byte[1];
             using (var crypto = new RNGCryptoServiceProvider())
             {
-                crypto.GetNonZeroBytes(data);
+                crypto.GetNonZeroBytes (data);
                 data = new byte[16];
-                crypto.GetNonZeroBytes(data);
+                crypto.GetNonZeroBytes (data);
             }
             var key = new StringBuilder(16);
             foreach (byte b in data)

@@ -1,6 +1,5 @@
 // Copyright (c) 2018 SIL International
 // This software is licensed under the MIT License (http://opensource.org/licenses/MIT)
-
 using Bugsnag;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +12,5 @@ namespace Microsoft.AspNetCore.Builder
             // Force the creation of the bugsnag client
             app.ApplicationServices.GetService<IClient>();
         }
-
     }
 }

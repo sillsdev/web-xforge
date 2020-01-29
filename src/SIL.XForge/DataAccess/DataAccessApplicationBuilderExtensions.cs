@@ -15,7 +15,8 @@ namespace Microsoft.AspNetCore.Builder
             app.InitRepository<UserSecret>();
         }
 
-        public static void InitRepository<T>(this IApplicationBuilder app) where T : IIdentifiable
+        public static void InitRepository<T>(this IApplicationBuilder app)
+            where T : IIdentifiable
         {
             app.ApplicationServices.GetService<IRepository<T>>().Init();
         }

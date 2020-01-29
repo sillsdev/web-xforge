@@ -15,14 +15,18 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public int Number { get; }
+
         public int LastVerse { get; }
+
         public bool IsValid { get; }
+
         public Delta Delta { get; }
     }
 
     public interface IDeltaUsxMapper
     {
         IEnumerable<ChapterDelta> ToChapterDeltas(XDocument usxDoc);
+
         XDocument ToUsx(XDocument oldUsxDoc, IEnumerable<ChapterDelta> chapterDeltas);
     }
 }

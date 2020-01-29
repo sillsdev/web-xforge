@@ -12,6 +12,7 @@ namespace SIL.XForge.Realtime
     public class Connection : DisposableBase, IConnection
     {
         private readonly RealtimeService _realtimeService;
+
         private int _handle;
 
         private readonly ConcurrentDictionary<(string, string), object> _documents;
@@ -22,15 +23,23 @@ namespace SIL.XForge.Realtime
             _documents = new ConcurrentDictionary<(string, string), object>();
         }
 
-        public IDocument<T> Get<T>(string id) where T : IIdentifiable
+        public IDocument<T> Get<T>(string id)
+            where T : IIdentifiable
         {
             DocConfig docConfig = _realtimeService.GetDocConfig<T>();
-            object doc = _documents.GetOrAdd((docConfig.CollectionName, id), key =>
-            {
-                string otTypeName = docConfig.OTTypeName;
-                return new Document<T>(_realtimeService.Server, _handle, otTypeName, docConfig.CollectionName, id);
-            });
-            return (Document<T>)doc;
+            object doc =
+                _documents
+                    .GetOrAdd((docConfig.CollectionName, id),
+                    key =>
+                    {
+                        string otTypeName = docConfig.OTTypeName;
+                        return new Document<T>(_realtimeService.Server,
+                            _handle,
+                            otTypeName,
+                            docConfig.CollectionName,
+                            id);
+                    });
+            return (Document<T>) doc;
         }
 
         internal async Task StartAsync(string userId = null)
@@ -40,7 +49,7 @@ namespace SIL.XForge.Realtime
 
         protected override void DisposeManagedResources()
         {
-            _realtimeService.Server.Disconnect(_handle);
+            _realtimeService.Server.Disconnect (_handle);
         }
     }
 }

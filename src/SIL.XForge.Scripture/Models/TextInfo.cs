@@ -11,7 +11,9 @@ namespace SIL.XForge.Scripture.Models
     public class TextInfo
     {
         public int BookNum { get; set; }
+
         public bool HasSource { get; set; }
+
         public List<Chapter> Chapters { get; set; } = new List<Chapter>();
     }
 }

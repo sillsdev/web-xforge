@@ -24,8 +24,7 @@ namespace SIL.XForge.Services
 
         public async Task RouteAsync(RouteContext context)
         {
-            if (context.HttpContext.Request.ContentType != "application/json")
-                return;
+            if (context.HttpContext.Request.ContentType != "application/json") return;
 
             var authSchemeProvider = context.HttpContext.RequestServices.GetService<IAuthenticationSchemeProvider>();
             ClaimsPrincipal principal = null;
@@ -40,8 +39,7 @@ namespace SIL.XForge.Services
                         principal.AddIdentities(result.Principal.Identities);
                 }
             }
-            if (principal != null)
-                context.HttpContext.User = principal;
+            if (principal != null) context.HttpContext.User = principal;
             await _internalRouter.RouteAsync(context);
         }
     }

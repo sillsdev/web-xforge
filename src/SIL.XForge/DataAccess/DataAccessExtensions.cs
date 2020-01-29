@@ -12,37 +12,42 @@ namespace SIL.XForge.DataAccess
 {
     public static class DataAccessExtensions
     {
-        public static Task<T> UpdateAsync<T>(this IRepository<T> repo, string id, Action<IUpdateBuilder<T>> update,
-            bool upsert = false) where T : IIdentifiable
+        public static Task<T>
+        UpdateAsync<T>(this IRepository<T> repo, string id, Action<IUpdateBuilder<T>> update, bool upsert = false)
+            where T : IIdentifiable
         {
             return repo.UpdateAsync(e => e.Id == id, update, upsert);
         }
 
-        public static Task<T> UpdateAsync<T>(this IRepository<T> repo, T entity, Action<IUpdateBuilder<T>> update,
-            bool upsert = false) where T : IIdentifiable
+        public static Task<T>
+        UpdateAsync<T>(this IRepository<T> repo, T entity, Action<IUpdateBuilder<T>> update, bool upsert = false)
+            where T : IIdentifiable
         {
             return repo.UpdateAsync(entity.Id, update, upsert);
         }
 
-        public static async Task<T> DeleteAsync<T>(this IRepository<T> repo, string id) where T : IIdentifiable
+        public static async Task<T> DeleteAsync<T>(this IRepository<T> repo, string id)
+            where T : IIdentifiable
         {
             return await repo.DeleteAsync(e => e.Id == id);
         }
 
-        public static async Task<bool> DeleteAsync<T>(this IRepository<T> repo, T entity) where T : IIdentifiable
+        public static async Task<bool> DeleteAsync<T>(this IRepository<T> repo, T entity)
+            where T : IIdentifiable
         {
             return (await repo.DeleteAsync(e => e.Id == entity.Id)) != null;
         }
 
-        public static async Task<T> GetAsync<T>(this IRepository<T> repo, string id) where T : IIdentifiable
+        public static async Task<T> GetAsync<T>(this IRepository<T> repo, string id)
+            where T : IIdentifiable
         {
             Attempt<T> attempt = await repo.TryGetAsync(id);
-            if (attempt.Success)
-                return attempt.Result;
+            if (attempt.Success) return attempt.Result;
             return default(T);
         }
 
-        public static async Task<IReadOnlyList<T>> GetAllAsync<T>(this IRepository<T> repo) where T : IIdentifiable
+        public static async Task<IReadOnlyList<T>> GetAllAsync<T>(this IRepository<T> repo)
+            where T : IIdentifiable
         {
             return await repo.Query().ToListAsync();
         }
@@ -62,8 +67,8 @@ namespace SIL.XForge.DataAccess
                 return queryable.FirstOrDefault();
         }
 
-        public static async Task<T> FirstOrDefaultAsync<T>(this IQueryable<T> queryable,
-            Expression<Func<T, bool>> predicate)
+        public static async Task<T>
+        FirstOrDefaultAsync<T>(this IQueryable<T> queryable, Expression<Func<T, bool>> predicate)
         {
             if (queryable is IMongoQueryable<T> mongoQueryable)
                 return await MongoQueryable.FirstOrDefaultAsync(mongoQueryable, predicate);
@@ -79,8 +84,8 @@ namespace SIL.XForge.DataAccess
                 return queryable.SingleOrDefault();
         }
 
-        public static async Task<T> SingleOrDefaultAsync<T>(this IQueryable<T> queryable,
-            Expression<Func<T, bool>> predicate)
+        public static async Task<T>
+        SingleOrDefaultAsync<T>(this IQueryable<T> queryable, Expression<Func<T, bool>> predicate)
         {
             if (queryable is IMongoQueryable<T> mongoQueryable)
                 return await MongoQueryable.SingleOrDefaultAsync(mongoQueryable, predicate);
@@ -128,8 +133,8 @@ namespace SIL.XForge.DataAccess
                 return queryable.ToList();
         }
 
-        public static async Task<List<TResult>> ToListAsync<TSource, TResult>(this IQueryable<TSource> queryable,
-            Func<TSource, Task<TResult>> selector)
+        public static async Task<List<TResult>>
+        ToListAsync<TSource, TResult>(this IQueryable<TSource> queryable, Func<TSource, Task<TResult>> selector)
         {
             var results = new List<TResult>();
             if (queryable is IMongoQueryable<TSource> mongoQueryable)
@@ -138,21 +143,19 @@ namespace SIL.XForge.DataAccess
                 {
                     while (await cursor.MoveNextAsync())
                     {
-                        foreach (TSource entity in cursor.Current)
-                            results.Add(await selector(entity));
+                        foreach (TSource entity in cursor.Current) results.Add(await selector(entity));
                     }
                 }
             }
             else
             {
-                foreach (TSource entity in queryable)
-                    results.Add(await selector(entity));
+                foreach (TSource entity in queryable) results.Add(await selector(entity));
             }
             return results;
         }
 
-        public static Task<List<TResult>> ToListAsync<TSource, TResult>(this IQueryable<TSource> query,
-            Func<TSource, TResult> selector)
+        public static Task<List<TResult>>
+        ToListAsync<TSource, TResult>(this IQueryable<TSource> query, Func<TSource, TResult> selector)
         {
             return query.ToListAsync(e => Task.FromResult(selector(e)));
         }
@@ -161,15 +164,15 @@ namespace SIL.XForge.DataAccess
         {
             try
             {
-                indexes.CreateOne(indexModel);
+                indexes.CreateOne (indexModel);
             }
             catch (MongoCommandException ex)
             {
                 if (ex.CodeName == "IndexOptionsConflict")
                 {
                     string name = ex.Command["indexes"][0]["name"].AsString;
-                    indexes.DropOne(name);
-                    indexes.CreateOne(indexModel);
+                    indexes.DropOne (name);
+                    indexes.CreateOne (indexModel);
                 }
                 else
                 {

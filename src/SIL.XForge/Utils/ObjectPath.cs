@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace SIL.XForge.Utils
 {
-    public static class ObjectPath<T>
+    public static class ObjectPath
     {
         public static ObjectPath Create<TField>(Expression<Func<T, TField>> field)
         {
@@ -30,7 +30,7 @@ namespace SIL.XForge.Utils
 
         public bool TryGetValue<TObj, TField>(TObj obj, out TField value)
         {
-            var getter = (Func<TObj, TField>)Expression.Compile();
+            var getter = (Func<TObj, TField>) Expression.Compile();
             try
             {
                 value = getter(obj);
@@ -53,7 +53,6 @@ namespace SIL.XForge.Utils
                     case MemberExpression memberExpr:
                         path.Add(memberExpr.Member.Name);
                         break;
-
                     case MethodCallExpression methodExpr:
                         if (methodExpr.Method.Name != "get_Item")
                             throw new ArgumentException("Invalid method call in field expression.", nameof(expression));

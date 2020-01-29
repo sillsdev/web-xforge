@@ -7,10 +7,11 @@ namespace Microsoft.AspNetCore.Builder
     {
         public static void UseSFJsonRpc(this IApplicationBuilder app)
         {
-            app.UseXFJsonRpc(options =>
-            {
-                options.RegisterController<SFProjectsRpcController>(UrlConstants.Projects);
-            });
+            app
+                .UseXFJsonRpc(options =>
+                {
+                    options.RegisterController<SFProjectsRpcController>(UrlConstants.Projects);
+                });
         }
     }
 }

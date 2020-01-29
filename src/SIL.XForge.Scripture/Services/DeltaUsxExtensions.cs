@@ -7,7 +7,7 @@ namespace SIL.XForge.Scripture.Services
     {
         public static Delta InsertPara(this Delta delta, JObject paraAttributes, JObject attributes = null)
         {
-            attributes = (JObject)attributes?.DeepClone() ?? new JObject();
+            attributes = (JObject) attributes?.DeepClone() ?? new JObject();
             attributes.Add(new JProperty("para", paraAttributes));
             return delta.Insert("\n", attributes);
         }
@@ -16,7 +16,7 @@ namespace SIL.XForge.Scripture.Services
         {
             if (segRef != null)
             {
-                attributes = (JObject)attributes?.DeepClone() ?? new JObject();
+                attributes = (JObject) attributes?.DeepClone() ?? new JObject();
                 attributes.Add(new JProperty("segment", segRef));
             }
             return delta.Insert(text, attributes);
@@ -28,14 +28,14 @@ namespace SIL.XForge.Scripture.Services
             return delta.Insert(new { blank = true }, attrs);
         }
 
-        public static Delta InsertEmbed(this Delta delta, string type, JObject obj, string segRef = null,
-            JObject attributes = null)
+        public static Delta
+        InsertEmbed(this Delta delta, string type, JObject obj, string segRef = null, JObject attributes = null)
         {
             var embed = new JObject(new JProperty(type, obj));
 
             if (segRef != null)
             {
-                attributes = (JObject)attributes?.DeepClone() ?? new JObject();
+                attributes = (JObject) attributes?.DeepClone() ?? new JObject();
                 attributes.Add(new JProperty("segment", segRef));
             }
 

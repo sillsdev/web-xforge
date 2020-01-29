@@ -23,6 +23,7 @@ namespace SIL.XForge.Realtime
         }
 
         private readonly Dictionary<Type, object> _repos;
+
         private readonly Dictionary<Type, DocConfig> _docConfigs;
 
         public MemoryRealtimeService()
@@ -49,13 +50,15 @@ namespace SIL.XForge.Realtime
             return Task.CompletedTask;
         }
 
-        public string GetCollectionName<T>() where T : IIdentifiable
+        public string GetCollectionName<T>()
+            where T : IIdentifiable
         {
             DocConfig docConfig = GetDocConfig<T>();
             return docConfig.CollectionName;
         }
 
-        public IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable
+        public IQueryable<T> QuerySnapshots<T>()
+            where T : IIdentifiable
         {
             return GetRepository<T>().Query();
         }
@@ -63,18 +66,20 @@ namespace SIL.XForge.Realtime
         public void AddRepository<T>(string collectionName, string otTypeName, MemoryRepository<T> repo)
             where T : IIdentifiable
         {
-            _repos[typeof(T)] = repo;
-            _docConfigs[typeof(T)] = new DocConfig(collectionName, typeof(T), otTypeName);
+            _repos[typeof (T)] = repo;
+            _docConfigs[typeof (T)] = new DocConfig(collectionName, typeof (T), otTypeName);
         }
 
-        public MemoryRepository<T> GetRepository<T>() where T : IIdentifiable
+        public MemoryRepository<T> GetRepository<T>()
+            where T : IIdentifiable
         {
-            return (MemoryRepository<T>)_repos[typeof(T)];
+            return (MemoryRepository<T>) _repos[typeof (T)];
         }
 
-        internal DocConfig GetDocConfig<T>() where T : IIdentifiable
+        internal DocConfig GetDocConfig<T>()
+            where T : IIdentifiable
         {
-            return _docConfigs[typeof(T)];
+            return _docConfigs[typeof (T)];
         }
     }
 }

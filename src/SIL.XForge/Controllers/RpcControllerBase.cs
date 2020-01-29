@@ -20,12 +20,14 @@ namespace SIL.XForge.Controllers
         }
 
         protected string UserId => _userAccessor.UserId;
+
         protected string SystemRole => _userAccessor.SystemRole;
+
         protected string AuthId => _userAccessor.AuthId;
 
         protected IRpcMethodResult InvalidParamsError(string message)
         {
-            return Error((int)RpcErrorCode.InvalidParams, message);
+            return Error((int) RpcErrorCode.InvalidParams, message);
         }
 
         protected IRpcMethodResult ForbiddenError()

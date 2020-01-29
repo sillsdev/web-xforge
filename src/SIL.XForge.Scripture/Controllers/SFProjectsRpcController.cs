@@ -21,8 +21,8 @@ namespace SIL.XForge.Scripture.Controllers
 
         private readonly ISFProjectService _projectService;
 
-        public SFProjectsRpcController(IUserAccessor userAccessor, ISFProjectService projectService)
-            : base(userAccessor)
+        public SFProjectsRpcController(IUserAccessor userAccessor, ISFProjectService projectService) :
+            base(userAccessor)
         {
             _projectService = projectService;
         }
@@ -133,8 +133,7 @@ namespace SIL.XForge.Scripture.Controllers
         {
             try
             {
-                if (await _projectService.InviteAsync(UserId, projectId, email))
-                    return Ok();
+                if (await _projectService.InviteAsync(UserId, projectId, email)) return Ok();
                 return Ok(AlreadyProjectMemberResponse);
             }
             catch (ForbiddenException)

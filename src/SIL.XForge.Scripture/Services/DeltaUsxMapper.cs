@@ -1,6 +1,6 @@
-using System.ComponentModel;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
@@ -22,22 +22,48 @@ namespace SIL.XForge.Scripture.Services
             return schemas;
         }
 
-        private static readonly HashSet<string> ParagraphPoetryListStyles = new HashSet<string>
-        {
-            // Paragraphs
-            "p", "m", "po", "pr", "cls", "pmo", "pm", "pmc", "pmr", "pi", "mi", "pc", "ph", "lit",
-            // Poetry
-            "q", "qr", "qc", "qa", "qm", "qd",
-            // Lists
-            "lh", "li", "lf", "lim",
-        };
+        private static readonly HashSet<string>
+            ParagraphPoetryListStyles =
+                new HashSet<string> {
+                    // Paragraphs
+                    "p",
+                    "m",
+                    "po",
+                    "pr",
+                    "cls",
+                    "pmo",
+                    "pm",
+                    "pmc",
+                    "pmr",
+                    "pi",
+                    "mi",
+                    "pc",
+                    "ph",
+                    "lit",
+                    // Poetry
+                    "q",
+                    "qr",
+                    "qc",
+                    "qa",
+                    "qm",
+                    "qd",
+                    // Lists
+                    "lh",
+                    "li",
+                    "lf",
+                    "lim"
+                };
 
         private class ParseState
         {
             public string LastVerse { get; set; }
+
             public string CurRef { get; set; }
+
             public string CurChapter { get; set; }
+
             public int TableIndex { get; set; }
+
             public bool TopLevelVerses { get; set; }
         }
 
@@ -60,16 +86,19 @@ namespace SIL.XForge.Scripture.Services
         public IEnumerable<ChapterDelta> ToChapterDeltas(XDocument usxDoc)
         {
             var invalidNodes = new HashSet<XNode>();
-            usxDoc.Validate(Schemas, (o, e) =>
+            usxDoc
+                .Validate(Schemas,
+                (o, e) =>
                 {
                     XNode node;
                     var attr = o as XAttribute;
                     if (attr != null)
                         node = attr.Parent;
                     else
-                        node = (XNode)o;
-                    invalidNodes.Add(node);
-                }, true);
+                        node = (XNode) o;
+                    invalidNodes.Add (node);
+                },
+                true);
             var chapterDeltas = new List<ChapterDelta>();
             var chapterDelta = new Delta();
             bool isChapterValid = true;
@@ -84,7 +113,6 @@ namespace SIL.XForge.Scripture.Services
                         {
                             case "book":
                                 break;
-
                             case "para":
                                 if (state.TopLevelVerses)
                                 {
@@ -92,16 +120,16 @@ namespace SIL.XForge.Scripture.Services
                                     chapterDelta.Insert('\n');
                                     state.TopLevelVerses = false;
                                 }
-                                var style = (string)elem.Attribute("style");
+                                var style = (string) elem.Attribute("style");
                                 bool canContainVerseText = CanParaContainVerseText(style);
                                 if (canContainVerseText)
                                 {
                                     if (state.CurRef != null)
                                     {
                                         int slashIndex = state.CurRef.IndexOf("/", StringComparison.Ordinal);
-                                        if (slashIndex != -1)
-                                            state.CurRef = state.CurRef.Substring(0, slashIndex);
-                                        state.CurRef = GetParagraphRef(nextIds, state.CurRef, state.CurRef + "/" + style);
+                                        if (slashIndex != -1) state.CurRef = state.CurRef.Substring(0, slashIndex);
+                                        state.CurRef =
+                                            GetParagraphRef(nextIds, state.CurRef, state.CurRef + "/" + style);
                                     }
                                     else
                                     {
@@ -116,52 +144,47 @@ namespace SIL.XForge.Scripture.Services
                                 {
                                     state.CurRef = GetParagraphRef(nextIds, style, style);
                                 }
-                                ProcessChildNodes(invalidNodes, chapterDelta, elem, state);
+                                ProcessChildNodes (invalidNodes, chapterDelta, elem, state);
                                 SegmentEnded(chapterDelta, state.CurRef);
-                                if (!canContainVerseText)
-                                    state.CurRef = null;
-                                InsertPara(invalidNodes, chapterDelta, elem);
+                                if (!canContainVerseText) state.CurRef = null;
+                                InsertPara (invalidNodes, chapterDelta, elem);
                                 break;
-
                             case "chapter":
                                 if (state.CurChapter != null)
                                 {
-                                    ChapterEnded(chapterDeltas, chapterDelta, isChapterValid, state);
+                                    ChapterEnded (chapterDeltas, chapterDelta, isChapterValid, state);
                                     nextIds.Clear();
                                     chapterDelta = new Delta();
                                     isChapterValid = true;
                                 }
                                 state.CurRef = null;
                                 state.LastVerse = null;
-                                state.CurChapter = (string)elem.Attribute("number");
-                                chapterDelta.InsertEmbed("chapter", GetAttributes(elem),
+                                state.CurChapter = (string) elem.Attribute("number");
+                                chapterDelta
+                                    .InsertEmbed("chapter",
+                                    GetAttributes(elem),
                                     attributes: AddInvalidBlockAttribute(invalidNodes, elem));
                                 break;
-
                             // according to the USX schema, a verse can only occur within a paragraph, but Paratext 8.0
                             // can still generate USX with verses at the top-level
                             case "verse":
-                                ProcessChildNode(invalidNodes, chapterDelta, elem, state);
+                                ProcessChildNode (invalidNodes, chapterDelta, elem, state);
                                 state.TopLevelVerses = true;
                                 break;
-
                             default:
-                                ProcessChildNode(invalidNodes, chapterDelta, elem, state);
+                                ProcessChildNode (invalidNodes, chapterDelta, elem, state);
                                 break;
                         }
-                        if (elem.GetSchemaInfo().Validity != XmlSchemaValidity.Valid)
-                            isChapterValid = false;
+                        if (elem.GetSchemaInfo().Validity != XmlSchemaValidity.Valid) isChapterValid = false;
                         break;
-
                     case XText text:
-                        chapterDelta.InsertText(text.Value, state.CurRef,
-                            AddInvalidInlineAttribute(invalidNodes, text));
+                        chapterDelta
+                            .InsertText(text.Value, state.CurRef, AddInvalidInlineAttribute(invalidNodes, text));
                         break;
                 }
             }
-            if (state.CurChapter == null)
-                state.CurChapter = "1";
-            ChapterEnded(chapterDeltas, chapterDelta, isChapterValid, state);
+            if (state.CurChapter == null) state.CurChapter = "1";
+            ChapterEnded (chapterDeltas, chapterDelta, isChapterValid, state);
             return chapterDeltas;
         }
 
@@ -170,15 +193,25 @@ namespace SIL.XForge.Scripture.Services
             ProcessChildNodes(invalidNodes, newDelta, parentElem, new ParseState());
         }
 
-        private void ProcessChildNodes(HashSet<XNode> invalidNodes, Delta newDelta, XElement parentElem,
-            ParseState state, JObject attributes = null)
+        private void ProcessChildNodes(
+            HashSet<XNode> invalidNodes,
+            Delta newDelta,
+            XElement parentElem,
+            ParseState state,
+            JObject attributes = null
+        )
         {
             foreach (XNode node in parentElem.Nodes())
-                ProcessChildNode(invalidNodes, newDelta, node, state, attributes);
+            ProcessChildNode(invalidNodes, newDelta, node, state, attributes);
         }
 
-        private void ProcessChildNode(HashSet<XNode> invalidNodes, Delta newDelta, XNode node, ParseState state,
-            JObject attributes = null)
+        private void ProcessChildNode(
+            HashSet<XNode> invalidNodes,
+            Delta newDelta,
+            XNode node,
+            ParseState state,
+            JObject attributes = null
+        )
         {
             switch (node)
             {
@@ -186,24 +219,21 @@ namespace SIL.XForge.Scripture.Services
                     switch (elem.Name.LocalName)
                     {
                         case "para":
-                            ProcessChildNodes(invalidNodes, newDelta, elem);
-                            InsertPara(invalidNodes, newDelta, elem);
+                            ProcessChildNodes (invalidNodes, newDelta, elem);
+                            InsertPara (invalidNodes, newDelta, elem);
                             break;
-
                         case "verse":
-                            state.LastVerse = (string)elem.Attribute("number");
-                            InsertVerse(invalidNodes, newDelta, elem, state);
+                            state.LastVerse = (string) elem.Attribute("number");
+                            InsertVerse (invalidNodes, newDelta, elem, state);
                             break;
-
                         case "ref":
-                            var newRefAttributes = (JObject)attributes?.DeepClone() ?? new JObject();
+                            var newRefAttributes = (JObject) attributes?.DeepClone() ?? new JObject();
                             newRefAttributes.Add(new JProperty(elem.Name.LocalName, GetAttributes(elem)));
                             newRefAttributes = AddInvalidInlineAttribute(invalidNodes, elem, newRefAttributes);
                             newDelta.InsertText(elem.Value, state.CurRef, newRefAttributes);
                             break;
-
                         case "char":
-                            var newChildAttributes = (JObject)attributes?.DeepClone() ?? new JObject();
+                            var newChildAttributes = (JObject) attributes?.DeepClone() ?? new JObject();
                             JToken existingCharAttrs = newChildAttributes["char"];
                             JObject newCharAttrs = GetAttributes(elem);
                             if (existingCharAttrs == null)
@@ -215,18 +245,16 @@ namespace SIL.XForge.Scripture.Services
                                 switch (existingCharAttrs)
                                 {
                                     case JArray array:
-                                        array.Add(newCharAttrs);
+                                        array.Add (newCharAttrs);
                                         break;
                                     case JObject obj:
                                         newChildAttributes[elem.Name.LocalName] = new JArray(obj, newCharAttrs);
                                         break;
-
                                 }
                             }
                             newChildAttributes = AddInvalidInlineAttribute(invalidNodes, elem, newChildAttributes);
-                            ProcessChildNodes(invalidNodes, newDelta, elem, state, newChildAttributes);
+                            ProcessChildNodes (invalidNodes, newDelta, elem, state, newChildAttributes);
                             break;
-
                         case "table":
                             state.TableIndex++;
                             JObject tableAttributes = GetAttributes(elem);
@@ -234,17 +262,17 @@ namespace SIL.XForge.Scripture.Services
                             int rowIndex = 1;
                             foreach (XElement row in elem.Elements("row"))
                             {
-                                var rowAttributes = new JObject(
-                                    new JProperty("id", $"row_{state.TableIndex}_{rowIndex}"));
+                                var rowAttributes =
+                                    new JObject(new JProperty("id", $"row_{state.TableIndex}_{rowIndex}"));
                                 int cellIndex = 1;
                                 foreach (XElement cell in row.Elements())
                                 {
                                     state.CurRef = $"cell_{state.TableIndex}_{rowIndex}_{cellIndex}";
-                                    ProcessChildNode(invalidNodes, newDelta, cell, state);
+                                    ProcessChildNode (invalidNodes, newDelta, cell, state);
                                     SegmentEnded(newDelta, state.CurRef);
-                                    var attrs = new JObject(
-                                        new JProperty("table", tableAttributes),
-                                        new JProperty("row", rowAttributes));
+                                    var attrs =
+                                        new JObject(new JProperty("table", tableAttributes),
+                                            new JProperty("row", rowAttributes));
                                     if (cell.Name.LocalName == "cell")
                                         attrs.Add(new JProperty("cell", GetAttributes(cell)));
                                     attrs = AddInvalidBlockAttribute(invalidNodes, elem, attrs);
@@ -257,26 +285,29 @@ namespace SIL.XForge.Scripture.Services
                             }
                             state.CurRef = null;
                             break;
-
                         case "cell":
-                            ProcessChildNodes(invalidNodes, newDelta, elem, state);
+                            ProcessChildNodes (invalidNodes, newDelta, elem, state);
                             break;
-
                         default:
                             InsertEmbed(invalidNodes, newDelta, elem, state.CurRef, attributes);
                             break;
                     }
                     break;
-
                 case XText text:
-                    newDelta.InsertText(text.Value, state.CurRef,
+                    newDelta
+                        .InsertText(text.Value,
+                        state.CurRef,
                         AddInvalidInlineAttribute(invalidNodes, text, attributes));
                     break;
             }
         }
 
-        private void ChapterEnded(List<ChapterDelta> chapterDeltas, Delta chapterDelta, bool isChapterValid,
-            ParseState state)
+        private void ChapterEnded(
+            List<ChapterDelta> chapterDeltas,
+            Delta chapterDelta,
+            bool isChapterValid,
+            ParseState state
+        )
         {
             if (state.TopLevelVerses)
             {
@@ -285,8 +316,7 @@ namespace SIL.XForge.Scripture.Services
                 chapterDelta.Insert('\n');
                 state.TopLevelVerses = false;
             }
-            if (!int.TryParse(state.CurChapter, out int chapterNum))
-                return;
+            if (!int.TryParse(state.CurChapter, out int chapterNum)) return;
 
             int lastVerseNum = 0;
             if (state.LastVerse != null)
@@ -302,25 +332,32 @@ namespace SIL.XForge.Scripture.Services
 
         private static void InsertVerse(HashSet<XNode> invalidNodes, Delta newDelta, XElement elem, ParseState state)
         {
-            var verse = (string)elem.Attribute("number");
+            var verse = (string) elem.Attribute("number");
             SegmentEnded(newDelta, state.CurRef);
             state.CurRef = $"verse_{state.CurChapter}_{verse}";
-            newDelta.InsertEmbed("verse", GetAttributes(elem),
-                attributes: AddInvalidInlineAttribute(invalidNodes, elem));
+            newDelta
+                .InsertEmbed("verse", GetAttributes(elem), attributes: AddInvalidInlineAttribute(invalidNodes, elem));
         }
 
-        private void InsertEmbed(HashSet<XNode> invalidNodes, Delta newDelta, XElement elem, string curRef,
-            JObject attributes)
+        private void InsertEmbed(
+            HashSet<XNode> invalidNodes,
+            Delta newDelta,
+            XElement elem,
+            string curRef,
+            JObject attributes
+        )
         {
             JObject obj = GetAttributes(elem);
             var contents = new Delta();
-            ProcessChildNodes(invalidNodes, contents, elem);
+            ProcessChildNodes (invalidNodes, contents, elem);
             if (contents.Ops.Count > 0)
             {
-                obj.Add(new JProperty("contents",
-                    new JObject(new JProperty("ops", new JArray(contents.Ops)))));
+                obj.Add(new JProperty("contents", new JObject(new JProperty("ops", new JArray(contents.Ops)))));
             }
-            newDelta.InsertEmbed(elem.Name.LocalName, obj, curRef,
+            newDelta
+                .InsertEmbed(elem.Name.LocalName,
+                obj,
+                curRef,
                 AddInvalidInlineAttribute(invalidNodes, elem, attributes));
         }
 
@@ -331,22 +368,23 @@ namespace SIL.XForge.Scripture.Services
 
         private static void SegmentEnded(Delta newDelta, string segRef)
         {
-            if (segRef == null)
-                return;
+            if (segRef == null) return;
 
             if (newDelta.Ops.Count == 0)
             {
-                newDelta.InsertBlank(segRef);
+                newDelta.InsertBlank (segRef);
             }
             else
             {
                 JToken lastOp = newDelta.Ops[newDelta.Ops.Count - 1];
                 var embed = lastOp[Delta.InsertType] as JObject;
-                var attrs = (JObject)lastOp[Delta.Attributes];
-                if ((embed != null && (embed["verse"] != null || embed["chapter"] != null))
-                    || (attrs != null && (attrs["para"] != null || attrs["table"] != null)))
+                var attrs = (JObject) lastOp[Delta.Attributes];
+                if (
+                    (embed != null && (embed["verse"] != null || embed["chapter"] != null)) ||
+                    (attrs != null && (attrs["para"] != null || attrs["table"] != null))
+                )
                 {
-                    newDelta.InsertBlank(segRef);
+                    newDelta.InsertBlank (segRef);
                 }
             }
         }
@@ -354,18 +392,16 @@ namespace SIL.XForge.Scripture.Services
         private static bool CanParaContainVerseText(string style)
         {
             // an empty style indicates an improperly formatted paragraph which could contain verse text
-            if (style == string.Empty)
-                return true;
-            if (char.IsDigit(style[style.Length - 1]))
-                style = style.Substring(0, style.Length - 1);
+            if (style == string.Empty) return true;
+            if (char.IsDigit(style[style.Length - 1])) style = style.Substring(0, style.Length - 1);
+
             // paragraph, poetry, and list styles are the only types of valid paras that can contain verse text
             return ParagraphPoetryListStyles.Contains(style);
         }
 
         private static string GetParagraphRef(Dictionary<string, int> nextIds, string key, string prefix)
         {
-            if (!nextIds.ContainsKey(key))
-                nextIds[key] = 1;
+            if (!nextIds.ContainsKey(key)) nextIds[key] = 1;
             return prefix + "_" + nextIds[key]++;
         }
 
@@ -373,27 +409,27 @@ namespace SIL.XForge.Scripture.Services
         {
             var obj = new JObject();
             foreach (XAttribute attribute in elem.Attributes())
-                obj.Add(new JProperty(attribute.Name.LocalName, attribute.Value));
+            obj.Add(new JProperty(attribute.Name.LocalName, attribute.Value));
             return obj;
         }
 
-        private static JObject AddInvalidInlineAttribute(HashSet<XNode> invalidNodes, XNode node,
-            JObject attributes = null)
+        private static JObject
+        AddInvalidInlineAttribute(HashSet<XNode> invalidNodes, XNode node, JObject attributes = null)
         {
             if (invalidNodes.Contains(node))
             {
-                attributes = (JObject)attributes?.DeepClone() ?? new JObject();
+                attributes = (JObject) attributes?.DeepClone() ?? new JObject();
                 attributes.Add(new JProperty("invalid-inline", true));
             }
             return attributes;
         }
 
-        private static JObject AddInvalidBlockAttribute(HashSet<XNode> invalidNodes, XNode node,
-            JObject attributes = null)
+        private static JObject
+        AddInvalidBlockAttribute(HashSet<XNode> invalidNodes, XNode node, JObject attributes = null)
         {
             if (invalidNodes.Contains(node))
             {
-                attributes = (JObject)attributes?.DeepClone() ?? new JObject();
+                attributes = (JObject) attributes?.DeepClone() ?? new JObject();
                 attributes.Add(new JProperty("invalid-block", true));
             }
             return attributes;
@@ -419,21 +455,22 @@ namespace SIL.XForge.Scripture.Services
                         ChapterDelta chapterDelta = chapterDeltaArray[i];
                         if (chapterDelta.Number == curChapter)
                         {
-                            if (chapterDelta.IsValid)
-                                curNode.AddBeforeSelf(ProcessDelta(chapterDelta.Delta));
+                            if (chapterDelta.IsValid) curNode.AddBeforeSelf(ProcessDelta(chapterDelta.Delta));
                             i++;
                         }
-                        var numberStr = (string)((XElement)curNode).Attribute("number");
-                        if (int.TryParse(numberStr, out int number))
-                            curChapter = number;
+                        var numberStr = (string)((XElement) curNode).Attribute("number");
+                        if (int.TryParse(numberStr, out int number)) curChapter = number;
                     }
                     else
                     {
                         firstChapter = true;
                     }
                 }
-                if (chapterDeltaArray[i].Number == curChapter && chapterDeltaArray[i].IsValid
-                    && !IsElement(curNode, "book"))
+                if (
+                    chapterDeltaArray[i].Number == curChapter &&
+                    chapterDeltaArray[i].IsValid &&
+                    !IsElement(curNode, "book")
+                )
                 {
                     curNode.Remove();
                 }
@@ -457,25 +494,23 @@ namespace SIL.XForge.Scripture.Services
                 if (op.OpType() != Delta.InsertType)
                     throw new ArgumentException("The delta is not a document.", nameof(delta));
 
-                var attrs = (JObject)op[Delta.Attributes];
+                var attrs = (JObject) op[Delta.Attributes];
                 if (curCharAttrs.Count > 0 && (attrs == null || attrs["char"] == null))
                 {
-                    while (curCharAttrs.Count > 0)
-                        CharEnded(childNodes, curCharAttrs);
+                    while (curCharAttrs.Count > 0) CharEnded(childNodes, curCharAttrs);
                 }
                 else if (attrs != null && attrs["char"] != null)
                 {
                     List<JObject> charAttrs = GetCharAttributes(attrs["char"]);
                     while (curCharAttrs.Count > 0 && !CharAttributesMatch(curCharAttrs, charAttrs))
-                        CharEnded(childNodes, curCharAttrs);
+                    CharEnded(childNodes, curCharAttrs);
                     curCharAttrs = charAttrs;
-                    while (childNodes.Count < curCharAttrs.Count + 1)
-                        childNodes.Push(new List<XNode>());
+                    while (childNodes.Count < curCharAttrs.Count + 1) childNodes.Push(new List<XNode>());
                 }
 
                 if (op[Delta.InsertType].Type == JTokenType.String)
                 {
-                    var text = (string)op[Delta.InsertType];
+                    var text = (string) op[Delta.InsertType];
                     if (curTableAttrs != null && (attrs == null || attrs["table"] == null) && text == "\n")
                     {
                         List<XNode> nextBlockNodes = RowEnded(childNodes, ref curRowAttrs);
@@ -484,26 +519,25 @@ namespace SIL.XForge.Scripture.Services
                     }
                     else if (attrs != null && attrs["table"] != null)
                     {
-                        var cellAttrs = (JObject)attrs["cell"];
+                        var cellAttrs = (JObject) attrs["cell"];
                         XElement cellElem;
                         if (cellAttrs != null)
                             cellElem = CreateContainerElement("cell", cellAttrs, childNodes.Peek());
                         else
-                            cellElem = (XElement)childNodes.Peek().Single();
+                            cellElem = (XElement) childNodes.Peek().Single();
                         childNodes.Pop();
 
-                        var tableAttrs = (JObject)attrs["table"];
-                        var rowAttrs = (JObject)attrs["row"];
+                        var tableAttrs = (JObject) attrs["table"];
+                        var rowAttrs = (JObject) attrs["row"];
                         if (curTableAttrs != null)
                         {
-                            if ((string)rowAttrs["id"] != (string)curRowAttrs["id"])
+                            if ((string) rowAttrs["id"] != (string) curRowAttrs["id"])
                                 RowEnded(childNodes, ref curRowAttrs);
-                            if ((string)tableAttrs["id"] != (string)curTableAttrs["id"])
+                            if ((string) tableAttrs["id"] != (string) curTableAttrs["id"])
                                 TableEnded(content, childNodes, ref curTableAttrs);
                         }
 
-                        while (childNodes.Count < 2)
-                            childNodes.Push(new List<XNode>());
+                        while (childNodes.Count < 2) childNodes.Push(new List<XNode>());
                         childNodes.Peek().Add(cellElem);
                         childNodes.Push(new List<XNode>());
 
@@ -531,23 +565,18 @@ namespace SIL.XForge.Scripture.Services
                                 case "para":
                                     // end of a para block
                                     for (int j = 0; j < text.Length; j++)
-                                        content.Add(CreateContainerElement("para", prop.Value, childNodes.Peek()));
+                                    content.Add(CreateContainerElement("para", prop.Value, childNodes.Peek()));
                                     childNodes.Peek().Clear();
                                     break;
-
                                 case "ref":
                                     XElement refElem = CreateContainerElement("ref", prop.Value, text);
                                     childNodes.Peek().Add(refElem);
                                     break;
-
                                 case "char":
-                                    if (attrs["ref"] == null)
-                                        childNodes.Peek().Add(new XText(text));
+                                    if (attrs["ref"] == null) childNodes.Peek().Add(new XText(text));
                                     break;
-
                                 case "segment":
-                                    if (attrs.Count == 1)
-                                        childNodes.Peek().Add(new XText(text));
+                                    if (attrs.Count == 1) childNodes.Peek().Add(new XText(text));
                                     break;
                             }
                         }
@@ -556,7 +585,7 @@ namespace SIL.XForge.Scripture.Services
                 else
                 {
                     // embeds
-                    var obj = (JObject)op[Delta.InsertType];
+                    var obj = (JObject) op[Delta.InsertType];
                     foreach (JProperty prop in obj.Properties())
                     {
                         switch (prop.Name)
@@ -564,13 +593,11 @@ namespace SIL.XForge.Scripture.Services
                             case "chapter":
                                 XElement chapterElem = new XElement("chapter");
                                 AddAttributes(chapterElem, prop.Value);
-                                content.Add(chapterElem);
+                                content.Add (chapterElem);
                                 break;
-
                             case "blank":
                                 // ignore blank embeds
                                 break;
-
                             default:
                                 XElement embedElem = new XElement(prop.Name);
                                 AddAttributes(embedElem, prop.Value);
@@ -583,12 +610,9 @@ namespace SIL.XForge.Scripture.Services
                                 break;
                         }
                     }
-
-
                 }
             }
-            while (curCharAttrs.Count > 0)
-                CharEnded(childNodes, curCharAttrs);
+            while (curCharAttrs.Count > 0) CharEnded(childNodes, curCharAttrs);
             if (curTableAttrs != null)
             {
                 RowEnded(childNodes, ref curRowAttrs);
@@ -600,13 +624,11 @@ namespace SIL.XForge.Scripture.Services
 
         private static bool CharAttributesMatch(List<JObject> curCharAttrs, List<JObject> charAttrs)
         {
-            if (curCharAttrs.Count > charAttrs.Count)
-                return false;
+            if (curCharAttrs.Count > charAttrs.Count) return false;
 
             for (int i = 0; i < curCharAttrs.Count; i++)
             {
-                if (!JToken.DeepEquals(curCharAttrs[i], charAttrs[i]))
-                    return false;
+                if (!JToken.DeepEquals(curCharAttrs[i], charAttrs[i])) return false;
             }
             return true;
         }
@@ -617,7 +639,6 @@ namespace SIL.XForge.Scripture.Services
             {
                 case JArray array:
                     return new List<JObject>(array.Children<JObject>());
-
                 case JObject obj:
                     return new List<JObject> { obj };
             }
@@ -630,12 +651,10 @@ namespace SIL.XForge.Scripture.Services
             switch (curChar)
             {
                 case JArray array:
-                    charAttrs = (JObject)array.Last;
-                    array.Remove(charAttrs);
-                    if (array.Count == 1)
-                        curChar = array.First;
+                    charAttrs = (JObject) array.Last;
+                    array.Remove (charAttrs);
+                    if (array.Count == 1) curChar = array.First;
                     break;
-
                 case JObject obj:
                     charAttrs = obj;
                     curChar = null;
@@ -647,20 +666,18 @@ namespace SIL.XForge.Scripture.Services
         private static XElement CreateContainerElement(string name, JToken attributes, object content = null)
         {
             var elem = new XElement(name);
-            AddAttributes(elem, attributes);
-            if (content != null)
-                elem.Add(content);
+            AddAttributes (elem, attributes);
+            if (content != null) elem.Add(content);
             return elem;
         }
 
         private static void AddAttributes(XElement elem, JToken attributes)
         {
-            var attrsObj = (JObject)attributes;
+            var attrsObj = (JObject) attributes;
             foreach (JProperty prop in attrsObj.Properties())
             {
-                if (prop.Value.Type != JTokenType.String || prop.Name == "id" || prop.Name == "invalid")
-                    continue;
-                elem.Add(new XAttribute(prop.Name, (string)prop.Value));
+                if (prop.Value.Type != JTokenType.String || prop.Name == "id" || prop.Name == "invalid") continue;
+                elem.Add(new XAttribute(prop.Name, (string) prop.Value));
             }
         }
 
@@ -679,10 +696,9 @@ namespace SIL.XForge.Scripture.Services
                 throw new InvalidOperationException("A table is not valid in the current location.");
 
             List<XNode> nextBlockNodes = null;
-            if (childNodes.Count == 3)
-                nextBlockNodes = childNodes.Pop();
-            XElement rowElem = CreateContainerElement("row", new JObject(new JProperty("style", "tr")),
-                childNodes.Peek());
+            if (childNodes.Count == 3) nextBlockNodes = childNodes.Pop();
+            XElement rowElem =
+                CreateContainerElement("row", new JObject(new JProperty("style", "tr")), childNodes.Peek());
             childNodes.Pop();
             childNodes.Peek().Add(rowElem);
             curRowAttrs = null;

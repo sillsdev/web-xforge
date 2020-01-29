@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using SIL.XForge.Models;
 using System.IO;
 using Newtonsoft.Json;
+using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture
 {
@@ -16,21 +16,37 @@ namespace SIL.XForge.Scripture
         public static class Keys
         {
             public const string UserMissing = "UserMissing";
+
             public const string InviteSubject = "InviteSubject";
+
             public const string InviteGreeting = "InviteGreeting";
+
             public const string InviteInstructions = "InviteInstructions";
+
             public const string InvitePTOption = "InvitePTOption";
+
             public const string InviteGoogleOption = "InviteGoogleOption";
+
             public const string InviteEmailOption = "InviteEmailOption";
+
             public const string InviteSignature = "InviteSignature";
+
             public const string InviteLinkSharingOn = "InviteLinkSharingOn";
+
             public const string InviteLinkSharingOff = "InviteLinkSharingOff";
+
             public const string NameMissing = "NameMissing";
+
             public const string EmailMissing = "EmailMissing";
+
             public const string EmailBad = "EmailBad";
+
             public const string RoleMissing = "RoleMissing";
+
             public const string MessageMissing = "MessageMissing";
+
             public const string Terms = "Terms";
+
             public const string Privacy = "Privacy";
         }
 

@@ -12,7 +12,7 @@ namespace SIL.XForge.Utils
 
         protected override Expression VisitMember(MemberExpression node)
         {
-            _nodes.Push(node);
+            _nodes.Push (node);
             return base.VisitMember(node);
         }
 
@@ -23,11 +23,9 @@ namespace SIL.XForge.Utils
             {
                 MemberExpression prevNode = _nodes.Peek();
                 var fieldInfo = prevNode.Member as FieldInfo;
-                if (fieldInfo != null)
-                    val = fieldInfo.GetValue(val);
+                if (fieldInfo != null) val = fieldInfo.GetValue(val);
                 var propertyInfo = prevNode.Member as PropertyInfo;
-                if (propertyInfo != null)
-                    val = propertyInfo.GetValue(val);
+                if (propertyInfo != null) val = propertyInfo.GetValue(val);
                 _nodes.Pop();
             }
             Value = val;

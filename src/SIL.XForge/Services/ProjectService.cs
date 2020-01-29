@@ -14,13 +14,17 @@ namespace SIL.XForge.Services
     /// <summary>
     /// This class contains the common functionality for managing xForge projects.
     /// </summary>
-    public abstract class ProjectService<TModel, TSecret> : IProjectService where TModel : Project, new()
-        where TSecret : ProjectSecret
+    public abstract class ProjectService : IProjectService where TModel : Project, new(), where TSecret : ProjectSecret
     {
         private readonly IAudioService _audioService;
 
-        public ProjectService(IRealtimeService realtimeService, IOptions<SiteOptions> siteOptions,
-            IAudioService audioService, IRepository<TSecret> projectSecrets, IFileSystemService fileSystemService)
+        public ProjectService(
+            IRealtimeService realtimeService,
+            IOptions<SiteOptions> siteOptions,
+            IAudioService audioService,
+            IRepository<TSecret> projectSecrets,
+            IFileSystemService fileSystemService
+        )
         {
             RealtimeService = realtimeService;
             SiteOptions = siteOptions;
@@ -30,9 +34,13 @@ namespace SIL.XForge.Services
         }
 
         protected IRealtimeService RealtimeService { get; }
+
         protected IOptions<SiteOptions> SiteOptions { get; }
+
         protected IRepository<TSecret> ProjectSecrets { get; }
+
         protected IFileSystemService FileSystemService { get; }
+
         protected abstract string ProjectAdminRole { get; }
 
         public async Task AddUserAsync(string curUserId, string projectId, string projectRole)
@@ -46,8 +54,7 @@ namespace SIL.XForge.Services
                 if (userDoc.Data.Role == SystemRole.User || projectRole == null)
                 {
                     Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
-                    if (!attempt.TryResult(out projectRole))
-                        throw new ForbiddenException();
+                    if (!attempt.TryResult(out projectRole)) throw new ForbiddenException();
                 }
 
                 await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole);
@@ -71,8 +78,7 @@ namespace SIL.XForge.Services
 
         public async Task UpdateRoleAsync(string curUserId, string systemRole, string projectId, string projectRole)
         {
-            if (systemRole != SystemRole.SystemAdmin)
-                throw new ForbiddenException();
+            if (systemRole != SystemRole.SystemAdmin) throw new ForbiddenException();
 
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
@@ -82,20 +88,17 @@ namespace SIL.XForge.Services
             }
         }
 
-        public async Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string extension,
-            Stream inputStream)
+        public async Task<Uri>
+        SaveAudioAsync(string curUserId, string projectId, string dataId, string extension, Stream inputStream)
         {
-            if (!StringUtils.ValidateId(dataId))
-                throw new FormatException($"{nameof(dataId)} is not a valid id.");
+            if (!StringUtils.ValidateId(dataId)) throw new FormatException($"{nameof(dataId)} is not a valid id.");
 
             TModel project = await GetProjectAsync(projectId);
 
-            if (!project.UserRoles.ContainsKey(curUserId))
-                throw new ForbiddenException();
+            if (!project.UserRoles.ContainsKey(curUserId)) throw new ForbiddenException();
 
             string audioDir = GetAudioDir(projectId);
-            if (!FileSystemService.DirectoryExists(audioDir))
-                FileSystemService.CreateDirectory(audioDir);
+            if (!FileSystemService.DirectoryExists(audioDir)) FileSystemService.CreateDirectory(audioDir);
             string outputPath = Path.Combine(audioDir, $"{curUserId}_{dataId}.mp3");
             if (string.Equals(extension, ".mp3", StringComparison.InvariantCultureIgnoreCase))
             {
@@ -113,56 +116,60 @@ namespace SIL.XForge.Services
                 }
                 finally
                 {
-                    if (FileSystemService.FileExists(tempPath))
-                        FileSystemService.DeleteFile(tempPath);
+                    if (FileSystemService.FileExists(tempPath)) FileSystemService.DeleteFile(tempPath);
                 }
             }
             string outputFileName = Path.GetFileName(outputPath);
-            var uri = new Uri(SiteOptions.Value.Origin,
-                $"assets/audio/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}");
+            var uri =
+                new Uri(SiteOptions.Value.Origin,
+                    $"assets/audio/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}");
             return uri;
         }
 
         public async Task DeleteAudioAsync(string curUserId, string projectId, string ownerId, string dataId)
         {
-            if (!StringUtils.ValidateId(dataId))
-                throw new FormatException($"{nameof(dataId)} is not a valid id.");
+            if (!StringUtils.ValidateId(dataId)) throw new FormatException($"{nameof(dataId)} is not a valid id.");
 
             TModel project = await GetProjectAsync(projectId);
 
-            if (curUserId != ownerId && !IsProjectAdmin(project, curUserId))
-                throw new ForbiddenException();
+            if (curUserId != ownerId && !IsProjectAdmin(project, curUserId)) throw new ForbiddenException();
 
             string audioDir = GetAudioDir(projectId);
             string filePath = Path.Combine(audioDir, $"{ownerId}_{dataId}.mp3");
-            if (FileSystemService.FileExists(filePath))
-                FileSystemService.DeleteFile(filePath);
+            if (FileSystemService.FileExists(filePath)) FileSystemService.DeleteFile(filePath);
         }
 
-        protected virtual async Task AddUserToProjectAsync(IConnection conn, IDocument<TModel> projectDoc,
-            IDocument<User> userDoc, string projectRole, bool removeShareKeys = true)
+        protected virtual async Task
+        AddUserToProjectAsync(
+            IConnection conn,
+            IDocument<TModel> projectDoc,
+            IDocument<User> userDoc,
+            string projectRole,
+            bool removeShareKeys = true
+        )
         {
             await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[userDoc.Id], projectRole));
             if (removeShareKeys)
             {
-                await ProjectSecrets.UpdateAsync(p => p.Id == projectDoc.Id,
+                await ProjectSecrets
+                    .UpdateAsync(p => p.Id == projectDoc.Id,
                     update => update.RemoveAll(p => p.ShareKeys, sk => sk.Email == userDoc.Data.Email));
             }
             string siteId = SiteOptions.Value.Id;
             await userDoc.SubmitJson0OpAsync(op => op.Add(u => u.Sites[siteId].Projects, projectDoc.Id));
         }
 
-        protected virtual async Task RemoveUserFromProjectAsync(IConnection conn, IDocument<TModel> projectDoc,
-            IDocument<User> userDoc)
+        protected virtual async Task
+        RemoveUserFromProjectAsync(IConnection conn, IDocument<TModel> projectDoc, IDocument<User> userDoc)
         {
-            if (projectDoc.IsLoaded)
-                await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserRoles[userDoc.Id]));
+            if (projectDoc.IsLoaded) await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserRoles[userDoc.Id]));
             string siteId = SiteOptions.Value.Id;
-            await userDoc.SubmitJson0OpAsync(op =>
-            {
-                int index = userDoc.Data.Sites[siteId].Projects.IndexOf(projectDoc.Id);
-                op.Remove(u => u.Sites[siteId].Projects, index);
-            });
+            await userDoc
+                .SubmitJson0OpAsync(op =>
+                {
+                    int index = userDoc.Data.Sites[siteId].Projects.IndexOf(projectDoc.Id);
+                    op.Remove(u => u.Sites[siteId].Projects, index);
+                });
         }
 
         protected bool IsProjectAdmin(TModel project, string userId)
@@ -190,16 +197,14 @@ namespace SIL.XForge.Services
         protected async Task<IDocument<TModel>> GetProjectDocAsync(string projectId, IConnection conn)
         {
             IDocument<TModel> projectDoc = await conn.FetchAsync<TModel>(projectId);
-            if (!projectDoc.IsLoaded)
-                throw new DataNotFoundException("The project does not exist.");
+            if (!projectDoc.IsLoaded) throw new DataNotFoundException("The project does not exist.");
             return projectDoc;
         }
 
         protected async Task<IDocument<User>> GetUserDocAsync(string userId, IConnection conn)
         {
             IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
-            if (!userDoc.IsLoaded)
-                throw new DataNotFoundException("The user does not exist.");
+            if (!userDoc.IsLoaded) throw new DataNotFoundException("The user does not exist.");
             return userDoc;
         }
     }

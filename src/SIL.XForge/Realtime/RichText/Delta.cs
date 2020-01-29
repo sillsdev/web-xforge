@@ -1,21 +1,26 @@
-using AbrarJahin.DiffMatchPatch;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using AbrarJahin.DiffMatchPatch;
+using Newtonsoft.Json.Linq;
 
 namespace SIL.XForge.Realtime.RichText
 {
     public class Delta
     {
         private static readonly Lazy<DeltaEqualityComparer> _equalityComparer = new Lazy<DeltaEqualityComparer>();
+
         public static DeltaEqualityComparer EqualityComparer => _equalityComparer.Value;
+
         private static readonly diff_match_patch Differ = new diff_match_patch();
 
         public const string InsertType = "insert";
+
         public const string DeleteType = "delete";
+
         public const string RetainType = "retain";
+
         public const string Attributes = "attributes";
 
         public static Delta New()
@@ -43,50 +48,42 @@ namespace SIL.XForge.Realtime.RichText
         public Delta Insert(object text, object attributes = null)
         {
             var textToken = text as JToken;
-            if (textToken == null)
-                textToken = JToken.FromObject(text);
+            if (textToken == null) textToken = JToken.FromObject(text);
             JToken attrsToken = null;
             if (attributes != null)
             {
                 attrsToken = attributes as JToken;
-                if (attrsToken == null)
-                    attrsToken = JToken.FromObject(attributes);
+                if (attrsToken == null) attrsToken = JToken.FromObject(attributes);
             }
 
-            if (textToken.Type == JTokenType.String && ((string)textToken).Length == 0)
-                return this;
+            if (textToken.Type == JTokenType.String && ((string) textToken).Length == 0) return this;
 
             var newOp = new JObject(new JProperty(InsertType, textToken));
-            if (attrsToken != null && attrsToken.HasValues)
-                newOp[Attributes] = attrsToken;
+            if (attrsToken != null && attrsToken.HasValues) newOp[Attributes] = attrsToken;
 
             return Add(newOp);
         }
 
         public Delta Delete(int length)
         {
-            if (length <= 0)
-                return this;
+            if (length <= 0) return this;
 
             return Add(new JObject(new JProperty(DeleteType, length)));
         }
 
         public Delta Retain(int length, object attributes = null)
         {
-            if (length <= 0)
-                return this;
+            if (length <= 0) return this;
 
             JToken attrsToken = null;
             if (attributes != null)
             {
                 attrsToken = attributes as JToken;
-                if (attrsToken == null)
-                    attrsToken = JToken.FromObject(attributes);
+                if (attrsToken == null) attrsToken = JToken.FromObject(attributes);
             }
 
             var newOp = new JObject(new JProperty(RetainType, length));
-            if (attrsToken != null && attrsToken.HasValues)
-                newOp[Attributes] = attrsToken;
+            if (attrsToken != null && attrsToken.HasValues) newOp[Attributes] = attrsToken;
 
             return Add(newOp);
         }
@@ -94,8 +91,7 @@ namespace SIL.XForge.Realtime.RichText
         public Delta Chop()
         {
             JToken lastOp = Ops.Count == 0 ? null : Ops[Ops.Count - 1];
-            if (lastOp != null && lastOp[RetainType] != null && lastOp[Attributes] == null)
-                Ops.RemoveAt(Ops.Count - 1);
+            if (lastOp != null && lastOp[RetainType] != null && lastOp[Attributes] == null) Ops.RemoveAt(Ops.Count - 1);
             return this;
         }
 
@@ -127,15 +123,14 @@ namespace SIL.XForge.Realtime.RichText
                         else
                             newOp[InsertType] = thisOp[InsertType];
 
-                        JToken attributes = ComposeAttributes(thisOp[Attributes], otherOp[Attributes],
-                            thisOp.OpType() == RetainType);
-                        if (attributes != null)
-                            newOp[Attributes] = attributes;
-                        delta.Add(newOp);
+                        JToken attributes =
+                            ComposeAttributes(thisOp[Attributes], otherOp[Attributes], thisOp.OpType() == RetainType);
+                        if (attributes != null) newOp[Attributes] = attributes;
+                        delta.Add (newOp);
                     }
                     else if (otherOp.OpType() == DeleteType && thisOp.OpType() == RetainType)
                     {
-                        delta.Add(otherOp);
+                        delta.Add (otherOp);
                     }
                 }
             }
@@ -144,8 +139,7 @@ namespace SIL.XForge.Realtime.RichText
 
         public Delta Diff(Delta other)
         {
-            if (this == other)
-                return new Delta();
+            if (this == other) return new Delta();
 
             if (other == null)
             {
@@ -172,13 +166,11 @@ namespace SIL.XForge.Realtime.RichText
                             opLength = Math.Min(otherIter.PeekLength(), length);
                             delta.Add(otherIter.Next(opLength));
                             break;
-
                         case Operation.DELETE:
                             opLength = Math.Min(length, thisIter.PeekLength());
-                            thisIter.Next(opLength);
-                            delta.Delete(opLength);
+                            thisIter.Next (opLength);
+                            delta.Delete (opLength);
                             break;
-
                         case Operation.EQUAL:
                             opLength = Math.Min(Math.Min(thisIter.PeekLength(), otherIter.PeekLength()), length);
                             JToken thisOp = thisIter.Next(opLength);
@@ -189,8 +181,8 @@ namespace SIL.XForge.Realtime.RichText
                             }
                             else
                             {
-                                delta.Add(otherOp);
-                                delta.Delete(opLength);
+                                delta.Add (otherOp);
+                                delta.Delete (opLength);
                             }
                             break;
                     }
@@ -207,13 +199,11 @@ namespace SIL.XForge.Realtime.RichText
 
         public bool DeepEquals(Delta other)
         {
-            if (Ops.Count != other.Ops.Count)
-                return false;
+            if (Ops.Count != other.Ops.Count) return false;
 
             for (int i = 0; i < Ops.Count; i++)
             {
-                if (!JToken.DeepEquals(Ops[i], other.Ops[i]))
-                    return false;
+                if (!JToken.DeepEquals(Ops[i], other.Ops[i])) return false;
             }
             return true;
         }
@@ -228,12 +218,12 @@ namespace SIL.XForge.Realtime.RichText
         {
             int index = Ops.Count;
             JToken lastOp = Ops.Count == 0 ? null : Ops[Ops.Count - 1];
-            newOp = (JObject)newOp.DeepClone();
+            newOp = (JObject) newOp.DeepClone();
             if (lastOp != null && lastOp.Type == JTokenType.Object)
             {
                 if (newOp.OpType() == DeleteType && lastOp.OpType() == DeleteType)
                 {
-                    int delete = (int)lastOp[DeleteType] + (int)newOp[DeleteType];
+                    int delete = (int) lastOp[DeleteType] + (int) newOp[DeleteType];
                     Ops[index - 1] = new JObject(new JProperty(DeleteType, delete));
                     return this;
                 }
@@ -253,41 +243,38 @@ namespace SIL.XForge.Realtime.RichText
                 {
                     if (newOp[InsertType]?.Type == JTokenType.String && lastOp[InsertType]?.Type == JTokenType.String)
                     {
-                        string insert = (string)lastOp[InsertType] + (string)newOp[InsertType];
+                        string insert = (string) lastOp[InsertType] + (string) newOp[InsertType];
                         var op = new JObject(new JProperty(InsertType, insert));
-                        if (newOp[Attributes]?.Type == JTokenType.Object)
-                            op[Attributes] = newOp[Attributes];
+                        if (newOp[Attributes]?.Type == JTokenType.Object) op[Attributes] = newOp[Attributes];
                         Ops[index - 1] = op;
                         return this;
                     }
                     else if (newOp.OpType() == RetainType && lastOp.OpType() == RetainType)
                     {
-                        int retain = (int)lastOp[RetainType] + (int)newOp[RetainType];
+                        int retain = (int) lastOp[RetainType] + (int) newOp[RetainType];
                         var op = new JObject(new JProperty(RetainType, retain));
-                        if (newOp[Attributes]?.Type == JTokenType.Object)
-                            op[Attributes] = newOp[Attributes];
+                        if (newOp[Attributes]?.Type == JTokenType.Object) op[Attributes] = newOp[Attributes];
                         Ops[index - 1] = op;
                         return this;
                     }
                 }
             }
 
-            Ops.Insert(index, newOp);
+            Ops.Insert (index, newOp);
             return this;
         }
 
         private static JToken ComposeAttributes(JToken a, JToken b, bool keepNull)
         {
-            JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : new JObject();
-            JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : new JObject();
-            JObject attributes = (JObject)bObj.DeepClone();
+            JObject aObj = a?.Type == JTokenType.Object ? (JObject) a : new JObject();
+            JObject bObj = b?.Type == JTokenType.Object ? (JObject) b : new JObject();
+            JObject attributes = (JObject) bObj.DeepClone();
             if (!keepNull)
                 attributes = new JObject(attributes.Properties().Where(p => p.Value.Type != JTokenType.Null));
 
             foreach (JProperty prop in aObj.Properties())
             {
-                if (aObj[prop.Name] != null && bObj[prop.Name] == null)
-                    attributes.Add(prop);
+                if (aObj[prop.Name] != null && bObj[prop.Name] == null) attributes.Add(prop);
             }
 
             return attributes.HasValues ? attributes : null;
@@ -300,7 +287,7 @@ namespace SIL.XForge.Realtime.RichText
             {
                 if (op[InsertType] != null)
                 {
-                    sb.Append(op[InsertType]?.Type == JTokenType.String ? (string)op[InsertType] : "\0");
+                    sb.Append(op[InsertType]?.Type == JTokenType.String ? (string) op[InsertType] : "\0");
                 }
                 else
                 {
@@ -314,22 +301,29 @@ namespace SIL.XForge.Realtime.RichText
 
         private static JToken DiffAttributes(JToken a, JToken b)
         {
-            JObject aObj = a?.Type == JTokenType.Object ? (JObject)a : new JObject();
-            JObject bObj = b?.Type == JTokenType.Object ? (JObject)b : new JObject();
-            JObject attributes = aObj.Properties().Select(p => p.Name).Concat(bObj.Properties().Select(p => p.Name))
-                .Aggregate(new JObject(), (attrs, key) =>
-                {
-                    if (!JToken.DeepEquals(aObj[key], bObj[key]))
-                        attrs[key] = bObj[key] == null ? JValue.CreateNull() : bObj[key];
-                    return attrs;
-                });
+            JObject aObj = a?.Type == JTokenType.Object ? (JObject) a : new JObject();
+            JObject bObj = b?.Type == JTokenType.Object ? (JObject) b : new JObject();
+            JObject attributes =
+                aObj
+                    .Properties()
+                    .Select(p => p.Name)
+                    .Concat(bObj.Properties().Select(p => p.Name))
+                    .Aggregate(new JObject(),
+                    (attrs, key) =>
+                    {
+                        if (!JToken.DeepEquals(aObj[key], bObj[key]))
+                            attrs[key] = bObj[key] == null ? JValue.CreateNull() : bObj[key];
+                        return attrs;
+                    });
             return attributes.HasValues ? attributes : null;
         }
 
         private class OpIterator
         {
             private readonly IReadOnlyList<JToken> _ops;
+
             private int _index;
+
             private int _offset;
 
             public OpIterator(IReadOnlyList<JToken> ops)
@@ -344,8 +338,7 @@ namespace SIL.XForge.Realtime.RichText
 
             public JToken Next(int length = int.MaxValue)
             {
-                if (_index >= _ops.Count)
-                    return new JObject(new JProperty(RetainType, int.MaxValue));
+                if (_index >= _ops.Count) return new JObject(new JProperty(RetainType, int.MaxValue));
 
                 JToken nextOp = _ops[_index];
                 int offset = _offset;
@@ -361,16 +354,14 @@ namespace SIL.XForge.Realtime.RichText
                     _offset += length;
                 }
 
-                if (nextOp.OpType() == DeleteType)
-                    return new JObject(new JProperty(DeleteType, length));
+                if (nextOp.OpType() == DeleteType) return new JObject(new JProperty(DeleteType, length));
 
                 var retOp = new JObject();
-                if (nextOp[Attributes] != null)
-                    retOp[Attributes] = nextOp[Attributes];
+                if (nextOp[Attributes] != null) retOp[Attributes] = nextOp[Attributes];
                 if (nextOp.OpType() == RetainType)
                     retOp[RetainType] = length;
                 else if (nextOp[InsertType]?.Type == JTokenType.String)
-                    retOp[InsertType] = ((string)nextOp[InsertType]).Substring(offset, length);
+                    retOp[InsertType] = ((string) nextOp[InsertType]).Substring(offset, length);
                 else
                     retOp[InsertType] = nextOp[InsertType];
                 return retOp;
@@ -383,15 +374,13 @@ namespace SIL.XForge.Realtime.RichText
 
             public int PeekLength()
             {
-                if (_index >= _ops.Count)
-                    return int.MaxValue;
+                if (_index >= _ops.Count) return int.MaxValue;
                 return _ops[_index].OpLength() - _offset;
             }
 
             public string PeekType()
             {
-                if (_index >= _ops.Count)
-                    return RetainType;
+                if (_index >= _ops.Count) return RetainType;
 
                 JToken nextOp = _ops[_index];
                 return nextOp.OpType();

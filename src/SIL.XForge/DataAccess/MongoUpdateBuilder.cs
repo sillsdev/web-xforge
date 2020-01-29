@@ -7,9 +7,10 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.DataAccess
 {
-    public class MongoUpdateBuilder<T> : IUpdateBuilder<T> where T : IIdentifiable
+    public class MongoUpdateBuilder : IUpdateBuilder<T> where T : IIdentifiable
     {
         private readonly UpdateDefinitionBuilder<T> _builder;
+
         private readonly List<UpdateDefinition<T>> _defs;
 
         public MongoUpdateBuilder()
@@ -42,8 +43,8 @@ namespace SIL.XForge.DataAccess
             return this;
         }
 
-        public IUpdateBuilder<T> RemoveAll<TItem>(Expression<Func<T, IEnumerable<TItem>>> field,
-            Expression<Func<TItem, bool>> predicate)
+        public IUpdateBuilder<T>
+        RemoveAll<TItem>(Expression<Func<T, IEnumerable<TItem>>> field, Expression<Func<TItem, bool>> predicate)
         {
             _defs.Add(_builder.PullFilter(ToFieldDefinition(field), Builders<TItem>.Filter.Where(predicate)));
             return this;
@@ -57,8 +58,7 @@ namespace SIL.XForge.DataAccess
 
         public UpdateDefinition<T> Build()
         {
-            if (_defs.Count == 1)
-                return _defs.Single();
+            if (_defs.Count == 1) return _defs.Single();
             return _builder.Combine(_defs);
         }
 

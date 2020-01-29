@@ -1,6 +1,5 @@
 // Copyright (c) 2018 SIL International
 // This software is licensed under the MIT License (http://opensource.org/licenses/MIT)
-
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -10,17 +9,18 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using SIL.Extensions;
+
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 namespace SIL.XForge.ExceptionLogging
 {
-    public class BugsnagConfigurator: IConfigureOptions<Bugsnag.Configuration>
+    public class BugsnagConfigurator : IConfigureOptions<Bugsnag.Configuration>
     {
         private readonly IConfiguration _bugsnagConfig;
+
         private readonly IHostingEnvironment _environment;
 
-        public BugsnagConfigurator(IConfiguration bugsnagConfig,
-            IHostingEnvironment environment)
+        public BugsnagConfigurator(IConfiguration bugsnagConfig, IHostingEnvironment environment)
         {
             _bugsnagConfig = bugsnagConfig;
             _environment = environment;
@@ -33,14 +33,15 @@ namespace SIL.XForge.ExceptionLogging
                 topLevelDirectory = topLevelDirectory + Path.DirectorySeparatorChar;
 
             configuration.ApiKey = _bugsnagConfig.GetValue<string>("ApiKey") ?? "missing-bugsnag-api-key";
-            configuration.ProjectNamespaces = new[] { "SIL", "ShareDB" };
-            configuration.ProjectRoots = new[] { topLevelDirectory };
+            configuration.ProjectNamespaces = new [] { "SIL", "ShareDB" };
+            configuration.ProjectRoots = new [] { topLevelDirectory };
             configuration.AutoCaptureSessions = true;
             configuration.AutoNotify = true;
             configuration.AppType = ".NET";
             configuration.AppVersion = _bugsnagConfig.GetValue<string>("Version") ?? "0.0";
+
             // only send errors to bugsnag if we're running on live or qa
-            configuration.NotifyReleaseStages = new[] { EnvironmentName.Staging, EnvironmentName.Production };
+            configuration.NotifyReleaseStages = new [] { EnvironmentName.Staging, EnvironmentName.Production };
 
             if (string.IsNullOrEmpty(configuration.ReleaseStage))
             {
@@ -48,8 +49,7 @@ namespace SIL.XForge.ExceptionLogging
             }
 
             var metadata = new List<KeyValuePair<string, object>>();
-            if (configuration.GlobalMetadata != null)
-                metadata.AddRange(configuration.GlobalMetadata);
+            if (configuration.GlobalMetadata != null) metadata.AddRange(configuration.GlobalMetadata);
 
             var app = FindMetadata("App", metadata);
             var entryAssembly = Assembly.GetEntryAssembly();
@@ -58,10 +58,12 @@ namespace SIL.XForge.ExceptionLogging
                 if (string.IsNullOrEmpty(configuration.AppVersion))
                     configuration.AppVersion = entryAssembly.GetName().Version.ToString();
 
-                if (entryAssembly
-                        .GetCustomAttributes(typeof(AssemblyInformationalVersionAttribute), true)
-                        .FirstOrDefault() is AssemblyInformationalVersionAttribute
-                    informationalVersion)
+                if (
+                    entryAssembly
+                        .GetCustomAttributes(typeof (AssemblyInformationalVersionAttribute), true)
+                        .FirstOrDefault() is
+                    AssemblyInformationalVersionAttribute informationalVersion
+                )
                 {
                     app.Add("infoVersion", informationalVersion.InformationalVersion);
                 }
@@ -73,13 +75,12 @@ namespace SIL.XForge.ExceptionLogging
                 configuration.GlobalMetadata.AddRange(metadata);
         }
 
-        private static Dictionary<string, string> FindMetadata(string key,
-            ICollection<KeyValuePair<string, object>> metadata)
+        private static Dictionary<string, string>
+        FindMetadata(string key, ICollection<KeyValuePair<string, object>> metadata)
         {
             foreach (var kv in metadata)
             {
-                if (kv.Key == key)
-                    return kv.Value as Dictionary<string, string>;
+                if (kv.Key == key) return kv.Value as Dictionary<string, string>;
             }
 
             var dict = new Dictionary<string, string>();
@@ -95,15 +96,12 @@ namespace SIL.XForge.ExceptionLogging
         /// <returns>The returned output</returns>
         private static string RunTerminalCommand(string cmd, string args = null)
         {
-            var proc = new Process {
-                EnableRaisingEvents = false,
-                StartInfo = {
-                    FileName = cmd,
-                    Arguments = args,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true
-                }
-            };
+            var proc =
+                new Process {
+                    EnableRaisingEvents = false,
+                    StartInfo =
+                        { FileName = cmd, Arguments = args, UseShellExecute = false, RedirectStandardOutput = true }
+                };
             proc.Start();
             proc.WaitForExit();
             var output = proc.StandardOutput.ReadToEnd();

@@ -1,6 +1,6 @@
-using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -21,7 +21,9 @@ namespace SIL.XForge.Scripture.Services
     public class SFTextCorpusFactory : ITextCorpusFactory
     {
         private readonly IMongoClient _mongoClient;
+
         private readonly IOptions<DataAccessOptions> _dataAccessOptions;
+
         private readonly IRealtimeService _realtimeService;
 
         public SFTextCorpusFactory(IOptions<DataAccessOptions> dataAccessOptions, IRealtimeService realtimeService)
@@ -36,13 +38,12 @@ namespace SIL.XForge.Scripture.Services
             return new DictionaryTextCorpus(await CreateTextsAsync(projects, type));
         }
 
-        private async Task<IReadOnlyList<IText>> CreateTextsAsync(IEnumerable<string> projects,
-            TextCorpusType type)
+        private async Task<IReadOnlyList<IText>> CreateTextsAsync(IEnumerable<string> projects, TextCorpusType type)
         {
             StringTokenizer wordTokenizer = new LatinWordTokenizer();
             IMongoDatabase database = _mongoClient.GetDatabase(_dataAccessOptions.Value.MongoDatabaseName);
-            IMongoCollection<BsonDocument> textDataColl = database.GetCollection<BsonDocument>(
-                _realtimeService.GetCollectionName<TextData>());
+            IMongoCollection<BsonDocument> textDataColl =
+                database.GetCollection<BsonDocument>(_realtimeService.GetCollectionName<TextData>());
             var texts = new List<IText>();
             foreach (string projectId in projects)
             {
@@ -56,7 +57,7 @@ namespace SIL.XForge.Scripture.Services
                         textType = TextType.Target;
                         break;
                     default:
-                        throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextType));
+                        throw new InvalidEnumArgumentException(nameof(type), (int) type, typeof (TextType));
                 }
 
                 var project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);

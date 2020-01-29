@@ -1,6 +1,5 @@
 // Copyright (c) 2018 SIL International
 // This software is licensed under the MIT License (http://opensource.org/licenses/MIT)
-
 using Bugsnag;
 using Bugsnag.AspNet.Core;
 using Microsoft.AspNetCore.Hosting;
@@ -22,9 +21,11 @@ namespace Microsoft.Extensions.DependencyInjection
             // We add bugsnag manually instead of using the official AddBugsnag() extension
             // method because we want a singleton instead of a scoped object.
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            return services.AddSingleton<IConfigureOptions<Bugsnag.Configuration>, BugsnagConfigurator>()
+            return services
+                .AddSingleton<IConfigureOptions<Bugsnag.Configuration>, BugsnagConfigurator>()
                 .AddSingleton<IStartupFilter, BugsnagStartupFilter>()
-                .AddSingleton<IClient, Client>(context => new Client(context.GetService<IOptions<Bugsnag.Configuration>>().Value));
+                .AddSingleton<IClient, Client>(context =>
+                    new Client(context.GetService<IOptions<Bugsnag.Configuration>>().Value));
         }
     }
 }

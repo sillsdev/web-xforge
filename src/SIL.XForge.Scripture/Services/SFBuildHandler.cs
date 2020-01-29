@@ -28,20 +28,19 @@ namespace SIL.XForge.Scripture.Services
             using (IConnection conn = await _realtimeService.ConnectAsync())
             {
                 IDocument<SFProject> project = await conn.FetchAsync<SFProject>(context.Engine.Projects.First());
-                if (!project.IsLoaded)
-                    return;
+                if (!project.IsLoaded) return;
 
                 var tasks = new List<Task>();
                 foreach (string userId in project.Data.UserRoles.Keys)
-                    tasks.Add(ClearSelectedSegmentChecksum(conn, project.Id, userId));
+                tasks.Add(ClearSelectedSegmentChecksum(conn, project.Id, userId));
                 await Task.WhenAll(tasks);
             }
         }
 
         private async Task ClearSelectedSegmentChecksum(IConnection conn, string projectId, string userId)
         {
-            IDocument<SFProjectUserConfig> config = await conn.FetchAsync<SFProjectUserConfig>(
-                SFProjectUserConfig.GetDocId(projectId, userId));
+            IDocument<SFProjectUserConfig> config =
+                await conn.FetchAsync<SFProjectUserConfig>(SFProjectUserConfig.GetDocId(projectId, userId));
             await config.SubmitJson0OpAsync(op => op.Unset(puc => puc.SelectedSegmentChecksum));
         }
     }

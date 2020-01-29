@@ -8,36 +8,40 @@ namespace SIL.XForge.Realtime
     public class RealtimeServer
     {
         private readonly INodeServices _nodeServices;
+
         private readonly string _modulePath;
+
         private bool _started;
 
         public RealtimeServer(INodeServices nodeServices)
         {
             _nodeServices = nodeServices;
-            _modulePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                "RealtimeServer", "lib", "common", "index");
+            _modulePath =
+                Path
+                    .Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    "RealtimeServer",
+                    "lib",
+                    "common",
+                    "index");
         }
 
         public void Start(object options)
         {
-            if (_started)
-                return;
+            if (_started) return;
             InvokeExportAsync<object>("start", options).GetAwaiter().GetResult();
             _started = true;
         }
 
         public void Stop()
         {
-            if (!_started)
-                return;
+            if (!_started) return;
             InvokeExportAsync<object>("stop").GetAwaiter().GetResult();
             _started = false;
         }
 
         public Task<int> ConnectAsync(string userId = null)
         {
-            if (userId != null)
-                return InvokeExportAsync<int>("connect", userId);
+            if (userId != null) return InvokeExportAsync<int>("connect", userId);
             return InvokeExportAsync<int>("connect");
         }
 

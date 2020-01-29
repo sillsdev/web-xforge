@@ -6,6 +6,7 @@ namespace SIL.XForge.Scripture.Models
     public class SyncUser
     {
         public string Id { get; set; }
+
         public string ParatextUsername { get; set; }
     }
 }

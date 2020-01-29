@@ -1,11 +1,11 @@
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
-using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Models;
 using SIL.XForge.Services;
+using idunno.Authentication.Basic;
 
 namespace SIL.XForge.Controllers
 {
@@ -15,11 +15,18 @@ namespace SIL.XForge.Controllers
     public class UsersRpcController : RpcControllerBase
     {
         private readonly IAuthService _authService;
+
         private readonly IHostingEnvironment _hostingEnv;
+
         private readonly IUserService _userService;
 
-        public UsersRpcController(IUserAccessor userAccessor, IUserService userService, IAuthService authService,
-            IHostingEnvironment hostingEnv) : base(userAccessor)
+        public UsersRpcController(
+            IUserAccessor userAccessor,
+            IUserService userService,
+            IAuthService authService,
+            IHostingEnvironment hostingEnv
+        ) :
+            base(userAccessor)
         {
             _userService = userService;
             _authService = authService;
@@ -42,8 +49,7 @@ namespace SIL.XForge.Controllers
         /// </summary>
         public async Task<IRpcMethodResult> PullAuthUserProfile()
         {
-            if (!_hostingEnv.IsDevelopment())
-                return ForbiddenError();
+            if (!_hostingEnv.IsDevelopment()) return ForbiddenError();
 
             JObject userProfile = await _authService.GetUserAsync(AuthId);
             await _userService.UpdateUserFromProfileAsync(UserId, userProfile);

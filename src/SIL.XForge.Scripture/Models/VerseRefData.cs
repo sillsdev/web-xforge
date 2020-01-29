@@ -42,15 +42,17 @@ namespace SIL.XForge.Scripture.Models
         }
 
         public int BookNum { get; set; }
+
         public int ChapterNum { get; set; }
+
         public int VerseNum { get; set; }
+
         public string Verse { get; set; }
 
         public VerseRef ToVerseRef()
         {
             var verseRef = new VerseRef(BookNum, ChapterNum, VerseNum, VerseRef.defaultVersification);
-            if (Verse != null)
-                verseRef.Verse = Verse;
+            if (Verse != null) verseRef.Verse = Verse;
             return verseRef;
         }
 

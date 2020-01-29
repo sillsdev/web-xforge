@@ -18,15 +18,25 @@ namespace SIL.XForge.Realtime
     public class RealtimeService : DisposableBase, IRealtimeService
     {
         private readonly IOptions<SiteOptions> _siteOptions;
+
         private readonly IOptions<DataAccessOptions> _dataAccessOptions;
+
         private readonly IOptions<RealtimeOptions> _realtimeOptions;
+
         private readonly IOptions<AuthOptions> _authOptions;
+
         private readonly IMongoDatabase _database;
+
         private readonly Dictionary<Type, DocConfig> _docConfigs;
 
-        public RealtimeService(RealtimeServer server, IOptions<SiteOptions> siteOptions,
-            IOptions<DataAccessOptions> dataAccessOptions, IOptions<RealtimeOptions> realtimeOptions,
-            IOptions<AuthOptions> authOptions, IMongoClient mongoClient)
+        public RealtimeService(
+            RealtimeServer server,
+            IOptions<SiteOptions> siteOptions,
+            IOptions<DataAccessOptions> dataAccessOptions,
+            IOptions<RealtimeOptions> realtimeOptions,
+            IOptions<AuthOptions> authOptions,
+            IMongoClient mongoClient
+        )
         {
             Server = server;
             _siteOptions = siteOptions;
@@ -39,8 +49,7 @@ namespace SIL.XForge.Realtime
             _docConfigs = new Dictionary<Type, DocConfig>();
             AddDocConfig(options.UserDoc);
             AddDocConfig(options.ProjectDoc);
-            foreach (DocConfig projectDataDoc in options.ProjectDataDocs)
-                AddDocConfig(projectDataDoc);
+            foreach (DocConfig projectDataDoc in options.ProjectDataDocs) AddDocConfig(projectDataDoc);
         }
 
         internal RealtimeServer Server { get; }
@@ -48,7 +57,7 @@ namespace SIL.XForge.Realtime
         public void StartServer()
         {
             object options = CreateOptions();
-            Server.Start(options);
+            Server.Start (options);
         }
 
         public void StopServer()
@@ -71,7 +80,8 @@ namespace SIL.XForge.Realtime
             }
         }
 
-        public string GetCollectionName<T>() where T : IIdentifiable
+        public string GetCollectionName<T>()
+            where T : IIdentifiable
         {
             DocConfig docConfig = GetDocConfig<T>();
             return docConfig.CollectionName;
@@ -82,30 +92,32 @@ namespace SIL.XForge.Realtime
             RealtimeOptions options = _realtimeOptions.Value;
             var tasks = new List<Task>();
             foreach (DocConfig docConfig in options.ProjectDataDocs)
-                tasks.Add(DeleteProjectDocsAsync(docConfig.CollectionName, projectId));
+            tasks.Add(DeleteProjectDocsAsync(docConfig.CollectionName, projectId));
             await Task.WhenAll(tasks);
 
-            IMongoCollection<BsonDocument> snapshotCollection = _database.GetCollection<BsonDocument>(
-                options.ProjectDoc.CollectionName);
+            IMongoCollection<BsonDocument> snapshotCollection =
+                _database.GetCollection<BsonDocument>(options.ProjectDoc.CollectionName);
             FilterDefinition<BsonDocument> idFilter = Builders<BsonDocument>.Filter.Eq("_id", projectId);
             await snapshotCollection.DeleteManyAsync(idFilter);
 
-            IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>(
-                $"o_{options.ProjectDoc.CollectionName}");
+            IMongoCollection<BsonDocument> opsCollection =
+                _database.GetCollection<BsonDocument>($"o_{options.ProjectDoc.CollectionName}");
             FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Eq("d", projectId);
             await opsCollection.DeleteManyAsync(dFilter);
         }
 
-        public IQueryable<T> QuerySnapshots<T>() where T : IIdentifiable
+        public IQueryable<T> QuerySnapshots<T>()
+            where T : IIdentifiable
         {
             string collectionName = GetCollectionName<T>();
             IMongoCollection<T> collection = _database.GetCollection<T>(collectionName);
             return collection.AsQueryable();
         }
 
-        internal DocConfig GetDocConfig<T>() where T : IIdentifiable
+        internal DocConfig GetDocConfig<T>()
+            where T : IIdentifiable
         {
-            return _docConfigs[typeof(T)];
+            return _docConfigs[typeof (T)];
         }
 
         protected override void DisposeManagedResources()
@@ -132,8 +144,7 @@ namespace SIL.XForge.Realtime
         private object CreateOptions()
         {
             string mongo = $"{_dataAccessOptions.Value.ConnectionString}/{_dataAccessOptions.Value.MongoDatabaseName}";
-            return new
-            {
+            return new {
                 AppModuleName = _realtimeOptions.Value.AppModuleName,
                 ConnectionString = mongo,
                 Port = _realtimeOptions.Value.Port,

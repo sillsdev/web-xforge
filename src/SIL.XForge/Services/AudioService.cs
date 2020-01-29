@@ -17,16 +17,17 @@ namespace SIL.XForge.Services
 
         public async Task ConvertToMp3Async(string inputPath, string outputPath)
         {
-            var process = new Process()
-            {
-                StartInfo = new ProcessStartInfo
+            var process =
+                new Process()
                 {
-                    FileName = _audioOptions.Value.FfmpegPath,
-                    Arguments = $"-y -i \"{inputPath}\" \"{outputPath}\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
+                    StartInfo =
+                        new ProcessStartInfo {
+                            FileName = _audioOptions.Value.FfmpegPath,
+                            Arguments = $"-y -i \"{inputPath}\" \"{outputPath}\"",
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        }
+                };
             process.Start();
             await WaitForExitAsync(process);
             if (process.ExitCode != 0)

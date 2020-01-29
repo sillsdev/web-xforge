@@ -7,6 +7,7 @@ namespace SIL.XForge.Models
     public class Tokens
     {
         public string AccessToken { get; set; }
+
         public string RefreshToken { get; set; }
 
         public DateTime IssuedAt
@@ -14,8 +15,7 @@ namespace SIL.XForge.Models
             get
             {
                 var accessToken = new JwtSecurityToken(AccessToken);
-                if (accessToken.Payload.Iat != null)
-                    return EpochTime.DateTime((long)accessToken.Payload.Iat);
+                if (accessToken.Payload.Iat != null) return EpochTime.DateTime((long) accessToken.Payload.Iat);
                 return DateTime.MinValue;
             }
         }

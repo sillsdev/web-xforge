@@ -12,18 +12,14 @@ namespace SIL.XForge.Scripture.Controllers
         [HttpPost]
         public IActionResult SetLanguage([FromForm] string culture, [FromForm] string returnUrl)
         {
-            if (string.IsNullOrEmpty(culture))
-                throw new ArgumentException("culture cannot be empty", culture);
-            if (string.IsNullOrEmpty(returnUrl))
-                throw new ArgumentException("return url must be specified", returnUrl);
+            if (string.IsNullOrEmpty(culture)) throw new ArgumentException("culture cannot be empty", culture);
+            if (string.IsNullOrEmpty(returnUrl)) throw new ArgumentException("return url must be specified", returnUrl);
 
             var cookieName = CookieRequestCultureProvider.DefaultCookieName;
             var cookieValue = CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture));
-            Response.Cookies.Append(
-                cookieName,
-                cookieValue,
-                new CookieOptions {Expires = DateTimeOffset.UtcNow.AddYears(1)}
-            );
+            Response
+                .Cookies
+                .Append(cookieName, cookieValue, new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) });
 
             return LocalRedirect(returnUrl);
         }

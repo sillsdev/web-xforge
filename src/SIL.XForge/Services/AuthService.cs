@@ -20,17 +20,17 @@ namespace SIL.XForge.Services
     public class AuthService : DisposableBase, IAuthService
     {
         private readonly HttpClient _httpClient;
+
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
+
         private string _accessToken;
+
         private readonly IOptions<AuthOptions> _authOptions;
 
         public AuthService(IOptions<AuthOptions> authOptions)
         {
             _authOptions = authOptions;
-            _httpClient = new HttpClient
-            {
-                BaseAddress = new Uri($"https://{_authOptions.Value.Domain}")
-            };
+            _httpClient = new HttpClient { BaseAddress = new Uri($"https://{_authOptions.Value.Domain}") };
         }
 
         public bool ValidateWebhookCredentials(string username, string password)
@@ -47,9 +47,7 @@ namespace SIL.XForge.Services
 
         public Task LinkAccounts(string primaryAuthId, string secondaryAuthId)
         {
-            var content = new JObject(
-                new JProperty("provider", "oauth2"),
-                new JProperty("user_id", secondaryAuthId));
+            var content = new JObject(new JProperty("provider", "oauth2"), new JProperty("user_id", secondaryAuthId));
             return CallApiAsync(HttpMethod.Post, $"users/{primaryAuthId}/identities", content);
         }
 
@@ -74,8 +72,8 @@ namespace SIL.XForge.Services
                 else if (response.StatusCode != HttpStatusCode.Unauthorized)
                 {
                     string error = await response.Content.ReadAsStringAsync();
-                    throw new HttpRequestException(
-                        $"HTTP Request error, Code: {response.StatusCode}, Content: {error}");
+                    throw new HttpRequestException($"HTTP Request error, Code: {response.StatusCode}, Content: {
+                            error}");
                 }
             }
 
@@ -87,23 +85,22 @@ namespace SIL.XForge.Services
             await _lock.WaitAsync();
             try
             {
-                if (!IsAccessTokenExpired())
-                    return (_accessToken, false);
+                if (!IsAccessTokenExpired()) return (_accessToken, false);
                 var request = new HttpRequestMessage(HttpMethod.Post, "oauth/token");
 
                 AuthOptions options = _authOptions.Value;
-                var requestObj = new JObject(
-                    new JProperty("grant_type", "client_credentials"),
-                    new JProperty("client_id", options.BackendClientId),
-                    new JProperty("client_secret", options.BackendClientSecret),
-                    new JProperty("audience", $"https://{_authOptions.Value.Domain}/api/v2/"));
+                var requestObj =
+                    new JObject(new JProperty("grant_type", "client_credentials"),
+                        new JProperty("client_id", options.BackendClientId),
+                        new JProperty("client_secret", options.BackendClientSecret),
+                        new JProperty("audience", $"https://{_authOptions.Value.Domain}/api/v2/"));
                 request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await _httpClient.SendAsync(request);
                 response.EnsureSuccessStatusCode();
 
                 string responseJson = await response.Content.ReadAsStringAsync();
                 var responseObj = JObject.Parse(responseJson);
-                _accessToken = (string)responseObj["access_token"];
+                _accessToken = (string) responseObj["access_token"];
                 return (_accessToken, true);
             }
             finally
@@ -114,8 +111,7 @@ namespace SIL.XForge.Services
 
         private bool IsAccessTokenExpired()
         {
-            if (_accessToken == null)
-                return true;
+            if (_accessToken == null) return true;
             var accessToken = new JwtSecurityToken(_accessToken);
             var now = DateTime.UtcNow;
             return now < accessToken.ValidFrom || now > accessToken.ValidTo;

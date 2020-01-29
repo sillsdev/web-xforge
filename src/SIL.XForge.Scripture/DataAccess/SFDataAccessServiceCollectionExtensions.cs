@@ -6,10 +6,9 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class SFDataAccessServiceCollectionExtensions
     {
-        public static IServiceCollection AddSFDataAccess(this IServiceCollection services,
-            IConfiguration configuration)
+        public static IServiceCollection AddSFDataAccess(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDataAccess(configuration);
+            services.AddDataAccess (configuration);
 
             DataAccessClassMap.RegisterClass<SyncUser>(cm => cm.SetIdMember(null));
 

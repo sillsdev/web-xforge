@@ -1,17 +1,18 @@
 using System;
+using System.Threading.Tasks;
 using MailKit.Net.Smtp;
+using MailKit.Security;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MimeKit;
 using SIL.XForge.Configuration;
-using Microsoft.Extensions.Options;
-using MailKit.Security;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace SIL.XForge.Services
 {
     public class EmailService : IEmailService
     {
         private readonly IOptions<SiteOptions> _options;
+
         private readonly ILogger<EmailService> _logger;
 
         public EmailService(IOptions<SiteOptions> options, ILogger<EmailService> logger)
@@ -34,10 +35,13 @@ namespace SIL.XForge.Services
             bodyBuilder.HtmlBody = body;
             mimeMessage.Body = bodyBuilder.ToMessageBody();
 
-            if (siteOptions.SendEmail) {
+            if (siteOptions.SendEmail)
+            {
                 using (var client = new SmtpClient())
                 {
-                    await client.ConnectAsync(siteOptions.SmtpServer, Convert.ToInt32(siteOptions.PortNumber),
+                    await client
+                        .ConnectAsync(siteOptions.SmtpServer,
+                        Convert.ToInt32(siteOptions.PortNumber),
                         SecureSocketOptions.None);
                     await client.SendAsync(mimeMessage);
                     await client.DisconnectAsync(true);

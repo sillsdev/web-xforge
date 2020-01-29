@@ -18,11 +18,16 @@ namespace SIL.XForge.Scripture.Controllers
     public class ParatextController : ControllerBase
     {
         private readonly IRepository<UserSecret> _userSecrets;
+
         private readonly IParatextService _paratextService;
+
         private readonly IUserAccessor _userAccessor;
 
-        public ParatextController(IRepository<UserSecret> userSecrets, IParatextService paratextService,
-            IUserAccessor userAccessor)
+        public ParatextController(
+            IRepository<UserSecret> userSecrets,
+            IParatextService paratextService,
+            IUserAccessor userAccessor
+        )
         {
             _userSecrets = userSecrets;
             _paratextService = paratextService;
@@ -33,8 +38,7 @@ namespace SIL.XForge.Scripture.Controllers
         public async Task<ActionResult<IEnumerable<ParatextProject>>> GetAsync()
         {
             Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
-            if (!attempt.TryResult(out UserSecret userSecret))
-                return NoContent();
+            if (!attempt.TryResult(out UserSecret userSecret)) return NoContent();
 
             try
             {
@@ -51,8 +55,7 @@ namespace SIL.XForge.Scripture.Controllers
         public async Task<ActionResult<string>> UsernameAsync()
         {
             Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
-            if (!attempt.TryResult(out UserSecret userSecret))
-                return NoContent();
+            if (!attempt.TryResult(out UserSecret userSecret)) return NoContent();
             string username = _paratextService.GetParatextUsername(userSecret);
             return Ok(username);
         }

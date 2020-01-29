@@ -12,6 +12,7 @@ namespace SIL.XForge.Scripture.Services
     public class SyncService : ISyncService
     {
         private readonly IBackgroundJobClient _backgroundJobClient;
+
         private readonly IRealtimeService _realtimeService;
 
         public SyncService(IBackgroundJobClient backgroundJobClient, IRealtimeService realtimeService)

@@ -22,12 +22,12 @@ namespace SIL.XForge.Services
 
         public void DeleteFile(string path)
         {
-            File.Delete(path);
+            File.Delete (path);
         }
 
         public void CreateDirectory(string path)
         {
-            Directory.CreateDirectory(path);
+            Directory.CreateDirectory (path);
         }
 
         public bool DirectoryExists(string path)

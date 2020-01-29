@@ -16,7 +16,9 @@ namespace SIL.XForge.Configuration
         }
 
         public string CollectionName { get; }
+
         public Type Type { get; }
+
         public string OTTypeName { get; }
     }
 }

@@ -13,12 +13,9 @@ namespace Microsoft.AspNetCore.Builder
     {
         public static void UseXFJsonRpc(this IApplicationBuilder app, Action<RpcManualRoutingOptions> configureOptions)
         {
-            var options = new RpcManualRoutingOptions
-            {
-                BaseRequestPath = $"/{UrlConstants.CommandApiNamespace}"
-            };
+            var options = new RpcManualRoutingOptions { BaseRequestPath = $"/{UrlConstants.CommandApiNamespace}" };
             options.RegisterController<UsersRpcController>(UrlConstants.Users);
-            configureOptions(options);
+            configureOptions (options);
 
             app.UseRouter(new MultiAuthSchemeRpcHttpRouter(new RpcManualRouteProvider(Options.Create(options))));
         }

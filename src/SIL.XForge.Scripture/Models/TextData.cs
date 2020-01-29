@@ -9,8 +9,7 @@ namespace SIL.XForge.Scripture.Models
 {
     public class TextData : Delta, IIdentifiable
     {
-        public static string GetTextDocId(string projectId, int book, int chapter,
-            TextType textType = TextType.Target)
+        public static string GetTextDocId(string projectId, int book, int chapter, TextType textType = TextType.Target)
         {
             string textTypeStr;
             switch (textType)
@@ -22,7 +21,7 @@ namespace SIL.XForge.Scripture.Models
                     textTypeStr = "target";
                     break;
                 default:
-                    throw new InvalidEnumArgumentException(nameof(textType), (int)textType, typeof(TextType));
+                    throw new InvalidEnumArgumentException(nameof(textType), (int) textType, typeof (TextType));
             }
             return $"{projectId}:{Canon.BookNumberToId(book)}:{chapter}:{textTypeStr}";
         }
@@ -31,8 +30,8 @@ namespace SIL.XForge.Scripture.Models
         {
         }
 
-        public TextData(Delta delta)
-            : base(delta)
+        public TextData(Delta delta) :
+            base(delta)
         {
         }
 

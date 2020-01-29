@@ -19,8 +19,7 @@ namespace SIL.XForge.Realtime
             where T : IIdentifiable
         {
             Attempt<T> attempt = await realtimeService.TryGetSnapshotAsync<T>(id);
-            if (attempt.Success)
-                return attempt.Result;
+            if (attempt.Success) return attempt.Result;
             return default(T);
         }
 
@@ -40,8 +39,9 @@ namespace SIL.XForge.Realtime
             return doc;
         }
 
-        public static async Task<IDocument<T>> FetchOrCreateAsync<T>(this IConnection conn, string id,
-            Func<T> createData) where T : IIdentifiable
+        public static async Task<IDocument<T>>
+        FetchOrCreateAsync<T>(this IConnection conn, string id, Func<T> createData)
+            where T : IIdentifiable
         {
             IDocument<T> doc = conn.Get<T>(id);
             await doc.FetchOrCreateAsync(createData);

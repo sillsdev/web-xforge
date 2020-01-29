@@ -9,8 +9,13 @@ namespace SIL.XForge.Scripture.Services
 {
     public class SFScriptureText : IText
     {
-        public SFScriptureText(ITokenizer<string, int> wordTokenizer, string projectId, int book, int chapter,
-            BsonDocument doc)
+        public SFScriptureText(
+            ITokenizer<string, int> wordTokenizer,
+            string projectId,
+            int book,
+            int chapter,
+            BsonDocument doc
+        )
         {
             Id = $"{projectId}_{book}_{chapter}";
             Segments = GetSegments(wordTokenizer, doc).OrderBy(s => s.SegmentRef).ToArray();
@@ -24,19 +29,16 @@ namespace SIL.XForge.Scripture.Services
         {
             string prevRef = null;
             var sb = new StringBuilder();
-            var ops = (BsonArray)doc["ops"];
+            var ops = (BsonArray) doc["ops"];
             foreach (BsonDocument op in ops.Cast<BsonDocument>())
             {
                 // skip embeds
-                if (!op.TryGetValue("insert", out BsonValue value) || value.BsonType != BsonType.String)
-                    continue;
+                if (!op.TryGetValue("insert", out BsonValue value) || value.BsonType != BsonType.String) continue;
 
-                if (!op.TryGetValue("attributes", out BsonValue attrsValue))
-                    continue;
+                if (!op.TryGetValue("attributes", out BsonValue attrsValue)) continue;
 
                 BsonDocument attrs = attrsValue.AsBsonDocument;
-                if (!attrs.TryGetValue("segment", out BsonValue segmentValue))
-                    continue;
+                if (!attrs.TryGetValue("segment", out BsonValue segmentValue)) continue;
 
                 string curRef = segmentValue.AsString;
                 if (prevRef != null && prevRef != curRef)
@@ -46,21 +48,21 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 string text = value.AsString;
-                sb.Append(text);
+                sb.Append (text);
                 prevRef = curRef;
             }
 
-            if (prevRef != null)
-                yield return CreateSegment(wordTokenizer, prevRef, sb.ToString());
+            if (prevRef != null) yield return CreateSegment(wordTokenizer, prevRef, sb.ToString());
         }
 
-        private static TextSegment CreateSegment(ITokenizer<string, int> wordTokenizer, string segRef,
-            string segmentStr)
+        private static TextSegment
+        CreateSegment(ITokenizer<string, int> wordTokenizer, string segRef, string segmentStr)
         {
             var keys = new List<string>();
             foreach (string refPart in segRef.Split('/'))
             {
                 string[] partKeys = refPart.Split('_');
+
                 // do not include the paragraph style for sub-segments, so that the segments sort correctly
                 if (keys.Count > 0)
                     keys.AddRange(partKeys.Skip(1));

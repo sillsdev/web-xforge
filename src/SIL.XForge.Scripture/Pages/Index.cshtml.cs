@@ -17,24 +17,38 @@ namespace SIL.XForge.Scripture.Pages
         [Required(ErrorMessage = SharedResource.Keys.NameMissing)]
         [RegularExpression(@"^ *[\S]+( +[\S]+)* *$", ErrorMessage = SharedResource.Keys.NameMissing)]
         public string Name { get; set; }
+
         [BindProperty]
         [Required(ErrorMessage = SharedResource.Keys.EmailMissing)]
-        [RegularExpression("^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$", ErrorMessage = SharedResource.Keys.EmailBad)]
+        [
+            RegularExpression(
+                "^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$",
+                ErrorMessage = SharedResource.Keys.EmailBad)
+        ]
         public string Email { get; set; }
+
         [BindProperty]
         [Required(ErrorMessage = SharedResource.Keys.RoleMissing)]
         public string Role { get; set; }
+
         [BindProperty]
         [Required(ErrorMessage = SharedResource.Keys.MessageMissing)]
         public string Message { get; set; }
 
         private readonly IHostingEnvironment _env;
+
         private readonly IOptions<AuthOptions> _authOptions;
+
         private readonly IOptions<SiteOptions> _siteOptions;
+
         private readonly IEmailService _emailService;
 
-        public IndexModel(IHostingEnvironment env, IOptions<AuthOptions> authOptions, IOptions<SiteOptions> siteOptions,
-            IEmailService emailService)
+        public IndexModel(
+            IHostingEnvironment env,
+            IOptions<AuthOptions> authOptions,
+            IOptions<SiteOptions> siteOptions,
+            IEmailService emailService
+        )
         {
             _env = env;
             _authOptions = authOptions;
@@ -68,8 +82,7 @@ namespace SIL.XForge.Scripture.Pages
                 subjectPrefix = "Dev: ";
             else if (_env.IsStaging())
                 subjectPrefix = "QA: ";
-            else if (!_env.IsProduction())
-                subjectPrefix = "Test: ";
+            else if (!_env.IsProduction()) subjectPrefix = "Test: ";
             string subject = subjectPrefix + "Register for SFv2 Beta";
             await _emailService.SendEmailAsync(email, subject, body);
             return RedirectToPage("/registerSuccess");

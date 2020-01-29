@@ -8,13 +8,15 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddXFJsonRpc(this IServiceCollection services)
         {
-            services.AddJsonRpc().WithOptions(options =>
+            services
+                .AddJsonRpc()
+                .WithOptions(options =>
                 {
-                    options.JsonSerializerSettings = new JsonSerializerSettings
-                    {
-                        ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                        NullValueHandling = NullValueHandling.Ignore
-                    };
+                    options.JsonSerializerSettings =
+                        new JsonSerializerSettings {
+                            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                            NullValueHandling = NullValueHandling.Ignore
+                        };
                 });
             return services;
         }

@@ -8,10 +8,12 @@ namespace SIL.XForge.Realtime
     /// <summary>
     /// This class represents a real-time document.
     /// </summary>
-    public class Document<T> : IDocument<T> where T : IIdentifiable
+    public class Document : IDocument<T> where T : IIdentifiable
     {
         private readonly RealtimeServer _server;
+
         private readonly int _connHandle;
+
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
         internal Document(RealtimeServer server, int connHandle, string otTypeName, string collection, string id)
@@ -41,7 +43,7 @@ namespace SIL.XForge.Realtime
             try
             {
                 Snapshot<T> snapshot = await _server.CreateDocAsync(_connHandle, Collection, Id, data, OTTypeName);
-                UpdateFromSnapshot(snapshot);
+                UpdateFromSnapshot (snapshot);
             }
             finally
             {
@@ -55,7 +57,7 @@ namespace SIL.XForge.Realtime
             try
             {
                 Snapshot<T> snapshot = await _server.FetchDocAsync<T>(_connHandle, Collection, Id);
-                UpdateFromSnapshot(snapshot);
+                UpdateFromSnapshot (snapshot);
             }
             finally
             {
@@ -71,7 +73,7 @@ namespace SIL.XForge.Realtime
                 Snapshot<T> snapshot = await _server.FetchDocAsync<T>(_connHandle, Collection, Id);
                 if (snapshot.Data == null)
                     snapshot = await _server.CreateDocAsync(_connHandle, Collection, Id, createData(), OTTypeName);
-                UpdateFromSnapshot(snapshot);
+                UpdateFromSnapshot (snapshot);
             }
             finally
             {
@@ -85,7 +87,7 @@ namespace SIL.XForge.Realtime
             try
             {
                 Snapshot<T> snapshot = await _server.SubmitOpAsync<T>(_connHandle, Collection, Id, op);
-                UpdateFromSnapshot(snapshot);
+                UpdateFromSnapshot (snapshot);
             }
             finally
             {
@@ -112,8 +114,7 @@ namespace SIL.XForge.Realtime
         {
             Version = snapshot.Version;
             Data = snapshot.Data;
-            if (Data != null)
-                Data.Id = Id;
+            if (Data != null) Data.Id = Id;
         }
     }
 }

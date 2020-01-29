@@ -13,12 +13,12 @@ namespace SIL.XForge.Utils
         }
     }
 
-    public struct Attempt<T>
+    public struct Attempt
     {
         public static Attempt<T> Failure { get; } = new Attempt<T>();
 
-        public Attempt(T result)
-            : this(true, result)
+        public Attempt(T result) :
+            this(true, result)
         {
         }
 
@@ -29,6 +29,7 @@ namespace SIL.XForge.Utils
         }
 
         public T Result { get; }
+
         public bool Success { get; }
 
         public bool TryResult(out T result)

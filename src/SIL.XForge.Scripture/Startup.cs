@@ -36,8 +36,11 @@ namespace SIL.XForge.Scripture
         }
 
         public IConfiguration Configuration { get; }
+
         public IHostingEnvironment Environment { get; }
+
         public ILoggerFactory LoggerFactory { get; }
+
         public IContainer ApplicationContainer { get; private set; }
 
         private SpaDevServerStartup SpaDevServerStartup
@@ -70,20 +73,20 @@ namespace SIL.XForge.Scripture
         {
             var containerBuilder = new ContainerBuilder();
 
-            services.AddConfiguration(Configuration);
+            services.AddConfiguration (Configuration);
 
-            services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment);
+            services.AddSFRealtimeServer (LoggerFactory, Configuration, IsDevelopment);
 
             services.AddExceptionLogging();
 
             services.AddSFServices();
 
-            services.AddXFAuthentication(Configuration);
+            services.AddXFAuthentication (Configuration);
 
-            services.AddSFDataAccess(Configuration);
+            services.AddSFDataAccess (Configuration);
 
-            services.Configure<RequestLocalizationOptions>(
-                opts =>
+            services
+                .Configure<RequestLocalizationOptions>(opts =>
                 {
                     var supportedCultures = new List<CultureInfo>();
                     foreach (var culture in SharedResource.Cultures)
@@ -92,21 +95,24 @@ namespace SIL.XForge.Scripture
                     }
 
                     opts.DefaultRequestCulture = new RequestCulture("en");
+
                     // Formatting numbers, dates, etc.
                     opts.SupportedCultures = supportedCultures;
+
                     // UI strings that we have localized.
                     opts.SupportedUICultures = supportedCultures;
                 });
 
             services.AddLocalization(options => options.ResourcesPath = "Resources");
 
-            services.AddMvc()
+            services
+                .AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddViewLocalization()
                 .AddDataAnnotationsLocalization(options =>
                 {
                     options.DataAnnotationLocalizerProvider = (type, factory) =>
-                        factory.Create(typeof(SharedResource));
+                        factory.Create(typeof (SharedResource));
                 });
 
             services.AddXFJsonRpc();
@@ -114,15 +120,16 @@ namespace SIL.XForge.Scripture
             if (SpaDevServerStartup == SpaDevServerStartup.None)
             {
                 // In production, the Angular files will be served from this directory
-                services.AddSpaStaticFiles(configuration =>
-                {
-                    configuration.RootPath = "ClientApp/dist";
-                });
+                services
+                    .AddSpaStaticFiles(configuration =>
+                    {
+                        configuration.RootPath = "ClientApp/dist";
+                    });
             }
 
-            services.AddSFMachine(Configuration);
+            services.AddSFMachine (Configuration);
 
-            containerBuilder.Populate(services);
+            containerBuilder.Populate (services);
 
             ApplicationContainer = containerBuilder.Build();
             return new AutofacServiceProvider(ApplicationContainer);
@@ -131,45 +138,46 @@ namespace SIL.XForge.Scripture
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IApplicationLifetime appLifetime)
         {
-            app.UseForwardedHeaders(new ForwardedHeadersOptions
-            {
-                ForwardedHeaders = ForwardedHeaders.All
-            });
+            app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.All });
 
-            if (IsDevelopment)
-                app.UseDeveloperExceptionPage();
+            if (IsDevelopment) app.UseDeveloperExceptionPage();
 
             app.UseExceptionLogging();
 
-            app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
+            app
+                .UseRequestLocalization(app
+                    .ApplicationServices
+                    .GetService<IOptions<RequestLocalizationOptions>>()
+                    .Value);
 
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                // this will allow files without extensions to be served, which is necessary for LetsEncrypt
-                ServeUnknownFileTypes = true,
-                OnPrepareResponse = ctx =>
-                {
-                    ctx.Context.Response.Headers.Add("Cache-Control", "must-revalidate");
-                }
-            });
+            app
+                .UseStaticFiles(new StaticFileOptions {
+                    // this will allow files without extensions to be served, which is necessary for LetsEncrypt
+                    ServeUnknownFileTypes = true,
+                    OnPrepareResponse =
+                        ctx =>
+                        {
+                            ctx.Context.Response.Headers.Add("Cache-Control", "must-revalidate");
+                        }
+                });
             IOptions<SiteOptions> siteOptions = app.ApplicationServices.GetService<IOptions<SiteOptions>>();
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                FileProvider = new PhysicalFileProvider(Path.Combine(siteOptions.Value.SiteDir, "audio")),
-                RequestPath = "/assets/audio"
-            });
+            app
+                .UseStaticFiles(new StaticFileOptions {
+                    FileProvider = new PhysicalFileProvider(Path.Combine(siteOptions.Value.SiteDir, "audio")),
+                    RequestPath = "/assets/audio"
+                });
 
-            if (SpaDevServerStartup == SpaDevServerStartup.None)
-                app.UseSpaStaticFiles();
+            if (SpaDevServerStartup == SpaDevServerStartup.None) app.UseSpaStaticFiles();
 
             app.UseAuthentication();
 
             app.UseSFJsonRpc();
 
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(name: "default", template: "{controller}/{action=Index}/{id?}");
-            });
+            app
+                .UseMvc(routes =>
+                {
+                    routes.MapRoute(name: "default", template: "{controller}/{action=Index}/{id?}");
+                });
 
             app.UseRealtimeServer();
 
@@ -179,23 +187,23 @@ namespace SIL.XForge.Scripture
 
             // setup all server-side routes before SPA client-side routes, so that the server-side routes supercede the
             // client-side routes
-            app.UseSpa(spa =>
-            {
-                // To learn more about options for serving an Angular SPA from ASP.NET Core,
-                // see https://go.microsoft.com/fwlink/?linkid=864501
-                spa.Options.SourcePath = "ClientApp";
-
-                switch (SpaDevServerStartup)
+            app
+                .UseSpa(spa =>
                 {
-                    case SpaDevServerStartup.Start:
-                        spa.UseAngularCliServer(npmScript: "start:no-progress");
-                        break;
+                    // To learn more about options for serving an Angular SPA from ASP.NET Core,
+                    // see https://go.microsoft.com/fwlink/?linkid=864501
+                    spa.Options.SourcePath = "ClientApp";
 
-                    case SpaDevServerStartup.Listen:
-                        spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
-                        break;
-                }
-            });
+                    switch (SpaDevServerStartup)
+                    {
+                        case SpaDevServerStartup.Start:
+                            spa.UseAngularCliServer(npmScript: "start:no-progress");
+                            break;
+                        case SpaDevServerStartup.Listen:
+                            spa.UseProxyToSpaDevelopmentServer("http://localhost:4200");
+                            break;
+                    }
+                });
 
             appLifetime.ApplicationStopped.Register(() => ApplicationContainer.Dispose());
         }

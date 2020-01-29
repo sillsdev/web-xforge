@@ -25,16 +25,20 @@ namespace SIL.XForge.Realtime
             return _logger.IsEnabled(logLevel);
         }
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception,
-            Func<TState, Exception, string> formatter)
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception exception,
+            Func<TState, Exception, string> formatter
+        )
         {
             if (logLevel == LogLevel.Error && exception == null)
             {
                 string message = formatter(state, exception);
-                if (message == "For help, see: https://nodejs.org/en/docs/inspector")
-                    logLevel = LogLevel.Warning;
+                if (message == "For help, see: https://nodejs.org/en/docs/inspector") logLevel = LogLevel.Warning;
             }
-            _logger.Log(logLevel, eventId, state, exception, formatter);
+            _logger.Log (logLevel, eventId, state, exception, formatter);
         }
     }
 }

@@ -4,7 +4,7 @@ namespace SIL.XForge.Configuration
     {
         public static string GetSectionName<T>()
         {
-            string sectionName = typeof(T).Name;
+            string sectionName = typeof (T).Name;
             if (sectionName.EndsWith("Options"))
                 sectionName = sectionName.Substring(0, sectionName.Length - "Options".Length);
             return sectionName;

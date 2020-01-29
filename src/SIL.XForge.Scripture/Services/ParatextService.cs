@@ -30,14 +30,23 @@ namespace SIL.XForge.Scripture.Services
     public class ParatextService : DisposableBase, IParatextService
     {
         private readonly IOptions<ParatextOptions> _options;
+
         private readonly IRepository<UserSecret> _userSecret;
+
         private readonly IRealtimeService _realtimeService;
+
         private readonly HttpClientHandler _httpClientHandler;
+
         private readonly HttpClient _dataAccessClient;
+
         private readonly HttpClient _registryClient;
 
-        public ParatextService(IHostingEnvironment env, IOptions<ParatextOptions> options,
-            IRepository<UserSecret> userSecret, IRealtimeService realtimeService)
+        public ParatextService(
+            IHostingEnvironment env,
+            IOptions<ParatextOptions> options,
+            IRepository<UserSecret> userSecret,
+            IRealtimeService realtimeService
+        )
         {
             _options = options;
             _userSecret = userSecret;
@@ -48,8 +57,8 @@ namespace SIL.XForge.Scripture.Services
             _registryClient = new HttpClient(_httpClientHandler);
             if (env.IsDevelopment() || env.IsEnvironment("Testing"))
             {
-                _httpClientHandler.ServerCertificateCustomValidationCallback
-                    = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                _httpClientHandler.ServerCertificateCustomValidationCallback =
+                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
                 _dataAccessClient.BaseAddress = new Uri("https://data-access-dev.paratext.org");
                 _registryClient.BaseAddress = new Uri("https://registry-dev.paratext.org");
             }
@@ -71,26 +80,31 @@ namespace SIL.XForge.Scripture.Services
             var repos = new Dictionary<string, string>();
             foreach (XElement repoElem in reposElem.Elements("repo"))
             {
-                var projId = (string)repoElem.Element("projid");
-                XElement userElem = repoElem.Element("users")?.Elements("user")
-                    ?.FirstOrDefault(ue => (string)ue.Element("name") == username);
-                repos[projId] = (string)userElem?.Element("role");
+                var projId = (string) repoElem.Element("projid");
+                XElement userElem =
+                    repoElem
+                        .Element("users")?
+                        .Elements("user")?
+                        .FirstOrDefault(ue => (string) ue.Element("name") == username);
+                repos[projId] = (string) userElem?.Element("role");
             }
-            Dictionary<string, SFProject> existingProjects = (await _realtimeService.QuerySnapshots<SFProject>()
-                .Where(p => repos.Keys.Contains(p.ParatextId))
-                .ToListAsync()).ToDictionary(p => p.ParatextId);
+            Dictionary<string, SFProject> existingProjects =
+                (
+                await _realtimeService
+                    .QuerySnapshots<SFProject>()
+                    .Where(p => repos.Keys.Contains(p.ParatextId))
+                    .ToListAsync()
+                ).ToDictionary(p => p.ParatextId);
             response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get, "projects");
             var projectArray = JArray.Parse(response);
             var projects = new List<ParatextProject>();
             foreach (JToken projectObj in projectArray)
             {
-                JToken identificationObj = projectObj["identification_systemId"]
-                    .FirstOrDefault(id => (string)id["type"] == "paratext");
-                if (identificationObj == null)
-                    continue;
-                string paratextId = (string)identificationObj["text"];
-                if (!repos.TryGetValue(paratextId, out string role))
-                    continue;
+                JToken identificationObj =
+                    projectObj["identification_systemId"].FirstOrDefault(id => (string) id["type"] == "paratext");
+                if (identificationObj == null) continue;
+                string paratextId = (string) identificationObj["text"];
+                if (!repos.TryGetValue(paratextId, out string role)) continue;
 
                 // determine if the project is connectable, i.e. either the project exists and the user hasn't been
                 // added to the project, or the project doesn't exist and the user is the administrator
@@ -112,45 +126,44 @@ namespace SIL.XForge.Scripture.Services
                     isConnectable = false;
                 }
 
-                projects.Add(new ParatextProject
-                {
-                    ParatextId = paratextId,
-                    Name = (string)projectObj["identification_name"],
-                    ShortName = (string)projectObj["identification_shortName"],
-                    LanguageTag = (string)projectObj["language_ldml"],
-                    ProjectId = projectId,
-                    IsConnectable = isConnectable,
-                    IsConnected = isConnected
-                });
+                projects
+                    .Add(new ParatextProject {
+                        ParatextId = paratextId,
+                        Name = (string) projectObj["identification_name"],
+                        ShortName = (string) projectObj["identification_shortName"],
+                        LanguageTag = (string) projectObj["language_ldml"],
+                        ProjectId = projectId,
+                        IsConnectable = isConnectable,
+                        IsConnected = isConnected
+                    });
             }
             return projects.OrderBy(p => p.Name, StringComparer.InvariantCulture).ToArray();
         }
 
-
-
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
         {
-            if (userSecret.ParatextTokens == null)
-                return Attempt.Failure((string)null);
+            if (userSecret.ParatextTokens == null) return Attempt.Failure((string) null);
             try
             {
                 var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
                 Claim subClaim = accessToken.Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject);
-                string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
+                string response =
+                    await CallApiAsync(_registryClient,
+                    userSecret,
+                    HttpMethod.Get,
                     $"projects/{paratextId}/members/{subClaim.Value}");
                 var memberObj = JObject.Parse(response);
-                return Attempt.Success((string)memberObj["role"]);
+                return Attempt.Success((string) memberObj["role"]);
             }
             catch (HttpRequestException)
             {
-                return Attempt.Failure((string)null);
+                return Attempt.Failure((string) null);
             }
         }
 
         public string GetParatextUsername(UserSecret userSecret)
         {
-            if (userSecret.ParatextTokens == null)
-                return null;
+            if (userSecret.ParatextTokens == null) return null;
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim usernameClaim = accessToken.Claims.FirstOrDefault(c => c.Type == "username");
             return usernameClaim?.Value;
@@ -160,7 +173,7 @@ namespace SIL.XForge.Scripture.Services
         {
             string response = await CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Get, $"books/{projectId}");
             var books = XElement.Parse(response);
-            string[] bookIds = books.Elements("Book").Select(b => (string)b.Attribute("id")).ToArray();
+            string[] bookIds = books.Elements("Book").Select(b => (string) b.Attribute("id")).ToArray();
             return bookIds;
         }
 
@@ -170,11 +183,14 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>Update cloud with new edits in usxText and return the combined result.</summary>
-        public Task<string> UpdateBookTextAsync(UserSecret userSecret, string projectId, string bookId,
-            string revision, string usxText)
+        public Task<string>
+        UpdateBookTextAsync(UserSecret userSecret, string projectId, string bookId, string revision, string usxText)
         {
-            return CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Post,
-                $"text/{projectId}/{revision}/{bookId}", usxText);
+            return CallApiAsync(_dataAccessClient,
+            userSecret,
+            HttpMethod.Post,
+            $"text/{projectId}/{revision}/{bookId}",
+            usxText);
         }
 
         public Task<string> GetNotesAsync(UserSecret userSecret, string projectId, string bookId)
@@ -187,15 +203,16 @@ namespace SIL.XForge.Scripture.Services
             return CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Post, $"notes/{projectId}", notesText);
         }
 
-        public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
-            string projectId)
+        public async Task<IReadOnlyDictionary<string, string>>
+        GetProjectRolesAsync(UserSecret userSecret, string projectId)
         {
-            string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
-                $"projects/{projectId}/members");
+            string response =
+                await CallApiAsync(_registryClient, userSecret, HttpMethod.Get, $"projects/{projectId}/members");
             var members = JArray.Parse(response);
-            return members.OfType<JObject>()
-                .Where(m => !string.IsNullOrEmpty((string)m["userId"]) && !string.IsNullOrEmpty((string)m["role"]))
-                .ToDictionary(m => (string)m["userId"], m => (string)m["role"]);
+            return members
+                .OfType<JObject>()
+                .Where(m => !string.IsNullOrEmpty((string) m["userId"]) && !string.IsNullOrEmpty((string) m["role"]))
+                .ToDictionary(m => (string) m["userId"], m => (string) m["role"]);
         }
 
         private async Task RefreshAccessTokenAsync(UserSecret userSecret)
@@ -203,16 +220,18 @@ namespace SIL.XForge.Scripture.Services
             var request = new HttpRequestMessage(HttpMethod.Post, "api8/token");
 
             ParatextOptions options = _options.Value;
-            var requestObj = new JObject(
-                new JProperty("grant_type", "refresh_token"),
-                new JProperty("client_id", options.ClientId),
-                new JProperty("client_secret", options.ClientSecret),
-                new JProperty("refresh_token", userSecret.ParatextTokens.RefreshToken));
+            var requestObj =
+                new JObject(new JProperty("grant_type", "refresh_token"),
+                    new JProperty("client_id", options.ClientId),
+                    new JProperty("client_secret", options.ClientSecret),
+                    new JProperty("refresh_token", userSecret.ParatextTokens.RefreshToken));
             request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
             HttpResponseMessage response = await _registryClient.SendAsync(request);
-            if ((int)response.StatusCode >= 400)
+            if ((int) response.StatusCode >= 400)
             {
-                Console.WriteLine($"ParatextService.RefreshAccessTokenAsync received {(int)response.StatusCode} HTTP response");
+                Console
+                    .WriteLine($"ParatextService.RefreshAccessTokenAsync received {(int)}{
+                        response.StatusCode} HTTP response");
                 Console.WriteLine("Response content:");
                 Console.WriteLine(await response.Content.ReadAsStringAsync());
             }
@@ -220,19 +239,18 @@ namespace SIL.XForge.Scripture.Services
 
             string responseJson = await response.Content.ReadAsStringAsync();
             var responseObj = JObject.Parse(responseJson);
-            userSecret.ParatextTokens = new Tokens
-            {
-                AccessToken = (string)responseObj["access_token"],
-                RefreshToken = (string)responseObj["refresh_token"],
-            };
+            userSecret.ParatextTokens =
+                new Tokens {
+                    AccessToken = (string) responseObj["access_token"],
+                    RefreshToken = (string) responseObj["refresh_token"]
+                };
             await _userSecret.UpdateAsync(userSecret, b => b.Set(u => u.ParatextTokens, userSecret.ParatextTokens));
         }
 
-        private async Task<string> CallApiAsync(HttpClient client, UserSecret userSecret, HttpMethod method,
-            string url, string content = null)
+        private async Task<string>
+        CallApiAsync(HttpClient client, UserSecret userSecret, HttpMethod method, string url, string content = null)
         {
-            if (userSecret == null)
-                throw new SecurityException("The current user is not signed into Paratext.");
+            if (userSecret == null) throw new SecurityException("The current user is not signed into Paratext.");
 
             bool expired = !userSecret.ParatextTokens.ValidateLifetime();
             bool refreshed = false;
@@ -245,10 +263,9 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 var request = new HttpRequestMessage(method, $"api8/{url}");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
-                    userSecret.ParatextTokens.AccessToken);
-                if (content != null)
-                    request.Content = new StringContent(content);
+                request.Headers.Authorization =
+                    new AuthenticationHeaderValue("Bearer", userSecret.ParatextTokens.AccessToken);
+                if (content != null) request.Content = new StringContent(content);
                 HttpResponseMessage response = await client.SendAsync(request);
                 if (response.IsSuccessStatusCode)
                 {
@@ -261,8 +278,8 @@ namespace SIL.XForge.Scripture.Services
                 else
                 {
                     string error = await response.Content.ReadAsStringAsync();
-                    throw new HttpRequestException(
-                        $"HTTP Request error, Code: {response.StatusCode}, Content: {error}");
+                    throw new HttpRequestException($"HTTP Request error, Code: {response.StatusCode}, Content: {
+                            error}");
                 }
             }
 
