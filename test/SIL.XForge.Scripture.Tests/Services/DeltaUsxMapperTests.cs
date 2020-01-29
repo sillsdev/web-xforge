@@ -509,6 +509,30 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToUsx_EmptyBookWithNullChapterDeltas()
+        {
+            IEnumerable<ChapterDelta> chapterDeltas = null;
+
+            var mapper = new DeltaUsxMapper();
+            XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), chapterDeltas);
+
+            XDocument expected = Usx("PHM");
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
+        public void ToUsx_EmptyBookWithNoDummyChapterDelta()
+        {
+            var chapterDeltas = new List<ChapterDelta>();
+
+            var mapper = new DeltaUsxMapper();
+            XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), chapterDeltas);
+
+            XDocument expected = Usx("PHM");
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
         public void ToUsx_BlankLine()
         {
             var chapterDelta = new ChapterDelta(1, 3, true, Delta.New()

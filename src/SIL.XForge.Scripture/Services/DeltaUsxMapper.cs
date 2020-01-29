@@ -47,11 +47,15 @@ namespace SIL.XForge.Scripture.Services
         /// PT Data Access gives USX with chapters for each chapter that is
         /// present in its project content. It will skip over chapters that are
         /// not present in its project content. If there are no chapters present
-        /// in the project content, PT Data Access will return USX with no chapters.
+        /// in the project content, PT Data Access will return USX with no explicit
+        /// chapters.
         ///
-        /// ToChapterDeltas will return a ChapterDelta for each chapter in USX.
-        /// If there are no chapters in USX, return a single ChapterDelta with a
-        /// non-null Delta with an empty Ops list.
+        /// ToChapterDeltas will return a ChapterDelta for each chapter in
+        /// USX. If there are no explicit chapters in USX, return a single
+        /// ChapterDelta with a non-null Delta with an empty Ops list. This
+        /// is because every book has at least one chapter. The book
+        /// introduction is part of an implicit first chapter, even if there
+        /// are no explicit chapters.
         /// </summary>
         public IEnumerable<ChapterDelta> ToChapterDeltas(XDocument usxDoc)
         {
@@ -398,6 +402,10 @@ namespace SIL.XForge.Scripture.Services
         public XDocument ToUsx(XDocument oldUsxDoc, IEnumerable<ChapterDelta> chapterDeltas)
         {
             var newUsxDoc = new XDocument(oldUsxDoc);
+            if (chapterDeltas == null || chapterDeltas.Count() == 0)
+            {
+                return newUsxDoc;
+            }
             int curChapter = 1;
             bool firstChapter = false;
             ChapterDelta[] chapterDeltaArray = chapterDeltas.ToArray();
