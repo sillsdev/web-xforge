@@ -115,9 +115,8 @@ describe('CheckingOverviewComponent', () => {
         dateModified: dateNow.toJSON()
       };
 
-      const questionDocId = getQuestionDocId('project01', newQuestion.dataId);
-      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenReturn(
-        env.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, questionDocId, newQuestion)
+      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenCall(() =>
+        env.addQuestion(newQuestion)
       );
 
       env.waitForQuestions();
@@ -131,7 +130,7 @@ describe('CheckingOverviewComponent', () => {
 
       env.clickElement(env.addQuestionButton);
       verify(mockedQuestionDialogService.questionDialog(anything(), undefined)).once();
-      env.fixture.detectChanges();
+      env.waitForQuestions();
       expect(env.textRows.length).toEqual(5); // Matthew, Luke, Luke 1, Question 1, Question 2
       expect(env.questionEditButtons.length).toEqual(2);
     }));
@@ -151,9 +150,8 @@ describe('CheckingOverviewComponent', () => {
         dateModified: dateNow.toJSON()
       };
 
-      const docId = getQuestionDocId('project01', newQuestion.dataId);
-      when(mockedQuestionDialogService.questionDialog(anything(), undefined)).thenReturn(
-        env.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, newQuestion)
+      when(mockedQuestionDialogService.questionDialog(anything(), undefined)).thenCall(() =>
+        env.addQuestion(newQuestion)
       );
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(0);
@@ -161,6 +159,10 @@ describe('CheckingOverviewComponent', () => {
       verify(mockedQuestionDialogService.questionDialog(anything(), undefined)).once();
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(1);
+      env.simulateRowClick(1);
+      const id = new TextDocId('project01', 42, 1);
+      env.simulateRowClick(2, id);
+      expect(env.textRows.length).toEqual(3);
     }));
   });
 
@@ -729,6 +731,7 @@ class TestEnvironment {
   }
 
   waitForQuestions(): void {
+    this.realtimeService.updateAllSubscribeQueries();
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();

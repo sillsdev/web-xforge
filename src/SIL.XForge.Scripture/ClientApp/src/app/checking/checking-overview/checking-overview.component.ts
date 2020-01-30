@@ -185,14 +185,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   getQuestionDocs(textDocId: TextDocId, fromArchive = false): QuestionDoc[] {
-    const textQuestionDocs = this.questionDocs.get(textDocId.toString());
-    if (textQuestionDocs == null) {
-      return [];
-    }
-    if (fromArchive) {
-      return textQuestionDocs.filter(qd => qd.data != null && qd.data.isArchived);
-    }
-    return textQuestionDocs.filter(qd => qd.data != null && !qd.data.isArchived);
+    const textQuestionDocs = this.questionDocs.get(textDocId.toString()) || [];
+    return textQuestionDocs.filter(qd => qd.data != null && qd.data.isArchived === fromArchive);
   }
 
   bookQuestionCount(text: TextInfo, fromArchive = false): number {
@@ -317,11 +311,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       textsByBookId: this.textsByBookId,
       projectId: this.projectDoc.id
     };
-    const resultQuestionDoc = await this.questionDialogService.questionDialog(data, questionDoc);
-    if (resultQuestionDoc != null && questionDoc == null) {
-      // Only add question to the view if a new question was created, not when a question is edited
-      this.addQuestionDoc(resultQuestionDoc);
-    }
+    await this.questionDialogService.questionDialog(data, questionDoc);
   }
 
   getBookName(text: TextInfo): string {
