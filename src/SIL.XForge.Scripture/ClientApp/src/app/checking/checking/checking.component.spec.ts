@@ -175,7 +175,7 @@ describe('CheckingComponent', () => {
       expect().nothing();
     }));
 
-    it('hides add question button for reviewer', fakeAsync(() => {
+    it('hides add question button for community checker', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       expect(env.addQuestionButton).toBeNull();
     }));
