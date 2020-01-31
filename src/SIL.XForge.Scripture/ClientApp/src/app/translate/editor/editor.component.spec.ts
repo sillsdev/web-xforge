@@ -731,6 +731,33 @@ describe('EditorComponent', () => {
 
       env.dispose();
     }));
+
+    it('undo', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_2');
+
+      env.typeCharacters('test');
+      let contents = env.targetEditor.getContents();
+      expect(contents.ops![5].insert).toEqual('test');
+      expect(contents.ops![5].attributes).toEqual({ 'para-contents': true, segment: 'verse_1_2' });
+      expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![6].attributes).toEqual({ 'para-contents': true });
+
+      env.triggerUndo();
+      contents = env.targetEditor.getContents();
+      // check that edit has been undone
+      expect(contents.ops![5].insert).toEqual({ blank: true });
+      expect(contents.ops![5].attributes).toEqual({ 'para-contents': true, segment: 'verse_1_2' });
+      // check to make sure that data after the affected segment hasn't gotten corrupted
+      expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![6].attributes).toEqual({ 'para-contents': true });
+      const selection = env.targetEditor.getSelection();
+      expect(selection!.index).toBe(31);
+      expect(selection!.length).toBe(0);
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
@@ -1160,6 +1187,11 @@ class TestEnvironment {
     this.targetEditor.setSelection(selection.index, 'user');
     this.wait();
     return selection.index;
+  }
+
+  triggerUndo(): void {
+    this.targetEditor.history.undo();
+    this.wait();
   }
 
   dispose(): void {
