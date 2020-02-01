@@ -56,10 +56,6 @@
     "training_completed_successfully": "Təlim uğurla başa çatdı",
     "verse_too_long_for_suggestions": "Bu ayə təkliflər irəli sürmək üçün çox uzundur."
   },
-  "project_deleted_dialog": {
-    "ok": "Tamam",
-    "project_has_been_deleted": "Layihə silinib və ya artıq mövcud deyil."
-  },
   "question_answered_dialog": {
     "cancel": "Ləğv etmək",
     "consider_creating_new_question": "Bu sualı redaktə etmək əvəzinə yeni bir sual yaratmağı düşünün.",
@@ -70,14 +66,18 @@
     "add_question_denied": "İcazə rədd edildi: yalnız layihə meneceri sualları əlavə edə və düzəldə bilər.",
     "cancel": "Ləğv etmək",
     "edit_question": "Sual redaktə etmək",
+    "end_reference": "Sonuncu istinad",
+    "enter_a_reference_to_load_text": "Mətn yükləmək üçün bir istinad daxil edin",
     "example_verse": "məsələn, Yəh 3:16",
     "must_be_after_scripture_reference": "{{ boldStart }}Kəlama istinaddan{{ boldEnd }} sonra olmalıdır",
     "must_be_inside_verse_range": "Ayənin çərçivəsindən kənar olmamalıdır",
     "must_be_same_book_and_chapter": "Eyni kitab və fəsil olmalıdır",
     "new_question": "Yeni sual",
+    "question": "Sual",
     "recording_stopped": "Sualınız səslə yazılarkən avtomatik dayandı.",
     "required_with_asterisk": "*Tələb olunur",
-    "save": "Yadda saxlamaq"
+    "save": "Yadda saxlamaq",
+    "scripture_reference": "Kəlamin istinadı"
   },
   "settings": {
     "anyone_with_a_link": "Keçid ilə hər bir kəs",
@@ -123,6 +123,11 @@
     "synchronize_project": "{{ projectName }} Paratext ilə sinxronlaşdırıldı",
     "your_project_is_being_synchronized": "Sizin layihəniz sinxronlaşdırılır..."
   },
+  "text": {
+    "book_does_not_exist": "Bu kitab mövcud deyil.",
+    "book_is_empty": "Bu kitab boşdur. Paratext proqramın köməyi ilə fəsillər əlavə edin.",
+    "loading": "Yüklənir..."
+  },
   "translate_overview": {
     "progress": "Tərəqqi",
     "quality": "Keyfiyyət",
@@ -130,7 +135,7 @@
     "suggestion_engine": "Təklif Mexanizmi",
     "trained_segments": "öyrədilən parçalar",
     "training": "Təlim...",
-    "translate_overview": "Tərcüməni gözdən keçirmək",
+    "translate_overview": "Tərcümənin Xülasəsi",
     "translated_segments": "{{ total }} hissənin {{ translatedSegments }}"
   },
   "users": {
