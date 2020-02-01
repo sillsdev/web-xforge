@@ -56,10 +56,6 @@
     "training_completed_successfully": "Training completed successfully",
     "verse_too_long_for_suggestions": "This verse is too long to generate suggestions."
   },
-  "project_deleted_dialog": {
-    "ok": "OK",
-    "project_has_been_deleted": "The project has been deleted or is no longer accessible."
-  },
   "question_answered_dialog": {
     "cancel": "Отмена",
     "consider_creating_new_question": "Рассмотрите возможность создания нового вопроса вместо редактирования этого вопроса.",
@@ -70,14 +66,18 @@
     "add_question_denied": "Нет доступа: только администратор проекта может добавлять и редактировать вопросы.",
     "cancel": "Отменить",
     "edit_question": "Редактировать вопрос",
+    "end_reference": "End reference",
+    "enter_a_reference_to_load_text": "Enter a reference to load text",
     "example_verse": "например, Ин 3:16",
     "must_be_after_scripture_reference": "Должно быть после {{ boldStart }}ссылки на Писание{{ boldEnd }}",
     "must_be_inside_verse_range": "Должно быть внутри диапазона стихов",
     "must_be_same_book_and_chapter": "Должна быть та же самая книга и глава",
     "new_question": "Новый вопрос",
+    "question": "Question",
     "recording_stopped": "Запись вашего ответа была автоматически остановлена.",
     "required_with_asterisk": "*Необходимый пункт",
-    "save": "Сохранить"
+    "save": "Сохранить",
+    "scripture_reference": "Scripture reference"
   },
   "settings": {
     "anyone_with_a_link": "Anyone with a link",
@@ -122,6 +122,11 @@
     "synchronize": "Синхронизировать",
     "synchronize_project": "Synchronize {{ projectName }} with Paratext",
     "your_project_is_being_synchronized": "Your project is being synchronized..."
+  },
+  "text": {
+    "book_does_not_exist": "This book does not exist.",
+    "book_is_empty": "This book is empty. Add chapters in Paratext.",
+    "loading": "Loading..."
   },
   "translate_overview": {
     "progress": "Progress",

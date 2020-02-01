@@ -56,10 +56,6 @@
     "training_completed_successfully": "Entrenamiento completado con éxito",
     "verse_too_long_for_suggestions": "Este versículo es demasiado largo para generar sugerencias."
   },
-  "project_deleted_dialog": {
-    "ok": "OK",
-    "project_has_been_deleted": "El proyecto ha sido borrado o ya no es accesible."
-  },
   "question_answered_dialog": {
     "cancel": "Cancelar",
     "consider_creating_new_question": "Considere la posibilidad de crear una nueva pregunta en lugar de editarla.",
@@ -70,14 +66,18 @@
     "add_question_denied": "Permiso denegado: sólo el administrador del proyecto puede añadir y editar preguntas.",
     "cancel": "Cancelar",
     "edit_question": "Editar Pregunta",
+    "end_reference": "Referencia final",
+    "enter_a_reference_to_load_text": "Introducir una referencia para cargar el texto",
     "example_verse": "p.ej. JHN 3:16",
     "must_be_after_scripture_reference": "Debe ser después de {{ boldStart }}Referencia bíblica{{ boldEnd }}",
     "must_be_inside_verse_range": "Debe estar dentro del rango de versículos",
     "must_be_same_book_and_chapter": "Debe ser el mismo libro y capítulo",
     "new_question": "Nueva pregunta",
+    "question": "Pregunta",
     "recording_stopped": "La grabación de su pregunta se detuvo automáticamente.",
     "required_with_asterisk": "*Requerido",
-    "save": "Guardar"
+    "save": "Guardar",
+    "scripture_reference": "Referencia bíblica"
   },
   "settings": {
     "anyone_with_a_link": "Cualquiera con un enlace",
@@ -122,6 +122,11 @@
     "synchronize": "Sincronizar",
     "synchronize_project": "Sincronizar {{ projectName }} con Paratext",
     "your_project_is_being_synchronized": "Su proyecto está siendo sincronizado..."
+  },
+  "text": {
+    "book_does_not_exist": "Este libro no existe.",
+    "book_is_empty": "Este libro está vacío. Añadir capítulos en Paratext.",
+    "loading": "Cargando..."
   },
   "translate_overview": {
     "progress": "Progreso",
