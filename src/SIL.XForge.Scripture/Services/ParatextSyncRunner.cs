@@ -327,6 +327,15 @@ namespace SIL.XForge.Scripture.Services
                 tasks.Add(textDoc.FetchAsync());
             }
             await Task.WhenAll(tasks);
+
+            // Omit items that are not actually in the database.
+            foreach (KeyValuePair<int, IDocument<Models.TextData>> item in textDocs.ToList())
+            {
+                if (!item.Value.IsLoaded)
+                {
+                    textDocs.Remove(item.Key);
+                }
+            }
             return textDocs;
         }
 
