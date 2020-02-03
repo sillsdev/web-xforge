@@ -322,9 +322,17 @@ namespace SIL.XForge.Scripture.Services
             var tasks = new List<Task>();
             foreach (Chapter chapter in text.Chapters)
             {
-                IDocument<Models.TextData> textDoc = GetTextDoc(text, chapter.Number, textType);
-                textDocs[chapter.Number] = textDoc;
-                tasks.Add(textDoc.FetchAsync());
+                async Task getChapterDoc()
+                {
+                    IDocument<Models.TextData> textDoc = GetTextDoc(text, chapter.Number, textType);
+                    await textDoc.FetchAsync();
+                    if (textDoc.IsLoaded)
+                    {
+                        textDocs[chapter.Number] = textDoc;
+                    }
+                }
+
+                tasks.Add(getChapterDoc());
             }
             await Task.WhenAll(tasks);
             return textDocs;
