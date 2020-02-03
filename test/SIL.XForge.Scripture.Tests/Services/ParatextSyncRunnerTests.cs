@@ -484,6 +484,31 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_DbMissingChapter()
+        {
+            // The project in the DB has a book, but a Source chapter is missing from that book.
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
+            env.SetupPTData(new Book("MAT", 3, true));
+
+            // DB should start with Target chapter 2 but without Source chapter 2.
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), Arg.Any<string>(), Arg.Any<string>());
+
+            var chapterContent = Delta.New().InsertText("text");
+            // DB should contain Source chapter 2 now from Paratext.
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Target).DeepEquals(chapterContent), Is.True);
+            Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(chapterContent), Is.True);
+        }
+
+        [Test]
         public async Task SyncAsync_ParatextMissingChapter()
         {
             // The project in Paratext has a book, but a chapter is missing from that book.
@@ -514,6 +539,28 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
             Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.True);
             Assert.That(env.ContainsText("MAT", 3, TextType.Source), Is.True);
+        }
+
+        [Test]
+        public async Task SyncAsync_DbAndParatextMissingChapter()
+        {
+            // The project has a book, but a Source chapter is missing from that book. Both in the DB and in Paratext.
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
+            env.SetupPTData(new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
+
+            // DB should start without Source chapter 2.
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            env.Logger.DidNotReceiveWithAnyArgs().LogError(Arg.Any<Exception>(), Arg.Any<string>(), Arg.Any<string>());
+
+            // DB should still be missing Source chapter 2.
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Source), Is.False);
         }
 
         [Test]
@@ -570,6 +617,45 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
             Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
         }
+
+        [Test]
+        public async Task FetchTextDocsAsync_MissingRequestedChapters()
+        {
+            // In production, the expected chapters list, used to specify
+            // what FetchTextDocsAsync() should fetch, comes from the
+            // SF DB project doc texts.chapters array. This array
+            // specifies what Target chapter text docs the SF DB should
+            // ave. Re-using the Target chapter list when fetching Source
+            // chapter text docs from the SF DB can lead to problems if
+            // FetchTextDocsAsync() does not omit ones that aren't
+            // actually in the DB.
+
+            var env = new TestEnvironment();
+            var highestChapter = 20;
+            var missingSourceChapters = new HashSet<int>() { 2, 3, 10, 12 };
+            var existingTargetChapters = Enumerable.Range(1, highestChapter);
+            var existingSourceChapters = Enumerable.Range(1, highestChapter).Except(missingSourceChapters);
+            Assert.That(existingSourceChapters.Count(),
+                Is.EqualTo(highestChapter - missingSourceChapters.Count()), "setup");
+            Assert.That(existingTargetChapters.Count(),
+                Is.GreaterThan(existingSourceChapters.Count()), "setup");
+            var book = new Book("MAT", highestChapter, true) { MissingSourceChapters = missingSourceChapters };
+            env.SetupSFData(true, true, false, book);
+            await env.Runner.InitAsync("project01", "user01");
+
+            // SUT
+            var targetFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Target);
+            var sourceFetch = await env.Runner.FetchTextDocsAsync(env.TextInfoFromBook(book), TextType.Source);
+
+            env.Runner.CloseConnection();
+
+            // Fetched only non-missing chapters. None have null Data.
+            Assert.That(targetFetch.Keys.SequenceEqual(existingTargetChapters));
+            Assert.That(sourceFetch.Keys.SequenceEqual(existingSourceChapters));
+            Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+            Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
+        }
+
         private class Book
         {
             public Book(string bookId, int highestChapter, bool hasSource = true)
