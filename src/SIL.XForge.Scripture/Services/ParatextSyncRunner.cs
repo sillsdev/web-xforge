@@ -191,11 +191,11 @@ namespace SIL.XForge.Scripture.Services
             }
             finally
             {
-                _conn?.Dispose();
+                CloseConnection();
             }
         }
 
-        private async Task<bool> InitAsync(string projectId, string userId)
+        internal async Task<bool> InitAsync(string projectId, string userId)
         {
             _conn = await _realtimeService.ConnectAsync();
             _projectDoc = await _conn.FetchAsync<SFProject>(projectId);
@@ -215,6 +215,11 @@ namespace SIL.XForge.Scripture.Services
             if (!_fileSystemService.DirectoryExists(WorkingDir))
                 _fileSystemService.CreateDirectory(WorkingDir);
             return true;
+        }
+
+        internal void CloseConnection()
+        {
+            _conn?.Dispose();
         }
 
         private async Task<List<Chapter>> SyncOrCloneBookUsxAsync(TextInfo text, TextType textType, string paratextId,
@@ -310,7 +315,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Fetches all text docs from the database for a book.
         /// </summary>
-        private async Task<SortedList<int, IDocument<Models.TextData>>> FetchTextDocsAsync(TextInfo text,
+        internal async Task<SortedList<int, IDocument<Models.TextData>>> FetchTextDocsAsync(TextInfo text,
             TextType textType)
         {
             var textDocs = new SortedList<int, IDocument<Models.TextData>>();
