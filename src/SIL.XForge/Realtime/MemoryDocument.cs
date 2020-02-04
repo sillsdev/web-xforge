@@ -43,6 +43,10 @@ namespace SIL.XForge.Realtime
 
         public async Task DeleteAsync()
         {
+            if (!_repo.Contains(Id))
+            {
+                throw new Microsoft.AspNetCore.NodeServices.HostingModels.NodeInvocationException("Document does not exist", "Would be received in production.");
+            }
             await _repo.DeleteAsync(Id);
             Data = default(T);
             Version = -1;
