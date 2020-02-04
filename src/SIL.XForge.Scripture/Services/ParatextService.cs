@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -9,59 +10,86 @@ using System.Security;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Linq;
+using System.Xml;
+using System.Xml.XPath;
 using IdentityModel;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
+using Paratext.Data;
+using Paratext.Data.Repository;
+using Paratext.Data.Users;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Services;
 using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>
     /// This class contains methods for interacting with the Paratext web service APIs.
+    ///
+    /// TODO: Implement progress reporting. PT uses singleton classes to handle progress. Implement ProgressDisplay
+    /// interface and call Progress.Mgr.SetDisplay() to get progress reports. Make sure that you call SetDisplay() right
+    /// before you call any ParatextData code. The Progress.Mgr instance has a ThreadStatic attribute in order to make
+    /// it thread-safe. If anything is awaited, then a different thread might take over for the call stack. If this
+    /// occurs, a different ProgressDisplay instance will receive the progress reports.
     /// </summary>
     public class ParatextService : DisposableBase, IParatextService
     {
-        private readonly IOptions<ParatextOptions> _options;
+        private readonly IOptions<ParatextOptions> _paratextOptions;
         private readonly IRepository<UserSecret> _userSecret;
         private readonly IRealtimeService _realtimeService;
+        private readonly IOptions<SiteOptions> _siteOptions;
+        private readonly IFileSystemService _fileSystemService;
         private readonly HttpClientHandler _httpClientHandler;
-        private readonly HttpClient _dataAccessClient;
         private readonly HttpClient _registryClient;
         private readonly IExceptionHandler _exceptionHandler;
+        private readonly bool _useDevServer;
 
-        public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> options,
-            IRepository<UserSecret> userSecret, IRealtimeService realtimeService, IExceptionHandler exceptionHandler)
+        public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
+            IRepository<UserSecret> userSecret, IRealtimeService realtimeService, IExceptionHandler exceptionHandler,
+            IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService)
         {
-            _options = options;
+            _paratextOptions = paratextOptions;
             _userSecret = userSecret;
             _realtimeService = realtimeService;
             _exceptionHandler = exceptionHandler;
+            _siteOptions = siteOptions;
+            _fileSystemService = fileSystemService;
 
+            // TODO: use RegistryServer from ParatextData instead of calling registry API directly?
             _httpClientHandler = new HttpClientHandler();
-            _dataAccessClient = new HttpClient(_httpClientHandler);
             _registryClient = new HttpClient(_httpClientHandler);
             if (env.IsDevelopment() || env.IsEnvironment("Testing"))
             {
                 _httpClientHandler.ServerCertificateCustomValidationCallback
                     = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                _dataAccessClient.BaseAddress = new Uri("https://data-access-dev.paratext.org");
                 _registryClient.BaseAddress = new Uri("https://registry-dev.paratext.org");
+                _useDevServer = true;
             }
             else
             {
-                _dataAccessClient.BaseAddress = new Uri("https://data-access.paratext.org");
                 _registryClient.BaseAddress = new Uri("https://registry.paratext.org");
+                _useDevServer = false;
             }
             _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
+
+        public void Init()
+        {
+            string syncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
+            if (!_fileSystemService.DirectoryExists(syncDir))
+                _fileSystemService.CreateDirectory(syncDir);
+            // TODO: not sure if using ScrTextCollection is the best idea for a server, since it loads all existing
+            // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
+            // ScrTextCollectionServer class in DataAccessServer.
+            ParatextData.Initialize(syncDir);
         }
 
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
@@ -69,20 +97,18 @@ namespace SIL.XForge.Scripture.Services
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim usernameClaim = accessToken.Claims.FirstOrDefault(c => c.Type == "username");
             string username = usernameClaim?.Value;
-            string response = await CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Get, "projects");
-            var reposElem = XElement.Parse(response);
-            var repos = new Dictionary<string, string>();
-            foreach (XElement repoElem in reposElem.Elements("repo"))
+            var source = new SFInternetSharedRepositorySource(_useDevServer, userSecret);
+            var repos = new Dictionary<string, UserRoles>();
+            foreach (SharedRepository repo in source.GetRepositories())
             {
-                var projId = (string)repoElem.Element("projid");
-                XElement userElem = repoElem.Element("users")?.Elements("user")
-                    ?.FirstOrDefault(ue => (string)ue.Element("name") == username);
-                repos[projId] = (string)userElem?.Element("role");
+                string projId = repo.SendReceiveId;
+                repos[projId] = repo.SourceUsers.GetRole(username);
             }
             Dictionary<string, SFProject> existingProjects = (await _realtimeService.QuerySnapshots<SFProject>()
                 .Where(p => repos.Keys.Contains(p.ParatextId))
                 .ToListAsync()).ToDictionary(p => p.ParatextId);
-            response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get, "projects");
+            // TODO: use RegistryServer from ParatextData instead of calling registry API directly?
+            string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get, "projects");
             var projectArray = JArray.Parse(response);
             var projects = new List<ParatextProject>();
             foreach (JToken projectObj in projectArray)
@@ -92,7 +118,7 @@ namespace SIL.XForge.Scripture.Services
                 if (identificationObj == null)
                     continue;
                 string paratextId = (string)identificationObj["text"];
-                if (!repos.TryGetValue(paratextId, out string role))
+                if (!repos.TryGetValue(paratextId, out UserRoles role))
                     continue;
 
                 // determine if the project is connectable, i.e. either the project exists and the user hasn't been
@@ -106,7 +132,7 @@ namespace SIL.XForge.Scripture.Services
                     isConnected = true;
                     isConnectable = !project.UserRoles.ContainsKey(userSecret.Id);
                 }
-                else if (role == SFProjectRole.Administrator)
+                else if (role == UserRoles.Administrator)
                 {
                     isConnectable = true;
                 }
@@ -129,8 +155,6 @@ namespace SIL.XForge.Scripture.Services
             return projects.OrderBy(p => p.Name, StringComparer.InvariantCulture).ToArray();
         }
 
-
-
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
         {
             if (userSecret.ParatextTokens == null)
@@ -139,6 +163,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
                 Claim subClaim = accessToken.Claims.FirstOrDefault(c => c.Type == JwtClaimTypes.Subject);
+                // TODO: use RegistryServer from ParatextData instead of calling registry API directly?
                 string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
                     $"projects/{paratextId}/members/{subClaim.Value}");
                 var memberObj = JObject.Parse(response);
@@ -159,40 +184,10 @@ namespace SIL.XForge.Scripture.Services
             return usernameClaim?.Value;
         }
 
-        public async Task<IReadOnlyList<string>> GetBooksAsync(UserSecret userSecret, string projectId)
-        {
-            string response = await CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Get, $"books/{projectId}");
-            var books = XElement.Parse(response);
-            string[] bookIds = books.Elements("Book").Select(b => (string)b.Attribute("id")).ToArray();
-            return bookIds;
-        }
-
-        public Task<string> GetBookTextAsync(UserSecret userSecret, string projectId, string bookId)
-        {
-            return CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Get, $"text/{projectId}/{bookId}");
-        }
-
-        /// <summary>Update cloud with new edits in usxText and return the combined result.</summary>
-        public Task<string> UpdateBookTextAsync(UserSecret userSecret, string projectId, string bookId,
-            string revision, string usxText)
-        {
-            return CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Post,
-                $"text/{projectId}/{revision}/{bookId}", usxText);
-        }
-
-        public Task<string> GetNotesAsync(UserSecret userSecret, string projectId, string bookId)
-        {
-            return CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Get, $"notes/{projectId}/{bookId}");
-        }
-
-        public Task<string> UpdateNotesAsync(UserSecret userSecret, string projectId, string notesText)
-        {
-            return CallApiAsync(_dataAccessClient, userSecret, HttpMethod.Post, $"notes/{projectId}", notesText);
-        }
-
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
             string projectId)
         {
+            // TODO: use RegistryServer from ParatextData instead of calling registry API directly?
             string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
                 $"projects/{projectId}/members");
             var members = JArray.Parse(response);
@@ -201,11 +196,72 @@ namespace SIL.XForge.Scripture.Services
                 .ToDictionary(m => (string)m["userId"], m => (string)m["role"]);
         }
 
+        public IReadOnlyList<int> GetBooks(string projectId)
+        {
+            // TODO: this is a guess at how to implement this method
+            ScrText scrText = ScrTextCollection.FindById(projectId);
+            if (scrText == null)
+                return Array.Empty<int>();
+            return scrText.Settings.BooksPresentSet.SelectedBookNumbers.ToArray();
+        }
+
+        public string GetBookText(string projectId, int bookNum)
+        {
+            // TODO: this is a guess at how to implement this method
+            ScrText scrText = ScrTextCollection.GetById(projectId);
+            string usfm = scrText.GetText(bookNum);
+            return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
+        }
+
+        public void PutBookText(string projectId, int bookNum, string usx)
+        {
+            // TODO: this is a guess at how to implement this method
+            ScrText scrText = ScrTextCollection.GetById(projectId);
+            var doc = new XmlDocument
+            {
+                PreserveWhitespace = true
+            };
+            doc.LoadXml(usx);
+            UsxFragmenter.FindFragments(scrText.ScrStylesheet(bookNum), doc.CreateNavigator(),
+                XPathExpression.Compile("*[false()]"), out string usfm);
+            scrText.PutText(bookNum, 0, false, usfm, null);
+        }
+
+        public string GetNotes(string projectId, int bookNum)
+        {
+            // TODO: get notes using CommentManager, see DataAccessServer.HandleNotesRequest for an example
+            // should return some data structure instead of XML
+            throw new NotImplementedException();
+        }
+
+        public void PutNotes(string projectId, string notesText)
+        {
+            // TODO: save notes using CommentManager, see DataAccessServer.HandleNotesUpdateRequest for an example
+            // should accept some data structure instead of XML
+            throw new NotImplementedException();
+        }
+
+        public void SendReceive(UserSecret userSecret, IEnumerable<string> projectIds)
+        {
+            // TODO: this is a guess at how to implement this method
+            var source = new SFInternetSharedRepositorySource(_useDevServer, userSecret);
+            SharedRepository[] repos = source.GetRepositories().ToArray();
+            var sharedProjects = new List<SharedProject>();
+            foreach (string projectId in projectIds)
+            {
+                SharedRepository repo = repos.First(r => r.SendReceiveId == projectId);
+                SharedProject sharedProject = SharingLogic.CreateSharedProject(projectId, repo.ScrTextName, source,
+                    repos);
+                sharedProjects.Add(sharedProject);
+            }
+            SharingLogic.ShareChanges(sharedProjects, source, out List<SendReceiveResult> results, sharedProjects);
+        }
+
         private async Task RefreshAccessTokenAsync(UserSecret userSecret)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, "api8/token");
 
-            ParatextOptions options = _options.Value;
+            ParatextOptions options = _paratextOptions.Value;
             var requestObj = new JObject(
                 new JProperty("grant_type", "refresh_token"),
                 new JProperty("client_id", options.ClientId),
@@ -268,7 +324,6 @@ namespace SIL.XForge.Scripture.Services
 
         protected override void DisposeManagedResources()
         {
-            _dataAccessClient.Dispose();
             _registryClient.Dispose();
             _httpClientHandler.Dispose();
         }
