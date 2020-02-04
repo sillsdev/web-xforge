@@ -18,8 +18,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.2" />
+    <PackageReference Include="ParatextData" Version="9.1.2-beta" />
     <PackageReference Include="SIL.Machine.WebApi" Version="$(MachineVersion)" />
-    <PackageReference Include="SIL.Scripture" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
