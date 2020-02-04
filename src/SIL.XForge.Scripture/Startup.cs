@@ -179,6 +179,8 @@ namespace SIL.XForge.Scripture
 
             app.UseMachine();
 
+            app.UseSFServices();
+
             app.UseSFDataAccess();
 
             // setup all server-side routes before SPA client-side routes, so that the server-side routes supercede the
