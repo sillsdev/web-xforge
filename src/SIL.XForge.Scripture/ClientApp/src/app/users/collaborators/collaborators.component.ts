@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -21,7 +22,7 @@ interface UserInfo {
 interface Row {
   readonly id: string;
   readonly user: UserInfo;
-  readonly roleName: string;
+  readonly role: string;
   readonly isInvitee: boolean;
 }
 
@@ -97,7 +98,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       return (
         userRow.user &&
         ((userRow.user.displayName && userRow.user.displayName.toLowerCase().includes(term)) ||
-          (userRow.roleName && userRow.roleName.toLowerCase().includes(term)) ||
+          (userRow.role && userRow.role.toLowerCase().includes(term)) ||
           (userRow.user.email && userRow.user.email.toLowerCase().includes(term)))
       );
     });
@@ -184,14 +185,13 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     for (let i = 0; i < users.length; i++) {
       const userId = users[i];
       const index = i;
-      const role = this.projectService.roles.get(this.projectDoc.data.userRoles[userId]);
-      const roleName = role ? role.displayName : '';
+      const role = this.projectDoc.data.userRoles[userId];
       tasks.push(
         this.userService
           .getProfile(userId)
           .then(
             userProfileDoc =>
-              (userRows[index] = { id: userProfileDoc.id, user: userProfileDoc.data || {}, roleName, isInvitee: false })
+              (userRows[index] = { id: userProfileDoc.id, user: userProfileDoc.data || {}, role, isInvitee: false })
           )
       );
     }
@@ -202,13 +202,13 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         return {
           id: '',
           user: { email: invitee },
-          roleName: '',
+          role: '',
           isInvitee: true
         } as Row;
       });
       this._userRows = userRows.concat(invitees);
     } catch {
-      this.noticeService.show('There was a problem loading the list of invited users.');
+      this.noticeService.show(translate('collaborators.problem_loading_invited_users'));
     }
   }
 }

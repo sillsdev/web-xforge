@@ -79,6 +79,15 @@
     "save": "保存",
     "scripture_reference": "Scripture reference"
   },
+  "roles": {
+    "none": "None",
+    "pt_administrator": "管理员",
+    "pt_consultant": "顾问",
+    "pt_observer": "观察者",
+    "pt_translator": "组员",
+    "sf_community_checker": "Community Checker",
+    "sf_reviewer": "Reviewer"
+  },
   "settings": {
     "anyone_with_a_link": "Anyone with a link",
     "based_on": "Based on",

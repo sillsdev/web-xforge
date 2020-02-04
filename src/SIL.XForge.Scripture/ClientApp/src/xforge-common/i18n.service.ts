@@ -156,6 +156,10 @@ export class I18nService {
     return `${this.translateBook(verse.bookNum)} ${verse.chapterNum}:${verse.verse}`;
   }
 
+  translateRole(role: string) {
+    return this.transloco.translate(`roles.${role}`);
+  }
+
   translateAndInsertTags(key: string, params: object = {}) {
     return this.transloco.translate(key, {
       ...params,
