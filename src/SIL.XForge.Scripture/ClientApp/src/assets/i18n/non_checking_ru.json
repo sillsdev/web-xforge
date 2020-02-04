@@ -79,15 +79,6 @@
     "save": "Сохранить",
     "scripture_reference": "Scripture reference"
   },
-  "roles": {
-    "none": "None",
-    "pt_administrator": "Администратор",
-    "pt_consultant": "Консультант",
-    "pt_observer": "Наблюдатель",
-    "pt_translator": "Член Группы",
-    "sf_community_checker": "Community Checker",
-    "sf_reviewer": "Reviewer"
-  },
   "settings": {
     "anyone_with_a_link": "Anyone with a link",
     "based_on": "Based on",
