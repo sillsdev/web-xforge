@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -280,6 +281,8 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
             var chapters = new List<Chapter>();
+            Debug.Assert(textDocs.All(chapter => chapter.Value.IsLoaded), "Docs must be loaded from the DB.");
+            Debug.Assert(deltas.All(incomingChapter => incomingChapter.Value.Delta != null), "Incoming chapter deltas cannot be null. Maybe DeltaUsxMapper.ToChapterDeltas() has a bug?");
             foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
             {
                 if (textDocs.TryGetValue(kvp.Key, out IDocument<Models.TextData> textDataDoc))
