@@ -109,7 +109,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get helpsPage(): string {
-    return encodeURI(environment.helps);
+    return environment.helps + '/' + (this.i18n.locale.helps || I18nService.defaultLocale.helps!);
   }
 
   @ViewChild('topAppBar', { static: true })
