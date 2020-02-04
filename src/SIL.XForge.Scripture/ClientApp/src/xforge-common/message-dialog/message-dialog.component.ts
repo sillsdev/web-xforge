@@ -2,7 +2,7 @@ import { MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject } from '@angular/core';
 
 export interface MessageDialogData {
-  message: string;
+  message: () => string;
 }
 
 @Component({
@@ -13,6 +13,6 @@ export class MessageDialogComponent {
   constructor(@Inject(MDC_DIALOG_DATA) private readonly data: MessageDialogData) {}
 
   get message(): string {
-    return this.data.message;
+    return this.data.message();
   }
 }

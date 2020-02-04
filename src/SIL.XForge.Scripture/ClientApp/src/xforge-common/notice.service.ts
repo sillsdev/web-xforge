@@ -44,7 +44,7 @@ export class NoticeService {
     return this.showSnackBar(message, ['snackbar-error']);
   }
 
-  showMessageDialog(message: string): Promise<void> {
+  showMessageDialog(message: () => string): Promise<void> {
     const dialogRef = this.dialog.open<MessageDialogComponent, MessageDialogData>(MessageDialogComponent, {
       data: { message }
     }) as MdcDialogRef<MessageDialogComponent, any>;
