@@ -79,15 +79,6 @@
     "save": "Simpan",
     "scripture_reference": "Ayat Alkitab"
   },
-  "roles": {
-    "none": "None",
-    "pt_administrator": "Administrator",
-    "pt_consultant": "Konsultan",
-    "pt_observer": "Peneliti",
-    "pt_translator": "Translator",
-    "sf_community_checker": "Community Checker",
-    "sf_reviewer": "Reviewer"
-  },
   "settings": {
     "anyone_with_a_link": "Siapapun yang punya tautan",
     "based_on": "Berdasarkan pada",
