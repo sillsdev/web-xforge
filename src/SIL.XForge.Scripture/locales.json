@@ -3,13 +3,15 @@
     "localName": "English (US)",
     "englishName": "English (US)",
     "tags": ["en", "en-US"],
-    "production": true
+    "production": true,
+    "helps": "en"
   },
   {
     "localName": "English (UK)",
     "englishName": "English (UK)",
     "tags": ["en-GB"],
-    "production": true
+    "production": true,
+    "helps": "en"
   },
   {
     "localName": "简体中文",

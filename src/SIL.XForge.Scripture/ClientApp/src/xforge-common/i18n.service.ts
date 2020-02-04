@@ -22,6 +22,7 @@ interface Locale {
   direction: 'ltr' | 'rtl';
   tags: string[];
   production: boolean;
+  helps?: string;
 }
 
 type DateFormat = Intl.DateTimeFormatOptions | ((date: Date) => string);
@@ -107,6 +108,10 @@ export class I18nService {
     if (language != null) {
       this.trySetLocale(getAspCultureCookieLanguage(language));
     }
+  }
+
+  get locale(): Locale {
+    return this.currentLocale;
   }
 
   get localeCode() {
