@@ -79,6 +79,15 @@
     "save": "Salvar",
     "scripture_reference": "Scripture reference"
   },
+  "roles": {
+    "none": "None",
+    "pt_administrator": "Administrador",
+    "pt_consultant": "Consultor",
+    "pt_observer": "Observador",
+    "pt_translator": "Membro da Equipe",
+    "sf_community_checker": "Community Checker",
+    "sf_reviewer": "Reviewer"
+  },
   "settings": {
     "anyone_with_a_link": "Qualquer pessoa com um link",
     "based_on": "Baseado em",

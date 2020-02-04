@@ -32,6 +32,7 @@ import { MatTableModule } from '@angular/material/table';
 import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 import { DonutChartModule } from './donut-chart/donut-chart.module';
+import { PaginatorModule } from './paginator/paginator.module';
 
 const modules = [
   DonutChartModule,
@@ -65,6 +66,7 @@ const modules = [
   MdcTextFieldModule,
   MdcTopAppBarModule,
   MdcTypographyModule,
+  PaginatorModule,
   ReactiveFormsModule
 ];
 

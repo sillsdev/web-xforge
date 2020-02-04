@@ -79,6 +79,15 @@
     "save": "Guardar",
     "scripture_reference": "Referencia bíblica"
   },
+  "roles": {
+    "none": "None",
+    "pt_administrator": "Administrador",
+    "pt_consultant": "Consultor/Revisor/Archivero",
+    "pt_observer": "Observador",
+    "pt_translator": "Traductor",
+    "sf_community_checker": "Community Checker",
+    "sf_reviewer": "Reviewer"
+  },
   "settings": {
     "anyone_with_a_link": "Cualquiera con un enlace",
     "based_on": "Basado en",
