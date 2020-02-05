@@ -111,7 +111,8 @@
     "pt_observer": "Observer",
     "pt_translator": "Translator",
     "sf_community_checker": "Community Checker",
-    "sf_reviewer": "Reviewer"
+    "sf_reviewer": "Reviewer",
+    "unspecified": "Unspecified"
   },
   "settings": {
     "anyone_with_a_link": "Anyone with a link",

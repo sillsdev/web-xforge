@@ -157,6 +157,9 @@ export class I18nService {
   }
 
   translateRole(role: string) {
+    if (role === '') {
+      role = 'unspecified';
+    }
     return this.transloco.translate(`roles.${role}`);
   }
 
