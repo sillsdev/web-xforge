@@ -133,10 +133,7 @@ const appFlexLayoutBreakPoints = [
     { provide: BREAKPOINT, useValue: appFlexLayoutBreakPoints, multi: true },
     {
       provide: MatPaginatorIntl,
-      useFactory: (translate: TranslocoService) => {
-        const paginator = new Paginator(translate);
-        return paginator;
-      },
+      useClass: Paginator,
       deps: [TranslocoService]
     }
   ]
