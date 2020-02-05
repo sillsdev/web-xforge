@@ -49,7 +49,9 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
               (err.code === CommandErrorCode.Forbidden || err.code === CommandErrorCode.NotFound)
             ) {
               await this.projectService.localDelete(projectId);
-              await this.noticeService.showMessageDialog(this.transloco.translate('project.project_link_is_invalid'));
+              await this.noticeService.showMessageDialog(() =>
+                this.transloco.translate('project.project_link_is_invalid')
+              );
               this.router.navigateByUrl('/projects', { replaceUrl: true });
               return;
             } else {
