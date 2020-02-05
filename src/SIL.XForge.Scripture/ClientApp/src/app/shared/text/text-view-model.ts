@@ -61,7 +61,7 @@ function setAttribute(op: DeltaOperation, attributes: StringMap, name: string, v
 }
 
 function removeAttribute(op: DeltaOperation, name: string): void {
-  if (op.attributes != null && op.attributes[name] != null) {
+  if (op.attributes != null && name in op.attributes) {
     delete op.attributes[name];
     if (Object.keys(op.attributes).length === 0) {
       delete op.attributes;
@@ -95,6 +95,7 @@ export class TextViewModel {
   private remoteChangesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
+  private canSubmitApiChange: boolean = false;
 
   constructor() {}
 
@@ -158,7 +159,7 @@ export class TextViewModel {
       return;
     }
 
-    if (source === 'user' && editor.isEnabled()) {
+    if ((this.canSubmitApiChange || source === 'user') && editor.isEnabled()) {
       const modelDelta = this.viewToData(delta);
       if (modelDelta.ops != null && modelDelta.ops.length > 0) {
         this.textDoc.submit(modelDelta, this.editor);
@@ -168,7 +169,16 @@ export class TextViewModel {
     const updateDelta = this.updateSegments(editor);
     if (updateDelta.ops != null && updateDelta.ops.length > 0) {
       // defer the update, since it might cause the segment ranges to be out-of-sync with the view model
-      Promise.resolve().then(() => editor.updateContents(updateDelta, 'user'));
+      Promise.resolve().then(() => {
+        // use "api" source, so that this delta will not get added to the undo stack
+        // set "canSubmitApiChange" flag, so that this delta will still get submitted to the real-time doc
+        this.canSubmitApiChange = true;
+        try {
+          editor.updateContents(updateDelta);
+        } finally {
+          this.canSubmitApiChange = false;
+        }
+      });
     }
   }
 
@@ -354,6 +364,7 @@ export class TextViewModel {
           } else if (paraSegments.length === 0) {
             paraSegments.push(new SegmentInfo('', curIndex));
           }
+          fixDelta = this.fixVerse(op, curIndex, fixDelta, fixOffset);
           setAttribute(op, attrs, 'para-contents', true);
           curIndex += len;
           curSegment = new SegmentInfo('verse_' + chapter + '_' + op.insert.verse.number, curIndex);
@@ -428,6 +439,17 @@ export class TextViewModel {
       fixDelta = fixDelta.compose(delta);
     }
     return [fixDelta, fixOffset];
+  }
+
+  private fixVerse(verseOp: DeltaOperation, curIndex: number, fixDelta: DeltaStatic, fixOffset: number): DeltaStatic {
+    // remove "highlight-segment" format, which can sometimes get placed on a verse number after an edit or undo
+    if (verseOp.attributes != null && verseOp.attributes['highlight-segment'] != null) {
+      const delta = new Delta();
+      delta.retain(curIndex + fixOffset);
+      delta.retain(1, { 'highlight-segment': false });
+      fixDelta = fixDelta.compose(delta);
+    }
+    return fixDelta;
   }
 
   private checkEditor(): Quill {

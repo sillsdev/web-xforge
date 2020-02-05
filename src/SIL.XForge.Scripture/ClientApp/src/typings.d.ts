@@ -15,7 +15,7 @@ interface NodeModule {
 }
 
 declare module 'quill' {
-  export interface History {
+  export interface HistoryStatic {
     clear(): void;
     undo(): void;
     redo(): void;
@@ -27,7 +27,7 @@ declare module 'quill' {
     container: Element;
     scrollingContainer: Element;
     selection: Selection;
-    history: History;
+    history: HistoryStatic;
 
     isEnabled(): boolean;
     setSelection(index: number, source?: Sources): void;
@@ -82,6 +82,30 @@ declare module 'quill' {
     dangerouslyPasteHTML(index: any, html?: any, source?: any): void;
     onPaste(e: ClipboardEvent): void;
     convert(html?: string): DeltaStatic;
+  }
+
+  export interface HistoryDelta {
+    undo: DeltaStatic;
+    redo: DeltaStatic;
+  }
+
+  export interface HistoryStack {
+    undo: HistoryDelta[];
+    redo: HistoryDelta[];
+  }
+
+  export type HistoryStackType = Extract<keyof HistoryStack, string>;
+
+  export class History extends Module implements HistoryStatic {
+    lastRecorded: number;
+    ignoreChange: boolean;
+    stack: HistoryStack;
+
+    clear(): void;
+    undo(): void;
+    redo(): void;
+    cutoff(): void;
+    change(source: HistoryStackType, dest: HistoryStackType): void;
   }
 
   export class Picker {

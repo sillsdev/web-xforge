@@ -1,5 +1,5 @@
 import Parchment from 'parchment';
-import Quill, { Clipboard, DeltaOperation, DeltaStatic, Module } from 'quill';
+import Quill, { Clipboard, DeltaOperation, DeltaStatic, History, HistoryStackType, Module } from 'quill';
 
 const Delta: new () => DeltaStatic = Quill.import('delta');
 
@@ -71,6 +71,7 @@ interface Unmatched {
 export function registerScripture(): void {
   const QuillClipboard = Quill.import('modules/clipboard') as typeof Clipboard;
   const QuillKeyboard = Quill.import('modules/keyboard') as typeof Module;
+  const QuillHistory = Quill.import('modules/history') as typeof History;
   const QuillParchment = Quill.import('parchment') as typeof Parchment;
   const Inline = Quill.import('blots/inline') as typeof Parchment.Inline;
   const Block = Quill.import('blots/block') as typeof Parchment.Block;
@@ -506,6 +507,81 @@ export function registerScripture(): void {
     static DEFAULTS: any = {};
   }
 
+  class FixSelectionHistory extends QuillHistory {
+    /**
+     * Performs undo/redo. Override this method, so that we can fix the selection logic. This method was copied from
+     * the Quill history module.
+     *
+     * @param {string} source The source stack type.
+     * @param {string} dest The destination stack type.
+     */
+    change(source: HistoryStackType, dest: HistoryStackType): void {
+      const delta = this.stack[source].pop();
+      if (delta == null) {
+        return;
+      }
+      this.stack[dest].push(delta);
+      this.lastRecorded = 0;
+      this.ignoreChange = true;
+      this.quill.updateContents(delta[source], 'user');
+      this.ignoreChange = false;
+      const index = getLastChangeIndex(delta[source]);
+      this.quill.setSelection(index);
+    }
+  }
+
+  /**
+   * Checks if the delta ends with a newline insert. This function was copied from the Quill history module.
+   */
+  function endsWithNewlineChange(delta: DeltaStatic): boolean {
+    if (delta.ops == null) {
+      return false;
+    }
+    const lastOp = delta.ops[delta.ops.length - 1];
+    if (lastOp == null) {
+      return false;
+    }
+    if (lastOp.insert != null) {
+      return typeof lastOp.insert === 'string' && lastOp.insert.endsWith('\n');
+    }
+    if (lastOp.attributes != null) {
+      return Object.keys(lastOp.attributes).some(function(attr) {
+        return Parchment.query(attr, Parchment.Scope.BLOCK) != null;
+      });
+    }
+    return false;
+  }
+
+  /**
+   * Finds the index where the last insert/delete occurs in the delta. This function has been modified from the
+   * original in the Quill history module.
+   *
+   * @param {DeltaStatic} delta The undo/redo delta.
+   * @returns {number} The index where the last insert/delete occurs.
+   */
+  function getLastChangeIndex(delta: DeltaStatic): number {
+    if (delta.ops == null) {
+      return 0;
+    }
+    // selection should be moved to location of last insert or delete in undo/redo delta
+    let changeIndex = 0;
+    let curIndex = 0;
+    for (const op of delta.ops) {
+      if (op.insert != null) {
+        curIndex += typeof op.insert === 'string' ? op.insert.length : 1;
+        changeIndex = curIndex;
+      } else if (op.delete != null) {
+        changeIndex = curIndex;
+      } else if (op.retain != null) {
+        curIndex += op.retain;
+      }
+    }
+    if (endsWithNewlineChange(delta)) {
+      changeIndex -= 1;
+    }
+    return changeIndex;
+  }
+
   Quill.register('formats/highlight-segment', HighlightSegmentClass);
   Quill.register('formats/highlight-para', HighlightParaClass);
   Quill.register('formats/question-segment', CheckingQuestionSegmentClass);
@@ -528,4 +604,5 @@ export function registerScripture(): void {
   Quill.register('blots/text', NotNormalizedText, true);
   Quill.register('modules/clipboard', DisableHtmlClipboard, true);
   Quill.register('modules/keyboard', NoDefaultBindingsKeyboard, true);
+  Quill.register('modules/history', FixSelectionHistory, true);
 }
