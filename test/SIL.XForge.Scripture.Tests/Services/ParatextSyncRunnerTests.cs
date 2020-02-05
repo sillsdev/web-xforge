@@ -656,6 +656,61 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
         }
 
+        [Test]
+        public async Task ChangeDbToNewSnapshotAsync_Works()
+        {
+            var env = new TestEnvironment();
+            var numberChapters = 4;
+            // SF DB has chapter text docs for chapters 1 and 2 only.
+            var missingDbChapters = new HashSet<int>() { 3, 4 };
+            var book = new Book("MAT", numberChapters, true)
+            {
+                MissingTargetChapters = missingDbChapters,
+                MissingSourceChapters = missingDbChapters
+            };
+            env.SetupSFData(true, true, false, book);
+
+            await env.Runner.InitAsync("project01", "user01");
+            var textInfo = env.TextInfoFromBook(book);
+            var targetTextDocs = await env.Runner.FetchTextDocsAsync(textInfo, TextType.Target);
+
+            var insertTextDelta = Delta.New().InsertText("text");
+            var insertPtDelta = Delta.New().InsertText("pt");
+            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(insertTextDelta), Is.True);
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(insertPtDelta), Is.False);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 4, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 5, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 6, TextType.Target), Is.False);
+
+            // Paratext has chapters 1, 4 and 6, with text.
+            var chapterDeltas = new int[] { 1, 4, 6 }
+                .Select(c => new ChapterDelta(c, 10, false,
+                Delta.New().InsertText("pt")))
+                .ToDictionary(cd => cd.Number);
+
+            // SUT
+            await env.Runner.ChangeDbToNewSnapshotAsync(textInfo,
+                TextType.Target, null, targetTextDocs, chapterDeltas);
+
+            env.Runner.CloseConnection();
+
+            // SF DB should now have just text in chapters 1, 4 and 6, matching Paratext.
+            // Note that chapter 2 is now missing.
+
+            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
+            // Content change to Chapter 1.
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(insertTextDelta), Is.False);
+            Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(insertPtDelta), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 4, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 5, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 6, TextType.Target), Is.True);
+        }
+
         private class Book
         {
             public Book(string bookId, int highestChapter, bool hasSource = true)
