@@ -23,7 +23,7 @@ import { ProjectService } from '../project.service';
 import { Filters, QueryParameters } from '../query-parameters';
 import { RealtimeDocTypes } from '../realtime-doc-types';
 import { TestRealtimeService } from '../test-realtime.service';
-import { configureTestingModule, emptyHammerLoader } from '../test-utils';
+import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
@@ -36,7 +36,14 @@ const mockedProjectService = mock(ProjectService);
 
 describe('SaUsersComponent', () => {
   configureTestingModule(() => ({
-    imports: [NoopAnimationsModule, RouterTestingModule, AvatarTestingModule, UICommonModule, DialogTestModule],
+    imports: [
+      NoopAnimationsModule,
+      RouterTestingModule,
+      AvatarTestingModule,
+      UICommonModule,
+      DialogTestModule,
+      TestTranslocoModule
+    ],
     declarations: [SaUsersComponent],
     providers: [
       { provide: MdcDialog, useMock: mockedMdcDialog },
