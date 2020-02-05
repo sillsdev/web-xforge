@@ -77,7 +77,9 @@
     "verse_too_long_for_suggestions": "This verse is too long to generate suggestions."
   },
   "paginator": {
-    "items_per_page": "Items per page"
+    "items_per_page": "Items per page",
+    "next_page": "Next page",
+    "previous_page": "Previous page"
   },
   "question_answered_dialog": {
     "cancel": "Cancel",

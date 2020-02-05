@@ -29,6 +29,7 @@ import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginato
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { TranslocoService } from '@ngneat/transloco';
 import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 import { DonutChartModule } from './donut-chart/donut-chart.module';
@@ -130,7 +131,14 @@ const appFlexLayoutBreakPoints = [
   exports: [...modules, BlurOnClickDirective, AutofocusDirective],
   providers: [
     { provide: BREAKPOINT, useValue: appFlexLayoutBreakPoints, multi: true },
-    { provide: MatPaginatorIntl, useClass: Paginator }
+    {
+      provide: MatPaginatorIntl,
+      useFactory: (translate: TranslocoService) => {
+        const paginator = new Paginator(translate);
+        return paginator;
+      },
+      deps: [TranslocoService]
+    }
   ]
 })
 export class UICommonModule {}
