@@ -89,4 +89,16 @@ describe('I18nService', () => {
     service.setLocale('az');
     expect(service.formatDate(date)).toEqual('25.11.1991 17:28');
   });
+
+  it('should return unspecified if role is empty', () => {
+    when(mockedTranslocoService.translate<string>('roles.unspecified')).thenReturn('Unspecified');
+
+    const service = new I18nService(
+      instance(mockedAuthService),
+      instance(mockedTranslocoService),
+      instance(mockedCookieService)
+    );
+    const role = '';
+    expect(service.translateRole(role)).toBe('Unspecified');
+  });
 });
