@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Bugsnag.AspNet.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -74,7 +75,15 @@ namespace SIL.XForge.Scripture
 
             services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment);
 
-            services.AddExceptionLogging();
+            services.AddBugsnag(options =>
+            {
+                options = Configuration.GetOptions<BugsnagOptions>();
+                string location = System.Reflection.Assembly.GetEntryAssembly().Location;
+                options.AppVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(location).ProductVersion;
+                options.ReleaseStage = Environment.IsProduction() ? "live" :
+                    Environment.IsStaging() ? "qa" :
+                    Environment.EnvironmentName.ToLowerInvariant();
+            });
 
             services.AddSFServices();
 
@@ -138,8 +147,6 @@ namespace SIL.XForge.Scripture
 
             if (IsDevelopment)
                 app.UseDeveloperExceptionPage();
-
-            app.UseExceptionLogging();
 
             app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
 
