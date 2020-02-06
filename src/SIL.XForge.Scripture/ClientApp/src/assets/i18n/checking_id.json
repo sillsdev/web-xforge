@@ -226,6 +226,12 @@
     "network_request_failed": "Permintaan jaringan gagal. Beberapa fungsi mungkin tidak tersedia.",
     "unknown_error": "Kesalahan yang tidak diketahui"
   },
+  "issue_email": {
+    "body": "Terima kasih telah melaporkan masalah ini!\nIni akan membantu kami jika Anda mengisi beberapa informasi di bawah ini, tetapi harap kirim meskipun Anda tidak dapat mengisi banyak informasi.\nJika Anda meminta fitur, banyak bidang yang mungkin tidak berlaku.\nKetahuilah bahwa laporan bug Anda akan ditampilkan untuk umum. Jangan pernah mengirimkan kata sandi atau rahasia lainnya.\n\nLaporan bug\nDeskripsi yang jelas dan ringkas tentang bug itu.\n\nLangkah-langkah mereproduksi\nSebagai contoh:\n1. Pergi ke ...\n2. Klik pada ...\n3. Gulir ke bawah untuk ...\n4. Lihat kesalahan\n\nPerilaku yang sebenarnya\nTolong jelaskan perilaku aktual dari masalah yang Anda amati.\n\nPerilaku yang diharapkan\nDeskripsi yang jelas dan ringkas tentang apa yang Anda harapkan terjadi.\n\nTangkapan layar\nJika bisa, tambahkan tangkapan layar untuk membantu menjelaskan masalah Anda.\n\nKonteks tambahan\nTambahkan konteks lain tentang masalah di sini.\n\nSolusi yang mungkin\nTambahkan kemungkinan solusi untuk masalah di sini.\n\nPerangkat Anda:\nVersi perangkat lunak\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nError id: {{ errorId }}",
+    "not_applicable": "tidak berlaku",
+    "subject": "{{ siteName }} masalah",
+    "unknown": "tidak diketahui"
+  },
   "message_dialog": {
     "dismiss": "Hentikan"
   },
@@ -264,6 +270,11 @@
   "start": {
     "connect_project": "Menghubungkan proyek",
     "not_connected_to_any_projects": "Sepertinya Anda belum terhubung di proyek apapun."
+  },
+  "supported_browsers_dialog": {
+    "dismiss": "Hentikan",
+    "browser_unsupported": "Peramban ini tidak didukung",
+    "upgrade_chrome_firefox": "Beberapa fitur situs web ini mungkin tidak berfungsi dengan baik dengan peramban Anda. Kami menyarankan untuk meningkatkan ke {{ chromeLink }} atau {{ firefoxLink }} terbaru."
   },
   "text_chooser_dialog": {
     "cancel": "Batal",

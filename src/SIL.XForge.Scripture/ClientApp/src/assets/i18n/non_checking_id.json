@@ -38,6 +38,25 @@
     "remove_from_project": "Hapus dari proyek",
     "share_with_others": "Bagikan dengan orang lain"
   },
+  "connect_project": {
+    "additional_settings": "Pengaturan Tambahan",
+    "already_connected": "(Sudah terhubung)",
+    "based_on": "Berdasarkan pada",
+    "choose_the_mother_project": "Pilih proyek Paratext yang menjadi dasar proyek Anda.",
+    "community_checking": "Pemeriksaan Komunitas",
+    "connect_paratext_project": "Hubungkan Proyek Paratext",
+    "connect": "Menghubungkan",
+    "connecting_to_project": "Menghubungkan ke {{ projectName }}...",
+    "engage_the_wider_community_to_check_scripture": "Libatkan komunitas yang lebih luas untuk memastikan bahwa terjemahannya jelas, akurat, dan alami. Pilih ayat, ajukan pertanyaan yang ditargetkan, izinkan diskusi jawaban.",
+    "log_in_with_paratext": "Masuk dengan Paratext",
+    "no_connectable_projects": "Sepertinya tidak ada proyek yang terhubung dengan Anda. {{ newLine }} Silakan buka Paratext untuk mendaftarkan proyek yang akan dihubungkan.",
+    "only_paratext_admins_can_start": "** Anda harus menjadi Administrator Paratext dari sebuah proyek untuk memulainya di sini. Minta Administrator Anda untuk menghubungkan ke proyek Anda maka Anda juga dapat terhubung ke sini setelah itu.",
+    "paratext_project": "Proyek Paratext",
+    "translation_suggestions": "Saran Terjemahan",
+    "translations_will_be_suggested_as_you_edit": "Terjemahan untuk kata dan frasa akan disarankan saat Anda menyunting Alkitab. Disarankan agar proyek Anda diatur sebagai {{ boldStart }}Daughter Translation{{ boldEnd }} di Paratext.",
+    "you_can_change_later": "Anda dapat mengubahnya nanti.",
+    "you_must_be_logged_in_to_paratext": "Anda harus masuk dengan akun Paratext Anda untuk menghubungkan ke proyek."
+  },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Apakah anda yakin anda ingin menghapus proyek ini?",
     "cancel": "Batal",

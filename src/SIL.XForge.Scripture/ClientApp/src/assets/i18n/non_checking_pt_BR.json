@@ -38,6 +38,25 @@
     "remove_from_project": "Remover do projeto",
     "share_with_others": "Compartilhar com outros"
   },
+  "connect_project": {
+    "additional_settings": "Additional Settings",
+    "already_connected": "(already connected)",
+    "based_on": "Baseado em",
+    "choose_the_mother_project": "Escolha o projeto do Paratext no qual seu projeto se baseia.",
+    "community_checking": "Verificação da Comunidade",
+    "connect_paratext_project": "Connect Paratext Project",
+    "connect": "Connect",
+    "connecting_to_project": "Connecting to {{ projectName }}...",
+    "engage_the_wider_community_to_check_scripture": "Envolva a comunidade em geral para garantir que a tradução seja clara, precisa e natural. Selecione versículos, faça perguntas específicas, permita a discussão das respostas.",
+    "log_in_with_paratext": "Log in with Paratext",
+    "no_connectable_projects": "Looks like there are no connectable projects for you.{{ newLine }}Please go to Paratext to register a project to connect to.",
+    "only_paratext_admins_can_start": "** You must be the Paratext Administrator of a project to start it here. Ask your Administrator to connect to your project then you can also connect to it here after that.",
+    "paratext_project": "Paratext Project",
+    "translation_suggestions": "Sugestões de Tradução",
+    "translations_will_be_suggested_as_you_edit": "Traduções para palavras e frases serão sugeridas enquanto você edita o Texto Bíblico. É recomendável que seu projeto seja configurado como uma {{ boldStart }}Tradução Derivada{{ boldEnd }} no Paratext.",
+    "you_can_change_later": "You can change these later.",
+    "you_must_be_logged_in_to_paratext": "You must login with your Paratext account to connect to a project."
+  },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Tem certeza de que deseja excluir este projeto?",
     "cancel": "Cancelar",

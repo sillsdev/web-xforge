@@ -89,25 +89,25 @@
       "JDT": "Judit",
       "ESG": "Ester (griego)",
       "WIS": "Sabiduría de Salomón",
-      "SIR": "Sirach (Ecclesiasticus)",
+      "SIR": "Sirácida (Eclesiástico)",
       "BAR": "Baruc",
       "LJE": "Carta de Jeremías",
-      "S3Y": "Song of 3 Young Men",
-      "SUS": "Susanna",
-      "BEL": "Bel and the Dragon",
+      "S3Y": "El canto de los 3 jóvenes",
+      "SUS": "Susana",
+      "BEL": "Bel y el dragón",
       "1MA": "1 Macabeos",
       "2MA": "2 Macabeos",
       "3MA": "3 Macabeos",
       "4MA": "4 Macabeos",
       "1ES": "1 Esdras (griego)",
       "2ES": "2 Esdras (latín)",
-      "MAN": "Prayer of Manasseh",
+      "MAN": "La oración de Manasés",
       "PS2": "Salmos 151",
-      "ODA": "Odes",
-      "PSS": "Psalms of Solomon",
-      "JSA": "Joshua A. *obsolete*",
-      "JDB": "Judges B. *obsolete*",
-      "TBS": "Tobit S. *obsolete*",
+      "ODA": "Odas",
+      "PSS": "Salmos de Salomón",
+      "JSA": "Josué A. *obsoleto*",
+      "JDB": "Jueces B. *obsoleto*",
+      "TBS": "Tobias *obsoleto*",
       "SST": "Susanna Th. *obsolete*",
       "DNT": "Daniel Th. *obsolete*",
       "BLT": "Bel Th. *obsolete*",
@@ -226,6 +226,12 @@
     "network_request_failed": "Una solicitud de red falló. Algunas funciones pueden no estar disponibles.",
     "unknown_error": "Error desconocido"
   },
+  "issue_email": {
+    "body": "¡Gracias por reportar el caso!\nNos ayudaría si completa algo de la información a continuación, pero envíelo incluso si no pueda completar muchos.\nSi está solicitando una función, muchos de los campos pueden no ser aplicables.\nTenga en cuenta que su informe de errores estará disponible públicamente. Nunca envíe contraseñas u otros información secreta.\n\nInforme de errores\nUna descripción clara y concisa del error.\n\nPasos para reproducirlo\nPor ejemplo:\n1. Ir a...\n2. Haga clic en ...\n3. Desplácese hacia abajo hasta ...\n4. Ver el error\n\nEl comportamiento actual\nPor favor, describa el comportamiento erróneo actual que está observando.\n\nComportamiento esperado\nUna descripción clara y concisa de lo que esperaba que sucediera.\n\nCapturas de pantalla\nSi corresponde, agregue capturas de pantalla para ayudar a explicar su problema.\n\nInformación adicional\nAñade aquí cualquier otra información sobre el problema.\n\nPosible solución\nAñade aquí cualquier posible solución al problema.\n\nTu entorno:\nSoftware                 Versión\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nError id: {{ errorId }}",
+    "not_applicable": "no aplica",
+    "subject": "caso {{ siteName }}",
+    "unknown": "desconocido"
+  },
   "message_dialog": {
     "dismiss": "Descartar"
   },
@@ -264,6 +270,11 @@
   "start": {
     "connect_project": "Conectar el proyecto",
     "not_connected_to_any_projects": "Parece que aún no estás conectado a ningún proyecto."
+  },
+  "supported_browsers_dialog": {
+    "dismiss": "Descartar",
+    "browser_unsupported": "Este navegador no es compatible",
+    "upgrade_chrome_firefox": "Algunas de las características de este sitio web pueden no funcionar correctamente con su navegador. Recomendamos actualizar a la última {{ chromeLink }} o {{ firefoxLink }}."
   },
   "text_chooser_dialog": {
     "cancel": "Cancelar",

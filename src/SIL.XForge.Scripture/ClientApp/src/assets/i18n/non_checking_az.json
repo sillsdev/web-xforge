@@ -38,6 +38,25 @@
     "remove_from_project": "Layihədən çıxar",
     "share_with_others": "Başqaları ilə paylaşın. "
   },
+  "connect_project": {
+    "additional_settings": "Additional Settings",
+    "already_connected": "(already connected)",
+    "based_on": "Əsasında",
+    "choose_the_mother_project": "Layihənizin əsaslandığı Paratext layihəsini seçin.",
+    "community_checking": "Dil daşıyıcıları tərəfindən yoxlanma",
+    "connect_paratext_project": "Connect Paratext Project",
+    "connect": "Connect",
+    "connecting_to_project": "Connecting to {{ projectName }}...",
+    "engage_the_wider_community_to_check_scripture": "Tərcümənin aydın, dəqiq və təbii olduğuna əmin olmaq üçün daha böyük kollektivi cəlb edin.",
+    "log_in_with_paratext": "Log in with Paratext",
+    "no_connectable_projects": "Looks like there are no connectable projects for you.{{ newLine }}Please go to Paratext to register a project to connect to.",
+    "only_paratext_admins_can_start": "** You must be the Paratext Administrator of a project to start it here. Ask your Administrator to connect to your project then you can also connect to it here after that.",
+    "paratext_project": "Paratext Project",
+    "translation_suggestions": "Tərcümə təklifləri",
+    "translations_will_be_suggested_as_you_edit": "Siz Kəlamı redaktə etdikcə sözlər və ifadələr üçün tərcümələr təklif olunacaq. Məsləhət görülür ki, layihəniz Paratextdə {{ boldStart }} Filial Tərcümə kimi {{ boldEnd }}quraşdırılsın.",
+    "you_can_change_later": "You can change these later.",
+    "you_must_be_logged_in_to_paratext": "You must login with your Paratext account to connect to a project."
+  },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Bu layihəni silməyə əminsinizmi?",
     "cancel": "Ləğv etmək",
