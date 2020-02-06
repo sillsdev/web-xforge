@@ -35,8 +35,28 @@
     "filter_users": "Filtrar usuarios...",
     "me": "yo",
     "no_users_found": "Usuarios no encontrados",
+    "problem_loading_invited_users": "Hubo un problema al cargar la lista de usuarios invitados.",
     "remove_from_project": "Eliminar del proyecto",
     "share_with_others": "Compartir con otros"
+  },
+  "connect_project": {
+    "additional_settings": "Configuración adicional",
+    "already_connected": "(ya conectado)",
+    "based_on": "Basado en",
+    "choose_the_mother_project": "Seleccione el proyecto de Paratext en el que se basa su proyecto.",
+    "community_checking": "Comprobación por la comunidad",
+    "connect_paratext_project": "Conectar proyecto de Paratext",
+    "connect": "Conectar",
+    "connecting_to_project": "Conectando a {{ projectName }}...",
+    "engage_the_wider_community_to_check_scripture": "Involucrar a la comunidad en general para asegurar que la traducción sea clara, precisa y natural. Seleccione versículos, haga preguntas específicas, permita la discusión de las respuestas.",
+    "log_in_with_paratext": "Iniciar sesión con Paratext",
+    "no_connectable_projects": "Parece que no hay proyectos conectables para usted.{{ newLine }}Por favor, vaya a Paratext para registrar un proyecto al cual conectarse.",
+    "only_paratext_admins_can_start": "** Usted debe ser el Administrador de un proyecto en Paratext para comenzarlo aquí. Pídele a su administrador que se conecte a su proyecto, luego también podrá conectarse aquí.",
+    "paratext_project": "Proyecto de Paratext",
+    "translation_suggestions": "Sugerencias de traducción",
+    "translations_will_be_suggested_as_you_edit": "Se sugerirán traducciones de palabras y frases a medida que edite la Escritura. Se recomienda que su proyecto se configure como {{ boldStart }}Traducción hija{{ boldEnd }} en Paratext.",
+    "you_can_change_later": "Puede cambiarlo más tarde.",
+    "you_must_be_logged_in_to_paratext": "Debe iniciar sesión con su cuenta de Paratext para conectarse a un proyecto."
   },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "¿Está seguro de que quiere borrar este proyecto?",
@@ -55,6 +75,12 @@
     "training": "Entrenamiento",
     "training_completed_successfully": "Entrenamiento completado con éxito",
     "verse_too_long_for_suggestions": "Este versículo es demasiado largo para generar sugerencias."
+  },
+  "paginator": {
+    "items_per_page": "Elementos por página",
+    "next_page": "Página siguiente",
+    "previous_page": "Página anterior",
+    "range_label": "{{ startIndex }} - {{ endIndex }} de {{ length }}"
   },
   "question_answered_dialog": {
     "cancel": "Cancelar",
@@ -78,6 +104,15 @@
     "required_with_asterisk": "*Requerido",
     "save": "Guardar",
     "scripture_reference": "Referencia bíblica"
+  },
+  "roles": {
+    "none": "Ninguno",
+    "pt_administrator": "Administrador",
+    "pt_consultant": "Consultor/Revisor/Archivero",
+    "pt_observer": "Observador",
+    "pt_translator": "Traductor",
+    "sf_community_checker": "Revisor de la comunidad",
+    "sf_reviewer": "Revisor"
   },
   "settings": {
     "anyone_with_a_link": "Cualquiera con un enlace",
