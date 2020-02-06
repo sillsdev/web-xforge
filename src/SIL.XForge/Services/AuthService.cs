@@ -23,10 +23,12 @@ namespace SIL.XForge.Services
         private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
         private string _accessToken;
         private readonly IOptions<AuthOptions> _authOptions;
+        private readonly IExceptionHandler _exceptionHandler;
 
-        public AuthService(IOptions<AuthOptions> authOptions)
+        public AuthService(IOptions<AuthOptions> authOptions, IExceptionHandler exceptionHandler)
         {
             _authOptions = authOptions;
+            _exceptionHandler = exceptionHandler;
             _httpClient = new HttpClient
             {
                 BaseAddress = new Uri($"https://{_authOptions.Value.Domain}")
@@ -77,15 +79,10 @@ namespace SIL.XForge.Services
                 if (content != null)
                     request.Content = new StringContent(content.ToString(), Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await _httpClient.SendAsync(request);
-                if (response.IsSuccessStatusCode)
+                if (response.StatusCode != HttpStatusCode.Unauthorized)
                 {
+                    await _exceptionHandler.EnsureSuccessStatusCode(response);
                     return await response.Content.ReadAsStringAsync();
-                }
-                else if (response.StatusCode != HttpStatusCode.Unauthorized)
-                {
-                    string error = await response.Content.ReadAsStringAsync();
-                    throw new HttpRequestException(
-                        $"HTTP Request error, Code: {response.StatusCode}, Content: {error}");
                 }
             }
 
@@ -109,13 +106,7 @@ namespace SIL.XForge.Services
                     new JProperty("audience", _authOptions.Value.ManagementAudience));
                 request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await _httpClient.SendAsync(request);
-                if ((int)response.StatusCode >= 400)
-                {
-                    Console.WriteLine($"AuthService.GetAccessTokenAsync received {(int)response.StatusCode} HTTP response");
-                    Console.WriteLine("Response content:");
-                    Console.WriteLine(await response.Content.ReadAsStringAsync());
-                }
-                response.EnsureSuccessStatusCode();
+                await _exceptionHandler.EnsureSuccessStatusCode(response);
 
                 string responseJson = await response.Content.ReadAsStringAsync();
                 var responseObj = JObject.Parse(responseJson);
