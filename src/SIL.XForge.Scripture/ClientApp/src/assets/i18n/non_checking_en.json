@@ -79,7 +79,8 @@
   "paginator": {
     "items_per_page": "Items per page",
     "next_page": "Next page",
-    "previous_page": "Previous page"
+    "previous_page": "Previous page",
+    "range_label": "{{ startIndex }} - {{ endIndex }} of {{ length }}"
   },
   "question_answered_dialog": {
     "cancel": "Cancel",
@@ -111,8 +112,7 @@
     "pt_observer": "Observer",
     "pt_translator": "Translator",
     "sf_community_checker": "Community Checker",
-    "sf_reviewer": "Reviewer",
-    "unspecified": "Unspecified"
+    "sf_reviewer": "Reviewer"
   },
   "settings": {
     "anyone_with_a_link": "Anyone with a link",
