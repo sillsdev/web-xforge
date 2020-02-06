@@ -25,13 +25,15 @@ import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatOptionModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { TranslocoService } from '@ngneat/transloco';
 import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 import { DonutChartModule } from './donut-chart/donut-chart.module';
+import { Paginator } from './paginator/paginator.component';
 
 const modules = [
   DonutChartModule,
@@ -127,6 +129,13 @@ const appFlexLayoutBreakPoints = [
   declarations: [BlurOnClickDirective, AutofocusDirective],
   imports: modules,
   exports: [...modules, BlurOnClickDirective, AutofocusDirective],
-  providers: [{ provide: BREAKPOINT, useValue: appFlexLayoutBreakPoints, multi: true }]
+  providers: [
+    { provide: BREAKPOINT, useValue: appFlexLayoutBreakPoints, multi: true },
+    {
+      provide: MatPaginatorIntl,
+      useClass: Paginator,
+      deps: [TranslocoService]
+    }
+  ]
 })
 export class UICommonModule {}

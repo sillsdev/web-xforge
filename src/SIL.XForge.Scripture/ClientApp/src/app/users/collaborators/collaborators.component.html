@@ -53,7 +53,7 @@
           </ng-container>
           <ng-container matColumnDef="projects">
             <td fxHide.xs mat-cell *matCellDef="let userRow">
-              <em>{{ userRow.roleName }}</em>
+              <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
             </td>
           </ng-container>
           <ng-container matColumnDef="remove">
