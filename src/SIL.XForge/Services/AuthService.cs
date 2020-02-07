@@ -109,6 +109,12 @@ namespace SIL.XForge.Services
                     new JProperty("audience", $"https://{_authOptions.Value.Domain}/api/v2/"));
                 request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await _httpClient.SendAsync(request);
+                if ((int)response.StatusCode >= 400)
+                {
+                    Console.WriteLine($"AuthService.GetAccessTokenAsync received {(int)response.StatusCode} HTTP response");
+                    Console.WriteLine("Response content:");
+                    Console.WriteLine(await response.Content.ReadAsStringAsync());
+                }
                 response.EnsureSuccessStatusCode();
 
                 string responseJson = await response.Content.ReadAsStringAsync();
