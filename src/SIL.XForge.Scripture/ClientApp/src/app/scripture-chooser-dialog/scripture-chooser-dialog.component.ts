@@ -169,6 +169,6 @@ export class ScriptureChooserDialogComponent implements OnInit {
   }
 
   getBookName(text: TextInfo): string {
-    return this.i18n.translateBook(text.bookNum);
+    return this.i18n.localizeBook(text.bookNum);
   }
 }
