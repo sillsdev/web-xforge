@@ -66,8 +66,8 @@ class TestEnvironment {
   readonly component: ChapterNavComponent;
 
   constructor(start?: { book: number; chapter: number }) {
-    when(mockedI18nService.translateBook(1)).thenReturn('Book 1');
-    when(mockedI18nService.translateBook(2)).thenReturn('Book 2');
+    when(mockedI18nService.localizeBook(1)).thenReturn('Book 1');
+    when(mockedI18nService.localizeBook(2)).thenReturn('Book 2');
     this.fixture = TestBed.createComponent(ChapterNavHostComponent);
     this.fixture.detectChanges();
     this.hostComponent = this.fixture.componentInstance;

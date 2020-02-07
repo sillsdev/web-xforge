@@ -21,7 +21,7 @@
               [primary]="data.input?.book === book"
               (click)="onClickBook(book)"
             >
-              {{ i18n.translateBook(book) }}
+              {{ i18n.localizeBook(book) }}
             </button>
           </div>
           <button
@@ -30,7 +30,7 @@
             [primary]="data.input?.book === book"
             (click)="onClickBook(book)"
           >
-            {{ i18n.translateBook(book) }}
+            {{ i18n.localizeBook(book) }}
           </button>
         </mdc-dialog-content>
       </mdc-dialog-surface>

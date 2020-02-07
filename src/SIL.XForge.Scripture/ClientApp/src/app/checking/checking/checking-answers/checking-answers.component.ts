@@ -396,7 +396,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return '';
     }
     const verseRef = verse instanceof VerseRef ? verse : toVerseRef(verse);
-    return `(${this.i18n.translateReference(verseRef)})`;
+    return `(${this.i18n.localizeReference(verseRef)})`;
   }
 
   showAnswerForm() {
