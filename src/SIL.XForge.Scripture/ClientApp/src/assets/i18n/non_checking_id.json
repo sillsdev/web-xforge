@@ -35,8 +35,28 @@
     "filter_users": "Saringan pengguna...",
     "me": "saya",
     "no_users_found": "Tidak ada pengguna ditemukan",
+    "problem_loading_invited_users": "There was a problem loading the list of invited users.",
     "remove_from_project": "Hapus dari proyek",
     "share_with_others": "Bagikan dengan orang lain"
+  },
+  "connect_project": {
+    "additional_settings": "Pengaturan Tambahan",
+    "already_connected": "(Sudah terhubung)",
+    "based_on": "Berdasarkan pada",
+    "choose_the_mother_project": "Pilih proyek Paratext yang menjadi dasar proyek Anda.",
+    "community_checking": "Pemeriksaan Komunitas",
+    "connect_paratext_project": "Hubungkan Proyek Paratext",
+    "connect": "Menghubungkan",
+    "connecting_to_project": "Menghubungkan ke {{ projectName }}...",
+    "engage_the_wider_community_to_check_scripture": "Libatkan komunitas yang lebih luas untuk memastikan bahwa terjemahannya jelas, akurat, dan alami. Pilih ayat, ajukan pertanyaan yang ditargetkan, izinkan diskusi jawaban.",
+    "log_in_with_paratext": "Masuk dengan Paratext",
+    "no_connectable_projects": "Sepertinya tidak ada proyek yang terhubung dengan Anda. {{ newLine }} Silakan buka Paratext untuk mendaftarkan proyek yang akan dihubungkan.",
+    "only_paratext_admins_can_start": "** Anda harus menjadi Administrator Paratext dari sebuah proyek untuk memulainya di sini. Minta Administrator Anda untuk menghubungkan ke proyek Anda maka Anda juga dapat terhubung ke sini setelah itu.",
+    "paratext_project": "Proyek Paratext",
+    "translation_suggestions": "Saran Terjemahan",
+    "translations_will_be_suggested_as_you_edit": "Terjemahan untuk kata dan frasa akan disarankan saat Anda menyunting Alkitab. Disarankan agar proyek Anda diatur sebagai {{ boldStart }}Daughter Translation{{ boldEnd }} di Paratext.",
+    "you_can_change_later": "Anda dapat mengubahnya nanti.",
+    "you_must_be_logged_in_to_paratext": "Anda harus masuk dengan akun Paratext Anda untuk menghubungkan ke proyek."
   },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Apakah anda yakin anda ingin menghapus proyek ini?",
@@ -55,6 +75,12 @@
     "training": "Pelatihan",
     "training_completed_successfully": "Pelatihan berhasil diselesaikan",
     "verse_too_long_for_suggestions": "Ayat ini terlalu panjang untuk membuat saran terjemahan."
+  },
+  "paginator": {
+    "items_per_page": "Items per page",
+    "next_page": "Next page",
+    "previous_page": "Previous page",
+    "range_label": "{{ startIndex }} - {{ endIndex }} of {{ length }}"
   },
   "question_answered_dialog": {
     "cancel": "Batal",
@@ -78,6 +104,15 @@
     "required_with_asterisk": "*Harus diisi",
     "save": "Simpan",
     "scripture_reference": "Ayat Alkitab"
+  },
+  "roles": {
+    "none": "None",
+    "pt_administrator": "Administrator",
+    "pt_consultant": "Konsultan/Pengulas/Arsiparis/Juru Ketik",
+    "pt_observer": "Pengamat",
+    "pt_translator": "Penerjemah",
+    "sf_community_checker": "Community Checker",
+    "sf_reviewer": "Reviewer"
   },
   "settings": {
     "anyone_with_a_link": "Siapapun yang punya tautan",
