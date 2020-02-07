@@ -145,15 +145,15 @@ export class I18nService {
     this.authService.updateInterfaceLanguage(locale.canonicalTag);
   }
 
-  translateBook(book: number | string) {
+  localizeBook(book: number | string) {
     if (typeof book === 'number') {
       book = Canon.bookNumberToId(book);
     }
     return this.transloco.translate(`canon.book_names.${book}`);
   }
 
-  translateReference(verse: VerseRef) {
-    return `${this.translateBook(verse.bookNum)} ${verse.chapterNum}:${verse.verse}`;
+  localizeReference(verse: VerseRef) {
+    return `${this.localizeBook(verse.bookNum)} ${verse.chapterNum}:${verse.verse}`;
   }
 
   localizeRole(role: string) {

@@ -147,7 +147,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get bookName(): string {
-    return this.text == null ? '' : this.i18n.translateBook(this.text.bookNum);
+    return this.text == null ? '' : this.i18n.localizeBook(this.text.bookNum);
   }
 
   get chapter(): number | undefined {

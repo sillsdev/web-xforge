@@ -73,7 +73,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
   }
 
   get bookName(): string {
-    return this.i18n.translateBook(this.bookNum);
+    return this.i18n.localizeBook(this.bookNum);
   }
 
   updateSelection() {
@@ -128,7 +128,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
   }
 
   get referenceForDisplay() {
-    return this.selectedVerses ? `(${this.i18n.translateReference(toVerseRef(this.selectedVerses))})` : '';
+    return this.selectedVerses ? `(${this.i18n.localizeReference(toVerseRef(this.selectedVerses))})` : '';
   }
 
   submit() {

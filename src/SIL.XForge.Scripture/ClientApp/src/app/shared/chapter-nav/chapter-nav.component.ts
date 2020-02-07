@@ -16,7 +16,7 @@ export class ChapterNavComponent {
   constructor(private i18n: I18nService) {}
 
   get bookName(): string {
-    return this.bookNum == null ? '' : this.i18n.translateBook(this.bookNum);
+    return this.bookNum == null ? '' : this.i18n.localizeBook(this.bookNum);
   }
 
   get chapterString(): string {
