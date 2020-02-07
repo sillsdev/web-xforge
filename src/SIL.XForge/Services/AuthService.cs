@@ -106,7 +106,7 @@ namespace SIL.XForge.Services
                     new JProperty("grant_type", "client_credentials"),
                     new JProperty("client_id", options.BackendClientId),
                     new JProperty("client_secret", options.BackendClientSecret),
-                    new JProperty("audience", $"https://{_authOptions.Value.Domain}/api/v2/"));
+                    new JProperty("audience", _authOptions.Value.ManagementAudience));
                 request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
                 HttpResponseMessage response = await _httpClient.SendAsync(request);
                 if ((int)response.StatusCode >= 400)

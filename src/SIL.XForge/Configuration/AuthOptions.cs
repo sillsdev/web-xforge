@@ -7,6 +7,7 @@ namespace SIL.XForge.Configuration
     {
         public string Domain { get; set; }
         public string Audience { get; set; }
+        public string ManagementAudience { get; set; }
         public string Scope { get; set; }
         public string FrontendClientId { get; set; }
         public string BackendClientId { get; set; }
