@@ -15,7 +15,8 @@
     "project_home": "Project home",
     "report_issue_email": "email {{ email }}",
     "report_issue": "Report an issue",
-    "scripture_checking_not_available": "Scripture checking is not available in this project."
+    "scripture_checking_not_available": "Scripture checking is not available in this project.",
+    "translate": "Translate"
   },
   "canon": {
     "book_names": {

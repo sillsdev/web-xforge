@@ -131,7 +131,7 @@
           (selectionChange)="translateVisible = !translateVisible"
         >
           <mdc-icon mdcListItemGraphic>translate</mdc-icon>
-          Translate
+          {{ t("translate") }}
           <mdc-icon *ngIf="!hasSingleAppEnabled" mdcListItemMeta>
             keyboard_arrow_{{ translateVisible ? "down" : "right" }}
           </mdc-icon>
