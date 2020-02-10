@@ -1,8 +1,9 @@
 {
   "app": {
     "settings": "Настройки",
-    "system_administration": "Управление системой",
     "synchronize": "Синхронизировать",
+    "system_administration": "Управление системой",
+    "translate": "Translate",
     "users": "Пользователи"
   },
   "chapter_nav": {

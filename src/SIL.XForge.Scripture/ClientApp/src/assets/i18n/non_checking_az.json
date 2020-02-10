@@ -1,8 +1,9 @@
 {
   "app": {
     "settings": "Parametrlər",
-    "system_administration": "Sistem Administrasiyası",
     "synchronize": "Sinxronlaşdırmaq",
+    "system_administration": "Sistem Administrasiyası",
+    "translate": "Tərcümə etmək",
     "users": "İstifadəçilər"
   },
   "chapter_nav": {
@@ -35,28 +36,28 @@
     "filter_users": "İstifadəçiləri seçmək...",
     "me": "mən",
     "no_users_found": "Heç bir istifadəçi tapılmadı",
-    "problem_loading_invited_users": "There was a problem loading the list of invited users.",
+    "problem_loading_invited_users": "Dəvət edən istifadəçilərin siyahısını yüklənənərkən bir problem yaranıb.",
     "remove_from_project": "Layihədən çıxar",
     "share_with_others": "Başqaları ilə paylaşın. "
   },
   "connect_project": {
-    "additional_settings": "Additional Settings",
-    "already_connected": "(already connected)",
+    "additional_settings": "Əlavə parametrlər",
+    "already_connected": "(artıq əlaqəlidir)",
     "based_on": "Əsasında",
     "choose_the_mother_project": "Layihənizin əsaslandığı Paratext layihəsini seçin.",
     "community_checking": "Dil daşıyıcıları tərəfindən yoxlanma",
-    "connect_paratext_project": "Connect Paratext Project",
-    "connect": "Connect",
-    "connecting_to_project": "Connecting to {{ projectName }}...",
+    "connect_paratext_project": "Paratekst lahiyəsini ilə əlaqə qurmaq",
+    "connect": "Bağlantı qur",
+    "connecting_to_project": "{{ projectName }} ilə qoşur...",
     "engage_the_wider_community_to_check_scripture": "Tərcümənin aydın, dəqiq və təbii olduğuna əmin olmaq üçün daha böyük kollektivi cəlb edin.",
-    "log_in_with_paratext": "Log in with Paratext",
-    "no_connectable_projects": "Looks like there are no connectable projects for you.{{ newLine }}Please go to Paratext to register a project to connect to.",
-    "only_paratext_admins_can_start": "** You must be the Paratext Administrator of a project to start it here. Ask your Administrator to connect to your project then you can also connect to it here after that.",
-    "paratext_project": "Paratext Project",
+    "log_in_with_paratext": "Paratekst vasitəsilə girmək",
+    "no_connectable_projects": "Görünür ki, sizin üçün qoşula bilən lahiyələr yoxdur. {{ newLine }} Zəhmət olmazsa, Paratekst proqramı ilə bir qoşula bilən lahiyəni qeydiyyatdan kecirtin.",
+    "only_paratext_admins_can_start": "Burada lahiyə başlamaq üçün, onun Paratekst Administratoru olmalısınız. Sizin Administratorunuzdan lahiyənizə qoşmağa xahiş ediniz, sonra siz də burada qoşula bilərsiniz.",
+    "paratext_project": "Paratekst layihəsi",
     "translation_suggestions": "Tərcümə təklifləri",
     "translations_will_be_suggested_as_you_edit": "Siz Kəlamı redaktə etdikcə sözlər və ifadələr üçün tərcümələr təklif olunacaq. Məsləhət görülür ki, layihəniz Paratextdə {{ boldStart }} Filial Tərcümə kimi {{ boldEnd }}quraşdırılsın.",
-    "you_can_change_later": "You can change these later.",
-    "you_must_be_logged_in_to_paratext": "You must login with your Paratext account to connect to a project."
+    "you_can_change_later": "Bunları sonra isə dəyişdirə bilərsiniz.",
+    "you_must_be_logged_in_to_paratext": "Bir layihəyə qoşulmağa sizin Paratekst hesabınız ilə girməlisiniz."
   },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Bu layihəni silməyə əminsinizmi?",
@@ -77,10 +78,10 @@
     "verse_too_long_for_suggestions": "Bu ayə təkliflər irəli sürmək üçün çox uzundur."
   },
   "paginator": {
-    "items_per_page": "Items per page",
-    "next_page": "Next page",
-    "previous_page": "Previous page",
-    "range_label": "{{ startIndex }} - {{ endIndex }} of {{ length }}"
+    "items_per_page": "Hər səhifə üçün bəndlər",
+    "next_page": "Növbəti səhifə",
+    "previous_page": "Əvvəlki səhifə",
+    "range_label": "{{ startIndex }} {{ endIndex }}{{ length }}-dən"
   },
   "question_answered_dialog": {
     "cancel": "Ləğv etmək",
@@ -106,13 +107,13 @@
     "scripture_reference": "Kəlamin istinadı"
   },
   "roles": {
-    "none": "None",
-    "pt_administrator": "Administrator",
-    "pt_consultant": "Consultant/Reviewer/Archivist/Typesetter",
-    "pt_observer": "Observer",
+    "none": "Heç biri",
+    "pt_administrator": "İnzibatçı",
+    "pt_consultant": "Məsləhətçi / Rəyçi / Arxivist / Mürəttib",
+    "pt_observer": "Müşahidəçi",
     "pt_translator": "Tərcüməçi",
-    "sf_community_checker": "Community Checker",
-    "sf_reviewer": "Reviewer"
+    "sf_community_checker": "Dil Daşıyıcılar ilə Yoxlayıcı",
+    "sf_reviewer": "Rəyçi"
   },
   "settings": {
     "anyone_with_a_link": "Keçid ilə hər bir kəs",
@@ -170,7 +171,7 @@
     "suggestion_engine": "Təklif Mexanizmi",
     "trained_segments": "öyrədilən parçalar",
     "training": "Təlim...",
-    "translate_overview": "Tərcümənin Xülasəsi",
+    "translate_overview": "Tərcümə Xülasə",
     "translated_segments": "{{ total }} hissənin {{ translatedSegments }}"
   },
   "users": {

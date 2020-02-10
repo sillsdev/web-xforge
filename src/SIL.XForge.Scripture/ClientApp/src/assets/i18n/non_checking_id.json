@@ -1,8 +1,9 @@
 {
   "app": {
     "settings": "Pengaturan",
-    "system_administration": "Administrasi Sistem",
     "synchronize": "Sinkronkan",
+    "system_administration": "Administrasi Sistem",
+    "translate": "Menerjemahkan",
     "users": "Pengguna"
   },
   "chapter_nav": {
@@ -35,7 +36,7 @@
     "filter_users": "Saringan pengguna...",
     "me": "saya",
     "no_users_found": "Tidak ada pengguna ditemukan",
-    "problem_loading_invited_users": "There was a problem loading the list of invited users.",
+    "problem_loading_invited_users": "Terjadi masalah ketika memuat daftar pengguna yang diundang.",
     "remove_from_project": "Hapus dari proyek",
     "share_with_others": "Bagikan dengan orang lain"
   },
@@ -77,10 +78,10 @@
     "verse_too_long_for_suggestions": "Ayat ini terlalu panjang untuk membuat saran terjemahan."
   },
   "paginator": {
-    "items_per_page": "Items per page",
-    "next_page": "Next page",
-    "previous_page": "Previous page",
-    "range_label": "{{ startIndex }} - {{ endIndex }} of {{ length }}"
+    "items_per_page": "Item per halaman",
+    "next_page": "Halaman berikutnya",
+    "previous_page": "Halaman sebelumnya",
+    "range_label": "{{ startIndex }} - {{ endIndex }} dari {{ length }}"
   },
   "question_answered_dialog": {
     "cancel": "Batal",
@@ -106,13 +107,13 @@
     "scripture_reference": "Ayat Alkitab"
   },
   "roles": {
-    "none": "None",
+    "none": "Tidak Ada",
     "pt_administrator": "Administrator",
     "pt_consultant": "Konsultan/Pengulas/Arsiparis/Juru Ketik",
     "pt_observer": "Pengamat",
     "pt_translator": "Penerjemah",
-    "sf_community_checker": "Community Checker",
-    "sf_reviewer": "Reviewer"
+    "sf_community_checker": "Pemeriksa Komunitas",
+    "sf_reviewer": "Pengulas"
   },
   "settings": {
     "anyone_with_a_link": "Siapapun yang punya tautan",
