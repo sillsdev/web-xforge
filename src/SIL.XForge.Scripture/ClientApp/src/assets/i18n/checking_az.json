@@ -86,15 +86,15 @@
       "JUD": "Yəhuda",
       "REV": "Vəhy",
       "TOB": "Tobit",
-      "JDT": "Judith",
-      "ESG": "Esther Greek",
-      "WIS": "Wisdom of Solomon",
-      "SIR": "Sirach (Ecclesiasticus)",
-      "BAR": "Baruch",
-      "LJE": "Letter of Jeremiah",
-      "S3Y": "Song of 3 Young Men",
-      "SUS": "Susanna",
-      "BEL": "Bel and the Dragon",
+      "JDT": "Yudit",
+      "ESG": "Estər (Grekçə)",
+      "WIS": "Süleymanın Hikmətləri",
+      "SIR": "Sirax oğlu",
+      "BAR": "Barux",
+      "LJE": "Yeremiyanın məktubu",
+      "S3Y": "Üç gənclərin nəğməsi",
+      "SUS": "Susana",
+      "BEL": "Bel və əjdaha",
       "1MA": "1 Maccabees",
       "2MA": "2 Maccabees",
       "3MA": "3 Maccabees",
@@ -227,10 +227,10 @@
     "unknown_error": "Naməlum səhv"
   },
   "issue_email": {
-    "body": "Thanks for reporting the issue!\nIt would help us if you fill out some of the information below, but please submit even if you can't fill out much.\nIf you are requesting a feature many of the fields may not be applicable.\nBe aware your bug report will be publicly available. Never submit passwords or other secrets.\n\nBug report\nA clear and concise description of what the bug is.\n\nSteps to reproduce\nFor example:\n1. Go to ...\n2. Click on ...\n3. Scroll down to ...\n4. See error\n\nActual behavior\nPlease describe actual behavior of the issue you are observing.\n\nExpected behavior\nA clear and concise description of what you expected to happen.\n\nScreenshots\nIf applicable, add screenshots to help explain your issue.\n\nAdditional context\nAdd any other context about the problem here.\n\nPossible solution\nAdd any possible solutions to the problem here.\n\nYour environment:\nSoftware                 Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nError id: {{ errorId }}",
-    "not_applicable": "not applicable",
-    "subject": "{{ siteName }} issue",
-    "unknown": "unknown"
+    "body": "Problemi bildirdiyiniz üçün təşəkkür edirik!\nSiz bizə aşağıda ətraflı məlumat versəniz, bu bizə çox kömək edər, amma xahiş edirik ki, çox məlumat verə bilməsəniz də, problem barədə bizə bildirəsiniz. \nƏgər siz hansısa xüsusiyyəti sorğulayırsınızsa, sahələrin çoxu uyğun olmaya bilər. Amma bilin ki, sizin səhvlə bağlı hesabatınızı hamı görə biləcək. Heç vaxt şifrələri və ya başqa sirləri göndərməyin.\n\nSəhvlə bağlı hesabat\nSəhvin aydın və yığcam təsvirini verin.\n\nHəll etmək üçün addımlar\nMəsələn:\n1. Daxil olun...\n2. Klikləyin...\n3. Aşağı sürüşdürün...\n4. Səhvə baxın\n\nFaktiki davranış\n\nZəhmət olmazsa, müşahidə etdiyiniz səhvin faktiki davranışını təsvir edin.\n\nGözlənilən davranış\n\nNəyin baş verəcəyini gözlədiyinizi aydın və yığcam təsvir edin.\n\nEkran şəkilləri\n\nƏgər uyğundursa, problemi izah etmək üçün kömək edəcək ekran şəkilləri əlavə edin.\n\nƏlavə məzmun\n\nSəhvlə bağlı istənilən başqa məzmunu buraya əlavə edin.\n\nMümkün həll\nİstənilən mümkün həlli buraya əlavə edin.\n\nSizin əməliyyat sisteminiz:\nProgram təminatı      Versiya\n\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nSəhv id: {{ errorId }}",
+    "not_applicable": "uyğun deyil",
+    "subject": "{{ siteName }} problem",
+    "unknown": "naməlum"
   },
   "message_dialog": {
     "dismiss": "İmtina et"
@@ -274,7 +274,7 @@
   "supported_browsers_dialog": {
     "dismiss": "İmtina et",
     "browser_unsupported": "Bu brauzerə dəstək göstərilmir",
-    "upgrade_chrome_firefox": "Some of the features of this website may not work correctly with your browser. We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}."
+    "upgrade_chrome_firefox": "Bu vebsaytın bəzi xüsusiyyətləri sizin brauzerinizlə düzgün işləməyəcək. Biz məsləhət görürük ki, onu {{ chromeLink }} və ya {{ firefoxLink }} -in ən son versiyası ilə yeniləyəsiniz."
   },
   "text_chooser_dialog": {
     "cancel": "Ləğv etmək",

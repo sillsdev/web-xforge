@@ -1,8 +1,9 @@
 {
   "app": {
     "settings": "Configuración",
-    "system_administration": "Administración del sistema",
     "synchronize": "Sincronizar",
+    "system_administration": "Administración del sistema",
+    "translate": "Traducir",
     "users": "Usuarios"
   },
   "chapter_nav": {
