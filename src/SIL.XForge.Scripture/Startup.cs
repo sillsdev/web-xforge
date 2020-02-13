@@ -75,21 +75,13 @@ namespace SIL.XForge.Scripture
 
             services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment);
 
-            services.AddBugsnag(bugsnagConfig =>
-            {
-                BugsnagOptions options = Configuration.GetOptions<BugsnagOptions>();
-                string location = System.Reflection.Assembly.GetEntryAssembly().Location;
-                bugsnagConfig.AppVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(location).ProductVersion;
-
-                bugsnagConfig.ApiKey = options.ApiKey;
-                bugsnagConfig.AppType = options.AppType;
-                bugsnagConfig.AutoCaptureSessions = options.AutoCaptureSessions;
-                bugsnagConfig.NotifyReleaseStages = options.NotifyReleaseStages;
-                bugsnagConfig.ProjectNamespaces = options.ProjectNamespaces;
-
-                bugsnagConfig.ReleaseStage = Environment.IsProduction() ? "live" :
-                    Environment.IsStaging() ? "qa" : Environment.EnvironmentName.ToLowerInvariant();
-            });
+            services.AddBugsnag()
+                .Configure<Bugsnag.Configuration>(Configuration.GetSection("Bugsnag"))
+                .Configure<Bugsnag.Configuration>(configuration =>
+                {
+                    string location = System.Reflection.Assembly.GetEntryAssembly().Location;
+                    configuration.AppVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(location).ProductVersion;
+                });
 
             services.AddSFServices();
 
