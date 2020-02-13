@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -37,6 +38,10 @@ namespace SIL.XForge.Scripture.Services
     /// 1. The current notes are retrieved from the PT data access API.
     /// 2. A notes changelist XML is generated from the real-time question docs.
     /// 3. The notes changelist is sent to the PT data access API.
+    ///
+    /// Target and source refer to child and mother translation data. Not
+    /// to be confused with a target or source for where data is coming
+    /// from or going to when fetching or syncing.
     /// </summary>
     public class ParatextSyncRunner
     {
@@ -239,15 +244,37 @@ namespace SIL.XForge.Scripture.Services
         private async Task<List<Chapter>> SyncBookUsxAsync(TextInfo text, TextType textType, string paratextId,
             string fileName, bool isReadOnly, ISet<int> chaptersToInclude)
         {
-            SortedList<int, IDocument<Models.TextData>> textDocs = await FetchTextDocsAsync(text, textType);
+            SortedList<int, IDocument<Models.TextData>> dbChapterDocs = await FetchTextDocsAsync(text, textType);
 
             string bookId = Canon.BookNumberToId(text.BookNum);
-            // Merge mongo data to PT cloud.
+            string ptBookText = await FetchFromAndUpdateParatextAsync(text,
+                paratextId, fileName, isReadOnly, bookId, dbChapterDocs);
+            await UpdateProgress();
+
+            XElement bookTextElem = XElement.Parse(ptBookText);
+            var usxDoc = new XDocument(bookTextElem.Element("usx"));
+            Dictionary<int, ChapterDelta> incomingChapters = _deltaUsxMapper.ToChapterDeltas(usxDoc)
+                .ToDictionary(cd => cd.Number);
+
+            // Set SF DB to snapshot from Paratext.
+            List<Chapter> chapters = await ChangeDbToNewSnapshotAsync(text,
+                textType, chaptersToInclude, dbChapterDocs, incomingChapters);
+
+            // Save to disk
+            await SaveXmlFileAsync(bookTextElem, fileName);
+
+            await UpdateProgress();
+            return chapters;
+        }
+
+        private async Task<string> FetchFromAndUpdateParatextAsync(TextInfo text, string paratextId,
+            string fileName, bool isReadOnly, string bookId, SortedList<int, IDocument<Models.TextData>> dbChapterDocs)
+        {
             XElement bookTextElem;
-            string bookText;
+            string ptBookText;
             if (isReadOnly)
             {
-                bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
+                ptBookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
             }
             else
             {
@@ -256,59 +283,64 @@ namespace SIL.XForge.Scripture.Services
 
                 var oldUsxDoc = new XDocument(bookTextElem.Element("usx"));
                 XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
-                    .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
+                    .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, dbChapterDocs[c.Number].Data)));
 
                 var revision = (string)bookTextElem.Attribute("revision");
 
                 if (XNode.DeepEquals(oldUsxDoc, newUsxDoc))
                 {
-                    bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
+                    ptBookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
                 }
                 else
                 {
-                    bookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
+                    ptBookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
                         revision, newUsxDoc.Root.ToString());
                 }
             }
-            await UpdateProgress();
+            return ptBookText;
+        }
 
-            bookTextElem = XElement.Parse(bookText);
+        internal async Task<List<Chapter>> ChangeDbToNewSnapshotAsync(
+            TextInfo text, TextType textType, ISet<int> chaptersToInclude,
+            SortedList<int, IDocument<TextData>> dbChapterDocs, Dictionary<int,
+            ChapterDelta> incomingChapters)
+        {
+            Debug.Assert(dbChapterDocs.All(chapter => chapter.Value.IsLoaded),
+                "Docs must be loaded from the DB.");
+            Debug.Assert(incomingChapters.All(incomingChapter => incomingChapter.Value.Delta != null),
+                "Incoming chapter deltas cannot be null. Maybe DeltaUsxMapper.ToChapterDeltas() has a bug?");
 
-            // Merge updated PT cloud data into mongo.
-            var usxDoc = new XDocument(bookTextElem.Element("usx"));
             var tasks = new List<Task>();
-            Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
-                .ToDictionary(cd => cd.Number);
             var chapters = new List<Chapter>();
-            foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
+            foreach (KeyValuePair<int, ChapterDelta> incomingChapter in incomingChapters)
             {
-                if (textDocs.TryGetValue(kvp.Key, out IDocument<Models.TextData> textDataDoc))
+                if (dbChapterDocs.TryGetValue(incomingChapter.Key, out IDocument<Models.TextData> dbChapterDoc))
                 {
-                    Delta diffDelta = textDataDoc.Data.Diff(kvp.Value.Delta);
+                    Delta diffDelta = dbChapterDoc.Data.Diff(incomingChapter.Value.Delta);
                     if (diffDelta.Ops.Count > 0)
-                        tasks.Add(textDataDoc.SubmitOpAsync(diffDelta));
-                    textDocs.Remove(kvp.Key);
+                    {
+                        tasks.Add(dbChapterDoc.SubmitOpAsync(diffDelta));
+                    }
+                    dbChapterDocs.Remove(incomingChapter.Key);
                 }
-                else if (chaptersToInclude == null || chaptersToInclude.Contains(kvp.Key))
+                else if (chaptersToInclude == null || chaptersToInclude.Contains(incomingChapter.Key))
                 {
-                    textDataDoc = GetTextDoc(text, kvp.Key, textType);
-                    tasks.Add(textDataDoc.CreateAsync(new Models.TextData(kvp.Value.Delta)));
+                    // Set database to content from Paratext.
+                    dbChapterDoc = GetTextDoc(text, incomingChapter.Key, textType);
+                    tasks.Add(dbChapterDoc.CreateAsync(new Models.TextData(incomingChapter.Value.Delta)));
                 }
                 chapters.Add(new Chapter
                 {
-                    Number = kvp.Key,
-                    LastVerse = kvp.Value.LastVerse,
-                    IsValid = kvp.Value.IsValid
+                    Number = incomingChapter.Key,
+                    LastVerse = incomingChapter.Value.LastVerse,
+                    IsValid = incomingChapter.Value.IsValid
                 });
             }
-            foreach (KeyValuePair<int, IDocument<Models.TextData>> kvp in textDocs)
-                tasks.Add(kvp.Value.DeleteAsync());
+            foreach (KeyValuePair<int, IDocument<Models.TextData>> dbChapterDoc in dbChapterDocs)
+            {
+                tasks.Add(dbChapterDoc.Value.DeleteAsync());
+            }
             await Task.WhenAll(tasks);
-
-            // Save to disk
-            await SaveXmlFileAsync(bookTextElem, fileName);
-
-            await UpdateProgress();
             return chapters;
         }
 
