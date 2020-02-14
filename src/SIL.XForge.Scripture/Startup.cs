@@ -4,7 +4,6 @@ using System.Globalization;
 using System.IO;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Bugsnag.AspNet.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -69,19 +68,13 @@ namespace SIL.XForge.Scripture
         // This method gets called by the runtime. Use this method to add services to the container.
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
+            services.AddExceptionReporting(Configuration);
+
             var containerBuilder = new ContainerBuilder();
 
             services.AddConfiguration(Configuration);
 
             services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment);
-
-            services.AddBugsnag()
-                .Configure<Bugsnag.Configuration>(Configuration.GetSection("Bugsnag"))
-                .Configure<Bugsnag.Configuration>(configuration =>
-                {
-                    string location = System.Reflection.Assembly.GetEntryAssembly().Location;
-                    configuration.AppVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(location).ProductVersion;
-                });
 
             services.AddSFServices();
 
@@ -129,8 +122,6 @@ namespace SIL.XForge.Scripture
 
             services.AddSFMachine(Configuration);
 
-            services.AddSingleton(typeof(IExceptionHandler), typeof(ExceptionHandler));
-
             containerBuilder.Populate(services);
 
             ApplicationContainer = containerBuilder.Build();
@@ -138,15 +129,21 @@ namespace SIL.XForge.Scripture
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IApplicationLifetime appLifetime)
+        public void Configure(IApplicationBuilder app, IApplicationLifetime appLifetime, IExceptionHandler exceptionHandler)
         {
+            if (IsDevelopment)
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler(errorApp => exceptionHandler.ReportExceptions(errorApp));
+            }
+
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.All
             });
-
-            if (IsDevelopment)
-                app.UseDeveloperExceptionPage();
 
             app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
 
