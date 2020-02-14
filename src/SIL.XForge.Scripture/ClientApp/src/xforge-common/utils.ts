@@ -55,6 +55,7 @@ export function issuesEmailTemplate(errorId?: string): string {
     browserVersion: bowser.getBrowserVersion(),
     operatingSystem: bowser.getOSName(),
     operatingSystemVersion: bowser.getOSVersion() || translate('issue_email.unknown'),
+    url: location.href,
     errorId: errorId || translate('issue_email.not_applicable')
   });
 
