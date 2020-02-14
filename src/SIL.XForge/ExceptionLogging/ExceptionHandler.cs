@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -28,6 +31,19 @@ namespace SIL.XForge
                 ReportException(exception);
                 throw exception;
             }
+        }
+
+        public void ReportExceptions(IApplicationBuilder errorApp)
+        {
+            errorApp.Run(async context =>
+            {
+                context.Response.StatusCode = 500;
+                context.Response.ContentType = "text/plain";
+                await context.Response.WriteAsync("500 Internal Server Error");
+
+                var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+                ReportException(exceptionHandlerPathFeature.Error);
+            });
         }
     }
 }
