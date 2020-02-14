@@ -35,13 +35,15 @@ namespace SIL.XForge.Scripture.Services
         private readonly HttpClientHandler _httpClientHandler;
         private readonly HttpClient _dataAccessClient;
         private readonly HttpClient _registryClient;
+        private readonly IExceptionHandler _exceptionHandler;
 
         public ParatextService(IHostingEnvironment env, IOptions<ParatextOptions> options,
-            IRepository<UserSecret> userSecret, IRealtimeService realtimeService)
+            IRepository<UserSecret> userSecret, IRealtimeService realtimeService, IExceptionHandler exceptionHandler)
         {
             _options = options;
             _userSecret = userSecret;
             _realtimeService = realtimeService;
+            _exceptionHandler = exceptionHandler;
 
             _httpClientHandler = new HttpClientHandler();
             _dataAccessClient = new HttpClient(_httpClientHandler);
@@ -210,13 +212,7 @@ namespace SIL.XForge.Scripture.Services
                 new JProperty("refresh_token", userSecret.ParatextTokens.RefreshToken));
             request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
             HttpResponseMessage response = await _registryClient.SendAsync(request);
-            if ((int)response.StatusCode >= 400)
-            {
-                Console.WriteLine($"ParatextService.RefreshAccessTokenAsync received {(int)response.StatusCode} HTTP response");
-                Console.WriteLine("Response content:");
-                Console.WriteLine(await response.Content.ReadAsStringAsync());
-            }
-            response.EnsureSuccessStatusCode();
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
 
             string responseJson = await response.Content.ReadAsStringAsync();
             var responseObj = JObject.Parse(responseJson);

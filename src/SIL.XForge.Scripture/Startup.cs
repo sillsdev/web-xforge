@@ -68,13 +68,13 @@ namespace SIL.XForge.Scripture
         // This method gets called by the runtime. Use this method to add services to the container.
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
+            services.AddExceptionReporting(Configuration);
+
             var containerBuilder = new ContainerBuilder();
 
             services.AddConfiguration(Configuration);
 
             services.AddSFRealtimeServer(LoggerFactory, Configuration, IsDevelopment);
-
-            services.AddExceptionLogging();
 
             services.AddSFServices();
 
@@ -129,17 +129,21 @@ namespace SIL.XForge.Scripture
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IApplicationLifetime appLifetime)
+        public void Configure(IApplicationBuilder app, IApplicationLifetime appLifetime, IExceptionHandler exceptionHandler)
         {
+            if (IsDevelopment)
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler(errorApp => exceptionHandler.ReportExceptions(errorApp));
+            }
+
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.All
             });
-
-            if (IsDevelopment)
-                app.UseDeveloperExceptionPage();
-
-            app.UseExceptionLogging();
 
             app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
 
