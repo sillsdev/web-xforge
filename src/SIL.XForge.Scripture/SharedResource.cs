@@ -32,6 +32,7 @@ namespace SIL.XForge.Scripture
             public const string MessageMissing = "MessageMissing";
             public const string Terms = "Terms";
             public const string Privacy = "Privacy";
+            public const string Language = "Language";
         }
 
         /// <summary>

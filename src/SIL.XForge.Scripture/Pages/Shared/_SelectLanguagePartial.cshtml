@@ -22,7 +22,7 @@
         .ToList();
 }
 
-<div title="@SharedLocalizer["Request culture provider:"] @requestCulture?.Provider?.GetType().Name">
+<div title="@SharedLocalizer[SharedResource.Keys.Language]">
     <form id="selectLanguage" asp-controller="Language"
           asp-action="SetLanguage" method="post" class="form-horizontal" role="form">
         <input type="hidden" name="returnUrl" value="@Context.Request.Path"/>
