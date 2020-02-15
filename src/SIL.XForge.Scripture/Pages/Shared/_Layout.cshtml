@@ -53,7 +53,7 @@
                     <div id="profile">
                         <ul class="app">
                             <li class="copyright">&copy; @DateTime.Now.Year <a target="_blank" href="http://www.sil.org">SIL International</a></li>
-                            <li class="version">@System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion</li>
+                            <li class="version">@ViewData["ProductVersion"]</li>
                         </ul>
                         <ul class="links">
                             <li><a href="~/terms">@SharedLocalizer[SharedResource.Keys.Terms]</a></li>
@@ -70,12 +70,7 @@
     </footer>
     <script src="https://d2wy8f7a9ursnm.cloudfront.net/v6/bugsnag.min.js"></script>
     <script>
-        window.bugsnagClient = bugsnag({
-            apiKey: 'b72a46a8924a3cd161d4c5534287923c',
-            appVersion: '@System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion',
-            notifyReleaseStages: ['live', 'qa'],
-            releaseStage: '@ViewData["ReleaseStage"]'
-        });
+        window.bugsnagClient = bugsnag(@Html.Raw(@ViewData["BugsnagConfig"]));
     </script>
     <script src="~/lib/material-design-lite/js/material.min.js"></script>
     <script src="https://cdn.auth0.com/js/auth0/9.10/auth0.min.js"></script>
