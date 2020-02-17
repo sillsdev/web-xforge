@@ -36,28 +36,28 @@
     "filter_users": "İstifadəçiləri seçmək...",
     "me": "mən",
     "no_users_found": "Heç bir istifadəçi tapılmadı",
-    "problem_loading_invited_users": "Dəvət edən istifadəçilərin siyahısını yüklənənərkən bir problem yaranıb.",
+    "problem_loading_invited_users": "Dəvət olunmuş istifadəçilərin siyahısını yükləyərkən bir problem yaranıb.",
     "remove_from_project": "Layihədən çıxar",
     "share_with_others": "Başqaları ilə paylaşın. "
   },
   "connect_project": {
     "additional_settings": "Əlavə parametrlər",
-    "already_connected": "(artıq əlaqəlidir)",
+    "already_connected": "(artıq qoşulub)",
     "based_on": "Əsasında",
     "choose_the_mother_project": "Layihənizin əsaslandığı Paratext layihəsini seçin.",
     "community_checking": "Dil daşıyıcıları tərəfindən yoxlanma",
-    "connect_paratext_project": "Paratekst lahiyəsini ilə əlaqə qurmaq",
-    "connect": "Bağlantı qur",
-    "connecting_to_project": "{{ projectName }} ilə qoşur...",
+    "connect_paratext_project": "Paratekst layihəsinə qoşulmaq",
+    "connect": "Qoşul",
+    "connecting_to_project": "{{ projectName }} -nə qoşulur...",
     "engage_the_wider_community_to_check_scripture": "Tərcümənin aydın, dəqiq və təbii olduğuna əmin olmaq üçün daha böyük kollektivi cəlb edin.",
-    "log_in_with_paratext": "Paratekst vasitəsilə girmək",
-    "no_connectable_projects": "Görünür ki, sizin üçün qoşula bilən lahiyələr yoxdur. {{ newLine }} Zəhmət olmazsa, Paratekst proqramı ilə bir qoşula bilən lahiyəni qeydiyyatdan kecirtin.",
+    "log_in_with_paratext": "Paratekst vasitəsilə daxil olmaq",
+    "no_connectable_projects": "Görünür ki, sizin üçün qoşula bilən layihələr yoxdur. {{ newLine }} Zəhmət olmazsa, layihəyə qoşulmaq məqsədilə qeydiyyatdan keçmək üçün Paratekst proqramına daxil olun.",
     "only_paratext_admins_can_start": "Burada lahiyə başlamaq üçün, onun Paratekst Administratoru olmalısınız. Sizin Administratorunuzdan lahiyənizə qoşmağa xahiş ediniz, sonra siz də burada qoşula bilərsiniz.",
     "paratext_project": "Paratekst layihəsi",
     "translation_suggestions": "Tərcümə təklifləri",
     "translations_will_be_suggested_as_you_edit": "Siz Kəlamı redaktə etdikcə sözlər və ifadələr üçün tərcümələr təklif olunacaq. Məsləhət görülür ki, layihəniz Paratextdə {{ boldStart }} Filial Tərcümə kimi {{ boldEnd }}quraşdırılsın.",
-    "you_can_change_later": "Bunları sonra isə dəyişdirə bilərsiniz.",
-    "you_must_be_logged_in_to_paratext": "Bir layihəyə qoşulmağa sizin Paratekst hesabınız ilə girməlisiniz."
+    "you_can_change_later": "Bunları sonra dəyişdirə bilərsiniz.",
+    "you_must_be_logged_in_to_paratext": "Siz layihəyə qoşulmaq üçün Paratekst hesabınız ilə daxil olmalısınız."
   },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Bu layihəni silməyə əminsinizmi?",
@@ -81,7 +81,7 @@
     "items_per_page": "Hər səhifə üçün bəndlər",
     "next_page": "Növbəti səhifə",
     "previous_page": "Əvvəlki səhifə",
-    "range_label": "{{ startIndex }} {{ endIndex }}{{ length }}-dən"
+    "range_label": "{{ length }}-in {{ startIndex }} - {{ endIndex }}"
   },
   "question_answered_dialog": {
     "cancel": "Ləğv etmək",
@@ -108,11 +108,11 @@
   },
   "roles": {
     "none": "Heç biri",
-    "pt_administrator": "İnzibatçı",
-    "pt_consultant": "Məsləhətçi / Rəyçi / Arxivist / Mürəttib",
+    "pt_administrator": "Administrator",
+    "pt_consultant": "Məsləhətçi / Rəyçi / Arxivçi / Tərtibatçı",
     "pt_observer": "Müşahidəçi",
     "pt_translator": "Tərcüməçi",
-    "sf_community_checker": "Dil Daşıyıcılar ilə Yoxlayıcı",
+    "sf_community_checker": "Dil daşıyıcıları ilə yoxlayan şəxs",
     "sf_reviewer": "Rəyçi"
   },
   "settings": {

@@ -170,4 +170,8 @@
   <data name="UserMissing" xml:space="preserve">
     <value>Пользователя не существует.</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>Язык</value>
+    <comment>Tool tip for the language selector</comment>
+  </data>
 </root>
