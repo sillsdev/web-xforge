@@ -231,11 +231,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
 
       this.currentUserDoc = await this.userService.getCurrentUser();
-      if (isNewlyLoggedIn) {
-        const languageTag = this.currentUserDoc.data!.interfaceLanguage;
-        if (languageTag != null) {
-          this.i18n.trySetLocale(languageTag);
-        }
+      const languageTag = this.currentUserDoc.data!.interfaceLanguage;
+      if (languageTag != null) {
+        this.i18n.trySetLocale(languageTag, false);
       }
 
       const projectDocs$ = this.currentUserDoc.remoteChanges$.pipe(
