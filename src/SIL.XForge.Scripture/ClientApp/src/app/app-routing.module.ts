@@ -6,6 +6,7 @@ import { SystemAdministrationComponent } from 'xforge-common/system-administrati
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
 import { ProjectComponent } from './project/project.component';
 import { SettingsComponent } from './settings/settings.component';
+import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.component';
 import { SFAdminAuthGuard } from './shared/project-router.guard';
 import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
@@ -16,7 +17,8 @@ const routes: Routes = [
   { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SFAdminAuthGuard] },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: StartComponent, canActivate: [AuthGuard] },
-  { path: 'system-administration', component: SystemAdministrationComponent, canActivate: [SystemAdminAuthGuard] }
+  { path: 'system-administration', component: SystemAdministrationComponent, canActivate: [SystemAdminAuthGuard] },
+  { path: '**', component: PageNotFoundComponent }
 ];
 
 @NgModule({

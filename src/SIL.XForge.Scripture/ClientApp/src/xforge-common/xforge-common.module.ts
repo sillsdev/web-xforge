@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { TRANSLOCO_CONFIG, TRANSLOCO_LOADER, TranslocoModule } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
 import { AvatarModule } from 'ngx-avatar';
+import { PageNotFoundComponent } from '../app/shared/page-not-found/page-not-found.component';
 import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
 import { I18nService, TranslationLoader } from './i18n.service';
@@ -27,6 +28,7 @@ const componentExports = [
   SaDeleteDialogComponent,
   SaUsersComponent,
   SystemAdministrationComponent,
+  PageNotFoundComponent,
   WriteStatusComponent
 ];
 

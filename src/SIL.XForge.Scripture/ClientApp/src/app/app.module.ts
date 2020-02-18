@@ -44,7 +44,6 @@ import { UsersModule } from './users/users.module';
     EditNameDialogComponent
   ],
   imports: [
-    AppRoutingModule,
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     BrowserAnimationsModule,
     CoreModule,
@@ -56,7 +55,8 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     UICommonModule,
     XForgeCommonModule,
-    TranslocoModule
+    TranslocoModule,
+    AppRoutingModule
   ],
   providers: [CookieService, DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
   entryComponents: [

@@ -10,6 +10,7 @@
     "log_out": "Log out",
     "logged_in_as": "Logged in as",
     "overview": "Overview",
+    "page_not_found": "Page not found",
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
     "product_version": "Product version: v{{ version }}",
     "project_home": "Project home",

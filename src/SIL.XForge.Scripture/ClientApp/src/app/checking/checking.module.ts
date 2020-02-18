@@ -53,7 +53,7 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     SharedModule,
     UICommonModule,
     XForgeCommonModule,
-    AngularSplitModule.forRoot(),
+    AngularSplitModule.forChild(),
     ngfModule,
     TranslocoModule
   ],
