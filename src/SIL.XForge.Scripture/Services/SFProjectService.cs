@@ -315,9 +315,10 @@ namespace SIL.XForge.Scripture.Services
             var instructions = $"<p>{_localizer[SharedResource.Keys.InviteInstructions, siteOptions.Name, "<b>", "</b>"]}";
             var pt = $"<ul><li>{_localizer[SharedResource.Keys.InvitePTOption, "<b>", "</b>", siteOptions.Name]}</li>";
             var google = $"<li>{_localizer[SharedResource.Keys.InviteGoogleOption, "<b>", "</b>", siteOptions.Name]}</li>";
+            var facebook = $"<li>{_localizer[SharedResource.Keys.InviteFacebookOption, "<b>", "</b>", siteOptions.Name]}</li>";
             var withemail = $"<li>{_localizer[SharedResource.Keys.InviteEmailOption, siteOptions.Name]}</li></ul></p><p></p>";
             var signoff = $"<p>{_localizer[SharedResource.Keys.InviteSignature, "<p>", siteOptions.Name]}</p>";
-            var emailBody = $"{greeting}{additionalMessage}{instructions}{pt}{google}{withemail}{signoff}";
+            var emailBody = $"{greeting}{additionalMessage}{instructions}{pt}{google}{facebook}{withemail}{signoff}";
             await _emailService.SendEmailAsync(email, subject, emailBody);
             return true;
         }
