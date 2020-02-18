@@ -67,14 +67,31 @@ describe('ExceptionHandlingService', () => {
       stack: 'Stack trace trace to promise implementation',
       rejection: {
         message: 'Original error',
-        stack: 'Original stack trace'
+        name: 'Original error name'
       }
     });
 
     expect(env.oneAndOnlyReport.error.message).toBe('Original error');
-    expect(env.oneAndOnlyReport.error.stack).toBe('Original stack trace');
+    expect(env.oneAndOnlyReport.error.name).toBe('Original error name');
     expect(env.oneAndOnlyReport.opts.user.id).toBe('some id');
     expect(env.oneAndOnlyReport.opts.metaData.eventId).toMatch(/[\da-f]{24}/);
+  });
+
+  it('should handle arbitrary objects', async () => {
+    const env = new TestEnvironment();
+    await env.service.handleError({
+      a: 1
+    });
+    expect(env.oneAndOnlyReport.error.message).toBe('Unknown error: {"a":1}');
+  });
+
+  it('should handle circular objects', async () => {
+    const env = new TestEnvironment();
+    const z = { z: {} };
+    z.z = z;
+    expect(() => JSON.stringify(z)).toThrow();
+    await env.service.handleError(z);
+    expect(env.oneAndOnlyReport.error.message).toBe('Unknown error (with circular references): [object Object]');
   });
 
   it('should handle undefined users', async () => {
