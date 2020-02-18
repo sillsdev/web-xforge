@@ -49,6 +49,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
   private rawTextSelection = '';
   private selectedVerses?: VerseRefData;
   private selectionChanged = false;
+  private readonly verseSegmentSelector = 'usx-segment[data-segment^=verse_]';
 
   constructor(
     private readonly dialogRef: MdcDialogRef<TextChooserDialogComponent>,
@@ -385,11 +386,11 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
   }
 
   private getSegments(verse?: number) {
-    return this.segments().filter(el => (verse == null ? true : verse === this.getVerseFromElement(el)));
+    return this.verseSegments().filter(el => (verse == null ? true : verse === this.getVerseFromElement(el)));
   }
 
   private isInASegment(node: Node): boolean {
-    if (this.isSegment(node)) {
+    if (this.isVerseSegment(node)) {
       return true;
     } else if (node.parentNode != null) {
       return this.isInASegment(node.parentNode);
@@ -398,16 +399,14 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     }
   }
 
-  private isSegment(node: Node) {
-    return node.nodeType === node.ELEMENT_NODE && (node as Element).tagName.toLowerCase() === 'usx-segment';
+  private isVerseSegment(node: Node) {
+    return node.nodeType === node.ELEMENT_NODE && (node as Element).matches(this.verseSegmentSelector);
   }
 
-  private segments(): Element[] {
+  private verseSegments(): Element[] {
     if (this.scriptureText == null) {
       return [];
     }
-    return Array.from(
-      (this.scriptureText.nativeElement as HTMLElement).querySelectorAll('usx-segment[data-segment^=verse_]')
-    );
+    return Array.from((this.scriptureText.nativeElement as HTMLElement).querySelectorAll(this.verseSegmentSelector));
   }
 }

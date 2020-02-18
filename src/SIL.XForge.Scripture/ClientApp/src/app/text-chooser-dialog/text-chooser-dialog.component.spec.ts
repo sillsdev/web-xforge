@@ -244,55 +244,54 @@ describe('TextChooserDialogComponent', () => {
     env.closeDialog();
   }));
 
-  it('can handle selections starting or ending outside the text', fakeAsync(() => {
-    const env = new TestEnvironment(
-      { start: 25, end: 3 },
-      // this isn't the same as the selection starting and ending outside the text, but it will be handled the same
-      'selector that will not select anything',
-      'another selector that will not select anything'
-    );
+  it('can handle selections starting outside the text', fakeAsync(() => {
+    const env = new TestEnvironment({ start: 5, end: 3 }, 'p_1', 'verse_1_1');
     expect(() => env.fireSelectionChange()).not.toThrow();
-    expect(env.selectedText).toEqual('');
+    expect(env.selectedText).toEqual('target… (Matthew 1:1)');
     env.closeDialog();
   }));
 
   it('calculates text content correctly', fakeAsync(() => {
     const env = new TestEnvironment();
-    const node = env.nodeFromHtml('<usx-segment>Here <usx-note>be</usx-note> text</usx-segment>');
-    expect(env.component.textContent(node)).toEqual('Here  text');
-    let dividingNode = node.childNodes[1];
+    const element = env.elementFromHtml(
+      '<usx-segment data-segment="verse_1_1">Here <usx-note>be</usx-note> text</usx-segment>'
+    );
+    expect(env.component.textContent(element)).toEqual('Here  text');
+    let dividingNode = element.childNodes[1];
     expect(dividingNode.textContent).toEqual('be');
-    expect(env.component.textContent(node, dividingNode, 0, true)).toEqual(' text');
-    expect(env.component.textContent(node, dividingNode, 0, false)).toEqual('Here ');
-    dividingNode = node.childNodes[2];
+    expect(env.component.textContent(element, dividingNode, 0, true)).toEqual(' text');
+    expect(env.component.textContent(element, dividingNode, 0, false)).toEqual('Here ');
+    dividingNode = element.childNodes[2];
     expect(dividingNode.textContent).toEqual(' text');
-    expect(env.component.textContent(node, dividingNode, 3, true)).toEqual('xt');
-    expect(env.component.textContent(node, dividingNode, 3, false)).toEqual('Here  te');
+    expect(env.component.textContent(element, dividingNode, 3, true)).toEqual('xt');
+    expect(env.component.textContent(element, dividingNode, 3, false)).toEqual('Here  te');
   }));
 
   it('calculates range offsets correctly', fakeAsync(() => {
     const env = new TestEnvironment();
-    let node = env.nodeFromHtml('<usx-segment>Here <usx-note>be</usx-note> text</usx-segment>') as Element;
+    let element = env.elementFromHtml(
+      '<usx-segment data-segment="verse_1_1">Here <usx-note>be</usx-note> text</usx-segment>'
+    );
     const mockedSelection = mock(Selection);
     when(mockedSelection.getRangeAt(anything())).thenReturn({
-      startContainer: node.childNodes[0] as Node,
-      endContainer: node.childNodes[2] as Node,
+      startContainer: element.childNodes[0] as Node,
+      endContainer: element.childNodes[2] as Node,
       startOffset: 'Her'.length,
       endOffset: ' text'.length
     } as Range);
-    expect(env.component.rangeOffsets(instance(mockedSelection), [node])).toEqual({
+    expect(env.component.rangeOffsets(instance(mockedSelection), [element])).toEqual({
       startOffset: 'Her'.length,
       endOffset: 'Here  text'.length
     });
 
-    node = env.nodeFromHtml('<usx-segment>Lorem ipsum</usx-segment>') as Element;
+    element = env.elementFromHtml('<usx-segment data-segment="verse_1_1">Lorem ipsum</usx-segment>');
     when(mockedSelection.getRangeAt(anything())).thenReturn({
-      startContainer: node.firstChild as Node,
-      endContainer: node.firstChild as Node,
+      startContainer: element.firstChild as Node,
+      endContainer: element.firstChild as Node,
       startOffset: 'Lor'.length,
       endOffset: 'Lorem ipsum'.length
     } as Range);
-    expect(env.component.rangeOffsets(instance(mockedSelection), [node])).toEqual({
+    expect(env.component.rangeOffsets(instance(mockedSelection), [element])).toEqual({
       startOffset: 'Lor'.length,
       endOffset: 'Lorem ipsum'.length
     });
@@ -405,7 +404,7 @@ class TestEnvironment {
           } as any;
         },
         containsNode: (node: Node): boolean => {
-          const segments = Array.from(this.editor.querySelectorAll('usx-segment[data-segment^="verse_"]'));
+          const segments = Array.from(this.editor.querySelectorAll('usx-segment[data-segment]'));
           let startingSegmentReached = false;
           for (const segment of segments) {
             if (segment.getAttribute('data-segment') === startSegment) {
@@ -512,15 +511,16 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  nodeFromHtml(html: string) {
+  elementFromHtml(html: string) {
     const div = document.createElement('div');
     div.innerHTML = html;
-    return div.firstChild!;
+    return div.firstChild! as Element;
   }
 
   static get delta() {
     const delta = new Delta();
     delta.insert({ chapter: { number: '1', style: 'c' } });
+    delta.insert('heading text', { para: { style: 'p' } });
     delta.insert({ blank: true }, { segment: 'p_1' });
     delta.insert({ verse: { number: '1', style: 'v' } });
     delta.insert('target: chapter 1, verse 1.', { segment: 'verse_1_1' });
