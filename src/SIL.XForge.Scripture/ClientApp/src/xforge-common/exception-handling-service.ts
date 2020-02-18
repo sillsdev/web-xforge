@@ -64,6 +64,22 @@ export class ExceptionHandlingService implements ErrorHandler {
       return;
     }
 
+    if (
+      typeof error === 'object' &&
+      // these are the properties Bugsnag checks for, and will have problems if they don't exist
+      !(
+        (typeof error.name === 'string' || typeof error.errorClass === 'string') &&
+        (typeof error.message === 'string' || typeof error.errorMessage === 'string')
+      )
+    ) {
+      // JSON.stringify will throw if there are recursive references, and this needs to be bulletproof
+      try {
+        error = new Error('Unknown error: ' + JSON.stringify(error));
+      } catch {
+        error = new Error('Unknown error (with circular references): ' + String(error));
+      }
+    }
+
     // some rejection objects from Auth0 use errorDescription or error_description for the rejection message
     const messageKeys = ['message', 'errorDescription', 'error_description'];
     const messageKey = messageKeys.find(key => typeof error[key] === 'string');
