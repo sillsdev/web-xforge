@@ -106,7 +106,7 @@ export class I18nService {
   ) {
     const language = this.cookieService.get(ASP_CULTURE_COOKIE_NAME);
     if (language != null) {
-      this.trySetLocale(getAspCultureCookieLanguage(language));
+      this.trySetLocale(getAspCultureCookieLanguage(language), false);
     }
   }
 
@@ -130,7 +130,7 @@ export class I18nService {
     this.trySetLocale(tag);
   }
 
-  trySetLocale(tag: string) {
+  trySetLocale(tag: string, doAuthUpdate: boolean = true) {
     const locale = I18nService.getLocale(tag);
     if (locale == null) {
       console.warn(`Failed attempt to set locale to unsupported locale ${tag}`);
@@ -142,7 +142,9 @@ export class I18nService {
     const date = new Date();
     date.setFullYear(date.getFullYear() + 1);
     this.cookieService.set(ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue(locale.canonicalTag), date, '/');
-    this.authService.updateInterfaceLanguage(locale.canonicalTag);
+    if (doAuthUpdate) {
+      this.authService.updateInterfaceLanguage(locale.canonicalTag);
+    }
   }
 
   localizeBook(book: number | string) {
