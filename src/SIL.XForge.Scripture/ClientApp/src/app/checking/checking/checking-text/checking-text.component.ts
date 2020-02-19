@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { translate } from '@ngneat/transloco';
 import clone from 'lodash/clone';
 import isEqual from 'lodash/isEqual';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
@@ -14,7 +15,6 @@ import { TextComponent } from '../../../shared/text/text.component';
   styleUrls: ['./checking-text.component.scss']
 })
 export class CheckingTextComponent extends SubscriptionDisposable {
-  @Input() placeholder = 'Loading...';
   @ViewChild(TextComponent, { static: true }) textComponent!: TextComponent;
   @Output() questionVerseSelected = new EventEmitter<VerseRef>();
 
@@ -23,6 +23,15 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   private _editorLoaded = false;
   private _id?: TextDocId;
   private _questionVerses?: VerseRef[];
+  private _placeholder?: string;
+
+  @Input() set placeholder(value: string) {
+    this._placeholder = value;
+  }
+
+  get placeholder() {
+    return this._placeholder || translate('text.loading');
+  }
 
   @Input() set activeVerse(verseRef: VerseRef | undefined) {
     // Removed the highlight on the old active verse
