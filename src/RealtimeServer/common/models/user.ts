@@ -10,6 +10,7 @@ export enum AuthType {
   Unknown,
   Paratext,
   Google,
+  Facebook,
   Account
 }
 
@@ -24,6 +25,9 @@ export function getAuthType(authId: string): AuthType {
   }
   if (authIdType.includes('google')) {
     return AuthType.Google;
+  }
+  if (authIdType.includes('facebook')) {
+    return AuthType.Facebook;
   }
   if (authIdType.includes('auth0')) {
     return AuthType.Account;

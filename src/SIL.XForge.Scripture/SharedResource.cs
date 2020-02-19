@@ -21,6 +21,7 @@ namespace SIL.XForge.Scripture
             public const string InviteInstructions = "InviteInstructions";
             public const string InvitePTOption = "InvitePTOption";
             public const string InviteGoogleOption = "InviteGoogleOption";
+            public const string InviteFacebookOption = "InviteFacebookOption";
             public const string InviteEmailOption = "InviteEmailOption";
             public const string InviteSignature = "InviteSignature";
             public const string InviteLinkSharingOn = "InviteLinkSharingOn";
