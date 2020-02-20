@@ -50,7 +50,6 @@ export interface TextUpdatedEvent {
 export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
   @Input() isReadOnly: boolean = true;
-  @Input() placeholder = translate('text.loading');
   @Input() markInvalid: boolean = false;
   @Input() multiSegmentSelection = false;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
@@ -129,9 +128,18 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   private highlightMarker?: HTMLElement;
   private highlightMarkerTop: number = 0;
   private highlightMarkerHeight: number = 0;
+  private _placeholder?: string;
 
   constructor(private readonly projectService: SFProjectService) {
     super();
+  }
+
+  get placeholder() {
+    return this._placeholder || translate('text.loading');
+  }
+
+  @Input() set placeholder(value: string) {
+    this._placeholder = value;
   }
 
   get id(): TextDocId | undefined {
