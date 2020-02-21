@@ -8,8 +8,11 @@ import { QueryParameters } from './query-parameters';
  * communicating with the real-time backend.
  */
 export abstract class RealtimeRemoteStore {
+  abstract connected: boolean;
+  abstract webSocketConnected$: Observable<boolean>;
   abstract createDocAdapter(collection: string, id: string): RealtimeDocAdapter;
   abstract createQueryAdapter(collection: string, parameters: QueryParameters): RealtimeQueryAdapter;
+  abstract removeAudioOnConnected(callback: () => Promise<void>): void;
 }
 
 /**
