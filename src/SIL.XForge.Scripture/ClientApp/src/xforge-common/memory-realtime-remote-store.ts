@@ -1,6 +1,7 @@
+import { OnDestroy } from '@angular/core';
 import isEqual from 'lodash/isEqual';
 import * as OTJson0 from 'ot-json0';
-import { EMPTY, Subject } from 'rxjs';
+import { EMPTY, Subject, Subscription } from 'rxjs';
 import { OTType, types } from 'sharedb/lib/client';
 import { Snapshot } from './models/snapshot';
 import { performQuery, QueryParameters } from './query-parameters';
@@ -9,8 +10,24 @@ import { RealtimeDocAdapter, RealtimeQueryAdapter, RealtimeRemoteStore } from '.
 /**
  * This is the memory-based implementation of the real-time remote store. It is useful for testing.
  */
-export class MemoryRealtimeRemoteStore extends RealtimeRemoteStore {
+export class MemoryRealtimeRemoteStore extends RealtimeRemoteStore implements OnDestroy {
+  readonly webSocketConnected$: Subject<boolean> = new Subject<boolean>();
+  connected: boolean = false;
   private readonly snapshots = new Map<string, Map<string, Snapshot>>();
+  private deleteAudioCallbacks: (() => Promise<void>)[] = [];
+  private connectedSubscription: Subscription;
+
+  constructor() {
+    super();
+    this.connectedSubscription = this.webSocketConnected$.subscribe(async () => {
+      await Promise.all(this.deleteAudioCallbacks);
+      this.deleteAudioCallbacks = [];
+    });
+  }
+
+  ngOnDestroy() {
+    this.connectedSubscription.unsubscribe();
+  }
 
   addSnapshot<T>(collection: string, snapshot: Snapshot<T>): void {
     let collectionSnapshots = this.snapshots.get(collection);
@@ -47,6 +64,16 @@ export class MemoryRealtimeRemoteStore extends RealtimeRemoteStore {
 
   createQueryAdapter(collection: string, parameters: QueryParameters): RealtimeQueryAdapter {
     return new MemoryRealtimeQueryAdapter(this, collection, parameters);
+  }
+
+  /** A method to simulate establishing a websocket connection. It is useful for unit tests. */
+  connectWebSocket(isConnected: boolean): void {
+    this.connected = isConnected;
+    this.webSocketConnected$.next(isConnected);
+  }
+
+  removeAudioOnConnected(callback: () => Promise<void>) {
+    this.deleteAudioCallbacks.push(callback);
   }
 }
 
