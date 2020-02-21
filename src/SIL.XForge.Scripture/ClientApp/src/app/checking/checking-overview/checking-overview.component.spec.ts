@@ -4,6 +4,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
@@ -48,7 +49,7 @@ const mockedCookieService = mock(CookieService);
 
 describe('CheckingOverviewComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [DialogTestModule, RouterTestingModule],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: MdcDialog, useMock: mockedMdcDialog },
