@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { LatinWordTokenizer, MAX_SEGMENT_LENGTH, RemoteTranslationEngine } from '@sillsdev/machine';
 import * as crc from 'crc-32';
+import { AudioBase } from 'realtime-server/lib/common/models/audio-base';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SF_PROJECTS_COLLECTION, SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
@@ -184,5 +185,40 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
         Canon.bookNumberToId(projectUserConfig.selectedBookNum) +
         ' was trained successfully.'
     );
+  }
+
+  uploadAudio(id: string, dataId: string, questionDocId: string, blob: Blob, filename: string): Promise<string> {
+    if (this.realtimeService.remoteStore.connected) {
+      // We are online. Upload directly to the server
+      return this.onlineUploadAudio(id, dataId, new File([blob], filename));
+    }
+    // Store the audio in indexedDB until we go online again
+    const localAudio: AudioBase = { projectRef: id, dataId: dataId, blob, realtimeDocRef: questionDocId, filename };
+    const indexedDBUrl = this.realtimeService.storeAudio(localAudio);
+    this.uploadAudioToServer(async (audio: AudioBase) => {
+      const doc: QuestionDoc = this.realtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, audio.realtimeDocRef);
+      if (doc.data != null) {
+        const url = await this.onlineUploadAudio(
+          audio.projectRef,
+          audio.dataId,
+          new File([audio.blob], audio.filename)
+        );
+        if (doc.data.dataId === audio.dataId) {
+          doc.submitJson0Op(op => op.set(qd => qd.audioUrl!, url));
+        } else {
+          const answerIndex = doc.data.answers.findIndex(a => a.dataId === audio.dataId);
+          doc.submitJson0Op(op => op.set(qd => qd.answers[answerIndex].audioUrl!, url));
+        }
+        this.realtimeService.removeAudio(audio.dataId);
+      }
+    });
+    return indexedDBUrl;
+  }
+
+  async deleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
+    if (this.realtimeService.remoteStore.connected) {
+      return this.onlineDeleteAudio(id, dataId, ownerId);
+    }
+    this.realtimeService.removeAudio(dataId, () => this.onlineDeleteAudio(id, dataId, ownerId));
   }
 }
