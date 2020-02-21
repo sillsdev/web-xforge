@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { AudioBase } from 'realtime-server/lib/common/models/audio-base';
+import { Subject, Subscription } from 'rxjs';
 import { RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { QueryParameters } from './query-parameters';
@@ -21,6 +23,8 @@ function getDocKey(collection: string, id: string): string {
 export class RealtimeService {
   protected readonly docs = new Map<string, RealtimeDoc>();
   protected readonly subscribeQueries = new Map<string, Set<RealtimeQuery>>();
+
+  protected connectedSubscription?: Subscription;
 
   constructor(
     private readonly docTypes: RealtimeDocTypes,
@@ -147,5 +151,38 @@ export class RealtimeService {
       await this.offlineStore.delete(doc.collection, doc.id);
       this.docs.delete(getDocKey(doc.collection, doc.id));
     }
+  }
+
+  async storeAudio(audio: AudioBase): Promise<string> {
+    await this.offlineStore.putAudio(audio);
+    const audioSource = await this.offlineStore.getAudio(audio.dataId);
+    if (audioSource != null) {
+      return URL.createObjectURL(audioSource.blob);
+    }
+    return Promise.reject('Could not retrieve audio');
+  }
+
+  async uploadAudioWhenOnline(callback: (audio: AudioBase) => Promise<void>): Promise<void> {
+    if (this.connectedSubscription != null) {
+      return;
+    }
+    this.connectedSubscription = this.remoteStore.webSocketConnected$.subscribe(async (isConnected: boolean) => {
+      if (!isConnected) {
+        return;
+      }
+      const audioInIndexedDB: AudioBase[] = await this.offlineStore.getAllAudio();
+      for (const audio of audioInIndexedDB) {
+        await callback(audio);
+      }
+      this.connectedSubscription!.unsubscribe();
+      this.connectedSubscription = undefined;
+    });
+  }
+
+  async removeAudio(id: string, deleteCallback: () => Promise<void> = () => Promise.resolve()): Promise<void> {
+    if (await this.offlineStore.getAudio(id)) {
+      return this.offlineStore.deleteAudio(id);
+    }
+    this.remoteStore.removeAudioOnConnected(deleteCallback);
   }
 }
