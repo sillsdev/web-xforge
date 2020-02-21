@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import isObjectLike from 'lodash/isObjectLike';
+import { AUDIO_COLLECTION, AudioBase } from 'realtime-server/lib/common/models/audio-base';
 import { Filter, performQuery, QueryParameters } from './query-parameters';
 import { RealtimeDocTypes } from './realtime-doc-types';
 import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore } from './realtime-offline-store';
@@ -24,6 +25,14 @@ function getAllFromCursor(
         resolve(results);
       }
     };
+  });
+}
+
+function getLocalAudio(store: IDBObjectStore | IDBIndex): Promise<AudioBase[]> {
+  return new Promise<AudioBase[]>((resolve, reject) => {
+    const request = store.getAll();
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
   });
 }
 
@@ -85,6 +94,15 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
     return await getAllFromCursor(objectStore);
   }
 
+  async getAllAudio(): Promise<AudioBase[]> {
+    const db = await this.openDB();
+
+    const transaction = db.transaction('audio');
+    const objectStore = transaction.objectStore('audio');
+
+    return await getLocalAudio(objectStore);
+  }
+
   async get(collection: string, id: string): Promise<RealtimeOfflineData> {
     const db = await this.openDB();
 
@@ -92,6 +110,19 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
     const objectStore = transaction.objectStore(collection);
 
     return await new Promise<RealtimeOfflineData>((resolve, reject) => {
+      const request = objectStore.get(id);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+  }
+
+  async getAudio(id: string): Promise<AudioBase | undefined> {
+    const db = await this.openDB();
+
+    const transaction = db.transaction(AUDIO_COLLECTION);
+    const objectStore = transaction.objectStore(AUDIO_COLLECTION);
+
+    return await new Promise<AudioBase>((resolve, reject) => {
       const request = objectStore.get(id);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
@@ -133,6 +164,35 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
     });
   }
 
+  async putAudio(audio: AudioBase): Promise<void> {
+    const db = await this.openDB();
+    /*
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = window.indexedDB.open(DATABASE_NAME);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const dataB = request.result;
+        dataB.onversionchange = () => {
+          dataB.close();
+          resolve(dataB);
+        };
+      };
+      request.onupgradeneeded = () => {
+        const database = request.result;
+        database.createObjectStore('audio');
+      };
+    });
+*/
+    const transaction = db.transaction(AUDIO_COLLECTION, 'readwrite');
+    const objectStore = transaction.objectStore(AUDIO_COLLECTION);
+
+    await new Promise<void>((resolve, reject) => {
+      const request = objectStore.put(audio, audio.dataId);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve();
+    });
+  }
+
   async delete(collection: string, id: string): Promise<void> {
     const db = await this.openDB();
 
@@ -144,6 +204,10 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve();
     });
+  }
+
+  async deleteAudio(id: string): Promise<void> {
+    return this.delete(AUDIO_COLLECTION, id);
   }
 
   async deleteDB(): Promise<void> {
@@ -179,6 +243,8 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
             objectStore.createIndex(path, `${nameof<RealtimeOfflineData>('data')}.${path}`);
           }
         }
+        // Create an audio store
+        db.createObjectStore('audio');
       };
     });
     return this.openDBPromise;
