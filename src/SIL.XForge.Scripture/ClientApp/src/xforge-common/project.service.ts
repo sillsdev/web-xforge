@@ -1,5 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import merge from 'lodash/merge';
+import { AudioBase } from 'realtime-server/lib/common/models/audio-base';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, Observable } from 'rxjs';
@@ -103,6 +104,10 @@ export abstract class ProjectService<
 
   onlineDeleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
     return this.onlineInvoke('deleteAudio', { projectId: id, ownerId, dataId });
+  }
+
+  uploadAudioToServer(callback: (audio: AudioBase) => Promise<void>): Promise<void> {
+    return this.realtimeService.uploadAudioWhenOnline(callback);
   }
 
   protected onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {

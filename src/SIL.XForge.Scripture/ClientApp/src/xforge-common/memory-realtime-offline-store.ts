@@ -1,4 +1,5 @@
 import merge from 'lodash/merge';
+import { AudioBase } from 'realtime-server/lib/common/models/audio-base';
 import { Snapshot } from './models/snapshot';
 import { performQuery, QueryParameters } from './query-parameters';
 import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore } from './realtime-offline-store';
@@ -8,6 +9,7 @@ import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore 
  */
 export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
   private readonly map = new Map<string, Map<string, RealtimeOfflineData>>();
+  private readonly audioMap = new Map<string, AudioBase>();
 
   addSnapshot<T>(collection: string, snapshot: Snapshot<T>): void {
     let collectionSnapshots = this.map.get(collection);
@@ -42,6 +44,18 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
     return Promise.resolve(collectionData.get(id));
   }
 
+  getAllAudio(): Promise<AudioBase[]> {
+    return Promise.resolve(Array.from(this.audioMap.values()));
+  }
+
+  getAudio(id: string): Promise<AudioBase | undefined> {
+    const collectionData = this.audioMap.get(id);
+    if (collectionData == null) {
+      return Promise.resolve(undefined);
+    }
+    return Promise.resolve(collectionData);
+  }
+
   async query(collection: string, parameters: QueryParameters): Promise<RealtimeOfflineQueryResults> {
     const snapshots = await this.getAll(collection);
     return performQuery(parameters, snapshots);
@@ -57,11 +71,21 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
     return Promise.resolve();
   }
 
+  putAudio(audio: AudioBase): Promise<void> {
+    this.audioMap.set(audio.dataId, audio);
+    return Promise.resolve();
+  }
+
   delete(collection: string, id: string): Promise<void> {
     const collectionData = this.map.get(collection);
     if (collectionData != null) {
       collectionData.delete(id);
     }
+    return Promise.resolve();
+  }
+
+  deleteAudio(id: string): Promise<void> {
+    this.audioMap.delete(id);
     return Promise.resolve();
   }
 
