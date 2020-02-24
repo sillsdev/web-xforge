@@ -17,8 +17,12 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
+using Paratext.Data.Encodings;
+using Paratext.Data.Languages;
+using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
+using PtxUtils;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -85,10 +89,21 @@ namespace SIL.XForge.Scripture.Services
             string syncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
             if (!_fileSystemService.DirectoryExists(syncDir))
                 _fileSystemService.CreateDirectory(syncDir);
+
+            WritingSystemRepository.Initialize();
+
+            RegistryU.Implementation = new DotNetCoreRegistry();
+
             // TODO: not sure if using ScrTextCollection is the best idea for a server, since it loads all existing
             // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
             // ScrTextCollectionServer class in DataAccessServer.
-            ParatextData.Initialize(syncDir);
+            ScrTextCollection.Initialize(syncDir, false);
+
+            string usfmStylesFileName = "usfm.sty";
+            string source = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
+            string target = Path.Combine(syncDir, usfmStylesFileName);
+            if (!File.Exists(target))
+                File.Copy(source, target);
         }
 
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
