@@ -31,7 +31,7 @@ class MockConsole {
   error(val: any) {
     if (
       !['', 'Test error', 'Original error'].includes(val.message) &&
-      !(val.message != null && val.message.startsWith('Unknown error: '))
+      !(val.message != null && val.message.startsWith('Unknown error'))
     ) {
       console.error(val);
     }
