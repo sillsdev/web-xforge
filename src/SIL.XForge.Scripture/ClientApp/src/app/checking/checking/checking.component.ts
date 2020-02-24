@@ -373,6 +373,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   ngOnDestroy(): void {
+    super.ngOnDestroy();
     if (this.questionsQuery != null) {
       this.questionsQuery.dispose();
     }
