@@ -88,6 +88,9 @@
           }
           &.action-icons {
             justify-content: flex-end;
+            .mdc-icon-button {
+              @include mdc-icon-button-size(24px, 24px, 8px);
+            }
           }
         }
       }
