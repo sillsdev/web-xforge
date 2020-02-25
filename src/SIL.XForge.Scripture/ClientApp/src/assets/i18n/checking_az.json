@@ -10,6 +10,7 @@
     "log_out": "Çıxış",
     "logged_in_as": "Bu adla daxil oldu.",
     "overview": "Ümumi baxış",
+    "page_not_found": "Səhifə tapılmadı",
     "password_reset_email_sent": "Şifrənizi yenidən qurmaq üçün sizə bir e-məktub göndərmişik.",
     "product_version": "Yekun variant: {{ version }}",
     "project_home": "Layihənin ana səhifəsi",

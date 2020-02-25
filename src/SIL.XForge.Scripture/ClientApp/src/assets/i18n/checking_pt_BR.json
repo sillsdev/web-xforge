@@ -10,6 +10,7 @@
     "log_out": "Sair",
     "logged_in_as": "Conectado como",
     "overview": "Visão geral",
+    "page_not_found": "Página não encontrada",
     "password_reset_email_sent": "Acabamos de enviar um email para redefinir sua senha.",
     "product_version": "Versão do produto: v{{ version }}",
     "project_home": "Página inicial do projeto",
@@ -85,7 +86,7 @@
       "3JN": "3 João",
       "JUD": "Judas",
       "REV": "Apocalipse",
-      "TOB": "Tobit",
+      "TOB": "Tobias",
       "JDT": "Judith",
       "ESG": "Esther Greek",
       "WIS": "Wisdom of Solomon",
@@ -227,10 +228,10 @@
     "unknown_error": "Erro desconhecido"
   },
   "issue_email": {
-    "body": "Thanks for reporting the issue!\nIt would help us if you fill out some of the information below, but please submit even if you can't fill out much.\nIf you are requesting a feature many of the fields may not be applicable.\nBe aware your bug report will be publicly available. Never submit passwords or other secrets.\n\nBug report\nA clear and concise description of what the bug is.\n\nSteps to reproduce\nFor example:\n1. Go to ...\n2. Click on ...\n3. Scroll down to ...\n4. See error\n\nActual behavior\nPlease describe actual behavior of the issue you are observing.\n\nExpected behavior\nA clear and concise description of what you expected to happen.\n\nScreenshots\nIf applicable, add screenshots to help explain your issue.\n\nAdditional context\nAdd any other context about the problem here.\n\nPossible solution\nAdd any possible solutions to the problem here.\n\nYour environment:\nSoftware                 Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
-    "not_applicable": "not applicable",
-    "subject": "{{ siteName }} issue",
-    "unknown": "unknown"
+    "body": "Obrigado por relatar o problema!\nVocê nos ajudaria se preenchesse algumas das informações abaixo, mas por favor envie mesmo que não consiga preencher muita informação.\nSe você está solicitando um recurso, muitos campos podem não ser aplicáveis.\nLembre-se de que seu relatório de  bug estará disponível publicamente. Nunca envie senhas ou outros segredos.\n\nRelatório de bug\nUma descrição clara e concisa de qual é o bug.\n\nPassos a reproduzir\nPor exemplo:\n1. Vá para ...\n2. Clique em ...\n3. Desça até ...\n4. Veja o erro\n\nComportamento real\nPor favor, descreva o comportamento real do problema que você está observando.\n\nComportamento esperado\nUma descrição clara e concisa do que você esperava que acontecesse.\n\nCapturas de tela\nSe for o caso, adicione capturas de tela para ajudar a explicar seu problema.\n\nContexto Adicional\nAdicione qualquer outro contexto sobre o problema aqui.\n\nPossível solução\nAdicione qualquer solução possível para o problema aqui.\n\nSeu ambiente:\nVersão do Software\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
+    "not_applicable": "não aplicável",
+    "subject": "{{ siteName }} problema",
+    "unknown": "desconhecido"
   },
   "message_dialog": {
     "dismiss": "Ignorar"
@@ -273,8 +274,8 @@
   },
   "supported_browsers_dialog": {
     "dismiss": "Ignorar",
-    "browser_unsupported": "This browser is unsupported",
-    "upgrade_chrome_firefox": "Some of the features of this website may not work correctly with your browser. We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}."
+    "browser_unsupported": "Este navegador não tem suporte",
+    "upgrade_chrome_firefox": "Alguns recursos deste site podem não funcionar corretamente com seu navegador. Recomendamos que você atualize para o mais recente {{ chromeLink }} ou {{ firefoxLink }} ."
   },
   "text_chooser_dialog": {
     "cancel": "Cancelar",

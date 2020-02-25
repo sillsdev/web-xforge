@@ -10,6 +10,7 @@
     "log_out": "登出",
     "logged_in_as": "登录为",
     "overview": "总览",
+    "page_not_found": "Page not found",
     "password_reset_email_sent": "重置密码的邮件已发送",
     "product_version": "产品版本：v {{ version }}",
     "project_home": "项目首页",

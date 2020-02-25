@@ -36,28 +36,28 @@
     "filter_users": "Filtrar usuários...",
     "me": "eu",
     "no_users_found": "Nenhum usuário encontrado",
-    "problem_loading_invited_users": "There was a problem loading the list of invited users.",
+    "problem_loading_invited_users": "Houve um problema ao carregar a lista de usuários convidados.",
     "remove_from_project": "Remover do projeto",
     "share_with_others": "Compartilhar com outros"
   },
   "connect_project": {
-    "additional_settings": "Additional Settings",
-    "already_connected": "(already connected)",
+    "additional_settings": "Configurações Adicionais",
+    "already_connected": "(já conectado)",
     "based_on": "Baseado em",
     "choose_the_mother_project": "Escolha o projeto do Paratext no qual seu projeto se baseia.",
     "community_checking": "Verificação da Comunidade",
-    "connect_paratext_project": "Connect Paratext Project",
-    "connect": "Connect",
-    "connecting_to_project": "Connecting to {{ projectName }}...",
+    "connect_paratext_project": "Conectar Projeto do Paratext",
+    "connect": "Conectar-se",
+    "connecting_to_project": "Conectando a {{ projectName }}...",
     "engage_the_wider_community_to_check_scripture": "Envolva a comunidade em geral para garantir que a tradução seja clara, precisa e natural. Selecione versículos, faça perguntas específicas, permita a discussão das respostas.",
-    "log_in_with_paratext": "Log in with Paratext",
-    "no_connectable_projects": "Looks like there are no connectable projects for you.{{ newLine }}Please go to Paratext to register a project to connect to.",
-    "only_paratext_admins_can_start": "** You must be the Paratext Administrator of a project to start it here. Ask your Administrator to connect to your project then you can also connect to it here after that.",
-    "paratext_project": "Paratext Project",
+    "log_in_with_paratext": "Entrar no Paratext",
+    "no_connectable_projects": "Parece que não há nenhum projeto conectável para você.{{ newLine }}Por favor, vá ao Paratext para registrar um projeto para se conectar.",
+    "only_paratext_admins_can_start": "** Você precisa ser o Administrador de um projeto do Paratext para iniciá-lo aqui. Peça ao seu administrador para se conectar ao seu projeto; depois disso, você também pode se conectar aqui.",
+    "paratext_project": "Projeto do Paratext",
     "translation_suggestions": "Sugestões de Tradução",
     "translations_will_be_suggested_as_you_edit": "Traduções para palavras e frases serão sugeridas enquanto você edita o Texto Bíblico. É recomendável que seu projeto seja configurado como uma {{ boldStart }}Tradução Derivada{{ boldEnd }} no Paratext.",
-    "you_can_change_later": "You can change these later.",
-    "you_must_be_logged_in_to_paratext": "You must login with your Paratext account to connect to a project."
+    "you_can_change_later": "Você pode alterar isto depois.",
+    "you_must_be_logged_in_to_paratext": "Você deve fazer login com sua conta do Paratext para se conectar a um projeto."
   },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Tem certeza de que deseja excluir este projeto?",
@@ -78,10 +78,10 @@
     "verse_too_long_for_suggestions": "Este versículo é muito longo para gerar sugestões."
   },
   "paginator": {
-    "items_per_page": "Items per page",
-    "next_page": "Next page",
-    "previous_page": "Previous page",
-    "range_label": "{{ startIndex }} - {{ endIndex }} of {{ length }}"
+    "items_per_page": "Itens por página",
+    "next_page": "Próxima página",
+    "previous_page": "Página anterior",
+    "range_label": "{{ startIndex }} - {{ endIndex }} de {{ length }}"
   },
   "question_answered_dialog": {
     "cancel": "Cancelar",
@@ -93,27 +93,27 @@
     "add_question_denied": "Permissão negada: somente o administrador do projeto pode adicionar e editar perguntas.",
     "cancel": "Cancelar",
     "edit_question": "Editar Pergunta",
-    "end_reference": "End reference",
-    "enter_a_reference_to_load_text": "Enter a reference to load text",
+    "end_reference": "Referência Final",
+    "enter_a_reference_to_load_text": "Insira uma referência para carregar o texto",
     "example_verse": "e.g. Jo 3.16",
     "must_be_after_scripture_reference": "Deve ser após de {{ boldStart }}Referência do Texto Bíblico{{ boldEnd }}",
     "must_be_inside_verse_range": "Deve estar dentro do intervalo de versículos",
     "must_be_same_book_and_chapter": "Deve ser o mesmo livro e capítulo",
     "new_question": "Nova Pergunta",
-    "question": "Question",
+    "question": "Pergunta",
     "recording_stopped": "O registro da sua resposta foi interrompido automaticamente.",
     "required_with_asterisk": "*Obrigatório",
     "save": "Salvar",
-    "scripture_reference": "Scripture reference"
+    "scripture_reference": "Referência das Escrituras"
   },
   "roles": {
-    "none": "None",
+    "none": "Nenhum",
     "pt_administrator": "Administrador",
     "pt_consultant": "Consultor",
     "pt_observer": "Observador",
     "pt_translator": "Membro da Equipe",
-    "sf_community_checker": "Community Checker",
-    "sf_reviewer": "Reviewer"
+    "sf_community_checker": "Verificador da Comunidade",
+    "sf_reviewer": "Revisor"
   },
   "settings": {
     "anyone_with_a_link": "Qualquer pessoa com um link",
@@ -160,9 +160,9 @@
     "your_project_is_being_synchronized": "Seu projeto está sendo sincronizado..."
   },
   "text": {
-    "book_does_not_exist": "This book does not exist.",
-    "book_is_empty": "This book is empty. Add chapters in Paratext.",
-    "loading": "Loading..."
+    "book_does_not_exist": "Este livro não existe.",
+    "book_is_empty": "Este livro está vazio. Adicione capítulos no Paratext.",
+    "loading": "Carregando..."
   },
   "translate_overview": {
     "progress": "Progresso",

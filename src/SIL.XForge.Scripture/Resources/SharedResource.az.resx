@@ -126,6 +126,9 @@
   <data name="InviteEmailOption" xml:space="preserve">
     <value>{0} hesabınız üçün e-poçt ünvanınızı və yeni gizli şifrənizi daxil edin, sonra qeydiyyatdan keçin. </value>
   </data>
+  <data name="InviteFacebookOption" xml:space="preserve">
+    <value>{0} Klikləyin, Feysbuk {1} ilə qeydiyyatdan keçmək üçün, və daxil olmaq üçün təlimatları izləyin {2} artıq mövcud olan Feysbuk hesab istifadə edərək, və ya</value>
+  </data>
   <data name="InviteGoogleOption" xml:space="preserve">
     <value>{0} basın və {1} Google-da qeydiyyatdan keçin, sonra {2} daxil olmaq üçün mövcud olan Google hesabından (məsələn, Gmail), yaxud başqasından istifadə edərək göstərişlərə əməl edin.  </value>
   </data>

@@ -118,13 +118,16 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="EmailBad" xml:space="preserve">
-    <value>Inserir um endereço de e-mail válido</value>
+    <value>Inserir um e-mail válido</value>
   </data>
   <data name="EmailMissing" xml:space="preserve">
-    <value>Insira seu endereço de e-mail</value>
+    <value>Insira seu e-mail</value>
   </data>
   <data name="InviteEmailOption" xml:space="preserve">
-    <value>Insira seu endereço de e-mail e uma nova senha para sua conta {0} e clique em Entrar.</value>
+    <value>Insira seu e-mail e uma nova senha para sua conta {0} e clique em Entrar.</value>
+  </data>
+  <data name="InviteFacebookOption" xml:space="preserve">
+    <value>Clique em {0}Entrar com Facebook{1} e siga as instruções para acessar {2} usando uma conta existente do Facebook, ou</value>
   </data>
   <data name="InviteGoogleOption" xml:space="preserve">
     <value>Clique em {0}Entrar com Google{1} e siga as instruções para acessar {2} usando uma conta existente do Google (como Gmail), ou</value>
