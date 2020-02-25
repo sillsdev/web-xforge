@@ -38,6 +38,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this.highlightActiveVerse(false);
     this._activeVerse = verseRef;
     this.highlightActiveVerse(true);
+    this.scrollToActiveVerse();
   }
 
   get activeVerse(): VerseRef | undefined {
@@ -79,6 +80,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this._editorLoaded = true;
     this.toggleQuestionVerses(true);
     this.highlightActiveVerse(true);
+    this.scrollToActiveVerse();
   }
 
   private toggleQuestionVerses(value: boolean): void {
@@ -148,11 +150,8 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
     for (const segment of segments) {
       const range = this.textComponent.getSegmentRange(segment);
-      if (range == null) {
-        continue;
-      }
-      const element = this.textComponent.editor.container.querySelector('usx-segment[data-segment="' + segment + '"]');
-      if (element == null) {
+      const element = this.getSegmentElement(segment);
+      if (range == null || element == null) {
         continue;
       }
       const formats: any = {
@@ -188,5 +187,23 @@ export class CheckingTextComponent extends SubscriptionDisposable {
         }
       }
     }
+  }
+
+  private scrollToActiveVerse() {
+    if (this.activeVerse != null) {
+      const firstSegment = this.getVerseSegments(this.activeVerse)[0];
+      if (firstSegment != null) {
+        const element = this.getSegmentElement(firstSegment);
+        if (element != null) {
+          element.scrollIntoView();
+        }
+      }
+    }
+  }
+
+  private getSegmentElement(segment: string): Element | null {
+    return this.textComponent.editor == null
+      ? null
+      : this.textComponent.editor.container.querySelector(`usx-segment[data-segment="${segment}"]`);
   }
 }
