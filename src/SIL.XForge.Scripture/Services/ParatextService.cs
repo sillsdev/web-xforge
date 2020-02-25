@@ -24,6 +24,7 @@ using Paratext.Data.Repository;
 using Paratext.Data.Users;
 using PtxUtils;
 using SIL.ObjectModel;
+using SIL.Reflection;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -84,20 +85,26 @@ namespace SIL.XForge.Scripture.Services
             _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
+        public string SyncDir;
         public void Init()
         {
             string syncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
+            SyncDir = syncDir;
             if (!_fileSystemService.DirectoryExists(syncDir))
                 _fileSystemService.CreateDirectory(syncDir);
 
             WritingSystemRepository.Initialize();
 
             RegistryU.Implementation = new DotNetCoreRegistry();
+            // Alert.Implementation = new DotNetCoreAlert();
 
             // TODO: not sure if using ScrTextCollection is the best idea for a server, since it loads all existing
             // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
             // ScrTextCollectionServer class in DataAccessServer.
             ScrTextCollection.Initialize(syncDir, false);
+            string applicationProductVersion = "SF";
+            RegistryServer.Initialize(applicationProductVersion);
+
 
             string usfmStylesFileName = "usfm.sty";
             string source = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
@@ -107,7 +114,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
-        {
+        {//seems to work in production
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim usernameClaim = accessToken.Claims.FirstOrDefault(c => c.Type == "username");
             string username = usernameClaim?.Value;
@@ -190,7 +197,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public string GetParatextUsername(UserSecret userSecret)
-        {
+        {//work in production
             if (userSecret.ParatextTokens == null)
                 return null;
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
@@ -219,8 +226,37 @@ namespace SIL.XForge.Scripture.Services
             return scrText.Settings.BooksPresentSet.SelectedBookNumbers.ToArray();
         }
 
-        public string GetBookText(string projectId, int bookNum)
+        private bool IsManagingProject(string projectId)
         {
+            return null != ScrTextCollection.FindById(projectId);
+        }
+
+        private void PullRepo(UserSecret userSecret, string projectId)
+        {
+            var repo = Path.Combine(SyncDir, projectId);
+            if (!Directory.Exists(repo))
+            {
+                Directory.CreateDirectory(repo);
+                Hg.Default.Init(repo);
+            }
+            var source = new SFInternetSharedRepositorySource(_useDevServer, userSecret);
+            var repoInfo = source.GetRepositories().FirstOrDefault(x => x.SendReceiveId == projectId);
+            if (source == null)
+                return;
+
+            source.Pull(repo, new SharedRepository(projectId, repoInfo.SendReceiveId, RepositoryType.Shared));
+
+            Hg.Default.Update(repo);
+        }
+
+
+
+        public string GetBookText(UserSecret userSecret, string projectId, int bookNum)
+        {
+            if (!IsManagingProject(projectId))
+            {
+                PullRepo(userSecret, projectId);
+            }
             // TODO: this is a guess at how to implement this method
             ScrText scrText = ScrTextCollection.GetById(projectId);
             string usfm = scrText.GetText(bookNum);
@@ -255,21 +291,82 @@ namespace SIL.XForge.Scripture.Services
             throw new NotImplementedException();
         }
 
+
+        // StringsEncoder class doesn't work on dotnet core because it assumes 1252 is avalaible.
+        // on dotnet core 1252 will never return from Encodings.GetEncodings().
+        // But StringsEncoder assumes it does.
+        private class HackStringEncoder : StringEncoder
+        {
+            public HackStringEncoder()
+            {
+
+            }
+
+            public override string ShortName => "utf8";
+
+            public override string LongName => "utf8";
+
+            public override string Convert(byte[] data, out string errorMessage)
+            {
+                errorMessage = "";
+                return Encoding.UTF8.GetString(data, 0, data.Length);
+            }
+
+            public override byte[] Convert(string text, out string errorMessage)
+            {
+                errorMessage = "";
+                return Encoding.UTF8.GetBytes(text.ToArray(), 0, text.Length);
+            }
+
+            public override void InstallInProject(ScrText scrText)
+            {
+
+            }
+
+            protected override bool Equals(StringEncoder other)
+            {
+                return other != null && other.LongName == this.LongName;
+            }
+
+            protected override bool Equals(int codePage)
+            {
+                return true;
+            }
+        }
+
+
         public void SendReceive(UserSecret userSecret, IEnumerable<string> projectIds)
         {
+            foreach (var projectId in projectIds)
+            {
+                if (!IsManagingProject(projectId))
+                {
+                    PullRepo(userSecret, projectId);
+                }
+            }
+            ScrText scrText = ScrTextCollection.FindById(projectIds.First());
+
+
+            // BEGIN HACK
+            ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
+            // END HACK
+
             // TODO: this is a guess at how to implement this method
             var source = new SFInternetSharedRepositorySource(_useDevServer, userSecret);
             SharedRepository[] repos = source.GetRepositories().ToArray();
             var sharedProjects = new List<SharedProject>();
             foreach (string projectId in projectIds)
             {
-                SharedRepository repo = repos.First(r => r.SendReceiveId == projectId);
+                SharedRepository repo = repos.First(r => r.SendReceiveId == projectId); // todo what if not found.
                 SharedProject sharedProject = SharingLogic.CreateSharedProject(projectId, repo.ScrTextName, source,
                     repos);
                 sharedProjects.Add(sharedProject);
             }
+
+
             SharingLogic.ShareChanges(sharedProjects, source, out List<SendReceiveResult> results, sharedProjects);
         }
+
 
         private async Task RefreshAccessTokenAsync(UserSecret userSecret)
         {
