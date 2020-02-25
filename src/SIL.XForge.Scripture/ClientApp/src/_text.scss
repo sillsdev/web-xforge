@@ -77,24 +77,28 @@ quill-editor {
   }
 }
 
-.ltr .ql-editor > p .question-segment[data-question-count],
-usx-para[dir='ltr'] .question-segment[data-question-count] {
-  margin-left: 1.75em;
-  &:before {
-    left: -2.25em;
-  }
-  &:after {
-    left: -1.5em;
+usx-para[dir='ltr'],
+p[dir='ltr'] {
+  .question-segment[data-question-count] {
+    margin-left: 1.75em;
+    &:before {
+      left: -2.25em;
+    }
+    &:after {
+      left: -1.5em;
+    }
   }
 }
-.rtl .ql-editor > .question-segment[data-question-count],
-usx-para[dir='rtl'] .question-segment[data-question-count] {
-  margin-right: 1.75em;
-  &:before {
-    right: -2.25em;
-  }
-  &:after {
-    right: -1.5em;
+usx-para[dir='rtl'],
+p[dir='rtl'] {
+  .question-segment[data-question-count] {
+    margin-right: 1.75em;
+    &:before {
+      right: -2.25em;
+    }
+    &:after {
+      right: -1.5em;
+    }
   }
 }
 
