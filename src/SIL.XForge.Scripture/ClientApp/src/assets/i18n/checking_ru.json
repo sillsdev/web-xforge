@@ -10,6 +10,7 @@
     "log_out": "Выйти",
     "logged_in_as": "Вы зашли как",
     "overview": "Обзор",
+    "page_not_found": "Page not found",
     "password_reset_email_sent": "Мы отправили вам сообщение для восстановления пароля.",
     "product_version": "Версия продукта: v{{ version }}",
     "project_home": "Домашняя страница проекта",

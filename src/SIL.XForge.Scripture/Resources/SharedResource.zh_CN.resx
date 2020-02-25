@@ -126,6 +126,9 @@
   <data name="InviteEmailOption" xml:space="preserve">
     <value>输入您的 {0} 帐户的电子邮件地址和新密码，然后单击“注册”。</value>
   </data>
+  <data name="InviteFacebookOption" xml:space="preserve">
+    <value>Click {0}Sign up with Facebook{1} and follow the instructions to access {2} using an existing Facebook account, or</value>
+  </data>
   <data name="InviteGoogleOption" xml:space="preserve">
     <value>点击 {0} 使用Google {1} 注册，然后按照说明使用现有的Google帐户（例如 Gmail）访问 {2}，或者</value>
   </data>

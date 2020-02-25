@@ -10,6 +10,7 @@
     "log_out": "Cerrar sesión",
     "logged_in_as": "Conectado como",
     "overview": "Panorama general",
+    "page_not_found": "No se encontró la página",
     "password_reset_email_sent": "Acabamos de enviarle un correo electrónico para restablecer su contraseña.",
     "product_version": "Versión del producto: v{{ version }}",
     "project_home": "Página de inicio del proyecto",

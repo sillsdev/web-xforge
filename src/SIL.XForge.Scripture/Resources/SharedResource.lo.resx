@@ -126,6 +126,9 @@
   <data name="InviteEmailOption" xml:space="preserve">
     <value>Enter your email address and a new password for your {0} account and click Sign up.</value>
   </data>
+  <data name="InviteFacebookOption" xml:space="preserve">
+    <value>Click {0}Sign up with Facebook{1} and follow the instructions to access {2} using an existing Facebook account, or</value>
+  </data>
   <data name="InviteGoogleOption" xml:space="preserve">
     <value>Click {0}Sign up with Google{1} and follow the instructions to access {2} using an existing Google account (such as Gmail), or</value>
   </data>

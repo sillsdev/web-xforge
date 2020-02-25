@@ -126,6 +126,9 @@
   <data name="InviteEmailOption" xml:space="preserve">
     <value>Введите адрес электронной почты и новый пароль для учетной записи {0} и нажмите кнопку Зарегистрироваться.</value>
   </data>
+  <data name="InviteFacebookOption" xml:space="preserve">
+    <value>Click {0}Sign up with Facebook{1} and follow the instructions to access {2} using an existing Facebook account, or</value>
+  </data>
   <data name="InviteGoogleOption" xml:space="preserve">
     <value>Нажмите {0}Зарегистрироваться в Google{1} и следуйте инструкциям для доступа к {2} с помощью существующего аккаунта Google (например, Gmail), или</value>
   </data>

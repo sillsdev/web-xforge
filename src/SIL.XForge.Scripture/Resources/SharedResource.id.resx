@@ -126,6 +126,9 @@
   <data name="InviteEmailOption" xml:space="preserve">
     <value>Masukkan alamat surel Anda dan kata sandi baru untuk akun {0} Anda dan klik Daftar.</value>
   </data>
+  <data name="InviteFacebookOption" xml:space="preserve">
+    <value>Click {0}Sign up with Facebook{1} and follow the instructions to access {2} using an existing Facebook account, or</value>
+  </data>
   <data name="InviteGoogleOption" xml:space="preserve">
     <value>Klik {0} Daftar dengan Google {1} dan ikuti instruksi untuk mengakses {2} menggunakan akun Google yang ada (seperti Gmail), atau</value>
   </data>

@@ -126,6 +126,9 @@
   <data name="InviteEmailOption" xml:space="preserve">
     <value>Introduzca su dirección de correo electrónico y una nueva contraseña para su cuenta {0} y haga clic en Registrarse.</value>
   </data>
+  <data name="InviteFacebookOption" xml:space="preserve">
+    <value>Haga clic en {0}Regístrese con Facebook{1} y siga las instrucciones para ingresar {2} usando una cuenta existente de Facebook, o</value>
+  </data>
   <data name="InviteGoogleOption" xml:space="preserve">
     <value>Haga clic en {0}Registrarse en Google{1} y siga las instrucciones para acceder a {2} utilizando una cuenta de Google existente (como Gmail), o bien</value>
   </data>
