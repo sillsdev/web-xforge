@@ -87,6 +87,10 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public string SyncDir;
+        private string applicationProductVersion = "SF";
+        private bool jwtRegistered = false;
+        private string _jwt;
+        private Dictionary<string, InternetSharedRepositorySource> _internetSharedRepositorySource = new Dictionary<string, InternetSharedRepositorySource>();
         public void Init()
         {
             string syncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
@@ -103,15 +107,34 @@ namespace SIL.XForge.Scripture.Services
             // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
             // ScrTextCollectionServer class in DataAccessServer.
             ScrTextCollection.Initialize(syncDir, false);
-            string applicationProductVersion = "SF";
             RegistryServer.Initialize(applicationProductVersion);
 
+            // Possibly needed initialization things
+            // RegisterWithJWT()
+            ParatextDataSettings.Initialize(new PersistedParatextDataSettings());
+            PtxUtilsDataSettings.Initialize(new PersistedPtxUtilsSettings());
 
-            string usfmStylesFileName = "usfm.sty";
-            string source = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
-            string target = Path.Combine(syncDir, usfmStylesFileName);
-            if (!File.Exists(target))
-                File.Copy(source, target);
+        }
+
+        public void RegisterWithJWT(string jwtToken)
+        {
+            if (jwtToken?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) ?? false)
+                jwtToken = jwtToken.Substring("Bearer ".Length).Trim();
+
+            _jwt = jwtToken;
+            // var jwtPayout = Jose.JWT.Decode<JwtPayload>(jwtToken, publicKey, JwsAlgorithm.RS256);
+            // TODO: can do some validation here...
+
+            var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ /*"https://registry.paratext.org/api8/"*/_registryClient.BaseAddress.AbsoluteUri, ApplicationProduct.DefaultVersion, jwtToken);
+            var result = jwtRESTClient.Get("my/licenses");
+
+            // Emitting - "/api8/my requires HTTP Basic authentication or API token with sub claim"
+
+
+            Console.WriteLine("result = {0}", result);
+
+            RegistryServer.Initialize(applicationProductVersion, jwtRESTClient);
+            jwtRegistered = true;
         }
 
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
@@ -234,13 +257,31 @@ namespace SIL.XForge.Scripture.Services
 
         private void PullRepo(UserSecret userSecret, string projectId)
         {
+            // Initialize
+            if (!jwtRegistered)
+                RegisterWithJWT(userSecret.ParatextTokens.AccessToken);
+            // projectId is the paratextId of the project.
             var repo = Path.Combine(SyncDir, projectId);
             if (!Directory.Exists(repo))
             {
                 Directory.CreateDirectory(repo);
+                // TODO: change to location on production server if different from /usr/bin/hg
+                var hgexe = "/usr/local/bin/hg";
+
+                var hgmerge = Path.Combine("/home/vagrant/src/web-xforge", "ParatextMerge.py");
+
+                string usfmStylesFileName = "usfm.sty";
+                string pathToStyle = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
+                string target = Path.Combine(SyncDir, usfmStylesFileName);
+                if (!File.Exists(target))
+                    File.Copy(pathToStyle, target);
+
+                Hg.Default = new Hg(hgexe, hgmerge, target);
                 Hg.Default.Init(repo);
             }
-            var source = new SFInternetSharedRepositorySource(_useDevServer, userSecret);
+            var source = GetInternetSharedRepositorySource(userSecret);
+            var repositories = source.GetRepositories();
+            // Still cant get repositories for Raymond
             var repoInfo = source.GetRepositories().FirstOrDefault(x => x.SendReceiveId == projectId);
             if (source == null)
                 return;
@@ -438,6 +479,16 @@ namespace SIL.XForge.Scripture.Services
         {
             _registryClient.Dispose();
             _httpClientHandler.Dispose();
+        }
+
+        private InternetSharedRepositorySource GetInternetSharedRepositorySource(UserSecret userSecret)
+        {
+            if (!_internetSharedRepositorySource.ContainsKey(userSecret.Id))
+            {
+                _internetSharedRepositorySource[userSecret.Id] = new SFInternetSharedRepositorySource(_useDevServer, userSecret);
+            }
+
+            return _internetSharedRepositorySource[userSecret.Id];
         }
     }
 }
