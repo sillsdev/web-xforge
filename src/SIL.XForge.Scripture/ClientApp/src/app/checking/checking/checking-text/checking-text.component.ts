@@ -190,12 +190,13 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   }
 
   private scrollToActiveVerse() {
-    if (this.activeVerse != null) {
+    if (this.activeVerse != null && this.textComponent.editor != null) {
       const firstSegment = this.getVerseSegments(this.activeVerse)[0];
-      if (firstSegment != null) {
-        const element = this.getSegmentElement(firstSegment);
+      const editor = this.textComponent.editor.container.querySelector('.ql-editor');
+      if (firstSegment != null && editor != null) {
+        const element = this.getSegmentElement(firstSegment) as HTMLElement;
         if (element != null) {
-          element.scrollIntoView();
+          editor.scrollTo({ top: element.offsetTop - 20, behavior: 'smooth' });
         }
       }
     }
