@@ -125,19 +125,19 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
       return;
     }
 
-    if (this.projectDoc.data.sync.queuedCount > 0) {
-      this.syncActive = true;
-    } else if (this.syncActive) {
-      this.syncActive = false;
-      if (this.projectDoc.data.sync.lastSyncSuccessful) {
-        this.noticeService.show(
-          translate('sync.successfully_synchronized_with_paratext', { projectName: this.projectName })
-        );
-      } else {
-        this.noticeService.show(
-          translate('sync.something_went_wrong_synchronizing_this_project', { projectName: this.projectName })
-        );
-      }
-    }
+    // if (this.projectDoc.data.sync.queuedCount > 0) {
+    //   this.syncActive = true;
+    // } else if (this.syncActive) {
+    //   this.syncActive = false;
+    //   if (this.projectDoc.data.sync.lastSyncSuccessful) {
+    //     this.noticeService.show(
+    //       translate('sync.successfully_synchronized_with_paratext', { projectName: this.projectName })
+    //     );
+    //   } else {
+    //     this.noticeService.show(
+    //       translate('sync.something_went_wrong_synchronizing_this_project', { projectName: this.projectName })
+    //     );
+    //   }
+    // }
   }
 }

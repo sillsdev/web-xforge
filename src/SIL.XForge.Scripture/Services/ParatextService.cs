@@ -90,6 +90,20 @@ namespace SIL.XForge.Scripture.Services
         private bool jwtRegistered = false;
         private string _jwt;
         private Dictionary<string, InternetSharedRepositorySource> _internetSharedRepositorySource = new Dictionary<string, InternetSharedRepositorySource>();
+
+        /// <summary>Entry point for testing so can consistently isolate and test the same thing.</summary>
+        public void DevEntryPoint(UserSecret userSecret)
+        {
+            Console.WriteLine("Begin DevEntryPoint.");
+            Init();
+            var accessToken = userSecret.ParatextTokens.AccessToken;
+            this.RegisterWithJWT(accessToken);
+            SetupMercurial();
+            InitializeProjects(SyncDir);
+            SendReceive2();
+
+        }
+
         public void Init()
         {
             string syncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
@@ -97,21 +111,19 @@ namespace SIL.XForge.Scripture.Services
             if (!_fileSystemService.DirectoryExists(syncDir))
                 _fileSystemService.CreateDirectory(syncDir);
 
-            WritingSystemRepository.Initialize();
+
 
             RegistryU.Implementation = new DotNetCoreRegistry();
-            // Alert.Implementation = new DotNetCoreAlert();
-
-            // TODO: not sure if using ScrTextCollection is the best idea for a server, since it loads all existing
-            // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
-            // ScrTextCollectionServer class in DataAccessServer.
-            ScrTextCollection.Initialize(syncDir, false);
             RegistryServer.Initialize(applicationProductVersion);
-
             // Possibly needed initialization things
-            // RegisterWithJWT()
             ParatextDataSettings.Initialize(new PersistedParatextDataSettings());
             PtxUtilsDataSettings.Initialize(new PersistedPtxUtilsSettings());
+
+
+
+            // Alert.Implementation = new DotNetCoreAlert();
+
+
 
         }
 
@@ -134,6 +146,47 @@ namespace SIL.XForge.Scripture.Services
 
             RegistryServer.Initialize(applicationProductVersion, jwtRESTClient);
             jwtRegistered = true;
+        }
+
+
+        private void SetupMercurial()
+        {
+            if (Hg.Default != null)
+            {
+                return;
+            }
+            // TODO: production server will presumably use /usr/bin/hg. Tho running from PATH would be good .
+            var hgexe = "/usr/local/bin/hg";
+
+            var hgmerge = Path.Combine("/home/vagrant/src/web-xforge", "ParatextMerge.py");
+
+
+            Hg.Default = new Hg(hgexe, hgmerge, SyncDir);
+
+
+        }
+
+        private void InitializeProjects(string path)
+        {
+            WritingSystemRepository.Initialize();
+
+            // TODO: not sure if using ScrTextCollection is the best idea for a server, since it loads all existing
+            // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
+            // ScrTextCollectionServer class in DataAccessServer.
+            ScrTextCollection.Initialize(SyncDir, false);
+
+            string usfmStylesFileName = "usfm.sty";
+            string pathToStyle = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
+            string target = Path.Combine(SyncDir, usfmStylesFileName);
+            if (!File.Exists(target))
+                File.Copy(pathToStyle, target);
+
+        }
+
+        /// <summary>(Learning/experimenting by writing Sendreceive anew)</summary>
+        public void SendReceive2()
+        {
+            // TODO
         }
 
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
@@ -264,18 +317,6 @@ namespace SIL.XForge.Scripture.Services
             if (!Directory.Exists(repo))
             {
                 Directory.CreateDirectory(repo);
-                // TODO: change to location on production server if different from /usr/bin/hg
-                var hgexe = "/usr/local/bin/hg";
-
-                var hgmerge = Path.Combine("/home/vagrant/src/web-xforge", "ParatextMerge.py");
-
-                string usfmStylesFileName = "usfm.sty";
-                string pathToStyle = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
-                string target = Path.Combine(SyncDir, usfmStylesFileName);
-                if (!File.Exists(target))
-                    File.Copy(pathToStyle, target);
-
-                Hg.Default = new Hg(hgexe, hgmerge, target);
                 Hg.Default.Init(repo);
             }
             var source = GetInternetSharedRepositorySource(userSecret);
