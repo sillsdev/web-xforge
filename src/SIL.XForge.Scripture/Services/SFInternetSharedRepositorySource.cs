@@ -21,6 +21,16 @@ namespace SIL.XForge.Scripture.Services
         }
     }
 
+    class JwtInternetSharedRepositorySource : InternetSharedRepositorySource
+    {
+        public JwtInternetSharedRepositorySource(string jwtToken)
+        {
+            client.JwtToken = jwtToken;
+            // RESTClient only uses the jwtToken if authentication is null;
+            ReflectionHelper.SetField(client, "authentication", null);
+        }
+    }
+
     class JwtRESTClient : RESTClient
     {
         public JwtRESTClient(string baseUri, string applicationProductVersion, string jwtToken) : base(baseUri, applicationProductVersion)
