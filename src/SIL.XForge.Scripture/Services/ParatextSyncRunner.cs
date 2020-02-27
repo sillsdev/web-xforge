@@ -83,9 +83,17 @@ namespace SIL.XForge.Scripture.Services
 
         // Do not allow multiple sync jobs to run in parallel on the same project by creating a mutex on the projectId
         // parameter, i.e. "{0}"
-        [Mutex("{0}")]
+        // [Mutex("{0}")]
         public async Task RunAsync(string projectId, string userId, bool trainEngine)
         {//todo we can't store user secret in a field if we allow multiple parallel runs of runasync right?
+
+            if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
+            {
+                return;
+            }
+
+            await _paratextService.DevEntryPoint(_userSecret);
+            /*
             try
             {
                 if (!await InitAsync(projectId, userId))
@@ -237,6 +245,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 CloseConnection();
             }
+            */
         }
 
         internal async Task<bool> InitAsync(string projectId, string userId)
