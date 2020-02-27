@@ -33,6 +33,7 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using System.Diagnostics;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -48,7 +49,7 @@ namespace SIL.XForge.Scripture.Services
     public class ParatextService : DisposableBase, IParatextService
     {
         private readonly IOptions<ParatextOptions> _paratextOptions;
-        private readonly IRepository<UserSecret> _userSecret;
+        private readonly IRepository<UserSecret> _userSecretRepository;
         private readonly IRealtimeService _realtimeService;
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IFileSystemService _fileSystemService;
@@ -58,11 +59,11 @@ namespace SIL.XForge.Scripture.Services
         private readonly bool _useDevServer;
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
-            IRepository<UserSecret> userSecret, IRealtimeService realtimeService, IExceptionHandler exceptionHandler,
+            IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService, IExceptionHandler exceptionHandler,
             IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService)
         {
             _paratextOptions = paratextOptions;
-            _userSecret = userSecret;
+            _userSecretRepository = userSecretRepository;
             _realtimeService = realtimeService;
             _exceptionHandler = exceptionHandler;
             _siteOptions = siteOptions;
@@ -80,6 +81,7 @@ namespace SIL.XForge.Scripture.Services
             }
             else
             {
+                System.Diagnostics.Debug.Assert(false, "dont let this be the problem");
                 _registryClient.BaseAddress = new Uri("https://registry.paratext.org");
                 _useDevServer = false;
             }
@@ -91,6 +93,53 @@ namespace SIL.XForge.Scripture.Services
         private bool jwtRegistered = false;
         private string _jwt;
         private Dictionary<string, InternetSharedRepositorySource> _internetSharedRepositorySource = new Dictionary<string, InternetSharedRepositorySource>();
+
+
+
+        class DebugLogTraceListener : LogTraceListener
+        {
+            public DebugLogTraceListener(string logFilePath, int maxLen) : base(logFilePath, maxLen)
+            {
+            }
+
+            public override void Write(string o)
+            {
+                Console.Write(o);
+                base.Write(o);
+            }
+
+            public override void WriteLine(string o)
+            {
+                Console.WriteLine(o);
+                base.WriteLine(o);
+            }
+        }
+
+
+        /// <summary>Entry point for testing so can consistently isolate and test the same thing.</summary>
+        public async Task DevEntryPoint(UserSecret userSecret)
+        {
+            Console.WriteLine("Begin DevEntryPoint.");
+
+            Trace.Listeners.Clear();
+            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+            // Trace.Listeners.Add(new DebugLogTraceListener(null, 0));
+
+
+
+            await RefreshAccessTokenAsync(userSecret);
+            Init();
+            var accessToken = userSecret.ParatextTokens.AccessToken;
+            this.RegisterWithJWT(accessToken);
+            SetupMercurial();
+            // TODO Use an appropriate string for the clone path. Such as the paratext project id (not the SF project id).
+            var dir = "repoCloneDir";
+            PullRepo2(userSecret, Path.Combine(SyncDir, dir));
+            InitializeProjects(SyncDir);
+            SendReceive2(userSecret);
+
+        }
+
         public void Init()
         {
             string syncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
@@ -98,21 +147,15 @@ namespace SIL.XForge.Scripture.Services
             if (!_fileSystemService.DirectoryExists(syncDir))
                 _fileSystemService.CreateDirectory(syncDir);
 
-            WritingSystemRepository.Initialize();
+
 
             RegistryU.Implementation = new DotNetCoreRegistry();
             // Alert.Implementation = new DotNetCoreAlert();
-
-            // TODO: not sure if using ScrTextCollection is the best idea for a server, since it loads all existing
-            // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
-            // ScrTextCollectionServer class in DataAccessServer.
-            ScrTextCollection.Initialize(syncDir, false);
             RegistryServer.Initialize(applicationProductVersion);
-
             // Possibly needed initialization things
-            // RegisterWithJWT()
             ParatextDataSettings.Initialize(new PersistedParatextDataSettings());
             PtxUtilsDataSettings.Initialize(new PersistedPtxUtilsSettings());
+
 
         }
 
@@ -125,7 +168,9 @@ namespace SIL.XForge.Scripture.Services
             // var jwtPayout = Jose.JWT.Decode<JwtPayload>(jwtToken, publicKey, JwsAlgorithm.RS256);
             // TODO: can do some validation here...
 
-            var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ /*"https://registry.paratext.org/api8/"*/_registryClient.BaseAddress.AbsoluteUri, ApplicationProduct.DefaultVersion, jwtToken);
+            // var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ /*"https://registry.paratext.org/api8/"*/_registryClient.BaseAddress.AbsoluteUri, ApplicationProduct.DefaultVersion, jwtToken);
+            var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ "https://registry-dev.paratext.org/api8/", ApplicationProduct.DefaultVersion, _jwt);
+
             var result = jwtRESTClient.Get("my/licenses");
 
             // Emitting - "/api8/my requires HTTP Basic authentication or API token with sub claim"
@@ -135,6 +180,99 @@ namespace SIL.XForge.Scripture.Services
 
             RegistryServer.Initialize(applicationProductVersion, jwtRESTClient);
             jwtRegistered = true;
+            var blah = RegistryServer.Default.GetLicensesForUserProjects(true);
+
+        }
+
+
+        private void SetupMercurial()
+        {
+            if (Hg.Default != null)
+            {
+                return;
+            }
+            // TODO: production server will presumably use /usr/bin/hg. Tho running from PATH would be good .
+            var hgExe = "/usr/local/bin/hg";
+
+            var hgMerge = Path.Combine("/home/vagrant/src/web-xforge", "ParatextMerge.py");
+
+
+            Hg.Default = new Hg(hgExe, hgMerge, SyncDir);
+
+
+        }
+
+        private void InitializeProjects(string path)
+        {
+            WritingSystemRepository.Initialize();
+
+            // TODO: not sure if using ScrTextCollection is the best idea for a server, since it loads all existing
+            // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
+            // ScrTextCollectionServer class in DataAccessServer.
+            ScrTextCollection.Initialize(SyncDir, false);
+
+            string usfmStylesFileName = "usfm.sty";
+            string pathToStyle = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
+            string target = Path.Combine(SyncDir, usfmStylesFileName);
+            if (!File.Exists(target))
+            {
+                File.Copy(pathToStyle, target);
+            }
+            if (!File.Exists(SyncDir + "/revisionStyle.sty"))
+            {
+                File.Copy("/home/vagrant/src/web-xforge/revisionStyle.sty", SyncDir);
+            }
+
+            if (!File.Exists(SyncDir + "/revisionTemplate.tem"))
+            {
+                File.Copy("/home/vagrant/src/web-xforge/revisionTemplate.tem", SyncDir);
+            }
+        }
+
+        /// <summary>(Learning/experimenting by writing clone anew)</summary>
+        public void PullRepo2(UserSecret userSecret, string newRepoPath) // todo rename to clone?
+        {
+            if (!Directory.Exists(newRepoPath))
+            {
+                Directory.CreateDirectory(newRepoPath);
+                Hg.Default.Init(newRepoPath);
+            }
+            var jwtSource = new JwtInternetSharedRepositorySource(_jwt);
+            // var repoSource = GetInternetSharedRepositorySource(userSecret);
+            var repos = jwtSource.GetRepositories();
+            var theRepo = repos.FirstOrDefault(r => r.ScrTextName == "Ott");
+            var projectName = theRepo.ScrTextName;
+            var sharedRepository = new SharedRepository(projectName, theRepo.SendReceiveId, RepositoryType.Shared);
+            jwtSource.Pull(newRepoPath, sharedRepository);
+            Hg.Default.Update(newRepoPath);
+
+        }
+
+        /// <summary>(Learning/experimenting by writing Sendreceive anew)</summary>
+        public void SendReceive2(UserSecret userSecret)
+        {
+            ScrText scrText = ScrTextCollection.FindById("94f48e5b710ec9e092d9a7ec2d124c30f33a04bf");
+
+
+            // BEGIN HACK
+            ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
+            // END HACK
+
+            string repoPath = "/var/lib/scriptureforge/sync/repoCloneDir";
+
+            var source = GetInternetSharedRepositorySource(userSecret);
+            var repositories = source.GetRepositories();
+
+
+            SharedProject sharedProj = SharingLogic.CreateSharedProject(scrText.Guid, "Ott", source, repositories);
+
+
+            List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
+            var list = new[] { sharedProj }.ToList();
+            bool success = false;
+            bool noErrors = SharingLogic.HandleErrors(() => success = SharingLogic.ShareChanges(new[] { sharedProj }.ToList(), source,
+                out results, list));
+
         }
 
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
@@ -265,18 +403,6 @@ namespace SIL.XForge.Scripture.Services
             if (!Directory.Exists(repo))
             {
                 Directory.CreateDirectory(repo);
-                // TODO: change to location on production server if different from /usr/bin/hg
-                var hgexe = "/usr/local/bin/hg";
-
-                var hgmerge = Path.Combine("/home/vagrant/src/web-xforge", "ParatextMerge.py");
-
-                string usfmStylesFileName = "usfm.sty";
-                string pathToStyle = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
-                string target = Path.Combine(SyncDir, usfmStylesFileName);
-                if (!File.Exists(target))
-                    File.Copy(pathToStyle, target);
-
-                Hg.Default = new Hg(hgexe, hgmerge, target);
                 Hg.Default.Init(repo);
             }
             var source = GetInternetSharedRepositorySource(userSecret);
@@ -431,7 +557,7 @@ namespace SIL.XForge.Scripture.Services
                 AccessToken = (string)responseObj["access_token"],
                 RefreshToken = (string)responseObj["refresh_token"],
             };
-            await _userSecret.UpdateAsync(userSecret, b => b.Set(u => u.ParatextTokens, userSecret.ParatextTokens));
+            await _userSecretRepository.UpdateAsync(userSecret, b => b.Set(u => u.ParatextTokens, userSecret.ParatextTokens));
         }
 
         private async Task<string> CallApiAsync(HttpClient client, UserSecret userSecret, HttpMethod method,
