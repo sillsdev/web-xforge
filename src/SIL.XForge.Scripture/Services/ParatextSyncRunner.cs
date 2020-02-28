@@ -91,7 +91,7 @@ namespace SIL.XForge.Scripture.Services
                 return;
             }
 
-            _paratextService.DevEntryPoint(_userSecret);
+            await _paratextService.DevEntryPoint(_userSecret);
             /*
             try
             {
