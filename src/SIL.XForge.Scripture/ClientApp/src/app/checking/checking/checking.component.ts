@@ -824,9 +824,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         answerPanelHeight = this.minAnswerPanelPercent;
       }
 
-      if (answerPanelHeight > 100) {
-        answerPanelHeight = 100;
-      }
+      answerPanelHeight = Math.min(75, answerPanelHeight);
       const scripturePanelHeight = 100 - answerPanelHeight;
       this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
     }, waitMs);

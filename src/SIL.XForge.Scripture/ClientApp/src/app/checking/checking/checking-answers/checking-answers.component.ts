@@ -356,15 +356,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   hideAnswerForm() {
-    this.answerFormVisible = false;
     this.answerFormSubmitAttempted = false;
     this.activeAnswer = undefined;
     this.clearSelection();
     this.audio = {};
     this.answerForm.reset();
-    this.action.emit({
-      action: 'hide-form'
-    });
+    if (this.answerFormVisible) {
+      this.answerFormVisible = false;
+      this.action.emit({ action: 'hide-form' });
+    }
     this.refreshAnswersHighlightStatus();
   }
 
