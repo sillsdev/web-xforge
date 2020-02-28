@@ -65,9 +65,19 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void GetProjectsAsync_Works()
+        public async Task GetProjectsAsync_Works()
         {
             var env = new TestEnvironment();
+            env.Service._jwt = "token1234";
+            IInternetSharedRepositorySource mockInternetSharedRepositorySource = Substitute.For<IInternetSharedRepositorySource>();
+            var list = new List<SharedRepository>();
+            list.Add(new SharedRepository());
+            list.Add(new SharedRepository());
+
+            mockInternetSharedRepositorySource.GetRepositories().Returns(list);
+            IEnumerable<SharedRepository> ret = env.Service.GetListOfProjects2(mockInternetSharedRepositorySource);
+            var repos = ret;
+            Assert.That(repos.Count(), Is.EqualTo(2));
             Assert.True(true);
         }
 
@@ -81,6 +91,9 @@ namespace SIL.XForge.Scripture.Services
             public IOptions<SiteOptions> MockSiteOptions;
             public IFileSystemService MockFileSystemService;
 
+
+            public ParatextService Service;
+
             public TestEnvironment()
             {
                 MockWebHostEnvironment = Substitute.For<IWebHostEnvironment>();
@@ -90,9 +103,12 @@ namespace SIL.XForge.Scripture.Services
                 MockExceptionHandler = Substitute.For<IExceptionHandler>();
                 MockSiteOptions = Substitute.For<IOptions<SiteOptions>>();
                 MockFileSystemService = Substitute.For<IFileSystemService>();
+                // MockInternetSharedRepositorySource = Substitute.For<IInternetSharedRepositorySource>();
+
+
                 //Mock=Substitute.For<>();
                 //Mock=Substitute.For<>();
-                var ptservice = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository, MockRealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService);
+                Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository, MockRealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService);
             }
         }
     }
