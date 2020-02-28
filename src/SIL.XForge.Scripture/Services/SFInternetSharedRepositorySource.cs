@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Paratext.Data;
 using Paratext.Data.Repository;
 using SIL.Reflection;
@@ -5,7 +7,7 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
-    public class SFInternetSharedRepositorySource : InternetSharedRepositorySource
+    public class SFInternetSharedRepositorySource : InternetSharedRepositorySource, IInternetSharedRepositorySource
     {
         private const string DevUrl = "https://archives-dev.paratext.org/send_receive_server/api80/";
         private const string ProdUrl = "https://archives.paratext.org/send_receive_server/api80/";
@@ -19,16 +21,35 @@ namespace SIL.XForge.Scripture.Services
             // RESTClient only uses the jwtToken if authentication is null;
             ReflectionHelper.SetField(client, "authentication", null);
         }
+        public void SetToken(string jwtToken)
+        {
+            throw new NotImplementedException();
+        }
     }
 
-    class JwtInternetSharedRepositorySource : InternetSharedRepositorySource
+    class JwtInternetSharedRepositorySource : InternetSharedRepositorySource, IInternetSharedRepositorySource
     {
-        public JwtInternetSharedRepositorySource(string jwtToken)
+        // public JwtInternetSharedRepositorySource(string jwtToken)
+        // {
+        //     client.JwtToken = jwtToken;
+        //     // RESTClient only uses the jwtToken if authentication is null;
+        //     ReflectionHelper.SetField(client, "authentication", null);
+
+        //      }
+        public void SetToken(string jwtToken)
         {
             client.JwtToken = jwtToken;
             // RESTClient only uses the jwtToken if authentication is null;
             ReflectionHelper.SetField(client, "authentication", null);
+
         }
+    }
+
+    public interface IInternetSharedRepositorySource
+    {
+        IEnumerable<SharedRepository> GetRepositories();
+        string[] Pull(string repository, SharedRepository pullRepo);
+        void SetToken(string jwtToken);
     }
 
     class JwtRESTClient : RESTClient

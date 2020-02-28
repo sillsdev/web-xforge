@@ -80,7 +80,6 @@ namespace SIL.XForge.Scripture.Services
             }
             else
             {
-                System.Diagnostics.Debug.Assert(false, "dont let this be the problem");
                 _registryClient.BaseAddress = new Uri("https://registry.paratext.org");
                 _useDevServer = false;
             }
@@ -90,7 +89,7 @@ namespace SIL.XForge.Scripture.Services
         public string SyncDir;
         private string applicationProductVersion = "SF";
         private bool jwtRegistered = false;
-        private string _jwt;
+        internal string _jwt;
         private Dictionary<string, InternetSharedRepositorySource> _internetSharedRepositorySource = new Dictionary<string, InternetSharedRepositorySource>();
 
 
@@ -236,9 +235,10 @@ namespace SIL.XForge.Scripture.Services
                 Directory.CreateDirectory(newRepoPath);
                 Hg.Default.Init(newRepoPath);
             }
-            var jwtSource = new JwtInternetSharedRepositorySource(_jwt);
-            // var repoSource = GetInternetSharedRepositorySource(userSecret);
-            var repos = jwtSource.GetRepositories();
+
+            var tmpTuple = GetListOfProjects();
+            var repos = tmpTuple.Item2;
+            var jwtSource = tmpTuple.Item1;
             var theRepo = repos.FirstOrDefault(r => r.ScrTextName == "Ott");
             var projectName = theRepo.ScrTextName;
             var sharedRepository = new SharedRepository(projectName, theRepo.SendReceiveId, RepositoryType.Shared);
@@ -274,8 +274,26 @@ namespace SIL.XForge.Scripture.Services
 
         }
 
+
+        public Tuple<IInternetSharedRepositorySource, IEnumerable<SharedRepository>> GetListOfProjects()
+        {
+            var jwtSource = new JwtInternetSharedRepositorySource();
+            jwtSource.SetToken(_jwt);
+            // var repoSource = GetInternetSharedRepositorySource(userSecret);
+            var repos = GetListOfProjects2(jwtSource);
+            return new Tuple<IInternetSharedRepositorySource, IEnumerable<SharedRepository>>(jwtSource, repos);
+        }
+
+        public IEnumerable<SharedRepository> GetListOfProjects2(IInternetSharedRepositorySource repositorySource)
+        {
+            return repositorySource.GetRepositories();
+        }
+
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
-        {//seems to work in production
+        {
+
+
+            //seems to work in production
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim usernameClaim = accessToken.Claims.FirstOrDefault(c => c.Type == "username");
             string username = usernameClaim?.Value;
