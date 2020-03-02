@@ -51,6 +51,7 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using Paratext.Base;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -85,8 +86,34 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetBooks_ReturnCorrectNumberOfBooks()
         {
             var env = new TestEnvironment();
-            env.Service._jwt = "token1234";
+            MockScrText paratextProject = new MockScrText();
+            // Books 1 thru 3.
+            paratextProject.Settings.BooksPresentSet = new BookSet(1, 3);
+            string paratextProjectId = "ptId123";
+            env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(paratextProject);
 
+            IReadOnlyList<int> result = env.Service.GetBooks(paratextProjectId);
+            Assert.That(result.Count(), Is.EqualTo(3));
+        }
+
+        [Test]
+        public async Task GetBookText_Works()
+        {
+            string paratextProjectId = "ptId123";
+            string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
+            "\\c 1\n" +
+            "\\v 1 Verse 1 here.\n" +
+            "\\v 2 Verse 2 here.";
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+
+            MockScrText paratextProject = new MockScrText();
+            paratextProject.Data.Add("RUT", ruthBookUsfm);
+            var env = new TestEnvironment();
+            env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(paratextProject);
+            env.MockedScrTextCollectionRunner.GetById(paratextProjectId).Returns(paratextProject);
+            string result = env.Service.GetBookText(null, paratextProjectId, 8);
+            Assert.That(result, Is.EqualTo(ruthBookUsx));
+            Assert.That(result.Contains("<book"));
         }
 
         private class TestEnvironment
