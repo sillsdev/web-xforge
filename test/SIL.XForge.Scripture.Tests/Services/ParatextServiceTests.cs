@@ -86,8 +86,14 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetBooks_ReturnCorrectNumberOfBooks()
         {
             var env = new TestEnvironment();
-            env.Service._jwt = "token1234";
+            MockScrText paratextProject = new MockScrText();
+            // Books 1 thru 3.
+            paratextProject.Settings.BooksPresentSet = new BookSet(1, 3);
+            string paratextProjectId = "ptId123";
+            env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(paratextProject);
 
+            IReadOnlyList<int> result = env.Service.GetBooks(paratextProjectId);
+            Assert.That(result.Count(), Is.EqualTo(3));
         }
 
         [Test]

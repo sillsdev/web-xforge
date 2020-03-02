@@ -13,6 +13,13 @@ namespace Paratext.Base
     /// </summary>
     public class MockScrText : ScrText
     {
+
+
+        public MockScrText()
+        {
+            _settings = new MockProjectSettings(this);
+        }
+
         public Dictionary<string, string> Data = new Dictionary<string, string>();
 
 
@@ -33,7 +40,8 @@ namespace Paratext.Base
         }
 
 
-        public override ProjectSettings Settings => new MockProjectSettings(this);
+        public ProjectSettings _settings;
+        public override ProjectSettings Settings => _settings;
         public override ScrStylesheet DefaultStylesheet => new MockScrStylesheet("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture/usfm.sty");
     }
 }

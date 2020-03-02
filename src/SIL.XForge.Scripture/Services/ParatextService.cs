@@ -405,7 +405,6 @@ namespace SIL.XForge.Scripture.Services
 
         public IReadOnlyList<int> GetBooks(string projectId)
         {
-            // TODO: this is a guess at how to implement this method
             ScrText scrText = _scrTextCollectionRunner.FindById(projectId);
             if (scrText == null)
                 return Array.Empty<int>();
