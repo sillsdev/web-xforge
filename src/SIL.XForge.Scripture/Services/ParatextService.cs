@@ -99,94 +99,53 @@ namespace SIL.XForge.Scripture.Services
 
 
 
-        class DebugLogTraceListener : LogTraceListener
-        {
-            public DebugLogTraceListener(string logFilePath, int maxLen) : base(logFilePath, maxLen)
-            {
-            }
-
-            public override void Write(string o)
-            {
-                Console.Write(o);
-                base.Write(o);
-            }
-
-            public override void WriteLine(string o)
-            {
-                Console.WriteLine(o);
-                base.WriteLine(o);
-            }
-        }
-
-
         /// <summary>Entry point for testing so can consistently isolate and test the same thing.</summary>
         public async Task DevEntryPoint(UserSecret userSecret)
         {
             Console.WriteLine("Begin DevEntryPoint.");
-
-            Trace.Listeners.Clear();
-            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
-            // Trace.Listeners.Add(new DebugLogTraceListener(null, 0));
-
-
-
             await RefreshAccessTokenAsync(userSecret);
             Init();
-            var accessToken = userSecret.ParatextTokens.AccessToken;
-            this.RegisterWithJWT(accessToken);
-            SetupMercurial();
+            RegisterWithJWT(userSecret);
+
             // TODO Use an appropriate string for the clone path. Such as the paratext project id (not the SF project id).
             var dir = "repoCloneDir";
             PullRepo2(userSecret, Path.Combine(SyncDir, dir));
             InitializeProjects(SyncDir);
+            var bookText = GetBookText(userSecret, "94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
             SendReceive2(userSecret);
-
         }
 
+        /// <summary>Prepare access to Paratext.Data library, authenticate, and prepare Mercurial.</summary>
         public void Init()
         {
+            // Print Paratext error messages.
+            Trace.Listeners.Clear();
+            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
             string syncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
             SyncDir = syncDir;
             if (!_fileSystemService.DirectoryExists(syncDir))
                 _fileSystemService.CreateDirectory(syncDir);
-
-
-
             RegistryU.Implementation = new DotNetCoreRegistry();
             // Alert.Implementation = new DotNetCoreAlert();
-            RegistryServer.Initialize(applicationProductVersion);
-            // Possibly needed initialization things
             ParatextDataSettings.Initialize(new PersistedParatextDataSettings());
             PtxUtilsDataSettings.Initialize(new PersistedPtxUtilsSettings());
-
-
+            SetupMercurial();
         }
 
-        public void RegisterWithJWT(string jwtToken)
+        public void RegisterWithJWT(UserSecret userSecret)
         {
+            var jwtToken = userSecret.ParatextTokens.AccessToken;
             if (jwtToken?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) ?? false)
                 jwtToken = jwtToken.Substring("Bearer ".Length).Trim();
 
             _jwt = jwtToken;
-            // var jwtPayout = Jose.JWT.Decode<JwtPayload>(jwtToken, publicKey, JwsAlgorithm.RS256);
-            // TODO: can do some validation here...
+            // TODO Do we need to do additional validation? cli used Jose.JWT.Decode...
 
             // var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ /*"https://registry.paratext.org/api8/"*/_registryClient.BaseAddress.AbsoluteUri, ApplicationProduct.DefaultVersion, jwtToken);
-            var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ "https://registry-dev.paratext.org/api8/", ApplicationProduct.DefaultVersion, _jwt);
-
-            var result = jwtRESTClient.Get("my/licenses");
-
-            // Emitting - "/api8/my requires HTTP Basic authentication or API token with sub claim"
-
-
-            Console.WriteLine("result = {0}", result);
-
+            var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ "https://registry-dev.paratext.org/api8/", ApplicationProduct.DefaultVersion, jwtToken);
             RegistryServer.Initialize(applicationProductVersion, jwtRESTClient);
             jwtRegistered = true;
-            var blah = RegistryServer.Default.GetLicensesForUserProjects(true);
-
         }
-
 
         private void SetupMercurial()
         {
@@ -196,13 +155,8 @@ namespace SIL.XForge.Scripture.Services
             }
             // TODO: production server will presumably use /usr/bin/hg. Tho running from PATH would be good .
             var hgExe = "/usr/local/bin/hg";
-
             var hgMerge = Path.Combine("/home/vagrant/src/web-xforge", "ParatextMerge.py");
-
-
             Hg.Default = new Hg(hgExe, hgMerge, SyncDir);
-
-
         }
 
         private void InitializeProjects(string path)
@@ -212,7 +166,7 @@ namespace SIL.XForge.Scripture.Services
             // TODO: not sure if using ScrTextCollection is the best idea for a server, since it loads all existing
             // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
             // ScrTextCollectionServer class in DataAccessServer.
-            ScrTextCollection.Initialize(SyncDir, false);
+            _scrTextCollectionRunner.Initialize(SyncDir, false);
 
             string usfmStylesFileName = "usfm.sty";
             string pathToStyle = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
@@ -255,7 +209,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>(Learning/experimenting by writing Sendreceive anew)</summary>
         public void SendReceive2(UserSecret userSecret)
         {
-            ScrText scrText = ScrTextCollection.FindById("94f48e5b710ec9e092d9a7ec2d124c30f33a04bf");
+            ScrText scrText = _scrTextCollectionRunner.FindById("94f48e5b710ec9e092d9a7ec2d124c30f33a04bf");
 
 
             // BEGIN HACK
@@ -276,9 +230,15 @@ namespace SIL.XForge.Scripture.Services
             bool success = false;
             bool noErrors = SharingLogic.HandleErrors(() => success = SharingLogic.ShareChanges(new[] { sharedProj }.ToList(), source,
                 out results, list));
-
+            Console.WriteLine($"S/R complete. NoErrors? {noErrors}");
         }
 
+        /// <summary>Fetch paratext projects that userSecret has access to. (re-writing in environment of present understanding of how to connect to Paratext.Data)</summary>
+        public async Task<IReadOnlyList<ParatextProject>> GetProjects2Async(UserSecret userSecret)
+        {
+            throw new NotImplementedException();
+
+        }
 
         public Tuple<IInternetSharedRepositorySource, IEnumerable<SharedRepository>> GetListOfProjects()
         {
@@ -294,10 +254,9 @@ namespace SIL.XForge.Scripture.Services
             return repositorySource.GetRepositories();
         }
 
+        /// <summary>Fetch paratext projects that userSecret has access to.</summary>
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
-
-
             //seems to work in production
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim usernameClaim = accessToken.Claims.FirstOrDefault(c => c.Type == "username");
@@ -381,7 +340,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public string GetParatextUsername(UserSecret userSecret)
-        {//work in production
+        {//works in production
             if (userSecret.ParatextTokens == null)
                 return null;
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
@@ -403,23 +362,22 @@ namespace SIL.XForge.Scripture.Services
 
         public IReadOnlyList<int> GetBooks(string projectId)
         {
-            // TODO: this is a guess at how to implement this method
-            ScrText scrText = ScrTextCollection.FindById(projectId);
+            ScrText scrText = _scrTextCollectionRunner.FindById(projectId);
             if (scrText == null)
                 return Array.Empty<int>();
             return scrText.Settings.BooksPresentSet.SelectedBookNumbers.ToArray();
         }
 
-        private bool IsManagingProject(string projectId)
+        private bool IsManagingProject(string paratextProjectId)
         {
-            return null != ScrTextCollection.FindById(projectId);
+            return null != _scrTextCollectionRunner.FindById(paratextProjectId);
         }
 
         private void PullRepo(UserSecret userSecret, string projectId)
         {
             // Initialize
             if (!jwtRegistered)
-                RegisterWithJWT(userSecret.ParatextTokens.AccessToken);
+                RegisterWithJWT(userSecret);
             // projectId is the paratextId of the project.
             var repo = Path.Combine(SyncDir, projectId);
             if (!Directory.Exists(repo))
@@ -441,14 +399,18 @@ namespace SIL.XForge.Scripture.Services
 
 
 
-        public string GetBookText(UserSecret userSecret, string projectId, int bookNum)
+        public string GetBookText(UserSecret userSecret, string paratextProjectId, int bookNum)
         {
-            if (!IsManagingProject(projectId))
+            if (!IsManagingProject(paratextProjectId))
             {
-                PullRepo(userSecret, projectId);
+                // TODO or throw?
+                // TODO isnt this an older method that we shouldnt be calling now?
+                PullRepo(userSecret, paratextProjectId);
             }
+
             // TODO: this is a guess at how to implement this method
-            ScrText scrText = ScrTextCollection.GetById(projectId);
+            ScrText scrText = _scrTextCollectionRunner.GetById(paratextProjectId);
+            ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
             string usfm = scrText.GetText(bookNum);
             return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
         }
@@ -456,7 +418,7 @@ namespace SIL.XForge.Scripture.Services
         public void PutBookText(string projectId, int bookNum, string usx)
         {
             // TODO: this is a guess at how to implement this method
-            ScrText scrText = ScrTextCollection.GetById(projectId);
+            ScrText scrText = _scrTextCollectionRunner.GetById(projectId);
             var doc = new XmlDocument
             {
                 PreserveWhitespace = true
@@ -482,9 +444,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
 
-        // StringsEncoder class doesn't work on dotnet core because it assumes 1252 is avalaible.
-        // on dotnet core 1252 will never return from Encodings.GetEncodings().
-        // But StringsEncoder assumes it does.
+        // StringsEncoder class doesn't work on dotnet core because it assumes 1252 is available.
+        // On dotnet core 1252 will never return from Encodings.GetEncodings(),
+        // but StringsEncoder assumes it does.
         private class HackStringEncoder : StringEncoder
         {
             public HackStringEncoder()
@@ -534,7 +496,7 @@ namespace SIL.XForge.Scripture.Services
                     PullRepo(userSecret, projectId);
                 }
             }
-            ScrText scrText = ScrTextCollection.FindById(projectIds.First());
+            ScrText scrText = _scrTextCollectionRunner.FindById(projectIds.First());
 
 
             // BEGIN HACK
