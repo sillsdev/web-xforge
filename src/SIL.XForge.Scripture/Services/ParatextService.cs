@@ -58,6 +58,8 @@ namespace SIL.XForge.Scripture.Services
         private readonly IExceptionHandler _exceptionHandler;
         private readonly bool _useDevServer;
 
+        internal IScrTextCollectionRunner _scrTextCollectionRunner;
+
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService, IExceptionHandler exceptionHandler,
             IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService)
@@ -85,6 +87,8 @@ namespace SIL.XForge.Scripture.Services
                 _useDevServer = false;
             }
             _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            _scrTextCollectionRunner = new ScrTextCollectionRunner();
         }
 
         public string SyncDir;

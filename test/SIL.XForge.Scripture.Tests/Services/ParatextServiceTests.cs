@@ -65,7 +65,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetProjectsAsync_Works()
+        public async Task GetProjectsAsync_ReturnCorrectNumberOfRepos()
         {
             var env = new TestEnvironment();
             env.Service._jwt = "token1234";
@@ -78,7 +78,15 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<SharedRepository> ret = env.Service.GetListOfProjects2(mockInternetSharedRepositorySource);
             var repos = ret;
             Assert.That(repos.Count(), Is.EqualTo(2));
-            Assert.True(true);
+            // Assert.True(true);
+        }
+
+        [Test]
+        public async Task GetBooks_ReturnCorrectNumberOfBooks()
+        {
+            var env = new TestEnvironment();
+            env.Service._jwt = "token1234";
+
         }
 
         private class TestEnvironment
@@ -90,6 +98,7 @@ namespace SIL.XForge.Scripture.Services
             public IExceptionHandler MockExceptionHandler;
             public IOptions<SiteOptions> MockSiteOptions;
             public IFileSystemService MockFileSystemService;
+            public IScrTextCollectionRunner MockedScrTextCollectionRunner;
 
 
             public ParatextService Service;
@@ -103,12 +112,14 @@ namespace SIL.XForge.Scripture.Services
                 MockExceptionHandler = Substitute.For<IExceptionHandler>();
                 MockSiteOptions = Substitute.For<IOptions<SiteOptions>>();
                 MockFileSystemService = Substitute.For<IFileSystemService>();
+                MockedScrTextCollectionRunner = Substitute.For<IScrTextCollectionRunner>();
                 // MockInternetSharedRepositorySource = Substitute.For<IInternetSharedRepositorySource>();
 
 
                 //Mock=Substitute.For<>();
                 //Mock=Substitute.For<>();
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository, MockRealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService);
+                Service._scrTextCollectionRunner = MockedScrTextCollectionRunner;
             }
         }
     }
