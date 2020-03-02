@@ -139,6 +139,9 @@ namespace SIL.XForge.Scripture.Services
             var dir = "repoCloneDir";
             PullRepo2(userSecret, Path.Combine(SyncDir, dir));
             InitializeProjects(SyncDir);
+
+            var bookText = GetBookText(userSecret, "94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
+
             SendReceive2(userSecret);
 
         }
@@ -212,7 +215,7 @@ namespace SIL.XForge.Scripture.Services
             // TODO: not sure if using ScrTextCollection is the best idea for a server, since it loads all existing
             // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
             // ScrTextCollectionServer class in DataAccessServer.
-            ScrTextCollection.Initialize(SyncDir, false);
+            _scrTextCollectionRunner.Initialize(SyncDir, false);
 
             string usfmStylesFileName = "usfm.sty";
             string pathToStyle = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
@@ -255,7 +258,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>(Learning/experimenting by writing Sendreceive anew)</summary>
         public void SendReceive2(UserSecret userSecret)
         {
-            ScrText scrText = ScrTextCollection.FindById("94f48e5b710ec9e092d9a7ec2d124c30f33a04bf");
+            ScrText scrText = _scrTextCollectionRunner.FindById("94f48e5b710ec9e092d9a7ec2d124c30f33a04bf");
 
 
             // BEGIN HACK
@@ -403,16 +406,15 @@ namespace SIL.XForge.Scripture.Services
 
         public IReadOnlyList<int> GetBooks(string projectId)
         {
-            // TODO: this is a guess at how to implement this method
-            ScrText scrText = ScrTextCollection.FindById(projectId);
+            ScrText scrText = _scrTextCollectionRunner.FindById(projectId);
             if (scrText == null)
                 return Array.Empty<int>();
             return scrText.Settings.BooksPresentSet.SelectedBookNumbers.ToArray();
         }
 
-        private bool IsManagingProject(string projectId)
+        private bool IsManagingProject(string paratextProjectId)
         {
-            return null != ScrTextCollection.FindById(projectId);
+            return null != _scrTextCollectionRunner.FindById(paratextProjectId);
         }
 
         private void PullRepo(UserSecret userSecret, string projectId)
@@ -441,14 +443,17 @@ namespace SIL.XForge.Scripture.Services
 
 
 
-        public string GetBookText(UserSecret userSecret, string projectId, int bookNum)
+        public string GetBookText(UserSecret userSecret, string paratextProjectId, int bookNum)
         {
-            if (!IsManagingProject(projectId))
+            if (!IsManagingProject(paratextProjectId))
             {
-                PullRepo(userSecret, projectId);
+                // TODO or throw?
+                PullRepo(userSecret, paratextProjectId);
             }
+
             // TODO: this is a guess at how to implement this method
-            ScrText scrText = ScrTextCollection.GetById(projectId);
+            ScrText scrText = _scrTextCollectionRunner.GetById(paratextProjectId);
+            ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
             string usfm = scrText.GetText(bookNum);
             return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
         }
@@ -456,7 +461,7 @@ namespace SIL.XForge.Scripture.Services
         public void PutBookText(string projectId, int bookNum, string usx)
         {
             // TODO: this is a guess at how to implement this method
-            ScrText scrText = ScrTextCollection.GetById(projectId);
+            ScrText scrText = _scrTextCollectionRunner.GetById(projectId);
             var doc = new XmlDocument
             {
                 PreserveWhitespace = true
@@ -482,9 +487,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
 
-        // StringsEncoder class doesn't work on dotnet core because it assumes 1252 is avalaible.
-        // on dotnet core 1252 will never return from Encodings.GetEncodings().
-        // But StringsEncoder assumes it does.
+        // StringsEncoder class doesn't work on dotnet core because it assumes 1252 is available.
+        // On dotnet core 1252 will never return from Encodings.GetEncodings(),
+        // but StringsEncoder assumes it does.
         private class HackStringEncoder : StringEncoder
         {
             public HackStringEncoder()
@@ -534,7 +539,7 @@ namespace SIL.XForge.Scripture.Services
                     PullRepo(userSecret, projectId);
                 }
             }
-            ScrText scrText = ScrTextCollection.FindById(projectIds.First());
+            ScrText scrText = _scrTextCollectionRunner.FindById(projectIds.First());
 
 
             // BEGIN HACK
