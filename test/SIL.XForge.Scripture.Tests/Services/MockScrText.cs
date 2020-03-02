@@ -34,10 +34,6 @@ namespace Paratext.Base
 
 
         public override ProjectSettings Settings => new MockProjectSettings(this);
-
-        // public override ScrStylesheet ScrStylesheet(int bookNum)
-        // {
-        //     // TODO return mock ScrStylesheet
-        // }
+        public override ScrStylesheet DefaultStylesheet => new MockScrStylesheet("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture/usfm.sty");
     }
 }

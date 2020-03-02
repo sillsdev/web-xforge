@@ -94,15 +94,19 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetBookText_Works()
         {
             string paratextProjectId = "ptId123";
-            string ruthBookText = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here. </usx>";
+            string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
+            "\\c 1\n" +
+            "\\v 1 Verse 1 here.\n" +
+            "\\v 2 Verse 2 here.";
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
             MockScrText paratextProject = new MockScrText();
-            paratextProject.Data.Add("RUT 1", ruthBookText);
+            paratextProject.Data.Add("RUT", ruthBookUsfm);
             var env = new TestEnvironment();
             env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(paratextProject);
             env.MockedScrTextCollectionRunner.GetById(paratextProjectId).Returns(paratextProject);
             string result = env.Service.GetBookText(null, paratextProjectId, 8);
-            Assert.That(result, Is.EqualTo(ruthBookText));
+            Assert.That(result, Is.EqualTo(ruthBookUsx));
             Assert.That(result.Contains("<book"));
         }
 
