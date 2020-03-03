@@ -98,69 +98,37 @@ namespace SIL.XForge.Scripture.Services
 
 
 
-        class DebugLogTraceListener : LogTraceListener
-        {
-            public DebugLogTraceListener(string logFilePath, int maxLen) : base(logFilePath, maxLen)
-            {
-            }
-
-            public override void Write(string o)
-            {
-                Console.Write(o);
-                base.Write(o);
-            }
-
-            public override void WriteLine(string o)
-            {
-                Console.WriteLine(o);
-                base.WriteLine(o);
-            }
-        }
-
-
         /// <summary>Entry point for testing so can consistently isolate and test the same thing.</summary>
         public async Task DevEntryPoint(UserSecret userSecret)
         {
             Console.WriteLine("Begin DevEntryPoint.");
-
-            Trace.Listeners.Clear();
-            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
-            // Trace.Listeners.Add(new DebugLogTraceListener(null, 0));
-
-
-
             await RefreshAccessTokenAsync(userSecret);
             Init();
             RegisterWithJWT(userSecret);
-            SetupMercurial();
+
             // TODO Use an appropriate string for the clone path. Such as the paratext project id (not the SF project id).
             var dir = "repoCloneDir";
             PullRepo2(userSecret, Path.Combine(SyncDir, dir));
             InitializeProjects(SyncDir);
-
             var bookText = GetBookText(userSecret, "94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
-
             SendReceive2(userSecret);
-
         }
 
+        /// <summary>Prepare access to Paratext.Data library, authenticate, and prepare Mercurial.</summary>
         public void Init()
         {
+            // Print Paratext error messages.
+            Trace.Listeners.Clear();
+            Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
             string syncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
             SyncDir = syncDir;
             if (!_fileSystemService.DirectoryExists(syncDir))
                 _fileSystemService.CreateDirectory(syncDir);
-
-
-
             RegistryU.Implementation = new DotNetCoreRegistry();
             // Alert.Implementation = new DotNetCoreAlert();
-            // RegistryServer.Initialize(applicationProductVersion);
-            // Possibly needed initialization things
             ParatextDataSettings.Initialize(new PersistedParatextDataSettings());
             PtxUtilsDataSettings.Initialize(new PersistedPtxUtilsSettings());
-
-
+            SetupMercurial();
         }
 
         public void RegisterWithJWT(UserSecret userSecret)
@@ -170,25 +138,13 @@ namespace SIL.XForge.Scripture.Services
                 jwtToken = jwtToken.Substring("Bearer ".Length).Trim();
 
             _jwt = jwtToken;
-            // var jwtPayout = Jose.JWT.Decode<JwtPayload>(jwtToken, publicKey, JwsAlgorithm.RS256);
-            // TODO: can do some validation here...
+            // TODO Do we need to do additional validation? cli used Jose.JWT.Decode...
 
             // var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ /*"https://registry.paratext.org/api8/"*/_registryClient.BaseAddress.AbsoluteUri, ApplicationProduct.DefaultVersion, jwtToken);
             var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ "https://registry-dev.paratext.org/api8/", ApplicationProduct.DefaultVersion, jwtToken);
-
-            // var result = jwtRESTClient.Get("my/licenses");
-
-            // Emitting - "/api8/my requires HTTP Basic authentication or API token with sub claim"
-
-
-            // Console.WriteLine("result = {0}", result);
-
             RegistryServer.Initialize(applicationProductVersion, jwtRESTClient);
-            // jwtRegistered = true;
-            // var blah = RegistryServer.Default.GetLicensesForUserProjects(true);
-
+            jwtRegistered = true;
         }
-
 
         private void SetupMercurial()
         {
@@ -198,13 +154,8 @@ namespace SIL.XForge.Scripture.Services
             }
             // TODO: production server will presumably use /usr/bin/hg. Tho running from PATH would be good .
             var hgExe = "/usr/local/bin/hg";
-
             var hgMerge = Path.Combine("/home/vagrant/src/web-xforge", "ParatextMerge.py");
-
-
             Hg.Default = new Hg(hgExe, hgMerge, SyncDir);
-
-
         }
 
         private void InitializeProjects(string path)
@@ -278,7 +229,7 @@ namespace SIL.XForge.Scripture.Services
             bool success = false;
             bool noErrors = SharingLogic.HandleErrors(() => success = SharingLogic.ShareChanges(new[] { sharedProj }.ToList(), source,
                 out results, list));
-
+            Console.WriteLine($"S/R complete. NoErrors? {noErrors}");
         }
 
         /// <summary>Fetch paratext projects that userSecret has access to. (re-writing in environment of present understanding of how to connect to Paratext.Data)</summary>
@@ -305,7 +256,6 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>Fetch paratext projects that userSecret has access to.</summary>
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
-
             //seems to work in production
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim usernameClaim = accessToken.Claims.FirstOrDefault(c => c.Type == "username");
