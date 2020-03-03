@@ -143,6 +143,8 @@ namespace SIL.XForge.Scripture.Services
             var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ "https://registry-dev.paratext.org/api8/", ApplicationProduct.DefaultVersion, jwtToken);
             RegistryServer.Initialize(applicationProductVersion, jwtRESTClient);
             jwtRegistered = true;
+            // Record a repository source corresponding to secret.
+            GetInternetSharedRepositorySource(userSecret);
         }
 
         private void SetupMercurial()
@@ -193,15 +195,13 @@ namespace SIL.XForge.Scripture.Services
                 Hg.Default.Init(newRepoPath);
             }
 
-            var tmpTuple = GetListOfProjects();
-            var repos = tmpTuple.Item2;
-            var jwtSource = tmpTuple.Item1;
+            var repos = GetListOfProjects(userSecret);
             var theRepo = repos.FirstOrDefault(r => r.ScrTextName == "Ott");
             var projectName = theRepo.ScrTextName;
             var sharedRepository = new SharedRepository(projectName, theRepo.SendReceiveId, RepositoryType.Shared);
+            var jwtSource = GetInternetSharedRepositorySource(userSecret);
             jwtSource.Pull(newRepoPath, sharedRepository);
             Hg.Default.Update(newRepoPath);
-
         }
 
         /// <summary>(Learning/experimenting by writing Sendreceive anew)</summary>
@@ -220,13 +220,13 @@ namespace SIL.XForge.Scripture.Services
             var repositories = source.GetRepositories();
 
 
-            SharedProject sharedProj = SharingLogic.CreateSharedProject(scrText.Guid, "Ott", source, repositories);
+            SharedProject sharedProj = SharingLogic.CreateSharedProject(scrText.Guid, "Ott", source as InternetSharedRepositorySource, repositories);
 
 
             List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
             var list = new[] { sharedProj }.ToList();
             bool success = false;
-            bool noErrors = SharingLogic.HandleErrors(() => success = SharingLogic.ShareChanges(new[] { sharedProj }.ToList(), source,
+            bool noErrors = SharingLogic.HandleErrors(() => success = SharingLogic.ShareChanges(new[] { sharedProj }.ToList(), source as InternetSharedRepositorySource,
                 out results, list));
             Console.WriteLine($"S/R complete. NoErrors? {noErrors}");
         }
@@ -238,12 +238,12 @@ namespace SIL.XForge.Scripture.Services
 
         }
 
-        public Tuple<IInternetSharedRepositorySource, IEnumerable<SharedRepository>> GetListOfProjects()
+        public IEnumerable<SharedRepository> GetListOfProjects(UserSecret userSecret)
         {
-            var jwtSource = new JwtInternetSharedRepositorySource();
-            jwtSource.SetToken(_jwt);
-            var repos = GetListOfProjectsFromSource(jwtSource);
-            return new Tuple<IInternetSharedRepositorySource, IEnumerable<SharedRepository>>(jwtSource, repos);
+            // var jwtSource = new JwtInternetSharedRepositorySource();
+            // jwtSource.SetToken(_jwt);
+            var jwtSource = GetInternetSharedRepositorySource(userSecret);
+            return GetListOfProjectsFromSource(jwtSource);
         }
 
         public IEnumerable<SharedRepository> GetListOfProjectsFromSource(IInternetSharedRepositorySource repositorySource)
