@@ -248,21 +248,30 @@ namespace SIL.XForge.Scripture.Services
             var existingSFProjects = (_realtimeService.QuerySnapshots<SFProject>());
             RegisterWithJWT(userSecret);
             var jwtSource = GetInternetSharedRepositorySource(userSecret);
-            return jwtSource.GetRepositories().Select(source =>
+            return jwtSource.GetRepositories().Select(remoteParatextProject =>
             {
-                var correspondingSFProject = existingSFProjects.FirstOrDefault(sfProj => sfProj.ParatextId == source.SendReceiveId);
+                SFProject correspondingSFProject = existingSFProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remoteParatextProject.SendReceiveId);
+
+                bool sfProjectExists = correspondingSFProject != null;
+                bool userOnSFProject = correspondingSFProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
+                bool adminOnPtProject = remoteParatextProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator;
+                bool projectIsConnectable =
+                    (sfProjectExists && !userOnSFProject)
+                    || (!sfProjectExists && adminOnPtProject)
+                    ;
+
                 return new ParatextProject
                 {
-                    ParatextId = source.SendReceiveId,
+                    ParatextId = remoteParatextProject.SendReceiveId,
                     // TODO Get project long name from Paratext.Data. ScrTextName is the short code.
-                    Name = source.ScrTextName,
+                    Name = remoteParatextProject.ScrTextName,
                     ShortName = correspondingSFProject?.ShortName,
                     LanguageTag = correspondingSFProject?.WritingSystem.Tag,
                     SFProjectId = correspondingSFProject?.Id,
-                    IsConnectable = true,
-                    IsConnected = correspondingSFProject != null
+                    IsConnectable = projectIsConnectable,
+                    IsConnected = sfProjectExists
                 };
-            }).ToArray();
+            }).OrderBy(project => project.Name, StringComparer.InvariantCulture).ToArray();
         }
 
         /// <summary>Fetch paratext projects that userSecret has access to.</summary>
