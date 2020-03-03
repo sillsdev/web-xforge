@@ -225,13 +225,18 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   activateQuestion(questionDoc: QuestionDoc): void {
+    // The reason for the convoluted questionChanged logic is because the change needs to be emitted even if it's the
+    // same question, but calling activeQuestionDoc$.next when the question is unchanged causes complicated test errors
     this._activeQuestionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
+    let questionChanged = true;
     if (this.activeQuestionDoc != null && this.activeQuestionDoc.id === questionDoc.id) {
-      return;
+      questionChanged = false;
     }
     this.activeQuestionDoc = questionDoc;
     this.changed.emit(questionDoc);
-    this.activeQuestionDoc$.next(questionDoc);
+    if (questionChanged) {
+      this.activeQuestionDoc$.next(questionDoc);
+    }
   }
 
   private changeQuestion(newDifferential: number): void {
