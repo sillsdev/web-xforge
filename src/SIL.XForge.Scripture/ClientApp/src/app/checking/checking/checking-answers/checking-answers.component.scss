@@ -119,8 +119,11 @@
 .answers-container {
   .answer {
     display: flex;
-    padding: 10px 0;
     border-top: 1px solid $borderColor;
+    padding-top: 10px;
+    &:not(:last-child) {
+      padding-bottom: 10px;
+    }
 
     &.attention {
       animation-name: attention;
