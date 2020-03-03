@@ -1,3 +1,4 @@
+using System.Diagnostics.Contracts;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -34,10 +35,14 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>
+    /// Provides interaction with Paratext libraries for data processing and exchanging data with Paratext servers.
+    ///
+    /// OLD:
     /// This class contains methods for interacting with the Paratext web service APIs.
     ///
     /// TODO: Implement progress reporting. PT uses singleton classes to handle progress. Implement ProgressDisplay
@@ -57,8 +62,8 @@ namespace SIL.XForge.Scripture.Services
         private readonly HttpClient _registryClient;
         private readonly IExceptionHandler _exceptionHandler;
         private readonly bool _useDevServer;
-
         internal IScrTextCollectionRunner _scrTextCollectionRunner;
+        private readonly string _resourcesPath;
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService, IExceptionHandler exceptionHandler,
@@ -70,6 +75,8 @@ namespace SIL.XForge.Scripture.Services
             _exceptionHandler = exceptionHandler;
             _siteOptions = siteOptions;
             _fileSystemService = fileSystemService;
+            // _resourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "....");
+            _resourcesPath = "/home/vagrant/src/web-xforge";
 
             // TODO: use RegistryServer from ParatextData instead of calling registry API directly?
             _httpClientHandler = new HttpClientHandler();
@@ -94,7 +101,6 @@ namespace SIL.XForge.Scripture.Services
         public string SyncDir;
         private string applicationProductVersion = "SF";
         private bool jwtRegistered = false;
-        internal string _jwt;
         internal Dictionary<string, IInternetSharedRepositorySource> _internetSharedRepositorySource = new Dictionary<string, IInternetSharedRepositorySource>();
 
 
@@ -104,13 +110,13 @@ namespace SIL.XForge.Scripture.Services
             Console.WriteLine("Begin DevEntryPoint.");
             await RefreshAccessTokenAsync(userSecret);
             Init();
-            RegisterWithJWT(userSecret);
+            SetupAccessToPtRegistry(userSecret);
 
             // TODO Use an appropriate string for the clone path. Such as the paratext project id (not the SF project id).
             var dir = "repoCloneDir";
-            PullRepo2(userSecret, Path.Combine(SyncDir, dir));
+            await PullRepo2Async(userSecret, Path.Combine(SyncDir, dir));
             InitializeProjects(SyncDir);
-            var bookText = GetBookText(userSecret, "94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
+            var bookText = GetBookText("94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
             SendReceive2(userSecret);
         }
 
@@ -131,19 +137,19 @@ namespace SIL.XForge.Scripture.Services
             SetupMercurial();
         }
 
-        public void RegisterWithJWT(UserSecret userSecret)
+        public void SetupAccessToPtRegistry(UserSecret userSecret)
         {
             var jwtToken = userSecret.ParatextTokens.AccessToken;
             if (jwtToken?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) ?? false)
+            {
                 jwtToken = jwtToken.Substring("Bearer ".Length).Trim();
+            }
 
-            _jwt = jwtToken;
             // TODO Do we need to do additional validation? cli used Jose.JWT.Decode...
 
             // var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ /*"https://registry.paratext.org/api8/"*/_registryClient.BaseAddress.AbsoluteUri, ApplicationProduct.DefaultVersion, jwtToken);
             var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ "https://registry-dev.paratext.org/api8/", ApplicationProduct.DefaultVersion, jwtToken);
             RegistryServer.Initialize(applicationProductVersion, jwtRESTClient);
-            jwtRegistered = true;
         }
 
         private void SetupMercurial()
@@ -152,9 +158,14 @@ namespace SIL.XForge.Scripture.Services
             {
                 return;
             }
-            // TODO: production server will presumably use /usr/bin/hg. Tho running from PATH would be good .
-            var hgExe = "/usr/local/bin/hg";
-            var hgMerge = Path.Combine("/home/vagrant/src/web-xforge", "ParatextMerge.py");
+            var hgExe = "/usr/bin/hg";
+            string customHgPath = "/usr/local/bin/hg";
+            if (File.Exists(customHgPath))
+            {
+                // Mercurial 4.7 is needed. Use custom install on Ubuntu 16.04.
+                hgExe = customHgPath;
+            }
+            var hgMerge = Path.Combine(_resourcesPath, "ParatextMerge.py");
             Hg.Default = new Hg(hgExe, hgMerge, SyncDir);
         }
 
@@ -168,7 +179,7 @@ namespace SIL.XForge.Scripture.Services
             _scrTextCollectionRunner.Initialize(SyncDir, false);
 
             string usfmStylesFileName = "usfm.sty";
-            string pathToStyle = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
+            string pathToStyle = Path.Combine(_resourcesPath, "/src/SIL.XForge.Scripture", usfmStylesFileName);
             string target = Path.Combine(SyncDir, usfmStylesFileName);
             if (!File.Exists(target))
             {
@@ -176,17 +187,17 @@ namespace SIL.XForge.Scripture.Services
             }
             if (!File.Exists(SyncDir + "/revisionStyle.sty"))
             {
-                File.Copy("/home/vagrant/src/web-xforge/revisionStyle.sty", SyncDir);
+                File.Copy(Path.Combine(_resourcesPath, "revisionStyle.sty"), SyncDir);
             }
 
             if (!File.Exists(SyncDir + "/revisionTemplate.tem"))
             {
-                File.Copy("/home/vagrant/src/web-xforge/revisionTemplate.tem", SyncDir);
+                File.Copy(Path.Combine(_resourcesPath, "revisionTemplate.tem"), SyncDir);
             }
         }
 
         /// <summary>(Learning/experimenting by writing clone anew)</summary>
-        public void PullRepo2(UserSecret userSecret, string newRepoPath) // todo rename to clone?
+        public async Task PullRepo2Async(UserSecret userSecret, string newRepoPath) // todo rename to clone?
         {
             if (!Directory.Exists(newRepoPath))
             {
@@ -194,15 +205,13 @@ namespace SIL.XForge.Scripture.Services
                 Hg.Default.Init(newRepoPath);
             }
 
-            var tmpTuple = GetListOfProjects();
-            var repos = tmpTuple.Item2;
-            var jwtSource = tmpTuple.Item1;
-            var theRepo = repos.FirstOrDefault(r => r.ScrTextName == "Ott");
-            var projectName = theRepo.ScrTextName;
-            var sharedRepository = new SharedRepository(projectName, theRepo.SendReceiveId, RepositoryType.Shared);
+            var repos = await GetProjectsAsync(userSecret);
+            var theRepo = repos.FirstOrDefault(r => r.ShortName == "Ott");
+            var projectName = theRepo.Name;
+            var sharedRepository = new SharedRepository(projectName, theRepo.ParatextId, RepositoryType.Shared);
+            var jwtSource = GetInternetSharedRepositorySource(userSecret);
             jwtSource.Pull(newRepoPath, sharedRepository);
             Hg.Default.Update(newRepoPath);
-
         }
 
         /// <summary>(Learning/experimenting by writing Sendreceive anew)</summary>
@@ -221,39 +230,55 @@ namespace SIL.XForge.Scripture.Services
             var repositories = source.GetRepositories();
 
 
-            SharedProject sharedProj = SharingLogic.CreateSharedProject(scrText.Guid, "Ott", source, repositories);
+            SharedProject sharedProj = SharingLogic.CreateSharedProject(scrText.Guid, "Ott", source as InternetSharedRepositorySource, repositories);
 
 
             List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
             var list = new[] { sharedProj }.ToList();
             bool success = false;
-            bool noErrors = SharingLogic.HandleErrors(() => success = SharingLogic.ShareChanges(new[] { sharedProj }.ToList(), source,
+            bool noErrors = SharingLogic.HandleErrors(() => success = SharingLogic.ShareChanges(new[] { sharedProj }.ToList(), source as InternetSharedRepositorySource,
                 out results, list));
             Console.WriteLine($"S/R complete. NoErrors? {noErrors}");
         }
 
-        /// <summary>Fetch paratext projects that userSecret has access to. (re-writing in environment of present understanding of how to connect to Paratext.Data)</summary>
-        public async Task<IReadOnlyList<ParatextProject>> GetProjects2Async(UserSecret userSecret)
+        /// <summary>Get Paratext projects that a user has access to. TODO what about projects the user does not have access to.</summary>
+        public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
-            throw new NotImplementedException();
+            if (userSecret == null) throw new ArgumentNullException();
 
-        }
+            List<ParatextProject> paratextProjects = new List<ParatextProject>();
+            IInternetSharedRepositorySource ptRepoSource = GetInternetSharedRepositorySource(userSecret);
+            IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+            IQueryable<SFProject> existingSfProjects = _realtimeService.QuerySnapshots<SFProject>();
 
-        public Tuple<IInternetSharedRepositorySource, IEnumerable<SharedRepository>> GetListOfProjects()
-        {
-            var jwtSource = new JwtInternetSharedRepositorySource();
-            jwtSource.SetToken(_jwt);
-            var repos = GetListOfProjectsFromSource(jwtSource);
-            return new Tuple<IInternetSharedRepositorySource, IEnumerable<SharedRepository>>(jwtSource, repos);
-        }
+            foreach (SharedRepository remotePtProject in remotePtProjects)
+            {
+                SFProject correspondingSfProject = existingSfProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remotePtProject.SendReceiveId);
 
-        public IEnumerable<SharedRepository> GetListOfProjectsFromSource(IInternetSharedRepositorySource repositorySource)
-        {
-            return repositorySource.GetRepositories();
+                bool sfProjectExists = correspondingSfProject != null;
+                bool sfUserIsOnSfProject = correspondingSfProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
+                bool adminOnPtProject = remotePtProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator; // TODO Fetch and use actual PT username.
+                bool ptProjectIsConnectable = (sfProjectExists && !sfUserIsOnSfProject) || (!sfProjectExists && adminOnPtProject);
+
+                paratextProjects.Add(new ParatextProject
+                {
+                    ParatextId = remotePtProject.SendReceiveId,
+                    // TODO Get project long name when don't have a corresponding SF project yet. ScrTextName is the short name.
+                    Name = correspondingSfProject?.Name,
+                    ShortName = remotePtProject.ScrTextName,
+                    LanguageTag = correspondingSfProject?.WritingSystem.Tag,
+                    SFProjectId = correspondingSfProject?.Id,
+                    IsConnectable = ptProjectIsConnectable,
+                    IsConnected = sfProjectExists && sfUserIsOnSfProject
+                });
+            }
+            return paratextProjects;
+
+            // .OrderBy(project => project.Name, StringComparer.InvariantCulture).ToArray();
         }
 
         /// <summary>Fetch paratext projects that userSecret has access to.</summary>
-        public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
+        private async Task<IReadOnlyList<ParatextProject>> GetProjectsOrigAsync(UserSecret userSecret)
         {
             //seems to work in production
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
@@ -267,9 +292,9 @@ namespace SIL.XForge.Scripture.Services
                 string projId = repo.SendReceiveId;
                 repos[projId] = repo.SourceUsers.GetRole(username);
             }
-            Dictionary<string, SFProject> existingProjects = (await _realtimeService.QuerySnapshots<SFProject>()
+            Dictionary<string, SFProject> existingProjects = (_realtimeService.QuerySnapshots<SFProject>()
                 .Where(p => repos.Keys.Contains(p.ParatextId))
-                .ToListAsync()).ToDictionary(p => p.ParatextId);
+                .ToList()).ToDictionary(p => p.ParatextId);
             // TODO: use RegistryServer from ParatextData instead of calling registry API directly?
             string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get, "projects");
             var projectArray = JArray.Parse(response);
@@ -310,7 +335,7 @@ namespace SIL.XForge.Scripture.Services
                     Name = (string)projectObj["identification_name"],
                     ShortName = (string)projectObj["identification_shortName"],
                     LanguageTag = (string)projectObj["language_ldml"],
-                    ProjectId = projectId,
+                    SFProjectId = projectId,
                     IsConnectable = isConnectable,
                     IsConnected = isConnected
                 });
@@ -374,9 +399,6 @@ namespace SIL.XForge.Scripture.Services
 
         private void PullRepo(UserSecret userSecret, string projectId)
         {
-            // Initialize
-            if (!jwtRegistered)
-                RegisterWithJWT(userSecret);
             // projectId is the paratextId of the project.
             var repo = Path.Combine(SyncDir, projectId);
             if (!Directory.Exists(repo))
@@ -396,19 +418,24 @@ namespace SIL.XForge.Scripture.Services
         }
 
 
-
-        public string GetBookText(UserSecret userSecret, string paratextProjectId, int bookNum)
+        /// <summary>Get PT book in USX, or null if can't.</summary>
+        public string GetBookText(string paratextProjectId, int bookNum)
         {
-            if (!IsManagingProject(paratextProjectId))
-            {
-                // TODO or throw?
-                // TODO isnt this an older method that we shouldnt be calling now?
-                PullRepo(userSecret, paratextProjectId);
-            }
+            // TODO have clients call a pull method before calling GetBookText().
+            // if (!IsManagingProject(paratextProjectId))
+            // {
+            //     // TODO or throw?
+            //     // TODO isnt this an older method that we shouldnt be calling now?
+            //     PullRepo(userSecret, paratextProjectId);
+            // }
 
-            // TODO: this is a guess at how to implement this method
-            ScrText scrText = _scrTextCollectionRunner.GetById(paratextProjectId);
-            ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
+            ScrText scrText = _scrTextCollectionRunner.FindById(paratextProjectId);
+            if (scrText == null)
+            {
+                return null;
+
+            }
+            // ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
             string usfm = scrText.GetText(bookNum);
             return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
         }
@@ -591,11 +618,14 @@ namespace SIL.XForge.Scripture.Services
 
         private IInternetSharedRepositorySource GetInternetSharedRepositorySource(UserSecret userSecret)
         {
+            if (userSecret == null) throw new ArgumentNullException();
+
             if (!_internetSharedRepositorySource.ContainsKey(userSecret.Id))
             {
                 var source = new JwtInternetSharedRepositorySource();
                 source.SetToken(userSecret.ParatextTokens.AccessToken);
                 _internetSharedRepositorySource[userSecret.Id] = source;
+                SetupAccessToPtRegistry(userSecret);
             }
 
             return _internetSharedRepositorySource[userSecret.Id];

@@ -18,7 +18,7 @@ namespace SIL.XForge.Scripture.Services
         // bool IsManagingProject(string projectId);
 
         IReadOnlyList<int> GetBooks(string projectId);
-        string GetBookText(UserSecret userSecret, string projectId, int bookNum);
+        string GetBookText(string projectId, int bookNum);
         void PutBookText(string projectId, int bookNum, string usx);
         string GetNotes(string projectId, int bookNum);
         void PutNotes(string projectId, string notesText);
