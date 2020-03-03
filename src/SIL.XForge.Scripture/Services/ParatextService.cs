@@ -131,8 +131,7 @@ namespace SIL.XForge.Scripture.Services
 
             await RefreshAccessTokenAsync(userSecret);
             Init();
-            var accessToken = userSecret.ParatextTokens.AccessToken;
-            this.RegisterWithJWT(accessToken);
+            RegisterWithJWT(userSecret);
             SetupMercurial();
             // TODO Use an appropriate string for the clone path. Such as the paratext project id (not the SF project id).
             var dir = "repoCloneDir";
@@ -156,7 +155,7 @@ namespace SIL.XForge.Scripture.Services
 
             RegistryU.Implementation = new DotNetCoreRegistry();
             // Alert.Implementation = new DotNetCoreAlert();
-            RegistryServer.Initialize(applicationProductVersion);
+            // RegistryServer.Initialize(applicationProductVersion);
             // Possibly needed initialization things
             ParatextDataSettings.Initialize(new PersistedParatextDataSettings());
             PtxUtilsDataSettings.Initialize(new PersistedPtxUtilsSettings());
@@ -164,8 +163,9 @@ namespace SIL.XForge.Scripture.Services
 
         }
 
-        public void RegisterWithJWT(string jwtToken)
+        public void RegisterWithJWT(UserSecret userSecret)
         {
+            var jwtToken = userSecret.ParatextTokens.AccessToken;
             if (jwtToken?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) ?? false)
                 jwtToken = jwtToken.Substring("Bearer ".Length).Trim();
 
@@ -174,18 +174,18 @@ namespace SIL.XForge.Scripture.Services
             // TODO: can do some validation here...
 
             // var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ /*"https://registry.paratext.org/api8/"*/_registryClient.BaseAddress.AbsoluteUri, ApplicationProduct.DefaultVersion, jwtToken);
-            var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ "https://registry-dev.paratext.org/api8/", ApplicationProduct.DefaultVersion, _jwt);
+            var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ "https://registry-dev.paratext.org/api8/", ApplicationProduct.DefaultVersion, jwtToken);
 
-            var result = jwtRESTClient.Get("my/licenses");
+            // var result = jwtRESTClient.Get("my/licenses");
 
             // Emitting - "/api8/my requires HTTP Basic authentication or API token with sub claim"
 
 
-            Console.WriteLine("result = {0}", result);
+            // Console.WriteLine("result = {0}", result);
 
             RegistryServer.Initialize(applicationProductVersion, jwtRESTClient);
-            jwtRegistered = true;
-            var blah = RegistryServer.Default.GetLicensesForUserProjects(true);
+            // jwtRegistered = true;
+            // var blah = RegistryServer.Default.GetLicensesForUserProjects(true);
 
         }
 
@@ -281,6 +281,12 @@ namespace SIL.XForge.Scripture.Services
 
         }
 
+        /// <summary>Fetch paratext projects that userSecret has access to. (re-writing in environment of present understanding of how to connect to Paratext.Data)</summary>
+        public async Task<IReadOnlyList<ParatextProject>> GetProjects2Async(UserSecret userSecret)
+        {
+            throw new NotImplementedException();
+
+        }
 
         public Tuple<IInternetSharedRepositorySource, IEnumerable<SharedRepository>> GetListOfProjects()
         {
@@ -296,9 +302,9 @@ namespace SIL.XForge.Scripture.Services
             return repositorySource.GetRepositories();
         }
 
+        /// <summary>Fetch paratext projects that userSecret has access to.</summary>
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
-
 
             //seems to work in production
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
@@ -383,7 +389,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         public string GetParatextUsername(UserSecret userSecret)
-        {//work in production
+        {//works in production
             if (userSecret.ParatextTokens == null)
                 return null;
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
@@ -420,7 +426,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Initialize
             if (!jwtRegistered)
-                RegisterWithJWT(userSecret.ParatextTokens.AccessToken);
+                RegisterWithJWT(userSecret);
             // projectId is the paratextId of the project.
             var repo = Path.Combine(SyncDir, projectId);
             if (!Directory.Exists(repo))
@@ -447,6 +453,7 @@ namespace SIL.XForge.Scripture.Services
             if (!IsManagingProject(paratextProjectId))
             {
                 // TODO or throw?
+                // TODO isnt this an older method that we shouldnt be calling now?
                 PullRepo(userSecret, paratextProjectId);
             }
 
