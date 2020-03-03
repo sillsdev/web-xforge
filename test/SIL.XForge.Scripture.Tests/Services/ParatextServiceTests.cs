@@ -65,12 +65,12 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             UserSecret userSecret = env.SetUserSecret();
-            var source = env.SetSharedRepositorySource(userSecret);
+            env.SetSharedRepositorySource(userSecret);
+            env.AddProjectRepository();
             RegistryU.Implementation = new DotNetCoreRegistry();
-
             env.Service.RegisterWithJWT(userSecret);
-            IEnumerable<SharedRepository> ret = env.Service.GetListOfProjects(userSecret);
-            var repos = ret;
+
+            IEnumerable<ParatextProject> repos = await env.Service.GetProjectsAsync(userSecret);
             Assert.That(repos.Count(), Is.EqualTo(3));
         }
 
