@@ -3,6 +3,7 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models
 {
+    /// <summary>Description of an SF project.</summary>
     public class SFProject : Project
     {
         public string ParatextId { get; set; }
