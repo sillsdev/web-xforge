@@ -94,8 +94,7 @@ namespace SIL.XForge.Scripture.Services
         private string applicationProductVersion = "SF";
         private bool jwtRegistered = false;
         internal string _jwt;
-        private Dictionary<string, InternetSharedRepositorySource> _internetSharedRepositorySource = new Dictionary<string, InternetSharedRepositorySource>();
-
+        internal Dictionary<string, IInternetSharedRepositorySource> _internetSharedRepositorySource = new Dictionary<string, IInternetSharedRepositorySource>();
 
 
         /// <summary>Entry point for testing so can consistently isolate and test the same thing.</summary>
@@ -217,7 +216,7 @@ namespace SIL.XForge.Scripture.Services
 
             string repoPath = "/var/lib/scriptureforge/sync/repoCloneDir";
 
-            var source = GetInternetSharedRepositorySource(userSecret);
+            var source = GetInternetSharedRepositorySource(userSecret) as JwtInternetSharedRepositorySource;
             var repositories = source.GetRepositories();
 
 
@@ -243,12 +242,11 @@ namespace SIL.XForge.Scripture.Services
         {
             var jwtSource = new JwtInternetSharedRepositorySource();
             jwtSource.SetToken(_jwt);
-            // var repoSource = GetInternetSharedRepositorySource(userSecret);
-            var repos = GetListOfProjects2(jwtSource);
+            var repos = GetListOfProjectsFromSource(jwtSource);
             return new Tuple<IInternetSharedRepositorySource, IEnumerable<SharedRepository>>(jwtSource, repos);
         }
 
-        public IEnumerable<SharedRepository> GetListOfProjects2(IInternetSharedRepositorySource repositorySource)
+        public IEnumerable<SharedRepository> GetListOfProjectsFromSource(IInternetSharedRepositorySource repositorySource)
         {
             return repositorySource.GetRepositories();
         }
@@ -260,7 +258,8 @@ namespace SIL.XForge.Scripture.Services
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim usernameClaim = accessToken.Claims.FirstOrDefault(c => c.Type == "username");
             string username = usernameClaim?.Value;
-            var source = new SFInternetSharedRepositorySource(_useDevServer, userSecret);
+            // var source = new SFInternetSharedRepositorySource(_useDevServer, userSecret);
+            var source = GetInternetSharedRepositorySource(userSecret);
             var repos = new Dictionary<string, UserRoles>();
             foreach (SharedRepository repo in source.GetRepositories())
             {
@@ -386,7 +385,6 @@ namespace SIL.XForge.Scripture.Services
             }
             var source = GetInternetSharedRepositorySource(userSecret);
             var repositories = source.GetRepositories();
-            // Still cant get repositories for Raymond
             var repoInfo = source.GetRepositories().FirstOrDefault(x => x.SendReceiveId == projectId);
             if (source == null)
                 return;
@@ -590,11 +588,13 @@ namespace SIL.XForge.Scripture.Services
             _httpClientHandler.Dispose();
         }
 
-        private InternetSharedRepositorySource GetInternetSharedRepositorySource(UserSecret userSecret)
+        private IInternetSharedRepositorySource GetInternetSharedRepositorySource(UserSecret userSecret)
         {
             if (!_internetSharedRepositorySource.ContainsKey(userSecret.Id))
             {
-                _internetSharedRepositorySource[userSecret.Id] = new SFInternetSharedRepositorySource(_useDevServer, userSecret);
+                var source = new JwtInternetSharedRepositorySource();
+                source.SetToken(userSecret.ParatextTokens.AccessToken);
+                _internetSharedRepositorySource[userSecret.Id] = source;
             }
 
             return _internetSharedRepositorySource[userSecret.Id];
