@@ -66,7 +66,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetProjectsAsync_ReturnCorrectNumberOfRepos()
+        public async Task GetProjects2Async_ReturnCorrectNumberOfRepos()
         {
             var env = new TestEnvironment();
             env.Service._jwt = "token1234";
