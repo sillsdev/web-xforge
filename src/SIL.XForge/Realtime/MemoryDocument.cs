@@ -45,8 +45,10 @@ namespace SIL.XForge.Realtime
         {
             if (!_repo.Contains(Id))
             {
+#pragma warning disable 0618
                 throw new Microsoft.AspNetCore.NodeServices.HostingModels.NodeInvocationException(
                     "Document does not exist", "Would be received in production.");
+#pragma warning restore 0618
             }
             await _repo.DeleteAsync(Id);
             Data = default(T);

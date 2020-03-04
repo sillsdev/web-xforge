@@ -12,6 +12,7 @@ namespace Microsoft.Extensions.DependencyInjection
             ILoggerFactory loggerFactory, IConfiguration configuration, Action<RealtimeOptions> configureOptions,
             bool launchWithDebugging = false)
         {
+#pragma warning disable 0618
             services.AddNodeServices(options =>
             {
                 options.LaunchWithDebugging = launchWithDebugging;
@@ -20,6 +21,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 options.NodeInstanceOutputLogger = new RealtimeServerLogger(
                     loggerFactory.CreateLogger("SIL.XForge.Realtime.RealtimeServer"));
             });
+#pragma warning restore 0618
 
             services.Configure(configureOptions);
             services.AddSingleton<RealtimeServer>();

@@ -7,11 +7,15 @@ namespace SIL.XForge.Realtime
 {
     public class RealtimeServer
     {
+#pragma warning disable 0618
         private readonly INodeServices _nodeServices;
+#pragma warning restore 0618
         private readonly string _modulePath;
         private bool _started;
 
+#pragma warning disable 0618
         public RealtimeServer(INodeServices nodeServices)
+#pragma warning restore 0618
         {
             _nodeServices = nodeServices;
             _modulePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),

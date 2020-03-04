@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using SIL.XForge.Configuration;
@@ -31,13 +32,13 @@ namespace SIL.XForge.Scripture.Pages
         [Required(ErrorMessage = SharedResource.Keys.MessageMissing)]
         public string Message { get; set; }
 
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         private readonly IOptions<AuthOptions> _authOptions;
         private readonly IOptions<SiteOptions> _siteOptions;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
 
-        public IndexModel(IHostingEnvironment env, IOptions<AuthOptions> authOptions, IOptions<SiteOptions> siteOptions,
+        public IndexModel(IWebHostEnvironment env, IOptions<AuthOptions> authOptions, IOptions<SiteOptions> siteOptions,
             IEmailService emailService, IConfiguration configuration)
         {
             _env = env;

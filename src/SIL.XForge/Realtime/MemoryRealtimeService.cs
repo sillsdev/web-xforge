@@ -14,6 +14,7 @@ namespace SIL.XForge.Realtime
     {
         internal static readonly RealtimeServer Server = new RealtimeServer(CreateNodeServices());
 
+#pragma warning disable 0618
         private static INodeServices CreateNodeServices()
         {
             var services = new ServiceCollection();
@@ -21,6 +22,7 @@ namespace SIL.XForge.Realtime
             IServiceProvider sp = services.BuildServiceProvider();
             return sp.GetRequiredService<INodeServices>();
         }
+#pragma warning restore 0618
 
         private readonly Dictionary<Type, object> _repos;
         private readonly Dictionary<Type, DocConfig> _docConfigs;

@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using IdentityModel;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using SIL.ObjectModel;
@@ -37,7 +38,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly HttpClient _registryClient;
         private readonly IExceptionHandler _exceptionHandler;
 
-        public ParatextService(IHostingEnvironment env, IOptions<ParatextOptions> options,
+        public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> options,
             IRepository<UserSecret> userSecret, IRealtimeService realtimeService, IExceptionHandler exceptionHandler)
         {
             _options = options;
