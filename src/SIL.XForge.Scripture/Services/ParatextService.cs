@@ -258,8 +258,8 @@ namespace SIL.XForge.Scripture.Services
                 {
                     ParatextId = remoteParatextProject.SendReceiveId,
                     // TODO Get project long name from Paratext.Data. ScrTextName is the short code.
-                    Name = remoteParatextProject.ScrTextName,
-                    ShortName = correspondingSFProject?.ShortName,
+                    Name = correspondingSFProject?.Name,
+                    ShortName = remoteParatextProject.ScrTextName,
                     LanguageTag = correspondingSFProject?.WritingSystem.Tag,
                     SFProjectId = correspondingSFProject?.Id,
                     // IsConnectable = projectIsConnectable,

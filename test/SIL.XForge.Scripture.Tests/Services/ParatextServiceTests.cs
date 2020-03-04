@@ -79,11 +79,14 @@ namespace SIL.XForge.Scripture.Services
                 LanguageTag = "writingsystem_tag",
                 SFProjectId = "sf_id_" + Project01,
                 // IsConnectable = ??,
-                // Is connected since is in SF database
+                // Is connected since is in SF database and user is on project
                 IsConnected = true
             };
             Assert.That(repos.Single(project => project.ParatextId == "paratext_" + Project01).ExpressiveToString(), Is.EqualTo(expectedProject01.ExpressiveToString()));
-            Assert.That(repos.Single(project => project.ParatextId == "paratext_" + Project02).IsConnected, Is.False, "not connected since not in SF database yet");
+            Assert.That(repos.Single(project => project.ParatextId == "paratext_" + Project02).IsConnected, Is.False, "not connected since not in SF database yet or user is not on project");
+
+            // userSecret.Id = User01;
+            Assert.That((await env.Service.GetProjectsAsync(userSecret)).Single(project => project.ParatextId == "paratext_" + Project01).IsConnectable, Is.False, "SF project exists but SF user is on SF project");
         }
 
         [Test]
@@ -177,19 +180,19 @@ namespace SIL.XForge.Scripture.Services
                 SharedRepository repo1 = new SharedRepository
                 {
                     SendReceiveId = "paratext_" + Project01,
-                    ScrTextName = Project01,
+                    ScrTextName = "P01",
                     SourceUsers = sourceUsers
                 };
                 SharedRepository repo2 = new SharedRepository
                 {
                     SendReceiveId = "paratext_" + Project02,
-                    ScrTextName = Project02,
+                    ScrTextName = "P02",
                     SourceUsers = sourceUsers
                 };
                 SharedRepository repo3 = new SharedRepository
                 {
                     SendReceiveId = "paratext_" + Project03,
-                    ScrTextName = Project03,
+                    ScrTextName = "P03",
                     SourceUsers = sourceUsers
                 };
                 mockSource.GetRepositories().Returns(new List<SharedRepository> { repo1, repo2, repo3 });
