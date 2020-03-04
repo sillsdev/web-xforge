@@ -254,6 +254,9 @@ namespace SIL.XForge.Scripture.Services
                 IQueryable<SFProject> existingSFProjects = (_realtimeService.QuerySnapshots<SFProject>());
                 SFProject correspondingSFProject = existingSFProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remoteParatextProject.SendReceiveId);
                 bool sfProjectExists = correspondingSFProject != null;
+                bool sfUserIsOnSfProject = correspondingSFProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
+                bool adminOnPtProject = remoteParatextProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator;
+                bool ptProjectIsConnectable = (sfProjectExists && !sfUserIsOnSfProject) || (!sfProjectExists && adminOnPtProject);
                 paratextProjects.Add(new ParatextProject
                 {
                     ParatextId = remoteParatextProject.SendReceiveId,
@@ -262,8 +265,8 @@ namespace SIL.XForge.Scripture.Services
                     ShortName = remoteParatextProject.ScrTextName,
                     LanguageTag = correspondingSFProject?.WritingSystem.Tag,
                     SFProjectId = correspondingSFProject?.Id,
-                    // IsConnectable = projectIsConnectable,
-                    IsConnected = sfProjectExists
+                    IsConnectable = ptProjectIsConnectable,
+                    IsConnected = sfProjectExists && sfUserIsOnSfProject
                 });
 
             }
