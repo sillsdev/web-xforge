@@ -54,13 +54,6 @@ namespace SIL.XForge.Scripture.Services
         private const string User02 = "user02";
 
         [Test]
-        public void Foo_Foo()
-        {
-            var env = new TestEnvironment();
-            Assert.True(true);
-        }
-
-        [Test]
         public async Task GetListOfProjects_ReturnCorrectNumberOfRepos()
         {
             var env = new TestEnvironment();
@@ -68,7 +61,6 @@ namespace SIL.XForge.Scripture.Services
             env.SetSharedRepositorySource(userSecret);
             env.AddProjectRepository();
             RegistryU.Implementation = new DotNetCoreRegistry();
-            env.Service.RegisterWithJWT(userSecret);
 
             IEnumerable<ParatextProject> repos = await env.Service.GetProjectsAsync(userSecret);
             Assert.That(repos.Count(), Is.EqualTo(3));
@@ -120,7 +112,6 @@ namespace SIL.XForge.Scripture.Services
             env.MockedScrTextCollectionRunner.GetById(paratextProjectId).Returns(paratextProject);
             string result = env.Service.GetBookText(null, paratextProjectId, 8);
             Assert.That(result, Is.EqualTo(ruthBookUsx));
-            Assert.That(result.Contains("<book"));
         }
 
         private class TestEnvironment
@@ -169,7 +160,6 @@ namespace SIL.XForge.Scripture.Services
                 };
                 // ptToken.AccessToken = "eyJhbGciOiJSUzI1NiJ9.eyJzY29wZXMiOlsiZGF0YV9hY2Nlc3MiLCJlbWFpbCIsIm9mZmxpbmVfYWNjZXNzIiwib3BlbmlkIiwicHJvamVjdHMubWVtYmVyczpyZWFkIiwicHJvamVjdHMubWVtYmVyczp3cml0ZSIsInByb2plY3RzOnJlYWQiXSwiaWF0IjoxNTgzMTkzMjg4LCJqdGkiOiIzeTZzYkZOS2cycThob2ZzUSIsImF1ZCI6WyJodHRwczovL3JlZ2lzdHJ5LWRldi5wYXJhdGV4dC5vcmciLCJodHRwczovL2RhdGEtYWNjZXNzLWRldi5wYXJhdGV4dC5vcmciLCJodHRwczovL2FyY2hpdmVzLWRldi5wYXJhdGV4dC5vcmciXSwic3ViIjoiZ0hUcHVuRWIzWkNEcW1xVEsiLCJleHAiOjE1ODMxOTQ0ODgsImF6cCI6IkRiRERwN25BZFBZdHVKTDlMIiwidXNlcm5hbWUiOiJSYXltb25kIEx1b25nIiwiaXNzIjoicHRyZWdfcnNhIn0.B0JvNb5sJwc3wSvAI5zOq3_3OghimNmfVFn0axGFBXHhT5BMHaOjdrfJJGNEQZO3aA3v83vou8n2sM_6zcnxiixCGnr_cmyl62bJjma0HHFX47Ms30TQQaDjiTON50czG7fqiKyGRtBbagjlkT8ulRjeoJbUtK-I3aIHmn6-FNZn4DdfbgznMtav8DP3m9r0L4pfyloOEH4Z3If5OTn9xfokP-bJtgoxrLOspzOfZaU6wqH-8uy7imAmhfBwpZxDwnqP1KHLXgpQB1SbCrrIhv82x66D6iL_5VP1laPjlc3zTk29ilE_HW0F1eIzrjDaMhYsTHQE2M6noCsKPrni6Q";
                 userSecret.ParatextTokens = ptToken;
-                Service._jwt = ptToken.AccessToken;
                 return userSecret;
             }
 
