@@ -239,20 +239,10 @@ namespace SIL.XForge.Scripture.Services
             Console.WriteLine($"S/R complete. NoErrors? {noErrors}");
         }
 
-        /// <summary>Fetch paratext projects that userSecret has access to. (re-writing in environment of present understanding of how to connect to Paratext.Data)</summary>
-        public async Task<IReadOnlyList<ParatextProject>> GetProjects2Async(UserSecret userSecret)
-        {
-            throw new NotImplementedException();
-
-
-        }
-
         /// <summary>Get Paratext projects that a user has access to.</summary>
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
             List<ParatextProject> paratextProjects = new List<ParatextProject>();
-            // var jwtSource = new JwtInternetSharedRepositorySource();
-            // jwtSource.SetToken(_jwt);
             var existingSFProjects = (_realtimeService.QuerySnapshots<SFProject>());
             SetupAccessToPtRegistry(userSecret);
             var jwtSource = GetInternetSharedRepositorySource(userSecret);

@@ -54,7 +54,7 @@ namespace SIL.XForge.Scripture.Services
         private const string User02 = "user02";
 
         [Test]
-        public async Task GetListOfProjects_ReturnCorrectNumberOfRepos()
+        public async Task GetProjectsAsync_ReturnCorrectRepos()
         {
             var env = new TestEnvironment();
             UserSecret userSecret = env.SetUserSecret();
@@ -64,20 +64,11 @@ namespace SIL.XForge.Scripture.Services
 
             IEnumerable<ParatextProject> repos = await env.Service.GetProjectsAsync(userSecret);
             Assert.That(repos.Count(), Is.EqualTo(3));
-        }
 
-        [Test]
-        public async Task GetProjectsAsync_ShowsProjectsAvailable()
-        {
-            var env = new TestEnvironment();
-            UserSecret userSecret = env.SetUserSecret();
-            env.SetSharedRepositorySource(userSecret);
-            env.AddProjectRepository();
-
-            // TODO: Not yet implemented
-            // var result = await env.Service.GetProjectsAsync(userSecret);
-            // string paratextId = "paratext_" + Project01;
-            // Assert.That(result.Single(p => p.ParatextId == paratextId), Is.Not.Null);
+            foreach (string projectName in new string[] { Project01, Project02, Project03 })
+            {
+                Assert.That(repos.Single(project => project.ParatextId == "paratext_" + projectName), Is.Not.Null);
+            }
         }
 
         [Test]
