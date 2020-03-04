@@ -47,37 +47,157 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class ParatextServiceTests
     {
-        private const string Project01 = "project01";
-        private const string Project02 = "project02";
-        private const string Project03 = "project03";
-        private const string User01 = "user01";
-        private const string User02 = "user02";
-
         [Test]
-        public async Task GetListOfProjects_ReturnCorrectNumberOfRepos()
+        public void GetProjectsAsync_BadArguments()
         {
             var env = new TestEnvironment();
-            UserSecret userSecret = env.SetUserSecret();
-            env.SetSharedRepositorySource(userSecret);
-            env.AddProjectRepository();
-            RegistryU.Implementation = new DotNetCoreRegistry();
-
-            IEnumerable<ParatextProject> repos = await env.Service.GetProjectsAsync(userSecret);
-            Assert.That(repos.Count(), Is.EqualTo(3));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.GetProjectsAsync(null));
         }
 
         [Test]
-        public async Task GetProjectsAsync_ShowsProjectsAvailable()
+        public async Task GetProjectsAsync_ReturnCorrectRepos()
         {
             var env = new TestEnvironment();
-            UserSecret userSecret = env.SetUserSecret();
-            env.SetSharedRepositorySource(userSecret);
-            env.AddProjectRepository();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01);
+            env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
 
-            // TODO: Not yet implemented
-            // var result = await env.Service.GetProjectsAsync(userSecret);
-            // string paratextId = "paratext_" + Project01;
-            // Assert.That(result.Single(p => p.ParatextId == paratextId), Is.Not.Null);
+            // SUT
+            IEnumerable<ParatextProject> repos = await env.Service.GetProjectsAsync(user01Secret);
+
+            // Right number of repos returned.
+            Assert.That(repos.Count(), Is.EqualTo(3));
+
+            // Repos returned are the ones we expect.
+            // TODO Make PT repos in data that should not be returned.
+            foreach (string projectName in new string[] { env.Project01, env.Project02, env.Project03 })
+            {
+                Assert.That(repos.Single(project => project.ParatextId == "paratext_" + projectName), Is.Not.Null);
+            }
+
+            // Properties of one of the returned repos have the correct values.
+            ParatextProject expectedProject01 = new ParatextProject
+            {
+                ParatextId = "paratext_" + env.Project01,
+                Name = env.Project01,
+                ShortName = "P01",
+                LanguageTag = "writingsystem_tag",
+                SFProjectId = "sf_id_" + env.Project01,
+                // Not connectable since sf project exists and sf user is on sf project.
+                IsConnectable = false,
+                // Is connected since is in SF database and user is on project
+                IsConnected = true
+            };
+            Assert.That(repos.Single(project => project.ParatextId == "paratext_" + env.Project01).ExpressiveToString(), Is.EqualTo(expectedProject01.ExpressiveToString()));
+
+            // TODO Work on alphabetical when am more easily getting names for repos.
+            // Repos are returned in alphabetical order by paratext project name.
+            // List<string> repoList = repos.Select(repo => repo.Name).ToList();
+            // foreach (var a in repoList) { Console.WriteLine("DEBUG: item is:" + a); }
+            // Assert.That(StringComparer.InvariantCultureIgnoreCase.Compare(repoList[0], repoList[1]), Is.LessThan(0));
+            // Assert.That(StringComparer.InvariantCultureIgnoreCase.Compare(repoList[1], repoList[2]), Is.LessThan(0));
+        }
+
+        [Test]
+        public async Task GetProjectsAsync_ConnectedConnectable()
+        {
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01);
+            env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            UserSecret user03Secret = env.MakeUserSecret(env.User03);
+            env.SetSharedRepositorySource(user03Secret, UserRoles.TeamMember);
+
+            // Check resulting IsConnectable and IsConnected values across various scenarios of SF project existing, SF user being a member of the SF project, and PT user being an admin on PT project.
+
+            var testCases = new[]
+            {
+                new
+                {
+                    // Data
+                    paratextProjectId = "paratext_" + env.Project01,
+                    sfUserId = env.User01,
+                    ptUsername = "user 01",
+                    userSecret = user01Secret,
+                    // Environmental assumptions
+                    sfProjectExists = true,
+                    sfUserIsOnSfProject = true,
+                    ptUserIsAdminOnPtProject = true,
+                    // Expectation to assert
+                    isConnected = true,
+                    reason1 = "sf project exists and sf user is member of the sf project",
+                    isConnectable = false,
+                    reason2 = "can not re-connect to project"
+                },
+                new
+                {
+                    paratextProjectId = "paratext_" + env.Project01,
+                    sfUserId = env.User03,
+                    ptUsername = "user 01",
+                    userSecret = user03Secret,
+
+                    sfProjectExists = true,
+                    sfUserIsOnSfProject = false,
+                    ptUserIsAdminOnPtProject = false,
+
+                    isConnected = false,
+                    reason1 = "sf project exists and but sf user is not member of the sf project",
+                    isConnectable = true,
+                    reason2 = "can connect to existing SF project"
+                },
+                new
+                {
+                    paratextProjectId = "paratext_" + env.Project02,
+                    sfUserId = env.User01,
+                    ptUsername = "user 01",
+                    userSecret = user01Secret,
+
+                    sfProjectExists = false,
+                    sfUserIsOnSfProject = false,
+                    ptUserIsAdminOnPtProject = true,
+
+                    isConnected = false,
+                    reason1 = "sf project does not exist",
+                    isConnectable = true,
+                    reason2 = "pt admin can start connection to not-yet-existing sf project"
+                },
+                new
+                {
+                    paratextProjectId = "paratext_" + env.Project02,
+                    sfUserId = env.User03,
+                    ptUsername = "user 03",
+                    userSecret = user03Secret,
+
+                    sfProjectExists = false,
+                    sfUserIsOnSfProject = false,
+                    ptUserIsAdminOnPtProject = false,
+
+                    isConnected = false,
+                    reason1 = "sf project does not exist",
+                    isConnectable = false,
+                    reason2 = "pt non-admin can not start connection to not-yet-existing sf project"
+                },
+            };
+
+            foreach (var testCase in testCases)
+            {
+                // Check that assumptions are true.
+                Assert.That((await env.RealtimeService.GetRepository<SFProject>().GetAllAsync()).Any(sfProject => sfProject.ParatextId == testCase.paratextProjectId), Is.EqualTo(testCase.sfProjectExists), "not set up - whether sf project exists or not");
+                if (testCase.sfProjectExists)
+                {
+                    Assert.That((await env.RealtimeService.GetRepository<SFProject>().GetAllAsync()).Single(sfProject => sfProject.ParatextId == testCase.paratextProjectId).UserRoles.ContainsKey(testCase.sfUserId), Is.EqualTo(testCase.sfUserIsOnSfProject), "not set up - whether user is on existing sf project or not");
+                }
+                Assert.That(env.Service._internetSharedRepositorySource[testCase.sfUserId]
+                    .GetRepositories()
+                    .FirstOrDefault(sharedRepository => sharedRepository.SendReceiveId == testCase.paratextProjectId)
+                    .SourceUsers
+                    .GetRole(testCase.ptUsername) == UserRoles.Administrator, Is.EqualTo(testCase.ptUserIsAdminOnPtProject), "not set up - whether pt user is an admin on pt project");
+
+                // SUT
+                ParatextProject resultingProjectToExamine = (await env.Service.GetProjectsAsync(testCase.userSecret)).Single(project => project.ParatextId == testCase.paratextProjectId);
+
+                // Assert expectations.
+                Assert.That(resultingProjectToExamine.IsConnected, Is.EqualTo(testCase.isConnected), testCase.reason1);
+                Assert.That(resultingProjectToExamine.IsConnectable, Is.EqualTo(testCase.isConnectable), testCase.reason2);
+            }
         }
 
         [Test]
@@ -116,6 +236,13 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
+            public readonly string Project01 = "project01";
+            public readonly string Project02 = "project02";
+            public readonly string Project03 = "project03";
+            public readonly string User01 = "user01";
+            public readonly string User02 = "user02";
+            public readonly string User03 = "user03";
+
             public IWebHostEnvironment MockWebHostEnvironment;
             public IOptions<ParatextOptions> MockParatextOptions;
             public IRepository<UserSecret> MockRepository;
@@ -147,46 +274,48 @@ namespace SIL.XForge.Scripture.Services
                 //Mock=Substitute.For<>();
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository, RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService);
                 Service._scrTextCollectionRunner = MockedScrTextCollectionRunner;
+
+                AddProjectRepository();
             }
 
-            public UserSecret SetUserSecret()
+            public UserSecret MakeUserSecret(string userSecretId)
             {
                 var userSecret = new UserSecret();
-                userSecret.Id = "User01";
+                userSecret.Id = userSecretId;
                 var ptToken = new Tokens
                 {
-                    AccessToken = "eyJhbGciOiJSUzI1NiJ9.eyJzY29wZXMiOlsiZGF0YV9hY2Nlc3MiLCJlbWFpbCIsIm9mZmxpbmVfYWNjZXNzIiwib3BlbmlkIiwicHJvamVjdHMubWVtYmVyczpyZWFkIiwicHJvamVjdHMubWVtYmVyczp3cml0ZSIsInByb2plY3RzOnJlYWQiXSwiaWF0IjoxNTgzMTkzMjg4LCJqdGkiOiIzeTZzYkZOS2cycThob2ZzUSIsImF1ZCI6WyJodHRwczovL3JlZ2lzdHJ5LWRldi5wYXJhdGV4dC5vcmciLCJodHRwczovL2RhdGEtYWNjZXNzLWRldi5wYXJhdGV4dC5vcmciLCJodHRwczovL2FyY2hpdmVzLWRldi5wYXJhdGV4dC5vcmciXSwic3ViIjoiZ0hUcHVuRWIzWkNEcW1xVEsiLCJleHAiOjE1ODMxOTQ0ODgsImF6cCI6IkRiRERwN25BZFBZdHVKTDlMIiwidXNlcm5hbWUiOiJSYXltb25kIEx1b25nIiwiaXNzIjoicHRyZWdfcnNhIn0.B0JvNb5sJwc3wSvAI5zOq3_3OghimNmfVFn0axGFBXHhT5BMHaOjdrfJJGNEQZO3aA3v83vou8n2sM_6zcnxiixCGnr_cmyl62bJjma0HHFX47Ms30TQQaDjiTON50czG7fqiKyGRtBbagjlkT8ulRjeoJbUtK-I3aIHmn6-FNZn4DdfbgznMtav8DP3m9r0L4pfyloOEH4Z3If5OTn9xfokP-bJtgoxrLOspzOfZaU6wqH-8uy7imAmhfBwpZxDwnqP1KHLXgpQB1SbCrrIhv82x66D6iL_5VP1laPjlc3zTk29ilE_HW0F1eIzrjDaMhYsTHQE2M6noCsKPrni6Q",
-                    RefreshToken = "3y6sbFNKg2q8hofsQ:7oJNRdrSd-vUxBHGYQiCPeDUsGHnGhuxtKnrHRcVBZ2"
+                    AccessToken = "access_token_1234",
+                    RefreshToken = "refresh_token_1234"
                 };
                 // ptToken.AccessToken = "eyJhbGciOiJSUzI1NiJ9.eyJzY29wZXMiOlsiZGF0YV9hY2Nlc3MiLCJlbWFpbCIsIm9mZmxpbmVfYWNjZXNzIiwib3BlbmlkIiwicHJvamVjdHMubWVtYmVyczpyZWFkIiwicHJvamVjdHMubWVtYmVyczp3cml0ZSIsInByb2plY3RzOnJlYWQiXSwiaWF0IjoxNTgzMTkzMjg4LCJqdGkiOiIzeTZzYkZOS2cycThob2ZzUSIsImF1ZCI6WyJodHRwczovL3JlZ2lzdHJ5LWRldi5wYXJhdGV4dC5vcmciLCJodHRwczovL2RhdGEtYWNjZXNzLWRldi5wYXJhdGV4dC5vcmciLCJodHRwczovL2FyY2hpdmVzLWRldi5wYXJhdGV4dC5vcmciXSwic3ViIjoiZ0hUcHVuRWIzWkNEcW1xVEsiLCJleHAiOjE1ODMxOTQ0ODgsImF6cCI6IkRiRERwN25BZFBZdHVKTDlMIiwidXNlcm5hbWUiOiJSYXltb25kIEx1b25nIiwiaXNzIjoicHRyZWdfcnNhIn0.B0JvNb5sJwc3wSvAI5zOq3_3OghimNmfVFn0axGFBXHhT5BMHaOjdrfJJGNEQZO3aA3v83vou8n2sM_6zcnxiixCGnr_cmyl62bJjma0HHFX47Ms30TQQaDjiTON50czG7fqiKyGRtBbagjlkT8ulRjeoJbUtK-I3aIHmn6-FNZn4DdfbgznMtav8DP3m9r0L4pfyloOEH4Z3If5OTn9xfokP-bJtgoxrLOspzOfZaU6wqH-8uy7imAmhfBwpZxDwnqP1KHLXgpQB1SbCrrIhv82x66D6iL_5VP1laPjlc3zTk29ilE_HW0F1eIzrjDaMhYsTHQE2M6noCsKPrni6Q";
                 userSecret.ParatextTokens = ptToken;
                 return userSecret;
             }
 
-            public IInternetSharedRepositorySource SetSharedRepositorySource(UserSecret userSecret)
+            public IInternetSharedRepositorySource SetSharedRepositorySource(UserSecret userSecret, UserRoles userRoleOnAllThePtProjects)
             {
                 PermissionManager sourceUsers = Substitute.For<PermissionManager>();
-                sourceUsers.GetRole(Arg.Any<string>()).Returns(UserRoles.Administrator);
+                sourceUsers.GetRole(Arg.Any<string>()).Returns(userRoleOnAllThePtProjects);
                 IInternetSharedRepositorySource mockSource = Substitute.For<IInternetSharedRepositorySource>();
                 SharedRepository repo1 = new SharedRepository
                 {
                     SendReceiveId = "paratext_" + Project01,
-                    ScrTextName = Project01,
+                    ScrTextName = "P01",
                     SourceUsers = sourceUsers
                 };
                 SharedRepository repo2 = new SharedRepository
                 {
                     SendReceiveId = "paratext_" + Project02,
-                    ScrTextName = Project02,
+                    ScrTextName = "P02",
                     SourceUsers = sourceUsers
                 };
                 SharedRepository repo3 = new SharedRepository
                 {
                     SendReceiveId = "paratext_" + Project03,
-                    ScrTextName = Project03,
+                    ScrTextName = "P03",
                     SourceUsers = sourceUsers
                 };
-                mockSource.GetRepositories().Returns(new List<SharedRepository> { repo1, repo2, repo3 });
+                mockSource.GetRepositories().Returns(new List<SharedRepository> { repo1, repo3, repo2 });
                 Service._internetSharedRepositorySource[userSecret.Id] = mockSource;
                 return mockSource;
             }
@@ -198,10 +327,14 @@ namespace SIL.XForge.Scripture.Services
                     {
                         new SFProject
                         {
-                            Id = Project01,
+                            Id = "sf_id_"+Project01,
                             ParatextId = "paratext_" + Project01,
                             Name = "project01",
                             ShortName = "P01",
+                            WritingSystem = new WritingSystem
+                            {
+                                Tag = "writingsystem_tag"
+                            },
                             TranslateConfig = new TranslateConfig
                             {
                                 TranslationSuggestionsEnabled = true,

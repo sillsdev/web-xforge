@@ -1,3 +1,4 @@
+using System.Diagnostics.Contracts;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -240,47 +241,40 @@ namespace SIL.XForge.Scripture.Services
             Console.WriteLine($"S/R complete. NoErrors? {noErrors}");
         }
 
-        /// <summary>Fetch paratext projects that userSecret has access to. (re-writing in environment of present understanding of how to connect to Paratext.Data)</summary>
-        public async Task<IReadOnlyList<ParatextProject>> GetProjects2Async(UserSecret userSecret)
-        {
-            throw new NotImplementedException();
-
-
-        }
-
-        /// <summary>Get Paratext projects that a user has access to.</summary>
+        /// <summary>Get Paratext projects that a user has access to. TODO what about projects the user does not have access to.</summary>
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
+            if (userSecret == null) throw new ArgumentNullException();
+
             List<ParatextProject> paratextProjects = new List<ParatextProject>();
-            // var jwtSource = new JwtInternetSharedRepositorySource();
-            // jwtSource.SetToken(_jwt);
-            var existingSFProjects = (_realtimeService.QuerySnapshots<SFProject>());
-            SetupAccessToPtRegistry(userSecret);
-            var jwtSource = GetInternetSharedRepositorySource(userSecret);
-            return jwtSource.GetRepositories().Select(remoteParatextProject =>
+            IInternetSharedRepositorySource ptRepoSource = GetInternetSharedRepositorySource(userSecret);
+            IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+            IQueryable<SFProject> existingSfProjects = _realtimeService.QuerySnapshots<SFProject>();
+
+            foreach (SharedRepository remotePtProject in remotePtProjects)
             {
-                SFProject correspondingSFProject = existingSFProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remoteParatextProject.SendReceiveId);
+                SFProject correspondingSfProject = existingSfProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remotePtProject.SendReceiveId);
 
-                bool sfProjectExists = correspondingSFProject != null;
-                bool userOnSFProject = correspondingSFProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
-                bool adminOnPtProject = remoteParatextProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator;
-                bool projectIsConnectable =
-                    (sfProjectExists && !userOnSFProject)
-                    || (!sfProjectExists && adminOnPtProject)
-                    ;
+                bool sfProjectExists = correspondingSfProject != null;
+                bool sfUserIsOnSfProject = correspondingSfProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
+                bool adminOnPtProject = remotePtProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator; // TODO Fetch and use actual PT username.
+                bool ptProjectIsConnectable = (sfProjectExists && !sfUserIsOnSfProject) || (!sfProjectExists && adminOnPtProject);
 
-                return new ParatextProject
+                paratextProjects.Add(new ParatextProject
                 {
-                    ParatextId = remoteParatextProject.SendReceiveId,
-                    // TODO Get project long name from Paratext.Data. ScrTextName is the short code.
-                    Name = remoteParatextProject.ScrTextName,
-                    ShortName = correspondingSFProject?.ShortName,
-                    LanguageTag = correspondingSFProject?.WritingSystem.Tag,
-                    SFProjectId = correspondingSFProject?.Id,
-                    IsConnectable = projectIsConnectable,
-                    IsConnected = sfProjectExists
-                };
-            }).OrderBy(project => project.Name, StringComparer.InvariantCulture).ToArray();
+                    ParatextId = remotePtProject.SendReceiveId,
+                    // TODO Get project long name when don't have a corresponding SF project yet. ScrTextName is the short name.
+                    Name = correspondingSfProject?.Name,
+                    ShortName = remotePtProject.ScrTextName,
+                    LanguageTag = correspondingSfProject?.WritingSystem.Tag,
+                    SFProjectId = correspondingSfProject?.Id,
+                    IsConnectable = ptProjectIsConnectable,
+                    IsConnected = sfProjectExists && sfUserIsOnSfProject
+                });
+            }
+            return paratextProjects;
+
+            // .OrderBy(project => project.Name, StringComparer.InvariantCulture).ToArray();
         }
 
         /// <summary>Fetch paratext projects that userSecret has access to.</summary>
@@ -619,6 +613,8 @@ namespace SIL.XForge.Scripture.Services
 
         private IInternetSharedRepositorySource GetInternetSharedRepositorySource(UserSecret userSecret)
         {
+            if (userSecret == null) throw new ArgumentNullException();
+
             if (!_internetSharedRepositorySource.ContainsKey(userSecret.Id))
             {
                 var source = new JwtInternetSharedRepositorySource();
