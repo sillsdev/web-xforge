@@ -75,13 +75,15 @@ namespace SIL.XForge.Scripture.Services
             {
                 ParatextId = "paratext_" + Project01,
                 Name = Project01,
-                // ShortName = "p1",
-                // LanguageTag = "eng",
-                // SFProjectId = "51234",
+                ShortName = "P01",
+                LanguageTag = "writingsystem_tag",
+                SFProjectId = "sf_id_" + Project01,
                 // IsConnectable = ??,
-                // IsConnected= ??
+                // Is connected since is in SF database
+                IsConnected = true
             };
             Assert.That(repos.Single(project => project.ParatextId == "paratext_" + Project01).ExpressiveToString(), Is.EqualTo(expectedProject01.ExpressiveToString()));
+            Assert.That(repos.Single(project => project.ParatextId == "paratext_" + Project02).IsConnected, Is.False, "not connected since not in SF database yet");
         }
 
         [Test]
@@ -202,10 +204,14 @@ namespace SIL.XForge.Scripture.Services
                     {
                         new SFProject
                         {
-                            Id = Project01,
+                            Id = "sf_id_"+Project01,
                             ParatextId = "paratext_" + Project01,
                             Name = "project01",
                             ShortName = "P01",
+                            WritingSystem = new WritingSystem
+                            {
+                                Tag = "writingsystem_tag"
+                            },
                             TranslateConfig = new TranslateConfig
                             {
                                 TranslationSuggestionsEnabled = true,

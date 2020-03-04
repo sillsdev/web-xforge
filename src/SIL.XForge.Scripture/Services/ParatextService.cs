@@ -248,18 +248,22 @@ namespace SIL.XForge.Scripture.Services
             List<ParatextProject> paratextProjects = new List<ParatextProject>();
             IInternetSharedRepositorySource repoSource = GetInternetSharedRepositorySource(userSecret);
             IEnumerable<SharedRepository> sharedProjectRepositories = repoSource.GetRepositories();
+
             foreach (SharedRepository remoteParatextProject in sharedProjectRepositories)
             {
+                IQueryable<SFProject> existingSFProjects = (_realtimeService.QuerySnapshots<SFProject>());
+                SFProject correspondingSFProject = existingSFProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remoteParatextProject.SendReceiveId);
+                bool sfProjectExists = correspondingSFProject != null;
                 paratextProjects.Add(new ParatextProject
                 {
                     ParatextId = remoteParatextProject.SendReceiveId,
                     // TODO Get project long name from Paratext.Data. ScrTextName is the short code.
                     Name = remoteParatextProject.ScrTextName,
-                    // ShortName = correspondingSFProject?.ShortName,
-                    // LanguageTag = correspondingSFProject?.WritingSystem.Tag,
-                    // SFProjectId = correspondingSFProject?.Id,
+                    ShortName = correspondingSFProject?.ShortName,
+                    LanguageTag = correspondingSFProject?.WritingSystem.Tag,
+                    SFProjectId = correspondingSFProject?.Id,
                     // IsConnectable = projectIsConnectable,
-                    // IsConnected = sfProjectExists
+                    IsConnected = sfProjectExists
                 });
 
             }
