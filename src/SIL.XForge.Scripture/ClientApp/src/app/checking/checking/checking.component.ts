@@ -73,7 +73,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   chapters: number[] = [];
   isExpanded: boolean = false;
-  resetAnswerPanelHeightOnFormHide: boolean = false;
   showAllBooks: boolean = false;
   summary: Summary = {
     read: 0,
@@ -220,17 +219,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       this.getCSSFloatPropertyOf(this.answersPanelContainerElement, 'padding-top') +
       this.getCSSFloatPropertyOf(this.answersPanelContainerElement, 'padding-bottom');
 
-    const actionsAreaHeight = this.getOffsetHeight(this.answersPanelContainerElement, '.actions');
-
     const scrollPartHeight = this.getMinScrollHeight(
       this.answersPanelContainerElement,
       '.answers-component-scrollable-content'
-    );
-
-    const totalAnswersMessageTopMargin = this.getCSSFloatProperty(
-      this.answersPanelContainerElement,
-      '#totalAnswersMessage',
-      'margin-top'
     );
 
     const showUnreadsBannerHeight = this.getOffsetHeight(
@@ -238,12 +229,37 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       '.answers-component-footer'
     );
 
+    // In Chromium the audio elements usually haven't rendered at this point, or have only partially rendered, though
+    // they are in the DOM
+    // If an audio element exists and the height is less than expected, add the difference to the calculation
+    // The same is done for the answer footer, since the avatar sometimes hasn't contributed to the height yet
+    const answerPanel = this.answersPanelContainerElement.nativeElement as HTMLElement;
+    const expectedAudioHeight = 58;
+    const audioOffsetHeight = Array.from(
+      answerPanel.querySelectorAll('.question-audio app-checking-audio-player, .answer app-checking-audio-player')
+    )
+      .map((audio: Element) => {
+        if (audio.getBoundingClientRect().height < expectedAudioHeight) {
+          return (
+            expectedAudioHeight -
+            audio.getBoundingClientRect().height +
+            (audio.parentElement ? this.getCSSFloatPropertyOf(audio.parentElement, 'margin-bottom') : 0)
+          );
+        } else {
+          return 0;
+        }
+      })
+      .reduce((a, b) => a + b, 0);
+
+    const expectedFooterHeight = 38;
+    // app-checking-owner is the element that ends up determining the height of the footer
+    const footerOffsetHeight = Array.from(answerPanel.querySelectorAll('.answer-footer app-checking-owner'))
+      .map(footer => footer as HTMLElement)
+      .map(footer => (footer.offsetHeight < expectedFooterHeight ? expectedFooterHeight - footer.offsetHeight : 0))
+      .reduce((a, b) => a + b, 0);
+
     return (
-      answersPanelVerticalPadding +
-      actionsAreaHeight +
-      scrollPartHeight +
-      totalAnswersMessageTopMargin +
-      showUnreadsBannerHeight
+      answersPanelVerticalPadding + scrollPartHeight + audioOffsetHeight + footerOffsetHeight + showUnreadsBannerHeight
     );
   }
 
@@ -297,16 +313,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private get minAnswerPanelPercent(): number {
     return Math.ceil((this.answerPanelElementMinimumHeight / this.splitContainerElementHeight) * 100);
   }
-  private get currentAnswerPanelPercent(): number {
-    return Math.ceil((this.answerPanelElementHeight / this.splitContainerElementHeight) * 100);
-  }
-
   private get fullyExpandedAnswerPanelPercent(): number {
     return Math.ceil((this.fullyExpandedAnswerPanelHeight / this.splitContainerElementHeight) * 100);
   }
 
   private get splitContainerElementHeight(): number {
-    return this.splitContainerElement ? this.splitContainerElement.nativeElement.offsetHeight : 0;
+    return this.splitContainerElement && this.splitComponent
+      ? this.splitContainerElement.nativeElement.offsetHeight - this.splitComponent.gutterSize!
+      : 0;
   }
 
   ngOnInit(): void {
@@ -388,7 +402,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       return;
     }
 
-    let useMaxAnswersPanelSize: boolean = true;
     switch (answerAction.action) {
       case 'save':
         let answer = answerAction.answer;
@@ -449,13 +462,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.questionsPanel.activeQuestionDoc$.next(this.questionsPanel.activeQuestionDoc);
         break;
       case 'show-form':
-        this.resetAnswerPanelHeightOnFormHide = true;
         break;
       case 'hide-form':
-        useMaxAnswersPanelSize = false;
         break;
     }
-    this.calculateScriptureSliderPosition(useMaxAnswersPanelSize);
+    this.calculateScriptureSliderPosition(true);
   }
 
   collapseDrawer(): void {
@@ -489,7 +500,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       return;
     }
 
-    let useMaxAnswersPanelSize: boolean = true;
     switch (commentAction.action) {
       case 'save':
         if (commentAction.answer != null) {
@@ -528,13 +538,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         }
         break;
       case 'show-form':
-        this.resetAnswerPanelHeightOnFormHide = true;
         break;
       case 'hide-form':
-        useMaxAnswersPanelSize = false;
         break;
     }
-    this.calculateScriptureSliderPosition(useMaxAnswersPanelSize);
+    this.calculateScriptureSliderPosition(true);
   }
 
   checkSliderPosition(event: any) {
@@ -816,10 +824,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       let answerPanelHeight: number;
       if (maximizeAnswerPanel) {
         answerPanelHeight = this.fullyExpandedAnswerPanelPercent;
-      } else if (this.resetAnswerPanelHeightOnFormHide) {
-        // Default the answers panel size to 50% so the scripture panel shows after answers and comments are added
-        answerPanelHeight = this.currentAnswerPanelPercent < 50 ? this.currentAnswerPanelPercent : 50;
-        this.resetAnswerPanelHeightOnFormHide = false;
       } else {
         answerPanelHeight = this.minAnswerPanelPercent;
       }
