@@ -9,8 +9,8 @@
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.3.1" />
     <PackageReference Include="Bugsnag.AspNet.Core" Version="2.2.0" />
     <PackageReference Include="EdjCase.JsonRpc.Router" Version="3.1.0" />
-    <PackageReference Include="Hangfire" Version="1.6.21" />
-    <PackageReference Include="Hangfire.Mongo" Version="0.5.15" />
+    <PackageReference Include="Hangfire" Version="1.7.9" />
+    <PackageReference Include="Hangfire.Mongo" Version="0.6.6" />
     <PackageReference Include="IdentityModel" Version="3.9.0" />
     <PackageReference Include="Jering.Javascript.NodeJS" Version="5.3.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.2" />

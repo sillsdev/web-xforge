@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -68,9 +69,16 @@ namespace SIL.XForge.Scripture
         // This method gets called by the runtime. Use this method to add services to the container.
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
-            services.AddExceptionReporting(Configuration);
-
             var containerBuilder = new ContainerBuilder();
+
+            // this is a workaround for an issue in EdjCase JsonRpc.Router
+            // see https://github.com/edjCase/JsonRpc/issues/69
+            services.Configure<KestrelServerOptions>(options =>
+            {
+                options.AllowSynchronousIO = true;
+            });
+
+            services.AddExceptionReporting(Configuration);
 
             services.AddConfiguration(Configuration);
 
@@ -101,6 +109,8 @@ namespace SIL.XForge.Scripture
             services.AddLocalization(options => options.ResourcesPath = "Resources");
 
             services.AddMvc()
+                // TODO: check if JSON.NET is required
+                .AddNewtonsoftJson()
                 .AddViewLocalization()
                 .AddDataAnnotationsLocalization(options =>
                 {
@@ -168,19 +178,21 @@ namespace SIL.XForge.Scripture
             app.UseRouting();
 
             app.UseAuthentication();
+            app.UseAuthorization();
 
             app.UseSFJsonRpc();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
-            });
 
             app.UseRealtimeServer();
 
             app.UseMachine();
 
             app.UseSFDataAccess();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+                endpoints.MapRazorPages();
+            });
 
             // setup all server-side routes before SPA client-side routes, so that the server-side routes supercede the
             // client-side routes
