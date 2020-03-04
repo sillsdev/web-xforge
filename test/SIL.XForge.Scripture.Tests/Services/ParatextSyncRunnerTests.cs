@@ -897,7 +897,7 @@ namespace SIL.XForge.Scripture.Services
                 string paratextProject = GetParatextProject(textType);
                 string oldBookText = GetBookText(textType, bookId, 1);
                 string remoteBookText = GetBookText(textType, bookId, 3);
-                ParatextService.GetBookText(Arg.Any<UserSecret>(), paratextProject, Canon.BookIdToNumber(bookId))
+                ParatextService.GetBookText(paratextProject, Canon.BookIdToNumber(bookId))
                     .Returns(x => _sendReceivedCalled ? remoteBookText : oldBookText);
             }
 

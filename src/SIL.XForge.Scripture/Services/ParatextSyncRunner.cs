@@ -273,7 +273,7 @@ namespace SIL.XForge.Scripture.Services
 
         private void UpdateParatextBook(TextInfo text, string paratextId, SortedList<int, IDocument<TextData>> textDocs)
         {
-            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+            string bookText = _paratextService.GetBookText(paratextId, text.BookNum);
             var oldUsxDoc = XDocument.Parse(bookText);
             XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
                 .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
@@ -304,7 +304,7 @@ namespace SIL.XForge.Scripture.Services
         private async Task<List<Chapter>> UpdateTextDocsAsync(TextInfo text, TextType textType, string paratextId,
             SortedList<int, IDocument<TextData>> textDocs, ISet<int> chaptersToInclude = null)
         {
-            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+            string bookText = _paratextService.GetBookText(paratextId, text.BookNum);
             var usxDoc = XDocument.Parse(bookText);
             var tasks = new List<Task>();
             Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
