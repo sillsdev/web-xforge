@@ -34,10 +34,14 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>
+    /// Provides interaction with Paratext libraries for data processing and exchanging data with Paratext servers.
+    ///
+    /// OLD:
     /// This class contains methods for interacting with the Paratext web service APIs.
     ///
     /// TODO: Implement progress reporting. PT uses singleton classes to handle progress. Implement ProgressDisplay
@@ -57,8 +61,8 @@ namespace SIL.XForge.Scripture.Services
         private readonly HttpClient _registryClient;
         private readonly IExceptionHandler _exceptionHandler;
         private readonly bool _useDevServer;
-
         internal IScrTextCollectionRunner _scrTextCollectionRunner;
+        private readonly string _resourcesPath;
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService, IExceptionHandler exceptionHandler,
@@ -70,6 +74,8 @@ namespace SIL.XForge.Scripture.Services
             _exceptionHandler = exceptionHandler;
             _siteOptions = siteOptions;
             _fileSystemService = fileSystemService;
+            // _resourcesPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "....");
+            _resourcesPath = "/home/vagrant/src/web-xforge";
 
             // TODO: use RegistryServer from ParatextData instead of calling registry API directly?
             _httpClientHandler = new HttpClientHandler();
@@ -94,7 +100,6 @@ namespace SIL.XForge.Scripture.Services
         public string SyncDir;
         private string applicationProductVersion = "SF";
         private bool jwtRegistered = false;
-        internal string _jwt;
         internal Dictionary<string, IInternetSharedRepositorySource> _internetSharedRepositorySource = new Dictionary<string, IInternetSharedRepositorySource>();
 
 
@@ -104,7 +109,7 @@ namespace SIL.XForge.Scripture.Services
             Console.WriteLine("Begin DevEntryPoint.");
             await RefreshAccessTokenAsync(userSecret);
             Init();
-            RegisterWithJWT(userSecret);
+            SetupAccessToPtRegistry(userSecret);
 
             // TODO Use an appropriate string for the clone path. Such as the paratext project id (not the SF project id).
             var dir = "repoCloneDir";
@@ -131,21 +136,19 @@ namespace SIL.XForge.Scripture.Services
             SetupMercurial();
         }
 
-        public void RegisterWithJWT(UserSecret userSecret)
+        public void SetupAccessToPtRegistry(UserSecret userSecret)
         {
             var jwtToken = userSecret.ParatextTokens.AccessToken;
             if (jwtToken?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) ?? false)
+            {
                 jwtToken = jwtToken.Substring("Bearer ".Length).Trim();
+            }
 
-            _jwt = jwtToken;
             // TODO Do we need to do additional validation? cli used Jose.JWT.Decode...
 
             // var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ /*"https://registry.paratext.org/api8/"*/_registryClient.BaseAddress.AbsoluteUri, ApplicationProduct.DefaultVersion, jwtToken);
             var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ "https://registry-dev.paratext.org/api8/", ApplicationProduct.DefaultVersion, jwtToken);
             RegistryServer.Initialize(applicationProductVersion, jwtRESTClient);
-            jwtRegistered = true;
-            // Record a repository source corresponding to secret.
-            GetInternetSharedRepositorySource(userSecret);
         }
 
         private void SetupMercurial()
@@ -154,9 +157,14 @@ namespace SIL.XForge.Scripture.Services
             {
                 return;
             }
-            // TODO: production server will presumably use /usr/bin/hg. Tho running from PATH would be good .
-            var hgExe = "/usr/local/bin/hg";
-            var hgMerge = Path.Combine("/home/vagrant/src/web-xforge", "ParatextMerge.py");
+            var hgExe = "/usr/bin/hg";
+            string customHgPath = "/usr/local/bin/hg";
+            if (File.Exists(customHgPath))
+            {
+                // Mercurial 4.7 is needed. Use custom install on Ubuntu 16.04.
+                hgExe = customHgPath;
+            }
+            var hgMerge = Path.Combine(_resourcesPath, "ParatextMerge.py");
             Hg.Default = new Hg(hgExe, hgMerge, SyncDir);
         }
 
@@ -170,7 +178,7 @@ namespace SIL.XForge.Scripture.Services
             _scrTextCollectionRunner.Initialize(SyncDir, false);
 
             string usfmStylesFileName = "usfm.sty";
-            string pathToStyle = Path.Combine("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture", usfmStylesFileName);
+            string pathToStyle = Path.Combine(_resourcesPath, "/src/SIL.XForge.Scripture", usfmStylesFileName);
             string target = Path.Combine(SyncDir, usfmStylesFileName);
             if (!File.Exists(target))
             {
@@ -178,12 +186,12 @@ namespace SIL.XForge.Scripture.Services
             }
             if (!File.Exists(SyncDir + "/revisionStyle.sty"))
             {
-                File.Copy("/home/vagrant/src/web-xforge/revisionStyle.sty", SyncDir);
+                File.Copy(Path.Combine(_resourcesPath, "revisionStyle.sty"), SyncDir);
             }
 
             if (!File.Exists(SyncDir + "/revisionTemplate.tem"))
             {
-                File.Copy("/home/vagrant/src/web-xforge/revisionTemplate.tem", SyncDir);
+                File.Copy(Path.Combine(_resourcesPath, "revisionTemplate.tem"), SyncDir);
             }
         }
 
@@ -247,7 +255,7 @@ namespace SIL.XForge.Scripture.Services
             // var jwtSource = new JwtInternetSharedRepositorySource();
             // jwtSource.SetToken(_jwt);
             var existingSFProjects = (_realtimeService.QuerySnapshots<SFProject>());
-            RegisterWithJWT(userSecret);
+            SetupAccessToPtRegistry(userSecret);
             var jwtSource = GetInternetSharedRepositorySource(userSecret);
             return jwtSource.GetRepositories().Select(remoteParatextProject =>
             {
@@ -397,9 +405,6 @@ namespace SIL.XForge.Scripture.Services
 
         private void PullRepo(UserSecret userSecret, string projectId)
         {
-            // Initialize
-            if (!jwtRegistered)
-                RegisterWithJWT(userSecret);
             // projectId is the paratextId of the project.
             var repo = Path.Combine(SyncDir, projectId);
             if (!Directory.Exists(repo))
@@ -619,7 +624,7 @@ namespace SIL.XForge.Scripture.Services
                 var source = new JwtInternetSharedRepositorySource();
                 source.SetToken(userSecret.ParatextTokens.AccessToken);
                 _internetSharedRepositorySource[userSecret.Id] = source;
-                // RegisterWithJWT(userSecret);
+                SetupAccessToPtRegistry(userSecret);
             }
 
             return _internetSharedRepositorySource[userSecret.Id];
