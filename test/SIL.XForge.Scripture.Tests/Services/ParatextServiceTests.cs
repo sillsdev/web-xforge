@@ -48,26 +48,33 @@ namespace SIL.XForge.Scripture.Services
     public class ParatextServiceTests
     {
         [Test]
-        public async Task GetProjectsAsync_ReturnCorrectRepos()
+        public void GetProjectsAsync_BadArguments()
         {
             var env = new TestEnvironment();
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.GetProjectsAsync(null));
+        }
 
-
-
-            RegistryU.Implementation = new DotNetCoreRegistry();
-
+        [Test]
+        public async Task GetProjectsAsync_ReturnCorrectRepos()
+        {
+            var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01);
             env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
 
+            // SUT
             IEnumerable<ParatextProject> repos = await env.Service.GetProjectsAsync(user01Secret);
+
+            // Right number of repos returned.
             Assert.That(repos.Count(), Is.EqualTo(3));
 
+            // Repos returned are the ones we expect.
+            // TODO make ones that shouldnt be there .
             foreach (string projectName in new string[] { env.Project01, env.Project02, env.Project03 })
             {
                 Assert.That(repos.Single(project => project.ParatextId == "paratext_" + projectName), Is.Not.Null);
             }
 
+            // Properties of one of the returned repos have the correct values.
             ParatextProject expectedProject01 = new ParatextProject
             {
                 ParatextId = "paratext_" + env.Project01,
@@ -81,11 +88,19 @@ namespace SIL.XForge.Scripture.Services
                 IsConnected = true
             };
             Assert.That(repos.Single(project => project.ParatextId == "paratext_" + env.Project01).ExpressiveToString(), Is.EqualTo(expectedProject01.ExpressiveToString()));
-            Assert.That(repos.Single(project => project.ParatextId == "paratext_" + env.Project02).IsConnected, Is.False, "not connected since not in SF database yet or user is not on project");
 
+        }
+
+        [Test]
+        public async Task GetProjectsAsync_ConnectedConnectable()
+        {
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01);
+            env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             UserSecret user03Secret = env.MakeUserSecret(env.User03);
             env.SetSharedRepositorySource(user03Secret, UserRoles.TeamMember);
 
+            // Check resulting IsConnectable and IsConnected values across various scenarios of SF project existing, SF user being a member of the SF project, and PT user being an admin on PT project.
 
             var testCases = new[]
             {
@@ -108,7 +123,7 @@ namespace SIL.XForge.Scripture.Services
                 },
                 new
                 {
-                    paratextProjectId = "paratext_"+env.Project01,
+                    paratextProjectId = "paratext_" + env.Project01,
                     sfUserId = env.User03,
                     ptUsername = "user 01",
                     userSecret = user03Secret,
@@ -124,7 +139,7 @@ namespace SIL.XForge.Scripture.Services
                 },
                 new
                 {
-                    paratextProjectId = "paratext_"+env.Project02,
+                    paratextProjectId = "paratext_" + env.Project02,
                     sfUserId = env.User01,
                     ptUsername = "user 01",
                     userSecret = user01Secret,
@@ -140,7 +155,7 @@ namespace SIL.XForge.Scripture.Services
                 },
                 new
                 {
-                    paratextProjectId = "paratext_"+env.Project02,
+                    paratextProjectId = "paratext_" + env.Project02,
                     sfUserId = env.User03,
                     ptUsername = "user 03",
                     userSecret = user03Secret,
@@ -154,7 +169,6 @@ namespace SIL.XForge.Scripture.Services
                     isConnectable = false,
                     reason2 = "pt non-admin can not start connection to not-yet-existing sf project"
                 },
-
             };
 
             foreach (var testCase in testCases)
@@ -171,9 +185,12 @@ namespace SIL.XForge.Scripture.Services
                     .SourceUsers
                     .GetRole(testCase.ptUsername) == UserRoles.Administrator, Is.EqualTo(testCase.ptUserIsAdminOnPtProject), "not set up - whether pt user is an admin on pt project");
 
-                // Assert behavior of SUT.
-                Assert.That((await env.Service.GetProjectsAsync(testCase.userSecret)).Single(project => project.ParatextId == testCase.paratextProjectId).IsConnected, Is.EqualTo(testCase.isConnected), testCase.reason1);
-                Assert.That((await env.Service.GetProjectsAsync(testCase.userSecret)).Single(project => project.ParatextId == testCase.paratextProjectId).IsConnectable, Is.EqualTo(testCase.isConnectable), testCase.reason2);
+                // SUT
+                ParatextProject resultingProjectToExamine = (await env.Service.GetProjectsAsync(testCase.userSecret)).Single(project => project.ParatextId == testCase.paratextProjectId);
+
+                // Assert expectations.
+                Assert.That(resultingProjectToExamine.IsConnected, Is.EqualTo(testCase.isConnected), testCase.reason1);
+                Assert.That(resultingProjectToExamine.IsConnectable, Is.EqualTo(testCase.isConnectable), testCase.reason2);
             }
         }
 

@@ -246,29 +246,30 @@ namespace SIL.XForge.Scripture.Services
             if (userSecret == null) throw new ArgumentNullException();
 
             List<ParatextProject> paratextProjects = new List<ParatextProject>();
-            IInternetSharedRepositorySource repoSource = GetInternetSharedRepositorySource(userSecret);
-            IEnumerable<SharedRepository> sharedProjectRepositories = repoSource.GetRepositories();
+            IInternetSharedRepositorySource ptRepoSource = GetInternetSharedRepositorySource(userSecret);
+            IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
 
-            foreach (SharedRepository remoteParatextProject in sharedProjectRepositories)
+            foreach (SharedRepository remotePtProject in remotePtProjects)
             {
-                IQueryable<SFProject> existingSFProjects = (_realtimeService.QuerySnapshots<SFProject>());
-                SFProject correspondingSFProject = existingSFProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remoteParatextProject.SendReceiveId);
-                bool sfProjectExists = correspondingSFProject != null;
-                bool sfUserIsOnSfProject = correspondingSFProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
-                bool adminOnPtProject = remoteParatextProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator;
+                IQueryable<SFProject> existingSfProjects = _realtimeService.QuerySnapshots<SFProject>();
+                SFProject correspondingSfProject = existingSfProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remotePtProject.SendReceiveId);
+
+                bool sfProjectExists = correspondingSfProject != null;
+                bool sfUserIsOnSfProject = correspondingSfProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
+                bool adminOnPtProject = remotePtProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator; // TODO not junk
                 bool ptProjectIsConnectable = (sfProjectExists && !sfUserIsOnSfProject) || (!sfProjectExists && adminOnPtProject);
+
                 paratextProjects.Add(new ParatextProject
                 {
-                    ParatextId = remoteParatextProject.SendReceiveId,
-                    // TODO Get project long name from Paratext.Data. ScrTextName is the short code.
-                    Name = correspondingSFProject?.Name,
-                    ShortName = remoteParatextProject.ScrTextName,
-                    LanguageTag = correspondingSFProject?.WritingSystem.Tag,
-                    SFProjectId = correspondingSFProject?.Id,
+                    ParatextId = remotePtProject.SendReceiveId,
+                    // TODO Get project long name when don't have a corresponding SF project yet. ScrTextName is the short name.
+                    Name = correspondingSfProject?.Name,
+                    ShortName = remotePtProject.ScrTextName,
+                    LanguageTag = correspondingSfProject?.WritingSystem.Tag,
+                    SFProjectId = correspondingSfProject?.Id,
                     IsConnectable = ptProjectIsConnectable,
                     IsConnected = sfProjectExists && sfUserIsOnSfProject
                 });
-
             }
             return paratextProjects;
             // var existingSFProjects = (_realtimeService.QuerySnapshots<SFProject>());
