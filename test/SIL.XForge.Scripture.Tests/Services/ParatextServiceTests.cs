@@ -68,7 +68,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(repos.Count(), Is.EqualTo(3));
 
             // Repos returned are the ones we expect.
-            // TODO make ones that shouldnt be there .
+            // TODO Make PT repos in data that should not be returned.
             foreach (string projectName in new string[] { env.Project01, env.Project02, env.Project03 })
             {
                 Assert.That(repos.Single(project => project.ParatextId == "paratext_" + projectName), Is.Not.Null);
@@ -89,6 +89,12 @@ namespace SIL.XForge.Scripture.Services
             };
             Assert.That(repos.Single(project => project.ParatextId == "paratext_" + env.Project01).ExpressiveToString(), Is.EqualTo(expectedProject01.ExpressiveToString()));
 
+            // TODO Work on alphabetical when am more easily getting names for repos.
+            // Repos are returned in alphabetical order by paratext project name.
+            // List<string> repoList = repos.Select(repo => repo.Name).ToList();
+            // foreach (var a in repoList) { Console.WriteLine("DEBUG: item is:" + a); }
+            // Assert.That(StringComparer.InvariantCultureIgnoreCase.Compare(repoList[0], repoList[1]), Is.LessThan(0));
+            // Assert.That(StringComparer.InvariantCultureIgnoreCase.Compare(repoList[1], repoList[2]), Is.LessThan(0));
         }
 
         [Test]
@@ -309,7 +315,7 @@ namespace SIL.XForge.Scripture.Services
                     ScrTextName = "P03",
                     SourceUsers = sourceUsers
                 };
-                mockSource.GetRepositories().Returns(new List<SharedRepository> { repo1, repo2, repo3 });
+                mockSource.GetRepositories().Returns(new List<SharedRepository> { repo1, repo3, repo2 });
                 Service._internetSharedRepositorySource[userSecret.Id] = mockSource;
                 return mockSource;
             }

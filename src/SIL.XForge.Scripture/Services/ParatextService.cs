@@ -240,7 +240,7 @@ namespace SIL.XForge.Scripture.Services
             Console.WriteLine($"S/R complete. NoErrors? {noErrors}");
         }
 
-        /// <summary>Get Paratext projects that a user has access to.</summary>
+        /// <summary>Get Paratext projects that a user has access to. TODO what about projects the user does not have access to.</summary>
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
             if (userSecret == null) throw new ArgumentNullException();
@@ -248,15 +248,15 @@ namespace SIL.XForge.Scripture.Services
             List<ParatextProject> paratextProjects = new List<ParatextProject>();
             IInternetSharedRepositorySource ptRepoSource = GetInternetSharedRepositorySource(userSecret);
             IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
+            IQueryable<SFProject> existingSfProjects = _realtimeService.QuerySnapshots<SFProject>();
 
             foreach (SharedRepository remotePtProject in remotePtProjects)
             {
-                IQueryable<SFProject> existingSfProjects = _realtimeService.QuerySnapshots<SFProject>();
                 SFProject correspondingSfProject = existingSfProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remotePtProject.SendReceiveId);
 
                 bool sfProjectExists = correspondingSfProject != null;
                 bool sfUserIsOnSfProject = correspondingSfProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
-                bool adminOnPtProject = remotePtProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator; // TODO not junk
+                bool adminOnPtProject = remotePtProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator; // TODO Fetch and use actual PT username.
                 bool ptProjectIsConnectable = (sfProjectExists && !sfUserIsOnSfProject) || (!sfProjectExists && adminOnPtProject);
 
                 paratextProjects.Add(new ParatextProject
@@ -272,33 +272,8 @@ namespace SIL.XForge.Scripture.Services
                 });
             }
             return paratextProjects;
-            // var existingSFProjects = (_realtimeService.QuerySnapshots<SFProject>());
-            // SetupAccessToPtRegistry(userSecret);
-            // var jwtSource = GetInternetSharedRepositorySource(userSecret);
-            // return jwtSource.GetRepositories().Select(remoteParatextProject =>
-            // {
-            //     SFProject correspondingSFProject = existingSFProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remoteParatextProject.SendReceiveId);
 
-            //     bool sfProjectExists = correspondingSFProject != null;
-            //     bool userOnSFProject = correspondingSFProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
-            //     bool adminOnPtProject = remoteParatextProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator;
-            //     bool projectIsConnectable =
-            //         (sfProjectExists && !userOnSFProject)
-            //         || (!sfProjectExists && adminOnPtProject)
-            //         ;
-
-            //     return new ParatextProject
-            //     {
-            //         ParatextId = remoteParatextProject.SendReceiveId,
-            //         // TODO Get project long name from Paratext.Data. ScrTextName is the short code.
-            //         Name = remoteParatextProject.ScrTextName,
-            //         ShortName = correspondingSFProject?.ShortName,
-            //         LanguageTag = correspondingSFProject?.WritingSystem.Tag,
-            //         SFProjectId = correspondingSFProject?.Id,
-            //         IsConnectable = projectIsConnectable,
-            //         IsConnected = sfProjectExists
-            //     };
-            // }).OrderBy(project => project.Name, StringComparer.InvariantCulture).ToArray();
+            // .OrderBy(project => project.Name, StringComparer.InvariantCulture).ToArray();
         }
 
         /// <summary>Fetch paratext projects that userSecret has access to.</summary>
