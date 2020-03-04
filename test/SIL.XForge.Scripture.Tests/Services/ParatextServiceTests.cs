@@ -57,6 +57,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetProjectsAsync_ReturnCorrectRepos()
         {
             var env = new TestEnvironment();
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.GetProjectsAsync(null));
             UserSecret userSecret = env.SetUserSecret();
             env.SetSharedRepositorySource(userSecret);
             env.AddProjectRepository();
@@ -69,6 +70,18 @@ namespace SIL.XForge.Scripture.Services
             {
                 Assert.That(repos.Single(project => project.ParatextId == "paratext_" + projectName), Is.Not.Null);
             }
+
+            ParatextProject expectedProject01 = new ParatextProject
+            {
+                ParatextId = "paratext_" + Project01,
+                Name = Project01,
+                // ShortName = "p1",
+                // LanguageTag = "eng",
+                // SFProjectId = "51234",
+                // IsConnectable = ??,
+                // IsConnected= ??
+            };
+            Assert.That(repos.Single(project => project.ParatextId == "paratext_" + Project01).ExpressiveToString(), Is.EqualTo(expectedProject01.ExpressiveToString()));
         }
 
         [Test]

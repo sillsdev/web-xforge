@@ -1,3 +1,7 @@
+using System;
+using System.Security.Cryptography;
+using System.Text;
+
 namespace SIL.XForge.Scripture.Models
 {
     /// <summary>Description of a project on the Paratext server.</summary>
@@ -12,5 +16,28 @@ namespace SIL.XForge.Scripture.Models
         public bool IsConnectable { get; set; }
         /// <summary>A SF project exists in the SF DB that syncs to a project on the Paratext server.</summary>
         public bool IsConnected { get; set; }
+
+        /// <summary>Hash of properties.</summary>
+        public string GetHash()
+        {
+            using (var sha = SHA512.Create())
+            {
+                return Convert.ToBase64String(sha.ComputeHash(Encoding.UTF8.GetBytes(ExpressiveToString())));
+            }
+        }
+
+        /// <summary>Descriptive string of object's properties, for debugging.</summary>
+        internal string ExpressiveToString()
+        {
+            StringBuilder message = new StringBuilder();
+            foreach (string item in new string[] { ParatextId, Name, ShortName, LanguageTag, SFProjectId, IsConnectable.ToString(), IsConnected.ToString() })
+            {
+                message.Append(item);
+                message.Append(',');
+            }
+            return message.ToString();
+        }
+
+
     }
 }
