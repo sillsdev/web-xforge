@@ -220,18 +220,39 @@ namespace SIL.XForge.Scripture.Services
         {
             string paratextProjectId = "ptId123";
             string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
-            "\\c 1\n" +
-            "\\v 1 Verse 1 here.\n" +
-            "\\v 2 Verse 2 here.";
+                "\\c 1\n" +
+                "\\v 1 Verse 1 here.\n" +
+                "\\v 2 Verse 2 here.";
             string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
             MockScrText paratextProject = new MockScrText();
             paratextProject.Data.Add("RUT", ruthBookUsfm);
             var env = new TestEnvironment();
             env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(paratextProject);
-            env.MockedScrTextCollectionRunner.GetById(paratextProjectId).Returns(paratextProject);
-            string result = env.Service.GetBookText(null, paratextProjectId, 8);
+            // env.MockedScrTextCollectionRunner.GetById(paratextProjectId).Returns(paratextProject);
+
+            // SUT
+            string result = env.Service.GetBookText(paratextProjectId, 8);
             Assert.That(result, Is.EqualTo(ruthBookUsx));
+        }
+
+        [Test]
+        public async Task GetBookText_NoSuchPtProjectKnown()
+        {
+            string paratextProjectId = "ptId123";
+            string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
+                "\\c 1\n" +
+                "\\v 1 Verse 1 here.\n" +
+                "\\v 2 Verse 2 here.";
+
+            MockScrText paratextProject = new MockScrText();
+            paratextProject.Data.Add("RUT", ruthBookUsfm);
+            var env = new TestEnvironment();
+            env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(i => null);
+
+            // SUT
+            string result = env.Service.GetBookText(paratextProjectId, 8);
+            Assert.That(result, Is.Null);
         }
 
         private class TestEnvironment

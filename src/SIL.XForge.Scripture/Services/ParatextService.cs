@@ -116,7 +116,7 @@ namespace SIL.XForge.Scripture.Services
             var dir = "repoCloneDir";
             await PullRepo2Async(userSecret, Path.Combine(SyncDir, dir));
             InitializeProjects(SyncDir);
-            var bookText = GetBookText(userSecret, "94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
+            var bookText = GetBookText("94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
             SendReceive2(userSecret);
         }
 
@@ -278,7 +278,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>Fetch paratext projects that userSecret has access to.</summary>
-        public async Task<IReadOnlyList<ParatextProject>> GetProjectsOrigAsync(UserSecret userSecret)
+        private async Task<IReadOnlyList<ParatextProject>> GetProjectsOrigAsync(UserSecret userSecret)
         {
             //seems to work in production
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
@@ -418,19 +418,24 @@ namespace SIL.XForge.Scripture.Services
         }
 
 
-
-        public string GetBookText(UserSecret userSecret, string paratextProjectId, int bookNum)
+        /// <summary>Get PT book in USX, or null if can't.</summary>
+        public string GetBookText(string paratextProjectId, int bookNum)
         {
-            if (!IsManagingProject(paratextProjectId))
-            {
-                // TODO or throw?
-                // TODO isnt this an older method that we shouldnt be calling now?
-                PullRepo(userSecret, paratextProjectId);
-            }
+            // TODO have clients call a pull method before calling GetBookText().
+            // if (!IsManagingProject(paratextProjectId))
+            // {
+            //     // TODO or throw?
+            //     // TODO isnt this an older method that we shouldnt be calling now?
+            //     PullRepo(userSecret, paratextProjectId);
+            // }
 
-            // TODO: this is a guess at how to implement this method
-            ScrText scrText = _scrTextCollectionRunner.GetById(paratextProjectId);
-            ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
+            ScrText scrText = _scrTextCollectionRunner.FindById(paratextProjectId);
+            if (scrText == null)
+            {
+                return null;
+
+            }
+            // ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
             string usfm = scrText.GetText(bookNum);
             return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
         }
