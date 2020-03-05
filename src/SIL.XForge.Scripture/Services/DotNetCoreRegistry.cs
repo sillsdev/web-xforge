@@ -6,6 +6,7 @@ using System.Text;
 
 namespace SIL.XForge.Scripture.Services
 {
+    /// <summary>Dummy registry implementation for Paratext Data to use when running in dotnet core.</summary>
     class DotNetCoreRegistry : RegistryU
     {
         protected override bool ValueExistsInternal(string registryPath)
