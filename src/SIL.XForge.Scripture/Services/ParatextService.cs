@@ -111,11 +111,9 @@ namespace SIL.XForge.Scripture.Services
             Init();
             SetupAccessToPtRegistry(userSecret);
 
-            // TODO Use an appropriate string for the clone path. Such as the paratext project id (not the SF project id).
-            var dir = "repoCloneDir";
-            await PullRepo2Async(userSecret, Path.Combine(SyncDir, dir));
-            InitializeProjects(SyncDir);
-            // var bookText = GetBookText("94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
+            var projectList = GetProjectsAsync(userSecret);
+
+            var bookText = GetBookText(userSecret, "94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
             SendReceive2(userSecret);
         }
 
@@ -134,6 +132,16 @@ namespace SIL.XForge.Scripture.Services
             ParatextDataSettings.Initialize(new PersistedParatextDataSettings());
             PtxUtilsDataSettings.Initialize(new PersistedPtxUtilsSettings());
             SetupMercurial();
+            InstallStyles();
+
+
+            WritingSystemRepository.Initialize();
+
+            // TODO: not sure if using ScrTextCollection is the best idea for a server, since it loads all existing
+            // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
+            // ScrTextCollectionServer class in DataAccessServer.
+            // TODO will this crash if haven't set user credentials yet?
+            _scrTextCollectionRunner.Initialize(SyncDir, false);
         }
 
         public void SetupAccessToPtRegistry(UserSecret userSecret)
@@ -149,6 +157,7 @@ namespace SIL.XForge.Scripture.Services
             // var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ /*"https://registry.paratext.org/api8/"*/_registryClient.BaseAddress.AbsoluteUri, ApplicationProduct.DefaultVersion, jwtToken);
             var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ "https://registry-dev.paratext.org/api8/", ApplicationProduct.DefaultVersion, jwtToken);
             RegistryServer.Initialize(applicationProductVersion, jwtRESTClient);
+
         }
 
         private void SetupMercurial()
@@ -168,15 +177,8 @@ namespace SIL.XForge.Scripture.Services
             Hg.Default = new Hg(hgExe, hgMerge, SyncDir);
         }
 
-        private void InitializeProjects(string path)
+        private void InstallStyles()
         {
-            WritingSystemRepository.Initialize();
-
-            // TODO: not sure if using ScrTextCollection is the best idea for a server, since it loads all existing
-            // ScrTexts into memory when it is initialized. Possibly use a different implementation, see
-            // ScrTextCollectionServer class in DataAccessServer.
-            _scrTextCollectionRunner.Initialize(SyncDir, false);
-
             string usfmStylesFileName = "usfm.sty";
             string pathToStyle = Path.Combine(_resourcesPath, "/src/SIL.XForge.Scripture", usfmStylesFileName);
             string target = Path.Combine(SyncDir, usfmStylesFileName);
@@ -195,22 +197,20 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        /// <summary>(Learning/experimenting by writing clone anew)</summary>
-        public async Task PullRepo2Async(UserSecret userSecret, string newRepoPath) // todo rename to clone?
+        /// <summary>Clone PT project.</summary>
+        private async Task CloneProjectRepoAsync(UserSecret userSecret, string ptProjectId)
         {
-            if (!Directory.Exists(newRepoPath))
+            ParatextProject ptProject = (await GetProjectsAsync(userSecret)).FirstOrDefault(proj => proj.ParatextId == ptProjectId);
+            SharedRepository ptProjectRepoInfo = new SharedRepository(ptProject.ShortName, ptProject.ParatextId, RepositoryType.Shared);
+            IInternetSharedRepositorySource ptRepositorySource = GetInternetSharedRepositorySource(userSecret);
+            string clonePath = Path.Combine(SyncDir, ptProject.ParatextId);
+            if (!Directory.Exists(clonePath))
             {
-                Directory.CreateDirectory(newRepoPath);
-                Hg.Default.Init(newRepoPath);
+                Directory.CreateDirectory(clonePath);
+                Hg.Default.Init(clonePath);
             }
-
-            var repos = await GetProjectsAsync(userSecret);
-            var theRepo = repos.FirstOrDefault(r => r.ShortName == "Ott");
-            var projectName = theRepo.Name;
-            var sharedRepository = new SharedRepository(projectName, theRepo.ParatextId, RepositoryType.Shared);
-            var jwtSource = GetInternetSharedRepositorySource(userSecret);
-            jwtSource.Pull(newRepoPath, sharedRepository);
-            Hg.Default.Update(newRepoPath);
+            ptRepositorySource.Pull(clonePath, ptProjectRepoInfo);
+            Hg.Default.Update(clonePath);
         }
 
         /// <summary>(Learning/experimenting by writing Sendreceive anew)</summary>
@@ -225,6 +225,7 @@ namespace SIL.XForge.Scripture.Services
 
             // string repoPath = "/var/lib/scriptureforge/sync/repoCloneDir";
 
+            // TODO something more reliable than 'as' here.
             var source = GetInternetSharedRepositorySource(userSecret) as JwtInternetSharedRepositorySource;
             var repositories = source.GetRepositories();
 
@@ -408,34 +409,32 @@ namespace SIL.XForge.Scripture.Services
                 Hg.Default.Init(repo);
             }
             var source = GetInternetSharedRepositorySource(userSecret);
-            var repoInfo = source.GetRepositories().FirstOrDefault(x => x.SendReceiveId == projectId);
             if (source == null)
                 return;
+            var repositories = source.GetRepositories();
+            var repoInfo = source.GetRepositories().FirstOrDefault(x => x.SendReceiveId == projectId);
 
             source.Pull(repo, new SharedRepository(projectId, repoInfo.SendReceiveId, RepositoryType.Shared));
 
             Hg.Default.Update(repo);
         }
 
-
-        /// <summary>Get PT book in USX, or null if can't.</summary>
-        public string GetBookText(string paratextProjectId, int bookNum)
+        // TODO append Async to method name.
+        /// <summary>Get PT book in USX, or throw if can't.</summary>
+        public async Task<string> GetBookText(UserSecret userSecret, string ptProjectId, int bookNum)
         {
-            // TODO have clients call a pull method before calling GetBookText().
-            // if (!IsManagingProject(paratextProjectId))
-            // {
-            //     // TODO or throw?
-            //     // TODO isnt this an older method that we shouldnt be calling now?
-            //     PullRepo(userSecret, paratextProjectId);
-            // }
-
-            ScrText scrText = _scrTextCollectionRunner.FindById(paratextProjectId);
+            ScrText scrText = _scrTextCollectionRunner.FindById(ptProjectId);
             if (scrText == null)
             {
-                return null;
-
+                await CloneProjectRepoAsync(userSecret, ptProjectId);
+                scrText = _scrTextCollectionRunner.FindById(ptProjectId);
+                if (scrText == null)
+                {
+                    throw new DataNotFoundException("Can't get access to cloned project.");
+                }
             }
-            // ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
+            // Work around "Could not find encoder for code page 1252" problem in production.
+            ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
             string usfm = scrText.GetText(bookNum);
             return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
         }
@@ -520,48 +519,6 @@ namespace SIL.XForge.Scripture.Services
             catch (Exception e)
             {
                 Trace.TraceError("Exception while updating notes: {0}", e);
-            }
-        }
-
-        // StringsEncoder class doesn't work on dotnet core because it assumes 1252 is available.
-        // On dotnet core 1252 will never return from Encodings.GetEncodings(),
-        // but StringsEncoder assumes it does.
-        private class HackStringEncoder : StringEncoder
-        {
-            public HackStringEncoder()
-            {
-
-            }
-
-            public override string ShortName => "utf8";
-
-            public override string LongName => "utf8";
-
-            public override string Convert(byte[] data, out string errorMessage)
-            {
-                errorMessage = "";
-                return Encoding.UTF8.GetString(data, 0, data.Length);
-            }
-
-            public override byte[] Convert(string text, out string errorMessage)
-            {
-                errorMessage = "";
-                return Encoding.UTF8.GetBytes(text.ToArray(), 0, text.Length);
-            }
-
-            public override void InstallInProject(ScrText scrText)
-            {
-
-            }
-
-            protected override bool Equals(StringEncoder other)
-            {
-                return other != null && other.LongName == this.LongName;
-            }
-
-            protected override bool Equals(int codePage)
-            {
-                return true;
             }
         }
 

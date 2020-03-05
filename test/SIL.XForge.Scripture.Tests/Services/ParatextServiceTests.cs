@@ -237,14 +237,14 @@ namespace SIL.XForge.Scripture.Services
             // env.MockedScrTextCollectionRunner.GetById(paratextProjectId).Returns(paratextProject);
 
             // SUT
-            string result = env.Service.GetBookText(paratextProjectId, 8);
+            string result = await env.Service.GetBookText(null, paratextProjectId, 8);
             Assert.That(result, Is.EqualTo(ruthBookUsx));
+            Assert.That(paratextProject.Settings.Encoder is HackStringEncoder, Is.True, "codepage 1252 workaround needs to be in place");
         }
 
         [Test]
         public async Task GetBookText_NoSuchPtProjectKnown()
         {
-            string paratextProjectId = "ptId123";
             string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
                 "\\c 1\n" +
                 "\\v 1 Verse 1 here.\n" +
@@ -253,11 +253,48 @@ namespace SIL.XForge.Scripture.Services
             MockScrText paratextProject = new MockScrText();
             paratextProject.Data.Add("RUT", ruthBookUsfm);
             var env = new TestEnvironment();
-            env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(i => null);
+            string ptProjectId = "paratext_" + env.Project01;
+            UserSecret user01Secret = env.MakeUserSecret(env.User01);
+            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            env.MockedScrTextCollectionRunner.FindById(ptProjectId).Returns(i => null);
 
             // SUT
-            string result = env.Service.GetBookText(paratextProjectId, 8);
-            Assert.That(result, Is.Null);
+            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetBookText(user01Secret, ptProjectId, 8));
+            // Should have tried to clone the needed repo.
+            mockSource.Received(1).Pull(Arg.Any<string>(), Arg.Any<SharedRepository>());
+            // Should have tried twice to access project.
+            env.MockedScrTextCollectionRunner.Received(2).FindById(Arg.Any<string>());
+        }
+
+        [Test]
+        public async Task GetBookText_ProjectNotYetCloned()
+        {
+            // PT project isn't cloned yet.
+            // It gets cloned.
+            // And so GetBookText then returns data.
+
+            string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
+                "\\c 1\n" +
+                "\\v 1 Verse 1 here.\n" +
+                "\\v 2 Verse 2 here.";
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+
+            MockScrText paratextProject = new MockScrText();
+            paratextProject.Data.Add("RUT", ruthBookUsfm);
+            var env = new TestEnvironment();
+            string ptProjectId = "paratext_" + env.Project01;
+            UserSecret user01Secret = env.MakeUserSecret(env.User01);
+            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            // FindById fails the first time, and then succeeds the second time after the pt project repo is cloned.
+            env.MockedScrTextCollectionRunner.FindById(ptProjectId).Returns(null, paratextProject);
+
+            // SUT
+            string result = await env.Service.GetBookText(user01Secret, ptProjectId, 8);
+            Assert.That(result, Is.EqualTo(ruthBookUsx));
+            // Should have tried to clone the needed repo.
+            mockSource.Received(1).Pull(Arg.Any<string>(), Arg.Any<SharedRepository>());
+            // Should have tried twice to access project.
+            env.MockedScrTextCollectionRunner.Received(2).FindById(Arg.Any<string>());
         }
 
         [Test]
@@ -351,9 +388,17 @@ namespace SIL.XForge.Scripture.Services
                 //Mock=Substitute.For<>();
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository, RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService);
                 Service._scrTextCollectionRunner = MockedScrTextCollectionRunner;
+                Service.SyncDir = "/tmp";
 
                 RegistryU.Implementation = new DotNetCoreRegistry();
                 AddProjectRepository();
+
+
+
+                // Set Hg.Default to a no-op.
+                var hgExe = "/bin/true";
+                var hgMerge = "/dev/null";
+                Hg.Default = new Hg(hgExe, hgMerge, Service.SyncDir);
             }
 
             public UserSecret MakeUserSecret(string userSecretId)
