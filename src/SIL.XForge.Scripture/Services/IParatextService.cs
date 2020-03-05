@@ -17,12 +17,12 @@ namespace SIL.XForge.Scripture.Services
         Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret, string projectId);
         // bool IsManagingProject(string projectId);
 
-        IReadOnlyList<int> GetBooks(string projectId);
-        string GetBookText(string projectId, int bookNum);
-        void PutBookText(string projectId, int bookNum, string usx);
-        string GetNotes(string projectId, int bookNum);
-        void PutNotes(string projectId, string notesText);
+        IReadOnlyList<int> GetBookList(string ptProjectId);
+        Task<string> GetBookTextAsync(UserSecret userSecret, string ptProjectId, int bookNum);
+        void PutBookText(string ptProjectId, int bookNum, string usx);
+        string GetNotes(string ptProjectId, int bookNum);
+        void PutNotes(string ptProjectId, string notesText);
 
-        void SendReceive(UserSecret userSecret, IEnumerable<string> projectIds);
+        void SendReceive(UserSecret userSecret, IEnumerable<string> ptProjectIds);
     }
 }
