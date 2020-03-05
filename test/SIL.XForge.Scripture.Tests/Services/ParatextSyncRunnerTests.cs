@@ -49,7 +49,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false);
-            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
+            await env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
             env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XDocument>())).Do(x => throw new Exception());
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -64,7 +64,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.SetupSFData(false, false, false);
-            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
+            await env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
             await env.Runner.RunAsync("project01", "user01", true);
 
@@ -126,7 +126,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.SetupSFData(true, false, false);
-            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
+            await env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
             await env.Runner.RunAsync("project01", "user01", true);
 
@@ -157,7 +157,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.SetupSFData(false, true, false);
-            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
+            await env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
             await env.Runner.RunAsync("project01", "user01", true);
 
@@ -189,7 +189,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
+            await env.SetupPTData(books);
 
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -228,7 +228,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(true, true, true, books);
-            env.SetupPTData(books);
+            await env.SetupPTData(books);
 
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -265,7 +265,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(true, false, true, books);
-            env.SetupPTData(books);
+            await env.SetupPTData(books);
 
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -301,7 +301,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2));
-            env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
+            await env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
 
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -324,7 +324,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2) { InvalidChapters = { 1 } });
-            env.SetupPTData(new Book("MAT", 2) { InvalidChapters = { 2 } }, new Book("MRK", 2));
+            await env.SetupPTData(new Book("MAT", 2) { InvalidChapters = { 2 } }, new Book("MRK", 2));
 
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -343,7 +343,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2));
-            env.SetupPTData(new Book("MAT", 2), new Book("LUK", 2));
+            await env.SetupPTData(new Book("MAT", 2), new Book("LUK", 2));
 
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -373,7 +373,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
+            await env.SetupPTData(books);
             var ptUserRoles = new Dictionary<string, string>
             {
                 { "pt01", SFProjectRole.Translator }
@@ -396,7 +396,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
             env.SetupSFData(true, true, false, books);
-            env.SetupPTData(books);
+            await env.SetupPTData(books);
             var ptUserRoles = new Dictionary<string, string>
             {
                 { "pt01", SFProjectRole.Administrator }
@@ -425,7 +425,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     Id = TextData.GetTextDocId("project01", 42, 1, TextType.Target)
                 });
-            env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
+            await env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
 
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -448,7 +448,7 @@ namespace SIL.XForge.Scripture.Services
             // The project in the DB has a book, but a Source chapter is missing from that book.
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
-            env.SetupPTData(new Book("MAT", 3, true));
+            await env.SetupPTData(new Book("MAT", 3, true));
 
             // DB should start with Target chapter 2 but without Source chapter 2.
             Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
@@ -473,7 +473,7 @@ namespace SIL.XForge.Scripture.Services
             // The project in Paratext has a book, but a chapter is missing from that book.
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, new Book("MAT", 3, true));
-            env.SetupPTData(new Book("MAT", 3, 3) { MissingTargetChapters = { 2 }, MissingSourceChapters = { 2 } });
+            await env.SetupPTData(new Book("MAT", 3, 3) { MissingTargetChapters = { 2 }, MissingSourceChapters = { 2 } });
 
             var chapterContent = Delta.New().InsertText("text");
             Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
@@ -506,7 +506,7 @@ namespace SIL.XForge.Scripture.Services
             // The project has a book, but a Source chapter is missing from that book. Both in the DB and in Paratext.
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
-            env.SetupPTData(new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
+            await env.SetupPTData(new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
 
             // DB should start without Source chapter 2.
             Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
@@ -528,7 +528,7 @@ namespace SIL.XForge.Scripture.Services
             // The project in PT has a book, but no chapters.
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, new Book("MAT", 3, true));
-            env.SetupPTData(new Book("MAT", 0, true));
+            await env.SetupPTData(new Book("MAT", 0, true));
 
             var chapterContent = Delta.New().InsertText("text");
             Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
@@ -817,22 +817,22 @@ namespace SIL.XForge.Scripture.Services
             }
 
 
-            public void SetupPTData(params Book[] books)
+            public async Task SetupPTData(params Book[] books)
             {
-                ParatextService.GetBooks("target")
+                ParatextService.GetBookList("target")
                     .Returns(books.Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 // Include book with Source even if there are no chapters, if there are also no chapters in Target. PT
                 // can actually have or not have books which do or do not have chapters more flexibly than this. But in
                 // this way, allow tests to request a Source book exist even with zero chapters.
-                ParatextService.GetBooks("source")
+                ParatextService.GetBookList("source")
                     .Returns(books
                         .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
                         .Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 foreach (Book book in books)
                 {
-                    AddPTBook(book.Id, book.HighestTargetChapter, TextType.Target, book.MissingTargetChapters, book.InvalidChapters);
+                    await AddPTBook(book.Id, book.HighestTargetChapter, TextType.Target, book.MissingTargetChapters, book.InvalidChapters);
                     if (book.HighestSourceChapter > 0 || book.HighestSourceChapter == book.HighestTargetChapter)
-                        AddPTBook(book.Id, book.HighestSourceChapter, TextType.Source, book.MissingSourceChapters);
+                        await AddPTBook(book.Id, book.HighestSourceChapter, TextType.Source, book.MissingSourceChapters);
                 }
             }
 
@@ -842,10 +842,10 @@ namespace SIL.XForge.Scripture.Services
                     u.Set(pr => pr.UserRoles[userId], role));
             }
 
-            private void AddPTBook(string bookId, int highestChapter, TextType textType, HashSet<int> missingChapters,
+            private async Task AddPTBook(string bookId, int highestChapter, TextType textType, HashSet<int> missingChapters,
                 HashSet<int> invalidChapters = null)
             {
-                MockGetBookText(bookId, textType);
+                await MockGetBookText(bookId, textType);
                 string paratextProject = GetParatextProject(textType);
                 Func<XDocument, bool> predicate = d => (string)d?.Root?.Element("book")?.Attribute("code") == bookId
                         && (string)d?.Root?.Element("book") == paratextProject;
@@ -892,12 +892,12 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
 
-            private void MockGetBookText(string bookId, TextType textType)
+            private async Task MockGetBookText(string bookId, TextType textType)
             {
                 string paratextProject = GetParatextProject(textType);
                 string oldBookText = GetBookText(textType, bookId, 1);
                 string remoteBookText = GetBookText(textType, bookId, 3);
-                ParatextService.GetBookText(paratextProject, Canon.BookIdToNumber(bookId))
+                ParatextService.GetBookTextAsync(Arg.Any<UserSecret>(), paratextProject, Canon.BookIdToNumber(bookId))
                     .Returns(x => _sendReceivedCalled ? remoteBookText : oldBookText);
             }
 

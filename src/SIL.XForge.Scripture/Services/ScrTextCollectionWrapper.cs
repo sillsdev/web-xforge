@@ -3,7 +3,7 @@ using Paratext.Data;
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>Wraps access to static methods on ScrTextCollection with a class implementing a mockable interface.</summary>
-    public class ScrTextCollectionRunner : IScrTextCollectionRunner
+    public class ScrTextCollectionWrapper : IScrTextCollectionWrapper
     {
         public void Initialize(string settingsDir = null, bool allowMigration = false)
         {
