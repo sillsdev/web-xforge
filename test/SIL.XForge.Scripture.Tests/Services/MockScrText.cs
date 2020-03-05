@@ -43,6 +43,6 @@ namespace Paratext.Base
         public ProjectSettings _settings;
         public override ProjectSettings Settings => _settings;
         public override ScrStylesheet DefaultStylesheet => new MockScrStylesheet("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture/usfm.sty");
-        public override string Directory => "/home/vagrant/src/web-xforge/test/SIL.XForge.Scripture.Tests";
+        public override string Directory => "/tmp/xForge_testing";
     }
 }

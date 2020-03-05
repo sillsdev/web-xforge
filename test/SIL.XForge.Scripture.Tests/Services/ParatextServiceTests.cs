@@ -1,45 +1,24 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NUnit.Framework;
-using SIL.Machine.WebApi.Services;
 using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
-using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
-using System.IdentityModel.Tokens.Jwt;
 using System.IO;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Security;
-using System.Security.Claims;
-using System.Text;
-using System.Xml;
-using System.Xml.XPath;
-using IdentityModel;
-using Newtonsoft.Json.Linq;
-using Paratext.Data;
-using Paratext.Data.Encodings;
-using Paratext.Data.Languages;
-using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
 using PtxUtils;
-using SIL.ObjectModel;
 using SIL.XForge.Services;
-using SIL.XForge.Utils;
 using Paratext.Base;
 using Paratext.Data.ProjectComments;
 
@@ -48,6 +27,31 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class ParatextServiceTests
     {
+        private MockScrText _paratextProject;
+        private CommentManager _manager;
+
+        [SetUp]
+        public void SetUp()
+        {
+            string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
+                "\\c 1\n" +
+                "\\v 1 Verse 1 here.\n" +
+                "\\v 2 Verse 2 here.";
+
+            _paratextProject = new MockScrText();
+            _paratextProject.Data.Add("RUT", ruthBookUsfm);
+            _manager = CommentManager.Get(_paratextProject);
+            if (!Directory.Exists(_paratextProject.Directory))
+                Directory.CreateDirectory(_paratextProject.Directory);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            CommentManager.RemoveCommentManager(_paratextProject);
+            Directory.Delete(_paratextProject.Directory, true);
+        }
+
         [Test]
         public void GetProjectsAsync_BadArguments()
         {
@@ -260,20 +264,51 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetNotes_RetrievesNotes()
         {
             string paratextProjectId = "ptId123";
-            string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
-                "\\c 1\n" +
-                "\\v 1 Verse 1 here.\n" +
-                "\\v 2 Verse 2 here.";
-
-            MockScrText paratextProject = new MockScrText();
-            paratextProject.Data.Add("RUT", ruthBookUsfm);
             int ruthBookNum = 8;
             var env = new TestEnvironment();
-            CommentManager manager = CommentManager.Get(paratextProject);
-            manager.AddComment(new Paratext.Data.ProjectComments.Comment { Thread = "Answer_dataId0123", VerseRefStr = "RUT 1:1" });
-            env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(paratextProject);
+            _manager.AddComment(new Paratext.Data.ProjectComments.Comment { Thread = "Answer_dataId0123", VerseRefStr = "RUT 1:1" });
+            env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(_paratextProject);
             string notes = env.Service.GetNotes(paratextProjectId, ruthBookNum);
             Assert.True(notes.StartsWith("<notes version=\"1.1\">\n  <thread id=\"Answer_dataId0123\">"));
+        }
+
+        [Test]
+        public async Task PutNotes_AddNewComment()
+        {
+            string paratextProjectId = "ptId123";
+            var env = new TestEnvironment();
+            env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(_paratextProject);
+
+            // Add new comment
+            string threadId = "Answer_0123";
+            string content = "Content for comment to update.";
+            string verseRef = "RUT 1:1";
+            string updateNotesString = env.GetUpdateNotesString(threadId, env.User01, content, verseRef);
+            env.Service.PutNotes(paratextProjectId, updateNotesString);
+
+            CommentThread thread = _manager.FindThread(threadId);
+            Assert.That(thread.Comments.Count, Is.EqualTo(1));
+            var comment = thread.Comments.First();
+            Assert.That(comment.VerseRefStr, Is.EqualTo(verseRef));
+            Assert.That(comment.User, Is.EqualTo(env.User01));
+            Assert.That(comment.Contents.InnerText, Is.EqualTo(content));
+
+            // Edit a comment
+            content = "Edited: Content for comment to update.";
+            updateNotesString = env.GetUpdateNotesString(threadId, env.User01, content, verseRef);
+            env.Service.PutNotes(paratextProjectId, updateNotesString);
+
+            Assert.That(thread.Comments.Count, Is.EqualTo(1));
+            comment = thread.Comments.First();
+            Assert.That(comment.Contents.InnerText, Is.EqualTo(content));
+
+            // Delete a comment
+            updateNotesString = env.GetUpdateNotesString(threadId, env.User01, content, verseRef, true);
+            env.Service.PutNotes(paratextProjectId, updateNotesString);
+
+            Assert.That(thread.Comments.Count, Is.EqualTo(1));
+            comment = thread.Comments.First();
+            Assert.That(comment.Deleted, Is.True, "Comment should be marked deleted");
         }
 
         private class TestEnvironment
@@ -419,6 +454,31 @@ namespace SIL.XForge.Scripture.Services
                             }
                         },
                     }));
+            }
+
+            public string GetUpdateNotesString(string threadId, string user, string content, string verseRef = "MAT 1:1", bool delete = false)
+            {
+                XElement notesElem = new XElement("notes", new XAttribute("version", "1.1"));
+                XElement threadElem = new XElement("thread", new XAttribute("id", threadId),
+                    new XElement("selection",
+                        new XAttribute("verseRef", "RUT 1:1"),
+                        new XAttribute("startPos", 0),
+                        new XAttribute("selectedText", "")
+                    ));
+                XElement commentElem = new XElement("comment", new XAttribute("user", user));
+                DateTime date = new DateTime();
+                commentElem.Add(new XAttribute("date", date.ToString("o")));
+                XElement contentElem = new XElement("content");
+                contentElem.Add(content);
+                commentElem.Add(contentElem);
+                if (delete)
+                {
+                    commentElem.SetAttributeValue("deleted", true);
+                    commentElem.SetAttributeValue("versionNbr", null);
+                }
+                threadElem.Add(commentElem);
+                notesElem.Add(threadElem);
+                return notesElem.ToString();
             }
         }
     }
