@@ -35,6 +35,8 @@ using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using System.Diagnostics;
 using System.Reflection;
+using Paratext.Data.ProjectComments;
+using System.Xml.Linq;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -457,7 +459,13 @@ namespace SIL.XForge.Scripture.Services
         {
             // TODO: get notes using CommentManager, see DataAccessServer.HandleNotesRequest for an example
             // should return some data structure instead of XML
-            throw new NotImplementedException();
+            ScrText scrText = _scrTextCollectionRunner.FindById(projectId);
+            if (scrText == null)
+                return null;
+
+            CommentManager manager = CommentManager.Get(scrText);
+            var threads = manager.FindThreads((commentThread) => { return commentThread.VerseRef.BookNum == bookNum; }, true);
+            return NotesFormatter.FormatNotes(threads);
         }
 
         public void PutNotes(string projectId, string notesText)
@@ -466,7 +474,6 @@ namespace SIL.XForge.Scripture.Services
             // should accept some data structure instead of XML
             throw new NotImplementedException();
         }
-
 
         // StringsEncoder class doesn't work on dotnet core because it assumes 1252 is available.
         // On dotnet core 1252 will never return from Encodings.GetEncodings(),
