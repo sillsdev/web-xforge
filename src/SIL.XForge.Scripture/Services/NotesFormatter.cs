@@ -1,3 +1,4 @@
+// This file is copied from Paratext DataAccessServer
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ using SIL.Xml;
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>
-    /// Formats CommentThreads as XML. Copied from Paratext DataAccessServer
+    /// Formats CommentThreads as XML.
     /// </summary>
     public static class NotesFormatter
     {
