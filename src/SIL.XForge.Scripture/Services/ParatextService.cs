@@ -1,4 +1,3 @@
-using System.Diagnostics.Contracts;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -35,9 +34,7 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using System.Diagnostics;
-using System.Reflection;
 using Paratext.Data.ProjectComments;
-using System.Xml.Linq;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -118,7 +115,7 @@ namespace SIL.XForge.Scripture.Services
             var dir = "repoCloneDir";
             await PullRepo2Async(userSecret, Path.Combine(SyncDir, dir));
             InitializeProjects(SyncDir);
-            var bookText = GetBookText("94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
+            // var bookText = GetBookText("94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
             SendReceive2(userSecret);
         }
 
@@ -226,7 +223,7 @@ namespace SIL.XForge.Scripture.Services
             ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
             // END HACK
 
-            string repoPath = "/var/lib/scriptureforge/sync/repoCloneDir";
+            // string repoPath = "/var/lib/scriptureforge/sync/repoCloneDir";
 
             var source = GetInternetSharedRepositorySource(userSecret) as JwtInternetSharedRepositorySource;
             var repositories = source.GetRepositories();
@@ -411,7 +408,6 @@ namespace SIL.XForge.Scripture.Services
                 Hg.Default.Init(repo);
             }
             var source = GetInternetSharedRepositorySource(userSecret);
-            var repositories = source.GetRepositories();
             var repoInfo = source.GetRepositories().FirstOrDefault(x => x.SendReceiveId == projectId);
             if (source == null)
                 return;
@@ -475,7 +471,56 @@ namespace SIL.XForge.Scripture.Services
         {
             // TODO: save notes using CommentManager, see DataAccessServer.HandleNotesUpdateRequest for an example
             // should accept some data structure instead of XML
-            throw new NotImplementedException();
+            List<string> users = new List<string>();
+            int nbrAddedComments = 0, nbrDeletedComments = 0, nbrUpdatedComments = 0;
+            ScrText scrText = _scrTextCollectionRunner.FindById(projectId);
+            CommentManager manager = CommentManager.Get(scrText);
+            var notes = NotesFormatter.ParseNotes(notesText);
+
+            // Algorithm sourced from Paratext DataAccessServer
+            foreach (var thread in notes)
+            {
+                CommentThread existingThread = manager.FindThread(thread[0].Thread);
+                foreach (var comment in thread)
+                {
+                    var existingComment = existingThread?.Comments.FirstOrDefault(c => c.Id == comment.Id);
+                    if (existingComment == null)
+                    {
+                        manager.AddComment(comment);
+                        nbrAddedComments++;
+                    }
+                    else if (comment.Deleted)
+                    {
+                        existingComment.Deleted = true;
+                        nbrDeletedComments++;
+                    }
+                    else
+                    {
+                        existingComment.ExternalUser = comment.ExternalUser;
+                        existingComment.Contents = comment.Contents;
+                        existingComment.VersionNumber += 1;
+                        nbrUpdatedComments++;
+                    }
+
+                    if (!users.Contains(comment.User))
+                        users.Add(comment.User);
+                }
+            }
+            // May need to implement a lock for the project
+            // if (!LockProject(scrText))
+            //     return CreateErrorResponse(HttpStatusCode.Forbidden, "Could not lock project");
+            try
+            {
+                foreach (string user in users)
+                    manager.SaveUser(user, false);
+                VersionedText vText = VersioningManager.Get(scrText);
+                vText.Commit($"{nbrAddedComments} notes added and {nbrDeletedComments + nbrUpdatedComments} notes updated or deleted in synchronize", null, false, "User01");
+                Trace.TraceInformation("{0} added {1} notes, updaed {2} notes and deleted {3} notes", "User01", nbrAddedComments, nbrUpdatedComments, nbrDeletedComments);
+            }
+            catch (Exception e)
+            {
+                Trace.TraceError("Exception while updating notes: {0}", e);
+            }
         }
 
         // StringsEncoder class doesn't work on dotnet core because it assumes 1252 is available.
