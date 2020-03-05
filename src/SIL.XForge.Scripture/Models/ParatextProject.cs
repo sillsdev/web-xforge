@@ -14,9 +14,9 @@ namespace SIL.XForge.Scripture.Models
         public string LanguageTag { get; set; }
         /// <summary>Id of corresponding SF project.</summary>
         public string SFProjectId { get; set; }
-        /// <summary>Either the SF project exists and the SF user hasn't been added to the SF project, or the SF project doesn't exist and the user is the administrator.</summary>
+        /// <summary>If the requesting user has access to the PT project, but not yet to a corresponding SF project, and has permission to connect a SF project to the PT project. The SF project may or may not yet already exist.</summary>
         public bool IsConnectable { get; set; }
-        /// <summary>A SF project exists in the SF DB that syncs to a PT project on the Paratext server, and the requesting SF user is a member of that SF project.</summary>
+        /// <summary>If the requesting user has access to both the PT project and the corresponding SF project.</summary>
         public bool IsConnected { get; set; }
 
         /// <summary>Hash of properties.</summary>
