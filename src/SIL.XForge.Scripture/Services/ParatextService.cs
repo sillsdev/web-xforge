@@ -242,7 +242,9 @@ namespace SIL.XForge.Scripture.Services
             Console.WriteLine($"S/R complete. NoErrors? {noErrors}");
         }
 
-        /// <summary>Get Paratext projects that a user has access to. TODO what about projects the user does not have access to.</summary>
+        /// <summary>Get Paratext projects that a user has access to.
+        /// TODO what about projects the user does not have access to.
+        /// TODO Revise IsConnectable and IsConnected according to updated comments in ParatextProject.cs.</summary>
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
             if (userSecret == null) throw new ArgumentNullException();
