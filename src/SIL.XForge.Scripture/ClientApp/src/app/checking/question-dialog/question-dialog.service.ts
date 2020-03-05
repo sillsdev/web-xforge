@@ -25,7 +25,7 @@ export class QuestionDialogService {
 
   /** Opens a question dialog that can be used to add a new question or edit an existing question. */
   async questionDialog(config: QuestionDialogData, questionDoc?: QuestionDoc): Promise<QuestionDoc | undefined> {
-    const dialogConfig: MdcDialogConfig = { data: config };
+    const dialogConfig: MdcDialogConfig = { data: config, clickOutsideToClose: false };
     const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig) as MdcDialogRef<
       QuestionDialogComponent,
       QuestionDialogResult | 'close'
