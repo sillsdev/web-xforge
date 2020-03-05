@@ -41,6 +41,7 @@ using SIL.ObjectModel;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using Paratext.Base;
+using Paratext.Data.ProjectComments;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -255,6 +256,26 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(result, Is.Null);
         }
 
+        [Test]
+        public async Task GetNotes_RetrievesNotes()
+        {
+            string paratextProjectId = "ptId123";
+            string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
+                "\\c 1\n" +
+                "\\v 1 Verse 1 here.\n" +
+                "\\v 2 Verse 2 here.";
+
+            MockScrText paratextProject = new MockScrText();
+            paratextProject.Data.Add("RUT", ruthBookUsfm);
+            int ruthBookNum = 8;
+            var env = new TestEnvironment();
+            CommentManager manager = CommentManager.Get(paratextProject);
+            manager.AddComment(new Paratext.Data.ProjectComments.Comment { Thread = "Answer_dataId0123", VerseRefStr = "RUT 1:1" });
+            env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(paratextProject);
+            string notes = env.Service.GetNotes(paratextProjectId, ruthBookNum);
+            Assert.True(notes.StartsWith("<notes version=\"1.1\">\n  <thread id=\"Answer_dataId0123\">"));
+        }
+
         private class TestEnvironment
         {
             public readonly string Project01 = "project01";
@@ -296,6 +317,7 @@ namespace SIL.XForge.Scripture.Services
                 Service = new ParatextService(MockHostingEnvironment, MockParatextOptions, MockRepository, RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService);
                 Service._scrTextCollectionRunner = MockedScrTextCollectionRunner;
 
+                RegistryU.Implementation = new DotNetCoreRegistry();
                 AddProjectRepository();
             }
 
@@ -308,7 +330,6 @@ namespace SIL.XForge.Scripture.Services
                     AccessToken = "access_token_1234",
                     RefreshToken = "refresh_token_1234"
                 };
-                // ptToken.AccessToken = "eyJhbGciOiJSUzI1NiJ9.eyJzY29wZXMiOlsiZGF0YV9hY2Nlc3MiLCJlbWFpbCIsIm9mZmxpbmVfYWNjZXNzIiwib3BlbmlkIiwicHJvamVjdHMubWVtYmVyczpyZWFkIiwicHJvamVjdHMubWVtYmVyczp3cml0ZSIsInByb2plY3RzOnJlYWQiXSwiaWF0IjoxNTgzMTkzMjg4LCJqdGkiOiIzeTZzYkZOS2cycThob2ZzUSIsImF1ZCI6WyJodHRwczovL3JlZ2lzdHJ5LWRldi5wYXJhdGV4dC5vcmciLCJodHRwczovL2RhdGEtYWNjZXNzLWRldi5wYXJhdGV4dC5vcmciLCJodHRwczovL2FyY2hpdmVzLWRldi5wYXJhdGV4dC5vcmciXSwic3ViIjoiZ0hUcHVuRWIzWkNEcW1xVEsiLCJleHAiOjE1ODMxOTQ0ODgsImF6cCI6IkRiRERwN25BZFBZdHVKTDlMIiwidXNlcm5hbWUiOiJSYXltb25kIEx1b25nIiwiaXNzIjoicHRyZWdfcnNhIn0.B0JvNb5sJwc3wSvAI5zOq3_3OghimNmfVFn0axGFBXHhT5BMHaOjdrfJJGNEQZO3aA3v83vou8n2sM_6zcnxiixCGnr_cmyl62bJjma0HHFX47Ms30TQQaDjiTON50czG7fqiKyGRtBbagjlkT8ulRjeoJbUtK-I3aIHmn6-FNZn4DdfbgznMtav8DP3m9r0L4pfyloOEH4Z3If5OTn9xfokP-bJtgoxrLOspzOfZaU6wqH-8uy7imAmhfBwpZxDwnqP1KHLXgpQB1SbCrrIhv82x66D6iL_5VP1laPjlc3zTk29ilE_HW0F1eIzrjDaMhYsTHQE2M6noCsKPrni6Q";
                 userSecret.ParatextTokens = ptToken;
                 return userSecret;
             }
