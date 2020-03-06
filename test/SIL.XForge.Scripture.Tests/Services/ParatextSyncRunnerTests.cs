@@ -819,12 +819,12 @@ namespace SIL.XForge.Scripture.Services
 
             public async Task SetupPTData(params Book[] books)
             {
-                ParatextService.GetBooks("target")
+                ParatextService.GetBookList("target")
                     .Returns(books.Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 // Include book with Source even if there are no chapters, if there are also no chapters in Target. PT
                 // can actually have or not have books which do or do not have chapters more flexibly than this. But in
                 // this way, allow tests to request a Source book exist even with zero chapters.
-                ParatextService.GetBooks("source")
+                ParatextService.GetBookList("source")
                     .Returns(books
                         .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
                         .Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
@@ -897,7 +897,7 @@ namespace SIL.XForge.Scripture.Services
                 string paratextProject = GetParatextProject(textType);
                 string oldBookText = GetBookText(textType, bookId, 1);
                 string remoteBookText = GetBookText(textType, bookId, 3);
-                ParatextService.GetBookText(Arg.Any<UserSecret>(), paratextProject, Canon.BookIdToNumber(bookId))
+                ParatextService.GetBookTextAsync(Arg.Any<UserSecret>(), paratextProject, Canon.BookIdToNumber(bookId))
                     .Returns(x => _sendReceivedCalled ? remoteBookText : oldBookText);
             }
 

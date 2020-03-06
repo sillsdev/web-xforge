@@ -17,8 +17,8 @@ namespace SIL.XForge.Scripture.Services
         Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret, string projectId);
         // bool IsManagingProject(string projectId);
 
-        IReadOnlyList<int> GetBooks(string ptProjectId);
-        Task<string> GetBookText(UserSecret userSecret, string ptProjectId, int bookNum);
+        IReadOnlyList<int> GetBookList(string ptProjectId);
+        Task<string> GetBookTextAsync(UserSecret userSecret, string ptProjectId, int bookNum);
         void PutBookText(string ptProjectId, int bookNum, string usx);
         string GetNotes(string ptProjectId, int bookNum);
         void PutNotes(string ptProjectId, string notesText);
