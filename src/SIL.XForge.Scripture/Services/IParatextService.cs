@@ -23,6 +23,6 @@ namespace SIL.XForge.Scripture.Services
         string GetNotes(string ptProjectId, int bookNum);
         void PutNotes(string ptProjectId, string notesText);
 
-        void SendReceive(UserSecret userSecret, IEnumerable<string> ptProjectIds);
+        Task SendReceiveAsync(UserSecret userSecret, IEnumerable<string> ptProjectIds);
     }
 }
