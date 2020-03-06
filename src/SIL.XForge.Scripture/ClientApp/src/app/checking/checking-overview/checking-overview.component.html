@@ -26,10 +26,10 @@
               keyboard_arrow_{{ itemVisible[getBookId(text)] ? "down" : "right" }}
             </mdc-icon>
             <span fxFlex>{{ getBookName(text) }}</span>
-            <span fxFlex="100px" fxShow fxHide.xs fxLayoutAlign="end center">
+            <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
               {{ questionCountLabel(bookQuestionCount(text)) }}
             </span>
-            <span fxFlex="100px" fxShow fxHide.xs fxLayoutAlign="end center">
+            <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
               {{ answerCountLabel(bookAnswerCount(text)) }}
             </span>
             <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
@@ -51,10 +51,10 @@
                   keyboard_arrow_{{ itemVisible[getTextDocId(text.bookNum, chapter.number)] ? "down" : "right" }}
                 </mdc-icon>
                 <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
-                <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
+                <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
                   {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
                 </span>
-                <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
+                <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
                   {{ answerCountLabel(chapterAnswerCount(text.bookNum, chapter.number)) }}
                 </span>
                 <span fxFlex="64px" fxShow fxHide.xs fxLayoutAlign="end center">&nbsp;</span>
@@ -72,7 +72,7 @@
                   <span fxFlex class="no-overflow-ellipsis">
                     <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
                   </span>
-                  <span fxFlex="80px" fxShow fxHide.xs fxLayoutAlign="end center">
+                  <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
                     {{ answerCountLabel(questionDoc.data?.answers.length) }}
                   </span>
                   <span fxFlex="64px" fxLayoutAlign="end center">
