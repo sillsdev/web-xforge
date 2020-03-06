@@ -671,7 +671,7 @@ namespace SIL.XForge.Scripture.Services
                 };
                 ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-                ParatextService.When(x => x.SendReceive(Arg.Any<UserSecret>(), Arg.Any<IEnumerable<string>>()))
+                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<IEnumerable<string>>()))
                     .Do(x => _sendReceivedCalled = true);
                 RealtimeService = new SFMemoryRealtimeService();
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
