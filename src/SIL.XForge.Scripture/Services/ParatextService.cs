@@ -35,6 +35,7 @@ using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using System.Diagnostics;
 using Paratext.Data.ProjectComments;
+using SIL.Scripture;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -61,6 +62,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly bool _useDevServer;
         internal IScrTextCollectionWrapper _scrTextCollectionWrapper;
         internal ISharingLogicWrapper _sharingLogicWrapper;
+        internal IHgHelper _hgHelper;
         private readonly string _resourcesPath;
         ///< summary>Path to cloned PT project Mercurial repos.</summary>
         public string SyncDir;
@@ -99,7 +101,10 @@ namespace SIL.XForge.Scripture.Services
             }
             _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _scrTextCollectionWrapper = new ScrTextCollectionWrapper();
+            _hgHelper = new HgHelper();
+
             _sharingLogicWrapper = new SharingLogicWrapper();
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
 
@@ -343,10 +348,10 @@ namespace SIL.XForge.Scripture.Services
             return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
         }
 
-        public void PutBookText(string projectId, int bookNum, string usx)
+        public string PutBookText(string projectId, int bookNum, string revision, string usx)
         {
             // TODO: this is a guess at how to implement this method
-            ScrText scrText = _scrTextCollectionWrapper.GetById(projectId);
+            ScrText scrText = _scrTextCollectionWrapper.FindById(projectId);
             var doc = new XmlDocument
             {
                 PreserveWhitespace = true
@@ -354,7 +359,20 @@ namespace SIL.XForge.Scripture.Services
             doc.LoadXml(usx);
             UsxFragmenter.FindFragments(scrText.ScrStylesheet(bookNum), doc.CreateNavigator(),
                 XPathExpression.Compile("*[false()]"), out string usfm);
+            usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft);
+            // Most likely the hg repo will always be up to date, so this would not be required
+            // if (_hgHelper.GetRevisionAtTip(scrText) != revision)
+            //     _hgHelper.Update(scrText.Directory, revision);
             scrText.PutText(bookNum, 0, false, usfm, null);
+            // This may be needed to commit our work
+            /*
+            VersionedText vText = VersioningManager.Get(scrText);
+            vText.Commit($"Update to book {bookId} by Data Access Server", null, false, user.UserName.ToSafeText());
+            if (chapterInfo.HgRevision != revision)
+                vText.PerformMerges(user.UserName.ToSafeText());
+            Trace.TraceInformation("Book {0} updated by {1}", bookId, user.UserName);
+            */
+            return BookTextAsXml(projectId, bookNum);
         }
 
         public string GetNotes(string projectId, int bookNum)
@@ -417,7 +435,7 @@ namespace SIL.XForge.Scripture.Services
                 foreach (string user in users)
                     manager.SaveUser(user, false);
                 VersionedText vText = VersioningManager.Get(scrText);
-                vText.Commit($"{nbrAddedComments} notes added and {nbrDeletedComments + nbrUpdatedComments} notes updated or deleted in synchronize", null, false, "User01");
+                vText.Commit($"{nbrAddedComments} notes added and {nbrDeletedComments + nbrUpdatedComments} notes updated or deleted in synchronize", null, false, users[0]);
                 // TODO probably not "User01" above and below (?).
                 Trace.TraceInformation("{0} added {1} notes, updated {2} notes and deleted {3} notes", "User01", nbrAddedComments, nbrUpdatedComments, nbrDeletedComments);
             }
@@ -513,6 +531,34 @@ namespace SIL.XForge.Scripture.Services
                 SetupAccessToPtRegistry(userSecret);
             }
             return _internetSharedRepositorySource[userSecret.Id];
+        }
+
+        private string BookTextAsXml(string projectId, int bookNum)
+        {
+            ScrText scrText = _scrTextCollectionWrapper.FindById(projectId);
+            string usfm = scrText.GetText(bookNum);
+            string bookText = UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
+            XmlDocument usxDoc = new XmlDocument();
+            usxDoc.LoadXml(bookText);
+
+            string bookId = Canon.BookNumberToId(bookNum);
+            XmlNodeList nodeList = usxDoc.FirstChild.SelectNodes("*");
+            if (nodeList != null && (usxDoc.FirstChild == null || nodeList.Count == 0))
+            {
+                string errorMsg = "No text found at requested location: " + bookId;
+                throw new FormatException(errorMsg);
+            }
+            StringBuilder bldr = new StringBuilder(bookText.Length + 100);
+            bldr.AppendFormat("<BookText project=\"{0}\" book=\"{1}\"", scrText.Name, bookId);
+            bldr.AppendFormat(" revision=\"{0}\">\n", GetRevisionAtTip(scrText, bookNum));
+            bldr.Append(bookText);
+            bldr.Append("\n</BookText");
+            return bldr.ToString();
+        }
+
+        private string GetRevisionAtTip(ScrText scrText, int bookNum)
+        {
+            return _hgHelper.GetRevisionAtTip(scrText);
         }
     }
 }

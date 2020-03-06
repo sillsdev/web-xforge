@@ -21,6 +21,8 @@ using PtxUtils;
 using SIL.XForge.Services;
 using Paratext.Base;
 using Paratext.Data.ProjectComments;
+using SIL.XForge.Realtime.RichText;
+using Newtonsoft.Json.Linq;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -267,6 +269,33 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void PutBookText_TextEdited_BookTextIsUpdated()
+        {
+            string paratextProjectId = "ptId123";
+            var env = new TestEnvironment();
+            env.MockedScrTextCollectionWrapper.FindById(paratextProjectId).Returns(_paratextProject);
+
+            int ruthBookNum = 8;
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+
+            JToken token1 = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
+            JToken token2 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"1\", \"style\": \"v\" } } }");
+            JToken token3 = JToken.Parse("{\"insert\": \"Verse 1 here. \", \"attributes\": { \"segment\": \"verse_1_1\" } }");
+            JToken token4 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"2\", \"style\": \"v\" } } }");
+            JToken token5 = JToken.Parse("{\"insert\": \"Verse 2 here. THIS PART IS EDITED!\", \"attributes\": { \"segment\": \"verse_1_2\" } }");
+
+
+            TextData data = new TextData(new Delta(new[] { token1, token2, token3, token4, token5 }));
+            XDocument oldDocUsx = XDocument.Parse(ruthBookUsx);
+            DeltaUsxMapper mapper = new DeltaUsxMapper();
+            var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
+            string revision = env.Service._hgHelper.GetRevisionAtTip(_paratextProject);
+            string result = env.Service.PutBookText(paratextProjectId, ruthBookNum, revision, newDocUsx.Root.ToString());
+            _paratextProject.FileManager.Received(1).WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
+            Assert.True(result.StartsWith($"<BookText project=\"{_paratextProject.Name}\" book=\"RUT\" revision=\"{revision}\">"));
+        }
+
+        [Test]
         public async Task GetBookText_ProjectNotYetCloned()
         {
             // PT project isn't cloned yet.
@@ -310,7 +339,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void PutNotes_AddNewComment()
+        public void PutNotes_AddEditDeleteComment_ThreadCorrectlyUpdated()
         {
             string paratextProjectId = "ptId123";
             var env = new TestEnvironment();
@@ -429,6 +458,7 @@ namespace SIL.XForge.Scripture.Services
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository, RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService);
                 Service._scrTextCollectionWrapper = MockedScrTextCollectionWrapper;
                 Service._sharingLogicWrapper = MockedSharingLogicWrapper;
+                Service._hgHelper = new MockHgHelper();
                 Service.SyncDir = "/tmp";
 
                 RegistryU.Implementation = new DotNetCoreRegistry();
@@ -547,7 +577,7 @@ namespace SIL.XForge.Scripture.Services
                 XElement notesElem = new XElement("notes", new XAttribute("version", "1.1"));
                 XElement threadElem = new XElement("thread", new XAttribute("id", threadId),
                     new XElement("selection",
-                        new XAttribute("verseRef", "RUT 1:1"),
+                        new XAttribute("verseRef", verseRef),
                         new XAttribute("startPos", 0),
                         new XAttribute("selectedText", "")
                     ));
