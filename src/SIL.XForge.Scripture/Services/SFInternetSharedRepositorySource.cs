@@ -25,23 +25,25 @@ namespace SIL.XForge.Scripture.Services
         {
             throw new NotImplementedException();
         }
+        public InternetSharedRepositorySource AsInternetSharedRepositorySource()
+        {
+            return this;
+        }
     }
 
     class JwtInternetSharedRepositorySource : InternetSharedRepositorySource, IInternetSharedRepositorySource
     {
-        // public JwtInternetSharedRepositorySource(string jwtToken)
-        // {
-        //     client.JwtToken = jwtToken;
-        //     // RESTClient only uses the jwtToken if authentication is null;
-        //     ReflectionHelper.SetField(client, "authentication", null);
-
-        //      }
         public void SetToken(string jwtToken)
         {
             client.JwtToken = jwtToken;
             // RESTClient only uses the jwtToken if authentication is null;
             ReflectionHelper.SetField(client, "authentication", null);
 
+        }
+
+        public InternetSharedRepositorySource AsInternetSharedRepositorySource()
+        {
+            return this;
         }
     }
 
@@ -50,6 +52,9 @@ namespace SIL.XForge.Scripture.Services
         IEnumerable<SharedRepository> GetRepositories();
         string[] Pull(string repository, SharedRepository pullRepo);
         void SetToken(string jwtToken);
+
+        /// <summary>Access as a particular class.</summary>
+        InternetSharedRepositorySource AsInternetSharedRepositorySource();
     }
 
     class JwtRESTClient : RESTClient

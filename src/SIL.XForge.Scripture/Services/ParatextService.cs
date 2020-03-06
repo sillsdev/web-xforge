@@ -60,6 +60,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IExceptionHandler _exceptionHandler;
         private readonly bool _useDevServer;
         internal IScrTextCollectionWrapper _scrTextCollectionWrapper;
+        internal ISharingLogicWrapper _sharingLogicWrapper;
         private readonly string _resourcesPath;
         ///< summary>Path to cloned PT project Mercurial repos.</summary>
         public string SyncDir;
@@ -98,6 +99,7 @@ namespace SIL.XForge.Scripture.Services
             }
             _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _scrTextCollectionWrapper = new ScrTextCollectionWrapper();
+            _sharingLogicWrapper = new SharingLogicWrapper();
         }
 
 
@@ -109,7 +111,7 @@ namespace SIL.XForge.Scripture.Services
             SetupAccessToPtRegistry(userSecret);
             var projectList = GetProjectsAsync(userSecret);
             var bookText = GetBookTextAsync(userSecret, "94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
-            SendReceive2(userSecret);
+            await SendReceiveAsync(userSecret, null);
         }
 
         /// <summary>Prepare access to Paratext.Data library, authenticate, and prepare Mercurial.</summary>
@@ -130,6 +132,7 @@ namespace SIL.XForge.Scripture.Services
             InstallStyles();
             WritingSystemRepository.Initialize();
             // TODO will this crash if haven't set user credentials yet?
+            // TODO this may need done again after cloning a new project?
             _scrTextCollectionWrapper.Initialize(SyncDir, false);
         }
 
@@ -200,32 +203,34 @@ namespace SIL.XForge.Scripture.Services
             Hg.Default.Update(clonePath);
         }
 
+        // TODO might need to do?: lock repo, pull, merge, push results, unlock repo.
         /// <summary>(Learning/experimenting by writing Sendreceive anew)</summary>
-        public void SendReceive2(UserSecret userSecret)
+        public async Task SendReceiveAsync(UserSecret userSecret, IEnumerable<string> ptProjectIds)
         {
-            ScrText scrText = _scrTextCollectionWrapper.FindById("94f48e5b710ec9e092d9a7ec2d124c30f33a04bf");
+            if (userSecret == null || ptProjectIds == null) { throw new ArgumentNullException(); }
 
+            IInternetSharedRepositorySource source = GetInternetSharedRepositorySource(userSecret);
+            IEnumerable<SharedRepository> repositories = source.GetRepositories();
+            Dictionary<string, ParatextProject> ptProjectsAvailable =
+                (await GetProjectsAsync(userSecret)).ToDictionary(ptProject => ptProject.ParatextId);
+            IEnumerable<string> unconnectedProjects = ptProjectIds.Except(ptProjectsAvailable.Keys);
+            if (unconnectedProjects.Any())
+            {
+                throw new ArgumentException(
+                    $"PT projects with the following PT ids were requested but without access or they don't exist: {string.Join(", ", unconnectedProjects.ToList())}");
+            }
+            List<SharedProject> sharedPtProjectsToSr = ptProjectIds.Select(ptProjId =>
+                _sharingLogicWrapper.CreateSharedProject(ptProjId, ptProjectsAvailable[ptProjId].ShortName,
+                    source.AsInternetSharedRepositorySource(), repositories)).ToList();
 
-            // BEGIN HACK
-            ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
-            // END HACK
-
-            // string repoPath = "/var/lib/scriptureforge/sync/repoCloneDir";
-
-            // TODO something more reliable than 'as' here.
-            var source = GetInternetSharedRepositorySource(userSecret) as JwtInternetSharedRepositorySource;
-            var repositories = source.GetRepositories();
-
-
-            SharedProject sharedProj = SharingLogic.CreateSharedProject(scrText.Guid, "Ott", source as InternetSharedRepositorySource, repositories);
-
-
+            // TODO report results
             List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
-            var list = new[] { sharedProj }.ToList();
-            bool success = false;
-            bool noErrors = SharingLogic.HandleErrors(() => success = SharingLogic.ShareChanges(new[] { sharedProj }.ToList(), source as InternetSharedRepositorySource,
-                out results, list));
-            Console.WriteLine($"S/R complete. NoErrors? {noErrors}");
+            bool success = false; // todo test fail 'success'
+            // todo test fail 'noErrors'
+            bool noErrors = _sharingLogicWrapper.HandleErrors(() => success = _sharingLogicWrapper.ShareChanges(sharedPtProjectsToSr, source.AsInternetSharedRepositorySource(),
+                out results, sharedPtProjectsToSr));
+            // todo test exception occurrence
+            if (!noErrors || !success) { throw new Exception("!"); }
         }
 
         /// <summary>Get Paratext projects that a user has access to.
@@ -242,12 +247,15 @@ namespace SIL.XForge.Scripture.Services
 
             foreach (SharedRepository remotePtProject in remotePtProjects)
             {
-                SFProject correspondingSfProject = existingSfProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remotePtProject.SendReceiveId);
+                SFProject correspondingSfProject =
+                    existingSfProjects.FirstOrDefault(sfProj => sfProj.ParatextId == remotePtProject.SendReceiveId);
 
                 bool sfProjectExists = correspondingSfProject != null;
                 bool sfUserIsOnSfProject = correspondingSfProject?.UserRoles.ContainsKey(userSecret.Id) ?? false;
-                bool adminOnPtProject = remotePtProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator; // TODO Fetch and use actual PT username.
-                bool ptProjectIsConnectable = (sfProjectExists && !sfUserIsOnSfProject) || (!sfProjectExists && adminOnPtProject);
+                // TODO Fetch and use actual PT username.
+                bool adminOnPtProject = remotePtProject.SourceUsers.GetRole("the_username") == UserRoles.Administrator;
+                bool ptProjectIsConnectable =
+                    (sfProjectExists && !sfUserIsOnSfProject) || (!sfProjectExists && adminOnPtProject);
 
                 paratextProjects.Add(new ParatextProject
                 {
@@ -419,40 +427,6 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-
-        public void SendReceive(UserSecret userSecret, IEnumerable<string> projectIds)
-        {
-            foreach (var projectId in projectIds)
-            {
-                if (!IsManagingProject(projectId))
-                {
-                    PullRepo(userSecret, projectId);
-                }
-            }
-            ScrText scrText = _scrTextCollectionWrapper.FindById(projectIds.First());
-
-
-            // BEGIN HACK
-            ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
-            // END HACK
-
-            // TODO: this is a guess at how to implement this method
-            var source = new SFInternetSharedRepositorySource(_useDevServer, userSecret);
-            SharedRepository[] repos = source.GetRepositories().ToArray();
-            var sharedProjects = new List<SharedProject>();
-            foreach (string projectId in projectIds)
-            {
-                SharedRepository repo = repos.First(r => r.SendReceiveId == projectId); // todo what if not found.
-                SharedProject sharedProject = SharingLogic.CreateSharedProject(projectId, repo.ScrTextName, source,
-                    repos);
-                sharedProjects.Add(sharedProject);
-            }
-
-
-            SharingLogic.ShareChanges(sharedProjects, source, out List<SendReceiveResult> results, sharedProjects);
-        }
-
-
         private async Task RefreshAccessTokenAsync(UserSecret userSecret)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, "api8/token");
@@ -519,7 +493,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
 
-
+        // TODO Set up a Dispose method to call these if that's important.
         protected override void DisposeManagedResources()
         {
             _registryClient.Dispose();
