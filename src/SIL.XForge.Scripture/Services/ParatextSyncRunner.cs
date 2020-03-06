@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -8,6 +9,7 @@ using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using SIL.Machine.WebApi.Services;
 using SIL.ObjectModel;
+using SIL.Scripture;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -276,11 +278,13 @@ namespace SIL.XForge.Scripture.Services
         {
             string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, text.BookNum);
             var oldUsxDoc = XDocument.Parse(bookText);
+            // TODO: Get the real revision number
+            string revisionNbr = "012345678901";
             XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
                 .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
 
             if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
-                _paratextService.PutBookText(paratextId, text.BookNum, newUsxDoc.Root.ToString());
+                _paratextService.PutBookText(paratextId, text.BookNum, revisionNbr, newUsxDoc.Root.ToString());
         }
 
         private async Task UpdateParatextNotesAsync(TextInfo text, IReadOnlyList<IDocument<Question>> questionDocs)
