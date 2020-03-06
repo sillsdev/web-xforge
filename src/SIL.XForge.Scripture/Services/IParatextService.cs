@@ -19,7 +19,7 @@ namespace SIL.XForge.Scripture.Services
 
         IReadOnlyList<int> GetBookList(string ptProjectId);
         Task<string> GetBookTextAsync(UserSecret userSecret, string ptProjectId, int bookNum);
-        void PutBookText(string ptProjectId, int bookNum, string usx);
+        string PutBookText(string ptProjectId, int bookNum, string revision, string usx);
         string GetNotes(string ptProjectId, int bookNum);
         void PutNotes(string ptProjectId, string notesText);
 
