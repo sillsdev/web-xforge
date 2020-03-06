@@ -215,7 +215,7 @@ namespace SIL.XForge.Scripture.Services
             string paratextProjectId = "ptId123";
             env.MockedScrTextCollectionRunner.FindById(paratextProjectId).Returns(paratextProject);
 
-            IReadOnlyList<int> result = env.Service.GetBooks(paratextProjectId);
+            IReadOnlyList<int> result = env.Service.GetBookList(paratextProjectId);
             Assert.That(result.Count(), Is.EqualTo(3));
             Assert.That(result, Is.EquivalentTo(new[] { 1, 2, 3 }));
         }
@@ -237,7 +237,7 @@ namespace SIL.XForge.Scripture.Services
             // env.MockedScrTextCollectionRunner.GetById(paratextProjectId).Returns(paratextProject);
 
             // SUT
-            string result = await env.Service.GetBookText(null, paratextProjectId, 8);
+            string result = await env.Service.GetBookTextAsync(null, paratextProjectId, 8);
             Assert.That(result, Is.EqualTo(ruthBookUsx));
             Assert.That(paratextProject.Settings.Encoder is HackStringEncoder, Is.True, "codepage 1252 workaround needs to be in place");
         }
@@ -259,7 +259,7 @@ namespace SIL.XForge.Scripture.Services
             env.MockedScrTextCollectionRunner.FindById(ptProjectId).Returns(i => null);
 
             // SUT
-            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetBookText(user01Secret, ptProjectId, 8));
+            Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetBookTextAsync(user01Secret, ptProjectId, 8));
             // Should have tried to clone the needed repo.
             mockSource.Received(1).Pull(Arg.Any<string>(), Arg.Any<SharedRepository>());
             // Should have tried twice to access project.
@@ -289,7 +289,7 @@ namespace SIL.XForge.Scripture.Services
             env.MockedScrTextCollectionRunner.FindById(ptProjectId).Returns(null, paratextProject);
 
             // SUT
-            string result = await env.Service.GetBookText(user01Secret, ptProjectId, 8);
+            string result = await env.Service.GetBookTextAsync(user01Secret, ptProjectId, 8);
             Assert.That(result, Is.EqualTo(ruthBookUsx));
             // Should have tried to clone the needed repo.
             mockSource.Received(1).Pull(Arg.Any<string>(), Arg.Any<SharedRepository>());
@@ -364,7 +364,7 @@ namespace SIL.XForge.Scripture.Services
             public IExceptionHandler MockExceptionHandler;
             public IOptions<SiteOptions> MockSiteOptions;
             public IFileSystemService MockFileSystemService;
-            public IScrTextCollectionRunner MockedScrTextCollectionRunner;
+            public IScrTextCollectionWrapper MockedScrTextCollectionRunner;
 
 
             public ParatextService Service;
@@ -379,7 +379,7 @@ namespace SIL.XForge.Scripture.Services
                 MockExceptionHandler = Substitute.For<IExceptionHandler>();
                 MockSiteOptions = Substitute.For<IOptions<SiteOptions>>();
                 MockFileSystemService = Substitute.For<IFileSystemService>();
-                MockedScrTextCollectionRunner = Substitute.For<IScrTextCollectionRunner>();
+                MockedScrTextCollectionRunner = Substitute.For<IScrTextCollectionWrapper>();
                 // MockInternetSharedRepositorySource = Substitute.For<IInternetSharedRepositorySource>();
 
                 RealtimeService = new SFMemoryRealtimeService();
@@ -387,7 +387,7 @@ namespace SIL.XForge.Scripture.Services
                 //Mock=Substitute.For<>();
                 //Mock=Substitute.For<>();
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository, RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService);
-                Service._scrTextCollectionRunner = MockedScrTextCollectionRunner;
+                Service._scrTextCollectionWrapper = MockedScrTextCollectionRunner;
                 Service.SyncDir = "/tmp";
 
                 RegistryU.Implementation = new DotNetCoreRegistry();
