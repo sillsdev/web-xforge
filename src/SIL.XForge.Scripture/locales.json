@@ -16,7 +16,8 @@
   {
     "localName": "简体中文",
     "englishName": "Chinese (Simplified)",
-    "tags": ["zh-CN", "zh"]
+    "tags": ["zh-CN", "zh"],
+    "production": true
   },
   {
     "localName": "Español",
@@ -27,17 +28,20 @@
   {
     "localName": "Русский",
     "englishName": "Russian",
-    "tags": ["ru", "ru-RU"]
+    "tags": ["ru", "ru-RU"],
+    "production": true
   },
   {
     "localName": "Português",
     "englishName": "Portuguese",
-    "tags": ["pt-BR"]
+    "tags": ["pt-BR"],
+    "production": true
   },
   {
     "localName": "Bahasa Indonesia",
     "englishName": "Indonesian",
-    "tags": ["id", "id-ID"]
+    "tags": ["id", "id-ID"],
+    "production": true
   },
   {
     "localName": "Azərbaycanca",
