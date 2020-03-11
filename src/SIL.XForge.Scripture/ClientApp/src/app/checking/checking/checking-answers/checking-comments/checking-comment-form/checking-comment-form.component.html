@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'checking_comment_form'">
-  <form [formGroup]="commentForm" (ngSubmit)="submit()" autocomplete="off" id="comment-form">
+  <form [formGroup]="commentForm" (ngSubmit)="submit()" autocomplete="off" id="comment-form" appScrollIntoView>
     <mdc-form-field fluid>
       <mdc-text-field
         appAutofocus

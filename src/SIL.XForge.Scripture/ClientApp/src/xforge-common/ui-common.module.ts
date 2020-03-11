@@ -34,6 +34,7 @@ import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 import { DonutChartModule } from './donut-chart/donut-chart.module';
 import { Paginator } from './paginator/paginator.component';
+import { ScrollIntoViewDirective } from './scroll-into-view';
 
 const modules = [
   DonutChartModule,
@@ -126,9 +127,9 @@ const appFlexLayoutBreakPoints = [
 ];
 
 @NgModule({
-  declarations: [BlurOnClickDirective, AutofocusDirective],
+  declarations: [BlurOnClickDirective, AutofocusDirective, ScrollIntoViewDirective],
   imports: modules,
-  exports: [...modules, BlurOnClickDirective, AutofocusDirective],
+  exports: [...modules, BlurOnClickDirective, AutofocusDirective, ScrollIntoViewDirective],
   providers: [
     { provide: BREAKPOINT, useValue: appFlexLayoutBreakPoints, multi: true },
     {

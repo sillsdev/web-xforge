@@ -38,7 +38,7 @@
         </div>
       </div>
       <div *ngIf="answerFormVisible">
-        <form [formGroup]="answerForm" autocomplete="off" id="answer-form">
+        <form [formGroup]="answerForm" autocomplete="off" id="answer-form" appScrollIntoView>
           <mdc-tab-bar #answerTabs fixed>
             <mdc-tab-scroller>
               <mdc-tab icon="title" label="{{ t('answer') }}"></mdc-tab>
