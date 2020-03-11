@@ -84,13 +84,13 @@ function getDoc(handle: number, collection: string, id: string): Doc | undefined
 export = {
   start: (callback: InteropCallback, options: RealtimeServerOptions) => {
     startServer(options)
-      .then(() => callback())
+      .then(() => callback(undefined, {}))
       .catch(err => callback(err));
   },
 
   stop: (callback: InteropCallback) => {
     stopServer();
-    callback();
+    callback(undefined, {});
   },
 
   connect: (callback: InteropCallback, userId?: string) => {
@@ -110,7 +110,7 @@ export = {
       return;
     }
     connections.delete(handle);
-    callback();
+    callback(undefined, {});
   },
 
   createDoc: (
@@ -169,7 +169,7 @@ export = {
       callback(new Error('Connection not found.'));
       return;
     }
-    doc.del({}, err => callback(err));
+    doc.del({}, err => callback(err, {}));
   },
 
   applyOp: (callback: InteropCallback, typeName: string, data: any, ops: ShareDB.Op[]) => {

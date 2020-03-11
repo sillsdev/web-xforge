@@ -455,12 +455,12 @@ Milestone.ms.style.enum = (
 
 Chapter =
     element chapter { # Start of new chapter
-        attribute number { xsd:integer }&
-        attribute style { "c" }&
-        attribute sid { xsd:string { minLength = "1" pattern = "[A-Z1-4]{3} ?[0-9]+" } }?&
-        attribute altnumber { xsd:string { minLength = "1" pattern = "[0-9]+\w?(\x{200F}?[\-,][0-9]+\w?)*" } }?&
-        attribute pubnumber { xsd:string { minLength = "1" } }?&
-        attribute eid { xsd:string { minLength = "1" pattern = "[A-Z1-4]{3} ?[0-9]+" } }?&
+        attribute number { xsd:integer },
+        attribute style { "c" },
+        attribute sid { xsd:string { minLength = "1" pattern = "[A-Z1-4]{3} ?[0-9]+" } }?,
+        attribute altnumber { xsd:string { minLength = "1" pattern = "[0-9]+\w?(\x{200F}?[\-,][0-9]+\w?)*" } }?,
+        attribute pubnumber { xsd:string { minLength = "1" } }?,
+        attribute eid { xsd:string { minLength = "1" pattern = "[A-Z1-4]{3} ?[0-9]+" } }?,
         empty
     }
     # E.g. <chapter number="1" style="c" altnumber="2" pubnumber="A" />

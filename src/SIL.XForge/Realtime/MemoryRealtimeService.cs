@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.NodeServices;
+using Jering.Javascript.NodeJS;
 using Microsoft.Extensions.DependencyInjection;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -12,14 +14,22 @@ namespace SIL.XForge.Realtime
 {
     public class MemoryRealtimeService : IRealtimeService
     {
-        internal static readonly RealtimeServer Server = new RealtimeServer(CreateNodeServices());
+        internal static readonly RealtimeServer Server = new RealtimeServer(CreateNodeJSService());
 
-        private static INodeServices CreateNodeServices()
+        private static INodeJSService CreateNodeJSService()
         {
             var services = new ServiceCollection();
-            services.AddNodeServices();
+            services.AddNodeJS();
+            services.Configure<NodeJSProcessOptions>(options =>
+            {
+                options.ProjectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                // only uncomment the two lines below when debugging on the Node side otherwise C# build is paused
+                // options.NodeAndV8Options = "--inspect-brk=9230";
+            });
+            // services.Configure<OutOfProcessNodeJSServiceOptions>(options => options.TimeoutMS = -1);
+            services.AddSingleton<IJsonService, RealtimeJsonService>();
             IServiceProvider sp = services.BuildServiceProvider();
-            return sp.GetRequiredService<INodeServices>();
+            return sp.GetRequiredService<INodeJSService>();
         }
 
         private readonly Dictionary<Type, object> _repos;
