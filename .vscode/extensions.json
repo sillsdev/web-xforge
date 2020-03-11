@@ -6,7 +6,7 @@
     "EditorConfig.editorconfig",
     "esbenp.prettier-vscode",
     "formulahendry.dotnet-test-explorer",
-    "ms-vscode.csharp",
+    "ms-dotnettools.csharp",
     "ms-vscode.vscode-typescript-tslint-plugin",
     "msjsdiag.debugger-for-chrome",
     "orta.vscode-jest",

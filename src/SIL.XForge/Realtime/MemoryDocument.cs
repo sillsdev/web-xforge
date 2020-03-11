@@ -45,8 +45,8 @@ namespace SIL.XForge.Realtime
         {
             if (!_repo.Contains(Id))
             {
-                throw new Microsoft.AspNetCore.NodeServices.HostingModels.NodeInvocationException(
-                    "Document does not exist", "Would be received in production.");
+                throw new Jering.Javascript.NodeJS.InvocationException("Document does not exist",
+                    "Would be received in production.");
             }
             await _repo.DeleteAsync(Id);
             Data = default(T);
