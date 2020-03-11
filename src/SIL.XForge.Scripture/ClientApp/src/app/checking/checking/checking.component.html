@@ -64,15 +64,27 @@
                   </div>
                 </div>
                 <div class="action-icons">
-                  <button
-                    *ngIf="isProjectAdmin"
-                    mdc-icon-button
-                    type="button"
-                    icon="post_add"
-                    title="{{ t('add_question') }}"
-                    (click)="questionDialog()"
-                    id="add-question-button"
-                  ></button>
+                  <ng-container *ngIf="isProjectAdmin">
+                    <button
+                      fxHide
+                      fxShow.lt-xl
+                      mdc-icon-button
+                      type="button"
+                      icon="post_add"
+                      title="{{ t('add_question') }}"
+                      (click)="questionDialog()"
+                      class="add-question-button"
+                    ></button>
+                    <button
+                      fxHide.lt-xl
+                      mdc-button
+                      type="button"
+                      (click)="questionDialog()"
+                      class="add-question-button"
+                    >
+                      <mdc-icon>post_add</mdc-icon> <span>{{ t("add_question") }}</span>
+                    </button>
+                  </ng-container>
                   <app-font-size (apply)="applyFontChange($event)"></app-font-size>
                   <app-share></app-share>
                 </div>
