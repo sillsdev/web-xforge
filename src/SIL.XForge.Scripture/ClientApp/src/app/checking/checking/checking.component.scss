@@ -58,7 +58,6 @@
         justify-content: space-between;
         flex: 1;
         > div {
-          flex: 1;
           display: flex;
           align-items: center;
           justify-content: flex-start;
@@ -66,9 +65,6 @@
             flex: 0;
             display: flex;
             align-items: center;
-            @include media-breakpoint-down(sm) {
-              width: calc(100vw - 150px);
-            }
             span {
               white-space: nowrap;
               text-overflow: ellipsis;
@@ -88,8 +84,12 @@
           }
           &.action-icons {
             justify-content: flex-end;
-            .mdc-icon-button {
+            .add-question-button[mdc-icon-button] {
               @include mdc-icon-button-size(24px, 24px, 8px);
+            }
+            .add-question-button mdc-icon {
+              font-size: 24px;
+              height: 24px;
             }
           }
         }

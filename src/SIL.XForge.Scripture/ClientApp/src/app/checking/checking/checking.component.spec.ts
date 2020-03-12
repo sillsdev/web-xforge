@@ -1286,7 +1286,7 @@ class TestEnvironment {
   }
 
   get addQuestionButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#add-question-button'));
+    return this.fixture.debugElement.query(By.css('.add-question-button'));
   }
 
   get archiveQuestionButton(): DebugElement {
