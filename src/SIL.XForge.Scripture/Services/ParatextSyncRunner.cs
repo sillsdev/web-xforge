@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using SIL.Machine.WebApi.Services;
 using SIL.ObjectModel;
-using SIL.Scripture;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -61,8 +58,7 @@ namespace SIL.XForge.Scripture.Services
         private UserSecret _userSecret;
         private IDocument<SFProject> _projectDoc;
         private SFProjectSecret _projectSecret;
-        private int _stepCount;
-        private int _step;
+        private SyncProgressDisplay _progressDisplay;
 
         public ParatextSyncRunner(IRepository<UserSecret> userSecrets, IRepository<SFProjectSecret> projectSecrets,
             ISFProjectService projectService, IEngineService engineService, IParatextService paratextService,
@@ -87,15 +83,7 @@ namespace SIL.XForge.Scripture.Services
         // parameter, i.e. "{0}"
         // [Mutex("{0}")]
         public async Task RunAsync(string projectId, string userId, bool trainEngine)
-        {//todo we can't store user secret in a field if we allow multiple parallel runs of runasync right?
-
-            if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
-            {
-                return;
-            }
-
-            await _paratextService.DevEntryPoint(_userSecret);
-            /*
+        {
             try
             {
                 if (!await InitAsync(projectId, userId))
@@ -103,10 +91,6 @@ namespace SIL.XForge.Scripture.Services
                     await CompleteSync(false);
                     return;
                 }
-
-                // TODO: implement progress reporting. Pass in an IProgress implementation to ParatextService methods.
-                _step = 0;
-                _stepCount = 0;
 
                 string targetParatextId = _projectDoc.Data.ParatextId;
                 string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
@@ -134,12 +118,14 @@ namespace SIL.XForge.Scripture.Services
                 var paratextIds = new List<string> { targetParatextId };
                 if (sourceParatextId != null)
                     paratextIds.Add(sourceParatextId);
-                _paratextService.SendReceive(_userSecret, paratextIds);
 
-                var targetBooks = new HashSet<int>(_paratextService.GetBooks(targetParatextId));
+                _progressDisplay = UseNewProgressDisplay();
+                await _paratextService.SendReceiveAsync(_userSecret, paratextIds, _progressDisplay);
+
+                var targetBooks = new HashSet<int>(_paratextService.GetBookList(targetParatextId));
 
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
-                    ? _paratextService.GetBooks(sourceParatextId)
+                    ? _paratextService.GetBookList(sourceParatextId)
                     : Enumerable.Empty<int>());
                 sourceBooks.IntersectWith(targetBooks);
 
@@ -152,8 +138,6 @@ namespace SIL.XForge.Scripture.Services
                 // delete all data for removed books
                 if (targetBooksToDelete.Count > 0 || sourceBooksToDelete.Count > 0)
                 {
-                    _stepCount += 1;
-
                     // delete source books
                     foreach (int bookNum in sourceBooksToDelete)
                     {
@@ -247,7 +231,6 @@ namespace SIL.XForge.Scripture.Services
             {
                 CloseConnection();
             }
-            */
         }
 
         internal async Task<bool> InitAsync(string projectId, string userId)
@@ -263,6 +246,7 @@ namespace SIL.XForge.Scripture.Services
             if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
                 return false;
 
+            await _paratextService.SetupAccessToPtRegistry(_userSecret);
             _notesMapper.Init(_userSecret, _projectSecret);
 
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
@@ -278,13 +262,11 @@ namespace SIL.XForge.Scripture.Services
         {
             string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, text.BookNum);
             var oldUsxDoc = XDocument.Parse(bookText);
-            // TODO: Get the real revision number
-            string revisionNbr = "012345678901";
             XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
                 .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
 
             if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
-                _paratextService.PutBookText(paratextId, text.BookNum, revisionNbr, newUsxDoc.Root.ToString());
+                _paratextService.PutBookText(paratextId, text.BookNum, newUsxDoc.Root.ToString());
         }
 
         private async Task UpdateParatextNotesAsync(TextInfo text, IReadOnlyList<IDocument<Question>> questionDocs)
@@ -303,7 +285,7 @@ namespace SIL.XForge.Scripture.Services
             XElement notesElem = await _notesMapper.GetNotesChangelistAsync(oldNotesElem, questionDocs);
 
             if (notesElem.Elements("thread").Any())
-                _paratextService.PutNotes(_projectDoc.Data.ParatextId, notesElem.ToString());
+                _paratextService.PutNotes(_userSecret, _projectDoc.Data.ParatextId, notesElem.ToString());
         }
 
         private async Task<List<Chapter>> UpdateTextDocsAsync(TextInfo text, TextType textType, string paratextId,
@@ -520,13 +502,20 @@ namespace SIL.XForge.Scripture.Services
                 await textDoc.DeleteAsync();
         }
 
-        private async Task UpdateProgress()
+        private void UpdateProgress(object sender, EventArgs e)
         {
             if (_projectDoc == null)
                 return;
-            _step++;
-            double percentCompleted = Math.Round((double)_step / _stepCount, 2, MidpointRounding.AwayFromZero);
-            await _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted));
+            double percentCompleted = _progressDisplay.ProgressValue;
+            if (percentCompleted >= 0)
+                _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted));
+        }
+
+        private SyncProgressDisplay UseNewProgressDisplay()
+        {
+            var progressDisplay = new SyncProgressDisplay();
+            progressDisplay.ProgressUpdated += UpdateProgress;
+            return progressDisplay;
         }
 
         private class ChapterEqualityComparer : IEqualityComparer<Chapter>
