@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using SIL.Machine.WebApi.Services;
 using SIL.ObjectModel;
-using SIL.Scripture;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -87,15 +84,7 @@ namespace SIL.XForge.Scripture.Services
         // parameter, i.e. "{0}"
         // [Mutex("{0}")]
         public async Task RunAsync(string projectId, string userId, bool trainEngine)
-        {//todo we can't store user secret in a field if we allow multiple parallel runs of runasync right?
-
-            if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
-            {
-                return;
-            }
-
-            await _paratextService.DevEntryPoint(_userSecret);
-            /*
+        {
             try
             {
                 if (!await InitAsync(projectId, userId))
@@ -134,12 +123,12 @@ namespace SIL.XForge.Scripture.Services
                 var paratextIds = new List<string> { targetParatextId };
                 if (sourceParatextId != null)
                     paratextIds.Add(sourceParatextId);
-                _paratextService.SendReceive(_userSecret, paratextIds);
+                await _paratextService.SendReceiveAsync(_userSecret, paratextIds);
 
-                var targetBooks = new HashSet<int>(_paratextService.GetBooks(targetParatextId));
+                var targetBooks = new HashSet<int>(_paratextService.GetBookList(targetParatextId));
 
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
-                    ? _paratextService.GetBooks(sourceParatextId)
+                    ? _paratextService.GetBookList(sourceParatextId)
                     : Enumerable.Empty<int>());
                 sourceBooks.IntersectWith(targetBooks);
 
@@ -247,7 +236,6 @@ namespace SIL.XForge.Scripture.Services
             {
                 CloseConnection();
             }
-            */
         }
 
         internal async Task<bool> InitAsync(string projectId, string userId)
@@ -263,6 +251,7 @@ namespace SIL.XForge.Scripture.Services
             if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
                 return false;
 
+            await _paratextService.SetupAccessToPtRegistry(_userSecret);
             _notesMapper.Init(_userSecret, _projectSecret);
 
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
@@ -278,7 +267,7 @@ namespace SIL.XForge.Scripture.Services
         {
             string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, text.BookNum);
             var oldUsxDoc = XDocument.Parse(bookText);
-            // TODO: Get the real revision number
+            // TODO: Get the real revision number if indeed it is necessary to update to the provide revision
             string revisionNbr = "012345678901";
             XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
                 .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
