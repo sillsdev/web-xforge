@@ -94,7 +94,8 @@ namespace SIL.XForge.Scripture.Services
                 // Is connected since is in SF database and user is on project
                 IsConnected = true
             };
-            Assert.That(repos.Single(project => project.ParatextId == "paratext_" + env.Project01).ExpressiveToString(), Is.EqualTo(expectedProject01.ExpressiveToString()));
+            Assert.That(repos.Single(project => project.ParatextId == "paratext_" + env.Project01).ExpressiveToString(),
+                Is.EqualTo(expectedProject01.ExpressiveToString()));
 
             // TODO Work on alphabetical when am more easily getting names for repos.
             // Repos are returned in alphabetical order by paratext project name.
@@ -113,7 +114,8 @@ namespace SIL.XForge.Scripture.Services
             UserSecret user03Secret = env.MakeUserSecret(env.User03);
             env.SetSharedRepositorySource(user03Secret, UserRoles.TeamMember);
 
-            // Check resulting IsConnectable and IsConnected values across various scenarios of SF project existing, SF user being a member of the SF project, and PT user being an admin on PT project.
+            // Check resulting IsConnectable and IsConnected values across various scenarios of SF project existing,
+            // SF user being a member of the SF project, and PT user being an admin on PT project.
 
             var testCases = new[]
             {
@@ -187,23 +189,30 @@ namespace SIL.XForge.Scripture.Services
             foreach (var testCase in testCases)
             {
                 // Check that assumptions are true.
-                Assert.That((await env.RealtimeService.GetRepository<SFProject>().GetAllAsync()).Any(sfProject => sfProject.ParatextId == testCase.paratextProjectId), Is.EqualTo(testCase.sfProjectExists), "not set up - whether sf project exists or not");
+                Assert.That((await env.RealtimeService.GetRepository<SFProject>().GetAllAsync())
+                    .Any(sfProject => sfProject.ParatextId == testCase.paratextProjectId),
+                    Is.EqualTo(testCase.sfProjectExists), "not set up - whether sf project exists or not");
                 if (testCase.sfProjectExists)
                 {
-                    Assert.That((await env.RealtimeService.GetRepository<SFProject>().GetAllAsync()).Single(sfProject => sfProject.ParatextId == testCase.paratextProjectId).UserRoles.ContainsKey(testCase.sfUserId), Is.EqualTo(testCase.sfUserIsOnSfProject), "not set up - whether user is on existing sf project or not");
+                    Assert.That((await env.RealtimeService.GetRepository<SFProject>().GetAllAsync())
+                        .Single(sfProject => sfProject.ParatextId == testCase.paratextProjectId).UserRoles
+                        .ContainsKey(testCase.sfUserId), Is.EqualTo(testCase.sfUserIsOnSfProject),
+                        "not set up - whether user is on existing sf project or not");
                 }
-                Assert.That(env.Service._internetSharedRepositorySource[testCase.sfUserId]
-                    .GetRepositories()
+                Assert.That(env.Service._internetSharedRepositorySource[testCase.sfUserId].GetRepositories()
                     .FirstOrDefault(sharedRepository => sharedRepository.SendReceiveId == testCase.paratextProjectId)
-                    .SourceUsers
-                    .GetRole(testCase.ptUsername) == UserRoles.Administrator, Is.EqualTo(testCase.ptUserIsAdminOnPtProject), "not set up - whether pt user is an admin on pt project");
+                    .SourceUsers.GetRole(testCase.ptUsername) == UserRoles.Administrator,
+                    Is.EqualTo(testCase.ptUserIsAdminOnPtProject),
+                    "not set up - whether pt user is an admin on pt project");
 
                 // SUT
-                ParatextProject resultingProjectToExamine = (await env.Service.GetProjectsAsync(testCase.userSecret)).Single(project => project.ParatextId == testCase.paratextProjectId);
+                ParatextProject resultingProjectToExamine = (await env.Service.GetProjectsAsync(testCase.userSecret))
+                    .Single(project => project.ParatextId == testCase.paratextProjectId);
 
                 // Assert expectations.
                 Assert.That(resultingProjectToExamine.IsConnected, Is.EqualTo(testCase.isConnected), testCase.reason1);
-                Assert.That(resultingProjectToExamine.IsConnectable, Is.EqualTo(testCase.isConnectable), testCase.reason2);
+                Assert.That(resultingProjectToExamine.IsConnectable,
+                    Is.EqualTo(testCase.isConnectable), testCase.reason2);
             }
         }
 
@@ -226,38 +235,26 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetBookText_Works()
         {
             string paratextProjectId = "ptId123";
-            string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
-                "\\c 1\n" +
-                "\\v 1 Verse 1 here.\n" +
-                "\\v 2 Verse 2 here.";
-            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
+                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
+                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
-            MockScrText paratextProject = new MockScrText();
-            paratextProject.Data.Add("RUT", ruthBookUsfm);
             var env = new TestEnvironment();
-            env.MockedScrTextCollectionWrapper.FindById(paratextProjectId).Returns(paratextProject);
-            // env.MockedScrTextCollectionRunner.GetById(paratextProjectId).Returns(paratextProject);
+            env.MockedScrTextCollectionWrapper.FindById(paratextProjectId).Returns(_paratextProject);
 
             // SUT
             string result = await env.Service.GetBookTextAsync(null, paratextProjectId, 8);
             Assert.That(result, Is.EqualTo(ruthBookUsx));
-            Assert.That(paratextProject.Settings.Encoder is HackStringEncoder, Is.True, "codepage 1252 workaround needs to be in place");
         }
 
         [Test]
         public void GetBookText_NoSuchPtProjectKnown()
         {
-            string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
-                "\\c 1\n" +
-                "\\v 1 Verse 1 here.\n" +
-                "\\v 2 Verse 2 here.";
-
-            MockScrText paratextProject = new MockScrText();
-            paratextProject.Data.Add("RUT", ruthBookUsfm);
             var env = new TestEnvironment();
             string ptProjectId = "paratext_" + env.Project01;
             UserSecret user01Secret = env.MakeUserSecret(env.User01);
-            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IInternetSharedRepositorySource mockSource =
+                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.MockedScrTextCollectionWrapper.FindById(ptProjectId).Returns(i => null);
 
             // SUT
@@ -276,23 +273,26 @@ namespace SIL.XForge.Scripture.Services
             env.MockedScrTextCollectionWrapper.FindById(paratextProjectId).Returns(_paratextProject);
 
             int ruthBookNum = 8;
-            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
+                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
+                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
             JToken token1 = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
             JToken token2 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"1\", \"style\": \"v\" } } }");
-            JToken token3 = JToken.Parse("{\"insert\": \"Verse 1 here. \", \"attributes\": { \"segment\": \"verse_1_1\" } }");
+            JToken token3 =
+                JToken.Parse("{\"insert\": \"Verse 1 here. \", \"attributes\": { \"segment\": \"verse_1_1\" } }");
             JToken token4 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"2\", \"style\": \"v\" } } }");
-            JToken token5 = JToken.Parse("{\"insert\": \"Verse 2 here. THIS PART IS EDITED!\", \"attributes\": { \"segment\": \"verse_1_2\" } }");
-
+            JToken token5 =
+                JToken.Parse("{\"insert\": \"Verse 2 here. THIS PART IS EDITED!\"," +
+                "\"attributes\": { \"segment\": \"verse_1_2\" } }");
 
             TextData data = new TextData(new Delta(new[] { token1, token2, token3, token4, token5 }));
             XDocument oldDocUsx = XDocument.Parse(ruthBookUsx);
             DeltaUsxMapper mapper = new DeltaUsxMapper(new TestGuidService());
             var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
-            string revision = env.Service._hgHelper.GetRevisionAtTip(_paratextProject);
-            string result = env.Service.PutBookText(paratextProjectId, ruthBookNum, revision, newDocUsx.Root.ToString());
-            _paratextProject.FileManager.Received(1).WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
-            Assert.True(result.StartsWith($"<BookText project=\"{_paratextProject.Name}\" book=\"RUT\" revision=\"{revision}\">"));
+            env.Service.PutBookText(paratextProjectId, ruthBookNum, newDocUsx.Root.ToString());
+            _paratextProject.FileManager.Received(1)
+                .WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
         }
 
         [Test]
@@ -301,21 +301,17 @@ namespace SIL.XForge.Scripture.Services
             // PT project isn't cloned yet.
             // It gets cloned.
             // And so GetBookText then returns data.
+            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere" +
+                "</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />" +
+                "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
-            string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
-                "\\c 1\n" +
-                "\\v 1 Verse 1 here.\n" +
-                "\\v 2 Verse 2 here.";
-            string ruthBookUsx = "<usx version=\"3.0\">\r\n  <book code=\"RUT\" style=\"id\">- ProjectNameHere</book>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <verse number=\"1\" style=\"v\" />Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
-
-            MockScrText paratextProject = new MockScrText();
-            paratextProject.Data.Add("RUT", ruthBookUsfm);
             var env = new TestEnvironment();
             string ptProjectId = "paratext_" + env.Project01;
             UserSecret user01Secret = env.MakeUserSecret(env.User01);
-            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IInternetSharedRepositorySource mockSource =
+                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             // FindById fails the first time, and then succeeds the second time after the pt project repo is cloned.
-            env.MockedScrTextCollectionWrapper.FindById(ptProjectId).Returns(null, paratextProject);
+            env.MockedScrTextCollectionWrapper.FindById(ptProjectId).Returns(null, _paratextProject);
 
             // SUT
             string result = await env.Service.GetBookTextAsync(user01Secret, ptProjectId, 8);
@@ -324,6 +320,7 @@ namespace SIL.XForge.Scripture.Services
             mockSource.Received(1).Pull(Arg.Any<string>(), Arg.Any<SharedRepository>());
             // Should have tried twice to access project.
             env.MockedScrTextCollectionWrapper.Received(2).FindById(Arg.Any<string>());
+            env.MockedScrTextCollectionWrapper.Received(1).RefreshScrTexts();
         }
 
         [Test]
@@ -332,7 +329,8 @@ namespace SIL.XForge.Scripture.Services
             string paratextProjectId = "ptId123";
             int ruthBookNum = 8;
             var env = new TestEnvironment();
-            _manager.AddComment(new Paratext.Data.ProjectComments.Comment { Thread = "Answer_dataId0123", VerseRefStr = "RUT 1:1" });
+            _manager.AddComment(
+                new Paratext.Data.ProjectComments.Comment { Thread = "Answer_dataId0123", VerseRefStr = "RUT 1:1" });
             env.MockedScrTextCollectionWrapper.FindById(paratextProjectId).Returns(_paratextProject);
             string notes = env.Service.GetNotes(paratextProjectId, ruthBookNum);
             Assert.True(notes.StartsWith("<notes version=\"1.1\">\n  <thread id=\"Answer_dataId0123\">"));
@@ -343,6 +341,7 @@ namespace SIL.XForge.Scripture.Services
         {
             string paratextProjectId = "ptId123";
             var env = new TestEnvironment();
+            UserSecret userSecret = env.MakeUserSecret(env.User01);
             env.MockedScrTextCollectionWrapper.FindById(paratextProjectId).Returns(_paratextProject);
 
             // Add new comment
@@ -350,7 +349,7 @@ namespace SIL.XForge.Scripture.Services
             string content = "Content for comment to update.";
             string verseRef = "RUT 1:1";
             string updateNotesString = env.GetUpdateNotesString(threadId, env.User01, content, verseRef);
-            env.Service.PutNotes(paratextProjectId, updateNotesString);
+            env.Service.PutNotes(userSecret, paratextProjectId, updateNotesString);
 
             CommentThread thread = _manager.FindThread(threadId);
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
@@ -362,7 +361,7 @@ namespace SIL.XForge.Scripture.Services
             // Edit a comment
             content = "Edited: Content for comment to update.";
             updateNotesString = env.GetUpdateNotesString(threadId, env.User01, content, verseRef);
-            env.Service.PutNotes(paratextProjectId, updateNotesString);
+            env.Service.PutNotes(userSecret, paratextProjectId, updateNotesString);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
             comment = thread.Comments.First();
@@ -370,7 +369,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Delete a comment
             updateNotesString = env.GetUpdateNotesString(threadId, env.User01, content, verseRef, true);
-            env.Service.PutNotes(paratextProjectId, updateNotesString);
+            env.Service.PutNotes(userSecret, paratextProjectId, updateNotesString);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
             comment = thread.Comments.First();
@@ -383,36 +382,51 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01);
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null, null));
-            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null, new string[] { "paratext_" + env.Project01 }));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null,
+                new string[] { "paratext_" + env.Project01 }));
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(user01Secret, null));
         }
 
         [Test]
-        public async Task SendReceiveAsync_Works()
+        public async Task SendReceiveAsync_UserIsAdministrator_Succeeds()
         {
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01);
-            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-            env.MockedSharingLogicWrapper.CreateSharedProject(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<SharedRepositorySource>(), Arg.Any<IEnumerable<SharedRepository>>()).Returns(callInfo => new SharedProject() { SendReceiveId = callInfo.ArgAt<string>(0) });
-            env.MockedSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(true);
-            // Have the HandleErrors method run its first argument, which would be the ShareChanges() call. This helps check that the implementation code is calling ShareChanges().
-            env.MockedSharingLogicWrapper.HandleErrors(Arg.Any<Action>(), Arg.Any<bool>()).Returns((callInfo) => { callInfo.Arg<Action>()(); return true; });
+            IInternetSharedRepositorySource mockSource =
+                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            env.MockedSharingLogicWrapper.CreateSharedProject(Arg.Any<string>(), Arg.Any<string>(),
+                Arg.Any<SharedRepositorySource>(), Arg.Any<IEnumerable<SharedRepository>>())
+                    .Returns(callInfo => new SharedProject() { SendReceiveId = callInfo.ArgAt<string>(0) });
+            env.MockedSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(),
+                Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(),
+                Arg.Any<List<SharedProject>>()).Returns(true);
+
+            // Have the HandleErrors method run its first argument, which would be the ShareChanges() call. This helps
+            // check that the implementation code is calling ShareChanges().
+            env.MockedSharingLogicWrapper.HandleErrors(Arg.Any<Action>(),
+                Arg.Any<bool>()).Returns((callInfo) => { callInfo.Arg<Action>()(); return true; });
             string ptProjectId1 = "paratext_" + env.Project01;
             string ptProjectId2 = "paratext_" + env.Project02;
-            // env.MockedScrTextCollectionWrapper.FindById(ptProjectId1).Returns(new MockScrText());
-            // env.MockedScrTextCollectionWrapper.FindById(ptProjectId2).Returns(new MockScrText());
+            SyncProgressDisplay progressDisplay = Substitute.For<SyncProgressDisplay>();
 
             // SUT 1
-            await env.Service.SendReceiveAsync(user01Secret, new string[] { ptProjectId1, ptProjectId2 });
-            env.MockedSharingLogicWrapper.Received(1).ShareChanges(Arg.Is<List<SharedProject>>(list => list.Count == 2 && list[0].SendReceiveId == ptProjectId1), Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(), Arg.Is<List<SharedProject>>(list => list.Count == 2 && list[0].SendReceiveId == ptProjectId1));
-
+            await env.Service.SendReceiveAsync(user01Secret, new string[] { ptProjectId1, ptProjectId2 },
+                progressDisplay);
+            env.MockedSharingLogicWrapper.Received(1).ShareChanges(Arg.Is<List<SharedProject>>(list =>
+                list.Count == 2 && list[0].SendReceiveId == ptProjectId1), Arg.Any<SharedRepositorySource>(),
+                out Arg.Any<List<SendReceiveResult>>(),
+                Arg.Is<List<SharedProject>>(list => list.Count == 2 && list[0].SendReceiveId == ptProjectId1));
+            progressDisplay.ReceivedWithAnyArgs().SetProgressValue(default);
             env.MockedSharingLogicWrapper.ClearReceivedCalls();
-            // Passing a PT project Id for a project the user does not have access to fails early without doing any SendReceive.
+            // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
             // SUT 2
-            ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() => env.Service.SendReceiveAsync(user01Secret, new string[] { ptProjectId1, "unknownPtProjectId8", ptProjectId2, "unknownPtProjectId9" }));
-            Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8").And.Contain("unknownPtProjectId8"));
-            env.MockedSharingLogicWrapper.DidNotReceive().ShareChanges(default, Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(), default);
-
+            ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
+                env.Service.SendReceiveAsync(user01Secret, new string[] {
+                    ptProjectId1, "unknownPtProjectId8", ptProjectId2, "unknownPtProjectId9" }));
+            Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8").And
+                .Contain("unknownPtProjectId8"));
+            env.MockedSharingLogicWrapper.DidNotReceive().ShareChanges(default, Arg.Any<SharedRepositorySource>(),
+                out Arg.Any<List<SendReceiveResult>>(), default);
         }
 
         private class TestEnvironment
@@ -433,11 +447,7 @@ namespace SIL.XForge.Scripture.Services
             public IFileSystemService MockFileSystemService;
             public IScrTextCollectionWrapper MockedScrTextCollectionWrapper;
             public ISharingLogicWrapper MockedSharingLogicWrapper;
-
-
             public ParatextService Service;
-
-            public readonly UserSecret userSecret;
 
             public TestEnvironment()
             {
@@ -449,22 +459,18 @@ namespace SIL.XForge.Scripture.Services
                 MockFileSystemService = Substitute.For<IFileSystemService>();
                 MockedScrTextCollectionWrapper = Substitute.For<IScrTextCollectionWrapper>();
                 MockedSharingLogicWrapper = Substitute.For<ISharingLogicWrapper>();
-                // MockInternetSharedRepositorySource = Substitute.For<IInternetSharedRepositorySource>();
 
                 RealtimeService = new SFMemoryRealtimeService();
 
-                //Mock=Substitute.For<>();
-                //Mock=Substitute.For<>();
-                Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository, RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService);
+                Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository,
+                    RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService);
                 Service._scrTextCollectionWrapper = MockedScrTextCollectionWrapper;
                 Service._sharingLogicWrapper = MockedSharingLogicWrapper;
-                Service._hgHelper = new MockHgHelper();
+                Service._jwtTokenHelper = new MockJwtTokenHelper(User01);
                 Service.SyncDir = "/tmp";
 
                 RegistryU.Implementation = new DotNetCoreRegistry();
                 AddProjectRepository();
-
-
 
                 // Set Hg.Default to a no-op.
                 var hgExe = "/bin/true";
@@ -472,7 +478,7 @@ namespace SIL.XForge.Scripture.Services
                 Hg.Default = new Hg(hgExe, hgMerge, Service.SyncDir);
             }
 
-            public UserSecret MakeUserSecret(string userSecretId)
+            public UserSecret MakeUserSecret(string userSecretId, string username = "testUsername")
             {
                 var userSecret = new UserSecret();
                 userSecret.Id = userSecretId;
@@ -482,10 +488,12 @@ namespace SIL.XForge.Scripture.Services
                     RefreshToken = "refresh_token_1234"
                 };
                 userSecret.ParatextTokens = ptToken;
+                Service._jwtTokenHelper = new MockJwtTokenHelper(username);
                 return userSecret;
             }
 
-            public IInternetSharedRepositorySource SetSharedRepositorySource(UserSecret userSecret, UserRoles userRoleOnAllThePtProjects)
+            public IInternetSharedRepositorySource SetSharedRepositorySource(UserSecret userSecret,
+                UserRoles userRoleOnAllThePtProjects)
             {
                 PermissionManager sourceUsers = Substitute.For<PermissionManager>();
                 sourceUsers.GetRole(Arg.Any<string>()).Returns(userRoleOnAllThePtProjects);
@@ -572,7 +580,8 @@ namespace SIL.XForge.Scripture.Services
                     }));
             }
 
-            public string GetUpdateNotesString(string threadId, string user, string content, string verseRef = "MAT 1:1", bool delete = false)
+            public string GetUpdateNotesString(string threadId, string user, string content,
+                string verseRef = "MAT 1:1", bool delete = false)
             {
                 XElement notesElem = new XElement("notes", new XAttribute("version", "1.1"));
                 XElement threadElem = new XElement("thread", new XAttribute("id", threadId),
