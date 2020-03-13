@@ -24,7 +24,6 @@ namespace Paratext.Base
         {
             _settings = new MockProjectSettings(this);
             _language = new MockScrLanguage(this);
-            // _language.RightToLeft.Returns(false);
         }
 
         public Dictionary<string, string> Data = new Dictionary<string, string>();
