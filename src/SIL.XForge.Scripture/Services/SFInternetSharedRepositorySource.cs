@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Paratext.Data;
+using Paratext;
 using Paratext.Data.Repository;
-using SIL.Reflection;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Services
@@ -19,7 +19,7 @@ namespace SIL.XForge.Scripture.Services
             client.JwtToken = userSecret.ParatextTokens.AccessToken;
 
             // RESTClient only uses the jwtToken if authentication is null;
-            ReflectionHelper.SetField(client, "authentication", null);
+            ReflectionHelperLite.SetField(client, "authentication", null);
         }
         public void SetToken(string jwtToken)
         {
@@ -37,7 +37,7 @@ namespace SIL.XForge.Scripture.Services
         {
             client.JwtToken = jwtToken;
             // RESTClient only uses the jwtToken if authentication is null;
-            ReflectionHelper.SetField(client, "authentication", null);
+            ReflectionHelperLite.SetField(client, "authentication", null);
 
         }
 
@@ -62,7 +62,7 @@ namespace SIL.XForge.Scripture.Services
         public JwtRESTClient(string baseUri, string applicationProductVersion, string jwtToken) : base(baseUri, applicationProductVersion)
         {
             this.JwtToken = jwtToken;
-            ReflectionHelper.SetField(this, "authentication", null);
+            ReflectionHelperLite.SetField(this, "authentication", null);
         }
     }
 }

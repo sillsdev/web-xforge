@@ -19,5 +19,9 @@ namespace SIL.XForge.Scripture.Services
         {
             return ScrTextCollection.GetById(projectId, shortName);
         }
+        public void RefreshScrTexts()
+        {
+            ScrTextCollection.RefreshScrTexts();
+        }
     }
 }

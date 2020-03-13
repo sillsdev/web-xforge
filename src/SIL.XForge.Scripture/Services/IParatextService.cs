@@ -8,9 +8,8 @@ namespace SIL.XForge.Scripture.Services
 {
     public interface IParatextService
     {
-        Task DevEntryPoint(UserSecret userSecret);
         void Init();
-
+        Task SetupAccessToPtRegistry(UserSecret userSecret);
         Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret);
         string GetParatextUsername(UserSecret userSecret);
         Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId);

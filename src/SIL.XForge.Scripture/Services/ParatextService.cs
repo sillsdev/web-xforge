@@ -18,14 +18,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
-using Paratext.Data.Encodings;
 using Paratext.Data.Languages;
 using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
 using PtxUtils;
 using SIL.ObjectModel;
-using SIL.Reflection;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -51,6 +49,13 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class ParatextService : DisposableBase, IParatextService
     {
+        ///< summary>Path to cloned PT project Mercurial repos.</summary>
+        public string SyncDir;
+        internal IScrTextCollectionWrapper _scrTextCollectionWrapper;
+        internal ISharingLogicWrapper _sharingLogicWrapper;
+        internal IHgHelper _hgHelper;
+        /// <summary>Set of SF user IDs and corresponding sources for remote PT projects.</summary>
+        internal Dictionary<string, IInternetSharedRepositorySource> _internetSharedRepositorySource = new Dictionary<string, IInternetSharedRepositorySource>();
         private readonly IOptions<ParatextOptions> _paratextOptions;
         private readonly IRepository<UserSecret> _userSecretRepository;
         private readonly IRealtimeService _realtimeService;
@@ -60,15 +65,9 @@ namespace SIL.XForge.Scripture.Services
         private readonly HttpClient _registryClient;
         private readonly IExceptionHandler _exceptionHandler;
         private readonly bool _useDevServer;
-        internal IScrTextCollectionWrapper _scrTextCollectionWrapper;
-        internal ISharingLogicWrapper _sharingLogicWrapper;
-        internal IHgHelper _hgHelper;
         private readonly string _resourcesPath;
-        ///< summary>Path to cloned PT project Mercurial repos.</summary>
-        public string SyncDir;
         private string applicationProductVersion = "SF";
-        /// <summary>Set of SF user IDs and corresponding sources for remote PT projects.</summary>
-        internal Dictionary<string, IInternetSharedRepositorySource> _internetSharedRepositorySource = new Dictionary<string, IInternetSharedRepositorySource>();
+        private string _serverUri = "https://registry-dev.paratext.org/api8/";
 
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
@@ -107,18 +106,6 @@ namespace SIL.XForge.Scripture.Services
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         }
 
-
-        /// <summary>Entry point for testing so can consistently isolate and test the same thing.</summary>
-        public async Task DevEntryPoint(UserSecret userSecret)
-        {
-            await RefreshAccessTokenAsync(userSecret);
-            Init();
-            SetupAccessToPtRegistry(userSecret);
-            var projectList = GetProjectsAsync(userSecret);
-            var bookText = GetBookTextAsync(userSecret, "94f48e5b710ec9e092d9a7ec2d124c30f33a04bf", 8);
-            await SendReceiveAsync(userSecret, null);
-        }
-
         /// <summary>Prepare access to Paratext.Data library, authenticate, and prepare Mercurial.</summary>
         public void Init()
         {
@@ -137,12 +124,12 @@ namespace SIL.XForge.Scripture.Services
             InstallStyles();
             WritingSystemRepository.Initialize();
             // TODO will this crash if haven't set user credentials yet?
-            // TODO this may need done again after cloning a new project?
             _scrTextCollectionWrapper.Initialize(SyncDir, false);
         }
 
-        private void SetupAccessToPtRegistry(UserSecret userSecret)
+        public async Task SetupAccessToPtRegistry(UserSecret userSecret)
         {
+            await RefreshAccessTokenAsync(userSecret);
             var jwtToken = userSecret.ParatextTokens.AccessToken;
             if (jwtToken?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) ?? false)
             {
@@ -150,62 +137,11 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // TODO Do we need to do additional validation? cli used Jose.JWT.Decode...
-
-            // var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ /*"https://registry.paratext.org/api8/"*/_registryClient.BaseAddress.AbsoluteUri, ApplicationProduct.DefaultVersion, jwtToken);
-            var jwtRESTClient = new JwtRESTClient(/*InternetAccess.RegistryServer*/ "https://registry-dev.paratext.org/api8/", ApplicationProduct.DefaultVersion, jwtToken);
+            // May be able to use InternetAccess.RegistryServer - See SF-PT Engineering meeting notes
+            var jwtRESTClient = new JwtRESTClient(_serverUri, ApplicationProduct.DefaultVersion, jwtToken);
+            // This is not complete, the RegistrationInfo class still gets registration info from RegistrationInfo.xml
+            // from the local paratext installation. It should retrieve authentication from the JwtRestClient instead
             RegistryServer.Initialize(applicationProductVersion, jwtRESTClient);
-        }
-
-        private void SetupMercurial()
-        {
-            if (Hg.Default != null)
-            {
-                return;
-            }
-            var hgExe = "/usr/bin/hg";
-            string customHgPath = "/usr/local/bin/hg";
-            if (File.Exists(customHgPath))
-            {
-                // Mercurial 4.7 is needed. Use custom install so can use new enough Mercurial on Ubuntu 16.04.
-                hgExe = customHgPath;
-            }
-            var hgMerge = Path.Combine(_resourcesPath, "ParatextMerge.py");
-            Hg.Default = new Hg(hgExe, hgMerge, SyncDir);
-        }
-
-        private void InstallStyles()
-        {
-            string usfmStylesFileName = "usfm.sty";
-            string pathToStyle = Path.Combine(_resourcesPath, "/src/SIL.XForge.Scripture", usfmStylesFileName);
-            string target = Path.Combine(SyncDir, usfmStylesFileName);
-            if (!File.Exists(target))
-            {
-                File.Copy(pathToStyle, target);
-            }
-            if (!File.Exists(SyncDir + "/revisionStyle.sty"))
-            {
-                File.Copy(Path.Combine(_resourcesPath, "revisionStyle.sty"), SyncDir);
-            }
-            if (!File.Exists(SyncDir + "/revisionTemplate.tem"))
-            {
-                File.Copy(Path.Combine(_resourcesPath, "revisionTemplate.tem"), SyncDir);
-            }
-        }
-
-        /// <summary>Clone PT project.</summary>
-        private async Task CloneProjectRepoAsync(UserSecret userSecret, string ptProjectId)
-        {
-            ParatextProject ptProject = (await GetProjectsAsync(userSecret)).FirstOrDefault(proj => proj.ParatextId == ptProjectId);
-            SharedRepository ptProjectRepoInfo = new SharedRepository(ptProject.ShortName, ptProject.ParatextId, RepositoryType.Shared);
-            IInternetSharedRepositorySource ptRepositorySource = GetInternetSharedRepositorySource(userSecret);
-            string clonePath = Path.Combine(SyncDir, ptProject.ParatextId);
-            if (!Directory.Exists(clonePath))
-            {
-                Directory.CreateDirectory(clonePath);
-                Hg.Default.Init(clonePath);
-            }
-            ptRepositorySource.Pull(clonePath, ptProjectRepoInfo);
-            Hg.Default.Update(clonePath);
         }
 
         // TODO might need to do?: lock repo, pull, merge, push results, unlock repo.
@@ -342,8 +278,6 @@ namespace SIL.XForge.Scripture.Services
                     throw new DataNotFoundException("Can't get access to cloned project.");
                 }
             }
-            // Work around "Could not find encoder for code page 1252" problem.
-            ReflectionHelper.SetField(scrText.Settings, "cachedEncoder", new HackStringEncoder());
             string usfm = scrText.GetText(bookNum);
             return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
         }
@@ -360,7 +294,7 @@ namespace SIL.XForge.Scripture.Services
             UsxFragmenter.FindFragments(scrText.ScrStylesheet(bookNum), doc.CreateNavigator(),
                 XPathExpression.Compile("*[false()]"), out string usfm);
             usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft);
-            // Most likely the hg repo will always be up to date, so this would not be required
+            // Since projects can has more than one admin, we may need to do an update on the repo first
             // if (_hgHelper.GetRevisionAtTip(scrText) != revision)
             //     _hgHelper.Update(scrText.Directory, revision);
             scrText.PutText(bookNum, 0, false, usfm, null);
@@ -368,7 +302,7 @@ namespace SIL.XForge.Scripture.Services
             /*
             VersionedText vText = VersioningManager.Get(scrText);
             vText.Commit($"Update to book {bookId} by Data Access Server", null, false, user.UserName.ToSafeText());
-            if (chapterInfo.HgRevision != revision)
+            if (_hgHelper.GetRevisionAtTip(scrText) != revision)
                 vText.PerformMerges(user.UserName.ToSafeText());
             Trace.TraceInformation("Book {0} updated by {1}", bookId, user.UserName);
             */
@@ -445,6 +379,66 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        // TODO Set up a Dispose method to call these if that's important.
+        protected override void DisposeManagedResources()
+        {
+            _registryClient.Dispose();
+            _httpClientHandler.Dispose();
+        }
+
+        private void SetupMercurial()
+        {
+            if (Hg.Default != null)
+            {
+                return;
+            }
+            var hgExe = "/usr/bin/hg";
+            string customHgPath = "/usr/local/bin/hg";
+            if (File.Exists(customHgPath))
+            {
+                // Mercurial 4.7 is needed. Use custom install so can use new enough Mercurial on Ubuntu 16.04.
+                hgExe = customHgPath;
+            }
+            var hgMerge = Path.Combine(_resourcesPath, "ParatextMerge.py");
+            Hg.Default = new Hg(hgExe, hgMerge, SyncDir);
+        }
+
+        private void InstallStyles()
+        {
+            string usfmStylesFileName = "usfm.sty";
+            string pathToStyle = Path.Combine(_resourcesPath, "/src/SIL.XForge.Scripture", usfmStylesFileName);
+            string target = Path.Combine(SyncDir, usfmStylesFileName);
+            if (!File.Exists(target))
+            {
+                File.Copy(pathToStyle, target);
+            }
+            if (!File.Exists(SyncDir + "/revisionStyle.sty"))
+            {
+                File.Copy(Path.Combine(_resourcesPath, "revisionStyle.sty"), SyncDir);
+            }
+            if (!File.Exists(SyncDir + "/revisionTemplate.tem"))
+            {
+                File.Copy(Path.Combine(_resourcesPath, "revisionTemplate.tem"), SyncDir);
+            }
+        }
+
+        /// <summary>Clone PT project.</summary>
+        private async Task CloneProjectRepoAsync(UserSecret userSecret, string ptProjectId)
+        {
+            ParatextProject ptProject = (await GetProjectsAsync(userSecret)).FirstOrDefault(proj => proj.ParatextId == ptProjectId);
+            SharedRepository ptProjectRepoInfo = new SharedRepository(ptProject.ShortName, ptProject.ParatextId, RepositoryType.Shared);
+            string clonePath = Path.Combine(SyncDir, ptProject.ParatextId);
+            if (!Directory.Exists(clonePath))
+            {
+                Directory.CreateDirectory(clonePath);
+                Hg.Default.Init(clonePath);
+            }
+            IInternetSharedRepositorySource ptRepositorySource = GetInternetSharedRepositorySource(userSecret);
+            ptRepositorySource.Pull(clonePath, ptProjectRepoInfo);
+            Hg.Default.Update(clonePath);
+            _scrTextCollectionWrapper.RefreshScrTexts();
+        }
+
         private async Task RefreshAccessTokenAsync(UserSecret userSecret)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, "api8/token");
@@ -508,14 +502,6 @@ namespace SIL.XForge.Scripture.Services
             }
 
             throw new SecurityException("The current user's Paratext access token is invalid.");
-        }
-
-
-        // TODO Set up a Dispose method to call these if that's important.
-        protected override void DisposeManagedResources()
-        {
-            _registryClient.Dispose();
-            _httpClientHandler.Dispose();
         }
 
         /// <summary>Get cached or setup new access to a source for PT project repositories, based on user secret.</summary>
