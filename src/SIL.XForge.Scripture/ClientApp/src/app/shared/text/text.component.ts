@@ -52,6 +52,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Input() isReadOnly: boolean = true;
   @Input() markInvalid: boolean = false;
   @Input() multiSegmentSelection = false;
+  @Input() subscribeToUpdates = true;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
@@ -386,7 +387,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
     this.placeholder = translate('text.loading');
     const textDoc = await this.projectService.getText(this._id);
-    this.viewModel.bind(textDoc);
+    this.viewModel.bind(textDoc, this.subscribeToUpdates);
     this.updatePlaceholderText();
 
     this.loaded.emit();

@@ -115,7 +115,7 @@ export class TextViewModel {
     return textData.ops == null || textData.ops.length === 0;
   }
 
-  bind(textDoc: TextDoc): void {
+  bind(textDoc: TextDoc, subscribeToUpdates: boolean): void {
     const editor = this.checkEditor();
     if (this.textDoc != null) {
       this.unbind();
@@ -124,7 +124,9 @@ export class TextViewModel {
     this.textDoc = textDoc;
     editor.setContents(this.textDoc.data as DeltaStatic);
     editor.history.clear();
-    this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => editor.updateContents(ops as DeltaStatic));
+    if (subscribeToUpdates) {
+      this.remoteChangesSub = this.textDoc.remoteChanges$.subscribe(ops => editor.updateContents(ops as DeltaStatic));
+    }
     this.onCreateSub = this.textDoc.create$.subscribe(() => {
       if (textDoc.data != null) {
         editor.setContents(textDoc.data as DeltaStatic);
