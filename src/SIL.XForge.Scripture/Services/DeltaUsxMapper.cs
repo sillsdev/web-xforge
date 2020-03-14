@@ -34,7 +34,7 @@ namespace SIL.XForge.Scripture.Services
 
         private class ParseState
         {
-            public string LastVerse { get; set; }
+            public int LastVerse { get; set; }
             public string CurRef { get; set; }
             public string CurChapter { get; set; }
             public int TableIndex { get; set; }
@@ -132,7 +132,7 @@ namespace SIL.XForge.Scripture.Services
                                     isChapterValid = true;
                                 }
                                 state.CurRef = null;
-                                state.LastVerse = null;
+                                state.LastVerse = -1;
                                 state.CurChapter = (string)elem.Attribute("number");
                                 chapterDelta.InsertEmbed("chapter", GetAttributes(elem),
                                     attributes: AddInvalidBlockAttribute(invalidNodes, elem));
@@ -191,7 +191,7 @@ namespace SIL.XForge.Scripture.Services
                             break;
 
                         case "verse":
-                            state.LastVerse = (string)elem.Attribute("number");
+                            SetLastVerse((string)elem.Attribute("number"), state);
                             InsertVerse(invalidNodes, newDelta, elem, state);
                             break;
 
@@ -288,16 +288,23 @@ namespace SIL.XForge.Scripture.Services
             if (!int.TryParse(state.CurChapter, out int chapterNum))
                 return;
 
+            chapterDeltas.Add(new ChapterDelta(chapterNum, state.LastVerse, isChapterValid, chapterDelta));
+        }
+
+        private void SetLastVerse(string lastVerse, ParseState state)
+        {
             int lastVerseNum = 0;
-            if (state.LastVerse != null)
+            if (lastVerse != null)
             {
-                int dashIndex = state.LastVerse.IndexOf('-');
+                lastVerseNum = state.LastVerse;
+                int dashIndex = lastVerse.IndexOf('-');
                 if (dashIndex != -1)
-                    lastVerseNum = int.Parse(state.LastVerse.Substring(dashIndex + 1), CultureInfo.InvariantCulture);
-                else
-                    lastVerseNum = int.Parse(state.LastVerse, CultureInfo.InvariantCulture);
+                    lastVerse = lastVerse.Substring(dashIndex + 1);
+                if (int.TryParse(lastVerse, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture,
+                        out int _lastVerseNum))
+                    lastVerseNum = _lastVerseNum;
             }
-            chapterDeltas.Add(new ChapterDelta(chapterNum, lastVerseNum, isChapterValid, chapterDelta));
+            state.LastVerse = lastVerseNum;
         }
 
         private static void InsertVerse(HashSet<XNode> invalidNodes, Delta newDelta, XElement elem, ParseState state)
