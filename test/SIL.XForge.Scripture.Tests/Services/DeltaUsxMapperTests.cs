@@ -497,6 +497,80 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToUsx_ImpliedParagraph()
+        {
+            var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
+                .InsertChapter("1")
+                .Insert("This is an implied paragraph before the first verse.")
+                .Insert("\n")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertBlank("verse_1_1")
+                .InsertPara("p"));
+
+            var mapper = new DeltaUsxMapper();
+            XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+
+            XDocument expected = Usx("PHM",
+                Chapter("1"),
+                "This is an implied paragraph before the first verse.",
+                Para("p",
+                    Verse("1")));
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
+        public void ToUsx_ImpliedParagraphTwice()
+        {
+            var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
+                .InsertChapter("1")
+                .Insert("This is an implied paragraph before the first verse.")
+                .Insert("\n")
+                .Insert(" This is actually part of the first implied paragraph.")
+                .Insert("\n")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertBlank("verse_1_1")
+                .InsertPara("p"));
+
+            var mapper = new DeltaUsxMapper();
+            XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+
+            XDocument expected = Usx("PHM",
+                Chapter("1"),
+                "This is an implied paragraph before the first verse.",
+                " This is actually part of the first implied paragraph.",
+                Para("p",
+                    Verse("1")));
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
+        public void ToUsx_ImpliedParagraphMissingReturn()
+        {
+            var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
+                .InsertChapter("1")
+                .Insert("This is an implied paragraph before the first verse.")
+                .Insert("\n")
+                .Insert(" This is actually part of the first implied paragraph but no return after.")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertBlank("verse_1_1")
+                .InsertPara("p"));
+
+            var mapper = new DeltaUsxMapper();
+            XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+
+            XDocument expected = Usx("PHM",
+                Chapter("1"),
+                "This is an implied paragraph before the first verse.",
+                " This is actually part of the first implied paragraph but no return after.",
+                Para("p",
+                    Verse("1")));
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
         public void ToUsx_EmptyBook()
         {
             var chapterDeltas = new[] { new ChapterDelta(1, 0, true, new Delta()) };
@@ -1651,6 +1725,33 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(chapterDeltas[1].LastVerse, Is.EqualTo(3));
             Assert.That(chapterDeltas[1].IsValid, Is.True);
             Assert.IsTrue(chapterDeltas[1].Delta.DeepEquals(expected2));
+        }
+
+        [Test]
+        public void ToDelta_ImpliedParagraph()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                "This is an implied paragraph before the first verse.",
+                Para("p",
+                    Verse("1")));
+
+            var mapper = new DeltaUsxMapper();
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .Insert("This is an implied paragraph before the first verse.")
+                .Insert("\n")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertBlank("verse_1_1")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].IsValid, Is.True);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
         }
 
         [Test]

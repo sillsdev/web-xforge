@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -38,6 +37,7 @@ namespace SIL.XForge.Scripture.Services
             public string CurChapter { get; set; }
             public int TableIndex { get; set; }
             public bool TopLevelVerses { get; set; }
+            public bool ImpliedParagraph { get; set; }
             public int LastVerse { get; set; }
             public string LastVerseStr
             {
@@ -103,7 +103,7 @@ namespace SIL.XForge.Scripture.Services
                                 break;
 
                             case "para":
-                                if (state.TopLevelVerses)
+                                if (state.TopLevelVerses || state.ImpliedParagraph)
                                 {
                                     // add implicit paragraph when there are top-level verses
                                     chapterDelta.Insert('\n');
@@ -132,6 +132,11 @@ namespace SIL.XForge.Scripture.Services
                                 else
                                 {
                                     state.CurRef = GetParagraphRef(nextIds, style, style);
+                                }
+                                if (state.ImpliedParagraph)
+                                {
+                                    chapterDelta.InsertBlank(state.CurRef);
+                                    state.ImpliedParagraph = false;
                                 }
                                 ProcessChildNodes(invalidNodes, chapterDelta, elem, state);
                                 SegmentEnded(chapterDelta, state.CurRef);
@@ -173,6 +178,9 @@ namespace SIL.XForge.Scripture.Services
                     case XText text:
                         chapterDelta.InsertText(text.Value, state.CurRef,
                             AddInvalidInlineAttribute(invalidNodes, text));
+                        // Only handle implied paragraphs at the top-level.
+                        if (state.CurRef == null)
+                            state.ImpliedParagraph = true;
                         break;
                 }
             }
@@ -411,14 +419,14 @@ namespace SIL.XForge.Scripture.Services
         {
             var newUsxDoc = new XDocument(oldUsxDoc);
             int curChapter = 1;
-            bool firstChapter = false;
+            bool isFirstChapterFound = false;
             ChapterDelta[] chapterDeltaArray = chapterDeltas.ToArray();
             int i = 0;
             foreach (XNode curNode in newUsxDoc.Root.Nodes().ToArray())
             {
                 if (IsElement(curNode, "chapter"))
                 {
-                    if (firstChapter)
+                    if (isFirstChapterFound)
                     {
                         ChapterDelta chapterDelta = chapterDeltaArray[i];
                         if (chapterDelta.Number == curChapter)
@@ -433,7 +441,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                     else
                     {
-                        firstChapter = true;
+                        isFirstChapterFound = true;
                     }
                 }
                 if (chapterDeltaArray[i].Number == curChapter && chapterDeltaArray[i].IsValid
@@ -517,6 +525,14 @@ namespace SIL.XForge.Scripture.Services
 
                     if (attrs == null)
                     {
+                        if (text.Length > 1 && text.Contains('\n'))
+                        {
+                            string paragraphText = string.Join("", text.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+                            childNodes.Peek().Add(new XText(paragraphText));
+                            // even if there isn't a '\n' at the end there should be
+                            text = "\n";
+                        }
+
                         if (text == "\n")
                         {
                             content.AddRange(childNodes.Peek());
