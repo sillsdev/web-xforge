@@ -932,6 +932,33 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToDelta_InvalidLastVerse()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    Verse("2bad")));
+
+            var mapper = new DeltaUsxMapper();
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertBlank("verse_1_1")
+                .InsertVerse("2bad", "v", true)
+                .InsertBlank("verse_1_2bad")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].IsValid, Is.False);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        [Test]
         public void ToDelta_SectionHeader()
         {
             XDocument usxDoc = Usx("PHM",
