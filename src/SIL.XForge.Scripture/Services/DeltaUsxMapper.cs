@@ -34,11 +34,28 @@ namespace SIL.XForge.Scripture.Services
 
         private class ParseState
         {
-            public string LastVerse { get; set; }
             public string CurRef { get; set; }
             public string CurChapter { get; set; }
             public int TableIndex { get; set; }
             public bool TopLevelVerses { get; set; }
+            public int LastVerse { get; set; }
+            public string LastVerseStr
+            {
+                set
+                {
+                    if (value != null)
+                    {
+                        int lastVerse = LastVerse;
+                        int dashIndex = value.IndexOf('-');
+                        if (dashIndex != -1)
+                            value = value.Substring(dashIndex + 1);
+                        if (int.TryParse(value, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture,
+                                out int _lastVerse))
+                            lastVerse = _lastVerse;
+                        LastVerse = lastVerse;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -132,7 +149,7 @@ namespace SIL.XForge.Scripture.Services
                                     isChapterValid = true;
                                 }
                                 state.CurRef = null;
-                                state.LastVerse = null;
+                                state.LastVerse = 0;
                                 state.CurChapter = (string)elem.Attribute("number");
                                 chapterDelta.InsertEmbed("chapter", GetAttributes(elem),
                                     attributes: AddInvalidBlockAttribute(invalidNodes, elem));
@@ -191,7 +208,7 @@ namespace SIL.XForge.Scripture.Services
                             break;
 
                         case "verse":
-                            state.LastVerse = (string)elem.Attribute("number");
+                            state.LastVerseStr = (string)elem.Attribute("number");
                             InsertVerse(invalidNodes, newDelta, elem, state);
                             break;
 
@@ -288,16 +305,7 @@ namespace SIL.XForge.Scripture.Services
             if (!int.TryParse(state.CurChapter, out int chapterNum))
                 return;
 
-            int lastVerseNum = 0;
-            if (state.LastVerse != null)
-            {
-                int dashIndex = state.LastVerse.IndexOf('-');
-                if (dashIndex != -1)
-                    lastVerseNum = int.Parse(state.LastVerse.Substring(dashIndex + 1), CultureInfo.InvariantCulture);
-                else
-                    lastVerseNum = int.Parse(state.LastVerse, CultureInfo.InvariantCulture);
-            }
-            chapterDeltas.Add(new ChapterDelta(chapterNum, lastVerseNum, isChapterValid, chapterDelta));
+            chapterDeltas.Add(new ChapterDelta(chapterNum, state.LastVerse, isChapterValid, chapterDelta));
         }
 
         private static void InsertVerse(HashSet<XNode> invalidNodes, Delta newDelta, XElement elem, ParseState state)
