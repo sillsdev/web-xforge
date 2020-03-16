@@ -396,9 +396,8 @@ class TestEnvironment {
     });
 
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
-    when(mockedSFProjectService.queryQuestionCount(anything(), anything())).thenCall((_projectId, options) => {
+    when(mockedSFProjectService.queryQuestions(anything(), anything())).thenCall((_projectId, options) => {
       const parameters: QueryParameters = {
-        $count: true,
         [obj<Question>().pathStr(q => q.verseRef.bookNum)]: options.bookNum,
         [obj<Question>().pathStr(q => q.isArchived)]: false
       };

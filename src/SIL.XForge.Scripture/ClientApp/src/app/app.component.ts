@@ -450,7 +450,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     for (const text of this.texts) {
       promises.push(
         this.projectService
-          .queryQuestionCount(this.selectedProjectDoc.id, {
+          .queryQuestions(this.selectedProjectDoc.id, {
             bookNum: text.bookNum,
             activeOnly: true
           })
