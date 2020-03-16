@@ -1,4 +1,7 @@
 using System;
+using System.IO;
+using System.Reflection;
+using Jering.Javascript.NodeJS;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SIL.XForge.Configuration;
@@ -12,14 +15,15 @@ namespace Microsoft.Extensions.DependencyInjection
             ILoggerFactory loggerFactory, IConfiguration configuration, Action<RealtimeOptions> configureOptions,
             bool launchWithDebugging = false)
         {
-            services.AddNodeServices(options =>
+            services.AddNodeJS();
+            services.Configure<NodeJSProcessOptions>(options =>
             {
-                options.LaunchWithDebugging = launchWithDebugging;
-                options.DebuggingPort = 9230;
-                options.WatchFileExtensions = new string[0];
-                options.NodeInstanceOutputLogger = new RealtimeServerLogger(
-                    loggerFactory.CreateLogger("SIL.XForge.Realtime.RealtimeServer"));
+                options.ProjectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                // only uncomment the two lines below when debugging on the Node side otherwise C# build is paused
+                // options.NodeAndV8Options = "--inspect-brk=9230";
             });
+            // services.Configure<OutOfProcessNodeJSServiceOptions>(options => options.TimeoutMS = -1);
+            services.AddSingleton<IJsonService, RealtimeJsonService>();
 
             services.Configure(configureOptions);
             services.AddSingleton<RealtimeServer>();

@@ -1,21 +1,19 @@
 using System.IO;
-using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.NodeServices;
+using Jering.Javascript.NodeJS;
 
 namespace SIL.XForge.Realtime
 {
     public class RealtimeServer
     {
-        private readonly INodeServices _nodeServices;
+        private readonly INodeJSService _nodeJSService;
         private readonly string _modulePath;
         private bool _started;
 
-        public RealtimeServer(INodeServices nodeServices)
+        public RealtimeServer(INodeJSService nodeJSService)
         {
-            _nodeServices = nodeServices;
-            _modulePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                "RealtimeServer", "lib", "common", "index");
+            _nodeJSService = nodeJSService;
+            _modulePath = Path.Combine("RealtimeServer", "lib", "common", "index");
         }
 
         public void Start(object options)
@@ -73,7 +71,7 @@ namespace SIL.XForge.Realtime
 
         private Task<T> InvokeExportAsync<T>(string exportedFunctionName, params object[] args)
         {
-            return _nodeServices.InvokeExportAsync<T>(_modulePath, exportedFunctionName, args);
+            return _nodeJSService.InvokeFromFileAsync<T>(_modulePath, exportedFunctionName, args);
         }
     }
 }
