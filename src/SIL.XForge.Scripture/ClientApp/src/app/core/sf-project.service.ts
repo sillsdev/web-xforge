@@ -87,23 +87,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
   }
 
-  queryQuestionCount(
-    id: string,
-    options: { bookNum?: number; activeOnly?: boolean } = {}
-  ): Promise<RealtimeQuery<QuestionDoc>> {
-    const queryParams: QueryParameters = {
-      $count: true,
-      [obj<Question>().pathStr(q => q.projectRef)]: id
-    };
-    if (options.bookNum != null) {
-      queryParams[obj<Question>().pathStr(q => q.verseRef.bookNum)] = options.bookNum;
-    }
-    if (options.activeOnly != null && options.activeOnly) {
-      queryParams[obj<Question>().pathStr(q => q.isArchived)] = false;
-    }
-    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
-  }
-
   createQuestion(id: string, question: Question): Promise<QuestionDoc> {
     return this.realtimeService.create(QuestionDoc.COLLECTION, getQuestionDocId(id, question.dataId), question);
   }
