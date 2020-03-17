@@ -53,5 +53,10 @@
     "localName": "ພາສາລາວ",
     "englishName": "Lao",
     "tags": ["lo", "lo-LA"]
+  },
+  {
+    "localName": "ꤊꤢ꤬ꤛꤢ꤭ꤜꤟꤤ꤬",
+    "englishName": "Western Kayah",
+    "tags": ["kyu", "kyu-Kali"]
   }
 ]
