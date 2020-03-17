@@ -251,7 +251,7 @@ namespace SIL.XForge.Scripture.Services
                 paratextId, fileName, isReadOnly, bookId, dbChapterDocs);
             await UpdateProgress();
 
-            XElement bookTextElem = XElement.Parse(ptBookText);
+            XElement bookTextElem = XElement.Parse(ptBookText, LoadOptions.PreserveWhitespace);
             var usxDoc = new XDocument(bookTextElem.Element("usx"));
             Dictionary<int, ChapterDelta> incomingChapters = _deltaUsxMapper.ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
@@ -379,7 +379,7 @@ namespace SIL.XForge.Scripture.Services
 
             string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId,
                 Canon.BookNumberToId(text.BookNum));
-            var bookTextElem = XElement.Parse(bookText);
+            var bookTextElem = XElement.Parse(bookText, LoadOptions.PreserveWhitespace);
             await UpdateProgress();
 
             var usxDoc = new XDocument(bookTextElem.Element("usx"));
@@ -457,7 +457,7 @@ namespace SIL.XForge.Scripture.Services
                 string oldNotesText = await _paratextService.GetNotesAsync(_userSecret, _projectDoc.Data.ParatextId,
                     Canon.BookNumberToId(text.BookNum));
                 if (oldNotesText != "")
-                    oldNotesElem = XElement.Parse(oldNotesText);
+                    oldNotesElem = XElement.Parse(oldNotesText, LoadOptions.PreserveWhitespace);
                 else
                     oldNotesElem = new XElement("notes", new XAttribute("version", "1.1"));
 
