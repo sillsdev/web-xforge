@@ -251,7 +251,7 @@ namespace SIL.XForge.Scripture.Services
                 paratextId, fileName, isReadOnly, bookId, dbChapterDocs);
             await UpdateProgress();
 
-            XElement bookTextElem = XElement.Parse(ptBookText);
+            XElement bookTextElem = XElement.Parse(ptBookText, LoadOptions.PreserveWhitespace);
             var usxDoc = new XDocument(bookTextElem.Element("usx"));
             Dictionary<int, ChapterDelta> incomingChapters = _deltaUsxMapper.ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
