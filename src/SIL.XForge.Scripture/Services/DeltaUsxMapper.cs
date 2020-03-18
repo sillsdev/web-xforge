@@ -130,11 +130,6 @@ namespace SIL.XForge.Scripture.Services
                                 {
                                     state.CurRef = GetParagraphRef(nextIds, style, style);
                                 }
-                                if (state.ImpliedParagraph)
-                                {
-                                    chapterDelta.InsertBlank(state.CurRef);
-                                    state.ImpliedParagraph = false;
-                                }
                                 ProcessChildNodes(invalidNodes, chapterDelta, elem, state);
                                 SegmentEnded(chapterDelta, state.CurRef);
                                 if (!canContainVerseText)
@@ -175,6 +170,8 @@ namespace SIL.XForge.Scripture.Services
                     case XText text:
                         chapterDelta.InsertText(text.Value, state.CurRef,
                             AddInvalidInlineAttribute(invalidNodes, text));
+                        // Implied paragraphs are only at the top-level
+                        // state.ImpliedParagraph = (state.CurRef == null);
                         state.ImpliedParagraph = true;
                         break;
                 }
@@ -211,6 +208,11 @@ namespace SIL.XForge.Scripture.Services
                             break;
 
                         case "verse":
+                            if (state.ImpliedParagraph)
+                            {
+                                newDelta.InsertBlank(state.CurRef);
+                                state.ImpliedParagraph = false;
+                            }
                             state.LastVerseStr = (string)elem.Attribute("number");
                             InsertVerse(invalidNodes, newDelta, elem, state);
                             break;
@@ -291,6 +293,7 @@ namespace SIL.XForge.Scripture.Services
                 case XText text:
                     newDelta.InsertText(text.Value, state.CurRef,
                         AddInvalidInlineAttribute(invalidNodes, text, attributes));
+                    state.ImpliedParagraph = false;
                     break;
             }
         }
