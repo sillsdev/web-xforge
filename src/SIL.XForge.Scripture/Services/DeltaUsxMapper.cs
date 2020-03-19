@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -37,7 +36,7 @@ namespace SIL.XForge.Scripture.Services
             public string CurRef { get; set; }
             public string CurChapter { get; set; }
             public int TableIndex { get; set; }
-            public bool TopLevelVerses { get; set; }
+            public bool ImpliedParagraph { get; set; }
             public int LastVerse { get; set; }
             public string LastVerseStr
             {
@@ -103,11 +102,10 @@ namespace SIL.XForge.Scripture.Services
                                 break;
 
                             case "para":
-                                if (state.TopLevelVerses)
+                                if (state.ImpliedParagraph)
                                 {
-                                    // add implicit paragraph when there are top-level verses
                                     chapterDelta.Insert('\n');
-                                    state.TopLevelVerses = false;
+                                    state.ImpliedParagraph = false;
                                 }
                                 var style = (string)elem.Attribute("style");
                                 bool canContainVerseText = CanParaContainVerseText(style);
@@ -159,7 +157,7 @@ namespace SIL.XForge.Scripture.Services
                             // can still generate USX with verses at the top-level
                             case "verse":
                                 ProcessChildNode(invalidNodes, chapterDelta, elem, state);
-                                state.TopLevelVerses = true;
+                                state.ImpliedParagraph = true;
                                 break;
 
                             default:
@@ -173,6 +171,7 @@ namespace SIL.XForge.Scripture.Services
                     case XText text:
                         chapterDelta.InsertText(text.Value, state.CurRef,
                             AddInvalidInlineAttribute(invalidNodes, text));
+                        state.ImpliedParagraph = true;
                         break;
                 }
             }
@@ -295,12 +294,11 @@ namespace SIL.XForge.Scripture.Services
         private void ChapterEnded(List<ChapterDelta> chapterDeltas, Delta chapterDelta, bool isChapterValid,
             ParseState state)
         {
-            if (state.TopLevelVerses)
+            if (state.ImpliedParagraph)
             {
-                // add implicit paragraph when there are top-level verses
                 SegmentEnded(chapterDelta, state.CurRef);
                 chapterDelta.Insert('\n');
-                state.TopLevelVerses = false;
+                state.ImpliedParagraph = false;
             }
             if (!int.TryParse(state.CurChapter, out int chapterNum))
                 return;
@@ -349,10 +347,14 @@ namespace SIL.XForge.Scripture.Services
             else
             {
                 JToken lastOp = newDelta.Ops[newDelta.Ops.Count - 1];
+                string lastOpText = "";
+                if (lastOp[Delta.InsertType].Type == JTokenType.String)
+                    lastOpText = (string)lastOp[Delta.InsertType];
                 var embed = lastOp[Delta.InsertType] as JObject;
                 var attrs = (JObject)lastOp[Delta.Attributes];
                 if ((embed != null && (embed["verse"] != null || embed["chapter"] != null))
-                    || (attrs != null && (attrs["para"] != null || attrs["table"] != null)))
+                    || (attrs != null && (attrs["para"] != null || attrs["table"] != null))
+                    || lastOpText.EndsWith('\n'))
                 {
                     newDelta.InsertBlank(segRef);
                 }
@@ -411,14 +413,14 @@ namespace SIL.XForge.Scripture.Services
         {
             var newUsxDoc = new XDocument(oldUsxDoc);
             int curChapter = 1;
-            bool firstChapter = false;
+            bool isFirstChapterFound = false;
             ChapterDelta[] chapterDeltaArray = chapterDeltas.ToArray();
             int i = 0;
             foreach (XNode curNode in newUsxDoc.Root.Nodes().ToArray())
             {
                 if (IsElement(curNode, "chapter"))
                 {
-                    if (firstChapter)
+                    if (isFirstChapterFound)
                     {
                         ChapterDelta chapterDelta = chapterDeltaArray[i];
                         if (chapterDelta.Number == curChapter)
@@ -433,7 +435,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                     else
                     {
-                        firstChapter = true;
+                        isFirstChapterFound = true;
                     }
                 }
                 if (chapterDeltaArray[i].Number == curChapter && chapterDeltaArray[i].IsValid
@@ -517,6 +519,14 @@ namespace SIL.XForge.Scripture.Services
 
                     if (attrs == null)
                     {
+                        if (text.Length > 1 && text.EndsWith('\n'))
+                        {
+                            // Combine implied paragraphs since USX only supports one (not expecting more than one tho).
+                            string[] impliedParagraphs = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                            childNodes.Peek().Add(new XText(string.Join("", impliedParagraphs)));
+                            text = "\n";
+                        }
+
                         if (text == "\n")
                         {
                             content.AddRange(childNodes.Peek());
