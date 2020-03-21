@@ -5,6 +5,7 @@ import jwks = require('jwks-rsa');
 import ShareDB = require('sharedb');
 import WebSocketJSONStream = require('websocket-json-stream');
 import ws = require('ws');
+import { ExceptionReporter } from './exception-reporter';
 
 function isLocalRequest(request: http.IncomingMessage): boolean {
   const addr = request.connection.remoteAddress;
@@ -19,11 +20,17 @@ export class WebSocketStreamListener {
     private readonly audience: string,
     private readonly scope: string,
     authority: string,
-    private readonly port: number
+    private readonly port: number,
+    private exceptionReporter: ExceptionReporter
   ) {
     // Create web servers to serve files and listen to WebSocket connections
     const app = express();
     app.use(express.static('static'));
+    app.use((err: any, req: any, res: any, next: any) => {
+      console.error(err);
+      res.status(500).send('500 Internal Server Error');
+      this.exceptionReporter.report(err);
+    });
     this.httpServer = http.createServer(app);
 
     this.jwksClient = jwks({
@@ -47,7 +54,11 @@ export class WebSocketStreamListener {
 
   start(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      this.httpServer.once('error', err => reject(err));
+      this.httpServer.once('error', err => {
+        console.error(err);
+        this.exceptionReporter.report(err);
+        reject(err);
+      });
       this.httpServer.once('listening', () => resolve());
       this.httpServer.listen(this.port);
     });

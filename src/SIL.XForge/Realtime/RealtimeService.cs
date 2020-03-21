@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using SIL.ObjectModel;
@@ -23,10 +24,11 @@ namespace SIL.XForge.Realtime
         private readonly IOptions<AuthOptions> _authOptions;
         private readonly IMongoDatabase _database;
         private readonly Dictionary<Type, DocConfig> _docConfigs;
+        private readonly IConfiguration _configuration;
 
         public RealtimeService(RealtimeServer server, IOptions<SiteOptions> siteOptions,
             IOptions<DataAccessOptions> dataAccessOptions, IOptions<RealtimeOptions> realtimeOptions,
-            IOptions<AuthOptions> authOptions, IMongoClient mongoClient)
+            IOptions<AuthOptions> authOptions, IMongoClient mongoClient, IConfiguration configuration)
         {
             Server = server;
             _siteOptions = siteOptions;
@@ -34,6 +36,7 @@ namespace SIL.XForge.Realtime
             _realtimeOptions = realtimeOptions;
             _authOptions = authOptions;
             _database = mongoClient.GetDatabase(_dataAccessOptions.Value.MongoDatabaseName);
+            _configuration = configuration;
 
             RealtimeOptions options = _realtimeOptions.Value;
             _docConfigs = new Dictionary<Type, DocConfig>();
@@ -139,7 +142,10 @@ namespace SIL.XForge.Realtime
                 Port = _realtimeOptions.Value.Port,
                 Authority = $"https://{_authOptions.Value.Domain}/",
                 Audience = _authOptions.Value.Audience,
-                Scope = _authOptions.Value.Scope
+                Scope = _authOptions.Value.Scope,
+                BugsnagApiKey = this._configuration.GetValue<string>("Bugsnag:ApiKey"),
+                ReleaseStage = this._configuration.GetValue<string>("Bugsnag:ReleaseStage"),
+                Version = System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion
             };
         }
     }

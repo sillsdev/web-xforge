@@ -24,6 +24,9 @@ declare class ShareDB {
     register: (type: { name?: string; uri?: string; [key: string]: any }) => void;
     map: { [key: string]: any };
   };
+  static logger: {
+    setMethods: (override: { info?: Function; warn?: Function; error?: Function }) => void;
+  };
   constructor(options?: {
     db?: any;
     pubsub?: ShareDB.PubSub;

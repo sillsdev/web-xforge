@@ -4,6 +4,7 @@ import * as RichText from 'rich-text';
 import ShareDB = require('sharedb');
 import ShareDBMongo = require('sharedb-mongo');
 import { Connection, Doc, OTType } from 'sharedb/lib/client';
+import { ExceptionReporter } from './exception-reporter';
 import { MetadataDB } from './metadata-db';
 import { RealtimeServer, RealtimeServerConstructor } from './realtime-server';
 import { SchemaVersionRepository } from './schema-version-repository';
@@ -21,6 +22,9 @@ interface RealtimeServerOptions {
   audience: string;
   scope: string;
   authority: string;
+  bugsnagApiKey: string;
+  releaseStage: string;
+  version: string;
 }
 
 let server: RealtimeServer | undefined;
@@ -34,6 +38,14 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
     return;
   }
 
+  const exceptionReporter = new ExceptionReporter(options.bugsnagApiKey, options.releaseStage, options.version);
+  function reportError(error: any) {
+    console.error(`Error from ShareDB server: ${error}`);
+    exceptionReporter.report(error);
+  }
+  // ShareDB sometimes reports errors as warnings
+  ShareDB.logger.setMethods({ warn: reportError, error: reportError });
+
   try {
     const RealtimeServerType: RealtimeServerConstructor = require(`../${options.appModuleName}/realtime-server`);
     const DBType = MetadataDB(ShareDBMongo);
@@ -43,7 +55,13 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
     await server.createIndexes(db);
     await server.migrateIfNecessary();
 
-    streamListener = new WebSocketStreamListener(options.audience, options.scope, options.authority, options.port);
+    streamListener = new WebSocketStreamListener(
+      options.audience,
+      options.scope,
+      options.authority,
+      options.port,
+      exceptionReporter
+    );
     streamListener.listen(server);
     await streamListener.start();
     running = true;
