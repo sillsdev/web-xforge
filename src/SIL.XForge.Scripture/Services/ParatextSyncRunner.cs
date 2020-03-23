@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -251,7 +252,7 @@ namespace SIL.XForge.Scripture.Services
                 paratextId, fileName, isReadOnly, bookId, dbChapterDocs);
             await UpdateProgress();
 
-            XElement bookTextElem = XElement.Parse(ptBookText, LoadOptions.PreserveWhitespace);
+            XElement bookTextElem = ParseText(ptBookText);
             var usxDoc = new XDocument(bookTextElem.Element("usx"));
             Dictionary<int, ChapterDelta> incomingChapters = _deltaUsxMapper.ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
@@ -379,7 +380,7 @@ namespace SIL.XForge.Scripture.Services
 
             string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId,
                 Canon.BookNumberToId(text.BookNum));
-            var bookTextElem = XElement.Parse(bookText, LoadOptions.PreserveWhitespace);
+            var bookTextElem = ParseText(bookText);
             await UpdateProgress();
 
             var usxDoc = new XDocument(bookTextElem.Element("usx"));
@@ -457,7 +458,7 @@ namespace SIL.XForge.Scripture.Services
                 string oldNotesText = await _paratextService.GetNotesAsync(_userSecret, _projectDoc.Data.ParatextId,
                     Canon.BookNumberToId(text.BookNum));
                 if (oldNotesText != "")
-                    oldNotesElem = XElement.Parse(oldNotesText, LoadOptions.PreserveWhitespace);
+                    oldNotesElem = ParseText(oldNotesText);
                 else
                     oldNotesElem = new XElement("notes", new XAttribute("version", "1.1"));
 
@@ -491,6 +492,16 @@ namespace SIL.XForge.Scripture.Services
             }
             await Task.WhenAll(tasks);
             return questionDocs;
+        }
+
+        /// <summary>
+        /// Preserve all whitespace in data but remove whitespace at the beginning of lines and remove line endings.
+        /// </summary>
+        private XElement ParseText(string text)
+        {
+            text = text.Trim().Replace("\r\n", "\n");
+            text = Regex.Replace(text, @"\n\s*<", "<", RegexOptions.CultureInvariant);
+            return XElement.Parse(text, LoadOptions.PreserveWhitespace);
         }
 
         /// <summary>
