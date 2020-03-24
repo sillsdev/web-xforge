@@ -193,11 +193,11 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            env.ParatextService.DidNotReceive().PutBookText("target", 40, Arg.Any<string>(), Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText("target", 41, Arg.Any<string>(), Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText("target", 40, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText("target", 41, Arg.Any<string>());
 
-            env.ParatextService.DidNotReceive().PutBookText("source", 40, Arg.Any<string>(), Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText("source", 41, Arg.Any<string>(), Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText("source", 40, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText("source", 41, Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
@@ -210,7 +210,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetText("MRK", 1, TextType.Source).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("MRK", 2, TextType.Source).DeepEquals(delta), Is.True);
 
-            env.ParatextService.DidNotReceive().PutNotes("target", Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
             SFProjectSecret projectSecret = env.GetProjectSecret();
             Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(0));
@@ -232,11 +232,11 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            env.ParatextService.Received().PutBookText("target", 40, Arg.Any<string>(), Arg.Any<string>());
-            env.ParatextService.Received().PutBookText("target", 41, Arg.Any<string>(), Arg.Any<string>());
+            env.ParatextService.Received().PutBookText("target", 40, Arg.Any<string>());
+            env.ParatextService.Received().PutBookText("target", 41, Arg.Any<string>());
 
-            env.ParatextService.DidNotReceive().PutBookText("source", 40, Arg.Any<string>(), Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText("source", 41, Arg.Any<string>(), Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText("source", 40, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText("source", 41, Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
@@ -249,7 +249,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetText("MRK", 1, TextType.Source).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("MRK", 2, TextType.Source).DeepEquals(delta), Is.True);
 
-            env.ParatextService.Received(2).PutNotes("target", Arg.Any<string>());
+            env.ParatextService.Received(2).PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
             SFProjectSecret projectSecret = env.GetProjectSecret();
             Assert.That(projectSecret.SyncUsers.Count, Is.EqualTo(1));
@@ -269,13 +269,13 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            env.ParatextService.Received().PutBookText("target", 40, Arg.Any<string>(), Arg.Any<string>());
-            env.ParatextService.Received().PutBookText("target", 41, Arg.Any<string>(), Arg.Any<string>());
+            env.ParatextService.Received().PutBookText("target", 40, Arg.Any<string>());
+            env.ParatextService.Received().PutBookText("target", 41, Arg.Any<string>());
 
-            env.ParatextService.DidNotReceive().PutBookText("source", 40, Arg.Any<string>(), Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText("source", 41, Arg.Any<string>(), Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText("source", 40, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText("source", 41, Arg.Any<string>());
 
-            env.ParatextService.DidNotReceive().PutNotes("target", Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
