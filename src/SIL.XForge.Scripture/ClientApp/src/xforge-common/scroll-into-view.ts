@@ -33,7 +33,6 @@ export class ScrollIntoViewDirective implements AfterViewInit {
     if (parent == null) {
       return null;
     } else if (
-      parent != null &&
       parent.scrollHeight > parent.clientHeight &&
       ['scroll', 'auto'].includes(window.getComputedStyle(parent).overflowY as string)
     ) {
