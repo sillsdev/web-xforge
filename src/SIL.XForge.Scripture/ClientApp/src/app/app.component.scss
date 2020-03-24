@@ -102,3 +102,7 @@ a {
 .active-locale {
   font-weight: bold;
 }
+
+.locale-menu .mdc-list-item {
+  white-space: nowrap;
+}
