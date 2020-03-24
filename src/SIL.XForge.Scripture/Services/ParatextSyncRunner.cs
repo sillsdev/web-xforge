@@ -281,7 +281,6 @@ namespace SIL.XForge.Scripture.Services
             {
                 bookTextElem = await LoadXmlFileAsync(fileName);
 
-
                 var oldUsxDoc = new XDocument(bookTextElem.Element("usx"));
                 XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
                     .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, dbChapterDocs[c.Number].Data)));
@@ -612,7 +611,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (Stream stream = _fileSystemService.OpenFile(fileName, FileMode.Open))
             {
-                return await XElement.LoadAsync(stream, LoadOptions.None, CancellationToken.None);
+                return await XElement.LoadAsync(stream, LoadOptions.PreserveWhitespace, CancellationToken.None);
             }
         }
 
@@ -620,7 +619,7 @@ namespace SIL.XForge.Scripture.Services
         {
             using (Stream stream = _fileSystemService.CreateFile(fileName))
             {
-                await bookTextElem.SaveAsync(stream, SaveOptions.None, CancellationToken.None);
+                await bookTextElem.SaveAsync(stream, SaveOptions.DisableFormatting, CancellationToken.None);
             }
         }
 
