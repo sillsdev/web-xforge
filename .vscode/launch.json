@@ -53,6 +53,16 @@
       }
     },
     {
+      "name": "Migrations",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "dotnet build",
+      "program": "${workspaceRoot}/src/Migrations/bin/Debug/netcoreapp3.1/Migrations.dll",
+      "cwd": "${workspaceRoot}/src/Migrations/",
+      "stopAtEntry": false,
+      "console": "integratedTerminal"
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "vscode-jest-tests",
