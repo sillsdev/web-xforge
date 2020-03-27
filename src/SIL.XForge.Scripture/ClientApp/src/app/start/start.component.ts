@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
@@ -14,9 +15,14 @@ export class StartComponent extends SubscriptionDisposable implements OnInit {
   constructor(
     private readonly router: Router,
     private readonly route: ActivatedRoute,
+    private readonly noticeService: NoticeService,
     private readonly userService: UserService
   ) {
     super();
+  }
+
+  get isAppLoading(): boolean {
+    return this.noticeService.isAppLoading;
   }
 
   async ngOnInit(): Promise<void> {

@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'start'">
-  <div fxLayout="column" fxLayoutAlign="center center">
+  <div fxLayout="column" fxLayoutAlign="center center" *ngIf="!isAppLoading">
     <p mdcBody1>{{ t("not_connected_to_any_projects") }}</p>
     <p>
       <button mdc-button primary type="button" [routerLink]="['/connect-project']">

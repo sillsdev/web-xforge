@@ -5,6 +5,7 @@ import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { User } from 'realtime-server/lib/common/models/user';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -12,18 +13,20 @@ import { UserService } from 'xforge-common/user.service';
 import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
 import { StartComponent } from './start.component';
 
-const mockedUserService = mock(UserService);
-const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedRouter = mock(Router);
+const mockedActivatedRoute = mock(ActivatedRoute);
+const mockedNoticeService = mock(NoticeService);
+const mockedUserService = mock(UserService);
 
 describe('StartComponent', () => {
   configureTestingModule(() => ({
     declarations: [StartComponent],
     imports: [UICommonModule, RouterTestingModule, TestTranslocoModule],
     providers: [
-      { provide: UserService, useMock: mockedUserService },
+      { provide: Router, useMock: mockedRouter },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
-      { provide: Router, useMock: mockedRouter }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 
