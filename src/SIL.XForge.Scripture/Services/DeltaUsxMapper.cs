@@ -240,7 +240,13 @@ namespace SIL.XForge.Scripture.Services
                                 }
                             }
                             newChildAttributes = AddInvalidInlineAttribute(invalidNodes, elem, newChildAttributes);
-                            ProcessChildNodes(invalidNodes, newDelta, elem, state, newChildAttributes);
+                            if (!elem.Nodes().Any() && elem.Value == "")
+                            {
+                                var obj = new JObject(new JProperty("blank", true));
+                                newDelta.InsertEmbed("blank", obj, state.CurRef, newChildAttributes);
+                            }
+                            else
+                                ProcessChildNodes(invalidNodes, newDelta, elem, state, newChildAttributes);
                             break;
 
                         case "table":

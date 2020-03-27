@@ -220,7 +220,11 @@ export function registerScripture(): void {
         node.innerText = value.caller;
       }
       if (value.contents != null) {
-        node.title = value.contents.ops.reduce((text, op) => text + op.insert, '');
+        // ignore blank embeds (checked here as non-string insert)
+        node.title = value.contents.ops.reduce(
+          (text, op) => (typeof op.insert === 'string' ? text + op.insert : text),
+          ''
+        );
       }
       setUsxValue(node, value);
       return node;
