@@ -153,6 +153,14 @@
   <data name="InviteSubject" xml:space="preserve">
     <value>You've been invited to the project {0} on {1}</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>ພາສາ</value>
+    <comment>Tool tip for the language selector</comment>
+  </data>
+  <data name="LogIn" xml:space="preserve">
+    <value>Log In</value>
+    <comment>Log In button label</comment>
+  </data>
   <data name="MessageMissing" xml:space="preserve">
     <value>Let us know why you want to use Scripture Forge</value>
   </data>
@@ -166,15 +174,15 @@
   <data name="RoleMissing" xml:space="preserve">
     <value>Select your language project role</value>
   </data>
+  <data name="SignUp" xml:space="preserve">
+    <value>Sign Up</value>
+    <comment>Sign Up button label</comment>
+  </data>
   <data name="Terms" xml:space="preserve">
     <value>Terms</value>
     <comment>Link to the Terms of service seen in the page footer</comment>
   </data>
   <data name="UserMissing" xml:space="preserve">
     <value>The user does not exist.</value>
-  </data>
-  <data name="Language" xml:space="preserve">
-    <value>ພາສາ</value>
-    <comment>Tool tip for the language selector</comment>
   </data>
 </root>

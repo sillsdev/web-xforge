@@ -153,6 +153,14 @@
   <data name="InviteSubject" xml:space="preserve">
     <value>Siz {1} -da olan {0} layihəsinə dəvət olunmusunuz</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>Dil</value>
+    <comment>Tool tip for the language selector</comment>
+  </data>
+  <data name="LogIn" xml:space="preserve">
+    <value>Daxil olun</value>
+    <comment>Log In button label</comment>
+  </data>
   <data name="MessageMissing" xml:space="preserve">
     <value>Kəlamın Yoxlanması proqramından niyə istifadə etmək istədiyinizi bizə bildirin. </value>
   </data>
@@ -166,15 +174,15 @@
   <data name="RoleMissing" xml:space="preserve">
     <value>Dil layihəsində gördüyünüz işi seçin. </value>
   </data>
+  <data name="SignUp" xml:space="preserve">
+    <value>Qeydiyyatdan keçmək</value>
+    <comment>Sign Up button label</comment>
+  </data>
   <data name="Terms" xml:space="preserve">
     <value>Şərtlər və qaydalar</value>
     <comment>Link to the Terms of service seen in the page footer</comment>
   </data>
   <data name="UserMissing" xml:space="preserve">
     <value>İstifadəçi mövcud deyil. </value>
-  </data>
-  <data name="Language" xml:space="preserve">
-    <value>Dil</value>
-    <comment>Tool tip for the language selector</comment>
   </data>
 </root>

@@ -117,51 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ContactEmail" xml:space="preserve">
-    <value>Where can we email you?</value>
-  </data>
-  <data name="ContactHeader" xml:space="preserve">
-    <value>Want to know more?</value>
-  </data>
-  <data name="ContactName" xml:space="preserve">
-    <value>What's your name and last name?</value>
-  </data>
-  <data name="ContactPrivacy" xml:space="preserve">
-    <value>Privacy Policy</value>
-  </data>
-  <data name="ContactPurpose" xml:space="preserve">
-    <value>Why do you want to use Scripture Forge?</value>
-  </data>
-  <data name="ContactRegister" xml:space="preserve">
-    <value>Send us your information and we will be in contact with you on how to join the beta.</value>
-  </data>
-  <data name="ContactRegisterButton" xml:space="preserve">
-    <value>Register</value>
-  </data>
-  <data name="ContactRegisterHeader" xml:space="preserve">
-    <value>When can I start using Scripture Forge?</value>
-  </data>
-  <data name="ContactRoleLabel" xml:space="preserve">
-    <value>What is your language project role?</value>
-  </data>
-  <data name="ContactRoleLTConsultant" xml:space="preserve">
-    <value>Language Technology Consultant</value>
-  </data>
-  <data name="ContactRoleManager" xml:space="preserve">
-    <value>Language Program Manager</value>
-  </data>
-  <data name="ContactRoleOther" xml:space="preserve">
-    <value>Other</value>
-  </data>
-  <data name="ContactRolePTConsultant" xml:space="preserve">
-    <value>Paratext Consultant</value>
-  </data>
-  <data name="ContactRoleTranslator" xml:space="preserve">
-    <value>Translator</value>
-  </data>
-  <data name="ContactTitle" xml:space="preserve">
-    <value>Get in Touch With Us</value>
-  </data>
   <data name="Description" xml:space="preserve">
     <value>A free set of tools to do more with your Paratext project, wherever you are. </value>
   </data>
@@ -176,8 +131,5 @@
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Engage with the language community. Collaborate with your peers.</value>
-  </data>
-  <data name="RegisterInterest" xml:space="preserve">
-    <value>Register Your Interest</value>
   </data>
 </root>

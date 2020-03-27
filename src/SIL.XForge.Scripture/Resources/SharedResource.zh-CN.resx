@@ -153,6 +153,14 @@
   <data name="InviteSubject" xml:space="preserve">
     <value>您受邀参加{1} 上的项目{0}</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>语言</value>
+    <comment>Tool tip for the language selector</comment>
+  </data>
+  <data name="LogIn" xml:space="preserve">
+    <value>登录</value>
+    <comment>Log In button label</comment>
+  </data>
   <data name="MessageMissing" xml:space="preserve">
     <value>让我们知道您为什么要使用圣经锻造</value>
   </data>
@@ -166,15 +174,15 @@
   <data name="RoleMissing" xml:space="preserve">
     <value>青玄贼您的预研项目的角色</value>
   </data>
+  <data name="SignUp" xml:space="preserve">
+    <value>注册</value>
+    <comment>Sign Up button label</comment>
+  </data>
   <data name="Terms" xml:space="preserve">
     <value>词条</value>
     <comment>Link to the Terms of service seen in the page footer</comment>
   </data>
   <data name="UserMissing" xml:space="preserve">
     <value>该用户不存在。</value>
-  </data>
-  <data name="Language" xml:space="preserve">
-    <value>语言</value>
-    <comment>Tool tip for the language selector</comment>
   </data>
 </root>

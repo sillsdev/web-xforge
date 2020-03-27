@@ -1,9 +1,9 @@
 #hero {
   background-color: $greenLight;
   background-image: linear-gradient($greenLight, #98b132);
-  padding: 130px 0 130px;
+  padding: 198px 0 100px;
   @include media-breakpoint-down(md) {
-    padding: 100px 0 70px;
+    padding: 152px 0 40px;
   }
   @include media-breakpoint-down(sm) {
     padding-bottom: 30px;
@@ -14,10 +14,6 @@
     max-width: 900px;
     line-height: 1.2;
     letter-spacing: 0;
-  }
-
-  button {
-    margin: auto;
   }
 }
 
@@ -88,30 +84,5 @@
         }
       }
     }
-  }
-}
-#contact {
-  background-color: $greenLight;
-  padding: 76px 0 125px;
-  @include media-breakpoint-down(md) {
-    padding: 46px 0 70px;
-  }
-  @include media-breakpoint-down(sm) {
-    padding: 30px 0;
-  }
-
-  a {
-    color: $greyDark;
-  }
-}
-
-#register {
-  margin-top: 80px;
-  @include media-breakpoint-down(md) {
-    margin-top: 40px;
-  }
-
-  h3 {
-    margin: 0 0 10px;
   }
 }

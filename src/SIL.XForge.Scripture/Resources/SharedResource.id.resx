@@ -153,6 +153,14 @@
   <data name="InviteSubject" xml:space="preserve">
     <value>Anda telah diundang ke proyek {0} pada {1}</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>Bahasa</value>
+    <comment>Tool tip for the language selector</comment>
+  </data>
+  <data name="LogIn" xml:space="preserve">
+    <value>Masuk log</value>
+    <comment>Log In button label</comment>
+  </data>
   <data name="MessageMissing" xml:space="preserve">
     <value>Beritahu kami, mengapa Anda ingin menggunakan Scripture Forge</value>
   </data>
@@ -166,15 +174,15 @@
   <data name="RoleMissing" xml:space="preserve">
     <value>Pilih peran Anda di proyek kebahasaan</value>
   </data>
+  <data name="SignUp" xml:space="preserve">
+    <value>Daftar</value>
+    <comment>Sign Up button label</comment>
+  </data>
   <data name="Terms" xml:space="preserve">
     <value>Istilah</value>
     <comment>Link to the Terms of service seen in the page footer</comment>
   </data>
   <data name="UserMissing" xml:space="preserve">
     <value>Pengguna tidak ada.</value>
-  </data>
-  <data name="Language" xml:space="preserve">
-    <value>Bahasa</value>
-    <comment>Tool tip for the language selector</comment>
   </data>
 </root>

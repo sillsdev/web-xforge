@@ -3,11 +3,7 @@
 @inject IViewLocalizer Localizer
 @model IndexModel
 @section scripts {
-    @await Html.PartialAsync("_ValidationScriptsPartial")
     <script type="text/javascript">
-        document.getElementById("register-interest").addEventListener("click", function () {
-            window.location = "#contact";
-        });
         webAuth.checkSession({}, function (err, authResult) {
             if (!err) {
                 var options = { state: JSON.stringify({}) };
@@ -23,13 +19,6 @@
             <div class="mdl-cell mdl-cell--12-col align-center">
                 <img src="~/images/multi-devices.svg" alt="Works on multiple devices" />
                 <h1 class="align-center">@Localizer["Description"]</h1>
-                <button id="register-interest" class="button">
-                    <span class="button-prefix">
-                        <span class="beta">Beta</span>
-                        <img src="~/images/logo-sf-white.svg" alt="Scripture Forge">
-                    </span>
-                    <span class="text">@Localizer["RegisterInterest"]</span>
-                </button>
             </div>
         </div>
     </div>
@@ -52,72 +41,6 @@
                         <img src="~/images/translate.svg" alt="Translate">
                         <span>@Localizer["EngageSuggestions"]</span>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-<section id="contact">
-    <div class="container">
-        <div class="mdl-grid">
-            <div class="mdl-cell mdl-cell--12-col">
-                <div class="section-title">
-                    <h2>@Localizer["ContactHeader"]</h2>
-                    <div class="title">@Localizer["ContactTitle"]</div>
-                </div>
-                <div id="register" class="align-center">
-                    <h3>@Localizer["ContactRegisterHeader"]</h3>
-                    <p>@Localizer["ContactRegister"]</p>
-                    <div asp-validation-summary="All" class="required"></div>
-                    <form method="POST" asp-antiforgery="false">
-                        <div class="field-container">
-                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                <input class="mdl-textfield__input" asp-for="Name">
-                                <label class="mdl-textfield__label" for="Name">
-                                    @Localizer["ContactName"] <span class="required">*</span>
-                                </label>
-                                <span asp-validation-for="Name"></span>
-                            </div>
-                        </div>
-                        <div class="field-container">
-                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                <input class="mdl-textfield__input" asp-for="Email">
-                                <label class="mdl-textfield__label" for="Email">
-                                    @Localizer["ContactEmail"] <span class="required">*</span>
-                                </label>
-                                <span asp-validation-for="Email"></span>
-                            </div>
-                        </div>
-                        <div class="field-container">
-                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                <select class="mdl-textfield__input" asp-for="Role">
-                                    <option></option>
-                                    <option value="Language Program Manager">@Localizer["ContactRoleManager"]</option>
-                                    <option value="Translator">@Localizer["ContactRoleTranslator"]</option>
-                                    <option value="Paratext Consultant">@Localizer["ContactRolePTConsultant"]</option>
-                                    <option value="Language Technology Consultant">@Localizer["ContactRoleLTConsultant"]</option>
-                                    <option value="Other">@Localizer["ContactRoleOther"]</option>
-                                </select>
-                                <label class="mdl-textfield__label" for="Role">@Localizer["ContactRoleLabel"]</label>
-                                <span asp-validation-for="Role"></span>
-                            </div>
-                        </div>
-                        <div class="field-container">
-                            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-                                <textarea class="mdl-textfield__input" rows="3" asp-for="Message"></textarea>
-                                <label class="mdl-textfield__label" for="Message">@Localizer["ContactPurpose"]</label>
-                                <span asp-validation-for="Message"></span>
-                            </div>
-                        </div>
-                        <button class="button" type="submit">
-                            <span class="button-prefix">
-                                <span class="beta">Beta</span>
-                                <img src="~/images/logo-sf-white.svg" alt="Scripture Forge">
-                            </span>
-                            <span class="text">@Localizer["ContactRegisterButton"]</span>
-                        </button>
-                    </form>
-                    <p><a href="~/privacy" target="_blank">@Localizer["ContactPrivacy"]</a></p>
                 </div>
             </div>
         </div>
