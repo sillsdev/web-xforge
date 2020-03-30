@@ -10,7 +10,7 @@
     "log_out": "Keluar",
     "logged_in_as": "Masuk sebagai",
     "overview": "Ringkasan",
-    "page_not_found": "Page not found",
+    "page_not_found": "Halaman tidak ditemukan",
     "password_reset_email_sent": "Kami baru saja mengirimi Anda surel untuk mengatur ulang kata sandi Anda.",
     "product_version": "Versi produk: v{{ version }}",
     "project_home": "Beranda Proyek",
