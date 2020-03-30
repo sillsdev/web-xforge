@@ -57,6 +57,7 @@
   {
     "localName": "ꤊꤢ꤬ꤛꤢ꤭ꤜꤟꤤ꤬ (W. Kayah Li)",
     "englishName": "Western Kayah Li",
-    "tags": ["kyu", "kyu-Kali"]
+    "tags": ["kyu", "kyu-Kali"],
+    "production": true
   }
 ]

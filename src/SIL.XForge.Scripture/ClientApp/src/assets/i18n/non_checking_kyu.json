@@ -1,37 +1,37 @@
 {
   "app": {
-    "settings": "Settings",
-    "synchronize": "Synchronize",
-    "system_administration": "System Administration",
-    "translate": "Translate",
-    "users": "Users"
+    "settings": "ꤜꤟꤢꤩꤗꤟꤢꤩ꤬ꤒꤟꤢꤧ꤬",
+    "synchronize": "ꤗꤟꤢꤩ꤬ꤕꤚꤝꤟꤥꤒꤟꤢꤧ꤬",
+    "system_administration": "ꤕꤚꤟꤢꤧ꤬ꤕꤣꤒꤢ꤬ꤚꤤ꤬ꤔꤟꤤ ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬",
+    "translate": "ꤚꤢ꤭ꤕꤟꤥ꤬ꤓꤢꤩ꤬",
+    "users": "ꤕꤚꤟꤢꤧ꤬ꤔꤢꤪ꤭ꤢꤩ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬"
   },
   "chapter_nav": {
-    "previous_chapter": "Previous chapter",
-    "next_chapter": "Next chapter"
+    "previous_chapter": "ꤢ꤬ꤗꤟꤢ꤭ꤘꤢꤨ꤬ ꤘꤣꤋꤛꤢꤩ꤭",
+    "next_chapter": "ꤢ꤬ꤗꤟꤢ꤭ꤘꤢꤨ꤬ ꤘꤣꤑꤢꤩ꤭"
   },
   "checking": {
-    "add_question": "Add question"
+    "add_question": "ꤙꤢꤩ꤬ꤔꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭"
   },
   "checking_answers": {
-    "archive": "Archive",
-    "only_community_checkers_can_like": "Only Community Checkers can like answers."
+    "archive": "ꤙꤢꤩ꤬ꤕꤜꤢꤪꤕꤜꤢꤪ ꤜꤤ꤬ꤒꤟꤢꤧ꤬ꤘꤛꤢꤊꤛꤢ꤭",
+    "only_community_checkers_can_like": "ꤊꤢ꤬ꤛꤢ꤭ ꤥ꤬ ꤕꤢ꤭ ꤘꤣ ꤕꤚꤟꤢꤧ꤬ꤕꤚꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤓꤢꤦꤡꤢꤩ꤭ ꤕꤜꤢꤪꤗꤟꤢꤨ꤬ ꤔꤌꤣ꤬ꤒꤢꤦ ꤢ꤬ ꤞꤢꤧꤕꤜꤢꤪ꤬ꤒꤥ꤭ ꤊꤟꤌꤣ꤭ ꤗꤢ꤬ꤢ꤬ꤔꤟꤤ"
   },
   "checking_overview": {
-    "add_question": "Add Question",
-    "answer_count_label": "{{ count }} answers",
-    "archive": "Archive",
-    "archived_questions": "Archived Questions",
-    "click_add_question": "Click {{ boldStart }}Add question{{ boldEnd }}, above.",
-    "no_questions": "There are no published questions. ",
-    "no_archived_questions": "There are no archived questions.",
-    "question_count_label": "{{ count }} questions",
-    "republish": "Republish",
-    "time_archived_stamp": "Archived on {{ timeStamp }}"
+    "add_question": "ꤙꤢꤩ꤬ꤔꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭",
+    "answer_count_label": "{{ ꤘꤛꤢ }} ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ",
+    "archive": "ꤙꤢꤩ꤬ꤕꤜꤢꤪꤕꤜꤢꤪ ꤜꤤ꤬ꤒꤟꤢꤧ꤬ꤘꤛꤢꤊꤛꤢ꤭",
+    "archived_questions": "ꤙꤢꤩ꤬ꤕꤜꤢꤪ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ",
+    "click_add_question": "ꤒꤣ꤬ꤙꤢꤧ꤬ {{ boldStart }}ꤚꤢ꤭ꤔꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭{{ boldEnd }}, ꤘꤣꤢ꤬ꤋꤢꤨ꤬ꤓꤛꤢ꤬.",
+    "no_questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤘꤣ ꤢꤧꤕꤚꤟꤢꤧ꤬ ꤜꤟꤢꤩꤞꤢꤧꤑꤢꤩ꤭ ꤥ꤬ ꤒꤥ꤬꤯",
+    "no_archived_questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤬ ꤘꤣ ꤢꤨ꤭ ꤙꤢꤩ꤬ꤕꤜꤢꤪ ꤔꤌꤣ꤬ ꤢ꤬ꤥ꤬ ꤒꤥ꤬꤯ ",
+    "question_count_label": "{{ count }} ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭",
+    "republish": "ꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤒꤟꤢ꤭ ꤋꤛꤢꤩ꤭ꤞꤛꤢ",
+    "time_archived_stamp": "ꤙꤢꤩ꤬ꤕꤜꤢꤪꤓꤛꤢ꤬ {{ timeStamp }}"
   },
   "collaborators": {
-    "awaiting_response_from": "Awaiting response from{{ newLine }}{{ email }}",
-    "cancel_invite": "Cancel invite",
+    "awaiting_response_from": "ꤥ꤬ꤕꤟꤢꤪ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤊꤟꤢ꤬ꤋꤛꤢꤩ꤭ꤏꤢꤦ꤬ ꤘꤣ{{ newLine }}{{ email }}",
+    "cancel_invite": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭ ꤒꤟꤢꤧ꤬ꤢꤧꤗꤟꤥ꤬",
     "change_roles_and_permissions": "Users' roles and permissions can {{ boldStart }}only{{ boldEnd }} be changed in {{ boldStart }}Paratext{{ boldEnd }}. Open the project in {{ boldStart }}Paratext{{ boldEnd }}, on the project window click {{ templateTagBoundary }}{{ templateTagBoundary }}, then {{ boldStart }}Project settings{{ boldEnd }}, then {{ boldStart }}User permissions{{ boldEnd }}. After a {{ italicsStart }}Send/Receive{{ italicsEnd }} in {{ boldStart }}Paratext{{ boldEnd }} and then a {{ italicsStart }}Synchronize{{ italicsEnd }} in {{ boldStart }}Scripture Forge{{ boldEnd }}, their role will come into effect here, once that user logs in with their {{ boldStart }}Paratext{{ boldEnd }} account.",
     "filter_users": "Filter users...",
     "me": "me",
@@ -111,7 +111,7 @@
     "pt_administrator": "Administrator",
     "pt_consultant": "Consultant/Reviewer/Archivist/Typesetter",
     "pt_observer": "Observer",
-    "pt_translator": "Translator",
+    "pt_translator": "ꤕꤚꤟꤢꤧ꤬ꤚꤢ꤭ꤕꤟꤥ꤬ꤓꤢꤩ꤬",
     "sf_community_checker": "Community Checker",
     "sf_reviewer": "Reviewer"
   },
@@ -128,7 +128,7 @@
     "log_in_with_paratext": "Log in to Paratext",
     "see_others_answers_and_comments": "See other's answers and comments",
     "select_additional_tools_and_features": "Select which additional tools and features are available.",
-    "settings": "Settings",
+    "settings": "ꤜꤟꤢꤩꤗꤟꤢꤩ꤬ꤒꤟꤢꤧ꤬",
     "share": "Share",
     "specific_people": "Specific people",
     "tools": "Tools",
@@ -155,7 +155,7 @@
     "never_been_synced": "Never been synced",
     "something_went_wrong_synchronizing_this_project": "Something went wrong while synchronizing the {{ projectName }} with Paratext. Please try again.",
     "successfully_synchronized_with_paratext": "Successfully synchronized {{ projectName }} with Paratext.",
-    "synchronize": "Synchronize",
+    "synchronize": "ꤗꤟꤢꤩ꤬ꤕꤚꤝꤟꤥꤒꤟꤢꤧ꤬",
     "synchronize_project": "Synchronize {{ projectName }} with Paratext",
     "your_project_is_being_synchronized": "Your project is being synchronized..."
   },
@@ -176,6 +176,6 @@
   },
   "users": {
     "collaborators": "Collaborators",
-    "users": "Users"
+    "users": "ꤕꤚꤟꤢꤧ꤬ꤔꤢꤪ꤭ꤢꤩ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬"
   }
 }
