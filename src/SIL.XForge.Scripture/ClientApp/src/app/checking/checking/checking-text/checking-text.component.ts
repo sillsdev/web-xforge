@@ -34,10 +34,8 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   }
 
   @Input() set activeVerse(verseRef: VerseRef | undefined) {
-    // Removed the highlight on the old active verse
-    this.highlightActiveVerse(false);
     this._activeVerse = verseRef;
-    this.highlightActiveVerse(true);
+    this.highlightActiveVerse();
     this.scrollToActiveVerse();
   }
 
@@ -79,7 +77,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   onLoaded(): void {
     this._editorLoaded = true;
     this.toggleQuestionVerses(true);
-    this.highlightActiveVerse(true);
+    this.highlightActiveVerse();
     this.scrollToActiveVerse();
   }
 
@@ -110,21 +108,19 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this.toggleQuestionSegments(questionCounts, segments, value);
   }
 
-  private highlightActiveVerse(toggle: boolean): void {
-    if (!this.isEditorLoaded || this._activeVerse == null) {
+  private highlightActiveVerse(): void {
+    if (!this.isEditorLoaded) {
       return;
     }
 
-    for (const segment of this.getVerseSegments(this._activeVerse)) {
-      const range = this.textComponent.getSegmentRange(segment);
-      if (range == null) {
-        continue;
-      }
-      this.textComponent.toggleHighlight(toggle, range);
-    }
+    const refs = this.getVerseSegments(this._activeVerse);
+    this.textComponent.highlight(refs);
   }
 
-  private getVerseSegments(verseRef: VerseRef): string[] {
+  private getVerseSegments(verseRef?: VerseRef): string[] {
+    if (verseRef == null) {
+      return [];
+    }
     const segments: string[] = [];
     let segment = '';
     for (const verseInRange of verseRef.allVerses()) {

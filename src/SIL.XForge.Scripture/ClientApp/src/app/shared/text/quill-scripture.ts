@@ -1,3 +1,4 @@
+import cloneDeep from 'lodash/cloneDeep';
 import Parchment from 'parchment';
 import Quill, { Clipboard, DeltaOperation, DeltaStatic, History, HistoryStackType, Module } from 'quill';
 
@@ -383,6 +384,21 @@ export function registerScripture(): void {
         });
       }
     }
+
+    insertAt(index: number, value: string, def?: any): void {
+      // force verse embeds to not get inserted inside of segments
+      if (value === 'verse') {
+        const [child, offset] = this.children.find(index);
+        if (child != null) {
+          const after = child.split(offset);
+          const node = VerseEmbed.create(def);
+          const blot = new VerseEmbed(node);
+          this.insertBefore(blot, after);
+          return;
+        }
+      }
+      super.insertAt(index, value, def);
+    }
   }
 
   class SegmentInline extends Inline {
@@ -415,14 +431,6 @@ export function registerScripture(): void {
     }
   }
 
-  ParaBlock.allowedChildren.push(ParaInline);
-  ParaBlock.allowedChildren.push(VerseEmbed);
-  ParaBlock.allowedChildren.push(BlankEmbed);
-  ParaBlock.allowedChildren.push(NoteEmbed);
-  ParaBlock.allowedChildren.push(OptBreakEmbed);
-  ParaBlock.allowedChildren.push(FigureEmbed);
-  ParaBlock.allowedChildren.push(UnmatchedEmbed);
-  ParaBlock.allowedChildren.push(SegmentInline);
   (Inline as any).order.push('segment');
   (Inline as any).order.push('para-contents');
 
@@ -471,6 +479,26 @@ export function registerScripture(): void {
     }
   }
 
+  interface ElementRestrictedAttributorOptions {
+    scope?: any;
+    whitelist?: string[];
+    elemName?: string;
+  }
+
+  class ElementRestrictedAttributor extends QuillParchment.Attributor.Attribute {
+    private readonly elemName?: string;
+    constructor(attrName: string, keyName: string, options: ElementRestrictedAttributorOptions = {}) {
+      super(attrName, keyName, options);
+      this.elemName = options.elemName;
+    }
+    canAdd(node: HTMLElement, value: any): boolean {
+      if (!super.canAdd(node, value)) {
+        return false;
+      }
+      return this.elemName == null || node.tagName.toLowerCase() === this.elemName.toLowerCase();
+    }
+  }
+
   const HighlightSegmentClass = new ClassAttributor('highlight-segment', 'highlight-segment', {
     scope: Parchment.Scope.INLINE
   });
@@ -497,6 +525,15 @@ export function registerScripture(): void {
 
   const InvalidInlineClass = new ClassAttributor('invalid-inline', 'invalid-inline', {
     scope: Parchment.Scope.INLINE
+  });
+
+  const SegmentDirectionAttribute = new ElementRestrictedAttributor('direction-segment', 'dir', {
+    scope: Parchment.Scope.INLINE,
+    elemName: 'usx-segment'
+  });
+
+  const BlockDirectionAttribute = new QuillParchment.Attributor.Attribute('direction-block', 'dir', {
+    scope: Parchment.Scope.BLOCK
   });
 
   class DisableHtmlClipboard extends QuillClipboard {
@@ -548,11 +585,30 @@ export function registerScripture(): void {
       this.stack[dest].push(delta);
       this.lastRecorded = 0;
       this.ignoreChange = true;
-      this.quill.updateContents(delta[source], 'user');
+      // during undo/redo, segments can be incorrectly highlighted, so explicitly remove incorrect highlighting
+      this.quill.updateContents(removeSegmentHighlight(delta[source]), 'user');
       this.ignoreChange = false;
       const index = getLastChangeIndex(delta[source]);
       this.quill.setSelection(index);
     }
+  }
+
+  /**
+   * Updates delta to remove segment highlights from segments that are not explicitly highlighted
+   */
+  function removeSegmentHighlight(delta: DeltaStatic): DeltaStatic {
+    const updatedDelta = new Delta();
+    if (delta.ops != null) {
+      for (const op of delta.ops) {
+        const modelOp: DeltaOperation = cloneDeep(op);
+        const attrs = modelOp.attributes;
+        if (attrs != null && attrs['segment'] != null && attrs['highlight-segment'] == null) {
+          attrs['highlight-segment'] = false;
+        }
+        (updatedDelta as any).push(modelOp);
+      }
+    }
+    return updatedDelta.chop();
   }
 
   /**
@@ -588,17 +644,20 @@ export function registerScripture(): void {
     if (delta.ops == null) {
       return 0;
     }
-    // selection should be moved to location of last insert or delete in undo/redo delta
+    // skip inserted embeds when determining last edit
     let changeIndex = 0;
     let curIndex = 0;
     for (const op of delta.ops) {
       if (op.insert != null) {
-        curIndex += typeof op.insert === 'string' ? op.insert.length : 1;
-        changeIndex = curIndex;
-      } else if (op.delete != null) {
-        changeIndex = curIndex;
+        if (typeof op.insert === 'string') {
+          curIndex += op.insert.length;
+          changeIndex = curIndex;
+        } else {
+          curIndex++;
+        }
       } else if (op.retain != null) {
         curIndex += op.retain;
+        changeIndex = curIndex;
       }
     }
     if (endsWithNewlineChange(delta)) {
@@ -613,6 +672,8 @@ export function registerScripture(): void {
   Quill.register('formats/question-count', CheckingQuestionCountAttribute);
   Quill.register('formats/invalid-block', InvalidBlockClass);
   Quill.register('formats/invalid-inline', InvalidInlineClass);
+  Quill.register('formats/direction-segment', SegmentDirectionAttribute);
+  Quill.register('formats/direction-block', BlockDirectionAttribute);
   Quill.register('blots/verse', VerseEmbed);
   Quill.register('blots/blank', BlankEmbed);
   Quill.register('blots/empty', EmptyEmbed);
