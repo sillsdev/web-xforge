@@ -117,51 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ContactEmail" xml:space="preserve">
-    <value>我们在哪里可以给您发送电子邮件？</value>
-  </data>
-  <data name="ContactHeader" xml:space="preserve">
-    <value>想知道更多？</value>
-  </data>
-  <data name="ContactName" xml:space="preserve">
-    <value>您怎么称呼？请留下您的姓名。</value>
-  </data>
-  <data name="ContactPrivacy" xml:space="preserve">
-    <value>隐私策略</value>
-  </data>
-  <data name="ContactPurpose" xml:space="preserve">
-    <value>您为何要使用圣经锻造？</value>
-  </data>
-  <data name="ContactRegister" xml:space="preserve">
-    <value>向我们发送您的信息，我们将与您联系如何加入Beta。</value>
-  </data>
-  <data name="ContactRegisterButton" xml:space="preserve">
-    <value>登记</value>
-  </data>
-  <data name="ContactRegisterHeader" xml:space="preserve">
-    <value>我什么时候可以开始使用经文锻造？</value>
-  </data>
-  <data name="ContactRoleLabel" xml:space="preserve">
-    <value>您的语言项目角色是什么？</value>
-  </data>
-  <data name="ContactRoleLTConsultant" xml:space="preserve">
-    <value>语言技术顾问</value>
-  </data>
-  <data name="ContactRoleManager" xml:space="preserve">
-    <value>预研项目经理</value>
-  </data>
-  <data name="ContactRoleOther" xml:space="preserve">
-    <value>其他</value>
-  </data>
-  <data name="ContactRolePTConsultant" xml:space="preserve">
-    <value>圣经辅助工具顾问</value>
-  </data>
-  <data name="ContactRoleTranslator" xml:space="preserve">
-    <value>译者</value>
-  </data>
-  <data name="ContactTitle" xml:space="preserve">
-    <value>与我们联络</value>
-  </data>
   <data name="Description" xml:space="preserve">
     <value>一套免费的工具，无论您身在何处，都可以在您的圣经辅助工具项目中完成更多工作。 </value>
   </data>
@@ -176,8 +131,5 @@
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>与语言社区相除，并与同事们合作。</value>
-  </data>
-  <data name="RegisterInterest" xml:space="preserve">
-    <value>告知您的兴趣</value>
   </data>
 </root>

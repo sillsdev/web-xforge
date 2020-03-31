@@ -15,25 +15,27 @@ namespace SIL.XForge.Scripture
     {
         public static class Keys
         {
-            public const string UserMissing = "UserMissing";
-            public const string InviteSubject = "InviteSubject";
+            public const string EmailBad = "EmailBad";
+            public const string EmailMissing = "EmailMissing";
+            public const string InviteEmailOption = "InviteEmailOption";
+            public const string InviteFacebookOption = "InviteFacebookOption";
+            public const string InviteGoogleOption = "InviteGoogleOption";
             public const string InviteGreeting = "InviteGreeting";
             public const string InviteInstructions = "InviteInstructions";
-            public const string InvitePTOption = "InvitePTOption";
-            public const string InviteGoogleOption = "InviteGoogleOption";
-            public const string InviteFacebookOption = "InviteFacebookOption";
-            public const string InviteEmailOption = "InviteEmailOption";
-            public const string InviteSignature = "InviteSignature";
-            public const string InviteLinkSharingOn = "InviteLinkSharingOn";
             public const string InviteLinkSharingOff = "InviteLinkSharingOff";
-            public const string NameMissing = "NameMissing";
-            public const string EmailMissing = "EmailMissing";
-            public const string EmailBad = "EmailBad";
-            public const string RoleMissing = "RoleMissing";
-            public const string MessageMissing = "MessageMissing";
-            public const string Terms = "Terms";
-            public const string Privacy = "Privacy";
+            public const string InviteLinkSharingOn = "InviteLinkSharingOn";
+            public const string InvitePTOption = "InvitePTOption";
+            public const string InviteSignature = "InviteSignature";
+            public const string InviteSubject = "InviteSubject";
             public const string Language = "Language";
+            public const string LogIn = "LogIn";
+            public const string MessageMissing = "MessageMissing";
+            public const string NameMissing = "NameMissing";
+            public const string Privacy = "Privacy";
+            public const string RoleMissing = "RoleMissing";
+            public const string SignUp = "SignUp";
+            public const string Terms = "Terms";
+            public const string UserMissing = "UserMissing";
         }
 
         /// <summary>

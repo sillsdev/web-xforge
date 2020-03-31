@@ -153,6 +153,14 @@
   <data name="InviteSubject" xml:space="preserve">
     <value>Вас пригласили в проект {0} на {1}</value>
   </data>
+  <data name="Language" xml:space="preserve">
+    <value>Язык</value>
+    <comment>Tool tip for the language selector</comment>
+  </data>
+  <data name="LogIn" xml:space="preserve">
+    <value>Вход</value>
+    <comment>Log In button label</comment>
+  </data>
   <data name="MessageMissing" xml:space="preserve">
     <value>Сообщите нам, почему вы хотите использовать кузницу Священное Писание</value>
   </data>
@@ -166,15 +174,15 @@
   <data name="RoleMissing" xml:space="preserve">
     <value>Выберите свою роль в языковом проекте</value>
   </data>
+  <data name="SignUp" xml:space="preserve">
+    <value>Авторизоваться</value>
+    <comment>Sign Up button label</comment>
+  </data>
   <data name="Terms" xml:space="preserve">
     <value>Условия</value>
     <comment>Link to the Terms of service seen in the page footer</comment>
   </data>
   <data name="UserMissing" xml:space="preserve">
     <value>Пользователя не существует.</value>
-  </data>
-  <data name="Language" xml:space="preserve">
-    <value>Язык</value>
-    <comment>Tool tip for the language selector</comment>
   </data>
 </root>

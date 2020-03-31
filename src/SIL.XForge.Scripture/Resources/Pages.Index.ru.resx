@@ -117,51 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ContactEmail" xml:space="preserve">
-    <value>Где мы можем отправить вам письмо?</value>
-  </data>
-  <data name="ContactHeader" xml:space="preserve">
-    <value>Хотите узнать больше?</value>
-  </data>
-  <data name="ContactName" xml:space="preserve">
-    <value>Как ваше имя и фамилия?</value>
-  </data>
-  <data name="ContactPrivacy" xml:space="preserve">
-    <value>Политика конфиденциальности</value>
-  </data>
-  <data name="ContactPurpose" xml:space="preserve">
-    <value>Почему вы хотите использовать кузницу Священного Писания?</value>
-  </data>
-  <data name="ContactRegister" xml:space="preserve">
-    <value>Отправьте нам свою информацию, и мы свяжемся с вами, чтобы узнать, как присоединиться к бета-версии.</value>
-  </data>
-  <data name="ContactRegisterButton" xml:space="preserve">
-    <value>Зарегистрироваться</value>
-  </data>
-  <data name="ContactRegisterHeader" xml:space="preserve">
-    <value>Когда я могу начать использовать кузницу Священного Писаниях?</value>
-  </data>
-  <data name="ContactRoleLabel" xml:space="preserve">
-    <value>Какова роль вашего в языковом проекте?	</value>
-  </data>
-  <data name="ContactRoleLTConsultant" xml:space="preserve">
-    <value>Консультант по языковым технологиям</value>
-  </data>
-  <data name="ContactRoleManager" xml:space="preserve">
-    <value>Менеджер языковых программ</value>
-  </data>
-  <data name="ContactRoleOther" xml:space="preserve">
-    <value>Другое</value>
-  </data>
-  <data name="ContactRolePTConsultant" xml:space="preserve">
-    <value>Консультант Paratext</value>
-  </data>
-  <data name="ContactRoleTranslator" xml:space="preserve">
-    <value>Переводчик</value>
-  </data>
-  <data name="ContactTitle" xml:space="preserve">
-    <value>Свяжитесь с нами</value>
-  </data>
   <data name="Description" xml:space="preserve">
     <value>Бесплатный набор инструментов для работы с проектом Paratext, где бы вы ни находились. </value>
   </data>
@@ -176,8 +131,5 @@
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Взаимодействовать с языковым сообществом. Сотрудничайте со своими коллегами.</value>
-  </data>
-  <data name="RegisterInterest" xml:space="preserve">
-    <value>Зарегистрируйте свой интерес</value>
   </data>
 </root>

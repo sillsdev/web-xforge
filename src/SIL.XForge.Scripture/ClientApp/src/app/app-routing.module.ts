@@ -13,6 +13,7 @@ import { SyncComponent } from './sync/sync.component';
 
 const routes: Routes = [
   { path: 'connect-project', component: ConnectProjectComponent, canActivate: [AuthGuard] },
+  { path: 'login', redirectTo: 'projects', pathMatch: 'full' },
   { path: 'projects/:projectId/settings', component: SettingsComponent, canActivate: [SFAdminAuthGuard] },
   { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SFAdminAuthGuard] },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },

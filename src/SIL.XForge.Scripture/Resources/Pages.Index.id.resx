@@ -117,51 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ContactEmail" xml:space="preserve">
-    <value>Di mana kami dapat mengirimkan email kepada Anda?</value>
-  </data>
-  <data name="ContactHeader" xml:space="preserve">
-    <value>Ingin mengetahui lebih banyak?</value>
-  </data>
-  <data name="ContactName" xml:space="preserve">
-    <value>Apa nama depan dan belakang Anda?</value>
-  </data>
-  <data name="ContactPrivacy" xml:space="preserve">
-    <value>Kebijakan privasi</value>
-  </data>
-  <data name="ContactPurpose" xml:space="preserve">
-    <value>Mengapa Anda ingin menggunakan Scripture Forge?</value>
-  </data>
-  <data name="ContactRegister" xml:space="preserve">
-    <value>Kirimkan informasi Anda dan kami akan menghubungi Anda bagaimana bergabung program Beta.</value>
-  </data>
-  <data name="ContactRegisterButton" xml:space="preserve">
-    <value>Terdaftar</value>
-  </data>
-  <data name="ContactRegisterHeader" xml:space="preserve">
-    <value>Kapan saya dapat mulai menggunakan Scripture Forge?</value>
-  </data>
-  <data name="ContactRoleLabel" xml:space="preserve">
-    <value>Apa peran Anda di proyek kebahasaan?</value>
-  </data>
-  <data name="ContactRoleLTConsultant" xml:space="preserve">
-    <value>Konsultan Teknologi Bahasa</value>
-  </data>
-  <data name="ContactRoleManager" xml:space="preserve">
-    <value>Manajer Program Bahasa</value>
-  </data>
-  <data name="ContactRoleOther" xml:space="preserve">
-    <value>Lainnya</value>
-  </data>
-  <data name="ContactRolePTConsultant" xml:space="preserve">
-    <value>Konsultan Paratext</value>
-  </data>
-  <data name="ContactRoleTranslator" xml:space="preserve">
-    <value>Penerjemah</value>
-  </data>
-  <data name="ContactTitle" xml:space="preserve">
-    <value>Hubungi Kami</value>
-  </data>
   <data name="Description" xml:space="preserve">
     <value>Seperangkat alat gratis untuk berbuat lebih banyak dengan proyek Paratext Anda, di mana pun Anda berada. </value>
   </data>
@@ -176,8 +131,5 @@
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Terlibat dengan komunitas bahasa. Berkolaborasi dengan rekan-rekan Anda.</value>
-  </data>
-  <data name="RegisterInterest" xml:space="preserve">
-    <value>Daftarkan Minat Anda</value>
   </data>
 </root>

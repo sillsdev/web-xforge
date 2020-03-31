@@ -3,6 +3,26 @@ header {
   width: 100%;
   padding-top: 8px;
 
+  .top-bar {
+    background-color: $greyDark;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    @include media-breakpoint-down(md) {
+      .mdl-cell {
+        margin-top: 0;
+        margin-bottom: 0;
+      }
+    }
+  }
+  > .container {
+    margin-top: 68px;
+    @include media-breakpoint-down(md) {
+      margin-top: 52px;
+    }
+  }
+
   img {
     width: 50px;
     height: auto;

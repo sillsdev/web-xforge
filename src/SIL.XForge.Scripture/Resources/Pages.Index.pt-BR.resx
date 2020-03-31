@@ -117,51 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ContactEmail" xml:space="preserve">
-    <value>Para onde podemos lhe enviar um e-mail?</value>
-  </data>
-  <data name="ContactHeader" xml:space="preserve">
-    <value>Deseja saber mais?</value>
-  </data>
-  <data name="ContactName" xml:space="preserve">
-    <value>Qual é o seu nome e seu sobrenome?</value>
-  </data>
-  <data name="ContactPrivacy" xml:space="preserve">
-    <value>Política de Privacidade</value>
-  </data>
-  <data name="ContactPurpose" xml:space="preserve">
-    <value>Por que você deseja usar o Scripture Forge?</value>
-  </data>
-  <data name="ContactRegister" xml:space="preserve">
-    <value>Envie-nos suas informações e entraremos em contato com você sobre como participar do beta.</value>
-  </data>
-  <data name="ContactRegisterButton" xml:space="preserve">
-    <value>Registrar</value>
-  </data>
-  <data name="ContactRegisterHeader" xml:space="preserve">
-    <value>Quando posso começar a usar o Scripture Forge?</value>
-  </data>
-  <data name="ContactRoleLabel" xml:space="preserve">
-    <value>Qual é o seu papel no projeto de línguas?</value>
-  </data>
-  <data name="ContactRoleLTConsultant" xml:space="preserve">
-    <value>Consultor de Tecnologia de Línguas</value>
-  </data>
-  <data name="ContactRoleManager" xml:space="preserve">
-    <value>Gestor de Programa de Línguas</value>
-  </data>
-  <data name="ContactRoleOther" xml:space="preserve">
-    <value>Outro</value>
-  </data>
-  <data name="ContactRolePTConsultant" xml:space="preserve">
-    <value>Consultor do Paratext</value>
-  </data>
-  <data name="ContactRoleTranslator" xml:space="preserve">
-    <value>Tradutor</value>
-  </data>
-  <data name="ContactTitle" xml:space="preserve">
-    <value>Entre em Contato Conosco</value>
-  </data>
   <data name="Description" xml:space="preserve">
     <value>Um conjunto gratuito de ferramentas para fazer mais com o seu projeto no Paratext, onde você estiver. </value>
   </data>
@@ -176,8 +131,5 @@
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Interaja com a comunidade da língua. Colabore com os seus colegas.</value>
-  </data>
-  <data name="RegisterInterest" xml:space="preserve">
-    <value>Registe Seu Interesse</value>
   </data>
 </root>
