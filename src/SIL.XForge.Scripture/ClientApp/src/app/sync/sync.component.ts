@@ -134,7 +134,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
           translate('sync.successfully_synchronized_with_paratext', { projectName: this.projectName })
         );
       } else {
-        this.noticeService.show(
+        this.noticeService.showMessageDialog(() =>
           translate('sync.something_went_wrong_synchronizing_this_project', { projectName: this.projectName })
         );
       }

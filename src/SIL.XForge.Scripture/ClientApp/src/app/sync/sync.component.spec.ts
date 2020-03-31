@@ -98,11 +98,7 @@ describe('SyncComponent', () => {
     // Simulate sync error
     env.emitSyncComplete(false);
     expect(env.component.syncActive).toBe(false);
-    verify(
-      mockedNoticeService.show(
-        'Something went wrong while synchronizing the Sync Test Project with Paratext. Please try again.'
-      )
-    ).once();
+    verify(mockedNoticeService.showMessageDialog(anything())).once();
   }));
 
   it('should show progress if in-progress when loaded', fakeAsync(() => {
