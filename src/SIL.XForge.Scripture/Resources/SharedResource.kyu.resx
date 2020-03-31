@@ -118,40 +118,40 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="EmailBad" xml:space="preserve">
-    <value>Enter a valid email address</value>
+    <value>ꤚꤢ꤭ꤔꤟꤌꤣ꤭ email ꤘꤣ ꤔꤢꤪ꤭ꤢꤩ꤬ꤔꤟꤤ</value>
   </data>
   <data name="EmailMissing" xml:space="preserve">
-    <value>Enter your email address</value>
+    <value>ꤚꤢ꤭ꤔꤟꤌꤣ꤭ ꤔꤟꤢꤧ꤬ email ꤘꤣ ꤔꤢꤪ꤭ꤢꤩ꤬ꤔꤟꤤ</value>
   </data>
   <data name="InviteEmailOption" xml:space="preserve">
-    <value>Enter your email address and a new password for your {0} account and click Sign up.</value>
+    <value>ꤚꤢ꤭ꤔꤟꤌꤣ꤭ ꤔꤟꤢꤧ꤬  email ꤔꤢ ꤔꤟꤢꤧ꤬ account ꤢ꤬ꤞꤢꤧ꤭ ꤘꤣ ꤔꤟꤢꤧ꤬ ꤔꤌꤣ꤬ ꤚꤢꤪ ꤒꤣ꤬ꤙꤢꤧ꤬ Sign up ꤔꤌꤣ꤬꤯</value>
   </data>
   <data name="InviteFacebookOption" xml:space="preserve">
-    <value>Click {0}Sign up with Facebook{1} and follow the instructions to access {2} using an existing Facebook account, or</value>
+    <value>ꤒꤣ꤬ꤙꤢꤧ꤬ Sign up ꤘꤣ Facebook ꤔꤌꤣ꤬, ꤓꤌꤣ꤭ꤚꤢꤪ ꤊꤚꤝꤥ꤭ꤗꤟꤢꤩ꤬ꤊꤟꤌꤣ꤭ ꤢ꤬ꤊꤜꤛꤢꤢ꤬ꤊꤜꤥ꤭ ꤜꤟꤢꤩꤔꤟꤌꤣ꤭ ꤔꤌꤣ꤬, ꤔꤢꤪ꤭ꤢꤩ꤬ Facebook account ꤘꤣ ꤢ꤬ꤔꤟꤤꤕꤢ꤭ ꤔꤌꤣ꤬ꤔꤤ, ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ</value>
   </data>
   <data name="InviteGoogleOption" xml:space="preserve">
-    <value>Click {0}Sign up with Google{1} and follow the instructions to access {2} using an existing Google account (such as Gmail), or</value>
+    <value>ꤒꤣ꤬ꤙꤢꤧ꤬ ꤘꤣ Sign up ꤘꤣ Google ꤢ꤬ꤑꤢꤩ꤭ ꤔꤌꤣ꤬, ꤓꤌꤣ꤭ꤚꤢꤪ ꤊꤚꤝꤥ꤭ꤗꤟꤢꤩ꤬ꤊꤟꤌꤣ꤭ ꤢ꤬ꤊꤜꤛꤢꤢ꤬ꤊꤜꤥ꤭ ꤜꤟꤢꤩꤔꤟꤌꤣ꤭ ꤔꤌꤣ꤬, ꤔꤢꤪ꤭ꤢꤩ꤬ Google account ꤘꤣ ꤢ꤬ꤔꤟꤤꤕꤢ꤭ ꤔꤌꤣ꤬ꤔꤤ (ꤖꤢꤨ Gmail ꤔꤌꤣ꤬), ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ</value>
   </data>
   <data name="InviteGreeting" xml:space="preserve">
-    <value>Hello,{0}{1} invites you to join the {2} project on {3}.{0}Just click the link below, choose how to log in, and you will be ready to start.{0}{0}To join, go to {4}</value>
+    <value>ꤟꤢ꤬ꤜꤥ꤬, {0}{1} ꤕꤟꤢꤧ꤬ ꤢꤧꤗꤟꤥ꤬ ꤔꤟꤢꤧ꤬ ꤘꤣ ꤊꤟꤢꤦ ꤔꤟꤢꤧ꤬ ꤊꤟꤢꤦ ꤔꤟꤌꤣ꤭ꤕꤢ꤬ ꤊꤟꤌꤣ꤭ {2} ꤙꤤ project ꤛꤢꤩ꤭, {3}.{0} ꤒꤣ꤬ꤙꤢꤧ꤬ ꤕꤚꤢꤧ link ꤘꤣ ꤢ꤬ꤜꤟꤢꤧ꤭ ꤛꤢꤩ꤭ ꤔꤤ, ꤔꤝꤥꤖꤛꤢꤩ ꤜꤟꤢꤩ ꤔꤟꤌꤣ꤭ ꤔꤌꤣ꤬, ꤓꤌꤣ꤭ꤚꤢꤪ ꤔꤟꤢꤧ꤬ ꤡꤢꤓꤛꤢ꤬ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ ꤟꤢꤪ, {0}{0} ꤜꤟꤢꤩ ꤕꤜꤥ꤭ꤓꤢꤦ꤭ ꤢ꤬ꤑꤢꤩ꤭ ꤡꤛꤣ ꤘꤣ {4}</value>
   </data>
   <data name="InviteInstructions" xml:space="preserve">
-    <value>If you are not already a {0} user, then after clicking the link, click {1}Sign Up{2} and do one of the following:</value>
+    <value>ꤔꤟꤢꤧ꤬ ꤊꤤ꤬ ꤗꤟꤢꤟꤤ  {0} user ꤒꤥ꤬ ꤟꤢꤩꤚꤢꤪ, ꤙꤤ ꤔꤟꤢꤧ꤬ ꤒꤣ꤬ꤙꤢꤧ꤬ ꤓꤌꤣ꤭ꤟꤢꤪ link ꤢ꤬ꤋꤢꤧ꤭ꤔꤌꤣ꤬, ꤒꤣ꤬ꤙꤢꤧ꤬ {1}Sign Up{2} ꤚꤢꤪ ꤗꤟꤢꤩ꤬ ꤘꤣ ꤢ꤬ꤜꤟꤢꤧ꤭ ꤛꤢꤩ꤭ꤒꤢ꤬ꤟꤢꤩ꤬:</value>
   </data>
   <data name="InviteLinkSharingOff" xml:space="preserve">
-    <value>This link will only work for this email address.</value>
+    <value>Link ꤛꤢꤩ꤭ꤗꤢ꤬ ꤢ꤬ꤗꤟꤢꤩ꤬ ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ ꤔꤢ ꤒꤢꤦ꤮ email ꤛꤢꤩ꤭ ꤕꤚꤢꤧ꤯</value>
   </data>
   <data name="InviteLinkSharingOn" xml:space="preserve">
-    <value>This link can be shared with others so they can join the project too.</value>
+    <value>ꤞꤛꤢꤖꤢꤨ ꤔꤟꤢꤧ꤬ ꤊꤟꤢꤦ ꤕꤜꤝꤥ꤭ꤓꤢꤦ꤭ ꤔꤟꤤ ꤔꤢ project ꤛꤢꤩ꤭ ꤢ꤬ꤑꤢꤩ꤭, link ꤛꤢꤩ꤭ꤗꤢ꤬ ꤞꤢꤨ꤭ꤘꤤ꤭ꤒꤟꤢꤦ ꤕꤢꤩ ꤔꤢ ꤢꤨ꤭ꤚꤟꤌꤣ꤬ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ꤯ </value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
-    <value>Click {0}Sign up with Paratext{1} and follow the instructions to access {2} using an existing Paratext account, or</value>
+    <value>ꤒꤣ꤬ꤙꤢꤧ꤬ {0}Sign up ꤔꤢ Paratext ꤔꤌꤣ꤬, {1} ꤓꤌꤣ꤭ꤚꤢꤪ ꤜꤟꤢꤩꤓꤛꤢ꤬ꤔꤟꤌꤣ꤭ ꤔꤟꤤ ꤢ꤬ꤑꤢꤩ꤭ ꤊꤚꤝꤥ꤭ꤗꤟꤢꤩ꤬ꤊꤟꤌꤣ꤭ ꤖꤢꤨ ꤒꤟꤢꤧ꤬ꤐꤟꤢꤨ꤭ꤊꤜꤛꤢ ꤔꤌꤣ꤬, {2} ꤔꤢꤪ꤭ꤢꤩ꤬ Paratext account ꤘꤣ ꤔꤢꤪ꤭ꤢꤩ꤬ꤔꤟꤤ ꤕꤢ꤭ ꤔꤌꤣ꤬, ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ </value>
   </data>
   <data name="InviteSignature" xml:space="preserve">
-    <value>Regards,{0}The {1} team</value>
+    <value>ꤤ꤬ꤕꤟꤢꤪꤗꤛꤢꤔꤟꤤ, {0} {1} ꤕꤜꤢꤪꤗꤟꤢꤨ꤬</value>
   </data>
   <data name="InviteSubject" xml:space="preserve">
-    <value>You've been invited to the project {0} on {1}</value>
+    <value>ꤢꤨ꤭ ꤢꤧꤗꤟꤥ꤬ ꤔꤟꤢꤧ꤬ ꤘꤣ project ꤛꤢꤩ꤭{0} ꤙꤤ {1}</value>
   </data>
   <data name="Language" xml:space="preserve">
     <value>ꤍꤟꤥ</value>
@@ -162,27 +162,27 @@
     <comment>Log In button label</comment>
   </data>
   <data name="MessageMissing" xml:space="preserve">
-    <value>Let us know why you want to use Scripture Forge</value>
+    <value>ꤔꤟꤢꤧ꤬ ꤞꤢꤧꤐꤟꤢꤦ ꤔꤢꤪ꤭ꤢꤩ꤬ Scripture Forge ꤗꤢ꤬ ꤗꤟꤢꤩ꤬ꤒꤢꤩ꤭ ꤔꤌꤣ꤬ ꤘꤛꤢꤩꤞꤢꤧꤑꤢꤩ꤭ ꤕꤟꤢꤧ꤬</value>
   </data>
   <data name="NameMissing" xml:space="preserve">
-    <value>Enter your name</value>
+    <value>ꤙꤢꤩ꤬ꤔꤟꤌꤣ꤭ ꤔꤟꤢꤧ꤬ꤗꤝꤟꤤ꤬</value>
   </data>
   <data name="Privacy" xml:space="preserve">
-    <value>Privacy</value>
+    <value>ꤒꤟꤢꤧ꤬ꤔꤟꤤꤘꤢꤦ꤬ </value>
     <comment>Link to the Privacy policy seen in the page footer</comment>
   </data>
   <data name="RoleMissing" xml:space="preserve">
-    <value>Select your language project role</value>
+    <value>ꤔꤝꤥꤖꤛꤢꤩ ꤔꤟꤢꤧ꤬ꤜꤟꤢ꤭ꤍꤟꤥ project</value>
   </data>
   <data name="SignUp" xml:space="preserve">
     <value>ꤙꤢꤩ꤬ꤓꤛꤢ꤬</value>
     <comment>Sign Up button label</comment>
   </data>
   <data name="Terms" xml:space="preserve">
-    <value>Terms</value>
+    <value>ꤕꤜꤢꤪꤗꤟꤢꤨ꤬</value>
     <comment>Link to the Terms of service seen in the page footer</comment>
   </data>
   <data name="UserMissing" xml:space="preserve">
-    <value>The user does not exist.</value>
+    <value>User ꤥ꤬ ꤒꤥ꤬꤯ </value>
   </data>
 </root>
