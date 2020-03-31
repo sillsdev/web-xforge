@@ -153,7 +153,7 @@
     "last_synced_time_stamp": "Última sincronização em {{ timeStamp }}",
     "log_in_to_paratext": "Entrar no Paratext",
     "never_been_synced": "Nunca foi sincronizado",
-    "something_went_wrong_synchronizing_this_project": "Algo deu errado ao sincronizar {{ projectName }} com o Paratext. Por favor, tente novamente.",
+    "something_went_wrong_synchronizing_this_project": "Something went wrong while synchronizing {{ projectName }} with Paratext. Please try again.",
     "successfully_synchronized_with_paratext": "Sincronizado {{ projectName }} com o Paratext com sucesso.",
     "synchronize": "Sincronizar",
     "synchronize_project": "Sincronizar {{ projectName }} com o Paratext",

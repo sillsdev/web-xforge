@@ -153,7 +153,7 @@
     "last_synced_time_stamp": "Axırıncı dəfə {{ timeStamp }} sinxronlaşdırılıb ",
     "log_in_to_paratext": "Paratextə daxil olun",
     "never_been_synced": "Heç vaxt sinxronlaşdırılmayıb",
-    "something_went_wrong_synchronizing_this_project": "{{ projectName }} Paratext ilə sinxronlaşdırarkən bir səhv baş verdi. Zəhmət olmazsa, yenidən cəhd edin.",
+    "something_went_wrong_synchronizing_this_project": "Something went wrong while synchronizing {{ projectName }} with Paratext. Please try again.",
     "successfully_synchronized_with_paratext": "{{ projectName }} Paratext ilə uğurla sinxronlaşdırıldı. ",
     "synchronize": "Sinxronlaşdırmaq",
     "synchronize_project": "{{ projectName }} Paratext ilə sinxronlaşdırıldı",

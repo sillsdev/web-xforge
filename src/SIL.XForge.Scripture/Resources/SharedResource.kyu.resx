@@ -145,7 +145,7 @@
     <value>ꤞꤛꤢꤖꤢꤨ ꤔꤟꤢꤧ꤬ ꤊꤟꤢꤦ ꤕꤜꤝꤥ꤭ꤓꤢꤦ꤭ ꤔꤟꤤ ꤔꤢ project ꤛꤢꤩ꤭ ꤢ꤬ꤑꤢꤩ꤭, link ꤛꤢꤩ꤭ꤗꤢ꤬ ꤞꤢꤨ꤭ꤘꤤ꤭ꤒꤟꤢꤦ ꤕꤢꤩ ꤔꤢ ꤢꤨ꤭ꤚꤟꤌꤣ꤬ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ꤯ </value>
   </data>
   <data name="InvitePTOption" xml:space="preserve">
-    <value>ꤒꤣ꤬ꤙꤢꤧ꤬ {0}Sign up ꤔꤢ Paratext ꤔꤌꤣ꤬, {1} ꤓꤌꤣ꤭ꤚꤢꤪ ꤜꤟꤢꤩꤓꤛꤢ꤬ꤔꤟꤌꤣ꤭ ꤔꤟꤤ ꤢ꤬ꤑꤢꤩ꤭ ꤊꤚꤝꤥ꤭ꤗꤟꤢꤩ꤬ꤊꤟꤌꤣ꤭ ꤖꤢꤨ ꤒꤟꤢꤧ꤬ꤐꤟꤢꤨ꤭ꤊꤜꤛꤢ ꤔꤌꤣ꤬, {2} ꤔꤢꤪ꤭ꤢꤩ꤬ Paratext account ꤘꤣ ꤔꤢꤪ꤭ꤢꤩ꤬ꤔꤟꤤ ꤕꤢ꤭ ꤔꤌꤣ꤬, ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ </value>
+    <value>ꤒꤣ꤬ꤙꤢꤧ꤬ {0}Sign up ꤔꤢ Paratext ꤔꤌꤣ꤬, {1} ꤓꤌꤣ꤭ꤚꤢꤪ ꤜꤟꤢꤩꤓꤛꤢ꤬ꤔꤟꤌꤣ꤭ ꤔꤟꤤ ꤢ꤬ꤑꤢꤩ꤭ ꤊꤚꤝꤥ꤭ꤗꤟꤢꤩ꤬ꤊꤟꤌꤣ꤭ ꤖꤢꤨ ꤒꤟꤢꤧ꤬ꤐꤟꤢꤨ꤭ꤊꤜꤛꤢ ꤔꤌꤣ꤬, {2} ꤔꤢꤪ꤭ꤢꤩ꤬ Paratext account ꤘꤣ ꤔꤢꤪ꤭ꤢꤩ꤬ꤔꤟꤤ ꤕꤢ꤭ ꤔꤌꤣ꤬, ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ</value>
   </data>
   <data name="InviteSignature" xml:space="preserve">
     <value>ꤤ꤬ꤕꤟꤢꤪꤗꤛꤢꤔꤟꤤ, {0} {1} ꤕꤜꤢꤪꤗꤟꤢꤨ꤬</value>
@@ -175,7 +175,7 @@
     <value>ꤔꤝꤥꤖꤛꤢꤩ ꤔꤟꤢꤧ꤬ꤜꤟꤢ꤭ꤍꤟꤥ project</value>
   </data>
   <data name="SignUp" xml:space="preserve">
-    <value>ꤙꤢꤩ꤬ꤓꤛꤢ꤬</value>
+    <value>ꤙꤢꤩ꤬ꤓꤛꤢ꤬ </value>
     <comment>Sign Up button label</comment>
   </data>
   <data name="Terms" xml:space="preserve">

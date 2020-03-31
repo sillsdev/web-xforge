@@ -158,7 +158,7 @@
     <comment>Tool tip for the language selector</comment>
   </data>
   <data name="LogIn" xml:space="preserve">
-    <value>Log In</value>
+    <value>Login</value>
     <comment>Log In button label</comment>
   </data>
   <data name="MessageMissing" xml:space="preserve">
@@ -175,7 +175,7 @@
     <value>Selecione seu papel no projeto da língua</value>
   </data>
   <data name="SignUp" xml:space="preserve">
-    <value>Inscrever</value>
+    <value>Inscrever-se</value>
     <comment>Sign Up button label</comment>
   </data>
   <data name="Terms" xml:space="preserve">

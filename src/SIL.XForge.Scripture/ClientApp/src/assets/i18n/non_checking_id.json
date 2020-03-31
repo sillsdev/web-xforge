@@ -153,7 +153,7 @@
     "last_synced_time_stamp": "Terakhir disinkronkan pada{{ timeStamp }}",
     "log_in_to_paratext": "Masuk ke Paratext",
     "never_been_synced": "Belum pernah disinkronkan",
-    "something_went_wrong_synchronizing_this_project": "Terjadi kesalahan saat menyinkronkan {{ projectName }} dengan Paratext. Silakan coba lagi.",
+    "something_went_wrong_synchronizing_this_project": "Something went wrong while synchronizing {{ projectName }} with Paratext. Please try again.",
     "successfully_synchronized_with_paratext": "Berhasil mensinkronkan {{ projectName }} dengan Paratext.",
     "synchronize": "Sinkronkan",
     "synchronize_project": "Mensinkronkan {{ projectName }} dengan Paratext",
