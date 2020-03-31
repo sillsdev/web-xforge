@@ -174,7 +174,7 @@
     <value>该用户不存在。</value>
   </data>
   <data name="Language" xml:space="preserve">
-    <value>Language</value>
+    <value>语言</value>
     <comment>Tool tip for the language selector</comment>
   </data>
 </root>
