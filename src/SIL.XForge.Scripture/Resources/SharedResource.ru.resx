@@ -175,7 +175,7 @@
     <value>Выберите свою роль в языковом проекте</value>
   </data>
   <data name="SignUp" xml:space="preserve">
-    <value>Авторизоваться</value>
+    <value>Зарегистрироваться</value>
     <comment>Sign Up button label</comment>
   </data>
   <data name="Terms" xml:space="preserve">
