@@ -3,6 +3,7 @@ using EdjCase.JsonRpc.Router.Abstractions;
 using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Services;
 
@@ -14,11 +15,11 @@ namespace SIL.XForge.Controllers
     public class UsersRpcController : RpcControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly IHostingEnvironment _hostingEnv;
+        private readonly IWebHostEnvironment _hostingEnv;
         private readonly IUserService _userService;
 
         public UsersRpcController(IUserAccessor userAccessor, IUserService userService, IAuthService authService,
-            IHostingEnvironment hostingEnv) : base(userAccessor)
+            IWebHostEnvironment hostingEnv) : base(userAccessor)
         {
             _userService = userService;
             _authService = authService;

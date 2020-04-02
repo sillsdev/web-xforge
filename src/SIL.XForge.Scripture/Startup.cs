@@ -8,11 +8,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SIL.XForge.Configuration;
@@ -28,7 +28,7 @@ namespace SIL.XForge.Scripture
 
     public class Startup
     {
-        public Startup(IConfiguration configuration, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             Configuration = configuration;
             Environment = env;
@@ -36,7 +36,7 @@ namespace SIL.XForge.Scripture
         }
 
         public IConfiguration Configuration { get; }
-        public IHostingEnvironment Environment { get; }
+        public IWebHostEnvironment Environment { get; }
         public ILoggerFactory LoggerFactory { get; }
         public IContainer ApplicationContainer { get; private set; }
 
@@ -101,7 +101,6 @@ namespace SIL.XForge.Scripture
             services.AddLocalization(options => options.ResourcesPath = "Resources");
 
             services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddViewLocalization()
                 .AddDataAnnotationsLocalization(options =>
                 {
@@ -129,7 +128,7 @@ namespace SIL.XForge.Scripture
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IApplicationLifetime appLifetime, IExceptionHandler exceptionHandler)
+        public void Configure(IApplicationBuilder app, IHostApplicationLifetime appLifetime, IExceptionHandler exceptionHandler)
         {
             if (IsDevelopment)
             {
@@ -166,13 +165,15 @@ namespace SIL.XForge.Scripture
             if (SpaDevServerStartup == SpaDevServerStartup.None)
                 app.UseSpaStaticFiles();
 
+            app.UseRouting();
+
             app.UseAuthentication();
 
             app.UseSFJsonRpc();
 
-            app.UseMvc(routes =>
+            app.UseEndpoints(endpoints =>
             {
-                routes.MapRoute(name: "default", template: "{controller}/{action=Index}/{id?}");
+                endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
             });
 
             app.UseRealtimeServer();
