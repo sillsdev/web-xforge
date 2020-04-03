@@ -2,25 +2,26 @@ using Paratext.Data;
 
 namespace SIL.XForge.Scripture.Services
 {
-    /// <summary>Wraps access to static methods on ScrTextCollection with a class implementing a mockable interface.</summary>
+    /// <summary>
+    /// Wraps access to static methods on <see cref="ScrTextCollection"/>. This class can be stubbed in tests.
+    /// </summary>
     public class ScrTextCollectionWrapper : IScrTextCollectionWrapper
     {
-        public void Initialize(string settingsDir = null, bool allowMigration = false)
+        public void Initialize(string syncDir = null, bool allowMigration = false)
         {
-            ScrTextCollection.Initialize(settingsDir, allowMigration);
+            MultiUserLazyScrTextCollection.Initialize(syncDir);
         }
 
-        public ScrText FindById(string projectId, string shortName = null, bool allowInaccessible = false, bool allowUnsupported = false)
+        public ScrText FindById(string username, string projectId)
         {
-            return ScrTextCollection.FindById(projectId, shortName, allowInaccessible, allowUnsupported);
+            return MultiUserLazyScrTextCollection.Get(username).FindById(projectId);
         }
 
-        public ScrText GetById(string projectId, string shortName = null)
+        public void RefreshScrTexts(string settingsDir)
         {
-            return ScrTextCollection.GetById(projectId, shortName);
-        }
-        public void RefreshScrTexts()
-        {
+            // Some Paratext.Data classes depend on ScrTextCollection being up-to-date, even if SF code
+            // does not make use of it
+            ScrTextCollection.Initialize(settingsDir);
             ScrTextCollection.RefreshScrTexts();
         }
     }
