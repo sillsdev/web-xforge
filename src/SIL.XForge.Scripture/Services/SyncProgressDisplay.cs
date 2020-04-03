@@ -1,34 +1,26 @@
 using System;
+using SIL.XForge.Scripture.Models;
 using PtxUtils.Progress;
 
 namespace SIL.XForge.Scripture.Services
 {
     public class SyncProgressDisplay : ProgressDisplay
     {
-        public event EventHandler ProgressUpdated;
-        private string _progressText = "";
-        private double _progressValue = 0;
+        private IProgress<ProgressState> _syncProgress;
 
-        public double ProgressValue
+        public SyncProgressDisplay(IProgress<ProgressState> progress)
         {
-            get { return _progressValue; }
+            _syncProgress = progress;
         }
 
         public void SetProgressText(string text)
         {
-            _progressText = text;
+            _syncProgress.Report(new ProgressState { ProgressString = text });
         }
 
         public void SetProgressValue(double value)
         {
-            _progressValue = value;
-            OnProgressUpdated(new EventArgs());
-        }
-
-        protected void OnProgressUpdated(EventArgs e)
-        {
-            EventHandler handler = ProgressUpdated;
-            handler?.Invoke(this, e);
+            _syncProgress.Report(new ProgressState { ProgressValue = value });
         }
     }
 }

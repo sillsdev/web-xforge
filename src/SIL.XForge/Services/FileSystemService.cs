@@ -44,5 +44,10 @@ namespace SIL.XForge.Services
         {
             return Directory.EnumerateFiles(path);
         }
+
+        public IEnumerable<string> EnumerateDirectories(string path)
+        {
+            return Directory.EnumerateDirectories(path);
+        }
     }
 }

@@ -1,23 +1,30 @@
-﻿using PtxUtils;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.ComponentModel;
-using System.Text;
+using Microsoft.Extensions.Logging;
+using PtxUtils;
 
 namespace SIL.XForge.Scripture.Services
 {
-    /// <summary>Simple alert implementation for Paratext Data to use when running in dotnet core.</summary>
+    /// <summary> Simple alert implementation for Paratext Data to use when running in dotnet core. </summary>
     class DotNetCoreAlert : PtxUtils.Alert
     {
-        protected override AlertResult ShowInternal(IComponent owner, string text, string caption, AlertButtons alertButtons, AlertLevel alertLevel, AlertDefaultButton defaultButton, bool showInTaskbar)
+        private readonly ILogger _logger;
+
+        public DotNetCoreAlert(ILogger logger)
         {
-            Console.WriteLine($"Alert: {text} : {caption}");
+            _logger = logger;
+        }
+
+        protected override AlertResult ShowInternal(IComponent owner, string text, string caption,
+            AlertButtons alertButtons, AlertLevel alertLevel, AlertDefaultButton defaultButton, bool showInTaskbar)
+        {
+            _logger.LogInformation($"Alert: {text} : {caption}");
             return AlertResult.Positive;
         }
 
         protected override void ShowLaterInternal(string text, string caption, AlertLevel alertLevel)
         {
-            Console.WriteLine($"Async Alert: {text} : {caption}");
+            _logger.LogInformation($"Async Alert: {text} : {caption}");
         }
     }
 }
