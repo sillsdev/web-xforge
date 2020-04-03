@@ -20,10 +20,11 @@ namespace Paratext.Base
     {
 
 
-        public MockScrText()
+        public MockScrText(string directory)
         {
             _settings = new MockProjectSettings(this);
             _language = new MockScrLanguage(this);
+            _directory = directory;
         }
 
         public Dictionary<string, string> Data = new Dictionary<string, string>();
@@ -53,12 +54,13 @@ namespace Paratext.Base
 
         public ProjectSettings _settings;
         public override ProjectSettings Settings => _settings;
-        public override ScrStylesheet DefaultStylesheet => new MockScrStylesheet("/home/vagrant/src/web-xforge/src/SIL.XForge.Scripture/usfm.sty");
-        public override string Directory => "/tmp/xForge_testing";
+        public override ScrStylesheet DefaultStylesheet => new MockScrStylesheet("./usfm.sty");
+        public override string Directory => _directory;
         public override string Name => "PTNAME";
         public override ScrLanguage Language => _language;
         public ProjectFileManager _fileManager;
         private ScrLanguage _language;
+        private string _directory;
     }
 
     /// <summary>

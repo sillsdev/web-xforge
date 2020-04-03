@@ -105,7 +105,7 @@ namespace SIL.XForge.Scripture.Services
                     SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text,
                         TextType.Target);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    await UpdateParatextBook(text, targetParatextId, targetTextDocs);
+                    UpdateParatextBook(text, targetParatextId, targetTextDocs);
                     if (text.HasSource)
                         sourceTextDocsByBook[text.BookNum] = await FetchTextDocsAsync(text, TextType.Source);
 
@@ -122,10 +122,10 @@ namespace SIL.XForge.Scripture.Services
                 _progressDisplay = UseNewProgressDisplay();
                 await _paratextService.SendReceiveAsync(_userSecret, paratextIds, _progressDisplay);
 
-                var targetBooks = new HashSet<int>(_paratextService.GetBookList(targetParatextId));
+                var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
 
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
-                    ? _paratextService.GetBookList(sourceParatextId)
+                    ? _paratextService.GetBookList(_userSecret, sourceParatextId)
                     : Enumerable.Empty<int>());
                 sourceBooks.IntersectWith(targetBooks);
 
@@ -246,7 +246,7 @@ namespace SIL.XForge.Scripture.Services
             if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
                 return false;
 
-            await _paratextService.SetupAccessToPtRegistry(_userSecret);
+            _paratextService.InstallStyles(_userSecret);
             _notesMapper.Init(_userSecret, _projectSecret);
 
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
@@ -258,15 +258,15 @@ namespace SIL.XForge.Scripture.Services
             _conn?.Dispose();
         }
 
-        private async Task UpdateParatextBook(TextInfo text, string paratextId, SortedList<int, IDocument<TextData>> textDocs)
+        private void UpdateParatextBook(TextInfo text, string paratextId, SortedList<int, IDocument<TextData>> textDocs)
         {
-            string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, text.BookNum);
+            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             var oldUsxDoc = XDocument.Parse(bookText);
             XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
                 .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
 
             if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
-                _paratextService.PutBookText(paratextId, text.BookNum, newUsxDoc.Root.ToString());
+                _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, newUsxDoc.Root.ToString());
         }
 
         private async Task UpdateParatextNotesAsync(TextInfo text, IReadOnlyList<IDocument<Question>> questionDocs)
@@ -276,7 +276,7 @@ namespace SIL.XForge.Scripture.Services
 
             // TODO: need to define a data structure for notes instead of XML
             XElement oldNotesElem;
-            string oldNotesText = _paratextService.GetNotes(_projectDoc.Data.ParatextId, text.BookNum);
+            string oldNotesText = _paratextService.GetNotes(_userSecret, _projectDoc.Data.ParatextId, text.BookNum);
             if (oldNotesText != "")
                 oldNotesElem = ParseText(oldNotesText);
             else
@@ -291,7 +291,7 @@ namespace SIL.XForge.Scripture.Services
         private async Task<List<Chapter>> UpdateTextDocsAsync(TextInfo text, TextType textType, string paratextId,
             SortedList<int, IDocument<TextData>> textDocs, ISet<int> chaptersToInclude = null)
         {
-            string bookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, text.BookNum);
+            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             var usxDoc = XDocument.Parse(bookText);
             var tasks = new List<Task>();
             Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc)
