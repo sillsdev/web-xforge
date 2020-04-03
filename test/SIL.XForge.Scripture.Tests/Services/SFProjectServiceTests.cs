@@ -512,15 +512,15 @@ namespace SIL.XForge.Scripture.Services
         public async Task DeleteAsync()
         {
             var env = new TestEnvironment();
-            string syncDir = Path.Combine("xforge", "sync", Project01);
-            env.FileSystemService.DirectoryExists(syncDir).Returns(true);
+            string ptProjectDir = Path.Combine("xforge", "sync", "paratext_" + Project01);
+            env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
             await env.Service.DeleteProjectAsync(User01, Project01);
 
             Assert.That(env.ContainsProject(Project01), Is.False);
             User user = env.GetUser(User01);
             Assert.That(user.Sites[SiteId].Projects, Does.Not.Contain(Project01));
             await env.EngineService.Received().RemoveProjectAsync(Project01);
-            env.FileSystemService.Received().DeleteDirectory(syncDir);
+            env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
             Assert.That(env.ProjectSecrets.Contains(Project01), Is.False);
         }
 
@@ -569,6 +569,7 @@ namespace SIL.XForge.Scripture.Services
                         new SFProject
                         {
                             Id = Project01,
+                            ParatextId = "paratext_" + Project01,
                             Name = "project01",
                             ShortName = "P01",
                             TranslateConfig = new TranslateConfig
@@ -701,7 +702,7 @@ namespace SIL.XForge.Scripture.Services
                 });
                 var translateMetrics = new MemoryRepository<TranslateMetrics>();
                 FileSystemService = Substitute.For<IFileSystemService>();
-                var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources"});
+                var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources" });
                 var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
                 Localizer = new StringLocalizer<SharedResource>(factory);
                 SecurityService = Substitute.For<ISecurityService>();

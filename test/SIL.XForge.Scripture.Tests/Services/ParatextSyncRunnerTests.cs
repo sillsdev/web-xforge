@@ -193,11 +193,11 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            env.ParatextService.DidNotReceive().PutBookText("target", 40, Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText("target", 41, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
 
-            env.ParatextService.DidNotReceive().PutBookText("source", 40, Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText("source", 41, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
@@ -232,11 +232,11 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            env.ParatextService.Received().PutBookText("target", 40, Arg.Any<string>());
-            env.ParatextService.Received().PutBookText("target", 41, Arg.Any<string>());
+            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
+            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
 
-            env.ParatextService.DidNotReceive().PutBookText("source", 40, Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText("source", 41, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("MAT", 1, TextType.Target).DeepEquals(delta), Is.True);
@@ -269,11 +269,11 @@ namespace SIL.XForge.Scripture.Services
 
             await env.Runner.RunAsync("project01", "user01", false);
 
-            env.ParatextService.Received().PutBookText("target", 40, Arg.Any<string>());
-            env.ParatextService.Received().PutBookText("target", 41, Arg.Any<string>());
+            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
+            env.ParatextService.Received().PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
 
-            env.ParatextService.DidNotReceive().PutBookText("source", 40, Arg.Any<string>());
-            env.ParatextService.DidNotReceive().PutBookText("source", 41, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
 
             env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
 
@@ -819,12 +819,12 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupPTData(params Book[] books)
             {
-                ParatextService.GetBookList("target")
+                ParatextService.GetBookList(Arg.Any<UserSecret>(), "target")
                     .Returns(books.Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 // Include book with Source even if there are no chapters, if there are also no chapters in Target. PT
                 // can actually have or not have books which do or do not have chapters more flexibly than this. But in
                 // this way, allow tests to request a Source book exist even with zero chapters.
-                ParatextService.GetBookList("source")
+                ParatextService.GetBookList(Arg.Any<UserSecret>(), "source")
                     .Returns(books
                         .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
                         .Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
@@ -897,7 +897,7 @@ namespace SIL.XForge.Scripture.Services
                 string paratextProject = GetParatextProject(textType);
                 string oldBookText = GetBookText(textType, bookId, 1);
                 string remoteBookText = GetBookText(textType, bookId, 3);
-                ParatextService.GetBookTextAsync(Arg.Any<UserSecret>(), paratextProject, Canon.BookIdToNumber(bookId))
+                ParatextService.GetBookText(Arg.Any<UserSecret>(), paratextProject, Canon.BookIdToNumber(bookId))
                     .Returns(x => _sendReceivedCalled ? remoteBookText : oldBookText);
             }
 

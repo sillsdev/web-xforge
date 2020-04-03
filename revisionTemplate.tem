@@ -1,9 +1,0 @@
-<HgRevision>
-	<Id>{node}</Id>
-	<LocalRevisionNumber>{rev}</LocalRevisionNumber>
-	<CommitTimeStampString>{date|rfc3339date}</CommitTimeStampString>
-	<UserEscaped>{author|escape}</UserEscaped>
-	<ParentsString><![CDATA[{parents}]]></ParentsString>
-	<Filenames><![CDATA[{files}]]></Filenames>
-	<Description>{desc|escape}</Description>
-</HgRevision>

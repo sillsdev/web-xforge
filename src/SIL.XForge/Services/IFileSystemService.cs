@@ -13,5 +13,6 @@ namespace SIL.XForge.Services
         bool DirectoryExists(string path);
         void DeleteDirectory(string path);
         IEnumerable<string> EnumerateFiles(string path);
+        IEnumerable<string> EnumerateDirectories(string path);
     }
 }
