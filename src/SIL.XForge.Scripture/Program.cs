@@ -2,6 +2,7 @@ using System.IO;
 using System.Reflection;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 
 namespace SIL.XForge.Scripture
@@ -29,7 +30,7 @@ namespace SIL.XForge.Scripture
                 .UseUrls("http://localhost:5000")
                 .ConfigureAppConfiguration((context, config) =>
                     {
-                        IHostingEnvironment env = context.HostingEnvironment;
+                        IWebHostEnvironment env = context.HostingEnvironment;
                         if (env.IsDevelopment() || env.IsEnvironment("Testing"))
                             config.AddJsonFile("appsettings.user.json", true);
                         else

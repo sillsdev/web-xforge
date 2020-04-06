@@ -2,7 +2,6 @@ using System;
 using Hangfire;
 using Hangfire.Mongo;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
@@ -19,8 +18,8 @@ namespace Microsoft.Extensions.DependencyInjection
             IConfiguration configuration)
         {
             var options = configuration.GetOptions<DataAccessOptions>();
-            services.AddHangfire(x => x.UseMongoStorage(options.ConnectionString,
-                options.JobDatabaseName ?? options.Prefix + "_jobs",
+            string jobDatabaseName = options.JobDatabaseName ?? options.Prefix + "_jobs";
+            services.AddHangfire(x => x.UseMongoStorage($"{options.ConnectionString}/{jobDatabaseName}",
                 new MongoStorageOptions
                 {
                     MigrationOptions = new MongoMigrationOptions
@@ -38,8 +37,7 @@ namespace Microsoft.Extensions.DependencyInjection
             DataAccessClassMap.RegisterClass<ProjectSecret>(cm => cm.MapIdProperty(e => e.Id));
 
             services.AddSingleton<IMongoClient>(sp => new MongoClient(options.ConnectionString));
-            services.AddSingleton<IMongoDatabase>(
-                sp => sp.GetService<IMongoClient>().GetDatabase(options.MongoDatabaseName));
+            services.AddSingleton(sp => sp.GetService<IMongoClient>().GetDatabase(options.MongoDatabaseName));
 
             services.AddMongoRepository<UserSecret>("user_secrets", cm => cm.MapIdProperty(us => us.Id));
 

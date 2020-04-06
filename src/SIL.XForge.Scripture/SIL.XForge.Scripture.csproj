@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
     <IsPackable>false</IsPackable>
@@ -11,15 +11,13 @@
     <!-- Set this to true if you enable server-side prerendering -->
     <BuildServerSideRenderer>false</BuildServerSideRenderer>
     <UserSecretsId>4d0606c3-0fc7-4d76-b43b-236485004e81</UserSecretsId>
-    <MachineVersion>2.1.0</MachineVersion>
+    <MachineVersion>2.1.2</MachineVersion>
     <RealtimeServerRoot>..\RealtimeServer\</RealtimeServerRoot>
     <AngularConfig>production</AngularConfig>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="4.8.1" />
-    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.3.1" />
-    <PackageReference Include="Microsoft.AspNetCore.All" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.2" />
     <PackageReference Include="SIL.Machine.WebApi" Version="$(MachineVersion)" />
     <PackageReference Include="SIL.Scripture" Version="7.0.0" />
   </ItemGroup>
@@ -35,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="$(NuGetPackageRoot)sil.machine.webapi\$(MachineVersion)\contentFiles\any\netstandard2.0\thot-new-model.zip">
+    <Content Update="$(NuGetPackageRoot)sil.machine.webapi\$(MachineVersion)\contentFiles\any\netcoreapp3.1\thot-new-model.zip">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
