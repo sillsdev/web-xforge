@@ -1,6 +1,9 @@
-import { MdcSliderChange } from '@angular-mdc/web/slider';
-import { Component, Input, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { MdcSlider, MdcSliderChange } from '@angular-mdc/web/slider';
+import { Component, Input, OnDestroy, Pipe, PipeTransform, ViewChild } from '@angular/core';
 import { environment } from '../../../../environments/environment';
+
+// See explanatory comment where this number is used
+const ARBITRARILY_LARGE_NUMBER = 1e10;
 
 @Component({
   selector: 'app-checking-audio-player',
@@ -9,6 +12,9 @@ import { environment } from '../../../../environments/environment';
 })
 export class CheckingAudioPlayerComponent implements OnDestroy {
   static lastPlayedAudio: HTMLAudioElement;
+
+  @ViewChild(MdcSlider, { static: false }) slider?: MdcSlider;
+
   seek: number = 0;
 
   private _currentTime: number = 0;
@@ -34,11 +40,11 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
   }
 
   get currentTime(): number {
-    return this._currentTime;
+    return isNaN(this._currentTime) || this._currentTime === ARBITRARILY_LARGE_NUMBER ? 0 : this._currentTime;
   }
 
   get duration(): number {
-    return this._duration;
+    return isNaN(this._duration) || this._duration === ARBITRARILY_LARGE_NUMBER ? 0 : this._duration;
   }
 
   get enabled(): boolean {
@@ -51,7 +57,7 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
   }
 
   get hasSource(): boolean {
-    return !!this.audio.src && this.enabled;
+    return !!this.audio.src;
   }
 
   get isPlaying(): boolean {
@@ -74,9 +80,9 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
       // assume is past the end. This number should be large, but numbers as small as 1e16 have been observed to cause
       // audio playback to skip to the end of the audio when the user presses play in Chromium. Normal audio files will
       // know the duration once metadata has loaded.
-      this.audio.currentTime = 1e10;
+      this.audio.currentTime = ARBITRARILY_LARGE_NUMBER;
     } else {
-      this.audio.src = '';
+      this.audio.removeAttribute('src');
       this.enabled = false;
     }
   }
@@ -98,6 +104,9 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
   play() {
     if (CheckingAudioPlayerComponent.lastPlayedAudio) {
       CheckingAudioPlayerComponent.lastPlayedAudio.pause();
+    }
+    if (this.slider != null) {
+      this.slider.layout();
     }
     this.audio.play();
     CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;

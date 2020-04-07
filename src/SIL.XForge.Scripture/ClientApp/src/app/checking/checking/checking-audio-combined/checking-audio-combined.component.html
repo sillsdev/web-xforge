@@ -43,7 +43,7 @@
         icon="delete"
         class="remove-audio-file"
       ></button>
-      <app-checking-audio-player [source]="source"></app-checking-audio-player>
+      <app-checking-audio-player *ngIf="!!source" [source]="source"></app-checking-audio-player>
     </ng-container>
   </div>
 </ng-container>
