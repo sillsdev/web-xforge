@@ -22,6 +22,6 @@
       icon="refresh"
       class="try-again"
     ></button>
-    <app-checking-audio-player [source]="audioUrl"></app-checking-audio-player>
+    <app-checking-audio-player *ngIf="!!audioUrl" [source]="audioUrl"></app-checking-audio-player>
   </div>
 </ng-container>
