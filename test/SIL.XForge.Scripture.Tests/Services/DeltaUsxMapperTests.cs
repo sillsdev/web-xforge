@@ -251,6 +251,42 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToUsx_EmptyRef()
+        {
+            var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("This is a verse with a footnote", "verse_1_1")
+                .InsertNote(Delta.New()
+                    .InsertChar("1:1", "fr")
+                    .InsertBlankChar("ft")
+                    .Insert(". ")
+                    .InsertBlankChar("xo")
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1"), "f", "*", "verse_1_1")
+                .InsertText(", so that we can test it.", "verse_1_1")
+                .InsertPara("p")
+                .Insert("\n"));
+
+            var mapper = new DeltaUsxMapper();
+            XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+
+            XDocument expected = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    "This is a verse with a footnote",
+                    Note("f", "*",
+                        Char("fr", "1:1"),
+                        Char("ft", null),
+                        ". ",
+                        Char("xo", null),
+                        Char("xt", Ref("MRK 1:1", "Mark 1:1"))),
+                    ", so that we can test it."));
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
         public void ToUsx_OptBreak()
         {
             var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
@@ -1390,6 +1426,45 @@ namespace SIL.XForge.Scripture.Services
                     .Insert(" and ")
                     .InsertCharRef("Mark 1:1", "xt", "MRK 1:1")
                     .Insert("."), "f", "+", "verse_1_1")
+                .InsertText(", so that we can test it.", "verse_1_1")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].IsValid, Is.True);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        [Test]
+        public void ToDelta_EmptyRef()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    "This is a verse with a footnote",
+                    Note("f", "*",
+                        Char("fr", "1:1"),
+                        Char("ft", ""),
+                        ". ",
+                        Char("xo", ""),
+                        Char("xt", Ref("MRK 1:1", "Mark 1:1"))),
+                    ", so that we can test it."));
+
+            var mapper = new DeltaUsxMapper();
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("This is a verse with a footnote", "verse_1_1")
+                .InsertNote(Delta.New()
+                    .InsertChar("1:1", "fr")
+                    .InsertBlankChar("ft")
+                    .Insert(". ")
+                    .InsertBlankChar("xo")
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1"), "f", "*", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
 
