@@ -10,6 +10,14 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class DeltaUsxMapperTests
     {
+        private int CharID;
+
+        [SetUp]
+        public void Init()
+        {
+            CharID = 1;
+        }
+
         [Test]
         public void ToUsx_HeaderPara()
         {
@@ -92,7 +100,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is some ", "verse_1_1")
-                .InsertChar("bold", "bd", "verse_1_1")
+                .InsertChar("bold", "bd", CharID++, "verse_1_1")
                 .InsertText(" text.", "verse_1_1")
                 .InsertPara("p")
                 .Insert("\n"));
@@ -119,13 +127,13 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", CharID++)
+                    .InsertChar("Refers to ", "ft", CharID++)
+                    .InsertChar("a footnote", "fq", CharID++)
                     .Insert(". ")
-                    .InsertChar("John 1:1", "xt")
+                    .InsertChar("John 1:1", "xt", CharID++)
                     .Insert(" and ")
-                    .InsertChar("Mark 1:1", "xt"), "f", "+", "verse_1_1")
+                    .InsertChar("Mark 1:1", "xt", CharID++), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p")
                 .Insert("\n"));
@@ -183,11 +191,11 @@ namespace SIL.XForge.Scripture.Services
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, "verse_1_1")
-                .InsertChar("This is", "bd", "verse_1_1")
-                .InsertChar("2", new[] { "bd", "sup" }, "verse_1_1")
-                .InsertChar(" bold text.", "bd", "verse_1_1")
-                .InsertChar("3", new[] { "bd", "sup" }, "verse_1_1")
+                .InsertChar("1", new[] { "bd", "sup" }, CharID, "verse_1_1")
+                .InsertChar("This is", "bd", CharID, "verse_1_1")
+                .InsertChar("2", new[] { "bd", "sup" }, CharID, "verse_1_1")
+                .InsertChar(" bold text.", "bd", CharID, "verse_1_1")
+                .InsertChar("3", new[] { "bd", "sup" }, CharID, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p"));
 
@@ -209,6 +217,33 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToUsx_AdjacentChars()
+        {
+            var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertChar("1", "sup", CharID++, "verse_1_1")
+                .InsertChar("2", "sup", CharID++, "verse_1_1")
+                .InsertChar("3", "sup", CharID++, "verse_1_1")
+                .InsertText(" This is normal text.", "verse_1_1")
+                .InsertPara("p"));
+
+            var mapper = new DeltaUsxMapper();
+            XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+
+            XDocument expected = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    Char("sup", "1"),
+                    Char("sup", "2"),
+                    Char("sup", "3"),
+                    " This is normal text."));
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
         public void ToUsx_Ref()
         {
             var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
@@ -217,13 +252,13 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", CharID++)
+                    .InsertChar("Refers to ", "ft", CharID++)
+                    .InsertChar("a footnote", "fq", CharID++)
                     .Insert(". ")
-                    .InsertCharRef("John 1:1", "xt", "JHN 1:1")
+                    .InsertCharRef("John 1:1", "xt", "JHN 1:1", CharID++)
                     .Insert(" and ")
-                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1")
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1", CharID++)
                     .Insert("."), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p")
@@ -259,11 +294,11 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1:1", "fr")
-                    .InsertBlankChar("ft")
+                    .InsertChar("1:1", "fr", CharID++)
+                    .InsertBlankChar("ft", CharID++)
                     .Insert(". ")
-                    .InsertBlankChar("xo")
-                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1"), "f", "*", "verse_1_1")
+                    .InsertBlankChar("xo", CharID++)
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1", CharID++), "f", "*", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p")
                 .Insert("\n"));
@@ -344,7 +379,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("Before verse.", "cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse ", "verse_1_1")
-                .InsertChar("1", "it", "verse_1_1")
+                .InsertChar("1", "it", CharID++, "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
                 .InsertBlank("cell_1_1_2")
@@ -381,7 +416,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("Before verse.", "cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse ", "verse_1_1")
-                .InsertChar("1", "it", "verse_1_1")
+                .InsertChar("1", "it", CharID++, "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
                 .InsertBlank("cell_1_1_2")
@@ -1201,13 +1236,13 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", CharID++)
+                    .InsertChar("Refers to ", "ft", CharID++)
+                    .InsertChar("a footnote", "fq", CharID++)
                     .Insert(". ")
-                    .InsertChar("John 1:1", "xt")
+                    .InsertChar("John 1:1", "xt", CharID++)
                     .Insert(" and ")
-                    .InsertChar("Mark 1:1", "xt"), "f", "+", "verse_1_1")
+                    .InsertChar("Mark 1:1", "xt", CharID++), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1244,13 +1279,13 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", CharID++)
+                    .InsertChar("Refers to ", "ft", CharID++)
+                    .InsertChar("a footnote", "fq", CharID++)
                     .Insert(". ")
-                    .InsertChar("John 1:1", "xt")
+                    .InsertChar("John 1:1", "xt", CharID++)
                     .Insert(" and ")
-                    .InsertChar("Mark 1:1", "xt"), "bad", "+", "verse_1_1", true)
+                    .InsertChar("Mark 1:1", "xt", CharID++), "bad", "+", "verse_1_1", true)
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1340,11 +1375,11 @@ namespace SIL.XForge.Scripture.Services
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, "verse_1_1")
-                .InsertChar("This is", "bd", "verse_1_1")
-                .InsertChar("2", new[] { "bd", "sup" }, "verse_1_1")
-                .InsertChar(" bold text.", "bd", "verse_1_1")
-                .InsertChar("3", new[] { "bd", "sup" }, "verse_1_1")
+                .InsertChar("1", new[] { "bd", "sup" }, CharID, "verse_1_1")
+                .InsertChar("This is", "bd", CharID, "verse_1_1")
+                .InsertChar("2", new[] { "bd", "sup" }, CharID, "verse_1_1")
+                .InsertChar(" bold text.", "bd", CharID, "verse_1_1")
+                .InsertChar("3", new[] { "bd", "sup" }, CharID, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1376,17 +1411,48 @@ namespace SIL.XForge.Scripture.Services
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bad", "sup" }, "verse_1_1", true)
-                .InsertChar("This is", "bad", "verse_1_1", true)
-                .InsertChar("2", new[] { "bad", "sup" }, "verse_1_1", true)
-                .InsertChar(" bold text.", "bad", "verse_1_1", true)
-                .InsertChar("3", new[] { "bad", "sup" }, "verse_1_1", true)
+                .InsertChar("1", new[] { "bad", "sup" }, CharID, "verse_1_1", true)
+                .InsertChar("This is", "bad", CharID, "verse_1_1", true)
+                .InsertChar("2", new[] { "bad", "sup" }, CharID, "verse_1_1", true)
+                .InsertChar(" bold text.", "bad", CharID, "verse_1_1", true)
+                .InsertChar("3", new[] { "bad", "sup" }, CharID, "verse_1_1", true)
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p");
 
             Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
             Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
             Assert.That(chapterDeltas[0].IsValid, Is.False);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        [Test]
+        public void ToDelta_AdjacentChars()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    Char("sup", "1"),
+                    Char("sup", "2"),
+                    Char("sup", "3"),
+                    " This is normal text."));
+
+            var mapper = new DeltaUsxMapper();
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertChar("1", "sup", CharID++, "verse_1_1")
+                .InsertChar("2", "sup", CharID++, "verse_1_1")
+                .InsertChar("3", "sup", CharID++, "verse_1_1")
+                .InsertText(" This is normal text.", "verse_1_1")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].IsValid, Is.True);
             Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
         }
 
@@ -1418,13 +1484,13 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", CharID++)
+                    .InsertChar("Refers to ", "ft", CharID++)
+                    .InsertChar("a footnote", "fq", CharID++)
                     .Insert(". ")
-                    .InsertCharRef("John 1:1", "xt", "JHN 1:1")
+                    .InsertCharRef("John 1:1", "xt", "JHN 1:1", CharID++)
                     .Insert(" and ")
-                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1")
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1", CharID++)
                     .Insert("."), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
@@ -1460,11 +1526,11 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1:1", "fr")
-                    .InsertBlankChar("ft")
+                    .InsertChar("1:1", "fr", CharID++)
+                    .InsertBlankChar("ft", CharID++)
                     .Insert(". ")
-                    .InsertBlankChar("xo")
-                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1"), "f", "*", "verse_1_1")
+                    .InsertBlankChar("xo", CharID++)
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1", CharID++), "f", "*", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1502,13 +1568,13 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", CharID++)
+                    .InsertChar("Refers to ", "ft", CharID++)
+                    .InsertChar("a footnote", "fq", CharID++)
                     .Insert(". ")
-                    .InsertCharRef("John 1:1", "xt", "bad location", invalid: true)
+                    .InsertCharRef("John 1:1", "xt", "bad location", CharID++, invalid: true)
                     .Insert(" and ")
-                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1")
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1", CharID++)
                     .Insert("."), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
@@ -1627,7 +1693,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("Before verse.", "cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse ", "verse_1_1")
-                .InsertChar("1", "it", "verse_1_1")
+                .InsertChar("1", "it", CharID++, "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
                 .InsertBlank("cell_1_1_2")
@@ -1669,7 +1735,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("Before verse.", "cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse ", "verse_1_1")
-                .InsertChar("1", "it", "verse_1_1")
+                .InsertChar("1", "it", CharID++, "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
                 .InsertBlank("cell_1_1_2")
@@ -1778,7 +1844,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("Before verse.", "cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse ", "verse_1_1")
-                .InsertChar("1", "it", "verse_1_1")
+                .InsertChar("1", "it", CharID++, "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "bad", "start", true)
                 .InsertBlank("cell_1_1_2")

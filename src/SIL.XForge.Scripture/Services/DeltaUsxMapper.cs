@@ -31,6 +31,8 @@ namespace SIL.XForge.Scripture.Services
             "lh", "li", "lf", "lim",
         };
 
+        private int CharID = 1;
+
         private class ParseState
         {
             public string CurRef { get; set; }
@@ -224,16 +226,17 @@ namespace SIL.XForge.Scripture.Services
                             JObject newCharAttrs = GetAttributes(elem);
                             if (existingCharAttrs == null)
                             {
+                                if (!newCharAttrs.ContainsKey("cid"))
+                                    newCharAttrs.Add("cid", $"{CharID++}");
                                 newChildAttributes.Add(new JProperty(elem.Name.LocalName, newCharAttrs));
                             }
                             else
                             {
                                 switch (existingCharAttrs)
                                 {
-                                    case JArray array:
-                                        array.Add(newCharAttrs);
-                                        break;
                                     case JObject obj:
+                                        if (obj.ContainsKey("cid") && !newCharAttrs.ContainsKey("cid"))
+                                            newCharAttrs.Add("cid", obj.Property("cid").Value);
                                         newChildAttributes[elem.Name.LocalName] = new JArray(obj, newCharAttrs);
                                         break;
 
@@ -688,6 +691,11 @@ namespace SIL.XForge.Scripture.Services
         {
             JObject charAttrs = curCharAttrs[curCharAttrs.Count - 1];
             curCharAttrs.RemoveAt(curCharAttrs.Count - 1);
+            if (charAttrs.ContainsKey("cid"))
+            {
+                charAttrs = (JObject)charAttrs.DeepClone();
+                charAttrs.Property("cid").Remove();
+            }
             XElement charElem = CreateContainerElement("char", charAttrs, childNodes.Peek());
             childNodes.Pop();
             childNodes.Peek().Add(charElem);
