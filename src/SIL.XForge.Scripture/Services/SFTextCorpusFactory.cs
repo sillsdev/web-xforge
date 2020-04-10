@@ -68,7 +68,7 @@ namespace SIL.XForge.Scripture.Services
                         string id = TextData.GetTextDocId(projectId, text.BookNum, chapter.Number, textType);
                         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", id);
                         BsonDocument doc = await textDataColl.Find(filter).FirstOrDefaultAsync();
-                        if (doc != null)
+                        if (doc != null && doc.TryGetValue("ops", out BsonValue ops) && ops as BsonArray != null)
                             texts.Add(new SFScriptureText(wordTokenizer, projectId, text.BookNum, chapter.Number, doc));
                     }
                 }

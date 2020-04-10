@@ -35,12 +35,8 @@ namespace SIL.XForge.Scripture.Services
         {
             string prevRef = null;
             var sb = new StringBuilder();
-            doc.TryGetValue("ops", out BsonValue ops);
-            if (ops as BsonArray == null)
-            {
-                yield break;
-            }
-            foreach (BsonDocument op in ((BsonArray)ops).Cast<BsonDocument>())
+            var ops = (BsonArray)doc["ops"];
+            foreach (BsonDocument op in ops.Cast<BsonDocument>())
             {
                 // skip embeds
                 if (!op.TryGetValue("insert", out BsonValue value) || value.BsonType != BsonType.String)
