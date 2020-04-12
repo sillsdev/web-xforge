@@ -55,7 +55,7 @@ header {
       }
       select {
         padding: 3px 6px;
-        font-family: $fontFamily;
+        font-family: language_picker;
         @include media-breakpoint-down(xs) {
           /* Adds the translate icon and a down arrow to replace the selected value of the selection box */
           background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 178.1 110'%3E%3Cpath fill='%23343a31' d='M59,69.1L47.3,57.6l0.1-0.1c8-8.9,13.7-19.1,17-29.9h13.4v-9.2H45.8V9.2h-9.2v9.2H4.6v9.1h51.2          c-3.1,8.8-7.9,17.2-14.5,24.6c-4.3-4.7-7.8-9.9-10.6-15.4h-9.2c3.3,7.5,7.9,14.5,13.7,20.9l-23.3,23l6.5,6.5l22.9-22.9l14.3,14.3          L59,69.1zM75.6,45.8l-20.6,55h9.2l5.1-13.8h21.8l5.2,13.8h9.2l-20.6-55H75.6z M72.8,77.9l7.4-19.8l7.4,19.8          H72.8zM172.8,45.3l-2.8-2.8c-0.4-0.4-0.8-0.6-1.3-0.6c-0.5,0-0.9,0.2-1.3,0.6l-21.7,21.7l-21.7-21.7          c-0.4-0.4-0.8-0.6-1.3-0.6c-0.5,0-0.9,0.2-1.3,0.6l-2.8,2.8c-0.4,0.4-0.6,0.8-0.6,1.3c0,0.5,0.2,0.9,0.6,1.3l25.7,25.7          c0.4,0.4,0.8,0.6,1.3,0.6c0.5,0,0.9-0.2,1.3-0.6l25.7-25.7c0.4-0.4,0.6-0.8,0.6-1.3C173.3,46.1,173.1,45.7,172.8,45.3z'/%3E%3C/svg%3E") !important;

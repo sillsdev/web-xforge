@@ -1,6 +1,7 @@
 /* Generic styles for the main html/body page itself */
 
 @import 'variables';
+@import 'fonts';
 @import '~@angular-mdc/theme/material';
 /* Only import relevant Bootstrap 4.x styles */
 @import '~bootstrap/scss/bootstrap-grid';
@@ -92,7 +93,7 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   transition: background-color 0.15s, color 0.15s;
   &.ngx-mdc-button--primary:not(:disabled):hover {
     background-color: $greenLight;
-    color: $purpleDark;
+    color: $sf_grey;
   }
 }
 mdc-icon.ngx-mdc-icon--clickable,

@@ -156,7 +156,7 @@
       }
     }
     .liked {
-      color: var(--mdc-theme-secondary);
+      color: $likes;
     }
     .answer-detail {
       flex: 1;
