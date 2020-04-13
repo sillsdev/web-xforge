@@ -23,6 +23,16 @@
 
     .mdc-list-item {
       cursor: pointer;
+      &:hover,
+      &.mdc-list-item--activated {
+        mdc-icon {
+          color: $purpleLight;
+        }
+      }
+      mdc-icon {
+        color: $purpleMedium;
+        transition: color 0.15s;
+      }
     }
   }
 
@@ -81,6 +91,10 @@
 
 .user-menu-name {
   white-space: nowrap;
+  color: $purpleLight;
+}
+#edit-name-btn {
+  color: $purpleLight;
 }
 
 a {
@@ -105,4 +119,5 @@ a {
 
 .locale-menu .mdc-list-item {
   white-space: nowrap;
+  font-family: language_picker;
 }

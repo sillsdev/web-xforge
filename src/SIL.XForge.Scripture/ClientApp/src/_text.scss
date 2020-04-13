@@ -43,7 +43,8 @@ quill-editor {
           display: flex;
           align-content: center;
           justify-content: center;
-          background: var(--mdc-theme-secondary);
+          background: $questions;
+          color: #fff;
           font-weight: bold;
           position: absolute;
           top: 0.2em;

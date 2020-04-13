@@ -69,7 +69,7 @@ app-donut-chart {
 .card-content-question {
   .stat-total,
   mdc-icon {
-    color: rgb(48, 209, 250);
+    color: $questions;
   }
 }
 
@@ -83,13 +83,13 @@ app-donut-chart {
 .card-content-comment {
   .stat-total,
   mdc-icon {
-    color: rgb(255, 115, 0);
+    color: $comments;
   }
 }
 
 .card-content-like {
   .stat-total,
   mdc-icon {
-    color: rgb(255, 208, 0);
+    color: $likes;
   }
 }

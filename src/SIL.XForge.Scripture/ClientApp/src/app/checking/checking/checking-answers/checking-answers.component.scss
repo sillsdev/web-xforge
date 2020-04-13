@@ -156,7 +156,7 @@
       }
     }
     .liked {
-      color: var(--mdc-theme-secondary);
+      color: $likes;
     }
     .answer-detail {
       flex: 1;
@@ -176,12 +176,6 @@
           margin-top: 10px;
         }
       }
-      .answer-scripture {
-        color: var(--mdc-theme-secondary);
-        & + app-checking-audio-player {
-          margin-top: 10px;
-        }
-      }
 
       app-checking-audio-player {
         display: block;
@@ -197,6 +191,19 @@
         }
       }
     }
+  }
+}
+
+.answer-scripture,
+.scripture-text {
+  color: $greenDark;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+
+  & + app-checking-audio-player {
+    margin-top: 10px;
   }
 }
 
