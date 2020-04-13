@@ -30,7 +30,7 @@
         }
       }
       mdc-icon {
-        color: $purpleDark;
+        color: $purpleLight;
         transition: color 0.15s;
       }
     }
@@ -91,10 +91,10 @@
 
 .user-menu-name {
   white-space: nowrap;
-  color: $purpleDark;
+  color: $purpleLight;
 }
 #edit-name-btn {
-  color: $purpleDark;
+  color: $purpleLight;
 }
 
 a {
