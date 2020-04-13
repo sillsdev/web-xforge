@@ -26,11 +26,11 @@
       &:hover,
       &.mdc-list-item--activated {
         mdc-icon {
-          color: $greenLight;
+          color: $purpleLight;
         }
       }
       mdc-icon {
-        color: $purpleLight;
+        color: $purpleMedium;
         transition: color 0.15s;
       }
     }
