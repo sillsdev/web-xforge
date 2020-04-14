@@ -29,6 +29,7 @@
                   (click)="langMenu.open = false; i18n.setLocale(locale.canonicalTag)"
                 >
                   <!-- `langMenu.open = false` is workaround for menu not closing when click is on a span element -->
+                  <mdc-icon>check</mdc-icon>
                   <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
                 </mdc-list-item>
               </mdc-list>
