@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,11 +8,21 @@ using SIL.Machine.Tokenization;
 
 namespace SIL.XForge.Scripture.Services
 {
+    /// <summary>Set of Scripture text segments.</summary>
     public class SFScriptureText : IText
     {
+        /// <remarks>Builds segments from texts and references. Will use ops in doc that have an insert and a segment attribute providing reference information.
+        /// For example,
+        /// { "insert": "In the beginning ...",
+        ///   "attributes": { "segment": "verse_1_1" } }
+        /// </remarks>
         public SFScriptureText(ITokenizer<string, int> wordTokenizer, string projectId, int book, int chapter,
             BsonDocument doc)
         {
+            if (doc == null)
+            {
+                throw new ArgumentNullException(nameof(doc));
+            }
             Id = $"{projectId}_{book}_{chapter}";
             Segments = GetSegments(wordTokenizer, doc).OrderBy(s => s.SegmentRef).ToArray();
         }
