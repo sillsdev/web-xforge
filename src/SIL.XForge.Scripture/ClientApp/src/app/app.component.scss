@@ -117,6 +117,15 @@ a {
   font-weight: bold;
 }
 
+.locale-menu {
+  mdc-list-item:not(.active-locale) mdc-icon {
+    visibility: hidden;
+  }
+  mdc-icon {
+    margin-right: 0.5em;
+  }
+}
+
 .locale-menu .mdc-list-item {
   white-space: nowrap;
   font-family: language_picker;
