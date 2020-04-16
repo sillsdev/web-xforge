@@ -68,13 +68,12 @@ namespace SIL.XForge.Scripture.Services
             return delta.InsertText(text, segRef, attributes);
         }
 
-        public static Delta InsertBlankChar(this Delta delta, string style, bool invalid = false)
+        public static Delta InsertEmptyChar(this Delta delta, string style, string segRef = null, bool invalid = false)
         {
-            var obj = new JObject(new JProperty("blank", true));
             var attributes = new JObject(new JProperty("char", new JObject(new JProperty("style", style))));
             if (invalid)
                 attributes.Add(new JProperty("invalid-inline", true));
-            return delta.InsertEmbed("blank", obj, null, attributes);
+            return delta.InsertEmpty(segRef, attributes);
         }
 
         public static Delta InsertCharRef(this Delta delta, string text, string style, string reference,

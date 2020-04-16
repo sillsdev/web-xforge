@@ -146,6 +146,27 @@ export function registerScripture(): void {
     }
   }
 
+  class EmptyEmbed extends Embed {
+    static blotName = 'empty';
+    static tagName = 'usx-empty';
+
+    static create(value: boolean): Node {
+      const node = super.create(value) as HTMLElement;
+      node.innerText = ZWSP;
+      return node;
+    }
+
+    static value(_node: HTMLElement): boolean {
+      return true;
+    }
+
+    static formats(node: HTMLElement): boolean {
+      return EmptyEmbed.value(node);
+    }
+
+    contentNode!: HTMLElement;
+  }
+
   class CharInline extends Inline {
     static blotName = 'char';
     static tagName = 'usx-char';
@@ -594,6 +615,7 @@ export function registerScripture(): void {
   Quill.register('formats/invalid-inline', InvalidInlineClass);
   Quill.register('blots/verse', VerseEmbed);
   Quill.register('blots/blank', BlankEmbed);
+  Quill.register('blots/empty', EmptyEmbed);
   Quill.register('blots/note', NoteEmbed);
   Quill.register('blots/char', CharInline);
   Quill.register('blots/ref', RefInline);

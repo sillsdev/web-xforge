@@ -111,6 +111,32 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToUsx_EmptyChar()
+        {
+            var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("This is some ", "verse_1_1")
+                .InsertEmptyChar("bd", "verse_1_1")
+                .InsertText(" text.", "verse_1_1")
+                .InsertPara("p")
+                .Insert("\n"));
+
+            var mapper = new DeltaUsxMapper();
+            XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+
+            XDocument expected = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    "This is some ",
+                    Char("bd", null),
+                    " text."));
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
         public void ToUsx_Note()
         {
             var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
@@ -209,6 +235,41 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToUsx_DoubleNestedChars()
+        {
+            var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertChar("1", new[] { "bd", "sup" }, "verse_1_1")
+                .InsertChar("This is bold text", "bd", "verse_1_1")
+                .InsertChar(" but this is not bold,", new[] { "bd", "no" }, "verse_1_1")
+                .InsertChar("2", new[] { "bd", "no", "sup" }, "verse_1_1")
+                .InsertChar(" and this is bold.", "bd", "verse_1_1")
+                .InsertChar("3", new[] { "bd", "sup" }, "verse_1_1")
+                .InsertText(" This is normal text.", "verse_1_1")
+                .InsertPara("p"));
+
+            var mapper = new DeltaUsxMapper();
+            XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+
+            XDocument expected = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    Char("bd",
+                        Char("sup", "1"),
+                        "This is bold text",
+                        Char("no",
+                            " but this is not bold,",
+                            Char("sup", "2")),
+                        " and this is bold.",
+                        Char("sup", "3")),
+                    " This is normal text."));
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
         public void ToUsx_Ref()
         {
             var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
@@ -260,9 +321,9 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
                     .InsertChar("1:1", "fr")
-                    .InsertBlankChar("ft")
+                    .InsertEmptyChar("ft")
                     .Insert(". ")
-                    .InsertBlankChar("xo")
+                    .InsertEmptyChar("xo")
                     .InsertCharRef("Mark 1:1", "xt", "MRK 1:1"), "f", "*", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p")
@@ -1319,6 +1380,64 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToDelta_CharText()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    "This is some ",
+                    Char("bd", "bold"),
+                    " text."));
+
+            var mapper = new DeltaUsxMapper();
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("This is some ", "verse_1_1")
+                .InsertChar("bold", "bd", "verse_1_1")
+                .InsertText(" text.", "verse_1_1")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].IsValid, Is.True);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        [Test]
+        public void ToDelta_EmptyChar()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    "This is some ",
+                    Char("bd", ""),
+                    " text."));
+
+            var mapper = new DeltaUsxMapper();
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertText("This is some ", "verse_1_1")
+                .InsertEmptyChar("bd", "verse_1_1")
+                .InsertText(" text.", "verse_1_1")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].IsValid, Is.True);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        [Test]
         public void ToDelta_NestedChars()
         {
             XDocument usxDoc = Usx("PHM",
@@ -1344,6 +1463,45 @@ namespace SIL.XForge.Scripture.Services
                 .InsertChar("This is", "bd", "verse_1_1")
                 .InsertChar("2", new[] { "bd", "sup" }, "verse_1_1")
                 .InsertChar(" bold text.", "bd", "verse_1_1")
+                .InsertChar("3", new[] { "bd", "sup" }, "verse_1_1")
+                .InsertText(" This is normal text.", "verse_1_1")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].IsValid, Is.True);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        [Test]
+        public void ToDelta_DoubleNestedChars()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    Char("bd",
+                        Char("sup", "1"),
+                        "This is bold text",
+                        Char("no",
+                            " but this is not bold,",
+                            Char("sup", "2")),
+                        " and this is bold.",
+                        Char("sup", "3")),
+                    " This is normal text."));
+
+            var mapper = new DeltaUsxMapper();
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertChar("1", new[] { "bd", "sup" }, "verse_1_1")
+                .InsertChar("This is bold text", "bd", "verse_1_1")
+                .InsertChar(" but this is not bold,", new[] { "bd", "no" }, "verse_1_1")
+                .InsertChar("2", new[] { "bd", "no", "sup" }, "verse_1_1")
+                .InsertChar(" and this is bold.", "bd", "verse_1_1")
                 .InsertChar("3", new[] { "bd", "sup" }, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p");
@@ -1461,9 +1619,9 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
                     .InsertChar("1:1", "fr")
-                    .InsertBlankChar("ft")
+                    .InsertEmptyChar("ft")
                     .Insert(". ")
-                    .InsertBlankChar("xo")
+                    .InsertEmptyChar("xo")
                     .InsertCharRef("Mark 1:1", "xt", "MRK 1:1"), "f", "*", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
