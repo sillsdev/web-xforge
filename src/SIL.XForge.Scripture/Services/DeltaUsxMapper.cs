@@ -241,10 +241,7 @@ namespace SIL.XForge.Scripture.Services
                             }
                             newChildAttributes = AddInvalidInlineAttribute(invalidNodes, elem, newChildAttributes);
                             if (!elem.Nodes().Any() && elem.Value == "")
-                            {
-                                var obj = new JObject(new JProperty("blank", true));
-                                newDelta.InsertEmbed("blank", obj, state.CurRef, newChildAttributes);
-                            }
+                                newDelta.InsertEmpty(state.CurRef, newChildAttributes);
                             else
                                 ProcessChildNodes(invalidNodes, newDelta, elem, state, newChildAttributes);
                             break;
@@ -588,7 +585,8 @@ namespace SIL.XForge.Scripture.Services
                                 break;
 
                             case "blank":
-                                // ignore blank embeds
+                            case "empty":
+                                // ignore blank and empty embeds
                                 break;
 
                             default:
