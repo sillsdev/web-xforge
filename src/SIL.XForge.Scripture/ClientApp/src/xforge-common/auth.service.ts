@@ -178,9 +178,9 @@ export class AuthService {
       }
     }
     if (state.returnUrl != null) {
-      this.router.navigateByUrl(state.returnUrl);
+      this.router.navigateByUrl(state.returnUrl, { replaceUrl: true });
     } else if (this.locationService.hash !== '') {
-      this.router.navigateByUrl(this.locationService.pathname);
+      this.router.navigateByUrl(this.locationService.pathname, { replaceUrl: true });
     }
     return true;
   }
