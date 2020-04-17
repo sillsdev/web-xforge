@@ -34,6 +34,10 @@ namespace SIL.XForge.Scripture.Services
             return this;
         }
 
+        /// <summary>
+        /// Uses the a REST client to pull from the Paratext send/receive server. This overrides the base implementation
+        /// to avoid needing the current user's Paratext registration code to get the base revision.
+        /// </summary>
         public override string[] Pull(string repository, SharedRepository pullRepo)
         {
             string tip = GetBaseRevision(repository);
@@ -61,6 +65,10 @@ namespace SIL.XForge.Scripture.Services
             return changeSets;
         }
 
+        /// <summary>
+        /// Uses the a REST client to push to the Paratext send/receive server. This overrides the base implementation
+        /// to avoid needing the current user's Paratext registration code to get the base revision.
+        /// </summary>
         public override void Push(string repository, SharedRepository pushRepo)
         {
             string tip = GetBaseRevision(repository);
@@ -86,7 +94,10 @@ namespace SIL.XForge.Scripture.Services
             return GetRepositories(GetLicensesForUserProjects());
         }
 
-        /// <summary> Gets the licenses for projects. Sourced from InternetSharedRepositorySource. </summary>
+        /// <summary>
+        /// Gets the licenses for all projects the current user is a member of.
+        /// Sourced from <see cref="RegistryServer" />.
+        /// </summary>
         private List<ProjectLicense> GetLicensesForUserProjects()
         {
             JArray licenses = GetJsonArray("my/licenses");
@@ -98,9 +109,7 @@ namespace SIL.XForge.Scripture.Services
                 var projLicense = new ProjectLicense(license);
                 if (projLicense.IsInvalid || projLicense.IsExpired)
                     continue;
-                UserRoles role = RegistryServer.ConvertToUserRole(license["role"]?.ToString());
-                if (role == UserRoles.Administrator)
-                    result.Add(projLicense);
+                result.Add(projLicense);
             }
             return result;
         }
@@ -132,28 +141,6 @@ namespace SIL.XForge.Scripture.Services
         private void MarkSharedChangeSetsPublic(string repository)
         {
             HgWrapper.RunCommand(repository, "phase -p -r 'tip'");
-        }
-    }
-
-    public interface IInternetSharedRepositorySource
-    {
-        IEnumerable<SharedRepository> GetRepositories();
-        string[] Pull(string repository, SharedRepository pullRepo);
-
-        void RefreshToken(string jwtToken);
-
-        /// <summary>Access as a particular class.</summary>
-        InternetSharedRepositorySource AsInternetSharedRepositorySource();
-    }
-
-    /// <summary> A REST client using a JWT token to authenticate. </summary>
-    public class JwtRESTClient : RESTClient
-    {
-        public JwtRESTClient(string baseUri, string applicationProductVersion, string jwtToken)
-            : base(baseUri, applicationProductVersion)
-        {
-            this.JwtToken = jwtToken;
-            ReflectionHelperLite.SetField(this, "authentication", null);
         }
     }
 }

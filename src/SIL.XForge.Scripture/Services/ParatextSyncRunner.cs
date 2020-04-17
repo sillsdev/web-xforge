@@ -81,7 +81,7 @@ namespace SIL.XForge.Scripture.Services
 
         // Do not allow multiple sync jobs to run in parallel on the same project by creating a mutex on the projectId
         // parameter, i.e. "{0}"
-        // [Mutex("{0}")]
+        [Mutex("{0}")]
         public async Task RunAsync(string projectId, string userId, bool trainEngine)
         {
             try

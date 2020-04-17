@@ -4,7 +4,7 @@ namespace SIL.XForge.Scripture.Services
 {
     public interface IScrTextCollectionWrapper
     {
-        void Initialize(string settingsDir = null, bool allowMigration = false);
+        void Initialize(string settingsDir = null);
         ScrText FindById(string username, string projectId);
     }
 }

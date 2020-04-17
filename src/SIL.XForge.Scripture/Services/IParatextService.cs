@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using PtxUtils.Progress;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
@@ -9,7 +10,6 @@ namespace SIL.XForge.Scripture.Services
     public interface IParatextService
     {
         void Init();
-        JwtRESTClient GenerateParatextRegistryJwtClient(UserSecret userSecret);
         void InstallStyles(UserSecret userSecret);
         Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret);
         string GetParatextUsername(UserSecret userSecret);
@@ -23,6 +23,6 @@ namespace SIL.XForge.Scripture.Services
         void PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
 
         Task SendReceiveAsync(UserSecret userSecret, IEnumerable<string> ptProjectIds,
-            SyncProgressDisplay progressDisplay = null);
+            ProgressDisplay progressDisplay = null);
     }
 }

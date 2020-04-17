@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Paratext.Data;
 using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.ProjectSettingsAccess;
@@ -9,9 +8,7 @@ using Paratext.Data.Languages;
 using PtxUtils;
 using SIL.WritingSystems;
 
-// TODO: Copied from PT vcs. Ok?   Then modified :)
-
-namespace Paratext.Base
+namespace SIL.XForge.Scripture.Services
 {
     /// <summary>
     /// Mock which stored text data in keys such as "GEN" or "GEN 3"
@@ -20,11 +17,11 @@ namespace Paratext.Base
     {
 
 
-        public MockScrText(string directory)
+        public MockScrText(ProjectName pn)
         {
+            projectName = pn;
             _settings = new MockProjectSettings(this);
             _language = new MockScrLanguage(this);
-            _directory = directory;
         }
 
         public Dictionary<string, string> Data = new Dictionary<string, string>();
@@ -55,12 +52,11 @@ namespace Paratext.Base
         public ProjectSettings _settings;
         public override ProjectSettings Settings => _settings;
         public override ScrStylesheet DefaultStylesheet => new MockScrStylesheet("./usfm.sty");
-        public override string Directory => _directory;
-        public override string Name => "PTNAME";
+        public override string Directory => projectName.ProjectPath;
+        public override string Name => projectName.ShortName;
         public override ScrLanguage Language => _language;
         public ProjectFileManager _fileManager;
         private ScrLanguage _language;
-        private string _directory;
     }
 
     /// <summary>

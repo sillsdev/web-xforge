@@ -1,74 +1,82 @@
+using System;
+using System.IO;
+using System.Xml;
 using Paratext.Data;
 using Paratext.Data.ProjectSettingsAccess;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
     public class LazyScrTextCollection
     {
         private readonly string _username;
-        private readonly string _userDir;
 
-        public LazyScrTextCollection(string userPath, string username)
+        public LazyScrTextCollection(string projectsPath, string username)
         {
-            _userDir = userPath;
             _username = username;
+            SettingsDirectory = projectsPath;
+            FileSystemService = new FileSystemService();
         }
 
-        /// <summary> Path of directory containing users with projects. </summary>
-        public string SettingsDirectory
-        {
-            get { return _userDir; }
-        }
+        /// <summary> Path of directory containing projects. </summary>
+        public string SettingsDirectory { get; set; }
+        internal IFileSystemService FileSystemService { get; set; }
 
-        public ScrText Find(string projectFolderPath)
-        {
-            if (!Directory.Exists(projectFolderPath))
-                return null;
-
-            string settingsFile = Path.Combine(projectFolderPath, ProjectSettings.fileName);
-            if (!File.Exists(settingsFile))
-                return null;
-
-            // ENHANCE: this could be improved by the use of a weak cache. (and/or MRU cache)
-
-            var pn = new ProjectName();
-            string nameLine = File.ReadAllLines(settingsFile).FirstOrDefault(line => line.Contains("<Name>"));
-            MatchCollection mc = Regex.Matches(nameLine, @"<Name>(\S+)</Name>");
-            foreach (Match match in mc)
-            {
-                pn.ShortName = match.Groups[1].Value;
-                break;
-            }
-
-            pn.ProjectPath = projectFolderPath;
-            return new MultiUserScrText(_userDir, _username, pn);
-        }
-
-        /// <summary> Get a ScrText from the data for a paratext project with the project ID </summary>
+        /// <summary> Get a ScrText from the data for a paratext project with the project ID. </summary>
         public ScrText FindById(string projectId)
         {
-            if (!Directory.Exists(_userDir))
+            if (!FileSystemService.DirectoryExists(SettingsDirectory))
                 return null;
-            var projectFolderPaths = Directory.EnumerateDirectories(_userDir);
-
+            var projectFolderPaths = FileSystemService.EnumerateDirectories(SettingsDirectory);
             foreach (string projectFolderPath in projectFolderPaths)
             {
-                var settingFile = Path.Combine(projectFolderPath, ProjectSettings.fileName);
-                if (!File.Exists(settingFile))
+                string settingsFile = Path.Combine(projectFolderPath, ProjectSettings.fileName);
+                if (!FileSystemService.FileExists(settingsFile))
                     continue;
 
-                var guidLine = File.ReadAllLines(settingFile).FirstOrDefault((line) => line.Contains("Guid"));
-                if (guidLine == null)
-                    continue;
-                if (!guidLine.Contains(projectId))
-                    continue;
+                bool found = CanFindProjectSettings(settingsFile, projectId, out string name);
 
-                return Find(projectFolderPath);
+                if (found)
+                    return CreateScrText(new ProjectName() { ProjectPath = projectFolderPath, ShortName = name });
             }
             return null;
+        }
+
+        protected virtual ScrText CreateScrText(ProjectName projectName)
+        {
+            return new MultiUserScrText(SettingsDirectory, _username, projectName);
+        }
+
+        private bool CanFindProjectSettings(string settingsFilePath, string projectId, out string name)
+        {
+            bool foundMatchingProjectId = false;
+            name = null;
+            using (Stream stream = FileSystemService.OpenFile(settingsFilePath, FileMode.Open))
+            {
+                XmlReader reader = XmlReader.Create(stream);
+                while (reader.Read())
+                {
+                    if (reader.NodeType == XmlNodeType.Element)
+                    {
+                        if (string.Equals(reader.Name, "guid", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            reader.Read();
+                            foundMatchingProjectId = reader.Value == projectId;
+                            if (name == null)
+                                continue;
+                            return foundMatchingProjectId;
+                        }
+                        else if (string.Equals(reader.Name, "name", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            reader.Read();
+                            name = reader.Value;
+                            if (foundMatchingProjectId)
+                                return true;
+                        }
+                    }
+                }
+            }
+            return foundMatchingProjectId;
         }
     }
 }

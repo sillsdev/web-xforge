@@ -5,32 +5,26 @@ using System.IO;
 
 namespace SIL.XForge.Scripture.Services
 {
-    /// <summary> A user specific <see cref="ScrText"/>. </summary>
+    /// <summary> A <see cref="ScrText"/> in a multi user environment. </summary>
     public class MultiUserScrText : ScrText
     {
-        // A path to a directory unique to each user
-        private readonly string _path;
-        private readonly string _username;
+        private readonly string _projectDir;
 
-        public MultiUserScrText(string path, string username, ProjectName pn) : base(pn, true, false, false)
+        public MultiUserScrText(string projectDir, string username, ProjectName pn) : base(pn, true, false, false)
         {
-            _path = path;
-            _username = username;
+            _projectDir = projectDir;
+            Username = username;
             Load(false);
         }
 
-        internal string Username
-        {
-            get { return _username; }
-        }
+        public string Username { get; private set; }
 
         public override IEnumerable<string> GetStandardStylesheet(string styleSheetName)
         {
-            string path = Path.Combine(MultiUserLazyScrTextCollection.Get(_username).SettingsDirectory, styleSheetName);
+            string path = Path.Combine(_projectDir, styleSheetName);
 
             if (!File.Exists(path))
-                path = Path.Combine(MultiUserLazyScrTextCollection.Get(_username).SettingsDirectory,
-                    Settings.TranslationInfo.Type.StandardStyleSheetName());
+                path = Path.Combine(_projectDir, Settings.TranslationInfo.Type.StandardStyleSheetName());
 
             return File.ReadAllLines(path);
         }

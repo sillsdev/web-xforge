@@ -9,21 +9,21 @@ namespace SIL.XForge.Scripture.Services
         public static string RunCommand(string repository, string cmd)
         {
             if (Hg.Default == null)
-                throw new NullReferenceException("Hg default has not been set");
+                throw new InvalidOperationException("Hg default has not been set.");
             return Hg.Default.RunCommand(repository, cmd).StdOut;
         }
 
         public static byte[] Bundle(string repository, params string[] heads)
         {
             if (Hg.Default == null)
-                throw new NullReferenceException("Hg default has not been set");
+                throw new InvalidOperationException("Hg default has not been set.");
             return Hg.Default.Bundle(repository, heads);
         }
 
         public static string[] Pull(string repository, byte[] bundle)
         {
             if (Hg.Default == null)
-                throw new NullReferenceException("Hg default has not been set");
+                throw new InvalidOperationException("Hg default has not been set.");
             return Hg.Default.Pull(repository, bundle, true);
         }
 
