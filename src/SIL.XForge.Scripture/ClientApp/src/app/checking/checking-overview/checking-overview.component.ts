@@ -204,11 +204,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count;
   }
 
-  questionCount(bookNum: number, chapterNumber: number, fromArchive = false): number {
+  questionCount(bookNumber: number, chapterNumber: number, fromArchive = false): number {
     if (this.projectDoc == null) {
       return 0;
     }
-    const id = new TextDocId(this.projectDoc.id, bookNum, chapterNumber);
+    const id = new TextDocId(this.projectDoc.id, bookNumber, chapterNumber);
     const questionDocs = this.getQuestionDocs(id, fromArchive);
     return questionDocs.length;
   }
@@ -318,6 +318,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       projectId: this.projectDoc.id
     };
     await this.questionDialogService.questionDialog(data, questionDoc);
+    this.initTexts();
   }
 
   getBookName(text: TextInfo): string {
