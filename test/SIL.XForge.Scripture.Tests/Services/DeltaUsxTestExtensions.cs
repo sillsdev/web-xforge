@@ -1,8 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Realtime.RichText;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -60,14 +60,12 @@ namespace SIL.XForge.Scripture.Services
             return delta.InsertText(text, segRef, attributes);
         }
 
-        public static Delta InsertChar(this Delta delta, string text, IEnumerable<string> styles, string[] cids,
+        public static Delta InsertChar(this Delta delta, string text, IEnumerable<CharAttr> charAttrs,
             string segRef = null, bool invalid = false)
         {
-            if (styles.Count() != cids.Length)
-                throw new ArgumentException("Array lengths don't match.", nameof(styles));
-            var attributes = new JObject(new JProperty("char", styles.Select((style, index) => new JObject(
-                new JProperty("style", style),
-                new JProperty("cid", cids[index])))));
+            var attributes = new JObject(new JProperty("char", charAttrs.Select(charAttr => new JObject(
+                new JProperty("style", charAttr.Style),
+                new JProperty("cid", charAttr.CharID)))));
             if (invalid)
                 attributes.Add(new JProperty("invalid-inline", true));
             return delta.InsertText(text, segRef, attributes);

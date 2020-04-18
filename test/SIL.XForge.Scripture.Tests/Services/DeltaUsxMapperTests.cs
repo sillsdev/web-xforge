@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Xml.Linq;
 using NUnit.Framework;
 using SIL.XForge.Realtime.RichText;
+using SIL.XForge.Scripture.Models;
 using Newtonsoft.Json.Linq;
 
 namespace SIL.XForge.Scripture.Services
@@ -223,11 +224,20 @@ namespace SIL.XForge.Scripture.Services
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
+                .InsertChar("1", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup1CharID }
+                    }, "verse_1_1")
                 .InsertChar("This is", "bd", bdCharID, "verse_1_1")
-                .InsertChar("2", new[] { "bd", "sup" }, new[] { bdCharID, sup2CharID }, "verse_1_1")
+                .InsertChar("2", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup2CharID }
+                    }, "verse_1_1")
                 .InsertChar(" bold text.", "bd", bdCharID, "verse_1_1")
-                .InsertChar("3", new[] { "bd", "sup" }, new[] { bdCharID, sup3CharID }, "verse_1_1")
+                .InsertChar("3", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup3CharID }
+                    }, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p"));
 
@@ -259,9 +269,18 @@ namespace SIL.XForge.Scripture.Services
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
-                .InsertChar("2", new[] { "bd", "sup" }, new[] { bdCharID, sup2CharID }, "verse_1_1")
-                .InsertChar("3", new[] { "bd", "sup" }, new[] { bdCharID, sup3CharID }, "verse_1_1")
+                .InsertChar("1", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup1CharID }
+                    }, "verse_1_1")
+                .InsertChar("2", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup2CharID }
+                    }, "verse_1_1")
+                .InsertChar("3", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup3CharID }
+                    }, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p"));
 
@@ -293,13 +312,30 @@ namespace SIL.XForge.Scripture.Services
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
+                .InsertChar("1", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup1CharID }
+                    }, "verse_1_1")
                 .InsertChar("This is bold text", "bd", bdCharID, "verse_1_1")
-                .InsertChar(" but this is not bold,", new[] { "bd", "no" }, new[] { bdCharID, noCharID }, "verse_1_1")
-                .InsertChar("2", new[] { "bd", "no", "sup" }, new[] { bdCharID, noCharID, sup2CharID }, "verse_1_1")
-                .InsertChar("3", new[] { "bd", "no", "sup" }, new[] { bdCharID, noCharID, sup3CharID }, "verse_1_1")
+                .InsertChar(" but this is not bold,", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="no", CharID = noCharID }
+                    }, "verse_1_1")
+                .InsertChar("2", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="no", CharID = noCharID },
+                        new CharAttr { Style ="sup", CharID = sup2CharID }
+                    }, "verse_1_1")
+                .InsertChar("3", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="no", CharID = noCharID },
+                        new CharAttr { Style ="sup", CharID = sup3CharID }
+                    }, "verse_1_1")
                 .InsertChar(" and this is bold.", "bd", bdCharID, "verse_1_1")
-                .InsertChar("4", new[] { "bd", "sup" }, new[] { bdCharID, sup4CharID }, "verse_1_1")
+                .InsertChar("4", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup4CharID }
+                    }, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p"));
 
@@ -1544,11 +1580,20 @@ namespace SIL.XForge.Scripture.Services
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
+                .InsertChar("1", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup1CharID }
+                    }, "verse_1_1")
                 .InsertChar("This is", "bd", bdCharID, "verse_1_1")
-                .InsertChar("2", new[] { "bd", "sup" }, new[] { bdCharID, sup2CharID }, "verse_1_1")
+                .InsertChar("2", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup2CharID }
+                    }, "verse_1_1")
                 .InsertChar(" bold text.", "bd", bdCharID, "verse_1_1")
-                .InsertChar("3", new[] { "bd", "sup" }, new[] { bdCharID, sup3CharID }, "verse_1_1")
+                .InsertChar("3", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup3CharID }
+                    }, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1582,9 +1627,18 @@ namespace SIL.XForge.Scripture.Services
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
-                .InsertChar("2", new[] { "bd", "sup" }, new[] { bdCharID, sup2CharID }, "verse_1_1")
-                .InsertChar("3", new[] { "bd", "sup" }, new[] { bdCharID, sup3CharID }, "verse_1_1")
+                .InsertChar("1", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup1CharID }
+                    }, "verse_1_1")
+                .InsertChar("2", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup2CharID }
+                    }, "verse_1_1")
+                .InsertChar("3", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup3CharID }
+                    }, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1625,13 +1679,30 @@ namespace SIL.XForge.Scripture.Services
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
+                .InsertChar("1", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup1CharID }
+                    }, "verse_1_1")
                 .InsertChar("This is bold text", "bd", bdCharID, "verse_1_1")
-                .InsertChar(" but this is not bold,", new[] { "bd", "no" }, new[] { bdCharID, noCharID }, "verse_1_1")
-                .InsertChar("2", new[] { "bd", "no", "sup" }, new[] { bdCharID, noCharID, sup2CharID }, "verse_1_1")
-                .InsertChar("3", new[] { "bd", "no", "sup" }, new[] { bdCharID, noCharID, sup3CharID }, "verse_1_1")
+                .InsertChar(" but this is not bold,", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="no", CharID = noCharID }
+                    }, "verse_1_1")
+                .InsertChar("2", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="no", CharID = noCharID },
+                        new CharAttr { Style ="sup", CharID = sup2CharID }
+                    }, "verse_1_1")
+                .InsertChar("3", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="no", CharID = noCharID },
+                        new CharAttr { Style ="sup", CharID = sup3CharID }
+                    }, "verse_1_1")
                 .InsertChar(" and this is bold.", "bd", bdCharID, "verse_1_1")
-                .InsertChar("4", new[] { "bd", "sup" }, new[] { bdCharID, sup4CharID }, "verse_1_1")
+                .InsertChar("4", new List<CharAttr> {
+                        new CharAttr { Style ="bd", CharID = bdCharID },
+                        new CharAttr { Style ="sup", CharID = sup4CharID }
+                    }, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1659,7 +1730,7 @@ namespace SIL.XForge.Scripture.Services
             var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
-            string bdCharID = _testGuidService.Generate();
+            string badCharID = _testGuidService.Generate();
             string sup1CharID = _testGuidService.Generate();
             string sup2CharID = _testGuidService.Generate();
             string sup3CharID = _testGuidService.Generate();
@@ -1667,11 +1738,20 @@ namespace SIL.XForge.Scripture.Services
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bad", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1", true)
-                .InsertChar("This is", "bad", bdCharID, "verse_1_1", true)
-                .InsertChar("2", new[] { "bad", "sup" }, new[] { bdCharID, sup2CharID }, "verse_1_1", true)
-                .InsertChar(" bold text.", "bad", bdCharID, "verse_1_1", true)
-                .InsertChar("3", new[] { "bad", "sup" }, new[] { bdCharID, sup3CharID }, "verse_1_1", true)
+                .InsertChar("1", new List<CharAttr> {
+                        new CharAttr { Style ="bad", CharID = badCharID },
+                        new CharAttr { Style ="sup", CharID = sup1CharID }
+                    }, "verse_1_1", true)
+                .InsertChar("This is", "bad", badCharID, "verse_1_1", true)
+                .InsertChar("2", new List<CharAttr> {
+                        new CharAttr { Style ="bad", CharID = badCharID },
+                        new CharAttr { Style ="sup", CharID = sup2CharID }
+                    }, "verse_1_1", true)
+                .InsertChar(" bold text.", "bad", badCharID, "verse_1_1", true)
+                .InsertChar("3", new List<CharAttr> {
+                        new CharAttr { Style ="bad", CharID = badCharID },
+                        new CharAttr { Style ="sup", CharID = sup3CharID }
+                    }, "verse_1_1", true)
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p");
 
