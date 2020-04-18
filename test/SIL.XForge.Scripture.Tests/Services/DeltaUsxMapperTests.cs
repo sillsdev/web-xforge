@@ -10,6 +10,16 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class DeltaUsxMapperTests
     {
+        private IGuidService _mapperGuidService;
+        private IGuidService _testGuidService;
+
+        [SetUp]
+        public void Init()
+        {
+            _mapperGuidService = new TestGuidService();
+            _testGuidService = new TestGuidService();
+        }
+
         [Test]
         public void ToUsx_HeaderPara()
         {
@@ -18,7 +28,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("h")
                 .Insert("\n"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -37,7 +47,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("p")
                 .Insert("\n"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -69,7 +79,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("p")
                 .Insert("\n"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -92,12 +102,12 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is some ", "verse_1_1")
-                .InsertChar("bold", "bd", "verse_1_1")
+                .InsertChar("bold", "bd", _testGuidService.Generate(), "verse_1_1")
                 .InsertText(" text.", "verse_1_1")
                 .InsertPara("p")
                 .Insert("\n"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -118,12 +128,12 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is some ", "verse_1_1")
-                .InsertEmptyChar("bd", "verse_1_1")
+                .InsertEmptyChar("bd", _testGuidService.Generate(), "verse_1_1")
                 .InsertText(" text.", "verse_1_1")
                 .InsertPara("p")
                 .Insert("\n"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -145,18 +155,18 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", _testGuidService.Generate())
+                    .InsertChar("Refers to ", "ft", _testGuidService.Generate())
+                    .InsertChar("a footnote", "fq", _testGuidService.Generate())
                     .Insert(". ")
-                    .InsertChar("John 1:1", "xt")
+                    .InsertChar("John 1:1", "xt", _testGuidService.Generate())
                     .Insert(" and ")
-                    .InsertChar("Mark 1:1", "xt"), "f", "+", "verse_1_1")
+                    .InsertChar("Mark 1:1", "xt", _testGuidService.Generate()), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p")
                 .Insert("\n"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -189,7 +199,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("p")
                 .Insert("\n"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -205,19 +215,23 @@ namespace SIL.XForge.Scripture.Services
         [Test]
         public void ToUsx_NestedChars()
         {
+            string bdCharID = _testGuidService.Generate();
+            string sup1CharID = _testGuidService.Generate();
+            string sup2CharID = _testGuidService.Generate();
+            string sup3CharID = _testGuidService.Generate();
             var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, "verse_1_1")
-                .InsertChar("This is", "bd", "verse_1_1")
-                .InsertChar("2", new[] { "bd", "sup" }, "verse_1_1")
-                .InsertChar(" bold text.", "bd", "verse_1_1")
-                .InsertChar("3", new[] { "bd", "sup" }, "verse_1_1")
+                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
+                .InsertChar("This is", "bd", bdCharID, "verse_1_1")
+                .InsertChar("2", new[] { "bd", "sup" }, new[] { bdCharID, sup2CharID }, "verse_1_1")
+                .InsertChar(" bold text.", "bd", bdCharID, "verse_1_1")
+                .InsertChar("3", new[] { "bd", "sup" }, new[] { bdCharID, sup3CharID }, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -235,22 +249,61 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void ToUsx_DoubleNestedChars()
+        public void ToUsx_NestedAdjacentChars()
         {
+            string bdCharID = _testGuidService.Generate();
+            string sup1CharID = _testGuidService.Generate();
+            string sup2CharID = _testGuidService.Generate();
+            string sup3CharID = _testGuidService.Generate();
             var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, "verse_1_1")
-                .InsertChar("This is bold text", "bd", "verse_1_1")
-                .InsertChar(" but this is not bold,", new[] { "bd", "no" }, "verse_1_1")
-                .InsertChar("2", new[] { "bd", "no", "sup" }, "verse_1_1")
-                .InsertChar(" and this is bold.", "bd", "verse_1_1")
-                .InsertChar("3", new[] { "bd", "sup" }, "verse_1_1")
+                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
+                .InsertChar("2", new[] { "bd", "sup" }, new[] { bdCharID, sup2CharID }, "verse_1_1")
+                .InsertChar("3", new[] { "bd", "sup" }, new[] { bdCharID, sup3CharID }, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
+            XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+
+            XDocument expected = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    Char("bd",
+                        Char("sup", "1"),
+                        Char("sup", "2"),
+                        Char("sup", "3")),
+                    " This is normal text."));
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
+        public void ToUsx_DoubleNestedAdjacentChars()
+        {
+            string bdCharID = _testGuidService.Generate();
+            string sup1CharID = _testGuidService.Generate();
+            string noCharID = _testGuidService.Generate();
+            string sup2CharID = _testGuidService.Generate();
+            string sup3CharID = _testGuidService.Generate();
+            string sup4CharID = _testGuidService.Generate();
+            var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
+                .InsertChar("This is bold text", "bd", bdCharID, "verse_1_1")
+                .InsertChar(" but this is not bold,", new[] { "bd", "no" }, new[] { bdCharID, noCharID }, "verse_1_1")
+                .InsertChar("2", new[] { "bd", "no", "sup" }, new[] { bdCharID, noCharID, sup2CharID }, "verse_1_1")
+                .InsertChar("3", new[] { "bd", "no", "sup" }, new[] { bdCharID, noCharID, sup3CharID }, "verse_1_1")
+                .InsertChar(" and this is bold.", "bd", bdCharID, "verse_1_1")
+                .InsertChar("4", new[] { "bd", "sup" }, new[] { bdCharID, sup4CharID }, "verse_1_1")
+                .InsertText(" This is normal text.", "verse_1_1")
+                .InsertPara("p"));
+
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -262,9 +315,37 @@ namespace SIL.XForge.Scripture.Services
                         "This is bold text",
                         Char("no",
                             " but this is not bold,",
-                            Char("sup", "2")),
+                            Char("sup", "2"),
+                            Char("sup", "3")),
                         " and this is bold.",
-                        Char("sup", "3")),
+                        Char("sup", "4")),
+                    " This is normal text."));
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
+        public void ToUsx_AdjacentChars()
+        {
+            var chapterDelta = new ChapterDelta(1, 1, true, Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertChar("1", "sup", _testGuidService.Generate(), "verse_1_1")
+                .InsertChar("2", "sup", _testGuidService.Generate(), "verse_1_1")
+                .InsertChar("3", "sup", _testGuidService.Generate(), "verse_1_1")
+                .InsertText(" This is normal text.", "verse_1_1")
+                .InsertPara("p"));
+
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
+            XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
+
+            XDocument expected = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    Char("sup", "1"),
+                    Char("sup", "2"),
+                    Char("sup", "3"),
                     " This is normal text."));
             Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
         }
@@ -278,19 +359,19 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", _testGuidService.Generate())
+                    .InsertChar("Refers to ", "ft", _testGuidService.Generate())
+                    .InsertChar("a footnote", "fq", _testGuidService.Generate())
                     .Insert(". ")
-                    .InsertCharRef("John 1:1", "xt", "JHN 1:1")
+                    .InsertCharRef("John 1:1", "xt", "JHN 1:1", _testGuidService.Generate())
                     .Insert(" and ")
-                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1")
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1", _testGuidService.Generate())
                     .Insert("."), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p")
                 .Insert("\n"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -320,16 +401,16 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1:1", "fr")
-                    .InsertEmptyChar("ft")
+                    .InsertChar("1:1", "fr", _testGuidService.Generate())
+                    .InsertEmptyChar("ft", _testGuidService.Generate())
                     .Insert(". ")
-                    .InsertEmptyChar("xo")
-                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1"), "f", "*", "verse_1_1")
+                    .InsertEmptyChar("xo", _testGuidService.Generate())
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1", _testGuidService.Generate()), "f", "*", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p")
                 .Insert("\n"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -359,7 +440,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -384,7 +465,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -405,7 +486,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("Before verse.", "cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse ", "verse_1_1")
-                .InsertChar("1", "it", "verse_1_1")
+                .InsertChar("1", "it", _testGuidService.Generate(), "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
                 .InsertBlank("cell_1_1_2")
@@ -419,7 +500,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("This is verse 3.", "verse_1_3")
                 .InsertCell(1, 2, "tc2", "start"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -442,7 +523,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("Before verse.", "cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse ", "verse_1_1")
-                .InsertChar("1", "it", "verse_1_1")
+                .InsertChar("1", "it", _testGuidService.Generate(), "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
                 .InsertBlank("cell_1_1_2")
@@ -460,7 +541,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("This is verse 4.", "verse_1_4")
                 .InsertPara("p"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -514,7 +595,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("This is verse 8.", "verse_1_8")
                 .InsertCell(2, 2, "tc2", "start"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -545,7 +626,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("p_2")
                 .InsertPara("p"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -577,7 +658,7 @@ namespace SIL.XForge.Scripture.Services
                     .Insert("\n"))
             };
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM", Chapter("1"), "Text", Chapter("2"), "Text"), chapterDeltas);
 
             XDocument expected = Usx("PHM",
@@ -605,7 +686,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("verse_1_1")
                 .InsertPara("p"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -630,7 +711,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("verse_1_1")
                 .InsertPara("p"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -654,7 +735,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("verse_1_1")
                 .InsertPara("p"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -690,7 +771,7 @@ namespace SIL.XForge.Scripture.Services
                     .Insert("\n"))
             };
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM", Chapter("1"), "Text", Chapter("2"), "Text"), chapterDeltas);
 
             XDocument expected = Usx("PHM",
@@ -712,7 +793,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var chapterDeltas = new[] { new ChapterDelta(1, 0, true, new Delta()) };
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), chapterDeltas);
 
             XDocument expected = Usx("PHM");
@@ -736,7 +817,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("verse_1_3")
                 .InsertPara("p"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -761,7 +842,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("p")
                 .Insert("\n"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("XXA", Book("PHM"), Chapter("1")), new[] { chapterDelta });
 
             XDocument expected = Usx("XXA",
@@ -815,7 +896,7 @@ namespace SIL.XForge.Scripture.Services
                     Verse("1"),
                     "Old verse text."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(oldUsxDoc, chapterDeltas);
 
             XDocument expected = Usx("PHM",
@@ -877,7 +958,7 @@ namespace SIL.XForge.Scripture.Services
                     Verse("1"),
                     "Old verse text."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(oldUsxDoc, chapterDeltas);
 
             XDocument expected = Usx("PHM",
@@ -939,7 +1020,7 @@ namespace SIL.XForge.Scripture.Services
                     Verse("1"),
                     "Old verse text."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(oldUsxDoc, chapterDeltas);
 
             XDocument expected = Usx("PHM",
@@ -971,7 +1052,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertPara("p")
                 .Insert("\n"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(Usx("PHM"), new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -1002,7 +1083,7 @@ namespace SIL.XForge.Scripture.Services
                     Verse("2")),
                 Chapter("2"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             XDocument newUsxDoc = mapper.ToUsx(oldUsxDoc, new[] { chapterDelta });
 
             XDocument expected = Usx("PHM",
@@ -1030,7 +1111,7 @@ namespace SIL.XForge.Scripture.Services
                 Para("p",
                     Verse("3")));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1069,7 +1150,7 @@ namespace SIL.XForge.Scripture.Services
                     Verse("1"),
                     Verse("2")));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1097,7 +1178,7 @@ namespace SIL.XForge.Scripture.Services
                     Verse("1"),
                     Verse("2")));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1124,7 +1205,7 @@ namespace SIL.XForge.Scripture.Services
                     Verse("1", "bad"),
                     Verse("2")));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1151,7 +1232,7 @@ namespace SIL.XForge.Scripture.Services
                     Verse("1"),
                     Verse("2bad")));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1189,7 +1270,7 @@ namespace SIL.XForge.Scripture.Services
                 Para("p",
                     Verse("3")));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expectedChapter1 = Delta.New()
@@ -1253,7 +1334,7 @@ namespace SIL.XForge.Scripture.Services
                         Char("xt", "Mark 1:1")),
                     ", so that we can test it."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1262,13 +1343,13 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", _testGuidService.Generate())
+                    .InsertChar("Refers to ", "ft", _testGuidService.Generate())
+                    .InsertChar("a footnote", "fq", _testGuidService.Generate())
                     .Insert(". ")
-                    .InsertChar("John 1:1", "xt")
+                    .InsertChar("John 1:1", "xt", _testGuidService.Generate())
                     .Insert(" and ")
-                    .InsertChar("Mark 1:1", "xt"), "f", "+", "verse_1_1")
+                    .InsertChar("Mark 1:1", "xt", _testGuidService.Generate()), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1296,7 +1377,7 @@ namespace SIL.XForge.Scripture.Services
                         Char("xt", "Mark 1:1")),
                     ", so that we can test it."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1305,13 +1386,13 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", _testGuidService.Generate())
+                    .InsertChar("Refers to ", "ft", _testGuidService.Generate())
+                    .InsertChar("a footnote", "fq", _testGuidService.Generate())
                     .Insert(". ")
-                    .InsertChar("John 1:1", "xt")
+                    .InsertChar("John 1:1", "xt", _testGuidService.Generate())
                     .Insert(" and ")
-                    .InsertChar("Mark 1:1", "xt"), "bad", "+", "verse_1_1", true)
+                    .InsertChar("Mark 1:1", "xt", _testGuidService.Generate()), "bad", "+", "verse_1_1", true)
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1332,7 +1413,7 @@ namespace SIL.XForge.Scripture.Services
                     Figure("file.jpg", "col", "PHM 1:1", "Caption"),
                     ", so that we can test it."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1361,7 +1442,7 @@ namespace SIL.XForge.Scripture.Services
                     Figure("file.jpg", "col", null, "Caption"),
                     ", so that we can test it."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1390,7 +1471,7 @@ namespace SIL.XForge.Scripture.Services
                     Char("bd", "bold"),
                     " text."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1398,7 +1479,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is some ", "verse_1_1")
-                .InsertChar("bold", "bd", "verse_1_1")
+                .InsertChar("bold", "bd", _testGuidService.Generate(), "verse_1_1")
                 .InsertText(" text.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1419,7 +1500,7 @@ namespace SIL.XForge.Scripture.Services
                     Char("bd", ""),
                     " text."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1427,7 +1508,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertBlank("p_1")
                 .InsertVerse("1")
                 .InsertText("This is some ", "verse_1_1")
-                .InsertEmptyChar("bd", "verse_1_1")
+                .InsertEmptyChar("bd", _testGuidService.Generate(), "verse_1_1")
                 .InsertText(" text.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1452,18 +1533,22 @@ namespace SIL.XForge.Scripture.Services
                         Char("sup", "3")),
                     " This is normal text."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
+            string bdCharID = _testGuidService.Generate();
+            string sup1CharID = _testGuidService.Generate();
+            string sup2CharID = _testGuidService.Generate();
+            string sup3CharID = _testGuidService.Generate();
             var expected = Delta.New()
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, "verse_1_1")
-                .InsertChar("This is", "bd", "verse_1_1")
-                .InsertChar("2", new[] { "bd", "sup" }, "verse_1_1")
-                .InsertChar(" bold text.", "bd", "verse_1_1")
-                .InsertChar("3", new[] { "bd", "sup" }, "verse_1_1")
+                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
+                .InsertChar("This is", "bd", bdCharID, "verse_1_1")
+                .InsertChar("2", new[] { "bd", "sup" }, new[] { bdCharID, sup2CharID }, "verse_1_1")
+                .InsertChar(" bold text.", "bd", bdCharID, "verse_1_1")
+                .InsertChar("3", new[] { "bd", "sup" }, new[] { bdCharID, sup3CharID }, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1474,7 +1559,43 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void ToDelta_DoubleNestedChars()
+        public void ToDelta_NestedAdjacentChars()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    Char("bd",
+                        Char("sup", "1"),
+                        Char("sup", "2"),
+                        Char("sup", "3")),
+                    " This is normal text."));
+
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            string bdCharID = _testGuidService.Generate();
+            string sup1CharID = _testGuidService.Generate();
+            string sup2CharID = _testGuidService.Generate();
+            string sup3CharID = _testGuidService.Generate();
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
+                .InsertChar("2", new[] { "bd", "sup" }, new[] { bdCharID, sup2CharID }, "verse_1_1")
+                .InsertChar("3", new[] { "bd", "sup" }, new[] { bdCharID, sup3CharID }, "verse_1_1")
+                .InsertText(" This is normal text.", "verse_1_1")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].IsValid, Is.True);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        [Test]
+        public void ToDelta_DoubleNestedAdjacentChars()
         {
             XDocument usxDoc = Usx("PHM",
                 Chapter("1"),
@@ -1485,24 +1606,32 @@ namespace SIL.XForge.Scripture.Services
                         "This is bold text",
                         Char("no",
                             " but this is not bold,",
-                            Char("sup", "2")),
+                            Char("sup", "2"),
+                            Char("sup", "3")),
                         " and this is bold.",
-                        Char("sup", "3")),
+                        Char("sup", "4")),
                     " This is normal text."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
+            string bdCharID = _testGuidService.Generate();
+            string sup1CharID = _testGuidService.Generate();
+            string noCharID = _testGuidService.Generate();
+            string sup2CharID = _testGuidService.Generate();
+            string sup3CharID = _testGuidService.Generate();
+            string sup4CharID = _testGuidService.Generate();
             var expected = Delta.New()
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bd", "sup" }, "verse_1_1")
-                .InsertChar("This is bold text", "bd", "verse_1_1")
-                .InsertChar(" but this is not bold,", new[] { "bd", "no" }, "verse_1_1")
-                .InsertChar("2", new[] { "bd", "no", "sup" }, "verse_1_1")
-                .InsertChar(" and this is bold.", "bd", "verse_1_1")
-                .InsertChar("3", new[] { "bd", "sup" }, "verse_1_1")
+                .InsertChar("1", new[] { "bd", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1")
+                .InsertChar("This is bold text", "bd", bdCharID, "verse_1_1")
+                .InsertChar(" but this is not bold,", new[] { "bd", "no" }, new[] { bdCharID, noCharID }, "verse_1_1")
+                .InsertChar("2", new[] { "bd", "no", "sup" }, new[] { bdCharID, noCharID, sup2CharID }, "verse_1_1")
+                .InsertChar("3", new[] { "bd", "no", "sup" }, new[] { bdCharID, noCharID, sup3CharID }, "verse_1_1")
+                .InsertChar(" and this is bold.", "bd", bdCharID, "verse_1_1")
+                .InsertChar("4", new[] { "bd", "sup" }, new[] { bdCharID, sup4CharID }, "verse_1_1")
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1527,24 +1656,59 @@ namespace SIL.XForge.Scripture.Services
                         Char("sup", "3")),
                     " This is normal text."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
+            string bdCharID = _testGuidService.Generate();
+            string sup1CharID = _testGuidService.Generate();
+            string sup2CharID = _testGuidService.Generate();
+            string sup3CharID = _testGuidService.Generate();
             var expected = Delta.New()
                 .InsertChapter("1")
                 .InsertBlank("p_1")
                 .InsertVerse("1")
-                .InsertChar("1", new[] { "bad", "sup" }, "verse_1_1", true)
-                .InsertChar("This is", "bad", "verse_1_1", true)
-                .InsertChar("2", new[] { "bad", "sup" }, "verse_1_1", true)
-                .InsertChar(" bold text.", "bad", "verse_1_1", true)
-                .InsertChar("3", new[] { "bad", "sup" }, "verse_1_1", true)
+                .InsertChar("1", new[] { "bad", "sup" }, new[] { bdCharID, sup1CharID }, "verse_1_1", true)
+                .InsertChar("This is", "bad", bdCharID, "verse_1_1", true)
+                .InsertChar("2", new[] { "bad", "sup" }, new[] { bdCharID, sup2CharID }, "verse_1_1", true)
+                .InsertChar(" bold text.", "bad", bdCharID, "verse_1_1", true)
+                .InsertChar("3", new[] { "bad", "sup" }, new[] { bdCharID, sup3CharID }, "verse_1_1", true)
                 .InsertText(" This is normal text.", "verse_1_1")
                 .InsertPara("p");
 
             Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
             Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
             Assert.That(chapterDeltas[0].IsValid, Is.False);
+            Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
+        }
+
+        [Test]
+        public void ToDelta_AdjacentChars()
+        {
+            XDocument usxDoc = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    Char("sup", "1"),
+                    Char("sup", "2"),
+                    Char("sup", "3"),
+                    " This is normal text."));
+
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+            var expected = Delta.New()
+                .InsertChapter("1")
+                .InsertBlank("p_1")
+                .InsertVerse("1")
+                .InsertChar("1", "sup", _testGuidService.Generate(), "verse_1_1")
+                .InsertChar("2", "sup", _testGuidService.Generate(), "verse_1_1")
+                .InsertChar("3", "sup", _testGuidService.Generate(), "verse_1_1")
+                .InsertText(" This is normal text.", "verse_1_1")
+                .InsertPara("p");
+
+            Assert.That(chapterDeltas[0].Number, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].LastVerse, Is.EqualTo(1));
+            Assert.That(chapterDeltas[0].IsValid, Is.True);
             Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
         }
 
@@ -1567,7 +1731,7 @@ namespace SIL.XForge.Scripture.Services
                         "."),
                     ", so that we can test it."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1576,13 +1740,13 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", _testGuidService.Generate())
+                    .InsertChar("Refers to ", "ft", _testGuidService.Generate())
+                    .InsertChar("a footnote", "fq", _testGuidService.Generate())
                     .Insert(". ")
-                    .InsertCharRef("John 1:1", "xt", "JHN 1:1")
+                    .InsertCharRef("John 1:1", "xt", "JHN 1:1", _testGuidService.Generate())
                     .Insert(" and ")
-                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1")
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1", _testGuidService.Generate())
                     .Insert("."), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
@@ -1609,7 +1773,7 @@ namespace SIL.XForge.Scripture.Services
                         Char("xt", Ref("MRK 1:1", "Mark 1:1"))),
                     ", so that we can test it."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1618,11 +1782,11 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1:1", "fr")
-                    .InsertEmptyChar("ft")
+                    .InsertChar("1:1", "fr", _testGuidService.Generate())
+                    .InsertEmptyChar("ft", _testGuidService.Generate())
                     .Insert(". ")
-                    .InsertEmptyChar("xo")
-                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1"), "f", "*", "verse_1_1")
+                    .InsertEmptyChar("xo", _testGuidService.Generate())
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1", _testGuidService.Generate()), "f", "*", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
 
@@ -1651,7 +1815,7 @@ namespace SIL.XForge.Scripture.Services
                         "."),
                     ", so that we can test it."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1660,13 +1824,13 @@ namespace SIL.XForge.Scripture.Services
                 .InsertVerse("1")
                 .InsertText("This is a verse with a footnote", "verse_1_1")
                 .InsertNote(Delta.New()
-                    .InsertChar("1.1: ", "fr")
-                    .InsertChar("Refers to ", "ft")
-                    .InsertChar("a footnote", "fq")
+                    .InsertChar("1.1: ", "fr", _testGuidService.Generate())
+                    .InsertChar("Refers to ", "ft", _testGuidService.Generate())
+                    .InsertChar("a footnote", "fq", _testGuidService.Generate())
                     .Insert(". ")
-                    .InsertCharRef("John 1:1", "xt", "bad location", invalid: true)
+                    .InsertCharRef("John 1:1", "xt", "bad location", _testGuidService.Generate(), invalid: true)
                     .Insert(" and ")
-                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1")
+                    .InsertCharRef("Mark 1:1", "xt", "MRK 1:1", _testGuidService.Generate())
                     .Insert("."), "f", "+", "verse_1_1")
                 .InsertText(", so that we can test it.", "verse_1_1")
                 .InsertPara("p");
@@ -1688,7 +1852,7 @@ namespace SIL.XForge.Scripture.Services
                     OptBreak(),
                     ", so that we can test it."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1717,7 +1881,7 @@ namespace SIL.XForge.Scripture.Services
                     Milestone("ts"),
                     ", so that we can test it."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1746,7 +1910,7 @@ namespace SIL.XForge.Scripture.Services
                     Milestone("bad"),
                     ", so that we can test it."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1777,7 +1941,7 @@ namespace SIL.XForge.Scripture.Services
                         Cell("tc1", "start"),
                         Cell("tc2", "start", Verse("3"), "This is verse 3."))));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1785,7 +1949,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("Before verse.", "cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse ", "verse_1_1")
-                .InsertChar("1", "it", "verse_1_1")
+                .InsertChar("1", "it", _testGuidService.Generate(), "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
                 .InsertBlank("cell_1_1_2")
@@ -1819,7 +1983,7 @@ namespace SIL.XForge.Scripture.Services
                         Cell("tc2", "start", Verse("3"), "This is verse 3."))),
                 Para("p", Verse("4"), "This is verse 4."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1827,7 +1991,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("Before verse.", "cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse ", "verse_1_1")
-                .InsertChar("1", "it", "verse_1_1")
+                .InsertChar("1", "it", _testGuidService.Generate(), "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "tc1", "start")
                 .InsertBlank("cell_1_1_2")
@@ -1871,7 +2035,7 @@ namespace SIL.XForge.Scripture.Services
                         Cell("tc1", "start", Verse("7"), "This is verse 7."),
                         Cell("tc2", "start", Verse("8"), "This is verse 8."))));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1928,7 +2092,7 @@ namespace SIL.XForge.Scripture.Services
                         Cell("tc1", "start"),
                         Cell("tc2", "start", Verse("3"), "This is verse 3."))));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -1936,7 +2100,7 @@ namespace SIL.XForge.Scripture.Services
                 .InsertText("Before verse.", "cell_1_1_1")
                 .InsertVerse("1")
                 .InsertText("This is verse ", "verse_1_1")
-                .InsertChar("1", "it", "verse_1_1")
+                .InsertChar("1", "it", _testGuidService.Generate(), "verse_1_1")
                 .InsertText(".", "verse_1_1")
                 .InsertCell(1, 1, "bad", "start", true)
                 .InsertBlank("cell_1_1_2")
@@ -1970,7 +2134,7 @@ namespace SIL.XForge.Scripture.Services
                 Verse("1"),
                 Verse("2-3"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected1 = Delta.New()
@@ -2009,7 +2173,7 @@ namespace SIL.XForge.Scripture.Services
                 Para("p",
                     Verse("1")));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -2037,7 +2201,7 @@ namespace SIL.XForge.Scripture.Services
                     "This is actually an implied paragraph as part of the verse.",
                     Verse("1")));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -2070,7 +2234,7 @@ namespace SIL.XForge.Scripture.Services
                 Verse("1"),
                 Verse("2-3"));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected1 = Delta.New()
@@ -2106,7 +2270,7 @@ namespace SIL.XForge.Scripture.Services
         {
             XDocument usxDoc = Usx("PHM");
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             Assert.That(chapterDeltas.Count, Is.EqualTo(1));
@@ -2129,7 +2293,7 @@ namespace SIL.XForge.Scripture.Services
                 Para("",
                     Verse("3")));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -2167,7 +2331,7 @@ namespace SIL.XForge.Scripture.Services
                 Para("p",
                     Verse("3")));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
@@ -2207,7 +2371,7 @@ namespace SIL.XForge.Scripture.Services
                     Verse("1"),
                     "Verse text."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expectedChapter1 = Delta.New()
@@ -2264,7 +2428,7 @@ namespace SIL.XForge.Scripture.Services
                     Verse("1"),
                     "Verse text."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expectedChapter1 = Delta.New()
@@ -2321,7 +2485,7 @@ namespace SIL.XForge.Scripture.Services
                     Verse("1"),
                     "Verse text."));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expectedChapter1 = Delta.New()
@@ -2370,7 +2534,7 @@ namespace SIL.XForge.Scripture.Services
                     "This is a verse with an unmatched marker",
                     Unmatched("bad")));
 
-            var mapper = new DeltaUsxMapper();
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
             List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
 
             var expected = Delta.New()
