@@ -157,12 +157,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         this.dataChangesSub.unsubscribe();
       }
       this.dataChangesSub = merge(this.projectDoc.remoteChanges$, this.questionsQuery.remoteChanges$).subscribe(() => {
-        this.loadingStarted();
-        try {
-          this.initTexts();
-        } finally {
-          this.loadingFinished();
-        }
+        this.initTextsWithLoadingIndicator();
       });
     });
   }
@@ -204,11 +199,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count;
   }
 
-  questionCount(bookNum: number, chapterNumber: number, fromArchive = false): number {
+  questionCount(bookNumber: number, chapterNumber: number, fromArchive = false): number {
     if (this.projectDoc == null) {
       return 0;
     }
-    const id = new TextDocId(this.projectDoc.id, bookNum, chapterNumber);
+    const id = new TextDocId(this.projectDoc.id, bookNumber, chapterNumber);
     const questionDocs = this.getQuestionDocs(id, fromArchive);
     return questionDocs.length;
   }
@@ -318,6 +313,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       projectId: this.projectDoc.id
     };
     await this.questionDialogService.questionDialog(data, questionDoc);
+    this.initTextsWithLoadingIndicator();
   }
 
   getBookName(text: TextInfo): string {
@@ -326,6 +322,15 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
   getBookId(text: TextInfo): string {
     return Canon.bookNumberToId(text.bookNum);
+  }
+
+  private initTextsWithLoadingIndicator() {
+    this.loadingStarted();
+    try {
+      this.initTexts();
+    } finally {
+      this.loadingFinished();
+    }
   }
 
   private initTexts(): void {
