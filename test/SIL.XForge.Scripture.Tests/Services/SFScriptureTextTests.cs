@@ -164,5 +164,23 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             Assert.Throws<ArgumentNullException>(() => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc));
         }
+
+        [Test]
+        public void Create_MissingOps_Crash()
+        {
+            var doc = new BsonDocument
+            {
+                {"_id", "abc123:MAT:1:target"},
+                // Missing ops
+            };
+            var bookNumber = 40;
+            var chapterNumber = 1;
+            var projectId = "myProject";
+            Assert.That(doc.Contains("ops"), Is.False, "Setup");
+            var tokenizer = new LatinWordTokenizer();
+
+            // SUT
+            Assert.Throws<ArgumentException>(() => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc));
+        }
     }
 }
