@@ -35,6 +35,7 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using SIL.Scripture;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -87,7 +88,7 @@ namespace SIL.XForge.Scripture.Services
                 _registryClient.BaseAddress = new Uri(_registryServerUri);
             }
             _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            ScrTextCollectionWrapper = new LazyScrTextCollectionWrapper();
+            ScrTextCollection = new LazyScrTextCollection();
             JwtTokenHelper = new JwtTokenHelper();
             HgWrapper = new HgWrapper();
 
@@ -106,10 +107,10 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        ///< summary>Path to cloned PT project Mercurial repos.</summary>
+        ///< summary> Path to cloned PT project Mercurial repos. </summary>
         public string SyncDir { get; set; }
 
-        internal IScrTextCollectionWrapper ScrTextCollectionWrapper { get; set; }
+        internal IScrTextCollection ScrTextCollection { get; set; }
         internal ISharingLogicWrapper SharingLogicWrapper { get; set; }
         internal IHgWrapper HgWrapper { get; set; }
         internal IJwtTokenHelper JwtTokenHelper { get; set; }
@@ -129,7 +130,7 @@ namespace SIL.XForge.Scripture.Services
             PtxUtilsDataSettings.Initialize(new PersistedPtxUtilsSettings());
             SetupMercurial();
             WritingSystemRepository.Initialize();
-            ScrTextCollectionWrapper.Initialize(SyncDir);
+            ScrTextCollection.Initialize(SyncDir);
             RegistryServer.Initialize(_applicationProductVersion);
         }
 
@@ -172,7 +173,7 @@ namespace SIL.XForge.Scripture.Services
             string username = GetParatextUsername(userSecret);
             foreach (string ptProjectId in ptProjectIds)
             {
-                ScrText scrText = ScrTextCollectionWrapper.FindById(username, ptProjectId);
+                ScrText scrText = ScrTextCollection.FindById(username, ptProjectId);
                 if (scrText == null)
                     await CloneProjectRepoAsync(userSecret, ptProjectId);
             }
@@ -185,21 +186,20 @@ namespace SIL.XForge.Scripture.Services
             foreach (SharedProject sp in sharedPtProjectsToSr)
             {
                 if (sp.ScrText == null)
-                    sp.ScrText = ScrTextCollectionWrapper.FindById(username, sp.SendReceiveId);
+                    sp.ScrText = ScrTextCollection.FindById(username, sp.SendReceiveId);
             }
 
             // TODO report results
             List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
             bool success = false; // todo test fail 'success'
             // todo test fail 'noErrors'
-            //List<SharedProject> srList = new List<SharedProject>();
-            // srList.AddRange(sharedPtProjectsToSr);
             bool noErrors = SharingLogicWrapper.HandleErrors(() => success = SharingLogicWrapper
                 .ShareChanges(sharedPtProjectsToSr, source.AsInternetSharedRepositorySource(),
                 out results, sharedPtProjectsToSr));
             // todo test exception occurrence
             if (!noErrors || !success)
-                throw new Exception("Failed: Errors occurred while performing the sync with the Paratext Server.");
+                throw new InvalidOperationException(
+                    "Failed: Errors occurred while performing the sync with the Paratext Server.");
         }
 
         /// <summary> Get Paratext projects that a user has access to. </summary>
@@ -251,7 +251,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>Get list of book numbers in PT project.</summary>
         public IReadOnlyList<int> GetBookList(UserSecret userSecret, string ptProjectId)
         {
-            ScrText scrText = ScrTextCollectionWrapper.FindById(GetParatextUsername(userSecret), ptProjectId);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
             if (scrText == null)
                 return Array.Empty<int>();
             return scrText.Settings.BooksPresentSet.SelectedBookNumbers.ToArray();
@@ -260,10 +260,10 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>Get PT book text in USX, or throw if can't.</summary>
         public string GetBookText(UserSecret userSecret, string ptProjectId, int bookNum)
         {
-            ScrText scrText = ScrTextCollectionWrapper.FindById(GetParatextUsername(userSecret), ptProjectId);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
             if (scrText == null)
             {
-                scrText = ScrTextCollectionWrapper.FindById(GetParatextUsername(userSecret), ptProjectId);
+                scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
                 if (scrText == null)
                     throw new DataNotFoundException("Can't get access to cloned project.");
             }
@@ -274,7 +274,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
         public void PutBookText(UserSecret userSecret, string projectId, int bookNum, string usx)
         {
-            ScrText scrText = ScrTextCollectionWrapper.FindById(GetParatextUsername(userSecret), projectId);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
             var doc = new XmlDocument
             {
                 PreserveWhitespace = true
@@ -284,13 +284,15 @@ namespace SIL.XForge.Scripture.Services
                 XPathExpression.Compile("*[false()]"), out string usfm);
             usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft);
             scrText.PutText(bookNum, 0, false, usfm, null);
+            _logger.LogInformation("{0} updated {1} in {2}.", GetParatextUsername(userSecret),
+                Canon.BookNumberToEnglishName(bookNum), scrText.Name);
         }
 
         /// <summary> Get notes from the Paratext project folder. </summary>
         public string GetNotes(UserSecret userSecret, string projectId, int bookNum)
         {
             // TODO: should return some data structure instead of XML
-            ScrText scrText = ScrTextCollectionWrapper.FindById(GetParatextUsername(userSecret), projectId);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
             if (scrText == null)
                 return null;
 
@@ -306,7 +308,7 @@ namespace SIL.XForge.Scripture.Services
             // TODO: should accept some data structure instead of XML
             List<string> users = new List<string>();
             int nbrAddedComments = 0, nbrDeletedComments = 0, nbrUpdatedComments = 0;
-            ScrText scrText = ScrTextCollectionWrapper.FindById(GetParatextUsername(userSecret), projectId);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
             if (scrText == null)
                 throw new DataNotFoundException("Can't get access to cloned project.");
             CommentManager manager = CommentManager.Get(scrText);
@@ -403,15 +405,16 @@ namespace SIL.XForge.Scripture.Services
 
         private void SetupMercurial()
         {
-            var hgExe = "/usr/bin/hg";
             string customHgPath = _paratextOptions.Value.HgExe;
-            if (File.Exists(customHgPath))
+            if (!File.Exists(customHgPath))
             {
-                // Mercurial 4.7 is needed. Use custom install so it can use new enough Mercurial on Ubuntu 16.04.
-                hgExe = customHgPath;
+                string msg = string.Format(
+                    "Error: Could not find hg executable at {0}. Please install hg 4.7 or greater.", customHgPath);
+                _logger.LogError(msg);
+                throw new InvalidOperationException(msg);
             }
             var hgMerge = Path.Combine(AssemblyDirectory, "ParatextMerge.py");
-            HgWrapper.SetDefault(new Hg(hgExe, hgMerge, AssemblyDirectory));
+            HgWrapper.SetDefault(new Hg(customHgPath, hgMerge, AssemblyDirectory));
         }
 
         /// <summary> Clone the paratext project to the local SF server. </summary>

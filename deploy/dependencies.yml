@@ -44,6 +44,7 @@
           - "mongodb-org"
           - nodejs
           - npm
+          - python-pip
         update_cache: yes
       tags: ["packages"]
 
@@ -65,6 +66,11 @@
 
     - name: change node version
       shell: "n {{node_version}}"
+
+    - name: install custom mercurial
+      pip:
+        name: mercurial
+        state: latest
 
     - name: update the mongo config file
       lineinfile:

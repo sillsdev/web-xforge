@@ -90,7 +90,6 @@ namespace SIL.XForge.Scripture.Services
 
             // Check resulting IsConnectable and IsConnected values across various scenarios of SF project existing,
             // SF user being a member of the SF project, and PT user being an admin on PT project.
-
             var testCases = new[]
             {
                 new
@@ -229,12 +228,12 @@ namespace SIL.XForge.Scripture.Services
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-            env.MockScrTextCollectionWrapper.FindById(env.Username01, ptProjectId).Returns(i => null);
+            env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(i => null);
 
             // SUT
             Assert.Throws<DataNotFoundException>(() => env.Service.GetBookText(user01Secret, ptProjectId, 8));
             // Should have tried twice to access project.
-            env.MockScrTextCollectionWrapper.Received(2).FindById(env.Username01, Arg.Any<string>());
+            env.MockScrTextCollection.Received(2).FindById(env.Username01, Arg.Any<string>());
         }
 
         [Test]
@@ -391,7 +390,7 @@ namespace SIL.XForge.Scripture.Services
             env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>(),
                 Arg.Any<bool>()).Returns((callInfo) => { callInfo.Arg<Action>()(); return true; });
             // FindById fails the first time, and then succeeds the second time after the pt project repo is cloned.
-            env.MockScrTextCollectionWrapper.FindById(env.Username01, ptProjectId)
+            env.MockScrTextCollection.FindById(env.Username01, ptProjectId)
                 .Returns(null, env.GetScrText(ptProjectId));
 
             string clonePath = Path.Combine(env.SyncDir, ptProjectId);
@@ -428,7 +427,7 @@ namespace SIL.XForge.Scripture.Services
             public IExceptionHandler MockExceptionHandler;
             public IOptions<SiteOptions> MockSiteOptions;
             public IFileSystemService MockFileSystemService;
-            public IScrTextCollectionWrapper MockScrTextCollectionWrapper;
+            public IScrTextCollection MockScrTextCollection;
             public ISharingLogicWrapper MockSharingLogicWrapper;
             public IHgWrapper MockHgWrapper;
             public ILogger<ParatextService> MockLogger;
@@ -443,7 +442,7 @@ namespace SIL.XForge.Scripture.Services
                 MockSiteOptions = Substitute.For<IOptions<SiteOptions>>();
                 MockFileSystemService = Substitute.For<IFileSystemService>();
                 MockLogger = Substitute.For<ILogger<ParatextService>>();
-                MockScrTextCollectionWrapper = Substitute.For<IScrTextCollectionWrapper>();
+                MockScrTextCollection = Substitute.For<IScrTextCollection>();
                 MockSharingLogicWrapper = Substitute.For<ISharingLogicWrapper>();
                 MockHgWrapper = Substitute.For<IHgWrapper>();
 
@@ -451,7 +450,7 @@ namespace SIL.XForge.Scripture.Services
 
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository,
                     RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService, MockLogger);
-                Service.ScrTextCollectionWrapper = MockScrTextCollectionWrapper;
+                Service.ScrTextCollection = MockScrTextCollection;
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
                 Service.HgWrapper = MockHgWrapper;
                 Service.JwtTokenHelper = new MockJwtTokenHelper(User01);
@@ -598,7 +597,7 @@ namespace SIL.XForge.Scripture.Services
                 string ptProjectId = "paratext_" + baseId;
                 ProjectScrText = GetScrText(baseId);
                 ProjectCommentManager = CommentManager.Get(ProjectScrText);
-                MockScrTextCollectionWrapper.FindById(Arg.Any<string>(), ptProjectId).Returns(ProjectScrText);
+                MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId).Returns(ProjectScrText);
                 return ptProjectId;
             }
 

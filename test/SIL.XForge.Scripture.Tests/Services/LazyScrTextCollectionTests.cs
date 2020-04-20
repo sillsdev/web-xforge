@@ -7,10 +7,10 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
-    public class LazyScrTextCollectionFactoryTests
+    public class LazyScrTextCollectionTests
     {
         private string _testDirectory;
-        private LazyScrTextCollectionFactory _lazyScrTextCollectionFactory;
+        private LazyScrTextCollection _lazyScrTextCollection;
         private IFileSystemService _fileSystemService;
 
 
@@ -22,28 +22,23 @@ namespace SIL.XForge.Scripture.Services
             _fileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
             _fileSystemService.FileExists(Arg.Any<string>()).Returns(false);
 
-            _lazyScrTextCollectionFactory = new MockLazyScrTextCollectionFactory(_fileSystemService);
-            _lazyScrTextCollectionFactory.Initialize(_testDirectory);
-        }
-
-        [Test]
-        public void Get_UserDoesNotExists_StillReturnsLazyScrTextCollection()
-        {
-            Assert.IsNotNull(_lazyScrTextCollectionFactory.Create("UserDoesNotExists"));
+            _lazyScrTextCollection = new MockLazyScrTextCollection();
+            _lazyScrTextCollection.Initialize(_testDirectory);
+            _lazyScrTextCollection.FileSystemService = _fileSystemService;
         }
 
         [Test]
         public void FindById_DoesNotExist_ReturnsNull()
         {
-            string userName = "User";
-            Assert.IsNull(_lazyScrTextCollectionFactory.Create(userName).FindById("projectDoesNotExist"));
+            string username = "User";
+            Assert.IsNull(_lazyScrTextCollection.FindById(username, "projectDoesNotExist"));
         }
 
         [Test]
         public void FindById_SingleProjectExists_ReturnsProject()
         {
             string projectId = "Project01";
-            string userName = "User";
+            string username = "User";
             string projectTextName = "Proj01";
             string path = Path.Combine(_testDirectory, projectId);
             string content = $"<ScriptureText><Name>{projectTextName}</Name><guid>{projectId}</guid></ScriptureText>";
@@ -51,7 +46,7 @@ namespace SIL.XForge.Scripture.Services
             _fileSystemService.EnumerateDirectories(Arg.Any<string>()).Returns(new[] { path });
             _fileSystemService.FileExists(Arg.Any<string>()).Returns(true);
 
-            ScrText scrText = _lazyScrTextCollectionFactory.Create(userName).FindById(projectId);
+            ScrText scrText = _lazyScrTextCollection.FindById(username, projectId);
             string settingsFile = Path.Combine(path, ProjectSettings.fileName);
             Assert.NotNull(scrText);
             Assert.AreEqual(projectTextName, scrText.Name);

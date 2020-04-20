@@ -7,14 +7,10 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
-    public class LazyScrTextCollection
+    public class LazyScrTextCollection : IScrTextCollection
     {
-        private readonly string _username;
-
-        public LazyScrTextCollection(string projectsPath, string username)
+        public LazyScrTextCollection()
         {
-            _username = username;
-            SettingsDirectory = projectsPath;
             FileSystemService = new FileSystemService();
         }
 
@@ -22,8 +18,16 @@ namespace SIL.XForge.Scripture.Services
         public string SettingsDirectory { get; set; }
         internal IFileSystemService FileSystemService { get; set; }
 
-        /// <summary> Get a ScrText from the data for a paratext project with the project ID. </summary>
-        public ScrText FindById(string projectId)
+        /// <summary> Set the directory to the folder containing Paratext projects. </summary>
+        public void Initialize(string projectsPath)
+        {
+            SettingsDirectory = projectsPath;
+        }
+
+        /// <summary>
+        /// Get a ScrText for a given user from the data for a paratext project with the project ID.
+        /// </summary>
+        public ScrText FindById(string username, string projectId)
         {
             if (!FileSystemService.DirectoryExists(SettingsDirectory))
                 return null;
@@ -37,14 +41,18 @@ namespace SIL.XForge.Scripture.Services
                 bool found = CanFindProjectSettings(settingsFile, projectId, out string name);
 
                 if (found)
-                    return CreateScrText(new ProjectName() { ProjectPath = projectFolderPath, ShortName = name });
+                    return CreateScrText(username, new ProjectName()
+                    {
+                        ProjectPath = projectFolderPath,
+                        ShortName = name
+                    });
             }
             return null;
         }
 
-        protected virtual ScrText CreateScrText(ProjectName projectName)
+        protected virtual ScrText CreateScrText(string username, ProjectName projectName)
         {
-            return new MultiUserScrText(SettingsDirectory, _username, projectName);
+            return new MultiUserScrText(SettingsDirectory, username, projectName);
         }
 
         private bool CanFindProjectSettings(string settingsFilePath, string projectId, out string name)
