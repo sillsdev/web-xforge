@@ -31,6 +31,8 @@ namespace SIL.XForge.Scripture.Services
             "lh", "li", "lf", "lim",
         };
 
+        private IGuidService GuidService;
+
         private class ParseState
         {
             public string CurRef { get; set; }
@@ -55,6 +57,11 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
             }
+        }
+
+        public DeltaUsxMapper(IGuidService guidService)
+        {
+            GuidService = guidService;
         }
 
         /// <summary>
@@ -222,10 +229,11 @@ namespace SIL.XForge.Scripture.Services
                             var newChildAttributes = (JObject)attributes?.DeepClone() ?? new JObject();
                             JToken existingCharAttrs = newChildAttributes["char"];
                             JObject newCharAttrs = GetAttributes(elem);
+                            if (!newCharAttrs.ContainsKey("cid"))
+                                newCharAttrs.Add("cid", GuidService.Generate());
+
                             if (existingCharAttrs == null)
-                            {
                                 newChildAttributes.Add(new JProperty(elem.Name.LocalName, newCharAttrs));
-                            }
                             else
                             {
                                 switch (existingCharAttrs)
@@ -236,7 +244,6 @@ namespace SIL.XForge.Scripture.Services
                                     case JObject obj:
                                         newChildAttributes[elem.Name.LocalName] = new JArray(obj, newCharAttrs);
                                         break;
-
                                 }
                             }
                             newChildAttributes = AddInvalidInlineAttribute(invalidNodes, elem, newChildAttributes);
@@ -686,6 +693,11 @@ namespace SIL.XForge.Scripture.Services
         {
             JObject charAttrs = curCharAttrs[curCharAttrs.Count - 1];
             curCharAttrs.RemoveAt(curCharAttrs.Count - 1);
+            if (charAttrs.ContainsKey("cid"))
+            {
+                charAttrs = (JObject)charAttrs.DeepClone();
+                charAttrs.Property("cid").Remove();
+            }
             XElement charElem = CreateContainerElement("char", charAttrs, childNodes.Peek());
             childNodes.Pop();
             childNodes.Peek().Add(charElem);
