@@ -1,1 +1,5 @@
 <ngx-avatar [src]="avatarUrl" [name]="name" [size]="size" [round]="round" cornerRadius="3"></ngx-avatar>
+<div *ngIf="showOnlineStatus" class="online-status">
+  <mdc-icon *ngIf="isAppOnline">cloud</mdc-icon>
+  <mdc-icon *ngIf="!isAppOnline">cloud_off</mdc-icon>
+</div>

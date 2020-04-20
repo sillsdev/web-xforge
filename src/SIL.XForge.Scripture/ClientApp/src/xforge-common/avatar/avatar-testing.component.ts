@@ -9,4 +9,5 @@ export class AvatarTestingComponent {
   @Input() round: boolean = false;
   @Input() size: number = 32;
   @Input() user?: UserProfile;
+  @Input() showOnlineStatus: boolean = false;
 }

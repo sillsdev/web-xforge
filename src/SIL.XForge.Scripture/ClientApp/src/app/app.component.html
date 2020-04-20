@@ -17,23 +17,25 @@
         </mdc-top-app-bar-section>
         <mdc-top-app-bar-section align="end" *ngIf="currentUser != null">
           <!-- not in MVP <mdc-icon mdcTopAppBarActionItem title="Notifications">notifications</mdc-icon> -->
-          <div mdcMenuSurfaceAnchor #langMenuAnchor *ngIf="i18n.locales.length >= 2">
-            <mdc-icon mdcTopAppBarActionItem title="{{ t('language') }}" (click)="langMenu.open = !langMenu.open">
-              translate
-            </mdc-icon>
-            <mdc-menu #langMenu [anchorCorner]="'bottomStart'" [anchorElement]="langMenuAnchor" class="locale-menu">
-              <mdc-list>
-                <mdc-list-item
-                  *ngFor="let locale of i18n.locales"
-                  [class.active-locale]="locale.canonicalTag === i18n.localeCode"
-                  (click)="langMenu.open = false; i18n.setLocale(locale.canonicalTag)"
-                >
-                  <!-- `langMenu.open = false` is workaround for menu not closing when click is on a span element -->
-                  <mdc-icon>check</mdc-icon>
-                  <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
-                </mdc-list-item>
-              </mdc-list>
-            </mdc-menu>
+          <div [hidden]="!isAppOnline">
+            <div mdcMenuSurfaceAnchor #langMenuAnchor *ngIf="i18n.locales.length >= 2">
+              <mdc-icon mdcTopAppBarActionItem title="{{ t('language') }}" (click)="langMenu.open = !langMenu.open">
+                translate
+              </mdc-icon>
+              <mdc-menu #langMenu [anchorCorner]="'bottomStart'" [anchorElement]="langMenuAnchor" class="locale-menu">
+                <mdc-list>
+                  <mdc-list-item
+                    *ngFor="let locale of i18n.locales"
+                    [class.active-locale]="locale.canonicalTag === i18n.localeCode"
+                    (click)="langMenu.open = false; i18n.setLocale(locale.canonicalTag)"
+                  >
+                    <!-- `langMenu.open = false` is workaround for menu not closing when click is on a span element -->
+                    <mdc-icon>check</mdc-icon>
+                    <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
+                  </mdc-list-item>
+                </mdc-list>
+              </mdc-menu>
+            </div>
           </div>
           <div mdcMenuSurfaceAnchor #helpMenuAnchor>
             <mdc-icon mdcTopAppBarActionItem title="{{ t('help') }}" (click)="helpMenu.open = !helpMenu.open"
@@ -68,31 +70,49 @@
               [title]="currentUser?.displayName"
               (click)="userMenu.open = !userMenu.open"
             >
-              <app-avatar id="avatarId" [user]="currentUser" [round]="true"></app-avatar>
+              <app-avatar id="avatarId" [user]="currentUser" [round]="true" [showOnlineStatus]="true"></app-avatar>
             </mdc-icon>
-            <mdc-menu #userMenu [anchorCorner]="'bottomStart'" [anchorElement]="userMenuAnchor">
+            <mdc-menu
+              #userMenu
+              [anchorCorner]="'bottomStart'"
+              [anchorElement]="userMenuAnchor"
+              [defaultFocusState]="!isAppOnline ? 'none' : 'list'"
+            >
               <mdc-list-group>
                 <div class="mdc-list-group__subheader">
                   {{ t("logged_in_as") }}
                   <div fxLayout="row" fxLayoutAlign="start center">
                     <span fxFlex>&nbsp;</span>
-                    <button id="edit-name-btn" mdcIconButton type="button" (click)="editName()">
+                    <button *ngIf="isAppOnline" id="edit-name-btn" mdcIconButton type="button" (click)="editName()">
                       <mdc-icon>edit</mdc-icon>
                     </button>
                     <strong class="user-menu-name">{{ currentUser?.displayName }}</strong>
                   </div>
                 </div>
+                <div [hidden]="!isAppOnline">
+                  <mdc-list-divider></mdc-list-divider>
+                  <mdc-list>
+                    <mdc-list-item *ngIf="isSystemAdmin" routerLink="/system-administration">
+                      {{ t("system_administration") }}
+                    </mdc-list-item>
+                    <mdc-list-item routerLink="/projects">{{ t("project_home") }}</mdc-list-item>
+                    <mdc-list-item *ngIf="canChangePassword" (click)="changePassword()">
+                      {{ t("change_password") }}
+                    </mdc-list-item>
+                    <mdc-list-item name="logout" (click)="logOut()">{{ t("log_out") }}</mdc-list-item>
+                  </mdc-list>
+                </div>
                 <mdc-list-divider></mdc-list-divider>
-                <mdc-list>
-                  <mdc-list-item *ngIf="isSystemAdmin" routerLink="/system-administration">
-                    {{ t("system_administration") }}
-                  </mdc-list-item>
-                  <mdc-list-item routerLink="/projects">{{ t("project_home") }}</mdc-list-item>
-                  <mdc-list-item *ngIf="canChangePassword" (click)="changePassword()">
-                    {{ t("change_password") }}
-                  </mdc-list-item>
-                  <mdc-list-item name="logout" (click)="logOut()">{{ t("log_out") }}</mdc-list-item>
-                </mdc-list>
+                <div class="online-status">
+                  <div *ngIf="isAppOnline" fxLayout="row" fxLayoutAlign="center center">
+                    <mdc-icon>cloud</mdc-icon>
+                    {{ t("online") }}
+                  </div>
+                  <div *ngIf="!isAppOnline" fxLayout="row" fxLayoutAlign="center center">
+                    <mdc-icon mdcListItemGraphic>cloud_off</mdc-icon>
+                    {{ t("offline") }}
+                  </div>
+                </div>
               </mdc-list-group>
             </mdc-menu>
           </div>

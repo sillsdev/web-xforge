@@ -27,6 +27,7 @@ import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
+import { OfflineComponent } from './offline/offline.component';
 
 @NgModule({
   declarations: [
@@ -41,7 +42,8 @@ import { UsersModule } from './users/users.module';
     ScriptureChooserDialogComponent,
     SupportedBrowsersDialogComponent,
     ErrorComponent,
-    EditNameDialogComponent
+    EditNameDialogComponent,
+    OfflineComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),

@@ -1,16 +1,29 @@
 {
   "name": "Scripture Forge",
   "short_name": "Scripture Forge",
-  "theme_color": "#1976d2",
-  "background_color": "#fafafa",
+  "theme_color": "#343a31",
+  "background_color": "#ffffff",
   "display": "standalone",
   "scope": "/",
   "start_url": "/projects",
   "icons": [
     {
-      "src": "assets/icons/sf-16x16.ico",
-      "sizes": "16x16",
-      "type": "image/vnd.microsoft.icon"
+      "src": "favicon.ico",
+      "sizes": "16x16 24x24 32x32 48x48 256x256"
+    },
+    {
+      "src": "assets/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/sf.svg",
+      "sizes": "513x513"
     }
   ]
 }

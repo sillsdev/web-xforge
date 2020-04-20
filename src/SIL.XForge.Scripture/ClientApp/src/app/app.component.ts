@@ -3,7 +3,7 @@ import { MdcSelect } from '@angular-mdc/web/select';
 import { MdcTopAppBar } from '@angular-mdc/web/top-app-bar';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
@@ -19,12 +19,12 @@ import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
-import { HelpHeroService } from './core/help-hero.service';
 import { SFProjectDoc } from './core/models/sf-project-doc';
 import { canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
@@ -47,6 +47,7 @@ export interface QuestionQuery {
 export class AppComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   version: string = version;
   issueEmail: string = environment.issueEmail;
+  isAppOnline: boolean = false;
   isExpanded: boolean = false;
   translateVisible: boolean = false;
   checkingVisible: boolean = false;
@@ -68,11 +69,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly router: Router,
     private readonly authService: AuthService,
     private readonly locationService: LocationService,
-    private readonly helpHeroService: HelpHeroService,
     private readonly userService: UserService,
     noticeService: NoticeService,
     public media: MediaObserver,
     private readonly projectService: SFProjectService,
+    private readonly pwaService: PwaService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,
@@ -83,6 +84,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg'].includes(change.mqAlias);
     });
 
+    // Check online status changes
+    this.isAppOnline = pwaService.isOnline();
+    this.subscribe(pwaService.onlineStatus, status => {
+      this.isAppOnline = status;
+      if (!this.isAppOnline) {
+        this.router.navigateByUrl('/offline');
+      }
+    });
+
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
     if (environment.releaseStage === 'live') {
       const navEndEvent$ = router.events.pipe(
@@ -90,9 +100,22 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         map(e => e as NavigationEnd)
       );
       this.subscribe(navEndEvent$, e => {
-        gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
+        if (this.isAppOnline) {
+          gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
+        }
       });
     }
+
+    // Redirect to offline page if we're offline i.e. if the user attempts to change pages when offline
+    const navEndStart$ = router.events.pipe(
+      filter(e => e instanceof NavigationStart),
+      map(e => e as NavigationStart)
+    );
+    this.subscribe(navEndStart$, e => {
+      if (!this.isAppOnline && e.url !== '/offline') {
+        router.navigateByUrl('/offline');
+      }
+    });
   }
 
   get showCheckingDisabled(): boolean {
@@ -351,8 +374,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
         this.checkCheckingBookQuestions();
       });
-      // tell HelpHero to remember this user to make sure we won't show them an identical tour again later
-      this.helpHeroService.setIdentity(this.userService.currentUserId);
     }
     this.loadingFinished();
   }

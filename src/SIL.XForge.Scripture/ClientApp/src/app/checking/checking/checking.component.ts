@@ -21,7 +21,6 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { HelpHeroService } from '../../core/help-hero.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -99,7 +98,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly activatedRoute: ActivatedRoute,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    private readonly helpHeroService: HelpHeroService,
     private readonly media: MediaObserver,
     private readonly dialog: MdcDialog,
     noticeService: NoticeService,
@@ -359,7 +357,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (this.showAllBooks !== prevShowAllBooks && this.book === prevBook) {
           this.refreshSummary();
         }
-        this.startUserOnboardingTour(); // start HelpHero tour for the Community Checking feature
         this.loadingFinished();
       }
       // Subscribe to the projectDoc now that it is defined
@@ -866,24 +863,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         }
       }
     }
-  }
-
-  private startUserOnboardingTour(): void {
-    if (this.projectDoc == null || this.projectDoc.data == null || this.userDoc == null || this.userDoc.data == null) {
-      return;
-    }
-
-    // HelpHero user-onboarding tour setup
-    const isDiscussionEnabled: boolean = this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses;
-    const isInvitingEnabled: boolean = this.projectDoc.data.checkingConfig.shareEnabled;
-    const isNameConfirmed = this.userDoc.data.isDisplayNameConfirmed;
-
-    this.helpHeroService.setProperty({
-      isAdmin: this.isProjectAdmin,
-      isDiscussionEnabled,
-      isInvitingEnabled,
-      isNameConfirmed
-    });
   }
 
   private getCSSFloatPropertyOf(element: ElementRef | Element, propertyName: string): number {
