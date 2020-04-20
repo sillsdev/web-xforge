@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Realtime.RichText;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -49,38 +50,43 @@ namespace SIL.XForge.Scripture.Services
             return delta.InsertEmbed("figure", obj, segRef, attrs);
         }
 
-        public static Delta InsertChar(this Delta delta, string text, string style, string segRef = null,
+        public static Delta InsertChar(this Delta delta, string text, string style, string cid, string segRef = null,
             bool invalid = false)
         {
-            var attributes = new JObject(new JProperty("char", new JObject(new JProperty("style", style))));
+            var attributes = new JObject(new JProperty("char",
+                new JObject(new JProperty("style", style), new JProperty("cid", cid))));
             if (invalid)
                 attributes.Add(new JProperty("invalid-inline", true));
             return delta.InsertText(text, segRef, attributes);
         }
 
-        public static Delta InsertChar(this Delta delta, string text, IEnumerable<string> styles, string segRef = null,
-            bool invalid = false)
+        public static Delta InsertChar(this Delta delta, string text, IEnumerable<CharAttr> charAttrs,
+            string segRef = null, bool invalid = false)
         {
-            var attributes = new JObject(
-                new JProperty("char", styles.Select(style => new JObject(new JProperty("style", style)))));
+            var attributes = new JObject(new JProperty("char", charAttrs.Select(charAttr => new JObject(
+                new JProperty("style", charAttr.Style),
+                new JProperty("cid", charAttr.CharID)))));
             if (invalid)
                 attributes.Add(new JProperty("invalid-inline", true));
             return delta.InsertText(text, segRef, attributes);
         }
 
-        public static Delta InsertEmptyChar(this Delta delta, string style, string segRef = null, bool invalid = false)
+        public static Delta InsertEmptyChar(this Delta delta, string style, string cid, string segRef = null,
+            bool invalid = false)
         {
-            var attributes = new JObject(new JProperty("char", new JObject(new JProperty("style", style))));
+            var attributes = new JObject(new JProperty("char", new JObject(
+                new JProperty("style", style),
+                new JProperty("cid", cid))));
             if (invalid)
                 attributes.Add(new JProperty("invalid-inline", true));
             return delta.InsertEmpty(segRef, attributes);
         }
 
-        public static Delta InsertCharRef(this Delta delta, string text, string style, string reference,
+        public static Delta InsertCharRef(this Delta delta, string text, string style, string reference, string cid,
             string segRef = null, bool invalid = false)
         {
             var attributes = new JObject(
-                new JProperty("char", new JObject(new JProperty("style", style))),
+                new JProperty("char", new JObject(new JProperty("style", style), new JProperty("cid", cid))),
                 new JProperty("ref", new JObject(new JProperty("loc", reference))));
             if (invalid)
                 attributes.Add(new JProperty("invalid-inline", true));
