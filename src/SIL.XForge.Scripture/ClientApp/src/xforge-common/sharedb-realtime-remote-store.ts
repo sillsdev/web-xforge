@@ -33,12 +33,12 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
     // Wait until we have a valid connection or error before proceeding so we know we're online/offline
     await new Promise(resolve => {
       this.ws = new ReconnectingWebSocket(() => this.getUrl(), undefined, { maxEnqueuedMessages: 0 });
-      // When the web socket is open we have an valid connection
+      // When the web socket is open we have a valid connection
       this.ws.addEventListener('open', () => {
         this.pwaService.webSocketResponse = true;
         resolve();
       });
-      // When the web socket errors an connection is not valid so the app needs to operate offline
+      // When the web socket errors a connection is not valid so the app needs to operate offline
       this.ws.addEventListener('error', e => {
         this.pwaService.webSocketResponse = false;
         resolve();

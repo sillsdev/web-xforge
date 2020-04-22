@@ -20,7 +20,7 @@
       "installMode": "lazy",
       "updateMode": "prefetch",
       "resources": {
-        "files": ["!/assets/i18n/**"]
+        "files": ["/assets/i18n/**"]
       }
     },
     {
