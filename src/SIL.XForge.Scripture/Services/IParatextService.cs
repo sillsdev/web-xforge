@@ -1,6 +1,6 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using PtxUtils.Progress;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
@@ -23,6 +23,6 @@ namespace SIL.XForge.Scripture.Services
         void PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
 
         Task SendReceiveAsync(UserSecret userSecret, IEnumerable<string> ptProjectIds,
-            ProgressDisplay progressDisplay = null);
+            IProgress<ProgressState> progress = null);
     }
 }

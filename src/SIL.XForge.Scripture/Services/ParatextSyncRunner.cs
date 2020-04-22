@@ -58,7 +58,6 @@ namespace SIL.XForge.Scripture.Services
         private UserSecret _userSecret;
         private IDocument<SFProject> _projectDoc;
         private SFProjectSecret _projectSecret;
-        private SyncProgressDisplay _progressDisplay;
 
         public ParatextSyncRunner(IRepository<UserSecret> userSecrets, IRepository<SFProjectSecret> projectSecrets,
             ISFProjectService projectService, IEngineService engineService, IParatextService paratextService,
@@ -118,12 +117,9 @@ namespace SIL.XForge.Scripture.Services
                 var paratextIds = new List<string> { targetParatextId };
                 if (sourceParatextId != null)
                     paratextIds.Add(sourceParatextId);
-
-                _progressDisplay = UseNewProgressDisplay();
-                await _paratextService.SendReceiveAsync(_userSecret, paratextIds, _progressDisplay);
+                await _paratextService.SendReceiveAsync(_userSecret, paratextIds, UseNewProgress());
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
-
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
                     ? _paratextService.GetBookList(_userSecret, sourceParatextId)
                     : Enumerable.Empty<int>());
@@ -502,20 +498,19 @@ namespace SIL.XForge.Scripture.Services
                 await textDoc.DeleteAsync();
         }
 
-        private void UpdateProgress(object sender, EventArgs e)
+        private SyncProgress UseNewProgress()
         {
-            if (_projectDoc == null)
-                return;
-            double percentCompleted = _progressDisplay.ProgressValue;
-            if (percentCompleted >= 0)
-                _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted));
-        }
+            var progress = new SyncProgress();
+            progress.ProgressUpdated += (object sender, EventArgs e) =>
+            {
+                if (_projectDoc == null)
+                    return;
+                double percentCompleted = progress.ProgressValue;
+                if (percentCompleted >= 0)
+                    _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted));
+            };
 
-        private SyncProgressDisplay UseNewProgressDisplay()
-        {
-            var progressDisplay = new SyncProgressDisplay();
-            progressDisplay.ProgressUpdated += UpdateProgress;
-            return progressDisplay;
+            return progress;
         }
 
         private class ChapterEqualityComparer : IEqualityComparer<Chapter>

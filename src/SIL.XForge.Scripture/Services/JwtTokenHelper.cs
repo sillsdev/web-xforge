@@ -40,24 +40,24 @@ namespace SIL.XForge.Scripture.Services
             bool expired = !paratextTokens.ValidateLifetime();
             if (!expired)
                 return paratextTokens;
-
-            var request = new HttpRequestMessage(HttpMethod.Post, "api8/token");
-
-            var requestObj = new JObject(
-                new JProperty("grant_type", "refresh_token"),
-                new JProperty("client_id", options.ClientId),
-                new JProperty("client_secret", options.ClientSecret),
-                new JProperty("refresh_token", paratextTokens.RefreshToken));
-            request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await client.SendAsync(request);
-
-            string responseJson = await response.Content.ReadAsStringAsync();
-            var responseObj = JObject.Parse(responseJson);
-            return new Tokens
+            using (var request = new HttpRequestMessage(HttpMethod.Post, "api8/token"))
             {
-                AccessToken = (string)responseObj["access_token"],
-                RefreshToken = (string)responseObj["refresh_token"]
-            };
+                var requestObj = new JObject(
+                    new JProperty("grant_type", "refresh_token"),
+                    new JProperty("client_id", options.ClientId),
+                    new JProperty("client_secret", options.ClientSecret),
+                    new JProperty("refresh_token", paratextTokens.RefreshToken));
+                request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
+                HttpResponseMessage response = await client.SendAsync(request);
+
+                string responseJson = await response.Content.ReadAsStringAsync();
+                var responseObj = JObject.Parse(responseJson);
+                return new Tokens
+                {
+                    AccessToken = (string)responseObj["access_token"],
+                    RefreshToken = (string)responseObj["refresh_token"]
+                };
+            }
         }
     }
 }

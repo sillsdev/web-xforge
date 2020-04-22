@@ -61,25 +61,27 @@ namespace SIL.XForge.Scripture.Services
             name = null;
             using (Stream stream = FileSystemService.OpenFile(settingsFilePath, FileMode.Open))
             {
-                XmlReader reader = XmlReader.Create(stream);
-                while (reader.Read())
+                using (XmlReader reader = XmlReader.Create(stream))
                 {
-                    if (reader.NodeType == XmlNodeType.Element)
+                    while (reader.Read())
                     {
-                        if (string.Equals(reader.Name, "guid", StringComparison.InvariantCultureIgnoreCase))
+                        if (reader.NodeType == XmlNodeType.Element)
                         {
-                            reader.Read();
-                            foundMatchingProjectId = reader.Value == projectId;
-                            if (name == null)
-                                continue;
-                            return foundMatchingProjectId;
-                        }
-                        else if (string.Equals(reader.Name, "name", StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            reader.Read();
-                            name = reader.Value;
-                            if (foundMatchingProjectId)
-                                return true;
+                            if (string.Equals(reader.Name, "guid", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                reader.Read();
+                                foundMatchingProjectId = reader.Value == projectId;
+                                if (name == null)
+                                    continue;
+                                return foundMatchingProjectId;
+                            }
+                            else if (string.Equals(reader.Name, "name", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                reader.Read();
+                                name = reader.Value;
+                                if (foundMatchingProjectId)
+                                    return true;
+                            }
                         }
                     }
                 }

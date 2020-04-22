@@ -26,7 +26,6 @@ using Paratext.Data.Repository;
 using Paratext.Data.Users;
 using Paratext.Data.ProjectComments;
 using PtxUtils;
-using PtxUtils.Progress;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -154,7 +153,7 @@ namespace SIL.XForge.Scripture.Services
         /// Synchronizes the text and notes data on the SF server with the data on the Paratext server.
         /// </summary>
         public async Task SendReceiveAsync(UserSecret userSecret, IEnumerable<string> ptProjectIds,
-            ProgressDisplay progressDisplay = null)
+            IProgress<ProgressState> progress = null)
         {
             if (userSecret == null || ptProjectIds == null) { throw new ArgumentNullException(); }
 
@@ -178,7 +177,7 @@ namespace SIL.XForge.Scripture.Services
                     await CloneProjectRepoAsync(userSecret, ptProjectId);
             }
 
-            StartProgressReporting(progressDisplay);
+            StartProgressReporting(progress);
             List<SharedProject> sharedPtProjectsToSr = ptProjectIds.Select(ptProjId =>
                 SharingLogicWrapper.CreateSharedProject(ptProjId, ptProjectsAvailable[ptProjId].ShortName,
                     source.AsInternetSharedRepositorySource(), repositories)).ToList();
@@ -518,10 +517,11 @@ namespace SIL.XForge.Scripture.Services
         }
 
         // Make sure there are no asynchronous methods called after this until the progress is completed.
-        private void StartProgressReporting(ProgressDisplay progressDisplay)
+        private void StartProgressReporting(IProgress<ProgressState> progress)
         {
-            if (progressDisplay == null)
-                progressDisplay = new SyncProgressDisplay();
+            if (progress == null)
+                return;
+            var progressDisplay = new SyncProgressDisplay(progress);
             PtxUtils.Progress.Progress.Mgr.SetDisplay(progressDisplay);
         }
     }

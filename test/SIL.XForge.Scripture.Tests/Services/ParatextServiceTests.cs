@@ -349,17 +349,14 @@ namespace SIL.XForge.Scripture.Services
             // check that the implementation code is calling ShareChanges().
             env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>(),
                 Arg.Any<bool>()).Returns((callInfo) => { callInfo.Arg<Action>()(); return true; });
-            SyncProgressDisplay progressDisplay = Substitute.For<SyncProgressDisplay>();
 
             // SUT 1
-            await env.Service.SendReceiveAsync(user01Secret, new string[] { ptProjectId },
-                progressDisplay);
+            await env.Service.SendReceiveAsync(user01Secret, new string[] { ptProjectId });
             env.MockSharingLogicWrapper.Received(1).ShareChanges(Arg.Is<List<SharedProject>>(list =>
                 list.Count == 1 && list[0].SendReceiveId == ptProjectId), Arg.Any<SharedRepositorySource>(),
                 out Arg.Any<List<SendReceiveResult>>(),
                 Arg.Is<List<SharedProject>>(list => list.Count == 1 && list[0].SendReceiveId == ptProjectId));
             mockSource.DidNotReceive().Pull(Arg.Any<string>(), Arg.Any<SharedRepository>());
-            progressDisplay.ReceivedWithAnyArgs().SetProgressValue(default);
             env.MockSharingLogicWrapper.ClearReceivedCalls();
 
             // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
