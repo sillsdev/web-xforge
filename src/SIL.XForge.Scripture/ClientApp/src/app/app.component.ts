@@ -85,7 +85,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     });
 
     // Check online status changes
-    this.isAppOnline = pwaService.isOnline();
+    this.isAppOnline = pwaService.isOnline;
     this.subscribe(pwaService.onlineStatus, status => {
       this.isAppOnline = status;
       if (!this.isAppOnline) {

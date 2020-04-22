@@ -169,7 +169,7 @@ export class AuthService {
     }
     this.scheduleRenewal();
     await this.remoteStore.init(() => this.accessToken);
-    const isAppOnline = this.pwaService.isOnline();
+    const isAppOnline = this.pwaService.isOnline;
     if (secondaryId != null && isAppOnline) {
       await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
     } else if (!environment.production && isAppOnline) {

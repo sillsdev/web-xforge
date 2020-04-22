@@ -9,7 +9,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 export class PwaService extends SubscriptionDisposable {
   private appOnlineStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(navigator.onLine);
   private windowOnLineStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(navigator.onLine);
-  private webSocketStatus: BehaviorSubject<true | false | null> = new BehaviorSubject<true | false | null>(null);
+  private webSocketStatus: BehaviorSubject<boolean | null> = new BehaviorSubject<boolean | null>(null);
 
   constructor() {
     super();
@@ -35,15 +35,15 @@ export class PwaService extends SubscriptionDisposable {
     });
   }
 
+  get isOnline(): boolean {
+    return this.appOnlineStatus.getValue();
+  }
+
   get onlineStatus(): Observable<boolean> {
     return this.appOnlineStatus.asObservable();
   }
 
   set webSocketResponse(status: boolean) {
     this.webSocketStatus.next(status);
-  }
-
-  isOnline(): boolean {
-    return this.appOnlineStatus.getValue();
   }
 }

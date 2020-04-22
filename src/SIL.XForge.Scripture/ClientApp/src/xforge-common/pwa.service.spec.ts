@@ -10,42 +10,42 @@ describe('PwaService', () => {
 
   it('offline when navigator is set to offline', () => {
     env.onlineStatus = false;
-    expect(env.pwaService.isOnline()).toBe(false);
+    expect(env.pwaService.isOnline).toBe(false);
   });
 
   it('online when navigator is set to online', () => {
     env.onlineStatus = true;
-    expect(env.pwaService.isOnline()).toBe(true);
+    expect(env.pwaService.isOnline).toBe(true);
   });
 
   it('switch to offline when navigator changes status', () => {
     env.onlineStatus = true;
-    expect(env.pwaService.isOnline()).toBe(true);
+    expect(env.pwaService.isOnline).toBe(true);
     env.onlineStatus = false;
-    expect(env.pwaService.isOnline()).toBe(false);
+    expect(env.pwaService.isOnline).toBe(false);
   });
 
   it('switch to online when navigator changes status', () => {
     env.onlineStatus = false;
-    expect(env.pwaService.isOnline()).toBe(false);
+    expect(env.pwaService.isOnline).toBe(false);
     env.onlineStatus = true;
-    expect(env.pwaService.isOnline()).toBe(true);
+    expect(env.pwaService.isOnline).toBe(true);
   });
 
   it('switch to offline when navigator is online but websocket status is false', () => {
     env.onlineStatus = true;
-    expect(env.pwaService.isOnline()).toBe(true);
+    expect(env.pwaService.isOnline).toBe(true);
     env.pwaService.webSocketResponse = false;
-    expect(env.pwaService.isOnline()).toBe(false);
+    expect(env.pwaService.isOnline).toBe(false);
   });
 
   it('switch to online when navigator is online and websocket comes back online', () => {
     env.onlineStatus = true;
-    expect(env.pwaService.isOnline()).toBe(true);
+    expect(env.pwaService.isOnline).toBe(true);
     env.pwaService.webSocketResponse = false;
-    expect(env.pwaService.isOnline()).toBe(false);
+    expect(env.pwaService.isOnline).toBe(false);
     env.pwaService.webSocketResponse = true;
-    expect(env.pwaService.isOnline()).toBe(true);
+    expect(env.pwaService.isOnline).toBe(true);
   });
 });
 
