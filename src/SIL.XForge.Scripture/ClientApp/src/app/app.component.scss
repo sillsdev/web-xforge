@@ -133,3 +133,10 @@ a {
   white-space: nowrap;
   font-family: language_picker;
 }
+
+.online-status {
+  padding-bottom: 8px;
+  mdc-icon {
+    margin-right: 10px;
+  }
+}

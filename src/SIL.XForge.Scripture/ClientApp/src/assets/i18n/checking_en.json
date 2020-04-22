@@ -9,6 +9,8 @@
     "language": "Language",
     "log_out": "Log out",
     "logged_in_as": "Logged in as",
+    "offline": "Offline",
+    "online": "Online",
     "overview": "Overview",
     "page_not_found": "Page not found",
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
@@ -235,6 +237,10 @@
   },
   "message_dialog": {
     "dismiss": "Dismiss"
+  },
+  "offline": {
+    "currently_offline_heading": "Looks like you're currently offline",
+    "currently_offline_text": "Hang tight, we'll keep trying to reconnect you"
   },
   "project": {
     "project_link_is_invalid": "The project link is invalid."

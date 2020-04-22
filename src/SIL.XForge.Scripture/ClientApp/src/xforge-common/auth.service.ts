@@ -6,6 +6,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
+import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
 import { LocalSettingsService } from './local-settings.service';
@@ -57,7 +58,8 @@ export class AuthService {
     private readonly commandService: CommandService,
     private readonly cookieService: CookieService,
     private readonly router: Router,
-    private readonly localSettings: LocalSettingsService
+    private readonly localSettings: LocalSettingsService,
+    private readonly pwaService: PwaService
   ) {
     // listen for changes to the auth state
     // this indicates that a user has logged in/out on a different tab/window
@@ -166,10 +168,11 @@ export class AuthService {
       await this.localLogIn(authResult);
     }
     this.scheduleRenewal();
-    this.remoteStore.init(() => this.accessToken);
-    if (secondaryId != null) {
+    await this.remoteStore.init(() => this.accessToken);
+    const isAppOnline = this.pwaService.isOnline;
+    if (secondaryId != null && isAppOnline) {
       await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
-    } else if (!environment.production) {
+    } else if (!environment.production && isAppOnline) {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
       } catch (err) {

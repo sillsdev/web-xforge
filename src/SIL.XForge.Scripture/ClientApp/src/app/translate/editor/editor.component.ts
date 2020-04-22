@@ -16,7 +16,6 @@ import isEqual from 'lodash/isEqual';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
@@ -27,7 +26,6 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import XRegExp from 'xregexp';
-import { HelpHeroService } from '../../core/help-hero.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta } from '../../core/models/text-doc';
@@ -92,7 +90,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
     noticeService: NoticeService,
-    private readonly helpHeroService: HelpHeroService,
     private readonly dialog: MdcDialog,
     private readonly mediaObserver: MediaObserver,
     @Inject(CONSOLE) private readonly console: ConsoleInterface
@@ -276,8 +273,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             );
           }
         }
-
-        this.startUserOnboardingTour(); // start HelpHero tour for the Translate feature
       }
     );
     setTimeout(() => this.setTextHeight());
@@ -763,19 +758,5 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const otherRange = this.source.segment.range;
     const otherBounds = this.source.editor.selection.getBounds(otherRange.index);
     this.source.editor.scrollingContainer.scrollTop += otherBounds.top - thisBounds.top;
-  }
-
-  private startUserOnboardingTour() {
-    if (this.projectDoc == null || this.projectDoc.data == null) {
-      return;
-    }
-
-    // HelpHero user-onboarding tour setup
-    const isProjectAdmin: boolean =
-      this.projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator;
-
-    this.helpHeroService.setProperty({
-      isAdmin: isProjectAdmin
-    });
   }
 }

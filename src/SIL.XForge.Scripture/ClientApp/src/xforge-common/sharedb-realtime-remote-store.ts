@@ -5,6 +5,7 @@ import * as RichText from 'rich-text';
 import { fromEvent, Observable, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { Connection, Doc, OTType, Query, Snapshot, types } from 'sharedb/lib/client';
+import { PwaService } from 'xforge-common/pwa.service';
 import { environment } from '../environments/environment';
 import { LocationService } from './location.service';
 import { QueryParameters } from './query-parameters';
@@ -23,13 +24,26 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
   private connection?: Connection;
   private getAccessToken?: () => string | undefined;
 
-  constructor(private readonly locationService: LocationService) {
+  constructor(private readonly locationService: LocationService, private readonly pwaService: PwaService) {
     super();
   }
 
-  init(getAccessToken: () => string | undefined): void {
+  async init(getAccessToken: () => string | undefined) {
     this.getAccessToken = getAccessToken;
-    this.ws = new ReconnectingWebSocket(() => this.getUrl(), undefined, { maxEnqueuedMessages: 0 });
+    // Wait until we have a valid connection or error before proceeding so we know we're online/offline
+    await new Promise(resolve => {
+      this.ws = new ReconnectingWebSocket(() => this.getUrl(), undefined, { maxEnqueuedMessages: 0 });
+      // When the web socket is open we have a valid connection
+      this.ws.addEventListener('open', () => {
+        this.pwaService.webSocketResponse = true;
+        resolve();
+      });
+      // When the web socket errors a connection is not valid so the app needs to operate offline
+      this.ws.addEventListener('error', e => {
+        this.pwaService.webSocketResponse = false;
+        resolve();
+      });
+    });
     this.connection = new Connection(this.ws);
   }
 
