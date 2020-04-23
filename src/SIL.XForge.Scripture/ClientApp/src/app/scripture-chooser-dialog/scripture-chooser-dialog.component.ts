@@ -49,6 +49,10 @@ export class ScriptureChooserDialogComponent implements OnInit {
     @Inject(MDC_DIALOG_DATA) public data: ScriptureChooserDialogData
   ) {}
 
+  get hasMultipleBooks(): boolean {
+    return this.otBooks.length + this.ntBooks.length > 1;
+  }
+
   get hasOTBooks() {
     return this.otBooks.length > 0;
   }
@@ -72,6 +76,10 @@ export class ScriptureChooserDialogComponent implements OnInit {
           this.showRangeEndSelection();
         }
       }
+    }
+    // When there is only one book available then start at the chapters view
+    if (!this.hasMultipleBooks) {
+      this.onClickBook(Object.keys(this.data.booksAndChaptersToShow)[0]);
     }
   }
 
