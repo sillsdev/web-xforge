@@ -671,7 +671,7 @@ namespace SIL.XForge.Scripture.Services
                 };
                 ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<IEnumerable<string>>()))
+                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<string>()))
                     .Do(x => _sendReceivedCalled = true);
                 RealtimeService = new SFMemoryRealtimeService();
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
@@ -819,12 +819,12 @@ namespace SIL.XForge.Scripture.Services
 
             public void SetupPTData(params Book[] books)
             {
-                ParatextService.GetBookList(Arg.Any<UserSecret>(), "target")
+                ParatextService.GetBookList(Arg.Any<UserSecret>(), "target", TextType.Target)
                     .Returns(books.Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 // Include book with Source even if there are no chapters, if there are also no chapters in Target. PT
                 // can actually have or not have books which do or do not have chapters more flexibly than this. But in
                 // this way, allow tests to request a Source book exist even with zero chapters.
-                ParatextService.GetBookList(Arg.Any<UserSecret>(), "source")
+                ParatextService.GetBookList(Arg.Any<UserSecret>(), "target", TextType.Source)
                     .Returns(books
                         .Where(b => b.HighestSourceChapter > 0 || b.HighestSourceChapter == b.HighestTargetChapter)
                         .Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
@@ -894,11 +894,10 @@ namespace SIL.XForge.Scripture.Services
 
             private void MockGetBookText(string bookId, TextType textType)
             {
-                string paratextProject = GetParatextProject(textType);
                 string oldBookText = GetBookText(textType, bookId, 1);
                 string remoteBookText = GetBookText(textType, bookId, 3);
-                ParatextService.GetBookText(Arg.Any<UserSecret>(), paratextProject, Canon.BookIdToNumber(bookId))
-                    .Returns(x => _sendReceivedCalled ? remoteBookText : oldBookText);
+                ParatextService.GetBookText(Arg.Any<UserSecret>(), "target", Canon.BookIdToNumber(bookId),
+                    textType).Returns(x => _sendReceivedCalled ? remoteBookText : oldBookText);
             }
 
             private static string GetBookText(TextType textType, string bookId, int version)
