@@ -44,6 +44,12 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     });
   }
 
+  get activeQuestionBook(): number | undefined {
+    return this.activeQuestionDoc == null || this.activeQuestionDoc.data == null
+      ? undefined
+      : this.activeQuestionDoc.data.verseRef.bookNum;
+  }
+
   get activeQuestionChapter(): number | undefined {
     return this.activeQuestionDoc == null || this.activeQuestionDoc.data == null
       ? undefined

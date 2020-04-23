@@ -143,6 +143,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.checkBookStatus();
   }
 
+  get activeQuestionVerseRef(): VerseRef | undefined {
+    if (this.questionsPanel != null && this.book === this.questionsPanel.activeQuestionBook) {
+      return this.questionsPanel.activeQuestionVerseRef;
+    }
+    return;
+  }
+
   get bookName(): string {
     return this.text == null ? '' : this.i18n.localizeBook(this.text.bookNum);
   }
@@ -195,7 +202,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     const textsByBook: TextsByBookId = {};
     if (this.projectDoc != null && this.projectDoc.data != null) {
       for (const text of this.projectDoc.data.texts) {
-        textsByBook[Canon.bookNumberToId(text.bookNum)] = text;
+        if (this.showAllBooks || this.book === text.bookNum) {
+          textsByBook[Canon.bookNumberToId(text.bookNum)] = text;
+        }
       }
     }
     return textsByBook;
@@ -347,8 +356,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
         }
-        this.questionsSub = this.subscribe(merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$), () =>
-          this.checkBookStatus()
+        this.questionsSub = this.subscribe(
+          merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$, this.questionsQuery.localChanges$),
+          () => this.checkBookStatus()
         );
         const prevBook = this.book;
         this.book = bookNum;
