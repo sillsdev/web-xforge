@@ -49,12 +49,12 @@ export class ScriptureChooserDialogComponent implements OnInit {
     @Inject(MDC_DIALOG_DATA) public data: ScriptureChooserDialogData
   ) {}
 
-  get hasMultipleBooks(): boolean {
-    return this.otBooks.length + this.ntBooks.length > 1;
-  }
-
   get hasOTBooks() {
     return this.otBooks.length > 0;
+  }
+
+  private get hasMultipleBooks(): boolean {
+    return this.otBooks.length + this.ntBooks.length > 1;
   }
 
   ngOnInit() {

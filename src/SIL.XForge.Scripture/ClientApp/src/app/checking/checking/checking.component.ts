@@ -147,7 +147,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (this.questionsPanel != null && this.book === this.questionsPanel.activeQuestionBook) {
       return this.questionsPanel.activeQuestionVerseRef;
     }
-    return;
   }
 
   get bookName(): string {
