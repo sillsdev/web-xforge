@@ -199,7 +199,7 @@ namespace SIL.XForge.Scripture.Services
             // Books 1 thru 3.
             env.ProjectScrText.Settings.BooksPresentSet = new BookSet(1, 3);
 
-            IReadOnlyList<int> result = env.Service.GetBookList(userSecret, ptProjectId);
+            IReadOnlyList<int> result = env.Service.GetBookList(userSecret, ptProjectId, Models.TextType.Target);
             Assert.That(result.Count(), Is.EqualTo(3));
             Assert.That(result, Is.EquivalentTo(new[] { 1, 2, 3 }));
         }
@@ -216,7 +216,7 @@ namespace SIL.XForge.Scripture.Services
             env.MakeUserSecret(env.User01, env.Username01);
 
             // SUT
-            string result = env.Service.GetBookText(null, ptProjectId, 8);
+            string result = env.Service.GetBookText(null, ptProjectId, 8, Models.TextType.Target);
             Assert.That(result, Is.EqualTo(ruthBookUsx));
         }
 
@@ -228,12 +228,12 @@ namespace SIL.XForge.Scripture.Services
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-            env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(i => null);
+            env.MockScrTextCollection.FindById(env.Username01, ptProjectId, Models.TextType.Target).Returns(i => null);
 
             // SUT
-            Assert.Throws<DataNotFoundException>(() => env.Service.GetBookText(user01Secret, ptProjectId, 8));
-            // Should have tried twice to access project.
-            env.MockScrTextCollection.Received(2).FindById(env.Username01, Arg.Any<string>());
+            Assert.Throws<DataNotFoundException>(() => env.Service.GetBookText(user01Secret, ptProjectId, 8,
+                Models.TextType.Target));
+            env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId, Models.TextType.Target);
         }
 
         [Test]
@@ -324,10 +324,35 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
-            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null, null));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null, null, null));
             Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null,
-                new string[] { "paratext_" + env.Project01 }));
-            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(user01Secret, null));
+                "paratext_" + env.Project01, null));
+            Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(user01Secret, null, null));
+        }
+
+        [Test]
+        public void SendReceiveAsync_ShareChangesErrors_Throws()
+        {
+            var env = new TestEnvironment();
+            string projectId = env.SetupProject(env.Project01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+
+            IInternetSharedRepositorySource mockSource =
+                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            env.SetupSuccessfulSendReceive();
+            // Setup share changes to be unsuccessful
+            env.MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
+                out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(false);
+
+            InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+            Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
+
+            // Check exception is thrown if errors occurred, even if share changes succeeded
+            env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
+            ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+                env.Service.SendReceiveAsync(user01Secret, projectId, null));
+            Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
         }
 
         [Test]
@@ -338,20 +363,10 @@ namespace SIL.XForge.Scripture.Services
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-            env.MockSharingLogicWrapper.CreateSharedProject(Arg.Any<string>(), Arg.Any<string>(),
-                Arg.Any<SharedRepositorySource>(), Arg.Any<IEnumerable<SharedRepository>>())
-                    .Returns(callInfo => new SharedProject() { SendReceiveId = callInfo.ArgAt<string>(0) });
-            env.MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(),
-                Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(),
-                Arg.Any<List<SharedProject>>()).Returns(true);
-
-            // Have the HandleErrors method run its first argument, which would be the ShareChanges() call. This helps
-            // check that the implementation code is calling ShareChanges().
-            env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>(),
-                Arg.Any<bool>()).Returns((callInfo) => { callInfo.Arg<Action>()(); return true; });
+            env.SetupSuccessfulSendReceive();
 
             // SUT 1
-            await env.Service.SendReceiveAsync(user01Secret, new string[] { ptProjectId });
+            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null);
             env.MockSharingLogicWrapper.Received(1).ShareChanges(Arg.Is<List<SharedProject>>(list =>
                 list.Count == 1 && list[0].SendReceiveId == ptProjectId), Arg.Any<SharedRepositorySource>(),
                 out Arg.Any<List<SendReceiveResult>>(),
@@ -362,10 +377,8 @@ namespace SIL.XForge.Scripture.Services
             // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
             // SUT 2
             ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, new string[] {
-                    ptProjectId, "unknownPtProjectId8", "unknownPtProjectId9" }));
-            Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8").And
-                .Contain("unknownPtProjectId8"));
+                env.Service.SendReceiveAsync(user01Secret, ptProjectId, "unknownPtProjectId8"));
+            Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
             env.MockSharingLogicWrapper.DidNotReceive().ShareChanges(default, Arg.Any<SharedRepositorySource>(),
                 out Arg.Any<List<SendReceiveResult>>(), default);
         }
@@ -378,27 +391,53 @@ namespace SIL.XForge.Scripture.Services
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
-            env.MockSharingLogicWrapper.CreateSharedProject(Arg.Any<string>(), Arg.Any<string>(),
-                Arg.Any<SharedRepositorySource>(), Arg.Any<IEnumerable<SharedRepository>>())
-                    .Returns(callInfo => new SharedProject() { SendReceiveId = callInfo.ArgAt<string>(0) });
-            env.MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(),
-                Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(),
-                Arg.Any<List<SharedProject>>()).Returns(true);
-            env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>(),
-                Arg.Any<bool>()).Returns((callInfo) => { callInfo.Arg<Action>()(); return true; });
+            env.SetupSuccessfulSendReceive();
             // FindById fails the first time, and then succeeds the second time after the pt project repo is cloned.
-            env.MockScrTextCollection.FindById(env.Username01, ptProjectId)
-                .Returns(null, env.GetScrText(ptProjectId));
+            env.MockScrTextCollection.FindById(env.Username01, ptProjectId, Models.TextType.Target)
+                .Returns(null, env.GetScrText(ptProjectId, Models.TextType.Target));
 
-            string clonePath = Path.Combine(env.SyncDir, ptProjectId);
+            string clonePath = Path.Combine(env.SyncDir, ptProjectId, "target");
             env.MockFileSystemService.DirectoryExists(clonePath).Returns(false);
 
             // SUT
-            await env.Service.SendReceiveAsync(user01Secret, new string[] { ptProjectId });
+            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null);
             // Should have tried to clone the needed repo.
             env.MockFileSystemService.Received(1).CreateDirectory(clonePath);
             mockSource.Received(1).Pull(clonePath, Arg.Any<SharedRepository>());
             env.MockHgWrapper.Received(1).Update(clonePath);
+        }
+
+        [Test]
+        public async Task SendReceiveAsync_SourceProjectPresent_BothSucceeds()
+        {
+            var env = new TestEnvironment();
+            string targetProjectId = env.SetupProject(env.Project01);
+            string sourceProjectId = "paratext_" + env.Project02;
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            IInternetSharedRepositorySource mockSource =
+                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            env.SetupSuccessfulSendReceive();
+
+            ScrText sourceScrText = env.GetScrText(targetProjectId, Models.TextType.Source, sourceProjectId);
+            env.MockScrTextCollection.FindById(env.Username01, targetProjectId, Models.TextType.Source)
+                .Returns(sourceScrText);
+            await env.Service.SendReceiveAsync(user01Secret, targetProjectId, sourceProjectId);
+            env.MockSharingLogicWrapper.Received(1).ShareChanges(Arg.Is<List<SharedProject>>(list =>
+                list.Count().Equals(2) && list[0].SendReceiveId == targetProjectId &&
+                list[1].SendReceiveId == sourceProjectId),
+                Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(),
+                Arg.Any<List<SharedProject>>());
+            env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
+
+            // Replaces obsolete source project if the source project has been changed
+            string newSourceProjectId = "paratext_" + env.Project03;
+            string sourcePath = Path.Combine(env.SyncDir, targetProjectId, "source");
+            await env.Service.SendReceiveAsync(user01Secret, targetProjectId, newSourceProjectId);
+            env.MockFileSystemService.Received(1).DeleteDirectory(sourcePath);
+            env.MockFileSystemService.Received(1).CreateDirectory(sourcePath);
+            mockSource.Received(1).Pull(sourcePath, Arg.Is<SharedRepository>(repo =>
+                repo.SendReceiveId == newSourceProjectId));
+            env.MockHgWrapper.Received(1).Update(sourcePath);
         }
 
         private class TestEnvironment
@@ -592,19 +631,50 @@ namespace SIL.XForge.Scripture.Services
             public string SetupProject(string baseId)
             {
                 string ptProjectId = "paratext_" + baseId;
-                ProjectScrText = GetScrText(baseId);
+                ProjectScrText = GetScrText(baseId, Models.TextType.Target);
                 ProjectCommentManager = CommentManager.Get(ProjectScrText);
-                MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId).Returns(ProjectScrText);
+                MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId, Models.TextType.Target)
+                    .Returns(ProjectScrText);
                 return ptProjectId;
             }
 
-            public MockScrText GetScrText(string projectId)
+            public MockScrText GetScrText(string projectId, Models.TextType textType, string sourceGuid = null)
             {
-                string projectDir = Path.Combine(SyncDir, projectId);
-                ProjectName projectName = new ProjectName() { ProjectPath = projectDir, ShortName = "Proj" };
+                string textTypeDir;
+                string guid = projectId;
+                switch (textType)
+                {
+                    case Models.TextType.Source:
+                        textTypeDir = "source";
+                        Assert.NotNull(sourceGuid, "Setup: must provide a source guid");
+                        guid = sourceGuid;
+                        break;
+                    default:
+                        textTypeDir = "target";
+                        break;
+                }
+                string scrtextDir = Path.Combine(SyncDir, projectId, textTypeDir);
+                ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
                 var scrText = new MockScrText(projectName);
+                scrText.Settings.Guid = guid;
                 scrText.Data.Add("RUT", ruthBookUsfm);
                 return scrText;
+            }
+
+            public void SetupSuccessfulSendReceive()
+            {
+                MockSharingLogicWrapper.CreateSharedProject(Arg.Any<string>(), Arg.Any<string>(),
+                    Arg.Any<SharedRepositorySource>(), Arg.Any<IEnumerable<SharedRepository>>())
+                    .Returns(callInfo => new SharedProject() { SendReceiveId = callInfo.ArgAt<string>(0) });
+                MockSharingLogicWrapper.ShareChanges(Arg.Any<List<SharedProject>>(), Arg.Any<SharedRepositorySource>(),
+                    out Arg.Any<List<SendReceiveResult>>(), Arg.Any<List<SharedProject>>()).Returns(true);
+                // Have the HandleErrors method run its first argument, which would be the ShareChanges() call.
+                // This helps check that the implementation code is calling ShareChanges().
+                MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(callInfo =>
+                {
+                    callInfo.Arg<Action>()();
+                    return true;
+                });
             }
         }
     }

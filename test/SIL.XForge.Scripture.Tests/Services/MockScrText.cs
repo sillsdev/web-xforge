@@ -15,8 +15,6 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class MockScrText : ScrText
     {
-
-
         public MockScrText(ProjectName pn)
         {
             projectName = pn;
@@ -49,7 +47,6 @@ namespace SIL.XForge.Scripture.Services
             return _fileManager;
         }
 
-        public ProjectSettings _settings;
         public override ProjectSettings Settings => _settings;
         public override ScrStylesheet DefaultStylesheet => new MockScrStylesheet("./usfm.sty");
         public override string Directory => projectName.ProjectPath;
@@ -57,6 +54,7 @@ namespace SIL.XForge.Scripture.Services
         public override ScrLanguage Language => _language;
         public ProjectFileManager _fileManager;
         private ScrLanguage _language;
+        private ProjectSettings _settings;
     }
 
     /// <summary>
