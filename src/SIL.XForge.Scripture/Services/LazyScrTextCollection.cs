@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Xml;
 using Paratext.Data;
@@ -25,28 +26,31 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Get a ScrText for a given user from the data for a paratext project with the project ID.
+        /// Get a ScrText for a given user from the data for a paratext project with the target project ID and type.
         /// </summary>
-        public ScrText FindById(string username, string projectId)
+        /// <param name="username"> The username of the user retrieving the ScrText. </param>
+        /// <param name="projectId"> The ID of the target project. </param>
+        /// <param name="textType"> Target or Source. </param>
+        public ScrText FindById(string username, string projectId, Models.TextType textType)
         {
-            if (!FileSystemService.DirectoryExists(SettingsDirectory))
+            if (projectId == null)
                 return null;
-            var projectFolderPaths = FileSystemService.EnumerateDirectories(SettingsDirectory);
-            foreach (string projectFolderPath in projectFolderPaths)
-            {
-                string settingsFile = Path.Combine(projectFolderPath, ProjectSettings.fileName);
-                if (!FileSystemService.FileExists(settingsFile))
-                    continue;
+            string baseProjectPath = Path.Combine(SettingsDirectory, projectId);
+            if (!FileSystemService.DirectoryExists(baseProjectPath))
+                return null;
 
-                bool found = CanFindProjectSettings(settingsFile, projectId, out string name);
+            string fullProjectPath = GetProjectPath(projectId, textType);
+            string settingsFile = Path.Combine(fullProjectPath, ProjectSettings.fileName);
+            if (!FileSystemService.FileExists(settingsFile))
+                return null;
 
-                if (found)
-                    return CreateScrText(username, new ProjectName()
-                    {
-                        ProjectPath = projectFolderPath,
-                        ShortName = name
-                    });
-            }
+            string name = GetNameFromSettings(settingsFile);
+            if (name != null)
+                return CreateScrText(username, new ProjectName()
+                {
+                    ProjectPath = fullProjectPath,
+                    ShortName = name
+                });
             return null;
         }
 
@@ -55,38 +59,41 @@ namespace SIL.XForge.Scripture.Services
             return new MultiUserScrText(SettingsDirectory, username, projectName);
         }
 
-        private bool CanFindProjectSettings(string settingsFilePath, string projectId, out string name)
+        private string GetNameFromSettings(string settingsFilePath)
         {
-            bool foundMatchingProjectId = false;
-            name = null;
             using (Stream stream = FileSystemService.OpenFile(settingsFilePath, FileMode.Open))
+            using (XmlReader reader = XmlReader.Create(stream))
             {
-                using (XmlReader reader = XmlReader.Create(stream))
+                while (reader.Read())
                 {
-                    while (reader.Read())
+                    if (reader.NodeType == XmlNodeType.Element)
                     {
-                        if (reader.NodeType == XmlNodeType.Element)
+                        if (string.Equals(reader.Name, "name", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            if (string.Equals(reader.Name, "guid", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                reader.Read();
-                                foundMatchingProjectId = reader.Value == projectId;
-                                if (name == null)
-                                    continue;
-                                return foundMatchingProjectId;
-                            }
-                            else if (string.Equals(reader.Name, "name", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                reader.Read();
-                                name = reader.Value;
-                                if (foundMatchingProjectId)
-                                    return true;
-                            }
+                            reader.Read();
+                            return reader.Value != "" ? reader.Value : null;
                         }
                     }
                 }
             }
-            return foundMatchingProjectId;
+            return null;
+        }
+
+        private string GetProjectPath(string projectId, Models.TextType textType)
+        {
+            string textTypeDir;
+            switch (textType)
+            {
+                case Models.TextType.Target:
+                    textTypeDir = "target";
+                    break;
+                case Models.TextType.Source:
+                    textTypeDir = "source";
+                    break;
+                default:
+                    throw new InvalidEnumArgumentException(nameof(textType), (int)textType, typeof(Models.TextType));
+            }
+            return Path.Combine(SettingsDirectory, projectId, textTypeDir);
         }
     }
 }
