@@ -78,7 +78,6 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
     this.navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then(this.successCallback.bind(this), this.errorCallback.bind(this));
-    this.status.emit({ status: 'recording' });
   }
 
   async stopRecording() {
@@ -119,5 +118,6 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
     this.stream = stream;
     this.recordRTC = RecordRTC(stream, options);
     this.recordRTC.startRecording();
+    this.status.emit({ status: 'recording' });
   }
 }
