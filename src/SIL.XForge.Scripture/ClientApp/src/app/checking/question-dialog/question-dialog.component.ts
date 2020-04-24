@@ -219,7 +219,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     this.audio = audio;
     if (audio.status === 'uploaded' || audio.status === 'processed' || audio.status === 'recording') {
       this.questionText.clearValidators();
-    } else if (audio.status === 'reset') {
+    } else if (audio.status === 'reset' || audio.status === 'denied') {
       this.questionText.setValidators([Validators.required, XFValidators.someNonWhitespace]);
     }
     this.questionText.updateValueAndValidity();

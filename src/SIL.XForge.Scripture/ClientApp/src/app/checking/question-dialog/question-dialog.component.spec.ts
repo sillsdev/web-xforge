@@ -313,6 +313,18 @@ describe('QuestionDialogComponent', () => {
     expect(env.component.questionText.errors!.required).not.toBeNull();
   }));
 
+  it('should not save with no text and audio permission is denied', fakeAsync(() => {
+    const env = new TestEnvironment();
+    flush();
+    env.inputValue(env.questionInput, '');
+    expect(env.component.questionText.valid).toBe(false);
+    expect(env.component.questionText.errors!.required).not.toBeNull();
+    // Test that audio permission was blocked and validation is still invalid
+    env.setAudioStatus('denied');
+    expect(env.component.questionText.valid).toBe(false);
+    expect(env.component.questionText.errors!.required).not.toBeNull();
+  }));
+
   it('display quill editor', fakeAsync(() => {
     const env = new TestEnvironment();
     flush();
