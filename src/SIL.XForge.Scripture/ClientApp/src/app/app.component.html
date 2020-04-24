@@ -22,7 +22,13 @@
               <mdc-icon mdcTopAppBarActionItem title="{{ t('language') }}" (click)="langMenu.open = !langMenu.open">
                 translate
               </mdc-icon>
-              <mdc-menu #langMenu [anchorCorner]="'bottomStart'" [anchorElement]="langMenuAnchor" class="locale-menu">
+              <mdc-menu
+                #langMenu
+                [anchorCorner]="'bottomStart'"
+                [anchorElement]="langMenuAnchor"
+                [anchorMargin]="{ right: media.isActive('xs') ? -88 : 0 }"
+                class="locale-menu"
+              >
                 <mdc-list>
                   <mdc-list-item
                     *ngFor="let locale of i18n.locales"
