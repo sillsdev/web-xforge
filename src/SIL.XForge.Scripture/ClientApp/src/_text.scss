@@ -78,15 +78,18 @@ quill-editor {
   }
 }
 
-usx-para[dir='ltr'],
-p[dir='ltr'] {
-  .question-segment[data-question-count] {
-    margin-left: 1.75em;
-    &:before {
-      left: -2.25em;
-    }
-    &:after {
-      left: -1.5em;
+usx-para,
+p {
+  &[dir='ltr'],
+  &[dir='auto'] {
+    .question-segment[data-question-count] {
+      margin-left: 1.75em;
+      &:before {
+        left: -2.25em;
+      }
+      &:after {
+        left: -1.5em;
+      }
     }
   }
 }
