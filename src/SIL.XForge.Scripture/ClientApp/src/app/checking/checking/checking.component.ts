@@ -201,9 +201,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     const textsByBook: TextsByBookId = {};
     if (this.projectDoc != null && this.projectDoc.data != null) {
       for (const text of this.projectDoc.data.texts) {
-        if (this.showAllBooks || this.book === text.bookNum) {
-          textsByBook[Canon.bookNumberToId(text.bookNum)] = text;
-        }
+        textsByBook[Canon.bookNumberToId(text.bookNum)] = text;
       }
     }
     return textsByBook;
@@ -682,6 +680,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
     }
     this.questionVerseRefs = questionVerseRefs;
+    if (
+      !this.showAllBooks &&
+      this.book != null &&
+      this.questionsPanel != null &&
+      this.questionsPanel.activeQuestionBook != null &&
+      Canon.bookNumberToId(this.book) !== this.activatedRoute.snapshot.params['bookId']
+    ) {
+      this._book = undefined;
+      this.router.navigate([
+        '/projects',
+        this.projectDoc.id,
+        'checking',
+        Canon.bookNumberToId(this.questionsPanel.activeQuestionBook)
+      ]);
+    }
   }
 
   private getAnswerIndex(answer: Answer): number {
