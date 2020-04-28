@@ -32,6 +32,7 @@ interface AuthState {
 
 interface LoginResult {
   loggedIn: boolean;
+  error?: Error;
   newlyLoggedIn: boolean;
 }
 
@@ -94,6 +95,10 @@ export class AuthService {
     return this.tryLogInPromise.then(result => result.newlyLoggedIn);
   }
 
+  get loginResult(): Promise<LoginResult> {
+    return this.tryLogInPromise;
+  }
+
   private get isAuthenticated(): boolean {
     return this.expiresAt != null && Date.now() < this.expiresAt;
   }
@@ -139,17 +144,21 @@ export class AuthService {
   }
 
   private async tryLogIn(): Promise<LoginResult> {
-    let authResult = await this.parseHash();
-    if (!(await this.handleAuth(authResult))) {
-      this.clearState();
-      authResult = await this.checkSession();
+    try {
+      let authResult = await this.parseHash();
       if (!(await this.handleAuth(authResult))) {
-        return { loggedIn: false, newlyLoggedIn: false };
+        this.clearState();
+        authResult = await this.checkSession();
+        if (!(await this.handleAuth(authResult))) {
+          return { loggedIn: false, newlyLoggedIn: false };
+        }
+      } else {
+        return { loggedIn: true, newlyLoggedIn: true };
       }
-    } else {
-      return { loggedIn: true, newlyLoggedIn: true };
+      return { loggedIn: true, newlyLoggedIn: false };
+    } catch (error) {
+      return { loggedIn: false, newlyLoggedIn: false, error };
     }
-    return { loggedIn: true, newlyLoggedIn: false };
   }
 
   private async handleAuth(authResult: auth0.Auth0DecodedHash | null): Promise<boolean> {

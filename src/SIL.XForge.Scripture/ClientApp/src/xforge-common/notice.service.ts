@@ -44,9 +44,9 @@ export class NoticeService {
     return this.showSnackBar(message, ['snackbar-error']);
   }
 
-  showMessageDialog(message: () => string): Promise<void> {
+  showMessageDialog(message: () => string, closeButtonText?: () => string): Promise<void> {
     const dialogRef = this.dialog.open<MessageDialogComponent, MessageDialogData>(MessageDialogComponent, {
-      data: { message }
+      data: { message, closeButtonText }
     }) as MdcDialogRef<MessageDialogComponent, any>;
 
     return dialogRef.afterClosed().toPromise();
