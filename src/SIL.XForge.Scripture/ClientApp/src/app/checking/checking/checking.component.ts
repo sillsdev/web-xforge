@@ -4,6 +4,7 @@ import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
@@ -23,6 +24,7 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { canAccessTranslateApp } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -371,18 +373,27 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.projectRemoteChangesSub.unsubscribe();
       }
       this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
-        if (
-          this.projectDoc != null &&
-          this.projectDoc.data != null &&
-          !(this.userService.currentUserId in this.projectDoc.data.userRoles)
-        ) {
-          this.onRemovedFromProject();
+        if (this.projectDoc != null && this.projectDoc.data != null) {
+          if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
+            this.onCheckingAccessRemoved();
+          } else if (!this.projectDoc.data.checkingConfig.checkingEnabled) {
+            const navigateToTranslate = canAccessTranslateApp(this.projectDoc.data.userRoles[
+              this.userService.currentUserId
+            ] as SFProjectRole);
+            this.onCheckingAccessRemoved();
+            this.noticeService.showMessageDialog(() => translate('checking.community_checking_disabled'));
+            if (navigateToTranslate) {
+              this.router.navigate(['/projects', projectId, 'translate', bookId], { replaceUrl: true });
+            } else {
+              this.router.navigate(['/projects', projectId], { replaceUrl: true });
+            }
+          }
         }
       });
       if (this.projectDeleteSub != null) {
         this.projectDeleteSub.unsubscribe();
       }
-      this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
+      this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onCheckingAccessRemoved());
     });
     this.subscribe(this.media.media$, (change: MediaChange) => {
       this.calculateScriptureSliderPosition();
@@ -855,7 +866,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   // Unbind this component from the data when a user is removed from the project, otherwise console
   // errors appear before the app can navigate to the start component
-  private onRemovedFromProject(): void {
+  private onCheckingAccessRemoved(): void {
     if (this.questionsPanel != null) {
       this.questionsPanel.activeQuestionDoc = undefined;
     }
