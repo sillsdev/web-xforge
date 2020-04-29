@@ -196,7 +196,7 @@ Although this setup is specifically written for **Windows**, the steps could be 
 5. Install [Node v12](https://nodejs.org/en/download/)
 6. Install [FFmpeg v4](https://ffmpeg.org/download.html) executable into the `C:\usr\bin\` directory.
 7. Install a developer editor, [VS Code](https://code.visualstudio.com/download) is recommended (the repo includes VS Code settings)
-8. Install [Mercurial v4.7](https://www.mercurial-scm.org/) (python 2) and copy contents into the `C:\usr\local\bin\ directory`.
+8. Install [Mercurial v4.8](https://www.mercurial-scm.org/) (python 2) and copy contents into the `C:\usr\local\bin\ directory`.
 9. Create folders owned by you. Check in the Ansible `deploy/dependencies.yml` for the valid list of folders. As of writing they were:
 
 - `/var/lib/scriptureforge/sync/`
