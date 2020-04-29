@@ -38,10 +38,13 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
     this.subscribe(this.activeQuestionDoc$.pipe(debounceTime(2000)), questionDoc => {
       this.updateElementsRead(questionDoc);
-      if (questionDoc != null && questionDoc.data != null) {
-        this.storeMostRecentQuestion(questionDoc.data.verseRef.bookNum);
-      }
     });
+  }
+
+  get activeQuestionBook(): number | undefined {
+    return this.activeQuestionDoc == null || this.activeQuestionDoc.data == null
+      ? undefined
+      : this.activeQuestionDoc.data.verseRef.bookNum;
   }
 
   get activeQuestionChapter(): number | undefined {
@@ -233,9 +236,13 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       questionChanged = false;
     }
     this.activeQuestionDoc = questionDoc;
-    this.changed.emit(questionDoc);
-    if (questionChanged) {
-      this.activeQuestionDoc$.next(questionDoc);
+    if (questionDoc.data != null) {
+      this.storeMostRecentQuestion(questionDoc.data.verseRef.bookNum).then(() => {
+        this.changed.emit(questionDoc);
+        if (questionChanged) {
+          this.activeQuestionDoc$.next(questionDoc);
+        }
+      });
     }
   }
 
