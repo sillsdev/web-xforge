@@ -8,6 +8,7 @@ namespace SIL.XForge.Services
         Stream CreateFile(string path);
         bool FileExists(string path);
         Stream OpenFile(string path, FileMode mode);
+        string FileReadText(string path);
         void DeleteFile(string path);
         void CreateDirectory(string path);
         bool DirectoryExists(string path);

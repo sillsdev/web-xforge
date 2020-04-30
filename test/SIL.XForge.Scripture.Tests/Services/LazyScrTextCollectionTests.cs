@@ -42,7 +42,7 @@ namespace SIL.XForge.Scripture.Services
             string projectTextName = "Proj01";
             string path = Path.Combine(_testDirectory, projectId, "target");
             string content = $"<ScriptureText><Name>{projectTextName}</Name><guid>{projectId}</guid></ScriptureText>";
-            _fileSystemService.OpenFile(Arg.Any<string>(), FileMode.Open).Returns(GetStream(content));
+            _fileSystemService.FileReadText(Arg.Any<string>()).Returns(content);
             _fileSystemService.FileExists(Arg.Any<string>()).Returns(true);
 
             ScrText scrText = _lazyScrTextCollection.FindById(username, projectId, Models.TextType.Target);
@@ -62,8 +62,7 @@ namespace SIL.XForge.Scripture.Services
             string path = Path.Combine(_testDirectory, targetProjectId, "source");
             string content =
                 $"<ScriptureText><Name>{sourceTextName}</Name><guid>{sourceProjectId}</guid></ScriptureText>";
-
-            _fileSystemService.OpenFile(Arg.Any<string>(), FileMode.Open).Returns(GetStream(content));
+            _fileSystemService.FileReadText(Arg.Any<string>()).Returns(content);
             _fileSystemService.FileExists(Arg.Any<string>()).Returns(true);
 
             ScrText scrText = _lazyScrTextCollection.FindById(username, targetProjectId, Models.TextType.Source);
@@ -71,16 +70,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(sourceTextName, scrText.Name);
             Assert.AreEqual(path, scrText.Directory);
             _fileSystemService.Received(1).FileExists(Path.Combine(path, ProjectSettings.fileName));
-        }
-
-        private static Stream GetStream(string content)
-        {
-            var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
-            writer.Write(content);
-            writer.Flush();
-            stream.Position = 0;
-            return stream;
         }
     }
 }
