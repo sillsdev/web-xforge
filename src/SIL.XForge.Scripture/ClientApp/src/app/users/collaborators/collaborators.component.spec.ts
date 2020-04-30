@@ -254,6 +254,9 @@ describe('CollaboratorsComponent', () => {
     expect(env.userRows.length).toEqual(1);
     env.setInputValue(env.filterInput, '    BOB ');
     expect(env.userRows.length).toEqual(1);
+
+    env.setInputValue(env.filterInput, 'community');
+    expect(env.userRows.length).toEqual(1);
   }));
 
   it('should page', fakeAsync(() => {
