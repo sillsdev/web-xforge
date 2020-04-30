@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
 import { CookieService } from 'ngx-cookie-service';
@@ -11,6 +12,7 @@ import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
+import { NoticeService } from './notice.service';
 import { RealtimeOfflineStore } from './realtime-offline-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
@@ -59,7 +61,8 @@ export class AuthService {
     private readonly cookieService: CookieService,
     private readonly router: Router,
     private readonly localSettings: LocalSettingsService,
-    private readonly pwaService: PwaService
+    private readonly pwaService: PwaService,
+    private readonly noticeService: NoticeService
   ) {
     // listen for changes to the auth state
     // this indicates that a user has logged in/out on a different tab/window
@@ -139,17 +142,25 @@ export class AuthService {
   }
 
   private async tryLogIn(): Promise<LoginResult> {
-    let authResult = await this.parseHash();
-    if (!(await this.handleAuth(authResult))) {
-      this.clearState();
-      authResult = await this.checkSession();
+    try {
+      let authResult = await this.parseHash();
       if (!(await this.handleAuth(authResult))) {
-        return { loggedIn: false, newlyLoggedIn: false };
+        this.clearState();
+        authResult = await this.checkSession();
+        if (!(await this.handleAuth(authResult))) {
+          return { loggedIn: false, newlyLoggedIn: false };
+        }
+      } else {
+        return { loggedIn: true, newlyLoggedIn: true };
       }
-    } else {
-      return { loggedIn: true, newlyLoggedIn: true };
+      return { loggedIn: true, newlyLoggedIn: false };
+    } catch {
+      await this.noticeService.showMessageDialog(
+        () => translate('error_messages.error_occurred_login'),
+        () => translate('error_messages.try_again')
+      );
+      return { loggedIn: false, newlyLoggedIn: false };
     }
-    return { loggedIn: true, newlyLoggedIn: false };
   }
 
   private async handleAuth(authResult: auth0.Auth0DecodedHash | null): Promise<boolean> {
