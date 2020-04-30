@@ -1,10 +1,9 @@
-using System;
-using System.ComponentModel;
 using System.IO;
-using System.Xml;
+using System.Xml.Linq;
 using Paratext.Data;
 using Paratext.Data.ProjectSettingsAccess;
 using SIL.XForge.Services;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -39,7 +38,7 @@ namespace SIL.XForge.Scripture.Services
             if (!FileSystemService.DirectoryExists(baseProjectPath))
                 return null;
 
-            string fullProjectPath = GetProjectPath(projectId, textType);
+            string fullProjectPath = Path.Combine(baseProjectPath, TextTypeUtils.DirectoryName(textType));
             string settingsFile = Path.Combine(fullProjectPath, ProjectSettings.fileName);
             if (!FileSystemService.FileExists(settingsFile))
                 return null;
@@ -61,39 +60,10 @@ namespace SIL.XForge.Scripture.Services
 
         private string GetNameFromSettings(string settingsFilePath)
         {
-            using (Stream stream = FileSystemService.OpenFile(settingsFilePath, FileMode.Open))
-            using (XmlReader reader = XmlReader.Create(stream))
-            {
-                while (reader.Read())
-                {
-                    if (reader.NodeType == XmlNodeType.Element)
-                    {
-                        if (string.Equals(reader.Name, "name", StringComparison.InvariantCultureIgnoreCase))
-                        {
-                            reader.Read();
-                            return reader.Value != "" ? reader.Value : null;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-
-        private string GetProjectPath(string projectId, Models.TextType textType)
-        {
-            string textTypeDir;
-            switch (textType)
-            {
-                case Models.TextType.Target:
-                    textTypeDir = "target";
-                    break;
-                case Models.TextType.Source:
-                    textTypeDir = "source";
-                    break;
-                default:
-                    throw new InvalidEnumArgumentException(nameof(textType), (int)textType, typeof(Models.TextType));
-            }
-            return Path.Combine(SettingsDirectory, projectId, textTypeDir);
+            string contents = FileSystemService.FileReadText(settingsFilePath);
+            XElement root = XElement.Parse(contents);
+            XElement nameElem = root.Element("Name");
+            return nameElem == null || nameElem.Value == "" ? null : nameElem.Value;
         }
     }
 }

@@ -1,5 +1,4 @@
 using Paratext.Data;
-using SIL.XForge.Scripture;
 
 namespace SIL.XForge.Scripture.Services
 {

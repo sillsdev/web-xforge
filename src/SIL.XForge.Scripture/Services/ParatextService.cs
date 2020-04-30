@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
@@ -162,14 +161,14 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<SharedRepository> repositories = source.GetRepositories();
             Dictionary<string, ParatextProject> ptProjectsAvailable =
                 GetProjects(userSecret, repositories).ToDictionary(ptProject => ptProject.ParatextId);
-            ParatextProject targetPtProject = ptProjectsAvailable.Get(ptTargetId, null);
-            ParatextProject sourcePtProject = ptSourceId != null ? ptProjectsAvailable.Get(ptSourceId, null) : null;
-
-            if (targetPtProject == null || (ptSourceId != null && sourcePtProject == null))
+            List<string> problemProjectIds = new List<string>();
+            if (!ptProjectsAvailable.TryGetValue(ptTargetId, out ParatextProject targetPtProject))
+                problemProjectIds.Add(ptTargetId);
+            ParatextProject sourcePtProject = null;
+            if (ptSourceId != null && !ptProjectsAvailable.TryGetValue(ptSourceId, out sourcePtProject))
+                problemProjectIds.Add(ptSourceId);
+            if (problemProjectIds.Count > 0)
             {
-                var problemProjectIds = targetPtProject == null ? new List<string> { ptTargetId } : new List<string>();
-                if (ptSourceId != null && sourcePtProject == null)
-                    problemProjectIds.Add(ptSourceId);
                 throw new ArgumentException(
                     "PT projects with the following PT ids were requested but without access or they don't exist: " +
                         string.Join(", ", problemProjectIds));
@@ -407,7 +406,7 @@ namespace SIL.XForge.Scripture.Services
         {
             string customHgPath = _paratextOptions.Value.HgExe;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                customHgPath = customHgPath + ".exe";
+                customHgPath = Path.GetExtension(customHgPath) != ".exe" ? customHgPath + ".exe" : customHgPath;
             if (!File.Exists(customHgPath))
             {
                 string msg = string.Format(
@@ -458,7 +457,7 @@ namespace SIL.XForge.Scripture.Services
         private void CloneProjectRepo(IInternetSharedRepositorySource source, string projectId, SharedRepository repo,
             Models.TextType textType)
         {
-            string clonePath = GetProjectPath(projectId, textType);
+            string clonePath = Path.Combine(SyncDir, projectId, TextTypeUtils.DirectoryName(textType));
             if (!_fileSystemService.DirectoryExists(clonePath))
             {
                 _fileSystemService.CreateDirectory(clonePath);
@@ -559,23 +558,6 @@ namespace SIL.XForge.Scripture.Services
                 return;
             var progressDisplay = new SyncProgressDisplay(progress);
             PtxUtils.Progress.Progress.Mgr.SetDisplay(progressDisplay);
-        }
-
-        private string GetProjectPath(string projectId, Models.TextType textType)
-        {
-            string textTypeDir;
-            switch (textType)
-            {
-                case Models.TextType.Source:
-                    textTypeDir = "source";
-                    break;
-                case Models.TextType.Target:
-                    textTypeDir = "target";
-                    break;
-                default:
-                    throw new InvalidEnumArgumentException(nameof(textType), (int)textType, typeof(Models.TextType));
-            }
-            return Path.Combine(SyncDir, projectId, textTypeDir);
         }
     }
 }

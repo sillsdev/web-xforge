@@ -20,6 +20,11 @@ namespace SIL.XForge.Services
             return File.Open(path, mode);
         }
 
+        public string FileReadText(string path)
+        {
+            return File.ReadAllText(path);
+        }
+
         public void DeleteFile(string path)
         {
             File.Delete(path);
