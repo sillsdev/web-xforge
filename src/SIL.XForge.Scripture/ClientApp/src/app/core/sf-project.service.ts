@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { LatinWordTokenizer, MAX_SEGMENT_LENGTH, RemoteTranslationEngine } from '@sillsdev/machine';
 import * as crc from 'crc-32';
-import { AudioBase } from 'realtime-server/lib/common/models/audio-base';
+import { AudioData } from 'realtime-server/lib/common/models/audio-data';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SF_PROJECTS_COLLECTION, SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
@@ -15,6 +15,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { CommandService } from 'xforge-common/command.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { MachineHttpClient } from './machine-http-client';
@@ -36,10 +37,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   constructor(
     realtimeService: RealtimeService,
     commandService: CommandService,
+    pwaService: PwaService,
     http: HttpClient,
     private readonly machineHttp: MachineHttpClient
   ) {
-    super(realtimeService, commandService, SF_PROJECT_ROLES, http);
+    super(realtimeService, commandService, pwaService, SF_PROJECT_ROLES, http);
   }
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
@@ -187,38 +189,48 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     );
   }
 
+  /**
+   * Uploads the audio file to the file server, or if offline, stores the audio in IndexedDB and uploads
+   * next time there is a valid connection.
+   */
   uploadAudio(id: string, dataId: string, questionDocId: string, blob: Blob, filename: string): Promise<string> {
-    if (this.realtimeService.remoteStore.connected) {
+    if (this.pwaService.isOnline) {
       // We are online. Upload directly to the server
       return this.onlineUploadAudio(id, dataId, new File([blob], filename));
     }
     // Store the audio in indexedDB until we go online again
-    const localAudio: AudioBase = { projectRef: id, dataId: dataId, blob, realtimeDocRef: questionDocId, filename };
-    const indexedDBUrl = this.realtimeService.storeAudio(localAudio);
-    this.uploadAudioToServer(async (audio: AudioBase) => {
-      const doc: QuestionDoc = this.realtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, audio.realtimeDocRef);
+    const localAudio: AudioData = { dataId: dataId, blob };
+    const indexedDBUrl = this.realtimeService.storeLocalAudio(localAudio);
+    this.onReconnect(async () => {
+      const doc: QuestionDoc = this.realtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, questionDocId);
       if (doc.data != null) {
-        const url = await this.onlineUploadAudio(
-          audio.projectRef,
-          audio.dataId,
-          new File([audio.blob], audio.filename)
-        );
-        if (doc.data.dataId === audio.dataId) {
+        const url = await this.onlineUploadAudio(id, dataId, new File([blob], filename));
+        if (doc.data.dataId === dataId) {
+          // The audio belongs to the question
           doc.submitJson0Op(op => op.set(qd => qd.audioUrl!, url));
         } else {
-          const answerIndex = doc.data.answers.findIndex(a => a.dataId === audio.dataId);
+          const answerIndex = doc.data.answers.findIndex(a => a.dataId === dataId);
           doc.submitJson0Op(op => op.set(qd => qd.answers[answerIndex].audioUrl!, url));
         }
-        this.realtimeService.removeAudio(audio.dataId);
+        this.realtimeService.removeLocalAudio(dataId);
       }
     });
     return indexedDBUrl;
   }
 
+  /**
+   * Deletes the audio file from the file server, or if offline, deletes the audio file from IndexedDB if present.
+   * If the file is not present in IndexedDB, delete the audio file from the file server next time there is a
+   * valid connection.
+   */
   async deleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
-    if (this.realtimeService.remoteStore.connected) {
+    if (this.pwaService.isOnline) {
       return this.onlineDeleteAudio(id, dataId, ownerId);
     }
-    this.realtimeService.removeAudio(dataId, () => this.onlineDeleteAudio(id, dataId, ownerId));
+    // The audio existed locally and was never uploaded, remove it and return
+    if (await this.realtimeService.removeLocalAudio(dataId)) {
+      return;
+    }
+    this.onReconnect(() => this.onlineDeleteAudio(id, dataId, ownerId));
   }
 }
