@@ -101,6 +101,21 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
             return true;
           }
         },
+        'disable bold': {
+          key: 'b',
+          ctrlKey: true,
+          handler: () => false
+        },
+        'disable italic': {
+          key: 'i',
+          ctrlKey: true,
+          handler: () => false
+        },
+        'disable underline': {
+          key: 'u',
+          ctrlKey: true,
+          handler: () => false
+        },
         redo: {
           key: 'Y',
           shortKey: true,
