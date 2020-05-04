@@ -143,6 +143,18 @@ export class AuthService {
 
   private async tryLogIn(): Promise<LoginResult> {
     try {
+      // Get connection status so we know if online or offline
+      await this.remoteStore.init(() => this.accessToken);
+      // In offline mode check against the last known access
+      if (!this.pwaService.isOnline) {
+        await this.localLogIn({ accessToken: this.accessToken, expiresIn: this.expiresAt });
+        if (this.isAuthenticated) {
+          return { loggedIn: true, newlyLoggedIn: false };
+        } else {
+          return { loggedIn: false, newlyLoggedIn: false };
+        }
+      }
+      // In online mode do the normal checks with auth0
       let authResult = await this.parseHash();
       if (!(await this.handleAuth(authResult))) {
         this.clearState();
@@ -179,11 +191,9 @@ export class AuthService {
       await this.localLogIn(authResult);
     }
     this.scheduleRenewal();
-    await this.remoteStore.init(() => this.accessToken);
-    const isAppOnline = this.pwaService.isOnline;
-    if (secondaryId != null && isAppOnline) {
+    if (secondaryId != null) {
       await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
-    } else if (!environment.production && isAppOnline) {
+    } else if (!environment.production) {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
       } catch (err) {
@@ -272,6 +282,9 @@ export class AuthService {
 
   private async localLogIn(authResult: auth0.Auth0DecodedHash): Promise<void> {
     if (authResult.accessToken == null || authResult.expiresIn == null) {
+      if (!this.pwaService.isOnline) {
+        return;
+      }
       throw new Error('The auth result is invalid.');
     }
     const claims: any = jwtDecode(authResult.accessToken);

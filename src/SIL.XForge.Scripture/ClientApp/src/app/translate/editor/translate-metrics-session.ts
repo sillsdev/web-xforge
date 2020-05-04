@@ -4,6 +4,7 @@ import isEqual from 'lodash/isEqual';
 import { fromEvent, interval, merge, Subject } from 'rxjs';
 import { buffer, debounceTime, filter, map, tap } from 'rxjs/operators';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';
 import { EditEndEvent, TranslateMetrics, TranslateMetricsType } from '../../core/models/translate-metrics';
@@ -84,7 +85,8 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
     private readonly source: TextComponent,
     private readonly target: TextComponent,
     private readonly sourceWordTokenizer: Tokenizer,
-    private readonly targetWordTokenizer: Tokenizer
+    private readonly targetWordTokenizer: Tokenizer,
+    private readonly pwaService: PwaService
   ) {
     super();
     this.id = objectId();
@@ -193,7 +195,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
   }
 
   private async sendMetrics(segment: Segment | undefined): Promise<void> {
-    if (this.metrics == null) {
+    if (this.metrics == null || !this.pwaService.isOnline) {
       return;
     }
 
