@@ -1,4 +1,4 @@
-import { AudioBase } from 'realtime-server/lib/common/models/audio-base';
+import { AudioData } from 'realtime-server/lib/common/models/audio-data';
 import { Snapshot } from './models/snapshot';
 import { QueryParameters, QueryResults } from './query-parameters';
 
@@ -18,12 +18,12 @@ export type RealtimeOfflineQueryResults = QueryResults<RealtimeOfflineData>;
 export abstract class RealtimeOfflineStore {
   abstract getAllIds(collection: string): Promise<string[]>;
   abstract getAll(collection: string): Promise<RealtimeOfflineData[]>;
-  abstract getAllAudio(): Promise<AudioBase[]>;
+  abstract getAllAudio(): Promise<AudioData[]>;
   abstract query(collection: string, parameters: QueryParameters): Promise<RealtimeOfflineQueryResults>;
   abstract get(collection: string, id: string): Promise<RealtimeOfflineData | undefined>;
-  abstract getAudio(id: string): Promise<AudioBase | undefined>;
+  abstract getAudio(id: string): Promise<AudioData | undefined>;
   abstract put(collection: string, offlineData: RealtimeOfflineData): Promise<void>;
-  abstract putAudio(audio: AudioBase): Promise<void>;
+  abstract putAudio(audio: AudioData): Promise<AudioData | undefined>;
   abstract delete(collection: string, id: string): Promise<void>;
   abstract deleteAudio(id: string): Promise<void>;
   abstract deleteDB(): Promise<void>;

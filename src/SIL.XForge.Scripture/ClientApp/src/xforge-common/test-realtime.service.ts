@@ -44,11 +44,6 @@ export class TestRealtimeService extends RealtimeService {
     }
   }
 
-  connectWebSocket(hasConnection: boolean): void {
-    const remoteStore: MemoryRealtimeRemoteStore = this.remoteStore as MemoryRealtimeRemoteStore;
-    remoteStore.connectWebSocket(hasConnection);
-  }
-
   updateAllSubscribeQueries(): void {
     for (const collectionQueries of this.subscribeQueries.values()) {
       for (const query of collectionQueries) {
