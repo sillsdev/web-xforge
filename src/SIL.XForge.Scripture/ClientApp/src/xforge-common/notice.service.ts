@@ -1,7 +1,6 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { MdcSnackbar, MdcSnackbarConfig } from '@angular-mdc/web/snackbar';
 import { Injectable } from '@angular/core';
-import { AuthService } from './auth.service';
 import { MessageDialogComponent, MessageDialogData } from './message-dialog/message-dialog.component';
 
 /** Manages and provides access to notices shown to user on the web site. */
@@ -12,11 +11,7 @@ export class NoticeService {
   private _isAppLoading: boolean = false;
   private loadingCount: number = 0;
 
-  constructor(
-    private readonly snackbar: MdcSnackbar,
-    private readonly authService: AuthService,
-    private readonly dialog: MdcDialog
-  ) {}
+  constructor(private readonly snackbar: MdcSnackbar, private readonly dialog: MdcDialog) {}
 
   get isAppLoading(): boolean {
     return this._isAppLoading;
@@ -44,9 +39,9 @@ export class NoticeService {
     return this.showSnackBar(message, ['snackbar-error']);
   }
 
-  showMessageDialog(message: () => string): Promise<void> {
+  showMessageDialog(message: () => string, closeButtonText?: () => string): Promise<void> {
     const dialogRef = this.dialog.open<MessageDialogComponent, MessageDialogData>(MessageDialogComponent, {
-      data: { message }
+      data: { message, closeButtonText }
     }) as MdcDialogRef<MessageDialogComponent, any>;
 
     return dialogRef.afterClosed().toPromise();
@@ -54,9 +49,6 @@ export class NoticeService {
 
   private async showSnackBar(message: string, classes: string[] = []): Promise<void> {
     let config: MdcSnackbarConfig<any> | undefined;
-    if (!(await this.authService.isLoggedIn)) {
-      classes.push('snackbar-above-footer');
-    }
     config = { classes: classes.join(' ') };
     this.snackbar.open(message, undefined, config);
   }

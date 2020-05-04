@@ -67,13 +67,6 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
   padding-top: 5px !important;
 }
 
-.snackbar-above-footer {
-  bottom: 63px;
-  @include media-breakpoint-only(xs) {
-    bottom: 45px;
-  }
-}
-
 .snackbar-error .mdc-snackbar__surface {
   background-color: var(--mdc-theme-error);
 }
