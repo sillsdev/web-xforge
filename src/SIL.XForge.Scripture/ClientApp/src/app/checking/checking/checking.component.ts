@@ -143,6 +143,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.checkBookStatus();
   }
 
+  get activeQuestionVerseRef(): VerseRef | undefined {
+    if (this.questionsPanel != null && this.book === this.questionsPanel.activeQuestionBook) {
+      return this.questionsPanel.activeQuestionVerseRef;
+    }
+  }
+
   get bookName(): string {
     return this.text == null ? '' : this.i18n.localizeBook(this.text.bookNum);
   }
@@ -347,8 +353,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
         }
-        this.questionsSub = this.subscribe(merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$), () =>
-          this.checkBookStatus()
+        this.questionsSub = this.subscribe(
+          merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$, this.questionsQuery.localChanges$),
+          () => this.checkBookStatus()
         );
         const prevBook = this.book;
         this.book = bookNum;
@@ -673,6 +680,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
     }
     this.questionVerseRefs = questionVerseRefs;
+    if (
+      !this.showAllBooks &&
+      this.book != null &&
+      this.questionsPanel != null &&
+      this.questionsPanel.activeQuestionBook != null &&
+      Canon.bookNumberToId(this.book) !== this.activatedRoute.snapshot.params['bookId']
+    ) {
+      this._book = undefined;
+      this.router.navigate([
+        '/projects',
+        this.projectDoc.id,
+        'checking',
+        Canon.bookNumberToId(this.questionsPanel.activeQuestionBook)
+      ]);
+    }
   }
 
   private getAnswerIndex(answer: Answer): number {

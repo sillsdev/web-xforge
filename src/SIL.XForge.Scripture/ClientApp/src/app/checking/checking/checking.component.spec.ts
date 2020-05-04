@@ -1,9 +1,10 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { Location } from '@angular/common';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
@@ -97,6 +98,10 @@ const CHECKER_USER: UserInfo = createUser('02', SFProjectRole.CommunityChecker);
 const CLEAN_CHECKER_USER: UserInfo = createUser('03', SFProjectRole.CommunityChecker, false);
 const OBSERVER_USER: UserInfo = createUser('04', SFProjectRole.ParatextObserver);
 
+class MockComponent {}
+
+const ROUTES: Route[] = [{ path: 'projects/:projectId/checking/:bookId', component: MockComponent }];
+
 describe('CheckingComponent', () => {
   configureTestingModule(() => ({
     declarations: [
@@ -117,7 +122,7 @@ describe('CheckingComponent', () => {
       AngularSplitModule.forRoot(),
       ngfModule,
       NoopAnimationsModule,
-      RouterTestingModule,
+      RouterTestingModule.withRoutes(ROUTES),
       AvatarTestingModule,
       SharedModule,
       UICommonModule,
@@ -353,6 +358,27 @@ describe('CheckingComponent', () => {
       expect(env.questions.length).toEqual(16);
       question = env.selectQuestion(16);
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
+    }));
+
+    it('question added to another book changes the route to that book and activates the question', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      const dateNow = new Date();
+      const newQuestion: Question = {
+        dataId: objectId(),
+        ownerRef: ADMIN_USER.id,
+        projectRef: 'project01',
+        text: 'Admin just added a question.',
+        answers: [],
+        verseRef: { bookNum: 40, chapterNum: 1, verseNum: 10, verse: '10' },
+        isArchived: false,
+        dateCreated: dateNow.toJSON(),
+        dateModified: dateNow.toJSON()
+      };
+      env.insertQuestion(newQuestion);
+      env.activateQuestion(newQuestion.dataId);
+      expect(env.location.path()).toEqual('/projects/project01/checking/MAT');
+      env.activateQuestion('q1Id');
+      expect(env.location.path()).toEqual('/projects/project01/checking/JHN');
     }));
   });
 
@@ -1162,6 +1188,7 @@ class TestEnvironment {
   readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   readonly mockedTextChooserDialogComponent: MdcDialogRef<TextChooserDialogComponent> = mock(MdcDialogRef);
+  readonly location: Location;
 
   questionReadTimer: number = 2000;
   project01WritingSystemTag = 'en';
@@ -1220,6 +1247,8 @@ class TestEnvironment {
     commentRefsRead: []
   };
 
+  private projectBookRoute: string = 'JHN';
+
   private readonly testProject: SFProject = {
     name: 'Project 01',
     paratextId: 'pt01',
@@ -1259,17 +1288,20 @@ class TestEnvironment {
     }
   };
 
-  constructor(user: UserInfo, private readonly projectBookRoute: string = 'JHN') {
+  constructor(user: UserInfo, projectBookRoute: string = 'JHN') {
+    this.setRouteSnapshot(projectBookRoute);
     this.setupDefaultProjectData(user);
     when(mockedUserService.editDisplayName(true)).thenResolve();
     this.fixture = TestBed.createComponent(CheckingComponent);
     this.component = this.fixture.componentInstance;
-    // Need to wait for questions and text promises to finish
+    this.location = TestBed.get(Location);
+    // Need to wait for questions, text promises, and slider position calculations to finish
     this.fixture.detectChanges();
     tick(1);
     this.fixture.detectChanges();
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
+    this.waitForSliderUpdate();
   }
 
   get answerPanel(): DebugElement {
@@ -1423,6 +1455,15 @@ class TestEnvironment {
     return this.getFirstNumberFromElementText('#show-unread-answers-button');
   }
 
+  activateQuestion(dataId: string) {
+    const questionDoc = this.getQuestionDoc(dataId);
+    this.component.questionsPanel!.activateQuestion(questionDoc);
+    tick();
+    this.fixture.detectChanges();
+    tick(this.questionReadTimer);
+    this.setRouteSnapshot(Canon.bookNumberToId(questionDoc.data!.verseRef.bookNum));
+  }
+
   /** Fetch first sequence of numbers (without spaces between) from an element's text. */
   getFirstNumberFromElementText(selector: string): number | null {
     const element = document.querySelector(selector);
@@ -1526,6 +1567,10 @@ class TestEnvironment {
 
   getEditCommentButton(answerIndex: number, commentIndex: number): DebugElement {
     return this.getAnswerComments(answerIndex)[commentIndex].query(By.css('.comment-edit'));
+  }
+
+  getQuestionDoc(dataId: string): QuestionDoc {
+    return this.realtimeService.get(QuestionDoc.COLLECTION, getQuestionDocId('project01', dataId));
   }
 
   getQuestionText(question: DebugElement): string {
@@ -1677,8 +1722,14 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  private setRouteSnapshot(bookId: string) {
+    const snapshot = new ActivatedRouteSnapshot();
+    snapshot.params = { bookId: bookId };
+    when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
+    this.projectBookRoute = bookId;
+  }
+
   private setupDefaultProjectData(user: UserInfo): void {
-    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01', bookId: this.projectBookRoute }));
     this.realtimeService.addSnapshots<SFProject>(SFProjectDoc.COLLECTION, [
       {
         id: 'project01',
@@ -1866,6 +1917,7 @@ class TestEnvironment {
       questions = johnQuestions.concat(matthewQuestions);
     }
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions);
+    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01', bookId: this.projectBookRoute }));
     when(
       mockedProjectService.queryQuestions(
         'project01',
