@@ -255,7 +255,7 @@ describe('CollaboratorsComponent', () => {
     env.setInputValue(env.filterInput, '    BOB ');
     expect(env.userRows.length).toEqual(1);
 
-    env.setInputValue(env.filterInput, 'community');
+    env.setInputValue(env.filterInput, 'Community Checker');
     expect(env.userRows.length).toEqual(1);
   }));
 
