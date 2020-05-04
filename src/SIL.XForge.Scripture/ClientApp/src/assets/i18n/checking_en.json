@@ -225,6 +225,10 @@
     "to_report_issue_email": "To report an issue, email {{ issueEmailLink }}.",
     "unsupported_browser": "You are using an unsupported browser, which may be the reason for this error. We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}."
   },
+  "error_messages": {
+    "error_occurred_login": "An error occurred during login.",
+    "try_again": "Try Again"
+  },
   "exception_handling_service": {
     "network_request_failed": "A network request failed. Some functionality may be unavailable.",
     "unknown_error": "Unknown error"
