@@ -1,6 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import merge from 'lodash/merge';
-import { AudioBase } from 'realtime-server/lib/common/models/audio-base';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, Observable } from 'rxjs';
@@ -11,6 +10,7 @@ import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
 import { RealtimeQuery } from './models/realtime-query';
+import { PwaService } from './pwa.service';
 import { Filters, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
@@ -24,6 +24,7 @@ export abstract class ProjectService<
   constructor(
     protected readonly realtimeService: RealtimeService,
     protected readonly commandService: CommandService,
+    protected readonly pwaService: PwaService,
     roles: ProjectRoleInfo[],
     private readonly http: HttpClient
   ) {
@@ -87,7 +88,20 @@ export abstract class ProjectService<
     return this.onlineInvoke('delete', { projectId: id });
   }
 
-  async onlineUploadAudio(id: string, dataId: string, file: File): Promise<string> {
+  onReconnect(callback: () => Promise<void>): void {
+    const sub = this.pwaService.onlineStatus.subscribe((online: boolean) => {
+      if (online) {
+        callback();
+        sub.unsubscribe();
+      }
+    });
+  }
+
+  protected onlineDeleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
+    return this.onlineInvoke('deleteAudio', { projectId: id, ownerId, dataId });
+  }
+
+  protected async onlineUploadAudio(id: string, dataId: string, file: File): Promise<string> {
     const formData = new FormData();
     formData.append('projectId', id);
     formData.append('dataId', dataId);
@@ -100,14 +114,6 @@ export abstract class ProjectService<
       .toPromise();
     const path = response.headers.get('Location')!;
     return path.replace(environment.assets.audio, '/');
-  }
-
-  onlineDeleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
-    return this.onlineInvoke('deleteAudio', { projectId: id, ownerId, dataId });
-  }
-
-  uploadAudioToServer(callback: (audio: AudioBase) => Promise<void>): Promise<void> {
-    return this.realtimeService.uploadAudioWhenOnline(callback);
   }
 
   protected onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {

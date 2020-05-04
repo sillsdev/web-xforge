@@ -146,7 +146,7 @@ describe('QuestionDialogService', () => {
     expect(questionDoc!.data!.audioUrl).toBe('anAudioFile.mp3');
     await env.service.questionDialog(env.getQuestionDialogData(newQuestion), questionDoc);
     expect(questionDoc!.data!.audioUrl).toBeUndefined();
-    verify(mockedProjectService.onlineDeleteAudio(env.PROJECT01, anything(), anything()));
+    verify(mockedProjectService.deleteAudio(env.PROJECT01, anything(), anything()));
   });
 });
 

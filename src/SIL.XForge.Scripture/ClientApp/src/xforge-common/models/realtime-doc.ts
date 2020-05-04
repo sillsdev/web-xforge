@@ -1,8 +1,8 @@
+import { AudioData } from 'realtime-server/lib/common/models/audio-data';
 import { merge, Observable, Subject, Subscription } from 'rxjs';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RealtimeOfflineData } from '../realtime-offline-store';
 import { RealtimeDocAdapter } from '../realtime-remote-store';
-import { AudioBase } from 'realtime-server/lib/common/models/audio-base';
 
 export interface RealtimeDocConstructor {
   readonly COLLECTION: string;
@@ -132,7 +132,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     this.updateOfflineData();
   }
 
-  async storeAudio(audio: AudioBase): Promise<string> {
+  async storeAudio(audio: AudioData): Promise<string> {
     await this.updateOfflineData();
     await this.realtimeService.offlineStore.putAudio(audio);
     const audioSource = await this.realtimeService.offlineStore.getAudio(audio.dataId);

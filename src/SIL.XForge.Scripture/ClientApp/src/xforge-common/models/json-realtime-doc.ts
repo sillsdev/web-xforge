@@ -24,9 +24,4 @@ export abstract class JsonRealtimeDoc<T = any> extends RealtimeDoc<T, OtJson0Op[
     }
     return false;
   }
-  /*
-  async uploadAudio(blob: Blob, id: string): Promise<string> {
-    return this.storeAudio(blob, id);
-  }
-  */
 }

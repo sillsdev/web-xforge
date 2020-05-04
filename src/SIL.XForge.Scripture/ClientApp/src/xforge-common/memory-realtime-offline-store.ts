@@ -1,5 +1,5 @@
 import merge from 'lodash/merge';
-import { AudioBase } from 'realtime-server/lib/common/models/audio-base';
+import { AudioData } from 'realtime-server/lib/common/models/audio-data';
 import { Snapshot } from './models/snapshot';
 import { performQuery, QueryParameters } from './query-parameters';
 import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore } from './realtime-offline-store';
@@ -9,7 +9,7 @@ import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore 
  */
 export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
   private readonly map = new Map<string, Map<string, RealtimeOfflineData>>();
-  private readonly audioMap = new Map<string, AudioBase>();
+  private readonly audioMap = new Map<string, AudioData>();
 
   addSnapshot<T>(collection: string, snapshot: Snapshot<T>): void {
     let collectionSnapshots = this.map.get(collection);
@@ -44,11 +44,11 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
     return Promise.resolve(collectionData.get(id));
   }
 
-  getAllAudio(): Promise<AudioBase[]> {
+  getAllAudio(): Promise<AudioData[]> {
     return Promise.resolve(Array.from(this.audioMap.values()));
   }
 
-  getAudio(id: string): Promise<AudioBase | undefined> {
+  getAudio(id: string): Promise<AudioData | undefined> {
     const collectionData = this.audioMap.get(id);
     if (collectionData == null) {
       return Promise.resolve(undefined);
@@ -71,9 +71,9 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
     return Promise.resolve();
   }
 
-  putAudio(audio: AudioBase): Promise<void> {
+  putAudio(audio: AudioData): Promise<AudioData> {
     this.audioMap.set(audio.dataId, audio);
-    return Promise.resolve();
+    return Promise.resolve(audio);
   }
 
   delete(collection: string, id: string): Promise<void> {

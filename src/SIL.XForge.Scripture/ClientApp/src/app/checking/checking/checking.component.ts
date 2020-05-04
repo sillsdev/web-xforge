@@ -438,29 +438,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         answer.dateModified = dateNow;
         if (answerAction.audio != null) {
           if (answerAction.audio.fileName != null && answerAction.audio.blob != null) {
-            /*
-            const response = await this.projectService.onlineUploadAudio(
-              this.projectDoc.id,
-              answer.dataId,
-              new File([answerAction.audio.blob], answerAction.audio.fileName)
-            );
-            // Get the amended filename and save it against the answer
-            */
-            const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
-            if (activeQuestionDoc == null) {
-              return;
+            if (this.questionsPanel.activeQuestionDoc != null) {
+              // Get the amended filename and save it against the answer
+              answer.audioUrl = await this.projectService.uploadAudio(
+                this.projectDoc.id,
+                answer.dataId,
+                this.questionsPanel.activeQuestionDoc.id,
+                answerAction.audio.blob,
+                answerAction.audio.fileName
+              );
             }
-            // audio.audioUrl = await activeQuestionDoc.uploadAudio(answerAction.audio.blob, answer.dataId);
-            const response = await this.projectService.uploadAudio(
-              this.projectDoc.id,
-              answer.dataId,
-              activeQuestionDoc.id,
-              answerAction.audio.blob,
-              answerAction.audio.fileName
-            );
-
-            // answer.audioUrl = await activeQuestionDoc.uploadAudio(answerAction.audio.blob, answer.dataId);
-            answer.audioUrl = response;
           } else if (answerAction.audio.status === 'reset') {
             answer.audioUrl = undefined;
           }
@@ -746,7 +733,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         .submitJson0Op(op => op.remove(q => q.answers, answerIndex))
         .then(() => {
           if (this.projectDoc != null) {
-            this.projectService.onlineDeleteAudio(this.projectDoc.id, answer.dataId, answer.ownerRef);
+            this.projectService.deleteAudio(this.projectDoc.id, answer.dataId, answer.ownerRef);
           }
         });
       this.refreshSummary();

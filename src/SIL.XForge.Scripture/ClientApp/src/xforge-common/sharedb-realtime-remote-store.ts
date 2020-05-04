@@ -1,8 +1,8 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable } from '@angular/core';
 import cloneDeep from 'lodash/cloneDeep';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import * as RichText from 'rich-text';
-import { fromEvent, Observable, Subject, Subscription } from 'rxjs';
+import { fromEvent, Observable, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { Connection, Doc, OTType, Query, Snapshot, types } from 'sharedb/lib/client';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -13,47 +13,19 @@ import { RealtimeDocAdapter, RealtimeQueryAdapter, RealtimeRemoteStore } from '.
 
 types.register(RichText.type);
 
-enum ConnectionState {
-  CONNECTING = 0,
-  OPEN = 1,
-  CLOSING = 2,
-  CLOSED = 3
-}
-
 /**
  * This is the ShareDB-based implementation of the real-time remote store.
  */
 @Injectable({
   providedIn: 'root'
 })
-export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore implements OnDestroy {
+export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
   private ws?: ReconnectingWebSocket;
   private connection?: Connection;
   private getAccessToken?: () => string | undefined;
-  private _webSocketConnected$: Subject<boolean> = new Subject<boolean>();
-  private deleteAudioCallbacks: (() => Promise<void>)[] = [];
-  private connectedSubscription: Subscription;
 
   constructor(private readonly locationService: LocationService, private readonly pwaService: PwaService) {
     super();
-    this.connectedSubscription = this.webSocketConnected$.subscribe(async () => {
-      if (this.deleteAudioCallbacks.length > 0) {
-        await Promise.all(this.deleteAudioCallbacks);
-        this.deleteAudioCallbacks = [];
-      }
-    });
-  }
-
-  get connected(): boolean {
-    return this.ws != null && this.ws.readyState === ConnectionState.OPEN;
-  }
-
-  get webSocketConnected$(): Observable<boolean> {
-    return this._webSocketConnected$;
-  }
-
-  ngOnDestroy() {
-    this.connectedSubscription.unsubscribe();
   }
 
   async init(getAccessToken: () => string | undefined) {
@@ -73,11 +45,6 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore implements O
       });
     });
     this.connection = new Connection(this.ws);
-
-    // set up webSocketConnection to fire an event when connected
-    this.ws.addEventListener('open', () => {
-      this._webSocketConnected$.next(true);
-    });
   }
 
   createDocAdapter(collection: string, id: string): RealtimeDocAdapter {
@@ -93,10 +60,6 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore implements O
       throw new Error('The store has not been initialized.');
     }
     return new SharedbRealtimeQueryAdapter(this.connection, collection, parameters);
-  }
-
-  removeAudioOnConnected(callback: () => Promise<void>) {
-    this.deleteAudioCallbacks.push(callback);
   }
 
   private getUrl(): string {
