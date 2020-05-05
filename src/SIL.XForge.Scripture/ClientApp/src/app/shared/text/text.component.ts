@@ -48,7 +48,7 @@ export interface TextUpdatedEvent {
   templateUrl: './text.component.html'
 })
 export class TextComponent extends SubscriptionDisposable implements OnDestroy {
-  @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
+  @ViewChild('quillEditor', { static: true, read: ElementRef }) quill?: ElementRef;
   @Input() isReadOnly: boolean = true;
   @Input() markInvalid: boolean = false;
   @Input() multiSegmentSelection = false;
@@ -452,7 +452,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   private setDirection() {
     // As the browser is automatically applying ltr/rtl we need to ask it which one it is using
     // This value can then be used for other purposes i.e. CSS styles
-    if (this.editor !== undefined) {
+    if (this.editor !== undefined && this.quill != null) {
       this.direction = window.getComputedStyle(this.quill.nativeElement).direction;
       // Set the browser calculated direction on the segments so we can action elsewhere i.e. CSS
       let segments: NodeListOf<Element> = this.quill.nativeElement.querySelectorAll('usx-segment');
