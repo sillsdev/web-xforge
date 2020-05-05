@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
 import { mapTo } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -32,12 +31,7 @@ export class PwaService extends SubscriptionDisposable {
       // The app is "online" if the browser/network thinks it's online AND
       // we have a valid web socket connection OR
       //    the web socket hasn't yet had a chance to connect i.e. (null) when the app first loads
-      if (environment.production) {
-        // For the time being we don't want to simulate going online/offline on production so always return online
-        this.appOnlineStatus.next(true);
-      } else {
-        this.appOnlineStatus.next(this.windowOnLineStatus.getValue() && this.webSocketStatus.getValue() !== false);
-      }
+      this.appOnlineStatus.next(this.windowOnLineStatus.getValue() && this.webSocketStatus.getValue() !== false);
     });
   }
 
