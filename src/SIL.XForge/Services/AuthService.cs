@@ -41,10 +41,9 @@ namespace SIL.XForge.Services
             return authOptions.WebhookUsername == username && authOptions.WebhookPassword == password;
         }
 
-        public async Task<JObject> GetUserAsync(string authId)
+        public Task<string> GetUserAsync(string authId)
         {
-            string content = await CallApiAsync(HttpMethod.Get, $"users/{authId}");
-            return JObject.Parse(content);
+            return CallApiAsync(HttpMethod.Get, $"users/{authId}");
         }
 
         public Task LinkAccounts(string primaryAuthId, string secondaryAuthId)

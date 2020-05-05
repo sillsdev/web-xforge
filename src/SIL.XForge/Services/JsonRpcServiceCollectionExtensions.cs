@@ -1,6 +1,8 @@
+using System.Text.Json;
+using EdjCase.JsonRpc.Common;
+using EdjCase.JsonRpc.Router;
 using Microsoft.AspNetCore.Builder;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
+using SIL.XForge;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -8,14 +10,23 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddXFJsonRpc(this IServiceCollection services)
         {
-            services.AddJsonRpc().WithOptions(options =>
+            services.AddJsonRpc(config =>
+            {
+                config.JsonSerializerSettings = new JsonSerializerOptions
                 {
-                    options.JsonSerializerSettings = new JsonSerializerSettings
-                    {
-                        ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                        NullValueHandling = NullValueHandling.Ignore
-                    };
-                });
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    IgnoreNullValues = true
+                };
+
+                config.OnInvokeException = context =>
+                {
+                    var exceptionHandler = context.ServiceProvider.GetService<IExceptionHandler>();
+                    exceptionHandler.ReportException(context.Exception);
+                    var rpcException = new RpcException((int)RpcErrorCode.InternalError,
+                        "Exception occurred from target method execution.", context.Exception);
+                    return OnExceptionResult.UseExceptionResponse(rpcException);
+                };
+            });
             return services;
         }
     }
