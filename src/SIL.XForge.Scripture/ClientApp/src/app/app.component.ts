@@ -58,7 +58,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private currentUserDoc?: UserDoc;
   private _projectSelect?: MdcSelect;
   private projectDeletedDialogRef: any;
-  private _topAppBar!: MdcTopAppBar;
+  private _topAppBar?: MdcTopAppBar;
   private selectedProjectDoc?: SFProjectDoc;
   private selectedProjectDeleteSub?: Subscription;
   private removedFromProjectSub?: Subscription;
@@ -73,7 +73,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     noticeService: NoticeService,
     public media: MediaObserver,
     private readonly projectService: SFProjectService,
-    private readonly pwaService: PwaService,
+    pwaService: PwaService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,

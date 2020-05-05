@@ -9,7 +9,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
   styleUrls: ['./offline.component.scss']
 })
 export class OfflineComponent extends SubscriptionDisposable {
-  constructor(private readonly router: Router, private readonly pwaService: PwaService) {
+  constructor(private readonly router: Router, pwaService: PwaService) {
     super();
     this.subscribe(pwaService.onlineStatus, status => {
       if (status) {
