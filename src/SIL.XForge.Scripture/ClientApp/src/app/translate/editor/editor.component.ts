@@ -24,6 +24,7 @@ import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/op
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import XRegExp from 'xregexp';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -92,6 +93,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     noticeService: NoticeService,
     private readonly dialog: MdcDialog,
     private readonly mediaObserver: MediaObserver,
+    private readonly pwaService: PwaService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface
   ) {
     super(noticeService);
@@ -269,7 +271,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
               this.source,
               this.target,
               this.sourceWordTokenizer,
-              this.targetWordTokenizer
+              this.targetWordTokenizer,
+              this.pwaService
             );
           }
         }
