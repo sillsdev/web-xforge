@@ -199,7 +199,8 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     }
 
     const dialogConfig: MdcDialogConfig<ScriptureChooserDialogData> = {
-      data: { input: currentVerseSelection, booksAndChaptersToShow: this.data.textsByBookId, rangeStart }
+      data: { input: currentVerseSelection, booksAndChaptersToShow: this.data.textsByBookId, rangeStart },
+      autoFocus: false
     };
 
     const dialogRef = this.dialog.open(ScriptureChooserDialogComponent, dialogConfig) as MdcDialogRef<
