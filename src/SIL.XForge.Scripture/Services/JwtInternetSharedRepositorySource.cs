@@ -87,11 +87,21 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Retrieve a list of <see cref="SharedRepository" />. Warning: This depends on the parent class client field.
+        /// Retrieve a list of <see cref="SharedRepository" />.
         /// </summary>
         public override IEnumerable<SharedRepository> GetRepositories()
         {
             return GetRepositories(GetLicensesForUserProjects());
+        }
+
+        /// <summary>
+        /// Gets the metadata information for all projects that the current user is on.
+        /// Sourced from <see cref="RegistryServer" />.
+        /// </summary>
+        public IEnumerable<ProjectMetadata> GetProjectsMetaData()
+        {
+            JArray projects = GetJsonArray("my/projects");
+            return projects == null ? null : projects.Select(p => new ProjectMetadata((JObject)p)).ToList();
         }
 
         /// <summary>
