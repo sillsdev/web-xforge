@@ -1,6 +1,6 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
-import { Component, DebugElement } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -202,14 +202,18 @@ describe('CheckingComponent', () => {
     it('responds to remote community checking disabled', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(1);
-      when(mockedNoticeService.showMessageDialog(anything())).thenResolve();
+      const projectUserConfig = env.component.projectUserConfigDoc!.data!;
+      expect(projectUserConfig.selectedTask).toEqual('checking');
+      expect(projectUserConfig.selectedQuestionRef).not.toBeNull();
       env.component.projectDoc!.submitJson0Op(
         op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, false),
         false
       );
       env.waitForSliderUpdate();
+      expect(projectUserConfig.selectedTask).toBeUndefined();
+      expect(projectUserConfig.selectedQuestionRef).toBeUndefined();
       expect(env.component.projectDoc).toBeUndefined();
-      verify(mockedNoticeService.showMessageDialog(anything())).once();
+      verify(mockedNoticeService.show(anything())).once();
       env.waitForSliderUpdate();
     }));
   });

@@ -375,16 +375,23 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
         if (this.projectDoc != null && this.projectDoc.data != null) {
           if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
-            this.onCheckingAccessRemoved();
+            this.onRemovedFromProject();
           } else if (!this.projectDoc.data.checkingConfig.checkingEnabled) {
             const navigateToTranslate = canAccessTranslateApp(this.projectDoc.data.userRoles[
               this.userService.currentUserId
             ] as SFProjectRole);
-            this.onCheckingAccessRemoved();
-            this.noticeService.showMessageDialog(() => translate('checking.community_checking_disabled'));
+            if (this.projectUserConfigDoc != null) {
+              // Remove the record of the state of the checking app so clicking 'Project Home' will not redirect there
+              this.projectUserConfigDoc.submitJson0Op(op => {
+                op.unset(puc => puc.selectedTask!);
+                op.unset(puc => puc.selectedQuestionRef!);
+              });
+            }
+            this.onRemovedFromProject();
             if (navigateToTranslate) {
               this.router.navigate(['/projects', projectId, 'translate', bookId], { replaceUrl: true });
             } else {
+              this.noticeService.show(translate('checking.community_checking_disabled'));
               this.router.navigate(['/projects', projectId], { replaceUrl: true });
             }
           }
@@ -393,7 +400,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       if (this.projectDeleteSub != null) {
         this.projectDeleteSub.unsubscribe();
       }
-      this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onCheckingAccessRemoved());
+      this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
     });
     this.subscribe(this.media.media$, (change: MediaChange) => {
       this.calculateScriptureSliderPosition();
@@ -866,7 +873,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   // Unbind this component from the data when a user is removed from the project, otherwise console
   // errors appear before the app can navigate to the start component
-  private onCheckingAccessRemoved(): void {
+  private onRemovedFromProject(): void {
     if (this.questionsPanel != null) {
       this.questionsPanel.activeQuestionDoc = undefined;
     }
