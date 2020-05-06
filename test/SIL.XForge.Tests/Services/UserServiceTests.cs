@@ -24,7 +24,7 @@ namespace SIL.XForge.Services
             var env = new TestEnvironment();
 
             JObject userProfile = env.CreateUserProfile("user01", "auth01", env.IssuedAt - TimeSpan.FromMinutes(5));
-            await env.Service.UpdateUserFromProfileAsync("user01", userProfile);
+            await env.Service.UpdateUserFromProfileAsync("user01", userProfile.ToString());
             User user1 = env.GetUser("user01");
             Assert.That(user1.Sites.ContainsKey("xf"), Is.True);
             UserSecret userSecret = env.UserSecrets.Get("user01");
@@ -37,7 +37,7 @@ namespace SIL.XForge.Services
             var env = new TestEnvironment();
 
             JObject userProfile = env.CreateUserProfile("user01", "auth01", env.IssuedAt + TimeSpan.FromMinutes(5));
-            await env.Service.UpdateUserFromProfileAsync("user01", userProfile);
+            await env.Service.UpdateUserFromProfileAsync("user01", userProfile.ToString());
             User user1 = env.GetUser("user01");
             Assert.That(user1.Sites.ContainsKey("xf"), Is.True);
             UserSecret userSecret = env.UserSecrets.Get("user01");
@@ -50,7 +50,7 @@ namespace SIL.XForge.Services
             var env = new TestEnvironment();
 
             JObject userProfile = env.CreateUserProfile("user03", "auth03", env.IssuedAt);
-            await env.Service.UpdateUserFromProfileAsync("user03", userProfile);
+            await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
             Assert.That(env.ContainsUser("user03"), Is.True);
             UserSecret userSecret = env.UserSecrets.Get("user03");
             Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
@@ -64,7 +64,7 @@ namespace SIL.XForge.Services
             JObject userProfile = env.CreateUserProfile("user03", "auth03", env.IssuedAt);
             userProfile["name"] = "usernew@example.com";
             userProfile["nickname"] = "usernew";
-            await env.Service.UpdateUserFromProfileAsync("user03", userProfile);
+            await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
             User user3 = env.GetUser("user03");
             Assert.That(user3.DisplayName, Is.EqualTo("usernew"));
             UserSecret userSecret = env.UserSecrets.Get("user03");
@@ -79,7 +79,7 @@ namespace SIL.XForge.Services
             JObject userProfile = env.CreateUserProfile("user03", "auth03", env.IssuedAt);
             userProfile["name"] = "User New";
             userProfile["nickname"] = "usernew";
-            await env.Service.UpdateUserFromProfileAsync("user03", userProfile);
+            await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
             User user3 = env.GetUser("user03");
             Assert.That(user3.DisplayName, Is.EqualTo("User New"));
             UserSecret userSecret = env.UserSecrets.Get("user03");
@@ -92,7 +92,7 @@ namespace SIL.XForge.Services
             var env = new TestEnvironment();
             env.AuthService.LinkAccounts("auth02", "auth03").Returns(Task.CompletedTask);
             JObject userProfile = env.CreateUserProfile("user02", "auth02", env.IssuedAt);
-            env.AuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile));
+            env.AuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile.ToString()));
 
             await env.Service.LinkParatextAccountAsync("user02", "auth02", "auth03");
             User user2 = env.GetUser("user02");
@@ -107,7 +107,7 @@ namespace SIL.XForge.Services
             var env = new TestEnvironment();
             env.AuthService.UpdateInterfaceLanguage("auth02", "mri").Returns(Task.CompletedTask);
             JObject userProfile = env.CreateUserProfile("user02", "auth02", env.IssuedAt);
-            env.AuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile));
+            env.AuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile.ToString()));
 
             await env.Service.UpdateInterfaceLanguageAsync("user02", "auth02", "mri");
             User user2 = env.GetUser("user02");

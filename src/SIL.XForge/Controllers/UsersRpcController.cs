@@ -1,10 +1,10 @@
+using System.Text.Json;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
 using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json.Linq;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Controllers
@@ -30,9 +30,9 @@ namespace SIL.XForge.Controllers
         /// Updates the user entity from the specified Auth0 user profile. Auth0 calls this command from a rule.
         /// </summary>
         [Authorize(AuthenticationSchemes = BasicAuthenticationDefaults.AuthenticationScheme)]
-        public Task PushAuthUserProfile(string userId, JObject userProfile)
+        public Task PushAuthUserProfile(string userId, JsonElement userProfile)
         {
-            return _userService.UpdateUserFromProfileAsync(userId, userProfile);
+            return _userService.UpdateUserFromProfileAsync(userId, userProfile.ToString());
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace SIL.XForge.Controllers
             if (!_hostingEnv.IsDevelopment())
                 return ForbiddenError();
 
-            JObject userProfile = await _authService.GetUserAsync(AuthId);
+            string userProfile = await _authService.GetUserAsync(AuthId);
             await _userService.UpdateUserFromProfileAsync(UserId, userProfile);
             return Ok();
         }
