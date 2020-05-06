@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.Scripture;
@@ -13,17 +15,16 @@ using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
-using System.IO;
+using SIL.XForge.Services;
+using Paratext.Data;
+using Paratext.Data.ProjectComments;
+using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
 using PtxUtils;
-using SIL.XForge.Services;
-using Paratext.Data.ProjectComments;
-using SIL.XForge.Realtime.RichText;
-using Newtonsoft.Json.Linq;
-using Paratext.Data;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -61,7 +62,7 @@ namespace SIL.XForge.Scripture.Services
             ParatextProject expectedProject01 = new ParatextProject
             {
                 ParatextId = "paratext_" + env.Project01,
-                Name = env.Project01,
+                Name = "Full Name " + env.Project01,
                 ShortName = "P01",
                 LanguageTag = "writingsystem_tag",
                 ProjectId = "sf_id_" + env.Project01,
@@ -77,6 +78,18 @@ namespace SIL.XForge.Scripture.Services
             List<string> repoList = repos.Select(repo => repo.Name).ToList();
             Assert.That(StringComparer.InvariantCultureIgnoreCase.Compare(repoList[0], repoList[1]), Is.LessThan(0));
             Assert.That(StringComparer.InvariantCultureIgnoreCase.Compare(repoList[1], repoList[2]), Is.LessThan(0));
+        }
+
+        [Test]
+        public async Task GetProjectsAsync_ProjectNotOnSF_RetrievesProjectFullName()
+        {
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            IEnumerable<ParatextProject> projects = await env.Service.GetProjectsAsync(user01Secret);
+
+            ParatextProject project02 = projects.Single(p => p.ParatextId == "paratext_" + env.Project02);
+            Assert.That(project02.Name, Is.EqualTo("Full Name " + env.Project02));
         }
 
         [Test]
@@ -538,7 +551,12 @@ namespace SIL.XForge.Scripture.Services
                     ScrTextName = "P03",
                     SourceUsers = sourceUsers
                 };
+
+                ProjectMetadata projMeta1 = GetMetadata("paratext_" + Project01, "Full Name " + Project01);
+                ProjectMetadata projMeta2 = GetMetadata("paratext_" + Project02, "Full Name " + Project02);
+                ProjectMetadata projMeta3 = GetMetadata("paratext_" + Project03, "Full Name " + Project03);
                 mockSource.GetRepositories().Returns(new List<SharedRepository> { repo1, repo3, repo2 });
+                mockSource.GetProjectsMetaData().Returns(new[] { projMeta1, projMeta2, projMeta3 });
                 Service.InternetSharedRepositorySources[userSecret.Id] = mockSource;
                 return mockSource;
             }
@@ -552,7 +570,7 @@ namespace SIL.XForge.Scripture.Services
                         {
                             Id = "sf_id_" + Project01,
                             ParatextId = "paratext_" + Project01,
-                            Name = "project01",
+                            Name = "Full Name " + Project01,
                             ShortName = "P01",
                             WritingSystem = new WritingSystem
                             {
@@ -675,6 +693,16 @@ namespace SIL.XForge.Scripture.Services
                     callInfo.Arg<Action>()();
                     return true;
                 });
+            }
+
+            private ProjectMetadata GetMetadata(string projectId, string fullname)
+            {
+                string json = "{\"identification_name\": \"" +
+                    fullname +
+                    "\", \"identification_systemId\": [{\"type\": \"paratext\", \"text\": \"" +
+                    projectId +
+                    "\"}]}";
+                return new ProjectMetadata(JObject.Parse(json));
             }
         }
     }

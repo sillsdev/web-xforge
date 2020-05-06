@@ -159,8 +159,9 @@ namespace SIL.XForge.Scripture.Services
 
             IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret);
             IEnumerable<SharedRepository> repositories = source.GetRepositories();
+            IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
             Dictionary<string, ParatextProject> ptProjectsAvailable =
-                GetProjects(userSecret, repositories).ToDictionary(ptProject => ptProject.ParatextId);
+                GetProjects(userSecret, repositories, projectsMetadata).ToDictionary(ptProject => ptProject.ParatextId);
             List<string> problemProjectIds = new List<string>();
             if (!ptProjectsAvailable.TryGetValue(ptTargetId, out ParatextProject targetPtProject))
                 problemProjectIds.Add(ptTargetId);
@@ -206,7 +207,7 @@ namespace SIL.XForge.Scripture.Services
         {
             IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret);
             IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
-            return GetProjects(userSecret, remotePtProjects);
+            return GetProjects(userSecret, remotePtProjects, ptRepoSource.GetProjectsMetaData());
         }
 
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
@@ -367,7 +368,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         private IReadOnlyList<ParatextProject> GetProjects(UserSecret userSecret,
-            IEnumerable<SharedRepository> remotePtProjects)
+            IEnumerable<SharedRepository> remotePtProjects, IEnumerable<ProjectMetadata> projectsMetadata)
         {
             if (userSecret == null) throw new ArgumentNullException();
 
@@ -389,9 +390,7 @@ namespace SIL.XForge.Scripture.Services
                 paratextProjects.Add(new ParatextProject
                 {
                     ParatextId = remotePtProject.SendReceiveId,
-                    // TODO: Query the Paratext Registry to get the full name of the project because the
-                    // SharedRepository for a project only lists the short names.
-                    Name = correspondingSfProject?.Name ?? remotePtProject.ScrTextName,
+                    Name = projectsMetadata.Single(pmd => pmd.ProjectGuid == remotePtProject.SendReceiveId).FullName,
                     ShortName = remotePtProject.ScrTextName,
                     LanguageTag = correspondingSfProject?.WritingSystem.Tag,
                     ProjectId = correspondingSfProject?.Id,
