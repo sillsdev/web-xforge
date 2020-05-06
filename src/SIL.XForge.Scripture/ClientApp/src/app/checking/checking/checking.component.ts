@@ -390,8 +390,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             this.onRemovedFromProject();
             if (navigateToTranslate) {
               this.router.navigate(['/projects', projectId, 'translate', bookId], { replaceUrl: true });
+              this.noticeService.show(translate('app.scripture_checking_not_available'));
             } else {
-              this.noticeService.show(translate('checking.community_checking_disabled'));
               this.router.navigate(['/projects', projectId], { replaceUrl: true });
             }
           }

@@ -213,7 +213,6 @@ describe('CheckingComponent', () => {
       expect(projectUserConfig.selectedTask).toBeUndefined();
       expect(projectUserConfig.selectedQuestionRef).toBeUndefined();
       expect(env.component.projectDoc).toBeUndefined();
-      verify(mockedNoticeService.show(anything())).once();
       env.waitForSliderUpdate();
     }));
   });

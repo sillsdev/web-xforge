@@ -148,7 +148,6 @@
     }
   },
   "checking": {
-    "community_checking_disabled": "Community checking has been disabled for this project.",
     "me": "Me",
     "next": "Next",
     "previous": "Previous",
