@@ -85,8 +85,12 @@
     color: var(--mdc-theme-error);
     font-size: 0.75em;
     padding-left: 15px;
+    margin-bottom: 0.5em;
     font-weight: 400;
     letter-spacing: 0.03333333em;
+    &:not(.visible) {
+      visibility: hidden;
+    }
   }
   .form-actions {
     display: flex;

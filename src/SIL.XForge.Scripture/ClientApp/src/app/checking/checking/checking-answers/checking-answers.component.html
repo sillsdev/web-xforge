@@ -93,7 +93,7 @@
               <button type="button" (click)="selectScripture()" mdc-button primary>{{ t("select_verses") }}</button>
             </div>
           </div>
-          <div *ngIf="answerFormSubmitAttempted && answerText.invalid" class="form-helper-text">
+          <div class="form-helper-text" [ngClass]="{ visible: answerFormSubmitAttempted && answerText.invalid }">
             {{ t("answer_required_before_saving") }}
           </div>
           <div class="form-actions">
