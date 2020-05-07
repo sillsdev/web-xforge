@@ -100,7 +100,10 @@ const OBSERVER_USER: UserInfo = createUser('04', SFProjectRole.ParatextObserver)
 
 class MockComponent {}
 
-const ROUTES: Route[] = [{ path: 'projects/:projectId/checking/:bookId', component: MockComponent }];
+const ROUTES: Route[] = [
+  { path: 'projects/:projectId/checking/:bookId', component: MockComponent },
+  { path: 'projects/:projectId', component: MockComponent }
+];
 
 describe('CheckingComponent', () => {
   configureTestingModule(() => ({
@@ -193,6 +196,23 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.component.projectDoc).toBeUndefined();
       expect(env.component.questionDocs.length).toEqual(0);
+      env.waitForSliderUpdate();
+    }));
+
+    it('responds to remote community checking disabled', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(1);
+      const projectUserConfig = env.component.projectUserConfigDoc!.data!;
+      expect(projectUserConfig.selectedTask).toEqual('checking');
+      expect(projectUserConfig.selectedQuestionRef).not.toBeNull();
+      env.component.projectDoc!.submitJson0Op(
+        op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, false),
+        false
+      );
+      env.waitForSliderUpdate();
+      expect(projectUserConfig.selectedTask).toBeUndefined();
+      expect(projectUserConfig.selectedQuestionRef).toBeUndefined();
+      expect(env.component.projectDoc).toBeUndefined();
       env.waitForSliderUpdate();
     }));
   });
