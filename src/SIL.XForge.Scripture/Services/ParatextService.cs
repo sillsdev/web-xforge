@@ -131,6 +131,7 @@ namespace SIL.XForge.Scripture.Services
             WritingSystemRepository.Initialize();
             ScrTextCollection.Initialize(SyncDir);
             RegistryServer.Initialize(_applicationProductVersion);
+            SubstituteVersionedTextCache();
         }
 
         /// <summary> Copy resource files from the Assembly Directory into the sync directory. </summary>
@@ -194,6 +195,8 @@ namespace SIL.XForge.Scripture.Services
             // TODO report results
             List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
             bool success = false;
+            // This will clear the entire VersionedText cache since we are using a substitute
+            VersioningManager.RemoveVersionedText(targetSharedProj.ScrText);
             bool noErrors = SharingLogicWrapper.HandleErrors(() => success = SharingLogicWrapper
                 .ShareChanges(sharedPtProjectsToSr, source.AsInternetSharedRepositorySource(),
                 out results, sharedPtProjectsToSr));
@@ -557,6 +560,18 @@ namespace SIL.XForge.Scripture.Services
                 return;
             var progressDisplay = new SyncProgressDisplay(progress);
             PtxUtils.Progress.Progress.Mgr.SetDisplay(progressDisplay);
+        }
+
+        private void SubstituteVersionedTextCache()
+        {
+            // The VersioningManager caches VersionedTexts for each Paratext project with the ParatextId as the key.
+            // This is a problem because the SF server contains multiple repos cloned from the same Paratext project
+            // (i.e. an SF project uses a PT project as a source text that is a target text on a separate SF project).
+            // So instead substitute the cache with one that never returns its contents so the VersioningManager never
+            // confuses which repo to share changes with.
+            var subCache = SubstituteDictionaryCache.ValuesNeverFoundCache<string, VersionedText>();
+            typeof(VersioningManager).GetField("versionedTexts", BindingFlags.Static | BindingFlags.NonPublic)
+                .SetValue(null, subCache);
         }
     }
 }
