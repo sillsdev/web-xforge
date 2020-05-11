@@ -73,7 +73,7 @@ export class WebSocketStreamListener {
     this.httpServer.close();
   }
 
-  private verifyToken(req: http.IncomingMessage, done: Function): void {
+  private verifyToken(req: http.IncomingMessage, done: (res: boolean, code?: number, message?: string) => void): void {
     const url = req.url;
     if (url != null && url.includes('?access_token=')) {
       // the url contains an access token
