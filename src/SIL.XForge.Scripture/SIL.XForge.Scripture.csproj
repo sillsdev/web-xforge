@@ -99,4 +99,27 @@
     </ItemGroup>
   </Target>
 
+  <Target Name="AssignCustomCultures" AfterTargets="SplitResourcesByCulture">
+    <!--
+      Manually set culture metadata on embedded resources in order to support localization resources with custom
+      cultures. See MSBuild bug https://github.com/microsoft/msbuild/issues/1454 for more info.
+    -->
+    <ItemGroup>
+      <EmbeddedResource Condition="$([System.IO.Path]::HasExtension(%(Filename))) And $([System.IO.Path]::GetFileNameWithoutExtension(%(Filename))) != 'Pages'">
+        <Culture>$([System.IO.Path]::GetExtension(%(Filename)).TrimStart('.'))</Culture>
+        <WithCulture>true</WithCulture>
+        <ManifestResourceName>SIL.XForge.Scripture.Resources.%(Filename)</ManifestResourceName>
+      </EmbeddedResource>
+    </ItemGroup>
+    <ItemGroup>
+      <ResxWithNoCulture Remove="@(ResxWithNoCulture)"/>
+      <NonResxWithNoCulture Remove="@(NonResxWithNoCulture)"/>
+      <ResxWithCulture Remove="@(ResxWithCulture)"/>
+      <NonResxWithCulture Remove="@(NonResxWithCulture)"/>
+      <ResxWithNoCulture Include="@(EmbeddedResource)" Condition="'%(WithCulture)'=='false' and ('%(Extension)'=='.resx' or '%(Extension)'=='.restext')"/>
+      <NonResxWithNoCulture Include="@(EmbeddedResource)" Condition="'%(WithCulture)'=='false' and ('%(Extension)'!='.resx' and '%(Extension)'!='.restext')"/>
+      <ResxWithCulture Include="@(EmbeddedResource)" Condition="'%(WithCulture)'=='true' and ('%(Extension)'=='.resx' or '%(Extension)'=='.restext')"/>
+      <NonResxWithCulture Include="@(EmbeddedResource)" Condition="'%(WithCulture)'=='true' and ('%(Extension)'!='.resx' and '%(Extension)'!='.restext')"/>
+    </ItemGroup>
+  </Target>
 </Project>
