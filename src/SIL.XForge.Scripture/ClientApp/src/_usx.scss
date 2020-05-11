@@ -304,6 +304,7 @@ usx-chapter {
 
 usx-verse {
   user-select: none;
+  display: inline-block;
   > span > span > span {
     // superscript
     top: -0.5em;
@@ -315,6 +316,11 @@ usx-verse {
     white-space: nowrap;
     margin: 0 0.2em 0 0.3em;
   }
+}
+
+usx-segment {
+  box-decoration-break: clone;
+  padding: 0 0.3em;
 }
 
 usx-note {
