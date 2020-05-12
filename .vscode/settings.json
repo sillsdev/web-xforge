@@ -66,5 +66,7 @@
     "webm",
     "xforge",
     "xlink"
-  ]
+  ],
+  "typescript.tsdk": "./src/SIL.XForge.Scripture/ClientApp/node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
 }
