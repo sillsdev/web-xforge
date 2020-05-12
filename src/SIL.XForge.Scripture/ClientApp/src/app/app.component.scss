@@ -1,6 +1,7 @@
 @import '~src/variables';
 @import '~bootstrap/scss/mixins/breakpoints';
 @import '~@angular-mdc/theme/scss/icon-button/mixins';
+@import '~@material/top-app-bar/_variables.scss';
 
 :host {
   display: flex;
@@ -71,6 +72,10 @@
     .mdc-top-app-bar__section {
       padding: 4px;
     }
+  }
+
+  .mdc-top-app-bar-adjust {
+    margin-top: $mdc-top-app-bar-mobile-row-height;
   }
 
   .app-content {
