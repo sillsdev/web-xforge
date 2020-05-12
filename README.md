@@ -136,7 +136,7 @@ Create a directory to manage the development machine, such as `xforge`. Checkout
 
 Run `vagrant up`. This will download, initialize, and run the development machine. The machine is about 5GB, so expect the download to take a while.
 
-In the guest development machine, do the following additional steps:
+In the guest development machine, do the following additional steps. If a dialog about grub appears during upgrade, use TAB, ENTER, and SPACE to specify to use `sda` or to not worry about it, depending on which dialog you get.
 
 ```shell
 sudo apt update
