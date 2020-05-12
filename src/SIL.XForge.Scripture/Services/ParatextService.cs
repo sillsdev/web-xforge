@@ -123,6 +123,8 @@ namespace SIL.XForge.Scripture.Services
             SyncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
             if (!_fileSystemService.DirectoryExists(SyncDir))
                 _fileSystemService.CreateDirectory(SyncDir);
+            // Disable caching VersionedText instances since multiple repos may exist on SF server with the same GUID
+            Environment.SetEnvironmentVariable("PTD_CACHE_VERSIONED_TEXT", "DISABLED");
             RegistryU.Implementation = new DotNetCoreRegistry();
             Alert.Implementation = new DotNetCoreAlert(_logger);
             ParatextDataSettings.Initialize(new PersistedParatextDataSettings());
