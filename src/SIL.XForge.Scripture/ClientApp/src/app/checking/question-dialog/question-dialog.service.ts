@@ -1,10 +1,10 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Injectable } from '@angular/core';
+import { TranslocoService } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -21,7 +21,7 @@ export class QuestionDialogService {
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly noticeService: NoticeService,
-    private readonly i18n: I18nService
+    private readonly transloco: TranslocoService
   ) {}
 
   /** Opens a question dialog that can be used to add a new question or edit an existing question. */
@@ -37,7 +37,7 @@ export class QuestionDialogService {
     }
     if (!(await this.canCreateAndEditQuestions(config.projectId))) {
       // The 'translate' method from transloco would save us from depending on i18nService but that caused test failures
-      this.noticeService.show(this.i18n.translateAndInsertTags('question_dialog.add_question_denied'));
+      this.noticeService.show(this.transloco.translate('question_dialog.add_question_denied'));
       return undefined;
     }
     const questionId = questionDoc != null && questionDoc.data != null ? questionDoc.data.dataId : objectId();

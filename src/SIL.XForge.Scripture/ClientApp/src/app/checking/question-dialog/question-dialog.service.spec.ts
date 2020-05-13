@@ -9,7 +9,6 @@ import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-re
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -26,7 +25,6 @@ const mockedDialog = mock(MdcDialog);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
-const mockedI18nService = mock(I18nService);
 
 describe('QuestionDialogService', () => {
   configureTestingModule(() => ({
@@ -36,8 +34,7 @@ describe('QuestionDialogService', () => {
       { provide: MdcDialog, useMock: mockedDialog },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: I18nService, useMock: mockedI18nService }
+      { provide: NoticeService, useMock: mockedNoticeService }
     ]
   }));
 
@@ -70,11 +67,10 @@ describe('QuestionDialogService', () => {
       audio: {}
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
-    when(mockedI18nService.translateAndInsertTags(anything())).thenReturn('User does not have permission');
     env.updateUserRole(SFProjectRole.CommunityChecker);
     await env.service.questionDialog(env.getQuestionDialogData());
     verify(mockedProjectService.createQuestion(env.PROJECT01, anything())).never();
-    verify(mockedNoticeService.show('User does not have permission')).once();
+    verify(mockedNoticeService.show('question_dialog.add_question_denied')).once();
     expect().nothing();
   });
 

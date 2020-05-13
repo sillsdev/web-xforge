@@ -1,5 +1,5 @@
 import merge from 'lodash/merge';
-import { AudioData } from 'realtime-server/lib/common/models/audio-data';
+import { OfflineData } from './models/offline-data';
 import { Snapshot } from './models/snapshot';
 import { performQuery, QueryParameters } from './query-parameters';
 import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore } from './realtime-offline-store';
@@ -9,7 +9,7 @@ import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore 
  */
 export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
   private readonly map = new Map<string, Map<string, RealtimeOfflineData>>();
-  private readonly audioMap = new Map<string, AudioData>();
+  private readonly offlineDataMap = new Map<string, Map<string, OfflineData>>();
 
   addSnapshot<T>(collection: string, snapshot: Snapshot<T>): void {
     let collectionSnapshots = this.map.get(collection);
@@ -44,16 +44,20 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
     return Promise.resolve(collectionData.get(id));
   }
 
-  getAllAudio(): Promise<AudioData[]> {
-    return Promise.resolve(Array.from(this.audioMap.values()));
+  getAllData<T extends OfflineData>(collection: string): Promise<T[]> {
+    const collectionData = this.offlineDataMap.get(collection);
+    if (collectionData == null) {
+      return Promise.resolve([]);
+    }
+    return Promise.resolve(Array.from(collectionData.values()).map(d => d as T));
   }
 
-  getAudio(id: string): Promise<AudioData | undefined> {
-    const collectionData = this.audioMap.get(id);
+  getData<T extends OfflineData>(collection: string, dataId: string): Promise<T | undefined> {
+    const collectionData = this.offlineDataMap.get(collection);
     if (collectionData == null) {
       return Promise.resolve(undefined);
     }
-    return Promise.resolve(collectionData);
+    return Promise.resolve(collectionData.get(dataId) as T);
   }
 
   async query(collection: string, parameters: QueryParameters): Promise<RealtimeOfflineQueryResults> {
@@ -71,9 +75,14 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
     return Promise.resolve();
   }
 
-  putAudio(audio: AudioData): Promise<AudioData> {
-    this.audioMap.set(audio.dataId, audio);
-    return Promise.resolve(audio);
+  putData(collection: string, data: OfflineData): Promise<OfflineData> {
+    let collectionData = this.offlineDataMap.get(collection);
+    if (collectionData == null) {
+      collectionData = new Map<string, OfflineData>();
+      this.offlineDataMap.set(collection, collectionData);
+    }
+    collectionData.set(data.dataId, data);
+    return Promise.resolve(data);
   }
 
   delete(collection: string, id: string): Promise<void> {
@@ -84,8 +93,11 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
     return Promise.resolve();
   }
 
-  deleteAudio(id: string): Promise<void> {
-    this.audioMap.delete(id);
+  deleteData(collection: string, dataId: string): Promise<void> {
+    const collectionData = this.offlineDataMap.get(collection);
+    if (collectionData != null) {
+      collectionData.delete(dataId);
+    }
     return Promise.resolve();
   }
 

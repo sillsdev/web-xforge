@@ -1,6 +1,7 @@
+import { AudioData } from 'xforge-common/models/audio-data';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
-import { RealtimeDocTypes } from 'xforge-common/realtime-doc-types';
+import { OfflineDataTypes, RealtimeDocTypes } from 'xforge-common/realtime-doc-types';
 import { QuestionDoc } from './question-doc';
 import { SFProjectDoc } from './sf-project-doc';
 import { SFProjectUserConfigDoc } from './sf-project-user-config-doc';
@@ -14,3 +15,5 @@ export const SF_REALTIME_DOC_TYPES = new RealtimeDocTypes([
   QuestionDoc,
   TextDoc
 ]);
+
+export const SF_OFFLINE_DATA_TYPES = new OfflineDataTypes([AudioData]);

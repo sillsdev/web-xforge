@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AudioData } from 'realtime-server/lib/common/models/audio-data';
+import { OfflineData } from './models/offline-data';
 import { RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { QueryParameters } from './query-parameters';
@@ -150,17 +150,17 @@ export class RealtimeService {
     }
   }
 
-  async storeLocalAudio(audio: AudioData): Promise<string> {
-    const audioSource = await this.offlineStore.putAudio(audio);
-    if (audioSource != null) {
-      return URL.createObjectURL(audioSource.blob);
+  async storeOfflineData<T extends OfflineData>(data: T): Promise<T> {
+    const storedData = await this.offlineStore.putData(data.collection, data);
+    if (storedData != null) {
+      return storedData as T;
     }
-    return Promise.reject('Could not store audio in offline store.');
+    return Promise.reject('Could not store data in offline store.');
   }
 
-  async removeLocalAudio(dataId: string): Promise<boolean> {
-    if ((await this.offlineStore.getAudio(dataId)) != null) {
-      await this.offlineStore.deleteAudio(dataId);
+  async removeOfflineData(collection: string, dataId: string): Promise<boolean> {
+    if ((await this.offlineStore.getData(collection, dataId)) != null) {
+      await this.offlineStore.deleteData(collection, dataId);
       return true;
     }
     return false;

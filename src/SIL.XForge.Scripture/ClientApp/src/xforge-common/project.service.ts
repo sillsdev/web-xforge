@@ -13,12 +13,13 @@ import { RealtimeQuery } from './models/realtime-query';
 import { PwaService } from './pwa.service';
 import { Filters, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
+import { SubscriptionDisposable } from './subscription-disposable';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
 
 export abstract class ProjectService<
   TProj extends Project = Project,
   TDoc extends ProjectDoc<TProj> = ProjectDoc<TProj>
-> {
+> extends SubscriptionDisposable {
   readonly roles: Map<string, ProjectRoleInfo>;
 
   constructor(
@@ -28,6 +29,7 @@ export abstract class ProjectService<
     roles: ProjectRoleInfo[],
     private readonly http: HttpClient
   ) {
+    super();
     this.roles = new Map<string, ProjectRoleInfo>();
     for (const role of roles) {
       this.roles.set(role.role, role);
@@ -86,15 +88,6 @@ export abstract class ProjectService<
 
   onlineDelete(id: string): Promise<void> {
     return this.onlineInvoke('delete', { projectId: id });
-  }
-
-  onReconnect(callback: () => Promise<void>): void {
-    const sub = this.pwaService.onlineStatus.subscribe((online: boolean) => {
-      if (online) {
-        callback();
-        sub.unsubscribe();
-      }
-    });
   }
 
   protected onlineDeleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
