@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import isObjectLike from 'lodash/isObjectLike';
-import { AUDIO_COLLECTION, AudioData } from 'realtime-server/lib/common/models/audio-data';
+import { OfflineData } from './models/offline-data';
 import { Filter, performQuery, QueryParameters } from './query-parameters';
-import { RealtimeDocTypes } from './realtime-doc-types';
+import { OfflineDataTypes, RealtimeDocTypes } from './realtime-doc-types';
 import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore } from './realtime-offline-store';
 import { nameof } from './utils';
 
@@ -28,8 +28,8 @@ function getAllFromCursor(
   });
 }
 
-function getLocalAudio(store: IDBObjectStore | IDBIndex): Promise<AudioData[]> {
-  return new Promise<AudioData[]>((resolve, reject) => {
+function getOfflineData<T extends OfflineData>(store: IDBObjectStore | IDBIndex): Promise<T[]> {
+  return new Promise<T[]>((resolve, reject) => {
     const request = store.getAll();
     request.onerror = () => reject(request.error);
     request.onsuccess = () => resolve(request.result);
@@ -59,7 +59,7 @@ function getKeyRange(filter: Filter): IDBKeyRange | undefined {
 export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
   private openDBPromise?: Promise<IDBDatabase>;
 
-  constructor(private readonly domainModel: RealtimeDocTypes) {
+  constructor(private readonly domainModel: RealtimeDocTypes, private readonly offlineDataModel: OfflineDataTypes) {
     super();
   }
 
@@ -94,13 +94,13 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
     return await getAllFromCursor(objectStore);
   }
 
-  async getAllAudio(): Promise<AudioData[]> {
+  async getAllData<T extends OfflineData>(collection: string): Promise<T[]> {
     const db = await this.openDB();
 
-    const transaction = db.transaction(AUDIO_COLLECTION);
-    const objectStore = transaction.objectStore(AUDIO_COLLECTION);
+    const transaction = db.transaction(collection);
+    const objectStore = transaction.objectStore(collection);
 
-    return await getLocalAudio(objectStore);
+    return await getOfflineData<T>(objectStore);
   }
 
   async get(collection: string, id: string): Promise<RealtimeOfflineData> {
@@ -116,13 +116,13 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
     });
   }
 
-  async getAudio(dataId: string): Promise<AudioData | undefined> {
+  async getData<T extends OfflineData>(collection: string, dataId: string): Promise<T | undefined> {
     const db = await this.openDB();
 
-    const transaction = db.transaction(AUDIO_COLLECTION);
-    const objectStore = transaction.objectStore(AUDIO_COLLECTION);
+    const transaction = db.transaction(collection);
+    const objectStore = transaction.objectStore(collection);
 
-    return await new Promise<AudioData>((resolve, reject) => {
+    return await new Promise<T>((resolve, reject) => {
       const request = objectStore.get(dataId);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
@@ -164,19 +164,19 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
     });
   }
 
-  async putAudio(audio: AudioData): Promise<AudioData | undefined> {
+  async putData(collection: string, data: OfflineData): Promise<OfflineData | undefined> {
     const db = await this.openDB();
-    const transaction = db.transaction(AUDIO_COLLECTION, 'readwrite');
-    const objectStore = transaction.objectStore(AUDIO_COLLECTION);
+    const transaction = db.transaction(collection, 'readwrite');
+    const objectStore = transaction.objectStore(collection);
 
     await new Promise<void>((resolve, reject) => {
-      const request = objectStore.put(audio);
+      const request = objectStore.put(data);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve();
     });
 
-    return await new Promise<AudioData>((resolve, reject) => {
-      const request = objectStore.get(audio.dataId);
+    return await new Promise<OfflineData>((resolve, reject) => {
+      const request = objectStore.get(data.dataId);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
     });
@@ -195,8 +195,8 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
     });
   }
 
-  async deleteAudio(id: string): Promise<void> {
-    return this.delete(AUDIO_COLLECTION, id);
+  deleteData(collection: string, dataId: string): Promise<void> {
+    return this.delete(collection, dataId);
   }
 
   async deleteDB(): Promise<void> {
@@ -233,7 +233,9 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
           }
         }
         // Create an audio store
-        db.createObjectStore(AUDIO_COLLECTION, { keyPath: 'dataId' });
+        for (const dataType of this.offlineDataModel.dataTypes) {
+          db.createObjectStore(dataType.COLLECTION, { keyPath: 'dataId' });
+        }
       };
     });
     return this.openDBPromise;
