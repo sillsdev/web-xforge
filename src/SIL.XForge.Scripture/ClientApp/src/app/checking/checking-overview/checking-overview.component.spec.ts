@@ -1,9 +1,10 @@
 import { MdcDialog, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { Location } from '@angular/common';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { CookieService } from 'ngx-cookie-service';
@@ -47,9 +48,16 @@ const mockedAuthService = mock(AuthService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedCookieService = mock(CookieService);
 
+class MockComponent {}
+
+const ROUTES: Route[] = [
+  { path: 'projects/:projectId', component: MockComponent },
+  { path: 'projects/:projectId/translate', component: MockComponent }
+];
+
 describe('CheckingOverviewComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, RouterTestingModule],
+    imports: [DialogTestModule, RouterTestingModule.withRoutes(ROUTES)],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: MdcDialog, useMock: mockedMdcDialog },
@@ -294,6 +302,24 @@ describe('CheckingOverviewComponent', () => {
       env.setSeeOtherUserResponses(true);
       expect(env.likePanel).not.toBeNull();
     }));
+
+    it('responds to remote community checking disabled for checker', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser(env.checkerUser);
+      env.waitForQuestions();
+      env.setCheckingEnabled(false);
+      expect(env.location.path()).toBe('/projects/project01');
+      verify(mockedNoticeService.show(anything())).never();
+    }));
+
+    it('responds to remote community checking disabled for non-checkers', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser(env.translatorUser);
+      env.waitForQuestions();
+      env.setCheckingEnabled(false);
+      expect(env.location.path()).toBe('/projects/project01/translate');
+      verify(mockedNoticeService.show(anything())).once();
+    }));
   });
 
   describe('Archive Question', () => {
@@ -373,12 +399,14 @@ interface UserInfo {
 class TestEnvironment {
   component: CheckingOverviewComponent;
   fixture: ComponentFixture<CheckingOverviewComponent>;
+  location: Location;
 
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
   checkerUser = this.createUser('02', SFProjectRole.CommunityChecker);
+  translatorUser = this.createUser('03', SFProjectRole.ParatextTranslator);
 
   private adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.adminUser.id,
@@ -401,6 +429,18 @@ class TestEnvironment {
     numSuggestions: 1,
     selectedSegment: '',
     questionRefsRead: ['q1Id', 'q2Id', 'q3Id'],
+    answerRefsRead: [],
+    commentRefsRead: []
+  };
+  private translatorProjectUserConfig: SFProjectUserConfig = {
+    ownerRef: this.translatorUser.id,
+    projectRef: 'project01',
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    translationSuggestionsEnabled: true,
+    numSuggestions: 1,
+    selectedSegment: '',
+    questionRefsRead: [],
     answerRefsRead: [],
     commentRefsRead: []
   };
@@ -431,7 +471,8 @@ class TestEnvironment {
     ],
     userRoles: {
       [this.adminUser.id]: this.adminUser.role,
-      [this.checkerUser.id]: this.checkerUser.role
+      [this.checkerUser.id]: this.checkerUser.role,
+      [this.translatorUser.id]: this.translatorUser.role
     }
   };
 
@@ -649,6 +690,10 @@ class TestEnvironment {
       {
         id: getSFProjectUserConfigDocId('project01', this.checkerUser.id),
         data: this.reviewerProjectUserConfig
+      },
+      {
+        id: getSFProjectUserConfigDocId('project01', this.translatorUser.id),
+        data: this.translatorProjectUserConfig
       }
     ]);
 
@@ -669,6 +714,7 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);
     this.component = this.fixture.componentInstance;
+    this.location = TestBed.get(Location);
   }
 
   get addQuestionButton(): DebugElement {
@@ -744,6 +790,13 @@ class TestEnvironment {
       op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, isEnabled),
       false
     );
+    tick();
+    this.fixture.detectChanges();
+  }
+
+  setCheckingEnabled(isEnabled: boolean): void {
+    const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
+    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
     tick();
     this.fixture.detectChanges();
   }

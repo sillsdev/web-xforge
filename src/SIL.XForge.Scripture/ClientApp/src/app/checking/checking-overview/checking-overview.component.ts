@@ -1,6 +1,6 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
@@ -15,6 +15,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { canAccessTranslateApp } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -49,7 +50,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    private readonly questionDialogService: QuestionDialogService
+    private readonly questionDialogService: QuestionDialogService,
+    private readonly router: Router
   ) {
     super(noticeService);
   }
@@ -157,7 +159,24 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         this.dataChangesSub.unsubscribe();
       }
       this.dataChangesSub = merge(this.projectDoc.remoteChanges$, this.questionsQuery.remoteChanges$).subscribe(() => {
-        this.initTextsWithLoadingIndicator();
+        if (this.projectDoc != null && this.projectDoc.data != null) {
+          if (this.projectDoc.data.checkingConfig.checkingEnabled) {
+            this.initTextsWithLoadingIndicator();
+          } else {
+            if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+              this.projectUserConfigDoc.submitJson0Op(op => {
+                op.unset(puc => puc.selectedTask!);
+              });
+            }
+            const role = this.projectDoc.data.userRoles[this.userService.currentUserId] as SFProjectRole;
+            if (canAccessTranslateApp(role)) {
+              this.router.navigate(['/projects', this.projectDoc.id, 'translate'], { replaceUrl: true });
+              this.noticeService.show(translate('app.scripture_checking_not_available'));
+            } else {
+              this.router.navigate(['/projects/', this.projectDoc.id]);
+            }
+          }
+        }
       });
     });
   }
