@@ -5,6 +5,7 @@
         id="question-drawer"
         [drawer]="isDrawerPermanent ? 'permanent' : 'modal'"
         [open]="isExpanded"
+        [autoFocus]="false"
         (closed)="drawerCollapsed()"
       >
         <div class="d-flex flex-max" id="questions-panel">
@@ -20,6 +21,7 @@
                   #questionsPanel
                   (update)="questionUpdated($event)"
                   (changed)="questionChanged($event)"
+                  [visible]="isDrawerPermanent || isExpanded"
                   [questionDocs]="questionDocs"
                   [project]="projectDoc?.data"
                   [projectUserConfigDoc]="projectUserConfigDoc"

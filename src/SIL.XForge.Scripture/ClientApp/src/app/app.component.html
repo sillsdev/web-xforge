@@ -131,6 +131,7 @@
     *ngIf="isProjectSelected"
     [drawer]="isDrawerPermanent ? 'permanent' : 'modal'"
     [open]="isExpanded"
+    [autoFocus]="false"
     (closed)="drawerCollapsed()"
   >
     <mdc-drawer-header>
