@@ -160,6 +160,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     if (this.isOfflineDataLoaded) {
       return;
     }
+    this.isOfflineDataLoaded = true;
     const offlineData = await this.realtimeService.offlineStore.get(this.collection, this.id);
     if (offlineData != null) {
       if (offlineData.v == null) {
@@ -172,7 +173,6 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
         }
       }
     }
-    this.isOfflineDataLoaded = true;
   }
 
   /**

@@ -89,7 +89,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.subscribe(pwaService.onlineStatus, status => {
       this.isAppOnline = status;
       if (!this.isAppOnline) {
-        this.router.navigateByUrl('/offline');
+        // this.router.navigateByUrl('/offline');
       }
     });
 
@@ -113,7 +113,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     );
     this.subscribe(navEndStart$, e => {
       if (!this.isAppOnline && e.url !== '/offline') {
-        router.navigateByUrl('/offline');
+        // router.navigateByUrl('/offline');
       }
     });
   }
@@ -478,7 +478,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           .then(query => this.questionCountQueries.set(text.bookNum, query))
       );
     }
-    await Promise.all(promises);
+    // await Promise.all(promises);
   }
 
   private disposeQuestionQueries(): void {
