@@ -101,7 +101,7 @@ describe('SettingsComponent', () => {
       const env = new TestEnvironment();
       when(
         mockedSFProjectService.onlineUpdateSettings('project01', deepEqual({ usersSeeEachOthersResponses: true }))
-      ).thenReject('Network error');
+      ).thenReject(new Error('Network error'));
       env.setupProject();
       env.wait();
       env.clickElement(env.inputElement(env.checkingCheckbox));
