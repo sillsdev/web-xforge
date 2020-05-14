@@ -40,6 +40,7 @@ export interface RealtimeDocAdapter {
   submitOp(op: any, source?: any): Promise<void>;
   exists(): Promise<boolean>;
   delete(): Promise<void>;
+  updatePendingOps(ops: any[]): void;
 
   destroy(): Promise<void>;
 }

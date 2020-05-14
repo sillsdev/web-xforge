@@ -168,9 +168,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       } else {
         await this.adapter.ingestSnapshot(offlineData);
         this.offlineSnapshotVersion = this.adapter.version;
-        if (offlineData.pendingOps.length > 0) {
-          Promise.all(offlineData.pendingOps.map(op => this.adapter.submitOp(op))).then(() => this.updateOfflineData());
-        }
+        this.adapter.updatePendingOps(offlineData.pendingOps);
       }
     }
   }
