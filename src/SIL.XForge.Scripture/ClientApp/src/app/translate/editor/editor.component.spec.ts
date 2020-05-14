@@ -27,7 +27,7 @@ import {
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Subject } from 'rxjs';
-import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anyNumber, anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -854,6 +854,122 @@ describe('EditorComponent', () => {
       expect(env.component.canEdit).toBe(false);
       expect(env.isSourceAreaHidden).toBe(true);
       expect(env.invalidWarning).not.toBeNull();
+      env.dispose();
+    }));
+  });
+
+  describe('TextComponent', () => {
+    it('removeIncomingFormatting (for onContentChanged)', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.wait();
+      expect(env.component.target).toBeDefined();
+      const mockedQuill = mock(Quill);
+
+      // A delta without formatting results in nothing happening.
+      let delta = new Delta();
+      delta.retain(2);
+      // SUT
+      env.component.target!.removeIncomingFormatting(delta, instance(mockedQuill));
+      verify(mockedQuill.removeFormat(anyNumber(), anyNumber())).never();
+      expect(delta.ops!.some(op => op.attributes != null && op.attributes.bold != null)).toBe(false);
+      expect(delta.ops!.length).toEqual(1);
+      expect(delta.ops![0].retain!).toEqual(2);
+
+      // A delta starting with retain, and then formatting some
+      // characters, results in a remove formatting request, and the
+      // delta ops are changed by only by setting the formatting
+      // request to null.
+      delta = new Delta();
+      delta.retain(2);
+      delta.retain(1, { bold: true });
+      // SUT
+      env.component.target!.removeIncomingFormatting(delta, instance(mockedQuill));
+      tick();
+      verify(mockedQuill.removeFormat(anyNumber(), anyNumber())).once();
+      let removeFormatArgs = capture(mockedQuill.removeFormat).last();
+      expect(removeFormatArgs[0]).toEqual(2);
+      expect(removeFormatArgs[1]).toEqual(1);
+      resetCalls(mockedQuill);
+      expect(delta.ops!.some(op => op.attributes != null && op.attributes.bold != null)).toBe(false);
+      expect(delta.ops!.length).toEqual(2);
+      expect(delta.ops![0].retain!).toEqual(2);
+      expect(delta.ops![1].retain!).toEqual(1);
+      expect(delta.ops![1].attributes!.bold).toBe(null);
+
+      // Don't process a delta with insert, until the implementation
+      // is made capable of handling that (if even necessary).
+      delta = new Delta();
+      delta.insert('hello', { bold: true });
+      delta.retain(2);
+      delta.retain(1, { bold: true });
+      // SUT
+      env.component.target!.removeIncomingFormatting(delta, instance(mockedQuill));
+      tick();
+      verify(mockedQuill.removeFormat(anyNumber(), anyNumber())).never();
+      resetCalls(mockedQuill);
+      expect(delta.ops!.some(op => op.attributes != null && op.attributes.bold != null)).toBe(true);
+      expect(delta.ops!.length).toEqual(3);
+      expect(delta.ops![0].insert!).toEqual('hello');
+      expect(delta.ops![0].attributes!.bold).toBe(true);
+      expect(delta.ops![1].retain!).toEqual(2);
+      expect(delta.ops![2].retain!).toEqual(1);
+      expect(delta.ops![2].attributes!.bold).toBe(true);
+
+      // Don't process a delta with delete, until the implementation
+      // is made capable of handling that (if even necessary).
+      delta = new Delta();
+      delta.delete(3);
+      delta.retain(2);
+      delta.retain(1, { bold: true });
+      // SUT
+      env.component.target!.removeIncomingFormatting(delta, instance(mockedQuill));
+      tick();
+      verify(mockedQuill.removeFormat(anyNumber(), anyNumber())).never();
+      resetCalls(mockedQuill);
+      expect(delta.ops!.some(op => op.attributes != null && op.attributes.bold != null)).toBe(true);
+      expect(delta.ops!.length).toEqual(3);
+      expect(delta.ops![0].delete!).toEqual(3);
+      expect(delta.ops![1].retain!).toEqual(2);
+      expect(delta.ops![2].retain!).toEqual(1);
+      expect(delta.ops![2].attributes!.bold).toBe(true);
+
+      // A delta starting with a retain that formats needs to have
+      // a different starting value on the remove formatting call.
+      delta = new Delta();
+      delta.retain(3, { bold: true });
+      delta.retain(4);
+      // SUT
+      env.component.target!.removeIncomingFormatting(delta, instance(mockedQuill));
+      tick();
+      verify(mockedQuill.removeFormat(anyNumber(), anyNumber())).once();
+      removeFormatArgs = capture(mockedQuill.removeFormat).last();
+      expect(removeFormatArgs[0]).toEqual(0);
+      expect(removeFormatArgs[1]).toEqual(3);
+      resetCalls(mockedQuill);
+      expect(delta.ops!.some(op => op.attributes != null && op.attributes.bold != null)).toBe(false);
+      expect(delta.ops!.length).toEqual(2);
+      expect(delta.ops![0].retain!).toEqual(3);
+      expect(delta.ops![0].attributes!.bold).toBe(null);
+      expect(delta.ops![1].retain!).toEqual(4);
+
+      // A delta with more than one formatting operation is ignored until the implementation handles that.
+      delta = new Delta();
+      delta.retain(3, { bold: true });
+      delta.retain(1);
+      delta.retain(4, { bold: true });
+      // SUT
+      env.component.target!.removeIncomingFormatting(delta, instance(mockedQuill));
+      tick();
+      verify(mockedQuill.removeFormat(anyNumber(), anyNumber())).never();
+      resetCalls(mockedQuill);
+      expect(delta.ops!.some(op => op.attributes != null && op.attributes.bold != null)).toBe(true);
+      expect(delta.ops!.length).toEqual(3);
+      expect(delta.ops![0].retain!).toEqual(3);
+      expect(delta.ops![0].attributes!.bold).toBe(true);
+      expect(delta.ops![1].retain!).toEqual(1);
+      expect(delta.ops![2].retain!).toEqual(4);
+      expect(delta.ops![2].attributes!.bold).toBe(true);
+
       env.dispose();
     }));
   });

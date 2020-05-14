@@ -2,7 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChil
 import { translate } from '@ngneat/transloco';
 import isEqual from 'lodash/isEqual';
 import merge from 'lodash/merge';
-import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
+import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill';
 import { fromEvent } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../core/models/text-doc';
@@ -42,7 +42,9 @@ export interface TextUpdatedEvent {
   segment?: Segment;
 }
 
-/** View of an editable text document. Used for displaying Scripture. */
+/** View of an editable text document. Used for displaying Scripture.
+ * Tests against some functionality can be found in editor.component.spec.ts.
+ */
 @Component({
   selector: 'app-text',
   templateUrl: './text.component.html'
@@ -333,7 +335,56 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     return this.viewModel.hasSegmentRange(ref);
   }
 
+  /** Remove certain formatting from delta.ops in simple cases,
+   * and issue an editor.removeFormat(). Ignores more complex cases. */
+  removeIncomingFormatting(delta: DeltaStatic, editor: Quill) {
+    if (delta.ops == null || delta.ops.length === 0) {
+      return;
+    }
+    if (delta.ops.some(op => op.insert != null || op.delete != null)) {
+      // Not yet built to handle deltas with insert or delete ops
+      return;
+    }
+    const opsWithFormatting = delta.ops.filter(op => op.attributes != null && op.attributes.bold != null);
+    if (opsWithFormatting.length !== 1) {
+      // Not yet handling cases of more than one formatting.
+      return;
+    }
+    const firstRetainOp = delta.ops.find((op: DeltaOperation) => op.retain != null);
+    if (firstRetainOp == null) {
+      // Not trying to handle deltas without a retain.
+      return;
+    }
+
+    let start: number | undefined = firstRetainOp.retain;
+    const firstOpWithFormatting: DeltaOperation | undefined = delta.ops.find(
+      (op: DeltaOperation) => op.attributes != null && op.attributes.bold != null
+    );
+    if (firstOpWithFormatting == null) {
+      return;
+    }
+    if (firstOpWithFormatting === firstRetainOp) {
+      start = 0;
+    }
+    const length = firstOpWithFormatting.retain;
+    Promise.resolve().then(() => {
+      if (start != null && length != null) {
+        editor.removeFormat(start, length);
+      }
+    });
+
+    delta.ops.forEach(op => {
+      if (op != null && op.attributes != null) {
+        op.attributes.bold = null;
+      }
+    });
+  }
+
   onContentChanged(delta: DeltaStatic, source: Sources): void {
+    if (this.editor != null) {
+      this.removeIncomingFormatting(delta, this.editor);
+    }
+
     this.viewModel.update(delta, source);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
