@@ -478,7 +478,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           .then(query => this.questionCountQueries.set(text.bookNum, query))
       );
     }
-    // await Promise.all(promises);
+    await Promise.all(promises);
   }
 
   private disposeQuestionQueries(): void {
