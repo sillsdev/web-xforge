@@ -17,6 +17,7 @@ import { LocationService } from 'xforge-common/location.service';
 import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -48,6 +49,7 @@ describe('CollaboratorsComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: CookieService, useMock: mockedCookieService },
+      { provide: PwaService, useFactory: () => new PwaService() },
       emptyHammerLoader
     ]
   }));
@@ -374,16 +376,38 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
     expect(env.linkSharingTextbox).toBeNull();
   }));
+
+  it('should disable page if not connected', fakeAsync(() => {
+    const env = new TestEnvironment(false);
+    env.setupProjectData();
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    const numUsersOnProject = 3;
+    expect(env.isFilterDisabled).toBe(true);
+
+    env.onlineStatus = true;
+    expect(env.userRows.length).toEqual(numUsersOnProject + 1);
+    expect(env.isFilterDisabled).toBe(false);
+
+    env.onlineStatus = false;
+    expect(env.userRows.length).toEqual(numUsersOnProject + 1);
+    expect(env.isFilterDisabled).toBe(true);
+    expect(env.removeUserButtonOnRow(0).nativeElement.disabled).toBe(true);
+    expect(env.cancelInviteButtonOnRow(3).nativeElement.disabled).toBe(true);
+  }));
 });
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<CollaboratorsComponent>;
   readonly component: CollaboratorsComponent;
   readonly project01Id: string = 'project01';
+  private isOnline: boolean;
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
-  constructor() {
+  constructor(hasConnection: boolean = true) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: this.project01Id }));
     const roles = new Map<string, ProjectRoleInfo>();
     for (const role of SF_PROJECT_ROLES) {
@@ -416,6 +440,8 @@ class TestEnvironment {
       }
     ]);
 
+    this.isOnline = hasConnection;
+    spyOnProperty(window.navigator, 'onLine').and.returnValue(this.isOnline);
     this.fixture = TestBed.createComponent(CollaboratorsComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -450,6 +476,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#project-user-filter'));
   }
 
+  get isFilterDisabled(): boolean {
+    return this.filterInput.query(By.css('input')).nativeElement.disabled;
+  }
+
   get paginator(): DebugElement {
     return this.fixture.debugElement.query(By.css('mat-paginator'));
   }
@@ -464,6 +494,13 @@ class TestEnvironment {
 
   get prevPageButton(): DebugElement {
     return this.paginator.query(By.css('.mat-paginator-navigation-previous'));
+  }
+
+  set onlineStatus(hasConnection: boolean) {
+    this.isOnline = hasConnection;
+    window.dispatchEvent(new Event(hasConnection ? 'online' : 'offline'));
+    tick();
+    this.fixture.detectChanges();
   }
 
   cell(row: number, column: number): DebugElement {

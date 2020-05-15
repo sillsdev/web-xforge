@@ -118,6 +118,7 @@
   "settings": {
     "anyone_with_a_link": "Anyone with a link",
     "based_on": "Based on",
+    "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to a network to make changes.",
     "choose_the_paratext_project": "Choose the Paratext project that your project is based on.",
     "danger_zone": "Danger Zone",
     "delete_this_project": "Delete this project",
@@ -150,6 +151,7 @@
     "translation_suggestions_settings": "Translation suggestions settings"
   },
   "sync": {
+    "connect_network_to_synchronize": "Please connect to a network to synchronize this project",
     "last_synced_time_stamp": "Last synced on {{ timeStamp }}",
     "log_in_to_paratext": "Log in to Paratext",
     "never_been_synced": "Never been synced",
@@ -176,6 +178,7 @@
   },
   "users": {
     "collaborators": "Collaborators",
+    "connect_network_to_manage_users": "This page is disabled while offline. Please connect to a network to manage users.",
     "users": "Users"
   }
 }
