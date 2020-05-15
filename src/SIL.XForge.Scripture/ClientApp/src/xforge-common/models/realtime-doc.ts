@@ -25,7 +25,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   private localDelete$ = new Subject<void>();
   private _delete$: Observable<void>;
   private subscribeQueryCount: number = 0;
-  private isOfflineDataLoaded: boolean = false;
+  private loadOfflineDataPromise?: Promise<void>;
 
   constructor(protected readonly realtimeService: RealtimeService, public readonly adapter: RealtimeDocAdapter) {
     this._delete$ = merge(this.localDelete$, this.adapter.delete$);
@@ -109,7 +109,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   async create(data: T): Promise<void> {
     this.adapter.create(data).then(() => this.updateOfflineData(true));
     await this.updateOfflineData(true);
-    this.isOfflineDataLoaded = true;
+    this.loadOfflineDataPromise = Promise.resolve();
     await this.realtimeService.onLocalDocUpdate(this);
   }
 
@@ -153,13 +153,17 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
 
   protected async onDelete(): Promise<void> {
     await this.realtimeService.offlineStore.delete(this.collection, this.id);
-    this.isOfflineDataLoaded = false;
+    this.loadOfflineDataPromise = undefined;
   }
 
   private async loadOfflineData(): Promise<void> {
-    if (this.isOfflineDataLoaded) {
-      return;
+    if (this.loadOfflineDataPromise == null) {
+      this.loadOfflineDataPromise = this.loadFromOfflineStore();
     }
+    return this.loadOfflineDataPromise;
+  }
+
+  private async loadFromOfflineStore(): Promise<void> {
     const offlineData = await this.realtimeService.offlineStore.get(this.collection, this.id);
     if (offlineData != null) {
       if (offlineData.v == null) {
@@ -167,12 +171,9 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       } else {
         await this.adapter.ingestSnapshot(offlineData);
         this.offlineSnapshotVersion = this.adapter.version;
-        if (offlineData.pendingOps.length > 0) {
-          Promise.all(offlineData.pendingOps.map(op => this.adapter.submitOp(op))).then(() => this.updateOfflineData());
-        }
+        this.adapter.updatePendingOps(offlineData.pendingOps);
       }
     }
-    this.isOfflineDataLoaded = true;
   }
 
   /**
