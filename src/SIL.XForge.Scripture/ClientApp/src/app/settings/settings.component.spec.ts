@@ -14,6 +14,7 @@ import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -61,7 +62,8 @@ describe('SettingsComponent', () => {
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: CookieService, useMock: mockedCookieService }
+      { provide: CookieService, useMock: mockedCookieService },
+      { provide: PwaService, useFactory: () => new PwaService() }
     ]
   }));
 
@@ -115,6 +117,19 @@ describe('SettingsComponent', () => {
       env.fixture.detectChanges();
       // 'error status' elements should now be present
       expect(env.statusError(env.seeOthersResponsesStatus)).not.toBeNull();
+    }));
+
+    it('disables form when user is offline', fakeAsync(() => {
+      const env = new TestEnvironment(false);
+      env.setupProject();
+      env.wait();
+      expect(env.settingsDisabledMessage.textContent).toContain('Project settings cannot be changed');
+      expect(env.deleteProjectButton.disabled).toBe(true);
+      expect(env.component.form.disabled).toBe(true);
+      env.onlineStatus = true;
+      expect(env.settingsDisabledMessage).toBeNull();
+      expect(env.deleteProjectButton.disabled).toBe(false);
+      expect(env.component.form.enabled).toBe(true);
     }));
 
     describe('Translation Suggestions options', () => {
@@ -374,8 +389,9 @@ class TestEnvironment {
   readonly location: Location;
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private isOnline: boolean;
 
-  constructor() {
+  constructor(hasConnection: boolean = true) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
@@ -383,6 +399,8 @@ class TestEnvironment {
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
+    this.isOnline = hasConnection;
+    spyOnProperty(window.navigator, 'onLine').and.returnValue(this.isOnline);
     this.setupParatextProjects([
       {
         paratextId: 'paratextId01',
@@ -477,6 +495,17 @@ class TestEnvironment {
   get cancelDeleteBtn(): HTMLElement {
     const oce = this.overlayContainer.getContainerElement();
     return oce.querySelector('#cancel-btn') as HTMLElement;
+  }
+
+  get settingsDisabledMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('#settings-offline-message');
+  }
+
+  set onlineStatus(hasConnection: boolean) {
+    this.isOnline = hasConnection;
+    window.dispatchEvent(new Event(hasConnection ? 'online' : 'offline'));
+    tick();
+    this.fixture.detectChanges();
   }
 
   confirmDialog(confirm: boolean): void {

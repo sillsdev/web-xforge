@@ -10,6 +10,7 @@ import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -36,7 +37,8 @@ describe('SyncComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: CookieService, useMock: mockedCookieService }
+      { provide: CookieService, useMock: mockedCookieService },
+      { provide: PwaService, useFactory: () => new PwaService() }
     ]
   }));
 
@@ -61,6 +63,17 @@ describe('SyncComponent', () => {
     expect(env.logInButton).toBeNull();
     expect(env.syncButton.nativeElement.textContent).toContain('Synchronize');
     expect(env.lastSyncDate.textContent).toContain('Last synced on');
+  }));
+
+  it('should disable button when offline', fakeAsync(() => {
+    const env = new TestEnvironment(true, false, false);
+    expect(env.logInButton).toBeNull();
+    expect(env.syncButton.nativeElement.disabled).toBe(true);
+    expect(env.lastSyncDate.textContent).toContain('Last synced on');
+    expect(env.syncDisabledMessage.textContent).toContain('Please connect to a network');
+    env.onlineStatus = true;
+    expect(env.syncButton.nativeElement.disabled).toBe(false);
+    expect(env.syncDisabledMessage).toBeNull();
   }));
 
   it('should sync project when the button is clicked', fakeAsync(() => {
@@ -114,8 +127,9 @@ class TestEnvironment {
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private isLoading: boolean = false;
+  private isOnline: boolean = true;
 
-  constructor(isParatextAccountConnected: boolean = false, isInProgress: boolean = false) {
+  constructor(isParatextAccountConnected: boolean = false, isInProgress: boolean = false, isOnline: boolean = true) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'testProject01' }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
@@ -123,6 +137,8 @@ class TestEnvironment {
     when(mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
     when(mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
     when(mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);
+    this.isOnline = isOnline;
+    spyOnProperty(window.navigator, 'onLine').and.returnValue(this.isOnline);
 
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
@@ -187,6 +203,17 @@ class TestEnvironment {
 
   get syncMessage(): HTMLElement {
     return this.fixture.nativeElement.querySelector('#sync-message');
+  }
+
+  get syncDisabledMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('#sync-offline-message');
+  }
+
+  set onlineStatus(hasConnection: boolean) {
+    this.isOnline = hasConnection;
+    window.dispatchEvent(new Event(hasConnection ? 'online' : 'offline'));
+    tick();
+    this.fixture.detectChanges();
   }
 
   clickElement(element: HTMLElement | DebugElement): void {

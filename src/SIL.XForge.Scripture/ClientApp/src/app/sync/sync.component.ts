@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { combineLatest, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
@@ -17,6 +18,7 @@ import { SFProjectService } from '../core/sf-project.service';
 })
 export class SyncComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   syncActive: boolean = false;
+  isAppOnline: boolean = false;
 
   private projectDoc?: SFProjectDoc;
   private paratextUsername?: string;
@@ -27,7 +29,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
     noticeService: NoticeService,
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
-    readonly i18n: I18nService
+    readonly i18n: I18nService,
+    private readonly pwaService: PwaService
   ) {
     super(noticeService);
   }
@@ -45,7 +48,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   get isProgressDeterminate(): boolean {
     return this.percentComplete != null;
   }
-
+  // Todo: This may not be return the correct data on reconnect
   get lastSyncNotice(): string {
     if (this.projectDoc == null || this.projectDoc.data == null) {
       return '';
@@ -75,26 +78,36 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   ngOnInit() {
+    this.isAppOnline = this.pwaService.isOnline;
+    this.subscribe(this.pwaService.onlineStatus, status => {
+      this.isAppOnline = status;
+      if (this.isAppOnline && this.paratextUsername == null) {
+        this.subscribe(this.paratextService.getParatextUsername(), username => {
+          if (username != null) {
+            this.paratextUsername = username;
+          }
+        });
+      }
+    });
+
     const projectId$ = this.route.params.pipe(
-      tap(() => this.loadingStarted()),
+      tap(() => {
+        if (this.isAppOnline) {
+          this.loadingStarted();
+        }
+      }),
       map(params => params['projectId'] as string)
     );
 
-    this.subscribe(
-      combineLatest(projectId$, this.paratextService.getParatextUsername()),
-      async ([projectId, paratextUsername]) => {
-        this.projectDoc = await this.projectService.get(projectId);
-        if (paratextUsername != null) {
-          this.paratextUsername = paratextUsername;
-        }
-        this.checkSyncStatus();
-        if (this.projectDataSub != null) {
-          this.projectDataSub.unsubscribe();
-        }
-        this.projectDataSub = this.projectDoc.remoteChanges$.subscribe(() => this.checkSyncStatus());
-        this.loadingFinished();
+    this.subscribe(projectId$, async projectId => {
+      this.projectDoc = await this.projectService.get(projectId);
+      this.checkSyncStatus();
+      if (this.projectDataSub != null) {
+        this.projectDataSub.unsubscribe();
       }
-    );
+      this.projectDataSub = this.projectDoc.remoteChanges$.subscribe(() => this.checkSyncStatus());
+      this.loadingFinished();
+    });
   }
 
   ngOnDestroy(): void {
