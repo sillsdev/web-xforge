@@ -15,12 +15,11 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { canAccessTranslateApp } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
-import { CheckingUtils } from '../checking.utils';
+import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
@@ -163,17 +162,14 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
           if (this.projectDoc.data.checkingConfig.checkingEnabled) {
             this.initTextsWithLoadingIndicator();
           } else {
-            if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
-              this.projectUserConfigDoc.submitJson0Op(op => {
-                op.unset(puc => puc.selectedTask!);
-              });
-            }
-            const role = this.projectDoc.data.userRoles[this.userService.currentUserId] as SFProjectRole;
-            if (canAccessTranslateApp(role)) {
-              this.router.navigate(['/projects', this.projectDoc.id, 'translate'], { replaceUrl: true });
-              this.noticeService.show(translate('app.scripture_checking_not_available'));
-            } else {
-              this.router.navigate(['/projects/', this.projectDoc.id]);
+            if (this.projectUserConfigDoc != null) {
+              const checkingAccessInfo: CheckingAccessInfo = {
+                userId: this.userService.currentUserId,
+                projectId: this.projectDoc.id,
+                project: this.projectDoc.data,
+                projectUserConfigDoc: this.projectUserConfigDoc
+              };
+              CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
             }
           }
         }
