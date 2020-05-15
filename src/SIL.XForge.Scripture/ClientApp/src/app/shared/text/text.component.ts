@@ -33,7 +33,7 @@ function onNativeSelectionChanged(): void {
   }
 }
 
-registerScripture();
+const USX_FORMATS = registerScripture();
 window.document.addEventListener('selectionchange', onNativeSelectionChanged);
 
 export interface TextUpdatedEvent {
@@ -57,6 +57,8 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
   lang: string = '';
+  // only use USX formats and not default Quill formats
+  readonly allowedFormats: string[] = USX_FORMATS;
 
   private direction: string | null = null;
   private _editorStyles: any = { fontSize: '1rem' };
@@ -64,6 +66,10 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     toolbar: false,
     keyboard: {
       bindings: {
+        // disable default tab keyboard shortcuts in Quill
+        tab: null,
+        'remove tab': null,
+
         'disable backspace': {
           key: 'backspace',
           altKey: null,
