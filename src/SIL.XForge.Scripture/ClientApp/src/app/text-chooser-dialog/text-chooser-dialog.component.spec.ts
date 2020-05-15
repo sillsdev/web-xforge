@@ -212,6 +212,19 @@ describe('TextChooserDialogComponent', () => {
     });
   }));
 
+  it("doesn't show ending ellipsis when entire verse is selected", fakeAsync(async () => {
+    const env = new TestEnvironment({ start: 4, end: TestEnvironment.segmentLen(10) - 1 }, 'verse_1_10', 'verse_1_10');
+    env.fireSelectionChange();
+    expect(env.selectedText).toEqual('verse ten (Matthew 1:10)');
+    env.click(env.saveButton);
+    expect(await env.resultPromise).toEqual({
+      verses: { bookNum: 40, chapterNum: 1, verseNum: 10, verse: '10' },
+      text: 'verse ten',
+      startClipped: false,
+      endClipped: false
+    });
+  }));
+
   it('shows the correct verse range when first or last segment has only white space selected', fakeAsync(async () => {
     const env = new TestEnvironment({ start: TestEnvironment.segmentLen(7) - 1, end: 1 }, 'verse_1_7', 'verse_1_9');
     env.fireSelectionChange();
@@ -545,6 +558,8 @@ class TestEnvironment {
     delta.insert(' target: chapter 1, verse 8. ', { segment: 'verse_1_8' });
     delta.insert({ verse: { number: '9', style: 'v' } });
     delta.insert({ blank: true }, { segment: 'verse_1_9' });
+    delta.insert({ verse: { number: '10', style: 'v' } });
+    delta.insert('verse ten', { segment: 'verse_1_10' });
     return delta;
   }
 
