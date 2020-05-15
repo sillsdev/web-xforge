@@ -4,6 +4,7 @@
   [placeholder]="placeholder"
   [readOnly]="readOnlyEnabled"
   [strict]="false"
+  [formats]="allowedFormats"
   [modules]="modules"
   (onEditorCreated)="onEditorCreated($event)"
   (onContentChanged)="onContentChanged($event.delta, $event.source)"
