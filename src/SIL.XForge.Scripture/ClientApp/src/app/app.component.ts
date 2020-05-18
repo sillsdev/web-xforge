@@ -88,9 +88,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.isAppOnline = pwaService.isOnline;
     this.subscribe(pwaService.onlineStatus, status => {
       this.isAppOnline = status;
-      if (!this.isAppOnline) {
-        this.router.navigateByUrl('/offline');
-      }
     });
 
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
@@ -105,17 +102,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
     }
-
-    // Redirect to offline page if we're offline i.e. if the user attempts to change pages when offline
-    const navEndStart$ = router.events.pipe(
-      filter(e => e instanceof NavigationStart),
-      map(e => e as NavigationStart)
-    );
-    this.subscribe(navEndStart$, e => {
-      if (!this.isAppOnline && e.url !== '/offline') {
-        router.navigateByUrl('/offline');
-      }
-    });
   }
 
   get showCheckingDisabled(): boolean {
