@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash/cloneDeep';
 import Parchment from 'parchment';
-import Quill, { Clipboard, DeltaOperation, DeltaStatic, History, HistoryStackType, Module } from 'quill';
+import Quill, { Clipboard, DeltaOperation, DeltaStatic, History, HistoryStackType } from 'quill';
 
 const Delta: new () => DeltaStatic = Quill.import('delta');
 
@@ -69,9 +69,8 @@ interface Unmatched {
   marker: string;
 }
 
-export function registerScripture(): void {
+export function registerScripture(): string[] {
   const QuillClipboard = Quill.import('modules/clipboard') as typeof Clipboard;
-  const QuillKeyboard = Quill.import('modules/keyboard') as typeof Module;
   const QuillHistory = Quill.import('modules/history') as typeof History;
   const QuillParchment = Quill.import('parchment') as typeof Parchment;
   const Inline = Quill.import('blots/inline') as typeof Parchment.Inline;
@@ -80,6 +79,8 @@ export function registerScripture(): void {
   const Embed = Quill.import('blots/embed') as typeof Parchment.Embed;
   const BlockEmbed = Quill.import('blots/block/embed') as typeof Parchment.Embed;
   const Text = Quill.import('blots/text') as typeof Parchment.Text;
+
+  const formats: any[] = [];
 
   // zero width space
   const ZWSP = '\u200b';
@@ -117,6 +118,7 @@ export function registerScripture(): void {
       return getUsxValue(node);
     }
   }
+  formats.push(VerseEmbed);
 
   class BlankEmbed extends Embed {
     static blotName = 'blank';
@@ -146,6 +148,8 @@ export function registerScripture(): void {
       super.format(name, value);
     }
   }
+  formats.push(BlankEmbed);
+  formats.push('initial');
 
   class EmptyEmbed extends Embed {
     static blotName = 'empty';
@@ -167,6 +171,7 @@ export function registerScripture(): void {
 
     contentNode!: HTMLElement;
   }
+  formats.push(EmptyEmbed);
 
   class CharInline extends Inline {
     static blotName = 'char';
@@ -198,6 +203,7 @@ export function registerScripture(): void {
       }
     }
   }
+  formats.push(CharInline);
 
   class RefInline extends Inline {
     static blotName = 'ref';
@@ -229,6 +235,7 @@ export function registerScripture(): void {
       }
     }
   }
+  formats.push(RefInline);
 
   class NoteEmbed extends Embed {
     static blotName = 'note';
@@ -256,6 +263,7 @@ export function registerScripture(): void {
       return getUsxValue(node);
     }
   }
+  formats.push(NoteEmbed);
 
   class OptBreakEmbed extends Embed {
     static blotName = 'optbreak';
@@ -272,6 +280,7 @@ export function registerScripture(): void {
       return getUsxValue(node);
     }
   }
+  formats.push(OptBreakEmbed);
 
   class FigureEmbed extends Embed {
     static blotName = 'figure';
@@ -314,6 +323,7 @@ export function registerScripture(): void {
       return getUsxValue(node);
     }
   }
+  formats.push(FigureEmbed);
 
   class UnmatchedEmbed extends Embed {
     static blotName = 'unmatched';
@@ -330,6 +340,7 @@ export function registerScripture(): void {
       return getUsxValue(node);
     }
   }
+  formats.push(UnmatchedEmbed);
 
   class ParaBlock extends Block {
     static blotName = 'para';
@@ -362,6 +373,7 @@ export function registerScripture(): void {
       }
     }
   }
+  formats.push(ParaBlock);
 
   class ParaInline extends Inline {
     static blotName = 'para-contents';
@@ -400,6 +412,7 @@ export function registerScripture(): void {
       super.insertAt(index, value, def);
     }
   }
+  formats.push(ParaInline);
 
   class SegmentInline extends Inline {
     static blotName = 'segment';
@@ -430,6 +443,7 @@ export function registerScripture(): void {
       }
     }
   }
+  formats.push(SegmentInline);
 
   (Inline as any).order.push('segment');
   (Inline as any).order.push('para-contents');
@@ -452,6 +466,7 @@ export function registerScripture(): void {
       return getUsxValue(node);
     }
   }
+  formats.push(ChapterEmbed);
 
   Scroll.allowedChildren.push(ParaBlock);
   Scroll.allowedChildren.push(ChapterEmbed);
@@ -502,14 +517,17 @@ export function registerScripture(): void {
   const HighlightSegmentClass = new ClassAttributor('highlight-segment', 'highlight-segment', {
     scope: Parchment.Scope.INLINE
   });
+  formats.push(HighlightSegmentClass);
 
   const HighlightParaClass = new ClassAttributor('highlight-para', 'highlight-para', {
     scope: Parchment.Scope.BLOCK
   });
+  formats.push(HighlightParaClass);
 
   const CheckingQuestionSegmentClass = new ClassAttributor('question-segment', 'question-segment', {
     scope: Parchment.Scope.INLINE
   });
+  formats.push(CheckingQuestionSegmentClass);
 
   const CheckingQuestionCountAttribute = new QuillParchment.Attributor.Attribute(
     'question-count',
@@ -518,23 +536,28 @@ export function registerScripture(): void {
       scope: Parchment.Scope.INLINE
     }
   );
+  formats.push(CheckingQuestionCountAttribute);
 
   const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK
   });
+  formats.push(InvalidBlockClass);
 
   const InvalidInlineClass = new ClassAttributor('invalid-inline', 'invalid-inline', {
     scope: Parchment.Scope.INLINE
   });
+  formats.push(InvalidInlineClass);
 
   const SegmentDirectionAttribute = new ElementRestrictedAttributor('direction-segment', 'dir', {
     scope: Parchment.Scope.INLINE,
     elemName: 'usx-segment'
   });
+  formats.push(SegmentDirectionAttribute);
 
   const BlockDirectionAttribute = new QuillParchment.Attributor.Attribute('direction-block', 'dir', {
     scope: Parchment.Scope.BLOCK
   });
+  formats.push(BlockDirectionAttribute);
 
   class DisableHtmlClipboard extends QuillClipboard {
     onPaste(e: ClipboardEvent): void {
@@ -563,10 +586,6 @@ export function registerScripture(): void {
         this.quill.focus();
       }, 1);
     }
-  }
-
-  class NoDefaultBindingsKeyboard extends QuillKeyboard {
-    static DEFAULTS: any = {};
   }
 
   class FixSelectionHistory extends QuillHistory {
@@ -666,30 +685,22 @@ export function registerScripture(): void {
     return changeIndex;
   }
 
-  Quill.register('formats/highlight-segment', HighlightSegmentClass);
-  Quill.register('formats/highlight-para', HighlightParaClass);
-  Quill.register('formats/question-segment', CheckingQuestionSegmentClass);
-  Quill.register('formats/question-count', CheckingQuestionCountAttribute);
-  Quill.register('formats/invalid-block', InvalidBlockClass);
-  Quill.register('formats/invalid-inline', InvalidInlineClass);
-  Quill.register('formats/direction-segment', SegmentDirectionAttribute);
-  Quill.register('formats/direction-block', BlockDirectionAttribute);
-  Quill.register('blots/verse', VerseEmbed);
-  Quill.register('blots/blank', BlankEmbed);
-  Quill.register('blots/empty', EmptyEmbed);
-  Quill.register('blots/note', NoteEmbed);
-  Quill.register('blots/char', CharInline);
-  Quill.register('blots/ref', RefInline);
-  Quill.register('blots/para', ParaBlock);
-  Quill.register('blots/para-contents', ParaInline);
-  Quill.register('blots/segment', SegmentInline);
-  Quill.register('blots/chapter', ChapterEmbed);
-  Quill.register('blots/figure', FigureEmbed);
-  Quill.register('blots/optbreak', OptBreakEmbed);
-  Quill.register('blots/unmatched', UnmatchedEmbed);
+  const formatNames: string[] = [];
+  for (const format of formats) {
+    if (typeof format === 'string') {
+      formatNames.push(format);
+    } else if (format.blotName != null) {
+      Quill.register(`blots/${format.blotName}`, format);
+      formatNames.push(format.blotName);
+    } else {
+      Quill.register(`formats/${format.attrName}`, format);
+      formatNames.push(format.attrName);
+    }
+  }
   Quill.register('blots/scroll', Scroll, true);
   Quill.register('blots/text', NotNormalizedText, true);
   Quill.register('modules/clipboard', DisableHtmlClipboard, true);
-  Quill.register('modules/keyboard', NoDefaultBindingsKeyboard, true);
   Quill.register('modules/history', FixSelectionHistory, true);
+
+  return formatNames;
 }
