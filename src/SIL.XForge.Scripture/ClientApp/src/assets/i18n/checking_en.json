@@ -242,10 +242,6 @@
   "message_dialog": {
     "dismiss": "Dismiss"
   },
-  "offline": {
-    "currently_offline_heading": "Looks like you're currently offline",
-    "currently_offline_text": "Hang tight, we'll keep trying to reconnect you"
-  },
   "project": {
     "project_link_is_invalid": "The project link is invalid."
   },
