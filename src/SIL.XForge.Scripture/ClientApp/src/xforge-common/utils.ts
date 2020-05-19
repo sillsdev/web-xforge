@@ -7,6 +7,8 @@ import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
 import { Locale } from './models/i18n-locale';
 
+const BROWSER = Bowser.getParser(window.navigator.userAgent);
+
 export function nameof<T>(name: Extract<keyof T, string>): string {
   return name;
 }
@@ -25,10 +27,8 @@ export function promiseTimeout<T>(promise: Promise<T>, timeout: number) {
 }
 
 export function supportedBrowser(): boolean {
-  const bowser = Bowser.getParser(window.navigator.userAgent);
-
   // See https://caniuse.com/#feat=indexeddb2 for browsers supporting IndexedDB 2.0
-  const isSupportedBrowser = bowser.satisfies({
+  const isSupportedBrowser = BROWSER.satisfies({
     chrome: '>=58',
     chromium: '>=58',
     edge: '>=76',
@@ -45,6 +45,11 @@ export function supportedBrowser(): boolean {
     }
   });
   return isSupportedBrowser ? true : false;
+}
+
+export function getBrowserEngine(): string {
+  const engine = BROWSER.getEngine().name;
+  return engine == null ? '' : engine.toLowerCase();
 }
 
 export function issuesEmailTemplate(errorId?: string): string {

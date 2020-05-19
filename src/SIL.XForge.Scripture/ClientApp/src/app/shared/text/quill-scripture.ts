@@ -103,8 +103,8 @@ export function registerScripture(): string[] {
 
     static create(value: Verse): Node {
       const node = super.create(value) as HTMLElement;
-      // add a ZWSP before the verse number, so that it allows breaking
-      node.appendChild(document.createTextNode(ZWSP));
+      // add a wbr element before the verse number, so that it allows breaking
+      node.appendChild(document.createElement('wbr'));
       const containerSpan = document.createElement('span');
       const verseSpan = document.createElement('span');
       verseSpan.innerText = value.number;
