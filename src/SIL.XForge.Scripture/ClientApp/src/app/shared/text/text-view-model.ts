@@ -328,6 +328,26 @@ export class TextViewModel {
     return undefined;
   }
 
+  wrapVerses(): void {
+    const editor = this.checkEditor();
+    let delta = new Delta();
+    const verses = editor.root.querySelectorAll('usx-verse');
+    for (const verse of Array.from(verses)) {
+      const segment = verse.nextElementSibling;
+      if (segment !== null) {
+        const verseEmbed = Quill.find(verse);
+        const verseIndex = editor.getIndex(verseEmbed);
+        const verseBounds = editor.getBounds(editor.getIndex(verseEmbed), 1);
+        const segmentEmbed = Quill.find(segment);
+        const segmentBounds = editor.getBounds(editor.getIndex(segmentEmbed), 1);
+        // Improve logic of "5". The difference is the verse has a negative top applied
+        const forceVerseWrap = segmentBounds.top - verseBounds.top > 5;
+        delta = delta.compose(new Delta().retain(verseIndex).retain(1, { 'verse-wrap': forceVerseWrap }));
+      }
+    }
+    editor.updateContents(delta, 'silent');
+  }
+
   private viewToData(delta: DeltaStatic): DeltaStatic {
     const modelDelta = new Delta();
     if (delta.ops != null) {
@@ -341,7 +361,8 @@ export class TextViewModel {
           'question-count',
           'initial',
           'direction-segment',
-          'direction-block'
+          'direction-block',
+          'verse-wrap'
         ]) {
           removeAttribute(modelOp, attr);
         }

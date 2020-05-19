@@ -559,6 +559,11 @@ export function registerScripture(): string[] {
   });
   formats.push(BlockDirectionAttribute);
 
+  const VerseWrapClass = new ClassAttributor('verse-wrap', 'verse-wrap', {
+    scope: Parchment.Scope.INLINE
+  });
+  formats.push(VerseWrapClass);
+
   class DisableHtmlClipboard extends QuillClipboard {
     onPaste(e: ClipboardEvent): void {
       if (e.defaultPrevented || !this.quill.isEnabled() || e.clipboardData == null) {

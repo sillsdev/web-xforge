@@ -461,6 +461,8 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       // set direction on the editor
       this.direction = window.getComputedStyle(quillElement).direction;
       this.viewModel.setDirection();
+      // Only placed here to prove the concept - needs to trigger on editor change and window resize
+      this.viewModel.wrapVerses();
     }
   }
 
