@@ -9,6 +9,8 @@
     "language": "Bahasa",
     "log_out": "Keluar",
     "logged_in_as": "Masuk sebagai",
+    "offline": "Offline",
+    "online": "Online",
     "overview": "Ringkasan",
     "page_not_found": "Halaman tidak ditemukan",
     "password_reset_email_sent": "Kami baru saja mengirimi Anda surel untuk mengatur ulang kata sandi Anda.",
@@ -222,6 +224,10 @@
     "show_details": "Tampilkan detail",
     "to_report_issue_email": "Untuk melaporkan sebuah masalah, kirim surel {{ issueEmailLink }}.",
     "unsupported_browser": "Anda menggunakan peramban yang tidak didukung, yang mungkin menyebabkan masalah ini. Kami menyarankan menggunakan yang terbaru dari {{ chromeLink }} atau {{ firefoxLink }}."
+  },
+  "error_messages": {
+    "error_occurred_login": "An error occurred during login.",
+    "try_again": "Coba Lagi"
   },
   "exception_handling_service": {
     "network_request_failed": "Permintaan jaringan gagal. Beberapa fungsi mungkin tidak tersedia.",

@@ -9,6 +9,8 @@
     "language": "Язык",
     "log_out": "Выйти",
     "logged_in_as": "Вы зашли как",
+    "offline": "Offline",
+    "online": "Online",
     "overview": "Обзор",
     "page_not_found": "Страница не найдена",
     "password_reset_email_sent": "Мы отправили вам сообщение для восстановления пароля.",
@@ -222,6 +224,10 @@
     "show_details": "Показать подробности",
     "to_report_issue_email": "Чтобы сообщить о проблеме, отправьте сообщение по электронной почте {{ issueEmailLink }}.",
     "unsupported_browser": "Вы используете неподдерживаемый браузер, что может быть причиной этой ошибки. Мы рекомендуем обновиться до {{ chromeLink }} или {{ firefoxLink }}."
+  },
+  "error_messages": {
+    "error_occurred_login": "An error occurred during login.",
+    "try_again": "Попробуйте ещё раз"
   },
   "exception_handling_service": {
     "network_request_failed": "Ошибка сетевого запроса. Некоторые функции могут быть недоступны.",
