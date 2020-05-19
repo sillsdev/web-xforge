@@ -124,7 +124,7 @@ p[dir='rtl'] {
         display: inline;
         box-sizing: border-box;
 
-        box-decoration-break: slice;
+        box-decoration-break: clone;
 
         color: rgba(0, 0, 0, 0.8);
         background-color: white;
@@ -147,6 +147,21 @@ p[dir='rtl'] {
     position: absolute;
     top: 0px;
     left: 6px;
+  }
+}
+
+// workaround for Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1569107
+// using "box-decoration-break: clone" or blur radius in a "box-shadow" with RTL text can cause weird behavior
+.template-editor.contains-rtl-text[data-browser-engine='gecko'] > .ql-container > .ql-editor {
+  usx-para,
+  p {
+    > usx-para-contents {
+      box-decoration-break: slice;
+    }
+  }
+
+  .highlight-para > usx-para-contents {
+    box-shadow: 1px 1px 0px 1px #ede6de;
   }
 }
 
