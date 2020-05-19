@@ -180,9 +180,10 @@ export class TextViewModel {
    * each paragraph/segment and then specifically set the paragraph to what the direction of the first segment that
    * contains text i.e. is not blank. For chapters we use the same direction value as the paragraph that follows it.
    */
-  setDirection(): void {
+  setDirection(): boolean {
     const editor = this.checkEditor();
 
+    let containsRtlText = false;
     // set direction on individual segments
     let delta = new Delta();
     for (const [segmentId, range] of this.segments) {
@@ -193,6 +194,10 @@ export class TextViewModel {
       }
 
       delta = delta.compose(new Delta().retain(range.index).retain(range.length, { 'direction-segment': dir }));
+
+      if (dir === 'rtl') {
+        containsRtlText = true;
+      }
     }
     editor.updateContents(delta, 'silent');
 
@@ -227,6 +232,7 @@ export class TextViewModel {
       }
     }
     editor.updateContents(delta, 'silent');
+    return containsRtlText;
   }
 
   highlight(segmentRefs: string[]): void {
