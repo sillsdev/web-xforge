@@ -13,7 +13,7 @@ export class AvatarComponent {
   @Input() user?: UserProfile;
   @Input() showOnlineStatus: boolean = false;
 
-  constructor(private readonly pwaService: PwaService) {}
+  constructor(readonly pwaService: PwaService) {}
 
   get avatarUrl(): string {
     return this.user != null ? this.user.avatarUrl : '';
