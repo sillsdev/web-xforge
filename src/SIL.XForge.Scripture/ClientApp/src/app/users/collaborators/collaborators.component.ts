@@ -138,7 +138,6 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
   ngOnInit(): void {
     this.loadingStarted();
-    this.isAppOnline = this.pwaService.isOnline;
     this.subscribe(
       this.activatedRoute.params.pipe(
         map(params => params['projectId'] as string),
