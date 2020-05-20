@@ -349,7 +349,6 @@ export function registerScripture(): string[] {
     static create(value: Para): Node {
       const node = super.create(value) as HTMLElement;
       node.setAttribute(customAttributeName('style'), value.style);
-      node.setAttribute('dir', 'auto');
       setUsxValue(node, value);
       return node;
     }
@@ -421,7 +420,6 @@ export function registerScripture(): string[] {
     static create(value: string): Node {
       const node = super.create(value) as HTMLElement;
       node.setAttribute(customAttributeName('segment'), value);
-      node.setAttribute('dir', 'auto');
       return node;
     }
 
@@ -433,17 +431,29 @@ export function registerScripture(): string[] {
       return node.getAttribute(customAttributeName('segment'))!;
     }
 
+    constructor(domNode: HTMLElement) {
+      super(domNode);
+      domNode.setAttribute('dir', 'auto');
+    }
+
     format(name: string, value: any): void {
       if (name === SegmentInline.blotName && value != null) {
-        const ref = value as string;
-        const elem = this.domNode as HTMLElement;
-        elem.setAttribute(customAttributeName('segment'), ref);
+        this.domNode.setAttribute(customAttributeName('segment'), value);
+      } else if (name === 'direction-segment') {
+        this.domNode.setAttribute('dir', value);
       } else {
         super.format(name, value);
       }
     }
+
+    formats(): { [index: string]: any } {
+      const fmts = super.formats();
+      fmts['direction-segment'] = this.domNode.getAttribute('dir') || '';
+      return fmts;
+    }
   }
   formats.push(SegmentInline);
+  formats.push('direction-segment');
 
   (Inline as any).order.push('segment');
   (Inline as any).order.push('para-contents');
@@ -494,26 +504,6 @@ export function registerScripture(): string[] {
     }
   }
 
-  interface ElementRestrictedAttributorOptions {
-    scope?: any;
-    whitelist?: string[];
-    elemName?: string;
-  }
-
-  class ElementRestrictedAttributor extends QuillParchment.Attributor.Attribute {
-    private readonly elemName?: string;
-    constructor(attrName: string, keyName: string, options: ElementRestrictedAttributorOptions = {}) {
-      super(attrName, keyName, options);
-      this.elemName = options.elemName;
-    }
-    canAdd(node: HTMLElement, value: any): boolean {
-      if (!super.canAdd(node, value)) {
-        return false;
-      }
-      return this.elemName == null || node.tagName.toLowerCase() === this.elemName.toLowerCase();
-    }
-  }
-
   const HighlightSegmentClass = new ClassAttributor('highlight-segment', 'highlight-segment', {
     scope: Parchment.Scope.INLINE
   });
@@ -547,12 +537,6 @@ export function registerScripture(): string[] {
     scope: Parchment.Scope.INLINE
   });
   formats.push(InvalidInlineClass);
-
-  const SegmentDirectionAttribute = new ElementRestrictedAttributor('direction-segment', 'dir', {
-    scope: Parchment.Scope.INLINE,
-    elemName: 'usx-segment'
-  });
-  formats.push(SegmentDirectionAttribute);
 
   const BlockDirectionAttribute = new QuillParchment.Attributor.Attribute('direction-block', 'dir', {
     scope: Parchment.Scope.BLOCK
