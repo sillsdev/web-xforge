@@ -123,7 +123,7 @@ describe('SettingsComponent', () => {
       const env = new TestEnvironment(false);
       env.setupProject();
       env.wait();
-      expect(env.settingsDisabledMessage.textContent).toContain('Project settings cannot be changed');
+      expect(env.settingsDisabledMessage).not.toBeNull();
       expect(env.deleteProjectButton.disabled).toBe(true);
       expect(env.component.form.disabled).toBe(true);
       env.onlineStatus = true;

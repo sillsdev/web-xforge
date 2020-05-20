@@ -70,7 +70,7 @@ describe('SyncComponent', () => {
     expect(env.logInButton).toBeNull();
     expect(env.syncButton.nativeElement.disabled).toBe(true);
     expect(env.lastSyncDate.textContent).toContain('Last synced on');
-    expect(env.syncDisabledMessage.textContent).toContain('Please connect to a network');
+    expect(env.syncDisabledMessage).not.toBeNull();
     env.onlineStatus = true;
     expect(env.syncButton.nativeElement.disabled).toBe(false);
     expect(env.syncDisabledMessage).toBeNull();
