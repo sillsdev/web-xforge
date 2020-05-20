@@ -188,7 +188,11 @@ export class TextViewModel {
     for (const [segmentId, range] of this.segments) {
       let dir = 'auto';
       const segment = editor.root.querySelector(`usx-segment[data-segment="${segmentId}"]`);
-      if (segment != null && segment.querySelectorAll('usx-blank').length === 0) {
+      if (
+        segment != null &&
+        segment.getAttribute('dir') != null &&
+        segment.querySelectorAll('usx-blank').length === 0
+      ) {
         dir = window.getComputedStyle(segment).direction || 'auto';
       }
 
