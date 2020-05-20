@@ -96,8 +96,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       }
       // If any answers have been edited, identify which ones and highlight it
       for (const op of ops) {
-        // 'oi' is an insert i.e. when replacing the dateModified on an answer
-        if (op['oi'] != null && op.p[0] === 'answers') {
+        // 'oi' is an insert e.g. when replacing the dateModified on an answer
+        // We're only interested when text is edited
+        if (op['oi'] != null && op.p[0] === 'answers' && op.p[2] === 'text') {
           const answer = this.allAnswers[op.p[1]];
           if (this.answersHighlightStatus.has(answer.dataId)) {
             this.answersHighlightStatus.set(answer.dataId, false);
