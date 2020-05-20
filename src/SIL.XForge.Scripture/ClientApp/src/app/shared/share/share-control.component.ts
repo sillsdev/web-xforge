@@ -4,6 +4,8 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectService } from '../../core/sf-project.service';
 
@@ -13,7 +15,7 @@ import { SFProjectService } from '../../core/sf-project.service';
   templateUrl: './share-control.component.html',
   styleUrls: ['./share-control.component.scss']
 })
-export class ShareControlComponent {
+export class ShareControlComponent extends SubscriptionDisposable {
   /** Fires when an invitation is sent. */
   @Output() invited = new EventEmitter<void>();
   @Input() readonly projectId?: string;
@@ -30,8 +32,14 @@ export class ShareControlComponent {
   constructor(
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
-    private readonly locationService: LocationService
-  ) {}
+    private readonly locationService: LocationService,
+    readonly pwaService: PwaService
+  ) {
+    super();
+    this.subscribe(this.pwaService.onlineStatus, isOnline =>
+      isOnline ? this.sendInviteForm.enable() : this.sendInviteForm.disable()
+    );
+  }
 
   get email(): FormControl {
     return this.sendInviteForm.controls.email as FormControl;
@@ -39,6 +47,10 @@ export class ShareControlComponent {
 
   get shareLink(): string {
     return this.locationService.origin + '/projects/' + this.projectId + '?sharing=true';
+  }
+
+  get isAppOnline(): boolean {
+    return this.pwaService.isOnline;
   }
 
   copyShareLink(): void {
