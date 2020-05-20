@@ -1,5 +1,6 @@
 {
   "app": {
+    "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "All Questions",
     "cannot_change_password": "Can't change password at this time. Try again later or report an issue in the Help menu.",
     "change_password": "Change password",

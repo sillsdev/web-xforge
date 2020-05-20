@@ -378,16 +378,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   changePassword(): void {
     if (this.currentUser == null) {
       return;
+    } else if (!this.isAppOnline) {
+      this.noticeService.show(translate('app.action_not_available_offline'));
+    } else {
+      this.authService
+        .changePassword(this.currentUser.email)
+        .then(() => {
+          this.noticeService.show(translate('app.password_reset_email_sent'));
+        })
+        .catch(() => {
+          this.noticeService.show(translate('app.cannot_change_password'));
+        });
     }
-
-    this.authService
-      .changePassword(this.currentUser.email)
-      .then(() => {
-        this.noticeService.show(translate('app.password_reset_email_sent'));
-      })
-      .catch(() => {
-        this.noticeService.show(translate('app.cannot_change_password'));
-      });
   }
 
   async editName(): Promise<void> {
