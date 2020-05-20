@@ -35,6 +35,7 @@
           {{ isAlreadyInvited ? t("resend") : t("send") }}
         </button>
       </div>
+      <div *ngIf="!isAppOnline" class="offline-message">{{ t("share_by_email_not_available_offline") }}</div>
     </div>
   </div>
 </ng-container>
