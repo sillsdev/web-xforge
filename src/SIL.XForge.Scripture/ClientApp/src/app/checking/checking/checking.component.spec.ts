@@ -554,6 +554,18 @@ describe('CheckingComponent', () => {
       expect(env.getAnswerText(otherAnswerIndex)).toBe('Question 9 edited answer');
     }));
 
+    it('does not highlight upon sync', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(9);
+      const answerIndex = 1;
+      expect(env.getAnswer(answerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswerText(answerIndex)).toBe('Answer 1 on question');
+
+      env.simulateSync(answerIndex);
+      expect(env.getAnswer(answerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswerText(answerIndex)).toBe('Answer 1 on question');
+    }));
+
     it('still shows answers as read after canceling an edit', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);
@@ -1737,6 +1749,15 @@ class TestEnvironment {
     questionDoc.submitJson0Op(op => {
       op.set(q => q.answers[index].text!, text);
       op.set(q => q.answers[index].dateModified, new Date().toJSON());
+    }, false);
+    tick(this.questionReadTimer);
+    this.fixture.detectChanges();
+  }
+
+  simulateSync(index: number): void {
+    const questionDoc = this.component.questionsPanel!.activeQuestionDoc!;
+    questionDoc.submitJson0Op(op => {
+      op.set(q => (q.answers[index] as any).syncUserRef, objectId());
     }, false);
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
