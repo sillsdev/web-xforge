@@ -78,9 +78,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   ngOnInit() {
-    this.isAppOnline = this.pwaService.isOnline;
-    this.subscribe(this.pwaService.onlineStatus, status => {
-      this.isAppOnline = status;
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      this.isAppOnline = isOnline;
       if (this.isAppOnline && this.paratextUsername == null) {
         this.subscribe(this.paratextService.getParatextUsername(), username => {
           if (username != null) {

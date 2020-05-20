@@ -11,6 +11,11 @@
   margin-bottom: 32px;
 }
 
+.offline-text {
+  color: var(--mdc-theme-error);
+  padding-bottom: 16px;
+}
+
 .content {
   display: flex;
   flex-direction: column;

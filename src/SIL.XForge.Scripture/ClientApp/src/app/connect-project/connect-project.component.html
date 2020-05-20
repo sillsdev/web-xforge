@@ -1,5 +1,8 @@
 <ng-container *transloco="let t; read: 'connect_project'">
   <div mdcHeadline4 class="title">{{ t("connect_paratext_project") }}</div>
+  <span *ngIf="!isAppOnline" id="connect-offline-message" class="offline-text">
+    {{ t("connect_network_to_connect_project") }}
+  </span>
   <div class="content" [ngSwitch]="state">
     <div *ngSwitchCase="'login'" class="paratext-login-container">
       <div mdcBody1>{{ t("you_must_be_logged_in_to_paratext") }}</div>
@@ -17,7 +20,7 @@
     </mdc-card>
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
       <ng-container *ngIf="projects?.length > 0; else noProjectMsg">
-        <p *ngIf="hasNonAdministratorProject && !showSettings" id="connect-non-admin-msg">
+        <p *ngIf="hasNonAdministratorProject && !showSettings && isAppOnline" id="connect-non-admin-msg">
           {{ t("only_paratext_admins_can_start") }}
         </p>
         <mdc-form-field>
@@ -113,7 +116,13 @@
           </div>
         </div>
       </mdc-card>
-      <button mdc-button primary type="submit" id="connect-submit-button" [disabled]="!hasConnectableProjects">
+      <button
+        mdc-button
+        primary
+        type="submit"
+        id="connect-submit-button"
+        [disabled]="!hasConnectableProjects || !isAppOnline"
+      >
         {{ t("connect") }}
       </button>
     </form>
