@@ -9,6 +9,8 @@
     "language": "Idioma",
     "log_out": "Sair",
     "logged_in_as": "Conectado como",
+    "offline": "Offline",
+    "online": "Online",
     "overview": "Visão geral",
     "page_not_found": "Página não encontrada",
     "password_reset_email_sent": "Acabamos de enviar um email para redefinir sua senha.",
@@ -222,6 +224,10 @@
     "show_details": "Exibir detalhes",
     "to_report_issue_email": "Para relatar um problema, envie um e-mail {{ issueEmailLink }}.",
     "unsupported_browser": "Você está usando um navegador sem suporte, o que pode ser a razão deste erro. Recomendamos atualizar para o mais recente {{ chromeLink }} ou {{ firefoxLink }}."
+  },
+  "error_messages": {
+    "error_occurred_login": "An error occurred during login.",
+    "try_again": "Tente Novamente"
   },
   "exception_handling_service": {
     "network_request_failed": "Um pedido de rede falhou. Algumas funcionalidades podem não estar disponíveis.",
