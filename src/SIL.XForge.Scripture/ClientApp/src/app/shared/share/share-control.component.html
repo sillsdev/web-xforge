@@ -24,6 +24,7 @@
               label="{{ t('email') }}"
               type="email"
               formControlName="email"
+              [disabled]="!isAppOnline"
               (input)="onEmailInput($event)"
             ></mdc-text-field>
             <mdc-helper-text validation>
@@ -31,10 +32,18 @@
             </mdc-helper-text>
           </mdc-form-field>
         </form>
-        <button id="send-btn" mdc-button form="email-form" type="submit" (click)="sendEmail()" [disabled]="isSubmitted">
+        <button
+          id="send-btn"
+          mdc-button
+          form="email-form"
+          type="submit"
+          (click)="sendEmail()"
+          [disabled]="isSubmitted || !isAppOnline"
+        >
           {{ isAlreadyInvited ? t("resend") : t("send") }}
         </button>
       </div>
+      <div *ngIf="!isAppOnline" class="helper-text">{{ t("share_by_email_not_available_offline") }}</div>
     </div>
   </div>
 </ng-container>
