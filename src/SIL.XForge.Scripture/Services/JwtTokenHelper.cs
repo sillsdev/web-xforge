@@ -14,11 +14,20 @@ namespace SIL.XForge.Scripture.Services
     /// <summary> Helper methods to access information involving JWT tokens </summary>
     public class JwtTokenHelper : IJwtTokenHelper
     {
+        private readonly IExceptionHandler _exceptionHandler;
+
+        public JwtTokenHelper(IExceptionHandler exceptionHandler)
+        {
+            _exceptionHandler = exceptionHandler;
+        }
+
         /// <summary> Get the Paratext username from the access token stored in the UserSecret. </summary>
         public string GetParatextUsername(UserSecret userSecret)
         {
-            if (userSecret.ParatextTokens == null)
+            if (userSecret.ParatextTokens == null || userSecret.ParatextTokens.AccessToken == null)
+            {
                 return null;
+            }
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim usernameClaim = accessToken.Claims.FirstOrDefault(c => c.Type == "username");
             return usernameClaim?.Value;
@@ -49,9 +58,10 @@ namespace SIL.XForge.Scripture.Services
                     new JProperty("refresh_token", paratextTokens.RefreshToken));
                 request.Content = new StringContent(requestObj.ToString(), Encoding.Default, "application/json");
                 HttpResponseMessage response = await client.SendAsync(request);
+                await _exceptionHandler.EnsureSuccessStatusCode(response);
 
                 string responseJson = await response.Content.ReadAsStringAsync();
-                var responseObj = JObject.Parse(responseJson);
+                JObject responseObj = JObject.Parse(responseJson);
                 return new Tokens
                 {
                     AccessToken = (string)responseObj["access_token"],

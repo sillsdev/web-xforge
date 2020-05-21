@@ -54,6 +54,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly HttpClient _registryClient;
         private readonly IExceptionHandler _exceptionHandler;
         private readonly ILogger _logger;
+        private readonly IJwtTokenHelper _jwtTokenHelper;
         private string _applicationProductVersion = "SF";
         private string _registryServerUri = "https://registry.paratext.org";
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
@@ -62,7 +63,7 @@ namespace SIL.XForge.Scripture.Services
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
             IExceptionHandler exceptionHandler, IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService,
-            ILogger<ParatextService> logger)
+            ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper)
         {
             _paratextOptions = paratextOptions;
             _userSecretRepository = userSecretRepository;
@@ -71,6 +72,7 @@ namespace SIL.XForge.Scripture.Services
             _siteOptions = siteOptions;
             _fileSystemService = fileSystemService;
             _logger = logger;
+            _jwtTokenHelper = jwtTokenHelper;
 
             _httpClientHandler = new HttpClientHandler();
             _registryClient = new HttpClient(_httpClientHandler);
@@ -88,7 +90,6 @@ namespace SIL.XForge.Scripture.Services
             }
             _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             ScrTextCollection = new LazyScrTextCollection();
-            JwtTokenHelper = new JwtTokenHelper();
             HgWrapper = new HgWrapper();
 
             SharingLogicWrapper = new SharingLogicWrapper();
@@ -112,7 +113,6 @@ namespace SIL.XForge.Scripture.Services
         internal IScrTextCollection ScrTextCollection { get; set; }
         internal ISharingLogicWrapper SharingLogicWrapper { get; set; }
         internal IHgWrapper HgWrapper { get; set; }
-        internal IJwtTokenHelper JwtTokenHelper { get; set; }
         /// <summary> Set of SF user IDs and corresponding sources for remote PT projects. </summary>
         internal Dictionary<string, IInternetSharedRepositorySource> InternetSharedRepositorySources { get; set; }
             = new Dictionary<string, IInternetSharedRepositorySource>();
@@ -236,7 +236,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Get the Paratext username from the UserSecret. </summary>
         public string GetParatextUsername(UserSecret userSecret)
         {
-            return JwtTokenHelper.GetParatextUsername(userSecret);
+            return _jwtTokenHelper.GetParatextUsername(userSecret);
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
@@ -472,7 +472,7 @@ namespace SIL.XForge.Scripture.Services
         {
             ParatextOptions options = _paratextOptions.Value;
 
-            userSecret.ParatextTokens = await JwtTokenHelper.RefreshAccessTokenAsync(options,
+            userSecret.ParatextTokens = await _jwtTokenHelper.RefreshAccessTokenAsync(options,
                 userSecret.ParatextTokens, _registryClient);
 
             await _userSecretRepository.UpdateAsync(userSecret, b =>
@@ -546,7 +546,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         private JwtRESTClient GenerateParatextRegistryJwtClient(UserSecret userSecret)
         {
-            string jwtToken = JwtTokenHelper.GetJwtTokenFromUserSecret(userSecret);
+            string jwtToken = _jwtTokenHelper.GetJwtTokenFromUserSecret(userSecret);
 
             string api = _registryServerUri + "/api8/";
             return new JwtRESTClient(api, _applicationProductVersion, jwtToken);
