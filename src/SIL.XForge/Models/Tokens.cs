@@ -13,6 +13,10 @@ namespace SIL.XForge.Models
         {
             get
             {
+                if (AccessToken == null)
+                {
+                    return DateTime.MinValue;
+                }
                 var accessToken = new JwtSecurityToken(AccessToken);
                 if (accessToken.Payload.Iat != null)
                     return EpochTime.DateTime((long)accessToken.Payload.Iat);
@@ -22,6 +26,10 @@ namespace SIL.XForge.Models
 
         public bool ValidateLifetime()
         {
+            if (AccessToken == null)
+            {
+                return false;
+            }
             var accessToken = new JwtSecurityToken(AccessToken);
             var now = DateTime.UtcNow;
             return now >= accessToken.ValidFrom && now <= accessToken.ValidTo;
