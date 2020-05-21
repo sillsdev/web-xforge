@@ -88,7 +88,7 @@ namespace SIL.XForge.Scripture.Services
             }
             _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             ScrTextCollection = new LazyScrTextCollection();
-            JwtTokenHelper = new JwtTokenHelper();
+            JwtTokenHelper = new JwtTokenHelper(exceptionHandler);
             HgWrapper = new HgWrapper();
 
             SharingLogicWrapper = new SharingLogicWrapper();
