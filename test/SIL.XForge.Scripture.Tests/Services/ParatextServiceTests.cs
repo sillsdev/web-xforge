@@ -25,6 +25,7 @@ using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
 using PtxUtils;
+using System.Net.Http;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -480,6 +481,7 @@ namespace SIL.XForge.Scripture.Services
             public ISharingLogicWrapper MockSharingLogicWrapper;
             public IHgWrapper MockHgWrapper;
             public ILogger<ParatextService> MockLogger;
+            public IJwtTokenHelper MockJwtTokenHelper;
             public ParatextService Service;
 
             public TestEnvironment()
@@ -494,17 +496,21 @@ namespace SIL.XForge.Scripture.Services
                 MockScrTextCollection = Substitute.For<IScrTextCollection>();
                 MockSharingLogicWrapper = Substitute.For<ISharingLogicWrapper>();
                 MockHgWrapper = Substitute.For<IHgWrapper>();
+                MockJwtTokenHelper = Substitute.For<IJwtTokenHelper>();
 
                 RealtimeService = new SFMemoryRealtimeService();
 
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository,
-                    RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService, MockLogger);
+                    RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService, MockLogger, MockJwtTokenHelper);
                 Service.ScrTextCollection = MockScrTextCollection;
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
                 Service.HgWrapper = MockHgWrapper;
-                Service.JwtTokenHelper = new MockJwtTokenHelper(User01);
                 Service.SyncDir = SyncDir;
 
+                MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(User01);
+                MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns("token_1234");
+                MockJwtTokenHelper.RefreshAccessTokenAsync(Arg.Any<ParatextOptions>(), Arg.Any<Tokens>(), Arg.Any<HttpClient>())
+                    .Returns(Task.FromResult(new Tokens { AccessToken = "token_1234", RefreshToken = "refresh_token_1234" }));
                 MockFileSystemService.DirectoryExists(SyncDir).Returns(true);
                 RegistryU.Implementation = new DotNetCoreRegistry();
                 AddProjectRepository();
@@ -523,7 +529,7 @@ namespace SIL.XForge.Scripture.Services
                     RefreshToken = "refresh_token_1234"
                 };
                 userSecret.ParatextTokens = ptToken;
-                Service.JwtTokenHelper = new MockJwtTokenHelper(username);
+                MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(username);
                 return userSecret;
             }
 
