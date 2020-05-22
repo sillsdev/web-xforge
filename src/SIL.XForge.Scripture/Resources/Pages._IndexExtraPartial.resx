@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="LearnHeader" xml:space="preserve">
+    <value>Learn more on Scripture Forge</value>
+  </data>
+  <data name="LearnHow" xml:space="preserve">
+    <value>Learn how to setup and use community checking, see how to collaborate on editing Scripture, and learn how to setup and use translation suggestions when editing Scripture.</value>
+  </data>
+  <data name="LearnSliderCheckingSeeAnswer" xml:space="preserve">
+    <value>{0}Answer questions{1} with text or audio, or both</value>
+  </data>
+  <data name="LearnSliderCheckingSeeConnect" xml:space="preserve">
+    <value>{0}Connect to a project{1} in Scripture Forge that you have been invited to join</value>
+  </data>
+  <data name="LearnSliderCheckingSeeDescription" xml:space="preserve">
+    <value>{0}Watch this video{1} to see how community {2}Checkers{3} answers questions and interact with each other. This video shows how to:</value>
+  </data>
+  <data name="LearnSliderCheckingSeeHeader" xml:space="preserve">
+    <value>See How Community Checking Works</value>
+  </data>
+  <data name="LearnSliderCheckingSeeInteract" xml:space="preserve">
+    <value>{0}Interact{1} with other {2}Checkers{3} by adding comments to their answers</value>
+  </data>
+  <data name="LearnSliderCheckingSeeReference" xml:space="preserve">
+    <value>{0}Select Scripture{1} to reference with your answer</value>
+  </data>
+  <data name="LearnSliderCheckingSetupAddQuestions" xml:space="preserve">
+    <value>{0}Add questions{1} to be checked by the community. Questions can include text, audio, or both. The audio could be the question, or the Scripture being read, or both</value>
+  </data>
+  <data name="LearnSliderCheckingSetupConnect" xml:space="preserve">
+    <value>{0}Connect to a Paratext project{1} in Scripture Forge</value>
+  </data>
+  <data name="LearnSliderCheckingSetupDescription" xml:space="preserve">
+    <value>As the {0}Administrator{1} of a Paratext project, {2}watch this video{3} for how to setup Community Checking. This video shows how to:</value>
+  </data>
+  <data name="LearnSliderCheckingSetupHeader" xml:space="preserve">
+    <value>Setup Community Checking</value>
+  </data>
+  <data name="LearnSliderCheckingSetupShare" xml:space="preserve">
+    <value>{0}Share the project{1} by inviting {2}Checkers{3} to answer questions</value>
+  </data>
+  <data name="LearnSliderCheckingSetupSync" xml:space="preserve">
+    <value>After community {0}Checkers{1} have answered some questions, {2}synchronize the answers{3} back to Paratext</value>
+  </data>
+  <data name="LearnSliderSuggestionSetupBest" xml:space="preserve">
+    <value>This works best on {0}closely related projects{1} with a similar grammar and using a similar style of translation. Adaptation projects are good candidates for effectively using translation suggestions. Ensure the verses and segments are aligned between the two projects. You can do this easily in Paratext if your project is a Daughter Translation of the Based-on project.</value>
+  </data>
+  <data name="LearnSliderSuggestionSetupDescription" xml:space="preserve">
+    <value>On a project, in Settings, enable {0}Translation Suggestions{1} and choose the project this translation is {0}Based-on{1}. It may take quite some time to train the suggestion engine if there is already a lot of Scripture translated.</value>
+  </data>
+  <data name="LearnSliderSuggestionSetupHeader" xml:space="preserve">
+    <value>Setup Translation Suggestions</value>
+  </data>
+  <data name="LearnSliderSuggestionAcceptDescription" xml:space="preserve">
+    <value>Once the suggestion engine is setup and trained, as you type, Scripture Forge may {0}offer suggestions{1} on how to translate the next word or phrase.</value>
+  </data>
+  <data name="LearnSliderSuggestionAcceptEnter" xml:space="preserve">
+    <value>Hit {0}ENTER{1} or click on the suggestion to accept it.</value>
+  </data>
+  <data name="LearnSliderSuggestionAcceptEsc" xml:space="preserve">
+    <value>Hit {0}ESC{1} or continue typing to ignore the suggestion.</value>
+  </data>
+  <data name="LearnSliderSuggestionAcceptHeader" xml:space="preserve">
+    <value>Accept a Translation Suggestion</value>
+  </data>
+  <data name="LearnSliderSuggestionAcceptLearn" xml:space="preserve">
+    <value>The {0}suggestion engine will learn{1} when you finish editing a verse and move to the next verse. Use tab or arrow keys to move to the next verse or segment.</value>
+  </data>
+  <data name="LearnSliderTranslateEditDescription" xml:space="preserve">
+    <value>Once you have connected to your Paratext project in Scripture Forge, you can {0}edit Scripture{1} the same as you can in Paratext. However, Scripture Forge works with correctly formatted text so you can't easily create poorly formatted Scripture. This is similar to using the {2}Basic{3} view in Paratext.</value>
+  </data>
+  <data name="LearnSliderTranslateEditHeader" xml:space="preserve">
+    <value>Edit Scripture</value>
+  </data>
+  <data name="LearnSliderTranslateEditStructure" xml:space="preserve">
+    <value>Text structure can't be added in Scripture Forge yet so add chapters, verses and paragraphs in Paratext, particularly when creating a book.</value>
+  </data>
+  <data name="LearnSliderTranslateEditSync" xml:space="preserve">
+    <value>{0}Synchronise{1} the project to keep it up-to-date with Paratext.</value>
+  </data>
+  <data name="LearnSliderTranslateCollaborateDescription" xml:space="preserve">
+    <value>If more than one {0}Translator{1} is connected online at the same time, they can {2}collaboratively edit{3} Scripture together.</value>
+  </data>
+  <data name="LearnSliderTranslateCollaborateHeader" xml:space="preserve">
+    <value>Collaborate on Scripture</value>
+  </data>
+  <data name="LearnSliderTranslateCollaborateRealtime" xml:space="preserve">
+    <value>Whether you are in the same room or on the other side of the world, you can easily work on the same book, the same chapter, or even the same verse. When someone is editing the same text, you can {0}see their changes in real-time{1} as they type.</value>
+  </data>
+  <data name="LearnTitle" xml:space="preserve">
+    <value>An Easy to Use Web Application</value>
+  </data>
+  <data name="QuoteQuotation" xml:space="preserve">
+    <value>It was so easy! ...all I had to do to get started was log in using my Paratext registration and boom! It was all there. Right away I chose a verse and wrote a checking question for it. Then I also recorded myself asking that checking question. It’s so great that feedback can be gathered either way. All the features are wonderful for remote contributors, including the option to answer the questions with an audio recording.</value>
+  </data>
+  <data name="QuoteQuoterName" xml:space="preserve">
+    <value>Trevor Deck</value>
+  </data>
+  <data name="QuoteQuoterRole" xml:space="preserve">
+    <value>SIL Global Diaspora Specialist</value>
+  </data>
+  <data name="Statement" xml:space="preserve">
+    <value>Where translation and the community meet.</value>
+  </data>
+</root>

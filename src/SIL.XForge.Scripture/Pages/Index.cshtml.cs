@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Reflection;
+using System.Web;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Localization;
@@ -10,22 +12,28 @@ namespace SIL.XForge.Scripture.Pages
 {
     public class IndexModel : PageModel
     {
-        private readonly IOptions<AuthOptions> _authOptions;
-        private readonly IConfiguration _configuration;
-        private readonly IStringLocalizer _localizer;
+        public IStringLocalizer Localizer { get; }
+        public IStringLocalizer ExtraLocalizer { get; }
 
-        public IndexModel(IOptions<AuthOptions> authOptions, IConfiguration configuration,
-            IStringLocalizerFactory localizerFactory)
+        private readonly IOptions<AuthOptions> _authOptions;
+        private readonly IOptions<SiteOptions> _siteOptions;
+        private readonly IConfiguration _configuration;
+
+        public IndexModel(IOptions<AuthOptions> authOptions, IOptions<SiteOptions> siteOptions,
+            IConfiguration configuration, IStringLocalizerFactory localizerFactory)
         {
+            Localizer = localizerFactory.Create("Pages.Index", Assembly.GetExecutingAssembly().GetName().Name);
+            ExtraLocalizer = localizerFactory.Create("Pages._IndexExtraPartial",
+                Assembly.GetExecutingAssembly().GetName().Name);
             _authOptions = authOptions;
+            _siteOptions = siteOptions;
             _configuration = configuration;
-            _localizer = localizerFactory.Create("Pages.Index",
-                System.Reflection.Assembly.GetExecutingAssembly().GetName().Name); ;
         }
 
         public void OnGet()
         {
-            ViewData["ProductVersion"] = System.Diagnostics.FileVersionInfo.GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location).ProductVersion;
+            var location = Assembly.GetEntryAssembly().Location;
+            ViewData["ProductVersion"] = System.Diagnostics.FileVersionInfo.GetVersionInfo(location).ProductVersion;
 
             var bugsnagConfig = new Dictionary<string, object>
                 {
@@ -40,12 +48,7 @@ namespace SIL.XForge.Scripture.Pages
             ViewData["ClientId"] = _authOptions.Value.FrontendClientId;
             ViewData["Audience"] = _authOptions.Value.Audience;
             ViewData["Scope"] = _authOptions.Value.Scope;
-            ViewData["AboutParatextDescription"] =
-                _localizer["AboutParatextDescription", "<span class=\"highlight\">", "</span>"];
-            ViewData["AboutFlexibleDescription"] =
-                _localizer["AboutFlexibleDescription", "<span class=\"highlight\">", "</span>"];
-            ViewData["AboutUserEngagementDescription"] =
-                _localizer["AboutUserEngagementDescription", "<span class=\"highlight\">", "</span>"];
+            ViewData["Origin"] = HttpUtility.UrlEncode(_siteOptions.Value.Origin.ToString());
         }
     }
 }
