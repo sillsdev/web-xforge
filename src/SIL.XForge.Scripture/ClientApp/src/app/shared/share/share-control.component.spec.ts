@@ -4,8 +4,10 @@ import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
+import { BehaviorSubject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -16,6 +18,7 @@ import { ShareControlComponent } from './share-control.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
+const mockedPwaService = mock(PwaService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
@@ -23,7 +26,8 @@ describe('ShareControlComponent', () => {
     imports: [TestModule],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -138,6 +142,17 @@ describe('ShareControlComponent', () => {
     expect(env.hostComponent.invitedCount).toEqual(1);
   }));
 
+  it('Does not allow sending invites when offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.component.sendInviteForm.enabled).toEqual(true);
+    expect((env.inputElement.nativeElement as HTMLInputElement).disabled).toEqual(false);
+    expect(env.offlineMessage).toBeNull();
+    env.onlineStatus = false;
+    expect(env.component.sendInviteForm.enabled).toEqual(false);
+    expect((env.inputElement.nativeElement as HTMLInputElement).disabled).toEqual(true);
+    expect(env.offlineMessage).not.toBeNull();
+  }));
+
   @NgModule({
     imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, TestTranslocoModule],
     declarations: [ShareControlComponent],
@@ -170,10 +185,13 @@ describe('ShareControlComponent', () => {
     readonly fixture: ComponentFixture<TestHostComponent>;
     readonly hostComponent: TestHostComponent;
     readonly component: ShareControlComponent;
+    private _onlineStatus = new BehaviorSubject<boolean>(true);
 
     private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
     constructor(isLinkSharingEnabled?: boolean, projectId?: string) {
+      when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
+      when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
       this.fixture = TestBed.createComponent(TestHostComponent);
       this.fixture.detectChanges();
       this.component = this.fixture.componentInstance.component;
@@ -206,6 +224,20 @@ describe('ShareControlComponent', () => {
 
     get emailTextField(): DebugElement {
       return this.fetchElement('#email');
+    }
+
+    get inputElement(): DebugElement {
+      return this.emailTextField.query(By.css('input[type="email"]'));
+    }
+
+    get offlineMessage(): DebugElement {
+      return this.fetchElement('.offline-message');
+    }
+
+    set onlineStatus(value: boolean) {
+      this._onlineStatus.next(value);
+      flush();
+      this.fixture.detectChanges();
     }
 
     fetchElement(query: string) {
