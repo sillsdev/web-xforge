@@ -1,0 +1,132 @@
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+@model IndexModel
+
+<section class="quote">
+    <div class="quote-container">
+        <img src="/images/quoter.jpg" alt="" />
+        <div class="quote-text">
+            <i class="material-icons">format_quote</i>
+            <p>
+                @Localizer["QuoteQuotation"]<br />
+                <br />
+                <span class="quoter-name">@Localizer["QuoteQuoterName"]</span>
+                <span class="quoter-role">@Localizer["QuoteQuoterRole"]</span>
+            </p>
+        </div>
+    </div>
+</section>
+<section id="learn-more" class="panel">
+    <div class="container">
+        <div class="mdl-grid">
+            <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet">
+                <div class="section-title">
+                    <h2>@Localizer["LearnHeader"]</h2>
+                    <div class="title">@Localizer["LearnTitle"]</div>
+                </div>
+            </div>
+            <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet intro">
+                <p>@Localizer["LearnHow"]</p>
+            </div>
+        </div>
+        <div class="mdl-grid features-container">
+            <a id="autoplay-button" hidden></a>
+            <div class="features">
+                <div class="slider" id="player-slider">
+                    <div>
+                        <div class="feature">
+                            <div class="text">
+                                <h3>@Localizer["LearnSliderCheckingSetupHeader"]</h3>
+                                <p><i class="material-icons">computer</i>@(Html.Raw(Model.ExtraLocalizer["LearnSliderCheckingSetupDescription", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</p>
+                                <ol>
+                                    <li>@(Html.Raw(Model.ExtraLocalizer["LearnSliderCheckingSetupConnect", "<span class=\"highlight\">", "</span>"]))</li>
+                                    <li>@(Html.Raw(Model.ExtraLocalizer["LearnSliderCheckingSetupAddQuestions", "<span class=\"highlight\">", "</span>"]))</li>
+                                    <li>@(Html.Raw(Model.ExtraLocalizer["LearnSliderCheckingSetupShare", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
+                                    <li>@(Html.Raw(Model.ExtraLocalizer["LearnSliderCheckingSetupSync", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</li>
+                                </ol>
+                            </div>
+                            <div id="player-setup-cc"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="feature right">
+                            <div class="text">
+                                <h3>@Localizer["LearnSliderCheckingSeeHeader"]</h3>
+                                <p><i class="material-icons">movie</i>@(Html.Raw(Model.ExtraLocalizer["LearnSliderCheckingSeeDescription", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</p>
+                                <ol>
+                                    <li>@(Html.Raw(Model.ExtraLocalizer["LearnSliderCheckingSeeConnect", "<span class=\"highlight\">", "</span>"]))</li>
+                                    <li>@(Html.Raw(Model.ExtraLocalizer["LearnSliderCheckingSeeAnswer", "<span class=\"highlight\">", "</span>"]))</li>
+                                    <li>@(Html.Raw(Model.ExtraLocalizer["LearnSliderCheckingSeeReference", "<span class=\"highlight\">", "</span>"]))</li>
+                                    <li>@(Html.Raw(Model.ExtraLocalizer["LearnSliderCheckingSeeInteract", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
+                                </ol>
+                            </div>
+                            <div id="player-see-cc"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="features">
+                <div class="slider">
+                    <div>
+                        <div class="feature right">
+                            <div class="text">
+                                <h3>@Localizer["LearnSliderTranslateEditHeader"]</h3>
+                                <p><i class="material-icons">edit</i>@(Html.Raw(Model.ExtraLocalizer["LearnSliderTranslateEditDescription", "<span class=\"highlight\">", "</span>", "<b>", "</b>"]))</p>
+                                <p>@Localizer["LearnSliderTranslateEditStructure"]</p>
+                                <p>@(Html.Raw(Model.ExtraLocalizer["LearnSliderTranslateEditSync", "<span class=\"highlight\">", "</span>"]))</p>
+                            </div>
+                            <img src="/images/TranslateTool_TET_MRK_1.png" alt="" />
+                        </div>
+                    </div>
+                    <div>
+                        <div class="feature">
+                            <div class="text">
+                                <h3>@Localizer["LearnSliderTranslateCollaborateHeader"]</h3>
+                                <p><i class="material-icons">people</i>@(Html.Raw(Model.ExtraLocalizer["LearnSliderTranslateCollaborateDescription", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</p>
+                                <p>@(Html.Raw(Model.ExtraLocalizer["LearnSliderTranslateCollaborateRealtime", "<span class=\"highlight\">", "</span>"]))</p>
+                            </div>
+                            <img src="/images/CollaborateOnScripture.gif" alt="" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="features">
+                <div class="slider">
+                    <div>
+                        <div class="feature">
+                            <div class="text">
+                                <h3>@Localizer["LearnSliderSuggestionSetupHeader"]</h3>
+                                <p><i class="material-icons">computer</i>@(Html.Raw(Model.ExtraLocalizer["LearnSliderSuggestionSetupDescription", "<b>", "</b>"]))</p>
+                                <p>@(Html.Raw(Model.ExtraLocalizer["LearnSliderSuggestionSetupBest", "<span class=\"highlight\">", "</span>"]))</p>
+                            </div>
+                            <img src="/images/Settings_NLTTest.png" alt="" />
+                        </div>
+                    </div>
+                    <div>
+                        <div class="feature right">
+                            <div class="text">
+                                <h3>@Localizer["LearnSliderSuggestionAcceptHeader"]</h3>
+                                <p><i class="material-icons">school</i>@(Html.Raw(Model.ExtraLocalizer["LearnSliderSuggestionAcceptDescription", "<span class=\"highlight\">", "</span>"]))</p>
+                                <p>@(Html.Raw(Model.ExtraLocalizer["LearnSliderSuggestionAcceptEnter", "<i>", "</i>"]))</p>
+                                <p>@(Html.Raw(Model.ExtraLocalizer["LearnSliderSuggestionAcceptEsc", "<i>", "</i>"]))</p>
+                                <p>@(Html.Raw(Model.ExtraLocalizer["LearnSliderSuggestionAcceptLearn", "<span class=\"highlight\">", "</span>"]))</p>
+                            </div>
+                            <img src="/images/TranslateTool_NLT_JHN_1_Suggestion.png" alt="" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="statement">
+    <div class="container">
+        <div class="mdl-grid">
+            <div class="mdl-cell mdl-cell--12-col">
+                <div class="statement-text">
+                    @Localizer["Statement"]
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
