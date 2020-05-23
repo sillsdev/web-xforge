@@ -3,6 +3,7 @@ import { MdcSlider } from '@angular-mdc/web/slider';
 import { Component, Inject, ViewChild } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
+import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 
@@ -25,7 +26,8 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
 
   constructor(
     dialogRef: MdcDialogRef<SuggestionsSettingsDialogComponent>,
-    @Inject(MDC_DIALOG_DATA) data: SuggestionsSettingsDialogData
+    @Inject(MDC_DIALOG_DATA) data: SuggestionsSettingsDialogData,
+    readonly pwaService: PwaService
   ) {
     super();
     this.projectUserConfigDoc = data.projectUserConfigDoc;
@@ -35,7 +37,7 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
         this.confidenceThresholdSlider.layout();
         this.confidenceThresholdSlider.disabled = false; // cannot set value when slider is disabled
         this.confidenceThresholdSlider.setValue(this.projectUserConfigDoc.data!.confidenceThreshold * 100);
-        this.confidenceThresholdSlider.disabled = !this.translationSuggestionsUserEnabled;
+        this.confidenceThresholdSlider.disabled = this.settingsEnabled;
       }
       this.open = true;
     });
@@ -53,6 +55,10 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
       ),
       threshold => this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold))
     );
+  }
+
+  get settingsEnabled(): boolean {
+    return !this.translationSuggestionsUserEnabled || !this.pwaService.isOnline;
   }
 
   get translationSuggestionsUserEnabled(): boolean {
