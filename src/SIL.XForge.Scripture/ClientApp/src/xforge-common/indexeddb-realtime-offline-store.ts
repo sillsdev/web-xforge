@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import isObjectLike from 'lodash/isObjectLike';
 import { OfflineData } from './models/offline-data';
+import { OfflineDataTypes } from './offline-data-types';
 import { Filter, performQuery, QueryParameters } from './query-parameters';
-import { OfflineDataTypes, RealtimeDocTypes } from './realtime-doc-types';
+import { RealtimeDocTypes } from './realtime-doc-types';
 import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore } from './realtime-offline-store';
 import { nameof } from './utils';
 

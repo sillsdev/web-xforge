@@ -36,7 +36,6 @@ export class QuestionDialogService {
       return questionDoc;
     }
     if (!(await this.canCreateAndEditQuestions(config.projectId))) {
-      // The 'translate' method from transloco would save us from depending on i18nService but that caused test failures
       this.noticeService.show(this.transloco.translate('question_dialog.add_question_denied'));
       return undefined;
     }

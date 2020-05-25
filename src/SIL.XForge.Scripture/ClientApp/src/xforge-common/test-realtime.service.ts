@@ -2,7 +2,8 @@ import * as OTJson0 from 'ot-json0';
 import { MemoryRealtimeOfflineStore } from './memory-realtime-offline-store';
 import { MemoryRealtimeQueryAdapter, MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
 import { Snapshot } from './models/snapshot';
-import { OfflineDataTypes, RealtimeDocTypes } from './realtime-doc-types';
+import { OfflineDataTypes } from './offline-data-types';
+import { RealtimeDocTypes } from './realtime-doc-types';
 import { RealtimeService } from './realtime.service';
 import { objectId } from './utils';
 

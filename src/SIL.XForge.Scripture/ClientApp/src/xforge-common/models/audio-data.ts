@@ -4,6 +4,26 @@ export const AUDIO_COLLECTION = 'audio';
 
 export class AudioData extends OfflineData {
   static readonly COLLECTION = AUDIO_COLLECTION;
+
+  static createUploadData(
+    dataId: string,
+    projectRef: string,
+    realtimeDocRef: string,
+    blob: Blob,
+    filename: string
+  ): AudioData {
+    const audioData = new AudioData(dataId, projectRef, realtimeDocRef);
+    audioData.blob = blob;
+    audioData.filename = filename;
+    return audioData;
+  }
+
+  static createDeletionData(dataId: string, projectRef: string, ownerRef: string): AudioData {
+    const audioData = new AudioData(dataId, projectRef, undefined);
+    audioData.deleteRef = ownerRef;
+    return audioData;
+  }
+
   realtimeDocRef?: string;
   blob?: Blob;
   filename?: string;
@@ -11,15 +31,5 @@ export class AudioData extends OfflineData {
 
   get collection(): string {
     return AUDIO_COLLECTION;
-  }
-
-  setUploadContents(realtimeDocRef: string, blob: Blob, filename: string): void {
-    this.realtimeDocRef = realtimeDocRef;
-    this.blob = blob;
-    this.filename = filename;
-  }
-
-  setDeletionContents(ownerRef: string): void {
-    this.deleteRef = ownerRef;
   }
 }

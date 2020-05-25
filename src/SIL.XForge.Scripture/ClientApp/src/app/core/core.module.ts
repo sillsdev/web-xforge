@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { OfflineDataTypes } from 'xforge-common/offline-data-types';
 import { ProjectService } from 'xforge-common/project.service';
-import { OfflineDataTypes, RealtimeDocTypes } from 'xforge-common/realtime-doc-types';
-import { SF_OFFLINE_DATA_TYPES, SF_REALTIME_DOC_TYPES } from './models/sf-realtime-doc-types';
+import { RealtimeDocTypes } from 'xforge-common/realtime-doc-types';
+import { SF_OFFLINE_DATA_TYPES } from './models/sf-offline-data-types';
+import { SF_REALTIME_DOC_TYPES } from './models/sf-realtime-doc-types';
 import { SFProjectService } from './sf-project.service';
 
 @NgModule({
