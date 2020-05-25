@@ -33,6 +33,7 @@
     "awaiting_response_from": "Awaiting response from{{ newLine }}{{ email }}",
     "cancel_invite": "Cancel invite",
     "change_roles_and_permissions": "Users' roles and permissions can {{ boldStart }}only{{ boldEnd }} be changed in {{ boldStart }}Paratext{{ boldEnd }}. Open the project in {{ boldStart }}Paratext{{ boldEnd }}, on the project window click {{ templateTagBoundary }}{{ templateTagBoundary }}, then {{ boldStart }}Project settings{{ boldEnd }}, then {{ boldStart }}User permissions{{ boldEnd }}. After a {{ italicsStart }}Send/Receive{{ italicsEnd }} in {{ boldStart }}Paratext{{ boldEnd }} and then a {{ italicsStart }}Synchronize{{ italicsEnd }} in {{ boldStart }}Scripture Forge{{ boldEnd }}, their role will come into effect here, once that user logs in with their {{ boldStart }}Paratext{{ boldEnd }} account.",
+    "connect_network_to_manage_users": "User management is disabled while offline. Please connect to the internet to manage users.",
     "filter_users": "Filter users...",
     "me": "me",
     "no_users_found": "No users found",
@@ -179,7 +180,6 @@
   },
   "users": {
     "collaborators": "Collaborators",
-    "connect_network_to_manage_users": "This page is disabled while offline. Please connect to the internet to manage users.",
     "users": "Users"
   }
 }

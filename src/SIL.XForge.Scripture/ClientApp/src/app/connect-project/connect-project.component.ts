@@ -70,11 +70,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   set isAppOnline(isOnline: boolean) {
-    if (isOnline) {
-      this.connectProjectForm.enable();
-    } else {
-      this.connectProjectForm.disable();
-    }
+    isOnline ? this.connectProjectForm.enable() : this.connectProjectForm.disable();
     this._isAppOnline = isOnline;
   }
 

@@ -83,11 +83,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   set isAppOnline(isOnline: boolean) {
-    if (isOnline) {
-      this.filterForm.enable();
-    } else {
-      this.filterForm.disable();
-    }
+    isOnline ? this.filterForm.enable() : this.filterForm.disable();
     this._isAppOnline = isOnline;
   }
 

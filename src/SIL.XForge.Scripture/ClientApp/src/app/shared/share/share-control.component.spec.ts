@@ -231,7 +231,7 @@ describe('ShareControlComponent', () => {
     }
 
     get offlineMessage(): DebugElement {
-      return this.fetchElement('.offline-message');
+      return this.fetchElement('.offline-text');
     }
 
     set onlineStatus(value: boolean) {

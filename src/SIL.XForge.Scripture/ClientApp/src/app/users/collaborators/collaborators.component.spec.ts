@@ -8,7 +8,7 @@ import { UserProfile } from 'realtime-server/lib/common/models/user';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -36,6 +36,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedCookieService = mock(CookieService);
+const mockedPwaService = mock(PwaService);
 
 describe('CollaboratorsComponent', () => {
   configureTestingModule(() => ({
@@ -49,7 +50,7 @@ describe('CollaboratorsComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: PwaService, useFactory: () => new PwaService() },
+      { provide: PwaService, useMock: mockedPwaService },
       emptyHammerLoader
     ]
   }));
@@ -377,7 +378,7 @@ describe('CollaboratorsComponent', () => {
     expect(env.linkSharingTextbox).toBeNull();
   }));
 
-  it('should disable page if not connected', fakeAsync(() => {
+  it('should disable collaborators if not connected', fakeAsync(() => {
     const env = new TestEnvironment(false);
     env.setupProjectData();
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve(['alice@a.aa']);
@@ -385,14 +386,17 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
     const numUsersOnProject = 3;
+    expect(env.offlineMessage).not.toBeNull();
     expect(env.isFilterDisabled).toBe(true);
 
     env.onlineStatus = true;
     expect(env.userRows.length).toEqual(numUsersOnProject + 1);
+    expect(env.offlineMessage).toBeNull();
     expect(env.isFilterDisabled).toBe(false);
 
     env.onlineStatus = false;
     expect(env.userRows.length).toEqual(numUsersOnProject + 1);
+    expect(env.offlineMessage).not.toBeNull();
     expect(env.isFilterDisabled).toBe(true);
     expect(env.removeUserButtonOnRow(0).nativeElement.disabled).toBe(true);
     expect(env.cancelInviteButtonOnRow(3).nativeElement.disabled).toBe(true);
@@ -403,7 +407,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<CollaboratorsComponent>;
   readonly component: CollaboratorsComponent;
   readonly project01Id: string = 'project01';
-  private isOnline: boolean;
+  private isOnline: BehaviorSubject<boolean>;
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
@@ -440,8 +444,8 @@ class TestEnvironment {
       }
     ]);
 
-    this.isOnline = hasConnection;
-    spyOnProperty(window.navigator, 'onLine').and.returnValue(this.isOnline);
+    this.isOnline = new BehaviorSubject<boolean>(hasConnection);
+    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
     this.fixture = TestBed.createComponent(CollaboratorsComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -456,6 +460,10 @@ class TestEnvironment {
 
   get linkSharingTextbox(): HTMLElement {
     return this.fixture.nativeElement.querySelector('#share-link');
+  }
+
+  get offlineMessage(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#collaborators-offline-message'));
   }
 
   get noUsersLabel(): DebugElement {
@@ -497,8 +505,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(hasConnection: boolean) {
-    this.isOnline = hasConnection;
-    window.dispatchEvent(new Event(hasConnection ? 'online' : 'offline'));
+    this.isOnline.next(hasConnection);
     tick();
     this.fixture.detectChanges();
   }

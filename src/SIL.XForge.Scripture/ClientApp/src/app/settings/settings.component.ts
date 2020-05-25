@@ -80,11 +80,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   set isAppOnline(isOnline: boolean) {
-    if (isOnline) {
-      this.form.enable();
-    } else {
-      this.form.disable();
-    }
+    isOnline ? this.form.enable() : this.form.disable();
     this._isAppOnline = isOnline;
   }
 
@@ -121,23 +117,21 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     );
     this.subscribe(this.pwaService.onlineStatus, isOnline => {
       this.isAppOnline = isOnline;
-      if (isOnline) {
-        if (this.paratextProjects == null) {
-          this.subscribe(
-            combineLatest(projectId$, this.paratextService.getProjects()),
-            async ([projectId, paratextProjects]) => {
-              this.loadingStarted();
-              this.projectDoc = await this.projectService.get(projectId);
-              this.paratextProjects = paratextProjects == null ? undefined : paratextProjects;
-              if (this.projectDoc != null) {
-                this.updateSettingsInfo();
-                this.updateSourceProjects();
-                this.subscribe(this.projectDoc.remoteChanges$, () => this.updateSourceProjects());
-              }
-              this.loadingFinished();
+      if (isOnline && this.paratextProjects == null) {
+        this.subscribe(
+          combineLatest(projectId$, this.paratextService.getProjects()),
+          async ([projectId, paratextProjects]) => {
+            this.loadingStarted();
+            this.projectDoc = await this.projectService.get(projectId);
+            this.paratextProjects = paratextProjects == null ? undefined : paratextProjects;
+            if (this.projectDoc != null) {
+              this.updateSettingsInfo();
+              this.updateSourceProjects();
+              this.subscribe(this.projectDoc.remoteChanges$, () => this.updateSourceProjects());
             }
-          );
-        }
+            this.loadingFinished();
+          }
+        );
       }
     });
   }
