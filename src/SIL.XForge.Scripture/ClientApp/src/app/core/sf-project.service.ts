@@ -37,11 +37,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   constructor(
     realtimeService: RealtimeService,
     commandService: CommandService,
-    pwaService: PwaService,
+    private readonly pwaService: PwaService,
     http: HttpClient,
     private readonly machineHttp: MachineHttpClient
   ) {
-    super(realtimeService, commandService, pwaService, SF_PROJECT_ROLES, http);
+    super(realtimeService, commandService, SF_PROJECT_ROLES, http);
     this.subscribe(this.pwaService.onlineStatus, async isOnline => {
       if (isOnline) {
         const audioData = await this.realtimeService.offlineStore.getAllData<AudioData>(AudioData.COLLECTION);
@@ -227,8 +227,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       return this.onlineUploadAudio(id, dataId, new File([blob], filename));
     }
     // Store the audio in indexedDB until we go online again
-    let localAudioData = new AudioData(dataId, id);
-    localAudioData.setUploadContents(questionDocId, blob, filename);
+    let localAudioData = AudioData.createUploadData(dataId, id, questionDocId, blob, filename);
     localAudioData = await this.realtimeService.storeOfflineData(localAudioData);
     return URL.createObjectURL(localAudioData.blob);
   }
@@ -246,8 +245,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     if (await this.realtimeService.removeOfflineData(AudioData.COLLECTION, dataId)) {
       return;
     }
-    const deleteAudioData = new AudioData(dataId, id);
-    deleteAudioData.setDeletionContents(ownerId);
-    this.realtimeService.storeOfflineData(deleteAudioData);
+    this.realtimeService.storeOfflineData(AudioData.createDeletionData(dataId, id, ownerId));
   }
 }
