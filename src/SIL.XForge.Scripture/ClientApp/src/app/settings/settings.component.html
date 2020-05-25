@@ -1,9 +1,7 @@
 <ng-container *transloco="let t; read: 'settings'">
   <div fxLayout="column" fxLayoutGap="2rem" class="container">
     <div mdcHeadline4>{{ t("settings") }}</div>
-    <span *ngIf="!isAppOnline" id="settings-offline-message" class="offline-text">
-      {{ t("connect_network_to_change_settings") }}
-    </span>
+    <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_change_settings") }} </span>
     <div>
       <div mdcHeadline6>{{ t("tools") }}</div>
       <p mdcBody2>{{ t("select_additional_tools_and_features") }}</p>

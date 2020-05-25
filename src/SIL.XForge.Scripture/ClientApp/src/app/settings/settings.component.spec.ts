@@ -10,7 +10,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { TranslateConfig } from 'realtime-server/lib/scriptureforge/models/translate-config';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -35,6 +35,7 @@ const mockedParatextService = mock(ParatextService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedCookieService = mock(CookieService);
+const mockedPwaService = mock(PwaService);
 
 @Component({
   template: `
@@ -63,7 +64,7 @@ describe('SettingsComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: PwaService, useFactory: () => new PwaService() }
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -123,11 +124,11 @@ describe('SettingsComponent', () => {
       const env = new TestEnvironment(false);
       env.setupProject();
       env.wait();
-      expect(env.settingsDisabledMessage).not.toBeNull();
+      expect(env.offlineMessage).not.toBeNull();
       expect(env.deleteProjectButton.disabled).toBe(true);
       expect(env.component.form.disabled).toBe(true);
       env.onlineStatus = true;
-      expect(env.settingsDisabledMessage).toBeNull();
+      expect(env.offlineMessage).toBeNull();
       expect(env.deleteProjectButton.disabled).toBe(false);
       expect(env.component.form.enabled).toBe(true);
     }));
@@ -389,7 +390,7 @@ class TestEnvironment {
   readonly location: Location;
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
-  private isOnline: boolean;
+  private isOnline: BehaviorSubject<boolean>;
 
   constructor(hasConnection: boolean = true) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
@@ -399,8 +400,9 @@ class TestEnvironment {
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
-    this.isOnline = hasConnection;
-    spyOnProperty(window.navigator, 'onLine').and.returnValue(this.isOnline);
+    this.isOnline = new BehaviorSubject<boolean>(hasConnection);
+    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
     this.setupParatextProjects([
       {
         paratextId: 'paratextId01',
@@ -497,13 +499,12 @@ class TestEnvironment {
     return oce.querySelector('#cancel-btn') as HTMLElement;
   }
 
-  get settingsDisabledMessage(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#settings-offline-message');
+  get offlineMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('.offline-text');
   }
 
   set onlineStatus(hasConnection: boolean) {
-    this.isOnline = hasConnection;
-    window.dispatchEvent(new Event(hasConnection ? 'online' : 'offline'));
+    this.isOnline.next(hasConnection);
     tick();
     this.fixture.detectChanges();
   }

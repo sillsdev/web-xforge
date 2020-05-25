@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { defer, of } from 'rxjs';
+import { BehaviorSubject, defer, of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -32,6 +32,7 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
+const mockedPwaService = mock(PwaService);
 
 describe('ConnectProjectComponent', () => {
   configureTestingModule(() => ({
@@ -43,7 +44,7 @@ describe('ConnectProjectComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: I18nService, useMock: mockedI18nService },
-      { provide: PwaService, useFactory: () => new PwaService() }
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -178,12 +179,12 @@ describe('ConnectProjectComponent', () => {
     env.setupDefaultProjectData();
     env.fixture.detectChanges();
     expect(env.component.state).toEqual('loading');
-    expect(env.connectProjectOfflineMessage).not.toBeNull();
+    expect(env.offlineMessage).not.toBeNull();
     expect(env.component.connectProjectForm.disabled).toBe(true);
     expect(env.submitButton.nativeElement.disabled).toBe(true);
 
     env.onlineStatus = true;
-    expect(env.connectProjectOfflineMessage).toBeNull();
+    expect(env.offlineMessage).toBeNull();
     expect(env.component.state).toEqual('input');
     expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
     expect(env.component.connectProjectForm.enabled).toBe(true);
@@ -298,7 +299,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ConnectProjectComponent>;
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
-  private isOnline: boolean;
+  private isOnline: BehaviorSubject<boolean>;
 
   constructor(hasConnection: boolean = true) {
     when(mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
@@ -340,9 +341,8 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.translateAndInsertTags(anything())).thenReturn('A translated string.');
-
-    this.isOnline = hasConnection;
-    spyOnProperty(window.navigator, 'onLine').and.returnValue(this.isOnline);
+    this.isOnline = new BehaviorSubject<boolean>(hasConnection);
+    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
     this.fixture = TestBed.createComponent(ConnectProjectComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -399,13 +399,12 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('mdc-linear-progress'));
   }
 
-  get connectProjectOfflineMessage(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#connect-offline-message'));
+  get offlineMessage(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.offline-text'));
   }
 
   set onlineStatus(hasConnection: boolean) {
-    this.isOnline = hasConnection;
-    window.dispatchEvent(new Event(hasConnection ? 'online' : 'offline'));
+    this.isOnline.next(hasConnection);
     tick();
     this.fixture.detectChanges();
   }

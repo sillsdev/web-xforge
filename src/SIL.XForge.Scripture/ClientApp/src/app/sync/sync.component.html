@@ -1,9 +1,7 @@
 <ng-container *transloco="let t; read: 'sync'">
   <div fxLayout="column" class="base-container">
     <h2 id="title">{{ t("synchronize_project", { projectName: projectName }) }}</h2>
-    <span *ngIf="!isAppOnline" id="sync-offline-message" class="offline-text">
-      {{ t("connect_network_to_synchronize") }}
-    </span>
+    <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_synchronize") }} </span>
     <mdc-card outlined class="sync-card">
       <div fxLayout="column" class="card-content">
         <button

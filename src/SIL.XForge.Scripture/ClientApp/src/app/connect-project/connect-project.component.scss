@@ -1,3 +1,4 @@
+@import '~src/app/shared/styles';
 @import '~src/variables';
 @import '~@angular-mdc/theme/scss/button/mixins';
 
@@ -12,7 +13,6 @@
 }
 
 .offline-text {
-  color: var(--mdc-theme-error);
   padding-bottom: 16px;
 }
 

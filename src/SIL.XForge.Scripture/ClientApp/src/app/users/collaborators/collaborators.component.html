@@ -15,18 +15,19 @@
         ><span [innerHtml]="rolesText?.after"></span>
       </p>
     </div>
+    <span *ngIf="!isAppOnline" id="collaborators-offline-message" class="offline-text">{{
+      t("connect_network_to_manage_users")
+    }}</span>
 
     <div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
-      <form fxFlex>
-        <mdc-form-field [formGroup]="filterForm" fxFlex>
-          <mdc-text-field
-            label="{{ t('filter_users') }}"
-            formControlName="filter"
-            (keyup)="updateSearchTerm($event.target.value)"
-            id="project-user-filter"
-          ></mdc-text-field>
-        </mdc-form-field>
-      </form>
+      <mdc-form-field [formGroup]="filterForm" fxFlex>
+        <mdc-text-field
+          label="{{ t('filter_users') }}"
+          formControlName="filter"
+          (keyup)="updateSearchTerm($event.target.value)"
+          id="project-user-filter"
+        ></mdc-text-field>
+      </mdc-form-field>
     </div>
     <div *ngIf="!isLoading">
       <div *ngIf="totalUsers > 0">
