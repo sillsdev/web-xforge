@@ -7,7 +7,6 @@ import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/ver
 import { anything, mock, verify } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
 import { AudioData } from 'xforge-common/models/audio-data';
-import { OfflineData } from 'xforge-common/models/offline-data';
 import { PwaService } from 'xforge-common/pwa.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -15,7 +14,8 @@ import { configureTestingModule, getAudioBlob } from 'xforge-common/test-utils';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from 'xforge-common/url-constants';
 import { MachineHttpClient } from './machine-http-client';
 import { QuestionDoc } from './models/question-doc';
-import { SF_OFFLINE_DATA_TYPES, SF_REALTIME_DOC_TYPES } from './models/sf-realtime-doc-types';
+import { SF_OFFLINE_DATA_TYPES } from './models/sf-offline-data-types';
+import { SF_REALTIME_DOC_TYPES } from './models/sf-realtime-doc-types';
 import { SFProjectService } from './sf-project.service';
 
 const mockedCommandService = mock(CommandService);
@@ -50,7 +50,7 @@ describe('SFProject Service', () => {
     const url = await response;
     expect(url).toBe('/path/to/test01.wav');
     env.httpMock.verify();
-    expect(await env.offlineAudioContentLengthAsync()).toEqual(0);
+    expect(await env.offlineAudioContentLength()).toEqual(0);
   });
 
   it('should store audio in offline store if webSocket is closed', async () => {
@@ -60,7 +60,7 @@ describe('SFProject Service', () => {
     const questionDocId = getQuestionDocId(env.projectId, questionId);
     await env.simulateUploadAudio(questionDocId, questionId);
     env.httpMock.verify();
-    expect(await env.offlineAudioContentLengthAsync()).toEqual(1);
+    expect(await env.offlineAudioContentLength()).toEqual(1);
   });
 
   it('should upload when reconnected', fakeAsync(() => {
@@ -115,7 +115,7 @@ describe('SFProject Service', () => {
       QuestionDoc.COLLECTION,
       getQuestionDocId(env.projectId, 'abcd')
     );
-    expect(await env.offlineAudioContentLengthAsync()).toEqual(0);
+    expect(await env.offlineAudioContentLength()).toEqual(0);
     await env.simulateResetAudioOnQuestion(questionDoc);
     verify(mockedCommandService.onlineInvoke(anything(), 'deleteAudio', anything())).once();
   });
@@ -128,9 +128,9 @@ describe('SFProject Service', () => {
       QuestionDoc.COLLECTION,
       getQuestionDocId(env.projectId, 'abcd')
     );
-    expect(await env.offlineAudioContentLengthAsync()).toEqual(1);
+    expect(await env.offlineAudioContentLength()).toEqual(1);
     await env.simulateResetAudioOnQuestion(questionDoc);
-    expect(await env.offlineAudioContentLengthAsync()).toEqual(0);
+    expect(await env.offlineAudioContentLength()).toEqual(0);
   });
 
   it('should store audio deletion data if offline', async () => {
@@ -141,10 +141,10 @@ describe('SFProject Service', () => {
       QuestionDoc.COLLECTION,
       getQuestionDocId(env.projectId, 'abcd')
     );
-    expect(await env.offlineAudioContentLengthAsync()).toEqual(0);
+    expect(await env.offlineAudioContentLength()).toEqual(0);
     env.establishWebSocket(false);
     await env.simulateResetAudioOnQuestion(questionDoc);
-    expect(await env.offlineAudioContentLengthAsync()).toEqual(1);
+    expect(await env.offlineAudioContentLength()).toEqual(1);
     const audio = await env.getOfflineAudioData('abcd');
     expect(audio).toBeDefined();
     expect(audio!.deleteRef).toEqual('user01');
@@ -196,7 +196,7 @@ class TestEnvironment {
     return this.testRealtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, getQuestionDocId(this.projectId, dataId));
   }
 
-  async offlineAudioContentLengthAsync(): Promise<number> {
+  async offlineAudioContentLength(): Promise<number> {
     const content = await this.testRealtimeService.offlineStore.getAllData<AudioData>(AudioData.COLLECTION);
     return content.length;
   }

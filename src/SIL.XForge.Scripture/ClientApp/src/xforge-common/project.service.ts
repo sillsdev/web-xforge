@@ -10,7 +10,6 @@ import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
 import { RealtimeQuery } from './models/realtime-query';
-import { PwaService } from './pwa.service';
 import { Filters, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
 import { SubscriptionDisposable } from './subscription-disposable';
@@ -25,7 +24,6 @@ export abstract class ProjectService<
   constructor(
     protected readonly realtimeService: RealtimeService,
     protected readonly commandService: CommandService,
-    protected readonly pwaService: PwaService,
     roles: ProjectRoleInfo[],
     private readonly http: HttpClient
   ) {
