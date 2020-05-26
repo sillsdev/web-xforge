@@ -9,10 +9,11 @@ import { Router } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { defer, of } from 'rxjs';
+import { BehaviorSubject, defer, of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -31,6 +32,7 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
+const mockedPwaService = mock(PwaService);
 
 describe('ConnectProjectComponent', () => {
   configureTestingModule(() => ({
@@ -41,7 +43,8 @@ describe('ConnectProjectComponent', () => {
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: I18nService, useMock: mockedI18nService }
+      { provide: I18nService, useMock: mockedI18nService },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -171,6 +174,27 @@ describe('ConnectProjectComponent', () => {
     expect(env.nonAdminMessage).toBeNull();
   }));
 
+  it('disables page if offline', fakeAsync(() => {
+    const env = new TestEnvironment(false);
+    env.setupDefaultProjectData();
+    env.fixture.detectChanges();
+    expect(env.component.state).toEqual('loading');
+    expect(env.offlineMessage).not.toBeNull();
+    expect(env.component.connectProjectForm.disabled).toBe(true);
+    expect(env.submitButton.nativeElement.disabled).toBe(true);
+
+    env.onlineStatus = true;
+    expect(env.offlineMessage).toBeNull();
+    expect(env.component.state).toEqual('input');
+    expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
+    expect(env.component.connectProjectForm.enabled).toBe(true);
+    expect(env.submitButton.nativeElement.disabled).toBe(false);
+    expect(env.nonAdminMessage).not.toBeNull();
+
+    env.onlineStatus = false;
+    expect(env.nonAdminMessage).toBeNull();
+  }));
+
   it('submit if user selects a source project then disables translation suggestions', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
@@ -275,8 +299,9 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ConnectProjectComponent>;
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private isOnline: BehaviorSubject<boolean>;
 
-  constructor() {
+  constructor(hasConnection: boolean = true) {
     when(mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
       const newProject: SFProject = {
         name: 'project 01',
@@ -316,7 +341,8 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.translateAndInsertTags(anything())).thenReturn('A translated string.');
-
+    this.isOnline = new BehaviorSubject<boolean>(hasConnection);
+    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
     this.fixture = TestBed.createComponent(ConnectProjectComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -371,6 +397,16 @@ class TestEnvironment {
 
   get progressBar(): DebugElement {
     return this.fixture.debugElement.query(By.css('mdc-linear-progress'));
+  }
+
+  get offlineMessage(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.offline-text'));
+  }
+
+  set onlineStatus(hasConnection: boolean) {
+    this.isOnline.next(hasConnection);
+    tick();
+    this.fixture.detectChanges();
   }
 
   changeSelectValue(select: DebugElement, value: string): void {

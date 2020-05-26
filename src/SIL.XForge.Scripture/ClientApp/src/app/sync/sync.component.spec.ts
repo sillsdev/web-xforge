@@ -6,10 +6,11 @@ import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -25,6 +26,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedParatextService = mock(ParatextService);
 const mockedProjectService = mock(SFProjectService);
 const mockedCookieService = mock(CookieService);
+const mockedPwaService = mock(PwaService);
 
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
@@ -36,7 +38,8 @@ describe('SyncComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: CookieService, useMock: mockedCookieService }
+      { provide: CookieService, useMock: mockedCookieService },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -61,6 +64,17 @@ describe('SyncComponent', () => {
     expect(env.logInButton).toBeNull();
     expect(env.syncButton.nativeElement.textContent).toContain('Synchronize');
     expect(env.lastSyncDate.textContent).toContain('Last synced on');
+  }));
+
+  it('should disable button when offline', fakeAsync(() => {
+    const env = new TestEnvironment(true, false, false);
+    expect(env.logInButton).toBeNull();
+    expect(env.syncButton.nativeElement.disabled).toBe(true);
+    expect(env.lastSyncDate.textContent).toContain('Last synced on');
+    expect(env.offlineMessage).not.toBeNull();
+    env.onlineStatus = true;
+    expect(env.syncButton.nativeElement.disabled).toBe(false);
+    expect(env.offlineMessage).toBeNull();
   }));
 
   it('should sync project when the button is clicked', fakeAsync(() => {
@@ -114,8 +128,9 @@ class TestEnvironment {
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private isLoading: boolean = false;
+  private isOnline: BehaviorSubject<boolean>;
 
-  constructor(isParatextAccountConnected: boolean = false, isInProgress: boolean = false) {
+  constructor(isParatextAccountConnected: boolean = false, isInProgress: boolean = false, isOnline: boolean = true) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'testProject01' }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
@@ -123,6 +138,8 @@ class TestEnvironment {
     when(mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
     when(mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
     when(mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);
+    this.isOnline = new BehaviorSubject(isOnline);
+    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
 
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
@@ -187,6 +204,16 @@ class TestEnvironment {
 
   get syncMessage(): HTMLElement {
     return this.fixture.nativeElement.querySelector('#sync-message');
+  }
+
+  get offlineMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('.offline-text');
+  }
+
+  set onlineStatus(hasConnection: boolean) {
+    this.isOnline.next(hasConnection);
+    tick();
+    this.fixture.detectChanges();
   }
 
   clickElement(element: HTMLElement | DebugElement): void {

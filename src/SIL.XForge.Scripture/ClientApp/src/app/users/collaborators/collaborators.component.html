@@ -15,11 +15,15 @@
         ><span [innerHtml]="rolesText?.after"></span>
       </p>
     </div>
+    <span *ngIf="!isAppOnline" id="collaborators-offline-message" class="offline-text">{{
+      t("connect_network_to_manage_users")
+    }}</span>
 
     <div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
-      <mdc-form-field fxFlex>
+      <mdc-form-field [formGroup]="filterForm" fxFlex>
         <mdc-text-field
           label="{{ t('filter_users') }}"
+          formControlName="filter"
           (keyup)="updateSearchTerm($event.target.value)"
           id="project-user-filter"
         ></mdc-text-field>
@@ -64,6 +68,7 @@
                 class="remove-user"
                 *ngIf="!userRow.isInvitee && !isCurrentUser(userRow)"
                 type="button"
+                [disabled]="!isAppOnline"
                 (click)="removeProjectUser(userRow.id)"
                 title="{{ t('remove_from_project') }}"
               ></button>
@@ -78,6 +83,7 @@
                 color="warn"
                 class="cancel-invite"
                 type="button"
+                [disabled]="!isAppOnline"
                 (click)="uninviteProjectUser(userRow.user.email)"
               >
                 {{ t("cancel_invite") }}
@@ -91,6 +97,7 @@
                 fxHide
                 fxShow.lt-sm
                 type="button"
+                [disabled]="!isAppOnline"
                 (click)="uninviteProjectUser(userRow.user.email)"
                 title="{{ t('cancel_invite') }}"
               ></button>
