@@ -49,7 +49,10 @@ import { UsersModule } from './users/users.module';
     CoreModule,
     HttpClientModule,
     // not ready for production yet - 2018-11 IJH
-    ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.pwaTest }), // || environment.production }),
+    ServiceWorkerModule.register('ngsw-worker.js', {
+      enabled: environment.pwaTest, // || environment.production,
+      registrationStrategy: 'registerImmediately'
+    }),
     TranslateModule,
     CheckingModule,
     UsersModule,
