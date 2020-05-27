@@ -146,6 +146,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     this.updateOfflineDataSub.unsubscribe();
     this.onDeleteSub.unsubscribe();
     await this.adapter.destroy();
+    this.subscribedState = false;
   }
 
   protected prepareDataForStore(data: T): any {
