@@ -16,7 +16,7 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.2/min/tiny-slider.js"></script>
     <script type="text/javascript">
-        var AUTOPLAY_TIMEOUT = 5000;
+        var AUTOPLAY_TIMEOUT = 15000;
         var playerSlider;
         var pauseIntervalId;
         document.querySelectorAll('.features .slider').forEach(function (container, index) {
@@ -35,10 +35,12 @@
                     loop: false,
                     mouseDrag: true,
                     nav: true,
+                    navPosition: 'bottom',
                     preventActionWhenRunning: true,
                     preventScrollOnTouch: 'force',
                     // with loop disabled this makes it behave the same as with loop enabled when there are only 2 slides
                     rewind: true,
+                    speed: 800,
                     swipeAngle: false
                 });
                 if (container.id && container.id === 'player-slider') {

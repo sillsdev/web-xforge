@@ -152,23 +152,30 @@
     display: flex;
     align-items: center;
     margin: 0 auto;
-    @include media-breakpoint-down(lg) {
+    @include media-breakpoint-down(md) {
       flex-direction: column;
     }
 
     img {
       height: auto;
+      margin-left: auto;
       @include media-breakpoint-only(xl) {
         max-width: 50vw;
+      }
+      @include media-breakpoint-down(md) {
+        margin-left: 0;
       }
     }
 
     .quote-text {
       max-width: 630px;
       padding: 50px 50px 40px 20px;
-      margin: auto;
+      margin: auto auto auto 0;
       display: flex;
       align-items: flex-start;
+      @include media-breakpoint-down(md) {
+        margin: auto;
+      }
       @include media-breakpoint-only(xs) {
         padding: 30px 30px 10px 20px;
       }
@@ -375,10 +382,10 @@
     color: $white;
     font-size: 50px;
     line-height: 1.2;
-    padding: 200px 0;
+    padding: 75px 0;
     @include media-breakpoint-down(lg) {
       font-size: 4vw;
-      padding: 16vw 0;
+      padding: 7vw 0;
     }
     @include media-breakpoint-down(xs) {
       font-size: 22px;
