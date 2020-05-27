@@ -53,14 +53,18 @@
       }
     },
     {
-      "name": "Migrations",
+      "name": "Migration PtdaToPtdd",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "dotnet build",
-      "program": "${workspaceRoot}/src/Migrations/bin/Debug/netcoreapp3.1/Migrations.dll",
-      "cwd": "${workspaceRoot}/src/Migrations/",
+      "program": "${workspaceRoot}/src/Migrations/PtdaToPtdd/bin/Debug/netcoreapp3.1/PtdaToPtdd.dll",
+      "cwd": "${workspaceRoot}/src/Migrations/PtdaToPtdd",
       "stopAtEntry": false,
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "args": ["--start-ng-serve=listen"],
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
     },
     {
       "type": "node",
