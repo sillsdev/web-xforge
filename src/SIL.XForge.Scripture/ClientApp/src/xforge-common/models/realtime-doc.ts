@@ -24,6 +24,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   private subscribePromise?: Promise<void>;
   private localDelete$ = new Subject<void>();
   private _delete$: Observable<void>;
+  private subscribedState: boolean = false;
   private subscribeQueryCount: number = 0;
   private loadOfflineDataPromise?: Promise<void>;
 
@@ -44,11 +45,11 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   }
 
   get isLoaded(): boolean {
-    return this.adapter.type != null;
+    return this.adapter.type != null && this.subscribedState;
   }
 
   get subscribed(): boolean {
-    return this.adapter.subscribed || this.subscribeQueryCount > 0;
+    return this.subscribedState || this.subscribeQueryCount > 0;
   }
 
   get collection(): string {
@@ -215,6 +216,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       this.checkExists();
     } else {
       await promise;
+      this.subscribedState = this.adapter.subscribed;
     }
   }
 
