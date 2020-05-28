@@ -41,7 +41,6 @@ section.panel {
   }
 }
 .section-title {
-  position: relative;
   padding-left: 110px;
   @include media-breakpoint-down(md) {
     padding-left: 70px;
@@ -59,8 +58,7 @@ section.panel {
   }
 
   .title {
-    display: flex;
-    align-items: center;
+    position: relative;
     @include media-breakpoint-down(sm) {
       font-size: 26px;
     }
@@ -68,33 +66,45 @@ section.panel {
     &:before {
       content: '';
       position: absolute;
-      left: 0;
+      left: -110px;
+      top: 0;
       height: 40px;
       width: 70px;
-      background-color: $purpleDark;
+      background-color: $greenLight;
       @include media-breakpoint-down(md) {
         width: 40px;
+        left: -85px;
       }
       @include media-breakpoint-down(sm) {
         width: 20px;
         height: 24px;
-        left: -20px;
+        left: -46px;
       }
     }
 
     &:after {
       position: absolute;
       content: '';
-      left: 70px;
+      left: -40px;
+      top: 0;
       border-style: solid;
       border-width: 20px 0 20px 20px;
-      border-color: transparent transparent transparent $purpleDark;
+      border-color: transparent transparent transparent $greenLight;
       @include media-breakpoint-down(md) {
-        left: 40px;
+        left: -46px;
       }
       @include media-breakpoint-down(sm) {
-        left: 0px;
+        left: -26px;
         border-width: 12px 0 12px 12px;
+      }
+    }
+
+    &.dark {
+      &:before {
+        background-color: $purpleDark;
+      }
+      &:after {
+        border-color: transparent transparent transparent $purpleDark;
       }
     }
   }
