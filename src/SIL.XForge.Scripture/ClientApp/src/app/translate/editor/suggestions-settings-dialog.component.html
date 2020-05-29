@@ -4,17 +4,19 @@
       <mdc-dialog-surface>
         <mdc-dialog-title>{{ t("translation_suggestions_settings") }}</mdc-dialog-title>
         <mdc-dialog-content class="content-padding" fxLayout="column" fxLayoutGap="25px">
+          <div class="offline-text" *ngIf="!pwaService.isOnline">{{ t("settings_not_available_offline") }}</div>
           <mdc-form-field>
             <mdc-switch
               id="suggestions-enabled-switch"
               *ngIf="open"
               [(ngModel)]="translationSuggestionsUserEnabled"
+              [disabled]="!pwaService.isOnline"
             ></mdc-switch>
             <label class="switch-label">{{ t("translation_suggestions") }}</label>
           </mdc-form-field>
           <mdc-select
             id="num-suggestions-select"
-            [disabled]="!translationSuggestionsUserEnabled"
+            [disabled]="settingsEnabled"
             [(ngModel)]="numSuggestions"
             placeholder="{{ t('number_of_suggestions') }}"
           >
@@ -28,7 +30,7 @@
             </div>
             <mdc-slider
               #confidenceThresholdSlider
-              [disabled]="!translationSuggestionsUserEnabled"
+              [disabled]="settingsEnabled"
               [min]="0"
               [max]="100"
               [(ngModel)]="confidenceThreshold"

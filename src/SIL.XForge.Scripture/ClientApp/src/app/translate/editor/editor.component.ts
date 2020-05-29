@@ -619,7 +619,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private async translateSegment(): Promise<void> {
     this.translationSession = undefined;
-    if (this.translationEngine == null || this.source == null) {
+    if (this.translationEngine == null || this.source == null || !this.pwaService.isOnline) {
       return;
     }
     const sourceSegment = this.source.segmentText;

@@ -148,6 +148,7 @@
     "close": "Close",
     "more": "More",
     "number_of_suggestions": "Number of suggestions",
+    "settings_not_available_offline": "These settings are not available while you are offline.",
     "suggestion_confidence": "Suggestion confidence",
     "translation_suggestions": "Translation suggestions",
     "translation_suggestions_settings": "Translation suggestions settings"
