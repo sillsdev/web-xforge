@@ -2,8 +2,10 @@ import { translate } from '@ngneat/transloco';
 import Bowser from 'bowser';
 import ObjectID from 'bson-objectid';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import locales from '../../../locales.json';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
+import { Locale } from './models/i18n-locale';
 
 export function nameof<T>(name: Extract<keyof T, string>): string {
   return name;
@@ -95,6 +97,17 @@ export function getAspCultureCookieLanguage(cookie: string): string {
     }
   });
   return uic! || c! || 'en';
+}
+
+export function getI18nLocales(): Locale[] {
+  return locales.map(locale => {
+    return {
+      ...locale,
+      canonicalTag: locale.tags[0],
+      production: !!locale.production,
+      direction: locale['direction'] || 'ltr'
+    };
+  });
 }
 
 export function browserLinks() {

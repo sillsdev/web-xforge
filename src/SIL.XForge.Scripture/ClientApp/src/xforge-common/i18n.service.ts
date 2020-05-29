@@ -8,22 +8,12 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { of, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
-import locales from '../../../locales.json';
 import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
-import { ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue, getAspCultureCookieLanguage } from './utils';
-
-interface Locale {
-  localName: string;
-  englishName: string;
-  canonicalTag: string;
-  direction: 'ltr' | 'rtl';
-  tags: string[];
-  production: boolean;
-  helps?: string;
-}
+import { Locale } from './models/i18n-locale';
+import { ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue, getAspCultureCookieLanguage, getI18nLocales } from './utils';
 
 type DateFormat = Intl.DateTimeFormatOptions | ((date: Date) => string);
 
@@ -61,14 +51,7 @@ function pad(number: number) {
   providedIn: 'root'
 })
 export class I18nService {
-  static readonly locales: Locale[] = locales.map(locale => {
-    return {
-      ...locale,
-      canonicalTag: locale.tags[0],
-      production: !!locale.production,
-      direction: locale['direction'] || 'ltr'
-    };
-  });
+  static readonly locales: Locale[] = getI18nLocales();
 
   static dateFormats: { [key: string]: DateFormat } = {
     en: { month: 'short' },
