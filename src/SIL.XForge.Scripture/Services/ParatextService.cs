@@ -36,6 +36,7 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using SIL.Scripture;
+using System.Diagnostics;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -45,6 +46,7 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class ParatextService : DisposableBase, IParatextService
     {
+        private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IOptions<ParatextOptions> _paratextOptions;
         private readonly IRepository<UserSecret> _userSecretRepository;
         private readonly IRealtimeService _realtimeService;
@@ -65,6 +67,7 @@ namespace SIL.XForge.Scripture.Services
             IExceptionHandler exceptionHandler, IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService,
             ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper)
         {
+            _webHostEnvironment = env;
             _paratextOptions = paratextOptions;
             _userSecretRepository = userSecretRepository;
             _realtimeService = realtimeService;
@@ -120,6 +123,13 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Prepare access to Paratext.Data library, authenticate, and prepare Mercurial. </summary>
         public void Init()
         {
+            if (_webHostEnvironment.IsDevelopment() || _webHostEnvironment.IsEnvironment("Testing"))
+            {
+                // On dev machines, output more info from ParatextData.dll for investigating.
+                Trace.Listeners.Add(new TextWriterTraceListener(Console.Out));
+                Trace.AutoFlush = true;
+            }
+
             SyncDir = Path.Combine(_siteOptions.Value.SiteDir, "sync");
             if (!_fileSystemService.DirectoryExists(SyncDir))
                 _fileSystemService.CreateDirectory(SyncDir);
