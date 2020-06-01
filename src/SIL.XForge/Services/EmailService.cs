@@ -23,11 +23,7 @@ namespace SIL.XForge.Services
         public async Task SendEmailAsync(string email, string subject, string body)
         {
             SiteOptions siteOptions = _options.Value;
-            string host = siteOptions.Origin.Host;
-            string beta = "beta.";
-            if (host.StartsWith(beta))
-                host = host.Substring(beta.Length);
-            string fromAddress = "no-reply@" + host;
+            string fromAddress = siteOptions.EmailFromAddress;
             string title = siteOptions.Name;
             var mimeMessage = new MimeMessage();
             mimeMessage.From.Add(new MailboxAddress(title, fromAddress));
