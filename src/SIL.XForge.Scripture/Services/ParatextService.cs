@@ -196,9 +196,17 @@ namespace SIL.XForge.Scripture.Services
             // TODO report results
             List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
             bool success = false;
-            bool noErrors = SharingLogicWrapper.HandleErrors(() => success = SharingLogicWrapper
-                .ShareChanges(sharedPtProjectsToSr, source.AsInternetSharedRepositorySource(),
-                out results, sharedPtProjectsToSr));
+            bool noErrors = false;
+            noErrors = SharingLogicWrapper.HandleErrors(() =>
+            {
+                RegistrationInfo.PerformAsUser(username, () =>
+                {
+                    success = SharingLogicWrapper
+                     .ShareChanges(sharedPtProjectsToSr, source.AsInternetSharedRepositorySource(),
+                     out results, sharedPtProjectsToSr);
+
+                });
+            });
             if (!noErrors || !success)
                 throw new InvalidOperationException(
                     "Failed: Errors occurred while performing the sync with the Paratext Server.");
