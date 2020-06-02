@@ -5,6 +5,7 @@ import merge from 'lodash/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import { fromEvent } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { getBrowserEngine } from 'xforge-common/utils';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { registerScripture } from './quill-scripture';
@@ -57,8 +58,11 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
   lang: string = '';
+  containsRtlText: boolean = false;
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = USX_FORMATS;
+  // allow for different CSS based on the browser engine
+  readonly browserEngine: string = getBrowserEngine();
 
   private direction: string | null = null;
   private _editorStyles: any = { fontSize: '1rem' };
@@ -69,6 +73,10 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
         // disable default tab keyboard shortcuts in Quill
         tab: null,
         'remove tab': null,
+        'embed left': null,
+        'embed left shift': null,
+        'embed right': null,
+        'embed right shift': null,
 
         'disable backspace': {
           key: 'backspace',
@@ -460,7 +468,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       const quillElement = this.quill.nativeElement as HTMLElement;
       // set direction on the editor
       this.direction = window.getComputedStyle(quillElement).direction;
-      this.viewModel.setDirection();
+      this.containsRtlText = this.viewModel.setDirection();
     }
   }
 

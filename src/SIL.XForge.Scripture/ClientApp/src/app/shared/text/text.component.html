@@ -14,9 +14,11 @@
     'template-editor': !readOnlyEnabled,
     ltr: isLtr,
     rtl: isRtl,
-    'mark-invalid': markInvalid
+    'mark-invalid': markInvalid,
+    'contains-rtl-text': containsRtlText
   }"
   dir="auto"
   [lang]="lang"
+  [attr.data-browser-engine]="browserEngine"
 >
 </quill-editor>
