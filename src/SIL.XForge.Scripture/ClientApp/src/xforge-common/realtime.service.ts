@@ -137,4 +137,12 @@ export class RealtimeService {
       await Promise.all(promises);
     }
   }
+
+  async onLocalDocDispose(doc: RealtimeDoc): Promise<void> {
+    const key = getDocKey(doc.collection, doc.id);
+    if (this.docs.get(key) != null) {
+      await this.offlineStore.delete(doc.collection, doc.id);
+      this.docs.delete(key);
+    }
+  }
 }

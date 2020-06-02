@@ -193,8 +193,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
-    // Wait until the question query is ready before showing any question
-    return this.questionsQuery != null && this.questionsQuery.ready ? this.questionsQuery.docs : [];
+    return this.questionsQuery != null ? this.questionsQuery.docs : [];
   }
 
   get textsByBookId(): TextsByBookId {
