@@ -35,9 +35,18 @@ export class SFProjectDoc extends ProjectDoc<SFProject> {
 
   async unLoadTextDocs(bookNum?: number): Promise<void> {
     for (const textDocId of this.getTextDocs(bookNum)) {
-      const doc = this.realtimeService.get(TEXTS_COLLECTION, textDocId.toString());
-      await doc.dispose();
+      if (this.realtimeService.isSet(TEXTS_COLLECTION, textDocId.toString())) {
+        const doc = this.realtimeService.get(TEXTS_COLLECTION, textDocId.toString());
+        await doc.dispose();
+      }
     }
+  }
+
+  protected async onDelete(): Promise<void> {
+    await super.onDelete();
+    await this.deleteProjectDocs(SFProjectUserConfigDoc.COLLECTION);
+    await this.deleteProjectDocs(TextDoc.COLLECTION);
+    await this.deleteProjectDocs(QuestionDoc.COLLECTION);
   }
 
   private getTextDocs(bookNum?: number): TextDocId[] {
@@ -52,13 +61,6 @@ export class SFProjectDoc extends ProjectDoc<SFProject> {
       }
     }
     return texts;
-  }
-
-  protected async onDelete(): Promise<void> {
-    await super.onDelete();
-    await this.deleteProjectDocs(SFProjectUserConfigDoc.COLLECTION);
-    await this.deleteProjectDocs(TextDoc.COLLECTION);
-    await this.deleteProjectDocs(QuestionDoc.COLLECTION);
   }
 
   private async deleteProjectDocs(collection: string): Promise<void> {
