@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import isObjectLike from 'lodash/isObjectLike';
+import { environment } from '../environments/environment';
 import { OfflineData } from './models/offline-data';
 import { OfflineDataTypes } from './offline-data-types';
 import { Filter, performQuery, QueryParameters } from './query-parameters';
@@ -217,7 +218,7 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
       if (!window.indexedDB) {
         return reject(new Error('IndexedDB is not available in this browser. Please use a different browser.'));
       }
-      const request = window.indexedDB.open(DATABASE_NAME);
+      const request = window.indexedDB.open(DATABASE_NAME, environment.offlineDBVersion);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         const db = request.result;
@@ -227,10 +228,12 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
       };
       request.onupgradeneeded = () => {
         const db = request.result;
-        for (const docType of this.domainModel.docTypes) {
-          const objectStore = db.createObjectStore(docType.COLLECTION, { keyPath: 'id' });
-          for (const path of docType.INDEX_PATHS) {
-            objectStore.createIndex(path, `${nameof<RealtimeOfflineData>('data')}.${path}`);
+        if (db.objectStoreNames.length === 0) {
+          for (const docType of this.domainModel.docTypes) {
+            const objectStore = db.createObjectStore(docType.COLLECTION, { keyPath: 'id' });
+            for (const path of docType.INDEX_PATHS) {
+              objectStore.createIndex(path, `${nameof<RealtimeOfflineData>('data')}.${path}`);
+            }
           }
         }
         // Create an audio store

@@ -3,9 +3,12 @@
  * represented as a string.
  */
 export abstract class OfflineData {
-  abstract get collection(): string;
-
-  constructor(public dataId: string, public projectRef: string, public realtimeDocRef?: string) {}
+  constructor(
+    public collection: string,
+    public dataId: string,
+    public projectRef: string,
+    public realtimeDocRef?: string
+  ) {}
 }
 
 export interface OfflineDataConstructor {
