@@ -31,7 +31,12 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   constructor(protected readonly realtimeService: RealtimeService, public readonly adapter: RealtimeDocAdapter) {
     this._delete$ = merge(this.localDelete$, this.adapter.delete$);
     this.updateOfflineDataSub = merge(this.adapter.remoteChanges$, this.adapter.idle$, this.adapter.create$).subscribe(
-      () => this.updateOfflineData()
+      async () => {
+        if (this.subscribePromise != null) {
+          await this.subscribePromise;
+        }
+        this.updateOfflineData();
+      }
     );
     this.onDeleteSub = this.adapter.delete$.subscribe(() => this.onDelete());
   }
