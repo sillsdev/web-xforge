@@ -11,6 +11,7 @@ import {
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
+import { AuthService } from 'xforge-common/auth.service';
 import { CommandService } from 'xforge-common/command.service';
 import { AudioData } from 'xforge-common/models/audio-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -38,12 +39,14 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     realtimeService: RealtimeService,
     commandService: CommandService,
     private readonly pwaService: PwaService,
+    private readonly authService: AuthService,
     http: HttpClient,
     private readonly machineHttp: MachineHttpClient
   ) {
     super(realtimeService, commandService, SF_PROJECT_ROLES, http);
     this.subscribe(this.pwaService.onlineStatus, async isOnline => {
-      if (isOnline) {
+      // Wait until logged in so that the remote store gets initialized
+      if (isOnline && (await this.authService.isLoggedIn)) {
         const audioData = await this.realtimeService.offlineStore.getAllData<AudioData>(AudioData.COLLECTION);
         for (const audio of audioData) {
           if (audio.deleteRef != null) {
@@ -51,19 +54,22 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
             this.realtimeService.removeOfflineData(AudioData.COLLECTION, audio.dataId);
             continue;
           }
-          const doc: QuestionDoc = this.realtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, audio.realtimeDocRef!);
-          if (doc.data != null) {
+          const questionDoc = await this.realtimeService.subscribe<QuestionDoc>(
+            QuestionDoc.COLLECTION,
+            audio.realtimeDocRef!
+          );
+          if (questionDoc.data != null) {
             const url = await this.onlineUploadAudio(
               audio.projectRef,
               audio.dataId,
               new File([audio.blob!], audio.filename!)
             );
-            if (doc.data.dataId === audio.dataId) {
+            if (questionDoc.data.dataId === audio.dataId) {
               // The audio belongs to the question
-              doc.submitJson0Op(op => op.set(qd => qd.audioUrl!, url));
+              questionDoc.submitJson0Op(op => op.set(qd => qd.audioUrl!, url));
             } else {
-              const answerIndex = doc.data.answers.findIndex(a => a.dataId === audio.dataId);
-              doc.submitJson0Op(op => op.set(qd => qd.answers[answerIndex].audioUrl!, url));
+              const answerIndex = questionDoc.data.answers.findIndex(a => a.dataId === audio.dataId);
+              questionDoc.submitJson0Op(op => op.set(qd => qd.answers[answerIndex].audioUrl!, url));
             }
           }
           this.realtimeService.removeOfflineData(AudioData.COLLECTION, audio.dataId);

@@ -29,7 +29,14 @@ export class AudioData extends OfflineData {
   filename?: string;
   deleteRef?: string;
 
+  private _collection: string;
+
+  constructor(dataId: string, projectRef: string, realtimeDocRef?: string) {
+    super(dataId, projectRef, realtimeDocRef);
+    this._collection = AUDIO_COLLECTION;
+  }
+
   get collection(): string {
-    return AUDIO_COLLECTION;
+    return this._collection;
   }
 }
