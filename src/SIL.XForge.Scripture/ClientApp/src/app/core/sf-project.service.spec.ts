@@ -1,10 +1,12 @@
+import { HttpClient } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController, RequestMatch } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
-import { anything, mock, verify } from 'ts-mockito';
+import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { CommandService } from 'xforge-common/command.service';
 import { AudioData } from 'xforge-common/models/audio-data';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -20,6 +22,8 @@ import { SFProjectService } from './sf-project.service';
 
 const mockedCommandService = mock(CommandService);
 const mockedMachineHttpClient = mock(MachineHttpClient);
+const mockedAuthService = mock(AuthService);
+const mockedHttpClient = mock(HttpClient);
 
 describe('SFProject Service', () => {
   configureTestingModule(() => ({
@@ -32,7 +36,8 @@ describe('SFProject Service', () => {
       },
       { provide: CommandService, useMock: mockedCommandService },
       { provide: MachineHttpClient, useMock: mockedMachineHttpClient },
-      { provide: PwaService, useFactory: () => new PwaService() }
+      { provide: PwaService, useFactory: () => new PwaService(instance(mockedHttpClient)) },
+      { provide: AuthService, useMock: mockedAuthService }
     ]
   }));
 
@@ -110,6 +115,7 @@ describe('SFProject Service', () => {
   it('should remove audio from remote server when online', async () => {
     const env = new TestEnvironment();
     env.establishWebSocket(true);
+    resetCalls(mockedCommandService);
     env.simulateCreateQuestionWithAudio();
     const questionDoc = env.testRealtimeService.get<QuestionDoc>(
       QuestionDoc.COLLECTION,
@@ -164,6 +170,7 @@ class TestEnvironment {
     this.testRealtimeService = TestBed.get(RealtimeService);
     this.httpMock = TestBed.get(HttpTestingController);
 
+    when(mockedAuthService.isLoggedIn).thenResolve(true);
     spyOnProperty(window.navigator, 'onLine').and.returnValue(this.isOnline);
     const dateNow = new Date().toJSON();
     this.testRealtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, [
