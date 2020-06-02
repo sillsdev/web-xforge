@@ -4,7 +4,6 @@ import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
@@ -24,7 +23,6 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { canAccessTranslateApp } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -33,7 +31,7 @@ import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { CheckingUtils } from '../checking.utils';
+import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
@@ -377,22 +375,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
             this.onRemovedFromProject();
           } else if (!this.projectDoc.data.checkingConfig.checkingEnabled) {
-            const navigateToTranslate = canAccessTranslateApp(this.projectDoc.data.userRoles[
-              this.userService.currentUserId
-            ] as SFProjectRole);
             if (this.projectUserConfigDoc != null) {
-              // Remove the record of the state of the checking app so clicking 'Project Home' will not redirect there
-              this.projectUserConfigDoc.submitJson0Op(op => {
-                op.unset(puc => puc.selectedTask!);
-                op.unset(puc => puc.selectedQuestionRef!);
-              });
-            }
-            this.onRemovedFromProject();
-            if (navigateToTranslate) {
-              this.router.navigate(['/projects', projectId, 'translate', bookId], { replaceUrl: true });
-              this.noticeService.show(translate('app.scripture_checking_not_available'));
-            } else {
-              this.router.navigate(['/projects', projectId], { replaceUrl: true });
+              const checkingAccessInfo: CheckingAccessInfo = {
+                userId: this.userService.currentUserId,
+                projectId: this.projectDoc.id,
+                project: this.projectDoc.data,
+                bookId,
+                projectUserConfigDoc: this.projectUserConfigDoc!
+              };
+              CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
+              this.onRemovedFromProject();
             }
           }
         }

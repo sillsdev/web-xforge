@@ -1,6 +1,6 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
@@ -19,7 +19,7 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
-import { CheckingUtils } from '../checking.utils';
+import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
@@ -49,7 +49,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    private readonly questionDialogService: QuestionDialogService
+    private readonly questionDialogService: QuestionDialogService,
+    private readonly router: Router
   ) {
     super(noticeService);
   }
@@ -157,7 +158,21 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         this.dataChangesSub.unsubscribe();
       }
       this.dataChangesSub = merge(this.projectDoc.remoteChanges$, this.questionsQuery.remoteChanges$).subscribe(() => {
-        this.initTextsWithLoadingIndicator();
+        if (this.projectDoc != null && this.projectDoc.data != null) {
+          if (this.projectDoc.data.checkingConfig.checkingEnabled) {
+            this.initTextsWithLoadingIndicator();
+          } else {
+            if (this.projectUserConfigDoc != null) {
+              const checkingAccessInfo: CheckingAccessInfo = {
+                userId: this.userService.currentUserId,
+                projectId: this.projectDoc.id,
+                project: this.projectDoc.data,
+                projectUserConfigDoc: this.projectUserConfigDoc
+              };
+              CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
+            }
+          }
+        }
       });
     });
   }

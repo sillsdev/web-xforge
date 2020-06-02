@@ -9,6 +9,8 @@
     "language": "Language",
     "log_out": "登出",
     "logged_in_as": "登录为",
+    "offline": "Offline",
+    "online": "Online",
     "overview": "总览",
     "page_not_found": "Page not found",
     "password_reset_email_sent": "重置密码的邮件已发送",
@@ -222,6 +224,10 @@
     "show_details": "显示细节",
     "to_report_issue_email": "以便报告问题, 发电子邮件给{{ issueEmailLink }}",
     "unsupported_browser": "您使用的浏览器不受支持，这可能是导致此错误的原因。 我们建议升级到最新版本{{ chromeLink }} 或{{ firefoxLink }}"
+  },
+  "error_messages": {
+    "error_occurred_login": "An error occurred during login.",
+    "try_again": "再试一次"
   },
   "exception_handling_service": {
     "network_request_failed": "A network request failed. Some functionality may be unavailable.",

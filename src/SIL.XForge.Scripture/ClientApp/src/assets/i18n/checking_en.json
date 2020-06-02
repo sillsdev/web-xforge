@@ -1,5 +1,6 @@
 {
   "app": {
+    "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "All Questions",
     "cannot_change_password": "Can't change password at this time. Try again later or report an issue in the Help menu.",
     "change_password": "Change password",
@@ -242,10 +243,6 @@
   "message_dialog": {
     "dismiss": "Dismiss"
   },
-  "offline": {
-    "currently_offline_heading": "Looks like you're currently offline",
-    "currently_offline_text": "Hang tight, we'll keep trying to reconnect you"
-  },
   "project": {
     "project_link_is_invalid": "The project link is invalid."
   },
@@ -272,7 +269,8 @@
     "link_sharing": "Link sharing",
     "not_inviting_already_member": "Not inviting: User is already a member of this project",
     "resend": "Resend",
-    "send": "Send"
+    "send": "Send",
+    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },
   "share_dialog": {
     "done": "Done",

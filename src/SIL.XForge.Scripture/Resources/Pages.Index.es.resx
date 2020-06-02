@@ -117,6 +117,36 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AboutCheckingTool" xml:space="preserve">
+    <value>La herramienta de Comprobación por la Comunidad facilita la tarea de verificación de las Escrituras parte por parte, con el objetivo de transmitir de manera más rápida comentarios y sugerencias generales al comité de traducción.</value>
+  </data>
+  <data name="AboutEngaging" xml:space="preserve">
+    <value>Actualmente, grupos de hablantes de distintas lenguas y diversidad geográfica se están involucrando en muchos proyectos de Traducción.</value>
+  </data>
+  <data name="AboutFlexible" xml:space="preserve">
+    <value>Flexible</value>
+  </data>
+  <data name="AboutFlexibleDescription" xml:space="preserve">
+    <value>2 No hay un grupo predefinido de preguntas que deba usar. {0}Recopile preguntas que se ajusten a su contexto{1}.</value>
+  </data>
+  <data name="AboutHeader" xml:space="preserve">
+    <value>Acerca de Scripture Forge</value>
+  </data>
+  <data name="AboutParatext" xml:space="preserve">
+    <value>Funciona con el Paratext</value>
+  </data>
+  <data name="AboutParatextDescription" xml:space="preserve">
+    <value>1 Simplemente {0}conecte su proyecto de Paratext{1} para empezar. {0}Sincronize{1} su proyecto para mantenerlo actualizado con Paratext y enviar las respuestas de los usuarios a las Notas de Paratext.</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>Extienda su alcance con la verificación de las Escrituras</value>
+  </data>
+  <data name="AboutUserEngagement" xml:space="preserve">
+    <value>Compromiso del usuario</value>
+  </data>
+  <data name="AboutUserEngagementDescription" xml:space="preserve">
+    <value>3 Activar {0}"Compartir"{1} para permitir a los usuarios invitar a un amigo a unirse a tu campaña o mantener los comentarios a un grupo definido. Los usuarios pueden contestar preguntas, comentar las respuestas y dar me gusta a las respuestas de otros.</value>
+  </data>
   <data name="Description" xml:space="preserve">
     <value>Un conjunto de herramientas gratuitas para hacer más con su proyecto de Paratext, dondequiera que esté. </value>
   </data>

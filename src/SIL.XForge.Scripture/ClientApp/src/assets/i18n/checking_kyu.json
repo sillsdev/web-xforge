@@ -9,6 +9,8 @@
     "language": "ꤍꤟꤥ",
     "log_out": "ꤓꤢꤩ꤬ꤊꤛꤢ꤭",
     "logged_in_as": "ꤔꤟꤌꤣ꤭ ꤔꤢ",
+    "offline": "Offline",
+    "online": "Online",
     "overview": "ꤗꤛꤢꤜꤟꤢꤪ꤭",
     "page_not_found": "ꤗꤛꤢꤓꤛꤢꤩ꤬ page ꤛꤢꤩ꤭ꤒꤥ꤬",
     "password_reset_email_sent": "ꤜꤟꤢꤩ ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭ ꤔꤟꤢꤧ꤬ password ꤢ꤬ꤑꤢꤩ꤭ ꤕꤟꤢꤧ꤬ ꤞꤢꤨ꤭ꤟꤛꤢ꤭ ꤓꤌꤣ꤭ꤟꤢꤪ ꤔꤟꤢꤧ꤬ email ꤟꤢꤪ꤯",
@@ -222,6 +224,10 @@
     "show_details": "ꤙꤢꤩ꤬ꤜꤟꤌꤣ꤭ ꤢ꤬ꤕꤢ꤬ꤒꤤ ꤒꤢ꤬ꤟꤢꤩ꤬",
     "to_report_issue_email": "ꤜꤟꤢꤩꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭, email {{ issueEmailLink }}.",
     "unsupported_browser": "ꤢ꤬ꤞꤢꤦ ꤥ꤬ꤓꤛꤢ꤬ ꤔꤌꤣ꤬ꤗꤢ꤬ ꤗꤟꤢꤘꤣ ꤔꤟꤢꤧ꤬ ꤔꤢꤪ꤭ꤢꤩ꤬ browser ꤘꤣ ꤢꤨ꤭ ꤢꤩ꤬ꤊꤜꤟꤢꤪ꤬ ꤜꤢꤨ꤭ ꤒꤥ꤬ ꤔꤌꤣ꤬ ꤊꤥ꤭ꤜꤢꤩ꤬꤯ ꤕꤟꤢꤧ꤬ ꤞꤢꤧꤐꤟꤢꤦ ꤔꤢꤪ꤭ ꤔꤢꤪ꤭ꤢꤩ꤬ ꤔꤟꤢꤧ꤬ ꤔꤢ browser ꤘꤣ ꤢ꤬ꤓꤢꤩ꤬ ꤔꤥ꤬ ꤜꤣ {{ chromeLink }} ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ {{ firefoxLink }}."
+  },
+  "error_messages": {
+    "error_occurred_login": "An error occurred during login.",
+    "try_again": "ꤗꤟꤢꤩ꤬ꤋꤛꤢꤩ꤭ ꤒꤣ꤬ꤟꤢꤦ꤬ "
   },
   "exception_handling_service": {
     "network_request_failed": "ꤜꤟꤢꤩꤕꤜꤥ꤭ꤓꤢꤦ꤭ ꤔꤌꤣ꤬ ꤢ꤬ ꤙꤢꤧꤓꤛꤢ꤬ꤒꤥ꤬꤯ ꤒꤟꤢꤧ꤬ ꤘꤣ ꤢ꤬ꤙꤢꤧ꤬ꤊꤛꤢ ꤔꤢ ꤜꤟꤢꤩꤕꤜꤥ꤭ꤓꤢꤦ꤭ ꤔꤌꤣ꤬ ꤢ꤬ꤔꤟꤤꤡꤟꤛꤢꤒꤥ꤬ ꤥ꤬ ꤒꤣ꤬ꤡꤣ꤬ꤡꤣ꤬ ꤊꤥ꤭ꤜꤢꤩ꤬꤯",

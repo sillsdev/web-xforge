@@ -8,6 +8,7 @@ import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -37,17 +38,20 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   });
   pageIndex: number = 0;
   pageSize: number = 50;
+  filterForm: FormGroup = new FormGroup({ filter: new FormControl('') });
 
   private projectDoc?: SFProjectDoc;
   private term: string = '';
   private _userRows?: Row[];
+  private _isAppOnline: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    readonly i18n: I18nService
+    readonly i18n: I18nService,
+    private readonly pwaService: PwaService
   ) {
     super(noticeService);
   }
@@ -76,6 +80,15 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
   get projectId(): string {
     return this.projectDoc ? this.projectDoc.id : '';
+  }
+
+  set isAppOnline(isOnline: boolean) {
+    isOnline ? this.filterForm.enable() : this.filterForm.disable();
+    this._isAppOnline = isOnline;
+  }
+
+  get isAppOnline(): boolean {
+    return this._isAppOnline;
   }
 
   get totalUsers(): number {
@@ -142,6 +155,14 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         this.loadingFinished();
       }
     );
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      this.isAppOnline = isOnline;
+      if (isOnline && this._userRows == null) {
+        this.loadingStarted();
+        this.loadUsers();
+        this.loadingFinished();
+      }
+    });
   }
 
   isCurrentUser(userRow: Row): boolean {
@@ -179,7 +200,12 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   private async loadUsers(): Promise<void> {
-    if (this.projectDoc == null || this.projectDoc.data == null || this.projectDoc.data.userRoles == null) {
+    if (
+      this.projectDoc == null ||
+      this.projectDoc.data == null ||
+      this.projectDoc.data.userRoles == null ||
+      !this.isAppOnline
+    ) {
       return;
     }
 
