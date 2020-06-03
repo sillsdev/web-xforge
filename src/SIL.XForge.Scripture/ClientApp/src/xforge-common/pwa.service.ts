@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
 import { mapTo } from 'rxjs/operators';
@@ -11,7 +12,7 @@ export class PwaService extends SubscriptionDisposable {
   private windowOnLineStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(navigator.onLine);
   private webSocketStatus: BehaviorSubject<boolean | null> = new BehaviorSubject<boolean | null>(null);
 
-  constructor() {
+  constructor(private readonly http: HttpClient) {
     super();
     // Check for any online changes from the browser window
     this.subscribe(
@@ -45,5 +46,16 @@ export class PwaService extends SubscriptionDisposable {
 
   set webSocketResponse(status: boolean) {
     this.webSocketStatus.next(status);
+  }
+
+  async checkOnline(): Promise<boolean> {
+    if (!navigator.onLine) {
+      return false;
+    }
+    try {
+      return (await this.http.get('ping', { responseType: 'text' }).toPromise()) === 'ok';
+    } catch {
+      return false;
+    }
   }
 }
