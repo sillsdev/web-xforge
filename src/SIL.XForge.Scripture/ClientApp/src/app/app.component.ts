@@ -474,8 +474,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
         if (query.count > 0) {
           this.selectedProjectDoc.loadTextDocs(bookNum);
-        } else {
-          this.selectedProjectDoc.unLoadTextDocs(bookNum);
         }
       });
     });
