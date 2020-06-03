@@ -22,6 +22,7 @@ import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module'
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -43,6 +44,7 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
+const mockedPwaService = mock(PwaService);
 
 @Component({
   template: `
@@ -80,7 +82,8 @@ describe('AppComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: LocationService, useMock: mockedLocationService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -433,6 +436,8 @@ class TestEnvironment {
     when(mockedUserService.currentProjectId).thenReturn('project01');
     when(mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
     when(mockedCookieService.get(anything())).thenReturn('en');
+    when(mockedPwaService.isOnline).thenReturn(true);
+    when(mockedPwaService.onlineStatus).thenReturn(of(true));
 
     this.router = TestBed.get(Router);
     this.location = TestBed.get(Location);

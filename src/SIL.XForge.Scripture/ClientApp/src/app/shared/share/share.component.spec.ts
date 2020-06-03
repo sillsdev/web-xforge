@@ -12,6 +12,7 @@ import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -29,6 +30,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedLocationService = mock(LocationService);
 const mockedUserService = mock(UserService);
+const mockedPwaService = mock(PwaService);
 
 describe('ShareComponent', () => {
   configureTestingModule(() => ({
@@ -40,7 +42,8 @@ describe('ShareComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: LocationService, useMock: mockedLocationService },
-      { provide: UserService, useMock: mockedUserService }
+      { provide: UserService, useMock: mockedUserService },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -172,6 +175,9 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
     when(mockedUserService.currentUserId).thenReturn('user01');
+    when(mockedPwaService.isOnline).thenReturn(true);
+    when(mockedPwaService.onlineStatus).thenReturn(of(true));
+
     this.setShareConfig(true, CheckingShareLevel.Anyone);
 
     this.fixture = TestBed.createComponent(ShareComponent);

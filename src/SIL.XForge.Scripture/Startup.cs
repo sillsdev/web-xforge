@@ -179,6 +179,8 @@ namespace SIL.XForge.Scripture
 
             app.UseSFDataAccess();
 
+            app.UsePing();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
