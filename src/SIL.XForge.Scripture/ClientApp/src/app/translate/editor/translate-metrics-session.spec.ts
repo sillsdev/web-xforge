@@ -2,11 +2,12 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { LatinWordTokenizer } from '@sillsdev/machine';
 import { QuillModule } from 'ngx-quill';
 import * as RichText from 'rich-text';
+import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -25,7 +26,7 @@ const mockedSFProjectService = mock(SFProjectService);
 describe('TranslateMetricsSession', () => {
   configureTestingModule(() => ({
     declarations: [TextComponent],
-    imports: [QuillModule.forRoot()],
+    imports: [QuillModule.forRoot(), TestTranslocoModule],
     providers: [{ provide: SFProjectService, useMock: mockedSFProjectService }]
   }));
 
@@ -344,16 +345,19 @@ class TestEnvironment {
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private readonly tokenizer = new LatinWordTokenizer();
-  private readonly pwaService = new PwaService();
 
   constructor() {
     this.addTextDoc(new TextDocId('project01', 40, 1, 'source'));
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
+
+    const mockedPwaService = mock(PwaService);
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     when(mockedSFProjectService.get(anything())).thenResolve({} as SFProjectDoc);
+    when(mockedPwaService.isOnline).thenReturn(true);
+    when(mockedPwaService.onlineStatus).thenReturn(of(true));
 
     this.sourceFixture = TestBed.createComponent(TextComponent);
     this.source = this.sourceFixture.componentInstance;
@@ -370,7 +374,7 @@ class TestEnvironment {
       this.target,
       this.tokenizer,
       this.tokenizer,
-      this.pwaService
+      instance(mockedPwaService)
     );
 
     this.sourceFixture.detectChanges();

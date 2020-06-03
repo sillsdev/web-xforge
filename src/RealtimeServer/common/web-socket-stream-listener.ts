@@ -7,11 +7,6 @@ import WebSocketJSONStream = require('websocket-json-stream');
 import ws = require('ws');
 import { ExceptionReporter } from './exception-reporter';
 
-function isLocalRequest(request: http.IncomingMessage): boolean {
-  const addr = request.connection.remoteAddress;
-  return addr === '127.0.0.1' || addr === '::ffff:127.0.0.1' || addr === '::1';
-}
-
 export class WebSocketStreamListener {
   private readonly httpServer: http.Server;
   private readonly jwksClient: jwks.JwksClient;
@@ -98,9 +93,6 @@ export class WebSocketStreamListener {
           }
         }
       );
-    } else if (isLocalRequest(req)) {
-      // no access token, but the request is local, so it is allowed
-      done(true);
     } else {
       // no access token and not local, so it is unauthorized
       done(false, 401, 'Unauthorized');
