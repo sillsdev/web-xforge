@@ -90,6 +90,10 @@ export class AuthService {
     return this.localSettings.get(ACCESS_TOKEN_SETTING);
   }
 
+  get idToken(): string | undefined {
+    return this.localSettings.get(ID_TOKEN_SETTING);
+  }
+
   get expiresAt(): number | undefined {
     return this.localSettings.get(EXPIRES_AT_SETTING);
   }
@@ -157,27 +161,23 @@ export class AuthService {
 
   private async tryLogIn(): Promise<LoginResult> {
     try {
-      // Get connection status so we know if online or offline
-      await this.remoteStore.init(() => this.accessToken);
-      // In offline mode check against the last known access
-      if (!this.pwaService.isOnline) {
-        await this.localLogIn({ accessToken: this.accessToken, expiresIn: this.expiresAt });
-        if (this.isAuthenticated) {
-          return { loggedIn: true, newlyLoggedIn: false };
+      if (await this.pwaService.checkOnline()) {
+        // In online mode do the normal checks with auth0
+        let authResult = await this.parseHash();
+        if (!(await this.handleOnlineAuth(authResult))) {
+          this.clearState();
+          authResult = await this.checkSession();
+          if (!(await this.handleOnlineAuth(authResult))) {
+            return { loggedIn: false, newlyLoggedIn: false };
+          }
         } else {
-          return { loggedIn: false, newlyLoggedIn: false };
-        }
-      }
-      // In online mode do the normal checks with auth0
-      let authResult = await this.parseHash();
-      if (!(await this.handleAuth(authResult))) {
-        this.clearState();
-        authResult = await this.checkSession();
-        if (!(await this.handleAuth(authResult))) {
-          return { loggedIn: false, newlyLoggedIn: false };
+          return { loggedIn: true, newlyLoggedIn: true };
         }
       } else {
-        return { loggedIn: true, newlyLoggedIn: true };
+        // In offline mode check against the last known access
+        if (!(await this.handleOfflineAuth())) {
+          return { loggedIn: false, newlyLoggedIn: false };
+        }
       }
       return { loggedIn: true, newlyLoggedIn: false };
     } catch {
@@ -189,8 +189,13 @@ export class AuthService {
     }
   }
 
-  private async handleAuth(authResult: auth0.Auth0DecodedHash | null): Promise<boolean> {
-    if (authResult == null || authResult.accessToken == null || authResult.idToken == null) {
+  private async handleOnlineAuth(authResult: auth0.Auth0DecodedHash | null): Promise<boolean> {
+    if (
+      authResult == null ||
+      authResult.accessToken == null ||
+      authResult.idToken == null ||
+      authResult.expiresIn == null
+    ) {
       return false;
     }
 
@@ -202,9 +207,10 @@ export class AuthService {
         await this.renewTokens();
       }
     } else {
-      await this.localLogIn(authResult);
+      await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
     }
     this.scheduleRenewal();
+    await this.remoteStore.init(() => this.accessToken);
     if (secondaryId != null) {
       await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
     } else if (!environment.production) {
@@ -223,10 +229,16 @@ export class AuthService {
     return true;
   }
 
-  private scheduleRenewal(): void {
-    if (!this.isAuthenticated) {
-      return;
+  private async handleOfflineAuth(): Promise<boolean> {
+    if (this.accessToken == null || this.idToken == null || this.expiresAt == null) {
+      return false;
     }
+    this.scheduleRenewal();
+    await this.remoteStore.init(() => this.accessToken);
+    return true;
+  }
+
+  private scheduleRenewal(): void {
     this.unscheduleRenewal();
 
     const expiresAt = this.expiresAt!;
@@ -234,7 +246,8 @@ export class AuthService {
       mergeMap(expAt => {
         const now = Date.now();
         return timer(Math.max(1, expAt - now));
-      })
+      }),
+      filter(() => this.pwaService.isOnline)
     );
 
     this.refreshSubscription = expiresIn$.subscribe(async () => {
@@ -253,8 +266,13 @@ export class AuthService {
     let success = false;
     try {
       const authResult = await this.checkSession();
-      if (authResult != null && authResult.accessToken != null && authResult.idToken != null) {
-        await this.localLogIn(authResult);
+      if (
+        authResult != null &&
+        authResult.accessToken != null &&
+        authResult.idToken != null &&
+        authResult.expiresIn != null
+      ) {
+        await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
         success = true;
       }
     } catch (err) {
@@ -294,14 +312,8 @@ export class AuthService {
     });
   }
 
-  private async localLogIn(authResult: auth0.Auth0DecodedHash): Promise<void> {
-    if (authResult.accessToken == null || authResult.expiresIn == null) {
-      if (!this.pwaService.isOnline) {
-        return;
-      }
-      throw new Error('The auth result is invalid.');
-    }
-    const claims: any = jwtDecode(authResult.accessToken);
+  private async localLogIn(accessToken: string, idToken: string, expiresIn: number): Promise<void> {
+    const claims: any = jwtDecode(accessToken);
     const prevUserId = this.currentUserId;
     const userId = claims[XF_USER_ID_CLAIM];
     if (prevUserId != null && prevUserId !== userId) {
@@ -309,9 +321,9 @@ export class AuthService {
       this.localSettings.clear();
     }
 
-    const expiresAt = authResult.expiresIn * 1000 + Date.now();
-    this.localSettings.set(ACCESS_TOKEN_SETTING, authResult.accessToken);
-    this.localSettings.set(ID_TOKEN_SETTING, authResult.idToken);
+    const expiresAt = expiresIn * 1000 + Date.now();
+    this.localSettings.set(ACCESS_TOKEN_SETTING, accessToken);
+    this.localSettings.set(ID_TOKEN_SETTING, idToken);
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt);
     this.localSettings.set(USER_ID_SETTING, userId);
     this.localSettings.set(ROLE_SETTING, claims[XF_ROLE_CLAIM]);

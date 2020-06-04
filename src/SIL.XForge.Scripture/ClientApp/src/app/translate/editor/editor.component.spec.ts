@@ -26,11 +26,12 @@ import {
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, defer, Subject } from 'rxjs';
+import { BehaviorSubject, defer, of, Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -50,6 +51,7 @@ const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedCookieService = mock(CookieService);
+const mockedPwaService = mock(PwaService);
 
 class MockConsole {
   log(val: any) {
@@ -74,7 +76,8 @@ describe('EditorComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: CONSOLE, useValue: new MockConsole() },
-      { provide: CookieService, useMock: mockedCookieService }
+      { provide: CookieService, useMock: mockedCookieService },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -976,6 +979,8 @@ class TestEnvironment {
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
+    when(mockedPwaService.isOnline).thenReturn(true);
+    when(mockedPwaService.onlineStatus).thenReturn(of(true));
 
     this.fixture = TestBed.createComponent(EditorComponent);
     this.component = this.fixture.componentInstance;
