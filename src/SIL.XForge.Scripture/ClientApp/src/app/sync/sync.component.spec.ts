@@ -49,6 +49,9 @@ describe('SyncComponent', () => {
     expect(env.logInButton.nativeElement.textContent).toContain('Log in to Paratext');
     expect(env.syncButton).toBeNull();
     expect(env.lastSyncDate).toBeNull();
+    expect(env.logInButton.nativeElement.disabled).toBe(false);
+    env.onlineStatus = false;
+    expect(env.logInButton).toBeNull();
   }));
 
   it('should redirect the user to log in to paratext', fakeAsync(() => {
