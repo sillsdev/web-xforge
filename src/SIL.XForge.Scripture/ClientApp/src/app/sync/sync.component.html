@@ -5,7 +5,7 @@
     <mdc-card outlined class="sync-card">
       <div fxLayout="column" class="card-content">
         <button
-          *ngIf="!isLoggedIntoParatext && !isLoading && isAppOnline"
+          *ngIf="showParatextLogin && isAppOnline"
           class="action-button"
           mdc-button
           type="button"

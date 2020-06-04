@@ -48,14 +48,17 @@ describe('ConnectProjectComponent', () => {
     ]
   }));
 
-  it('should display login button when PT projects is null', () => {
+  it('should display login button when PT projects is null', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(of(undefined));
     env.fixture.detectChanges();
 
     expect(env.component.state).toEqual('login');
     expect(env.loginButton).not.toBeNull();
-  });
+    expect(env.loginButton.nativeElement.disabled).toBe(false);
+    env.onlineStatus = false;
+    expect(env.loginButton).toBeNull();
+  }));
 
   it('should display form when PT projects is empty', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -178,8 +181,9 @@ describe('ConnectProjectComponent', () => {
     const env = new TestEnvironment(false);
     env.setupDefaultProjectData();
     env.fixture.detectChanges();
-    expect(env.component.state).toEqual('loading');
+    expect(env.component.state).toEqual('offline');
     expect(env.offlineMessage).not.toBeNull();
+    expect(env.noProjectsMessage).toBeNull();
     expect(env.component.connectProjectForm.disabled).toBe(true);
     expect(env.submitButton.nativeElement.disabled).toBe(true);
 
@@ -193,6 +197,7 @@ describe('ConnectProjectComponent', () => {
 
     env.onlineStatus = false;
     expect(env.nonAdminMessage).toBeNull();
+    expect(env.component.state).toEqual('offline');
   }));
 
   it('submit if user selects a source project then disables translation suggestions', fakeAsync(() => {

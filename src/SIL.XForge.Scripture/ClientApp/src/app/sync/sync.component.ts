@@ -19,6 +19,7 @@ import { SFProjectService } from '../core/sf-project.service';
 export class SyncComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   syncActive: boolean = false;
   isAppOnline: boolean = false;
+  showParatextLogin = false;
 
   private projectDoc?: SFProjectDoc;
   private paratextUsername?: string;
@@ -85,6 +86,8 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
           if (username != null) {
             this.paratextUsername = username;
           }
+          // Explicit to prevent flashing the login button during page load
+          this.showParatextLogin = !this.isLoggedIntoParatext;
         });
       }
     });
