@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
@@ -32,18 +32,18 @@ interface Row {
   templateUrl: './collaborators.component.html',
   styleUrls: ['./collaborators.component.scss']
 })
-export class CollaboratorsComponent extends DataLoadingComponent implements OnInit {
+export class CollaboratorsComponent extends DataLoadingComponent implements OnInit, AfterViewInit {
   userInviteForm = new FormGroup({
     email: new FormControl('', [XFValidators.email])
   });
   pageIndex: number = 0;
   pageSize: number = 50;
   filterForm: FormGroup = new FormGroup({ filter: new FormControl('') });
+  isAppOnline = true;
 
   private projectDoc?: SFProjectDoc;
   private term: string = '';
   private _userRows?: Row[];
-  private _isAppOnline: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -51,7 +51,8 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     readonly i18n: I18nService,
-    private readonly pwaService: PwaService
+    private readonly pwaService: PwaService,
+    private readonly changeDetector: ChangeDetectorRef
   ) {
     super(noticeService);
   }
@@ -80,15 +81,6 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
   get projectId(): string {
     return this.projectDoc ? this.projectDoc.id : '';
-  }
-
-  set isAppOnline(isOnline: boolean) {
-    isOnline ? this.filterForm.enable() : this.filterForm.disable();
-    this._isAppOnline = isOnline;
-  }
-
-  get isAppOnline(): boolean {
-    return this._isAppOnline;
   }
 
   get totalUsers(): number {
@@ -161,6 +153,18 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         this.loadingStarted();
         this.loadUsers();
         this.loadingFinished();
+      }
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      if (isOnline) {
+        this.filterForm.enable();
+      } else {
+        this.filterForm.disable();
+        // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
+        this.changeDetector.detectChanges();
       }
     });
   }

@@ -1,5 +1,5 @@
 import { MdcTextField } from '@angular-mdc/web/textfield';
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { LocationService } from 'xforge-common/location.service';
@@ -15,7 +15,7 @@ import { SFProjectService } from '../../core/sf-project.service';
   templateUrl: './share-control.component.html',
   styleUrls: ['./share-control.component.scss']
 })
-export class ShareControlComponent extends SubscriptionDisposable {
+export class ShareControlComponent extends SubscriptionDisposable implements AfterViewInit {
   /** Fires when an invitation is sent. */
   @Output() invited = new EventEmitter<void>();
   @Input() readonly projectId?: string;
@@ -33,12 +33,22 @@ export class ShareControlComponent extends SubscriptionDisposable {
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly locationService: LocationService,
-    readonly pwaService: PwaService
+    private readonly pwaService: PwaService,
+    private readonly changeDetector: ChangeDetectorRef
   ) {
     super();
-    this.subscribe(this.pwaService.onlineStatus, isOnline =>
-      isOnline ? this.sendInviteForm.enable() : this.sendInviteForm.disable()
-    );
+  }
+
+  ngAfterViewInit() {
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      if (isOnline) {
+        this.sendInviteForm.enable();
+      } else {
+        this.sendInviteForm.disable();
+        // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
+        this.changeDetector.detectChanges();
+      }
+    });
   }
 
   get email(): FormControl {
