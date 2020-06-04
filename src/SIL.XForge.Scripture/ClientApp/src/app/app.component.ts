@@ -10,7 +10,7 @@ import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/u
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { combineLatest, from, Observable, Subscription } from 'rxjs';
+import { combineLatest, from, merge, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -467,6 +467,16 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       );
     }
     await Promise.all(promises);
+    this.questionCountQueries.forEach((query: RealtimeQuery, bookNum: number) => {
+      this.subscribe(merge(query.remoteChanges$, query.localChanges$, query.ready$), () => {
+        if (this.selectedProjectDoc == null) {
+          return;
+        }
+        if (query.count > 0) {
+          this.selectedProjectDoc.loadTextDocs(bookNum);
+        }
+      });
+    });
   }
 
   private disposeQuestionQueries(): void {
