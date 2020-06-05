@@ -88,6 +88,15 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.confidenceThresholdSlider.disabled).toBe(true);
     expect(env.numSuggestionsSelect.disabled).toBe(true);
   }));
+
+  it('the suggestions toggle is switched on when the dialog opens while offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.isOnline = false;
+    env.openDialog();
+
+    expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
+    expect(env.suggestionsEnabledSwitch.checked).toBe(true);
+  }));
 });
 
 @Directive({
@@ -138,6 +147,7 @@ class TestEnvironment {
     this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
 
     when(mockedPwaService.isOnline).thenCall(() => this.onlineStatus.getValue());
+    when(mockedPwaService.onlineStatus).thenReturn(this.onlineStatus.asObservable());
   }
 
   get confidenceThresholdSlider(): MdcSlider {
