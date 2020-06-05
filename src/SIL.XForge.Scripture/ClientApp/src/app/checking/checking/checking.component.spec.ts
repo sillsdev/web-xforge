@@ -439,11 +439,15 @@ describe('CheckingComponent', () => {
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
       verify(mockedProjectService.trainSelectedSegment(anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
+      env.component.projectDoc!.submitJson0Op(op => {
+        op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, false);
+      });
+      env.waitForSliderUpdate();
       env.selectQuestion(4);
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBe(43);
-      verify(mockedProjectService.trainSelectedSegment(anything())).twice();
+      verify(mockedProjectService.trainSelectedSegment(anything())).once();
     }));
 
     it('saves the last visited question in all question context', fakeAsync(() => {
@@ -1298,7 +1302,7 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Anyone
     },
     translateConfig: {
-      translationSuggestionsEnabled: false
+      translationSuggestionsEnabled: true
     },
     texts: [
       {
