@@ -115,23 +115,19 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       }),
       map(params => params['projectId'] as string)
     );
-    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+    this.subscribe(combineLatest(this.pwaService.onlineStatus, projectId$), async ([isOnline, projectId]) => {
       this.isAppOnline = isOnline;
       if (isOnline && this.paratextProjects == null) {
-        this.subscribe(
-          combineLatest(projectId$, this.paratextService.getProjects()),
-          async ([projectId, paratextProjects]) => {
-            this.loadingStarted();
-            this.projectDoc = await this.projectService.get(projectId);
-            this.paratextProjects = paratextProjects == null ? undefined : paratextProjects;
-            if (this.projectDoc != null) {
-              this.updateSettingsInfo();
-              this.updateSourceProjects();
-              this.subscribe(this.projectDoc.remoteChanges$, () => this.updateSourceProjects());
-            }
-            this.loadingFinished();
-          }
-        );
+        this.loadingStarted();
+        const paratextProjects = await this.paratextService.getProjects().toPromise();
+        this.projectDoc = await this.projectService.get(projectId);
+        this.paratextProjects = paratextProjects == null ? undefined : paratextProjects;
+        if (this.projectDoc != null) {
+          this.updateSettingsInfo();
+          this.updateSourceProjects();
+          this.subscribe(this.projectDoc.remoteChanges$, () => this.updateSourceProjects());
+        }
+        this.loadingFinished();
       }
     });
   }

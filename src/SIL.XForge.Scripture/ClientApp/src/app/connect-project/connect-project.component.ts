@@ -70,12 +70,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   set isAppOnline(isOnline: boolean) {
-    if (isOnline) {
-      this.connectProjectForm.enable();
-    } else {
-      this.connectProjectForm.disable();
-      this.state = 'offline';
-    }
+    isOnline ? this.connectProjectForm.enable() : this.connectProjectForm.disable();
     this._isAppOnline = isOnline;
   }
 
@@ -141,26 +136,26 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       }
     });
 
-    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+    this.subscribe(this.pwaService.onlineStatus, async isOnline => {
       this.isAppOnline = isOnline;
-
       if (isOnline) {
         if (this.projects == null) {
           this.state = 'loading';
           this.loadingStarted();
-          this.subscribe(this.paratextService.getProjects(), projects => {
-            this.projects = projects == null ? undefined : projects;
-            if (projects != null) {
-              this.targetProjects = projects.filter(p => p.isConnectable);
-              this.state = 'input';
-            } else {
-              this.state = 'login';
-            }
-            this.loadingFinished();
-          });
+          const paratextProjects = await this.paratextService.getProjects().toPromise();
+          this.projects = paratextProjects == null ? undefined : paratextProjects;
+          if (paratextProjects != null) {
+            this.targetProjects = paratextProjects.filter(p => p.isConnectable);
+            this.state = 'input';
+          } else {
+            this.state = 'login';
+          }
+          this.loadingFinished();
         } else {
           this.state = 'input';
         }
+      } else {
+        this.state = 'offline';
       }
     });
   }
