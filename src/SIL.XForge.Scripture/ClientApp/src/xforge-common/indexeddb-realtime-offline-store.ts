@@ -178,7 +178,7 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
     });
 
     return await new Promise<OfflineData>((resolve, reject) => {
-      const request = objectStore.get(data.dataId);
+      const request = objectStore.get(data.id);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
     });
@@ -238,7 +238,7 @@ export class IndexeddbRealtimeOfflineStore extends RealtimeOfflineStore {
         }
         // Create an audio store
         for (const dataType of this.offlineDataModel.dataTypes) {
-          db.createObjectStore(dataType.COLLECTION, { keyPath: 'dataId' });
+          db.createObjectStore(dataType.COLLECTION, { keyPath: 'id' });
         }
       };
     });

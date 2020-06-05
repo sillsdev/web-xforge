@@ -81,7 +81,7 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
       collectionData = new Map<string, OfflineData>();
       this.offlineDataMap.set(collection, collectionData);
     }
-    collectionData.set(data.dataId, data);
+    collectionData.set(data.id, data);
     return Promise.resolve(data);
   }
 
