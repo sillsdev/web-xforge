@@ -79,16 +79,15 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   }
 
   ngOnInit() {
-    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+    this.subscribe(this.pwaService.onlineStatus, async isOnline => {
       this.isAppOnline = isOnline;
       if (this.isAppOnline && this.paratextUsername == null) {
-        this.subscribe(this.paratextService.getParatextUsername(), username => {
-          if (username != null) {
-            this.paratextUsername = username;
-          }
-          // Explicit to prevent flashing the login button during page load
-          this.showParatextLogin = !this.isLoggedIntoParatext;
-        });
+        const username = await this.paratextService.getParatextUsername().toPromise();
+        if (username != null) {
+          this.paratextUsername = username;
+        }
+        // Explicit to prevent flashing the login button during page load
+        this.showParatextLogin = !this.isLoggedIntoParatext;
       }
     });
 
