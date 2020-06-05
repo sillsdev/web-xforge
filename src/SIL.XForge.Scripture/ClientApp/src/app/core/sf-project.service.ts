@@ -50,8 +50,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
         const audioData = await this.realtimeService.offlineStore.getAllData<AudioData>(AudioData.COLLECTION);
         for (const audio of audioData) {
           if (audio.deleteRef != null) {
-            await this.onlineDeleteAudio(audio.projectRef, audio.dataId, audio.deleteRef);
-            this.realtimeService.removeOfflineData(AudioData.COLLECTION, audio.dataId);
+            await this.onlineDeleteAudio(audio.projectRef, audio.id, audio.deleteRef);
+            this.realtimeService.removeOfflineData(AudioData.COLLECTION, audio.id);
             continue;
           }
           const questionDoc = await this.realtimeService.subscribe<QuestionDoc>(
@@ -61,18 +61,18 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
           if (questionDoc.data != null) {
             const url = await this.onlineUploadAudio(
               audio.projectRef,
-              audio.dataId,
+              audio.id,
               new File([audio.blob!], audio.filename!)
             );
-            if (questionDoc.data.dataId === audio.dataId) {
+            if (questionDoc.data.dataId === audio.id) {
               // The audio belongs to the question
               questionDoc.submitJson0Op(op => op.set(qd => qd.audioUrl!, url));
             } else {
-              const answerIndex = questionDoc.data.answers.findIndex(a => a.dataId === audio.dataId);
+              const answerIndex = questionDoc.data.answers.findIndex(a => a.dataId === audio.id);
               questionDoc.submitJson0Op(op => op.set(qd => qd.answers[answerIndex].audioUrl!, url));
             }
           }
-          this.realtimeService.removeOfflineData(AudioData.COLLECTION, audio.dataId);
+          this.realtimeService.removeOfflineData(AudioData.COLLECTION, audio.id);
         }
       }
     });
@@ -233,7 +233,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       return this.onlineUploadAudio(id, dataId, new File([blob], filename));
     }
     // Store the audio in indexedDB until we go online again
-    let localAudioData = AudioData.createUploadData(dataId, id, questionDocId, blob, filename);
+    let localAudioData = AudioData.createUploadData(QuestionDoc.COLLECTION, dataId, id, questionDocId, blob, filename);
     localAudioData = await this.realtimeService.storeOfflineData(localAudioData);
     return URL.createObjectURL(localAudioData.blob);
   }
@@ -251,6 +251,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     if (await this.realtimeService.removeOfflineData(AudioData.COLLECTION, dataId)) {
       return;
     }
-    this.realtimeService.storeOfflineData(AudioData.createDeletionData(dataId, id, ownerId));
+    this.realtimeService.storeOfflineData(AudioData.createDeletionData(QuestionDoc.COLLECTION, dataId, id, ownerId));
   }
 }
