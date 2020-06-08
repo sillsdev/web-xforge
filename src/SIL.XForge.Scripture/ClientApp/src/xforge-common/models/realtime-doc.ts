@@ -24,8 +24,9 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   private subscribePromise?: Promise<void>;
   private localDelete$ = new Subject<void>();
   private _delete$: Observable<void>;
+  private subscribedState: boolean = false;
   private subscribeQueryCount: number = 0;
-  private isOfflineDataLoaded: boolean = false;
+  private loadOfflineDataPromise?: Promise<void>;
 
   constructor(protected readonly realtimeService: RealtimeService, public readonly adapter: RealtimeDocAdapter) {
     this._delete$ = merge(this.localDelete$, this.adapter.delete$);
@@ -44,11 +45,11 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   }
 
   get isLoaded(): boolean {
-    return this.adapter.type != null;
+    return this.adapter.type != null && this.subscribedState;
   }
 
   get subscribed(): boolean {
-    return this.adapter.subscribed || this.subscribeQueryCount > 0;
+    return this.subscribedState || this.subscribeQueryCount > 0;
   }
 
   get collection(): string {
@@ -109,7 +110,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   async create(data: T): Promise<void> {
     this.adapter.create(data).then(() => this.updateOfflineData(true));
     await this.updateOfflineData(true);
-    this.isOfflineDataLoaded = true;
+    this.loadOfflineDataPromise = Promise.resolve();
     await this.realtimeService.onLocalDocUpdate(this);
   }
 
@@ -145,6 +146,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     this.updateOfflineDataSub.unsubscribe();
     this.onDeleteSub.unsubscribe();
     await this.adapter.destroy();
+    this.subscribedState = false;
   }
 
   protected prepareDataForStore(data: T): any {
@@ -153,13 +155,17 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
 
   protected async onDelete(): Promise<void> {
     await this.realtimeService.offlineStore.delete(this.collection, this.id);
-    this.isOfflineDataLoaded = false;
+    this.loadOfflineDataPromise = undefined;
   }
 
   private async loadOfflineData(): Promise<void> {
-    if (this.isOfflineDataLoaded) {
-      return;
+    if (this.loadOfflineDataPromise == null) {
+      this.loadOfflineDataPromise = this.loadFromOfflineStore();
     }
+    return this.loadOfflineDataPromise;
+  }
+
+  private async loadFromOfflineStore(): Promise<void> {
     const offlineData = await this.realtimeService.offlineStore.get(this.collection, this.id);
     if (offlineData != null) {
       if (offlineData.v == null) {
@@ -167,12 +173,9 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       } else {
         await this.adapter.ingestSnapshot(offlineData);
         this.offlineSnapshotVersion = this.adapter.version;
-        if (offlineData.pendingOps.length > 0) {
-          Promise.all(offlineData.pendingOps.map(op => this.adapter.submitOp(op))).then(() => this.updateOfflineData());
-        }
+        this.adapter.updatePendingOps(offlineData.pendingOps);
       }
     }
-    this.isOfflineDataLoaded = true;
   }
 
   /**
@@ -214,6 +217,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       this.checkExists();
     } else {
       await promise;
+      this.subscribedState = this.adapter.subscribed;
     }
   }
 

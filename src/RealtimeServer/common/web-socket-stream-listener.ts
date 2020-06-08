@@ -42,13 +42,18 @@ export class WebSocketStreamListener {
   listen(backend: ShareDB): void {
     // Connect any incoming WebSocket connection to ShareDB
     const wss = new ws.Server({
-      server: this.httpServer,
-      verifyClient: (info, done) => this.verifyToken(info, done)
+      server: this.httpServer
     });
 
     wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => {
-      const stream = new WebSocketJSONStream(webSocket);
-      backend.listen(stream, req);
+      this.verifyToken(req, (res: boolean, code: number = 200, message?: string) => {
+        if (res) {
+          const stream = new WebSocketJSONStream(webSocket);
+          backend.listen(stream, req);
+        } else {
+          webSocket.close(4000 + code, message);
+        }
+      });
     });
   }
 
@@ -68,11 +73,8 @@ export class WebSocketStreamListener {
     this.httpServer.close();
   }
 
-  private verifyToken(
-    info: { origin: string; secure: boolean; req: http.IncomingMessage },
-    done: (res: boolean, code?: number, message?: string, headers?: http.OutgoingHttpHeaders) => void
-  ): void {
-    const url = info.req.url;
+  private verifyToken(req: http.IncomingMessage, done: (res: boolean, code?: number, message?: string) => void): void {
+    const url = req.url;
     if (url != null && url.includes('?access_token=')) {
       // the url contains an access token
       const token = url.split('?access_token=')[1];
@@ -88,7 +90,7 @@ export class WebSocketStreamListener {
             // check that the access token was granted xForge API scope
             const scopeClaim = decoded['scope'];
             if (scopeClaim != null && scopeClaim.split(' ').includes(this.scope)) {
-              (info.req as any).user = decoded;
+              (req as any).user = decoded;
               done(true);
             } else {
               done(false, 401, 'A required scope has not been granted.');
@@ -96,7 +98,7 @@ export class WebSocketStreamListener {
           }
         }
       );
-    } else if (isLocalRequest(info.req)) {
+    } else if (isLocalRequest(req)) {
       // no access token, but the request is local, so it is allowed
       done(true);
     } else {

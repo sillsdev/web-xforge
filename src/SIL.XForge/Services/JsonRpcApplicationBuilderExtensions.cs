@@ -1,26 +1,47 @@
 using System;
-using EdjCase.JsonRpc.Router.Abstractions;
-using EdjCase.JsonRpc.Router.RouteProviders;
-using Microsoft.Extensions.Options;
+using System.Security.Claims;
+using EdjCase.JsonRpc.Router;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.DependencyInjection;
 using SIL.XForge;
 using SIL.XForge.Controllers;
-using SIL.XForge.Models;
-using SIL.XForge.Services;
 
 namespace Microsoft.AspNetCore.Builder
 {
     public static class JsonRpcApplicationBuilderExtensions
     {
-        public static void UseXFJsonRpc(this IApplicationBuilder app, Action<RpcManualRoutingOptions> configureOptions)
+        public static void UseXFJsonRpc(this IApplicationBuilder app, Action<RpcEndpointBuilder> configureOptions)
         {
-            var options = new RpcManualRoutingOptions
+            app.Map($"/{UrlConstants.CommandApiNamespace}", b =>
             {
-                BaseRequestPath = $"/{UrlConstants.CommandApiNamespace}"
-            };
-            options.RegisterController<UsersRpcController>(UrlConstants.Users);
-            configureOptions(options);
+                // add a custom middleware that authenticates all schemes.
+                // Workaround for the lack of support of multiple authentication schemes in EdjCase.JsonRpc.
+                b.Use(async (context, next) =>
+                {
+                    var authSchemeProvider = context.RequestServices.GetService<IAuthenticationSchemeProvider>();
+                    ClaimsPrincipal principal = null;
+                    foreach (AuthenticationScheme scheme in await authSchemeProvider.GetAllSchemesAsync())
+                    {
+                        AuthenticateResult result = await context.AuthenticateAsync(scheme.Name);
+                        if (result.Succeeded)
+                        {
+                            if (principal == null)
+                                principal = result.Principal;
+                            else
+                                principal.AddIdentities(result.Principal.Identities);
+                        }
+                    }
+                    if (principal != null)
+                        context.User = principal;
+                    await next();
+                });
 
-            app.UseRouter(new MultiAuthSchemeRpcHttpRouter(new RpcManualRouteProvider(Options.Create(options))));
+                b.UseJsonRpc(options =>
+                {
+                    options.AddControllerWithCustomPath<UsersRpcController>(UrlConstants.Users);
+                    configureOptions(options);
+                });
+            });
         }
     }
 }

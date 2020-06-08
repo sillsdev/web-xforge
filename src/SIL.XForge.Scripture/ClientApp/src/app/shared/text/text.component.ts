@@ -33,7 +33,7 @@ function onNativeSelectionChanged(): void {
   }
 }
 
-registerScripture();
+const USX_FORMATS = registerScripture();
 window.document.addEventListener('selectionchange', onNativeSelectionChanged);
 
 export interface TextUpdatedEvent {
@@ -57,6 +57,8 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
   lang: string = '';
+  // only use USX formats and not default Quill formats
+  readonly allowedFormats: string[] = USX_FORMATS;
 
   private direction: string | null = null;
   private _editorStyles: any = { fontSize: '1rem' };
@@ -64,6 +66,10 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     toolbar: false,
     keyboard: {
       bindings: {
+        // disable default tab keyboard shortcuts in Quill
+        tab: null,
+        'remove tab': null,
+
         'disable backspace': {
           key: 'backspace',
           altKey: null,
@@ -182,8 +188,10 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   set highlightSegment(value: boolean) {
     if (this._highlightSegment !== value) {
       this._highlightSegment = value;
-      if (this._segment != null) {
-        this.toggleHighlight(value);
+      if (value) {
+        this.highlight();
+      } else {
+        this.clearHighlight();
       }
     }
   }
@@ -348,20 +356,24 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.update();
   }
 
-  toggleHighlight(value: boolean, range?: RangeStatic): void {
+  clearHighlight(): void {
+    this.highlight([]);
+  }
+
+  highlight(segmentRefs?: string[]): void {
     if (this._id == null) {
       return;
     }
-    if (range == null && this._segment != null) {
-      range = this._segment.range;
+    if (segmentRefs == null && this._segment != null) {
+      segmentRefs = [this._segment.ref];
     }
-    if (range == null) {
-      return;
+    if (segmentRefs != null) {
+      // this changes the underlying HTML, which can mess up some Quill events, so defer this call
+      Promise.resolve().then(() => this.viewModel.highlight(segmentRefs!));
     }
-    this.viewModel.toggleHighlight(range, value);
 
     if (!this.isReadOnly && this._id.textType === 'target' && this.highlightMarker != null) {
-      if (value) {
+      if (segmentRefs != null && segmentRefs.length > 0) {
         this.highlightMarker.style.visibility = '';
       } else {
         this.highlightMarker.style.visibility = 'hidden';
@@ -392,7 +404,6 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
     this.loaded.emit();
     this.applyEditorStyles();
-    // Get the computed direction the browser decided to use for quill for the current text
     this.setDirection();
   }
 
@@ -442,75 +453,14 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
   }
 
-  /**
-   * Not all browsers appear to be consistent with how child elements determine the value of dir="auto" i.e. paragraphs
-   * with child segments both having dir="auto" set.
-   * To get around this we apply dir="auto" to both paragraphs (when available) and segments. We then query
-   * each paragraph/segment and then specifically set the paragraph to what the direction of the first segment that
-   * contains text i.e. is not blank. For chapters we use the same direction value as the paragraph that follows it.
-   */
   private setDirection() {
     // As the browser is automatically applying ltr/rtl we need to ask it which one it is using
-    // This value can then be used for other purposes i.e. CSS styles
+    // This value can then be used for other purposes e.g. CSS styles
     if (this.editor !== undefined) {
-      this.direction = window.getComputedStyle(this.quill.nativeElement).direction;
-      // Set the browser calculated direction on the segments so we can action elsewhere i.e. CSS
-      let segments: NodeListOf<Element> = this.quill.nativeElement.querySelectorAll('usx-segment');
-      for (const segment of Array.from(segments)) {
-        let dir = window.getComputedStyle(segment).direction;
-        if (dir === null) {
-          continue;
-        }
-        const segmentRef = segment.getAttribute('data-segment');
-        if (segmentRef === null) {
-          continue;
-        }
-        const range = this.viewModel.getSegmentRange(segmentRef);
-        if (range === undefined) {
-          continue;
-        }
-        const blanks = segment.querySelectorAll('usx-blank');
-        // Set the direction back to auto for blank segments so the browser can work it out when something is added
-        // or pasted in through the Translate app
-        if (blanks.length > 0) {
-          dir = 'auto';
-        }
-        segment.setAttribute('dir', dir);
-      }
-      // Loop through the paragraphs to see what direction it should be set to based off the first valid segment
-      const paragraphs: NodeListOf<Element> = this.quill.nativeElement.querySelectorAll('usx-para,.ql-editor > p');
-      for (const paragraph of Array.from(paragraphs)) {
-        let paraDir = 'auto';
-        // Locate the first segment that isn't blank to see what direction the paragraph should be set to
-        segments = paragraph.querySelectorAll('usx-segment');
-        for (const segment of Array.from(segments)) {
-          const dir = window.getComputedStyle(segment).direction;
-          if (dir === null) {
-            continue;
-          }
-          const blanks = segment.querySelectorAll('usx-blank');
-          // Only use the segment direction if this isn't a blank segment
-          if (blanks.length === 0) {
-            paraDir = dir;
-            break;
-          }
-        }
-        // Set the paragraph dir
-        paragraph.setAttribute('dir', paraDir);
-      }
-      // Chapters need its direction set from the paragraph that follows
-      const chapters: NodeListOf<Element> = this.quill.nativeElement.querySelectorAll('usx-chapter');
-      for (const chapter of Array.from(chapters)) {
-        const sibling = chapter.nextElementSibling;
-        if (sibling === null) {
-          continue;
-        }
-        const dir = window.getComputedStyle(sibling).direction;
-        if (dir === null) {
-          continue;
-        }
-        chapter.setAttribute('dir', dir);
-      }
+      const quillElement = this.quill.nativeElement as HTMLElement;
+      // set direction on the editor
+      this.direction = window.getComputedStyle(quillElement).direction;
+      this.viewModel.setDirection();
     }
   }
 
@@ -543,11 +493,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       if (!this.tryChangeSegment(segmentRef, checksum, focus) && this._segment != null) {
         // the selection has not changed to a different segment, so update existing segment
         this.updateSegment();
-        if (this._highlightSegment && this._id != null) {
+        if (this._highlightSegment) {
           // ensure that the currently selected segment is highlighted
-          if (!this.viewModel.isHighlighted(this._segment)) {
-            this.viewModel.toggleHighlight(this._segment.range, true);
-          }
+          this.highlight();
         }
       }
       this.setHighlightMarkerPosition();
@@ -577,7 +525,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
     if (!this.viewModel.hasSegmentRange(segmentRef)) {
       if (this._segment != null && this.highlightSegment) {
-        this.toggleHighlight(false);
+        this.clearHighlight();
       }
       this._segment = undefined;
       this.segmentRefChange.emit();
@@ -600,9 +548,6 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       }
     }
 
-    if (this._segment != null && this.highlightSegment) {
-      this.toggleHighlight(false);
-    }
     this._segment = new Segment(this._id.bookNum, this._id.chapterNum, segmentRef);
     if (checksum != null) {
       this._segment.initialChecksum = checksum;
@@ -610,7 +555,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     this.updateSegment();
     this.segmentRefChange.emit(this.segmentRef);
     if (this.highlightSegment) {
-      this.toggleHighlight(true);
+      this.highlight();
     }
     return true;
   }

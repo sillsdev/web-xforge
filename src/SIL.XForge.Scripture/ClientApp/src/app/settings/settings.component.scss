@@ -1,3 +1,4 @@
+@import '~src/styles';
 @import '~src/variables';
 @import '~bootstrap/scss/mixins/breakpoints';
 @import '~@angular-mdc/theme/scss/button/mixins';
@@ -63,6 +64,10 @@
   background-color: $pt-button-green;
   color: white;
   height: 40px;
+}
+
+.offline-text {
+  padding-left: 16px;
 }
 
 .paratext-login-container {

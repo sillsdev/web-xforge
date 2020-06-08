@@ -1,8 +1,10 @@
 import { MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject } from '@angular/core';
+import { translate } from '@ngneat/transloco';
 
 export interface MessageDialogData {
   message: () => string;
+  closeButtonText?: () => string;
 }
 
 @Component({
@@ -14,5 +16,9 @@ export class MessageDialogComponent {
 
   get message(): string {
     return this.data.message();
+  }
+
+  get closeButtonText(): string {
+    return this.data.closeButtonText ? this.data.closeButtonText() : translate('message_dialog.dismiss');
   }
 }

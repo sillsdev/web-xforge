@@ -2,14 +2,18 @@ import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
 import { MdcSlider } from '@angular-mdc/web/slider';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   getSFProjectUserConfigDocId,
   SF_PROJECT_USER_CONFIGS_COLLECTION,
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import { BehaviorSubject } from 'rxjs';
+import { mock, when } from 'ts-mockito';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -21,9 +25,12 @@ import {
   SuggestionsSettingsDialogData
 } from './suggestions-settings-dialog.component';
 
+const mockedPwaService = mock(PwaService);
+
 describe('SuggestionsSettingsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule]
+    imports: [DialogTestModule],
+    providers: [{ provide: PwaService, useMock: mockedPwaService }]
   }));
 
   it('update confidence threshold', fakeAsync(() => {
@@ -42,7 +49,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     env.openDialog();
     expect(env.component!.translationSuggestionsUserEnabled).toBe(true);
 
-    env.clickSwitch(env.suggestionsEnabledSwitch);
+    env.clickSwitch(env.mdcSuggestionsEnabledSwitch);
     expect(env.component!.translationSuggestionsUserEnabled).toBe(false);
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.translationSuggestionsEnabled).toBe(false);
@@ -53,7 +60,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     env.openDialog();
     expect(env.component!.numSuggestions).toEqual('1');
 
-    env.changeSelectValue(env.numSuggestionsSelect, 2);
+    env.changeSelectValue(env.mdcNumSuggestionsSelect, 2);
     expect(env.component!.numSuggestions).toEqual('2');
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.numSuggestions).toEqual(2);
@@ -62,7 +69,24 @@ describe('SuggestionsSettingsDialogComponent', () => {
   it('shows correct confidence threshold even when suggestions disabled', fakeAsync(() => {
     const env = new TestEnvironment(false);
     env.openDialog();
-    expect(env.component!.confidenceThresholdSlider!.value).toEqual(50);
+    expect(env.confidenceThresholdSlider.value).toEqual(50);
+  }));
+
+  it('disables settings when offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.openDialog();
+
+    expect(env.offlineText).toBeNull();
+    expect(env.suggestionsEnabledSwitch.disabled).toBe(false);
+    expect(env.confidenceThresholdSlider.disabled).toBe(false);
+    expect(env.numSuggestionsSelect.disabled).toBe(false);
+
+    env.isOnline = false;
+
+    expect(env.offlineText).not.toBeNull();
+    expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
+    expect(env.confidenceThresholdSlider.disabled).toBe(true);
+    expect(env.numSuggestionsSelect.disabled).toBe(true);
   }));
 });
 
@@ -99,6 +123,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   component?: SuggestionsSettingsDialogComponent;
   readonly overlayContainerElement: HTMLElement;
+  onlineStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
 
@@ -111,18 +136,38 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.overlayContainerElement = TestBed.get(OverlayContainer).getContainerElement();
+
+    when(mockedPwaService.isOnline).thenCall(() => this.onlineStatus.getValue());
   }
 
   get confidenceThresholdSlider(): MdcSlider {
     return this.component!.confidenceThresholdSlider!;
   }
 
-  get suggestionsEnabledSwitch(): HTMLElement {
+  get mdcSuggestionsEnabledSwitch(): HTMLElement {
     return this.overlayContainerElement.querySelector('#suggestions-enabled-switch') as HTMLElement;
   }
 
-  get numSuggestionsSelect(): HTMLElement {
+  get suggestionsEnabledSwitch(): HTMLInputElement {
+    return this.mdcSuggestionsEnabledSwitch.querySelector('input[type="checkbox"]') as HTMLInputElement;
+  }
+
+  get mdcNumSuggestionsSelect(): HTMLElement {
     return this.overlayContainerElement.querySelector('#num-suggestions-select') as HTMLElement;
+  }
+
+  get numSuggestionsSelect(): HTMLSelectElement {
+    return this.mdcNumSuggestionsSelect.querySelector('select') as HTMLSelectElement;
+  }
+
+  get offlineText(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.offline-text'));
+  }
+
+  set isOnline(value: boolean) {
+    this.onlineStatus.next(value);
+    this.fixture.detectChanges();
+    tick();
   }
 
   openDialog(): void {

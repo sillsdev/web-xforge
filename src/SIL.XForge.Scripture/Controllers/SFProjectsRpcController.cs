@@ -78,7 +78,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        public async Task<IRpcMethodResult> AddUser(string projectId, string projectRole = null)
+        public async Task<IRpcMethodResult> AddUser(string projectId, string projectRole)
         {
             try
             {
@@ -93,6 +93,11 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFoundError(dnfe.Message);
             }
+        }
+
+        public async Task<IRpcMethodResult> AddUser(string projectId)
+        {
+            return await this.AddUser(projectId, null);
         }
 
         public async Task<IRpcMethodResult> RemoveUser(string projectId, string projectUserId)
@@ -196,7 +201,7 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        public async Task<IRpcMethodResult> CheckLinkSharing(string projectId, string shareKey = null)
+        public async Task<IRpcMethodResult> CheckLinkSharing(string projectId, string shareKey)
         {
             try
             {
@@ -211,6 +216,11 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFoundError(dnfe.Message);
             }
+        }
+
+        public async Task<IRpcMethodResult> CheckLinkSharing(string projectId)
+        {
+            return await CheckLinkSharing(projectId, null);
         }
 
         public async Task<IRpcMethodResult> AddTranslateMetrics(string projectId, TranslateMetrics metrics)

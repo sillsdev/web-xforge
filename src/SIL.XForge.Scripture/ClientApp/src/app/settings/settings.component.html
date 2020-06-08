@@ -1,6 +1,7 @@
 <ng-container *transloco="let t; read: 'settings'">
   <div fxLayout="column" fxLayoutGap="2rem" class="container">
     <div mdcHeadline4>{{ t("settings") }}</div>
+    <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_change_settings") }} </span>
     <div>
       <div mdcHeadline6>{{ t("tools") }}</div>
       <p mdcBody2>{{ t("select_additional_tools_and_features") }}</p>
@@ -33,7 +34,7 @@
                 class="helper-text checkbox-helper-text"
                 [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
               ></div>
-              <div *ngIf="!isLoading && !isLoggedInToParatext" class="paratext-login-container">
+              <div *ngIf="!isLoading && !isLoggedInToParatext && isAppOnline" class="paratext-login-container">
                 <button
                   class="action-button"
                   mdc-button
@@ -173,7 +174,7 @@
             unelevated
             type="button"
             (click)="openDeleteProjectDialog()"
-            [disabled]="isLoading"
+            [disabled]="isLoading || !isAppOnline"
           >
             {{ t("delete_this_project") }}
           </button>

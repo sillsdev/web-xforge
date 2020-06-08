@@ -9,6 +9,8 @@
     "language": "ພາສາ",
     "log_out": "Log out",
     "logged_in_as": "Logged in as",
+    "offline": "Offline",
+    "online": "Online",
     "overview": "Overview",
     "page_not_found": "Page not found",
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
@@ -222,6 +224,10 @@
     "show_details": "Show details",
     "to_report_issue_email": "To report an issue, email {{ issueEmailLink }}.",
     "unsupported_browser": "You are using an unsupported browser, which may be the reason for this error. We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}."
+  },
+  "error_messages": {
+    "error_occurred_login": "An error occurred during login.",
+    "try_again": "ລອງ​ອີກ​ຄັ້ງ"
   },
   "exception_handling_service": {
     "network_request_failed": "A network request failed. Some functionality may be unavailable.",

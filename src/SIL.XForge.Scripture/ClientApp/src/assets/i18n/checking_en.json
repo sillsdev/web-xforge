@@ -1,5 +1,6 @@
 {
   "app": {
+    "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "All Questions",
     "cannot_change_password": "Can't change password at this time. Try again later or report an issue in the Help menu.",
     "change_password": "Change password",
@@ -225,6 +226,10 @@
     "to_report_issue_email": "To report an issue, email {{ issueEmailLink }}.",
     "unsupported_browser": "You are using an unsupported browser, which may be the reason for this error. We recommend upgrading to the latest {{ chromeLink }} or {{ firefoxLink }}."
   },
+  "error_messages": {
+    "error_occurred_login": "An error occurred during login.",
+    "try_again": "Try Again"
+  },
   "exception_handling_service": {
     "network_request_failed": "A network request failed. Some functionality may be unavailable.",
     "unknown_error": "Unknown error"
@@ -237,10 +242,6 @@
   },
   "message_dialog": {
     "dismiss": "Dismiss"
-  },
-  "offline": {
-    "currently_offline_heading": "Looks like you're currently offline",
-    "currently_offline_text": "Hang tight, we'll keep trying to reconnect you"
   },
   "project": {
     "project_link_is_invalid": "The project link is invalid."
@@ -268,7 +269,8 @@
     "link_sharing": "Link sharing",
     "not_inviting_already_member": "Not inviting: User is already a member of this project",
     "resend": "Resend",
-    "send": "Send"
+    "send": "Send",
+    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },
   "share_dialog": {
     "done": "Done",

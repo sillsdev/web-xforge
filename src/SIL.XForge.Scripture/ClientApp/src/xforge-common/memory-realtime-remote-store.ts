@@ -125,6 +125,10 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     return Promise.resolve();
   }
 
+  updatePendingOps(ops: any[]): void {
+    this.pendingOps.push(...ops);
+  }
+
   destroy(): Promise<void> {
     return Promise.resolve();
   }

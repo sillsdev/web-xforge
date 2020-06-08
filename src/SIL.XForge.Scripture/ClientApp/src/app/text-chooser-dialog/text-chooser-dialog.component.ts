@@ -328,7 +328,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     const startSegmentLeadingWhitespaceLength = startNodeText.length - startNodeText.trimLeft().length;
     const startSegmentClipped = startOffset + startTrimLength > startSegmentLeadingWhitespaceLength;
     const endSegmentLengthWithoutTrailingWhitespace = endNodeText.trimRight().length;
-    const endSegmentClipped = endOffset + endTrimLength < endSegmentLengthWithoutTrailingWhitespace;
+    const endSegmentClipped = endOffset - endTrimLength < endSegmentLengthWithoutTrailingWhitespace;
 
     // Even if the entirety of the first or last segment was selected, it's possible that segment isn't the only segment
     // for that verse. Assemble a list of segments that are in the same verse as the selection's first segment's verse.

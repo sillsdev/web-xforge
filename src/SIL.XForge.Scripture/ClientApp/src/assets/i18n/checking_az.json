@@ -9,6 +9,8 @@
     "language": "Dil",
     "log_out": "Çıxış",
     "logged_in_as": "Bu adla daxil oldu.",
+    "offline": "Oflayn",
+    "online": "Onlayn",
     "overview": "Ümumi baxış",
     "page_not_found": "Səhifə tapılmadı",
     "password_reset_email_sent": "Şifrənizi yenidən qurmaq üçün sizə bir e-məktub göndərmişik.",
@@ -222,6 +224,10 @@
     "show_details": "Detalları göstər",
     "to_report_issue_email": "Problemi bildirmək üçün {{ issueEmailLink }}-a e-poçt göndərin.",
     "unsupported_browser": "Bu xətaya səbəb dəstəklənməyən brauzerdən istifadə etməyiniz ola bilər. Məsləhət görürük ki, onu {{ chromeLink }}-un və ya {{ firefoxLink }}-un ən son versiyası ilə yeniləyəsiniz."
+  },
+  "error_messages": {
+    "error_occurred_login": "Giriş edəndə bir səhv baş verdi.",
+    "try_again": "Yenidən çalışın"
   },
   "exception_handling_service": {
     "network_request_failed": "Şəbəkə sorğusu baş tutmadı. Bəzi funksionallıq mövcud olmaya bilər.",

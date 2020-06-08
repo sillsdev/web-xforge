@@ -31,7 +31,7 @@ import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { CheckingUtils } from '../checking.utils';
+import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
@@ -141,6 +141,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       this.chapter = this.questionsPanel.activeQuestionChapter;
     }
     this.checkBookStatus();
+  }
+
+  get activeQuestionVerseRef(): VerseRef | undefined {
+    if (this.questionsPanel != null && this.book === this.questionsPanel.activeQuestionBook) {
+      return this.questionsPanel.activeQuestionVerseRef;
+    }
   }
 
   get bookName(): string {
@@ -347,8 +353,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
         }
-        this.questionsSub = this.subscribe(merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$), () =>
-          this.checkBookStatus()
+        this.questionsSub = this.subscribe(
+          merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$, this.questionsQuery.localChanges$),
+          () => this.checkBookStatus()
         );
         const prevBook = this.book;
         this.book = bookNum;
@@ -364,12 +371,22 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.projectRemoteChangesSub.unsubscribe();
       }
       this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
-        if (
-          this.projectDoc != null &&
-          this.projectDoc.data != null &&
-          !(this.userService.currentUserId in this.projectDoc.data.userRoles)
-        ) {
-          this.onRemovedFromProject();
+        if (this.projectDoc != null && this.projectDoc.data != null) {
+          if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
+            this.onRemovedFromProject();
+          } else if (!this.projectDoc.data.checkingConfig.checkingEnabled) {
+            if (this.projectUserConfigDoc != null) {
+              const checkingAccessInfo: CheckingAccessInfo = {
+                userId: this.userService.currentUserId,
+                projectId: this.projectDoc.id,
+                project: this.projectDoc.data,
+                bookId,
+                projectUserConfigDoc: this.projectUserConfigDoc!
+              };
+              CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
+              this.onRemovedFromProject();
+            }
+          }
         }
       });
       if (this.projectDeleteSub != null) {
@@ -673,6 +690,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
     }
     this.questionVerseRefs = questionVerseRefs;
+    if (
+      !this.showAllBooks &&
+      this.book != null &&
+      this.questionsPanel != null &&
+      this.questionsPanel.activeQuestionBook != null &&
+      Canon.bookNumberToId(this.book) !== this.activatedRoute.snapshot.params['bookId']
+    ) {
+      this._book = undefined;
+      this.router.navigate([
+        '/projects',
+        this.projectDoc.id,
+        'checking',
+        Canon.bookNumberToId(this.questionsPanel.activeQuestionBook)
+      ]);
+    }
   }
 
   private getAnswerIndex(answer: Answer): number {

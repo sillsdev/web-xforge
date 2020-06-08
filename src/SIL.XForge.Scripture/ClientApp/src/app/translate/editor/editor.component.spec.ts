@@ -732,7 +732,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('undo', fakeAsync(() => {
+    it('undo/redo', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
       env.wait();
@@ -741,7 +741,12 @@ describe('EditorComponent', () => {
       env.typeCharacters('test');
       let contents = env.targetEditor.getContents();
       expect(contents.ops![5].insert).toEqual('test');
-      expect(contents.ops![5].attributes).toEqual({ 'para-contents': true, segment: 'verse_1_2' });
+      expect(contents.ops![5].attributes).toEqual({
+        'para-contents': true,
+        segment: 'verse_1_2',
+        'direction-segment': 'ltr',
+        'highlight-segment': true
+      });
       expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
       expect(contents.ops![6].attributes).toEqual({ 'para-contents': true });
 
@@ -749,13 +754,31 @@ describe('EditorComponent', () => {
       contents = env.targetEditor.getContents();
       // check that edit has been undone
       expect(contents.ops![5].insert).toEqual({ blank: true });
-      expect(contents.ops![5].attributes).toEqual({ 'para-contents': true, segment: 'verse_1_2' });
+      expect(contents.ops![5].attributes).toEqual({
+        'para-contents': true,
+        segment: 'verse_1_2',
+        'direction-segment': 'auto',
+        'highlight-segment': true
+      });
       // check to make sure that data after the affected segment hasn't gotten corrupted
       expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
       expect(contents.ops![6].attributes).toEqual({ 'para-contents': true });
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(31);
       expect(selection!.length).toBe(0);
+
+      env.triggerRedo();
+      contents = env.targetEditor.getContents();
+      expect(contents.ops![5].insert).toEqual('test');
+      expect(contents.ops![5].attributes).toEqual({
+        'para-contents': true,
+        segment: 'verse_1_2',
+        'direction-segment': 'ltr',
+        'highlight-segment': true
+      });
+      expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
+      expect(contents.ops![6].attributes).toEqual({ 'para-contents': true });
+
       env.dispose();
     }));
   });
@@ -1191,6 +1214,11 @@ class TestEnvironment {
 
   triggerUndo(): void {
     this.targetEditor.history.undo();
+    this.wait();
+  }
+
+  triggerRedo(): void {
+    this.targetEditor.history.redo();
     this.wait();
   }
 

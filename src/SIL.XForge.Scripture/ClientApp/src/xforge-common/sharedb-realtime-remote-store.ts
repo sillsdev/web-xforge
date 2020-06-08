@@ -231,6 +231,11 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
     });
   }
 
+  updatePendingOps(ops: any[]): void {
+    this.doc.pendingOps.push(...ops.map(component => ({ op: component, type: this.doc.type, callbacks: [] })));
+    this.doc.flush();
+  }
+
   destroy(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.doc.destroy(err => {

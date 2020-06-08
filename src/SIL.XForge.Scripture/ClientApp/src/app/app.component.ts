@@ -3,7 +3,7 @@ import { MdcSelect } from '@angular-mdc/web/select';
 import { MdcTopAppBar } from '@angular-mdc/web/top-app-bar';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
-import { ActivatedRoute, NavigationEnd, NavigationStart, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/common/models/user';
@@ -58,7 +58,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private currentUserDoc?: UserDoc;
   private _projectSelect?: MdcSelect;
   private projectDeletedDialogRef: any;
-  private _topAppBar!: MdcTopAppBar;
+  private _topAppBar?: MdcTopAppBar;
   private selectedProjectDoc?: SFProjectDoc;
   private selectedProjectDeleteSub?: Subscription;
   private removedFromProjectSub?: Subscription;
@@ -73,7 +73,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     noticeService: NoticeService,
     public media: MediaObserver,
     private readonly projectService: SFProjectService,
-    private readonly pwaService: PwaService,
+    pwaService: PwaService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,
@@ -88,9 +88,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.isAppOnline = pwaService.isOnline;
     this.subscribe(pwaService.onlineStatus, status => {
       this.isAppOnline = status;
-      if (!this.isAppOnline) {
-        this.router.navigateByUrl('/offline');
-      }
     });
 
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
@@ -105,17 +102,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
     }
-
-    // Redirect to offline page if we're offline i.e. if the user attempts to change pages when offline
-    const navEndStart$ = router.events.pipe(
-      filter(e => e instanceof NavigationStart),
-      map(e => e as NavigationStart)
-    );
-    this.subscribe(navEndStart$, e => {
-      if (!this.isAppOnline && e.url !== '/offline') {
-        router.navigateByUrl('/offline');
-      }
-    });
   }
 
   get showCheckingDisabled(): boolean {
@@ -392,16 +378,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   changePassword(): void {
     if (this.currentUser == null) {
       return;
+    } else if (!this.isAppOnline) {
+      this.noticeService.show(translate('app.action_not_available_offline'));
+    } else {
+      this.authService
+        .changePassword(this.currentUser.email)
+        .then(() => {
+          this.noticeService.show(translate('app.password_reset_email_sent'));
+        })
+        .catch(() => {
+          this.noticeService.show(translate('app.cannot_change_password'));
+        });
     }
-
-    this.authService
-      .changePassword(this.currentUser.email)
-      .then(() => {
-        this.noticeService.show(translate('app.password_reset_email_sent'));
-      })
-      .catch(() => {
-        this.noticeService.show(translate('app.cannot_change_password'));
-      });
   }
 
   async editName(): Promise<void> {

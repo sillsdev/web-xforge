@@ -2,7 +2,7 @@
   <mdc-linear-progress [secondary]="true" *ngIf="isAppLoading != null" [open]="isAppLoading" fxFlex="none">
   </mdc-linear-progress>
   <header [class.overlay-drawer]="isDrawerPermanent">
-    <mdc-top-app-bar [short]="media.isActive(['lg', 'xl'])" fixed #topAppBar [scrollTarget]="appContent">
+    <mdc-top-app-bar fixed #topAppBar [scrollTarget]="appContent">
       <mdc-top-app-bar-row>
         <mdc-top-app-bar-section align="start">
           <a *ngIf="!isDrawerPermanent && isProjectSelected" (click)="toggleDrawer()">
@@ -95,17 +95,17 @@
                     <strong class="user-menu-name">{{ currentUser?.displayName }}</strong>
                   </div>
                 </div>
-                <div [hidden]="!isAppOnline">
+                <div>
                   <mdc-list-divider></mdc-list-divider>
                   <mdc-list>
-                    <mdc-list-item *ngIf="isSystemAdmin" routerLink="/system-administration">
+                    <mdc-list-item *ngIf="isSystemAdmin" routerLink="/system-administration" [disabled]="!isAppOnline">
                       {{ t("system_administration") }}
                     </mdc-list-item>
                     <mdc-list-item routerLink="/projects">{{ t("project_home") }}</mdc-list-item>
-                    <mdc-list-item *ngIf="canChangePassword" (click)="changePassword()">
+                    <mdc-list-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
                       {{ t("change_password") }}
                     </mdc-list-item>
-                    <mdc-list-item name="logout" (click)="logOut()">{{ t("log_out") }}</mdc-list-item>
+                    <mdc-list-item name="logout" (click)="logOut()"> {{ t("log_out") }} </mdc-list-item>
                   </mdc-list>
                 </div>
                 <mdc-list-divider></mdc-list-divider>
@@ -131,10 +131,11 @@
     *ngIf="isProjectSelected"
     [drawer]="isDrawerPermanent ? 'permanent' : 'modal'"
     [open]="isExpanded"
+    [autoFocus]="false"
     (closed)="drawerCollapsed()"
   >
     <mdc-drawer-header>
-      <div [class.mdc-top-app-bar--short-fixed-adjust]="isDrawerPermanent"></div>
+      <div [class.mdc-top-app-bar-adjust]="isDrawerPermanent"></div>
       <mdc-select *ngIf="projectDocs != null" class="project-select" (valueChange)="projectChanged($event.value)">
         <mdc-menu>
           <mdc-list>
@@ -142,7 +143,7 @@
               projectDoc.data?.name
             }}</mdc-list-item>
             <mdc-list-divider></mdc-list-divider>
-            <mdc-list-item value="*connect-project*">
+            <mdc-list-item value="*connect-project*" [class.list-item-disabled]="!isAppOnline">
               <mdc-icon mdcListItemGraphic>add</mdc-icon>
               {{ t("connect_project") }}
             </mdc-list-item>
@@ -242,6 +243,7 @@
           <mdc-list-item
             [routerLink]="['/projects', selectedProjectId, 'sync']"
             [activated]="rlaSync.isActive"
+            [class.list-item-disabled]="!isAppOnline"
             routerLinkActive
             #rlaSync="routerLinkActive"
             id="sync-item"
@@ -253,6 +255,7 @@
           <mdc-list-item
             [routerLink]="['/projects', selectedProjectId, 'settings']"
             [activated]="rlaSettings.isActive"
+            [class.list-item-disabled]="!isAppOnline"
             routerLinkActive
             #rlaSettings="routerLinkActive"
             id="settings-item"
@@ -264,6 +267,7 @@
           <mdc-list-item
             [routerLink]="['/projects', selectedProjectId, 'users']"
             [activated]="rlaUsers.isActive"
+            [class.list-item-disabled]="!isAppOnline"
             routerLinkActive
             #rlaUsers="routerLinkActive"
             id="users-item"
@@ -276,7 +280,7 @@
       </mdc-list>
     </mdc-drawer-content>
   </mdc-drawer>
-  <div #appContent class="app-content mdc-top-app-bar--short-fixed-adjust">
+  <div #appContent class="app-content mdc-top-app-bar-adjust">
     <div>
       <router-outlet></router-outlet>
       <p *ngIf="showCheckingDisabled" class="checking-unavailable">{{ t("scripture_checking_not_available") }}</p>

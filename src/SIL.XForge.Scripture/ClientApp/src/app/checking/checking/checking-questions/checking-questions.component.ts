@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { MdcList, MdcListItem } from '@angular-mdc/web';
+import { Component, EventEmitter, Input, Output, ViewChild, ViewChildren } from '@angular/core';
 import sortBy from 'lodash/sortBy';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
@@ -31,6 +32,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   _questionDocs: Readonly<QuestionDoc[]> = [];
   activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
+  @ViewChild(MdcList, { static: true }) mdcList!: MdcList;
   private _activeQuestionVerseRef?: VerseRef;
 
   constructor(private readonly userService: UserService, private readonly projectService: SFProjectService) {
@@ -38,10 +40,13 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
     this.subscribe(this.activeQuestionDoc$.pipe(debounceTime(2000)), questionDoc => {
       this.updateElementsRead(questionDoc);
-      if (questionDoc != null && questionDoc.data != null) {
-        this.storeMostRecentQuestion(questionDoc.data.verseRef.bookNum);
-      }
     });
+  }
+
+  get activeQuestionBook(): number | undefined {
+    return this.activeQuestionDoc == null || this.activeQuestionDoc.data == null
+      ? undefined
+      : this.activeQuestionDoc.data.verseRef.bookNum;
   }
 
   get activeQuestionChapter(): number | undefined {
@@ -73,6 +78,25 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       this.activeQuestionDoc = undefined;
     }
     this._questionDocs = questionDocs;
+  }
+
+  // When the list of questions is hidden it has display: none applied, which prevents scrolling to the active question
+  // The instant it becomes visible we scroll the active question into view
+  @Input() set visible(value: boolean) {
+    if (value) {
+      this.scrollToActiveQuestion();
+    }
+  }
+
+  // The list of questions is rendered before there are any questions to render, so to scroll to the active question
+  // on page load we have to watch as each element is added to the view
+  @ViewChildren(MdcListItem) set questionElements(listItem: MdcListItem) {
+    if (
+      listItem.elementRef != null &&
+      (listItem.elementRef.nativeElement as HTMLElement).classList.contains('.mdc-list-item--activated')
+    ) {
+      this.scrollToActiveQuestion();
+    }
   }
 
   private get canAddAnswer(): boolean {
@@ -233,9 +257,21 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       questionChanged = false;
     }
     this.activeQuestionDoc = questionDoc;
-    this.changed.emit(questionDoc);
-    if (questionChanged) {
-      this.activeQuestionDoc$.next(questionDoc);
+    if (questionDoc.data != null) {
+      this.storeMostRecentQuestion(questionDoc.data.verseRef.bookNum).then(() => {
+        this.changed.emit(questionDoc);
+        if (questionChanged) {
+          this.activeQuestionDoc$.next(questionDoc);
+        }
+      });
+    }
+    setTimeout(() => this.scrollToActiveQuestion());
+  }
+
+  private scrollToActiveQuestion() {
+    const element = (this.mdcList.elementRef.nativeElement as HTMLElement).querySelector('.mdc-list-item--activated');
+    if (element != null) {
+      element.scrollIntoView({ block: 'nearest' });
     }
   }
 

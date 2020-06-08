@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -71,13 +70,6 @@ namespace SIL.XForge.Scripture
         {
             var containerBuilder = new ContainerBuilder();
 
-            // this is a workaround for an issue in EdjCase JsonRpc.Router
-            // see https://github.com/edjCase/JsonRpc/issues/69
-            services.Configure<KestrelServerOptions>(options =>
-            {
-                options.AllowSynchronousIO = true;
-            });
-
             services.AddExceptionReporting(Configuration);
 
             services.AddConfiguration(Configuration);
@@ -138,7 +130,8 @@ namespace SIL.XForge.Scripture
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostApplicationLifetime appLifetime, IExceptionHandler exceptionHandler)
+        public void Configure(IApplicationBuilder app, IHostApplicationLifetime appLifetime,
+            IExceptionHandler exceptionHandler)
         {
             if (IsDevelopment)
             {
@@ -180,8 +173,6 @@ namespace SIL.XForge.Scripture
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseSFJsonRpc();
-
             app.UseRealtimeServer();
 
             app.UseMachine();
@@ -195,6 +186,9 @@ namespace SIL.XForge.Scripture
                 endpoints.MapControllers();
                 endpoints.MapRazorPages();
             });
+
+            // Map JSON-RPC controllers after MVC controllers, so that MVC controllers take precedence.
+            app.UseSFJsonRpc();
 
             // setup all server-side routes before SPA client-side routes, so that the server-side routes supercede the
             // client-side routes

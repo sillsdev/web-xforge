@@ -4,6 +4,7 @@ import { QuillModule } from 'ngx-quill';
 import * as RichText from 'rich-text';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -343,6 +344,7 @@ class TestEnvironment {
 
   private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
   private readonly tokenizer = new LatinWordTokenizer();
+  private readonly pwaService = new PwaService();
 
   constructor() {
     this.addTextDoc(new TextDocId('project01', 40, 1, 'source'));
@@ -367,7 +369,8 @@ class TestEnvironment {
       this.source,
       this.target,
       this.tokenizer,
-      this.tokenizer
+      this.tokenizer,
+      this.pwaService
     );
 
     this.sourceFixture.detectChanges();
