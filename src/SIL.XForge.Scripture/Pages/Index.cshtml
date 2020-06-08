@@ -2,6 +2,9 @@
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IViewLocalizer Localizer
 @model IndexModel
+@section css {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.2/tiny-slider.css"/>
+}
 @section scripts {
     <script type="text/javascript">
         webAuth.checkSession({}, function (err, authResult) {
@@ -10,6 +13,76 @@
                 webAuth.authorize(options);
             }
         });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.2/min/tiny-slider.js"></script>
+    <script type="text/javascript">
+        var AUTOPLAY_TIMEOUT = 15000;
+        var playerSlider;
+        var pauseIntervalId;
+        document.querySelectorAll('.features .slider').forEach(function (container, index) {
+            // start the sliders at 3 different times so they don't all slide together - works if there are more than 3 sliders
+            setTimeout(function () {
+                var slider = tns({
+                    container: container,
+                    autoplay: true,
+                    autoplayButton: '#autoplay-button',
+                    autoplayHoverPause: true,
+                    autoplayResetOnVisibility: false,
+                    autoplayText: ['<i class="material-icons">play_arrow</i>', '<i class="material-icons">pause</i>'],
+                    autoplayTimeout: AUTOPLAY_TIMEOUT,
+                    controlsText: ['<i class="material-icons">keyboard_arrow_left</i>', '<i class="material-icons">keyboard_arrow_right</i>'],
+                    // must disable loop for videos otherwise you get 3 copies of each slide that can all play at once
+                    loop: false,
+                    mouseDrag: true,
+                    nav: true,
+                    navPosition: 'bottom',
+                    preventActionWhenRunning: true,
+                    preventScrollOnTouch: 'force',
+                    // with loop disabled this makes it behave the same as with loop enabled when there are only 2 slides
+                    rewind: true,
+                    speed: 800,
+                    swipeAngle: false
+                });
+                if (container.id && container.id === 'player-slider') {
+                    playerSlider = slider;
+                }
+            }, AUTOPLAY_TIMEOUT*(index % 3)/3);
+        });
+
+        var tag = document.createElement('script');
+        tag.src = `${window.location.protocol}//www.youtube.com/iframe_api`;
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        function onYouTubeIframeAPIReady() {
+            configurePlayer('player-setup-cc', 'mRsuBIkAhhk');
+            configurePlayer('player-see-cc', 'rKQj6_954ic');
+        }
+
+        function configurePlayer(player, videoId) {
+            // must use <div> replacement for this setup to work, particularly when using origin setting with events
+            new YT.Player(player, {
+                host: `${window.location.protocol}//www.youtube-nocookie.com`,
+                videoId: videoId,
+                playerVars: {
+                    enablejsapi: 1,
+                    origin: '@(ViewData["Origin"])'
+                },
+                events: {
+                    onStateChange: onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.PLAYING) {
+                // ensure slider stays paused while video is playing
+                pauseIntervalId = setInterval(playerSlider.pause, AUTOPLAY_TIMEOUT);
+                playerSlider.pause();
+            } else if (pauseIntervalId) {
+                clearInterval(pauseIntervalId);
+            }
+        }
     </script>
 }
 
@@ -66,20 +139,21 @@
                     <div class="about-feature">
                         <img src="~/images/logo-paratext.svg" alt="Paratext">
                         <span>@Localizer["AboutParatext"]</span>
-                        <p>@(Html.Raw(ViewData["AboutParatextDescription"]))</p>
+                        <p>@(Html.Raw(Model.Localizer["AboutParatextDescription", "<span class=\"highlight\">", "</span>"]))</p>
                     </div>
                     <div class="about-feature">
                         <i class="material-icons">shuffle</i>
                         <span>@Localizer["AboutFlexible"]</span>
-                        <p>@(Html.Raw(ViewData["AboutFlexibleDescription"]))</p>
+                        <p>@(Html.Raw(Model.Localizer["AboutFlexibleDescription", "<span class=\"highlight\">", "</span>"]))</p>
                     </div>
                     <div class="about-feature">
                         <i class="material-icons">group</i>
                         <span>@Localizer["AboutUserEngagement"]</span>
-                        <p>@(Html.Raw(ViewData["AboutUserEngagementDescription"]))</p>
+                        <p>@(Html.Raw(Model.Localizer["AboutUserEngagementDescription", "<span class=\"highlight\">", "</span>"]))</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+@await Html.PartialAsync("_IndexExtraPartial")

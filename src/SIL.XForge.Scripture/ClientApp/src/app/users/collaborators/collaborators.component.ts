@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
@@ -8,6 +8,7 @@ import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -31,12 +32,14 @@ interface Row {
   templateUrl: './collaborators.component.html',
   styleUrls: ['./collaborators.component.scss']
 })
-export class CollaboratorsComponent extends DataLoadingComponent implements OnInit {
+export class CollaboratorsComponent extends DataLoadingComponent implements OnInit, AfterViewInit {
   userInviteForm = new FormGroup({
     email: new FormControl('', [XFValidators.email])
   });
   pageIndex: number = 0;
   pageSize: number = 50;
+  filterForm: FormGroup = new FormGroup({ filter: new FormControl('') });
+  isAppOnline = true;
 
   private projectDoc?: SFProjectDoc;
   private term: string = '';
@@ -47,7 +50,9 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    readonly i18n: I18nService
+    readonly i18n: I18nService,
+    private readonly pwaService: PwaService,
+    private readonly changeDetector: ChangeDetectorRef
   ) {
     super(noticeService);
   }
@@ -98,7 +103,11 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       return (
         userRow.user &&
         ((userRow.user.displayName && userRow.user.displayName.toLowerCase().includes(term)) ||
-          (userRow.role && userRow.role.toLowerCase().includes(term)) ||
+          (userRow.role &&
+            this.i18n
+              .localizeRole(userRow.role)
+              .toLowerCase()
+              .includes(term)) ||
           (userRow.user.email && userRow.user.email.toLowerCase().includes(term)))
       );
     });
@@ -138,6 +147,26 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         this.loadingFinished();
       }
     );
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      this.isAppOnline = isOnline;
+      if (isOnline && this._userRows == null) {
+        this.loadingStarted();
+        this.loadUsers();
+        this.loadingFinished();
+      }
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      if (isOnline) {
+        this.filterForm.enable();
+      } else {
+        this.filterForm.disable();
+        // Workaround for angular/angular#17793 (ExpressionChangedAfterItHasBeenCheckedError after form disabled)
+        this.changeDetector.detectChanges();
+      }
+    });
   }
 
   isCurrentUser(userRow: Row): boolean {
@@ -175,7 +204,12 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   private async loadUsers(): Promise<void> {
-    if (this.projectDoc == null || this.projectDoc.data == null || this.projectDoc.data.userRoles == null) {
+    if (
+      this.projectDoc == null ||
+      this.projectDoc.data == null ||
+      this.projectDoc.data.userRoles == null ||
+      !this.isAppOnline
+    ) {
       return;
     }
 

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -40,13 +41,15 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
 
   private projectDoc?: SFProjectDoc;
   private targetProjects?: ParatextProject[];
+  private _isAppOnline: boolean = false;
 
   constructor(
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly router: Router,
     readonly i18n: I18nService,
-    noticeService: NoticeService
+    noticeService: NoticeService,
+    private readonly pwaService: PwaService
   ) {
     super(noticeService);
     this.connectProjectForm.disable();
@@ -64,6 +67,15 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
 
   get hasConnectableProjects(): boolean {
     return this.state === 'input' && this.targetProjects != null && this.targetProjects.length > 0;
+  }
+
+  set isAppOnline(isOnline: boolean) {
+    isOnline ? this.connectProjectForm.enable() : this.connectProjectForm.disable();
+    this._isAppOnline = isOnline;
+  }
+
+  get isAppOnline(): boolean {
+    return this._isAppOnline;
   }
 
   get paratextIdControl() {
@@ -95,7 +107,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   ngOnInit(): void {
-    this.loadingStarted();
     this.subscribe(this.paratextIdControl.valueChanges, (paratextId: string) => {
       if (this.state !== 'input' || this.projects == null) {
         return;
@@ -125,16 +136,21 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       }
     });
 
-    this.subscribe(this.paratextService.getProjects(), projects => {
-      this.projects = projects == null ? undefined : projects;
-      if (projects != null) {
-        this.targetProjects = projects.filter(p => p.isConnectable);
-        this.state = 'input';
-      } else {
-        this.state = 'login';
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      this.isAppOnline = isOnline;
+      if (isOnline && this.projects == null) {
+        this.loadingStarted();
+        this.subscribe(this.paratextService.getProjects(), projects => {
+          this.projects = projects == null ? undefined : projects;
+          if (projects != null) {
+            this.targetProjects = projects.filter(p => p.isConnectable);
+            this.state = 'input';
+          } else {
+            this.state = 'login';
+          }
+          this.loadingFinished();
+        });
       }
-      this.connectProjectForm.enable();
-      this.loadingFinished();
     });
   }
 

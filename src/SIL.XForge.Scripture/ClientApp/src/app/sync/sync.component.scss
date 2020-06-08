@@ -1,3 +1,4 @@
+@import '~src/styles';
 @import '~src/variables';
 
 .sync-card {
@@ -43,4 +44,9 @@ h2 {
 .sync-info {
   align-self: center;
   color: var(--mdc-theme-text-hint-on-background);
+}
+
+.offline-text {
+  padding-bottom: 1rem;
+  text-align: center;
 }

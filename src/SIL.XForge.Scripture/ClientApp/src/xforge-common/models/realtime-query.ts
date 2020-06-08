@@ -14,6 +14,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private unsubscribe$ = new Subject<void>();
   private _count: number = 0;
   private _unpagedCount: number = 0;
+  private readonly _localChanges$ = new Subject<void>();
   private readonly _remoteChanges$ = new Subject<void>();
   private readonly _ready$ = new Subject<void>();
 
@@ -42,6 +43,10 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
 
   get unpagedCount(): number {
     return this._unpagedCount;
+  }
+
+  get localChanges$(): Observable<void> {
+    return this._localChanges$;
   }
 
   get remoteChanges$(): Observable<void> {
@@ -85,6 +90,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       return;
     }
     await this.localQuery();
+    this._localChanges$.next();
   }
 
   private async localQuery(): Promise<string[] | undefined> {

@@ -8,6 +8,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -38,6 +39,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   private controlStates = new Map<Extract<keyof SFProjectSettings, string>, ElementState>();
   private paratextProjects?: ParatextProject[];
   private previousFormValues: SFProjectSettings = {};
+  private _isAppOnline: boolean = false;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -47,10 +49,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly router: Router,
+    private readonly pwaService: PwaService,
     readonly i18n: I18nService
   ) {
     super(noticeService);
-    this.loadingStarted();
   }
 
   get synchronizeWarning(): TextAroundTemplate | undefined {
@@ -77,6 +79,15 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     return this.projectDoc == null ? '' : this.projectDoc.id;
   }
 
+  set isAppOnline(isOnline: boolean) {
+    isOnline ? this.form.enable() : this.form.disable();
+    this._isAppOnline = isOnline;
+  }
+
+  get isAppOnline(): boolean {
+    return this._isAppOnline;
+  }
+
   private get isOnlyBasedOnInvalid(): boolean {
     let invalidCount = 0;
     const controls = this.form.controls;
@@ -94,28 +105,35 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.form.setErrors({ required: true });
     this.form.valueChanges.subscribe(value => this.onFormValueChanges(value));
     this.setAllControlsToInSync();
+    this.isAppOnline = this.pwaService.isOnline;
     const projectId$ = this.route.params.pipe(
       tap(() => {
         this.loadingStarted();
-        this.form.disable();
+        if (!this.isAppOnline) {
+          this.loadingFinished();
+        }
       }),
       map(params => params['projectId'] as string)
     );
-    this.subscribe(
-      combineLatest(projectId$, this.paratextService.getProjects()),
-      async ([projectId, paratextProjects]) => {
-        this.loadingStarted();
-        this.form.enable();
-        this.projectDoc = await this.projectService.get(projectId);
-        this.paratextProjects = paratextProjects == null ? undefined : paratextProjects;
-        if (this.projectDoc != null) {
-          this.updateSettingsInfo();
-          this.updateSourceProjects();
-          this.subscribe(this.projectDoc.remoteChanges$, () => this.updateSourceProjects());
-        }
-        this.loadingFinished();
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      this.isAppOnline = isOnline;
+      if (isOnline && this.paratextProjects == null) {
+        this.subscribe(
+          combineLatest(projectId$, this.paratextService.getProjects()),
+          async ([projectId, paratextProjects]) => {
+            this.loadingStarted();
+            this.projectDoc = await this.projectService.get(projectId);
+            this.paratextProjects = paratextProjects == null ? undefined : paratextProjects;
+            if (this.projectDoc != null) {
+              this.updateSettingsInfo();
+              this.updateSourceProjects();
+              this.subscribe(this.projectDoc.remoteChanges$, () => this.updateSourceProjects());
+            }
+            this.loadingFinished();
+          }
+        );
       }
-    );
+    });
   }
 
   logInWithParatext(): void {

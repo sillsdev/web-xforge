@@ -46,6 +46,10 @@ export class RealtimeService {
     return new RealtimeQuery<T>(this, this.remoteStore.createQueryAdapter(collection, parameters));
   }
 
+  isSet<T extends RealtimeDoc>(collection: string, id: string): boolean {
+    return this.docs.get(getDocKey(collection, id)) != null;
+  }
+
   /**
    * Gets the real-time doc with the specified id and subscribes to remote changes.
    *
@@ -135,6 +139,13 @@ export class RealtimeService {
         promises.push(query.localUpdate());
       }
       await Promise.all(promises);
+    }
+  }
+
+  async onLocalDocDispose(doc: RealtimeDoc): Promise<void> {
+    if (this.isSet(doc.collection, doc.id)) {
+      await this.offlineStore.delete(doc.collection, doc.id);
+      this.docs.delete(getDocKey(doc.collection, doc.id));
     }
   }
 }

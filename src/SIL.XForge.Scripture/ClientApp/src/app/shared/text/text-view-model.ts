@@ -2,7 +2,6 @@ import cloneDeep from 'lodash/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { Subscription } from 'rxjs';
 import { Delta, TextDoc } from '../../core/models/text-doc';
-import { Segment } from './segment';
 
 const PARA_STYLES: Set<string> = new Set<string>([
   // Paragraphs
@@ -95,7 +94,6 @@ export class TextViewModel {
   private remoteChangesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
-  private canSubmitApiChange: boolean = false;
 
   constructor() {}
 
@@ -161,7 +159,7 @@ export class TextViewModel {
       return;
     }
 
-    if ((this.canSubmitApiChange || source === 'user') && editor.isEnabled()) {
+    if (source === 'user' && editor.isEnabled()) {
       const modelDelta = this.viewToData(delta);
       if (modelDelta.ops != null && modelDelta.ops.length > 0) {
         this.textDoc.submit(modelDelta, this.editor);
@@ -171,34 +169,106 @@ export class TextViewModel {
     const updateDelta = this.updateSegments(editor);
     if (updateDelta.ops != null && updateDelta.ops.length > 0) {
       // defer the update, since it might cause the segment ranges to be out-of-sync with the view model
-      Promise.resolve().then(() => {
-        // use "api" source, so that this delta will not get added to the undo stack
-        // set "canSubmitApiChange" flag, so that this delta will still get submitted to the real-time doc
-        this.canSubmitApiChange = true;
-        try {
-          editor.updateContents(updateDelta);
-        } finally {
-          this.canSubmitApiChange = false;
+      Promise.resolve().then(() => editor.updateContents(updateDelta, source));
+    }
+  }
+
+  /**
+   * Not all browsers appear to be consistent with how child elements determine the value of dir="auto" i.e. paragraphs
+   * with child segments both having dir="auto" set.
+   * To get around this we apply dir="auto" to both paragraphs (when available) and segments. We then query
+   * each paragraph/segment and then specifically set the paragraph to what the direction of the first segment that
+   * contains text i.e. is not blank. For chapters we use the same direction value as the paragraph that follows it.
+   */
+  setDirection(): boolean {
+    const editor = this.checkEditor();
+
+    let containsRtlText = false;
+    // set direction on individual segments
+    let delta = new Delta();
+    for (const [segmentId, range] of this.segments) {
+      let dir = 'auto';
+      const segment = editor.root.querySelector(`usx-segment[data-segment="${segmentId}"]`);
+      if (segment != null && segment.querySelectorAll('usx-blank').length === 0) {
+        dir = window.getComputedStyle(segment).direction || 'auto';
+      }
+
+      delta = delta.compose(new Delta().retain(range.index).retain(range.length, { 'direction-segment': dir }));
+
+      if (dir === 'rtl') {
+        containsRtlText = true;
+      }
+    }
+    editor.updateContents(delta, 'silent');
+
+    // Loop through the paragraphs to see what direction it should be set to based off the first valid segment
+    delta = new Delta();
+    const paragraphs = editor.root.querySelectorAll('usx-para,p');
+    for (const paragraph of Array.from(paragraphs)) {
+      let dir = 'auto';
+      const segments = paragraph.querySelectorAll('usx-segment');
+      // Locate the first segment that isn't blank to see what direction the paragraph should be set to
+      const firstNonBlankSegment = Array.from(segments).find(segment => !segment.querySelector('usx-blank'));
+      if (firstNonBlankSegment != null) {
+        dir = window.getComputedStyle(firstNonBlankSegment).direction || 'auto';
+      }
+
+      const paraBlot = Quill.find(paragraph);
+      const index = editor.getIndex(paraBlot) + paraBlot.length() - 1;
+      delta = delta.compose(new Delta().retain(index).retain(1, { 'direction-block': dir }));
+    }
+    editor.updateContents(delta, 'silent');
+
+    // Chapters need its direction set from the paragraph that follows
+    delta = new Delta();
+    const chapters = editor.root.querySelectorAll('usx-chapter');
+    for (const chapter of Array.from(chapters)) {
+      const sibling = chapter.nextElementSibling;
+      if (sibling !== null) {
+        const dir = window.getComputedStyle(sibling).direction || 'auto';
+        const chapterEmbed = Quill.find(chapter);
+        const index = editor.getIndex(chapterEmbed);
+        delta = delta.compose(new Delta().retain(index).retain(1, { 'direction-block': dir }));
+      }
+    }
+    editor.updateContents(delta, 'silent');
+    return containsRtlText;
+  }
+
+  highlight(segmentRefs: string[]): void {
+    const refs = new Set(segmentRefs);
+    const editor = this.checkEditor();
+    const delta = editor.getContents();
+    const clearDelta = new Delta();
+    if (delta.ops != null) {
+      let highlightPara = false;
+      for (const op of delta.ops) {
+        const len = typeof op.insert === 'string' ? op.insert.length : 1;
+        const attrs = op.attributes;
+        let newAttrs: StringMap | undefined;
+        if (attrs != null && attrs['segment'] != null) {
+          if (refs.has(attrs['segment'])) {
+            // highlight segment
+            newAttrs = { 'highlight-segment': true };
+            highlightPara = true;
+          } else if (attrs['highlight-segment'] != null) {
+            // clear highlight
+            newAttrs = { 'highlight-segment': false };
+          }
+        } else if (op.insert === '\n' || (op.attributes != null && op.attributes.para != null)) {
+          if (highlightPara) {
+            // highlight para
+            newAttrs = { 'highlight-para': true };
+            highlightPara = false;
+          } else if (attrs != null && attrs['highlight-para'] != null) {
+            // clear highlight
+            newAttrs = { 'highlight-para': false };
+          }
         }
-      });
+        clearDelta.retain(len, newAttrs);
+      }
     }
-  }
-
-  isHighlighted(segment: Segment): boolean {
-    const editor = this.checkEditor();
-    const formats = editor.getFormat(segment.range);
-    return formats['highlight-segment'] != null;
-  }
-
-  toggleHighlight(range: RangeStatic, value: boolean): void {
-    const editor = this.checkEditor();
-    if (range.length > 0) {
-      // this changes the underlying HTML, which can mess up some Quill events, so defer this call
-      Promise.resolve().then(() => {
-        editor.formatText(range.index, range.length, 'highlight-segment', value, 'silent');
-        editor.formatLine(range.index, range.length, 'highlight-para', value, 'silent');
-      });
-    }
+    editor.updateContents(clearDelta, 'silent');
   }
 
   hasSegmentRange(ref: string): boolean {
@@ -269,12 +339,18 @@ export class TextViewModel {
     if (delta.ops != null) {
       for (const op of delta.ops) {
         const modelOp: DeltaOperation = cloneDeep(op);
-        removeAttribute(modelOp, 'highlight-segment');
-        removeAttribute(modelOp, 'highlight-para');
-        removeAttribute(modelOp, 'para-contents');
-        removeAttribute(modelOp, 'question-segment');
-        removeAttribute(modelOp, 'question-count');
-        removeAttribute(modelOp, 'initial');
+        for (const attr of [
+          'highlight-segment',
+          'highlight-para',
+          'para-contents',
+          'question-segment',
+          'question-count',
+          'initial',
+          'direction-segment',
+          'direction-block'
+        ]) {
+          removeAttribute(modelOp, attr);
+        }
         (modelDelta as any).push(modelOp);
       }
     }
@@ -366,7 +442,6 @@ export class TextViewModel {
           } else if (paraSegments.length === 0) {
             paraSegments.push(new SegmentInfo('', curIndex));
           }
-          fixDelta = this.fixVerse(op, curIndex, fixDelta, fixOffset);
           setAttribute(op, attrs, 'para-contents', true);
           curIndex += len;
           curSegment = new SegmentInfo('verse_' + chapter + '_' + op.insert.verse.number, curIndex);
@@ -406,7 +481,7 @@ export class TextViewModel {
       // insert blank
       const delta = new Delta();
       delta.retain(segment.index + fixOffset);
-      const attrs: any = { segment: segment.ref, 'para-contents': true };
+      const attrs: any = { segment: segment.ref, 'para-contents': true, 'direction-segment': 'auto' };
       if (segment.isInitial) {
         attrs.initial = true;
       }
@@ -417,7 +492,7 @@ export class TextViewModel {
       // delete blank
       const delta = new Delta()
         .retain(segment.index + fixOffset)
-        .retain(segment.length - 1, { segment: segment.ref, 'para-contents': true })
+        .retain(segment.length - 1, { segment: segment.ref, 'para-contents': true, 'direction-segment': 'auto' })
         .delete(1);
       fixDelta = fixDelta.compose(delta);
       fixOffset--;
@@ -441,17 +516,6 @@ export class TextViewModel {
       fixDelta = fixDelta.compose(delta);
     }
     return [fixDelta, fixOffset];
-  }
-
-  private fixVerse(verseOp: DeltaOperation, curIndex: number, fixDelta: DeltaStatic, fixOffset: number): DeltaStatic {
-    // remove "highlight-segment" format, which can sometimes get placed on a verse number after an edit or undo
-    if (verseOp.attributes != null && verseOp.attributes['highlight-segment'] != null) {
-      const delta = new Delta();
-      delta.retain(curIndex + fixOffset);
-      delta.retain(1, { 'highlight-segment': false });
-      fixDelta = fixDelta.compose(delta);
-    }
-    return fixDelta;
   }
 
   private checkEditor(): Quill {

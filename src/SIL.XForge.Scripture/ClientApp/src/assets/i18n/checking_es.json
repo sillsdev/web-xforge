@@ -9,6 +9,8 @@
     "language": "Idioma",
     "log_out": "Cerrar sesión",
     "logged_in_as": "Conectado como",
+    "offline": "Sin conexión",
+    "online": "Conectado",
     "overview": "Panorama general",
     "page_not_found": "No se encontró la página",
     "password_reset_email_sent": "Acabamos de enviarle un correo electrónico para restablecer su contraseña.",
@@ -134,15 +136,15 @@
       "DAG": "Daniel Greek",
       "PS3": "Salmos 152-155",
       "2BA": "2 Baruch (Apocalypse)",
-      "LBA": "Letter of Baruch",
-      "JUB": "Jubilees",
-      "ENO": "Enoch",
-      "1MQ": "1 Meqabyan",
-      "2MQ": "2 Meqabyan",
-      "3MQ": "3 Meqabyan",
+      "LBA": "Libro de Baruc",
+      "JUB": "Jubileos",
+      "ENO": "Enoc",
+      "1MQ": "1 Macabeos",
+      "2MQ": "2 Macabeos",
+      "3MQ": "3 Macabeos",
       "REP": "Reproof (Proverbs 25-31)",
-      "4BA": "4 Baruch (Rest of Baruch)",
-      "LAO": "Laodiceans"
+      "4BA": "4 Baruc",
+      "LAO": "Laodicenses"
     }
   },
   "checking": {
@@ -222,6 +224,10 @@
     "show_details": "Mostrar detalles",
     "to_report_issue_email": "Para informar de un problema, envíe un correo electrónico {{ issueEmailLink }}.",
     "unsupported_browser": "Está utilizando un navegador que no es compatible, lo que puede ser la razón de este error. Recomendamos actualizar a la última versión de {{ chromeLink }} o {{ firefoxLink }}."
+  },
+  "error_messages": {
+    "error_occurred_login": "Se produjo un error durante el inicio de sesión.",
+    "try_again": "Inténtelo de nuevo"
   },
   "exception_handling_service": {
     "network_request_failed": "Una solicitud de red falló. Algunas funciones pueden no estar disponibles.",

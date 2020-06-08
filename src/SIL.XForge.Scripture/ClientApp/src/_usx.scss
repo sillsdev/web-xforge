@@ -304,6 +304,7 @@ usx-chapter {
 
 usx-verse {
   user-select: none;
+  unicode-bidi: embed;
   > span > span > span {
     // superscript
     top: -0.5em;

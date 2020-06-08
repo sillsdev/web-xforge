@@ -18,7 +18,6 @@ import { AppComponent } from './app.component';
 import { CheckingModule } from './checking/checking.module';
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
 import { CoreModule } from './core/core.module';
-import { OfflineComponent } from './offline/offline.component';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { ProjectComponent } from './project/project.component';
 import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scripture-chooser-dialog.component';
@@ -42,8 +41,7 @@ import { UsersModule } from './users/users.module';
     ScriptureChooserDialogComponent,
     SupportedBrowsersDialogComponent,
     ErrorComponent,
-    EditNameDialogComponent,
-    OfflineComponent
+    EditNameDialogComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
@@ -51,7 +49,10 @@ import { UsersModule } from './users/users.module';
     CoreModule,
     HttpClientModule,
     // not ready for production yet - 2018-11 IJH
-    ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.pwaTest }), // || environment.production }),
+    ServiceWorkerModule.register('ngsw-worker.js', {
+      enabled: environment.pwaTest, // || environment.production,
+      registrationStrategy: 'registerImmediately'
+    }),
     TranslateModule,
     CheckingModule,
     UsersModule,

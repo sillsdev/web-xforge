@@ -53,6 +53,10 @@ export class ScriptureChooserDialogComponent implements OnInit {
     return this.otBooks.length > 0;
   }
 
+  private get hasMultipleBooks(): boolean {
+    return this.otBooks.length + this.ntBooks.length > 1;
+  }
+
   ngOnInit() {
     const books = Object.keys(this.data.booksAndChaptersToShow);
     this.otBooks = books.filter(book => this.isOT(book));
@@ -72,6 +76,10 @@ export class ScriptureChooserDialogComponent implements OnInit {
           this.showRangeEndSelection();
         }
       }
+    }
+    // When there is only one book available then start at the chapters view
+    if (!this.hasMultipleBooks) {
+      this.onClickBook(Object.keys(this.data.booksAndChaptersToShow)[0]);
     }
   }
 

@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -33,8 +32,9 @@ namespace SIL.XForge.Services
             _authService = authService;
         }
 
-        public async Task UpdateUserFromProfileAsync(string curUserId, JObject userProfile)
+        public async Task UpdateUserFromProfileAsync(string curUserId, string userProfileJson)
         {
+            var userProfile = JObject.Parse(userProfileJson);
             var identities = (JArray)userProfile["identities"];
             JObject ptIdentity = identities.OfType<JObject>()
                 .FirstOrDefault(i => (string)i["connection"] == "paratext");
@@ -94,7 +94,7 @@ namespace SIL.XForge.Services
         public async Task LinkParatextAccountAsync(string curUserId, string primaryAuthId, string secondaryAuthId)
         {
             await _authService.LinkAccounts(primaryAuthId, secondaryAuthId);
-            JObject userProfile = await _authService.GetUserAsync(primaryAuthId);
+            JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
             var identities = (JArray)userProfile["identities"];
             JObject ptIdentity = identities.OfType<JObject>()
                 .First(i => (string)i["connection"] == "paratext");

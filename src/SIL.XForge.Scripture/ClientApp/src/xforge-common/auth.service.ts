@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { translate } from '@ngneat/transloco';
 import { AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
 import { CookieService } from 'ngx-cookie-service';
@@ -11,10 +12,11 @@ import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
+import { NoticeService } from './notice.service';
 import { RealtimeOfflineStore } from './realtime-offline-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
-import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage } from './utils';
+import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage, getI18nLocales } from './utils';
 
 const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 const XF_ROLE_CLAIM = 'http://xforge.org/role';
@@ -28,6 +30,11 @@ const EXPIRES_AT_SETTING = 'expires_at';
 interface AuthState {
   returnUrl?: string;
   linking?: boolean;
+}
+
+interface LanguageOption {
+  value: string;
+  label?: string;
 }
 
 interface LoginResult {
@@ -59,7 +66,8 @@ export class AuthService {
     private readonly cookieService: CookieService,
     private readonly router: Router,
     private readonly localSettings: LocalSettingsService,
-    private readonly pwaService: PwaService
+    private readonly pwaService: PwaService,
+    private readonly noticeService: NoticeService
   ) {
     // listen for changes to the auth state
     // this indicates that a user has logged in/out on a different tab/window
@@ -80,6 +88,10 @@ export class AuthService {
 
   get accessToken(): string | undefined {
     return this.localSettings.get(ACCESS_TOKEN_SETTING);
+  }
+
+  get idToken(): string | undefined {
+    return this.localSettings.get(ID_TOKEN_SETTING);
   }
 
   get expiresAt(): number | undefined {
@@ -112,12 +124,21 @@ export class AuthService {
 
   logIn(returnUrl: string, signUp?: boolean): void {
     const state: AuthState = { returnUrl };
-    const language = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
-    const options: AuthorizeOptions = { state: JSON.stringify(state), language };
+    const tag = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
+    const i18nLocales = getI18nLocales();
+    const locales = environment.production ? i18nLocales.filter(locale => locale.production) : i18nLocales;
+    const options: LanguageOption[] = locales.map(locale => {
+      const result = { value: locale.canonicalTag, label: locale.localName };
+      if (!environment.production && !locale.production) {
+        result.label += ' *';
+      }
+      return result;
+    });
+    const authOptions: AuthorizeOptions = { state: JSON.stringify(state), language: JSON.stringify({ tag, options }) };
     if (signUp) {
-      options.login_hint = 'signUp';
+      authOptions.login_hint = 'signUp';
     }
-    this.auth0.authorize(options);
+    this.auth0.authorize(authOptions);
   }
 
   linkParatext(returnUrl: string): void {
@@ -139,21 +160,42 @@ export class AuthService {
   }
 
   private async tryLogIn(): Promise<LoginResult> {
-    let authResult = await this.parseHash();
-    if (!(await this.handleAuth(authResult))) {
-      this.clearState();
-      authResult = await this.checkSession();
-      if (!(await this.handleAuth(authResult))) {
-        return { loggedIn: false, newlyLoggedIn: false };
+    try {
+      if (await this.pwaService.checkOnline()) {
+        // In online mode do the normal checks with auth0
+        let authResult = await this.parseHash();
+        if (!(await this.handleOnlineAuth(authResult))) {
+          this.clearState();
+          authResult = await this.checkSession();
+          if (!(await this.handleOnlineAuth(authResult))) {
+            return { loggedIn: false, newlyLoggedIn: false };
+          }
+        } else {
+          return { loggedIn: true, newlyLoggedIn: true };
+        }
+      } else {
+        // In offline mode check against the last known access
+        if (!(await this.handleOfflineAuth())) {
+          return { loggedIn: false, newlyLoggedIn: false };
+        }
       }
-    } else {
-      return { loggedIn: true, newlyLoggedIn: true };
+      return { loggedIn: true, newlyLoggedIn: false };
+    } catch {
+      await this.noticeService.showMessageDialog(
+        () => translate('error_messages.error_occurred_login'),
+        () => translate('error_messages.try_again')
+      );
+      return { loggedIn: false, newlyLoggedIn: false };
     }
-    return { loggedIn: true, newlyLoggedIn: false };
   }
 
-  private async handleAuth(authResult: auth0.Auth0DecodedHash | null): Promise<boolean> {
-    if (authResult == null || authResult.accessToken == null || authResult.idToken == null) {
+  private async handleOnlineAuth(authResult: auth0.Auth0DecodedHash | null): Promise<boolean> {
+    if (
+      authResult == null ||
+      authResult.accessToken == null ||
+      authResult.idToken == null ||
+      authResult.expiresIn == null
+    ) {
       return false;
     }
 
@@ -165,14 +207,13 @@ export class AuthService {
         await this.renewTokens();
       }
     } else {
-      await this.localLogIn(authResult);
+      await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
     }
     this.scheduleRenewal();
     await this.remoteStore.init(() => this.accessToken);
-    const isAppOnline = this.pwaService.isOnline;
-    if (secondaryId != null && isAppOnline) {
+    if (secondaryId != null) {
       await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
-    } else if (!environment.production && isAppOnline) {
+    } else if (!environment.production) {
       try {
         await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
       } catch (err) {
@@ -188,10 +229,16 @@ export class AuthService {
     return true;
   }
 
-  private scheduleRenewal(): void {
-    if (!this.isAuthenticated) {
-      return;
+  private async handleOfflineAuth(): Promise<boolean> {
+    if (this.accessToken == null || this.idToken == null || this.expiresAt == null) {
+      return false;
     }
+    this.scheduleRenewal();
+    await this.remoteStore.init(() => this.accessToken);
+    return true;
+  }
+
+  private scheduleRenewal(): void {
     this.unscheduleRenewal();
 
     const expiresAt = this.expiresAt!;
@@ -199,7 +246,8 @@ export class AuthService {
       mergeMap(expAt => {
         const now = Date.now();
         return timer(Math.max(1, expAt - now));
-      })
+      }),
+      filter(() => this.pwaService.isOnline)
     );
 
     this.refreshSubscription = expiresIn$.subscribe(async () => {
@@ -218,8 +266,13 @@ export class AuthService {
     let success = false;
     try {
       const authResult = await this.checkSession();
-      if (authResult != null && authResult.accessToken != null && authResult.idToken != null) {
-        await this.localLogIn(authResult);
+      if (
+        authResult != null &&
+        authResult.accessToken != null &&
+        authResult.idToken != null &&
+        authResult.expiresIn != null
+      ) {
+        await this.localLogIn(authResult.accessToken, authResult.idToken, authResult.expiresIn);
         success = true;
       }
     } catch (err) {
@@ -259,11 +312,8 @@ export class AuthService {
     });
   }
 
-  private async localLogIn(authResult: auth0.Auth0DecodedHash): Promise<void> {
-    if (authResult.accessToken == null || authResult.expiresIn == null) {
-      throw new Error('The auth result is invalid.');
-    }
-    const claims: any = jwtDecode(authResult.accessToken);
+  private async localLogIn(accessToken: string, idToken: string, expiresIn: number): Promise<void> {
+    const claims: any = jwtDecode(accessToken);
     const prevUserId = this.currentUserId;
     const userId = claims[XF_USER_ID_CLAIM];
     if (prevUserId != null && prevUserId !== userId) {
@@ -271,9 +321,9 @@ export class AuthService {
       this.localSettings.clear();
     }
 
-    const expiresAt = authResult.expiresIn * 1000 + Date.now();
-    this.localSettings.set(ACCESS_TOKEN_SETTING, authResult.accessToken);
-    this.localSettings.set(ID_TOKEN_SETTING, authResult.idToken);
+    const expiresAt = expiresIn * 1000 + Date.now();
+    this.localSettings.set(ACCESS_TOKEN_SETTING, accessToken);
+    this.localSettings.set(ID_TOKEN_SETTING, idToken);
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt);
     this.localSettings.set(USER_ID_SETTING, userId);
     this.localSettings.set(ROLE_SETTING, claims[XF_ROLE_CLAIM]);
