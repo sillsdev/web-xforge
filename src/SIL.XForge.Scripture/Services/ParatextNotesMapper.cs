@@ -212,14 +212,10 @@ namespace SIL.XForge.Scripture.Services
             bool isParatextUser = paratextUsername != null;
 
             SyncUser syncUser;
-            if (syncUserRef != null)
+            // check if comment has already been synced before
+            if (syncUserRef == null || !_idToSyncUser.TryGetValue(syncUserRef, out syncUser))
             {
-                // comment has already been synced before so lookup the PT username
-                syncUser = _idToSyncUser[syncUserRef];
-            }
-            else
-            {
-                // the comment has never been synced before
+                // the comment has never been synced before (or syncUser is missing)
                 // if the owner is not a PT user, then use the current user's PT username
                 if (paratextUsername == null)
                     paratextUsername = _currentParatextUsername;
