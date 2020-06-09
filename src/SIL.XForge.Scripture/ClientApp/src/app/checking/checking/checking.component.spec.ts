@@ -603,7 +603,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.removeAudioButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      verify(mockedProjectService.onlineDeleteAudio('project01', 'a6Id', CHECKER_USER.id)).once();
+      verify(mockedProjectService.deleteAudio('project01', 'a6Id', CHECKER_USER.id)).once();
       expect().nothing();
     }));
 
@@ -614,7 +614,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.answerDeleteButton(0));
       env.waitForSliderUpdate();
       expect(env.answers.length).toEqual(0);
-      verify(mockedProjectService.onlineDeleteAudio('project01', 'a6Id', CHECKER_USER.id)).once();
+      verify(mockedProjectService.deleteAudio('project01', 'a6Id', CHECKER_USER.id)).once();
     }));
 
     it('can delete correct answer after changing chapters', fakeAsync(() => {
