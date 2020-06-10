@@ -31,6 +31,7 @@ namespace SIL.XForge.Scripture.Services
         private UserSecret _currentUserSecret;
         private string _currentParatextUsername;
         private SFProjectSecret _projectSecret;
+        private HashSet<string> _ptProjectUsersWhoCanWriteNotes;
 
         public ParatextNotesMapper(IRepository<UserSecret> userSecrets, IParatextService paratextService)
         {
@@ -40,7 +41,8 @@ namespace SIL.XForge.Scripture.Services
 
         public List<SyncUser> NewSyncUsers { get; } = new List<SyncUser>();
 
-        public void Init(UserSecret currentUserSecret, SFProjectSecret projectSecret)
+        public async Task InitAsync(UserSecret currentUserSecret, SFProjectSecret projectSecret, List<User> ptUsers,
+            string paratextProjectId)
         {
             _currentUserSecret = currentUserSecret;
             _currentParatextUsername = _paratextService.GetParatextUsername(currentUserSecret);
@@ -51,6 +53,17 @@ namespace SIL.XForge.Scripture.Services
             {
                 _idToSyncUser[syncUser.Id] = syncUser;
                 _usernameToSyncUser[syncUser.ParatextUsername] = syncUser;
+            }
+            _ptProjectUsersWhoCanWriteNotes = new HashSet<string>();
+            IReadOnlyDictionary<string, string> roles = await _paratextService.GetProjectRolesAsync(currentUserSecret,
+                paratextProjectId);
+            var ptRolesCanWriteNote = new HashSet<string> { SFProjectRole.Administrator, SFProjectRole.Translator,
+                SFProjectRole.Consultant, SFProjectRole.WriteNote };
+            foreach (User user in ptUsers)
+            {
+                // Populate the list with all Paratext users belonging to the project and who can write notes
+                if (roles.TryGetValue(user.ParatextId, out string role) && ptRolesCanWriteNote.Contains(role))
+                    _ptProjectUsersWhoCanWriteNotes.Add(user.Id);
             }
         }
 
@@ -142,13 +155,13 @@ namespace SIL.XForge.Scripture.Services
         private async Task<string> AddCommentIfChangedAsync(Dictionary<string, XElement> oldCommentElems,
             XElement threadElem, Comment comment, IReadOnlyList<object> prefixContent = null)
         {
-            (string syncUserId, string user, bool isParatextUser) = await GetSyncUserAsync(comment.SyncUserRef,
+            (string syncUserId, string user, bool canWritePTNoteOnProject) = await GetSyncUserAsync(comment.SyncUserRef,
                 comment.OwnerRef);
 
             var commentElem = new XElement("comment");
             commentElem.Add(new XAttribute("user", user));
-            // if the user isn't a PT user, then set external user id
-            if (!isParatextUser)
+            // if the user is not a Paratext user on the project, then set external user id
+            if (!canWritePTNoteOnProject)
                 commentElem.Add(new XAttribute("extUser", comment.OwnerRef));
             commentElem.Add(new XAttribute("date", comment.DateCreated.ToString("o").Replace("Z", "+00:00")));
             var contentElem = new XElement("content");
@@ -196,27 +209,34 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Gets the Paratext user for a comment from the specified sync user id and owner id.
         /// </summary>
-        private async Task<(string SyncUserId, string ParatextUsername, bool IsParatextUser)> GetSyncUserAsync(
+        private async Task<(string SyncUserId, string ParatextUsername, bool CanWritePTNoteOnProject)> GetSyncUserAsync(
             string syncUserRef, string ownerRef)
         {
             // if the owner is a PT user, then get the PT username
             if (!_userIdToUsername.TryGetValue(ownerRef, out string paratextUsername))
             {
-                Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(ownerRef);
-                if (attempt.TryResult(out UserSecret userSecret))
-                    paratextUsername = _paratextService.GetParatextUsername(userSecret);
-                // cache the results
-                _userIdToUsername[ownerRef] = paratextUsername;
+                if (_ptProjectUsersWhoCanWriteNotes.Contains(ownerRef))
+                {
+                    Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(ownerRef);
+                    if (attempt.TryResult(out UserSecret userSecret))
+                        paratextUsername = _paratextService.GetParatextUsername(userSecret);
+                    // cache the results
+                    _userIdToUsername[ownerRef] = paratextUsername;
+                }
+                else
+                {
+                    paratextUsername = null;
+                }
             }
 
-            bool isParatextUser = paratextUsername != null;
+            bool canWritePTNoteOnProject = paratextUsername != null;
 
             SyncUser syncUser;
             // check if comment has already been synced before
             if (syncUserRef == null || !_idToSyncUser.TryGetValue(syncUserRef, out syncUser))
             {
                 // the comment has never been synced before (or syncUser is missing)
-                // if the owner is not a PT user, then use the current user's PT username
+                // if the owner is not a PT user on the project, then use the current user's PT username
                 if (paratextUsername == null)
                     paratextUsername = _currentParatextUsername;
                 if (!_usernameToSyncUser.TryGetValue(paratextUsername, out syncUser))
@@ -233,7 +253,7 @@ namespace SIL.XForge.Scripture.Services
                     NewSyncUsers.Add(syncUser);
                 }
             }
-            return (syncUser.Id, syncUser.ParatextUsername, isParatextUser);
+            return (syncUser.Id, syncUser.ParatextUsername, canWritePTNoteOnProject);
         }
 
         private bool IsCommentNewOrChanged(Dictionary<string, XElement> oldCommentElems, string key,

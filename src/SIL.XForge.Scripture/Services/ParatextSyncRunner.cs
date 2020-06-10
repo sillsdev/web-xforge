@@ -214,7 +214,10 @@ namespace SIL.XForge.Scripture.Services
             if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
                 return false;
 
-            _notesMapper.Init(_userSecret, _projectSecret);
+            List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
+                .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
+                .ToListAsync();
+            await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data.ParatextId);
 
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
 
