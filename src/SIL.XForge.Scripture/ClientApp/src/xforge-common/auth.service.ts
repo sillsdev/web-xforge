@@ -71,8 +71,9 @@ export class AuthService {
   ) {
     // listen for changes to the auth state
     // this indicates that a user has logged in/out on a different tab/window
+    // when localStorage is cleared event.key is null
     this.localSettings.remoteChanges$
-      .pipe(filter(event => event.key === USER_ID_SETTING))
+      .pipe(filter(event => event.key === USER_ID_SETTING || event.key === null))
       .subscribe(() => this.locationService.go('/'));
 
     this.tryLogInPromise = this.tryLogIn();
