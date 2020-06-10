@@ -67,7 +67,7 @@
               <mdc-helper-text #questionHelper validation>{{ t("required_with_asterisk") }}</mdc-helper-text>
             </mdc-form-field>
             <app-checking-audio-combined
-              [source]="audio.url"
+              [source]="audioSource"
               (update)="processAudio($event)"
             ></app-checking-audio-combined>
           </form>

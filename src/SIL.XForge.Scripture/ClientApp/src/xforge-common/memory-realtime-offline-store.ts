@@ -20,6 +20,15 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
     collectionSnapshots.set(snapshot.id, merge(snapshot, { pendingOps: [] }));
   }
 
+  addOfflineData(collection: string, data: OfflineData): void {
+    let collectionData = this.offlineDataMap.get(collection);
+    if (collectionData == null) {
+      collectionData = new Map<string, OfflineData>();
+      this.offlineDataMap.set(collection, collectionData);
+    }
+    collectionData.set(data.id, data);
+  }
+
   getAllIds(collection: string): Promise<string[]> {
     const collectionData = this.map.get(collection);
     if (collectionData == null) {
@@ -58,6 +67,10 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
       return Promise.resolve(undefined);
     }
     return Promise.resolve(collectionData.get(dataId) as T);
+  }
+
+  offlineDataCollection(collection: string): Map<string, OfflineData> | undefined {
+    return this.offlineDataMap.get(collection);
   }
 
   async query(collection: string, parameters: QueryParameters): Promise<RealtimeOfflineQueryResults> {

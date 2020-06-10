@@ -9,8 +9,10 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
+import { QuestionDoc } from '../../core/models/question-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
+import { SFProjectService } from '../../core/sf-project.service';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
@@ -54,11 +56,13 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   );
   audio: AudioAttachment = {};
   _selection?: VerseRef;
+  audioSource?: string;
 
   constructor(
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
     @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData,
     private noticeService: NoticeService,
+    private readonly projectService: SFProjectService,
     readonly i18n: I18nService,
     readonly dialog: MdcDialog
   ) {
@@ -120,6 +124,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       }
       if (question.audioUrl != null) {
         this.audio.url = question.audioUrl;
+        this.setAudioSource();
         this.questionText.clearValidators();
         this.questionText.updateValueAndValidity();
       }
@@ -220,9 +225,22 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     this.audio = audio;
     if (audio.status === 'uploaded' || audio.status === 'processed' || audio.status === 'recording') {
       this.questionText.clearValidators();
+      this.audioSource = audio.blob == null ? undefined : URL.createObjectURL(audio.blob);
     } else if (audio.status === 'reset' || audio.status === 'denied') {
       this.questionText.setValidators([Validators.required, XFValidators.someNonWhitespace]);
     }
     this.questionText.updateValueAndValidity();
+  }
+
+  private async setAudioSource() {
+    const question = this.data.question;
+    if (question != null) {
+      const audioData = await this.projectService.findOrUpdateAudioCache(
+        QuestionDoc.COLLECTION,
+        question.dataId,
+        question.audioUrl
+      );
+      this.audioSource = audioData != null && audioData.blob != null ? URL.createObjectURL(audioData.blob) : undefined;
+    }
   }
 }

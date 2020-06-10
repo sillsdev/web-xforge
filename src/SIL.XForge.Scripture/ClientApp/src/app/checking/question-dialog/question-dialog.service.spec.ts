@@ -82,12 +82,28 @@ describe('QuestionDialogService', () => {
       audio: { fileName: 'someFileName.mp3', blob: new Blob() }
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
-    when(mockedProjectService.uploadAudio(env.PROJECT01, anything(), anything(), anything(), anything())).thenResolve(
-      'aFileName.mp3'
-    );
+    when(
+      mockedProjectService.uploadAudio(
+        env.PROJECT01,
+        QuestionDoc.COLLECTION,
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
+    ).thenResolve('aFileName.mp3');
     await env.service.questionDialog(env.getQuestionDialogData());
     verify(mockedProjectService.createQuestion(env.PROJECT01, anything())).once();
-    verify(mockedProjectService.uploadAudio('project01', anything(), anything(), anything(), anything())).once();
+    verify(
+      mockedProjectService.uploadAudio(
+        'project01',
+        QuestionDoc.COLLECTION,
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
+    ).once();
     expect().nothing();
   });
 
@@ -142,7 +158,7 @@ describe('QuestionDialogService', () => {
     expect(questionDoc!.data!.audioUrl).toBe('anAudioFile.mp3');
     await env.service.questionDialog(env.getQuestionDialogData(newQuestion), questionDoc);
     expect(questionDoc!.data!.audioUrl).toBeUndefined();
-    verify(mockedProjectService.deleteAudio(env.PROJECT01, anything(), anything()));
+    verify(mockedProjectService.deleteAudio(env.PROJECT01, QuestionDoc.COLLECTION, anything(), anything()));
   });
 });
 
