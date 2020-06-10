@@ -9,9 +9,9 @@ import { PageNotFoundComponent } from '../app/shared/page-not-found/page-not-fou
 import { AuthHttpInterceptor } from './auth-http-interceptor';
 import { AvatarComponent } from './avatar/avatar.component';
 import { I18nService, TranslationLoader } from './i18n.service';
-import { IndexeddbRealtimeOfflineStore } from './indexeddb-realtime-offline-store';
+import { IndexeddbOfflineStore } from './indexeddb-offline-store';
 import { MessageDialogComponent } from './message-dialog/message-dialog.component';
-import { RealtimeOfflineStore } from './realtime-offline-store';
+import { OfflineStore } from './offline-store';
 import { RealtimeRemoteStore } from './realtime-remote-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { SaDeleteDialogComponent } from './system-administration/sa-delete-dialog.component';
@@ -50,7 +50,7 @@ export const xForgeCommonEntryComponents = [SaDeleteDialogComponent];
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthHttpInterceptor, multi: true },
     { provide: RealtimeRemoteStore, useExisting: SharedbRealtimeRemoteStore },
-    { provide: RealtimeOfflineStore, useExisting: IndexeddbRealtimeOfflineStore },
+    { provide: OfflineStore, useExisting: IndexeddbOfflineStore },
     { provide: TRANSLOCO_CONFIG, useValue: I18nService.translocoConfig },
     { provide: TRANSLOCO_LOADER, useClass: TranslationLoader }
   ]

@@ -1,11 +1,10 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import merge from 'lodash/merge';
 import { Project } from 'realtime-server/lib/common/models/project';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, Observable } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import XRegExp from 'xregexp';
-import { environment } from '../environments/environment';
 import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
@@ -13,7 +12,7 @@ import { RealtimeQuery } from './models/realtime-query';
 import { Filters, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
 import { SubscriptionDisposable } from './subscription-disposable';
-import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
+import { PROJECTS_URL } from './url-constants';
 
 export abstract class ProjectService<
   TProj extends Project = Project,
@@ -86,25 +85,6 @@ export abstract class ProjectService<
 
   onlineDelete(id: string): Promise<void> {
     return this.onlineInvoke('delete', { projectId: id });
-  }
-
-  protected onlineDeleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
-    return this.onlineInvoke('deleteAudio', { projectId: id, ownerId, dataId });
-  }
-
-  protected async onlineUploadAudio(id: string, dataId: string, file: File): Promise<string> {
-    const formData = new FormData();
-    formData.append('projectId', id);
-    formData.append('dataId', dataId);
-    formData.append('file', file);
-    const response = await this.http
-      .post<HttpResponse<string>>(`${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/audio`, formData, {
-        headers: { Accept: 'application/json' },
-        observe: 'response'
-      })
-      .toPromise();
-    const path = response.headers.get('Location')!;
-    return path.replace(environment.assets.audio, '/');
   }
 
   protected onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {

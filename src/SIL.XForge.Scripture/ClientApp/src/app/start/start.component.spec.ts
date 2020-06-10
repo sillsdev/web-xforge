@@ -6,11 +6,12 @@ import { User } from 'realtime-server/lib/common/models/user';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { StartComponent } from './start.component';
 
 const mockedRouter = mock(Router);
@@ -21,7 +22,7 @@ const mockedUserService = mock(UserService);
 describe('StartComponent', () => {
   configureTestingModule(() => ({
     declarations: [StartComponent],
-    imports: [UICommonModule, RouterTestingModule, TestTranslocoModule],
+    imports: [UICommonModule, RouterTestingModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: Router, useMock: mockedRouter },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
@@ -89,7 +90,7 @@ class TestEnvironment {
   readonly component: StartComponent;
   readonly fixture: ComponentFixture<StartComponent>;
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedUserService.getCurrentUser()).thenCall(() =>

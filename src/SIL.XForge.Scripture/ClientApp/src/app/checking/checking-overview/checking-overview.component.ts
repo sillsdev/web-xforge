@@ -323,11 +323,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
 
     const data: QuestionDialogData = {
-      question: questionDoc != null ? questionDoc.data : undefined,
+      questionDoc,
       textsByBookId: this.textsByBookId,
       projectId: this.projectDoc.id
     };
-    await this.questionDialogService.questionDialog(data, questionDoc);
+    await this.questionDialogService.questionDialog(data);
     this.initTextsWithLoadingIndicator();
   }
 

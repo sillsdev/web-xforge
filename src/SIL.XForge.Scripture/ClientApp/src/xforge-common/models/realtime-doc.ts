@@ -1,7 +1,7 @@
 import { merge, Observable, Subject, Subscription } from 'rxjs';
 import { RealtimeService } from 'xforge-common/realtime.service';
-import { RealtimeOfflineData } from '../realtime-offline-store';
 import { RealtimeDocAdapter } from '../realtime-remote-store';
+import { RealtimeOfflineData } from './realtime-offline-data';
 
 export interface RealtimeDocConstructor {
   readonly COLLECTION: string;
@@ -50,7 +50,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   }
 
   get isLoaded(): boolean {
-    return this.adapter.type != null && this.subscribedState;
+    return this.adapter.type != null;
   }
 
   get subscribed(): boolean {
@@ -129,6 +129,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     this.subscribeQueryCount++;
     await this.loadOfflineData();
     this.updateOfflineData();
+    await this.onSubscribe();
   }
 
   onRemovedFromSubscribeQuery(): void {
@@ -164,6 +165,13 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     this.loadOfflineDataPromise = undefined;
   }
 
+  /**
+   * This method is called when the doc is subscribed. It can be overridden to provide custom behavior on subscription.
+   */
+  protected onSubscribe(): Promise<void> {
+    return Promise.resolve();
+  }
+
   private async loadOfflineData(): Promise<void> {
     if (this.loadOfflineDataPromise == null) {
       this.loadOfflineDataPromise = this.loadFromOfflineStore();
@@ -172,7 +180,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
   }
 
   private async loadFromOfflineStore(): Promise<void> {
-    const offlineData = await this.realtimeService.offlineStore.get(this.collection, this.id);
+    const offlineData = await this.realtimeService.offlineStore.get<RealtimeOfflineData>(this.collection, this.id);
     if (offlineData != null) {
       if (offlineData.v == null) {
         this.adapter.create(offlineData.data, offlineData.type).then(() => this.updateOfflineData(true));
@@ -218,13 +226,13 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
 
   private async subscribeToChanges(): Promise<void> {
     await this.loadOfflineData();
-    const promise = this.adapter.subscribe();
+    const promise = this.adapter.subscribe().then(() => (this.subscribedState = this.adapter.subscribed));
     if (this.isLoaded) {
       this.checkExists();
     } else {
       await promise;
-      this.subscribedState = this.adapter.subscribed;
     }
+    await this.onSubscribe();
   }
 
   private async checkExists(): Promise<void> {
