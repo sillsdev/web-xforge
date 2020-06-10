@@ -9,15 +9,17 @@ import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { FileType } from 'xforge-common/models/file-offline-data';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import XRegExp from 'xregexp';
 import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { Filters, QueryParameters } from '../query-parameters';
-import { RealtimeDocTypes } from '../realtime-doc-types';
 import { TestRealtimeService } from '../test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from '../test-utils';
+import { TypeRegistry } from '../type-registry';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaProjectsComponent } from './sa-projects.component';
@@ -28,7 +30,13 @@ const mockedUserService = mock(UserService);
 
 describe('SaProjectsComponent', () => {
   configureTestingModule(() => ({
-    imports: [NoopAnimationsModule, RouterTestingModule, UICommonModule, TestTranslocoModule],
+    imports: [
+      NoopAnimationsModule,
+      RouterTestingModule,
+      UICommonModule,
+      TestTranslocoModule,
+      TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio]))
+    ],
     declarations: [SaProjectsComponent],
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -150,7 +158,7 @@ class TestEnvironment {
   readonly component: SaProjectsComponent;
   readonly fixture: ComponentFixture<SaProjectsComponent>;
 
-  private readonly realtimeService = new TestRealtimeService(new RealtimeDocTypes([TestProjectDoc]));
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedUserService.currentUserId).thenReturn('user01');

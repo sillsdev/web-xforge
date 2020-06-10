@@ -13,7 +13,7 @@ import { CommandService } from './command.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
 import { NoticeService } from './notice.service';
-import { RealtimeOfflineStore } from './realtime-offline-store';
+import { OfflineStore } from './offline-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
 import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage, getI18nLocales } from './utils';
@@ -60,7 +60,7 @@ export class AuthService {
 
   constructor(
     private readonly remoteStore: SharedbRealtimeRemoteStore,
-    private readonly offlineStore: RealtimeOfflineStore,
+    private readonly offlineStore: OfflineStore,
     private readonly locationService: LocationService,
     private readonly commandService: CommandService,
     private readonly cookieService: CookieService,

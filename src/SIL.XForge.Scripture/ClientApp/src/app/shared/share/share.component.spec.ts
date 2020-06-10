@@ -13,12 +13,13 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from './share-control.component';
 import { ShareDialogComponent } from './share-dialog.component';
@@ -151,7 +152,8 @@ describe('ShareComponent', () => {
     ReactiveFormsModule,
     NoopAnimationsModule,
     UICommonModule,
-    TestTranslocoModule
+    TestTranslocoModule,
+    TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
   ],
   exports: [ShareDialogComponent, ShareControlComponent],
   declarations: [ShareDialogComponent, ShareControlComponent],
@@ -164,7 +166,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ShareComponent>;
   readonly overlayContainer: OverlayContainer;
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedProjectService.onlineInvite('project01', anything())).thenResolve();

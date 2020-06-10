@@ -16,12 +16,13 @@ import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -35,7 +36,7 @@ const mockedUserService = mock(UserService);
 describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
     declarations: [TranslateOverviewComponent],
-    imports: [RouterTestingModule, UICommonModule, TestTranslocoModule],
+    imports: [RouterTestingModule, UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
@@ -154,7 +155,7 @@ class TestEnvironment {
 
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
   private trainingProgress$ = new Subject<ProgressStatus>();
 
   constructor() {

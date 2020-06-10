@@ -41,15 +41,12 @@ export interface QueryParameters {
   $count?: true;
 }
 
-export interface QueryResults<T extends Snapshot = Snapshot> {
+export interface QueryResults<T> {
   results: T[] | number;
   unpagedCount: number;
 }
 
-export function performQuery<T extends Snapshot = Snapshot>(
-  parameters: QueryParameters,
-  snapshots: T[]
-): QueryResults<T> {
+export function performQuery<T>(parameters: QueryParameters, snapshots: T[]): QueryResults<T> {
   const query = new mingo.Query(toMingoCriteria(parameters));
   const cursor = query.find(snapshots);
   if (parameters.$sort != null) {

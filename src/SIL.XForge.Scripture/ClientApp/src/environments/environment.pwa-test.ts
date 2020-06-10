@@ -7,9 +7,7 @@ export const environment = {
   audience: 'https://scriptureforge.org/',
   scope: 'sf_data',
   siteId: 'sf',
-  assets: {
-    audio: '/assets/audio/'
-  },
+  assets: '/assets/',
   helps: 'https://help.scriptureforge.org',
   bugsnagApiKey: 'b72a46a8924a3cd161d4c5534287923c',
   realtimePort: 5003,
