@@ -9,13 +9,16 @@ import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-re
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { FileService } from 'xforge-common/file.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { QuestionDialogComponent, QuestionDialogData, QuestionDialogResult } from './question-dialog.component';
@@ -25,16 +28,18 @@ const mockedDialog = mock(MdcDialog);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
+const mockedFileService = mock(FileService);
 
 describe('QuestionDialogService', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule],
+    imports: [TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       QuestionDialogService,
       { provide: MdcDialog, useMock: mockedDialog },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: FileService, useMock: mockedFileService }
     ]
   }));
 
@@ -47,7 +52,7 @@ describe('QuestionDialogService', () => {
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
     await env.service.questionDialog(env.getQuestionDialogData());
-    verify(mockedProjectService.createQuestion(env.PROJECT01, anything())).once();
+    verify(mockedProjectService.createQuestion(env.PROJECT01, anything(), undefined, undefined)).once();
     expect().nothing();
   });
 
@@ -82,28 +87,8 @@ describe('QuestionDialogService', () => {
       audio: { fileName: 'someFileName.mp3', blob: new Blob() }
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
-    when(
-      mockedProjectService.uploadAudio(
-        env.PROJECT01,
-        QuestionDoc.COLLECTION,
-        anything(),
-        anything(),
-        anything(),
-        anything()
-      )
-    ).thenResolve('aFileName.mp3');
     await env.service.questionDialog(env.getQuestionDialogData());
-    verify(mockedProjectService.createQuestion(env.PROJECT01, anything())).once();
-    verify(
-      mockedProjectService.uploadAudio(
-        'project01',
-        QuestionDoc.COLLECTION,
-        anything(),
-        anything(),
-        anything(),
-        anything()
-      )
-    ).once();
+    verify(mockedProjectService.createQuestion(env.PROJECT01, anything(), 'someFileName.mp3', anything())).once();
     expect().nothing();
   });
 
@@ -129,7 +114,7 @@ describe('QuestionDialogService', () => {
     };
     const questionDoc = env.addQuestion(newQuestion);
     expect(questionDoc!.data!.text).toBe('question to be edited');
-    await env.service.questionDialog(env.getQuestionDialogData(newQuestion), questionDoc);
+    await env.service.questionDialog(env.getQuestionDialogData(questionDoc));
     expect(questionDoc!.data!.text).toBe('question edited');
   });
 
@@ -156,9 +141,9 @@ describe('QuestionDialogService', () => {
     };
     const questionDoc = env.addQuestion(newQuestion);
     expect(questionDoc!.data!.audioUrl).toBe('anAudioFile.mp3');
-    await env.service.questionDialog(env.getQuestionDialogData(newQuestion), questionDoc);
+    await env.service.questionDialog(env.getQuestionDialogData(questionDoc));
     expect(questionDoc!.data!.audioUrl).toBeUndefined();
-    verify(mockedProjectService.deleteAudio(env.PROJECT01, QuestionDoc.COLLECTION, anything(), anything()));
+    verify(mockedFileService.deleteFile(FileType.Audio, env.PROJECT01, QuestionDoc.COLLECTION, anything(), anything()));
   });
 });
 
@@ -197,7 +182,7 @@ class TestEnvironment {
       [this.adminUser.id]: this.adminUser.role
     }
   };
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     this.service = TestBed.get(QuestionDialogService);
@@ -223,8 +208,8 @@ class TestEnvironment {
     return this.realtimeService.get(QUESTIONS_COLLECTION, getQuestionDocId(this.PROJECT01, question.dataId));
   }
 
-  getQuestionDialogData(question?: Question): QuestionDialogData {
-    return { question: question, textsByBookId: this.textsByBookId, projectId: this.PROJECT01 };
+  getQuestionDialogData(questionDoc?: QuestionDoc): QuestionDialogData {
+    return { questionDoc, textsByBookId: this.textsByBookId, projectId: this.PROJECT01 };
   }
 
   updateUserRole(role: string) {

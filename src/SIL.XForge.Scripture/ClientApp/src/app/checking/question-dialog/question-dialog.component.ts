@@ -2,17 +2,16 @@ import { MDC_DIALOG_DATA, MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angu
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
-import { SFProjectService } from '../../core/sf-project.service';
 import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
@@ -23,7 +22,7 @@ import { CheckingAudioCombinedComponent } from '../checking/checking-audio-combi
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
 export interface QuestionDialogData {
-  question?: Question;
+  questionDoc?: QuestionDoc;
   textsByBookId: TextsByBookId;
   projectId: string;
   defaultVerse?: VerseRef;
@@ -42,7 +41,7 @@ export interface QuestionDialogResult {
 export class QuestionDialogComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent?: CheckingAudioCombinedComponent;
   modeLabel =
-    this.data && this.data.question != null
+    this.data && this.data.questionDoc != null
       ? translate('question_dialog.edit_question')
       : translate('question_dialog.new_question');
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
@@ -62,7 +61,6 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     private readonly dialogRef: MdcDialogRef<QuestionDialogComponent, QuestionDialogResult>,
     @Inject(MDC_DIALOG_DATA) private data: QuestionDialogData,
     private noticeService: NoticeService,
-    private readonly projectService: SFProjectService,
     readonly i18n: I18nService,
     readonly dialog: MdcDialog
   ) {
@@ -112,7 +110,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   }
 
   ngOnInit(): void {
-    const question = this.data.question;
+    const question = this.data.questionDoc != null ? this.data.questionDoc.data : undefined;
     if (question != null) {
       const { startVerseRef, endVerseRef } = toStartAndEndVerseRefs(question.verseRef);
       this.scriptureStart.setValue(startVerseRef.toString());
@@ -233,14 +231,10 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   }
 
   private async setAudioSource() {
-    const question = this.data.question;
-    if (question != null) {
-      const audioData = await this.projectService.findOrUpdateAudioCache(
-        QuestionDoc.COLLECTION,
-        question.dataId,
-        question.audioUrl
-      );
-      this.audioSource = audioData != null && audioData.blob != null ? URL.createObjectURL(audioData.blob) : undefined;
+    const questionDoc = this.data.questionDoc;
+    if (questionDoc != null && questionDoc.data != null) {
+      const blob = await questionDoc.getFileContents(FileType.Audio, questionDoc.data.dataId);
+      this.audioSource = blob != null ? URL.createObjectURL(blob) : undefined;
     }
   }
 }

@@ -31,13 +31,15 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anyString, anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
-import { AudioData } from 'xforge-common/models/audio-data';
+import { FileService } from 'xforge-common/file.service';
+import { createStorageFileData, FileType } from 'xforge-common/models/file-offline-data';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ProjectService } from 'xforge-common/project.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -46,12 +48,13 @@ import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
+import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
@@ -75,6 +78,7 @@ const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
+const mockedFileService = mock(FileService);
 
 function createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {
   return {
@@ -134,7 +138,8 @@ describe('CheckingComponent', () => {
       AvatarTestingModule,
       SharedModule,
       UICommonModule,
-      TestTranslocoModule
+      TestTranslocoModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
@@ -147,6 +152,7 @@ describe('CheckingComponent', () => {
       { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: CookieService, useMock: mockedCookieService },
+      { provide: FileService, useMock: mockedFileService },
       { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
@@ -205,8 +211,8 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
     }));
 
-    it('responds to remote community checking disabled', fakeAsync(() => {
-      let env = new TestEnvironment(CHECKER_USER);
+    it('responds to remote community checking disabled when checker', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(1);
       const projectUserConfig = env.component.projectUserConfigDoc!.data!;
       expect(projectUserConfig.selectedTask).toEqual('checking');
@@ -219,9 +225,12 @@ describe('CheckingComponent', () => {
       expect(projectUserConfig.selectedTask).toBeUndefined();
       expect(projectUserConfig.selectedQuestionRef).toBeUndefined();
       expect(env.component.projectDoc).toBeUndefined();
+      env.waitForSliderUpdate();
+    }));
 
+    it('responds to remote community checking disabled when observer', fakeAsync(() => {
       // User with access to translate app should get redirected there
-      env = new TestEnvironment(OBSERVER_USER, 'ALL');
+      const env = new TestEnvironment(OBSERVER_USER, 'ALL');
       env.selectQuestion(1);
       env.component.projectDoc!.submitJson0Op(
         op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, false),
@@ -238,7 +247,9 @@ describe('CheckingComponent', () => {
   describe('Questions', () => {
     it('questions are displaying and audio is cached', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
-      verify(mockedProjectService.onlineCacheAudio(anything())).once();
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anything())).times(
+        45
+      );
       // Question 5 has been stored as the last question to start at
       expect(env.component.questionsPanel!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       // A sixteenth question is archived
@@ -311,16 +322,20 @@ describe('CheckingComponent', () => {
     it('opens a dialog when edit question is clicked', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
       env.selectQuestion(15);
-      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenResolve(
+      when(mockedQuestionDialogService.questionDialog(anything())).thenResolve(
         env.component.questionsPanel!.activeQuestionDoc
       );
       const questionId = 'q15Id';
-      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).once();
+      verify(
+        mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
+      ).times(4);
       env.clickButton(env.editQuestionButton);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).never();
-      verify(mockedQuestionDialogService.questionDialog(anything(), anything())).once();
+      verify(mockedQuestionDialogService.questionDialog(anything())).once();
       tick(env.questionReadTimer);
-      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).twice();
+      verify(
+        mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
+      ).times(5);
       expect().nothing();
     }));
 
@@ -331,14 +346,16 @@ describe('CheckingComponent', () => {
       questionDoc.submitJson0Op(op => {
         op.unset(qd => qd.audioUrl!);
       });
-      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenResolve(questionDoc);
+      when(mockedQuestionDialogService.questionDialog(anything())).thenResolve(questionDoc);
       env.selectQuestion(15);
       expect(env.audioPlayerOnQuestion).not.toBeNull();
-      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).once();
+      verify(
+        mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
+      ).times(4);
       env.clickButton(env.editQuestionButton);
       env.waitForSliderUpdate();
       expect(env.audioPlayerOnQuestion).toBeNull();
-      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, undefined)).once();
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, undefined)).once();
     }));
 
     it('user must confirm question answered dialog before question dialog appears', fakeAsync(() => {
@@ -351,7 +368,7 @@ describe('CheckingComponent', () => {
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
       env.clickButton(env.editQuestionButton);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).twice();
-      verify(mockedQuestionDialogService.questionDialog(anything(), anything())).once();
+      verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
 
@@ -363,14 +380,12 @@ describe('CheckingComponent', () => {
       expect(env.isSegmentHighlighted(1, 1)).toBe(true);
       expect(env.segmentHasQuestion(1, 5)).toBe(false);
       expect(env.isSegmentHighlighted(1, 5)).toBe(false);
-      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenCall(
-        (_config, questionDoc: QuestionDoc) => {
-          questionDoc.submitJson0Op(op =>
-            op.set(q => q.verseRef, { bookNum: 43, chapterNum: 1, verseNum: 5, verse: '5' })
-          );
-          return questionDoc;
-        }
-      );
+      when(mockedQuestionDialogService.questionDialog(anything())).thenCall((config: QuestionDialogData) => {
+        config.questionDoc!.submitJson0Op(op =>
+          op.set(q => q.verseRef, { bookNum: 43, chapterNum: 1, verseNum: 5, verse: '5' })
+        );
+        return config.questionDoc;
+      });
 
       env.clickButton(env.editQuestionButton);
       env.realtimeService.updateAllSubscribeQueries();
@@ -429,15 +444,19 @@ describe('CheckingComponent', () => {
       expect(env.audioPlayerOnQuestion).toBeNull();
       env.simulateRemoteEditQuestionAudio('filename.mp3');
       expect(env.audioPlayerOnQuestion).not.toBeNull();
-      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, 'q1Id', 'filename.mp3')).once();
-      resetCalls(mockedProjectService);
+      verify(
+        mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', 'filename.mp3')
+      ).twice();
+      resetCalls(mockedFileService);
       env.simulateRemoteEditQuestionAudio(undefined);
       expect(env.audioPlayerOnQuestion).toBeNull();
-      verify(mockedProjectService.onlineCacheAudio(anything())).once();
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', undefined)).once();
       env.selectQuestion(2);
       env.simulateRemoteEditQuestionAudio('filename2.mp3');
       env.waitForSliderUpdate();
-      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, 'q2Id', anything())).once();
+      verify(
+        mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q2Id', 'filename2.mp3')
+      ).twice();
     }));
 
     it('question added to another book changes the route to that book and activates the question', fakeAsync(() => {
@@ -667,7 +686,9 @@ describe('CheckingComponent', () => {
       env.clickButton(env.removeAudioButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      verify(mockedProjectService.deleteAudio('project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)).once();
+      verify(
+        mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)
+      ).once();
       expect().nothing();
     }));
 
@@ -678,7 +699,9 @@ describe('CheckingComponent', () => {
       env.clickButton(env.answerDeleteButton(0));
       env.waitForSliderUpdate();
       expect(env.answers.length).toEqual(0);
-      verify(mockedProjectService.deleteAudio('project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)).once();
+      verify(
+        mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)
+      ).once();
     }));
 
     it('can delete correct answer after changing chapters', fakeAsync(() => {
@@ -1281,7 +1304,7 @@ interface UserInfo {
 class TestEnvironment {
   readonly component: CheckingComponent;
   readonly fixture: ComponentFixture<CheckingComponent>;
-  readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
   readonly mockedTextChooserDialogComponent: MdcDialogRef<TextChooserDialogComponent> = mock(MdcDialogRef);
   readonly location: Location;
@@ -1392,12 +1415,13 @@ class TestEnvironment {
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
-    when(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, anything(), anyString())).thenResolve(
-      AudioData.createStorageData(QuestionDoc.COLLECTION, 'anyId', 'filename.mp3', getAudioBlob())
-    );
-    when(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, anything(), undefined)).thenResolve(
-      undefined
-    );
+    when(mockedPwaService.isOnline).thenReturn(hasConnection);
+    when(
+      mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anyString())
+    ).thenResolve(createStorageFileData(QuestionDoc.COLLECTION, 'anyId', 'filename.mp3', getAudioBlob()));
+    when(
+      mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), undefined)
+    ).thenResolve(undefined);
     this.fixture = TestBed.createComponent(CheckingComponent);
     this.component = this.fixture.componentInstance;
     this.location = TestBed.get(Location);
@@ -1485,6 +1509,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(hasConnection: boolean) {
+    when(mockedPwaService.isOnline).thenReturn(hasConnection);
     this.isOnline.next(hasConnection);
     tick();
     this.fixture.detectChanges();

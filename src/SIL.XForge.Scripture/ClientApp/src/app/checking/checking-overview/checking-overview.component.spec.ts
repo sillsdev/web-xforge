@@ -23,6 +23,7 @@ import { of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -30,7 +31,7 @@ import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingModule } from '../checking.module';
@@ -57,7 +58,7 @@ const ROUTES: Route[] = [
 
 describe('CheckingOverviewComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, RouterTestingModule.withRoutes(ROUTES)],
+    imports: [DialogTestModule, RouterTestingModule.withRoutes(ROUTES), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: MdcDialog, useMock: mockedMdcDialog },
@@ -105,7 +106,7 @@ describe('CheckingOverviewComponent', () => {
       const env = new TestEnvironment();
       env.waitForQuestions();
       env.clickElement(env.addQuestionButton);
-      verify(mockedQuestionDialogService.questionDialog(anything(), undefined)).once();
+      verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
 
@@ -124,9 +125,7 @@ describe('CheckingOverviewComponent', () => {
         dateModified: dateNow.toJSON()
       };
 
-      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenCall(() =>
-        env.addQuestion(newQuestion)
-      );
+      when(mockedQuestionDialogService.questionDialog(anything())).thenCall(() => env.addQuestion(newQuestion));
 
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
@@ -138,7 +137,7 @@ describe('CheckingOverviewComponent', () => {
       expect(env.questionEditButtons.length).toEqual(1);
 
       env.clickElement(env.addQuestionButton);
-      verify(mockedQuestionDialogService.questionDialog(anything(), undefined)).once();
+      verify(mockedQuestionDialogService.questionDialog(anything())).once();
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(5); // Matthew, Luke, Luke 1, Question 1, Question 2
       expect(env.questionEditButtons.length).toEqual(2);
@@ -159,13 +158,11 @@ describe('CheckingOverviewComponent', () => {
         dateModified: dateNow.toJSON()
       };
 
-      when(mockedQuestionDialogService.questionDialog(anything(), undefined)).thenCall(() =>
-        env.addQuestion(newQuestion)
-      );
+      when(mockedQuestionDialogService.questionDialog(anything())).thenCall(() => env.addQuestion(newQuestion));
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(0);
       env.clickElement(env.addQuestionButton);
-      verify(mockedQuestionDialogService.questionDialog(anything(), undefined)).once();
+      verify(mockedQuestionDialogService.questionDialog(anything())).once();
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(1);
       env.simulateRowClick(1);
@@ -209,7 +206,7 @@ describe('CheckingOverviewComponent', () => {
 
       resetCalls(mockedProjectService);
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedQuestionDialogService.questionDialog(anything(), anything())).once();
+      verify(mockedQuestionDialogService.questionDialog(anything())).once();
     }));
 
     it('should bring up question dialog only if user confirms question answered dialog', fakeAsync(() => {
@@ -231,7 +228,7 @@ describe('CheckingOverviewComponent', () => {
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
       env.clickElement(env.questionEditButtons[0]);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).twice();
-      verify(mockedQuestionDialogService.questionDialog(anything(), anything())).once();
+      verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
   });
@@ -402,7 +399,7 @@ class TestEnvironment {
   location: Location;
 
   readonly mockedAnsweredDialogRef: MdcDialogRef<QuestionAnsweredDialogComponent> = mock(MdcDialogRef);
-  readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
   checkerUser = this.createUser('02', SFProjectRole.CommunityChecker);
@@ -698,7 +695,7 @@ class TestEnvironment {
     ]);
 
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
-    when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenResolve();
+    when(mockedQuestionDialogService.questionDialog(anything())).thenResolve();
     when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
     when(this.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
     when(mockedProjectService.get(anything())).thenCall(id =>
