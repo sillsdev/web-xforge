@@ -166,9 +166,9 @@ export class AuthService {
         // In online mode do the normal checks with auth0
         let authResult = await this.parseHash();
         if (!(await this.handleOnlineAuth(authResult))) {
-          this.clearState();
           authResult = await this.checkSession();
           if (!(await this.handleOnlineAuth(authResult))) {
+            this.clearState();
             return { loggedIn: false, newlyLoggedIn: false };
           }
         } else {
