@@ -31,7 +31,7 @@ namespace SIL.XForge.Scripture.Services
         private UserSecret _currentUserSecret;
         private string _currentParatextUsername;
         private SFProjectSecret _projectSecret;
-        private List<string> _ptProjectUsers;
+        private List<string> _ptProjectUsersWhoCanWriteNotes;
 
         public ParatextNotesMapper(IRepository<UserSecret> userSecrets, IParatextService paratextService)
         {
@@ -54,13 +54,15 @@ namespace SIL.XForge.Scripture.Services
                 _idToSyncUser[syncUser.Id] = syncUser;
                 _usernameToSyncUser[syncUser.ParatextUsername] = syncUser;
             }
-            _ptProjectUsers = new List<string>();
+            _ptProjectUsersWhoCanWriteNotes = new List<string>();
             var roles = await _paratextService.GetProjectRolesAsync(currentUserSecret, paratextProjectId);
+            string[] ptRolesCanWriteNote = { SFProjectRole.Administrator, SFProjectRole.Translator,
+                SFProjectRole.Consultant, SFProjectRole.WriteNote };
             foreach (User user in ptUsers)
             {
-                // Populate the list with all Paratext users belonging to the project
-                if (roles.TryGetValue(user.ParatextId, out string role))
-                    _ptProjectUsers.Add(user.Id);
+                // Populate the list with all Paratext users belonging to the project and who can write notes
+                if (roles.TryGetValue(user.ParatextId, out string role) && ptRolesCanWriteNote.Any(r => r == role))
+                    _ptProjectUsersWhoCanWriteNotes.Add(user.Id);
             }
         }
 
@@ -212,7 +214,7 @@ namespace SIL.XForge.Scripture.Services
             // if the owner is a PT user, then get the PT username
             if (!_userIdToUsername.TryGetValue(ownerRef, out string paratextUsername))
             {
-                if (_ptProjectUsers.Any(pu => pu == ownerRef))
+                if (_ptProjectUsersWhoCanWriteNotes.Any(pu => pu == ownerRef))
                 {
                     Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(ownerRef);
                     if (attempt.TryResult(out UserSecret userSecret))

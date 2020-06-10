@@ -110,6 +110,11 @@ namespace SIL.XForge.Scripture.Services
                 XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
                     await env.GetQuestionDocsAsync(conn));
 
+                // User 3 is a PT user but does not have a role on this particular PT project, according to the PT
+                // Registry. So we will attribute their comment to user 1, who does have a role on this project
+                // according to the PT registry. Otherwise we would get errors when uploading a note attributed to user
+                // 3's PT username since they do not have appropriate access to write a note. Also, NewSyncUsers will
+                // not contain user 3.
                 const string expectedNotesText = @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
@@ -327,7 +332,8 @@ namespace SIL.XForge.Scripture.Services
 
             public async Task InitMapperAsync(bool includeSyncUsers, bool twoPtUsersOnProject)
             {
-                await Mapper.InitAsync(UserSecrets.Get("user01"), ProjectSecret(includeSyncUsers), ParatextUsersOnProject(twoPtUsersOnProject), "paratextId");
+                await Mapper.InitAsync(UserSecrets.Get("user01"), ProjectSecret(includeSyncUsers),
+                    ParatextUsersOnProject(twoPtUsersOnProject), "paratextId");
             }
 
             public void AddData(string answerSyncUserId1, string answerSyncUserId2, string commentSyncUserId1,
