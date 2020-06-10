@@ -9,10 +9,11 @@ import { instance, mock, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SF_REALTIME_DOC_TYPES } from '../../../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
 import { CheckingOwnerComponent } from './checking-owner.component';
 
 describe('CheckingOwnerComponent', () => {
@@ -79,9 +80,23 @@ class TestEnvironment {
   readonly mockedTransloco = mock(TranslocoService);
   readonly mockedUserService = mock(UserService);
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService;
 
   constructor(template: string) {
+    TestBed.configureTestingModule({
+      declarations: [HostComponent, CheckingOwnerComponent],
+      imports: [AvatarTestingModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+      providers: [
+        { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
+        { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) },
+        { provide: CookieService, useFactory: () => instance(this.mockedCookieService) },
+        { provide: TranslocoService, useFactory: () => instance(this.mockedTransloco) },
+        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
+      ]
+    });
+    TestBed.overrideComponent(HostComponent, { set: { template: template } });
+
+    this.realtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
     this.realtimeService.addSnapshot<UserProfile>(UserProfileDoc.COLLECTION, {
       id: 'user01',
       data: {
@@ -92,19 +107,6 @@ class TestEnvironment {
     when(this.mockedUserService.getProfile('user01')).thenCall(() =>
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, 'user01')
     );
-    TestBed.configureTestingModule({
-      declarations: [HostComponent, CheckingOwnerComponent],
-      imports: [AvatarTestingModule, UICommonModule],
-      providers: [
-        { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
-        { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) },
-        { provide: CookieService, useFactory: () => instance(this.mockedCookieService) },
-        { provide: TranslocoService, useFactory: () => instance(this.mockedTransloco) },
-        { provide: UserService, useFactory: () => instance(this.mockedUserService) }
-      ]
-    });
-
-    TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();
   }

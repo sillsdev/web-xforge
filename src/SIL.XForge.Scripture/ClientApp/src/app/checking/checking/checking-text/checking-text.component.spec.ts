@@ -6,11 +6,12 @@ import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-proj
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { anything, mock, when } from 'ts-mockito';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
-import { SF_REALTIME_DOC_TYPES } from '../../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { SharedModule } from '../../../shared/shared.module';
@@ -21,7 +22,7 @@ const mockedSFProjectService = mock(SFProjectService);
 describe('CheckingTextComponent', () => {
   configureTestingModule(() => ({
     declarations: [CheckingTextComponent],
-    imports: [NoopAnimationsModule, SharedModule, UICommonModule],
+    imports: [NoopAnimationsModule, SharedModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [{ provide: SFProjectService, useMock: mockedSFProjectService }]
   }));
 
@@ -78,7 +79,7 @@ class TestEnvironment {
   readonly component: CheckingTextComponent;
   readonly fixture: ComponentFixture<CheckingTextComponent>;
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));

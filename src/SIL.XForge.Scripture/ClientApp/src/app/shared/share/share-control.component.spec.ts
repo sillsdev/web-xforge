@@ -8,11 +8,12 @@ import { BehaviorSubject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from './share-control.component';
 
@@ -23,7 +24,7 @@ const mockedPwaService = mock(PwaService);
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
     declarations: [TestHostComponent],
-    imports: [TestModule],
+    imports: [TestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -187,7 +188,7 @@ describe('ShareControlComponent', () => {
     readonly component: ShareControlComponent;
     private _onlineStatus = new BehaviorSubject<boolean>(true);
 
-    private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+    private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
     constructor(isLinkSharingEnabled?: boolean, projectId?: string) {
       when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
