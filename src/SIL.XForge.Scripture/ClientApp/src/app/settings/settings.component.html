@@ -129,7 +129,7 @@
                 <div class="helper-text checkbox-helper-text" fxLayout="row">
                   <span>
                     <span [innerHTML]="shareDescription?.before"></span>
-                    <a [routerLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
+                    <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
                     <span>{{ shareDescription?.after }}</span>
                   </span>
                 </div>
@@ -164,7 +164,7 @@
         <p>{{ t("delete_project_cannot_be_undone") }}</p>
         <p>
           <span [innerHTML]="synchronizeWarning?.before"></span>
-          <a [routerLink]="['/projects', projectId, 'sync']">{{ synchronizeWarning?.templateTagText }}</a>
+          <a [appRouterLink]="['/projects', projectId, 'sync']">{{ synchronizeWarning?.templateTagText }}</a>
           <span>{{ synchronizeWarning?.after }}</span>
         </p>
         <div fxLayout="row" fxLayoutAlign="end stretch">

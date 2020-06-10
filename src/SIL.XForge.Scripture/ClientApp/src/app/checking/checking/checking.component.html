@@ -173,7 +173,7 @@
               class="next-question"
               icon="chevron_right"
             ></button>
-            <a [routerLink]="['/projects', projectDoc?.id, 'checking']" id="project-summary">
+            <a [appRouterLink]="['/projects', projectDoc?.id, 'checking']" id="project-summary">
               <app-donut-chart
                 [colors]="['#3a3a3a', '#fff', '#B8D332']"
                 [data]="[summary.unread, summary.read, summary.answered]"
