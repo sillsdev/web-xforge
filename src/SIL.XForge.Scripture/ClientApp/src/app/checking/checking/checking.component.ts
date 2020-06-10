@@ -19,6 +19,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -103,7 +104,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     noticeService: NoticeService,
     private readonly router: Router,
     private readonly questionDialogService: QuestionDialogService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    private readonly pwaService: PwaService
   ) {
     super(noticeService);
   }
@@ -396,6 +398,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.projectDeleteSub.unsubscribe();
       }
       this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
+      if (this.pwaService.isOnline) {
+        this.projectService.onlineCacheAudio(projectId, QuestionDoc.COLLECTION);
+      } else {
+        this.subscribe(this.pwaService.onlineStatus, isOnline => {
+          if (isOnline && this.projectDoc != null) {
+            this.projectService.onlineCacheAudio(this.projectDoc.id, QuestionDoc.COLLECTION);
+          }
+        });
+      }
     });
     this.subscribe(this.media.media$, (change: MediaChange) => {
       this.calculateScriptureSliderPosition();
@@ -446,6 +457,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
               // Get the amended filename and save it against the answer
               answer.audioUrl = await this.projectService.uploadAudio(
                 this.projectDoc.id,
+                this.questionsPanel.activeQuestionDoc.collection,
                 answer.dataId,
                 this.questionsPanel.activeQuestionDoc.id,
                 answerAction.audio.blob,
@@ -737,7 +749,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         .submitJson0Op(op => op.remove(q => q.answers, answerIndex))
         .then(() => {
           if (this.projectDoc != null) {
-            this.projectService.deleteAudio(this.projectDoc.id, answer.dataId, answer.ownerRef);
+            this.projectService.deleteAudio(
+              this.projectDoc.id,
+              activeQuestionDoc.collection,
+              answer.dataId,
+              answer.ownerRef
+            );
           }
         });
       this.refreshSummary();
@@ -776,7 +793,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       if (deleteAudio) {
         submitPromise.then(() => {
           if (this.projectDoc != null) {
-            this.projectService.deleteAudio(this.projectDoc.id, oldAnswer.dataId, oldAnswer.ownerRef);
+            this.projectService.deleteAudio(
+              this.projectDoc.id,
+              activeQuestionDoc.collection,
+              oldAnswer.dataId,
+              oldAnswer.ownerRef
+            );
           }
         });
       }

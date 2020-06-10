@@ -46,6 +46,7 @@ export class QuestionDialogService {
     if (result.audio.fileName && result.audio.blob != null) {
       const response = await this.projectService.uploadAudio(
         config.projectId,
+        QuestionDoc.COLLECTION,
         questionId,
         getQuestionDocId(config.projectId, questionId),
         result.audio.blob,
@@ -68,7 +69,12 @@ export class QuestionDialogService {
           .set(q => q.dateModified, currentDate)
       );
       if (deleteAudio) {
-        await this.projectService.deleteAudio(config.projectId, questionDoc.data.dataId, questionDoc.data.ownerRef);
+        await this.projectService.deleteAudio(
+          config.projectId,
+          questionDoc.collection,
+          questionDoc.data.dataId,
+          questionDoc.data.ownerRef
+        );
       }
       return questionDoc;
     }
