@@ -13,6 +13,8 @@ import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { combineLatest, from, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { FileType } from 'xforge-common/models/file-offline-data';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import XRegExp from 'xregexp';
 import { environment } from '../../environments/environment';
 import { AvatarTestingModule } from '../avatar/avatar-testing.module';
@@ -21,9 +23,9 @@ import { UserDoc } from '../models/user-doc';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { Filters, QueryParameters } from '../query-parameters';
-import { RealtimeDocTypes } from '../realtime-doc-types';
 import { TestRealtimeService } from '../test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from '../test-utils';
+import { TypeRegistry } from '../type-registry';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
@@ -42,7 +44,8 @@ describe('SaUsersComponent', () => {
       AvatarTestingModule,
       UICommonModule,
       DialogTestModule,
-      TestTranslocoModule
+      TestTranslocoModule,
+      TestRealtimeModule.forRoot(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio]))
     ],
     declarations: [SaUsersComponent],
     providers: [
@@ -171,7 +174,7 @@ class TestEnvironment {
 
   readonly mockedDeleteUserDialogRef: MdcDialogRef<SaDeleteDialogComponent> = mock(MdcDialogRef);
 
-  private readonly realtimeService = new TestRealtimeService(new RealtimeDocTypes([UserDoc, TestProjectDoc]));
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));

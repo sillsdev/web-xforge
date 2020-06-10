@@ -5,11 +5,12 @@ import { ngfModule } from 'angular-file';
 import { mock, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SF_REALTIME_DOC_TYPES } from '../../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingAudioCombinedComponent } from './checking-audio-combined.component';
@@ -25,7 +26,7 @@ describe('CheckingAudioCombinedComponent', () => {
       CheckingAudioPlayerComponent,
       AudioTimePipe
     ],
-    imports: [UICommonModule, ngfModule, TestTranslocoModule],
+    imports: [UICommonModule, ngfModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService }
@@ -84,7 +85,7 @@ class TestEnvironment {
   readonly component: CheckingAudioCombinedComponent;
   readonly fixture: ComponentFixture<CheckingAudioCombinedComponent>;
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     this.fixture = TestBed.createComponent(CheckingAudioCombinedComponent);

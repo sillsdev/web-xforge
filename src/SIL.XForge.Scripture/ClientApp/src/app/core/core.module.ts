@@ -1,10 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { OfflineDataTypes } from 'xforge-common/offline-data-types';
 import { ProjectService } from 'xforge-common/project.service';
-import { RealtimeDocTypes } from 'xforge-common/realtime-doc-types';
-import { SF_OFFLINE_DATA_TYPES } from './models/sf-offline-data-types';
-import { SF_REALTIME_DOC_TYPES } from './models/sf-realtime-doc-types';
+import { TypeRegistry } from 'xforge-common/type-registry';
+import { SF_TYPE_REGISTRY } from './models/sf-type-registry';
 import { SFProjectService } from './sf-project.service';
 
 @NgModule({
@@ -12,8 +10,7 @@ import { SFProjectService } from './sf-project.service';
   declarations: [],
   providers: [
     { provide: ProjectService, useExisting: SFProjectService },
-    { provide: RealtimeDocTypes, useValue: SF_REALTIME_DOC_TYPES },
-    { provide: OfflineDataTypes, useValue: SF_OFFLINE_DATA_TYPES }
+    { provide: TypeRegistry, useValue: SF_TYPE_REGISTRY }
   ]
 })
 export class CoreModule {}

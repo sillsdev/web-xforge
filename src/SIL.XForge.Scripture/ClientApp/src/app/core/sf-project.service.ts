@@ -11,13 +11,11 @@ import {
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
-import { AudioService } from 'xforge-common/audio.service';
-import { AuthService } from 'xforge-common/auth.service';
 import { CommandService } from 'xforge-common/command.service';
-import { AudioData } from 'xforge-common/models/audio-data';
+import { FileService } from 'xforge-common/file.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
-import { PwaService } from 'xforge-common/pwa.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { MachineHttpClient } from './machine-http-client';
@@ -39,45 +37,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   constructor(
     realtimeService: RealtimeService,
     commandService: CommandService,
-    private readonly pwaService: PwaService,
-    private readonly authService: AuthService,
-    private readonly audioService: AudioService,
     http: HttpClient,
-    private readonly machineHttp: MachineHttpClient
+    private readonly machineHttp: MachineHttpClient,
+    private readonly fileService: FileService
   ) {
     super(realtimeService, commandService, SF_PROJECT_ROLES, http);
-
-    this.subscribe(this.pwaService.onlineStatus, async isOnline => {
-      // Wait until logged in so that the remote store gets initialized
-      if (isOnline && (await this.authService.isLoggedIn)) {
-        const audioData = await this.realtimeService.offlineStore.getAllData<AudioData>(AudioData.COLLECTION);
-        for (const audio of audioData) {
-          if (audio.deleteRef != null && audio.projectRef != null) {
-            await this.onlineDeleteAudio(audio.projectRef, audio.id, audio.deleteRef);
-            await this.realtimeService.removeOfflineData(AudioData.COLLECTION, audio.id);
-            continue;
-          }
-          if (audio.onlineUrl == null && audio.projectRef != null && audio.dataCollection === QuestionDoc.COLLECTION) {
-            // The audio file has not been uploaded to the server
-            const doc = this.realtimeService.get<QuestionDoc>(audio.dataCollection, audio.realtimeDocRef!);
-            let url: string;
-            if (doc.data != null) {
-              url = await this.onlineUploadAudio(audio.projectRef, audio.id, new File([audio.blob!], audio.filename!));
-              if (doc.data.dataId === audio.id) {
-                // The audio belongs to the question
-                doc.submitJson0Op(op => op.set(qd => qd.audioUrl!, url));
-                this.findOrUpdateAudioCache(audio.dataCollection, audio.id, url);
-              } else {
-                const answerIndex = doc.data.answers.findIndex(a => a.dataId === audio.id);
-                doc.submitJson0Op(op => op.set(qd => qd.answers[answerIndex].audioUrl!, url));
-                // Audio on answers are not cached
-                this.realtimeService.removeOfflineData(AudioData.COLLECTION, audio.id);
-              }
-            }
-          }
-        }
-      }
-    });
   }
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
@@ -126,8 +90,22 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
   }
 
-  createQuestion(id: string, question: Question): Promise<QuestionDoc> {
-    return this.realtimeService.create(QuestionDoc.COLLECTION, getQuestionDocId(id, question.dataId), question);
+  async createQuestion(id: string, question: Question, audioFileName?: string, audioBlob?: Blob): Promise<QuestionDoc> {
+    const docId = getQuestionDocId(id, question.dataId);
+    if (audioFileName != null && audioBlob != null) {
+      const audioUrl = await this.fileService.uploadFile(
+        FileType.Audio,
+        id,
+        this.collection,
+        question.dataId,
+        docId,
+        audioBlob,
+        audioFileName,
+        true
+      );
+      question.audioUrl = audioUrl;
+    }
+    return this.realtimeService.create(QuestionDoc.COLLECTION, docId, question);
   }
 
   onlineSync(id: string): Promise<void> {
@@ -159,25 +137,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   async onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
     return (await this.onlineInvoke<string>('uninviteUser', { projectId, emailToUninvite }))!;
-  }
-
-  /**
-   * Iterate through the questions in a project and cache the up-to-date audio data if it exists.
-   */
-  async onlineCacheAudio(questionDocs: Readonly<QuestionDoc[]>): Promise<void> {
-    for (const qd of questionDocs) {
-      if (qd.data != null) {
-        if (qd.data.isArchived) {
-          this.findOrUpdateAudioCache(qd.collection, qd.data.dataId, undefined);
-        } else {
-          this.findOrUpdateAudioCache(qd.collection, qd.data.dataId, qd.data.audioUrl);
-        }
-      }
-    }
-  }
-
-  findOrUpdateAudioCache(dataCollection: string, dataId: string, url?: string): Promise<AudioData | undefined> {
-    return this.audioService.findOrUpdateCache(dataCollection, dataId, url);
   }
 
   async trainSelectedSegment(projectUserConfig: SFProjectUserConfig): Promise<void> {
@@ -242,50 +201,5 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
         Canon.bookNumberToId(projectUserConfig.selectedBookNum) +
         ' was trained successfully.'
     );
-  }
-
-  /**
-   * Uploads the audio file to the file server, or if offline, stores the audio in IndexedDB and uploads
-   * next time there is a valid connection.
-   */
-  async uploadAudio(
-    id: string,
-    dataCollection: string,
-    dataId: string,
-    realtimeDocRef: string,
-    blob: Blob,
-    filename: string
-  ): Promise<string> {
-    if (this.pwaService.isOnline) {
-      // We are online. Upload directly to the server
-      const onlineUrl = await this.onlineUploadAudio(id, dataId, new File([blob], filename));
-      if (dataCollection === QuestionDoc.COLLECTION && realtimeDocRef === getQuestionDocId(id, dataId)) {
-        await this.findOrUpdateAudioCache(dataCollection, dataId, onlineUrl);
-      }
-      return onlineUrl;
-    }
-    // Store the audio in indexedDB until we go online again
-    let localAudioData = AudioData.createUploadData(dataCollection, dataId, id, realtimeDocRef, blob, filename);
-    localAudioData = await this.realtimeService.storeOfflineData(localAudioData);
-    return URL.createObjectURL(localAudioData.blob);
-  }
-
-  /**
-   * Deletes the audio file from the file server, or if offline, deletes the audio file from IndexedDB if present.
-   * If the file is not present in IndexedDB, delete the audio file from the file server next time there is a
-   * valid connection.
-   */
-  async deleteAudio(id: string, dataCollection: string, dataId: string, ownerId: string): Promise<void> {
-    if (this.pwaService.isOnline) {
-      await this.findOrUpdateAudioCache(dataCollection, dataId, undefined);
-      return this.onlineDeleteAudio(id, dataId, ownerId);
-    }
-    const audio = await this.realtimeService.offlineStore.getData<AudioData>(AudioData.COLLECTION, dataId);
-    if (audio != null && audio.onlineUrl == null) {
-      // The audio existed locally and was never uploaded, remove it and return
-      await this.findOrUpdateAudioCache(audio.dataCollection, audio.id, undefined);
-      return;
-    }
-    this.realtimeService.storeOfflineData(AudioData.createDeletionData(dataCollection, dataId, id, ownerId));
   }
 }

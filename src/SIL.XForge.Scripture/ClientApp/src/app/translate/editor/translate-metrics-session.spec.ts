@@ -6,10 +6,11 @@ import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { TranslateMetrics } from '../../core/models/translate-metrics';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -26,7 +27,7 @@ const mockedSFProjectService = mock(SFProjectService);
 describe('TranslateMetricsSession', () => {
   configureTestingModule(() => ({
     declarations: [TextComponent],
-    imports: [QuillModule.forRoot(), TestTranslocoModule],
+    imports: [QuillModule.forRoot(), TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [{ provide: SFProjectService, useMock: mockedSFProjectService }]
   }));
 
@@ -343,7 +344,7 @@ class TestEnvironment {
   readonly targetFixture: ComponentFixture<TextComponent>;
   readonly session: TranslateMetricsSession;
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
   private readonly tokenizer = new LatinWordTokenizer();
 
   constructor() {

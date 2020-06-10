@@ -15,6 +15,7 @@ import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -22,7 +23,7 @@ import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
-import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
@@ -53,7 +54,8 @@ describe('SettingsComponent', () => {
       HttpClientTestingModule,
       RouterTestingModule.withRoutes(ROUTES),
       UICommonModule,
-      TestTranslocoModule
+      TestTranslocoModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     declarations: [SettingsComponent, WriteStatusComponent, MockComponent],
     providers: [
@@ -389,7 +391,7 @@ class TestEnvironment {
   readonly overlayContainer: OverlayContainer;
   readonly location: Location;
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;
 
   constructor(hasConnection: boolean = true) {

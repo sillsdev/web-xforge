@@ -7,6 +7,7 @@
     "ng": "ng",
     "start": "ng serve",
     "start:no-progress": "ng serve --progress=false",
+    "start:no-reload": "ng serve --liveReload=false",
     "build": "ng build",
     "test": "ng test --sourceMap=true",
     "test:tc": "ng test --browsers xForgeChromiumHeadless --watch false --code-coverage",

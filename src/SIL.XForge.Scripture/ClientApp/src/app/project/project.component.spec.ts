@@ -12,13 +12,14 @@ import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
-import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectComponent } from './project.component';
 
@@ -32,7 +33,7 @@ const mockedTranslocoService = mock(TranslocoService);
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
     declarations: [ProjectComponent],
-    imports: [UICommonModule],
+    imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
@@ -200,7 +201,7 @@ class TestEnvironment {
   readonly component: ProjectComponent;
   readonly fixture: ComponentFixture<ProjectComponent>;
 
-  readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));

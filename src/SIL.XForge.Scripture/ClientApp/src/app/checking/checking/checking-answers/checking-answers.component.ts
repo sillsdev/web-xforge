@@ -13,13 +13,13 @@ import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scri
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextsByBookId } from '../../../core/models/texts-by-book-id';
-import { SFProjectService } from '../../../core/sf-project.service';
 import {
   TextChooserDialogComponent,
   TextChooserDialogData,
@@ -144,7 +144,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly noticeService: NoticeService,
     private readonly questionDialogService: QuestionDialogService,
     private readonly i18n: I18nService,
-    private readonly projectService: SFProjectService,
     public media: MediaObserver
   ) {
     super();
@@ -307,18 +306,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
 
     const data: QuestionDialogData = {
-      question: this._questionDoc.data,
+      questionDoc: this._questionDoc,
       textsByBookId: this.textsByBookId!,
       projectId: projectId
     };
-    const questionDialogResponse = await this.questionDialogService.questionDialog(data, this._questionDoc);
+    const questionDialogResponse = await this.questionDialogService.questionDialog(data);
     if (questionDialogResponse != null && questionDialogResponse.data != null) {
-      const audio = await this.projectService.findOrUpdateAudioCache(
-        questionDialogResponse.collection,
-        questionDialogResponse.data.dataId,
-        questionDialogResponse.data.audioUrl
-      );
-      this.questionUrl = audio != null && audio.blob != null ? URL.createObjectURL(audio.blob) : undefined;
+      const blob = await questionDialogResponse.getFileContents(FileType.Audio, questionDialogResponse.data.dataId);
+      this.questionUrl = blob != null ? URL.createObjectURL(blob) : undefined;
       this.action.emit({ action: 'edit', questionDoc: questionDialogResponse });
     }
   }
@@ -328,12 +323,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       this.questionUrl = undefined;
       return;
     }
-    const audio = await this.projectService.findOrUpdateAudioCache(
-      this.questionDoc.collection,
-      this.questionDoc.data.dataId,
-      this.questionDoc.data.audioUrl
-    );
-    this.questionUrl = audio != null && audio.blob != null ? URL.createObjectURL(audio.blob) : undefined;
+    const blob = await this.questionDoc.getFileContents(FileType.Audio, this.questionDoc.data.dataId);
+    this.questionUrl = blob != null ? URL.createObjectURL(blob) : undefined;
   }
 
   selectScripture() {

@@ -16,6 +16,7 @@ import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/ver
 import { merge, Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -93,6 +94,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private questionsSub?: Subscription;
   private projectDeleteSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
+  private questionsRemoteChangesSub?: Subscription;
   private text?: TextInfo;
 
   constructor(
@@ -346,11 +348,20 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           bookNum: this.showAllBooks ? undefined : bookNum,
           sort: true
         });
-        this.subscribe(merge(this.questionsQuery.remoteDocChanges$, this.questionsQuery.ready$), () => {
-          if (this.pwaService.isOnline) {
-            this.projectService.onlineCacheAudio(this.questionsQuery!.docs);
+        // TODO: check for remote changes to file data more generically
+        if (this.questionsRemoteChangesSub != null) {
+          this.questionsRemoteChangesSub.unsubscribe();
+        }
+        this.questionsRemoteChangesSub = this.subscribe(
+          merge(this.questionsQuery.remoteDocChanges$, this.questionsQuery.ready$),
+          () => {
+            if (this.pwaService.isOnline) {
+              for (const qd of this.questionsQuery!.docs) {
+                qd.updateFileCache();
+              }
+            }
           }
-        });
+        );
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
         }
@@ -446,11 +457,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           if (answerAction.audio.fileName != null && answerAction.audio.blob != null) {
             if (this.questionsPanel.activeQuestionDoc != null) {
               // Get the amended filename and save it against the answer
-              answer.audioUrl = await this.projectService.uploadAudio(
-                this.projectDoc.id,
-                this.questionsPanel.activeQuestionDoc.collection,
+              answer.audioUrl = await this.questionsPanel.activeQuestionDoc.uploadFile(
+                FileType.Audio,
                 answer.dataId,
-                this.questionsPanel.activeQuestionDoc.id,
                 answerAction.audio.blob,
                 answerAction.audio.fileName
               );
@@ -622,7 +631,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
 
     const data: QuestionDialogData = {
-      question: undefined,
+      questionDoc: undefined,
       textsByBookId: this.textsByBookId,
       projectId: this.projectDoc.id,
       defaultVerse: new VerseRef(this.book, this.chapter, 1)
@@ -759,12 +768,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         .submitJson0Op(op => op.remove(q => q.answers, answerIndex))
         .then(() => {
           if (this.projectDoc != null) {
-            this.projectService.deleteAudio(
-              this.projectDoc.id,
-              activeQuestionDoc.collection,
-              answer.dataId,
-              answer.ownerRef
-            );
+            activeQuestionDoc.deleteFile(FileType.Audio, answer.dataId, answer.ownerRef);
           }
         });
       this.refreshSummary();
@@ -803,12 +807,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       if (deleteAudio) {
         submitPromise.then(() => {
           if (this.projectDoc != null) {
-            this.projectService.deleteAudio(
-              this.projectDoc.id,
-              activeQuestionDoc.collection,
-              oldAnswer.dataId,
-              oldAnswer.ownerRef
-            );
+            activeQuestionDoc.deleteFile(FileType.Audio, oldAnswer.dataId, oldAnswer.ownerRef);
           }
         });
       }
