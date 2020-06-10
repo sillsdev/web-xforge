@@ -20,7 +20,8 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetNotesChangelistAsync_AddNotes()
         {
             var env = new TestEnvironment();
-            env.InitMapper(false);
+            env.SetParatextProjectRoles(true);
+            await env.InitMapperAsync(false, true);
             env.AddData(null, null, null, null);
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
@@ -85,10 +86,85 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task GetNotesChangelistAsync_ParatextUserNotOnProject_AddNotes()
+        {
+            var env = new TestEnvironment();
+            env.SetParatextProjectRoles(false);
+            await env.InitMapperAsync(false, true);
+            env.AddData(null, null, null, null);
+
+            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            {
+                const string oldNotesText = @"
+                    <notes version=""1.1"">
+                        <thread id=""ANSWER_answer03"">
+                            <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p>Test answer 3.</p>
+                                </content>
+                            </comment>
+                        </thread>
+                    </notes>";
+                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(XElement.Parse(oldNotesText),
+                    await env.GetQuestionDocsAsync(conn));
+
+                // User 3 is a PT user but does not have a role on this particular PT project, according to the PT
+                // Registry. So we will attribute their comment to user 1, who does have a role on this project
+                // according to the PT registry. Otherwise we would get errors when uploading a note attributed to user
+                // 3's PT username since they do not have appropriate access to write a note. Also, NewSyncUsers will
+                // not contain user 3.
+                const string expectedNotesText = @"
+                    <notes version=""1.1"">
+                        <thread id=""ANSWER_answer01"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p>Test answer 1.</p>
+                                </content>
+                            </comment>
+                            <comment user=""PT User 1"" extUser=""user03"" date=""2019-01-01T09:00:00.0000000+00:00"">
+                                <content>Test comment 1.</content>
+                            </comment>
+                        </thread>
+                        <thread id=""ANSWER_answer02"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
+                                    <p>Test answer 2.</p>
+                                </content>
+                            </comment>
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
+                                <content>Test comment 2.</content>
+                            </comment>
+                        </thread>
+                        <thread id=""ANSWER_answer03"">
+                            <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p>Test answer 3.</p>
+                                </content>
+                            </comment>
+                        </thread>
+                    </notes>";
+                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+
+                Assert.That(env.Mapper.NewSyncUsers.Select(su => su.ParatextUsername),
+                    Is.EquivalentTo(new[] { "PT User 1" }));
+            }
+        }
+
+        [Test]
         public async Task GetNotesChangelistAsync_UpdateNotes()
         {
             var env = new TestEnvironment();
-            env.InitMapper(true);
+            env.SetParatextProjectRoles(true);
+            await env.InitMapperAsync(true, true);
             env.AddData("syncuser01", "syncuser03", null, "syncuser03");
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
@@ -152,7 +228,8 @@ namespace SIL.XForge.Scripture.Services
         public async Task GetNotesChangelistAsync_DeleteNotes()
         {
             var env = new TestEnvironment();
-            env.InitMapper(true);
+            env.SetParatextProjectRoles(true);
+            await env.InitMapperAsync(true, true);
             env.AddData("syncuser01", "syncuser03", "syncuser03", "syncuser03");
 
             using (IConnection conn = await env.RealtimeService.ConnectAsync())
@@ -242,19 +319,21 @@ namespace SIL.XForge.Scripture.Services
 
                 RealtimeService = new SFMemoryRealtimeService();
 
-                var paratextService = Substitute.For<IParatextService>();
-                paratextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("PT User 1");
-                paratextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user03")).Returns("PT User 3");
-                Mapper = new ParatextNotesMapper(UserSecrets, paratextService);
+                ParatextService = Substitute.For<IParatextService>();
+                ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("PT User 1");
+                ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user03")).Returns("PT User 3");
+                Mapper = new ParatextNotesMapper(UserSecrets, ParatextService);
             }
 
             public ParatextNotesMapper Mapper { get; }
             public MemoryRepository<UserSecret> UserSecrets { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
+            public IParatextService ParatextService { get; }
 
-            public void InitMapper(bool includeSyncUsers)
+            public async Task InitMapperAsync(bool includeSyncUsers, bool twoPtUsersOnProject)
             {
-                Mapper.Init(UserSecrets.Get("user01"), ProjectSecret(includeSyncUsers));
+                await Mapper.InitAsync(UserSecrets.Get("user01"), ProjectSecret(includeSyncUsers),
+                    ParatextUsersOnProject(twoPtUsersOnProject), "paratextId");
             }
 
             public void AddData(string answerSyncUserId1, string answerSyncUserId2, string commentSyncUserId1,
@@ -321,6 +400,15 @@ namespace SIL.XForge.Scripture.Services
                 return new[] { questionDoc };
             }
 
+            public void SetParatextProjectRoles(bool twoPtUserOnProject)
+            {
+                Dictionary<string, string> ptUserRoles = new Dictionary<string, string>();
+                ptUserRoles["ptuser01"] = "pt_administrator";
+                if (twoPtUserOnProject)
+                    ptUserRoles["ptuser03"] = "pt_translator";
+                ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(ptUserRoles);
+            }
+
             private static SFProjectSecret ProjectSecret(bool includeSyncUsers)
             {
                 var syncUsers = new List<SyncUser>();
@@ -335,6 +423,17 @@ namespace SIL.XForge.Scripture.Services
                     Id = "project01",
                     SyncUsers = syncUsers.ToList()
                 };
+            }
+
+            private static List<User> ParatextUsersOnProject(bool twoPtUsersOnProject)
+            {
+                var ptUsers = new List<User>
+                {
+                    new User { Id = "user01", ParatextId = "ptuser01" }
+                };
+                if (twoPtUsersOnProject)
+                    ptUsers.Add(new User { Id = "user03", ParatextId = "ptuser03" });
+                return ptUsers;
             }
         }
     }
