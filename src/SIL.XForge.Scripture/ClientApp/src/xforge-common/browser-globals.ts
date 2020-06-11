@@ -8,6 +8,14 @@ import { InjectionToken } from '@angular/core';
 export type ConsoleInterface = Console;
 
 /**
+ * InjectionToken for window
+ */
+export const WINDOW = new InjectionToken<Window>('Window', {
+  providedIn: 'root',
+  factory: () => window
+});
+
+/**
  * InjectionToken for window.console
  */
 export const CONSOLE = new InjectionToken<Console>('Console', {

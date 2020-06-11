@@ -117,7 +117,7 @@
         <ng-container *ngFor="let text of texts">
           <mdc-list-item
             *ngIf="bookQuestionCount(text) > 0"
-            [routerLink]="['/projects', projectId, 'checking', getBookId(text)]"
+            [appRouterLink]="['/projects', projectId, 'checking', getBookId(text)]"
           >
             <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
               <span fxFlex>{{ getBookName(text) }}</span>
