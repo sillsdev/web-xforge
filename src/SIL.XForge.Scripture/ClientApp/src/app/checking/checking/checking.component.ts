@@ -93,6 +93,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private questionsSub?: Subscription;
   private projectDeleteSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
+  private cacheAudioSubscription?: Subscription;
   private text?: TextInfo;
 
   constructor(
@@ -401,9 +402,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       if (this.pwaService.isOnline) {
         this.projectService.onlineCacheAudio(projectId, QuestionDoc.COLLECTION);
       } else {
-        this.subscribe(this.pwaService.onlineStatus, isOnline => {
+        if (this.cacheAudioSubscription != null) {
+          // If the user navigates to another project, cancel and subscribe to cache audio for the current project
+          this.cacheAudioSubscription.unsubscribe();
+        }
+        this.cacheAudioSubscription = this.pwaService.onlineStatus.subscribe(async isOnline => {
           if (isOnline && this.projectDoc != null) {
-            this.projectService.onlineCacheAudio(this.projectDoc.id, QuestionDoc.COLLECTION);
+            await this.projectService.onlineCacheAudio(this.projectDoc.id, QuestionDoc.COLLECTION);
+            if (this.cacheAudioSubscription != null) {
+              this.cacheAudioSubscription.unsubscribe();
+            }
           }
         });
       }
