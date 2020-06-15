@@ -11,7 +11,7 @@
       >
         <div class="question">
           <div class="question-text">{{ questionDoc?.data?.text }}</div>
-          <div *ngIf="questionDoc?.data?.audioUrl" class="question-audio">
+          <div *ngIf="questionUrl" class="question-audio">
             <app-checking-audio-player [source]="questionUrl"></app-checking-audio-player>
           </div>
           <div class="question-footer" *ngIf="isProjectAdmin">
