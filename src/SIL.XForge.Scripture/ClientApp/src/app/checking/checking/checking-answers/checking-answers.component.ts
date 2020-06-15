@@ -319,16 +319,17 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   async updateQuestionAudioUrl(): Promise<void> {
-    if (this.questionDoc != null && this.questionDoc.data != null) {
-      const audio = await this.projectService.findOrUpdateAudioCache(
-        this.questionDoc.collection,
-        this.questionDoc.data.dataId,
-        this.questionDoc.data.audioUrl
-      );
-      this.questionUrl = audio != null && audio.blob != null ? URL.createObjectURL(audio.blob) : undefined;
+    if (this.questionDoc == null || this.questionDoc.data == null) {
+      this.questionUrl = undefined;
       return;
     }
-    this.questionUrl = undefined;
+    const audio = await this.projectService.findOrUpdateAudioCache(
+      this.questionDoc.collection,
+      this.questionDoc.data.dataId,
+      this.questionDoc.data.audioUrl
+    );
+    this.questionUrl = audio != null && audio.blob != null ? URL.createObjectURL(audio.blob) : undefined;
+    return;
   }
 
   selectScripture() {

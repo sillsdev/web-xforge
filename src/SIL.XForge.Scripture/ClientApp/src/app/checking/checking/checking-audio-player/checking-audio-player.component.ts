@@ -66,9 +66,8 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
 
   @Input() set source(source: string) {
     if (source && source !== '') {
-      source = formatAudioSource(source);
+      this.audio.src = formatAudioSource(source);
       this.enabled = false;
-      this.audio.src = source;
       this.seek = 0;
       // In Chromium the duration of blobs isn't known even after metadata is loaded
       // By making it skip to the end the duration becomes available. To do this we have to skip to some point that we

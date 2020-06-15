@@ -8,6 +8,7 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
+import { cloneDeep } from 'lodash';
 import clone from 'lodash/clone';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
@@ -27,8 +28,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-import { AudioService } from 'xforge-common/audio.service';
+import { anyString, anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { AudioData } from 'xforge-common/models/audio-data';
@@ -324,22 +324,16 @@ describe('CheckingComponent', () => {
 
     it('removes audio player when question audio deleted', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
-      const questionDoc = env.getQuestionDoc('q15Id');
-      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenResolve(
-        env.component.questionsPanel!.activeQuestionDoc
-      );
-      const audio = AudioData.createStorageData(
-        QuestionDoc.COLLECTION,
-        'q15Id',
-        questionDoc.data!.audioUrl!,
-        getAudioBlob()
-      );
-      when(mockedProjectService.findOrUpdateAudioCache(anything(), anything())).thenResolve(audio);
+      const questionDoc = cloneDeep(env.getQuestionDoc('q15Id'));
+      questionDoc.submitJson0Op(op => {
+        op.unset(qd => qd.audioUrl!);
+      });
+      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenResolve(questionDoc);
       env.selectQuestion(15);
       expect(env.audioPlayerOnQuestion).not.toBeNull();
-      when(mockedProjectService.findOrUpdateAudioCache(anything(), anything())).thenResolve(undefined);
+      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, anything(), undefined)).once();
       env.clickButton(env.editQuestionButton);
-      tick(env.questionReadTimer);
+      env.waitForSliderUpdate();
       expect(env.audioPlayerOnQuestion).toBeNull();
     }));
 
@@ -432,6 +426,7 @@ describe('CheckingComponent', () => {
       expect(env.audioPlayerOnQuestion).toBeNull();
       env.simulateRemoteEditQuestionAudio('filename.mp3');
       expect(env.audioPlayerOnQuestion).not.toBeNull();
+      // Called once when the save question doc (question 5) is loaded, and again when we select question 1
       verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).twice();
       env.simulateRemoteEditQuestionAudio(undefined);
       expect(env.audioPlayerOnQuestion).toBeNull();
@@ -1401,6 +1396,12 @@ class TestEnvironment {
     when(mockedUserService.editDisplayName(true)).thenResolve();
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, anything(), anyString())).thenResolve(
+      AudioData.createStorageData(QuestionDoc.COLLECTION, 'anyId', 'filename.mp3', getAudioBlob())
+    );
+    when(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, anything(), undefined)).thenResolve(
+      undefined
+    );
     this.fixture = TestBed.createComponent(CheckingComponent);
     this.component = this.fixture.componentInstance;
     this.location = TestBed.get(Location);
