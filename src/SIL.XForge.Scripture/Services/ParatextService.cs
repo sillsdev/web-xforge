@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
@@ -22,12 +23,14 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Languages;
+using Paratext.Data.ProjectComments;
 using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
-using Paratext.Data.ProjectComments;
 using PtxUtils;
 using SIL.ObjectModel;
+using SIL.Scripture;
+using SIL.XForge;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -35,8 +38,6 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
-using SIL.Scripture;
-using System.Diagnostics;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -162,6 +163,23 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
+        /// Get a SharedProject that SF can pass to Paratext for SendReceive, such as
+        /// with the requesting SF user's PT username set so it is used for various
+        /// operations.
+        /// </summary>
+        private SharedProject MakeSharedProject(string ptProjectId, string ptProjectShortName,
+            IInternetSharedRepositorySource sharedRepoSource, string ptUsername,
+            Models.TextType textType)
+        {
+            SharedProject project = SharingLogicWrapper.CreateSharedProject(ptProjectId,
+               ptProjectShortName, sharedRepoSource.AsInternetSharedRepositorySource(), sharedRepoSource.GetRepositories());
+            // Specifically set the ScrText property of the SharedProject to indicate the project is available locally
+            project.ScrText = ScrTextCollection.FindById(ptUsername, ptProjectId, textType);
+            project.Permissions = project.ScrText.Permissions;
+            return project;
+        }
+
+        /// <summary>
         /// Synchronizes the text and notes data on the SF server with the data on the Paratext server.
         /// </summary>
         public async Task SendReceiveAsync(UserSecret userSecret, string ptTargetId, string ptSourceId,
@@ -189,29 +207,31 @@ namespace SIL.XForge.Scripture.Services
 
             EnsureProjectReposExists(userSecret, targetPtProject, sourcePtProject, source);
             StartProgressReporting(progress);
-            SharedProject targetSharedProj = SharingLogicWrapper.CreateSharedProject(ptTargetId,
-                targetPtProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
-            string username = GetParatextUsername(userSecret);
-            // Specifically set the ScrText property of the SharedProject to indicate the project is available locally
-            targetSharedProj.ScrText = ScrTextCollection.FindById(username, ptTargetId, Models.TextType.Target);
+            string ptUsername = GetParatextUsername(userSecret);
+            SharedProject targetSharedProj = MakeSharedProject(ptTargetId,
+                targetPtProject.ShortName, source, ptUsername, Models.TextType.Target);
             List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { targetSharedProj };
             if (sourcePtProject != null)
             {
-                SharedProject sourceSharedProj = SharingLogicWrapper.CreateSharedProject(ptSourceId,
-                    sourcePtProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
-                sourceSharedProj.ScrText = ScrTextCollection.FindById(username, ptTargetId, Models.TextType.Source);
+                SharedProject sourceSharedProj = MakeSharedProject(ptSourceId,
+                    sourcePtProject.ShortName, source, ptUsername, Models.TextType.Source);
                 sharedPtProjectsToSr.Add(sourceSharedProj);
             }
 
             // TODO report results
             List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
             bool success = false;
-            bool noErrors = SharingLogicWrapper.HandleErrors(() => success = SharingLogicWrapper
-                .ShareChanges(sharedPtProjectsToSr, source.AsInternetSharedRepositorySource(),
-                out results, sharedPtProjectsToSr));
+            bool noErrors = SharingLogicWrapper.HandleErrors(() =>
+            {
+                success = SharingLogicWrapper.ShareChanges(sharedPtProjectsToSr,
+                    source.AsInternetSharedRepositorySource(), out results, sharedPtProjectsToSr);
+            });
             if (!noErrors || !success)
+            {
                 throw new InvalidOperationException(
                     "Failed: Errors occurred while performing the sync with the Paratext Server.");
+            }
+
         }
 
         /// <summary> Get Paratext projects that a user has access to. </summary>
