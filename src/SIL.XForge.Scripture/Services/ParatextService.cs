@@ -194,12 +194,14 @@ namespace SIL.XForge.Scripture.Services
             string username = GetParatextUsername(userSecret);
             // Specifically set the ScrText property of the SharedProject to indicate the project is available locally
             targetSharedProj.ScrText = ScrTextCollection.FindById(username, ptTargetId, Models.TextType.Target);
+            targetSharedProj.Permissions = targetSharedProj.ScrText.Permissions;
             List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { targetSharedProj };
             if (sourcePtProject != null)
             {
                 SharedProject sourceSharedProj = SharingLogicWrapper.CreateSharedProject(ptSourceId,
                     sourcePtProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
                 sourceSharedProj.ScrText = ScrTextCollection.FindById(username, ptTargetId, Models.TextType.Source);
+                sourceSharedProj.Permissions = sourceSharedProj.ScrText.Permissions;
                 sharedPtProjectsToSr.Add(sourceSharedProj);
             }
 

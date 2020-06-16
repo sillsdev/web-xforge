@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
@@ -10,6 +11,12 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NUnit.Framework;
+using Paratext.Data;
+using Paratext.Data.ProjectComments;
+using Paratext.Data.RegistryServerAccess;
+using Paratext.Data.Repository;
+using Paratext.Data.Users;
+using PtxUtils;
 using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
@@ -19,13 +26,6 @@ using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
-using Paratext.Data;
-using Paratext.Data.ProjectComments;
-using Paratext.Data.RegistryServerAccess;
-using Paratext.Data.Repository;
-using Paratext.Data.Users;
-using PtxUtils;
-using System.Net.Http;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -436,11 +436,20 @@ namespace SIL.XForge.Scripture.Services
             env.MockScrTextCollection.FindById(env.Username01, targetProjectId, Models.TextType.Source)
                 .Returns(sourceScrText);
             await env.Service.SendReceiveAsync(user01Secret, targetProjectId, sourceProjectId);
-            env.MockSharingLogicWrapper.Received(1).ShareChanges(Arg.Is<List<SharedProject>>(list =>
-                list.Count().Equals(2) && list[0].SendReceiveId == targetProjectId &&
-                list[1].SendReceiveId == sourceProjectId),
-                Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(),
-                Arg.Any<List<SharedProject>>());
+            // Below, we are checking also that the SharedProject has a
+            // Permissions that is set from the SharedProject's ScrText.Permissions.
+            // Better may be to assert that each SharedProject.Permissions.GetUser()
+            // returns a desired PT username, if the test environment wasn't
+            // mired in mock.
+            env.MockSharingLogicWrapper.Received(1).ShareChanges(
+                Arg.Is<List<SharedProject>>(
+                    list =>
+                    list.Count().Equals(2) && list[0].SendReceiveId == targetProjectId &&
+                    list[1].SendReceiveId == sourceProjectId
+                        && Object.ReferenceEquals(list[0].Permissions, list[0].ScrText.Permissions)
+                        && Object.ReferenceEquals(list[1].Permissions, list[1].ScrText.Permissions)),
+                    Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(),
+                    Arg.Any<List<SharedProject>>());
             env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
 
             // Replaces obsolete source project if the source project has been changed
