@@ -285,7 +285,9 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       const activeQuestionDoc = this.activeQuestionDoc;
       if (activeQuestionDoc != null && activeQuestionDoc.data != null) {
-        await this.projectService.trainSelectedSegment(this.projectUserConfigDoc.data);
+        if (this.project != null && this.project.translateConfig.translationSuggestionsEnabled) {
+          await this.projectService.trainSelectedSegment(this.projectUserConfigDoc.data);
+        }
         await this.projectUserConfigDoc.submitJson0Op(op => {
           op.set<string>(puc => puc.selectedTask!, 'checking');
           op.set(puc => puc.selectedQuestionRef!, activeQuestionDoc.id);

@@ -1,6 +1,7 @@
 import { MDC_DIALOG_DATA, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { MdcSlider } from '@angular-mdc/web/slider';
 import { Component, Inject, ViewChild } from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -21,6 +22,11 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
   @ViewChild('confidenceThresholdSlider', { static: false }) confidenceThresholdSlider?: MdcSlider;
   open: boolean = false;
 
+  suggestionsEnabledSwitch = new FormControl();
+  suggestionsSwitchFormGroup = new FormGroup({
+    suggestionsEnabledSwitch: this.suggestionsEnabledSwitch
+  });
+
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
 
@@ -37,7 +43,7 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
         this.confidenceThresholdSlider.layout();
         this.confidenceThresholdSlider.disabled = false; // cannot set value when slider is disabled
         this.confidenceThresholdSlider.setValue(this.projectUserConfigDoc.data!.confidenceThreshold * 100);
-        this.confidenceThresholdSlider.disabled = this.settingsEnabled;
+        this.confidenceThresholdSlider.disabled = this.settingsDisabled;
       }
       this.open = true;
     });
@@ -55,18 +61,30 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
       ),
       threshold => this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold))
     );
+
+    this.suggestionsEnabledSwitch.setValue(this.translationSuggestionsUserEnabled);
+    this.subscribe(this.suggestionsEnabledSwitch.valueChanges, () => {
+      this.projectUserConfigDoc.submitJson0Op(op =>
+        op.set<boolean>(puc => puc.translationSuggestionsEnabled, this.suggestionsEnabledSwitch.value)
+      );
+    });
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      isOnline ? this.suggestionsSwitchFormGroup.enable() : this.suggestionsEnabledSwitch.disable();
+      // Dialog width changes when offline message is shown, causing slider to need to run layout again
+      setTimeout(() => {
+        if (this.confidenceThresholdSlider != null) {
+          this.confidenceThresholdSlider.layout();
+        }
+      });
+    });
   }
 
-  get settingsEnabled(): boolean {
+  get settingsDisabled(): boolean {
     return !this.translationSuggestionsUserEnabled || !this.pwaService.isOnline;
   }
 
   get translationSuggestionsUserEnabled(): boolean {
     return this.projectUserConfigDoc.data == null ? true : this.projectUserConfigDoc.data.translationSuggestionsEnabled;
-  }
-
-  set translationSuggestionsUserEnabled(value: boolean) {
-    this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.translationSuggestionsEnabled, value));
   }
 
   get numSuggestions(): string {
