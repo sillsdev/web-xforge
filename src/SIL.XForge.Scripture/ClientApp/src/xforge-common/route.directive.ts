@@ -1,4 +1,4 @@
-import { Directive, ElementRef, HostListener, Inject, Input } from '@angular/core';
+import { Directive, ElementRef, HostBinding, HostListener, Inject, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { WINDOW } from './browser-globals';
 
@@ -21,6 +21,11 @@ export class RouterDirective {
 
   get route() {
     return this._route;
+  }
+
+  @HostBinding('class.mdc-list-item--activated')
+  get active(): boolean {
+    return (this.element.nativeElement as HTMLElement).tagName === 'MDC-LIST-ITEM' && this.router.url === this.url;
   }
 
   @HostListener('click', ['$event'])
@@ -49,6 +54,6 @@ export class RouterDirective {
   }
 
   private get isLink(): boolean {
-    return (this.element!.nativeElement as HTMLElement).tagName === 'A';
+    return (this.element.nativeElement as HTMLElement).tagName === 'A';
   }
 }
