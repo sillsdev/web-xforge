@@ -12,10 +12,7 @@ export class AutofocusDirective implements AfterViewInit {
 
   // Angular allows injecting the component or element but doesn't have a good way to handle components of variable type
   // See https://github.com/angular/angular/issues/8277#issuecomment-323678013 for this workaround
-  constructor(
-    @Host() @Self() @Optional() private readonly textField: MdcTextField,
-    @Host() @Self() @Optional() private readonly textArea: MdcTextarea
-  ) {
+  constructor(@Host() @Self() @Optional() textField: MdcTextField, @Host() @Self() @Optional() textArea: MdcTextarea) {
     this.component = (textField || textArea)!;
   }
 

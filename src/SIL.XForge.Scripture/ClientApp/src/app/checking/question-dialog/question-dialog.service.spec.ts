@@ -11,7 +11,7 @@ import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -28,6 +28,7 @@ const mockedNoticeService = mock(NoticeService);
 
 describe('QuestionDialogService', () => {
   configureTestingModule(() => ({
+    imports: [TestTranslocoModule],
     providers: [
       QuestionDialogService,
       { provide: MdcDialog, useMock: mockedDialog },
@@ -69,7 +70,7 @@ describe('QuestionDialogService', () => {
     env.updateUserRole(SFProjectRole.CommunityChecker);
     await env.service.questionDialog(env.getQuestionDialogData());
     verify(mockedProjectService.createQuestion(env.PROJECT01, anything())).never();
-    verify(mockedNoticeService.show(anything())).once();
+    verify(mockedNoticeService.show('question_dialog.add_question_denied')).once();
     expect().nothing();
   });
 
@@ -81,10 +82,12 @@ describe('QuestionDialogService', () => {
       audio: { fileName: 'someFileName.mp3', blob: new Blob() }
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
-    when(mockedProjectService.onlineUploadAudio(env.PROJECT01, anything(), anything())).thenResolve('aFileName.mp3');
+    when(mockedProjectService.uploadAudio(env.PROJECT01, anything(), anything(), anything(), anything())).thenResolve(
+      'aFileName.mp3'
+    );
     await env.service.questionDialog(env.getQuestionDialogData());
     verify(mockedProjectService.createQuestion(env.PROJECT01, anything())).once();
-    verify(mockedProjectService.onlineUploadAudio('project01', anything(), anything())).once();
+    verify(mockedProjectService.uploadAudio('project01', anything(), anything(), anything(), anything())).once();
     expect().nothing();
   });
 
@@ -139,7 +142,7 @@ describe('QuestionDialogService', () => {
     expect(questionDoc!.data!.audioUrl).toBe('anAudioFile.mp3');
     await env.service.questionDialog(env.getQuestionDialogData(newQuestion), questionDoc);
     expect(questionDoc!.data!.audioUrl).toBeUndefined();
-    verify(mockedProjectService.onlineDeleteAudio(env.PROJECT01, anything(), anything()));
+    verify(mockedProjectService.deleteAudio(env.PROJECT01, anything(), anything()));
   });
 });
 

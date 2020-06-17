@@ -439,11 +439,15 @@ describe('CheckingComponent', () => {
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
       verify(mockedProjectService.trainSelectedSegment(anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
+      env.component.projectDoc!.submitJson0Op(op => {
+        op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, false);
+      });
+      env.waitForSliderUpdate();
       env.selectQuestion(4);
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBe(43);
-      verify(mockedProjectService.trainSelectedSegment(anything())).twice();
+      verify(mockedProjectService.trainSelectedSegment(anything())).once();
     }));
 
     it('saves the last visited question in all question context', fakeAsync(() => {
@@ -603,7 +607,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.removeAudioButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      verify(mockedProjectService.onlineDeleteAudio('project01', 'a6Id', CHECKER_USER.id)).once();
+      verify(mockedProjectService.deleteAudio('project01', 'a6Id', CHECKER_USER.id)).once();
       expect().nothing();
     }));
 
@@ -614,7 +618,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.answerDeleteButton(0));
       env.waitForSliderUpdate();
       expect(env.answers.length).toEqual(0);
-      verify(mockedProjectService.onlineDeleteAudio('project01', 'a6Id', CHECKER_USER.id)).once();
+      verify(mockedProjectService.deleteAudio('project01', 'a6Id', CHECKER_USER.id)).once();
     }));
 
     it('can delete correct answer after changing chapters', fakeAsync(() => {
@@ -1298,7 +1302,7 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Anyone
     },
     translateConfig: {
-      translationSuggestionsEnabled: false
+      translationSuggestionsEnabled: true
     },
     texts: [
       {

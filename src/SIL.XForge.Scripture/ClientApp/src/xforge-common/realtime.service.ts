@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { OfflineData } from './models/offline-data';
 import { RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { QueryParameters } from './query-parameters';
@@ -147,5 +148,21 @@ export class RealtimeService {
       await this.offlineStore.delete(doc.collection, doc.id);
       this.docs.delete(getDocKey(doc.collection, doc.id));
     }
+  }
+
+  async storeOfflineData<T extends OfflineData>(data: T): Promise<T> {
+    const storedData = await this.offlineStore.putData(data.collection, data);
+    if (storedData != null) {
+      return storedData as T;
+    }
+    return Promise.reject('Could not store data in offline store.');
+  }
+
+  async removeOfflineData(collection: string, dataId: string): Promise<boolean> {
+    if ((await this.offlineStore.getData(collection, dataId)) != null) {
+      await this.offlineStore.deleteData(collection, dataId);
+      return true;
+    }
+    return false;
   }
 }

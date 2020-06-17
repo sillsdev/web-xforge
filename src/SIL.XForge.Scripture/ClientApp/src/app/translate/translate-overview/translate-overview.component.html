@@ -18,7 +18,7 @@
       <mdc-list *ngIf="texts != null" twoLine [interactive]="false">
         <mdc-list-item
           *ngFor="let textProgress of texts; trackBy: trackTextByBookNum"
-          [routerLink]="['./', getBookId(textProgress.text)]"
+          [appRouterLink]="['./', getBookId(textProgress.text)]"
         >
           <mdc-icon mdcListItemGraphic>book</mdc-icon>
           <mdc-list-item-text

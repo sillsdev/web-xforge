@@ -12,12 +12,13 @@ import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
 import { RealtimeQuery } from './models/realtime-query';
 import { Filters, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
+import { SubscriptionDisposable } from './subscription-disposable';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
 
 export abstract class ProjectService<
   TProj extends Project = Project,
   TDoc extends ProjectDoc<TProj> = ProjectDoc<TProj>
-> {
+> extends SubscriptionDisposable {
   readonly roles: Map<string, ProjectRoleInfo>;
 
   constructor(
@@ -26,6 +27,7 @@ export abstract class ProjectService<
     roles: ProjectRoleInfo[],
     private readonly http: HttpClient
   ) {
+    super();
     this.roles = new Map<string, ProjectRoleInfo>();
     for (const role of roles) {
       this.roles.set(role.role, role);
@@ -86,7 +88,11 @@ export abstract class ProjectService<
     return this.onlineInvoke('delete', { projectId: id });
   }
 
-  async onlineUploadAudio(id: string, dataId: string, file: File): Promise<string> {
+  protected onlineDeleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
+    return this.onlineInvoke('deleteAudio', { projectId: id, ownerId, dataId });
+  }
+
+  protected async onlineUploadAudio(id: string, dataId: string, file: File): Promise<string> {
     const formData = new FormData();
     formData.append('projectId', id);
     formData.append('dataId', dataId);
@@ -99,10 +105,6 @@ export abstract class ProjectService<
       .toPromise();
     const path = response.headers.get('Location')!;
     return path.replace(environment.assets.audio, '/');
-  }
-
-  onlineDeleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
-    return this.onlineInvoke('deleteAudio', { projectId: id, ownerId, dataId });
   }
 
   protected onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {
