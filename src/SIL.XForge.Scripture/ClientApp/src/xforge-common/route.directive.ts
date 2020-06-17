@@ -1,25 +1,29 @@
 import { Directive, ElementRef, HostBinding, HostListener, Inject, Input } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
 import { WINDOW } from './browser-globals';
 
 @Directive({
   selector: '[appRouterLink]'
 })
 export class RouterDirective {
-  private _route!: string | string[];
+  private _route!: string[];
 
-  constructor(private element: ElementRef, private router: Router, @Inject(WINDOW) private window: Window) {}
+  constructor(
+    private element: ElementRef,
+    private router: Router,
+    private currentRoute: ActivatedRoute,
+    @Inject(WINDOW) private window: Window
+  ) {}
 
   @Input('appRouterLink')
-  set route(value: string | string[]) {
-    this._route = value;
-    const element = this.element!.nativeElement as HTMLElement;
+  set appRouterLink(value: string | string[]) {
+    this._route = Array.isArray(value) ? value : [value];
     if (this.isLink) {
-      element.setAttribute('href', this.url);
+      (this.element.nativeElement as HTMLElement).setAttribute('href', this.url);
     }
   }
 
-  get route() {
+  get route(): string[] {
     return this._route;
   }
 
@@ -35,7 +39,7 @@ export class RouterDirective {
     if (event.ctrlKey || event.metaKey) {
       this.window.open(this.url, '_blank', 'noopener');
     } else {
-      this.router.navigate(Array.isArray(this.route) ? this.route : [this.route]);
+      this.router.navigate(this.route, this.routerOptions);
     }
   }
 
@@ -50,7 +54,12 @@ export class RouterDirective {
   }
 
   private get url(): string {
-    return Array.isArray(this.route) ? this.route.join('/') : this.route;
+    return this.router.createUrlTree(this.route, this.routerOptions).toString();
+  }
+
+  private get routerOptions(): NavigationExtras {
+    const isRelativeRoute = this.route[0][0] !== '/';
+    return { relativeTo: isRelativeRoute ? this.currentRoute : null };
   }
 
   private get isLink(): boolean {
