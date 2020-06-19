@@ -33,6 +33,10 @@ export class AudioData extends OfflineData {
   }
 
   blob?: Blob;
+  /**
+   * The url of the audio file stored on the server. This audio data instance is stale if onlineUrl does not
+   * match the audio url stored in the realtime doc.
+   */
   onlineUrl?: string;
   filename?: string;
   deleteRef?: string;
