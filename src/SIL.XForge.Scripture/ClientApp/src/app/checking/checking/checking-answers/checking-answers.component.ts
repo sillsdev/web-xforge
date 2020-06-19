@@ -329,7 +329,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       this.questionDoc.data.audioUrl
     );
     this.questionUrl = audio != null && audio.blob != null ? URL.createObjectURL(audio.blob) : undefined;
-    return;
   }
 
   selectScripture() {
