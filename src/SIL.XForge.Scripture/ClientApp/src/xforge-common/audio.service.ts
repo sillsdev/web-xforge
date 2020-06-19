@@ -5,7 +5,11 @@ import { AUDIO_COLLECTION, AudioData } from './models/audio-data';
 import { PwaService } from './pwa.service';
 import { RealtimeService } from './realtime.service';
 
+/**
+ * Formats the name of an audio file stored on the server into a URL a http client can use to request the data.
+ */
 export function formatAudioSource(source: string): string {
+  // The file is local if it contains '://'
   if (!source.includes('://')) {
     if (source.startsWith('/')) {
       source = source.substring(1);
@@ -15,6 +19,9 @@ export function formatAudioSource(source: string): string {
   return source;
 }
 
+/**
+ * Provides access to locally cached audio data while keeping the cache up-to-date.
+ */
 @Injectable({
   providedIn: 'root'
 })
@@ -31,12 +38,14 @@ export class AudioService {
   async findOrUpdateCache(dataCollection: string, dataId: string, url?: string): Promise<AudioData | undefined> {
     let audioData = await this.realtimeService.offlineStore.getData<AudioData>(AUDIO_COLLECTION, dataId);
     if (url == null) {
+      // Only delete the data if it is not storing a request to delete from the server
       if (audioData != null && audioData.deleteRef == null) {
         this.realtimeService.removeOfflineData(AudioData.COLLECTION, dataId);
       }
       return;
     }
-    // The cache needs to be updated if no audio exists or the onlineUrl does not match a valid request url
+    // The cache needs to be updated if no audio exists or the onlineUrl does not match a valid request url.
+    // Urls containing '://' means it is a local blob object which has not yet been uploaded i.e. blob://localhost...
     const needsUpdate = (audioData == null || audioData.onlineUrl !== url) && !url.includes('://');
     if (needsUpdate && this.pwaService.isOnline) {
       audioData = await this.onlineCacheAudio(url, dataCollection, dataId);
@@ -51,15 +60,12 @@ export class AudioService {
       const audioData = AudioData.createStorageData(dataCollection, dataId, source, blob);
       return this.realtimeService.storeOfflineData(audioData);
     }
-    return Promise.reject('The requested audio file does not exist.');
+    return Promise.reject('Trouble downloading requested audio file. It may not exist.');
   }
 
   private async onlineRequestAudio(url: string): Promise<Blob> {
     let headers: HttpHeaders = new HttpHeaders();
     headers = headers.append('Range', 'bytes=0-');
-    const response: Blob = await this.http
-      .get(url, { headers: headers, observe: 'body', responseType: 'blob' })
-      .toPromise();
-    return response;
+    return this.http.get(url, { headers: headers, observe: 'body', responseType: 'blob' }).toPromise();
   }
 }

@@ -2,10 +2,10 @@ import { HttpClientTestingModule, HttpTestingController, RequestMatch } from '@a
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { mock, when } from 'ts-mockito';
 import { configureTestingModule, getAudioBlob } from 'xforge-common/test-utils';
+import { environment } from '../environments/environment';
 import { AudioService, formatAudioSource } from './audio.service';
 import { AudioData } from './models/audio-data';
 import { OfflineData } from './models/offline-data';
-import { OfflineDataTypes } from './offline-data-types';
 import { PwaService } from './pwa.service';
 import { RealtimeDocTypes } from './realtime-doc-types';
 import { RealtimeService } from './realtime.service';
@@ -38,9 +38,11 @@ describe('AudioService', () => {
     expect(audio).not.toBeNull();
     expect(audio!.onlineUrl).toBe(env.audioUrl);
 
-    env.service.findOrUpdateCache('questions', env.dataId, '/new/file.mp3');
+    const serverFile = '/new/file.mp3';
+    env.service.findOrUpdateCache('questions', env.dataId, serverFile);
     tick(1000);
-    env.setupAudioResponse('/new/file.mp3');
+    const requestUrl = env.setupAudioResponse(serverFile);
+    expect(requestUrl).toBe(environment.assets.audio + 'new/file.mp3');
     tick(1000);
     env.httpMock.verify();
     audio = env.getCachedValue(env.dataId);
@@ -70,6 +72,7 @@ describe('AudioService', () => {
     env.httpMock.verify();
     expect(env.getCachedValue(env.dataId)).toBeUndefined();
 
+    // The audio data stores a flag to delete from the server when the user returns online. Do not remove in this case
     env.cacheAudioData(AudioData.createDeletionData('questions', env.dataId, 'project01', 'owner01'));
     expect(env.getCachedValue(env.dataId)).not.toBeNull();
     response = await env.service.findOrUpdateCache('questions', env.dataId, undefined);
@@ -80,9 +83,10 @@ describe('AudioService', () => {
     expect(deletionData!.deleteRef).toBe('owner01');
   });
 
-  it('does not cache if url is invalid', async () => {
+  it('does not cache if url is of a local object', async () => {
     const env = new TestEnvironment();
     expect(env.getCachedValue(env.dataId)).toBeUndefined();
+    // URLs of local objects should not be requested
     const response = await env.service.findOrUpdateCache('questions', env.dataId, 'blob://localhost:5000');
     expect(response).toBeUndefined();
     env.httpMock.verify();
@@ -115,9 +119,11 @@ class TestEnvironment {
     return collection == null ? undefined : collection.get(dataId);
   }
 
-  setupAudioResponse(url: string): void {
-    const req: RequestMatch = { url: formatAudioSource(url), method: 'GET' };
+  setupAudioResponse(url: string): string {
+    const requestedUrl = formatAudioSource(url);
+    const req: RequestMatch = { url: requestedUrl, method: 'GET' };
     const request = this.httpMock.expectOne(req);
     request.flush(getAudioBlob());
+    return requestedUrl;
   }
 }
