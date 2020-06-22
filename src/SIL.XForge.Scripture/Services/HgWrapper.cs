@@ -30,9 +30,6 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Set the default Mercurial installation. Must be called for all other methods to work. </summary>
         public void SetDefault(Hg hgDefault)
         {
-            if (Hg.Default != null)
-                return;
-
             Hg.Default = hgDefault;
 
             // This allows SF to intercept some Hg commands involving registration codes
