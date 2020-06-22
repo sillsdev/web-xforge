@@ -1,7 +1,7 @@
 import { Directive, ElementRef, HostBinding, HostListener, Inject, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { WINDOW } from './browser-globals';
-
+// test
 @Directive({
   selector: '[appRouterLink]'
 })
