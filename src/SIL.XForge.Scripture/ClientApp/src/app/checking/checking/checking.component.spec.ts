@@ -457,14 +457,6 @@ describe('CheckingComponent', () => {
       env.activateQuestion('q1Id');
       expect(env.location.path()).toEqual('/projects/project01/checking/JHN');
     }));
-
-    it('should cache audio for questions in the project', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER, 'JHN', false);
-      verify(mockedProjectService.onlineCacheAudio(anything(), QuestionDoc.COLLECTION)).never();
-      env.onlineStatus = true;
-      verify(mockedProjectService.onlineCacheAudio(anything(), QuestionDoc.COLLECTION)).once();
-      expect().nothing();
-    }));
   });
 
   describe('Answers', () => {
