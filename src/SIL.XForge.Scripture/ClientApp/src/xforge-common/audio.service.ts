@@ -5,12 +5,14 @@ import { AUDIO_COLLECTION, AudioData } from './models/audio-data';
 import { PwaService } from './pwa.service';
 import { RealtimeService } from './realtime.service';
 
+// Urls containing this prefix are local blob not yet been uploaded to the server i.e. blob:http://localhost...
+const LOCAL_BLOB_PREFIX = 'blob:http://';
+
 /**
  * Formats the name of an audio file stored on the server into a URL a http client can use to request the data.
  */
 export function formatAudioSource(source: string): string {
-  // The file is local if it contains '://'
-  if (!source.includes('://')) {
+  if (!source.startsWith(LOCAL_BLOB_PREFIX)) {
     if (source.startsWith('/')) {
       source = source.substring(1);
     }
@@ -34,20 +36,24 @@ export class AudioService {
 
   /**
    * Finds the cached audio data if it exists, or updates the cache with new audio data from the server.
+   * If the url parameter is undefined, the data is removed from the cache
    */
   async findOrUpdateCache(dataCollection: string, dataId: string, url?: string): Promise<AudioData | undefined> {
     let audioData = await this.realtimeService.offlineStore.getData<AudioData>(AUDIO_COLLECTION, dataId);
     if (url == null) {
-      // Only delete the data if it is not storing a request to delete from the server
+      // Remove the data only if it is not storing a request to delete from the server
       if (audioData != null && audioData.deleteRef == null) {
         this.realtimeService.removeOfflineData(AudioData.COLLECTION, dataId);
       }
       return;
     }
     // The cache needs to be updated if no audio exists or the onlineUrl does not match a valid request url.
-    // Urls containing '://' means it is a local blob object which has not yet been uploaded i.e. blob://localhost...
-    const needsUpdate = (audioData == null || audioData.onlineUrl !== url) && !url.includes('://');
-    if (needsUpdate && this.pwaService.isOnline) {
+    const notYetUploaded = url.startsWith(LOCAL_BLOB_PREFIX);
+    if (!this.pwaService.isOnline || notYetUploaded) {
+      return audioData;
+    }
+    const cacheDataIsStale = audioData == null || audioData.onlineUrl !== url;
+    if (cacheDataIsStale) {
       audioData = await this.onlineCacheAudio(url, dataCollection, dataId);
     }
     return audioData;

@@ -164,17 +164,20 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   /**
    * Iterate through the questions in a project and cache the up-to-date audio data if it exists.
    */
-  async onlineCacheAudio(id: string, dataCollection: string): Promise<void> {
-    const questions: RealtimeQuery<QuestionDoc> = await this.queryQuestions(id);
-    for (const qd of questions.docs) {
-      if (qd.data != null && qd.data.audioUrl != null) {
-        if (qd.data.isArchived) {
-          this.findOrUpdateAudioCache(dataCollection, qd.data.dataId, undefined);
-        } else {
-          this.findOrUpdateAudioCache(dataCollection, qd.data.dataId, qd.data.audioUrl);
+  async onlineCacheAudio(id: string): Promise<void> {
+    const questionsQuery = await this.queryQuestions(id);
+    const subscription = this.subscribe(questionsQuery.ready$, () => {
+      for (const qd of questionsQuery.docs) {
+        if (qd.data != null) {
+          if (qd.data.isArchived) {
+            this.findOrUpdateAudioCache(qd.collection, qd.data.dataId, undefined);
+          } else {
+            this.findOrUpdateAudioCache(qd.collection, qd.data.dataId, qd.data.audioUrl);
+          }
         }
       }
-    }
+      subscription.unsubscribe();
+    });
   }
 
   findOrUpdateAudioCache(dataCollection: string, dataId: string, url?: string): Promise<AudioData | undefined> {

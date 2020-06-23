@@ -1,7 +1,7 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { MdcList } from '@angular-mdc/web/list';
 import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
-import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SplitComponent } from 'angular-split';
@@ -51,7 +51,7 @@ interface Summary {
   templateUrl: './checking.component.html',
   styleUrls: ['./checking.component.scss']
 })
-export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
+export class CheckingComponent extends DataLoadingComponent implements AfterViewChecked, OnInit, OnDestroy {
   userDoc?: UserDoc;
   scriptureFontSize?: string;
   @ViewChild('answerPanelContainer', { static: false }) set answersPanelElement(
@@ -93,8 +93,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private questionsSub?: Subscription;
   private projectDeleteSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
-  private cacheAudioSubscription?: Subscription;
   private text?: TextInfo;
+  private questionAudioHash?: string;
+  private audioCachePromise?: Promise<void>;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -399,22 +400,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.projectDeleteSub.unsubscribe();
       }
       this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
-      if (this.pwaService.isOnline) {
-        this.projectService.onlineCacheAudio(projectId, QuestionDoc.COLLECTION);
-      } else {
-        if (this.cacheAudioSubscription != null) {
-          // If the user navigates to another project, cancel and subscribe to cache audio for the current project
-          this.cacheAudioSubscription.unsubscribe();
-        }
-        this.cacheAudioSubscription = this.pwaService.onlineStatus.subscribe(async isOnline => {
-          if (isOnline && this.projectDoc != null) {
-            await this.projectService.onlineCacheAudio(this.projectDoc.id, QuestionDoc.COLLECTION);
-            if (this.cacheAudioSubscription != null) {
-              this.cacheAudioSubscription.unsubscribe();
-            }
-          }
-        });
-      }
     });
     this.subscribe(this.media.media$, (change: MediaChange) => {
       this.calculateScriptureSliderPosition();
@@ -426,6 +411,25 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     super.ngOnDestroy();
     if (this.questionsQuery != null) {
       this.questionsQuery.dispose();
+    }
+  }
+
+  ngAfterViewChecked() {
+    if (!this.pwaService.isOnline || this.audioCachePromise != null || this.projectDoc == null) {
+      return;
+    }
+    // Each time change detection is run on this component, check if question audio has changed.
+    // There is the potential for this to be expensive in a project with lots of question.
+    const audioHash = this.questionDocs
+      .filter(q => q.data != null && q.data.audioUrl != null)
+      .map(qd => qd.data!.audioUrl)
+      .join();
+    if (this.questionAudioHash !== audioHash) {
+      // Refresh the cache of question audio data
+      this.audioCachePromise = this.projectService.onlineCacheAudio(this.projectDoc.id).then(() => {
+        this.audioCachePromise = undefined;
+        this.questionAudioHash = audioHash;
+      });
     }
   }
 
