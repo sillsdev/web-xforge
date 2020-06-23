@@ -160,6 +160,7 @@ class TestEnvironment {
   constructor() {
     const params = { ['projectId']: 'project01' } as Params;
     when(mockedActivatedRoute.params).thenReturn(of(params));
+    when(mockedActivatedRoute.snapshot).thenReturn({} as any); // just needs to not be null/undefined
     when(mockedSFProjectService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );
