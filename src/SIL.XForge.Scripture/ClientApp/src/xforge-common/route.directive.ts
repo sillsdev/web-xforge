@@ -35,7 +35,6 @@ export class RouterDirective {
   @HostListener('click', ['$event'])
   onClick(event: MouseEvent) {
     event.preventDefault();
-    event.stopPropagation();
     if (event.ctrlKey || event.metaKey) {
       this.window.open(this.url, '_blank', 'noopener');
     } else {
@@ -48,7 +47,6 @@ export class RouterDirective {
     // if it's the middle mouse button (but not an a tag, because preventDefault doesn't stop it from opening a new tab)
     if (event.which === 2 && !this.isLink) {
       event.preventDefault();
-      event.stopPropagation();
       this.window.open(this.url, '_blank', 'noopener');
     }
   }
