@@ -87,7 +87,7 @@ describe('AudioService', () => {
     const env = new TestEnvironment();
     expect(env.getCachedValue(env.dataId)).toBeUndefined();
     // URLs of local objects should not be requested
-    const response = await env.service.findOrUpdateCache('questions', env.dataId, 'blob://localhost:5000');
+    const response = await env.service.findOrUpdateCache('questions', env.dataId, 'blob:http://localhost:5000');
     expect(response).toBeUndefined();
     env.httpMock.verify();
     expect(env.getCachedValue(env.dataId)).toBeUndefined();
