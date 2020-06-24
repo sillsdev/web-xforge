@@ -53,12 +53,12 @@
       }
     },
     {
-      "name": "Migration PtdaToPtdd",
+      "name": "Migration PtdaSyncAll",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "dotnet build",
-      "program": "${workspaceRoot}/src/Migrations/PtdaToPtdd/bin/Debug/netcoreapp3.1/PtdaToPtdd.dll",
-      "cwd": "${workspaceRoot}/src/Migrations/PtdaToPtdd",
+      "program": "${workspaceRoot}/src/Migrations/PtdaSyncAll/bin/Debug/netcoreapp3.1/PtdaSyncAll.dll",
+      "cwd": "${workspaceRoot}/src/Migrations/PtdaSyncAll",
       "stopAtEntry": false,
       "console": "integratedTerminal",
       "args": ["--start-ng-serve=listen"],
