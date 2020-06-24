@@ -61,40 +61,44 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
         }
         const projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
         const projectUserConfig = projectUserConfigDoc.data;
+        const projectDoc = await this.projectService.get(projectId);
+        const project = projectDoc.data;
+
+        if (project == null || projectUserConfig == null) {
+          return;
+        }
+
+        const projectRole = project.userRoles[this.userService.currentUserId] as SFProjectRole;
+        const selectedTask = projectUserConfig.selectedTask;
+
         // navigate to last location
         if (
-          projectUserConfig != null &&
-          projectUserConfig.selectedTask != null &&
-          projectUserConfig.selectedTask !== ''
+          (selectedTask === 'translate' && canAccessTranslateApp(projectRole)) ||
+          (selectedTask === 'checking' && project.checkingConfig.checkingEnabled)
         ) {
-          const taskRoute = ['./', projectUserConfig.selectedTask];
+          const taskRoute = ['./', selectedTask];
           // the user has previously navigated to a location in a task
           const bookNum = projectUserConfig.selectedBookNum;
           if (bookNum != null) {
             taskRoute.push(Canon.bookNumberToId(bookNum));
-          } else if (projectUserConfig.selectedTask === 'checking') {
+          } else if (selectedTask === 'checking') {
             taskRoute.push('ALL');
           }
           this.router.navigate(taskRoute, { relativeTo: this.route, replaceUrl: true });
         } else {
-          const projectDoc = await this.projectService.get(projectId);
-          const project = projectDoc.data;
-          if (project != null) {
-            const projectRole = project.userRoles[this.userService.currentUserId] as SFProjectRole;
-            // the user has not navigated anywhere before, so navigate to the default location in the first enabled task
-            let task: string | undefined;
-            if (canAccessTranslateApp(projectRole)) {
-              task = 'translate';
-            } else if (project.checkingConfig.checkingEnabled) {
-              task = 'checking';
+          // navigate to the default location in the first enabled task
+          let task: string | undefined;
+          if (canAccessTranslateApp(projectRole)) {
+            task = 'translate';
+          } else if (project.checkingConfig.checkingEnabled) {
+            task = 'checking';
+          }
+          if (task != null) {
+            const taskRoute = ['./', task];
+            if (project.texts.length > 0) {
+              taskRoute.push(task === 'checking' ? 'ALL' : Canon.bookNumberToId(project.texts[0].bookNum));
             }
-            if (task != null) {
-              const taskRoute = ['./', task];
-              if (project.texts.length > 0) {
-                taskRoute.push(task === 'checking' ? 'ALL' : Canon.bookNumberToId(project.texts[0].bookNum));
-              }
-              this.router.navigate(taskRoute, { relativeTo: this.route, replaceUrl: true });
-            }
+            this.router.navigate(taskRoute, { relativeTo: this.route, replaceUrl: true });
           }
         }
         this.loadingFinished();
