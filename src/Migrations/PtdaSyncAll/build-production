@@ -1,0 +1,19 @@
+#!/bin/bash
+# Build for running on another computer.
+# This is turning into a bit of a kludge, in order for the product filename to contain the date,
+# the contents to be contained within a top-level folder, and not leave old intermediate production
+# files laying around. But it works.
+#
+# Usage: ./build-production
+
+set -ue -o pipefail
+
+outputProductName="ptda-sync-all-$(date '+%Y%m%d%H%M%S')"
+outputDir="bin/${outputProductName}"
+dotnet publish -c Release --runtime "linux-x64" -o "${outputDir}"
+package="$(mktemp -d)/${outputProductName}.tar.xz"
+cd "${outputDir}/.."
+tar cfJ "${package}" ${outputProductName}
+cd -
+rm -rf "${outputDir}"
+echo Product: ${package}
