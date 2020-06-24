@@ -21,6 +21,20 @@
       "problemMatcher": "$msCompile"
     },
     {
+      "label": "build-migrator-ptdaSyncAll",
+      "command": "dotnet",
+      "args": ["build", "/property:GenerateFullPaths=true"],
+      "type": "shell",
+      "group": "build",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "options": {
+        "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
       "label": "npm start (SF)",
       "command": "npm start",
       "type": "shell",
