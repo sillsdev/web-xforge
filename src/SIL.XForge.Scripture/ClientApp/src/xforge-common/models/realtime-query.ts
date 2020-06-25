@@ -1,5 +1,5 @@
 import arrayDiff, { InsertDiff, MoveDiff, RemoveDiff } from 'arraydiff';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { RealtimeQueryAdapter } from '../realtime-remote-store';
 import { RealtimeService } from '../realtime.service';
@@ -17,6 +17,8 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private readonly _localChanges$ = new Subject<void>();
   private readonly _remoteChanges$ = new Subject<void>();
   private readonly _ready$ = new Subject<void>();
+  private readonly _docSubscriptions = new Map<string, Subscription>();
+  private readonly _remoteDocChanges$ = new Subject<void>();
 
   constructor(private readonly realtimeService: RealtimeService, public readonly adapter: RealtimeQueryAdapter) {
     this.adapter.ready$.pipe(takeUntil(this.unsubscribe$)).subscribe(() => this.onReady());
@@ -55,6 +57,10 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
 
   get ready$(): Observable<void> {
     return this._ready$;
+  }
+
+  get remoteDocChanges$(): Observable<void> {
+    return this._remoteDocChanges$;
   }
 
   get ready(): boolean {
@@ -174,6 +180,10 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       const newDoc = this.realtimeService.get<T>(this.collection, docId);
       promises.push(newDoc.onAddedToSubscribeQuery());
       newDocs.push(newDoc);
+      const docSubscription = newDoc.remoteChanges$
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe(() => this._remoteDocChanges$.next());
+      this._docSubscriptions.set(newDoc.id, docSubscription);
     }
     await Promise.all(promises);
     this._docs.splice(index, 0, ...newDocs);
@@ -183,6 +193,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     const removedDocs = this._docs.splice(index, docIds.length);
     for (const doc of removedDocs) {
       doc.onRemovedFromSubscribeQuery();
+      this._docSubscriptions.delete(doc.id);
     }
   }
 
