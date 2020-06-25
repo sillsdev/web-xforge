@@ -107,6 +107,16 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
+  it('if checking is disabled, navigate to translate app, even if last location was in checking app', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setProjectData({ selectedTask: 'checking', selectedBooknum: 41, hasTexts: true, checkingEnabled: false });
+    env.fixture.detectChanges();
+    tick();
+
+    verify(mockedRouter.navigate(deepEqual(['./', 'translate', 'MAT']), anything())).once();
+    expect().nothing();
+  }));
+
   it('do not navigate when project does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
     env.fixture.detectChanges();
@@ -218,7 +228,13 @@ class TestEnvironment {
   }
 
   setProjectData(
-    args: { hasTexts?: boolean; selectedTask?: string; selectedBooknum?: number; role?: SFProjectRole } = {}
+    args: {
+      hasTexts?: boolean;
+      selectedTask?: string;
+      selectedBooknum?: number;
+      role?: SFProjectRole;
+      checkingEnabled?: boolean;
+    } = {}
   ): void {
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: getSFProjectUserConfigDocId('project01', 'user01'),
@@ -251,7 +267,7 @@ class TestEnvironment {
           translationSuggestionsEnabled: false
         },
         checkingConfig: {
-          checkingEnabled: true,
+          checkingEnabled: args.checkingEnabled == null ? true : args.checkingEnabled,
           usersSeeEachOthersResponses: true,
           shareEnabled: true,
           shareLevel: CheckingShareLevel.Specific
