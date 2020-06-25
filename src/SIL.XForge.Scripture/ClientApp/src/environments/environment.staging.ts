@@ -15,5 +15,6 @@ export const environment = {
   realtimePort: 0,
   realtimeUrl: '/realtime-api/',
   authDomain: 'dev-sillsdev.auth0.com',
-  authClientId: '4eHLjo40mAEGFU6zUxdYjnpnC1K1Ydnj'
+  authClientId: '4eHLjo40mAEGFU6zUxdYjnpnC1K1Ydnj',
+  offlineDBVersion: 2
 };

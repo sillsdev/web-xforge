@@ -98,10 +98,14 @@
                 <div>
                   <mdc-list-divider></mdc-list-divider>
                   <mdc-list>
-                    <mdc-list-item *ngIf="isSystemAdmin" routerLink="/system-administration" [disabled]="!isAppOnline">
+                    <mdc-list-item
+                      *ngIf="isSystemAdmin"
+                      appRouterLink="/system-administration"
+                      [disabled]="!isAppOnline"
+                    >
                       {{ t("system_administration") }}
                     </mdc-list-item>
-                    <mdc-list-item routerLink="/projects">{{ t("project_home") }}</mdc-list-item>
+                    <mdc-list-item appRouterLink="/projects">{{ t("project_home") }}</mdc-list-item>
                     <mdc-list-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
                       {{ t("change_password") }}
                     </mdc-list-item>
@@ -166,7 +170,7 @@
         </mdc-list-item>
         <div *ngIf="isTranslateEnabled && (translateVisible || hasSingleAppEnabled)">
           <mdc-list-item
-            [routerLink]="['/projects', selectedProjectId, 'translate']"
+            [appRouterLink]="['/projects', selectedProjectId, 'translate']"
             [activated]="rlaTranslateOverview.isActive"
             routerLinkActive
             [routerLinkActiveOptions]="{ exact: true }"
@@ -178,7 +182,7 @@
           </mdc-list-item>
           <mdc-list-item
             *ngFor="let text of texts"
-            [routerLink]="['/projects', selectedProjectId, 'translate', getBookId(text)]"
+            [appRouterLink]="['/projects', selectedProjectId, 'translate', getBookId(text)]"
             [activated]="rla.isActive"
             routerLinkActive
             #rla="routerLinkActive"
@@ -202,7 +206,7 @@
         </mdc-list-item>
         <div *ngIf="isCheckingEnabled && (checkingVisible || hasSingleAppEnabled)">
           <mdc-list-item
-            [routerLink]="['/projects', selectedProjectId, 'checking']"
+            [appRouterLink]="['/projects', selectedProjectId, 'checking']"
             [activated]="rlaCheckingOverview.isActive"
             routerLinkActive
             [routerLinkActiveOptions]="{ exact: true }"
@@ -214,7 +218,7 @@
           </mdc-list-item>
           <mdc-list-item
             *ngIf="showAllQuestions"
-            [routerLink]="['/projects', selectedProjectId, 'checking', 'ALL']"
+            [appRouterLink]="['/projects', selectedProjectId, 'checking', 'ALL']"
             [activated]="rlaCheckingAllBooks.isActive"
             routerLinkActive
             [routerLinkActiveOptions]="{ exact: true }"
@@ -227,7 +231,7 @@
           <ng-container *ngFor="let text of texts">
             <mdc-list-item
               *ngIf="hasQuestions(text)"
-              [routerLink]="['/projects', selectedProjectId, 'checking', getBookId(text)]"
+              [appRouterLink]="['/projects', selectedProjectId, 'checking', getBookId(text)]"
               [activated]="rla.isActive"
               routerLinkActive
               #rla="routerLinkActive"
@@ -241,7 +245,7 @@
         <div *ngIf="(isProjectAdmin$ | async)">
           <mdc-list-divider *ngIf="isCheckingEnabled"></mdc-list-divider>
           <mdc-list-item
-            [routerLink]="['/projects', selectedProjectId, 'sync']"
+            [appRouterLink]="['/projects', selectedProjectId, 'sync']"
             [activated]="rlaSync.isActive"
             [class.list-item-disabled]="!isAppOnline"
             routerLinkActive
@@ -253,7 +257,7 @@
             {{ t("synchronize") }}
           </mdc-list-item>
           <mdc-list-item
-            [routerLink]="['/projects', selectedProjectId, 'settings']"
+            [appRouterLink]="['/projects', selectedProjectId, 'settings']"
             [activated]="rlaSettings.isActive"
             [class.list-item-disabled]="!isAppOnline"
             routerLinkActive
@@ -265,7 +269,7 @@
             {{ t("settings") }}
           </mdc-list-item>
           <mdc-list-item
-            [routerLink]="['/projects', selectedProjectId, 'users']"
+            [appRouterLink]="['/projects', selectedProjectId, 'users']"
             [activated]="rlaUsers.isActive"
             [class.list-item-disabled]="!isAppOnline"
             routerLinkActive

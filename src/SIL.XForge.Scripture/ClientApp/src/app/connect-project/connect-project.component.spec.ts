@@ -48,19 +48,22 @@ describe('ConnectProjectComponent', () => {
     ]
   }));
 
-  it('should display login button when PT projects is null', () => {
+  it('should display login button when PT projects is null', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(of(undefined));
-    env.fixture.detectChanges();
+    env.waitForProjectsResponse();
 
     expect(env.component.state).toEqual('login');
     expect(env.loginButton).not.toBeNull();
-  });
+    expect(env.loginButton.nativeElement.disabled).toBe(false);
+    env.onlineStatus = false;
+    expect(env.loginButton).toBeNull();
+  }));
 
   it('should display form when PT projects is empty', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(of([]));
-    env.fixture.detectChanges();
+    env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
     expect(env.projectSelect).toBeNull();
@@ -70,7 +73,7 @@ describe('ConnectProjectComponent', () => {
   it('should do nothing when form is invalid', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(of([]));
-    env.fixture.detectChanges();
+    env.waitForProjectsResponse();
 
     expect(env.submitButton.nativeElement.disabled).toBe(true);
     env.clickElement(env.submitButton);
@@ -102,7 +105,7 @@ describe('ConnectProjectComponent', () => {
   it('should join when existing project is selected', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
-    env.fixture.detectChanges();
+    env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
 
     // Simulate touching the control
@@ -123,7 +126,7 @@ describe('ConnectProjectComponent', () => {
   it('should display non-connectable projects disabled', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
-    env.fixture.detectChanges();
+    env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
     expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
@@ -165,7 +168,7 @@ describe('ConnectProjectComponent', () => {
         }
       ])
     );
-    env.fixture.detectChanges();
+    env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.getMenuItems(env.projectSelect).length).toEqual(3);
     expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
@@ -178,8 +181,9 @@ describe('ConnectProjectComponent', () => {
     const env = new TestEnvironment(false);
     env.setupDefaultProjectData();
     env.fixture.detectChanges();
-    expect(env.component.state).toEqual('loading');
+    expect(env.component.state).toEqual('offline');
     expect(env.offlineMessage).not.toBeNull();
+    expect(env.noProjectsMessage).toBeNull();
     expect(env.component.connectProjectForm.disabled).toBe(true);
     expect(env.submitButton.nativeElement.disabled).toBe(true);
 
@@ -193,12 +197,13 @@ describe('ConnectProjectComponent', () => {
 
     env.onlineStatus = false;
     expect(env.nonAdminMessage).toBeNull();
+    expect(env.component.state).toEqual('offline');
   }));
 
   it('submit if user selects a source project then disables translation suggestions', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
-    env.fixture.detectChanges();
+    env.waitForProjectsResponse();
 
     env.changeSelectValue(env.projectSelect, 'pt01');
     env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
@@ -225,7 +230,7 @@ describe('ConnectProjectComponent', () => {
   it('should create when non-existent project is selected', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
-    env.fixture.detectChanges();
+    env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
 
     env.changeSelectValue(env.projectSelect, 'pt01');
@@ -264,7 +269,7 @@ describe('ConnectProjectComponent', () => {
   it('should create when no setting is selected', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupDefaultProjectData();
-    env.fixture.detectChanges();
+    env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     env.changeSelectValue(env.projectSelect, 'pt01');
     expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
@@ -498,5 +503,12 @@ class TestEnvironment {
         }
       ])
     );
+  }
+
+  waitForProjectsResponse(): void {
+    tick();
+    this.fixture.detectChanges();
+    tick();
+    this.fixture.detectChanges();
   }
 }

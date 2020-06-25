@@ -1,4 +1,5 @@
 import merge from 'lodash/merge';
+import { OfflineData } from './models/offline-data';
 import { Snapshot } from './models/snapshot';
 import { performQuery, QueryParameters } from './query-parameters';
 import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore } from './realtime-offline-store';
@@ -8,6 +9,7 @@ import { RealtimeOfflineData, RealtimeOfflineQueryResults, RealtimeOfflineStore 
  */
 export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
   private readonly map = new Map<string, Map<string, RealtimeOfflineData>>();
+  private readonly offlineDataMap = new Map<string, Map<string, OfflineData>>();
 
   addSnapshot<T>(collection: string, snapshot: Snapshot<T>): void {
     let collectionSnapshots = this.map.get(collection);
@@ -42,6 +44,22 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
     return Promise.resolve(collectionData.get(id));
   }
 
+  getAllData<T extends OfflineData>(collection: string): Promise<T[]> {
+    const collectionData = this.offlineDataMap.get(collection);
+    if (collectionData == null) {
+      return Promise.resolve([]);
+    }
+    return Promise.resolve(Array.from(collectionData.values()).map(d => d as T));
+  }
+
+  getData<T extends OfflineData>(collection: string, dataId: string): Promise<T | undefined> {
+    const collectionData = this.offlineDataMap.get(collection);
+    if (collectionData == null) {
+      return Promise.resolve(undefined);
+    }
+    return Promise.resolve(collectionData.get(dataId) as T);
+  }
+
   async query(collection: string, parameters: QueryParameters): Promise<RealtimeOfflineQueryResults> {
     const snapshots = await this.getAll(collection);
     return performQuery(parameters, snapshots);
@@ -57,10 +75,28 @@ export class MemoryRealtimeOfflineStore extends RealtimeOfflineStore {
     return Promise.resolve();
   }
 
+  putData(collection: string, data: OfflineData): Promise<OfflineData> {
+    let collectionData = this.offlineDataMap.get(collection);
+    if (collectionData == null) {
+      collectionData = new Map<string, OfflineData>();
+      this.offlineDataMap.set(collection, collectionData);
+    }
+    collectionData.set(data.id, data);
+    return Promise.resolve(data);
+  }
+
   delete(collection: string, id: string): Promise<void> {
     const collectionData = this.map.get(collection);
     if (collectionData != null) {
       collectionData.delete(id);
+    }
+    return Promise.resolve();
+  }
+
+  deleteData(collection: string, dataId: string): Promise<void> {
+    const collectionData = this.offlineDataMap.get(collection);
+    if (collectionData != null) {
+      collectionData.delete(dataId);
     }
     return Promise.resolve();
   }
