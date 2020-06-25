@@ -701,7 +701,7 @@ namespace SIL.XForge.Scripture.Services
                 });
                 var translateMetrics = new MemoryRepository<TranslateMetrics>();
                 FileSystemService = Substitute.For<IFileSystemService>();
-                var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources"});
+                var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources" });
                 var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
                 Localizer = new StringLocalizer<SharedResource>(factory);
                 SecurityService = Substitute.For<ISecurityService>();
