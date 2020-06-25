@@ -353,6 +353,7 @@ export class CheckingComponent extends DataLoadingComponent implements AfterView
           activeOnly: true,
           sort: true
         });
+        this.questionsQuery.remoteDocChanges$.subscribe(() => console.log('doc changed!!!***'));
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
         }
