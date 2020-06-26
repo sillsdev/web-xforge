@@ -223,8 +223,9 @@ describe('CheckingComponent', () => {
   });
 
   describe('Questions', () => {
-    it('questions are displaying', fakeAsync(() => {
+    it('questions are displaying and audio is cached', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
+      verify(mockedProjectService.onlineCacheAudio(anything())).once();
       // Question 5 has been stored as the last question to start at
       expect(env.component.questionsPanel!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       // A sixteenth question is archived
@@ -1374,6 +1375,7 @@ class TestEnvironment {
     this.setupDefaultProjectData(user);
     when(mockedUserService.editDisplayName(true)).thenResolve();
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
+    when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
     when(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, anything(), anyString())).thenResolve(
       AudioData.createStorageData(QuestionDoc.COLLECTION, 'anyId', 'filename.mp3', getAudioBlob())
@@ -1801,7 +1803,7 @@ class TestEnvironment {
           likes: [],
           dateCreated: dateCreated,
           dateModified: dateCreated,
-          audioUrl: 'file://audio.mp3',
+          audioUrl: '/audio.mp3',
           comments: []
         }),
       // Another user
@@ -1966,7 +1968,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
-      audioUrl: 'file://audio.mp3',
+      audioUrl: '/audio.mp3',
       comments: []
     });
 
@@ -2018,7 +2020,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
-      audioUrl: 'file://audio.mp3',
+      audioUrl: '/audio.mp3',
       comments: []
     });
     johnQuestions[8].data!.answers.push({
@@ -2030,7 +2032,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
-      audioUrl: 'file://audio.mp3',
+      audioUrl: '/audio.mp3',
       comments: []
     });
 
@@ -2046,7 +2048,6 @@ class TestEnvironment {
         'project01',
         deepEqual({
           bookNum: this.projectBookRoute === 'ALL' ? undefined : Canon.bookIdToNumber(this.projectBookRoute),
-          activeOnly: true,
           sort: true
         })
       )
