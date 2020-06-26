@@ -1,7 +1,7 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { MdcList } from '@angular-mdc/web/list';
 import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
-import { AfterViewChecked, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SplitComponent } from 'angular-split';
@@ -51,7 +51,7 @@ interface Summary {
   templateUrl: './checking.component.html',
   styleUrls: ['./checking.component.scss']
 })
-export class CheckingComponent extends DataLoadingComponent implements AfterViewChecked, OnInit, OnDestroy {
+export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   userDoc?: UserDoc;
   scriptureFontSize?: string;
   @ViewChild('answerPanelContainer', { static: false }) set answersPanelElement(
@@ -94,8 +94,6 @@ export class CheckingComponent extends DataLoadingComponent implements AfterView
   private projectDeleteSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
   private text?: TextInfo;
-  private questionAudioHash?: string;
-  private audioCachePromise?: Promise<void>;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -197,7 +195,7 @@ export class CheckingComponent extends DataLoadingComponent implements AfterView
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
-    return this.questionsQuery != null ? this.questionsQuery.docs : [];
+    return this.questionsQuery != null ? this.questionsQuery.docs.filter(qd => !qd.data!.isArchived) : [];
   }
 
   get textsByBookId(): TextsByBookId {
@@ -208,10 +206,6 @@ export class CheckingComponent extends DataLoadingComponent implements AfterView
       }
     }
     return textsByBook;
-  }
-
-  private get answerPanelElementHeight(): number {
-    return this.answersPanelContainerElement != null ? this.answersPanelContainerElement.nativeElement.offsetHeight : 0;
   }
 
   /** Height in px needed to show all elements in the bottom
@@ -350,10 +344,13 @@ export class CheckingComponent extends DataLoadingComponent implements AfterView
         this.showAllBooks = bookId === 'ALL';
         this.questionsQuery = await this.projectService.queryQuestions(projectId, {
           bookNum: this.showAllBooks ? undefined : bookNum,
-          activeOnly: true,
           sort: true
         });
-        this.questionsQuery.remoteDocChanges$.subscribe(() => console.log('doc changed!!!***'));
+        this.subscribe(merge(this.questionsQuery.remoteDocChanges$, this.questionsQuery.ready$), () => {
+          if (this.pwaService.isOnline) {
+            this.projectService.onlineCacheAudio(this.questionsQuery!.docs);
+          }
+        });
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
         }
@@ -412,25 +409,6 @@ export class CheckingComponent extends DataLoadingComponent implements AfterView
     super.ngOnDestroy();
     if (this.questionsQuery != null) {
       this.questionsQuery.dispose();
-    }
-  }
-
-  ngAfterViewChecked() {
-    if (!this.pwaService.isOnline || this.audioCachePromise != null || this.projectDoc == null) {
-      return;
-    }
-    // Each time change detection is run on this component, check if question audio has changed.
-    // There is the potential for this to be expensive in a project with lots of question.
-    const audioHash = this.questionDocs
-      .filter(q => q.data != null && q.data.audioUrl != null)
-      .map(qd => qd.data!.audioUrl)
-      .join();
-    if (this.questionAudioHash !== audioHash) {
-      // Refresh the cache of question audio data
-      this.audioCachePromise = this.projectService.onlineCacheAudio(this.projectDoc.id).then(() => {
-        this.audioCachePromise = undefined;
-        this.questionAudioHash = audioHash;
-      });
     }
   }
 
@@ -656,7 +634,7 @@ export class CheckingComponent extends DataLoadingComponent implements AfterView
   }
 
   totalQuestions(): number {
-    return this.questionsQuery != null ? this.questionsQuery.docs.length : 0;
+    return this.questionDocs.length;
   }
 
   verseRefClicked(verseRef: VerseRef): void {
@@ -922,18 +900,16 @@ export class CheckingComponent extends DataLoadingComponent implements AfterView
     this.summary.answered = 0;
     this.summary.read = 0;
     this.summary.unread = 0;
-    if (this.questionsQuery != null) {
-      for (const questionDoc of this.questionsQuery.docs) {
-        if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
-          this.summary.answered++;
-        } else if (
-          this.projectUserConfigDoc != null &&
-          CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)
-        ) {
-          this.summary.read++;
-        } else {
-          this.summary.unread++;
-        }
+    for (const questionDoc of this.questionDocs) {
+      if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
+        this.summary.answered++;
+      } else if (
+        this.projectUserConfigDoc != null &&
+        CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)
+      ) {
+        this.summary.read++;
+      } else {
+        this.summary.unread++;
       }
     }
   }
@@ -943,15 +919,6 @@ export class CheckingComponent extends DataLoadingComponent implements AfterView
       element instanceof ElementRef ? element.nativeElement : element
     );
     return parseFloat(elementStyle.getPropertyValue(propertyName));
-  }
-
-  /** Get float property without units. eg 3.14 instead of '3.14px'. */
-  private getCSSFloatProperty(baseElement: ElementRef, elementSelector: string, propertyName: string): number {
-    const element: Element | null = baseElement.nativeElement.querySelector(elementSelector);
-    if (element == null) {
-      return 0;
-    }
-    return this.getCSSFloatPropertyOf(element, propertyName);
   }
 
   private getOffsetHeight(baseElement: ElementRef, selector: string): number {
