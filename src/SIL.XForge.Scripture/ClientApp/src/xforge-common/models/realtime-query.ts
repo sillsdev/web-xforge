@@ -193,6 +193,10 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     const removedDocs = this._docs.splice(index, docIds.length);
     for (const doc of removedDocs) {
       doc.onRemovedFromSubscribeQuery();
+      const subscription = this._docSubscriptions.get(doc.id);
+      if (subscription != null) {
+        subscription.unsubscribe();
+      }
       this._docSubscriptions.delete(doc.id);
     }
   }
