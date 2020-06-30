@@ -374,12 +374,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
             this.onRemovedFromProject();
           } else if (!this.projectDoc.data.checkingConfig.checkingEnabled) {
+            const currentBookId =
+              this.questionsPanel == null || this.questionsPanel.activeQuestionBook == null
+                ? undefined
+                : Canon.bookNumberToId(this.questionsPanel.activeQuestionBook);
             if (this.projectUserConfigDoc != null) {
               const checkingAccessInfo: CheckingAccessInfo = {
                 userId: this.userService.currentUserId,
                 projectId: this.projectDoc.id,
                 project: this.projectDoc.data,
-                bookId,
+                bookId: currentBookId,
                 projectUserConfigDoc: this.projectUserConfigDoc!
               };
               CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
