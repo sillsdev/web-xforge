@@ -102,6 +102,7 @@ class MockComponent {}
 
 const ROUTES: Route[] = [
   { path: 'projects/:projectId/checking/:bookId', component: MockComponent },
+  { path: 'projects/:projectId/translate/:bookId', component: MockComponent },
   { path: 'projects/:projectId', component: MockComponent }
 ];
 
@@ -200,7 +201,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('responds to remote community checking disabled', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      let env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(1);
       const projectUserConfig = env.component.projectUserConfigDoc!.data!;
       expect(projectUserConfig.selectedTask).toEqual('checking');
@@ -213,6 +214,18 @@ describe('CheckingComponent', () => {
       expect(projectUserConfig.selectedTask).toBeUndefined();
       expect(projectUserConfig.selectedQuestionRef).toBeUndefined();
       expect(env.component.projectDoc).toBeUndefined();
+
+      // User with access to translate app should get redirected there
+      env = new TestEnvironment(OBSERVER_USER, 'ALL');
+      env.selectQuestion(1);
+      env.component.projectDoc!.submitJson0Op(
+        op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, false),
+        false
+      );
+      env.waitForSliderUpdate();
+      expect(env.location.path()).toEqual('/projects/project01/translate/JHN');
+      expect(env.component.projectDoc).toBeUndefined();
+      expect(env.component.questionDocs.length).toEqual(0);
       env.waitForSliderUpdate();
     }));
   });
