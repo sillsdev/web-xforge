@@ -5,8 +5,8 @@ import { AUDIO_COLLECTION, AudioData } from './models/audio-data';
 import { PwaService } from './pwa.service';
 import { RealtimeService } from './realtime.service';
 
-// Urls containing this prefix are local blob not yet been uploaded to the server i.e. blob:http://localhost...
-const LOCAL_BLOB_PREFIX = 'blob:http://';
+// Urls containing this prefix are local blob not yet been uploaded to the server e.g. blob:https://scriptureforge...
+const LOCAL_BLOB_PREFIX = 'blob:';
 
 /**
  * Formats the name of an audio file stored on the server into a URL a http client can use to request the data.

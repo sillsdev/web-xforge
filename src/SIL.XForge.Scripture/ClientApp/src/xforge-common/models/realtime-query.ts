@@ -88,6 +88,9 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       }
       this.realtimeService.onQueryUnsubscribe(this);
     }
+    for (const sub of this._docSubscriptions.values()) {
+      sub.unsubscribe();
+    }
     this.adapter.destroy();
   }
 
@@ -180,9 +183,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       const newDoc = this.realtimeService.get<T>(this.collection, docId);
       promises.push(newDoc.onAddedToSubscribeQuery());
       newDocs.push(newDoc);
-      const docSubscription = newDoc.remoteChanges$
-        .pipe(takeUntil(this.unsubscribe$))
-        .subscribe(() => this._remoteDocChanges$.next());
+      const docSubscription = newDoc.remoteChanges$.subscribe(() => this._remoteDocChanges$.next());
       this._docSubscriptions.set(newDoc.id, docSubscription);
     }
     await Promise.all(promises);
