@@ -94,7 +94,7 @@
     "karma-jasmine": "^2.0.1",
     "karma-jasmine-html-reporter": "^1.4.2",
     "karma-teamcity-reporter": "^1.1.0",
-    "lint-staged": "^8.1.6",
+    "lint-staged": "^10.2.11",
     "ng-bullet": "^1.0.3",
     "npm": "6.14.4",
     "prettier": "1.15.3",
@@ -112,8 +112,7 @@
   },
   "lint-staged": {
     "*.{ts,js,json,css,scss,less,html,md,yml}": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ]
   },
   "browser": {
