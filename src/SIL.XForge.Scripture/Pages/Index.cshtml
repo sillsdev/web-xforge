@@ -19,33 +19,36 @@
         var AUTOPLAY_TIMEOUT = 15000;
         var playerSlider;
         var pauseIntervalId;
+        // start the sliders at 3 different times so they don't all slide together
         document.querySelectorAll('.features .slider').forEach(function (container, index) {
-            // start the sliders at 3 different times so they don't all slide together - works if there are more than 3 sliders
+            var slider = tns({
+                container: container,
+                autoplay: true,
+                autoplayButton: '#autoplay-button',
+                autoplayHoverPause: true,
+                autoplayResetOnVisibility: false,
+                autoplayText: ['<i class="material-icons">play_arrow</i>', '<i class="material-icons">pause</i>'],
+                autoplayTimeout: AUTOPLAY_TIMEOUT,
+                controlsText: ['<i class="material-icons">keyboard_arrow_left</i>', '<i class="material-icons">keyboard_arrow_right</i>'],
+                // must disable loop for videos otherwise you get 3 copies of each slide that can all play at once
+                loop: false,
+                mouseDrag: true,
+                nav: true,
+                navPosition: 'bottom',
+                preventActionWhenRunning: true,
+                preventScrollOnTouch: 'force',
+                // with loop disabled this makes it behave the same as with loop enabled when there are only 2 slides
+                rewind: true,
+                speed: 800,
+                swipeAngle: false
+            });
+            slider.pause();
+            if (container.id && container.id === 'player-slider') {
+                playerSlider = slider;
+            }
+            // works if there are more than 3 sliders
             setTimeout(function () {
-                var slider = tns({
-                    container: container,
-                    autoplay: true,
-                    autoplayButton: '#autoplay-button',
-                    autoplayHoverPause: true,
-                    autoplayResetOnVisibility: false,
-                    autoplayText: ['<i class="material-icons">play_arrow</i>', '<i class="material-icons">pause</i>'],
-                    autoplayTimeout: AUTOPLAY_TIMEOUT,
-                    controlsText: ['<i class="material-icons">keyboard_arrow_left</i>', '<i class="material-icons">keyboard_arrow_right</i>'],
-                    // must disable loop for videos otherwise you get 3 copies of each slide that can all play at once
-                    loop: false,
-                    mouseDrag: true,
-                    nav: true,
-                    navPosition: 'bottom',
-                    preventActionWhenRunning: true,
-                    preventScrollOnTouch: 'force',
-                    // with loop disabled this makes it behave the same as with loop enabled when there are only 2 slides
-                    rewind: true,
-                    speed: 800,
-                    swipeAngle: false
-                });
-                if (container.id && container.id === 'player-slider') {
-                    playerSlider = slider;
-                }
+                slider.play();
             }, AUTOPLAY_TIMEOUT*(index % 3)/3);
         });
 
