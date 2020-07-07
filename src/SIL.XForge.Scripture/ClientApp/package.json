@@ -96,7 +96,7 @@
     "karma-teamcity-reporter": "^1.1.0",
     "lint-staged": "^10.2.11",
     "ng-bullet": "^1.0.3",
-    "npm": "6.14.4",
+    "npm": "6.14.6",
     "prettier": "1.15.3",
     "protractor": "^5.4.3",
     "ts-mockito": "^2.5.0",
