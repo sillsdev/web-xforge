@@ -17,7 +17,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private readonly _localChanges$ = new Subject<void>();
   private readonly _remoteChanges$ = new Subject<void>();
   private readonly _ready$ = new Subject<void>();
-  private readonly _docSubscriptions = new Map<string, Subscription>();
+  private readonly docSubscriptions = new Map<string, Subscription>();
   private readonly _remoteDocChanges$ = new Subject<void>();
 
   constructor(private readonly realtimeService: RealtimeService, public readonly adapter: RealtimeQueryAdapter) {
@@ -88,7 +88,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       }
       this.realtimeService.onQueryUnsubscribe(this);
     }
-    for (const sub of this._docSubscriptions.values()) {
+    for (const sub of this.docSubscriptions.values()) {
       sub.unsubscribe();
     }
     this.adapter.destroy();
@@ -183,8 +183,8 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       const newDoc = this.realtimeService.get<T>(this.collection, docId);
       promises.push(newDoc.onAddedToSubscribeQuery());
       newDocs.push(newDoc);
-      const docSubscription = newDoc.remoteChanges$.subscribe(() => this._remoteDocChanges$.next());
-      this._docSubscriptions.set(newDoc.id, docSubscription);
+      const docSubscription = newDoc.remoteChanges$.subscribe(this._remoteDocChanges$);
+      this.docSubscriptions.set(newDoc.id, docSubscription);
     }
     await Promise.all(promises);
     this._docs.splice(index, 0, ...newDocs);
@@ -194,11 +194,11 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     const removedDocs = this._docs.splice(index, docIds.length);
     for (const doc of removedDocs) {
       doc.onRemovedFromSubscribeQuery();
-      const subscription = this._docSubscriptions.get(doc.id);
+      const subscription = this.docSubscriptions.get(doc.id);
       if (subscription != null) {
         subscription.unsubscribe();
       }
-      this._docSubscriptions.delete(doc.id);
+      this.docSubscriptions.delete(doc.id);
     }
   }
 

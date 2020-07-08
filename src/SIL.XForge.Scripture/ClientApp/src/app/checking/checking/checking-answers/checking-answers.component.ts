@@ -312,14 +312,19 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       projectId: projectId
     };
     const questionDialogResponse = await this.questionDialogService.questionDialog(data, this._questionDoc);
-    if (questionDialogResponse != null) {
-      await this.updateQuestionAudioUrl();
+    if (questionDialogResponse != null && questionDialogResponse.data != null) {
+      const audio = await this.projectService.findOrUpdateAudioCache(
+        questionDialogResponse.collection,
+        questionDialogResponse.data.dataId,
+        questionDialogResponse.data.audioUrl
+      );
+      this.questionUrl = audio != null && audio.blob != null ? URL.createObjectURL(audio.blob) : undefined;
       this.action.emit({ action: 'edit', questionDoc: questionDialogResponse });
     }
   }
 
   async updateQuestionAudioUrl(): Promise<void> {
-    if (this.questionDoc == null || this.questionDoc.data == null) {
+    if (this.questionDoc == null || this.questionDoc.data == null || this.questionDoc.data.audioUrl == null) {
       this.questionUrl = undefined;
       return;
     }

@@ -28,7 +28,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of } from 'rxjs';
-import { anyString, anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { anyString, anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { AudioData } from 'xforge-common/models/audio-data';
@@ -310,32 +310,35 @@ describe('CheckingComponent', () => {
 
     it('opens a dialog when edit question is clicked', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
+      env.selectQuestion(15);
       when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenResolve(
         env.component.questionsPanel!.activeQuestionDoc
       );
-      env.selectQuestion(1);
-      const questionId = 'q1Id';
+      const questionId = 'q15Id';
       verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).once();
       env.clickButton(env.editQuestionButton);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).never();
       verify(mockedQuestionDialogService.questionDialog(anything(), anything())).once();
+      tick(env.questionReadTimer);
       verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).twice();
       expect().nothing();
     }));
 
     it('removes audio player when question audio deleted', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
-      const questionDoc = cloneDeep(env.getQuestionDoc('q15Id'));
+      const questionId = 'q15Id';
+      const questionDoc = cloneDeep(env.getQuestionDoc(questionId));
       questionDoc.submitJson0Op(op => {
         op.unset(qd => qd.audioUrl!);
       });
       when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenResolve(questionDoc);
       env.selectQuestion(15);
       expect(env.audioPlayerOnQuestion).not.toBeNull();
-      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, anything(), undefined)).once();
+      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).once();
       env.clickButton(env.editQuestionButton);
       env.waitForSliderUpdate();
       expect(env.audioPlayerOnQuestion).toBeNull();
+      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, undefined)).once();
     }));
 
     it('user must confirm question answered dialog before question dialog appears', fakeAsync(() => {
@@ -422,20 +425,19 @@ describe('CheckingComponent', () => {
 
     it('respond to remote question audio added or removed', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
-      const questionId = 'q1Id';
       env.selectQuestion(1);
       expect(env.audioPlayerOnQuestion).toBeNull();
       env.simulateRemoteEditQuestionAudio('filename.mp3');
       expect(env.audioPlayerOnQuestion).not.toBeNull();
-      // Called once when the save question doc (question 5) is loaded, and again when we select question 1
-      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).twice();
+      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, 'q1Id', 'filename.mp3')).once();
+      resetCalls(mockedProjectService);
       env.simulateRemoteEditQuestionAudio(undefined);
       expect(env.audioPlayerOnQuestion).toBeNull();
-      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).thrice();
+      verify(mockedProjectService.onlineCacheAudio(anything())).once();
       env.selectQuestion(2);
       env.simulateRemoteEditQuestionAudio('filename2.mp3');
-      env.selectQuestion(1);
-      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).times(4);
+      env.waitForSliderUpdate();
+      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, 'q2Id', anything())).once();
     }));
 
     it('question added to another book changes the route to that book and activates the question', fakeAsync(() => {
