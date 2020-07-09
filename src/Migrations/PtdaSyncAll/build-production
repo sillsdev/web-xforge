@@ -5,6 +5,10 @@
 # files laying around. But it works.
 #
 # Usage: ./build-production
+#
+# To run product on another computer:
+# tar xf ptda-sync-all-*.tar.xz
+# SF_APP_DIR="/path/to/sf/app" ptda-sync-all-*/PtdaSyncAll |& tee /tmp/ptda.log
 
 set -ue -o pipefail
 
