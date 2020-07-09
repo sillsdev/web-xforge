@@ -14,11 +14,13 @@ import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, objectContaining, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { AudioData } from 'xforge-common/models/audio-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -350,13 +352,15 @@ describe('QuestionDialogComponent', () => {
       answers: [],
       isArchived: false,
       dateCreated: '',
-      dateModified: ''
+      dateModified: '',
+      audioUrl: '/path/to/audio.mp3'
     });
     flush();
     const textDocId = new TextDocId('project01', 42, 1, 'target');
     expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
     verify(mockedProjectService.getText(deepEqual(textDocId))).once();
     expect(env.component.selection!.toString()).toEqual('LUK 1:3');
+    expect(env.component.audioSource).toBeDefined();
   }));
 
   it('displays error editing end reference to different book', fakeAsync(() => {
@@ -552,6 +556,7 @@ class TestEnvironment {
       } as QuestionDialogData,
       viewContainerRef
     };
+
     this.dialogRef = TestBed.get(MdcDialog).open(QuestionDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');
     this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
@@ -570,6 +575,9 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     when(mockedProjectService.get(anything())).thenResolve({} as SFProjectDoc);
+    when(mockedProjectService.findOrUpdateAudioCache(anything(), 'question01', anything())).thenResolve(
+      AudioData.createStorageData(QuestionDoc.COLLECTION, 'question01', '/path/to/audio.mp3', getAudioBlob())
+    );
     this.fixture.detectChanges();
   }
 

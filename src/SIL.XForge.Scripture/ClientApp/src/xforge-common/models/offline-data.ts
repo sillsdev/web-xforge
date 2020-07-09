@@ -8,7 +8,7 @@ export abstract class OfflineData {
   constructor(
     public dataCollection: string,
     public id: string,
-    public projectRef: string,
+    public projectRef?: string,
     public realtimeDocRef?: string
   ) {}
 }
@@ -16,5 +16,5 @@ export abstract class OfflineData {
 export interface OfflineDataConstructor {
   readonly COLLECTION: string;
 
-  new (dataCollection: string, id: string, projectRef: string, realtimeDocRef?: string): OfflineData;
+  new (dataCollection: string, id: string, projectRef?: string, realtimeDocRef?: string): OfflineData;
 }

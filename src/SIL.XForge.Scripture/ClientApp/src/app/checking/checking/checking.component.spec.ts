@@ -8,6 +8,7 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
+import { cloneDeep } from 'lodash';
 import clone from 'lodash/clone';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
@@ -26,17 +27,19 @@ import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/model
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
-import { of } from 'rxjs';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
+import { BehaviorSubject, of } from 'rxjs';
+import { anyString, anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { AudioData } from 'xforge-common/models/audio-data';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { ProjectService } from 'xforge-common/project.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -71,6 +74,7 @@ const mockedMdcDialog = mock(MdcDialog);
 const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedCookieService = mock(CookieService);
+const mockedPwaService = mock(PwaService);
 
 function createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {
   return {
@@ -142,7 +146,8 @@ describe('CheckingComponent', () => {
       { provide: MdcDialog, useMock: mockedMdcDialog },
       { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
-      { provide: CookieService, useMock: mockedCookieService }
+      { provide: CookieService, useMock: mockedCookieService },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -231,8 +236,9 @@ describe('CheckingComponent', () => {
   });
 
   describe('Questions', () => {
-    it('questions are displaying', fakeAsync(() => {
+    it('questions are displaying and audio is cached', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
+      verify(mockedProjectService.onlineCacheAudio(anything())).once();
       // Question 5 has been stored as the last question to start at
       expect(env.component.questionsPanel!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       // A sixteenth question is archived
@@ -304,11 +310,35 @@ describe('CheckingComponent', () => {
 
     it('opens a dialog when edit question is clicked', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
-      env.selectQuestion(1);
+      env.selectQuestion(15);
+      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenResolve(
+        env.component.questionsPanel!.activeQuestionDoc
+      );
+      const questionId = 'q15Id';
+      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).once();
       env.clickButton(env.editQuestionButton);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).never();
       verify(mockedQuestionDialogService.questionDialog(anything(), anything())).once();
+      tick(env.questionReadTimer);
+      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).twice();
       expect().nothing();
+    }));
+
+    it('removes audio player when question audio deleted', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      const questionId = 'q15Id';
+      const questionDoc = cloneDeep(env.getQuestionDoc(questionId));
+      questionDoc.submitJson0Op(op => {
+        op.unset(qd => qd.audioUrl!);
+      });
+      when(mockedQuestionDialogService.questionDialog(anything(), anything())).thenResolve(questionDoc);
+      env.selectQuestion(15);
+      expect(env.audioPlayerOnQuestion).not.toBeNull();
+      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, anything())).once();
+      env.clickButton(env.editQuestionButton);
+      env.waitForSliderUpdate();
+      expect(env.audioPlayerOnQuestion).toBeNull();
+      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, questionId, undefined)).once();
     }));
 
     it('user must confirm question answered dialog before question dialog appears', fakeAsync(() => {
@@ -391,6 +421,23 @@ describe('CheckingComponent', () => {
       expect(env.questions.length).toEqual(16);
       question = env.selectQuestion(16);
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
+    }));
+
+    it('respond to remote question audio added or removed', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(1);
+      expect(env.audioPlayerOnQuestion).toBeNull();
+      env.simulateRemoteEditQuestionAudio('filename.mp3');
+      expect(env.audioPlayerOnQuestion).not.toBeNull();
+      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, 'q1Id', 'filename.mp3')).once();
+      resetCalls(mockedProjectService);
+      env.simulateRemoteEditQuestionAudio(undefined);
+      expect(env.audioPlayerOnQuestion).toBeNull();
+      verify(mockedProjectService.onlineCacheAudio(anything())).once();
+      env.selectQuestion(2);
+      env.simulateRemoteEditQuestionAudio('filename2.mp3');
+      env.waitForSliderUpdate();
+      verify(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, 'q2Id', anything())).once();
     }));
 
     it('question added to another book changes the route to that book and activates the question', fakeAsync(() => {
@@ -620,7 +667,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.removeAudioButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      verify(mockedProjectService.deleteAudio('project01', 'a6Id', CHECKER_USER.id)).once();
+      verify(mockedProjectService.deleteAudio('project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)).once();
       expect().nothing();
     }));
 
@@ -631,7 +678,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.answerDeleteButton(0));
       env.waitForSliderUpdate();
       expect(env.answers.length).toEqual(0);
-      verify(mockedProjectService.deleteAudio('project01', 'a6Id', CHECKER_USER.id)).once();
+      verify(mockedProjectService.deleteAudio('project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)).once();
     }));
 
     it('can delete correct answer after changing chapters', fakeAsync(() => {
@@ -1241,6 +1288,7 @@ class TestEnvironment {
 
   questionReadTimer: number = 2000;
   project01WritingSystemTag = 'en';
+  isOnline: BehaviorSubject<boolean>;
 
   private readonly adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: ADMIN_USER.id,
@@ -1337,10 +1385,19 @@ class TestEnvironment {
     }
   };
 
-  constructor(user: UserInfo, projectBookRoute: string = 'JHN') {
+  constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
     this.setRouteSnapshot(projectBookRoute);
     this.setupDefaultProjectData(user);
     when(mockedUserService.editDisplayName(true)).thenResolve();
+    this.isOnline = new BehaviorSubject<boolean>(hasConnection);
+    when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
+    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, anything(), anyString())).thenResolve(
+      AudioData.createStorageData(QuestionDoc.COLLECTION, 'anyId', 'filename.mp3', getAudioBlob())
+    );
+    when(mockedProjectService.findOrUpdateAudioCache(QuestionDoc.COLLECTION, anything(), undefined)).thenResolve(
+      undefined
+    );
     this.fixture = TestBed.createComponent(CheckingComponent);
     this.component = this.fixture.componentInstance;
     this.location = TestBed.get(Location);
@@ -1372,6 +1429,10 @@ class TestEnvironment {
 
   get archiveQuestionButton(): DebugElement {
     return this.answerPanel.query(By.css('.archive-question-button'));
+  }
+
+  get audioPlayerOnQuestion(): DebugElement {
+    return this.answerPanel.query(By.css('.question-audio'));
   }
 
   get cancelAnswerButton(): DebugElement {
@@ -1421,6 +1482,12 @@ class TestEnvironment {
 
   get nextButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#project-navigation .next-question'));
+  }
+
+  set onlineStatus(hasConnection: boolean) {
+    this.isOnline.next(hasConnection);
+    tick();
+    this.fixture.detectChanges();
   }
 
   get previousButton(): DebugElement {
@@ -1623,7 +1690,7 @@ class TestEnvironment {
   }
 
   getQuestionText(question: DebugElement): string {
-    return question.query(By.css('.question-title')).nativeElement.textContent;
+    return question.query(By.css('.question-title span')).nativeElement.textContent;
   }
 
   getSaveCommentButton(answerIndex: number): DebugElement {
@@ -1751,12 +1818,26 @@ class TestEnvironment {
           likes: [],
           dateCreated: dateCreated,
           dateModified: dateCreated,
-          audioUrl: 'file://audio.mp3',
+          audioUrl: '/audio.mp3',
           comments: []
         }),
       // Another user
       false
     );
+    tick(this.questionReadTimer);
+    this.fixture.detectChanges();
+  }
+
+  simulateRemoteEditQuestionAudio(filename?: string, questionId?: string): void {
+    const questionDoc =
+      questionId != null ? this.getQuestionDoc(questionId) : this.component.questionsPanel!.activeQuestionDoc!;
+    questionDoc.submitJson0Op(op => {
+      if (filename != null) {
+        op.set(q => q.audioUrl!, filename);
+      } else {
+        op.unset(q => q.audioUrl!);
+      }
+    }, false);
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
   }
@@ -1872,6 +1953,7 @@ class TestEnvironment {
         text: 'Question relating to chapter 2',
         verseRef: { bookNum: 43, chapterNum: 2, verseNum: 1, verse: '1-2' },
         answers: [],
+        audioUrl: 'audioFile.mp3',
         isArchived: false,
         dateCreated: dateCreated,
         dateModified: dateCreated
@@ -1901,7 +1983,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
-      audioUrl: 'file://audio.mp3',
+      audioUrl: '/audio.mp3',
       comments: []
     });
 
@@ -1953,7 +2035,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
-      audioUrl: 'file://audio.mp3',
+      audioUrl: '/audio.mp3',
       comments: []
     });
     johnQuestions[8].data!.answers.push({
@@ -1965,7 +2047,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
-      audioUrl: 'file://audio.mp3',
+      audioUrl: '/audio.mp3',
       comments: []
     });
 
@@ -1981,7 +2063,6 @@ class TestEnvironment {
         'project01',
         deepEqual({
           bookNum: this.projectBookRoute === 'ALL' ? undefined : Canon.bookIdToNumber(this.projectBookRoute),
-          activeOnly: true,
           sort: true
         })
       )

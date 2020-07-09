@@ -19,6 +19,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -103,7 +104,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     noticeService: NoticeService,
     private readonly router: Router,
     private readonly questionDialogService: QuestionDialogService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    private readonly pwaService: PwaService
   ) {
     super(noticeService);
   }
@@ -193,7 +195,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
-    return this.questionsQuery != null ? this.questionsQuery.docs : [];
+    return this.questionsQuery != null ? this.questionsQuery.docs.filter(qd => !qd.data!.isArchived) : [];
   }
 
   get textsByBookId(): TextsByBookId {
@@ -204,10 +206,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
     }
     return textsByBook;
-  }
-
-  private get answerPanelElementHeight(): number {
-    return this.answersPanelContainerElement != null ? this.answersPanelContainerElement.nativeElement.offsetHeight : 0;
   }
 
   /** Height in px needed to show all elements in the bottom
@@ -346,8 +344,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.showAllBooks = bookId === 'ALL';
         this.questionsQuery = await this.projectService.queryQuestions(projectId, {
           bookNum: this.showAllBooks ? undefined : bookNum,
-          activeOnly: true,
           sort: true
+        });
+        this.subscribe(merge(this.questionsQuery.remoteDocChanges$, this.questionsQuery.ready$), () => {
+          if (this.pwaService.isOnline) {
+            this.projectService.onlineCacheAudio(this.questionsQuery!.docs);
+          }
         });
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
@@ -446,6 +448,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
               // Get the amended filename and save it against the answer
               answer.audioUrl = await this.projectService.uploadAudio(
                 this.projectDoc.id,
+                this.questionsPanel.activeQuestionDoc.collection,
                 answer.dataId,
                 this.questionsPanel.activeQuestionDoc.id,
                 answerAction.audio.blob,
@@ -631,7 +634,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   totalQuestions(): number {
-    return this.questionsQuery != null ? this.questionsQuery.docs.length : 0;
+    return this.questionDocs.length;
   }
 
   verseRefClicked(verseRef: VerseRef): void {
@@ -737,7 +740,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         .submitJson0Op(op => op.remove(q => q.answers, answerIndex))
         .then(() => {
           if (this.projectDoc != null) {
-            this.projectService.deleteAudio(this.projectDoc.id, answer.dataId, answer.ownerRef);
+            this.projectService.deleteAudio(
+              this.projectDoc.id,
+              activeQuestionDoc.collection,
+              answer.dataId,
+              answer.ownerRef
+            );
           }
         });
       this.refreshSummary();
@@ -776,7 +784,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       if (deleteAudio) {
         submitPromise.then(() => {
           if (this.projectDoc != null) {
-            this.projectService.deleteAudio(this.projectDoc.id, oldAnswer.dataId, oldAnswer.ownerRef);
+            this.projectService.deleteAudio(
+              this.projectDoc.id,
+              activeQuestionDoc.collection,
+              oldAnswer.dataId,
+              oldAnswer.ownerRef
+            );
           }
         });
       }
@@ -887,18 +900,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.summary.answered = 0;
     this.summary.read = 0;
     this.summary.unread = 0;
-    if (this.questionsQuery != null) {
-      for (const questionDoc of this.questionsQuery.docs) {
-        if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
-          this.summary.answered++;
-        } else if (
-          this.projectUserConfigDoc != null &&
-          CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)
-        ) {
-          this.summary.read++;
-        } else {
-          this.summary.unread++;
-        }
+    for (const questionDoc of this.questionDocs) {
+      if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
+        this.summary.answered++;
+      } else if (
+        this.projectUserConfigDoc != null &&
+        CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)
+      ) {
+        this.summary.read++;
+      } else {
+        this.summary.unread++;
       }
     }
   }
@@ -908,15 +919,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       element instanceof ElementRef ? element.nativeElement : element
     );
     return parseFloat(elementStyle.getPropertyValue(propertyName));
-  }
-
-  /** Get float property without units. eg 3.14 instead of '3.14px'. */
-  private getCSSFloatProperty(baseElement: ElementRef, elementSelector: string, propertyName: string): number {
-    const element: Element | null = baseElement.nativeElement.querySelector(elementSelector);
-    if (element == null) {
-      return 0;
-    }
-    return this.getCSSFloatPropertyOf(element, propertyName);
   }
 
   private getOffsetHeight(baseElement: ElementRef, selector: string): number {

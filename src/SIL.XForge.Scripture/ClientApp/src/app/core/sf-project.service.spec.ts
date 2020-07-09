@@ -6,6 +6,7 @@ import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/m
 import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { AudioService } from 'xforge-common/audio.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandService } from 'xforge-common/command.service';
 import { AudioData } from 'xforge-common/models/audio-data';
@@ -24,6 +25,7 @@ const mockedCommandService = mock(CommandService);
 const mockedMachineHttpClient = mock(MachineHttpClient);
 const mockedAuthService = mock(AuthService);
 const mockedHttpClient = mock(HttpClient);
+const mockedAudioService = mock(AudioService);
 
 describe('SFProject Service', () => {
   configureTestingModule(() => ({
@@ -32,12 +34,13 @@ describe('SFProject Service', () => {
       SFProjectService,
       {
         provide: RealtimeService,
-        useFactory: () => new TestRealtimeService(SF_REALTIME_DOC_TYPES, SF_OFFLINE_DATA_TYPES)
+        useFactory: () => new TestRealtimeService(SF_REALTIME_DOC_TYPES)
       },
       { provide: CommandService, useMock: mockedCommandService },
       { provide: MachineHttpClient, useMock: mockedMachineHttpClient },
       { provide: PwaService, useFactory: () => new PwaService(instance(mockedHttpClient)) },
-      { provide: AuthService, useMock: mockedAuthService }
+      { provide: AuthService, useMock: mockedAuthService },
+      { provide: AudioService, useMock: mockedAudioService }
     ]
   }));
 
@@ -47,15 +50,26 @@ describe('SFProject Service', () => {
     const questionId = 'newQuestion01';
     const questionDocId = getQuestionDocId(env.projectId, questionId);
     const response = env.simulateUploadAudio(questionDocId, questionId);
-    const req: RequestMatch = { url: `${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/audio`, method: 'POST' };
-    const request = env.httpMock.expectOne(req);
-    const obj: { [name: string]: string } = {};
-    obj.Location = '/path/to/test01.wav';
-    request.flush('some_string_response', { headers: obj });
+    env.setupUploadResponse();
     const url = await response;
     expect(url).toBe('/path/to/test01.wav');
     env.httpMock.verify();
-    expect(await env.offlineAudioContentLength()).toEqual(0);
+    verify(mockedAudioService.findOrUpdateCache(QuestionDoc.COLLECTION, questionId, url)).once();
+  });
+
+  it('should cache audio for questions and not answers on upload', async () => {
+    const env = new TestEnvironment();
+    env.establishWebSocket(true);
+    let response = env.simulateCreateQuestionWithAudio();
+    env.setupUploadResponse();
+    let questionDoc = await response;
+    env.httpMock.verify();
+    verify(mockedAudioService.findOrUpdateCache(questionDoc.collection, anything(), anything())).once();
+    response = env.simulateAnswerQuestionWithAudio(questionDoc);
+    env.setupUploadResponse();
+    questionDoc = await response;
+    verify(mockedAudioService.findOrUpdateCache(questionDoc.collection, anything(), anything())).once();
+    expect().nothing();
   });
 
   it('should store audio in offline store if webSocket is closed', async () => {
@@ -70,43 +84,34 @@ describe('SFProject Service', () => {
 
   it('should upload when reconnected', fakeAsync(() => {
     const env = new TestEnvironment();
+    const onlineAudioUrl = '/path/to/test01.wav';
     env.establishWebSocket(false);
     env.simulateCreateQuestionWithAudio();
     tick(1000);
-    const questionDoc = env.testRealtimeService.get<QuestionDoc>(
-      QuestionDoc.COLLECTION,
-      getQuestionDocId(env.projectId, 'abcd')
-    );
+    const questionDoc = env.getQuestionDoc(env.newQuestionId);
     const req: RequestMatch = { url: `${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/audio`, method: 'POST' };
     env.httpMock.expectNone(req);
-    expect(questionDoc.data!.audioUrl).toBe(env.filename);
+    expect(questionDoc.data!.audioUrl).not.toBe(onlineAudioUrl);
     env.establishWebSocket(true);
     tick(1000);
-    const request = env.httpMock.expectOne(req);
-    const obj: { [name: string]: string } = {};
-    obj.Location = '/path/to/test01.wav';
-    request.flush('some_string_response', { headers: obj });
-    env.httpMock.verify();
+    env.setupUploadResponse();
     tick(1000);
-    expect(questionDoc.data!.audioUrl).toBe('/path/to/test01.wav');
+    env.httpMock.verify();
+    expect(questionDoc.data!.audioUrl).toBe(onlineAudioUrl);
+    verify(mockedAudioService.findOrUpdateCache(QuestionDoc.COLLECTION, env.newQuestionId, onlineAudioUrl)).once();
   }));
 
   it('uploads answer audio on reconnect', fakeAsync(() => {
     const env = new TestEnvironment();
     env.establishWebSocket(false);
-    const questionDoc = env.testRealtimeService.get<QuestionDoc>(
-      QuestionDoc.COLLECTION,
-      getQuestionDocId(env.projectId, 'question01')
-    );
+    const questionDoc = env.getQuestionDoc('question01');
     env.simulateAnswerQuestionWithAudio(questionDoc);
+    tick(1000);
     const req: RequestMatch = { url: `${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/audio`, method: 'POST' };
     env.httpMock.expectNone(req);
     env.establishWebSocket(true);
     tick(1000);
-    const request = env.httpMock.expectOne(req);
-    const obj: { [name: string]: string } = {};
-    obj.Location = '/path/to/test01.wav';
-    request.flush('some_string_response', { headers: obj });
+    env.setupUploadResponse();
     env.httpMock.verify();
     tick(1000);
     expect(questionDoc.data!.answers[0].audioUrl).toBe('/path/to/test01.wav');
@@ -115,25 +120,24 @@ describe('SFProject Service', () => {
   it('should remove audio from remote server when online', async () => {
     const env = new TestEnvironment();
     env.establishWebSocket(true);
+    const response = env.simulateCreateQuestionWithAudio();
+    env.setupUploadResponse();
+    const questionDoc = await response;
+    env.httpMock.verify();
+    expect(questionDoc.data!.audioUrl).toBeDefined();
+    verify(
+      mockedAudioService.findOrUpdateCache(questionDoc.collection, questionDoc.data!.dataId, questionDoc.data!.audioUrl)
+    ).once();
     resetCalls(mockedCommandService);
-    env.simulateCreateQuestionWithAudio();
-    const questionDoc = env.testRealtimeService.get<QuestionDoc>(
-      QuestionDoc.COLLECTION,
-      getQuestionDocId(env.projectId, 'abcd')
-    );
-    expect(await env.offlineAudioContentLength()).toEqual(0);
     await env.simulateResetAudioOnQuestion(questionDoc);
     verify(mockedCommandService.onlineInvoke(anything(), 'deleteAudio', anything())).once();
+    verify(mockedAudioService.findOrUpdateCache(questionDoc.collection, questionDoc.data!.dataId, undefined));
   });
 
   it('should remove audio from local storage', async () => {
     const env = new TestEnvironment();
     env.establishWebSocket(false);
-    env.simulateCreateQuestionWithAudio();
-    const questionDoc = env.testRealtimeService.get<QuestionDoc>(
-      QuestionDoc.COLLECTION,
-      getQuestionDocId(env.projectId, 'abcd')
-    );
+    const questionDoc = await env.simulateCreateQuestionWithAudio();
     expect(await env.offlineAudioContentLength()).toEqual(1);
     await env.simulateResetAudioOnQuestion(questionDoc);
     expect(await env.offlineAudioContentLength()).toEqual(0);
@@ -142,16 +146,14 @@ describe('SFProject Service', () => {
   it('should store audio deletion data if offline', async () => {
     const env = new TestEnvironment();
     env.establishWebSocket(true);
-    env.simulateCreateQuestionWithAudio();
-    const questionDoc = env.testRealtimeService.get<QuestionDoc>(
-      QuestionDoc.COLLECTION,
-      getQuestionDocId(env.projectId, 'abcd')
-    );
-    expect(await env.offlineAudioContentLength()).toEqual(0);
+    const response = env.simulateCreateQuestionWithAudio();
+    env.setupUploadResponse();
+    const questionDoc = await response;
+    expect(await env.offlineAudioContentLength()).toEqual(1);
     env.establishWebSocket(false);
     await env.simulateResetAudioOnQuestion(questionDoc);
     expect(await env.offlineAudioContentLength()).toEqual(1);
-    const audio = await env.getOfflineAudioData('abcd');
+    const audio = await env.getOfflineAudioData(questionDoc.data!.dataId);
     expect(audio).toBeDefined();
     expect(audio!.deleteRef).toEqual('user01');
   });
@@ -163,6 +165,7 @@ class TestEnvironment {
   readonly testRealtimeService: TestRealtimeService;
   readonly projectId = 'test01';
   readonly filename = 'file01.wav';
+  readonly newQuestionId = 'newQuestion01';
   isOnline: boolean = false;
 
   constructor() {
@@ -172,6 +175,7 @@ class TestEnvironment {
 
     when(mockedAuthService.isLoggedIn).thenResolve(true);
     spyOnProperty(window.navigator, 'onLine').and.returnValue(this.isOnline);
+
     const dateNow = new Date().toJSON();
     this.testRealtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, [
       {
@@ -184,10 +188,23 @@ class TestEnvironment {
           verseRef: fromVerseRef(VerseRef.parse('MAT 1:1')),
           dateCreated: dateNow,
           dateModified: dateNow,
-          isArchived: false
+          isArchived: false,
+          audioUrl: 'audiofile.mp3'
         }
       }
     ]);
+
+    when(mockedAudioService.findOrUpdateCache(QuestionDoc.COLLECTION, anything(), anything()))
+      .thenCall((dataCollection: string, dataId: string, url?: string) => {
+        if (url == null) {
+          this.testRealtimeService.removeOfflineData(AudioData.COLLECTION, dataId);
+        } else {
+          this.testRealtimeService.storeOfflineData(
+            AudioData.createStorageData(dataCollection, dataId, url, this.audioBlob)
+          );
+        }
+      })
+      .thenResolve();
   }
 
   get audioBlob(): Blob {
@@ -216,7 +233,7 @@ class TestEnvironment {
     return getQuestionDocId(this.projectId, dataId);
   }
 
-  simulateAnswerQuestionWithAudio(questionDoc: QuestionDoc): void {
+  async simulateAnswerQuestionWithAudio(questionDoc: QuestionDoc): Promise<QuestionDoc> {
     const dateNow = new Date().toJSON();
     const answer: Answer = {
       dataId: 'answer01',
@@ -231,14 +248,14 @@ class TestEnvironment {
     questionDoc.submitJson0Op(op => {
       op.insert(qd => qd.answers, 0, answer);
     });
-    this.simulateUploadAudio(questionDoc.id, answer.dataId);
-    tick(1000);
+    await this.simulateUploadAudio(questionDoc.id, answer.dataId);
+    return questionDoc;
   }
 
-  simulateCreateQuestionWithAudio(): void {
+  async simulateCreateQuestionWithAudio(): Promise<QuestionDoc> {
     const dateNow = new Date().toJSON();
     const question: Question = {
-      dataId: 'abcd',
+      dataId: this.newQuestionId,
       projectRef: this.projectId,
       ownerRef: 'user01',
       text: 'question 01',
@@ -246,20 +263,39 @@ class TestEnvironment {
       answers: [],
       dateCreated: dateNow,
       dateModified: dateNow,
-      isArchived: false,
-      audioUrl: this.filename
+      isArchived: false
     };
     const questionDocId = getQuestionDocId(this.projectId, question.dataId);
-    this.simulateUploadAudio(questionDocId, question.dataId);
-    this.testRealtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, questionDocId, question);
+    question.audioUrl = await this.simulateUploadAudio(questionDocId, question.dataId);
+    return this.testRealtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, questionDocId, question);
   }
 
   async simulateResetAudioOnQuestion(questionDoc: QuestionDoc): Promise<void> {
     await questionDoc.submitJson0Op(op => op.unset(qd => qd.audioUrl!));
-    return this.service.deleteAudio(this.projectId, questionDoc.data!.dataId, questionDoc.data!.ownerRef);
+    return this.service.deleteAudio(
+      this.projectId,
+      questionDoc.collection,
+      questionDoc.data!.dataId,
+      questionDoc.data!.ownerRef
+    );
   }
 
   simulateUploadAudio(questionDocId: string, dataId: string): Promise<string> {
-    return this.service.uploadAudio(this.projectId, dataId, questionDocId, this.audioBlob, this.filename);
+    return this.service.uploadAudio(
+      this.projectId,
+      QuestionDoc.COLLECTION,
+      dataId,
+      questionDocId,
+      this.audioBlob,
+      this.filename
+    );
+  }
+
+  setupUploadResponse(): void {
+    const req: RequestMatch = { url: `${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/audio`, method: 'POST' };
+    const request = this.httpMock.expectOne(req);
+    const obj: { [name: string]: string } = {};
+    obj.Location = '/path/to/test01.wav';
+    request.flush('some_string_response', { headers: obj });
   }
 }

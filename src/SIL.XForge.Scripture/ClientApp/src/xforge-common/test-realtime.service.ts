@@ -1,6 +1,7 @@
 import * as OTJson0 from 'ot-json0';
 import { MemoryRealtimeOfflineStore } from './memory-realtime-offline-store';
 import { MemoryRealtimeQueryAdapter, MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
+import { OfflineData } from './models/offline-data';
 import { Snapshot } from './models/snapshot';
 import { OfflineDataTypes } from './offline-data-types';
 import { RealtimeDocTypes } from './realtime-doc-types';
@@ -27,7 +28,7 @@ function addSnapshotDefaults(snapshot: Partial<Snapshot>): Snapshot {
  * This is a memory-based implementation of the real-time service. It is useful for testing.
  */
 export class TestRealtimeService extends RealtimeService {
-  constructor(docTypes: RealtimeDocTypes, dataTypes: OfflineDataTypes = new OfflineDataTypes([])) {
+  constructor(docTypes: RealtimeDocTypes) {
     super(docTypes, new MemoryRealtimeRemoteStore(), new MemoryRealtimeOfflineStore());
   }
 
@@ -43,6 +44,14 @@ export class TestRealtimeService extends RealtimeService {
     if (addToOfflineStore) {
       (this.offlineStore as MemoryRealtimeOfflineStore).addSnapshot(collection, completeSnapshot);
     }
+  }
+
+  addOfflineData<T>(collection: string, data: OfflineData): void {
+    (this.offlineStore as MemoryRealtimeOfflineStore).addOfflineData(collection, data);
+  }
+
+  offlineDataCollection(collection: string): Map<string, OfflineData> | undefined {
+    return (this.offlineStore as MemoryRealtimeOfflineStore).offlineDataCollection(collection);
   }
 
   updateAllSubscribeQueries(): void {

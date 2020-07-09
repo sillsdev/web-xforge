@@ -1,6 +1,6 @@
 import { MdcSlider, MdcSliderChange } from '@angular-mdc/web/slider';
 import { Component, Input, OnDestroy, Pipe, PipeTransform, ViewChild } from '@angular/core';
-import { environment } from '../../../../environments/environment';
+import { formatAudioSource } from 'xforge-common/audio.service';
 
 // See explanatory comment where this number is used
 const ARBITRARILY_LARGE_NUMBER = 1e10;
@@ -66,14 +66,8 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
 
   @Input() set source(source: string) {
     if (source && source !== '') {
-      if (!source.includes('://')) {
-        if (source.startsWith('/')) {
-          source = source.substring(1);
-        }
-        source = environment.assets.audio + source;
-      }
+      this.audio.src = formatAudioSource(source);
       this.enabled = false;
-      this.audio.src = source;
       this.seek = 0;
       // In Chromium the duration of blobs isn't known even after metadata is loaded
       // By making it skip to the end the duration becomes available. To do this we have to skip to some point that we
