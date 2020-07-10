@@ -71,19 +71,19 @@ export abstract class ProjectService<
   }
 
   onlineAddCurrentUser(id: string, projectRole?: string): Promise<void> {
-    return this.onlineInvoke('addUser', { projectId: id, projectRole });
+    return this.onlineInvoke('AddUser', { projectId: id, projectRole });
   }
 
   onlineRemoveUser(id: string, userId: string): Promise<void> {
-    return this.onlineInvoke('removeUser', { projectId: id, projectUserId: userId });
+    return this.onlineInvoke('RemoveUser', { projectId: id, projectUserId: userId });
   }
 
   onlineUpdateCurrentUserRole(id: string, projectRole: string): Promise<void> {
-    return this.onlineInvoke('updateRole', { projectId: id, projectRole });
+    return this.onlineInvoke('UpdateRole', { projectId: id, projectRole });
   }
 
   onlineDelete(id: string): Promise<void> {
-    return this.onlineInvoke('delete', { projectId: id });
+    return this.onlineInvoke('Delete', { projectId: id });
   }
 
   async onlineUploadAudio(id: string, dataId: string, file: File): Promise<string> {
@@ -102,7 +102,7 @@ export abstract class ProjectService<
   }
 
   onlineDeleteAudio(id: string, dataId: string, ownerId: string): Promise<void> {
-    return this.onlineInvoke('deleteAudio', { projectId: id, ownerId, dataId });
+    return this.onlineInvoke('DeleteAudio', { projectId: id, ownerId, dataId });
   }
 
   protected onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {
