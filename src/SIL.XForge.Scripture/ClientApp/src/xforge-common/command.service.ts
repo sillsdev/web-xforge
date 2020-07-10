@@ -44,7 +44,7 @@ export class CommandError extends Error {
 /**
  * This service is used to invoke JSON-RPC commands.
  *
- * @example commandService.onlineInvoke(url, 'method', { param1: 'value1', param2: 'value2' });
+ * @example commandService.onlineInvoke(url, 'Method', { param1: 'value1', param2: 'value2' });
  */
 @Injectable({
   providedIn: 'root'

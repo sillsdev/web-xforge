@@ -156,7 +156,7 @@ export class AuthService {
 
   async updateInterfaceLanguage(language: string): Promise<void> {
     if (await this.isLoggedIn) {
-      await this.commandService.onlineInvoke(USERS_URL, 'updateInterfaceLanguage', { language });
+      await this.commandService.onlineInvoke(USERS_URL, 'UpdateInterfaceLanguage', { language });
     }
   }
 
@@ -213,10 +213,10 @@ export class AuthService {
     this.scheduleRenewal();
     await this.remoteStore.init(() => this.accessToken);
     if (secondaryId != null) {
-      await this.commandService.onlineInvoke(USERS_URL, 'linkParatextAccount', { authId: secondaryId });
+      await this.commandService.onlineInvoke(USERS_URL, 'LinkParatextAccount', { authId: secondaryId });
     } else if (!environment.production) {
       try {
-        await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
+        await this.commandService.onlineInvoke(USERS_URL, 'PullAuthUserProfile');
       } catch (err) {
         console.error(err);
         return false;

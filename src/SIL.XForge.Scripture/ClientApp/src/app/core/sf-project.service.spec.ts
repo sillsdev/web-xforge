@@ -130,7 +130,7 @@ describe('SFProject Service', () => {
     ).once();
     resetCalls(mockedCommandService);
     await env.simulateResetAudioOnQuestion(questionDoc);
-    verify(mockedCommandService.onlineInvoke(anything(), 'deleteAudio', anything())).once();
+    verify(mockedCommandService.onlineInvoke(anything(), 'DeleteAudio', anything())).once();
     verify(mockedAudioService.findOrUpdateCache(questionDoc.collection, questionDoc.data!.dataId, undefined));
   });
 
