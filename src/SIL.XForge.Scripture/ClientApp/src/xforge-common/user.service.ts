@@ -60,7 +60,7 @@ export class UserService {
   }
 
   async onlineDelete(id: string): Promise<void> {
-    await this.onlineInvoke('delete', { userId: id });
+    await this.onlineInvoke('Delete', { userId: id });
   }
 
   onlineQuery(

@@ -42,7 +42,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   async onlineCreate(settings: SFProjectCreateSettings): Promise<string> {
-    return (await this.onlineInvoke<string>('create', { settings }))!;
+    return (await this.onlineInvoke<string>('Create', { settings }))!;
   }
 
   getUserConfig(id: string, userId: string): Promise<SFProjectUserConfigDoc> {
@@ -61,7 +61,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   onlineAddTranslateMetrics(id: string, metrics: TranslateMetrics): Promise<void> {
-    return this.onlineInvoke('addTranslateMetrics', { projectId: id, metrics });
+    return this.onlineInvoke('AddTranslateMetrics', { projectId: id, metrics });
   }
 
   getText(textId: TextDocId | string): Promise<TextDoc> {
@@ -92,34 +92,34 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   onlineSync(id: string): Promise<void> {
-    return this.onlineInvoke('sync', { projectId: id });
+    return this.onlineInvoke('Sync', { projectId: id });
   }
 
   onlineUpdateSettings(id: string, settings: SFProjectSettings): Promise<void> {
-    return this.onlineInvoke('updateSettings', { projectId: id, settings });
+    return this.onlineInvoke('UpdateSettings', { projectId: id, settings });
   }
 
   async onlineIsAlreadyInvited(id: string, email: string): Promise<boolean> {
-    return (await this.onlineInvoke<boolean>('isAlreadyInvited', { projectId: id, email }))!;
+    return (await this.onlineInvoke<boolean>('IsAlreadyInvited', { projectId: id, email }))!;
   }
 
   /** Get list of email addresses that have outstanding invitations on project.
    * Caller must be an admin on the project. */
   async onlineInvitedUsers(projectId: string): Promise<string[]> {
-    return (await this.onlineInvoke<string[]>('invitedUsers', { projectId }))!;
+    return (await this.onlineInvoke<string[]>('InvitedUsers', { projectId }))!;
   }
 
   /** Get added into project, with optionally specified shareKey code. */
   onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
-    return this.onlineInvoke('checkLinkSharing', { projectId: id, shareKey });
+    return this.onlineInvoke('CheckLinkSharing', { projectId: id, shareKey });
   }
 
   onlineInvite(id: string, email: string): Promise<string | undefined> {
-    return this.onlineInvoke('invite', { projectId: id, email });
+    return this.onlineInvoke('Invite', { projectId: id, email });
   }
 
   async onlineUninviteUser(projectId: string, emailToUninvite: string): Promise<string> {
-    return (await this.onlineInvoke<string>('uninviteUser', { projectId, emailToUninvite }))!;
+    return (await this.onlineInvoke<string>('UninviteUser', { projectId, emailToUninvite }))!;
   }
 
   async trainSelectedSegment(projectUserConfig: SFProjectUserConfig): Promise<void> {
