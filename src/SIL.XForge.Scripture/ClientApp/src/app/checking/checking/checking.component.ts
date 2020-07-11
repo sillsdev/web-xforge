@@ -142,7 +142,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (this.questionsPanel != null) {
       this.chapter = this.questionsPanel.activeQuestionChapter;
     }
-    this.checkBookStatus();
+    this.triggerUpdate();
   }
 
   get activeQuestionVerseRef(): VerseRef | undefined {
@@ -354,12 +354,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
         }
-        this.questionsSub = this.subscribe(
-          merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$, this.questionsQuery.localChanges$),
-          () => this.checkBookStatus()
-        );
         const prevBook = this.book;
         this.book = bookNum;
+        this.questionsSub = this.subscribe(
+          merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$, this.questionsQuery.localChanges$),
+          () => this.updateQuestionRefsOrRedirect()
+        );
         this.userDoc = await this.userService.getCurrentUser();
         // refresh the summary when switching between all questions and the current book
         if (this.showAllBooks !== prevShowAllBooks && this.book === prevBook) {
@@ -470,10 +470,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (answerAction.questionDoc != null) {
           this.questionsPanel.activateQuestion(answerAction.questionDoc);
         }
-        this.checkBookStatus();
+        this.triggerUpdate();
         break;
       case 'archive':
-        this.checkBookStatus();
+        this.triggerUpdate();
         break;
       case 'like':
         if (answerAction.answer != null) {
@@ -668,14 +668,32 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  private checkBookStatus(): void {
-    if (this.projectDoc == null || this.questionsQuery == null || !this.questionsQuery.ready) {
+  private triggerUpdate() {
+    if (this.questionsQuery != null) {
+      this.questionsQuery.localUpdate();
+    }
+  }
+
+  /**
+   * Checks whether the user should be redirected to another page and does so if necessary. For example, redirect if the
+   * only question was deleted, or the book is invalid, or the user added a question to a book other than the currently
+   * active book.
+   * If no redirect is necessary, updates the list of verse refs to show in the text doc.
+   * This method assumes any local data in IndexedDB has already been loaded into this.questionQuery
+   */
+  private async updateQuestionRefsOrRedirect(): Promise<void> {
+    if (
+      this.projectDoc == null ||
+      this.questionsQuery == null ||
+      (this.pwaService.isOnline && !this.questionsQuery.ready)
+    ) {
       return;
     }
     if (this.totalQuestions() === 0) {
       this.router.navigate(['/projects', this.projectDoc.id, 'checking'], {
         replaceUrl: true
       });
+      return;
     } else if (this.showAllBooks) {
       const availableBooks = new Set<string>();
       for (const questionDoc of this.questionDocs) {
@@ -688,6 +706,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.router.navigate(['/projects', this.projectDoc.id, 'checking', availableBooks.values().next().value], {
           replaceUrl: true
         });
+        return;
       }
     }
     // Only pass in relevant verse references to the text component
