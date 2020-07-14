@@ -1,8 +1,10 @@
+import { MdcIconRegistry } from '@angular-mdc/web';
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { MdcSelect } from '@angular-mdc/web/select';
 import { MdcTopAppBar } from '@angular-mdc/web/top-app-bar';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
+import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
@@ -77,7 +79,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,
-    readonly i18n: I18nService
+    readonly i18n: I18nService,
+    private readonly iconRegistry: MdcIconRegistry,
+    private readonly sanitizer: DomSanitizer
   ) {
     super(noticeService);
     this.subscribe(media.media$, (change: MediaChange) => {
@@ -102,6 +106,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
     }
+    iconRegistry.addSvgIcon('translate', sanitizer.bypassSecurityTrustResourceUrl('/assets/icons/translate.svg'));
   }
 
   get showCheckingDisabled(): boolean {

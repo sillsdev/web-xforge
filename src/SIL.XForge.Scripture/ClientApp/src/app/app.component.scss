@@ -29,14 +29,18 @@
     &.mdc-list-item--activated {
       mdc-icon {
         color: $purpleLight;
+        fill: $purpleLight;
       }
     }
     mdc-icon {
       color: $purpleMedium;
+      fill: $purpleMedium;
       transition: color 0.15s;
-    }
-    .mdc-list-item__graphic {
       margin-right: 24px;
+      &.ngx-mdc-icon {
+        width: 24px;
+        height: 24px;
+      }
     }
   }
 
@@ -152,6 +156,7 @@ a {
     &,
     mdc-icon {
       color: var(--mdc-theme-text-disabled-on-background);
+      fill: var(--mdc-theme-text-disabled-on-background);
     }
   }
 }
