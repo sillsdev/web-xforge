@@ -1,6 +1,7 @@
 import { MdcList } from '@angular-mdc/web/list';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule, Location } from '@angular/common';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -71,6 +72,7 @@ describe('AppComponent', () => {
     imports: [
       AvatarTestingModule,
       DialogTestModule,
+      HttpClientTestingModule,
       UICommonModule,
       RouterTestingModule.withRoutes(ROUTES),
       TestTranslocoModule
