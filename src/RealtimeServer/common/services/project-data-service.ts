@@ -152,7 +152,9 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
         // property update
         const entityPath = op.p.slice(0, domain.pathTemplate.template.length);
         const oldEntity = this.deepGet(entityPath, oldDoc);
-        if (!this.hasRight(role, domain, Operation.Edit, session.userId, oldEntity)) {
+        // if the entity doesn't exist in the old doc, then it must be inserted by a previous op that the user has a
+        // right to perform, so we don't need to check this edit right
+        if (oldEntity != null && !this.hasRight(role, domain, Operation.Edit, session.userId, oldEntity)) {
           return false;
         }
       } else {
@@ -254,8 +256,11 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
 
   private deepGet(path: ShareDB.Path, obj: any): any {
     let curValue = obj;
-    for (let i = 0; i < path.length; i++) {
-      curValue = curValue[path[i]];
+    for (const part of path) {
+      if (curValue == null) {
+        return undefined;
+      }
+      curValue = curValue[part];
     }
     return curValue;
   }
