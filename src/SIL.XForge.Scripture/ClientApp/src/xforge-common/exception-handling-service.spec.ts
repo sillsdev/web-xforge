@@ -55,7 +55,23 @@ describe('ExceptionHandlingService', () => {
 
   it('should not crash on anything', async () => {
     const env = new TestEnvironment();
-    const values = [undefined, null, NaN, Infinity, -1, 0, Symbol(), [] as any[], '', new Error()];
+    const values = [
+      undefined,
+      null,
+      NaN,
+      true,
+      false,
+      Infinity,
+      -1,
+      0,
+      Symbol(),
+      [],
+      '',
+      '\0',
+      new Error(),
+      () => {},
+      BigInt(3)
+    ];
     await Promise.all(values.map(value => env.service.handleError(value)));
     expect(env.errorReports.length).toBe(values.length);
   });
