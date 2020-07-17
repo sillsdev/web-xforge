@@ -64,7 +64,8 @@ export class CommandService {
       .post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
       .toPromise();
     if (response.error != null) {
-      throw new CommandError(response.error.code, response.error.message, response.error.data);
+      const message = `Error invoking ${method}: ${response.error.message}`;
+      throw new CommandError(response.error.code, message, response.error.data);
     }
     return response.result;
   }
