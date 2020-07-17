@@ -10,6 +10,7 @@
           <a (click)="this.showDetails = !this.showDetails" [fxShow]="data.stack">{{
             showDetails ? t("hide_details") : t("show_details")
           }}</a>
+          <p [fxShow]="showDetails">{{ t("error_id", { errorId: data.eventId }) }}</p>
           <pre [fxShow]="showDetails">{{ data.stack }}</pre>
         </mdc-dialog-content>
         <mdc-dialog-actions>
