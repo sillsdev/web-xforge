@@ -219,6 +219,7 @@
   "error": {
     "chrome": "Chrome",
     "close": "Close",
+    "error_id": "Error ID: {{ errorId }}",
     "error_occurred": "An error has occurred",
     "firefox": "Firefox",
     "hide_details": "Hide details",
