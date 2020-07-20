@@ -1,7 +1,8 @@
 import { MdcSlider, MdcSliderChange } from '@angular-mdc/web/slider';
 import { Component, Input, OnDestroy, Pipe, PipeTransform, ViewChild } from '@angular/core';
-import { formatFileSource } from 'xforge-common/file.service';
+import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { PwaService } from 'xforge-common/pwa.service';
 
 // See explanatory comment where this number is used
 const ARBITRARILY_LARGE_NUMBER = 1e10;
@@ -23,9 +24,13 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
   private _enabled: boolean = false;
   private _isPlaying: boolean = false;
   private audio: HTMLAudioElement = new Audio();
+  private audioDataLoaded = false;
 
-  constructor() {
-    this.audio.addEventListener('loadedmetadata', () => this.updateDuration());
+  constructor(private readonly pwaService: PwaService) {
+    this.audio.addEventListener('loadedmetadata', () => {
+      this.updateDuration();
+      this.audioDataLoaded = true;
+    });
 
     this.audio.addEventListener('timeupdate', () => {
       this.updateDuration();
@@ -80,10 +85,19 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
       this.audio.removeAttribute('src');
       this.enabled = false;
     }
+    this.audioDataLoaded = false;
   }
 
   private get checkIsPlaying(): boolean {
     return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
+  }
+
+  /**
+   * Audio is available if it's stored offline, or we are online and can fetch audio, or if the audio is successfully
+   * loaded already (and therefore cached in memory).
+   */
+  get isAudioAvailable(): boolean {
+    return isLocalBlobUrl(this.audio.src) || this.pwaService.isOnline || this.audioDataLoaded;
   }
 
   ngOnDestroy() {
@@ -103,8 +117,10 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
     if (this.slider != null) {
       this.slider.layout();
     }
-    this.audio.play();
-    CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;
+    if (this.isAudioAvailable) {
+      this.audio.play();
+      CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;
+    }
   }
 
   seeking(event: MdcSliderChange) {
