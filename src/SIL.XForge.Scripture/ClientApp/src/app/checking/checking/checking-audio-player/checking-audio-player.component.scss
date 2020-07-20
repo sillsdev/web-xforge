@@ -14,4 +14,12 @@
     flex: 1;
     width: 100%;
   }
+  .audio-not-available {
+    width: 100%;
+    text-align: center;
+    mdc-icon {
+      height: 1.25em;
+      vertical-align: middle;
+    }
+  }
 }
