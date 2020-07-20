@@ -18,20 +18,21 @@ import { SubscriptionDisposable } from './subscription-disposable';
 import { TypeRegistry } from './type-registry';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
 
-// Urls containing this prefix are local blob not yet been uploaded to the server e.g. blob:https://scriptureforge...
-const LOCAL_BLOB_PREFIX = 'blob:';
-
 /**
  * Formats the name of a file stored on the server into a URL that a http client can use to request the data.
  */
 export function formatFileSource(fileType: FileType, source: string): string {
-  if (!source.startsWith(LOCAL_BLOB_PREFIX)) {
+  if (!isLocalBlobUrl(source)) {
     if (source.startsWith('/')) {
       source = source.substring(1);
     }
     source = `${environment.assets}${fileType}/${source}`;
   }
   return source;
+}
+
+export function isLocalBlobUrl(url: string): boolean {
+  return url.startsWith('blob:');
 }
 
 /**
@@ -156,7 +157,7 @@ export class FileService extends SubscriptionDisposable {
       return undefined;
     } else {
       // The cache needs to be updated if no file exists or the onlineUrl does not match a valid request url.
-      const notYetUploaded = url.startsWith(LOCAL_BLOB_PREFIX);
+      const notYetUploaded = isLocalBlobUrl(url);
       if (!this.pwaService.isOnline || notYetUploaded) {
         return fileData;
       }

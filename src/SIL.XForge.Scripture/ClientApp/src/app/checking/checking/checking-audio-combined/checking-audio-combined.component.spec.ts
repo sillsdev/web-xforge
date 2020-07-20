@@ -5,6 +5,7 @@ import { ngfModule } from 'angular-file';
 import { mock, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -17,6 +18,7 @@ import { CheckingAudioCombinedComponent } from './checking-audio-combined.compon
 
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
+const mockedPwaService = mock(PwaService);
 
 describe('CheckingAudioCombinedComponent', () => {
   configureTestingModule(() => ({
@@ -29,7 +31,8 @@ describe('CheckingAudioCombinedComponent', () => {
     imports: [UICommonModule, ngfModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: UserService, useMock: mockedUserService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -98,6 +101,7 @@ class TestEnvironment {
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
+    when(mockedPwaService.isOnline).thenReturn(true);
     this.fixture.detectChanges();
   }
 
