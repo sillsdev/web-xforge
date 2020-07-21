@@ -32,7 +32,7 @@
         fill: $purpleLight;
       }
     }
-    mdc-icon {
+    mdc-icon:first-child {
       color: $purpleMedium;
       fill: $purpleMedium;
       transition: color 0.15s;
