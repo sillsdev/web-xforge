@@ -48,9 +48,8 @@ import { UsersModule } from './users/users.module';
     BrowserAnimationsModule,
     CoreModule,
     HttpClientModule,
-    // not ready for production yet - 2018-11 IJH
     ServiceWorkerModule.register('ngsw-worker.js', {
-      enabled: environment.pwaTest, // || environment.production,
+      enabled: environment.pwaTest || environment.production,
       registrationStrategy: 'registerImmediately'
     }),
     TranslateModule,
