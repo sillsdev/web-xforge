@@ -143,22 +143,7 @@ namespace SIL.XForge.Scripture.Services
             WritingSystemRepository.Initialize();
             ScrTextCollection.Initialize(SyncDir);
             RegistryServer.Initialize(_applicationProductVersion);
-        }
-
-        /// <summary> Copy resource files from the Assembly Directory into the sync directory. </summary>
-        public void InstallStyles(UserSecret userSecret)
-        {
-            string usfmStyFile = Path.Combine(SyncDir, "usfm.sty");
-            if (!File.Exists(usfmStyFile))
-            {
-                string[] resources = new[] { "usfm.sty", "revisionStyle.sty", "revisionTemplate.tem" };
-                foreach (string resource in resources)
-                {
-                    string target = Path.Combine(SyncDir, resource);
-                    string source = Path.Combine(AssemblyDirectory, resource);
-                    File.Copy(source, target, true);
-                }
-            }
+            InstallStyles();
         }
 
         /// <summary>
@@ -429,6 +414,22 @@ namespace SIL.XForge.Scripture.Services
             }
             var hgMerge = Path.Combine(AssemblyDirectory, "ParatextMerge.py");
             HgWrapper.SetDefault(new Hg(customHgPath, hgMerge, AssemblyDirectory));
+        }
+
+        /// <summary> Copy resource files from the Assembly Directory into the sync directory. </summary>
+        private void InstallStyles()
+        {
+            string usfmStyFile = Path.Combine(SyncDir, "usfm.sty");
+            if (!File.Exists(usfmStyFile))
+            {
+                string[] resources = new[] { "usfm.sty", "revisionStyle.sty", "revisionTemplate.tem" };
+                foreach (string resource in resources)
+                {
+                    string target = Path.Combine(SyncDir, resource);
+                    string source = Path.Combine(AssemblyDirectory, resource);
+                    File.Copy(source, target, true);
+                }
+            }
         }
 
         /// <summary>

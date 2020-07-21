@@ -689,7 +689,7 @@ namespace SIL.XForge.Scripture.Services
                 string scrtextDir = Path.Combine(SyncDir, projectId, textTypeDir);
                 ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
                 var scrText = new MockScrText(projectName);
-                scrText.Settings.Guid = guid;
+                scrText.CachedGuid = guid;
                 scrText.Data.Add("RUT", ruthBookUsfm);
                 return scrText;
             }

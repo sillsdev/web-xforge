@@ -22,8 +22,12 @@ namespace SIL.XForge.Scripture.Services
             _language = new MockScrLanguage(this);
         }
 
-        public Dictionary<string, string> Data = new Dictionary<string, string>();
+        public string CachedGuid
+        {
+            set { cachedGuid = value; }
+        }
 
+        public Dictionary<string, string> Data = new Dictionary<string, string>();
 
         /// <summary>
         /// Return text of specified chapter or book.
