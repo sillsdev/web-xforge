@@ -63,7 +63,7 @@ export class FileService extends SubscriptionDisposable {
               await this.onlineDeleteFile(fileType, fileData.projectRef, fileData.id, fileData.deleteRef);
               await this.offlineStore.delete(fileType, fileData.id);
             } else if (fileData.onlineUrl == null && fileData.projectRef != null) {
-              // The audio file has not been uploaded to the server
+              // The file has not been uploaded to the server
               const doc = await realtimeService.onlineFetch<ProjectDataDoc>(
                 fileData.dataCollection,
                 fileData.realtimeDocRef!
@@ -84,7 +84,7 @@ export class FileService extends SubscriptionDisposable {
   }
 
   /**
-   * Uploads afile to the file server, or if offline, stores the file in IndexedDB and uploads next time there is a
+   * Uploads a file to the file server, or if offline, stores the file in IndexedDB and uploads next time there is a
    * valid connection.
    */
   async uploadFile(
@@ -105,10 +105,10 @@ export class FileService extends SubscriptionDisposable {
       }
       return onlineUrl;
     } else {
-      // Store the audio in indexedDB until we go online again
-      const localAudioData = createUploadFileData(dataCollection, dataId, projectId, docId, blob, filename);
-      await this.offlineStore.put(fileType, localAudioData);
-      return URL.createObjectURL(localAudioData.blob);
+      // Store the file in indexedDB until we go online again
+      const localFileData = createUploadFileData(dataCollection, dataId, projectId, docId, blob, filename);
+      await this.offlineStore.put(fileType, localFileData);
+      return URL.createObjectURL(localFileData.blob);
     }
   }
 
@@ -155,7 +155,7 @@ export class FileService extends SubscriptionDisposable {
       }
       return undefined;
     } else {
-      // The cache needs to be updated if no audio exists or the onlineUrl does not match a valid request url.
+      // The cache needs to be updated if no file exists or the onlineUrl does not match a valid request url.
       const notYetUploaded = url.startsWith(LOCAL_BLOB_PREFIX);
       if (!this.pwaService.isOnline || notYetUploaded) {
         return fileData;
