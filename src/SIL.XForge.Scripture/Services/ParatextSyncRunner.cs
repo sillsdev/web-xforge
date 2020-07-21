@@ -241,7 +241,6 @@ namespace SIL.XForge.Scripture.Services
             if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
                 return false;
 
-            _paratextService.InstallStyles(_userSecret);
             List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();

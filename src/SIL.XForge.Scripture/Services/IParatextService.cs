@@ -10,7 +10,6 @@ namespace SIL.XForge.Scripture.Services
     public interface IParatextService
     {
         void Init();
-        void InstallStyles(UserSecret userSecret);
         Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret);
         string GetParatextUsername(UserSecret userSecret);
         Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId);
