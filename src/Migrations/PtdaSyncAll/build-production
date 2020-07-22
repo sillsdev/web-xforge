@@ -14,7 +14,7 @@ set -ue -o pipefail
 
 outputProductName="ptda-sync-all-$(date '+%Y%m%d%H%M%S')"
 outputDir="bin/${outputProductName}"
-dotnet publish -c Release --runtime "linux-x64" -o "${outputDir}"
+dotnet publish -o "${outputDir}"
 package="$(mktemp -d)/${outputProductName}.tar.xz"
 cd "${outputDir}/.."
 tar cfJ "${package}" ${outputProductName}
