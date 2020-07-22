@@ -6,15 +6,16 @@
 #
 # Usage: ./build-production
 #
-# To run product on another computer:
+# To run product on another computer (with ASPNETCORE_ENVIRONMENT set to Development on a workstation, Staging for QA,
+# or omitted for Live):
 # tar xf ptda-sync-all-*.tar.xz
-# SF_APP_DIR="/path/to/sf/app" ptda-sync-all-*/PtdaSyncAll |& tee /tmp/ptda.log
+# ASPNETCORE_ENVIRONMENT=Development SF_APP_DIR="/path/to/sf/app" ptda-sync-all-*/PtdaSyncAll |& tee /tmp/ptda.log
 
 set -ue -o pipefail
 
 outputProductName="ptda-sync-all-$(date '+%Y%m%d%H%M%S')"
 outputDir="bin/${outputProductName}"
-dotnet publish -c Release --runtime "linux-x64" -o "${outputDir}"
+dotnet publish --runtime "linux-x64" -o "${outputDir}"
 package="$(mktemp -d)/${outputProductName}.tar.xz"
 cd "${outputDir}/.."
 tar cfJ "${package}" ${outputProductName}

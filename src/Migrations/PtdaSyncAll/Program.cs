@@ -1,37 +1,43 @@
 using System;
-using System.IO;
-using System.Linq;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Autofac;
 using MongoDB.Driver;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
-using SIL.XForge.Scripture.Models;
 using SIL.XForge.Realtime;
+using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 
 namespace PtdaSyncAll
 {
     /// <summary>
     /// Sync all SF projects between SF DB and Paratext Data Access Web API.
-    /// This is the first step in migrating to using ParatextData.dll for sync
-    /// and storing data.
+    /// This is the first step in migrating to using ParatextData.dll for sync and storing data.
     /// Fails to run if SF server is running, with error
     /// > System.Net.Http.HttpRequestException: An error occurred while sending the request.
     /// >  ---> System.IO.IOException: The response ended prematurely.
+    /// This app works by starting up a subset of the regular SF services, then using SF as a library to perform tasks.
     /// </summary>
     public class Program
     {
         public static async Task Main(string[] args)
         {
             string sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
-
             Directory.SetCurrentDirectory(sfAppDir);
-            IWebHostBuilder builder = SIL.XForge.Scripture.Program.CreateWebHostBuilder(args);
+            // Can alternatively use the SF startup configurations:
+            // IWebHostBuilder builder = SIL.XForge.Scripture.Program.CreateWebHostBuilder(args);
+            IWebHostBuilder builder = CreateWebHostBuilder(args);
             IWebHost webHost = builder.Build();
             webHost.Start();
             await Inquiry(webHost);
@@ -39,12 +45,10 @@ namespace PtdaSyncAll
         }
 
         /// <summary>
-        /// Query information that will show whether we should be able to sync
-        /// all projects. In addition to reporting information on projects and
-        /// whether there is an admin that can sync the project, this method
-        /// shows that the admin can successfully perform queries to both the
-        /// PT Registry and the PT Data Access web APIs, via various
-        /// ParatextService method calls.
+        /// Query information that will show whether we should be able to sync all projects. In addition to reporting
+        /// information on projects and whether there is an admin that can sync the project, this method  shows that
+        /// the admin can successfully perform queries to both the PT Registry and the PT Data Access web APIs, via
+        /// various ParatextService method calls.
         /// </summary>
         public static async Task Inquiry(IWebHost webHost)
         {
@@ -152,8 +156,8 @@ namespace PtdaSyncAll
         }
 
         /// <summary>
-        /// As claimed by tokens in userSecret. Looks like it corresponds to
-        /// `userId` in PT Registry project members query.
+        /// As claimed by tokens in userSecret. Looks like it corresponds to `userId` in PT Registry project members
+        /// query.
         /// </summary>
         private static string GetParatextUserId(UserSecret userSecret)
         {
@@ -162,6 +166,40 @@ namespace PtdaSyncAll
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim claim = accessToken.Claims.FirstOrDefault(c => c.Type == "sub");
             return claim?.Value;
+        }
+
+        /// <summary>
+        /// This was copied and modified from `SIL.XForge.Scripture/Program.cs`.
+        /// </summary>
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+        {
+            IWebHostBuilder builder = WebHost.CreateDefaultBuilder(args);
+
+            // Secrets to connect to PT web API are associated with the SIL.XForge.Scripture assembly.
+            Assembly sfAssembly = System.Reflection.Assembly.GetAssembly(typeof(ParatextService));
+
+            IConfigurationRoot configuration = new ConfigurationBuilder()
+                .AddUserSecrets(sfAssembly)
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .Build();
+
+            return builder
+                .ConfigureAppConfiguration((context, config) =>
+                    {
+                        IWebHostEnvironment env = context.HostingEnvironment;
+                        if (env.IsDevelopment() || env.IsEnvironment("Testing"))
+                            config.AddJsonFile("appsettings.user.json", true);
+                        else
+                            config.AddJsonFile("secrets.json", true, true);
+                        if (env.IsEnvironment("Testing"))
+                        {
+                            var appAssembly = Assembly.Load(new AssemblyName(env.ApplicationName));
+                            if (appAssembly != null)
+                                config.AddUserSecrets(appAssembly, true);
+                        }
+                    })
+                .UseConfiguration(configuration)
+                .UseStartup<Startup>();
         }
     }
 }
