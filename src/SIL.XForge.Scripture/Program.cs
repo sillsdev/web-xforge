@@ -11,7 +11,7 @@ namespace SIL.XForge.Scripture
     {
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Services.GetService <.Run();
+            CreateWebHostBuilder(args).Build().Run();
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args)

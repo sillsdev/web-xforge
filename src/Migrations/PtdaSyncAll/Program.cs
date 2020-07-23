@@ -53,7 +53,7 @@ namespace PtdaSyncAll
             IWebHost webHost = builder.Build();
             await webHost.StartAsync();
             await SynchronizeAllProjects(webHost, true);
-            // todo await webHost.StopAsync();
+            await webHost.StopAsync();
             Console.WriteLine("Migrator done.");
         }
 
@@ -192,7 +192,8 @@ namespace PtdaSyncAll
             // ISyncService syncService = webHost.Services.GetService<ISyncService>();
 
             // return syncService.SyncAsync(sfUserId, sfProjectId, false);
-            var a = webHost.Services.GetService<ParatextSyncRunner>();
+            var syncRunner = webHost.Services.GetService<ParatextSyncRunner>();
+            return syncRunner.RunAsync(sfProjectId, sfUserId, false);
             // IRealtimeService realtimeService = webHost.Services.GetService<IRealtimeService>();
             // IParatextService paratextService = webHost.Services.GetService<IParatextService>();
             // IRepository<UserSecret> userSecretRepo = webHost.Services.GetService<IRepository<UserSecret>>();
@@ -211,7 +212,7 @@ namespace PtdaSyncAll
             // IDeltaUsxMapper deltaUsxMapper;
             // IParatextNotesMapper notesMapper;
             // ILogger<ParatextSyncRunner> logger;
-            return null;
+            // return null;
         }
 
         /// <summary>
@@ -310,8 +311,12 @@ namespace PtdaSyncAll
                         // UI strings that we have localized.
                         opts.SupportedUICultures = supportedCultures;
                     });
+                services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+                services.AddSFMachine(Configuration);
 
                 containerBuilder.Populate(services);
+                containerBuilder.RegisterType<ParatextSyncRunner>();
                 ApplicationContainer = containerBuilder.Build();
                 return new AutofacServiceProvider(ApplicationContainer);
             }
