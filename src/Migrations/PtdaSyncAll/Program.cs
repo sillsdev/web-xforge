@@ -45,6 +45,9 @@ namespace PtdaSyncAll
     {
         public static async Task Main(string[] args)
         {
+            string mode = Environment.GetEnvironmentVariable("PTDASYNCALL_MODE") ?? "inspect";
+            bool doSynchronizations = mode == "sync";
+            Console.WriteLine($"PtdaSyncAll starting. Will sync: {doSynchronizations}");
             string sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
             Directory.SetCurrentDirectory(sfAppDir);
             // Can alternatively use the SF startup configurations:
@@ -52,9 +55,9 @@ namespace PtdaSyncAll
             IWebHostBuilder builder = CreateWebHostBuilder(args);
             IWebHost webHost = builder.Build();
             await webHost.StartAsync();
-            await SynchronizeAllProjects(webHost, true);
+            await SynchronizeAllProjects(webHost, doSynchronizations);
             await webHost.StopAsync();
-            Console.WriteLine("Migrator done.");
+            Console.WriteLine("PtdaSyncAll done.");
         }
 
         /// <summary>
