@@ -1,28 +1,17 @@
 using System.Security.Cryptography;
-using System.Text;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace SIL.XForge.Services
 {
     /// <summary>Security related utilities</summary>
     public class SecurityService : ISecurityService
     {
-        /// <summary>Return a random 16-character base-36 string.</summary>
+        /// <summary>Return a random 16-character base-64 string that is safe to use in URLs.</summary>
         public string GenerateKey()
         {
-            char[] chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".ToCharArray();
-            byte[] data = new byte[1];
-            using (var crypto = new RNGCryptoServiceProvider())
-            {
-                crypto.GetNonZeroBytes(data);
-                data = new byte[16];
-                crypto.GetNonZeroBytes(data);
-            }
-            var key = new StringBuilder(16);
-            foreach (byte b in data)
-            {
-                key.Append(chars[b % (chars.Length)]);
-            }
-            return key.ToString();
+            System.Span<byte> data = stackalloc byte[12];  // 12 bytes of data become 16 bytes of base-64 text
+            RandomNumberGenerator.Fill(data);
+            return WebEncoders.Base64UrlEncode(data);
         }
     }
 }
