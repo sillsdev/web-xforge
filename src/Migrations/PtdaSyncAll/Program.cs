@@ -51,18 +51,21 @@ namespace PtdaSyncAll
             // IWebHostBuilder builder = SIL.XForge.Scripture.Program.CreateWebHostBuilder(args);
             IWebHostBuilder builder = CreateWebHostBuilder(args);
             IWebHost webHost = builder.Build();
-            webHost.Start();
-            await Inquiry(webHost);
+            await webHost.StartAsync();
+            await SynchronizeAllProjects(webHost, true);
+            // todo await webHost.StopAsync();
             Console.WriteLine("Migrator done.");
         }
 
         /// <summary>
-        /// Query information that will show whether we should be able to sync all projects. In addition to reporting
-        /// information on projects and whether there is an admin that can sync the project, this method  shows that
+        /// First-stage migrator. Synchronize all SF projects to the Paratext Data Access server.
+        /// First query information that will show whether we should be able to sync all projects. In addition to reporting
+        /// information on projects and whether there is an admin that can sync the project, this method shows that
         /// the admin can successfully perform queries to both the PT Registry and the PT Data Access web APIs, via
         /// various ParatextService method calls.
+        /// If `doSynchronizations` is false, only do the above reporting. If true, also synchronize the SF DB with the Paratext Data Access server.
         /// </summary>
-        public static async Task Inquiry(IWebHost webHost)
+        public static async Task SynchronizeAllProjects(IWebHost webHost, bool doSynchronizations)
         {
             IRealtimeService realtimeService = webHost.Services.GetService<IRealtimeService>();
             IParatextService paratextService = webHost.Services.GetService<IParatextService>();
@@ -71,6 +74,7 @@ namespace PtdaSyncAll
             char bullet1 = '>';
             char bullet2 = '*';
             char bullet3 = '-';
+            List<Task> syncTasks = new List<Task>();
 
             // Report on all SF projects.
             foreach (SFProject sfProject in allSfProjects)
@@ -158,13 +162,56 @@ namespace PtdaSyncAll
                         ptProjectNames = "None.";
                     }
                     Console.WriteLine(ptProjectNames);
+
+                    // TODO Not for each admin? :)
+                    if (doSynchronizations)
+                    {
+                        Task syncTask = SynchronizeProject(webHost, sfUserId, sfProject.Id);
+                        syncTasks.Add(syncTask);
+                    }
                 }
+            }
+            Console.WriteLine("Waiting for synchronization tasks to finish (if any).");
+            try
+            {
+                await Task.WhenAll(syncTasks);
+                Console.WriteLine("Synchronization tasks are finished.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("There was a problem with one or more synchronization tasks. Exception is:");
+                Console.WriteLine($"{e}");
             }
         }
 
-        public static void MigrateAsync(IWebHost webHost)
+        /// <summary>
+        /// Synchronize project between SF DB and Paratext Data Access server.
+        /// </summary>
+        public static Task SynchronizeProject(IWebHost webHost, string sfUserId, string sfProjectId)
         {
-            throw new NotImplementedException();
+            // ISyncService syncService = webHost.Services.GetService<ISyncService>();
+
+            // return syncService.SyncAsync(sfUserId, sfProjectId, false);
+            var a = webHost.Services.GetService<ParatextSyncRunner>();
+            // IRealtimeService realtimeService = webHost.Services.GetService<IRealtimeService>();
+            // IParatextService paratextService = webHost.Services.GetService<IParatextService>();
+            // IRepository<UserSecret> userSecretRepo = webHost.Services.GetService<IRepository<UserSecret>>();
+            // IQueryable<SFProject> allSfProjects = realtimeService.QuerySnapshots<SFProject>();
+
+            // IOptions<SiteOptions> siteOptions;
+            // ;
+
+            // IRepository<SFProjectSecret> projectSecrets = webHost.Services.GetService<IRepository<SFProjectSecret>>(); ;
+            // ISFProjectService projectService = webHost.Services.GetService<ISFProjectService>();
+
+            // IEngineService engineService = webHost.Services.GetService<IEngineService>();
+
+            // IFileSystemService fileSystemService = webHost.Services.GetService<IFileSystemService>();
+
+            // IDeltaUsxMapper deltaUsxMapper;
+            // IParatextNotesMapper notesMapper;
+            // ILogger<ParatextSyncRunner> logger;
+            return null;
         }
 
         /// <summary>
