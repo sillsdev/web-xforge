@@ -1,0 +1,50 @@
+@model RazorPageSettings
+@inject IHtmlLocalizer<SharedResource> SharedLocalizer
+
+<footer>
+    <div class="container">
+        <div class="mdl-grid">
+            <div class="mdl-cell mdl-cell--12-col flex justify-content-space-between align-items-end">
+                <div id="profile">
+                    <ul class="app">
+                        <li class="copyright">&copy; @DateTime.Now.Year <a target="_blank" href="http://www.sil.org">SIL International</a></li>
+                        <li class="version">@Model.ProductVersion</li>
+                    </ul>
+                    <ul class="links">
+                        <li><a asp-page="Terms">@SharedLocalizer[SharedResource.Keys.Terms]</a></li>
+                        <li><a asp-page="Privacy">@SharedLocalizer[SharedResource.Keys.Privacy]</a></li>
+                        <li><a asp-page="LearnMore">@SharedLocalizer[SharedResource.Keys.LearnMore]</a></li>
+                    </ul>
+                </div>
+                <div id="logos">
+                    <a id="payap" href="https://inter.payap.ac.th/" target="_blank"><img src="~/images/logo-payap.svg" alt="Payap University Logo"></a>
+                    <a id="sil" href="http://www.sil.org/" target="_blank"><img src="~/images/logo-sil.svg" alt="SIL International Logo"></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<script type="text/javascript">
+    webAuth.checkSession({}, function (err, authResult) {
+        if (!err) {
+            var options = { state: JSON.stringify({}) };
+            webAuth.authorize(options);
+        }
+    });
+</script>
+<script src="https://d2wy8f7a9ursnm.cloudfront.net/v6/bugsnag.min.js"></script>
+<script>
+    window.bugsnagClient = bugsnag(@Html.Raw(@Model.BugsnagConfig));
+</script>
+<script src="~/lib/material-design-lite/js/material.min.js"></script>
+<script src="https://cdn.auth0.com/js/auth0/9.10/auth0.min.js"></script>
+<script type="text/javascript">
+    var webAuth = new auth0.WebAuth({
+        clientID: '@Model.ClientId',
+        domain: '@Model.Domain',
+        responseType: 'token id_token',
+        redirectUri: window.location.origin + '/projects',
+        scope: 'openid profile email @Model.Scope',
+        audience: '@Model.Audience'
+    });
+</script>
