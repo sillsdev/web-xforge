@@ -4,13 +4,13 @@ using Microsoft.Extensions.Localization;
 
 namespace SIL.XForge.Scripture.Pages
 {
-    public class IndexModel : PageModel
+    public class LearnMoreModel : PageModel
     {
         public IStringLocalizer Localizer { get; }
 
-        public IndexModel(IStringLocalizerFactory localizerFactory)
+        public LearnMoreModel(IStringLocalizerFactory localizerFactory)
         {
-            Localizer = localizerFactory.Create("Pages.Index", Assembly.GetExecutingAssembly().GetName().Name);
+            Localizer = localizerFactory.Create("Pages.LearnMore", Assembly.GetExecutingAssembly().GetName().Name);
         }
     }
 }

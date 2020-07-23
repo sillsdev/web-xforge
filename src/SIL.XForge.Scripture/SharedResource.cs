@@ -28,6 +28,7 @@ namespace SIL.XForge.Scripture
             public const string InviteSignature = "InviteSignature";
             public const string InviteSubject = "InviteSubject";
             public const string Language = "Language";
+            public const string LearnMore = "LearnMore";
             public const string LogIn = "LogIn";
             public const string MessageMissing = "MessageMissing";
             public const string NameMissing = "NameMissing";
