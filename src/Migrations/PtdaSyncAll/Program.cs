@@ -62,11 +62,12 @@ namespace PtdaSyncAll
 
         /// <summary>
         /// First-stage migrator. Synchronize all SF projects to the Paratext Data Access server.
-        /// First query information that will show whether we should be able to sync all projects. In addition to reporting
-        /// information on projects and whether there is an admin that can sync the project, this method shows that
-        /// the admin can successfully perform queries to both the PT Registry and the PT Data Access web APIs, via
+        /// First query information that will show whether we should be able to sync all projects. In addition to
+        /// reporting information on projects and whether there is an admin that can sync the project, this method shows
+        /// that the admin can successfully perform queries to both the PT Registry and the PT Data Access web APIs, via
         /// various ParatextService method calls.
-        /// If `doSynchronizations` is false, only do the above reporting. If true, also synchronize the SF DB with the Paratext Data Access server.
+        /// If `doSynchronizations` is false, only do the above reporting. If true, also synchronize the SF DB with the
+        /// Paratext Data Access server.
         /// </summary>
         public static async Task SynchronizeAllProjects(IWebHost webHost, bool doSynchronizations)
         {
