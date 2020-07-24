@@ -110,7 +110,9 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($"  Failure. Skipping. Error was {e.Message}");
+                        Console.WriteLine($"  {bullet2} Failure getting SF user's PT username or PT user id. " +
+                            $"Skipping. SF user id was {sfUserId}. If known, PT username was {ptUsername}. " +
+                            $"Error with stack was {e}");
                         continue;
                     }
                     Console.WriteLine($"  {bullet2} PT user '{ptUsername}', "
@@ -131,7 +133,8 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($"      Failure. Skipping. Error was {e.Message}");
+                        Console.WriteLine($"      Failure fetching user's PT project roles. Skipping. " +
+                            $"Error was {e.Message}");
                         continue;
                     }
                     if (ptProjectRoles.TryGetValue(ptUserId, out string ptRole))
@@ -150,7 +153,8 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($"    Failure. Skipping. Error was {e.Message}");
+                        Console.WriteLine($"    {bullet3} Failure fetching user's PT projects. Skipping. " +
+                            $"Error was {e.Message}");
                         continue;
                     }
 
@@ -162,7 +166,8 @@ namespace PtdaSyncAll
                     string ptProjectNames = string.Join(',', ptProjectNamesList);
                     if (ptProjectNamesList.Count() < 1)
                     {
-                        ptProjectNames = "None.";
+                        ptProjectNames = $"User is not on this project. " +
+                            $"PT reports they are on this many PT projects: {userPtProjects.Count()}";
                     }
                     Console.WriteLine(ptProjectNames);
 
