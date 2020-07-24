@@ -78,7 +78,6 @@ namespace PtdaSyncAll
             char bullet1 = '>';
             char bullet2 = '*';
             char bullet3 = '-';
-            List<Task> syncTasks = new List<Task>();
 
             // Report on all SF projects.
             foreach (SFProject sfProject in allSfProjects)
@@ -175,21 +174,21 @@ namespace PtdaSyncAll
                     // TODO Not for each admin? :)
                     if (doSynchronizations)
                     {
-                        Task syncTask = SynchronizeProject(webHost, sfUserId, sfProject.Id);
-                        syncTasks.Add(syncTask);
+                        Console.WriteLine($"  {bullet2} Synchronizing SF project {sfProject.Id} " +
+                            $"as SF user {sfUserId} ...");
+                        try
+                        {
+                            await SynchronizeProject(webHost, sfUserId, sfProject.Id);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine($"    {bullet3} There was a problem with synchronizing. Exception is:");
+                            Console.WriteLine($"{e}");
+                            continue;
+                        }
+                        Console.WriteLine($"    {bullet3} Done synchronization with no reported problems.");
                     }
                 }
-            }
-            Console.WriteLine("Waiting for synchronization tasks to finish (if any).");
-            try
-            {
-                await Task.WhenAll(syncTasks);
-                Console.WriteLine("Synchronization tasks are finished.");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("There was a problem with one or more synchronization tasks. Exception is:");
-                Console.WriteLine($"{e}");
             }
         }
 
