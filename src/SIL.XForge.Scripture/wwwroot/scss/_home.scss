@@ -147,6 +147,8 @@
 
 .quote {
   background: $purpleDark;
+  display: flex;
+  justify-content: center;
   .quote-container {
     max-width: 1600px;
     display: flex;
