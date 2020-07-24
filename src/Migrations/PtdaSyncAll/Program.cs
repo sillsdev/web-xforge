@@ -201,6 +201,7 @@ namespace PtdaSyncAll
 
             // return syncService.SyncAsync(sfUserId, sfProjectId, false);
             var syncRunner = webHost.Services.GetService<ParatextSyncRunner>();
+            // using (var scope=.)
             return syncRunner.RunAsync(sfProjectId, sfUserId, false);
             // IRealtimeService realtimeService = webHost.Services.GetService<IRealtimeService>();
             // IParatextService paratextService = webHost.Services.GetService<IParatextService>();
@@ -323,8 +324,10 @@ namespace PtdaSyncAll
 
                 services.AddSFMachine(Configuration);
 
+                services.AddTransient<ParatextSyncRunner>();
+
                 containerBuilder.Populate(services);
-                containerBuilder.RegisterType<ParatextSyncRunner>();
+                // containerBuilder.RegisterType<ParatextSyncRunner>();
                 ApplicationContainer = containerBuilder.Build();
                 return new AutofacServiceProvider(ApplicationContainer);
             }
