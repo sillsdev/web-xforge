@@ -25,9 +25,15 @@ namespace SIL.XForge
         {
             if (!response.IsSuccessStatusCode)
             {
-                string error = await response.Content.ReadAsStringAsync();
-                var exception = new HttpRequestException(
-                    $"HTTP Request error, Code: {response.StatusCode}, Content: {error}");
+                var exception = new HttpRequestException(string.Join("\n", new string[] {
+                    "HTTP Request error:",
+                    "Request (request content omitted for security reasons):",
+                    response.RequestMessage.ToString(),
+                    "Response:",
+                    response.ToString(),
+                    "Response content:",
+                    await response.Content.ReadAsStringAsync()
+                }).Replace("\n", "\n    "));
                 ReportException(exception);
                 throw exception;
             }
