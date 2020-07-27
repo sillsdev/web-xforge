@@ -4,7 +4,6 @@
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
 @model LearnMoreModel
 
-
 <section id="learn-more" class="inside">
     <div class="container">
         <div class="mdl-grid section-header">
@@ -105,8 +104,8 @@
         <div class="mdl-grid">
             <div class="mdl-cell mdl-cell--12-col">
                 <div class="statement-buttons flex direction-column align-items-center">
-                    <h2>Ready to try Scripture Forge?</h2>
-                    <a class="mdl-button mdl-button--raised mdl-button--accent" href="/login?sign-up=true">@SharedLocalizer[SharedResource.Keys.SignUp]</a>
+                    <h2>@Localizer["ReadyToTry"]</h2>
+                    <a class="mdl-button mdl-button--raised mdl-button--accent button-lg" href="/login?sign-up=true">@SharedLocalizer[SharedResource.Keys.SignUp]</a>
                 </div>
             </div>
         </div>
