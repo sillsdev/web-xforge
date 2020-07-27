@@ -24,9 +24,12 @@
   margin: 0 auto;
 }
 section.inside {
-  padding: 150px 0 30px;
-  @include media-breakpoint-down(sm) {
-    padding-top: 120px;
+  padding: 200px 0 30px;
+  @include media-breakpoint-only(sm) {
+    padding-top: 160px;
+  }
+  @include media-breakpoint-only(xs) {
+    padding-top: 140px;
   }
 }
 section.panel {

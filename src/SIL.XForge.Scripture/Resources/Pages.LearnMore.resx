@@ -213,4 +213,7 @@
   <data name="LearnTranslateTitle" xml:space="preserve">
     <value>Translation</value>
   </data>
+  <data name="ReadyToTry" xml:space="preserve">
+    <value>Ready to try Scripture Forge?</value>
+  </data>
 </root>
