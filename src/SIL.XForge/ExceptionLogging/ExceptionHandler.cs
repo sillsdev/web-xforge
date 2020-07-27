@@ -4,12 +4,26 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace SIL.XForge
 {
     public class ExceptionHandler : IExceptionHandler
     {
         private readonly Bugsnag.IClient _bugsnag;
+
+        public async static Task<string> CreateHttpRequestErrorMessage(HttpResponseMessage response)
+        {
+            string responseContent = string.Join("\n", (await response.Content.ReadAsStringAsync()).Split('\n').Take(10));
+            return string.Join("\n", new string[] {
+                    "HTTP Request error:",
+                    $"{response.RequestMessage.Method} {response.RequestMessage.RequestUri}",
+                    "Response:",
+                    response.ToString(),
+                    "Response content begins with:",
+                    responseContent
+                }).Replace("\n", "\n    ");
+        }
 
         public ExceptionHandler(Bugsnag.IClient client)
         {
@@ -25,15 +39,7 @@ namespace SIL.XForge
         {
             if (!response.IsSuccessStatusCode)
             {
-                var exception = new HttpRequestException(string.Join("\n", new string[] {
-                    "HTTP Request error:",
-                    "Request (request content omitted for security reasons):",
-                    response.RequestMessage.ToString(),
-                    "Response:",
-                    response.ToString(),
-                    "Response content:",
-                    await response.Content.ReadAsStringAsync()
-                }).Replace("\n", "\n    "));
+                var exception = new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
                 ReportException(exception);
                 throw exception;
             }
