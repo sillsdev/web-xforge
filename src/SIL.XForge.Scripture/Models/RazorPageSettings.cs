@@ -1,13 +1,9 @@
 namespace SIL.XForge.Scripture.Models
 {
+    /// <summary>Various settings to be used Razor pages</summary>
     public class RazorPageSettings
     {
         public string ProductVersion { get; set; }
         public string BugsnagConfig { get; set; }
-        public string Domain { get; set; }
-        public string ClientId { get; set; }
-        public string Audience { get; set; }
-        public string Scope { get; set; }
-        public string Origin { get; set; }
     }
 }

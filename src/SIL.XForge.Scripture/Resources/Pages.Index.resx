@@ -162,20 +162,20 @@
   <data name="EngageTitle" xml:space="preserve">
     <value>Engage with the language community. Collaborate with your peers.</value>
   </data>
+  <data name="QuoteQuotation1" xml:space="preserve">
+    <value>It was so easy! ...all I had to do to get started was log in using my Paratext registration and boom! It was all there.</value>
+  </data>
+  <data name="QuoteQuotation2" xml:space="preserve">
+    <value>It’s so great that feedback can be gathered either way. All the features are wonderful for remote contributors, including the option to answer the questions with an audio recording.</value>
+  </data>
+  <data name="QuoteQuotation3" xml:space="preserve">
+    <value>Right away I chose a verse and wrote a checking question for it. Then I also recorded myself asking that checking question.</value>
+  </data>
   <data name="QuoteQuoterName" xml:space="preserve">
     <value>Trevor Deck</value>
   </data>
-  <data name="QuoteQuotationOne" xml:space="preserve">
-    <value>It was so easy! ...all I had to do to get started was log in using my Paratext registration and boom! It was all there.</value>
-  </data>
   <data name="QuoteQuoterRole" xml:space="preserve">
     <value>SIL Global Diaspora Specialist</value>
-  </data>
-  <data name="QuoteQuotationThree" xml:space="preserve">
-    <value>Right away I chose a verse and wrote a checking question for it. Then I also recorded myself asking that checking question.</value>
-  </data>
-  <data name="QuoteQuotationTwo" xml:space="preserve">
-    <value>It’s so great that feedback can be gathered either way. All the features are wonderful for remote contributors, including the option to answer the questions with an audio recording.</value>
   </data>
   <data name="Statement" xml:space="preserve">
     <value>Where translation and the community meet.</value>

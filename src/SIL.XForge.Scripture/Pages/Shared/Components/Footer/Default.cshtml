@@ -24,27 +24,8 @@
         </div>
     </div>
 </footer>
-<script type="text/javascript">
-    webAuth.checkSession({}, function (err, authResult) {
-        if (!err) {
-            var options = { state: JSON.stringify({}) };
-            webAuth.authorize(options);
-        }
-    });
-</script>
 <script src="https://d2wy8f7a9ursnm.cloudfront.net/v6/bugsnag.min.js"></script>
 <script>
     window.bugsnagClient = bugsnag(@Html.Raw(@Model.BugsnagConfig));
 </script>
 <script src="~/lib/material-design-lite/js/material.min.js"></script>
-<script src="https://cdn.auth0.com/js/auth0/9.10/auth0.min.js"></script>
-<script type="text/javascript">
-    var webAuth = new auth0.WebAuth({
-        clientID: '@Model.ClientId',
-        domain: '@Model.Domain',
-        responseType: 'token id_token',
-        redirectUri: window.location.origin + '/projects',
-        scope: 'openid profile email @Model.Scope',
-        audience: '@Model.Audience'
-    });
-</script>

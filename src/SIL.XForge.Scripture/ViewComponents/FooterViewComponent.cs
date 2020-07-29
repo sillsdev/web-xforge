@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Reflection;
-using System.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -10,6 +9,7 @@ using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.ViewComponents
 {
+    /// <summary>Provides a global shared footer with common logic for all pages</summary>
     public class FooterViewComponent : ViewComponent
     {
         private readonly IOptions<AuthOptions> authOptions;
@@ -38,11 +38,6 @@ namespace SIL.XForge.Scripture.ViewComponents
                 };
             appSettings.BugsnagConfig = JsonConvert.SerializeObject(bugsnagConfig, Formatting.Indented);
 
-            appSettings.Domain = authOptions.Value.Domain;
-            appSettings.ClientId = authOptions.Value.FrontendClientId;
-            appSettings.Audience = authOptions.Value.Audience;
-            appSettings.Scope = authOptions.Value.Scope;
-            appSettings.Origin = HttpUtility.UrlEncode(siteOptions.Value.Origin.ToString());
             return View(appSettings);
         }
 
