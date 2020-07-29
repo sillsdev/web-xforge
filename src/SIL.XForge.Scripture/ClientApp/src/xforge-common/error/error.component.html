@@ -7,11 +7,11 @@
           <p>{{ data.message }}</p>
           <p [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></p>
           <p *ngIf="browserUnsupported" [innerHTML]="t('unsupported_browser', browserLinks)"></p>
-          <a (click)="this.showDetails = !this.showDetails" [fxShow]="data.stack">{{
+          <a (click)="this.showDetails = !this.showDetails">{{
             showDetails ? t("hide_details") : t("show_details")
           }}</a>
-          <p [fxShow]="showDetails">{{ t("error_id", { errorId: data.eventId }) }}</p>
-          <pre [fxShow]="showDetails">{{ data.stack }}</pre>
+          <p class="error-id" [fxShow]="showDetails">{{ t("error_id", { errorId: data.eventId }) }}</p>
+          <pre [fxShow]="showDetails && data.stack">{{ data.stack }}</pre>
         </mdc-dialog-content>
         <mdc-dialog-actions>
           <button mdcDialogButton type="button" mdcDialogAction="close">{{ t("close") }}</button>
