@@ -147,30 +147,30 @@
 
 .quote {
   background: $purpleDark;
+  display: flex;
+  justify-content: center;
   .quote-container {
     max-width: 1600px;
     display: flex;
     align-items: center;
-    margin: 0 auto;
+    padding: 20px;
+    justify-content: center;
     @include media-breakpoint-down(md) {
-      flex-direction: column;
+      display: block;
     }
 
     img {
       height: auto;
-      margin-left: auto;
-      @include media-breakpoint-only(xl) {
-        max-width: 50vw;
-      }
+      margin-left: 30px;
       @include media-breakpoint-down(md) {
-        margin-left: 0;
+        margin: auto;
+        display: block;
       }
     }
 
     .quote-text {
       max-width: 630px;
       padding: 50px 50px 40px 20px;
-      margin: auto auto auto 0;
       display: flex;
       align-items: flex-start;
       @include media-breakpoint-down(md) {
@@ -212,174 +212,16 @@
   }
 }
 
-#learn-more {
-  .features-container {
-    .features {
-      position: relative;
-      padding: 0 80px;
-      margin-top: 120px;
-      box-sizing: border-box;
-      width: 100%;
-
-      @media (max-width: 767px) {
-        padding: 0 70px;
-        margin-top: 70px;
-      }
-
-      @include media-breakpoint-down(xs) {
-        padding: 0 30px;
-      }
-
-      &:nth-child(1) {
-        margin-top: 80px;
-        @media (max-width: 767px) {
-          margin-top: 0px;
-        }
-      }
-      .tns-controls {
-        display: flex;
-        align-items: center;
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        left: 0;
-        @media (max-width: 767px) {
-          align-items: flex-start;
-          top: -10px;
-        }
-        @include media-breakpoint-down(xs) {
-          top: -5px;
-        }
-
-        &:active {
-          outline: none;
-        }
-
-        button {
-          position: absolute;
-          z-index: 1;
-          border: 0;
-          background: none;
-          padding: 0;
-          i {
-            font-size: 50px;
-            @include media-breakpoint-down(xs) {
-              font-size: 40px;
-            }
-          }
-          &:focus {
-            outline: none;
-          }
-
-          &[data-controls='prev'] {
-            left: 0;
-            @include media-breakpoint-down(xs) {
-              left: -8px;
-            }
-          }
-          &[data-controls='next'] {
-            right: 0;
-            @include media-breakpoint-down(xs) {
-              right: -8px;
-            }
-          }
-        }
-      }
-      .tns-nav {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 10px 0;
-
-        [aria-controls] {
-          z-index: 1;
-          width: 9px;
-          height: 9px;
-          padding: 0;
-          margin: 0 5px;
-          border-radius: 50%;
-          background: #ddd;
-          border: 0;
-        }
-        .tns-nav-active {
-          background: #999;
-        }
-      }
-      .slider > div {
-        .feature {
-          display: flex;
-          align-items: flex-start;
-
-          @media (max-width: 767px) {
-            flex-direction: column;
-          }
-
-          &.right {
-            .text {
-              order: 2;
-              padding: 0 0 0 35px;
-            }
-            img,
-            iframe {
-              order: 1;
-              @media (max-width: 767px) {
-                order: 3;
-              }
-            }
-          }
-        }
-
-        .text {
-          padding: 0 35px 0 0;
-          flex: 1;
-          @media (max-width: 767px) {
-            padding: 0 0 5px !important;
-          }
-          h3 {
-            margin: 0 0 16px;
-          }
-
-          i.material-icons {
-            font-size: 3em;
-            float: left;
-            line-height: 1;
-            padding-right: 5px;
-          }
-        }
-
-        img {
-          height: auto;
-        }
-        iframe {
-          height: 400px;
-          @include media-breakpoint-down(md) {
-            height: 194px;
-          }
-          @media (max-width: 767px) {
-            height: 315px;
-          }
-        }
-        img,
-        iframe {
-          max-width: 100%;
-          width: 60%;
-          @include media-breakpoint-down(md) {
-            width: 45%;
-          }
-          @media (max-width: 767px) {
-            width: 100%;
-          }
-        }
-      }
-    }
-  }
-}
-
 .statement {
-  background: $purpleDark;
+  padding-bottom: 75px;
+  @include media-breakpoint-down(lg) {
+    padding-bottom: 7vw;
+  }
+  @include media-breakpoint-down(xs) {
+    padding-bottom: 50px;
+  }
   .statement-text {
     text-align: center;
-    color: $white;
     font-size: 50px;
     line-height: 1.2;
     padding: 75px 0;
@@ -390,6 +232,14 @@
     @include media-breakpoint-down(xs) {
       font-size: 22px;
       padding: 50px 0;
+    }
+  }
+  .statement-buttons {
+    a {
+      margin: 0 20px;
+      @include media-breakpoint-down(xs) {
+        margin: 0 10px;
+      }
     }
   }
 }
