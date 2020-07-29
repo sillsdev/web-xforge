@@ -30,7 +30,7 @@
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSetupSync", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</li>
                         </ol>
                     </div>
-                    <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/mRsuBIkAhhk" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <iframe width="560" height="315" src='@(ViewData["Scheme"])://www.youtube-nocookie.com/embed/mRsuBIkAhhk?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
                 <div class="feature right">
                     <div class="text">
@@ -43,7 +43,7 @@
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSeeInteract", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
                         </ol>
                     </div>
-                    <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/rKQj6_954ic" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <iframe width="560" height="315" src='@(ViewData["Scheme"])://www.youtube-nocookie.com/embed/rKQj6_954ic?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
             </div>
         </div>
