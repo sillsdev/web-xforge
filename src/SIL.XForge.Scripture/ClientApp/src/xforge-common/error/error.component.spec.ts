@@ -22,28 +22,21 @@ describe('ErrorComponent', () => {
     expect(env.errorMessage.textContent).toBe('The error message');
     expect(env.showDetails.textContent).toBe('Show details');
     expect(env.stackTrace.style.display).toBe('none');
+    expect(env.errorId.style.display).toBe('none');
 
     env.showDetails.click();
     env.fixture.detectChanges();
     expect(env.showDetails.textContent).toBe('Hide details');
     expect(env.stackTrace.style.display).not.toBe('none');
     expect(env.stackTrace.textContent).toBe('The error stack');
+    expect(env.errorId.style.display).not.toBe('none');
+    expect(env.errorId.textContent).toBe('Error ID: 0');
 
     env.showDetails.click();
     env.fixture.detectChanges();
     expect(env.showDetails.textContent).toBe('Show details');
     expect(env.stackTrace.style.display).toBe('none');
-  }));
-
-  it('should only offer to show more when a stack trace is available', fakeAsync(() => {
-    const env = new TestEnvironment({
-      message: 'Testing without stack',
-      eventId: '1'
-    });
-
-    expect(env.errorMessage.textContent).toBe('Testing without stack');
-    expect(env.showDetails.style.display).toBe('none');
-    expect(env.stackTrace.style.display).toBe('none');
+    expect(env.errorId.style.display).toBe('none');
   }));
 });
 
@@ -104,6 +97,10 @@ class TestEnvironment {
 
   get stackTrace(): HTMLElement {
     return this.element.querySelector('pre') as HTMLElement;
+  }
+
+  get errorId(): HTMLElement {
+    return this.element.querySelector('.error-id') as HTMLElement;
   }
 
   get closeButton(): HTMLElement {
