@@ -3,6 +3,25 @@
 @inject IViewLocalizer Localizer
 @inject IHtmlLocalizer<SharedResource> SharedLocalizer
 @model IndexModel
+@section scripts {
+    <script src="https://cdn.auth0.com/js/auth0/9.10/auth0.min.js"></script>
+    <script type="text/javascript">
+        var webAuth = new auth0.WebAuth({
+            clientID: '@ViewData["ClientId"]',
+            domain: '@ViewData["Domain"]',
+            responseType: 'token id_token',
+            redirectUri: window.location.origin + '/projects',
+            scope: 'openid profile email @ViewData["Scope"]',
+            audience: '@ViewData["Audience"]'
+        });
+        webAuth.checkSession({}, function (err, authResult) {
+            if (!err) {
+                var options = { state: JSON.stringify({}) };
+                webAuth.authorize(options);
+            }
+        });
+    </script>
+}
 
 <section id="hero">
     <div class="container">
@@ -80,11 +99,11 @@
         <div class="quote-text">
             <i class="material-icons">format_quote</i>
             <p>
-                @Localizer["QuoteQuotationOne"]<br />
+                @Localizer["QuoteQuotation1"]<br />
                 <br />
-                @Localizer["QuoteQuotationTwo"]<br />
+                @Localizer["QuoteQuotation2"]<br />
                 <br />
-                @Localizer["QuoteQuotationThree"]<br />
+                @Localizer["QuoteQuotation3"]<br />
                 <br />
                 <span class="quoter-name">@Localizer["QuoteQuoterName"]</span>
                 <span class="quoter-role">@Localizer["QuoteQuoterRole"]</span>
