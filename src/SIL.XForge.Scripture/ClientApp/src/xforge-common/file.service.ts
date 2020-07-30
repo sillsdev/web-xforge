@@ -106,8 +106,10 @@ export class FileService extends SubscriptionDisposable {
       }
       return onlineUrl;
     } else {
-      // Store the file in indexedDB until we go online again
-      const localFileData = createUploadFileData(dataCollection, dataId, projectId, docId, blob, filename);
+      // Store the file in indexedDB until we go online again.
+      // Use blob.slice() to get a copy of the original. It appears that blobs which references data from files
+      // on disk cause a NotReadableError during upload when the user returns online using Chrome incognito mode.
+      const localFileData = createUploadFileData(dataCollection, dataId, projectId, docId, blob.slice(), filename);
       await this.offlineStore.put(fileType, localFileData);
       return URL.createObjectURL(localFileData.blob);
     }
