@@ -1,25 +1,47 @@
 @import '../checking-global-vars';
 
-.player {
-  display: flex;
-  align-items: center;
+.audio-area {
   padding: 4px;
   border-radius: 4px;
   border: 1px solid $borderColor;
-  .duration,
-  .current-time {
-    padding: 0 10px;
+
+  .player {
+    display: flex;
+    align-items: center;
+
+    .duration,
+    .current-time {
+      padding: 0 10px;
+    }
+    .slider {
+      flex: 1;
+      width: 100%;
+    }
   }
-  .slider {
-    flex: 1;
-    width: 100%;
-  }
+
   .audio-not-available {
-    width: 100%;
-    text-align: center;
+    display: flex;
+    align-items: center;
+
+    // Same font size and padding as mdc-button to match Play button
     mdc-icon {
-      font-size: 1em;
-      vertical-align: top;
+      font-size: 24px;
+      padding: 12px;
+    }
+
+    .audio-unavailable-message {
+      // Same left padding as .player.current-time
+      padding-left: 10px;
+    }
+
+    a {
+      color: $blueMedium;
+      cursor: pointer;
+
+      mdc-icon {
+        font-size: 1.3em;
+        padding: 6px;
+      }
     }
   }
 }
