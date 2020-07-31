@@ -33,6 +33,7 @@
     "awaiting_response_from": "Ожидание ответа от{{ newLine }}{{ email }}",
     "cancel_invite": "Отменить приглашение",
     "change_roles_and_permissions": "Роли и права пользователей могут быть изменены {{ boldStart }}только{{ boldEnd }} в программе {{ boldStart }}Paratext{{ boldEnd }}. Откройте проект в {{ boldStart }}Paratext{{ boldEnd }}, в окне проекта нажмите {{ templateTagBoundary }}{{ templateTagBoundary }}, затем {{ boldStart }}Настройки проекта{{ boldEnd }}, затем {{ boldStart }}Права доступа пользователей{{ boldEnd }}. После выполнения {{ italicsStart }}Обмена данными проекта{{ italicsEnd }} в {{ boldStart }}Paratext{{ boldEnd }} , а затем {{ italicsStart }}Синхронизации{{ italicsEnd }} в {{ boldStart }}Scripture Forge{{ boldEnd }}, новые настройки прав пользователей вступят в силу здесь, как только соответствующий пользователь войдёт при помощи своего аккаунта {{ boldStart }}Paratext{{ boldEnd }}.",
+    "connect_network_to_manage_users": "User management is disabled while offline. Please connect to the internet to manage users.",
     "filter_users": "Фильтр пользователей...",
     "me": "я",
     "no_users_found": "Пользователи не найдены",
@@ -46,6 +47,7 @@
     "based_on": "На основе",
     "choose_the_mother_project": "Выберите проект Paratext, на котором базируется ваш проект.",
     "community_checking": "Проверка сообщества",
+    "connect_network_to_connect_project": "Please connect to the internet to enable connecting to a project",
     "connect_paratext_project": "Подключить проект Paratext",
     "connect": "Подключиться",
     "connecting_to_project": "Подключение к {{ projectName }}...",
@@ -118,6 +120,7 @@
   "settings": {
     "anyone_with_a_link": "Любой, у кого есть ссылка",
     "based_on": "На основе",
+    "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to the internet to make changes.",
     "choose_the_paratext_project": "Выберите проект Paratext, на котором базируется ваш проект.",
     "danger_zone": "ОСТОРОЖНО!!!",
     "delete_this_project": "Удалить этот проект",
@@ -145,11 +148,13 @@
     "close": "Закрыть",
     "more": "More",
     "number_of_suggestions": "Number of suggestions",
+    "settings_not_available_offline": "These settings are not available while you are offline.",
     "suggestion_confidence": "Suggestion confidence",
     "translation_suggestions": "Translation suggestions",
     "translation_suggestions_settings": "Translation suggestions settings"
   },
   "sync": {
+    "connect_network_to_synchronize": "Please connect to the internet to synchronize this project",
     "last_synced_time_stamp": "Last synced on {{ timeStamp }}",
     "log_in_to_paratext": "Войти в Paratext",
     "never_been_synced": "Never been synced",

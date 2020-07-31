@@ -1,5 +1,6 @@
 {
   "app": {
+    "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "ທຸກຄຳຖາມ",
     "cannot_change_password": "Can't change password at this time. Try again later or report an issue in the Help menu.",
     "change_password": "ປ່ຽນ password",
@@ -179,6 +180,10 @@
     "upload_audio_file": "Upload Audio File",
     "upload": "Upload"
   },
+  "checking_audio_player": {
+    "audio_unavailable": "Audio unavailable.",
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+  },
   "checking_audio_recorder": {
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "record": "ບັນທຶກຂໍ້ຄວາມ",
@@ -218,6 +223,7 @@
   "error": {
     "chrome": "Chrome",
     "close": "ປິດ",
+    "error_id": "Error ID: {{ errorId }}",
     "error_occurred": "An error has occurred",
     "firefox": "Firefox",
     "hide_details": "Hide details",
@@ -268,7 +274,8 @@
     "link_sharing": "Link sharing",
     "not_inviting_already_member": "Not inviting: User is already a member of this project",
     "resend": "ສົ່ງອີກເທື່ອໜຶ່ງ",
-    "send": "ສົ່ງ"
+    "send": "ສົ່ງ",
+    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },
   "share_dialog": {
     "done": "ສຳເລັດ",

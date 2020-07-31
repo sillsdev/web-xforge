@@ -1,5 +1,6 @@
 {
   "app": {
+    "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "Todas las preguntas",
     "cannot_change_password": "No se puede cambiar la contraseña en este momento. Inténtalo de nuevo más tarde o informe de un problema en el menú Ayuda.",
     "change_password": "Cambiar la contraseña",
@@ -111,9 +112,9 @@
       "JSA": "Josué A. *obsoleto*",
       "JDB": "Jueces B. *obsoleto*",
       "TBS": "Tobias *obsoleto*",
-      "SST": "Susanna Th. *obsolete*",
-      "DNT": "Daniel Th. *obsolete*",
-      "BLT": "Bel Th. *obsolete*",
+      "SST": "Susana Th. *obsoleto*",
+      "DNT": "Daniel Th. *obsoleto*",
+      "BLT": "Bel Th. *obsoleto*",
       "XXA": "Extra A",
       "XXB": "Extra B",
       "XXC": "Extra C",
@@ -121,21 +122,21 @@
       "XXE": "Extra E",
       "XXF": "Extra F",
       "XXG": "Extra G",
-      "FRT": "Front Matter",
-      "BAK": "Back Matter",
-      "OTH": "Other Matter",
-      "3ES": "3 Ezra *obsolete*",
-      "EZA": "Apocalypse of Ezra",
-      "5EZ": "5 Ezra (Latin Prologue)",
-      "6EZ": "6 Ezra (Latin Epilogue)",
+      "FRT": "Materia frontal",
+      "BAK": "Materia dorsal",
+      "OTH": "Otra materia",
+      "3ES": "3 Esdras *obsoleto*",
+      "EZA": "Apocalipsis de Esdras",
+      "5EZ": "5 Esdras (Prólogo en Latín)",
+      "6EZ": "6 Esdras (Prólogo en Latín)",
       "INT": "Introducción",
       "CNC": "Concordancia ",
       "GLO": "Glosario ",
-      "TDX": "Topical Index",
-      "NDX": "Names Index",
-      "DAG": "Daniel Greek",
+      "TDX": "Índice de temas",
+      "NDX": "Índice de nombres",
+      "DAG": "Daniel griego",
       "PS3": "Salmos 152-155",
-      "2BA": "2 Baruch (Apocalypse)",
+      "2BA": "2 Baruc (Apocalipsis)",
       "LBA": "Libro de Baruc",
       "JUB": "Jubileos",
       "ENO": "Enoc",
@@ -179,6 +180,10 @@
     "upload_audio_file": "Cargar archivo de audio",
     "upload": "Cargar"
   },
+  "checking_audio_player": {
+    "audio_unavailable": "El audio no está disponible.",
+    "audio_cannot_be_played": "Este audio no puede ser reproducido mientras esté desconectado porque no ha sido descargado. Conéctese a Internet para reproducirlo."
+  },
   "checking_audio_recorder": {
     "mic_access_denied": "El acceso a su micrófono fue denegado. Por favor, habilite el micrófono desde su navegador.",
     "record": "Grabar",
@@ -218,6 +223,7 @@
   "error": {
     "chrome": "Chrome",
     "close": "Cerrar",
+    "error_id": "Error ID: {{ errorId }}",
     "error_occurred": "Se ha producido un error",
     "firefox": "Firefox",
     "hide_details": "Ocultar detalles",
@@ -234,7 +240,7 @@
     "unknown_error": "Error desconocido"
   },
   "issue_email": {
-    "body": "¡Gracias por reportar el incidente!\nNos ayudaría si a continuación completara algunos detalles sobre el incidente, pero envíelo incluso si no puede completar muchos.\nSi está solicitando una función, muchos de los campos pueden no ser aplicables.\nTenga en cuenta que su informe de errores estará disponible públicamente. Nunca envíe contraseñas u otra información secreta.\n\nInforme de errores\nUna descripción clara y concisa del error.\n\nPasos para reproducirlo\nPor ejemplo:\n1. Ir a...\n2. Haga clic en ...\n3. Desplácese hacia abajo hasta ...\n4. Ver el error\n\nEl comportamiento actual\nPor favor, describa el comportamiento exacto del problema que está observando.\n\nComportamiento esperado\nUna descripción clara y concisa de lo que esperaba que sucediera.\n\nCapturas de pantalla\nSi corresponde, agregue capturas de pantalla para ayudar a explicar su problema.\n\nInformación adicional\nAñada aquí cualquier otra información sobre el problema.\n\nPosible solución\nAñada aquí cualquier posible solución al problema.\n\nTu entorno:\nSoftware                 Versión\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
+    "body": "¡Gracias por reportar el incidente!\nNos ayudaría si a continuación completara algunos detalles sobre el incidente, pero envíelo incluso si no puede completar muchos.\nSi está solicitando una característica, muchos de los campos pueden no ser aplicables.\nTenga en cuenta que su informe de errores estará disponible públicamente. Nunca envíe contraseñas u otra información secreta.\n\nInforme de errores\nUna descripción clara y concisa del error.\n\nPasos para reproducirlo\nPor ejemplo:\n1. Ir a...\n2. Haga clic en ...\n3. Desplácese hacia abajo hasta ...\n4. Ver el error\n\nEl comportamiento actual\nPor favor, describa el comportamiento exacto del problema que está observando.\n\nComportamiento esperado\nUna descripción clara y concisa de lo que esperaba que sucediera.\n\nCapturas de pantalla\nSi corresponde, agregue capturas de pantalla para ayudar a explicar su problema.\n\nInformación adicional\nAñada aquí cualquier otra información sobre el problema.\n\nPosible solución\nAñada aquí cualquier posible solución al problema.\n\nTu entorno:\nSoftware                 Versión\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
     "not_applicable": "no aplica",
     "subject": "caso {{ siteName }}",
     "unknown": "desconocido"
@@ -268,7 +274,8 @@
     "link_sharing": "Compartir enlaces",
     "not_inviting_already_member": "No se invitó: El usuario ya es miembro de este proyecto",
     "resend": "Reenviar",
-    "send": "Enviar"
+    "send": "Enviar",
+    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },
   "share_dialog": {
     "done": "Terminado",

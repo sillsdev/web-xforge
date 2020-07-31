@@ -118,16 +118,16 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AboutCheckingTool" xml:space="preserve">
-    <value>The Community Checking tool facilitates a Scripture checking campaign, portion-by-portion, with the aim of getting broader feedback to the translation committee quickly.</value>
+    <value>Our Community Checking tool facilitates modular Scripture checking campaigns, to deliver broader feedback to the translation committee, faster.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
-    <value>Many Scripture projects today are engaging an increasingly geographically diverse group of heart-language speakers.</value>
+    <value>Scripture projects engage increasingly geographically diverse groups of heart language speakers.</value>
   </data>
   <data name="AboutFlexible" xml:space="preserve">
     <value>Flexible</value>
   </data>
   <data name="AboutFlexibleDescription" xml:space="preserve">
-    <value>2 There's no predefined set of questions that you have to use. {0}Compile questions that fit your context{1}.</value>
+    <value>2 Compile {0}unique questions{1} that fit your specific context.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
     <value>About Scripture Forge</value>
@@ -136,7 +136,7 @@
     <value>Works with Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 Simply {0}connect your Paratext project{1} to get started. {0}Synchronize{1} your project to keep it up-to-date with Paratext and send users responses back in Paratext Notes.</value>
+    <value>1 {0}Paratext integration{1} and {0}ongoing synchronization{1} keeps your project up-to-date and allows user feedback via {0}Paratext Notes{1}.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Extend your Reach With Scripture Checking</value>
@@ -145,13 +145,13 @@
     <value>User Engagement</value>
   </data>
   <data name="AboutUserEngagementDescription" xml:space="preserve">
-    <value>3 Turn on {0}"Share"{1} to enable users to invite a friend to join your campaign or keep feedback to a defined group. Users can answer questions, comment on other's answers and like other's responses.</value>
+    <value>3 {0}Invited users{1} can answer questions, leave comments on existing answers and like responses.</value>
   </data>
   <data name="Description" xml:space="preserve">
     <value>Um conjunto gratuito de ferramentas para fazer mais com o seu projeto no Paratext, onde você estiver. </value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
-    <value>Realizar verificação da comunidade</value>
+    <value>Engage in Community Checking</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
     <value>Colaborar com o Texto Bíblico</value>
@@ -161,5 +161,23 @@
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Interaja com a comunidade da língua. Colabore com os seus colegas.</value>
+  </data>
+  <data name="QuoteQuotation1" xml:space="preserve">
+    <value>It was so easy! ...all I had to do to get started was log in using my Paratext registration and boom! It was all there.</value>
+  </data>
+  <data name="QuoteQuotation2" xml:space="preserve">
+    <value>Right away I chose a verse and wrote a checking question for it. Then I also recorded myself asking that checking question.</value>
+  </data>
+  <data name="QuoteQuotation3" xml:space="preserve">
+    <value>It’s so great that feedback can be gathered either way. All the features are wonderful for remote contributors, including the option to answer the questions with an audio recording.</value>
+  </data>
+  <data name="QuoteQuoterName" xml:space="preserve">
+    <value>Trevor Deck</value>
+  </data>
+  <data name="QuoteQuoterRole" xml:space="preserve">
+    <value>SIL Global Diaspora Specialist</value>
+  </data>
+  <data name="Statement" xml:space="preserve">
+    <value>Where translation and the community meet.</value>
   </data>
 </root>

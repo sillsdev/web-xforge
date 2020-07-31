@@ -1,5 +1,6 @@
 {
   "app": {
+    "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤜꤟꤢꤪ꤭꤮ ꤕꤜꤤ꤭",
     "cannot_change_password": "ꤋꤥ꤭ꤑꤟꤢꤗꤢ꤬ ꤔꤟꤢꤧ꤬ꤓꤢꤨ꤬ꤜꤟꤛꤢ꤬ꤒꤢ꤬ꤕꤜꤢꤩ꤬ password ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ ꤟꤤ ꤒꤥ꤬꤯ ꤓꤢꤨ꤬ꤜꤟꤛꤢ꤬ ꤔꤥ꤬ ꤋꤛꤢꤩ꤭ꤞꤛꤢ ꤢꤧ꤬ꤕꤢ꤭ ꤔꤤ, ꤊꤤ꤬ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ ꤊꤝꤤ꤭ꤊꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤗꤟꤢꤩ꤬ꤡꤝꤟꤥ ꤘꤣ menu ꤔꤌꤣ꤬꤯",
     "change_password": "ꤓꤢꤨ꤬ꤜꤟꤛꤢ꤬ password",
@@ -179,6 +180,10 @@
     "upload_audio_file": "ꤙꤢꤩ꤬ꤓꤛꤢ꤬ ꤍꤟꤥ file",
     "upload": "ꤙꤢꤩ꤬ꤓꤛꤢ꤬"
   },
+  "checking_audio_player": {
+    "audio_unavailable": "Audio unavailable.",
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+  },
   "checking_audio_recorder": {
     "mic_access_denied": "ꤔꤟꤢꤧ꤬ ꤜꤟꤢꤩꤔꤟꤤꤘꤢ꤭ ꤔꤢ microphone ꤔꤌꤣ꤬ ꤢ꤬ꤙꤤ ꤕꤢ꤭꤯ ꤋꤛꤢꤞꤢꤧꤘꤥ꤭ ꤗꤟꤢꤩ꤬ ꤊꤟꤢꤦꤚꤟꤢꤩ enable the microphone ꤘꤣ ꤔꤟꤢꤧ꤬ browser ꤊꤢꤨ꤭ ꤔꤌꤣ꤬꤯ ",
     "record": "ꤕꤟꤢꤦꤍꤟꤥ",
@@ -218,6 +223,7 @@
   "error": {
     "chrome": "Chrome",
     "close": "ꤗꤟꤢꤩ꤬ꤙꤤ",
+    "error_id": "Error ID: {{ errorId }}",
     "error_occurred": "ꤢ꤬ꤞꤢꤦ ꤥ꤬ꤕꤢ꤬ ꤒꤣ꤬ꤊꤟꤌꤣ꤬",
     "firefox": "Firefox",
     "hide_details": "ꤙꤢꤩ꤬ꤢꤟꤌꤣꤊꤛꤢ꤭ ꤢ꤬ꤕꤢ꤬ꤒꤤ ꤒꤢ꤬ꤟꤢꤩ꤬",
@@ -268,7 +274,8 @@
     "link_sharing": "ꤘꤛꤢꤩ ꤕꤢꤩ ꤢꤨ꤭ Link",
     "not_inviting_already_member": "ꤢꤧꤗꤟꤥ꤬ ꤒꤥ꤬: ꤕꤚꤟꤢꤧ꤬ꤔꤢꤪ꤭ꤢꤩ꤬ ꤛꤢꤩ꤭ꤗꤢ꤬ ꤢ꤬ ꤕꤢ꤬ ꤓꤌꤣ꤭ꤟꤢꤪ ꤘꤣ project ꤢ꤬ꤊꤢꤨ꤭ ꤟꤢꤪ",
     "resend": "ꤞꤢꤨ꤭ ꤒꤢ꤬ꤕꤜꤢꤩ꤬ ꤋꤛꤢꤩ꤭",
-    "send": "ꤞꤢꤨ꤭"
+    "send": "ꤞꤢꤨ꤭",
+    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },
   "share_dialog": {
     "done": "ꤢ꤬ꤓꤌꤣ꤭ꤟꤢꤪ",
