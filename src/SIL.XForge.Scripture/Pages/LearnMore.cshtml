@@ -14,7 +14,7 @@
                 </div>
             </div>
             <div class="mdl-cell mdl-cell--6-col mdl-cell--12-col-tablet intro">
-                <p>@Localizer["LearnCheckingHow"]</p>
+                <p>@(Html.Raw(Model.Localizer["LearnCheckingHow", "<i>", "</i>"]))</p>
             </div>
         </div>
         <div class="mdl-grid features-container">
@@ -27,7 +27,7 @@
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSetupConnect", "<span class=\"highlight\">", "</span>"]))</li>
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSetupAddQuestions", "<span class=\"highlight\">", "</span>"]))</li>
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSetupShare", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
-                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSetupSync", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSetupSync", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
                         </ol>
                     </div>
                     <iframe width="560" height="315" src='@(ViewData["Scheme"])://www.youtube-nocookie.com/embed/mRsuBIkAhhk?origin=@(ViewData["Origin"])' frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -35,9 +35,9 @@
                 <div class="feature right">
                     <div class="text">
                         <h3>@Localizer["LearnSliderCheckingSeeHeader"]</h3>
-                        <p><i class="material-icons">movie</i>@(Html.Raw(Model.Localizer["LearnSliderCheckingSeeDescription", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</p>
+                        <p><i class="material-icons">movie</i>@(Html.Raw(Model.Localizer["LearnSliderCheckingSeeDescription", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</p>
                         <ol>
-                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSeeConnect", "<span class=\"highlight\">", "</span>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSeeConnect", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSeeAnswer", "<span class=\"highlight\">", "</span>"]))</li>
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSeeReference", "<span class=\"highlight\">", "</span>"]))</li>
                             <li>@(Html.Raw(Model.Localizer["LearnSliderCheckingSeeInteract", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
@@ -63,9 +63,11 @@
                 <div class="feature right">
                     <div class="text">
                         <h3>@Localizer["LearnSliderTranslateEditHeader"]</h3>
-                        <p><i class="material-icons">edit</i>@(Html.Raw(Model.Localizer["LearnSliderTranslateEditDescription", "<span class=\"highlight\">", "</span>", "<b>", "</b>"]))</p>
-                        <p>@Localizer["LearnSliderTranslateEditStructure"]</p>
-                        <p>@(Html.Raw(Model.Localizer["LearnSliderTranslateEditSync", "<span class=\"highlight\">", "</span>"]))</p>
+                        <p><i class="material-icons">edit</i>@(Html.Raw(Model.Localizer["LearnSliderTranslateEditDescription", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</p>
+                        <ol>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderTranslateEditScripture", "<span class=\"highlight\">", "</span>", "<i>", "</i>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderTranslateEditSync", "<span class=\"highlight\">", "</span>"]))</li>
+                        </ol>
                     </div>
                     <img src="/images/TranslateTool_TET_MRK_1.png" alt="" />
                 </div>
@@ -73,25 +75,34 @@
                     <div class="text">
                         <h3>@Localizer["LearnSliderTranslateCollaborateHeader"]</h3>
                         <p><i class="material-icons">people</i>@(Html.Raw(Model.Localizer["LearnSliderTranslateCollaborateDescription", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</p>
-                        <p>@(Html.Raw(Model.Localizer["LearnSliderTranslateCollaborateRealtime", "<span class=\"highlight\">", "</span>"]))</p>
+                        <ol>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderTranslateCollaborateLocation", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderTranslateCollaborateVerse", "<span class=\"highlight\">", "</span>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderTranslateCollaborateRealtime", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</li>
+                        </ol>
                     </div>
                     <img src="/images/CollaborateOnScripture.gif" alt="" />
                 </div>
                 <div class="feature right">
                     <div class="text">
                         <h3>@Localizer["LearnSliderSuggestionSetupHeader"]</h3>
-                        <p><i class="material-icons">computer</i>@(Html.Raw(Model.Localizer["LearnSliderSuggestionSetupDescription", "<b>", "</b>"]))</p>
-                        <p>@(Html.Raw(Model.Localizer["LearnSliderSuggestionSetupBest", "<span class=\"highlight\">", "</span>"]))</p>
+                        <p><i class="material-icons">computer</i>@(Html.Raw(Model.Localizer["LearnSliderSuggestionSetupDescription", "<i>", "</i>", "<b>", "</b>"]))</p>
+                        <ol>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderSuggestionSetupBased", "<b>", "</b>", "<span class=\"highlight\">", "</span>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderSuggestionSetupBest", "<span class=\"highlight\">", "</span>"]))</li>
+                        </ol>
                     </div>
                     <img src="/images/Settings_NLTTest.png" alt="" />
                 </div>
                 <div class="feature">
                     <div class="text">
                         <h3>@Localizer["LearnSliderSuggestionAcceptHeader"]</h3>
-                        <p><i class="material-icons">school</i>@(Html.Raw(Model.Localizer["LearnSliderSuggestionAcceptDescription", "<span class=\"highlight\">", "</span>"]))</p>
-                        <p>@(Html.Raw(Model.Localizer["LearnSliderSuggestionAcceptEnter", "<i>", "</i>"]))</p>
-                        <p>@(Html.Raw(Model.Localizer["LearnSliderSuggestionAcceptEsc", "<i>", "</i>"]))</p>
-                        <p>@(Html.Raw(Model.Localizer["LearnSliderSuggestionAcceptLearn", "<span class=\"highlight\">", "</span>"]))</p>
+                        <p><i class="material-icons">school</i>@(Html.Raw(Model.Localizer["LearnSliderSuggestionAcceptDescription", "<i>", "</i>"]))</p>
+                        <ol>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderSuggestionAcceptReceive", "<i>", "</i>", "<span class=\"highlight\">", "</span>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderSuggestionAcceptEnter", "<i>", "</i>"]))</li>
+                            <li>@(Html.Raw(Model.Localizer["LearnSliderSuggestionAcceptLearn", "<span class=\"highlight\">", "</span>"]))</li>
+                        </ol>
                     </div>
                     <img src="/images/TranslateTool_NLT_JHN_1_Suggestion.png" alt="" />
                 </div>
