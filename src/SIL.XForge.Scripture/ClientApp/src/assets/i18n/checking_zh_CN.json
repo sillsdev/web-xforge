@@ -1,5 +1,6 @@
 {
   "app": {
+    "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "所有问题",
     "cannot_change_password": "目前无法更改密码。",
     "change_password": "请稍后再试或在“帮助”菜单中报告问题",
@@ -179,6 +180,10 @@
     "upload_audio_file": "上传音频文件",
     "upload": "上载"
   },
+  "checking_audio_player": {
+    "audio_unavailable": "Audio unavailable.",
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+  },
   "checking_audio_recorder": {
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
     "record": "录制音频",
@@ -218,6 +223,7 @@
   "error": {
     "chrome": "Chrome浏览器",
     "close": "关闭",
+    "error_id": "Error ID: {{ errorId }}",
     "error_occurred": "发生了错误",
     "firefox": "火狐浏览器",
     "hide_details": "隐藏细节",
@@ -268,7 +274,8 @@
     "link_sharing": "链接共享",
     "not_inviting_already_member": "不邀请：用户已经是该项目的成员",
     "resend": "重发",
-    "send": "发送"
+    "send": "发送",
+    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },
   "share_dialog": {
     "done": "完成",

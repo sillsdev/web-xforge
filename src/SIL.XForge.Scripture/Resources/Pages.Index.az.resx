@@ -118,16 +118,16 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AboutCheckingTool" xml:space="preserve">
-    <value>The Community Checking tool facilitates a Scripture checking campaign, portion-by-portion, with the aim of getting broader feedback to the translation committee quickly.</value>
+    <value>Bizim İcma yoxlama alətimiz, tərcümə komitəsinə daha sürətli rəy vermək üçün parça-parça Müqəddəs Kitab yoxlama təşəbbüsləri asanlaşdırır.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
-    <value>Many Scripture projects today are engaging an increasingly geographically diverse group of heart-language speakers.</value>
+    <value>Kələmə layihələr getdikcə coğrafi cəhətdən müxtəlif dil danışan qrupları daxil edir.</value>
   </data>
   <data name="AboutFlexible" xml:space="preserve">
     <value>Flexible</value>
   </data>
   <data name="AboutFlexibleDescription" xml:space="preserve">
-    <value>2 There's no predefined set of questions that you have to use. {0}Compile questions that fit your context{1}.</value>
+    <value>Xüsusi vəziyyətinizə uyğun gələn {0} vahid suallar {1} tərtib edin.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
     <value>About Scripture Forge</value>
@@ -136,7 +136,7 @@
     <value>Works with Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 Simply {0}connect your Paratext project{1} to get started. {0}Synchronize{1} your project to keep it up-to-date with Paratext and send users responses back in Paratext Notes.</value>
+    <value>1 {0} Paratekst ilə birləşdirməsi {1} və {0} davam edən sinxronizasiya {1} layihənizi ən son deyişliklər ilə uyğunlaşdırır və {0} Paratekst Qeydləri {1} vasitəsilə istifadəçi rəy verməyə imkan verir.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Extend your Reach With Scripture Checking</value>
@@ -145,13 +145,13 @@
     <value>User Engagement</value>
   </data>
   <data name="AboutUserEngagementDescription" xml:space="preserve">
-    <value>3 Turn on {0}"Share"{1} to enable users to invite a friend to join your campaign or keep feedback to a defined group. Users can answer questions, comment on other's answers and like other's responses.</value>
+    <value>3 {0} Dəvət olunmuş istifadəçilər {1} suallara cavab verə bilər, mövcud cavablara rəy yaza və cavabları bəyənə bilər.</value>
   </data>
   <data name="Description" xml:space="preserve">
     <value>Paratext layihənizdə istənilən yerdə sizə kömək edəcək pulsuz vasitələr toplusu</value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
-    <value>Kəlamı dil daşıyıcıları vasitəsilə yoxlayın. </value>
+    <value>İcma yoxlaması ilə istirak etmək</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
     <value>Kəlamın yoxlanması işində başqaları ilə əməkdaşlıq etmək</value>
@@ -161,5 +161,23 @@
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Dil daşıyıcıları ilə ünsiyyət qurun. Həmyaşıdlarınız ilə əməkdaşlıq edin. </value>
+  </data>
+  <data name="QuoteQuotation1" xml:space="preserve">
+    <value>Çox asan oldu! ... başlamaq üçün ancaq Paratekst qeydiyyatı istifadə etməyə lazım idi və dərhal girə bildim! Hamısı orada idi.</value>
+  </data>
+  <data name="QuoteQuotation2" xml:space="preserve">
+    <value>Dərhal bir ayə seçdim və bunun üçün yoxlama sualını yazdım. Sonra da yoxlama sualını verərək özümü qeyd etdim.</value>
+  </data>
+  <data name="QuoteQuotation3" xml:space="preserve">
+    <value>Lap yaxşı ki, rəylərin hər iki şəkildə toplanmaq ola bilər. Bütün xüsusiyyətlər, səs yazısı ilə suallara cavab vermək imkanı daxil olmaqla, uzaq töhfəçilər üçün əladır.</value>
+  </data>
+  <data name="QuoteQuoterName" xml:space="preserve">
+    <value>Trevor Dek</value>
+  </data>
+  <data name="QuoteQuoterRole" xml:space="preserve">
+    <value>SIL Dünya Diaspor Mütəxəssisi</value>
+  </data>
+  <data name="Statement" xml:space="preserve">
+    <value>İcma və tərcümə etmək rast gələn yeri.</value>
   </data>
 </root>
