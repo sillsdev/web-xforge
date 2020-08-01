@@ -6,7 +6,7 @@ import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@an
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CookieService } from 'ngx-cookie-service';
-import { Question } from 'realtime-server/lib/scriptureforge/models/question';
+import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
@@ -14,13 +14,17 @@ import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, objectContaining, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
+import { FileService } from 'xforge-common/file.service';
+import { createStorageFileData, FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
-import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
@@ -34,17 +38,19 @@ const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedHttpClient = mock(HttpClient);
 const mockedCookieService = mock(CookieService);
+const mockedFileService = mock(FileService);
 
 describe('QuestionDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [ReactiveFormsModule, FormsModule, DialogTestModule],
+    imports: [ReactiveFormsModule, FormsModule, DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: HttpClient, useMock: mockedHttpClient },
-      { provide: CookieService, useMock: mockedCookieService }
+      { provide: CookieService, useMock: mockedCookieService },
+      { provide: FileService, useMock: mockedFileService }
     ]
   }));
 
@@ -350,13 +356,15 @@ describe('QuestionDialogComponent', () => {
       answers: [],
       isArchived: false,
       dateCreated: '',
-      dateModified: ''
+      dateModified: '',
+      audioUrl: '/path/to/audio.mp3'
     });
     flush();
     const textDocId = new TextDocId('project01', 42, 1, 'target');
     expect(env.component.textDocId!.toString()).toBe(textDocId.toString());
     verify(mockedProjectService.getText(deepEqual(textDocId))).once();
     expect(env.component.selection!.toString()).toEqual('LUK 1:3');
+    expect(env.component.audioSource).toBeDefined();
   }));
 
   it('displays error editing end reference to different book', fakeAsync(() => {
@@ -530,28 +538,39 @@ class TestEnvironment {
 
   readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor(question?: Question, defaultVerseRef?: VerseRef) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
+    let questionDoc: QuestionDoc | undefined;
+    if (question != null) {
+      const questionId = getQuestionDocId(question.projectRef, question.dataId);
+      this.realtimeService.addSnapshot(QuestionDoc.COLLECTION, {
+        id: questionId,
+        data: question
+      });
+      questionDoc = this.realtimeService.get<QuestionDoc>(QuestionDoc.COLLECTION, questionId);
+      questionDoc.onlineFetch();
+    }
     const config: MdcDialogConfig<QuestionDialogData> = {
       data: {
-        question: question ? question : undefined,
+        questionDoc,
         textsByBookId: {
           MAT: {
             bookNum: 40,
             hasSource: false,
-            chapters: [{ number: 1, lastVerse: 25 }, { number: 2, lastVerse: 23, isValid: true }]
+            chapters: [{ number: 1, lastVerse: 25, isValid: true }, { number: 2, lastVerse: 23, isValid: true }]
           },
           LUK: { bookNum: 42, hasSource: false, chapters: [{ number: 1, lastVerse: 80, isValid: true }] },
           JHN: { bookNum: 43, hasSource: false, chapters: [{ number: 1, lastVerse: 0, isValid: true }] }
         },
         projectId: 'project01',
         defaultVerse: defaultVerseRef
-      } as QuestionDialogData,
+      },
       viewContainerRef
     };
+
     this.dialogRef = TestBed.get(MdcDialog).open(QuestionDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');
     this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
@@ -570,6 +589,9 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     when(mockedProjectService.get(anything())).thenResolve({} as SFProjectDoc);
+    when(mockedFileService.findOrUpdateCache(FileType.Audio, anything(), 'question01', anything())).thenResolve(
+      createStorageFileData(QuestionDoc.COLLECTION, 'question01', '/path/to/audio.mp3', getAudioBlob())
+    );
     this.fixture.detectChanges();
   }
 

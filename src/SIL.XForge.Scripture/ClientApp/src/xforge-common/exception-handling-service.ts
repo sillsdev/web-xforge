@@ -51,6 +51,7 @@ export class ExceptionHandlingService implements ErrorHandler {
     }
 
     if (typeof error !== 'object' || error === null || Array.isArray(error)) {
+      // using String(value) rather than plain string concatenation, because concatenating a symbol throws an error
       error = new Error('Unknown error: ' + String(error));
     }
 

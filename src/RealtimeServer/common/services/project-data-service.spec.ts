@@ -43,7 +43,7 @@ describe('ProjectDataService', () => {
       createDoc<TestData>(nonmemberConn, TEST_DATA_COLLECTION, 'test04', {
         projectRef: 'project01',
         ownerRef: 'nonmember',
-        subData: []
+        children: []
       })
     ).rejects.toThrow();
 
@@ -52,7 +52,7 @@ describe('ProjectDataService', () => {
       createDoc<TestData>(observerConn, TEST_DATA_COLLECTION, 'test04', {
         projectRef: 'project01',
         ownerRef: 'observer',
-        subData: []
+        children: []
       })
     ).rejects.toThrow();
 
@@ -61,7 +61,7 @@ describe('ProjectDataService', () => {
       createDoc<TestData>(adminConn, TEST_DATA_COLLECTION, 'test04', {
         projectRef: 'project01',
         ownerRef: 'admin',
-        subData: []
+        children: []
       })
     ).resolves.not.toThrow();
   });
@@ -73,21 +73,21 @@ describe('ProjectDataService', () => {
     const nonmemberConn = clientConnect(env.server, 'nonmember');
     await expect(
       submitJson0Op<TestData>(nonmemberConn, TEST_DATA_COLLECTION, 'test01', ops =>
-        ops.add(d => d.subData, { id: 'sub04', ownerRef: 'nonmember' })
+        ops.add(d => d.children, { id: 'sub04', ownerRef: 'nonmember' })
       )
     ).rejects.toThrow();
 
     const observerConn = clientConnect(env.server, 'observer');
     await expect(
       submitJson0Op<TestData>(observerConn, TEST_DATA_COLLECTION, 'test01', ops =>
-        ops.add(d => d.subData, { id: 'sub04', ownerRef: 'observer' })
+        ops.add(d => d.children, { id: 'sub04', ownerRef: 'observer' })
       )
     ).rejects.toThrow();
 
     const adminConn = clientConnect(env.server, 'admin');
     await expect(
       submitJson0Op<TestData>(adminConn, TEST_DATA_COLLECTION, 'test01', ops =>
-        ops.add(d => d.subData, { id: 'sub04', ownerRef: 'admin' })
+        ops.add(d => d.children, { id: 'sub04', ownerRef: 'admin' })
       )
     ).resolves.not.toThrow();
   });
@@ -126,25 +126,35 @@ describe('ProjectDataService', () => {
 
     const nonmemberConn = clientConnect(env.server, 'nonmember');
     await expect(
-      submitJson0Op<TestData>(nonmemberConn, TEST_DATA_COLLECTION, 'test01', ops => ops.set<number>(d => d.num!, 1))
+      submitJson0Op<TestData>(nonmemberConn, TEST_DATA_COLLECTION, 'test01', ops =>
+        ops.set<number>(d => d.children[0].num!, 1)
+      )
     ).rejects.toThrow();
 
     const observerConn = clientConnect(env.server, 'observer');
     await expect(
-      submitJson0Op<TestData>(observerConn, TEST_DATA_COLLECTION, 'test01', ops => ops.set<number>(d => d.num!, 1))
+      submitJson0Op<TestData>(observerConn, TEST_DATA_COLLECTION, 'test01', ops =>
+        ops.set<number>(d => d.children[0].num!, 1)
+      )
     ).rejects.toThrow();
 
     const userConn = clientConnect(env.server, 'user');
     await expect(
-      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test01', ops => ops.set<number>(d => d.num!, 1))
+      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test01', ops =>
+        ops.set<number>(d => d.children[0].num!, 1)
+      )
     ).rejects.toThrow();
     await expect(
-      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test02', ops => ops.set<number>(d => d.num!, 1))
+      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test02', ops =>
+        ops.set<number>(d => d.children[0].num!, 1)
+      )
     ).resolves.not.toThrow();
 
     const adminConn = clientConnect(env.server, 'admin');
     await expect(
-      submitJson0Op<TestData>(adminConn, TEST_DATA_COLLECTION, 'test01', ops => ops.set<number>(d => d.num!, 1))
+      submitJson0Op<TestData>(adminConn, TEST_DATA_COLLECTION, 'test01', ops =>
+        ops.set<number>(d => d.children[0].num!, 1)
+      )
     ).resolves.not.toThrow();
   });
 
@@ -172,25 +182,25 @@ describe('ProjectDataService', () => {
 
     const nonmemberConn = clientConnect(env.server, 'nonmember');
     await expect(
-      submitJson0Op<TestData>(nonmemberConn, TEST_DATA_COLLECTION, 'test01', ops => ops.remove(d => d.subData, 0))
+      submitJson0Op<TestData>(nonmemberConn, TEST_DATA_COLLECTION, 'test01', ops => ops.remove(d => d.children, 0))
     ).rejects.toThrow();
 
     const observerConn = clientConnect(env.server, 'observer');
     await expect(
-      submitJson0Op<TestData>(observerConn, TEST_DATA_COLLECTION, 'test01', ops => ops.remove(d => d.subData, 0))
+      submitJson0Op<TestData>(observerConn, TEST_DATA_COLLECTION, 'test01', ops => ops.remove(d => d.children, 0))
     ).rejects.toThrow();
 
     const userConn = clientConnect(env.server, 'user');
     await expect(
-      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test01', ops => ops.remove(d => d.subData, 0))
+      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test01', ops => ops.remove(d => d.children, 0))
     ).rejects.toThrow();
     await expect(
-      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test02', ops => ops.remove(d => d.subData, 0))
+      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test02', ops => ops.remove(d => d.children, 0))
     ).resolves.not.toThrow();
 
     const adminConn = clientConnect(env.server, 'admin');
     await expect(
-      submitJson0Op<TestData>(adminConn, TEST_DATA_COLLECTION, 'test01', ops => ops.remove(d => d.subData, 0))
+      submitJson0Op<TestData>(adminConn, TEST_DATA_COLLECTION, 'test01', ops => ops.remove(d => d.children, 0))
     ).resolves.not.toThrow();
   });
 
@@ -205,22 +215,57 @@ describe('ProjectDataService', () => {
       )
     ).rejects.toThrow();
   });
+
+  it('controls access to create and edit child entity in one submit', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const userConn = clientConnect(env.server, 'user');
+    await expect(
+      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test02', ops =>
+        ops.add(d => d.children, { id: 'sub04', ownerRef: 'user' }).set<number>(d => d.children[1].num!, 1)
+      )
+    ).resolves.not.toThrow();
+  });
+
+  it('controls access to create, edit, and delete child entity in one submit', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const userConn = clientConnect(env.server, 'user');
+    await expect(
+      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test02', ops =>
+        ops
+          .add(d => d.children, { id: 'sub04', ownerRef: 'user', children: [] })
+          .insert(d => d.children[1].children, 0, { id: 'sub05', ownerRef: 'user' })
+          .set<number>(d => d.children[1].children[0].num!, 1)
+          .remove(d => d.children[1].children, 0, { id: 'sub05', ownerRef: 'user', num: 1 })
+      )
+    ).resolves.not.toThrow();
+  });
 });
 
 enum TestProjectDomain {
   TestData = 1000,
-  SubData = 2000
+  SubData = 2000,
+  SubSubData = 3000
+}
+
+interface TestSubSubData extends OwnedData {
+  id: string;
+  num?: number;
 }
 
 interface TestSubData extends OwnedData {
   id: string;
   num?: number;
+  children: TestSubSubData[];
 }
 
 interface TestData extends ProjectData {
   num?: number;
   immutable?: string;
-  subData: TestSubData[];
+  children: TestSubData[];
 }
 
 class TestDataService extends ProjectDataService<TestData> {
@@ -239,7 +284,12 @@ class TestDataService extends ProjectDataService<TestData> {
       { projectDomain: TestProjectDomain.SubData, operation: Operation.View },
       { projectDomain: TestProjectDomain.SubData, operation: Operation.Create },
       { projectDomain: TestProjectDomain.SubData, operation: Operation.Edit },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.Delete }
+      { projectDomain: TestProjectDomain.SubData, operation: Operation.Delete },
+
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.View },
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.Create },
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.Edit },
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.Delete }
     ],
     user: [
       { projectDomain: TestProjectDomain.TestData, operation: Operation.View },
@@ -250,7 +300,12 @@ class TestDataService extends ProjectDataService<TestData> {
       { projectDomain: TestProjectDomain.SubData, operation: Operation.View },
       { projectDomain: TestProjectDomain.SubData, operation: Operation.Create },
       { projectDomain: TestProjectDomain.SubData, operation: Operation.EditOwn },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.DeleteOwn }
+      { projectDomain: TestProjectDomain.SubData, operation: Operation.DeleteOwn },
+
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.View },
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.Create },
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.EditOwn },
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.DeleteOwn }
     ],
     userOwn: [
       { projectDomain: TestProjectDomain.TestData, operation: Operation.ViewOwn },
@@ -261,12 +316,19 @@ class TestDataService extends ProjectDataService<TestData> {
       { projectDomain: TestProjectDomain.SubData, operation: Operation.ViewOwn },
       { projectDomain: TestProjectDomain.SubData, operation: Operation.Create },
       { projectDomain: TestProjectDomain.SubData, operation: Operation.EditOwn },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.DeleteOwn }
+      { projectDomain: TestProjectDomain.SubData, operation: Operation.DeleteOwn },
+
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.ViewOwn },
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.Create },
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.EditOwn },
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.DeleteOwn }
     ],
     observer: [
       { projectDomain: TestProjectDomain.TestData, operation: Operation.View },
 
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.View }
+      { projectDomain: TestProjectDomain.SubData, operation: Operation.View },
+
+      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.View }
     ]
   });
 
@@ -277,7 +339,11 @@ class TestDataService extends ProjectDataService<TestData> {
   protected setupDomains(): ProjectDomainConfig[] {
     return [
       { projectDomain: TestProjectDomain.TestData, pathTemplate: this.pathTemplate() },
-      { projectDomain: TestProjectDomain.SubData, pathTemplate: this.pathTemplate(d => d.subData[ANY_INDEX]) }
+      { projectDomain: TestProjectDomain.SubData, pathTemplate: this.pathTemplate(d => d.children[ANY_INDEX]) },
+      {
+        projectDomain: TestProjectDomain.SubSubData,
+        pathTemplate: this.pathTemplate(d => d.children[ANY_INDEX].children[ANY_INDEX])
+      }
     ];
   }
 }
@@ -377,19 +443,19 @@ class TestEnvironment {
     await createDoc<TestData>(conn, TEST_DATA_COLLECTION, 'test01', {
       projectRef: 'project01',
       ownerRef: 'admin',
-      subData: [{ id: 'sub01', ownerRef: 'admin' }]
+      children: [{ id: 'sub01', ownerRef: 'admin', children: [] }]
     });
 
     await createDoc<TestData>(conn, TEST_DATA_COLLECTION, 'test02', {
       projectRef: 'project01',
       ownerRef: 'user',
-      subData: [{ id: 'sub02', ownerRef: 'user' }]
+      children: [{ id: 'sub02', ownerRef: 'user', children: [] }]
     });
 
     await createDoc<TestData>(conn, TEST_DATA_COLLECTION, 'test03', {
       projectRef: 'project01',
       ownerRef: 'userOwn',
-      subData: [{ id: 'sub03', ownerRef: 'userOwn' }]
+      children: [{ id: 'sub03', ownerRef: 'userOwn', children: [] }]
     });
   }
 }

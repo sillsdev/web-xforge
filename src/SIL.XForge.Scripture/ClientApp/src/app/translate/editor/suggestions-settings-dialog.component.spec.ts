@@ -14,11 +14,12 @@ import {
 import { BehaviorSubject } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { SF_REALTIME_DOC_TYPES } from '../../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import {
   CONFIDENCE_THRESHOLD_TIMEOUT,
   SuggestionsSettingsDialogComponent,
@@ -29,7 +30,7 @@ const mockedPwaService = mock(PwaService);
 
 describe('SuggestionsSettingsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [{ provide: PwaService, useMock: mockedPwaService }]
   }));
 
@@ -134,7 +135,7 @@ class TestEnvironment {
   readonly overlayContainerElement: HTMLElement;
   onlineStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor(translationSuggestionsEnabled = true) {
     this.setProjectUserConfig({

@@ -13,6 +13,7 @@ import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scri
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
@@ -83,10 +84,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (questionDoc == null) {
       return;
     }
+    this.updateQuestionAudioUrl();
     if (this.questionChangeSubscription != null) {
       this.questionChangeSubscription!.unsubscribe();
     }
     this.questionChangeSubscription = this.subscribe(questionDoc.remoteChanges$, ops => {
+      this.updateQuestionAudioUrl();
       // If the user hasn't added an answer yet and is able to, then
       // don't hold back any incoming answers from appearing right away
       // as soon as the user adds their answer.
@@ -125,6 +128,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   selectionEndClipped?: boolean;
   verseRef?: VerseRef;
   answersHighlightStatus: Map<string, boolean> = new Map<string, boolean>();
+  questionUrl?: string;
 
   /** IDs of answers to show to user (so, excluding unshown incoming answers). */
   private _answersToShow: string[] = [];
@@ -302,14 +306,25 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
 
     const data: QuestionDialogData = {
-      question: this._questionDoc.data,
+      questionDoc: this._questionDoc,
       textsByBookId: this.textsByBookId!,
       projectId: projectId
     };
-    const questionDialogResponse = await this.questionDialogService.questionDialog(data, this._questionDoc);
-    if (questionDialogResponse != null) {
+    const questionDialogResponse = await this.questionDialogService.questionDialog(data);
+    if (questionDialogResponse != null && questionDialogResponse.data != null) {
+      const blob = await questionDialogResponse.getFileContents(FileType.Audio, questionDialogResponse.data.dataId);
+      this.questionUrl = blob != null ? URL.createObjectURL(blob) : undefined;
       this.action.emit({ action: 'edit', questionDoc: questionDialogResponse });
     }
+  }
+
+  async updateQuestionAudioUrl(): Promise<void> {
+    if (this.questionDoc == null || this.questionDoc.data == null || this.questionDoc.data.audioUrl == null) {
+      this.questionUrl = undefined;
+      return;
+    }
+    const blob = await this.questionDoc.getFileContents(FileType.Audio, this.questionDoc.data.dataId);
+    this.questionUrl = blob != null ? URL.createObjectURL(blob) : undefined;
   }
 
   selectScripture() {

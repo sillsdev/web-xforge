@@ -1,6 +1,7 @@
 import { MdcList } from '@angular-mdc/web/list';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule, Location } from '@angular/common';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -24,6 +25,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -32,7 +34,7 @@ import { objectId } from 'xforge-common/utils';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectDoc } from './core/models/sf-project-doc';
-import { SF_REALTIME_DOC_TYPES } from './core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SFAdminAuthGuard } from './shared/project-router.guard';
@@ -71,9 +73,11 @@ describe('AppComponent', () => {
     imports: [
       AvatarTestingModule,
       DialogTestModule,
+      HttpClientTestingModule,
       UICommonModule,
       RouterTestingModule.withRoutes(ROUTES),
-      TestTranslocoModule
+      TestTranslocoModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
@@ -377,7 +381,7 @@ class TestEnvironment {
   readonly questions: Question[];
   readonly ngZone: NgZone;
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {

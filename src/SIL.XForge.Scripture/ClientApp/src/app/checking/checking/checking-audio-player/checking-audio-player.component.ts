@@ -1,6 +1,8 @@
 import { MdcSlider, MdcSliderChange } from '@angular-mdc/web/slider';
 import { Component, Input, OnDestroy, Pipe, PipeTransform, ViewChild } from '@angular/core';
-import { environment } from '../../../../environments/environment';
+import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
+import { PwaService } from 'xforge-common/pwa.service';
 
 // See explanatory comment where this number is used
 const ARBITRARILY_LARGE_NUMBER = 1e10;
@@ -22,9 +24,13 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
   private _enabled: boolean = false;
   private _isPlaying: boolean = false;
   private audio: HTMLAudioElement = new Audio();
+  private audioDataLoaded = false;
 
-  constructor() {
-    this.audio.addEventListener('loadedmetadata', () => this.updateDuration());
+  constructor(private readonly pwaService: PwaService) {
+    this.audio.addEventListener('loadedmetadata', () => {
+      this.updateDuration();
+      this.audioDataLoaded = true;
+    });
 
     this.audio.addEventListener('timeupdate', () => {
       this.updateDuration();
@@ -66,14 +72,8 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
 
   @Input() set source(source: string) {
     if (source && source !== '') {
-      if (!source.includes('://')) {
-        if (source.startsWith('/')) {
-          source = source.substring(1);
-        }
-        source = environment.assets.audio + source;
-      }
+      this.audio.src = formatFileSource(FileType.Audio, source);
       this.enabled = false;
-      this.audio.src = source;
       this.seek = 0;
       // In Chromium the duration of blobs isn't known even after metadata is loaded
       // By making it skip to the end the duration becomes available. To do this we have to skip to some point that we
@@ -85,10 +85,19 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
       this.audio.removeAttribute('src');
       this.enabled = false;
     }
+    this.audioDataLoaded = false;
   }
 
   private get checkIsPlaying(): boolean {
     return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
+  }
+
+  /**
+   * Audio is available if it's stored offline, or we are online and can fetch audio, or if the audio is successfully
+   * loaded already (and therefore cached in memory).
+   */
+  get isAudioAvailable(): boolean {
+    return isLocalBlobUrl(this.audio.src) || this.pwaService.isOnline || this.audioDataLoaded;
   }
 
   ngOnDestroy() {
@@ -108,8 +117,10 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
     if (this.slider != null) {
       this.slider.layout();
     }
-    this.audio.play();
-    CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;
+    if (this.isAudioAvailable) {
+      this.audio.play();
+      CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;
+    }
   }
 
   seeking(event: MdcSliderChange) {

@@ -73,3 +73,11 @@ blockquote {
 .highlight {
   background-color: $highlight;
 }
+.mdl-button.button-lg {
+  padding: 0.5em 2em;
+  font-size: 18px;
+  @include media-breakpoint-down(xs) {
+    font-size: 16px;
+    padding: 0.5em 1em;
+  }
+}

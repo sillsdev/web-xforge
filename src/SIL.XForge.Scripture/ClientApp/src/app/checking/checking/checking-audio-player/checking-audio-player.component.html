@@ -1,7 +1,23 @@
-<div *ngIf="hasSource" class="player">
-  <button *ngIf="!isPlaying" mdc-icon-button icon="play_arrow" type="button" (click)="play()" class="play"></button>
-  <button *ngIf="isPlaying" mdc-icon-button icon="pause" type="button" (click)="pause()" class="pause"></button>
-  <div class="current-time">{{ currentTime | audioTime }}</div>
-  <mdc-slider class="slider" min="0" max="100" step="1" [value]="seek" (input)="seeking($event)"></mdc-slider>
-  <div class="duration">{{ duration | audioTime }}</div>
-</div>
+<ng-container *transloco="let t; read: 'checking_audio_player'">
+  <div class="audio-area">
+    <div *ngIf="hasSource && isAudioAvailable" class="player">
+      <button *ngIf="!isPlaying" mdc-icon-button icon="play_arrow" type="button" (click)="play()" class="play"></button>
+      <button *ngIf="isPlaying" mdc-icon-button icon="pause" type="button" (click)="pause()" class="pause"></button>
+      <div class="current-time">{{ currentTime | audioTime }}</div>
+      <mdc-slider class="slider" min="0" max="100" step="1" [value]="seek" (input)="seeking($event)"></mdc-slider>
+
+      <div class="duration">{{ duration | audioTime }}</div>
+    </div>
+    <div *ngIf="!isAudioAvailable" class="audio-not-available">
+      <mdc-icon>volume_off</mdc-icon>
+      <span class="audio-unavailable-message">{{ t("audio_unavailable") }}</span>
+      <a
+        #audioUnavailableTooltip="matTooltip"
+        (click)="audioUnavailableTooltip.show()"
+        matTooltip="{{ t('audio_cannot_be_played') }}"
+      >
+        <mdc-icon>help</mdc-icon>
+      </a>
+    </div>
+  </div>
+</ng-container>

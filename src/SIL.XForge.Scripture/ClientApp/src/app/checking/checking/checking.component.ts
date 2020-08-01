@@ -16,9 +16,11 @@ import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/ver
 import { merge, Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -92,6 +94,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private questionsSub?: Subscription;
   private projectDeleteSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
+  private questionsRemoteChangesSub?: Subscription;
   private text?: TextInfo;
 
   constructor(
@@ -103,7 +106,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     noticeService: NoticeService,
     private readonly router: Router,
     private readonly questionDialogService: QuestionDialogService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    private readonly pwaService: PwaService
   ) {
     super(noticeService);
   }
@@ -140,7 +144,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (this.questionsPanel != null) {
       this.chapter = this.questionsPanel.activeQuestionChapter;
     }
-    this.checkBookStatus();
+    this.triggerUpdate();
   }
 
   get activeQuestionVerseRef(): VerseRef | undefined {
@@ -193,7 +197,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
-    return this.questionsQuery != null ? this.questionsQuery.docs : [];
+    return this.questionsQuery != null ? this.questionsQuery.docs.filter(qd => !qd.data!.isArchived) : [];
   }
 
   get textsByBookId(): TextsByBookId {
@@ -204,10 +208,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
     }
     return textsByBook;
-  }
-
-  private get answerPanelElementHeight(): number {
-    return this.answersPanelContainerElement != null ? this.answersPanelContainerElement.nativeElement.offsetHeight : 0;
   }
 
   /** Height in px needed to show all elements in the bottom
@@ -346,18 +346,31 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.showAllBooks = bookId === 'ALL';
         this.questionsQuery = await this.projectService.queryQuestions(projectId, {
           bookNum: this.showAllBooks ? undefined : bookNum,
-          activeOnly: true,
           sort: true
         });
+        // TODO: check for remote changes to file data more generically
+        if (this.questionsRemoteChangesSub != null) {
+          this.questionsRemoteChangesSub.unsubscribe();
+        }
+        this.questionsRemoteChangesSub = this.subscribe(
+          merge(this.questionsQuery.remoteDocChanges$, this.questionsQuery.ready$),
+          () => {
+            if (this.pwaService.isOnline) {
+              for (const qd of this.questionsQuery!.docs) {
+                qd.updateFileCache();
+              }
+            }
+          }
+        );
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
         }
-        this.questionsSub = this.subscribe(
-          merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$, this.questionsQuery.localChanges$),
-          () => this.checkBookStatus()
-        );
         const prevBook = this.book;
         this.book = bookNum;
+        this.questionsSub = this.subscribe(
+          merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$, this.questionsQuery.localChanges$),
+          () => this.updateQuestionRefsOrRedirect()
+        );
         this.userDoc = await this.userService.getCurrentUser();
         // refresh the summary when switching between all questions and the current book
         if (this.showAllBooks !== prevShowAllBooks && this.book === prevBook) {
@@ -374,12 +387,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
             this.onRemovedFromProject();
           } else if (!this.projectDoc.data.checkingConfig.checkingEnabled) {
+            const currentBookId =
+              this.questionsPanel == null || this.questionsPanel.activeQuestionBook == null
+                ? undefined
+                : Canon.bookNumberToId(this.questionsPanel.activeQuestionBook);
             if (this.projectUserConfigDoc != null) {
               const checkingAccessInfo: CheckingAccessInfo = {
                 userId: this.userService.currentUserId,
                 projectId: this.projectDoc.id,
                 project: this.projectDoc.data,
-                bookId,
+                bookId: currentBookId,
                 projectUserConfigDoc: this.projectUserConfigDoc!
               };
               CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
@@ -440,10 +457,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           if (answerAction.audio.fileName != null && answerAction.audio.blob != null) {
             if (this.questionsPanel.activeQuestionDoc != null) {
               // Get the amended filename and save it against the answer
-              answer.audioUrl = await this.projectService.uploadAudio(
-                this.projectDoc.id,
+              answer.audioUrl = await this.questionsPanel.activeQuestionDoc.uploadFile(
+                FileType.Audio,
                 answer.dataId,
-                this.questionsPanel.activeQuestionDoc.id,
                 answerAction.audio.blob,
                 answerAction.audio.fileName
               );
@@ -463,10 +479,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (answerAction.questionDoc != null) {
           this.questionsPanel.activateQuestion(answerAction.questionDoc);
         }
-        this.checkBookStatus();
+        this.triggerUpdate();
         break;
       case 'archive':
-        this.checkBookStatus();
+        this.triggerUpdate();
         break;
       case 'like':
         if (answerAction.answer != null) {
@@ -615,7 +631,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
 
     const data: QuestionDialogData = {
-      question: undefined,
+      questionDoc: undefined,
       textsByBookId: this.textsByBookId,
       projectId: this.projectDoc.id,
       defaultVerse: new VerseRef(this.book, this.chapter, 1)
@@ -627,7 +643,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   totalQuestions(): number {
-    return this.questionsQuery != null ? this.questionsQuery.docs.length : 0;
+    return this.questionDocs.length;
   }
 
   verseRefClicked(verseRef: VerseRef): void {
@@ -661,14 +677,32 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  private checkBookStatus(): void {
-    if (this.projectDoc == null || this.questionsQuery == null || !this.questionsQuery.ready) {
+  private triggerUpdate() {
+    if (this.questionsQuery != null) {
+      this.questionsQuery.localUpdate();
+    }
+  }
+
+  /**
+   * Checks whether the user should be redirected to another page and does so if necessary. For example, redirect if the
+   * only question was deleted, or the book is invalid, or the user added a question to a book other than the currently
+   * active book.
+   * If no redirect is necessary, updates the list of verse refs to show in the text doc.
+   * This method assumes any local data in IndexedDB has already been loaded into this.questionQuery
+   */
+  private async updateQuestionRefsOrRedirect(): Promise<void> {
+    if (
+      this.projectDoc == null ||
+      this.questionsQuery == null ||
+      (this.pwaService.isOnline && !this.questionsQuery.ready)
+    ) {
       return;
     }
     if (this.totalQuestions() === 0) {
       this.router.navigate(['/projects', this.projectDoc.id, 'checking'], {
         replaceUrl: true
       });
+      return;
     } else if (this.showAllBooks) {
       const availableBooks = new Set<string>();
       for (const questionDoc of this.questionDocs) {
@@ -681,6 +715,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.router.navigate(['/projects', this.projectDoc.id, 'checking', availableBooks.values().next().value], {
           replaceUrl: true
         });
+        return;
       }
     }
     // Only pass in relevant verse references to the text component
@@ -733,7 +768,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         .submitJson0Op(op => op.remove(q => q.answers, answerIndex))
         .then(() => {
           if (this.projectDoc != null) {
-            this.projectService.deleteAudio(this.projectDoc.id, answer.dataId, answer.ownerRef);
+            activeQuestionDoc.deleteFile(FileType.Audio, answer.dataId, answer.ownerRef);
           }
         });
       this.refreshSummary();
@@ -772,7 +807,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       if (deleteAudio) {
         submitPromise.then(() => {
           if (this.projectDoc != null) {
-            this.projectService.deleteAudio(this.projectDoc.id, oldAnswer.dataId, oldAnswer.ownerRef);
+            activeQuestionDoc.deleteFile(FileType.Audio, oldAnswer.dataId, oldAnswer.ownerRef);
           }
         });
       }
@@ -883,18 +918,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.summary.answered = 0;
     this.summary.read = 0;
     this.summary.unread = 0;
-    if (this.questionsQuery != null) {
-      for (const questionDoc of this.questionsQuery.docs) {
-        if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
-          this.summary.answered++;
-        } else if (
-          this.projectUserConfigDoc != null &&
-          CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)
-        ) {
-          this.summary.read++;
-        } else {
-          this.summary.unread++;
-        }
+    for (const questionDoc of this.questionDocs) {
+      if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
+        this.summary.answered++;
+      } else if (
+        this.projectUserConfigDoc != null &&
+        CheckingUtils.hasUserReadQuestion(questionDoc.data, this.projectUserConfigDoc.data)
+      ) {
+        this.summary.read++;
+      } else {
+        this.summary.unread++;
       }
     }
   }
@@ -904,15 +937,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       element instanceof ElementRef ? element.nativeElement : element
     );
     return parseFloat(elementStyle.getPropertyValue(propertyName));
-  }
-
-  /** Get float property without units. eg 3.14 instead of '3.14px'. */
-  private getCSSFloatProperty(baseElement: ElementRef, elementSelector: string, propertyName: string): number {
-    const element: Element | null = baseElement.nativeElement.querySelector(elementSelector);
-    if (element == null) {
-      return 0;
-    }
-    return this.getCSSFloatPropertyOf(element, propertyName);
   }
 
   private getOffsetHeight(baseElement: ElementRef, selector: string): number {

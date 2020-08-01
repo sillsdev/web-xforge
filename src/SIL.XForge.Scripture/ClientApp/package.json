@@ -7,6 +7,7 @@
     "ng": "ng",
     "start": "ng serve",
     "start:no-progress": "ng serve --progress=false",
+    "start:no-reload": "ng serve --liveReload=false",
     "build": "ng build",
     "test": "ng test --sourceMap=true",
     "test:tc": "ng test --browsers xForgeChromiumHeadless --watch false --code-coverage",
@@ -49,7 +50,7 @@
     "core-js": "^2.6.5",
     "crc-32": "^1.2.0",
     "jwt-decode": "^2.2.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "mingo": "^2.4.0",
     "ngx-avatar": "^3.4.0",
     "ngx-cookie-service": "^2.2.0",
@@ -78,7 +79,7 @@
     "@types/jasmine": "~3.3.12",
     "@types/jasminewd2": "~2.0.6",
     "@types/jwt-decode": "^2.2.1",
-    "@types/lodash": "^4.14.136",
+    "@types/lodash": "^4.14.157",
     "@types/node": "~10.12.30",
     "@types/quill": "^1.3.10",
     "@types/uuid": "^3.4.5",
@@ -94,9 +95,9 @@
     "karma-jasmine": "^2.0.1",
     "karma-jasmine-html-reporter": "^1.4.2",
     "karma-teamcity-reporter": "^1.1.0",
-    "lint-staged": "^8.1.6",
+    "lint-staged": "^10.2.11",
     "ng-bullet": "^1.0.3",
-    "npm": "6.14.4",
+    "npm": "6.14.6",
     "prettier": "1.15.3",
     "protractor": "^5.4.3",
     "ts-mockito": "^2.5.0",
@@ -112,8 +113,7 @@
   },
   "lint-staged": {
     "*.{ts,js,json,css,scss,less,html,md,yml}": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ]
   },
   "browser": {

@@ -1,11 +1,12 @@
-import { Injectable } from '@angular/core';
-import { OfflineData } from './models/offline-data';
+import { Injectable, Optional } from '@angular/core';
+import { FileService } from './file.service';
 import { RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
+import { OfflineStore } from './offline-store';
+import { PwaService } from './pwa.service';
 import { QueryParameters } from './query-parameters';
-import { RealtimeDocTypes } from './realtime-doc-types';
-import { RealtimeOfflineStore } from './realtime-offline-store';
 import { RealtimeRemoteStore } from './realtime-remote-store';
+import { TypeRegistry } from './type-registry';
 
 function getDocKey(collection: string, id: string): string {
   return `${collection}:${id}`;
@@ -24,16 +25,22 @@ export class RealtimeService {
   protected readonly subscribeQueries = new Map<string, Set<RealtimeQuery>>();
 
   constructor(
-    private readonly docTypes: RealtimeDocTypes,
+    private readonly typeRegistry: TypeRegistry,
     public readonly remoteStore: RealtimeRemoteStore,
-    public readonly offlineStore: RealtimeOfflineStore
-  ) {}
+    public readonly offlineStore: OfflineStore,
+    @Optional() public readonly fileService?: FileService,
+    @Optional() public readonly pwaService?: PwaService
+  ) {
+    if (this.fileService != null) {
+      this.fileService.init(this);
+    }
+  }
 
   get<T extends RealtimeDoc>(collection: string, id: string): T {
     const key = getDocKey(collection, id);
     let doc = this.docs.get(key);
     if (doc == null) {
-      const RealtimeDocType = this.docTypes.getDocType(collection);
+      const RealtimeDocType = this.typeRegistry.getDocType(collection);
       if (RealtimeDocType == null) {
         throw new Error('The collection is unknown.');
       }
@@ -47,7 +54,7 @@ export class RealtimeService {
     return new RealtimeQuery<T>(this, this.remoteStore.createQueryAdapter(collection, parameters));
   }
 
-  isSet<T extends RealtimeDoc>(collection: string, id: string): boolean {
+  isSet(collection: string, id: string): boolean {
     return this.docs.get(getDocKey(collection, id)) != null;
   }
 
@@ -148,21 +155,5 @@ export class RealtimeService {
       await this.offlineStore.delete(doc.collection, doc.id);
       this.docs.delete(getDocKey(doc.collection, doc.id));
     }
-  }
-
-  async storeOfflineData<T extends OfflineData>(data: T): Promise<T> {
-    const storedData = await this.offlineStore.putData(data.collection, data);
-    if (storedData != null) {
-      return storedData as T;
-    }
-    return Promise.reject('Could not store data in offline store.');
-  }
-
-  async removeOfflineData(collection: string, dataId: string): Promise<boolean> {
-    if ((await this.offlineStore.getData(collection, dataId)) != null) {
-      await this.offlineStore.deleteData(collection, dataId);
-      return true;
-    }
-    return false;
   }
 }

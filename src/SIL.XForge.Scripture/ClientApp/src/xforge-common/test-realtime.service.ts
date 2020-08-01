@@ -1,9 +1,9 @@
+import merge from 'lodash/merge';
 import * as OTJson0 from 'ot-json0';
-import { MemoryRealtimeOfflineStore } from './memory-realtime-offline-store';
+import { MemoryOfflineStore } from './memory-offline-store';
 import { MemoryRealtimeQueryAdapter, MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
+import { FileOfflineData, FileType } from './models/file-offline-data';
 import { Snapshot } from './models/snapshot';
-import { OfflineDataTypes } from './offline-data-types';
-import { RealtimeDocTypes } from './realtime-doc-types';
 import { RealtimeService } from './realtime.service';
 import { objectId } from './utils';
 
@@ -27,10 +27,6 @@ function addSnapshotDefaults(snapshot: Partial<Snapshot>): Snapshot {
  * This is a memory-based implementation of the real-time service. It is useful for testing.
  */
 export class TestRealtimeService extends RealtimeService {
-  constructor(docTypes: RealtimeDocTypes, dataTypes: OfflineDataTypes = new OfflineDataTypes([])) {
-    super(docTypes, new MemoryRealtimeRemoteStore(), new MemoryRealtimeOfflineStore());
-  }
-
   addSnapshots<T>(collection: string, snapshots: Partial<Snapshot<T>>[], addToOfflineStore: boolean = false): void {
     for (const snapshot of snapshots) {
       this.addSnapshot(collection, snapshot, addToOfflineStore);
@@ -41,8 +37,16 @@ export class TestRealtimeService extends RealtimeService {
     const completeSnapshot = addSnapshotDefaults(snapshot);
     (this.remoteStore as MemoryRealtimeRemoteStore).addSnapshot(collection, completeSnapshot);
     if (addToOfflineStore) {
-      (this.offlineStore as MemoryRealtimeOfflineStore).addSnapshot(collection, completeSnapshot);
+      (this.offlineStore as MemoryOfflineStore).addData(collection, merge(completeSnapshot, { pendingOps: [] }));
     }
+  }
+
+  addFileData(fileType: FileType, data: FileOfflineData): void {
+    (this.offlineStore as MemoryOfflineStore).addData(fileType, data);
+  }
+
+  getFileData(fileType: FileType, id: string): FileOfflineData | undefined {
+    return (this.offlineStore as MemoryOfflineStore).getData(fileType, id);
   }
 
   updateAllSubscribeQueries(): void {

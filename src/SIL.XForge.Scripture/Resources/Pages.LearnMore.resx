@@ -117,11 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="LearnCheckingHow" xml:space="preserve">
+    <value>Learn how to setup and use community checking.</value>
+  </data>
+  <data name="LearnCheckingTitle" xml:space="preserve">
+    <value>Community Checking</value>
+  </data>
   <data name="LearnHeader" xml:space="preserve">
     <value>Learn more on Scripture Forge</value>
-  </data>
-  <data name="LearnHow" xml:space="preserve">
-    <value>Learn how to setup and use community checking, see how to collaborate on editing Scripture, and learn how to setup and use translation suggestions when editing Scripture.</value>
   </data>
   <data name="LearnSliderCheckingSeeAnswer" xml:space="preserve">
     <value>{0}Answer questions{1} with text or audio, or both</value>
@@ -193,7 +196,7 @@
     <value>Text structure can't be added in Scripture Forge yet so add chapters, verses and paragraphs in Paratext, particularly when creating a book.</value>
   </data>
   <data name="LearnSliderTranslateEditSync" xml:space="preserve">
-    <value>{0}Synchronise{1} the project to keep it up-to-date with Paratext.</value>
+    <value>{0}Synchronize{1} the project to keep it up-to-date with Paratext.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateDescription" xml:space="preserve">
     <value>If more than one {0}Translator{1} is connected online at the same time, they can {2}collaboratively edit{3} Scripture together.</value>
@@ -204,19 +207,13 @@
   <data name="LearnSliderTranslateCollaborateRealtime" xml:space="preserve">
     <value>Whether you are in the same room or on the other side of the world, you can easily work on the same book, the same chapter, or even the same verse. When someone is editing the same text, you can {0}see their changes in real-time{1} as they type.</value>
   </data>
-  <data name="LearnTitle" xml:space="preserve">
-    <value>An Easy to Use Web Application</value>
+  <data name="LearnTranslateHow" xml:space="preserve">
+    <value>Learn how to collaborate on editing Scripture and see how to setup and use translation suggestions when editing Scripture.</value>
   </data>
-  <data name="QuoteQuotation" xml:space="preserve">
-    <value>It was so easy! ...all I had to do to get started was log in using my Paratext registration and boom! It was all there. Right away I chose a verse and wrote a checking question for it. Then I also recorded myself asking that checking question. It’s so great that feedback can be gathered either way. All the features are wonderful for remote contributors, including the option to answer the questions with an audio recording.</value>
+  <data name="LearnTranslateTitle" xml:space="preserve">
+    <value>Translation</value>
   </data>
-  <data name="QuoteQuoterName" xml:space="preserve">
-    <value>Trevor Deck</value>
-  </data>
-  <data name="QuoteQuoterRole" xml:space="preserve">
-    <value>SIL Global Diaspora Specialist</value>
-  </data>
-  <data name="Statement" xml:space="preserve">
-    <value>Where translation and the community meet.</value>
+  <data name="ReadyToTry" xml:space="preserve">
+    <value>Ready to try Scripture Forge?</value>
   </data>
 </root>

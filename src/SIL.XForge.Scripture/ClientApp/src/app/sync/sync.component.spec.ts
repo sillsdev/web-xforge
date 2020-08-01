@@ -11,11 +11,12 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
-import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SyncComponent } from './sync.component';
@@ -31,7 +32,7 @@ const mockedPwaService = mock(PwaService);
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
     declarations: [SyncComponent],
-    imports: [CommonModule, UICommonModule, TestTranslocoModule],
+    imports: [CommonModule, UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
@@ -129,7 +130,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<SyncComponent>;
   readonly component: SyncComponent;
 
-  private readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
   private isLoading: boolean = false;
   private isOnline: BehaviorSubject<boolean>;
 

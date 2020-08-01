@@ -1,6 +1,9 @@
 import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { instance, mock, when } from 'ts-mockito';
+import { PwaService } from 'xforge-common/pwa.service';
+import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player.component';
 
@@ -59,6 +62,32 @@ describe('CheckingAudioPlayerComponent', () => {
     env.component.player1.source = '';
     expect(env.component.player1.hasSource).toBe(false);
   });
+
+  it('it notifies the user when audio is unavailable offline', async () => {
+    const template = `<app-checking-audio-player #player1 source="https://"></app-checking-audio-player>`;
+    const env = new TestEnvironment(template, false);
+    await env.waitForPlayer(1000);
+    expect(env.component.player1.hasSource).toBe(true);
+    expect(env.audioNotAvailableMessage).toBeDefined();
+  });
+
+  it('it can play blobs even when offline', async () => {
+    const template = `<app-checking-audio-player #player1 source="blob://"></app-checking-audio-player>`;
+    const env = new TestEnvironment(template, false);
+    await env.waitForPlayer(1000);
+    expect(env.component.player1.hasSource).toBe(true);
+    expect(env.audioNotAvailableMessage).toBeNull();
+  });
+
+  it('it can play preloaded audio when offline', async () => {
+    const template = `<app-checking-audio-player #player1 source="${audioFile}"></app-checking-audio-player>`;
+    const env = new TestEnvironment(template, false);
+    await env.waitForPlayer(1000);
+    expect(env.component.player1.hasSource).toBe(true);
+    // The browser is online, but the component thinks it is offline. This simulates the scenario where audio data is
+    // already loaded, but the browser is offline.
+    expect(env.audioNotAvailableMessage).toBeNull();
+  });
 });
 
 @Component({ selector: 'app-host', template: '' })
@@ -68,14 +97,18 @@ class HostComponent {
 }
 
 class TestEnvironment {
+  readonly mockedPwaService = mock(PwaService);
+
   fixture: ComponentFixture<HostComponent>;
   component: HostComponent;
 
-  constructor(template: string) {
+  constructor(template: string, isOnline = true) {
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingAudioPlayerComponent, AudioTimePipe],
-      imports: [UICommonModule]
+      providers: [{ provide: PwaService, useFactory: () => instance(this.mockedPwaService) }],
+      imports: [UICommonModule, TestTranslocoModule]
     });
+    when(this.mockedPwaService.isOnline).thenCall(() => isOnline);
 
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.fixture = TestBed.createComponent(HostComponent);
@@ -94,8 +127,13 @@ class TestEnvironment {
   get moreMenuButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('.more-menu'));
   }
+
   get downloadButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('.download'));
+  }
+
+  get audioNotAvailableMessage(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.audio-not-available'));
   }
 
   playButton(num: number): DebugElement {

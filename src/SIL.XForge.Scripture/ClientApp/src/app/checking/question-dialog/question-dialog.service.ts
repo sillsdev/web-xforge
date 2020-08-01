@@ -2,9 +2,10 @@ import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialo
 import { Injectable } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/common/models/project-rights';
-import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
+import { Question } from 'realtime-server/lib/scriptureforge/models/question';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
+import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -25,7 +26,8 @@ export class QuestionDialogService {
   ) {}
 
   /** Opens a question dialog that can be used to add a new question or edit an existing question. */
-  async questionDialog(config: QuestionDialogData, questionDoc?: QuestionDoc): Promise<QuestionDoc | undefined> {
+  async questionDialog(config: QuestionDialogData): Promise<QuestionDoc | undefined> {
+    const questionDoc = config.questionDoc;
     const dialogConfig: MdcDialogConfig = { data: config, clickOutsideToClose: false };
     const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig) as MdcDialogRef<
       QuestionDialogComponent,
@@ -43,16 +45,9 @@ export class QuestionDialogService {
     const verseRefData = fromVerseRef(result.verseRef);
     const text = result.text;
     let audioUrl = questionDoc != null && questionDoc.data != null ? questionDoc.data.audioUrl : undefined;
-    if (result.audio.fileName && result.audio.blob != null) {
-      const response = await this.projectService.uploadAudio(
-        config.projectId,
-        questionId,
-        getQuestionDocId(config.projectId, questionId),
-        result.audio.blob,
-        result.audio.fileName
-      );
+    if (questionDoc != null && result.audio.fileName != null && result.audio.blob != null) {
       // Get the amended filename and save it against the answer
-      audioUrl = response;
+      audioUrl = await questionDoc.uploadFile(FileType.Audio, questionId, result.audio.blob, result.audio.fileName);
     } else if (result.audio.status === 'reset') {
       audioUrl = undefined;
     }
@@ -68,7 +63,7 @@ export class QuestionDialogService {
           .set(q => q.dateModified, currentDate)
       );
       if (deleteAudio) {
-        await this.projectService.deleteAudio(config.projectId, questionDoc.data.dataId, questionDoc.data.ownerRef);
+        await questionDoc.deleteFile(FileType.Audio, questionDoc.data.dataId, questionDoc.data.ownerRef);
       }
       return questionDoc;
     }
@@ -84,7 +79,12 @@ export class QuestionDialogService {
       dateCreated: currentDate,
       dateModified: currentDate
     };
-    return await this.projectService.createQuestion(config.projectId, newQuestion);
+    return await this.projectService.createQuestion(
+      config.projectId,
+      newQuestion,
+      result.audio.fileName,
+      result.audio.blob
+    );
   }
 
   private async canCreateAndEditQuestions(projectId: string): Promise<boolean> {

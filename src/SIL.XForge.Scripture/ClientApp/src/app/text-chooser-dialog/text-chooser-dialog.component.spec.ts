@@ -15,12 +15,13 @@ import { of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DOCUMENT } from 'xforge-common/browser-globals';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { CheckingModule } from '../checking/checking.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
-import { SF_REALTIME_DOC_TYPES } from '../core/models/sf-realtime-doc-types';
+import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { Delta, TextDoc } from '../core/models/text-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from './text-chooser-dialog.component';
@@ -30,7 +31,7 @@ const mockedDocument = mock(Document);
 
 describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule],
+    imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: SFProjectService, useMock: mockedProjectService },
@@ -387,7 +388,7 @@ class TestEnvironment {
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly overlayContainerElement: HTMLElement;
-  readonly realtimeService = new TestRealtimeService(SF_REALTIME_DOC_TYPES);
+  readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   readonly mockedScriptureChooserMdcDialogRef = mock(MdcDialogRef);
 
