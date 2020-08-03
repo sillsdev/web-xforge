@@ -2,6 +2,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ngfModule } from 'angular-file';
+import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -102,6 +103,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
     when(mockedPwaService.isOnline).thenReturn(true);
+    when(mockedPwaService.onlineStatus).thenReturn(of(true));
     this.fixture.detectChanges();
   }
 
