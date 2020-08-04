@@ -1,0 +1,17 @@
+#!/bin/bash
+# Build for running on another computer.
+#
+# Usage: ./build-production
+#
+# To run product on another computer, where PTDDCLONEALL_MODE can be set to "clone" to do a clone, or omitted to just inspect:
+# tar xf ptdd-clone-all-*.tar.xz
+# PTDDCLONEALL_MODE="clone" SF_APP_DIR="/path/to/sf/app" ptdd-clone-all-*/PTDDCloneAll |& tee /tmp/ptdd.log
+
+set -ue -o pipefail
+
+outputProductName="ptdd-clone-all-$(date '+%Y%m%d%H%M%S')"
+outputDir="bin/${outputProductName}"
+dotnet publish -o "${outputDir}"
+package="$(mktemp -d)/${outputProductName}.tar.xz"
+cd "${outputDir}/.."
+tar cfJ "${package}" ${outputProductName}

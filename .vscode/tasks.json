@@ -21,13 +21,13 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "build-migrator-ptdaSyncAll",
+      "label": "build-migrator-PTDDCloneAll",
       "command": "dotnet",
       "args": ["build", "/property:GenerateFullPaths=true"],
       "type": "shell",
       "group": "build",
       "options": {
-        "cwd": "${workspaceRoot}/src/Migrations/PtdaSyncAll"
+        "cwd": "${workspaceRoot}/src/Migrations/PTDDCloneAll"
       },
       "problemMatcher": "$msCompile"
     },
