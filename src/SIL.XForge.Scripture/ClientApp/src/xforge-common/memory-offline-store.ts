@@ -5,6 +5,8 @@ import { performQuery, QueryParameters, QueryResults } from './query-parameters'
  * This class is a memory-based implementation of the real-time offline store. It is useful for testing.
  */
 export class MemoryOfflineStore extends OfflineStore {
+  public storageQuotaFull: boolean = false;
+
   private readonly map = new Map<string, Map<string, OfflineData>>();
 
   addData(collection: string, data: OfflineData): void {
@@ -53,14 +55,17 @@ export class MemoryOfflineStore extends OfflineStore {
     return performQuery<T>(parameters, snapshots);
   }
 
-  put(collection: string, offlineData: OfflineData): Promise<void> {
+  put<T extends OfflineData>(collection: string, offlineData: T): Promise<T> {
+    if (this.storageQuotaFull) {
+      return Promise.reject(new DOMException('error', 'QuotaExceededError'));
+    }
     let collectionData = this.map.get(collection);
     if (collectionData == null) {
       collectionData = new Map<string, OfflineData>();
       this.map.set(collection, collectionData);
     }
     collectionData.set(offlineData.id, offlineData);
-    return Promise.resolve();
+    return Promise.resolve(offlineData);
   }
 
   delete(collection: string, id: string): Promise<void> {

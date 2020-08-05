@@ -47,7 +47,15 @@ export class QuestionDialogService {
     let audioUrl = questionDoc != null && questionDoc.data != null ? questionDoc.data.audioUrl : undefined;
     if (questionDoc != null && result.audio.fileName != null && result.audio.blob != null) {
       // Get the amended filename and save it against the answer
-      audioUrl = await questionDoc.uploadFile(FileType.Audio, questionId, result.audio.blob, result.audio.fileName);
+      const urlResult = await questionDoc.uploadFile(
+        FileType.Audio,
+        questionId,
+        result.audio.blob,
+        result.audio.fileName
+      );
+      if (urlResult != null) {
+        audioUrl = urlResult;
+      }
     } else if (result.audio.status === 'reset') {
       audioUrl = undefined;
     }
