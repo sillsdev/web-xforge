@@ -1,4 +1,13 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  Output,
+  ViewChild,
+  ChangeDetectorRef
+} from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash/isEqual';
 import merge from 'lodash/merge';
@@ -11,6 +20,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { TextViewModel } from './text-view-model';
+import { PwaService } from 'xforge-common/pwa.service';
 
 const EDITORS = new Set<Quill>();
 
@@ -145,12 +155,34 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
 
-  constructor(private readonly projectService: SFProjectService, private readonly transloco: TranslocoService) {
+  constructor(
+    private readonly projectService: SFProjectService,
+    private readonly transloco: TranslocoService,
+    private readonly pwaService: PwaService,
+    private readonly changeDetector: ChangeDetectorRef
+  ) {
     super();
+    // this._placeholder = this.transloco.translate('text.loading');
+  }
+
+  ngAfterViewInit() {
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      console.log('text component ngavi');
+      this.updatePlaceholderText(isOnline);
+      this.changeDetector.detectChanges();
+    });
   }
 
   get placeholder() {
-    return this._placeholder || this.transloco.translate('text.loading');
+    if (this._placeholder !== undefined) {
+      return this._placeholder;
+    }
+
+    if (this.pwaService.isOnline) {
+      return this.transloco.translate('text.loading');
+    } else {
+      return this.transloco.translate('text.not_avail_offline');
+    }
   }
 
   @Input() set placeholder(value: string) {
@@ -405,7 +437,11 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (this._id == null) {
       return;
     }
-    this.placeholder = this.transloco.translate('text.loading');
+    if (this.pwaService.isOnline) {
+      this.placeholder = this.transloco.translate('text.loading');
+    } else {
+      this.placeholder = this.transloco.translate('text.not_avail_offline');
+    }
     const textDoc = await this.projectService.getText(this._id);
     this.viewModel.bind(textDoc, this.subscribeToUpdates);
     this.updatePlaceholderText();
@@ -638,11 +674,24 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
   }
 
-  private updatePlaceholderText(): void {
+  private updatePlaceholderText(userIsOnline?: boolean): void {
     if (!this.viewModel.isLoaded) {
-      this.placeholder = this.transloco.translate('text.book_does_not_exist');
+      if (this.pwaService.isOnline) {
+        this.placeholder = this.transloco.translate('text.book_does_not_exist');
+      } else {
+        this.placeholder = this.transloco.translate('text.not_avail_offline');
+      }
     } else if (this.viewModel.isEmpty) {
       this.placeholder = this.transloco.translate('text.book_is_empty');
+    } else {
+      if (userIsOnline === undefined) {
+        return;
+      }
+      if (userIsOnline) {
+        this.placeholder = this.transloco.translate('text.loading');
+      } else {
+        this.placeholder = '!!' + this.transloco.translate('text.not_avail_offline');
+      }
     }
   }
 

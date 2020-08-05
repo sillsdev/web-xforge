@@ -79,6 +79,11 @@ describe('CheckingTextComponent', () => {
     expect(env.segmentHasQuestion(1, 4)).toBe(true);
     expect(env.isSegmentHighlighted(1, 4)).toBe(true);
   }));
+
+  it('shows Loading message when offline and text not available', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.wait();
+  }));
 });
 
 class TestEnvironment {

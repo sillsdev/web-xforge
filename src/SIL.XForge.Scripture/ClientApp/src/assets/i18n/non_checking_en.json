@@ -169,7 +169,8 @@
   "text": {
     "book_does_not_exist": "This book does not exist.",
     "book_is_empty": "This book is empty. Add chapters in Paratext.",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "not_avail_offline": "This text is not available offline. Connect to the Internet to see the text."
   },
   "translate_overview": {
     "progress": "Progress",
