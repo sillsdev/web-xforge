@@ -99,20 +99,21 @@ export class FileService extends SubscriptionDisposable {
     alwaysKeepFileOffline: boolean
   ): Promise<string> {
     if (this.pwaService.isOnline) {
-      // We are online. Upload directly to the server
-      const onlineUrl = await this.onlineUploadFile(fileType, projectId, dataId, new File([blob], filename));
-      if (alwaysKeepFileOffline) {
-        await this.findOrUpdateCache(fileType, dataCollection, dataId, onlineUrl);
-      }
-      return onlineUrl;
-    } else {
-      // Store the file in indexedDB until we go online again.
-      // Use blob.slice() to get a copy of the original. It appears that blobs which references data from files
-      // on disk cause a NotReadableError during upload when the user returns online using Chrome incognito mode.
-      const localFileData = createUploadFileData(dataCollection, dataId, projectId, docId, blob.slice(), filename);
-      await this.offlineStore.put(fileType, localFileData);
-      return URL.createObjectURL(localFileData.blob);
+      // Try and upload it online and, failing that, do so in offline mode
+      try {
+        const onlineUrl = await this.onlineUploadFile(fileType, projectId, dataId, new File([blob], filename));
+        if (alwaysKeepFileOffline) {
+          await this.findOrUpdateCache(fileType, dataCollection, dataId, onlineUrl);
+        }
+        return onlineUrl;
+      } catch {}
     }
+    // Store the file in indexedDB until we go online again.
+    // Use blob.slice() to get a copy of the original. It appears that blobs which references data from files
+    // on disk cause a NotReadableError during upload when the user returns online using Chrome incognito mode.
+    const localFileData = createUploadFileData(dataCollection, dataId, projectId, docId, blob.slice(), filename);
+    await this.offlineStore.put(fileType, localFileData);
+    return URL.createObjectURL(localFileData.blob);
   }
 
   /**
@@ -128,15 +129,18 @@ export class FileService extends SubscriptionDisposable {
   ): Promise<void> {
     if (this.pwaService.isOnline) {
       await this.findOrUpdateCache(fileType, dataCollection, dataId);
-      await this.onlineDeleteFile(fileType, projectId, dataId, ownerId);
+      // Try and delete it online and, failing that, do so in offline mode
+      try {
+        await this.onlineDeleteFile(fileType, projectId, dataId, ownerId);
+        return;
+      } catch {}
+    }
+    const fileData = await this.offlineStore.get<FileOfflineData>(fileType, dataId);
+    if (fileData != null && fileData.onlineUrl == null) {
+      // The file existed locally and was never uploaded, remove it and return
+      await this.findOrUpdateCache(fileType, fileData.dataCollection, fileData.id);
     } else {
-      const fileData = await this.offlineStore.get<FileOfflineData>(fileType, dataId);
-      if (fileData != null && fileData.onlineUrl == null) {
-        // The file existed locally and was never uploaded, remove it and return
-        await this.findOrUpdateCache(fileType, fileData.dataCollection, fileData.id);
-      } else {
-        await this.offlineStore.put(fileType, createDeletionFileData(dataCollection, dataId, projectId, ownerId));
-      }
+      await this.offlineStore.put(fileType, createDeletionFileData(dataCollection, dataId, projectId, ownerId));
     }
   }
 
