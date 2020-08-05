@@ -10,6 +10,7 @@ import { MessageDialogComponent, MessageDialogData } from './message-dialog/mess
 export class NoticeService {
   private _isAppLoading: boolean = false;
   private loadingCount: number = 0;
+  private messageOnDisplay?: string;
 
   constructor(private readonly snackbar: MdcSnackbar, private readonly dialog: MdcDialog) {}
 
@@ -50,6 +51,14 @@ export class NoticeService {
   private async showSnackBar(message: string, classes: string[] = []): Promise<void> {
     let config: MdcSnackbarConfig<any> | undefined;
     config = { classes: classes.join(' ') };
-    this.snackbar.open(message, undefined, config);
+    if (this.messageOnDisplay === message) {
+      return;
+    }
+    const snackBarRef = this.snackbar.open(message, undefined, config);
+    this.messageOnDisplay = message;
+    snackBarRef
+      .afterDismiss()
+      .toPromise()
+      .then(() => (this.messageOnDisplay = undefined));
   }
 }
