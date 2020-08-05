@@ -3,7 +3,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/common/models/user';
 import { Observable } from 'rxjs';
-import { anything, mock, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from './auth.service';
 import { CONSOLE } from './browser-globals';
 import { ErrorReportingService } from './error-reporting.service';
@@ -141,6 +141,12 @@ describe('ExceptionHandlingService', () => {
     expect(env.oneAndOnlyReport.error).toBeDefined();
     expect(env.oneAndOnlyReport.opts).toBeDefined();
     expect(env.oneAndOnlyReport.opts.user).toBeUndefined();
+  });
+
+  it('should handle storage quota exceeded errors', async () => {
+    const env = new TestEnvironment();
+    await env.service.handleError(new DOMException('error', 'QuotaExceededError'));
+    verify(mockedNoticeService.showError(anything())).once();
   });
 });
 

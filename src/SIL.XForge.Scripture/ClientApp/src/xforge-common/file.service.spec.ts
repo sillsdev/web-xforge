@@ -4,13 +4,14 @@ import { ProjectData } from 'realtime-server/lib/common/models/project-data';
 import { obj, PathItem } from 'realtime-server/lib/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
-import { configureTestingModule, getAudioBlob } from 'xforge-common/test-utils';
+import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
 import { FileService, formatFileSource } from './file.service';
 import { createDeletionFileData, createStorageFileData, FileOfflineData, FileType } from './models/file-offline-data';
 import { ProjectDataDoc } from './models/project-data-doc';
+import { NoticeService } from './notice.service';
 import { PwaService } from './pwa.service';
 import { RealtimeService } from './realtime.service';
 import { TestRealtimeModule } from './test-realtime.module';
@@ -21,15 +22,21 @@ import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
 const mockedPwaService = mock(PwaService);
 const mockedAuthService = mock(AuthService);
 const mockedCommandService = mock(CommandService);
+const mockedNoticeService = mock(NoticeService);
 
 describe('FileService', () => {
   configureTestingModule(() => ({
-    imports: [HttpClientTestingModule, TestRealtimeModule.forRoot(new TypeRegistry([TestDataDoc], [FileType.Audio]))],
+    imports: [
+      HttpClientTestingModule,
+      TestTranslocoModule,
+      TestRealtimeModule.forRoot(new TypeRegistry([TestDataDoc], [FileType.Audio]))
+    ],
     providers: [
       FileService,
       { provide: PwaService, useMock: mockedPwaService },
       { provide: AuthService, useMock: mockedAuthService },
-      { provide: CommandService, useMock: mockedCommandService }
+      { provide: CommandService, useMock: mockedCommandService },
+      { provide: NoticeService, useMock: mockedNoticeService }
     ]
   }));
 
@@ -202,6 +209,16 @@ describe('FileService', () => {
     const data = env.getCachedValue(env.dataId);
     expect(data).toBeDefined();
     expect(data!.deleteRef).toEqual(env.userId);
+  }));
+
+  it('should show dialog when storage quota exceeded', fakeAsync(() => {
+    const env = new TestEnvironment(false);
+    env.realtimeService.offlineStorageQuotaStatus = true;
+    when(mockedNoticeService.showMessageDialog(anything(), anything())).thenResolve();
+    env.simulateUploadAudio(env.doc!);
+    tick();
+    verify(mockedNoticeService.showMessageDialog(anything(), anything())).once();
+    expect(env.doc!.data!.audioUrl).toBeUndefined();
   }));
 });
 

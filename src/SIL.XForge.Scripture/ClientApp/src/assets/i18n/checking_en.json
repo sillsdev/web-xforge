@@ -153,6 +153,7 @@
     "next": "Next",
     "previous": "Previous",
     "questions": "Questions ({{ count }})",
+    "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all feature are available. Please free up storage space.",
     "view_questions": "View Questions"
   },
   "checking_answers": {
@@ -237,7 +238,12 @@
   },
   "exception_handling_service": {
     "network_request_failed": "A network request failed. Some functionality may be unavailable.",
+    "out_of_space": "An error occurred because your device is out of space.",
     "unknown_error": "Unknown error"
+  },
+  "file_service": {
+    "exceeded_storage_quota": "Scripture Forge could not upload a file because your device is out of space. Please free up space to continue working on Scripture Forge.",
+    "i_understand": "I understand"
   },
   "issue_email": {
     "body": "Thanks for reporting the issue!\nIt would help us if you fill out some of the information below, but please submit even if you can't fill out much.\nIf you are requesting a feature many of the fields may not be applicable.\nBe aware your bug report will be publicly available. Never submit passwords or other secrets.\n\nBug report\nA clear and concise description of what the bug is.\n\nSteps to reproduce\nFor example:\n1. Go to ...\n2. Click on ...\n3. Scroll down to ...\n4. See error\n\nActual behavior\nPlease describe actual behavior of the issue you are observing.\n\nExpected behavior\nA clear and concise description of what you expected to happen.\n\nScreenshots\nIf applicable, add screenshots to help explain your issue.\n\nAdditional context\nAdd any other context about the problem here.\n\nPossible solution\nAdd any possible solutions to the problem here.\n\nYour environment:\nSoftware                 Version\n-----------------------------------------\n{{ siteName }} - {{ siteVersion }}\n{{ browserName }} - {{ browserVersion }}\n{{ operatingSystem }} - {{ operatingSystemVersion }}\n\nURL: {{ url }}\nError id: {{ errorId }}",
