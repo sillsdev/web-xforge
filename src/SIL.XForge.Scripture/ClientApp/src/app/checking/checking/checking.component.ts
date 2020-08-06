@@ -369,8 +369,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
                   this.limitedStoragePromise = this.noticeService.showMessageDialog(() =>
                     translate('checking.storage_space_is_limited')
                   );
+                  this.limitedStoragePromise.then(() => (this.limitedStoragePromise = undefined));
                 }
-                this.limitedStoragePromise.then(() => (this.limitedStoragePromise = undefined));
               }
             }
           }
@@ -476,6 +476,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
                 answerAction.audio.blob,
                 answerAction.audio.fileName
               );
+              // TODO: If storage is full we should prevent saving the answer rather than discarding it
               if (urlResult != null) {
                 answer.audioUrl = urlResult;
               }

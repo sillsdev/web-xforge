@@ -53,6 +53,7 @@ export class QuestionDialogService {
         result.audio.blob,
         result.audio.fileName
       );
+      // TODO: If storage is full we should prevent saving the answer rather than discarding it
       if (urlResult != null) {
         audioUrl = urlResult;
       }
