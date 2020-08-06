@@ -68,10 +68,11 @@ namespace PTDDCloneAll
 
             IConnection connection = await realtimeService.ConnectAsync();
             List<string> projectCloneResults = new List<string>();
+            string migrationStatus;
             // Get the paratext project ID and admin user for all SF Projects
             foreach (SFProject proj in allSFProjects)
             {
-                string migrationStatus = "Failed to find project administrator.";
+                migrationStatus = "Failed to find project administrator.";
                 foreach (string userId in proj.UserRoles.Keys)
                 {
                     if (proj.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Administrator)
@@ -158,7 +159,7 @@ namespace PTDDCloneAll
         }
 
         /// <summary>
-        /// Deletes all text docs from the database for a book.
+        /// Deletes all text docs from the database for a book. Copied and modified from ParatextSyncRunner.cs
         /// </summary>
         public static async Task DeleteAllTextDocsForBookAsync(IConnection connection, string sfProjectId, TextInfo text, TextType textType)
         {
@@ -168,11 +169,13 @@ namespace PTDDCloneAll
             await Task.WhenAll(tasks);
         }
 
+        // Copied and modified from ParatextSyncRunner.cs
         public static IDocument<TextData> GetTextDoc(IConnection connection, string sfProjectId, TextInfo text, int chapter, TextType textType)
         {
             return connection.Get<TextData>(TextData.GetTextDocId(sfProjectId, text.BookNum, chapter, textType));
         }
 
+        // Copied and modified from ParatextSyncRunner.cs
         public static async Task DeleteTextDocAsync(IConnection connection, string sfProjectId, TextInfo text, int chapter, TextType textType)
         {
             IDocument<TextData> textDoc = GetTextDoc(connection, sfProjectId, text, chapter, textType);

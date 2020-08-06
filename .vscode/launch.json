@@ -53,6 +53,20 @@
       }
     },
     {
+      "name": "Migration PtdaSyncAll",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-migrator-ptdaSyncAll",
+      "program": "${workspaceRoot}/src/Migrations/PtdaSyncAll/bin/Debug/netcoreapp3.1/PtdaSyncAll.dll",
+      "cwd": "${workspaceRoot}/src/Migrations/PtdaSyncAll",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "args": ["--start-ng-serve=listen"],
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
       "name": "Migrations PTDDCloneAll",
       "type": "coreclr",
       "request": "launch",
