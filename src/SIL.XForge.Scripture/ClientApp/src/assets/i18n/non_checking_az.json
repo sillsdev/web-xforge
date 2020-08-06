@@ -33,6 +33,7 @@
     "awaiting_response_from": "{{ newLine }}{{ email }}-dan cavab gözlənilir",
     "cancel_invite": "Dəvəti ləğv etmək",
     "change_roles_and_permissions": "İstifadəçilərin rolları və icazələri {{ boldStart }}yalnız{{ boldEnd }} {{ boldStart }}Paratextdə{{ boldEnd }} dəyişilə bilər. Layihəni {{ boldStart }}Paratextdə{{ boldEnd }} açın, layihənin pəncərəsində {{ templateTagBoundary }}{{ templateTagBoundary }}, sonra {{ boldStart }}Layihə parametrləri{{ boldEnd }}, sonra{{ boldStart }}İstifadəçinin izacələri{{ boldEnd }} tıklayın. {{ boldStart }}Paratextdə{{ boldEnd }} {{ italicsStart }}Göndərmək/Qəbul etmək{{ italicsEnd }}-dən sonra {{ boldStart }} Kəlamın Kürəsində {{ boldEnd }}{{ italicsStart }}Sinxronlaşdırmaq{{ italicsEnd }} edildikdə həmin istifadəçi öz {{ boldStart }}Paratext{{ boldEnd }} hesabı ilə daxil olduqda onların rolu aktivləşəcək.",
+    "connect_network_to_manage_users": "Şəbəkədə olmayanda istifadəçi idarəetməsi aktiv deyil. Xahiş edirik, istifadəçiləri idarə etmək üçün internetə qoşulun.",
     "filter_users": "İstifadəçiləri seçmək...",
     "me": "mən",
     "no_users_found": "Heç bir istifadəçi tapılmadı",
@@ -46,6 +47,7 @@
     "based_on": "Əsasında",
     "choose_the_mother_project": "Layihənizin əsaslandığı Paratext layihəsini seçin.",
     "community_checking": "Dil daşıyıcıları tərəfindən yoxlanma",
+    "connect_network_to_connect_project": "Zəhmət olmasa bir layihəyə qoşulmaq üçün internetə qoşulun",
     "connect_paratext_project": "Paratekst layihəsinə qoşulmaq",
     "connect": "Qoşul",
     "connecting_to_project": "{{ projectName }} -nə qoşulur...",
@@ -118,6 +120,7 @@
   "settings": {
     "anyone_with_a_link": "Keçid ilə hər bir kəs",
     "based_on": "Əsasında",
+    "connect_network_to_change_settings": "Şəbəkədə olmayan zaman layihə parametrləri deyişdirmək mümkün deyil. Xahiş edirik, deyişliklər etmək üçün internetə qoşulun.",
     "choose_the_paratext_project": "Layihənizin əsaslandığı Paratext layihəsini seçin.",
     "danger_zone": "Təhlükə Zonası",
     "delete_this_project": "Bu layihəni silmək",
@@ -145,11 +148,13 @@
     "close": "Bağla",
     "more": "Daha çox",
     "number_of_suggestions": "Təkliflərin sayı",
+    "settings_not_available_offline": "Şəbəkədə olmayan vaxtınızda bu paramətrlər ələ çatmazdır.",
     "suggestion_confidence": "Təklifə əminlik",
     "translation_suggestions": "Tərcümə təklifləri",
     "translation_suggestions_settings": "Tərcümə təkliflərinin parametrləri"
   },
   "sync": {
+    "connect_network_to_synchronize": "Zəhmət olmazsa, layihə sinxronlaşdırmaq üçün, internetə qoşulun",
     "last_synced_time_stamp": "Axırıncı dəfə {{ timeStamp }} sinxronlaşdırılıb ",
     "log_in_to_paratext": "Paratextə daxil olun",
     "never_been_synced": "Heç vaxt sinxronlaşdırılmayıb",

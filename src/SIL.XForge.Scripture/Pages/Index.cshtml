@@ -1,91 +1,25 @@
 @page
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IViewLocalizer Localizer
+@inject IHtmlLocalizer<SharedResource> SharedLocalizer
 @model IndexModel
-@section css {
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.2/tiny-slider.css"/>
-}
 @section scripts {
+    <script src="https://cdn.auth0.com/js/auth0/9.10/auth0.min.js"></script>
     <script type="text/javascript">
+        var webAuth = new auth0.WebAuth({
+            clientID: '@ViewData["ClientId"]',
+            domain: '@ViewData["Domain"]',
+            responseType: 'token id_token',
+            redirectUri: window.location.origin + '/projects',
+            scope: 'openid profile email @ViewData["Scope"]',
+            audience: '@ViewData["Audience"]'
+        });
         webAuth.checkSession({}, function (err, authResult) {
             if (!err) {
                 var options = { state: JSON.stringify({}) };
                 webAuth.authorize(options);
             }
         });
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.2/min/tiny-slider.js"></script>
-    <script type="text/javascript">
-        var AUTOPLAY_TIMEOUT = 15000;
-        var playerSlider;
-        var pauseIntervalId;
-        // start the sliders at 3 different times so they don't all slide together
-        document.querySelectorAll('.features .slider').forEach(function (container, index) {
-            var slider = tns({
-                container: container,
-                autoplay: true,
-                autoplayButton: '#autoplay-button',
-                autoplayHoverPause: true,
-                autoplayResetOnVisibility: false,
-                autoplayText: ['<i class="material-icons">play_arrow</i>', '<i class="material-icons">pause</i>'],
-                autoplayTimeout: AUTOPLAY_TIMEOUT,
-                controlsText: ['<i class="material-icons">keyboard_arrow_left</i>', '<i class="material-icons">keyboard_arrow_right</i>'],
-                // must disable loop for videos otherwise you get 3 copies of each slide that can all play at once
-                loop: false,
-                mouseDrag: true,
-                nav: true,
-                navPosition: 'bottom',
-                preventActionWhenRunning: true,
-                preventScrollOnTouch: 'force',
-                // with loop disabled this makes it behave the same as with loop enabled when there are only 2 slides
-                rewind: true,
-                speed: 800,
-                swipeAngle: false
-            });
-            slider.pause();
-            if (container.id && container.id === 'player-slider') {
-                playerSlider = slider;
-            }
-            // works if there are more than 3 sliders
-            setTimeout(function () {
-                slider.play();
-            }, AUTOPLAY_TIMEOUT*(index % 3)/3);
-        });
-
-        var tag = document.createElement('script');
-        tag.src = `${window.location.protocol}//www.youtube.com/iframe_api`;
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-        function onYouTubeIframeAPIReady() {
-            configurePlayer('player-setup-cc', 'mRsuBIkAhhk');
-            configurePlayer('player-see-cc', 'rKQj6_954ic');
-        }
-
-        function configurePlayer(player, videoId) {
-            // must use <div> replacement for this setup to work, particularly when using origin setting with events
-            new YT.Player(player, {
-                host: `${window.location.protocol}//www.youtube-nocookie.com`,
-                videoId: videoId,
-                playerVars: {
-                    enablejsapi: 1,
-                    origin: '@(ViewData["Origin"])'
-                },
-                events: {
-                    onStateChange: onPlayerStateChange
-                }
-            });
-        }
-
-        function onPlayerStateChange(event) {
-            if (event.data === YT.PlayerState.PLAYING) {
-                // ensure slider stays paused while video is playing
-                pauseIntervalId = setInterval(playerSlider.pause, AUTOPLAY_TIMEOUT);
-                playerSlider.pause();
-            } else if (pauseIntervalId) {
-                clearInterval(pauseIntervalId);
-            }
-        }
     </script>
 }
 
@@ -159,4 +93,36 @@
         </div>
     </div>
 </section>
-@await Html.PartialAsync("_IndexExtraPartial")
+<section class="quote">
+    <div class="quote-container">
+        <img src="/images/quoter.jpg" alt="" />
+        <div class="quote-text">
+            <i class="material-icons">format_quote</i>
+            <p>
+                @Localizer["QuoteQuotation1"]<br />
+                <br />
+                @Localizer["QuoteQuotation2"]<br />
+                <br />
+                @Localizer["QuoteQuotation3"]<br />
+                <br />
+                <span class="quoter-name">@Localizer["QuoteQuoterName"]</span>
+                <span class="quoter-role">@Localizer["QuoteQuoterRole"]</span>
+            </p>
+        </div>
+    </div>
+</section>
+<section class="statement">
+    <div class="container">
+        <div class="mdl-grid">
+            <div class="mdl-cell mdl-cell--12-col">
+                <div class="statement-text">
+                    @Localizer["Statement"]
+                </div>
+                <div class="statement-buttons flex justify-content-center">
+                    <a asp-page="LearnMore" class="mdl-button mdl-button--raised mdl-button--colored button-lg">@SharedLocalizer[SharedResource.Keys.LearnMore]</a>
+                    <a class="mdl-button mdl-button--raised mdl-button--accent button-lg" href="/login?sign-up=true">@SharedLocalizer[SharedResource.Keys.SignUp]</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

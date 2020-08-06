@@ -96,7 +96,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       const audioUrl = await this.fileService.uploadFile(
         FileType.Audio,
         id,
-        this.collection,
+        QuestionDoc.COLLECTION,
         question.dataId,
         docId,
         audioBlob,

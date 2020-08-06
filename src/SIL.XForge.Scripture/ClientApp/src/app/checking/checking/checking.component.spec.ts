@@ -490,9 +490,12 @@ describe('CheckingComponent', () => {
     it('can answer a question', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(2);
+      // Checker user already has an answer on question 6 and 9
+      expect(env.component.summary.answered).toEqual(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerText(0)).toBe('Answer question 2');
+      expect(env.component.summary.answered).toEqual(3);
     }));
 
     it('opens dialog if answering a question for the first time', fakeAsync(() => {

@@ -1,5 +1,6 @@
 {
   "app": {
+    "action_not_available_offline": "Şəbəkədə olmayan vaxtınızda bu hərəkət mümkün deyil.",
     "all_questions": "Bütün Suallar",
     "cannot_change_password": "Hal hazırda gizli şifrə dəyişilmir. Az sonra yenidən çalışın və ya bu problemi Kömək menyusuna bildirin. ",
     "change_password": "Gizli şifrəni dəyişin. ",
@@ -179,6 +180,10 @@
     "upload_audio_file": "Audio Faylı yükləmək",
     "upload": "Yükləmək"
   },
+  "checking_audio_player": {
+    "audio_unavailable": "Audio unavailable.",
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+  },
   "checking_audio_recorder": {
     "mic_access_denied": "Mikrofonunuza giriş rədd edildi. Zəhmət olmasa, brauzerinizdən mikrofonu işə salın.",
     "record": "Səs yazmaq",
@@ -218,6 +223,7 @@
   "error": {
     "chrome": "Xrom",
     "close": "Bağla",
+    "error_id": "Səhv Nəliyi {{ errorId }}",
     "error_occurred": "Bir səhv baş verib",
     "firefox": "Firefox",
     "hide_details": "Detalları gizlət",
@@ -268,7 +274,8 @@
     "link_sharing": "Keçid paylaşımı",
     "not_inviting_already_member": "Dəvət olunmur: İstifadəçi artıq bu layihənin üzvüdür. ",
     "resend": "Yenidən göndərmək",
-    "send": "Göndərmək"
+    "send": "Göndərmək",
+    "share_by_email_not_available_offline": "Şəbəkədə olmayan vaxtınızda istifadəçini dəvət etmək mümkün deyil."
   },
   "share_dialog": {
     "done": "Yerinə yetirildi",

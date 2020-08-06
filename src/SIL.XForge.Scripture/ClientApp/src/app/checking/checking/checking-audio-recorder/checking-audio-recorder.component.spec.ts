@@ -1,10 +1,12 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -17,6 +19,7 @@ import { CheckingAudioRecorderComponent } from './checking-audio-recorder.compon
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
+const mockedPwaService = mock(PwaService);
 
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
@@ -25,7 +28,8 @@ describe('CheckingAudioRecorderComponent', () => {
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: NAVIGATOR, useMock: mockedNavigator }
+      { provide: NAVIGATOR, useMock: mockedNavigator },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -95,6 +99,8 @@ class TestEnvironment {
         return this.rejectUserMedia ? Promise.reject() : navigator.mediaDevices.getUserMedia(mediaConstraints);
       }
     } as MediaDevices);
+    when(mockedPwaService.isOnline).thenReturn(true);
+    when(mockedPwaService.onlineStatus).thenReturn(of(true));
     this.fixture.detectChanges();
   }
 

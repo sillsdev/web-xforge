@@ -3,6 +3,7 @@ import { Component, Input, OnDestroy, Pipe, PipeTransform, ViewChild } from '@an
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { PwaService } from 'xforge-common/pwa.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 
 // See explanatory comment where this number is used
 const ARBITRARILY_LARGE_NUMBER = 1e10;
@@ -12,7 +13,7 @@ const ARBITRARILY_LARGE_NUMBER = 1e10;
   templateUrl: './checking-audio-player.component.html',
   styleUrls: ['./checking-audio-player.component.scss']
 })
-export class CheckingAudioPlayerComponent implements OnDestroy {
+export class CheckingAudioPlayerComponent extends SubscriptionDisposable implements OnDestroy {
   static lastPlayedAudio: HTMLAudioElement;
 
   @ViewChild(MdcSlider, { static: false }) slider?: MdcSlider;
@@ -27,6 +28,7 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
   private audioDataLoaded = false;
 
   constructor(private readonly pwaService: PwaService) {
+    super();
     this.audio.addEventListener('loadedmetadata', () => {
       this.updateDuration();
       this.audioDataLoaded = true;
@@ -41,6 +43,13 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
         this.seek = (this.currentTime / this.duration) * 100;
       } else if (this.currentTime === this.duration) {
         this.seek = 100;
+      }
+    });
+
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      if (isOnline && !this.audioDataLoaded) {
+        // force the audio element to try loading again, now that the user is online again
+        this.audio.load();
       }
     });
   }
@@ -101,6 +110,7 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
+    super.ngOnDestroy();
     if (this.isPlaying) {
       this.audio.pause();
     }
@@ -117,10 +127,11 @@ export class CheckingAudioPlayerComponent implements OnDestroy {
     if (this.slider != null) {
       this.slider.layout();
     }
-    if (this.isAudioAvailable) {
-      this.audio.play();
-      CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;
+    if (!this.audioDataLoaded) {
+      this.audio.load();
     }
+    this.audio.play();
+    CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;
   }
 
   seeking(event: MdcSliderChange) {

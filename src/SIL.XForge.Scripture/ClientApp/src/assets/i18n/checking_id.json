@@ -1,5 +1,6 @@
 {
   "app": {
+    "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "Semua Pertanyaan",
     "cannot_change_password": "Tidak dapat mengganti kata kunci saat ini. Coba lagi nanti atau laporkan masalah dalam menu Bantuan.",
     "change_password": "Ganti kata kunci",
@@ -179,6 +180,10 @@
     "upload_audio_file": "Unggah File Suara",
     "upload": "Unggah"
   },
+  "checking_audio_player": {
+    "audio_unavailable": "Audio unavailable.",
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+  },
   "checking_audio_recorder": {
     "mic_access_denied": "Akses ke mikrofon Anda ditolak. Harap aktifkan mikrofon dari peramban Anda.",
     "record": "Rekam",
@@ -218,6 +223,7 @@
   "error": {
     "chrome": "Chrome",
     "close": "Tutup",
+    "error_id": "Error ID: {{ errorId }}",
     "error_occurred": "Kesalahan terjadi",
     "firefox": "Firefox",
     "hide_details": "Sembunyikan detail",
@@ -268,7 +274,8 @@
     "link_sharing": "Berbagi tautan",
     "not_inviting_already_member": "Tidak mengundang: Pengguna sudah menjadi anggota proyek ini",
     "resend": "Kirim ulang",
-    "send": "Kirim"
+    "send": "Kirim",
+    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },
   "share_dialog": {
     "done": "Selesai",

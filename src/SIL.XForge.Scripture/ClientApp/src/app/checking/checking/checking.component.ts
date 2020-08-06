@@ -815,6 +815,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
     }
     this.questionsPanel.updateElementsRead(activeQuestionDoc);
+    this.refreshSummary();
   }
 
   private saveComment(answer: Answer, comment: Comment): void {

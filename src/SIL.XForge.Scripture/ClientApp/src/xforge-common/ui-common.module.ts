@@ -29,6 +29,7 @@ import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginato
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoService } from '@ngneat/transloco';
 import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
@@ -47,6 +48,7 @@ const modules = [
   MatProgressSpinnerModule,
   MatSelectModule,
   MatTableModule,
+  MatTooltipModule,
   MdcButtonModule,
   MdcCardModule,
   MdcCheckboxModule,

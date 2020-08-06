@@ -124,7 +124,15 @@ export class I18nService {
     this.transloco.setActiveLang(locale.canonicalTag);
     const date = new Date();
     date.setFullYear(date.getFullYear() + 1);
-    this.cookieService.set(ASP_CULTURE_COOKIE_NAME, aspCultureCookieValue(locale.canonicalTag), date, '/');
+    this.cookieService.set(
+      ASP_CULTURE_COOKIE_NAME,
+      aspCultureCookieValue(locale.canonicalTag),
+      date,
+      '/',
+      undefined,
+      true,
+      'Strict'
+    );
     if (doAuthUpdate) {
       this.authService.updateInterfaceLanguage(locale.canonicalTag);
     }

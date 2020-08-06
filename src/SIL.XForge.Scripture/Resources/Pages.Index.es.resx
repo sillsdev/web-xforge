@@ -118,16 +118,16 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AboutCheckingTool" xml:space="preserve">
-    <value>La herramienta de Comprobación por la Comunidad facilita la tarea de verificación de las Escrituras parte por parte, con el objetivo de transmitir de manera más rápida comentarios y sugerencias generales al comité de traducción.</value>
+    <value>Our Community Checking tool facilitates modular Scripture checking campaigns, to deliver broader feedback to the translation committee, faster.</value>
   </data>
   <data name="AboutEngaging" xml:space="preserve">
-    <value>Actualmente, grupos de hablantes de distintas lenguas y diversidad geográfica se están involucrando en muchos proyectos de Traducción.</value>
+    <value>Scripture projects engage increasingly geographically diverse groups of heart language speakers.</value>
   </data>
   <data name="AboutFlexible" xml:space="preserve">
     <value>Flexible</value>
   </data>
   <data name="AboutFlexibleDescription" xml:space="preserve">
-    <value>2 No hay un grupo predefinido de preguntas que deba usar. {0}Recopile preguntas que se ajusten a su contexto{1}.</value>
+    <value>2 Compile {0}unique questions{1} that fit your specific context.</value>
   </data>
   <data name="AboutHeader" xml:space="preserve">
     <value>Acerca de Scripture Forge</value>
@@ -136,7 +136,7 @@
     <value>Funciona con el Paratext</value>
   </data>
   <data name="AboutParatextDescription" xml:space="preserve">
-    <value>1 Simplemente {0}conecte su proyecto de Paratext{1} para empezar. {0}Sincronize{1} su proyecto para mantenerlo actualizado con Paratext y enviar las respuestas de los usuarios a las Notas de Paratext.</value>
+    <value>1 {0}Paratext integration{1} and {0}ongoing synchronization{1} keeps your project up-to-date and allows user feedback via {0}Paratext Notes{1}.</value>
   </data>
   <data name="AboutTitle" xml:space="preserve">
     <value>Extienda su alcance con la verificación de las Escrituras</value>
@@ -145,13 +145,13 @@
     <value>Compromiso del usuario</value>
   </data>
   <data name="AboutUserEngagementDescription" xml:space="preserve">
-    <value>3 Activar {0}"Compartir"{1} para permitir a los usuarios invitar a un amigo a unirse a tu campaña o mantener los comentarios a un grupo definido. Los usuarios pueden contestar preguntas, comentar las respuestas y dar me gusta a las respuestas de otros.</value>
+    <value>3 {0}Invited users{1} can answer questions, leave comments on existing answers and like responses.</value>
   </data>
   <data name="Description" xml:space="preserve">
     <value>Un conjunto de herramientas gratuitas para hacer más con su proyecto de Paratext, dondequiera que esté. </value>
   </data>
   <data name="EngageChecking" xml:space="preserve">
-    <value>Realizar la comprobación con la comunidad</value>
+    <value>Engage in Community Checking</value>
   </data>
   <data name="EngageCollaborate" xml:space="preserve">
     <value>Colaborar en las Escrituras</value>
@@ -161,5 +161,23 @@
   </data>
   <data name="EngageTitle" xml:space="preserve">
     <value>Interactuar con la comunidad lingüística. Colabore con sus compañeros.</value>
+  </data>
+  <data name="QuoteQuotation1" xml:space="preserve">
+    <value>It was so easy! ...all I had to do to get started was log in using my Paratext registration and boom! It was all there.</value>
+  </data>
+  <data name="QuoteQuotation2" xml:space="preserve">
+    <value>Right away I chose a verse and wrote a checking question for it. Then I also recorded myself asking that checking question.</value>
+  </data>
+  <data name="QuoteQuotation3" xml:space="preserve">
+    <value>It’s so great that feedback can be gathered either way. All the features are wonderful for remote contributors, including the option to answer the questions with an audio recording.</value>
+  </data>
+  <data name="QuoteQuoterName" xml:space="preserve">
+    <value>Trevor Deck</value>
+  </data>
+  <data name="QuoteQuoterRole" xml:space="preserve">
+    <value>SIL Global Diaspora Specialist</value>
+  </data>
+  <data name="Statement" xml:space="preserve">
+    <value>Where translation and the community meet.</value>
   </data>
 </root>

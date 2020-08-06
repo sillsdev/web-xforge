@@ -257,9 +257,7 @@ namespace SIL.XForge.Scripture.Services
                 }
                 else
                 {
-                    string error = await response.Content.ReadAsStringAsync();
-                    throw new HttpRequestException(
-                        $"HTTP Request error, Code: {response.StatusCode}, Content: {error}");
+                    throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
                 }
             }
 

@@ -60,13 +60,14 @@ export class CommandService {
       params,
       id: uuidv1()
     };
-    const response = await this.http
-      .post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
-      .toPromise();
-    if (response.error != null) {
-      const message = `Error invoking ${method}: ${response.error.message}`;
-      throw new CommandError(response.error.code, message, response.error.data);
+    try {
+      const response = await this.http
+        .post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
+        .toPromise();
+      return response.result;
+    } catch (error) {
+      const message = `Error invoking ${method}: ${error.message}`;
+      throw new CommandError(error.code, message, error.data);
     }
-    return response.result;
   }
 }
