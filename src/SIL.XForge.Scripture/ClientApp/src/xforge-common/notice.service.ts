@@ -52,6 +52,7 @@ export class NoticeService {
     let config: MdcSnackbarConfig<any> | undefined;
     config = { classes: classes.join(' ') };
     if (this.messageOnDisplay === message) {
+      // Do nothing if the message is the same as one currently on display
       return;
     }
     const snackBarRef = this.snackbar.open(message, undefined, config);
