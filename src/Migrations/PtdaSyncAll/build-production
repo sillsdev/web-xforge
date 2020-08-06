@@ -6,10 +6,14 @@
 #
 # Usage: ./build-production
 #
-# To run product on another computer (with ASPNETCORE_ENVIRONMENT set to Development on a workstation, Staging for QA,
-# or omitted for Live):
-# tar xf ptda-sync-all-*.tar.xz
-# ASPNETCORE_ENVIRONMENT=Development SF_APP_DIR="/path/to/sf/app" ptda-sync-all-*/PtdaSyncAll |& tee /tmp/ptda.log
+# To run product on another computer:
+# Set ASPNETCORE_ENVIRONMENT to Development on a workstation, Staging for QA, or omit it for Live.
+# Set PTDASYNCALL_MODE to "sync" to do a sync, or anything else or omit to just inspect.
+# Extract program:
+#   tar xf ptda-sync-all-*.tar.xz
+# Run:
+#   ASPNETCORE_ENVIRONMENT=Development PTDASYNCALL_MODE="sync" SF_APP_DIR="/path/to/sf/app" \
+#     ptda-sync-all-*/PtdaSyncAll |& tee /tmp/ptda.log
 
 set -ue -o pipefail
 
