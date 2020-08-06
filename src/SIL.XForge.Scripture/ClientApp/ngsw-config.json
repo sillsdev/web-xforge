@@ -32,20 +32,13 @@
     }
   ],
   "navigationUrls": [
-    "/**",
-    "!/",
-    "!/terms",
-    "!/privacy",
-    "!/learn-more",
-    "!/language-api",
-    "!/connect/**",
-    "!/identity-api/**",
-    "!/json-api/**",
-    "!/paratext-api/**",
-    "!/sharedb/**",
-    "!/.well-known/**",
-    "!/**/*.*",
-    "!/**/*__*",
-    "!/**/*__*/**"
+    "/projects",
+    "/projects/**",
+    "/login",
+    "/login/",
+    "/connect-project",
+    "/connect-project/",
+    "/system-administration",
+    "/system-administration/"
   ]
 }
