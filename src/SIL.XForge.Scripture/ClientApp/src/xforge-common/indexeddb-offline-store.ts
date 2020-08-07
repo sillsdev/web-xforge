@@ -129,7 +129,7 @@ export class IndexeddbOfflineStore extends OfflineStore {
     return performQuery(parameters, snapshots);
   }
 
-  async put<T extends OfflineData>(collection: string, offlineData: T): Promise<T> {
+  async put(collection: string, offlineData: OfflineData): Promise<void> {
     const db = await this.openDB();
 
     const transaction = db.transaction(collection, 'readwrite');
@@ -141,14 +141,8 @@ export class IndexeddbOfflineStore extends OfflineStore {
       request.onsuccess = () => resolve();
     });
 
-    const result = await new Promise<T>((resolve, reject) => {
-      const request = objectStore.get(offlineData.id);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-    });
-
-    return new Promise<T>((resolve, reject) => {
-      transaction.oncomplete = () => resolve(result);
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
       // The transaction is aborted if the storage quota has been exceeded. We want to handle that if it happens.
       transaction.onabort = event => {
         const target = event.target! as IDBTransaction;

@@ -4,7 +4,6 @@ import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
@@ -98,7 +97,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private projectRemoteChangesSub?: Subscription;
   private questionsRemoteChangesSub?: Subscription;
   private text?: TextInfo;
-  private limitedStoragePromise?: Promise<void>;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -358,19 +356,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         }
         this.questionsRemoteChangesSub = this.subscribe(
           merge(this.questionsQuery.remoteDocChanges$, this.questionsQuery.ready$),
-          async () => {
+          () => {
             if (this.pwaService.isOnline) {
               for (const qd of this.questionsQuery!.docs) {
                 qd.updateFileCache();
-              }
-              if (!(await this.fileService.hasStorageQuotaRemaining(20))) {
-                // Notify user if the device has less than 20 MB of storage available
-                if (this.limitedStoragePromise == null) {
-                  this.limitedStoragePromise = this.noticeService.showMessageDialog(() =>
-                    translate('checking.storage_space_is_limited')
-                  );
-                  this.limitedStoragePromise.then(() => (this.limitedStoragePromise = undefined));
-                }
               }
             }
           }

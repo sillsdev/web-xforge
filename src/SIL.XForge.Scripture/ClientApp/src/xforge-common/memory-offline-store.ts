@@ -55,7 +55,7 @@ export class MemoryOfflineStore extends OfflineStore {
     return performQuery<T>(parameters, snapshots);
   }
 
-  put<T extends OfflineData>(collection: string, offlineData: T): Promise<T> {
+  put(collection: string, offlineData: OfflineData): Promise<void> {
     if (this.storageQuotaFull) {
       return Promise.reject(new DOMException('error', 'QuotaExceededError'));
     }
@@ -65,7 +65,7 @@ export class MemoryOfflineStore extends OfflineStore {
       this.map.set(collection, collectionData);
     }
     collectionData.set(offlineData.id, offlineData);
-    return Promise.resolve(offlineData);
+    return Promise.resolve();
   }
 
   delete(collection: string, id: string): Promise<void> {
