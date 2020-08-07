@@ -1459,7 +1459,6 @@ class TestEnvironment {
     when(
       mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), undefined)
     ).thenResolve(undefined);
-    when(mockedFileService.hasStorageQuotaRemaining(anything())).thenResolve(true);
     this.fixture = TestBed.createComponent(CheckingComponent);
     this.component = this.fixture.componentInstance;
     this.location = TestBed.get(Location);

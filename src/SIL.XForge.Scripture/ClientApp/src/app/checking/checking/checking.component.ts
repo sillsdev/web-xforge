@@ -4,7 +4,6 @@ import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash/cloneDeep';
 import { Answer } from 'realtime-server/lib/scriptureforge/models/answer';
@@ -16,7 +15,6 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { merge, Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -98,7 +96,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private projectRemoteChangesSub?: Subscription;
   private questionsRemoteChangesSub?: Subscription;
   private text?: TextInfo;
-  private limitedStoragePromise?: Promise<void>;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -110,8 +107,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly router: Router,
     private readonly questionDialogService: QuestionDialogService,
     private readonly i18n: I18nService,
-    private readonly pwaService: PwaService,
-    private readonly fileService: FileService
+    private readonly pwaService: PwaService
   ) {
     super(noticeService);
   }
@@ -358,19 +354,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         }
         this.questionsRemoteChangesSub = this.subscribe(
           merge(this.questionsQuery.remoteDocChanges$, this.questionsQuery.ready$),
-          async () => {
+          () => {
             if (this.pwaService.isOnline) {
               for (const qd of this.questionsQuery!.docs) {
                 qd.updateFileCache();
-              }
-              if (!(await this.fileService.hasStorageQuotaRemaining(20))) {
-                // Notify user if the device has less than 20 MB of storage available
-                if (this.limitedStoragePromise == null) {
-                  this.limitedStoragePromise = this.noticeService.showMessageDialog(() =>
-                    translate('checking.storage_space_is_limited')
-                  );
-                  this.limitedStoragePromise.then(() => (this.limitedStoragePromise = undefined));
-                }
               }
             }
           }

@@ -44,6 +44,8 @@ export function isLocalBlobUrl(url: string): boolean {
   providedIn: 'root'
 })
 export class FileService extends SubscriptionDisposable {
+  private limitedStorageDialogPromise?: Promise<void>;
+
   constructor(
     private readonly typeRegistry: TypeRegistry,
     private readonly offlineStore: OfflineStore,
@@ -184,14 +186,20 @@ export class FileService extends SubscriptionDisposable {
     }
   }
 
-  async hasStorageQuotaRemaining(megabytes: number): Promise<boolean> {
-    if (navigator.storage && navigator.storage.estimate) {
-      const quota = await navigator.storage.estimate();
-      return quota.usage == null || quota.quota == null ? true : quota.quota - quota.usage > megabytes * 1024 * 1024;
-    }
+  async notifyUserIfStorageQuotaBelow(megabytes: number): Promise<void> {
     // The StorageManager API is not available on some browsers e.g. Safari. So just default to true.
     // See https://caniuse.com/#feat=mdn-api_storagemanager
-    return true;
+    let hasAdequateSpace: boolean = true;
+    if (navigator.storage && navigator.storage.estimate) {
+      const quota = await navigator.storage.estimate();
+      hasAdequateSpace =
+        quota.usage == null || quota.quota == null ? true : quota.quota - quota.usage > megabytes * 1024 * 1024;
+    }
+    if (!hasAdequateSpace && this.limitedStorageDialogPromise == null) {
+      this.limitedStorageDialogPromise = this.noticeService
+        .showMessageDialog(() => this.transloco.translate('file_service.storage_space_is_limited'))
+        .then(() => (this.limitedStorageDialogPromise = undefined));
+    }
   }
 
   private onlineDeleteFile(fileType: FileType, projectId: string, dataId: string, ownerId: string): Promise<void> {
@@ -246,7 +254,7 @@ export class FileService extends SubscriptionDisposable {
     // Prompt the user to free up storage space
     await this.noticeService.showMessageDialog(
       () => this.transloco.translate('file_service.exceeded_storage_quota'),
-      () => this.transloco.translate('file_service.ok')
+      () => this.transloco.translate('file_service.i_understand')
     );
   }
 }
