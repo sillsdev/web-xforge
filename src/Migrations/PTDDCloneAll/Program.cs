@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Xml.Linq;
 using System.Threading.Tasks;
@@ -13,7 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Autofac;
-using Autofac.Extensions.DependencyInjection;
 using SIL.XForge;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -38,10 +39,19 @@ namespace PTDDCloneAll
             Directory.SetCurrentDirectory(sfAppDir);
             IWebHostBuilder builder = CreateWebHostBuilder(args);
             IWebHost webHost = builder.Build();
-            await webHost.StartAsync();
+            try
+            {
+                await webHost.StartAsync();
+            }
+            catch (HttpRequestException e)
+            {
+                Log("There was an error starting the program before getting to the migration"
+                    + " part. Maybe the SF server is running and needs shut down? Rethrowing.");
+                throw e;
+            }
             await CloneSFProjects(webHost, doClone);
             await webHost.StopAsync();
-            Console.WriteLine("Clone all projects: Completed");
+            Log("Clone all projects - Completed");
         }
 
         /// <summary>
@@ -55,7 +65,6 @@ namespace PTDDCloneAll
         {
             IRealtimeService realtimeService = webHost.Services.GetService<IRealtimeService>();
             IQueryable<SFProject> allSFProjects = realtimeService.QuerySnapshots<SFProject>();
-            ParatextSyncRunner syncRunner = webHost.Services.GetService<ParatextSyncRunner>();
             IOptions<SiteOptions> siteOptions = webHost.Services.GetService<IOptions<SiteOptions>>();
             string syncDir = Path.Combine(siteOptions.Value.SiteDir, "sync");
             string syncDirOld = Path.Combine(siteOptions.Value.SiteDir, "sync_old");
@@ -67,17 +76,14 @@ namespace PTDDCloneAll
             }
 
             IConnection connection = await realtimeService.ConnectAsync();
-            List<string> projectCloneResults = new List<string>();
-            string migrationStatus;
             // Get the paratext project ID and admin user for all SF Projects
             foreach (SFProject proj in allSFProjects)
             {
-                migrationStatus = "Failed to find project administrator.";
                 foreach (string userId in proj.UserRoles.Keys)
                 {
                     if (proj.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Administrator)
                     {
-                        migrationStatus = $"Project administrator identified: {userId}";
+                        Console.WriteLine($"Project administrator identified on {proj.Name}: {userId}");
                         if (!doClone)
                             break;
                         try
@@ -97,34 +103,44 @@ namespace PTDDCloneAll
                                 op.Inc(pd => pd.Sync.QueuedCount);
                             });
                             // Clone the paratext project and update the SF database with the project data
-                            await CloneAndSyncSFToParatext(syncRunner, proj.Id, userId);
+                            await CloneAndSyncSFToParatext(webHost, proj, userId, syncDir);
                             string projectDir = Path.Combine(syncDir, proj.Id);
                             string projectDirOld = Path.Combine(syncDirOld, proj.Id);
                             Directory.Move(projectDir, projectDirOld);
-                            migrationStatus = "Succeeded";
                         }
                         catch (Exception e)
                         {
-                            string partialCloneDir = Path.Combine(syncDir, proj.ParatextId);
-                            if (Directory.Exists(partialCloneDir))
-                                Directory.Delete(partialCloneDir);
-                            migrationStatus = $"Error: {e.Message}";
+                            Log($"There was an error setting up {proj.Name} ({proj.Id}) to be cloned. Skipping. " +
+                                $"Error was {e.Message}");
                         }
                         break;
                     }
                 }
-                projectCloneResults.Add($"{proj.Name} - {migrationStatus}");
-            }
-            Console.WriteLine("MIGRATION RESULTS:");
-            foreach (string result in projectCloneResults)
-            {
-                Console.WriteLine(result);
             }
         }
 
-        public static async Task CloneAndSyncSFToParatext(ParatextSyncRunner syncRunner, string projectId, string userId)
+        public static async Task CloneAndSyncSFToParatext(IWebHost webHost, SFProject proj, string userId, string syncDir)
         {
-            await syncRunner.RunAsync(projectId, userId, false);
+            try
+            {
+                Console.WriteLine($"Cloning {proj.Name} ({proj.Id}) as SF user {userId}");
+                ParatextSyncRunner syncRunner = webHost.Services.GetService<ParatextSyncRunner>();
+                await syncRunner.RunAsync(proj.Id, userId, false);
+                Log($"{proj.Name} - Succeeded");
+            }
+            catch (Exception e)
+            {
+                Log($"There was a problem cloning the project. Exception is:\n${e}");
+                string partialCloneDir = Path.Combine(syncDir, proj.ParatextId);
+                if (Directory.Exists(partialCloneDir))
+                    Directory.Delete(partialCloneDir);
+            }
+        }
+
+        public static void Log(string message)
+        {
+            string when = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            Console.WriteLine($"{when} PTDDCloneAll: {message}");
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args)
