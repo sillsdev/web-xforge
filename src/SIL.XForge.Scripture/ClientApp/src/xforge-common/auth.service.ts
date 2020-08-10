@@ -111,6 +111,17 @@ export class AuthService {
     return this.expiresAt != null && Date.now() < this.expiresAt;
   }
 
+  async attemptOnlineLogin(): Promise<void> {
+    // Only need to check if the app has logged in via an offline state
+    if (await this.isLoggedIn) {
+      this.tryOnlineLogIn().then(result => {
+        if (!result.loggedIn) {
+          this.logIn(this.locationService.pathname + this.locationService.search);
+        }
+      });
+    }
+  }
+
   changePassword(email: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.auth0.changePassword({ connection: 'Username-Password-Authentication', email }, (error, result) => {
@@ -162,6 +173,26 @@ export class AuthService {
 
   private async tryLogIn(): Promise<LoginResult> {
     try {
+      // If we have no valid auth0 data then we have to validate online first
+      if (this.accessToken == null || this.idToken == null || this.expiresAt == null) {
+        return await this.tryOnlineLogIn();
+      }
+      // In offline mode check against the last known access
+      if (!(await this.handleOfflineAuth())) {
+        return { loggedIn: false, newlyLoggedIn: false };
+      }
+      return { loggedIn: true, newlyLoggedIn: false };
+    } catch {
+      await this.noticeService.showMessageDialog(
+        () => translate('error_messages.error_occurred_login'),
+        () => translate('error_messages.try_again')
+      );
+      return { loggedIn: false, newlyLoggedIn: false };
+    }
+  }
+
+  private async tryOnlineLogIn(): Promise<LoginResult> {
+    try {
       if (await this.pwaService.checkOnline()) {
         // In online mode do the normal checks with auth0
         let authResult = await this.parseHash();
@@ -173,11 +204,6 @@ export class AuthService {
           }
         } else {
           return { loggedIn: true, newlyLoggedIn: true };
-        }
-      } else {
-        // In offline mode check against the last known access
-        if (!(await this.handleOfflineAuth())) {
-          return { loggedIn: false, newlyLoggedIn: false };
         }
       }
       return { loggedIn: true, newlyLoggedIn: false };
@@ -222,6 +248,7 @@ export class AuthService {
         return false;
       }
     }
+    console.log('navigate', state.returnUrl, this.locationService.hash);
     if (state.returnUrl != null) {
       this.router.navigateByUrl(state.returnUrl, { replaceUrl: true });
     } else if (this.locationService.hash !== '') {
@@ -231,9 +258,6 @@ export class AuthService {
   }
 
   private async handleOfflineAuth(): Promise<boolean> {
-    if (this.accessToken == null || this.idToken == null || this.expiresAt == null) {
-      return false;
-    }
     this.scheduleRenewal();
     await this.remoteStore.init(() => this.accessToken);
     return true;
