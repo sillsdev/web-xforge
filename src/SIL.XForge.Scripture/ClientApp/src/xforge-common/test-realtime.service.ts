@@ -27,6 +27,10 @@ function addSnapshotDefaults(snapshot: Partial<Snapshot>): Snapshot {
  * This is a memory-based implementation of the real-time service. It is useful for testing.
  */
 export class TestRealtimeService extends RealtimeService {
+  set offlineStorageQuotaStatus(isFull: boolean) {
+    (this.offlineStore as MemoryOfflineStore).storageQuotaFull = isFull;
+  }
+
   addSnapshots<T>(collection: string, snapshots: Partial<Snapshot<T>>[], addToOfflineStore: boolean = false): void {
     for (const snapshot of snapshots) {
       this.addSnapshot(collection, snapshot, addToOfflineStore);

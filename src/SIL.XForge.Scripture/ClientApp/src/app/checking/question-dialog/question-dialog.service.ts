@@ -47,7 +47,16 @@ export class QuestionDialogService {
     let audioUrl = questionDoc != null && questionDoc.data != null ? questionDoc.data.audioUrl : undefined;
     if (questionDoc != null && result.audio.fileName != null && result.audio.blob != null) {
       // Get the amended filename and save it against the answer
-      audioUrl = await questionDoc.uploadFile(FileType.Audio, questionId, result.audio.blob, result.audio.fileName);
+      const urlResult = await questionDoc.uploadFile(
+        FileType.Audio,
+        questionId,
+        result.audio.blob,
+        result.audio.fileName
+      );
+      // TODO: If storage is full we should prevent saving the answer rather than discarding it
+      if (urlResult != null) {
+        audioUrl = urlResult;
+      }
     } else if (result.audio.status === 'reset') {
       audioUrl = undefined;
     }

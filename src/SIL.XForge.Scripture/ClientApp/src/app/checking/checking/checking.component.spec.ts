@@ -24,6 +24,7 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
 import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
+import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
@@ -56,7 +57,7 @@ import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-di
 import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { CheckingAnswersComponent } from './checking-answers/checking-answers.component';
+import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingOwnerComponent } from './checking-answers/checking-owner/checking-owner.component';
@@ -554,6 +555,39 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.yourAnswerField).toBeNull();
       expect(env.addAnswerButton).toBeDefined();
+    }));
+
+    it('discards audio content if storage quota exceeded', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      when(
+        mockedFileService.uploadFile(
+          FileType.Audio,
+          'project01',
+          QuestionDoc.COLLECTION,
+          anything(),
+          anything(),
+          anything(),
+          anything(),
+          anything()
+        )
+      ).thenResolve(undefined);
+
+      env.selectQuestion(1);
+      const answerAction: AnswerAction = {
+        action: 'save',
+        text: 'answer 01',
+        verseRef: fromVerseRef(VerseRef.parse('JHN 1:1')),
+        audio: {
+          status: 'processed',
+          fileName: 'audioFile.mp3',
+          blob: getAudioBlob()
+        }
+      };
+      env.component.answerAction(answerAction);
+      env.waitForSliderUpdate();
+      const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      expect(questionDoc.data!.answers.length).toEqual(1);
+      expect(questionDoc.data!.answers[0].audioUrl).toBeUndefined();
     }));
 
     it('can change answering tabs', fakeAsync(() => {
