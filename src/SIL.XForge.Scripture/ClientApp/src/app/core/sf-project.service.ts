@@ -90,7 +90,12 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
   }
 
-  async createQuestion(id: string, question: Question, audioFileName?: string, audioBlob?: Blob): Promise<QuestionDoc> {
+  async createQuestion(
+    id: string,
+    question: Question,
+    audioFileName?: string,
+    audioBlob?: Blob
+  ): Promise<QuestionDoc | undefined> {
     const docId = getQuestionDocId(id, question.dataId);
     if (audioFileName != null && audioBlob != null) {
       const audioUrl = await this.fileService.uploadFile(
@@ -103,9 +108,12 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
         audioFileName,
         true
       );
+      if (audioUrl == null) {
+        return;
+      }
       question.audioUrl = audioUrl;
     }
-    return this.realtimeService.create(QuestionDoc.COLLECTION, docId, question);
+    return this.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question);
   }
 
   onlineSync(id: string): Promise<void> {

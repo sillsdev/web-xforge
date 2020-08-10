@@ -557,7 +557,7 @@ describe('CheckingComponent', () => {
       expect(env.addAnswerButton).toBeDefined();
     }));
 
-    it('discards audio content if storage quota exceeded', fakeAsync(() => {
+    it('does not save the answer when storage quota exceeded', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       when(
         mockedFileService.uploadFile(
@@ -586,8 +586,7 @@ describe('CheckingComponent', () => {
       env.component.answerAction(answerAction);
       env.waitForSliderUpdate();
       const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
-      expect(questionDoc.data!.answers.length).toEqual(1);
-      expect(questionDoc.data!.answers[0].audioUrl).toBeUndefined();
+      expect(questionDoc.data!.answers.length).toEqual(0);
     }));
 
     it('can change answering tabs', fakeAsync(() => {

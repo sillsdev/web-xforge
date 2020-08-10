@@ -453,6 +453,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         answer.selectionStartClipped = answerAction.selectionStartClipped;
         answer.selectionEndClipped = answerAction.selectionEndClipped;
         answer.dateModified = dateNow;
+        let shouldSaveAnswer = true;
         if (answerAction.audio != null) {
           if (answerAction.audio.fileName != null && answerAction.audio.blob != null) {
             if (this.questionsPanel.activeQuestionDoc != null) {
@@ -463,16 +464,18 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
                 answerAction.audio.blob,
                 answerAction.audio.fileName
               );
-              // TODO: If storage is full we should prevent saving the answer rather than discarding it
-              if (urlResult != null) {
-                answer.audioUrl = urlResult;
+              if (urlResult == null) {
+                shouldSaveAnswer = false;
               }
+              answer.audioUrl = urlResult;
             }
           } else if (answerAction.audio.status === 'reset') {
             answer.audioUrl = undefined;
           }
         }
-        this.saveAnswer(answer);
+        if (shouldSaveAnswer) {
+          this.saveAnswer(answer);
+        }
         break;
       case 'delete':
         if (answerAction.answer != null) {
