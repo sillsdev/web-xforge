@@ -140,6 +140,15 @@ export class IndexeddbOfflineStore extends OfflineStore {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve();
     });
+
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      // The transaction is aborted if the storage quota has been exceeded. We want to handle that if it happens.
+      transaction.onabort = event => {
+        const target = event.target! as IDBTransaction;
+        reject(target.error);
+      };
+    });
   }
 
   async delete(collection: string, id: string): Promise<void> {

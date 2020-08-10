@@ -65,6 +65,11 @@ export class ExceptionHandlingService implements ErrorHandler {
       return;
     }
 
+    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      ngZone.run(() => noticeService.showError(translate('exception_handling_service.out_of_space')));
+      return;
+    }
+
     if (
       typeof error === 'object' &&
       // these are the properties Bugsnag checks for, and will have problems if they don't exist
