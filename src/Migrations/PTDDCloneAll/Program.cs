@@ -34,7 +34,7 @@ namespace PTDDCloneAll
         {
             string mode = Environment.GetEnvironmentVariable("PTDDCLONEALL_MODE") ?? "inspect";
             bool doClone = mode == "clone";
-            Console.WriteLine($"PTDDCloneAll starting. Will clone: {doClone}");
+            Log($"PTDDCloneAll starting. Will clone: {doClone}");
             string sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
             Directory.SetCurrentDirectory(sfAppDir);
             IWebHostBuilder builder = CreateWebHostBuilder(args);
@@ -43,11 +43,11 @@ namespace PTDDCloneAll
             {
                 await webHost.StartAsync();
             }
-            catch (HttpRequestException e)
+            catch (HttpRequestException)
             {
                 Log("There was an error starting the program before getting to the migration"
                     + " part. Maybe the SF server is running and needs shut down? Rethrowing.");
-                throw e;
+                throw;
             }
             await CloneSFProjects(webHost, doClone);
             await webHost.StopAsync();
@@ -83,7 +83,7 @@ namespace PTDDCloneAll
                 {
                     if (proj.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Administrator)
                     {
-                        Console.WriteLine($"Project administrator identified on {proj.Name}: {userId}");
+                        Log($"Project administrator identified on {proj.Name}: {userId}");
                         if (!doClone)
                             break;
                         try
@@ -107,13 +107,13 @@ namespace PTDDCloneAll
                             string projectDir = Path.Combine(syncDir, proj.Id);
                             string projectDirOld = Path.Combine(syncDirOld, proj.Id);
                             Directory.Move(projectDir, projectDirOld);
+                            break;
                         }
                         catch (Exception e)
                         {
-                            Log($"There was an error setting up {proj.Name} ({proj.Id}) to be cloned. Skipping. " +
-                                $"Error was {e.Message}");
+                            Log($"Unable to clone {proj.Name} ({proj.Id}) as user: {userId}{Environment.NewLine}" +
+                                $"Error was: {e.Message}");
                         }
-                        break;
                     }
                 }
             }
@@ -123,17 +123,18 @@ namespace PTDDCloneAll
         {
             try
             {
-                Console.WriteLine($"Cloning {proj.Name} ({proj.Id}) as SF user {userId}");
+                Log($"Cloning {proj.Name} ({proj.Id}) as SF user {userId}");
                 ParatextSyncRunner syncRunner = webHost.Services.GetService<ParatextSyncRunner>();
                 await syncRunner.RunAsync(proj.Id, userId, false);
                 Log($"{proj.Name} - Succeeded");
             }
             catch (Exception e)
             {
-                Log($"There was a problem cloning the project. Exception is:\n${e}");
+                Log($"There was a problem cloning the project.{Environment.NewLine}Exception is: {e}");
                 string partialCloneDir = Path.Combine(syncDir, proj.ParatextId);
                 if (Directory.Exists(partialCloneDir))
                     Directory.Delete(partialCloneDir);
+                throw;
             }
         }
 
