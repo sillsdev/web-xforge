@@ -53,10 +53,11 @@ export class QuestionDialogService {
         result.audio.blob,
         result.audio.fileName
       );
-      // TODO: If storage is full we should prevent saving the answer rather than discarding it
-      if (urlResult != null) {
-        audioUrl = urlResult;
+      if (urlResult == null) {
+        // Discard the question if an error occurred while uploading or storing the audio
+        return undefined;
       }
+      audioUrl = urlResult;
     } else if (result.audio.status === 'reset') {
       audioUrl = undefined;
     }
