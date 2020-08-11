@@ -66,7 +66,7 @@ enum LikeAnswerResponse {
   styleUrls: ['./checking-answers.component.scss']
 })
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
-  @ViewChild(CheckingAudioCombinedComponent, { static: false }) audioCombinedComponent?: CheckingAudioCombinedComponent;
+  @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent?: CheckingAudioCombinedComponent;
   @Input() project?: SFProject;
   @Input() projectId?: string;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
