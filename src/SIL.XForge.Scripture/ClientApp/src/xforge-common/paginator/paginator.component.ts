@@ -1,5 +1,5 @@
 import { OnDestroy } from '@angular/core';
-import { MatPaginatorIntl } from '@angular/material';
+import { MatPaginatorIntl } from '@angular/material/paginator';
 import { translate, TranslocoService } from '@ngneat/transloco';
 import { Subscription } from 'rxjs';
 
