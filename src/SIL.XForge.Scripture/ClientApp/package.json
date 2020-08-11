@@ -22,7 +22,7 @@
   },
   "private": true,
   "dependencies": {
-    "@angular-mdc/web": "^3.2.1",
+    "@angular-mdc/web": "^4.0.0-canary.1",
     "@angular/animations": "^9.1.12",
     "@angular/cdk": "^9.2.4",
     "@angular/common": "^9.1.12",
