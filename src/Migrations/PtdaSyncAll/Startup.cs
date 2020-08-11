@@ -13,6 +13,7 @@ using Autofac.Extensions.DependencyInjection;
 using SIL.XForge;
 using SIL.XForge.Configuration;
 using SIL.XForge.Scripture;
+using SIL.XForge.Scripture.Services;
 
 namespace PtdaSyncAll
 {
@@ -49,6 +50,11 @@ namespace PtdaSyncAll
             services.AddSFServices();
 
             services.AddSFDataAccess(Configuration);
+
+            services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+            services.AddSFMachine(Configuration);
+            services.AddTransient<ParatextSyncRunner>();
 
             services.Configure<RequestLocalizationOptions>(
                 opts =>

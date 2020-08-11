@@ -1,8 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -31,26 +33,64 @@ namespace PtdaSyncAll
     /// </summary>
     public class Program
     {
+        private static int _thisProcessId;
+
         public static async Task Main(string[] args)
         {
+            using (Process thisProcess = Process.GetCurrentProcess())
+            {
+                _thisProcessId = thisProcess.Id;
+            }
+            string mode = Environment.GetEnvironmentVariable("PTDASYNCALL_MODE") ?? "inspect";
+            bool doSynchronizations = mode == "sync";
+            Log($"Starting. Will sync: {doSynchronizations}");
             string sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
             Directory.SetCurrentDirectory(sfAppDir);
-            // Can alternatively use the SF startup configurations:
-            // IWebHostBuilder builder = SIL.XForge.Scripture.Program.CreateWebHostBuilder(args);
             IWebHostBuilder builder = CreateWebHostBuilder(args);
             IWebHost webHost = builder.Build();
-            webHost.Start();
-            await Inquiry(webHost);
-            Console.WriteLine("Migrator done.");
+            try
+            {
+                await webHost.StartAsync();
+            }
+            catch (HttpRequestException)
+            {
+                Log("There was an error starting the program before getting to the inspection or migration. "
+                    + "Maybe the SF server is running on this machine and needs shut down? Rethrowing.");
+                throw;
+            }
+            await SynchronizeAllProjects(webHost, doSynchronizations);
+            await webHost.StopAsync();
+            Log("Done.");
         }
 
         /// <summary>
-        /// Query information that will show whether we should be able to sync all projects. In addition to reporting
-        /// information on projects and whether there is an admin that can sync the project, this method  shows that
-        /// the admin can successfully perform queries to both the PT Registry and the PT Data Access web APIs, via
-        /// various ParatextService method calls.
+        /// Write message to standard output, prefixed by time and program name.
         /// </summary>
-        public static async Task Inquiry(IWebHost webHost)
+        public static void Log(string message, bool finalNewline = true)
+        {
+            string when = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            string programName = "PtdaSyncAll";
+            string output = $"{when} {programName}[{_thisProcessId}]: {message}";
+            if (finalNewline)
+            {
+                Console.WriteLine(output);
+            }
+            else
+            {
+                Console.Write(output);
+            }
+        }
+
+        /// <summary>
+        /// First-stage migrator. Synchronize all SF projects to the Paratext Data Access server.
+        /// First query information that will show whether we should be able to sync all projects. In addition to
+        /// reporting information on projects and whether there is an admin that can sync the project, this method shows
+        /// that the admin can successfully perform queries to both the PT Registry and the PT Data Access web APIs, via
+        /// various ParatextService method calls.
+        /// If `doSynchronizations` is false, only do the above reporting. If true, also synchronize the SF DB with the
+        /// Paratext Data Access server.
+        /// </summary>
+        public static async Task SynchronizeAllProjects(IWebHost webHost, bool doSynchronizations)
         {
             IRealtimeService realtimeService = webHost.Services.GetService<IRealtimeService>();
             IParatextService paratextService = webHost.Services.GetService<IParatextService>();
@@ -63,7 +103,7 @@ namespace PtdaSyncAll
             // Report on all SF projects.
             foreach (SFProject sfProject in allSfProjects)
             {
-                Console.WriteLine($"{bullet1} PT project {sfProject.ShortName}, "
+                Log($"{bullet1} PT project {sfProject.ShortName}, "
                     + $"PT project id {sfProject.ParatextId}, SF project id {sfProject.Id}.");
                 IEnumerable<string> projectSfAdminUserIds = sfProject.UserRoles
                     .Where(ur => ur.Value == SFProjectRole.Administrator).Select(ur => ur.Key);
@@ -75,7 +115,7 @@ namespace PtdaSyncAll
                     {
                         users = "None";
                     }
-                    Console.WriteLine($"  {bullet2} Warning: no admin users. Non-admin users include: {users}");
+                    Log($"  {bullet2} Warning: no admin users. Non-admin users include: {users}");
                 }
 
                 // Report on all admins in a project
@@ -91,20 +131,22 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($"  Failure. Skipping. Error was {e.Message}");
+                        Log($"  {bullet2} Failure getting SF user's PT username or PT user id. " +
+                            $"Skipping. SF user id was {sfUserId}. If known, PT username was {ptUsername}. " +
+                            $"Error with stack was {e}");
                         continue;
                     }
-                    Console.WriteLine($"  {bullet2} PT user '{ptUsername}', "
+                    Log($"  {bullet2} PT user '{ptUsername}', "
                         + $"id {ptUserId}, using SF admin user id {sfUserId} on SF project.");
 
                     string rt = $"{userSecret.ParatextTokens.RefreshToken.Substring(0, 5)}..";
                     string at = $"{userSecret.ParatextTokens.AccessToken.Substring(0, 5)}..";
                     bool atv = userSecret.ParatextTokens.ValidateLifetime();
-                    Console.WriteLine($"    {bullet3} Paratext RefreshToken: {rt}, "
+                    Log($"    {bullet3} Paratext RefreshToken: {rt}, "
                         + $"AccessToken: {at}, AccessToken initially valid: {atv}.");
 
                     // Demonstrate access to PT Registry, and report Registry's statement of role.
-                    Console.Write($"    {bullet3} PT Registry report on role on PT project: ");
+                    Log($"    {bullet3} PT Registry report on role on PT project: ", false);
                     IReadOnlyDictionary<string, string> ptProjectRoles = null;
                     try
                     {
@@ -112,7 +154,8 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($"      Failure. Skipping. Error was {e.Message}");
+                        Console.WriteLine($"      Failure fetching user's PT project roles. Skipping. " +
+                            $"Error was {e.Message}");
                         continue;
                     }
                     if (ptProjectRoles.TryGetValue(ptUserId, out string ptRole))
@@ -131,28 +174,50 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($"    Failure. Skipping. Error was {e.Message}");
+                        Log($"    {bullet3} Failure fetching user's PT projects. Skipping. Error was {e.Message}");
                         continue;
                     }
 
-                    Console.Write($"    {bullet3} PT Data Access and PT Registry "
-                        + "based report on projects the user can access, narrowed to this project: ");
+                    Log($"    {bullet3} PT Data Access and PT Registry "
+                        + "based report on projects the user can access, narrowed to this project: ", false);
                     IEnumerable<string> ptProjectNamesList = userPtProjects
                         .Where(ptProject => ptProject.ParatextId == sfProject.ParatextId)
                         .Select(ptProject => ptProject.ShortName);
                     string ptProjectNames = string.Join(',', ptProjectNamesList);
                     if (ptProjectNamesList.Count() < 1)
                     {
-                        ptProjectNames = "None.";
+                        ptProjectNames = $"User is not on this project. " +
+                            $"PT reports they are on this many PT projects: {userPtProjects.Count()}";
                     }
                     Console.WriteLine(ptProjectNames);
+
+                    if (doSynchronizations)
+                    {
+                        Log($"  {bullet2} Synchronizing SF project {sfProject.Id} as SF user {sfUserId} ...");
+                        try
+                        {
+                            await SynchronizeProject(webHost, sfUserId, sfProject.Id);
+                            Log($"    {bullet3} Done synchronization with no thrown exceptions.");
+                            break;
+                        }
+                        catch (Exception e)
+                        {
+                            Log($"    {bullet3} There was a problem with synchronizing. It might be tried next with "
+                                + $"another admin user. Exception is:{Environment.NewLine}{e}");
+                            continue;
+                        }
+                    }
                 }
             }
         }
 
-        public static void MigrateAsync(IWebHost webHost)
+        /// <summary>
+        /// Synchronize project between SF DB and Paratext Data Access server.
+        /// </summary>
+        public static Task SynchronizeProject(IWebHost webHost, string sfUserId, string sfProjectId)
         {
-            throw new NotImplementedException();
+            var syncRunner = webHost.Services.GetService<ParatextSyncRunner>();
+            return syncRunner.RunAsync(sfProjectId, sfUserId, false);
         }
 
         /// <summary>
