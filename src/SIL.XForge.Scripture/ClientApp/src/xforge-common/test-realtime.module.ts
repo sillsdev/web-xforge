@@ -11,7 +11,7 @@ import { TypeRegistry } from './type-registry';
 
 @NgModule()
 export class TestRealtimeModule {
-  static forRoot(typeRegistry: TypeRegistry): ModuleWithProviders {
+  static forRoot(typeRegistry: TypeRegistry): ModuleWithProviders<TestRealtimeModule> {
     return {
       ngModule: TestRealtimeModule,
       providers: [
