@@ -14,25 +14,10 @@ import { MessageDialogComponent } from './message-dialog/message-dialog.componen
 import { OfflineStore } from './offline-store';
 import { RealtimeRemoteStore } from './realtime-remote-store';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
-import { SaDeleteDialogComponent } from './system-administration/sa-delete-dialog.component';
-import { SaProjectsComponent } from './system-administration/sa-projects.component';
-import { SaUsersComponent } from './system-administration/sa-users.component';
-import { SystemAdministrationComponent } from './system-administration/system-administration.component';
 import { UICommonModule } from './ui-common.module';
 import { WriteStatusComponent } from './write-status/write-status.component';
 
-const componentExports = [
-  AvatarComponent,
-  MessageDialogComponent,
-  SaProjectsComponent,
-  SaDeleteDialogComponent,
-  SaUsersComponent,
-  SystemAdministrationComponent,
-  PageNotFoundComponent,
-  WriteStatusComponent
-];
-
-export const xForgeCommonEntryComponents = [SaDeleteDialogComponent];
+const componentExports = [AvatarComponent, MessageDialogComponent, PageNotFoundComponent, WriteStatusComponent];
 
 @NgModule({
   imports: [
