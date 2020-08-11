@@ -19,7 +19,7 @@ export interface SuggestionsSettingsDialogData {
   styleUrls: ['./suggestions-settings-dialog.component.scss']
 })
 export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
-  @ViewChild('confidenceThresholdSlider', { static: false }) confidenceThresholdSlider?: MdcSlider;
+  @ViewChild('confidenceThresholdSlider') confidenceThresholdSlider?: MdcSlider;
   open: boolean = false;
 
   suggestionsEnabledSwitch = new FormControl();

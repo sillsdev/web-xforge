@@ -53,7 +53,7 @@ describe('ChapterNavComponent', () => {
   `
 })
 class ChapterNavHostComponent {
-  @ViewChild(ChapterNavComponent, { static: false }) chapterNavComponent!: ChapterNavComponent;
+  @ViewChild(ChapterNavComponent) chapterNavComponent!: ChapterNavComponent;
   activeBookNum?: number;
   activeChapter?: number;
   allChapters: number[] = [1, 2];

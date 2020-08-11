@@ -20,7 +20,7 @@ export class ShareControlComponent extends SubscriptionDisposable implements Aft
   @Output() invited = new EventEmitter<void>();
   @Input() readonly projectId?: string;
   @Input() readonly isLinkSharingEnabled: boolean = false;
-  @ViewChild('shareLinkField', { static: false }) shareLinkField?: MdcTextField;
+  @ViewChild('shareLinkField') shareLinkField?: MdcTextField;
 
   sendInviteForm: FormGroup = new FormGroup({
     email: new FormControl('', [XFValidators.email])

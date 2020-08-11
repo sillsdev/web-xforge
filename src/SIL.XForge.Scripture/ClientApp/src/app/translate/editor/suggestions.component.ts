@@ -27,7 +27,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
   @Output() selected = new EventEmitter<SuggestionSelectedEvent>();
   @Output() showChange = new EventEmitter<boolean>();
 
-  @ViewChild('list', { static: false }) list?: MdcList;
+  @ViewChild('list') list?: MdcList;
 
   showHelp: boolean = false;
 
