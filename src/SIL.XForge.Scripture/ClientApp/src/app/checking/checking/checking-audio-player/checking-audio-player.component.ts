@@ -16,7 +16,7 @@ const ARBITRARILY_LARGE_NUMBER = 1e10;
 export class CheckingAudioPlayerComponent extends SubscriptionDisposable implements OnDestroy {
   static lastPlayedAudio: HTMLAudioElement;
 
-  @ViewChild(MdcSlider, { static: false }) slider?: MdcSlider;
+  @ViewChild(MdcSlider) slider?: MdcSlider;
 
   seek: number = 0;
 

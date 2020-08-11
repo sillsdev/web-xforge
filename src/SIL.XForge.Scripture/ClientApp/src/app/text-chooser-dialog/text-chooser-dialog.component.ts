@@ -37,7 +37,7 @@ export interface TextSelection {
   styleUrls: ['./text-chooser-dialog.component.scss']
 })
 export class TextChooserDialogComponent extends SubscriptionDisposable {
-  @ViewChild(TextComponent, { static: false, read: ElementRef }) scriptureText?: ElementRef;
+  @ViewChild(TextComponent, { read: ElementRef }) scriptureText?: ElementRef;
   selectedText?: string;
   showError = false;
   bookNum: number;

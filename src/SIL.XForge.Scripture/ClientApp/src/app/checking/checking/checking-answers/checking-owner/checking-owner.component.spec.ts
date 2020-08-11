@@ -68,7 +68,7 @@ describe('CheckingOwnerComponent', () => {
 
 @Component({ selector: 'app-host', template: '' })
 class HostComponent {
-  @ViewChild(CheckingOwnerComponent, { static: false }) checkingOwner!: CheckingOwnerComponent;
+  @ViewChild(CheckingOwnerComponent) checkingOwner!: CheckingOwnerComponent;
 }
 
 class TestEnvironment {

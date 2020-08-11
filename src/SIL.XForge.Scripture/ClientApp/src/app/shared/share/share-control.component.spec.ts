@@ -172,7 +172,7 @@ describe('ShareControlComponent', () => {
     `
   })
   class TestHostComponent {
-    @ViewChild(ShareControlComponent, { static: false }) component!: ShareControlComponent;
+    @ViewChild(ShareControlComponent) component!: ShareControlComponent;
     projectId = '';
     isLinkSharingEnabled = false;
     invitedCount = 0;

@@ -146,7 +146,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this._projectSelect;
   }
 
-  @ViewChild(MdcSelect, { static: false })
+  @ViewChild(MdcSelect)
   set projectSelect(value: MdcSelect | undefined) {
     this._projectSelect = value;
     if (this._projectSelect != null) {
