@@ -103,7 +103,7 @@ namespace PTDDCloneAll
                                 op.Inc(pd => pd.Sync.QueuedCount);
                             });
                             // Clone the paratext project and update the SF database with the project data
-                            await CloneAndSyncSFToParatext(webHost, proj, userId, syncDir);
+                            await CloneAndSyncFromParatext(webHost, proj, userId, syncDir);
                             string projectDir = Path.Combine(syncDir, proj.Id);
                             string projectDirOld = Path.Combine(syncDirOld, proj.Id);
                             Directory.Move(projectDir, projectDirOld);
@@ -120,10 +120,10 @@ namespace PTDDCloneAll
         }
 
         /// <summary>
-        /// Clone Paratext project data into the SF projects sync folder. Then synchronize the data in the SF DB
-        /// to the data in the Paratext project.
+        /// Clone Paratext project data into the SF projects sync folder. Then synchronize existing books
+        /// and notes in project.
         /// </summary>
-        public static async Task CloneAndSyncSFToParatext(IWebHost webHost, SFProject proj, string userId, string syncDir)
+        public static async Task CloneAndSyncFromParatext(IWebHost webHost, SFProject proj, string userId, string syncDir)
         {
             try
             {
