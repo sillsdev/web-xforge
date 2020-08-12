@@ -5,7 +5,7 @@
 #
 # To run product on another computer:
 # Set ASPNETCORE_ENVIRONMENT to "Development" on a workstation, "Staging" on QA, or omit it for Live.
-# Set PTDDCLONEALL_MODE to "clone" to do the clone, or omit to just imspect
+# Set PTDDCLONEALL_MODE to "clone" to do the clone, or omit to just inspect
 # Extract program:
 #   tar xf ptdd-clone-all-*.tar.xz
 # Run:
@@ -20,3 +20,4 @@ dotnet publish --runtime "linux-x64" -o "${outputDir}"
 package="$(mktemp -d)/${outputProductName}.tar.xz"
 cd "${outputDir}/.."
 tar cfJ "${package}" ${outputProductName}
+echo "Product: ${package}"

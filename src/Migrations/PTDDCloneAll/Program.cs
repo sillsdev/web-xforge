@@ -58,7 +58,7 @@ namespace PTDDCloneAll
         /// Iterates through all SF projects on the server and identifies one administrator user on the project.
         /// Using the administrator user's secrets, perform a send/receive with the Paratext server. Effectively,
         /// this clones the project to the Scripture Forge server.
-        /// Text documents for Scripture texts are deleted and recreated from the up-to-date Paratext project data after
+        /// Text documents in the SF DB for Scripture texts are deleted and recreated from the up-to-date Paratext project data after
         /// cloning. This will overwrite any un-synchronized data on SF.
         /// </summary>
         public static async Task CloneSFProjects(IWebHost webHost, bool doClone)
@@ -112,13 +112,17 @@ namespace PTDDCloneAll
                         catch (Exception e)
                         {
                             Log($"Unable to clone {proj.Name} ({proj.Id}) as user: {userId}{Environment.NewLine}" +
-                                $"Error was: {e.Message}");
+                                $"Error was: {e}");
                         }
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Clone Paratext project data into the SF projects sync folder. Then synchronize the data in the SF DB
+        /// to the data in the Paratext project.
+        /// </summary>
         public static async Task CloneAndSyncSFToParatext(IWebHost webHost, SFProject proj, string userId, string syncDir)
         {
             try

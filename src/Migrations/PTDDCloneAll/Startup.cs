@@ -17,6 +17,9 @@ using SIL.XForge.Scripture.Services;
 
 namespace PTDDCloneAll
 {
+    /// <summary>
+    /// Configurations and services needed to bootstrap the PTDDCloneAll app.
+    /// This was copied and modified from `SIL.XForge.Scripture/Startup.cs`.
     public class Startup
     {
         public Startup(IConfiguration configuration, IWebHostEnvironment env, ILoggerFactory loggerFactory)
