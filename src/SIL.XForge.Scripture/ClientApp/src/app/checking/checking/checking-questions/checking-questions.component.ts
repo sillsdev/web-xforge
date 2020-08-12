@@ -9,7 +9,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptur
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { toVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
@@ -34,6 +34,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   activeQuestionDoc$ = new Subject<QuestionDoc>();
   @ViewChild(MdcList, { static: true }) mdcList!: MdcList;
   private _activeQuestionVerseRef?: VerseRef;
+  private questionDocSubscription?: Subscription;
 
   constructor(private readonly userService: UserService, private readonly projectService: SFProjectService) {
     super();
@@ -262,6 +263,14 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
         this.changed.emit(questionDoc);
         if (questionChanged) {
           this.activeQuestionDoc$.next(questionDoc);
+          if (this.questionDocSubscription != null) {
+            this.questionDocSubscription.unsubscribe();
+          }
+          this.questionDocSubscription = questionDoc.remoteChanges$.subscribe(
+            () =>
+              (this._activeQuestionVerseRef =
+                questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef))
+          );
         }
       });
     }

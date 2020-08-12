@@ -364,7 +364,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         const prevBook = this.book;
         this.book = bookNum;
         this.questionsSub = this.subscribe(
-          merge(this.questionsQuery.ready$, this.questionsQuery.remoteChanges$, this.questionsQuery.localChanges$),
+          merge(
+            this.questionsQuery.ready$,
+            this.questionsQuery.remoteChanges$,
+            this.questionsQuery.localChanges$,
+            this.questionsQuery.remoteDocChanges$
+          ),
           () => this.updateQuestionRefsOrRedirect()
         );
         this.userDoc = await this.userService.getCurrentUser();
