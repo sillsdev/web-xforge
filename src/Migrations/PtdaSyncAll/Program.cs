@@ -214,7 +214,7 @@ namespace PtdaSyncAll
                         }
                         catch (Exception e)
                         {
-                            // We probably won't get here, because of the way await works, but just in case.
+                            // We probably won't get here. But just in case.
                             Log($"    {Bullet3} There was a problem with synchronizing. It might be tried next with "
                                 + $"another admin user. Exception is:{Environment.NewLine}{e}");
                             continue;
@@ -256,28 +256,31 @@ namespace PtdaSyncAll
                 }
                 else
                 {
-                    Log("All sync tasks completed successfully.");
+                    Log("All sync tasks finished with a claimed Task status of Completed Successfully.");
                 }
 
+                Log($"{Bullet1} Sync task completion results:");
                 foreach (Task task in syncTasks)
                 {
                     string exceptionInfo = $"with exception {task.Exception?.InnerException}.";
                     if (task.Exception == null)
                     {
-                        exceptionInfo = "with no exception thrown.";
+                        exceptionInfo = "with no unhandled exception thrown.";
                     }
-                    Log($"Sync task Id {task.Id} has status {task.Status} {exceptionInfo}");
+                    Log($"  {Bullet2} Sync task Id {task.Id} has status {task.Status} {exceptionInfo}");
                     if (task.Exception?.InnerExceptions?.Count > 1)
                     {
-                        Log($"Sync task Id {task.Id} has more than one inner exception. "
+                        Log($"    {Bullet3} Sync task Id {task.Id} has more than one inner exception. "
                             + "Sorry if this is redundant, but they are:");
                         foreach (var e in task.Exception.InnerExceptions)
                         {
-                            Log($"Inner exception: {e}");
+                            Log($"    {Bullet3} Inner exception: {e}");
                         }
                     }
                 }
             }
+
+            ReportLastSyncSuccesses(allSfProjects);
         }
 
         /// <summary>
@@ -300,6 +303,32 @@ namespace PtdaSyncAll
             var accessToken = new JwtSecurityToken(userSecret.ParatextTokens.AccessToken);
             Claim claim = accessToken.Claims.FirstOrDefault(c => c.Type == "sub");
             return claim?.Value;
+        }
+
+        /// <summary>
+        /// Report on project sync successes from mongo project doc sync data.
+        /// </summary>
+        private static void ReportLastSyncSuccesses(IEnumerable<SFProject> sfProjects)
+        {
+            Log($"{Bullet1} SF projects have the following last sync dates and results.");
+            bool anyFailures = sfProjects.Any((SFProject sfProject) => sfProject.Sync.LastSyncSuccessful != true);
+            Log($"  {Bullet2} One or more SF projects are noted as having failed the last sync "
+                + $"(this would be bad): {anyFailures}");
+            DateTime yesterday = DateTime.Now.ToUniversalTime().AddDays(-1);
+            bool anyDidNotSyncToday = sfProjects
+                .Any((SFProject sfProject) => sfProject.Sync.DateLastSuccessfulSync < yesterday);
+            Log($"  {Bullet2} One or more SF projects have not successfully synchronized in the last day "
+                + $"(this would be bad): {anyDidNotSyncToday}");
+            foreach (SFProject sfProject in sfProjects)
+            {
+                string successOrFailure = "successful";
+                if (sfProject.Sync.LastSyncSuccessful == false)
+                {
+                    successOrFailure = "failure";
+                }
+                Log($"  {Bullet2} SF Project id {sfProject.Id} last sync was on "
+                    + $"{sfProject.Sync.DateLastSuccessfulSync?.ToString("o")} and was {successOrFailure}.");
+            }
         }
 
         /// <summary>
