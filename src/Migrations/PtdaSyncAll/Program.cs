@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
@@ -246,24 +246,29 @@ namespace PtdaSyncAll
                 if (syncTasks.Any(task => !task.IsCompletedSuccessfully))
                 {
                     Log("One or more sync tasks did not complete successfully.");
-                    syncTasks.ForEach(task =>
+                }
+                else
+                {
+                    Log("All sync tasks completed successfully.");
+                }
+
+                foreach (Task task in syncTasks)
+                {
+                    string exceptionInfo = $"with exception {task.Exception?.InnerException}.";
+                    if (task.Exception == null)
                     {
-                        string exceptionInfo = $"with exception {task.Exception?.InnerException}.";
-                        if (task.Exception == null)
+                        exceptionInfo = "with no exception thrown.";
+                    }
+                    Log($"Sync task Id {task.Id} has status {task.Status} {exceptionInfo}");
+                    if (task.Exception?.InnerExceptions?.Count > 1)
+                    {
+                        Log($"Sync task Id {task.Id} has more than one inner exception. "
+                            + "Sorry if this is redundant, but they are:");
+                        foreach (var e in task.Exception.InnerExceptions)
                         {
-                            exceptionInfo = "with no exception thrown.";
+                            Log($"Inner exception: {e}");
                         }
-                        Log($"Sync task Id {task.Id} has status {task.Status} {exceptionInfo}");
-                        if (task.Exception?.InnerExceptions?.Count > 1)
-                        {
-                            Log($"Sync task Id {task.Id} has more than one inner exception. "
-                                + "Sorry if this is redundant, but they are:");
-                            foreach (var e in task.Exception.InnerExceptions)
-                            {
-                                Log($"Inner exception: {e}");
-                            }
-                        }
-                    });
+                    }
                 }
             }
         }
