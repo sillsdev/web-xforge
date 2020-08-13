@@ -1,7 +1,7 @@
-@import '~src/styles';
-@import '~src/variables';
-@import '~bootstrap/scss/mixins/breakpoints';
-@import '~@angular-mdc/theme/scss/button/mixins';
+@use '@material/button/mixins' as button;
+
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
 
 .container {
   margin: 0;
@@ -98,7 +98,7 @@
 }
 
 #delete-btn {
-  @include mdc-button-container-fill-color(red);
+  @include button.container-fill-color(red);
 }
 
 #based-on-select {

@@ -1,6 +1,8 @@
+@use '@material/icon-button/mixins' as icon-button;
+
 @import 'checking-global-vars';
-@import '~bootstrap/scss/mixins/breakpoints';
-@import '~@angular-mdc/theme/scss/icon-button/mixins';
+
+@import 'bootstrap/scss/mixins/breakpoints';
 
 #projects-app {
   #checking-app-container {
@@ -16,7 +18,7 @@
       top: 0;
     }
     .collapse-question-menu {
-      @include mdc-icon-button-size(24px, 24px, 8px);
+      @include icon-button.icon-size(24px, 24px, 8px);
       @include media-breakpoint-up(md) {
         display: none;
       }
@@ -85,7 +87,7 @@
           &.action-icons {
             justify-content: flex-end;
             .add-question-button[mdc-icon-button] {
-              @include mdc-icon-button-size(24px, 24px, 8px);
+              @include icon-button.icon-size(24px, 24px, 8px);
             }
             .add-question-button mdc-icon {
               font-size: 24px;
@@ -123,7 +125,7 @@
         margin: -10px;
         .next-question,
         .prev-question {
-          @include mdc-icon-button-size(24px, 24px, 8px);
+          @include icon-button.icon-size(24px, 24px, 8px);
         }
       }
     }
