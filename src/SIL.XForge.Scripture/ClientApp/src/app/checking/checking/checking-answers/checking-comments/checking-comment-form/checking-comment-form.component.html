@@ -13,7 +13,9 @@
     </mdc-form-field>
     <div class="form-actions">
       <button mdc-button type="button" (click)="submitCancel()" class="cancel-comment">{{ t("cancel") }}</button>
-      <button mdc-button primary form="comment-form" type="submit" class="save-comment">{{ t("save_comment") }}</button>
+      <button mdc-button unelevated form="comment-form" type="submit" class="save-comment">
+        {{ t("save_comment") }}
+      </button>
     </div>
   </form>
 </ng-container>

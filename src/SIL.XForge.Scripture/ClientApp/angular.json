@@ -40,6 +40,9 @@
               },
               "src/styles.scss"
             ],
+            "stylePreprocessorOptions": {
+              "includePaths": ["node_modules"]
+            },
             "scripts": []
           },
           "configurations": {
@@ -142,6 +145,9 @@
               },
               "src/styles.scss"
             ],
+            "stylePreprocessorOptions": {
+              "includePaths": ["node_modules"]
+            },
             "assets": ["src/favicon.ico", "src/assets", "src/manifest.json"],
             "sourceMap": false
           }

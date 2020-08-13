@@ -1,5 +1,5 @@
-@import '~src/variables';
-@import '~bootstrap/scss/mixins/breakpoints';
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
 
 #add-question-button {
   @include media-breakpoint-only(xs) {

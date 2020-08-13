@@ -1,6 +1,6 @@
-@import '~src/styles';
-@import '~src/variables';
-@import '~@angular-mdc/theme/scss/button/mixins';
+@use '@material/button/mixins' as button;
+
+@import 'src/variables';
 
 :host {
   display: flex;
@@ -87,7 +87,7 @@
     #connect-submit-button {
       align-self: center;
       margin-top: 32px;
-      @include mdc-button-filled-accessible($pt-button-green);
+      @include button.filled-accessible($pt-button-green);
     }
 
     p.helper-select,
@@ -115,4 +115,7 @@
 
 mdc-select {
   margin-bottom: 4px;
+  ::ng-deep .mdc-select__anchor {
+    width: 100%;
+  }
 }
