@@ -19,6 +19,7 @@ using MongoDB.Driver;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 
@@ -35,6 +36,7 @@ namespace PtdaSyncAll
     public class Program
     {
         private static int _thisProcessId;
+        private static IConnection RealtimeServiceConnection;
 
         public static async Task Main(string[] args)
         {
@@ -97,6 +99,7 @@ namespace PtdaSyncAll
             IParatextService paratextService = webHost.Services.GetService<IParatextService>();
             IRepository<UserSecret> userSecretRepo = webHost.Services.GetService<IRepository<UserSecret>>();
             IQueryable<SFProject> allSfProjects = realtimeService.QuerySnapshots<SFProject>();
+            RealtimeServiceConnection = await realtimeService.ConnectAsync();
             List<Task> syncTasks = new List<Task>();
             char bullet1 = '>';
             char bullet2 = '*';
@@ -201,6 +204,10 @@ namespace PtdaSyncAll
                                 + $"as SF user {sfUserId}.");
                             Task syncTask = SynchronizeProject(webHost, sfUserId, sfProject.Id);
                             Log($"    {bullet3} Synchronization task for SF project {sfProject.Id} as "
+                            var projectDoc = await RealtimeServiceConnection.FetchAsync<SFProject>(sfProject.Id);
+                            // Increment the queued count (such as done in SyncService), since it gets decremented
+                            // later by ParatextSyncRunner.
+                            await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
                                 + $"SF user {sfUserId} has Sync Task Id {syncTask.Id}.");
                             syncTasks.Add(syncTask);
                             break;
