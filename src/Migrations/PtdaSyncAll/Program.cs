@@ -37,6 +37,9 @@ namespace PtdaSyncAll
     {
         private static int _thisProcessId;
         private static IConnection RealtimeServiceConnection;
+        private static readonly char Bullet1 = '>';
+        private static readonly char Bullet2 = '*';
+        private static readonly char Bullet3 = '-';
 
         public static async Task Main(string[] args)
         {
@@ -101,14 +104,11 @@ namespace PtdaSyncAll
             IQueryable<SFProject> allSfProjects = realtimeService.QuerySnapshots<SFProject>();
             RealtimeServiceConnection = await realtimeService.ConnectAsync();
             List<Task> syncTasks = new List<Task>();
-            char bullet1 = '>';
-            char bullet2 = '*';
-            char bullet3 = '-';
 
             // Report on all SF projects.
             foreach (SFProject sfProject in allSfProjects)
             {
-                Log($"{bullet1} PT project {sfProject.ShortName}, "
+                Log($"{Bullet1} PT project {sfProject.ShortName}, "
                     + $"PT project id {sfProject.ParatextId}, SF project id {sfProject.Id}.");
                 IEnumerable<string> projectSfAdminUserIds = sfProject.UserRoles
                     .Where(ur => ur.Value == SFProjectRole.Administrator).Select(ur => ur.Key);
@@ -120,7 +120,7 @@ namespace PtdaSyncAll
                     {
                         users = "None";
                     }
-                    Log($"  {bullet2} Warning: no admin users. Non-admin users include: {users}");
+                    Log($"  {Bullet2} Warning: no admin users. Non-admin users include: {users}");
                 }
 
                 // Report on all admins in a project
@@ -136,22 +136,22 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        Log($"  {bullet2} Failure getting SF user's PT username or PT user id. " +
+                        Log($"  {Bullet2} Failure getting SF user's PT username or PT user id. " +
                             $"Skipping. SF user id was {sfUserId}. If known, PT username was {ptUsername}. " +
                             $"Error with stack was {e}");
                         continue;
                     }
-                    Log($"  {bullet2} PT user '{ptUsername}', "
+                    Log($"  {Bullet2} PT user '{ptUsername}', "
                         + $"id {ptUserId}, using SF admin user id {sfUserId} on SF project.");
 
                     string rt = $"{userSecret.ParatextTokens.RefreshToken.Substring(0, 5)}..";
                     string at = $"{userSecret.ParatextTokens.AccessToken.Substring(0, 5)}..";
                     bool atv = userSecret.ParatextTokens.ValidateLifetime();
-                    Log($"    {bullet3} Paratext RefreshToken: {rt}, "
+                    Log($"    {Bullet3} Paratext RefreshToken: {rt}, "
                         + $"AccessToken: {at}, AccessToken initially valid: {atv}.");
 
                     // Demonstrate access to PT Registry, and report Registry's statement of role.
-                    Log($"    {bullet3} PT Registry report on role on PT project: ", false);
+                    Log($"    {Bullet3} PT Registry report on role on PT project: ", false);
                     IReadOnlyDictionary<string, string> ptProjectRoles = null;
                     try
                     {
@@ -179,11 +179,11 @@ namespace PtdaSyncAll
                     }
                     catch (Exception e)
                     {
-                        Log($"    {bullet3} Failure fetching user's PT projects. Skipping. Error was {e.Message}");
+                        Log($"    {Bullet3} Failure fetching user's PT projects. Skipping. Error was {e.Message}");
                         continue;
                     }
 
-                    Log($"    {bullet3} PT Data Access and PT Registry "
+                    Log($"    {Bullet3} PT Data Access and PT Registry "
                         + "based report on projects the user can access, narrowed to this project: ", false);
                     IEnumerable<string> ptProjectNamesList = userPtProjects
                         .Where(ptProject => ptProject.ParatextId == sfProject.ParatextId)
@@ -200,14 +200,14 @@ namespace PtdaSyncAll
                     {
                         try
                         {
-                            Log($"  {bullet2} Starting an asynchronous synchronization for SF project {sfProject.Id} "
+                            Log($"  {Bullet2} Starting an asynchronous synchronization for SF project {sfProject.Id} "
                                 + $"as SF user {sfUserId}.");
                             Task syncTask = SynchronizeProject(webHost, sfUserId, sfProject.Id);
-                            Log($"    {bullet3} Synchronization task for SF project {sfProject.Id} as "
                             var projectDoc = await RealtimeServiceConnection.FetchAsync<SFProject>(sfProject.Id);
                             // Increment the queued count (such as done in SyncService), since it gets decremented
                             // later by ParatextSyncRunner.
                             await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
+                            Log($"    {Bullet3} Synchronization task for SF project {sfProject.Id} as "
                                 + $"SF user {sfUserId} has Sync Task Id {syncTask.Id}.");
                             syncTasks.Add(syncTask);
                             break;
@@ -215,7 +215,7 @@ namespace PtdaSyncAll
                         catch (Exception e)
                         {
                             // We probably won't get here, because of the way await works, but just in case.
-                            Log($"    {bullet3} There was a problem with synchronizing. It might be tried next with "
+                            Log($"    {Bullet3} There was a problem with synchronizing. It might be tried next with "
                                 + $"another admin user. Exception is:{Environment.NewLine}{e}");
                             continue;
                         }
