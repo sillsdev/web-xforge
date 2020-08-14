@@ -402,7 +402,8 @@ namespace SIL.XForge.Scripture.Services
 
         private void SetupMercurial()
         {
-            string customHgPath = _paratextOptions.Value.HgExe;
+            // We do not yet know where hg will be installed on the server, so allow defining it in an env variable
+            string customHgPath = Environment.GetEnvironmentVariable("HG_PATH") ?? _paratextOptions.Value.HgExe;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 customHgPath = Path.GetExtension(customHgPath) != ".exe" ? customHgPath + ".exe" : customHgPath;
             if (!File.Exists(customHgPath))
