@@ -96,11 +96,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       if (status !== this.isAppOnline) {
         this.isAppOnline = status;
         this.checkDeviceStorage();
-        // Check authentication when coming back online
-        // This is also run on first load when the websocket connects for the first time
-        if (this.isAppOnline && !this.isAppLoading) {
-          this.authService.attemptOnlineLogin();
-        }
+      }
+      // Check authentication when coming back online
+      // This is also run on first load when the websocket connects for the first time
+      if (this.isAppOnline && !this.isAppLoading) {
+        this.authService.attemptOnlineLogin();
       }
     });
 

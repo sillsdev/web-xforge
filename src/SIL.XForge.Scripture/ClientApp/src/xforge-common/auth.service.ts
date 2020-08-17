@@ -248,7 +248,6 @@ export class AuthService {
         return false;
       }
     }
-    console.log('navigate', state.returnUrl, this.locationService.hash);
     if (state.returnUrl != null) {
       this.router.navigateByUrl(state.returnUrl, { replaceUrl: true });
     } else if (this.locationService.hash !== '') {
