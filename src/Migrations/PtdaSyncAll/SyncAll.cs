@@ -227,7 +227,7 @@ namespace PtdaSyncAll
         /// </summary>
         public Task SynchronizeProject(IWebHost webHost, string sfUserId, string sfProjectId)
         {
-            var syncRunner = webHost.Services.GetService<ParatextSyncRunner>();
+            var syncRunner = webHost.Services.GetService<IParatextSyncRunner>();
             return syncRunner.RunAsync(sfProjectId, sfUserId, false);
         }
 
