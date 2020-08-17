@@ -54,7 +54,7 @@ namespace PtdaSyncAll
             services.AddLocalization(options => options.ResourcesPath = "Resources");
 
             services.AddSFMachine(Configuration);
-            services.AddTransient<ParatextSyncRunner>();
+            services.AddTransient<IParatextSyncRunner, ParatextSyncRunner>();
 
             services.Configure<RequestLocalizationOptions>(
                 opts =>
