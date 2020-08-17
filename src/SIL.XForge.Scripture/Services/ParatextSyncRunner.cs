@@ -44,7 +44,7 @@ namespace SIL.XForge.Scripture.Services
     /// to be confused with a target or source for where data is coming
     /// from or going to when fetching or syncing.
     /// </summary>
-    public class ParatextSyncRunner
+    public class ParatextSyncRunner : IParatextSyncRunner
     {
         private static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
             SequenceEqualityComparer.Create(new ChapterEqualityComparer());

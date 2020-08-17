@@ -29,6 +29,15 @@ namespace PtdaSyncAll
             await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
         }
 
+        [Test]
+        public async Task Sync()
+        {
+            var env = new TestEnvironment();
+            await env.syncAll.SynchronizeAllProjectsAsync(env.WebHost, true);
+            await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
+            await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
+        }
+
         private class TestEnvironment
         {
             public SyncAll syncAll = new SyncAll();
@@ -53,11 +62,15 @@ namespace PtdaSyncAll
                 serviceProvider.GetService<IRepository<UserSecret>>().Returns(userSecrets);
 
                 SetupSFData(true, true);
+
+                ParatextSyncRunner = Substitute.For<IParatextSyncRunner>();
+                serviceProvider.GetService<IParatextSyncRunner>().Returns(ParatextSyncRunner);
             }
 
             public IWebHost WebHost { get; }
             public IParatextService ParatextService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
+            public IParatextSyncRunner ParatextSyncRunner { get; }
 
             // The SetupSFData method was copied from ParatextSyncRunnerTests.cs and trimmed.
             public void SetupSFData(bool translationSuggestionsEnabled, bool checkingEnabled)
