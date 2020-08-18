@@ -181,14 +181,14 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     }
 
     const wordTokenizer = new LatinWordTokenizer();
-    const sourceWords = wordTokenizer.tokenizeToStrings(sourceText);
+    const sourceWords = wordTokenizer.tokenize(sourceText);
     if (sourceWords.length > MAX_SEGMENT_LENGTH) {
       return;
     }
 
     const translationEngine = this.createTranslationEngine(projectUserConfig.projectRef);
     const session = await translationEngine.translateInteractively(sourceWords);
-    const tokenRanges = wordTokenizer.tokenize(targetText);
+    const tokenRanges = wordTokenizer.tokenizeAsRanges(targetText);
     const prefix = tokenRanges.map(r => targetText.substring(r.start, r.end));
     const isLastWordComplete =
       tokenRanges.length === 0 || tokenRanges[tokenRanges.length - 1].end !== targetText.length;
