@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'checking_audio_recorder'">
   <ng-container *ngIf="!hasAudioAttachment">
-    <button *ngIf="!isRecording" mdc-button primary type="button" (click)="startRecording()" class="record">
+    <button *ngIf="!isRecording" mdc-button unelevated type="button" (click)="startRecording()" class="record">
       <mdc-icon>mic</mdc-icon>
       {{ t("record") }}
     </button>

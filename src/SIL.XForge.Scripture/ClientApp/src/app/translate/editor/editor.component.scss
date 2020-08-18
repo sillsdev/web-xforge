@@ -1,6 +1,8 @@
-@import '~src/variables';
-@import '~bootstrap/scss/mixins/breakpoints';
-@import '~@angular-mdc/theme/scss/icon-button/mixins';
+@use '@material/button/mixins' as button;
+@use '@material/icon-button/mixins' as icon-button;
+
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
 
 :host {
   display: flex;
@@ -32,7 +34,7 @@
   }
 
   .mdc-icon-button {
-    @include mdc-icon-button-size(24px, 24px, 8px);
+    @include icon-button.icon-size(24px, 24px, 8px);
   }
 }
 
@@ -91,8 +93,8 @@ app-text {
       color: white;
     }
     > button {
-      @include mdc-icon-button-ink-color(white);
-      @include mdc-icon-button-size(24px, 24px, 8px);
+      @include button.ink-color(white);
+      @include icon-button.icon-size(24px, 24px, 8px);
     }
     background-color: $mdc-theme-primary;
   }

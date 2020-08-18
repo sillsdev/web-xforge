@@ -24,7 +24,7 @@
           >
             {{ t("cancel") }}
           </button>
-          <button form="name-form" mdc-button primary type="submit" (click)="submitDialog()" id="submit-button">
+          <button form="name-form" mdc-button unelevated type="submit" (click)="submitDialog()" id="submit-button">
             {{ data.isConfirmation ? t("confirm") : t("update") }}
           </button>
         </mdc-dialog-actions>

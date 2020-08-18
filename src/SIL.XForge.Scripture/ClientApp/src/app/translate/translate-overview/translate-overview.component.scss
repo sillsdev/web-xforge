@@ -1,5 +1,6 @@
-@import '~src/variables';
-@import '~@angular-mdc/theme/scss/list/mixins';
+@use '@material/list/mixins' as list;
+
+@import 'src/variables';
 
 .title {
   margin-bottom: 20px;
@@ -19,7 +20,7 @@ mdc-card {
   }
 
   mdc-list {
-    @include mdc-list-item-graphic-ink-color(rgba(0, 0, 0, 0.6));
+    @include list.item-graphic-ink-color(rgba(0, 0, 0, 0.6));
     overflow-y: auto;
     mdc-list-item {
       cursor: pointer;

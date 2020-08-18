@@ -1,7 +1,10 @@
-@import '~src/variables';
-@import '~bootstrap/scss/mixins/breakpoints';
-@import '~@angular-mdc/theme/scss/icon-button/mixins';
-@import '~@material/top-app-bar/_variables.scss';
+@use '@material/icon-button/mixins' as icon-button;
+@use "@material/typography/mixins" as typography;
+@use '@material/top-app-bar/variables' as top-app-bar;
+
+@import 'bootstrap/scss/mixins/breakpoints';
+
+@import 'src/variables';
 
 :host {
   display: flex;
@@ -18,7 +21,22 @@
       padding: 0;
 
       > .project-select {
-        width: 100%;
+        ::ng-deep .mdc-select__anchor {
+          width: 100%;
+        }
+
+        // Override styles spilling from mdc-drawer to mdc-select (both mdc-drawer and mdc-select can contain
+        // mdc-list-item and it appears the styles applied for the drawer's list items are now styling the select menu).
+        .mdc-list-item {
+          @include typography.typography(subtitle1);
+          margin: 0;
+          border-radius: 0;
+          padding: 0 16px;
+          height: 48px;
+        }
+        .mdc-list-divider {
+          margin: 8px 0;
+        }
       }
     }
   }
@@ -81,7 +99,7 @@
   }
 
   .mdc-top-app-bar-adjust {
-    margin-top: $mdc-top-app-bar-mobile-row-height;
+    margin-top: top-app-bar.$mobile-row-height;
   }
 
   .app-content {
@@ -120,7 +138,7 @@ a {
 }
 
 .avatar-icon {
-  @include mdc-icon-button-size(32px, 32px, 8px);
+  @include icon-button.icon-size(32px, 32px, 8px);
 }
 
 .locale-disabled::after {

@@ -3,7 +3,14 @@
     <mdc-icon fxFlex="32px">library_books</mdc-icon>
     <h2 fxFlex>{{ t("texts_with_questions") }}</h2>
     <div fxFlexAlign="center" *ngIf="isProjectAdmin; else overallProgressChart">
-      <button *ngIf="!isLoading" mdc-button primary type="button" (click)="questionDialog()" id="add-question-button">
+      <button
+        *ngIf="!isLoading"
+        mdc-button
+        unelevated
+        type="button"
+        (click)="questionDialog()"
+        id="add-question-button"
+      >
         <mdc-icon>post_add</mdc-icon> <span fxHide.xs>{{ t("add_question") }}</span>
       </button>
     </div>
