@@ -55,7 +55,7 @@ namespace PtdaSyncAll
 
         private class TestEnvironment
         {
-            public SyncAll syncAll = new SyncAll();
+            public SyncAll syncAll = new SyncAll(new ProgramLogger(123));
 
             public TestEnvironment()
             {
