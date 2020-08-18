@@ -26,6 +26,7 @@ namespace PtdaSyncAll
         public static readonly char Bullet1 = '>';
         public static readonly char Bullet2 = '*';
         public static readonly char Bullet3 = '-';
+        public static ProgramLogger Logger;
 
         public static async Task Main(string[] args)
         {
@@ -33,9 +34,10 @@ namespace PtdaSyncAll
             {
                 _thisProcessId = thisProcess.Id;
             }
+            Logger = new ProgramLogger(_thisProcessId);
             string mode = Environment.GetEnvironmentVariable("PTDASYNCALL_MODE") ?? "inspect";
             bool doSynchronizations = mode == "sync";
-            Log($"Starting. Will sync: {doSynchronizations}");
+            Logger.Log($"Starting. Will sync: {doSynchronizations}");
             string sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
             Directory.SetCurrentDirectory(sfAppDir);
             IWebHostBuilder builder = CreateWebHostBuilder(args);
@@ -46,32 +48,14 @@ namespace PtdaSyncAll
             }
             catch (HttpRequestException)
             {
-                Log("There was an error starting the program before getting to the inspection or migration. "
+                Logger.Log("There was an error starting the program before getting to the inspection or migration. "
                     + "Maybe the SF server is running on this machine and needs shut down? Rethrowing.");
                 throw;
             }
-            var tool = new SyncAll();
+            var tool = new SyncAll(Logger);
             await tool.SynchronizeAllProjectsAsync(webHost, doSynchronizations);
             await webHost.StopAsync();
-            Log("Done.");
-        }
-
-        /// <summary>
-        /// Write message to standard output, prefixed by time and program name.
-        /// </summary>
-        public static void Log(string message, bool finalNewline = true)
-        {
-            string when = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            string programName = "PtdaSyncAll";
-            string output = $"{when} {programName}[{_thisProcessId}]: {message}";
-            if (finalNewline)
-            {
-                Console.WriteLine(output);
-            }
-            else
-            {
-                Console.Write(output);
-            }
+            Logger.Log("Done.");
         }
 
         /// <summary>
