@@ -1,4 +1,4 @@
-import { Tokenizer } from '@sillsdev/machine';
+import { RangeTokenizer } from '@sillsdev/machine';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import { fromEvent, interval, merge, Subject } from 'rxjs';
@@ -84,8 +84,8 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
     private readonly projectId: string,
     private readonly source: TextComponent,
     private readonly target: TextComponent,
-    private readonly sourceWordTokenizer: Tokenizer,
-    private readonly targetWordTokenizer: Tokenizer,
+    private readonly sourceWordTokenizer: RangeTokenizer,
+    private readonly targetWordTokenizer: RangeTokenizer,
     private readonly pwaService: PwaService
   ) {
     super();

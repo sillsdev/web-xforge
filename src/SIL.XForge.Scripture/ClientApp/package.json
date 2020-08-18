@@ -38,7 +38,7 @@
     "@bugsnag/js": "^6.4.0",
     "@ngneat/transloco": "^2.5.2",
     "@ngneat/transloco-locale": "^1.0.0",
-    "@sillsdev/machine": "^2.1.2",
+    "@sillsdev/machine": "^2.1.5",
     "angular-file": "^1.3.2",
     "angular-split": "^3.0.2",
     "arraydiff": "^0.1.3",
