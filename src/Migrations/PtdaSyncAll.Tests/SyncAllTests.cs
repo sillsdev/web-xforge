@@ -29,11 +29,26 @@ namespace PtdaSyncAll
             await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
         }
 
+        // This test uses a timer, but isn't part of a CI test suite.
         [Test]
         public async Task Sync()
         {
             var env = new TestEnvironment();
+            Task syncTask = null;
+            env.ParatextSyncRunner.RunAsync("project01", "user01", Arg.Any<bool>()).Returns((callInfo) =>
+            {
+                syncTask = Task.Run(() =>
+                {
+                    Task.Delay(1000).Wait();
+                });
+                return syncTask;
+            });
+            Assert.That(syncTask?.Status, Is.Not.EqualTo(TaskStatus.RanToCompletion));
+
             await env.syncAll.SynchronizeAllProjectsAsync(env.WebHost, true);
+
+            // Projects were fetched. RunAsync was called. The RunAsync task was waited for.
+            Assert.That(syncTask?.Status, Is.EqualTo(TaskStatus.RanToCompletion));
             await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
             await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
         }
