@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore;
@@ -221,7 +222,19 @@ namespace PtdaSyncAll
                     + $"There are this many tasks: {syncTasks.Count}");
                 try
                 {
-                    Task.WhenAll(syncTasks).Wait();
+                    Task allTasks = Task.WhenAll(syncTasks);
+                    try
+                    {
+                        await allTasks.ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        if (allTasks.Exception == null)
+                        {
+                            throw;
+                        }
+                        ExceptionDispatchInfo.Capture(allTasks.Exception).Throw();
+                    }
                     Log("Synchronization tasks are finished.");
                 }
                 catch (AggregateException e)
