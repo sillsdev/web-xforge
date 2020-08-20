@@ -1,5 +1,6 @@
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { TranslocoService } from '@ngneat/transloco';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
@@ -11,6 +12,7 @@ import {
   FileType
 } from './models/file-offline-data';
 import { ProjectDataDoc } from './models/project-data-doc';
+import { NoticeService } from './notice.service';
 import { OfflineStore } from './offline-store';
 import { PwaService } from './pwa.service';
 import { RealtimeService } from './realtime.service';
@@ -42,13 +44,17 @@ export function isLocalBlobUrl(url: string): boolean {
   providedIn: 'root'
 })
 export class FileService extends SubscriptionDisposable {
+  private limitedStorageDialogPromise?: Promise<void>;
+
   constructor(
     private readonly typeRegistry: TypeRegistry,
     private readonly offlineStore: OfflineStore,
     private readonly pwaService: PwaService,
     private readonly http: HttpClient,
     private readonly authService: AuthService,
-    private readonly commandService: CommandService
+    private readonly commandService: CommandService,
+    private readonly transloco: TranslocoService,
+    private readonly noticeService: NoticeService
   ) {
     super();
   }
@@ -87,6 +93,7 @@ export class FileService extends SubscriptionDisposable {
   /**
    * Uploads a file to the file server, or if offline, stores the file in IndexedDB and uploads next time there is a
    * valid connection.
+   * @returns The url to the file content, or undefined if unable to save the file
    */
   async uploadFile(
     fileType: FileType,
@@ -97,21 +104,26 @@ export class FileService extends SubscriptionDisposable {
     blob: Blob,
     filename: string,
     alwaysKeepFileOffline: boolean
-  ): Promise<string> {
+  ): Promise<string | undefined> {
     if (this.pwaService.isOnline) {
-      // We are online. Upload directly to the server
-      const onlineUrl = await this.onlineUploadFile(fileType, projectId, dataId, new File([blob], filename));
-      if (alwaysKeepFileOffline) {
-        await this.findOrUpdateCache(fileType, dataCollection, dataId, onlineUrl);
-      }
-      return onlineUrl;
-    } else {
+      // Try and upload it online and, failing that, do so in offline mode
+      try {
+        const onlineUrl = await this.onlineUploadFile(fileType, projectId, dataId, new File([blob], filename));
+        if (alwaysKeepFileOffline) {
+          await this.findOrUpdateCache(fileType, dataCollection, dataId, onlineUrl);
+        }
+        return onlineUrl;
+      } catch {}
+    }
+    try {
       // Store the file in indexedDB until we go online again.
       // Use blob.slice() to get a copy of the original. It appears that blobs which references data from files
       // on disk cause a NotReadableError during upload when the user returns online using Chrome incognito mode.
       const localFileData = createUploadFileData(dataCollection, dataId, projectId, docId, blob.slice(), filename);
       await this.offlineStore.put(fileType, localFileData);
       return URL.createObjectURL(localFileData.blob);
+    } catch (error) {
+      await this.onCachingError(error);
     }
   }
 
@@ -128,15 +140,18 @@ export class FileService extends SubscriptionDisposable {
   ): Promise<void> {
     if (this.pwaService.isOnline) {
       await this.findOrUpdateCache(fileType, dataCollection, dataId);
-      await this.onlineDeleteFile(fileType, projectId, dataId, ownerId);
+      // Try and delete it online and, failing that, do so in offline mode
+      try {
+        await this.onlineDeleteFile(fileType, projectId, dataId, ownerId);
+        return;
+      } catch {}
+    }
+    const fileData = await this.offlineStore.get<FileOfflineData>(fileType, dataId);
+    if (fileData != null && fileData.onlineUrl == null) {
+      // The file existed locally and was never uploaded, remove it and return
+      await this.findOrUpdateCache(fileType, fileData.dataCollection, fileData.id);
     } else {
-      const fileData = await this.offlineStore.get<FileOfflineData>(fileType, dataId);
-      if (fileData != null && fileData.onlineUrl == null) {
-        // The file existed locally and was never uploaded, remove it and return
-        await this.findOrUpdateCache(fileType, fileData.dataCollection, fileData.id);
-      } else {
-        await this.offlineStore.put(fileType, createDeletionFileData(dataCollection, dataId, projectId, ownerId));
-      }
+      await this.offlineStore.put(fileType, createDeletionFileData(dataCollection, dataId, projectId, ownerId));
     }
   }
 
@@ -168,6 +183,22 @@ export class FileService extends SubscriptionDisposable {
         fileData = await this.onlineCacheFile(fileType, url, dataCollection, dataId);
       }
       return fileData;
+    }
+  }
+
+  async notifyUserIfStorageQuotaBelow(megabytes: number): Promise<void> {
+    // The StorageManager API is not available on some browsers e.g. Safari. So just default to true.
+    // See https://caniuse.com/#feat=mdn-api_storagemanager
+    let hasAdequateSpace: boolean = true;
+    if (navigator.storage && navigator.storage.estimate) {
+      const quota = await navigator.storage.estimate();
+      hasAdequateSpace =
+        quota.usage == null || quota.quota == null ? true : quota.quota - quota.usage > megabytes * 1024 * 1024;
+    }
+    if (!hasAdequateSpace && this.limitedStorageDialogPromise == null) {
+      this.limitedStorageDialogPromise = this.noticeService
+        .showMessageDialog(() => this.transloco.translate('file_service.storage_space_is_limited'))
+        .then(() => (this.limitedStorageDialogPromise = undefined));
     }
   }
 
@@ -211,5 +242,19 @@ export class FileService extends SubscriptionDisposable {
     let headers: HttpHeaders = new HttpHeaders();
     headers = headers.append('Range', 'bytes=0-');
     return this.http.get(url, { headers: headers, observe: 'body', responseType: 'blob' }).toPromise();
+  }
+
+  /**
+   * Detects if the error is caused by exceeding the browser's storage quota, and prompt the user to free up space.
+   */
+  private async onCachingError(error: any): Promise<void> {
+    if (!(error instanceof DOMException) || error.name !== 'QuotaExceededError') {
+      return Promise.reject(error);
+    }
+    // Prompt the user to free up storage space
+    await this.noticeService.showMessageDialog(
+      () => this.transloco.translate('file_service.exceeded_storage_quota'),
+      () => this.transloco.translate('file_service.i_understand')
+    );
   }
 }

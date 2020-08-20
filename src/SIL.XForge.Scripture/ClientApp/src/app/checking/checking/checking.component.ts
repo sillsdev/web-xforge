@@ -457,12 +457,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           if (answerAction.audio.fileName != null && answerAction.audio.blob != null) {
             if (this.questionsPanel.activeQuestionDoc != null) {
               // Get the amended filename and save it against the answer
-              answer.audioUrl = await this.questionsPanel.activeQuestionDoc.uploadFile(
+              const urlResult = await this.questionsPanel.activeQuestionDoc.uploadFile(
                 FileType.Audio,
                 answer.dataId,
                 answerAction.audio.blob,
                 answerAction.audio.fileName
               );
+              // TODO: If storage is full we should prevent saving the answer rather than discarding it
+              if (urlResult != null) {
+                answer.audioUrl = urlResult;
+              }
             }
           } else if (answerAction.audio.status === 'reset') {
             answer.audioUrl = undefined;
@@ -815,6 +819,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
     }
     this.questionsPanel.updateElementsRead(activeQuestionDoc);
+    this.refreshSummary();
   }
 
   private saveComment(answer: Answer, comment: Comment): void {

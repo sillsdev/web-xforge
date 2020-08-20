@@ -16,6 +16,7 @@ import { combineLatest, from, merge, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -80,6 +81,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,
     readonly i18n: I18nService,
+    private readonly fileService: FileService,
     private readonly iconRegistry: MdcIconRegistry,
     private readonly sanitizer: DomSanitizer
   ) {
@@ -91,7 +93,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     // Check online status changes
     this.isAppOnline = pwaService.isOnline;
     this.subscribe(pwaService.onlineStatus, status => {
-      this.isAppOnline = status;
+      if (status !== this.isAppOnline) {
+        this.isAppOnline = status;
+        this.checkDeviceStorage();
+      }
     });
 
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
@@ -364,6 +369,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.userService.setCurrentProjectId(this.selectedProjectDoc.id);
 
         this.checkCheckingBookQuestions();
+        this.checkDeviceStorage();
       });
     }
     this.loadingFinished();
@@ -528,5 +534,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     if (isShort !== this._topAppBar.short) {
       this._topAppBar.setShort(isShort, true);
     }
+  }
+
+  private checkDeviceStorage(): void {
+    // Allow 5 seconds for the app to process any caching in progress
+    const SPACE_IN_MB = 20;
+    setTimeout(() => this.fileService.notifyUserIfStorageQuotaBelow(SPACE_IN_MB), 5000);
   }
 }

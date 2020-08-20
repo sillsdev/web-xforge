@@ -63,7 +63,8 @@
       "console": "integratedTerminal",
       "args": ["--start-ng-serve=listen"],
       "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "PTDASYNCALL_MODE": "NOTsync"
       }
     },
     {

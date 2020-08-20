@@ -20,6 +20,7 @@ import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -47,6 +48,7 @@ const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
+const mockedFileService = mock(FileService);
 
 @Component({
   template: `
@@ -87,7 +89,8 @@ describe('AppComponent', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: FileService, useMock: mockedFileService }
     ]
   }));
 
@@ -260,6 +263,7 @@ describe('AppComponent', () => {
     expect(env.syncItem).toBeDefined();
     expect(env.settingsItem).toBeDefined();
     expect(env.usersItem).toBeDefined();
+    flush();
   }));
 
   describe('Community Checking', () => {
@@ -442,6 +446,7 @@ class TestEnvironment {
     when(mockedCookieService.get(anything())).thenReturn('en');
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
 
     this.router = TestBed.get(Router);
     this.location = TestBed.get(Location);

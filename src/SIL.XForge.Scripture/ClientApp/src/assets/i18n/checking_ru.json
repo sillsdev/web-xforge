@@ -1,5 +1,6 @@
 {
   "app": {
+    "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "Все вопросы",
     "cannot_change_password": "В настоящее время сменить пароль невозможно. Попробуйте позже или сообщите о проблеме в меню \"Справка\".",
     "change_password": "Сменить пароль",
@@ -179,6 +180,10 @@
     "upload_audio_file": "Загрузить аудиофайл",
     "upload": "Загрузить"
   },
+  "checking_audio_player": {
+    "audio_unavailable": "Audio unavailable.",
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+  },
   "checking_audio_recorder": {
     "mic_access_denied": "Доступ к микрофону был ограничен. Пожалуйста, включите микрофон из браузера.",
     "record": "Запись",
@@ -218,6 +223,7 @@
   "error": {
     "chrome": "Барузер Chrome",
     "close": "Закрыть",
+    "error_id": "Error ID: {{ errorId }}",
     "error_occurred": "Произошла ошибка",
     "firefox": "Firefox",
     "hide_details": "Скрыть подробности",
@@ -268,7 +274,8 @@
     "link_sharing": "Поделиться ссылкой",
     "not_inviting_already_member": "Не приглашает: Пользователь уже является участником данного проекта",
     "resend": "Отправить повторный запрос",
-    "send": "Отправить"
+    "send": "Отправить",
+    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },
   "share_dialog": {
     "done": "Выполнено",

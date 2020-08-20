@@ -1,5 +1,6 @@
 {
   "app": {
+    "action_not_available_offline": "This action isn't available while you are offline.",
     "all_questions": "Todas as Perguntas",
     "cannot_change_password": "Não é possível alterar a senha neste momento. Tente novamente mais tarde ou relate um problema no menu de Ajuda.",
     "change_password": "Alterar senha",
@@ -179,6 +180,10 @@
     "upload_audio_file": "Carregar Arquivo de Áudio",
     "upload": "Carregar"
   },
+  "checking_audio_player": {
+    "audio_unavailable": "Audio unavailable.",
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+  },
   "checking_audio_recorder": {
     "mic_access_denied": "O acesso ao seu microfone foi negado. Ative o microfone a partir do seu navegador.",
     "record": "Registrar",
@@ -218,6 +223,7 @@
   "error": {
     "chrome": "Cromado",
     "close": "Fechar",
+    "error_id": "Error ID: {{ errorId }}",
     "error_occurred": "Ocorreu um erro",
     "firefox": "Firefox",
     "hide_details": "Ocultar detalhes",
@@ -268,7 +274,8 @@
     "link_sharing": "Compartilhamento de link",
     "not_inviting_already_member": "Não convidar: Usuário já é membro deste projeto",
     "resend": "Reenviar",
-    "send": "Enviar"
+    "send": "Enviar",
+    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
   },
   "share_dialog": {
     "done": "Concluído",

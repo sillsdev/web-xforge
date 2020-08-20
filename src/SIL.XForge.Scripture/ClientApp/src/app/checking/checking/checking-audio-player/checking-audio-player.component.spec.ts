@@ -1,6 +1,7 @@
 import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
@@ -109,6 +110,7 @@ class TestEnvironment {
       imports: [UICommonModule, TestTranslocoModule]
     });
     when(this.mockedPwaService.isOnline).thenCall(() => isOnline);
+    when(this.mockedPwaService.onlineStatus).thenReturn(of(isOnline));
 
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.fixture = TestBed.createComponent(HostComponent);

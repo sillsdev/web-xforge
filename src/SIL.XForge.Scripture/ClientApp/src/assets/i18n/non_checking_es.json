@@ -33,6 +33,7 @@
     "awaiting_response_from": "Esperando respuesta de{{ newLine }}{{ email }}",
     "cancel_invite": "Cancelar la invitación",
     "change_roles_and_permissions": "Los roles y permisos de los usuarios {{ boldStart }}sólo{{ boldEnd }} pueden ser cambiados en {{ boldStart }}Paratext{{ boldEnd }}. Abra el proyecto en {{ boldStart }}Paratext{{ boldEnd }}, en la ventana del proyecto haga clic en {{ templateTagBoundary }}{{ templateTagBoundary }}, luego {{ boldStart }}Configuración del proyecto{{ boldEnd }}, luego {{ boldStart }}Permisos de usuario{{ boldEnd }}. Después un {{ italicsStart }}Enviar/Recibir{{ italicsEnd }} en {{ boldStart }}Paratext{{ boldEnd }} y luego un {{ italicsStart }}Sincronizar{{ italicsEnd }} en {{ boldStart }}Scripture Forge{{ boldEnd }}, su rol entrará en vigor aquí, una vez que el usuario inicie la sesión con su cuenta de {{ boldStart }}Paratext{{ boldEnd }} .",
+    "connect_network_to_manage_users": "User management is disabled while offline. Please connect to the internet to manage users.",
     "filter_users": "Filtrar usuarios...",
     "me": "yo",
     "no_users_found": "Usuarios no encontrados",
@@ -46,6 +47,7 @@
     "based_on": "Basado en",
     "choose_the_mother_project": "Seleccione el proyecto de Paratext en el que se basa su proyecto.",
     "community_checking": "Comprobación por la comunidad",
+    "connect_network_to_connect_project": "Please connect to the internet to enable connecting to a project",
     "connect_paratext_project": "Conectar proyecto de Paratext",
     "connect": "Conectar",
     "connecting_to_project": "Conectando a {{ projectName }}...",
@@ -118,6 +120,7 @@
   "settings": {
     "anyone_with_a_link": "Cualquiera con un enlace",
     "based_on": "Basado en",
+    "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to the internet to make changes.",
     "choose_the_paratext_project": "Seleccione el proyecto de Paratext en el que se basa su proyecto.",
     "danger_zone": "Zona de Peligro",
     "delete_this_project": "Borrar este proyecto",
@@ -145,11 +148,13 @@
     "close": "Cerrar",
     "more": "Más",
     "number_of_suggestions": "Número de sugerencias",
+    "settings_not_available_offline": "These settings are not available while you are offline.",
     "suggestion_confidence": "Confianza en la sugerencia",
     "translation_suggestions": "Sugerencias de traducción",
     "translation_suggestions_settings": "Configuración de las sugerencias de traducción"
   },
   "sync": {
+    "connect_network_to_synchronize": "Please connect to the internet to synchronize this project",
     "last_synced_time_stamp": "Última sincronización en {{ timeStamp }}",
     "log_in_to_paratext": "Iniciar sesión en Paratext",
     "never_been_synced": "Nunca ha sido sincronizado",
@@ -167,7 +172,7 @@
   "translate_overview": {
     "progress": "Progreso",
     "quality": "Calidad",
-    "retrain": "Reentrenamiento",
+    "retrain": "Volver a entrenar",
     "suggestion_engine": "Motor de sugerencias",
     "trained_segments": "segmentos entrenados",
     "training": "Entrenamiento...",

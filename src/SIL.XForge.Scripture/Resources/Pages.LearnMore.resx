@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="LearnCheckingHow" xml:space="preserve">
-    <value>Learn how to setup and use community checking.</value>
+    <value>Learn how to set up and use {0}Community Checking{1}.</value>
   </data>
   <data name="LearnCheckingTitle" xml:space="preserve">
     <value>Community Checking</value>
@@ -127,88 +127,97 @@
     <value>Learn more on Scripture Forge</value>
   </data>
   <data name="LearnSliderCheckingSeeAnswer" xml:space="preserve">
-    <value>{0}Answer questions{1} with text or audio, or both</value>
+    <value>{0}Answering questions{1} in text and audio form.</value>
   </data>
   <data name="LearnSliderCheckingSeeConnect" xml:space="preserve">
-    <value>{0}Connect to a project{1} in Scripture Forge that you have been invited to join</value>
+    <value>{0}Connecting to a Scripture Forge project{1} as an invited {2}Community Checker{3}.</value>
   </data>
   <data name="LearnSliderCheckingSeeDescription" xml:space="preserve">
-    <value>{0}Watch this video{1} to see how community {2}Checkers{3} answers questions and interact with each other. This video shows how to:</value>
+    <value>{0}Community Checkers{1} and {0}Administrators{1} should {2}watch this video{3} to see how {0}Community Checkers{1} can answer questions and interact with each other. It covers:</value>
   </data>
   <data name="LearnSliderCheckingSeeHeader" xml:space="preserve">
-    <value>See How Community Checking Works</value>
+    <value>Watch How Community Checking Works</value>
   </data>
   <data name="LearnSliderCheckingSeeInteract" xml:space="preserve">
-    <value>{0}Interact{1} with other {2}Checkers{3} by adding comments to their answers</value>
+    <value>{0}Interacting{1} with other {2}Community Checkers{3} by adding comments to their answers.</value>
   </data>
   <data name="LearnSliderCheckingSeeReference" xml:space="preserve">
-    <value>{0}Select Scripture{1} to reference with your answer</value>
+    <value>{0}Selecting Scripture{1} to reference with answers.</value>
   </data>
   <data name="LearnSliderCheckingSetupAddQuestions" xml:space="preserve">
-    <value>{0}Add questions{1} to be checked by the community. Questions can include text, audio, or both. The audio could be the question, or the Scripture being read, or both</value>
+    <value>{0}Adding questions{1} to be checked by the community (these can feature audio recordings of the relevant Scripture, or the question itself).</value>
   </data>
   <data name="LearnSliderCheckingSetupConnect" xml:space="preserve">
-    <value>{0}Connect to a Paratext project{1} in Scripture Forge</value>
+    <value>{0}Connecting to a Paratext project{1} in Scripture Forge.</value>
   </data>
   <data name="LearnSliderCheckingSetupDescription" xml:space="preserve">
-    <value>As the {0}Administrator{1} of a Paratext project, {2}watch this video{3} for how to setup Community Checking. This video shows how to:</value>
+    <value>Paratext project {0}Administrators{1} can {2}watch this video{3} to learn about setting up {0}Community Checking{1}. It covers:</value>
   </data>
   <data name="LearnSliderCheckingSetupHeader" xml:space="preserve">
-    <value>Setup Community Checking</value>
+    <value>Setting Up Community Checking</value>
   </data>
   <data name="LearnSliderCheckingSetupShare" xml:space="preserve">
-    <value>{0}Share the project{1} by inviting {2}Checkers{3} to answer questions</value>
+    <value>{0}Sharing the project{1} by inviting {2}Community Checkers{3} to answer questions.</value>
   </data>
   <data name="LearnSliderCheckingSetupSync" xml:space="preserve">
-    <value>After community {0}Checkers{1} have answered some questions, {2}synchronize the answers{3} back to Paratext</value>
+    <value>{0}Synchronizing{1} the {2}Community Checkers'{3} answers with Paratext.</value>
+  </data>
+  <data name="LearnSliderSuggestionSetupBased" xml:space="preserve">
+    <value>Select a project the translation is {0}Based on{1} and the intelligent suggestion engine can be trained to {2}provide helpful translation suggestions{3}.</value>
   </data>
   <data name="LearnSliderSuggestionSetupBest" xml:space="preserve">
-    <value>This works best on {0}closely related projects{1} with a similar grammar and using a similar style of translation. Adaptation projects are good candidates for effectively using translation suggestions. Ensure the verses and segments are aligned between the two projects. You can do this easily in Paratext if your project is a Daughter Translation of the Based-on project.</value>
+    <value>Most effective on {0}closely related projects{1} with similar grammar and style of translation, such as adaptation projects.</value>
   </data>
   <data name="LearnSliderSuggestionSetupDescription" xml:space="preserve">
-    <value>On a project, in Settings, enable {0}Translation Suggestions{1} and choose the project this translation is {0}Based-on{1}. It may take quite some time to train the suggestion engine if there is already a lot of Scripture translated.</value>
+    <value>{0}Administrators{1} can enable {2}Translation Suggestions{3} to assist {0}Translators{1}.</value>
   </data>
   <data name="LearnSliderSuggestionSetupHeader" xml:space="preserve">
-    <value>Setup Translation Suggestions</value>
+    <value>Setting Up Translation Suggestions</value>
   </data>
   <data name="LearnSliderSuggestionAcceptDescription" xml:space="preserve">
-    <value>Once the suggestion engine is setup and trained, as you type, Scripture Forge may {0}offer suggestions{1} on how to translate the next word or phrase.</value>
+    <value>With the suggestion engine set up and trained, Scripture Forge may offer {0}Translators{1} suggestions as they type.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptEnter" xml:space="preserve">
-    <value>Hit {0}ENTER{1} or click on the suggestion to accept it.</value>
-  </data>
-  <data name="LearnSliderSuggestionAcceptEsc" xml:space="preserve">
-    <value>Hit {0}ESC{1} or continue typing to ignore the suggestion.</value>
+    <value>Simply hit {0}ENTER{1} or click on the suggestion to accept it, or hit {0}ESC{1} or continue typing to ignore it.</value>
   </data>
   <data name="LearnSliderSuggestionAcceptHeader" xml:space="preserve">
-    <value>Accept a Translation Suggestion</value>
+    <value>Accepting a Translation Suggestion</value>
   </data>
   <data name="LearnSliderSuggestionAcceptLearn" xml:space="preserve">
-    <value>The {0}suggestion engine will learn{1} when you finish editing a verse and move to the next verse. Use tab or arrow keys to move to the next verse or segment.</value>
+    <value>The {0}suggestion engine learns{1} and provides better suggestions as each verse is translated.</value>
+  </data>
+  <data name="LearnSliderSuggestionAcceptReceive" xml:space="preserve">
+    <value>{0}Translators{1} can {2}receive suggestions{3} about how to translate the next word or phrase, as they type.</value>
   </data>
   <data name="LearnSliderTranslateEditDescription" xml:space="preserve">
-    <value>Once you have connected to your Paratext project in Scripture Forge, you can {0}edit Scripture{1} the same as you can in Paratext. However, Scripture Forge works with correctly formatted text so you can't easily create poorly formatted Scripture. This is similar to using the {2}Basic{3} view in Paratext.</value>
+    <value>{0}Administrators{1} can connect a Paratext project to Scripture Forge to edit Scripture as they would in Paratext, while {2}benefiting from increased collaboration{3} options.</value>
   </data>
   <data name="LearnSliderTranslateEditHeader" xml:space="preserve">
-    <value>Edit Scripture</value>
+    <value>Editing Scripture</value>
   </data>
-  <data name="LearnSliderTranslateEditStructure" xml:space="preserve">
-    <value>Text structure can't be added in Scripture Forge yet so add chapters, verses and paragraphs in Paratext, particularly when creating a book.</value>
+  <data name="LearnSliderTranslateEditScripture" xml:space="preserve">
+    <value>{0}Edit Scripture{1} in Scripture Forge as you would in Paratext’s {2}Basic{3} view.</value>
   </data>
   <data name="LearnSliderTranslateEditSync" xml:space="preserve">
-    <value>{0}Synchronize{1} the project to keep it up-to-date with Paratext.</value>
+    <value>{0}Synchronize{1} your Scripture Forge project with Paratext to keep your work up to date.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateDescription" xml:space="preserve">
-    <value>If more than one {0}Translator{1} is connected online at the same time, they can {2}collaboratively edit{3} Scripture together.</value>
+    <value>{0}Translators{1} can work on projects collaboratively, {2}editing Scripture at the same time{3}.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateHeader" xml:space="preserve">
-    <value>Collaborate on Scripture</value>
+    <value>Collaborating on Scripture</value>
+  </data>
+  <data name="LearnSliderTranslateCollaborateLocation" xml:space="preserve">
+    <value>Work with {0}Translators{1} in {2}multiple locations{3} on the same project.</value>
   </data>
   <data name="LearnSliderTranslateCollaborateRealtime" xml:space="preserve">
-    <value>Whether you are in the same room or on the other side of the world, you can easily work on the same book, the same chapter, or even the same verse. When someone is editing the same text, you can {0}see their changes in real-time{1} as they type.</value>
+    <value>See other {0}Translators'{1} {2}edits in real time{3}, as they type.</value>
+  </data>
+  <data name="LearnSliderTranslateCollaborateVerse" xml:space="preserve">
+    <value>Collaborate on the same book, same chapter, or {0}even the same verse{1}.</value>
   </data>
   <data name="LearnTranslateHow" xml:space="preserve">
-    <value>Learn how to collaborate on editing Scripture and see how to setup and use translation suggestions when editing Scripture.</value>
+    <value>Learn how to edit Scripture collaboratively and use translation suggestions.</value>
   </data>
   <data name="LearnTranslateTitle" xml:space="preserve">
     <value>Translation</value>
