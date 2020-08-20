@@ -53,7 +53,7 @@ namespace PtdaSyncAll
         public async Task SynchronizeAllProjectsAsync(bool doSynchronizations)
         {
 
-            IQueryable<SFProject> allSfProjects = _realtimeService.QuerySnapshots<SFProject>();
+            List<SFProject> allSfProjects = _realtimeService.QuerySnapshots<SFProject>().ToList<SFProject>();
             _realtimeServiceConnection = await _realtimeService.ConnectAsync();
             List<Task> syncTasks = new List<Task>();
 
@@ -62,11 +62,11 @@ namespace PtdaSyncAll
             {
                 _logger.Log($"{Program.Bullet1} PT project {sfProject.ShortName}, "
                     + $"PT project id {sfProject.ParatextId}, SF project id {sfProject.Id}.");
-                IEnumerable<string> projectSfAdminUserIds = sfProject.UserRoles
-                    .Where(ur => ur.Value == SFProjectRole.Administrator).Select(ur => ur.Key);
+                List<string> projectSfAdminUserIds = sfProject.UserRoles
+                    .Where(ur => ur.Value == SFProjectRole.Administrator).Select(ur => ur.Key).ToList<string>();
                 if (projectSfAdminUserIds.Count() < 1)
                 {
-                    IEnumerable<string> projectSfUserIds = sfProject.UserRoles.Select(ur => ur.Key);
+                    List<string> projectSfUserIds = sfProject.UserRoles.Select(ur => ur.Key).ToList<string>();
                     string users = string.Join(", ", projectSfUserIds);
                     if (projectSfUserIds.Count() < 1)
                     {
@@ -139,9 +139,9 @@ namespace PtdaSyncAll
 
                     _logger.Log($"    {Program.Bullet3} PT Data Access and PT Registry "
                         + "based report on projects the user can access, narrowed to this project: ", false);
-                    IEnumerable<string> ptProjectNamesList = userPtProjects
+                    List<string> ptProjectNamesList = userPtProjects
                         .Where(ptProject => ptProject.ParatextId == sfProject.ParatextId)
-                        .Select(ptProject => ptProject.ShortName);
+                        .Select(ptProject => ptProject.ShortName).ToList();
                     string ptProjectNames = string.Join(',', ptProjectNamesList);
                     if (ptProjectNamesList.Count() < 1)
                     {
@@ -249,7 +249,7 @@ namespace PtdaSyncAll
         /// <summary>
         /// Report on project sync successes from mongo project doc sync data.
         /// </summary>
-        private void ReportLastSyncSuccesses(IEnumerable<SFProject> sfProjects)
+        private void ReportLastSyncSuccesses(List<SFProject> sfProjects)
         {
             _logger.Log($"{Program.Bullet1} SF projects have the following last sync dates and results.");
             bool anyFailures = sfProjects.Any((SFProject sfProject) => sfProject.Sync.LastSyncSuccessful != true);
