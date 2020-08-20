@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
@@ -22,13 +21,13 @@ namespace PtdaSyncAll
     /// These tests use timers, but are not part of a CI suite.
     /// </remarks>
     [TestFixture]
-    public class SyncAllTests
+    public class SyncAllServiceTests
     {
         [Test]
         public async Task Inspects()
         {
             var env = new TestEnvironment();
-            await env.syncAll.SynchronizeAllProjectsAsync(env.WebHost, false);
+            await env.Service.SynchronizeAllProjectsAsync(false);
             await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
         }
 
@@ -47,7 +46,7 @@ namespace PtdaSyncAll
             });
             Assert.That(syncTask?.Status, Is.Not.EqualTo(TaskStatus.RanToCompletion));
 
-            await env.syncAll.SynchronizeAllProjectsAsync(env.WebHost, true);
+            await env.Service.SynchronizeAllProjectsAsync(true);
 
             // Projects were fetched. RunAsync was called. The RunAsync task was waited for.
             Assert.That(syncTask?.Status, Is.EqualTo(TaskStatus.RanToCompletion));
@@ -76,7 +75,7 @@ namespace PtdaSyncAll
             });
             Assert.That(syncTask?.Status, Is.Not.EqualTo(TaskStatus.RanToCompletion));
 
-            await env.syncAll.SynchronizeAllProjectsAsync(env.WebHost, true);
+            await env.Service.SynchronizeAllProjectsAsync(true);
 
             // Exceptions thrown from the synchronization are reported.
             Assert.That(syncTask?.Status, Is.EqualTo(TaskStatus.Faulted));
@@ -88,17 +87,12 @@ namespace PtdaSyncAll
 
         private class TestEnvironment
         {
-            public SyncAll syncAll;
 
             public TestEnvironment()
             {
-                WebHost = Substitute.For<IWebHost>();
                 IServiceProvider serviceProvider = Substitute.For<IServiceProvider>();
-                WebHost.Services.Returns(serviceProvider);
                 RealtimeService = new SFMemoryRealtimeService();
-                serviceProvider.GetService<IRealtimeService>().Returns(RealtimeService);
                 ParatextService = Substitute.For<IParatextService>();
-                serviceProvider.GetService<IParatextService>().Returns(ParatextService);
                 var userSecrets = new MemoryRepository<UserSecret>(new[]
                 {
                     new UserSecret { Id = "user01" , ParatextTokens = new Tokens
@@ -107,18 +101,18 @@ namespace PtdaSyncAll
                             RefreshToken = "test_refresh_token"
                         }}
                 });
-                serviceProvider.GetService<IRepository<UserSecret>>().Returns(userSecrets);
 
                 SetupSFData(true, true);
 
                 ParatextSyncRunner = Substitute.For<IParatextSyncRunner>();
-                serviceProvider.GetService<IParatextSyncRunner>().Returns(ParatextSyncRunner);
+                Func<IParatextSyncRunner> syncRunnerFactory = () => ParatextSyncRunner;
 
                 ProgramLogger = Substitute.For<IProgramLogger>();
-                syncAll = new SyncAll(ProgramLogger);
+                Service = new SyncAllService(syncRunnerFactory, RealtimeService, ParatextService, userSecrets,
+                    ProgramLogger);
             }
 
-            public IWebHost WebHost { get; }
+            public SyncAllService Service { get; }
             public IParatextService ParatextService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
             public IParatextSyncRunner ParatextSyncRunner { get; }
