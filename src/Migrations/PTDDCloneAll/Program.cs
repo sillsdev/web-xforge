@@ -30,11 +30,15 @@ namespace PTDDCloneAll
 {
     public class Program
     {
+        const string CLONE = "clone";
+        const string CLONE_AND_MOVE_OLD = "cloneandmoveold";
+        const string INSPECT = "inspect";
+
         public static async Task Main(string[] args)
         {
-            string mode = Environment.GetEnvironmentVariable("PTDDCLONEALL_MODE") ?? "inspect";
-            bool doClone = mode == "clone";
-            Log($"PTDDCloneAll starting. Will clone: {doClone}");
+            string modeEnv = Environment.GetEnvironmentVariable("PTDDCLONEALL_MODE");
+            string mode = modeEnv == CLONE || modeEnv == CLONE_AND_MOVE_OLD ? modeEnv : INSPECT;
+            Log($"PTDDCloneAll starting. Migration mode: {mode}");
             string sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
             Directory.SetCurrentDirectory(sfAppDir);
             IWebHostBuilder builder = CreateWebHostBuilder(args);
@@ -49,7 +53,7 @@ namespace PTDDCloneAll
                     + " part. Maybe the SF server is running and needs shut down? Rethrowing.");
                 throw;
             }
-            await CloneSFProjects(webHost, doClone);
+            await CloneSFProjects(webHost, mode);
             await webHost.StopAsync();
             Log("Clone all projects - Completed");
         }
@@ -61,20 +65,20 @@ namespace PTDDCloneAll
         /// Text documents in the SF DB for Scripture texts are deleted and recreated from the up-to-date Paratext project data after
         /// cloning. This will overwrite any un-synchronized data on SF.
         /// </summary>
-        public static async Task CloneSFProjects(IWebHost webHost, bool doClone)
+        public static async Task CloneSFProjects(IWebHost webHost, string mode)
         {
             IRealtimeService realtimeService = webHost.Services.GetService<IRealtimeService>();
             IQueryable<SFProject> allSFProjects = realtimeService.QuerySnapshots<SFProject>();
             IOptions<SiteOptions> siteOptions = webHost.Services.GetService<IOptions<SiteOptions>>();
             string syncDir = Path.Combine(siteOptions.Value.SiteDir, "sync");
+            bool doClone = mode == CLONE || mode == CLONE_AND_MOVE_OLD;
 
-            // Uncomment this if moving old projects to another folder is preferred
-            // string syncDirOld = Path.Combine(siteOptions.Value.SiteDir, "sync_old");
-            // if (doClone)
-            // {
-            //     if (!Directory.Exists(syncDirOld))
-            //         Directory.CreateDirectory(syncDirOld);
-            // }
+            string syncDirOld = Path.Combine(siteOptions.Value.SiteDir, "sync_old");
+            if (mode == CLONE_AND_MOVE_OLD)
+            {
+                if (!Directory.Exists(syncDirOld))
+                    Directory.CreateDirectory(syncDirOld);
+            }
 
             IConnection connection = await realtimeService.ConnectAsync();
             // Get the paratext project ID and admin user for all SF Projects
@@ -99,10 +103,13 @@ namespace PTDDCloneAll
                             });
                             // Clone the paratext project and update the SF database with the project data
                             await CloneAndSyncFromParatext(webHost, proj, userId, syncDir);
-                            // Uncomment this if moving old projects to another folder is preferred
-                            // string projectDir = Path.Combine(syncDir, proj.Id);
-                            // string projectDirOld = Path.Combine(syncDirOld, proj.Id);
-                            // Directory.Move(projectDir, projectDirOld);
+
+                            if (mode == CLONE_AND_MOVE_OLD)
+                            {
+                                string projectDir = Path.Combine(syncDir, proj.Id);
+                                string projectDirOld = Path.Combine(syncDirOld, proj.Id);
+                                Directory.Move(projectDir, projectDirOld);
+                            }
                             break;
                         }
                         catch (Exception e)

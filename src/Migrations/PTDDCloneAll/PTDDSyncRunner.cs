@@ -133,9 +133,6 @@ namespace PTDDCloneAll
                     ? _projectDoc.Data.Texts.Where(t => t.HasSource).Select(t => t.BookNum).Except(sourceBooks)
                     : Enumerable.Empty<int>());
 
-                Console.WriteLine($"Deleting target books {targetBooksToDelete.Count}");
-                Console.WriteLine($"Deleting source books {sourceBooksToDelete.Count}");
-
                 // delete all data for removed books
                 if (targetBooksToDelete.Count > 0 || sourceBooksToDelete.Count > 0)
                 {
