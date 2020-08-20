@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore;
@@ -96,6 +97,7 @@ namespace PtdaSyncAll
             IParatextService paratextService = webHost.Services.GetService<IParatextService>();
             IRepository<UserSecret> userSecretRepo = webHost.Services.GetService<IRepository<UserSecret>>();
             IQueryable<SFProject> allSfProjects = realtimeService.QuerySnapshots<SFProject>();
+            List<Task> syncTasks = new List<Task>();
             char bullet1 = '>';
             char bullet2 = '*';
             char bullet3 = '-';
@@ -193,20 +195,75 @@ namespace PtdaSyncAll
 
                     if (doSynchronizations)
                     {
-                        Log($"  {bullet2} Synchronizing SF project {sfProject.Id} as SF user {sfUserId} ...");
                         try
                         {
-                            await SynchronizeProject(webHost, sfUserId, sfProject.Id);
-                            Log($"    {bullet3} Done synchronization with no thrown exceptions.");
+                            Log($"  {bullet2} Starting an asynchronous synchronization for SF project {sfProject.Id} "
+                                + $"as SF user {sfUserId}.");
+                            Task syncTask = SynchronizeProject(webHost, sfUserId, sfProject.Id);
+                            Log($"    {bullet3} Synchronization task for SF project {sfProject.Id} as "
+                                + $"SF user {sfUserId} has Sync Task Id {syncTask.Id}.");
+                            syncTasks.Add(syncTask);
                             break;
                         }
                         catch (Exception e)
                         {
+                            // We probably won't get here, because of the way await works, but just in case.
                             Log($"    {bullet3} There was a problem with synchronizing. It might be tried next with "
                                 + $"another admin user. Exception is:{Environment.NewLine}{e}");
                             continue;
                         }
                     }
+                }
+            }
+
+            if (doSynchronizations)
+            {
+                Log("Waiting for synchronization tasks to finish (if any). "
+                    + $"There are this many tasks: {syncTasks.Count}");
+                try
+                {
+                    Task allTasks = Task.WhenAll(syncTasks);
+                    try
+                    {
+                        await allTasks.ConfigureAwait(false);
+                    }
+                    catch
+                    {
+                        if (allTasks.Exception == null)
+                        {
+                            throw;
+                        }
+                        ExceptionDispatchInfo.Capture(allTasks.Exception).Throw();
+                    }
+                    Log("Synchronization tasks are finished.");
+                }
+                catch (AggregateException e)
+                {
+                    Log("There was a problem with one or more synchronization tasks. "
+                        + $"Exception is:{Environment.NewLine}{e}");
+                }
+
+                if (syncTasks.Any(task => !task.IsCompletedSuccessfully))
+                {
+                    Log("One or more sync tasks did not complete successfully.");
+                    syncTasks.ForEach(task =>
+                    {
+                        string exceptionInfo = $"with exception {task.Exception?.InnerException}.";
+                        if (task.Exception == null)
+                        {
+                            exceptionInfo = "with no exception thrown.";
+                        }
+                        Log($"Sync task Id {task.Id} has status {task.Status} {exceptionInfo}");
+                        if (task.Exception?.InnerExceptions?.Count > 1)
+                        {
+                            Log($"Sync task Id {task.Id} has more than one inner exception. "
+                                + "Sorry if this is redundant, but they are:");
+                            foreach (var e in task.Exception.InnerExceptions)
+                            {
+                                Log($"Inner exception: {e}");
+                            }
+                        }
+                    });
                 }
             }
         }
