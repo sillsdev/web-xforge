@@ -14,6 +14,7 @@ using SIL.XForge;
 using SIL.XForge.Configuration;
 using SIL.XForge.Scripture;
 using SIL.XForge.Scripture.Services;
+using System.Diagnostics;
 
 namespace PtdaSyncAll
 {
@@ -54,7 +55,16 @@ namespace PtdaSyncAll
             services.AddLocalization(options => options.ResourcesPath = "Resources");
 
             services.AddSFMachine(Configuration);
+
             services.AddTransient<IParatextSyncRunner, ParatextSyncRunner>();
+            services.AddSingleton<IProgramLogger>((IServiceProvider serviceProvider) =>
+            {
+                using (Process thisProcess = Process.GetCurrentProcess())
+                {
+                    return new ProgramLogger(thisProcess.Id);
+                }
+            });
+            services.AddSingleton<ISyncAllService, SyncAllService>();
 
             services.Configure<RequestLocalizationOptions>(
                 opts =>
