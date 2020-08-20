@@ -67,46 +67,42 @@ namespace PTDDCloneAll
             IQueryable<SFProject> allSFProjects = realtimeService.QuerySnapshots<SFProject>();
             IOptions<SiteOptions> siteOptions = webHost.Services.GetService<IOptions<SiteOptions>>();
             string syncDir = Path.Combine(siteOptions.Value.SiteDir, "sync");
-            string syncDirOld = Path.Combine(siteOptions.Value.SiteDir, "sync_old");
 
-            if (doClone)
-            {
-                if (!Directory.Exists(syncDirOld))
-                    Directory.CreateDirectory(syncDirOld);
-            }
+            // Uncomment this if moving old projects to another folder is preferred
+            // string syncDirOld = Path.Combine(siteOptions.Value.SiteDir, "sync_old");
+            // if (doClone)
+            // {
+            //     if (!Directory.Exists(syncDirOld))
+            //         Directory.CreateDirectory(syncDirOld);
+            // }
 
             IConnection connection = await realtimeService.ConnectAsync();
             // Get the paratext project ID and admin user for all SF Projects
             foreach (SFProject proj in allSFProjects)
             {
+                bool foundAdmin = false;
                 foreach (string userId in proj.UserRoles.Keys)
                 {
                     if (proj.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Administrator)
                     {
+                        foundAdmin = true;
                         Log($"Project administrator identified on {proj.Name}: {userId}");
                         if (!doClone)
                             break;
                         try
                         {
-                            // Delete the TextDocs in the SF project
                             var projectDoc = await connection.FetchAsync<SFProject>(proj.Id);
-                            foreach (TextInfo text in projectDoc.Data.Texts)
-                            {
-                                if (text.HasSource)
-                                    await DeleteAllTextDocsForBookAsync(connection, proj.Id, text, TextType.Source);
-                                await DeleteAllTextDocsForBookAsync(connection, proj.Id, text, TextType.Target);
-                            }
                             await projectDoc.SubmitJson0OpAsync(op =>
                             {
-                                op.Set(pd => pd.Texts, new List<TextInfo>());
                                 // Increment the queued count such as in SyncService
                                 op.Inc(pd => pd.Sync.QueuedCount);
                             });
                             // Clone the paratext project and update the SF database with the project data
                             await CloneAndSyncFromParatext(webHost, proj, userId, syncDir);
-                            string projectDir = Path.Combine(syncDir, proj.Id);
-                            string projectDirOld = Path.Combine(syncDirOld, proj.Id);
-                            Directory.Move(projectDir, projectDirOld);
+                            // Uncomment this if moving old projects to another folder is preferred
+                            // string projectDir = Path.Combine(syncDir, proj.Id);
+                            // string projectDirOld = Path.Combine(syncDirOld, proj.Id);
+                            // Directory.Move(projectDir, projectDirOld);
                             break;
                         }
                         catch (Exception e)
@@ -116,6 +112,8 @@ namespace PTDDCloneAll
                         }
                     }
                 }
+                if (!foundAdmin)
+                    Log($"ERROR: Unable to identify a project administrator on {proj.Name}");
             }
         }
 
@@ -128,7 +126,7 @@ namespace PTDDCloneAll
             try
             {
                 Log($"Cloning {proj.Name} ({proj.Id}) as SF user {userId}");
-                ParatextSyncRunner syncRunner = webHost.Services.GetService<ParatextSyncRunner>();
+                PTDDSyncRunner syncRunner = webHost.Services.GetService<PTDDSyncRunner>();
                 await syncRunner.RunAsync(proj.Id, userId, false);
                 Log($"{proj.Name} - Succeeded");
             }
@@ -177,32 +175,6 @@ namespace PTDDCloneAll
                     })
                 .UseConfiguration(configuration)
                 .UseStartup<Startup>();
-        }
-
-        /// <summary>
-        /// Deletes all text docs from the database for a book. Copied and modified from ParatextSyncRunner.cs
-        /// </summary>
-        public static async Task DeleteAllTextDocsForBookAsync(IConnection connection, string sfProjectId, TextInfo text, TextType textType)
-        {
-            var tasks = new List<Task>();
-            foreach (Chapter chapter in text.Chapters)
-                tasks.Add(DeleteTextDocAsync(connection, sfProjectId, text, chapter.Number, textType));
-            await Task.WhenAll(tasks);
-        }
-
-        // Copied and modified from ParatextSyncRunner.cs
-        public static IDocument<TextData> GetTextDoc(IConnection connection, string sfProjectId, TextInfo text, int chapter, TextType textType)
-        {
-            return connection.Get<TextData>(TextData.GetTextDocId(sfProjectId, text.BookNum, chapter, textType));
-        }
-
-        // Copied and modified from ParatextSyncRunner.cs
-        public static async Task DeleteTextDocAsync(IConnection connection, string sfProjectId, TextInfo text, int chapter, TextType textType)
-        {
-            IDocument<TextData> textDoc = GetTextDoc(connection, sfProjectId, text, chapter, textType);
-            await textDoc.FetchAsync();
-            if (textDoc.IsLoaded)
-                await textDoc.DeleteAsync();
         }
     }
 }
