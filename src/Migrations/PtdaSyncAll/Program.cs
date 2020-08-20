@@ -1,5 +1,4 @@
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
@@ -7,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SIL.XForge.Scripture.Services;
 
@@ -22,26 +22,21 @@ namespace PtdaSyncAll
     /// </summary>
     public class Program
     {
-        private static int _thisProcessId;
         public static readonly char Bullet1 = '>';
         public static readonly char Bullet2 = '*';
         public static readonly char Bullet3 = '-';
-        public static ProgramLogger Logger;
+        public static IProgramLogger Logger;
 
         public static async Task Main(string[] args)
         {
-            using (Process thisProcess = Process.GetCurrentProcess())
-            {
-                _thisProcessId = thisProcess.Id;
-            }
-            Logger = new ProgramLogger(_thisProcessId);
             string mode = Environment.GetEnvironmentVariable("PTDASYNCALL_MODE") ?? "inspect";
             bool doSynchronizations = mode == "sync";
-            Logger.Log($"Starting. Will sync: {doSynchronizations}");
             string sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
             Directory.SetCurrentDirectory(sfAppDir);
             IWebHostBuilder builder = CreateWebHostBuilder(args);
             IWebHost webHost = builder.Build();
+            Logger = webHost.Services.GetService<IProgramLogger>();
+            Logger.Log($"Starting. Will sync: {doSynchronizations}");
             try
             {
                 await webHost.StartAsync();
@@ -52,8 +47,8 @@ namespace PtdaSyncAll
                     + "Maybe the SF server is running on this machine and needs shut down? Rethrowing.");
                 throw;
             }
-            var tool = new SyncAll(Logger);
-            await tool.SynchronizeAllProjectsAsync(webHost, doSynchronizations);
+            ISyncAllService tool = webHost.Services.GetService<ISyncAllService>();
+            await tool.SynchronizeAllProjectsAsync(doSynchronizations);
             await webHost.StopAsync();
             Logger.Log("Done.");
         }
