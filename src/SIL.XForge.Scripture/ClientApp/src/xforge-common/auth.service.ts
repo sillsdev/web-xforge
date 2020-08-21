@@ -111,17 +111,6 @@ export class AuthService {
     return this.expiresAt != null && Date.now() < this.expiresAt;
   }
 
-  async attemptOnlineLogin(): Promise<void> {
-    // Only need to check if the app has logged in via an offline state
-    if (await this.isLoggedIn) {
-      this.tryOnlineLogIn().then(result => {
-        if (!result.loggedIn) {
-          this.logIn(this.locationService.pathname + this.locationService.search);
-        }
-      });
-    }
-  }
-
   changePassword(email: string): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       this.auth0.changePassword({ connection: 'Username-Password-Authentication', email }, (error, result) => {
@@ -132,6 +121,17 @@ export class AuthService {
         }
       });
     });
+  }
+
+  async checkOnlineAuth(): Promise<void> {
+    // Only need to check if the app has logged in via an offline state
+    if (await this.isLoggedIn) {
+      this.tryOnlineLogIn().then(result => {
+        if (!result.loggedIn) {
+          this.logIn(this.locationService.pathname + this.locationService.search);
+        }
+      });
+    }
   }
 
   logIn(returnUrl: string, signUp?: boolean): void {
@@ -183,10 +183,7 @@ export class AuthService {
       }
       return { loggedIn: true, newlyLoggedIn: false };
     } catch {
-      await this.noticeService.showMessageDialog(
-        () => translate('error_messages.error_occurred_login'),
-        () => translate('error_messages.try_again')
-      );
+      await this.showLoginErrorDialog();
       return { loggedIn: false, newlyLoggedIn: false };
     }
   }
@@ -208,10 +205,7 @@ export class AuthService {
       }
       return { loggedIn: true, newlyLoggedIn: false };
     } catch {
-      await this.noticeService.showMessageDialog(
-        () => translate('error_messages.error_occurred_login'),
-        () => translate('error_messages.try_again')
-      );
+      await this.showLoginErrorDialog();
       return { loggedIn: false, newlyLoggedIn: false };
     }
   }
@@ -278,6 +272,13 @@ export class AuthService {
       await this.renewTokens();
       this.scheduleRenewal();
     });
+  }
+
+  private async showLoginErrorDialog(): Promise<void> {
+    await this.noticeService.showMessageDialog(
+      () => translate('error_messages.error_occurred_login'),
+      () => translate('error_messages.try_again')
+    );
   }
 
   private unscheduleRenewal(): void {
