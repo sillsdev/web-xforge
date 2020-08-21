@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
 using NUnit.Framework;
@@ -86,6 +85,78 @@ namespace PtdaSyncAll
                 message.Contains("> PT project P01")));
             env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
                 message.Contains("> PT project P02")));
+
+            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
+                message.Contains("subset of projects")));
+        }
+
+        [Test]
+        public async Task Sync_MultipleProjectsSynchronized_WhenRequested()
+        {
+            var env = new TestEnvironment();
+            Dictionary<string, Task> synchronizationTasks = env.SetupSynchronizationTasks();
+            // Synchronization tasks have not started yet.
+            Assert.That(synchronizationTasks.Count, Is.EqualTo(0));
+
+            List<string> sfProjectIdsToSynchronize = new List<string>();
+            sfProjectIdsToSynchronize.Add("project01");
+            sfProjectIdsToSynchronize.Add("project02");
+            await env.Service.SynchronizeAllProjectsAsync(true, sfProjectIdsToSynchronize);
+
+            Task syncTaskProject01 = synchronizationTasks.GetValueOrDefault("project01");
+            Task syncTaskProject02 = synchronizationTasks.GetValueOrDefault("project02");
+            Assert.That(syncTaskProject01.Status, Is.EqualTo(TaskStatus.RanToCompletion));
+            Assert.That(syncTaskProject02.Status, Is.EqualTo(TaskStatus.RanToCompletion));
+            await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
+            await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
+            await env.ParatextSyncRunner.Received().RunAsync("project02", "user01", Arg.Any<bool>());
+
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
+                message.Contains("All sync tasks finished with a claimed Task status of Completed Successfully")));
+            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
+                message.Contains("There was a problem with one or more synchronization tasks")));
+
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
+                message.Contains("> PT project P01")));
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
+                message.Contains("> PT project P02")));
+
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
+                message.Contains("subset of projects")));
+        }
+
+        [Test]
+        public async Task Sync_SubsetSynchronized()
+        {
+            var env = new TestEnvironment();
+            Dictionary<string, Task> synchronizationTasks = env.SetupSynchronizationTasks();
+            // Synchronization tasks have not started yet.
+            Assert.That(synchronizationTasks.Count, Is.EqualTo(0));
+
+            List<string> sfProjectIdsToSynchronize = new List<string>();
+            sfProjectIdsToSynchronize.Add("project01");
+            await env.Service.SynchronizeAllProjectsAsync(true, sfProjectIdsToSynchronize);
+
+            Task syncTaskProject01 = synchronizationTasks.GetValueOrDefault("project01");
+            Task syncTaskProject02 = synchronizationTasks.GetValueOrDefault("project02");
+            Assert.That(syncTaskProject01.Status, Is.EqualTo(TaskStatus.RanToCompletion));
+            Assert.That(syncTaskProject02, Is.Null);
+            await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
+            await env.ParatextSyncRunner.Received().RunAsync("project01", "user01", Arg.Any<bool>());
+            await env.ParatextSyncRunner.DidNotReceive().RunAsync("project02", "user01", Arg.Any<bool>());
+
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
+                message.Contains("All sync tasks finished with a claimed Task status of Completed Successfully")));
+            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
+                message.Contains("There was a problem with one or more synchronization tasks")));
+
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
+                message.Contains("> PT project P01")));
+            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
+                message.Contains("> PT project P02")));
+
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
+                message.Contains("subset of projects")));
         }
 
         [Test]
