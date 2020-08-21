@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Reflection;
@@ -32,11 +33,29 @@ namespace PtdaSyncAll
             string mode = Environment.GetEnvironmentVariable("PTDASYNCALL_MODE") ?? "inspect";
             bool doSynchronizations = mode == "sync";
             string sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
+            string sfProjectIdsSubset = Environment.GetEnvironmentVariable("SYNC_SET");
+
             Directory.SetCurrentDirectory(sfAppDir);
             IWebHostBuilder builder = CreateWebHostBuilder(args);
             IWebHost webHost = builder.Build();
             Logger = webHost.Services.GetService<IProgramLogger>();
             Logger.Log($"Starting. Will sync: {doSynchronizations}");
+
+            List<string> projectSubset = null;
+            try
+            {
+                if (sfProjectIdsSubset != null)
+                {
+                    projectSubset = new List<string>(sfProjectIdsSubset.Split(' '));
+                }
+            }
+            catch
+            {
+                Logger.Log($"There was a problem parsing the SYNC_SET SF project ids "
+                    + $"environment variable. Rethrowing.");
+                throw;
+            }
+
             try
             {
                 await webHost.StartAsync();
@@ -48,7 +67,7 @@ namespace PtdaSyncAll
                 throw;
             }
             ISyncAllService tool = webHost.Services.GetService<ISyncAllService>();
-            await tool.SynchronizeAllProjectsAsync(doSynchronizations);
+            await tool.SynchronizeAllProjectsAsync(doSynchronizations, projectSubset);
             await webHost.StopAsync();
             Logger.Log("Done.");
         }
