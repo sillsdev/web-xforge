@@ -73,6 +73,9 @@ namespace PTDDCloneAll
             IExceptionHandler exceptionHandler)
         {
             Console.WriteLine("Configuring app");
+            // Set a custom realtime port using the Realtime__Port environment variable
+            string realtimePort = Configuration["Realtime:Port"];
+            Console.WriteLine($"Realtime:Port : {realtimePort}");
             app.UseRealtimeServer();
             app.UseSFDataAccess();
             app.UseSFServices();
