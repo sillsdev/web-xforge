@@ -319,6 +319,7 @@ namespace PtdaSyncAll
                             if (appAssembly != null)
                                 config.AddUserSecrets(appAssembly, true);
                         }
+                        config.AddEnvironmentVariables();
                     })
                 .UseConfiguration(configuration)
                 .UseStartup<Startup>();

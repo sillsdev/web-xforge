@@ -80,6 +80,9 @@ namespace PtdaSyncAll
         public void Configure(IApplicationBuilder app, IHostApplicationLifetime appLifetime,
             IExceptionHandler exceptionHandler)
         {
+            // Set a custom realtime port using the Realtime__Port environment variable
+            string realtimePort = Configuration["Realtime:Port"];
+            Console.WriteLine($"Realtime:Port : {realtimePort}");
             app.UseRealtimeServer();
             app.UseSFDataAccess();
             appLifetime.ApplicationStopped.Register(() => ApplicationContainer.Dispose());
