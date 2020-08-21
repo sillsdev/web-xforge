@@ -76,7 +76,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     noticeService: NoticeService,
     public media: MediaObserver,
     private readonly projectService: SFProjectService,
-    pwaService: PwaService,
+    private readonly pwaService: PwaService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,
@@ -96,6 +96,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       if (status !== this.isAppOnline) {
         this.isAppOnline = status;
         this.checkDeviceStorage();
+      }
+      // Check authentication when coming back online
+      // This is also run on first load when the websocket connects for the first time
+      if (this.isAppOnline && !this.isAppLoading) {
+        this.authService.checkOnlineAuth();
       }
     });
 

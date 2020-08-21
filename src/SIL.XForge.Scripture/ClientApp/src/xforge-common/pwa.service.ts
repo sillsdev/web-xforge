@@ -45,7 +45,9 @@ export class PwaService extends SubscriptionDisposable {
   }
 
   set webSocketResponse(status: boolean) {
-    this.webSocketStatus.next(status);
+    if (status !== this.webSocketStatus.getValue()) {
+      this.webSocketStatus.next(status);
+    }
   }
 
   async checkOnline(): Promise<boolean> {
