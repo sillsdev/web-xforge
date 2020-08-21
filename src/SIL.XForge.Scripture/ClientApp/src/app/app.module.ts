@@ -48,7 +48,7 @@ import { UsersModule } from './users/users.module';
     BrowserAnimationsModule,
     CoreModule,
     HttpClientModule,
-    ServiceWorkerModule.register('ngsw-worker.js', {
+    ServiceWorkerModule.register('sf-service-worker.js', {
       enabled: environment.pwaTest || environment.production,
       registrationStrategy: 'registerImmediately'
     }),
