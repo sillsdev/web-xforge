@@ -41,12 +41,12 @@ namespace PtdaSyncAll
             Logger = webHost.Services.GetService<IProgramLogger>();
             Logger.Log($"Starting. Will sync: {doSynchronizations}");
 
-            List<string> projectSubset = null;
+            HashSet<string> projectSubset = null;
             try
             {
                 if (sfProjectIdsSubset != null)
                 {
-                    projectSubset = new List<string>(sfProjectIdsSubset.Split(' '));
+                    projectSubset = new HashSet<string>(sfProjectIdsSubset.Split(' '));
                 }
             }
             catch
@@ -80,7 +80,7 @@ namespace PtdaSyncAll
             IWebHostBuilder builder = WebHost.CreateDefaultBuilder(args);
 
             // Secrets to connect to PT web API are associated with the SIL.XForge.Scripture assembly.
-            Assembly sfAssembly = System.Reflection.Assembly.GetAssembly(typeof(ParatextService));
+            Assembly sfAssembly = Assembly.GetAssembly(typeof(ParatextService));
 
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .AddUserSecrets(sfAssembly)
