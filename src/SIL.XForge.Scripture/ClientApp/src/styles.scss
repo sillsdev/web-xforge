@@ -30,11 +30,9 @@
 @use '@material/form-field/mdc-form-field';
 @use '@material/radio/mdc-radio';
 @use '@material/switch/mdc-switch';
+@use '@material/linear-progress/mdc-linear-progress';
 
 @use '@angular-mdc/theme/material';
-
-// commented out because it never stops, and it's super annoying while developing
-// @use '@material/linear-progress/mdc-linear-progress';
 
 @import 'variables';
 @import 'fonts';

@@ -1,5 +1,6 @@
 @use '@material/icon-button/mixins' as icon-button;
 @use "@material/typography/mixins" as typography;
+@use '@material/linear-progress/mixins' as linear-progress;
 @use '@material/top-app-bar/variables' as top-app-bar;
 
 @import 'bootstrap/scss/mixins/breakpoints';
@@ -14,6 +15,10 @@
   > mdc-linear-progress {
     position: absolute;
     z-index: 10;
+
+    ::ng-deep {
+      @include linear-progress.bar-color($mdc-theme-secondary);
+    }
   }
 
   > mdc-drawer {

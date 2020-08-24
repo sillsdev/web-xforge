@@ -1,3 +1,5 @@
+@use '@material/linear-progress/mixins' as linear-progress;
+
 @import 'src/variables';
 
 .sync-card {
@@ -48,4 +50,8 @@ h2 {
 .offline-text {
   padding-bottom: 1rem;
   text-align: center;
+}
+
+mdc-linear-progress ::ng-deep {
+  @include linear-progress.bar-color($mdc-theme-secondary);
 }

@@ -1,4 +1,5 @@
 @use '@material/button/mixins' as button;
+@use '@material/linear-progress/mixins' as linear-progress;
 
 @import 'src/variables';
 
@@ -118,4 +119,8 @@ mdc-select {
   ::ng-deep .mdc-select__anchor {
     width: 100%;
   }
+}
+
+mdc-linear-progress ::ng-deep {
+  @include linear-progress.bar-color($mdc-theme-secondary);
 }

@@ -136,11 +136,11 @@
                 <mdc-radio-group id="share-level-radio-group" formControlName="shareLevel" class="tool-setting indent">
                   <div class="tool-setting-field">
                     <mdc-form-field id="share-level-anyone-field">
-                      <mdc-radio id="radio-shareLevel-anyone" value="anyone"></mdc-radio>
+                      <mdc-radio id="radio-shareLevel-anyone" [value]="'anyone'"></mdc-radio>
                       <label>{{ t("anyone_with_a_link") }}</label>
                     </mdc-form-field>
                     <mdc-form-field>
-                      <mdc-radio id="radio-shareLevel-specific" value="specific"></mdc-radio>
+                      <mdc-radio id="radio-shareLevel-specific" [value]="'specific'"></mdc-radio>
                       <label>{{ t("specific_people") }}</label>
                     </mdc-form-field>
                     <app-write-status
