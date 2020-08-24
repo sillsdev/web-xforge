@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
 using Autofac;
 using MongoDB.Driver;
 using SIL.XForge.DataAccess;
@@ -50,10 +49,17 @@ namespace PtdaSyncAll
         /// If `doSynchronizations` is false, only do the above reporting. If true, also synchronize the SF DB with the
         /// Paratext Data Access server.
         /// </summary>
-        public async Task SynchronizeAllProjectsAsync(bool doSynchronizations)
+        public async Task SynchronizeAllProjectsAsync(bool doSynchronizations,
+            ISet<string> sfProjectIdsToSynchronize = null)
         {
-
             List<SFProject> allSfProjects = _realtimeService.QuerySnapshots<SFProject>().ToList<SFProject>();
+            if (sfProjectIdsToSynchronize != null)
+            {
+                allSfProjects.RemoveAll((SFProject sfProject) => !sfProjectIdsToSynchronize.Contains(sfProject.Id));
+                string ids = string.Join(' ', allSfProjects.Select((SFProject sfProject) => sfProject.Id));
+                int count = allSfProjects.Count;
+                _logger.Log($"Only working on the subset of projects (count {count}) with these SF project ids: {ids}");
+            }
             _realtimeServiceConnection = await _realtimeService.ConnectAsync();
             List<Task> syncTasks = new List<Task>();
 

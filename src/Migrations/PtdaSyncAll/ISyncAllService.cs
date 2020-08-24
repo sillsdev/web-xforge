@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace PtdaSyncAll
@@ -7,6 +8,6 @@ namespace PtdaSyncAll
     /// </summary>
     public interface ISyncAllService
     {
-        Task SynchronizeAllProjectsAsync(bool doSynchronizations);
+        Task SynchronizeAllProjectsAsync(bool doSynchronizations, ISet<string> sfProjectIdsToSynchronize = null);
     }
 }
