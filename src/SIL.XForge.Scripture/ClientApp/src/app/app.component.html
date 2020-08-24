@@ -1,6 +1,5 @@
 <ng-container *transloco="let t; read: 'app'">
-  <mdc-linear-progress [secondary]="true" *ngIf="isAppLoading != null" [open]="isAppLoading" fxFlex="none">
-  </mdc-linear-progress>
+  <mdc-linear-progress [class.mdc-linear-progress--closed]="isAppLoading != true"></mdc-linear-progress>
   <header [class.overlay-drawer]="isDrawerPermanent">
     <mdc-top-app-bar fixed #topAppBar [scrollTarget]="appContent">
       <mdc-top-app-bar-row>

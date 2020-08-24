@@ -37,9 +37,9 @@
           <mdc-linear-progress
             *ngIf="syncActive"
             class="progress-bar"
-            [secondary]="true"
             [determinate]="isProgressDeterminate"
             [progress]="percentComplete"
+            [buffer]="1"
           ></mdc-linear-progress>
           <span *ngIf="!syncActive" [title]="lastSyncDate" id="date-last-sync" class="sync-info">
             {{ lastSyncNotice }}
