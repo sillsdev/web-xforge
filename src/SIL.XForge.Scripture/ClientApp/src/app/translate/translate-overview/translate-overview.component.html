@@ -44,8 +44,9 @@
       <mdc-linear-progress
         id="training-progress"
         [determinate]="trainingPercentage > 0"
-        [open]="isTraining"
+        [class.mdc-linear-progress--closed]="!isTraining"
         [progress]="trainingPercentage"
+        [buffer]="1"
       ></mdc-linear-progress>
       <div class="engine-card-title" mdcHeadline6>{{ t("suggestion_engine") }}</div>
       <div class="engine-card-content">
