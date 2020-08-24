@@ -50,7 +50,7 @@ namespace PtdaSyncAll
         /// Paratext Data Access server.
         /// </summary>
         public async Task SynchronizeAllProjectsAsync(bool doSynchronizations,
-            ISet<string> sfProjectIdsToSynchronize = null)
+            ISet<string> sfProjectIdsToSynchronize = null, IDictionary<string, string> sfAdminsToUse = null)
         {
             List<SFProject> allSfProjects = _realtimeService.QuerySnapshots<SFProject>().ToList<SFProject>();
             if (sfProjectIdsToSynchronize != null)
@@ -158,6 +158,23 @@ namespace PtdaSyncAll
 
                     if (doSynchronizations)
                     {
+                        if (sfAdminsToUse != null && sfAdminsToUse.ContainsKey(sfProject.Id))
+                        {
+                            bool fetchSuccess = sfAdminsToUse.TryGetValue(sfProject.Id, out string sfAdminIdToUse);
+                            bool isUserAtHand = sfUserId == sfAdminIdToUse;
+                            if (isUserAtHand)
+                            {
+                                _logger.Log($"  {Program.Bullet2} For SF Project {sfProject.Id}, we were asked to use "
+                                    + $"this SF user {sfUserId} to sync.");
+                            }
+                            else
+                            {
+                                _logger.Log($"  {Program.Bullet2} For SF Project {sfProject.Id}, we were asked to use "
+                                    + $"SF user {sfAdminIdToUse}, not {sfUserId}, to sync. So skipping this user.");
+                                continue;
+                            }
+                        }
+
                         try
                         {
                             _logger.Log($"  {Program.Bullet2} Starting an asynchronous synchronization for "

@@ -185,6 +185,51 @@ namespace PtdaSyncAll
                 message.Contains("One or more sync tasks did not complete successfully")));
         }
 
+        [Test]
+        public async Task Sync_RequestedSFAdminUsed()
+        {
+            var env = new TestEnvironment();
+            Dictionary<string, Task> synchronizationTasks = env.SetupSynchronizationTasks();
+            Assert.That(synchronizationTasks.Count, Is.EqualTo(0));
+
+            var sfProjectIdsToSynchronize = new HashSet<string>();
+            sfProjectIdsToSynchronize.Add("project01");
+            sfProjectIdsToSynchronize.Add("project02");
+
+            var sfAdminsToUse = new Dictionary<string, string>();
+            sfAdminsToUse.Add("project01", "user03");
+
+            // SUT
+            await env.Service.SynchronizeAllProjectsAsync(true, sfProjectIdsToSynchronize, sfAdminsToUse);
+
+            await env.ParatextSyncRunner.Received().RunAsync("project01", "user03", Arg.Any<bool>());
+            // The user used for project02 isn't so important. But it is important that we didn't for some reason
+            // intentionally use the admin user that was requested to be used for project01.
+            await env.ParatextSyncRunner.Received().RunAsync("project02", "user01", Arg.Any<bool>());
+
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
+                message.Contains("For SF Project project01, we were asked to use SF user user03, not user01")));
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
+                message.Contains("For SF Project project01, we were asked to use this SF user user03 to sync")));
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
+                message.Contains(
+                    "Starting an asynchronous synchronization for SF project project01 as SF user user03")));
+            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
+                message.Contains(
+                    "Starting an asynchronous synchronization for SF project project01 as SF user user01")));
+
+            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
+                message.Contains("For SF Project project02")));
+            env.ProgramLogger.Received().Log(Arg.Is<string>((string message) =>
+                message.Contains(
+                    "Starting an asynchronous synchronization for SF project project02 as SF user user01")));
+
+            Task syncTaskProject01 = synchronizationTasks.GetValueOrDefault("project01");
+            Task syncTaskProject02 = synchronizationTasks.GetValueOrDefault("project02");
+            Assert.That(syncTaskProject01.Status, Is.EqualTo(TaskStatus.RanToCompletion));
+            Assert.That(syncTaskProject02.Status, Is.EqualTo(TaskStatus.RanToCompletion));
+        }
+
         private class TestEnvironment
         {
 
@@ -198,7 +243,12 @@ namespace PtdaSyncAll
                     new UserSecret { Id = "user01" , ParatextTokens = new Tokens
                         {
                             AccessToken = CreateAccessToken(DateTime.Now),
-                            RefreshToken = "test_refresh_token"
+                            RefreshToken = "test_refresh_token1"
+                        }},
+                        new UserSecret { Id = "user03" , ParatextTokens = new Tokens
+                        {
+                            AccessToken = CreateAccessToken(DateTime.Now),
+                            RefreshToken = "test_refresh_token2"
                         }}
                 });
 
@@ -221,7 +271,7 @@ namespace PtdaSyncAll
             public Dictionary<string, Task> SetupSynchronizationTasks()
             {
                 var synchronizationTasks = new Dictionary<string, Task>();
-                ParatextSyncRunner.RunAsync("project01", "user01", Arg.Any<bool>()).Returns((callInfo) =>
+                ParatextSyncRunner.RunAsync("project01", Arg.Any<string>(), Arg.Any<bool>()).Returns((callInfo) =>
                 {
                     Task project01task = Task.Run(() =>
                     {
@@ -230,7 +280,7 @@ namespace PtdaSyncAll
                     synchronizationTasks.Add("project01", project01task);
                     return project01task;
                 });
-                ParatextSyncRunner.RunAsync("project02", "user01", Arg.Any<bool>()).Returns((callInfo) =>
+                ParatextSyncRunner.RunAsync("project02", Arg.Any<string>(), Arg.Any<bool>()).Returns((callInfo) =>
                 {
                     Task project02task = Task.Run(() =>
                     {
@@ -256,6 +306,11 @@ namespace PtdaSyncAll
                     {
                         Id = "user02",
                         ParatextId = "pt02"
+                    },
+                    new User
+                    {
+                        Id = "user03",
+                        ParatextId = "pt03"
                     }
                 }));
                 RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(
@@ -269,7 +324,9 @@ namespace PtdaSyncAll
                             UserRoles = new Dictionary<string, string>
                             {
                                 { "user01", SFProjectRole.Administrator },
-                                { "user02", SFProjectRole.Translator }
+                                { "user02", SFProjectRole.Translator },
+                                { "user03", SFProjectRole.Administrator }
+
                             },
                             ParatextId = "target",
                             TranslateConfig = new TranslateConfig
@@ -303,7 +360,8 @@ namespace PtdaSyncAll
                             UserRoles = new Dictionary<string, string>
                             {
                                 { "user01", SFProjectRole.Administrator },
-                                { "user02", SFProjectRole.Translator }
+                                { "user02", SFProjectRole.Translator },
+                                { "user03", SFProjectRole.Administrator }
                             },
                             ParatextId = "target",
                             TranslateConfig = new TranslateConfig
