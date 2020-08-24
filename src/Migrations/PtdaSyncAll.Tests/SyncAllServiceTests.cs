@@ -98,7 +98,7 @@ namespace PtdaSyncAll
             // Synchronization tasks have not started yet.
             Assert.That(synchronizationTasks.Count, Is.EqualTo(0));
 
-            List<string> sfProjectIdsToSynchronize = new List<string>();
+            var sfProjectIdsToSynchronize = new HashSet<string>();
             sfProjectIdsToSynchronize.Add("project01");
             sfProjectIdsToSynchronize.Add("project02");
             await env.Service.SynchronizeAllProjectsAsync(true, sfProjectIdsToSynchronize);
@@ -133,7 +133,7 @@ namespace PtdaSyncAll
             // Synchronization tasks have not started yet.
             Assert.That(synchronizationTasks.Count, Is.EqualTo(0));
 
-            List<string> sfProjectIdsToSynchronize = new List<string>();
+            var sfProjectIdsToSynchronize = new HashSet<string>();
             sfProjectIdsToSynchronize.Add("project01");
             await env.Service.SynchronizeAllProjectsAsync(true, sfProjectIdsToSynchronize);
 

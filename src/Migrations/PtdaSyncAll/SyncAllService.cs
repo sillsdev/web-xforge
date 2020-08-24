@@ -50,7 +50,7 @@ namespace PtdaSyncAll
         /// Paratext Data Access server.
         /// </summary>
         public async Task SynchronizeAllProjectsAsync(bool doSynchronizations,
-            List<string> sfProjectIdsToSynchronize = null)
+            ISet<string> sfProjectIdsToSynchronize = null)
         {
             List<SFProject> allSfProjects = _realtimeService.QuerySnapshots<SFProject>().ToList<SFProject>();
             if (sfProjectIdsToSynchronize != null)
