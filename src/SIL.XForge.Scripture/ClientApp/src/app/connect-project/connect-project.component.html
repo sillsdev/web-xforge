@@ -36,13 +36,11 @@
                   [value]="project.paratextId"
                   [disabled]="!project.isConnectable"
                 >
-                  <span>
-                    {{ project.name }}
-                    <span *ngIf="!project.isConnectable && project.isConnected"
-                      >&nbsp;{{ t("already_connected") }}</span
-                    >
-                    <span *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</span>
-                  </span>
+                  {{ project.name }}
+                  <ng-container *ngIf="!project.isConnectable && project.isConnected">
+                    &nbsp;{{ t("already_connected") }}
+                  </ng-container>
+                  <ng-container *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</ng-container>
                 </mdc-list-item>
               </mdc-list>
             </mdc-menu>
