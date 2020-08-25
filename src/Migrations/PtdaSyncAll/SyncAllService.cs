@@ -285,13 +285,9 @@ namespace PtdaSyncAll
                 + $"the last day (this would be bad): {anyDidNotSyncToday}");
             foreach (SFProject sfProject in sfProjects)
             {
-                string successOrFailure = "successful";
-                if (sfProject.Sync.LastSyncSuccessful == false)
-                {
-                    successOrFailure = "failure";
-                }
-                _logger.Log($"  {Program.Bullet2} SF Project id {sfProject.Id} last sync was on "
-                    + $"{sfProject.Sync.DateLastSuccessfulSync?.ToString("o")} and was {successOrFailure}.");
+                _logger.Log($"  {Program.Bullet2} SF Project id {sfProject.Id}: "
+                    + $"DateLastSuccessfulSync: {sfProject.Sync.DateLastSuccessfulSync?.ToString("o")}. "
+                    + $"LastSyncSuccessful: {sfProject.Sync.LastSyncSuccessful}.");
             }
         }
 
