@@ -26,8 +26,16 @@ namespace PtdaSyncAll
         public async Task Inspects()
         {
             var env = new TestEnvironment();
+            // SUT
             await env.Service.SynchronizeAllProjectsAsync(false);
+
             await env.ParatextService.Received().GetProjectsAsync(Arg.Any<UserSecret>());
+            await env.ParatextSyncRunner.DidNotReceive().RunAsync(Arg.Any<string>(), Arg.Any<string>(),
+                Arg.Any<bool>());
+            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
+                message.Contains("Starting an asynchronous synchronization")));
+            env.ProgramLogger.DidNotReceive().Log(Arg.Is<string>((string message) =>
+                message.Contains("Waiting for synchronization tasks to finish")));
         }
 
         [Test]
