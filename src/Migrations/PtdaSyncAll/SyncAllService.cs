@@ -160,7 +160,7 @@ namespace PtdaSyncAll
                     {
                         if (sfAdminsToUse != null && sfAdminsToUse.ContainsKey(sfProject.Id))
                         {
-                            bool fetchSuccess = sfAdminsToUse.TryGetValue(sfProject.Id, out string sfAdminIdToUse);
+                            sfAdminsToUse.TryGetValue(sfProject.Id, out string sfAdminIdToUse);
                             bool isUserAtHand = sfUserId == sfAdminIdToUse;
                             if (isUserAtHand)
                             {
