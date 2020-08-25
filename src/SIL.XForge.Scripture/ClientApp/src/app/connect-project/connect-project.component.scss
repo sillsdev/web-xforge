@@ -111,7 +111,7 @@
 }
 
 #based-on-field {
-  overflow: hidden;
+  max-width: calc(100% - 44px);
 }
 
 mdc-select {
