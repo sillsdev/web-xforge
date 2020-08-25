@@ -271,6 +271,8 @@ namespace PtdaSyncAll
 
         /// <summary>
         /// Report on project sync successes from mongo project doc sync data.
+        /// Note that as implemented, this seems to report out of date information, so running a second time can be
+        /// needed to see an up-to-date report.
         /// </summary>
         private void ReportLastSyncSuccesses(List<SFProject> sfProjects)
         {
