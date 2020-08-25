@@ -421,14 +421,15 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Copy resource files from the Assembly Directory into the sync directory. </summary>
         private void InstallStyles()
         {
-            string usfmStyFile = Path.Combine(SyncDir, "usfm.sty");
-            if (!File.Exists(usfmStyFile))
+            string[] resources = new[] { "usfm.sty", "revisionStyle.sty", "revisionTemplate.tem", "usfm_mod.sty",
+                "usfm_sb.sty" };
+            foreach (string resource in resources)
             {
-                string[] resources = new[] { "usfm.sty", "revisionStyle.sty", "revisionTemplate.tem" };
-                foreach (string resource in resources)
+                string target = Path.Combine(SyncDir, resource);
+                string source = Path.Combine(AssemblyDirectory, resource);
+                if (!File.Exists(target))
                 {
-                    string target = Path.Combine(SyncDir, resource);
-                    string source = Path.Combine(AssemblyDirectory, resource);
+                    _logger.LogInformation($"Installing missing {target}");
                     File.Copy(source, target, true);
                 }
             }
