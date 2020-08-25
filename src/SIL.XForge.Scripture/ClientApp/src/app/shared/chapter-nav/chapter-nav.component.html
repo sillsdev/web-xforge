@@ -3,7 +3,7 @@
     #chapterSelect
     class="chapter-select"
     [(ngModel)]="chapterString"
-    (selectionChange)="chapterSelect._selectedText.nativeElement.blur()"
+    (selectionChange)="chapterSelect._selectedText.elementRef.nativeElement.blur()"
   >
     <mdc-menu>
       <mdc-list>

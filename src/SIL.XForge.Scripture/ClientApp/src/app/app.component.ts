@@ -73,17 +73,17 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly authService: AuthService,
     private readonly locationService: LocationService,
     private readonly userService: UserService,
-    noticeService: NoticeService,
-    public media: MediaObserver,
     private readonly projectService: SFProjectService,
-    private readonly pwaService: PwaService,
     private readonly route: ActivatedRoute,
     private readonly adminAuthGuard: SFAdminAuthGuard,
     private readonly dialog: MdcDialog,
-    readonly i18n: I18nService,
     private readonly fileService: FileService,
-    private readonly iconRegistry: MdcIconRegistry,
-    private readonly sanitizer: DomSanitizer
+    readonly noticeService: NoticeService,
+    readonly i18n: I18nService,
+    readonly media: MediaObserver,
+    pwaService: PwaService,
+    iconRegistry: MdcIconRegistry,
+    sanitizer: DomSanitizer
   ) {
     super(noticeService);
     this.subscribe(media.media$, (change: MediaChange) => {
@@ -152,7 +152,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     if (this._projectSelect != null) {
       setTimeout(() => {
         if (this._projectSelect != null && this.selectedProjectDoc != null) {
-          this._projectSelect.reset();
           this._projectSelect.value = this.selectedProjectDoc.id;
         }
       });
@@ -367,7 +366,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           this.checkingVisible = false;
         }
         if (this._projectSelect != null) {
-          this._projectSelect.reset();
           this._projectSelect.value = this.selectedProjectDoc.id;
         }
 
