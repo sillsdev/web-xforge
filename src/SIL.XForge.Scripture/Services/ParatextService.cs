@@ -144,6 +144,7 @@ namespace SIL.XForge.Scripture.Services
             ScrTextCollection.Initialize(SyncDir);
             RegistryServer.Initialize(_applicationProductVersion);
             InstallStyles();
+            Paratext.Data.ScrTextCollection.Initialize(SyncDir);
         }
 
         /// <summary>
