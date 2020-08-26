@@ -20,6 +20,12 @@ namespace PtdaSyncAll
     /// > System.Net.Http.HttpRequestException: An error occurred while sending the request.
     /// >  ---> System.IO.IOException: The response ended prematurely.
     /// This app works by starting up a subset of the regular SF services, then using SF as a library to perform tasks.
+    ///
+    /// PTDASYNCALL_MODE can by "sync" to sync, or anything else to inspect.
+    /// SF_APP_DIR should be the path to where the SF app .dll files are.
+    /// SYNC_SET is an optional space-delimited list of SF project IDs to operate on.
+    /// SF_PROJECT_ADMINS is an optional space-delimited list of sfProjectId:sfUserId pairs, specifying to not try
+    /// to synchronize a particular SF project except with a specific SF admin.
     /// </summary>
     public class Program
     {
@@ -34,6 +40,7 @@ namespace PtdaSyncAll
             bool doSynchronizations = mode == "sync";
             string sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
             string sfProjectIdsSubset = Environment.GetEnvironmentVariable("SYNC_SET");
+            string sfAdminRequestValues = Environment.GetEnvironmentVariable("SF_PROJECT_ADMINS");
 
             Directory.SetCurrentDirectory(sfAppDir);
             IWebHostBuilder builder = CreateWebHostBuilder(args);
@@ -56,6 +63,25 @@ namespace PtdaSyncAll
                 throw;
             }
 
+            Dictionary<string, string> sfAdminsToUse = null;
+            try
+            {
+                if (sfAdminRequestValues != null)
+                {
+                    sfAdminsToUse = new Dictionary<string, string>();
+                    foreach (string sfAdminRequest in sfAdminRequestValues.Split(' '))
+                    {
+                        string[] request = sfAdminRequest.Split(':');
+                        sfAdminsToUse.Add(request[0], request[1]);
+                    }
+                }
+            }
+            catch
+            {
+                Logger.Log($"There was a problem parsing SF_PROJECT_ADMINS. Rethrowing.");
+                throw;
+            }
+
             try
             {
                 await webHost.StartAsync();
@@ -67,7 +93,7 @@ namespace PtdaSyncAll
                 throw;
             }
             ISyncAllService tool = webHost.Services.GetService<ISyncAllService>();
-            await tool.SynchronizeAllProjectsAsync(doSynchronizations, projectSubset);
+            await tool.SynchronizeAllProjectsAsync(doSynchronizations, projectSubset, sfAdminsToUse);
             await webHost.StopAsync();
             Logger.Log("Done.");
         }

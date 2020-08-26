@@ -8,6 +8,7 @@ namespace PtdaSyncAll
     /// </summary>
     public interface ISyncAllService
     {
-        Task SynchronizeAllProjectsAsync(bool doSynchronizations, ISet<string> sfProjectIdsToSynchronize = null);
+        Task SynchronizeAllProjectsAsync(bool doSynchronizations, ISet<string> sfProjectIdsToSynchronize = null,
+            IDictionary<string, string> sfAdminsToUse = null);
     }
 }

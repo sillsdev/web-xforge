@@ -50,7 +50,7 @@ namespace PtdaSyncAll
         /// Paratext Data Access server.
         /// </summary>
         public async Task SynchronizeAllProjectsAsync(bool doSynchronizations,
-            ISet<string> sfProjectIdsToSynchronize = null)
+            ISet<string> sfProjectIdsToSynchronize = null, IDictionary<string, string> sfAdminsToUse = null)
         {
             List<SFProject> allSfProjects = _realtimeService.QuerySnapshots<SFProject>().ToList<SFProject>();
             if (sfProjectIdsToSynchronize != null)
@@ -158,6 +158,23 @@ namespace PtdaSyncAll
 
                     if (doSynchronizations)
                     {
+                        if (sfAdminsToUse != null && sfAdminsToUse.ContainsKey(sfProject.Id))
+                        {
+                            sfAdminsToUse.TryGetValue(sfProject.Id, out string sfAdminIdToUse);
+                            bool isUserAtHand = sfUserId == sfAdminIdToUse;
+                            if (isUserAtHand)
+                            {
+                                _logger.Log($"  {Program.Bullet2} For SF Project {sfProject.Id}, we were asked to use "
+                                    + $"this SF user {sfUserId} to sync.");
+                            }
+                            else
+                            {
+                                _logger.Log($"  {Program.Bullet2} For SF Project {sfProject.Id}, we were asked to use "
+                                    + $"SF user {sfAdminIdToUse}, not {sfUserId}, to sync. So skipping this user.");
+                                continue;
+                            }
+                        }
+
                         try
                         {
                             _logger.Log($"  {Program.Bullet2} Starting an asynchronous synchronization for "
@@ -254,6 +271,8 @@ namespace PtdaSyncAll
 
         /// <summary>
         /// Report on project sync successes from mongo project doc sync data.
+        /// Note that as implemented, this seems to report out of date information, so running a second time can be
+        /// needed to see an up-to-date report.
         /// </summary>
         private void ReportLastSyncSuccesses(List<SFProject> sfProjects)
         {
@@ -268,13 +287,9 @@ namespace PtdaSyncAll
                 + $"the last day (this would be bad): {anyDidNotSyncToday}");
             foreach (SFProject sfProject in sfProjects)
             {
-                string successOrFailure = "successful";
-                if (sfProject.Sync.LastSyncSuccessful == false)
-                {
-                    successOrFailure = "failure";
-                }
-                _logger.Log($"  {Program.Bullet2} SF Project id {sfProject.Id} last sync was on "
-                    + $"{sfProject.Sync.DateLastSuccessfulSync?.ToString("o")} and was {successOrFailure}.");
+                _logger.Log($"  {Program.Bullet2} SF Project id {sfProject.Id}: "
+                    + $"DateLastSuccessfulSync: {sfProject.Sync.DateLastSuccessfulSync?.ToString("o")}. "
+                    + $"LastSyncSuccessful: {sfProject.Sync.LastSyncSuccessful}.");
             }
         }
 

@@ -63,7 +63,8 @@
       "console": "integratedTerminal",
       "args": ["--start-ng-serve=listen"],
       "env": {
-        // "SYNC_SET": "",
+        // "SYNC_SET": "sfProject2 sfProject3",
+        // "SF_PROJECT_ADMINS": "sfProject1:sfUserA sfProject2:sfUserB",
         "ASPNETCORE_ENVIRONMENT": "Development",
         "PTDASYNCALL_MODE": "NOTsync"
       }
