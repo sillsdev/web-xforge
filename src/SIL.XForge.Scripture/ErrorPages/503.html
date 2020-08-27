@@ -13,7 +13,6 @@
             body {
                 background: linear-gradient(-45deg, #343a31, #5f7333, #b8d432);
                 background-size: 400% 400%;
-                animation: gradient 10s ease infinite;
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -24,17 +23,6 @@
                 font-size: 18px;
             }
 
-            @keyframes gradient {
-                0% {
-                    background-position: 0% 50%;
-                }
-                50% {
-                    background-position: 100% 50%;
-                }
-                100% {
-                    background-position: 0% 50%;
-                }
-            }
             div {
                 box-sizing: border-box;
             }
@@ -80,6 +68,12 @@
             p {
                 margin: 0;
             }
+            a {
+                color: #a065e3;
+            }
+            a:hover {
+                color: #47314e;
+            }
             .background-container {
                 position: absolute;
                 overflow: hidden;
@@ -107,6 +101,13 @@
                 html,
                 body {
                     height: initial;
+                    font-size: 16px;
+                }
+                h1 {
+                    font-size: 1.75em;
+                }
+                h2 {
+                    font-size: 1.15em;
                 }
                 .inside-container {
                     flex-direction: column;
@@ -120,9 +121,9 @@
                     padding: 0;
                 }
                 .icon {
-                    width: 150px;
-                    height: 150px;
-                    flex-basis: 150px;
+                    width: 100px;
+                    height: 100px;
+                    flex-basis: 100px;
                 }
             }
         </style>
@@ -199,8 +200,17 @@
                     <h1>Scripture Forge</h1>
                     <h2>Is not available right now</h2>
                     <p>
-                        Scripture Forge is being upgraded so we can add new features. Unfortunately we needed to switch
-                        it off today to do that. Please try it again tomorrow.
+                        Scripture Forge is likely being upgraded so we can add new features. Unfortunately we needed to
+                        switch it off today to do that.
+                    </p>
+                    <p>
+                        Please
+                        <a
+                            href="https://community.scripture.software.sil.org/t/scripture-forge-announcements/1776"
+                            target="_blank"
+                            >check here for announcements</a
+                        >
+                        of scheduled upgrades.
                     </p>
                 </div>
             </div>
