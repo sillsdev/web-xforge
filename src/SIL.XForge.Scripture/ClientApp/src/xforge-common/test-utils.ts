@@ -1,7 +1,6 @@
 import { TestBed, TestModuleMetadata } from '@angular/core/testing';
 import { HAMMER_LOADER } from '@angular/platform-browser';
 import { TranslocoTestingModule } from '@ngneat/transloco';
-import { configureTestSuite } from 'ng-bullet';
 import { instance, reset } from 'ts-mockito';
 import { en } from './i18n.service';
 
@@ -18,18 +17,23 @@ import { en } from './i18n.service';
 export const configureTestingModule = (createModuleDef: () => TestModuleMetadata) => {
   const mocks: any[] = [];
 
-  configureTestSuite(() => {
-    const moduleDef = createModuleDef();
-    if (moduleDef.providers != null) {
-      for (const provider of moduleDef.providers) {
-        if (provider.useMock != null) {
-          const mock = provider.useMock;
-          provider.useFactory = () => instance(mock);
-          delete provider.useMock;
-          mocks.push(mock);
+  let moduleDef: TestModuleMetadata;
+
+  beforeEach(() => {
+    if (moduleDef == null) {
+      moduleDef = createModuleDef();
+      if (moduleDef.providers != null) {
+        for (const provider of moduleDef.providers) {
+          if (provider.useMock != null) {
+            const mock = provider.useMock;
+            provider.useFactory = () => instance(mock);
+            delete provider.useMock;
+            mocks.push(mock);
+          }
         }
       }
     }
+
     TestBed.configureTestingModule(moduleDef);
   });
 
