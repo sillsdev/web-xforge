@@ -36,7 +36,7 @@
     "@angular/router": "^9.1.12",
     "@angular/service-worker": "^9.1.12",
     "@bugsnag/js": "^6.4.0",
-    "@ngneat/transloco": "^2.5.2",
+    "@ngneat/transloco": "^2.19.1",
     "@ngneat/transloco-locale": "^1.0.0",
     "@sillsdev/machine": "^2.1.5",
     "angular-file": "^3.1.2",
