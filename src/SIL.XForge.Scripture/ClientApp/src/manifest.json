@@ -45,7 +45,8 @@
     {
       "src": "assets/icons/sf-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "assets/icons/sf.svg",
