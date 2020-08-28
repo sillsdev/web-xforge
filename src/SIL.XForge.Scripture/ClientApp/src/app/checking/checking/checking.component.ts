@@ -453,7 +453,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         answer.selectionStartClipped = answerAction.selectionStartClipped;
         answer.selectionEndClipped = answerAction.selectionEndClipped;
         answer.dateModified = dateNow;
-        let shouldSaveAnswer = true;
         if (answerAction.audio != null) {
           if (answerAction.audio.fileName != null && answerAction.audio.blob != null) {
             if (this.questionsPanel.activeQuestionDoc != null) {
@@ -465,7 +464,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
                 answerAction.audio.fileName
               );
               if (urlResult == null) {
-                shouldSaveAnswer = false;
+                break;
               }
               answer.audioUrl = urlResult;
             }
@@ -473,8 +472,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             answer.audioUrl = undefined;
           }
         }
-        if (shouldSaveAnswer) {
-          this.saveAnswer(answer);
+        this.saveAnswer(answer);
+        if (answerAction.savedCallback != null) {
+          answerAction.savedCallback();
         }
         break;
       case 'delete':

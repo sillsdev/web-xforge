@@ -33,6 +33,8 @@ export class QuestionDialogService {
       QuestionDialogComponent,
       QuestionDialogResult | 'close'
     >;
+    // ENHANCE: Put the audio upload logic into QuestionDialogComponent so we can detect if the upload
+    // fails and notify the user without discarding the question.
     const result: QuestionDialogResult | 'close' | undefined = await dialogRef.afterClosed().toPromise();
     if (result == null || result === 'close') {
       return questionDoc;
