@@ -573,6 +573,9 @@ describe('CheckingComponent', () => {
       ).thenResolve(undefined);
 
       env.selectQuestion(1);
+      env.clickButton(env.addAnswerButton);
+      env.waitForSliderUpdate();
+      expect(env.saveAnswerButton).not.toBeNull();
       const answerAction: AnswerAction = {
         action: 'save',
         text: 'answer 01',
@@ -587,6 +590,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
       expect(questionDoc.data!.answers.length).toEqual(0);
+      expect(env.saveAnswerButton).not.toBeNull();
     }));
 
     it('can change answering tabs', fakeAsync(() => {
