@@ -144,6 +144,8 @@ namespace SIL.XForge.Scripture.Services
             ScrTextCollection.Initialize(SyncDir);
             RegistryServer.Initialize(_applicationProductVersion);
             InstallStyles();
+            // Allow use of custom versification systems
+            Versification.Table.Implementation = new ParatextVersificationTable();
         }
 
         /// <summary>

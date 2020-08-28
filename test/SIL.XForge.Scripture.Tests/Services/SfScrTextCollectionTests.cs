@@ -1,28 +1,18 @@
 using NUnit.Framework;
+using Paratext.Data;
 
 namespace SIL.XForge.Scripture.Services
 {
     [TestFixture]
-    public class SfScrTextCollectionTests
+    public class SFScrTextCollectionTests
     {
         [Test]
         public void SetsSettingsDirectory()
         {
-            var env = new TestEnvironment();
-            Reflection.ReflectionHelper.CallMethod(env.Subject, "InitializeInternal", "/srv/scriptureforge/projects",
-                false);
-            string dir = Reflection.ReflectionHelper.GetProperty(env.Subject, "SettingsDirectoryInternal") as string;
+            ScrTextCollection.Implementation = new SFScrTextCollection();
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            string dir = ScrTextCollection.SettingsDirectory;
             Assert.That(dir, Is.EqualTo("/srv/scriptureforge/projects"));
-        }
-
-        private class TestEnvironment
-        {
-            public SfScrTextCollection Subject;
-
-            public TestEnvironment()
-            {
-                Subject = new SfScrTextCollection();
-            }
         }
     }
 }
