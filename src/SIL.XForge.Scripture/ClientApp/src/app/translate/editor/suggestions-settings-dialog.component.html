@@ -19,7 +19,13 @@
             [(ngModel)]="numSuggestions"
             placeholder="{{ t('number_of_suggestions') }}"
           >
-            <option>1</option> <option>2</option> <option>3</option> <option>4</option> <option>5</option>
+            <mdc-menu>
+              <mdc-list>
+                <mdc-list-item *ngFor="let value of ['1', '2', '3', '4', '5']" [value]="value">
+                  {{ value }}
+                </mdc-list-item>
+              </mdc-list>
+            </mdc-menu>
           </mdc-select>
           <mdc-form-field>
             <label mdcSubtitle2>{{ t("suggestion_confidence") }}</label>
