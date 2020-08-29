@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
-import { translate } from '@ngneat/transloco';
+import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash/isEqual';
 import merge from 'lodash/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
@@ -145,12 +145,12 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
 
-  constructor(private readonly projectService: SFProjectService) {
+  constructor(private readonly projectService: SFProjectService, private readonly transloco: TranslocoService) {
     super();
   }
 
   get placeholder() {
-    return this._placeholder || translate('text.loading');
+    return this._placeholder || this.transloco.translate('text.loading');
   }
 
   @Input() set placeholder(value: string) {
@@ -405,7 +405,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (this._id == null) {
       return;
     }
-    this.placeholder = translate('text.loading');
+    this.placeholder = this.transloco.translate('text.loading');
     const textDoc = await this.projectService.getText(this._id);
     this.viewModel.bind(textDoc, this.subscribeToUpdates);
     this.updatePlaceholderText();
@@ -640,9 +640,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   private updatePlaceholderText(): void {
     if (!this.viewModel.isLoaded) {
-      this.placeholder = translate('text.book_does_not_exist');
+      this.placeholder = this.transloco.translate('text.book_does_not_exist');
     } else if (this.viewModel.isEmpty) {
-      this.placeholder = translate('text.book_is_empty');
+      this.placeholder = this.transloco.translate('text.book_is_empty');
     }
   }
 
