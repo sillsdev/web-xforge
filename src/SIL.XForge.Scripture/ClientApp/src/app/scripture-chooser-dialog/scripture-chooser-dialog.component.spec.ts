@@ -22,7 +22,6 @@ describe('ScriptureChooserDialog', () => {
     imports: [TestModule],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
-      { provide: MDC_DIALOG_DATA },
       { provide: CookieService, useMock: mock(CookieService) }
     ]
   }));
