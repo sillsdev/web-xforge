@@ -221,15 +221,14 @@ namespace PTDDCloneAll
                 }
 
                 await CompleteSync(true);
+                CloseConnection();
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
                 await CompleteSync(false);
-            }
-            finally
-            {
                 CloseConnection();
+                throw;
             }
         }
 
