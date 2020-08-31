@@ -301,7 +301,7 @@ describe('CollaboratorsComponent', () => {
 
     // SUT
     expect(env.nextPageButton.nativeElement.disabled).toBe(true);
-    expect(env.elementTextContent(env.paginatorLabel)).toEqual('1 - 1 of 1');
+    expect(env.elementTextContent(env.paginatorLabel).trim()).toEqual('1 - 1 of 1');
   }));
 
   it('should not reduce page size when using next and prev', fakeAsync(() => {
@@ -327,7 +327,7 @@ describe('CollaboratorsComponent', () => {
 
     // SUT
     expect(env.userRows.length).toEqual(2);
-    expect(env.elementTextContent(env.paginatorLabel)).toEqual('1 - 2 of 3');
+    expect(env.elementTextContent(env.paginatorLabel).trim()).toEqual('1 - 2 of 3');
   }));
 
   it('should reset the page index when the filter is changed', fakeAsync(() => {
@@ -351,7 +351,7 @@ describe('CollaboratorsComponent', () => {
     // SUT
     expect(env.userRows.length).toEqual(1);
     expect(env.nextPageButton.nativeElement.disabled).toBe(true);
-    expect(env.elementTextContent(env.paginatorLabel)).toEqual('1 - 1 of 1');
+    expect(env.elementTextContent(env.paginatorLabel).trim()).toEqual('1 - 1 of 1');
   }));
 
   it('should hide link sharing if checking is unavailable', fakeAsync(() => {
