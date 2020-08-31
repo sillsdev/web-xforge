@@ -70,6 +70,8 @@ namespace PTDDCloneAll
             IRealtimeService realtimeService = webHost.Services.GetService<IRealtimeService>();
             IQueryable<SFProject> allSFProjects = realtimeService.QuerySnapshots<SFProject>();
             IOptions<SiteOptions> siteOptions = webHost.Services.GetService<IOptions<SiteOptions>>();
+            IParatextService paratextService = webHost.Services.GetService<IParatextService>();
+            IRepository<UserSecret> userSecretRepo = webHost.Services.GetService<IRepository<UserSecret>>();
             string syncDir = Path.Combine(siteOptions.Value.SiteDir, "sync");
             bool doClone = mode == CLONE || mode == CLONE_AND_MOVE_OLD;
 
@@ -90,7 +92,9 @@ namespace PTDDCloneAll
                     if (proj.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Administrator)
                     {
                         foundAdmin = true;
-                        Log($"Project administrator identified on {proj.Name}: {userId}");
+                        UserSecret userSecret = userSecretRepo.Query().FirstOrDefault((UserSecret us) => us.Id == userId);
+                        string ptUsername = paratextService.GetParatextUsername(userSecret);
+                        Log($"Project administrator identified on {proj.Name}: {ptUsername} ({userId})");
                         if (!doClone)
                             break;
                         try
