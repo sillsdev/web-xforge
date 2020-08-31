@@ -1,3 +1,4 @@
+import { MdcSelect } from '@angular-mdc/web';
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
 import { MdcSlider } from '@angular-mdc/web/slider';
 import { OverlayContainer } from '@angular/cdk/overlay';
@@ -80,14 +81,14 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.offlineText).toBeNull();
     expect(env.suggestionsEnabledSwitch.disabled).toBe(false);
     expect(env.confidenceThresholdSlider.disabled).toBe(false);
-    expect(env.numSuggestionsSelect.disabled).toBe(false);
+    expect(env.mdcNumSuggestionsSelect.disabled).toBe(false);
 
     env.isOnline = false;
 
     expect(env.offlineText).not.toBeNull();
     expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
     expect(env.confidenceThresholdSlider.disabled).toBe(true);
-    expect(env.numSuggestionsSelect.disabled).toBe(true);
+    expect(env.mdcNumSuggestionsSelect.disabled).toBe(true);
   }));
 
   it('the suggestions toggle is switched on when the dialog opens while offline', fakeAsync(() => {
@@ -163,12 +164,8 @@ class TestEnvironment {
     return this.mdcSuggestionsEnabledSwitch.querySelector('input[type="checkbox"]') as HTMLInputElement;
   }
 
-  get mdcNumSuggestionsSelect(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#num-suggestions-select') as HTMLElement;
-  }
-
-  get numSuggestionsSelect(): HTMLSelectElement {
-    return this.mdcNumSuggestionsSelect.querySelector('select') as HTMLSelectElement;
+  get mdcNumSuggestionsSelect(): MdcSelect {
+    return this.fixture.debugElement.query(By.css('#num-suggestions-select')).componentInstance;
   }
 
   get offlineText(): DebugElement {
@@ -228,10 +225,8 @@ class TestEnvironment {
     tick();
   }
 
-  changeSelectValue(element: HTMLElement, option: number): void {
-    const selectElem = element.querySelector('select');
-    selectElem!.value = option.toString();
-    selectElem!.dispatchEvent(new Event('change'));
+  changeSelectValue(mdcSelect: MdcSelect, option: number): void {
+    mdcSelect.setSelectionByValue(option.toString());
     this.fixture.detectChanges();
     tick();
   }
