@@ -22,6 +22,9 @@ namespace SIL.XForge.Scripture.Services
         public void Initialize(string projectsPath)
         {
             SettingsDirectory = projectsPath;
+            // Initialize so that Paratext.Data can find settings files
+            ScrTextCollection.Implementation = new SFScrTextCollection();
+            ScrTextCollection.Initialize(projectsPath);
         }
 
         /// <summary>

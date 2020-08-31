@@ -522,6 +522,7 @@ namespace SIL.XForge.Scripture.Services
                     .Returns(Task.FromResult(new Tokens { AccessToken = "token_1234", RefreshToken = "refresh_token_1234" }));
                 MockFileSystemService.DirectoryExists(SyncDir).Returns(true);
                 RegistryU.Implementation = new DotNetCoreRegistry();
+                ScrTextCollection.Implementation = new SFScrTextCollection();
                 AddProjectRepository();
             }
 
