@@ -47,7 +47,7 @@ namespace SIL.XForge.DataAccess
             try
             {
                 ReplaceOneResult result = await _collection.ReplaceOneAsync(e => e.Id == entity.Id, entity,
-                    new UpdateOptions { IsUpsert = upsert });
+                    new ReplaceOptions { IsUpsert = upsert });
                 if (result.IsAcknowledged)
                     return upsert || result.MatchedCount > 0;
                 return false;

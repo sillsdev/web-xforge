@@ -168,7 +168,8 @@ usx-para {
     text-align: center;
   }
 }
-usx-para[dir='ltr'] {
+usx-para[dir='ltr'],
+usx-para[dir='auto'] {
   &[data-style='li'],
   &[data-style='li1'] {
     margin-left: 10%;

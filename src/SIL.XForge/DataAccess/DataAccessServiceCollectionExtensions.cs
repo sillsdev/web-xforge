@@ -1,6 +1,8 @@
 using System;
 using Hangfire;
 using Hangfire.Mongo;
+using Hangfire.Mongo.Migration.Strategies;
+using Hangfire.Mongo.Migration.Strategies.Backup;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
@@ -24,7 +26,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     MigrationOptions = new MongoMigrationOptions
                     {
-                        Strategy = MongoMigrationStrategy.Migrate
+                        MigrationStrategy = new MigrateMongoMigrationStrategy(),
+                        BackupStrategy = new CollectionMongoBackupStrategy()
                     }
                 }));
 

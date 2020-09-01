@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using MongoDB.Bson;
 using NUnit.Framework;
+using SIL.Machine.Corpora;
 using SIL.Machine.Tokenization;
 
 namespace SIL.XForge.Scripture.Services
@@ -17,13 +18,16 @@ namespace SIL.XForge.Scripture.Services
             var doc = new BsonDocument
             {
                 {"_id", "abc123:MAT:1:target"},
-                {"ops", new BsonArray
+                {
+                    "ops", new BsonArray
                     {
                         new BsonDocument
                         {
-                            {"insert", new BsonDocument
+                            {
+                                "insert", new BsonDocument
                                 {
-                                    {"chapter", new BsonDocument
+                                    {
+                                        "chapter", new BsonDocument
                                         {
                                             {"number","1"},
                                             {"style","c"}
@@ -34,9 +38,11 @@ namespace SIL.XForge.Scripture.Services
                         },
                         new BsonDocument
                         {
-                            {"insert", new BsonDocument
+                            {
+                                "insert", new BsonDocument
                                 {
-                                    {"verse", new BsonDocument
+                                    {
+                                        "verse", new BsonDocument
                                         {
                                             {"number","1"},
                                             {"style","v"}
@@ -48,17 +54,108 @@ namespace SIL.XForge.Scripture.Services
                         new BsonDocument
                         {
                             {"insert", "First verse text here"},
-                            {"attributes", new BsonDocument
+                            {
+                                "attributes", new BsonDocument
                                 {
                                     {"segment", "verse_1_1"}
+                                }
+                            }
+                        },
+                        new BsonDocument
+                        {
+                            {
+                                "insert", new BsonDocument
+                                {
+                                    {
+                                        "verse", new BsonDocument
+                                        {
+                                            {"number","2"},
+                                            {"style","v"}
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        new BsonDocument
+                        {
+                            {"insert", "and second verse text here."},
+                            {
+                                "attributes", new BsonDocument
+                                {
+                                    {"segment", "verse_1_2"}
+                                }
+                            }
+                        },
+                        new BsonDocument
+                        {
+                            {
+                                "insert", new BsonDocument
+                                {
+                                    {
+                                        "verse", new BsonDocument
+                                        {
+                                            {"number","3"},
+                                            {"style","v"}
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        new BsonDocument
+                        {
+                            {"insert", "This is a new sentence"},
+                            {
+                                "attributes", new BsonDocument
+                                {
+                                    {"segment", "verse_1_3"}
+                                }
+                            }
+                        },
+                        new BsonDocument
+                        {
+                            {"insert", "\n"},
+                            {
+                                "attributes", new BsonDocument
+                                {
+                                    {
+                                        "para", new BsonDocument
+                                        {
+                                            {"style", "p"}
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        new BsonDocument
+                        {
+                            {"insert", "Heading"},
+                            {
+                                "attributes", new BsonDocument
+                                {
+                                    {"segment", "s_1"}
+                                }
+                            }
+                        },
+                        new BsonDocument
+                        {
+                            {"insert", "\n"},
+                            {
+                                "attributes", new BsonDocument
+                                {
+                                    {
+                                        "para", new BsonDocument
+                                        {
+                                            {"style", "s"}
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             };
-            var numberOps = 3;
-            var numberSegments = 1;
+            var numberOps = 10;
+            var numberSegments = 4;
             var bookNumber = 40;
             var chapterNumber = 1;
             var projectId = "myProject";
@@ -69,7 +166,12 @@ namespace SIL.XForge.Scripture.Services
             var text = new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc);
 
             Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
-            Assert.That(text.Segments.Count(), Is.EqualTo(numberSegments));
+            TextSegment[] segments = text.Segments.ToArray();
+            Assert.That(segments.Length, Is.EqualTo(numberSegments));
+            Assert.That(segments[0].SentenceStart, Is.True);
+            Assert.That(segments[1].SentenceStart, Is.True);
+            Assert.That(segments[2].SentenceStart, Is.False);
+            Assert.That(segments[3].SentenceStart, Is.True);
         }
 
         [Test]

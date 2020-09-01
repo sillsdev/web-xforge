@@ -1,3 +1,4 @@
+import { hasSentenceEnding } from '@sillsdev/machine';
 import Quill, { DeltaOperation, DeltaStatic } from 'quill';
 import {
   getTextDocId,
@@ -9,6 +10,22 @@ import {
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 
 export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
+
+export function isSentenceStart(segRef: string, prevSegRef?: string, prevSegText?: string): boolean {
+  // if the current or previous segment is a non-verse segment (headings, titles), then the current segment is the start
+  // of a sentence
+  if (prevSegRef == null || prevSegText == null || !isVerseRef(segRef) || !isVerseRef(prevSegRef)) {
+    return true;
+  }
+  // check previous verse segment for a sentence terminal character
+  return hasSentenceEnding(prevSegText);
+}
+
+function isVerseRef(ref: string): boolean {
+  const index = ref.indexOf('_');
+  const style = ref.substring(0, index);
+  return style === 'verse';
+}
 
 /**
  * This class represents the different components for a text doc id. It can be converted to the actual text doc id
@@ -62,25 +79,37 @@ export class TextDoc extends RealtimeDoc<TextData, TextData> {
     return { translated, blank };
   }
 
-  getSegmentText(ref: string): string {
+  getSegmentText(ref: string): { text?: string; prevRef?: string; prevText?: string } {
     if (this.data == null || this.data.ops == null) {
-      return '';
+      return {};
     }
 
-    let text = '';
-    let inSegment = false;
+    let curText: string | undefined;
+    let curRef: string | undefined;
+    let prevRef: string | undefined;
+    let prevText: string | undefined;
     for (const op of this.data.ops) {
-      if (op.attributes != null && op.attributes.segment === ref) {
-        if (op.insert != null && typeof op.insert === 'string') {
-          text += op.insert;
-          inSegment = true;
+      if (op.attributes != null && op.attributes.segment != null) {
+        if (curRef !== op.attributes.segment) {
+          if (curRef === ref) {
+            break;
+          }
+          prevRef = curRef;
+          prevText = curText;
+          curRef = op.attributes.segment;
+          curText = '';
         }
-      } else if (inSegment) {
-        break;
+        if (op.insert != null && typeof op.insert === 'string') {
+          curText += op.insert;
+        }
       }
     }
 
-    return text;
+    if (curRef === ref) {
+      return { text: curText, prevRef, prevText };
+    }
+
+    return {};
   }
 
   protected prepareDataForStore(data: TextData): any {

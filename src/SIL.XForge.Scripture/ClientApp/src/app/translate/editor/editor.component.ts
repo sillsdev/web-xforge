@@ -4,12 +4,16 @@ import { MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import {
-  InteractiveTranslationSession,
+  createInteractiveTranslator,
+  ErrorCorrectionModel,
+  hasSentenceEnding,
+  InteractiveTranslator,
   LatinWordTokenizer,
   MAX_SEGMENT_LENGTH,
   PhraseTranslationSuggester,
   RangeTokenizer,
   RemoteTranslationEngine,
+  toSentenceCase,
   TranslationSuggester
 } from '@sillsdev/machine';
 import isEqual from 'lodash/isEqual';
@@ -29,7 +33,7 @@ import { UserService } from 'xforge-common/user.service';
 import XRegExp from 'xregexp';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { Delta } from '../../core/models/text-doc';
+import { Delta, isSentenceStart } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { Segment } from '../../shared/text/segment';
@@ -69,8 +73,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private isTranslating: boolean = false;
   private readonly sourceWordTokenizer: RangeTokenizer;
   private readonly targetWordTokenizer: RangeTokenizer;
-  private translationSession?: InteractiveTranslationSession;
+  private translator?: InteractiveTranslator;
   private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester();
+  private readonly ecm: ErrorCorrectionModel = new ErrorCorrectionModel();
   private insertSuggestionEnd: number = -1;
   private projectDoc?: SFProjectDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -85,6 +90,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private projectDataChangesSub?: Subscription;
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
+  private sentenceStart: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -433,8 +439,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const words = wordIndex === -1 ? suggestion.words : suggestion.words.slice(0, wordIndex + 1);
     // TODO: use detokenizer to build suggestion text
     let insertText = words.join(' ');
-    if (this.translationSession != null && !this.translationSession.isLastWordComplete) {
-      const lastWord = this.translationSession.prefix[this.translationSession.prefix.length - 1];
+    if (this.translator != null && !this.translator.isLastWordComplete) {
+      const lastWord = this.translator.prefix[this.translator.prefix.length - 1];
       insertText = insertText.substring(lastWord.length);
     }
     if (this.insertSuggestionEnd !== -1) {
@@ -481,7 +487,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.trainingSub.unsubscribe();
       this.trainingSub = undefined;
     }
-    this.translationSession = undefined;
+    this.translator = undefined;
     this.translationEngine = undefined;
     if (this.projectDoc == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
       return;
@@ -618,7 +624,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private async translateSegment(): Promise<void> {
-    this.translationSession = undefined;
+    this.translator = undefined;
     if (this.translationEngine == null || this.source == null || !this.pwaService.isOnline) {
       return;
     }
@@ -627,15 +633,27 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (words.length === 0) {
       return;
     } else if (words.length > MAX_SEGMENT_LENGTH) {
-      this.translationSession = undefined;
+      this.translator = undefined;
       this.noticeService.show(translate('editor.verse_too_long_for_suggestions'));
       return;
     }
 
+    let sentenceStart = true;
+    if (this.target != null && this.target.segment != null) {
+      const segRef = this.target.segment.ref;
+      const prevSegRef = this.target.getPrevSegmentRef(segRef);
+      sentenceStart = isSentenceStart(
+        segRef,
+        prevSegRef,
+        prevSegRef != null ? this.target.getSegmentText(prevSegRef) : undefined
+      );
+    }
+
     const start = performance.now();
-    const translationSession = await this.translationEngine.translateInteractively(words);
+    const translator = await createInteractiveTranslator(this.ecm, this.translationEngine, words, sentenceStart);
     if (sourceSegment === this.source.segmentText) {
-      this.translationSession = translationSession;
+      this.translator = translator;
+      this.sentenceStart = sentenceStart;
       const finish = performance.now();
       this.console.log(`Translated segment, length: ${words.length}, time: ${finish - start}ms`);
     }
@@ -653,7 +671,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     // only bother updating the suggestion if the cursor is at the end of the segment
     if (!this.isTranslating && this.target.isSelectionAtSegmentEnd) {
-      if (this.translationSession == null) {
+      if (this.translator == null) {
         this.suggestions = [];
       } else {
         const range = this.skipInitialWhitespace(this.target.editor, this.target.editor.getSelection()!);
@@ -668,20 +686,21 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.insertSuggestionEnd !== -1 ||
           tokenRanges.length === 0 ||
           tokenRanges[tokenRanges.length - 1].end !== text.length;
-        this.translationSession.setPrefix(prefix, isLastWordComplete);
+        this.translator.setPrefix(prefix, isLastWordComplete);
         const machineSuggestions = this.translationSuggester.getSuggestions(
           this.numSuggestions,
           prefix.length,
           isLastWordComplete,
-          this.translationSession.getCurrentResults()
+          this.translator.getCurrentResults()
         );
         if (machineSuggestions.length === 0) {
           this.suggestions = [];
         } else {
           const suggestions: Suggestion[] = [];
           let confidence = 1;
+          const sentenceStart = text.length > 0 ? hasSentenceEnding(text) : this.sentenceStart;
           for (const machineSuggestion of machineSuggestions) {
-            const words = machineSuggestion.targetWords;
+            const words = toSentenceCase(machineSuggestion.targetWords, sentenceStart);
             // for display purposes, we ensure that the confidence is less than or equal to "better" suggestions
             confidence = Math.min(confidence, machineSuggestion.confidence);
             suggestions.push({ words, confidence });
@@ -711,11 +730,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private async trainSegment(segment: Segment | undefined): Promise<void> {
-    if (this.translationSession == null || segment == null || !this.canTrainSegment(segment)) {
+    if (this.translator == null || segment == null || !this.canTrainSegment(segment)) {
       return;
     }
 
-    await this.translationSession.approve(true);
+    await this.translator.approve(true);
     segment.acceptChanges();
     this.console.log(
       'Segment ' + segment.ref + ' of document ' + Canon.bookNumberToId(segment.bookNum) + ' was trained successfully.'

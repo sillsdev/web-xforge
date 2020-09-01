@@ -347,6 +347,14 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     return this.viewModel.hasSegmentRange(ref);
   }
 
+  getPrevSegmentRef(ref: string): string | undefined {
+    return this.viewModel.getPrevSegmentRef(ref);
+  }
+
+  getNextSegmentRef(ref: string): string | undefined {
+    return this.viewModel.getNextSegmentRef(ref);
+  }
+
   onContentChanged(delta: DeltaStatic, source: Sources): void {
     this.viewModel.update(delta, source);
     this.updatePlaceholderText();

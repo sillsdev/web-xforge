@@ -1,6 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { LatinWordTokenizer, MAX_SEGMENT_LENGTH, RemoteTranslationEngine } from '@sillsdev/machine';
+import {
+  createInteractiveTranslator,
+  ErrorCorrectionModel,
+  LatinWordTokenizer,
+  MAX_SEGMENT_LENGTH,
+  RemoteTranslationEngine
+} from '@sillsdev/machine';
 import * as crc from 'crc-32';
 import { obj } from 'realtime-server/lib/common/utils/obj-path';
 import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/models/question';
@@ -25,7 +31,7 @@ import { SFProjectDoc } from './models/sf-project-doc';
 import { SF_PROJECT_ROLES } from './models/sf-project-role-info';
 import { SFProjectSettings } from './models/sf-project-settings';
 import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
-import { TextDoc, TextDocId } from './models/text-doc';
+import { isSentenceStart, TextDoc, TextDocId } from './models/text-doc';
 import { TranslateMetrics } from './models/translate-metrics';
 
 @Injectable({
@@ -166,8 +172,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
         'target'
       )
     );
-    const targetText = targetDoc.getSegmentText(projectUserConfig.selectedSegment);
-    if (targetText === '') {
+    const { text: targetText, prevRef: prevTargetRef, prevText: prevTargetText } = targetDoc.getSegmentText(
+      projectUserConfig.selectedSegment
+    );
+    if (targetText == null || targetText === '') {
       return;
     }
     const checksum = crc.str(targetText);
@@ -183,8 +191,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
         'source'
       )
     );
-    const sourceText = sourceDoc.getSegmentText(projectUserConfig.selectedSegment);
-    if (sourceText === '') {
+    const { text: sourceText } = sourceDoc.getSegmentText(projectUserConfig.selectedSegment);
+    if (sourceText == null || sourceText === '') {
       return;
     }
 
@@ -194,14 +202,16 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       return;
     }
 
+    const sentenceStart = isSentenceStart(projectUserConfig.selectedSegment, prevTargetRef, prevTargetText);
+    const ecm = new ErrorCorrectionModel();
     const translationEngine = this.createTranslationEngine(projectUserConfig.projectRef);
-    const session = await translationEngine.translateInteractively(sourceWords);
+    const translator = await createInteractiveTranslator(ecm, translationEngine, sourceWords, sentenceStart);
     const tokenRanges = wordTokenizer.tokenizeAsRanges(targetText);
     const prefix = tokenRanges.map(r => targetText.substring(r.start, r.end));
     const isLastWordComplete =
       tokenRanges.length === 0 || tokenRanges[tokenRanges.length - 1].end !== targetText.length;
-    session.setPrefix(prefix, isLastWordComplete);
-    await session.approve(true);
+    translator.setPrefix(prefix, isLastWordComplete);
+    await translator.approve(true);
     console.log(
       'Segment ' +
         projectUserConfig.selectedSegment +
