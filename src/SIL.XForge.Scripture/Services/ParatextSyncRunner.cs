@@ -39,7 +39,7 @@ namespace SIL.XForge.Scripture.Services
     /// Target and source refer to daughter and mother translation data. Not to be confused with a target or source for
     /// where data is coming from or going to when fetching or syncing.
     /// </summary>
-    public class ParatextSyncRunner
+    public class ParatextSyncRunner : IParatextSyncRunner
     {
         private static readonly IEqualityComparer<List<Chapter>> ChapterListEqualityComparer =
             SequenceEqualityComparer.Create(new ChapterEqualityComparer());

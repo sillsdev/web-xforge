@@ -45,6 +45,7 @@ The rest of this document discusses the development of the underlying software.
   - [Angular End-To-End (E2E) Testing](#angular-end-to-end-e2e-testing)
     - [Debugging E2E Tests](#debugging-e2e-tests)
   - [PWA Testing](#pwa-testing)
+  - [Physical Device Testing](#physical-device-testing)
 - [Backend Development](#backend-development)
   - [Model Changes](#model-changes)
 - [Debugging](#debugging)
@@ -412,6 +413,26 @@ dotnet run --start-ng-serve=no
 ```bash
 rm -rf src/SIL.XForge.Scripture/ClientApp/dist
 ```
+
+### Physical Device Testing
+
+To test `localhost` on a physical device you need to ensure you have the following:
+
+- An Android device
+- The latest version of Chrome on your desktop
+- The latest version of Chrome on your device
+- USB debugging enabled on your device
+
+Enabling USB debugging first involves switching on developer mode on your device. This usually involves going to your System->About screen and tapping repeatedly on your build number. Doing a Google search for, `"How to enable USB Debugging on {device name}"` should help get it enabled. Once the device is developer mode there will be a new developer link on your device - likely under system - and in there you'll find an option to toggle on USB debugging.
+
+With USB debugging turned on navigate in Chrome on your desktop to [chrome://inspect/#devices](chrome://inspect/#devices). Your device may at this point present a prompt to allow your Chrome browser access to debug your device - you must allow this. Once allowed your device name will appear in the list of available devices. Before you can run the app you first need to update the `Port forwarding` settings to reflect our app. Click the button on the inspection screen and set as follows:
+
+- 5000 &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; localhost:5000
+- 5003 &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; localhost:5003
+
+You're now ready to go. Build the app as normal on your desktop using `dotnet run` or `ng serve` or whichever variation you need. Once the build is complete, open up Chrome on your device and navigate to [localhost:5000](http://localhost:5000/). On your desktop the inspection page will show all the open tabs you have in Chrome on the device. Locate the tab running `http://localhost:5000/` and click the `inspect` link. A new window will open with the Chrome DevTools giving you full access to the console, DOM, network, screen sharing, etc.
+
+Please note that if your device goes to sleep or switches to the lock screen then the USB debugging will no longer have permission.
 
 ## Backend Development
 

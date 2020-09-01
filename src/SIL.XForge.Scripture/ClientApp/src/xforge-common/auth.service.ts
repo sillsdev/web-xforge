@@ -123,6 +123,17 @@ export class AuthService {
     });
   }
 
+  async checkOnlineAuth(): Promise<void> {
+    // Only need to check if the app has logged in via an offline state
+    if (await this.isLoggedIn) {
+      this.tryOnlineLogIn().then(result => {
+        if (!result.loggedIn) {
+          this.logIn(this.locationService.pathname + this.locationService.search);
+        }
+      });
+    }
+  }
+
   logIn(returnUrl: string, signUp?: boolean): void {
     const state: AuthState = { returnUrl };
     const tag = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
@@ -162,6 +173,23 @@ export class AuthService {
 
   private async tryLogIn(): Promise<LoginResult> {
     try {
+      // If we have no valid auth0 data then we have to validate online first
+      if (this.accessToken == null || this.idToken == null || this.expiresAt == null) {
+        return await this.tryOnlineLogIn();
+      }
+      // In offline mode check against the last known access
+      if (!(await this.handleOfflineAuth())) {
+        return { loggedIn: false, newlyLoggedIn: false };
+      }
+      return { loggedIn: true, newlyLoggedIn: false };
+    } catch {
+      await this.showLoginErrorDialog();
+      return { loggedIn: false, newlyLoggedIn: false };
+    }
+  }
+
+  private async tryOnlineLogIn(): Promise<LoginResult> {
+    try {
       if (await this.pwaService.checkOnline()) {
         // In online mode do the normal checks with auth0
         let authResult = await this.parseHash();
@@ -174,18 +202,10 @@ export class AuthService {
         } else {
           return { loggedIn: true, newlyLoggedIn: true };
         }
-      } else {
-        // In offline mode check against the last known access
-        if (!(await this.handleOfflineAuth())) {
-          return { loggedIn: false, newlyLoggedIn: false };
-        }
       }
       return { loggedIn: true, newlyLoggedIn: false };
     } catch {
-      await this.noticeService.showMessageDialog(
-        () => translate('error_messages.error_occurred_login'),
-        () => translate('error_messages.try_again')
-      );
+      await this.showLoginErrorDialog();
       return { loggedIn: false, newlyLoggedIn: false };
     }
   }
@@ -231,9 +251,6 @@ export class AuthService {
   }
 
   private async handleOfflineAuth(): Promise<boolean> {
-    if (this.accessToken == null || this.idToken == null || this.expiresAt == null) {
-      return false;
-    }
     this.scheduleRenewal();
     await this.remoteStore.init(() => this.accessToken);
     return true;
@@ -255,6 +272,13 @@ export class AuthService {
       await this.renewTokens();
       this.scheduleRenewal();
     });
+  }
+
+  private async showLoginErrorDialog(): Promise<void> {
+    await this.noticeService.showMessageDialog(
+      () => translate('error_messages.error_occurred_login'),
+      () => translate('error_messages.try_again')
+    );
   }
 
   private unscheduleRenewal(): void {
