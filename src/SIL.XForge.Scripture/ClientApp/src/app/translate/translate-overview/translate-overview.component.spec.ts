@@ -105,14 +105,14 @@ describe('TranslateOverviewComponent', () => {
 
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress.open).toBe(true);
+      expect(env.trainingProgressShown).toBe(true);
       expect(env.component.isTraining).toBe(true);
       env.updateTrainingProgress(1);
       env.completeTrainingProgress();
-      expect(env.trainingProgress.open).toBe(false);
+      expect(env.trainingProgressShown).toBe(false);
       expect(env.component.isTraining).toBe(false);
       env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress.open).toBe(true);
+      expect(env.trainingProgressShown).toBe(true);
       expect(env.component.isTraining).toBe(true);
     }));
 
@@ -122,15 +122,15 @@ describe('TranslateOverviewComponent', () => {
 
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress.open).toBe(true);
+      expect(env.trainingProgressShown).toBe(true);
       expect(env.component.isTraining).toBe(true);
       env.throwTrainingProgressError();
-      expect(env.trainingProgress.open).toBe(false);
+      expect(env.trainingProgressShown).toBe(false);
       expect(env.component.isTraining).toBe(false);
 
       tick(30000);
       env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress.open).toBe(true);
+      expect(env.trainingProgressShown).toBe(true);
       expect(env.component.isTraining).toBe(true);
     }));
 
@@ -140,7 +140,7 @@ describe('TranslateOverviewComponent', () => {
 
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
       env.clickRetrainButton();
-      expect(env.trainingProgress.open).toBe(true);
+      expect(env.trainingProgressShown).toBe(true);
       expect(env.trainingProgress.determinate).toBe(false);
       expect(env.component.isTraining).toBe(true);
       env.updateTrainingProgress(0.1);
@@ -203,6 +203,12 @@ class TestEnvironment {
 
   get trainingProgress(): MdcLinearProgress {
     return this.fixture.debugElement.query(By.css('#training-progress')).componentInstance;
+  }
+
+  get trainingProgressShown(): boolean {
+    return !(this.trainingProgress.elementRef.nativeElement as HTMLElement).classList.contains(
+      'mdc-linear-progress--closed'
+    );
   }
 
   get retrainButton(): DebugElement {
