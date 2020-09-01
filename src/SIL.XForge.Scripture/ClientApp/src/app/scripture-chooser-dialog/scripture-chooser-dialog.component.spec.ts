@@ -529,7 +529,7 @@ describe('ScriptureChooserDialog', () => {
     }
 
     get highlightedButton(): DebugElement {
-      return this.fixture.debugElement.query(By.css('.ngx-mdc-button--primary'));
+      return this.fixture.debugElement.query(By.css('.mdc-button--unelevated'));
     }
 
     click(element: DebugElement | undefined): void {
