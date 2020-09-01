@@ -55,9 +55,7 @@ interface Summary {
 export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   userDoc?: UserDoc;
   scriptureFontSize?: string;
-  @ViewChild('answerPanelContainer') set answersPanelElement(
-    answersPanelContainerElement: ElementRef
-  ) {
+  @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
     // Need to trigger the calculation for the slider after DOM has been updated
     this.answersPanelContainerElement = answersPanelContainerElement;
     this.calculateScriptureSliderPosition(true);
