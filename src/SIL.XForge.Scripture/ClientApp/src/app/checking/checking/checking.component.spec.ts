@@ -614,14 +614,14 @@ describe('CheckingComponent', () => {
       env.answerQuestion('Answer question 7');
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeTruthy();
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeFalsy();
       env.clickButton(env.getAnswerEditButton(myAnswerIndex));
       env.setTextFieldValue(env.yourAnswerField, 'Edited question 7 answer');
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeTruthy();
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeFalsy();
       expect(env.getAnswerText(0)).toBe('Edited question 7 answer');
     }));
 
@@ -637,16 +637,16 @@ describe('CheckingComponent', () => {
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
       expect(env.getAnswerText(myAnswerIndex)).toEqual('Answer 0 on question', 'setup problem');
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(false);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false, 'have already read this answer');
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeFalsy();
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeFalsy('have already read this answer');
 
       // Edit, save
       env.clickButton(env.getAnswerEditButton(myAnswerIndex));
       env.setTextFieldValue(env.yourAnswerField, 'Edited answer');
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeTruthy();
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeFalsy();
       expect(env.getAnswerText(myAnswerIndex)).toEqual('Edited answer');
 
       // Edit, cancel
@@ -654,11 +654,10 @@ describe('CheckingComponent', () => {
       env.setTextFieldValue(env.yourAnswerField, 'Different edit, to cancel');
       env.clickButton(env.cancelAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(
-        false,
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeFalsy(
         "don't spotlight own answer on cancelled edit"
       );
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeFalsy();
       expect(env.getAnswerText(myAnswerIndex)).toEqual('Edited answer', 'should not have been changed');
     }));
 
@@ -666,11 +665,11 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(9);
       const otherAnswerIndex = 1;
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeFalsy();
       expect(env.getAnswerText(otherAnswerIndex)).toBe('Answer 1 on question');
 
       env.simulateRemoteEditAnswer(otherAnswerIndex, 'Question 9 edited answer');
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(true);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeTruthy();
       expect(env.getAnswerText(otherAnswerIndex)).toBe('Question 9 edited answer');
     }));
 
@@ -678,11 +677,11 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(9);
       const answerIndex = 1;
-      expect(env.getAnswer(answerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(answerIndex).classes['attention']).toBeFalsy();
       expect(env.getAnswerText(answerIndex)).toBe('Answer 1 on question');
 
       env.simulateSync(answerIndex);
-      expect(env.getAnswer(answerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(answerIndex).classes['attention']).toBeFalsy();
       expect(env.getAnswerText(answerIndex)).toBe('Answer 1 on question');
     }));
 
@@ -692,14 +691,14 @@ describe('CheckingComponent', () => {
       env.answerQuestion('Answer question 7');
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeTruthy();
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeFalsy();
       env.clickButton(env.getAnswerEditButton(0));
       env.setTextFieldValue(env.yourAnswerField, 'Edited question 7 answer');
       env.clickButton(env.cancelAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(false);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeFalsy();
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeFalsy();
       expect(env.getAnswerText(0)).toEqual('Answer question 7');
     }));
 
@@ -710,8 +709,8 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toBeGreaterThan(1, 'setup problem');
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeTruthy();
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeFalsy();
     }));
 
     it('can remove audio from answer', fakeAsync(() => {
