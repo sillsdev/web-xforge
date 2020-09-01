@@ -57,12 +57,12 @@ describe('CheckingOwnerComponent', () => {
     const template =
       '<app-checking-owner #checkingOwner ownerRef="user01" [layoutStacked]="true"></app-checking-owner>';
     const env = new TestEnvironment(template);
-    expect(env.layout.classes['layout-stacked']).toBeTruthy();
-    expect(env.layout.classes['layout-inline']).toBeFalsy();
+    expect(env.layout.classes['layout-stacked']).toBe(true);
+    expect(env.layout.classes['layout-inline']).toBeUndefined();
     env.fixture.componentInstance.checkingOwner.layoutStacked = false;
     env.fixture.detectChanges();
-    expect(env.layout.classes['layout-stacked']).toBeFalsy();
-    expect(env.layout.classes['layout-inline']).toBeTruthy();
+    expect(env.layout.classes['layout-stacked']).toBeUndefined();
+    expect(env.layout.classes['layout-inline']).toBe(true);
   });
 });
 
