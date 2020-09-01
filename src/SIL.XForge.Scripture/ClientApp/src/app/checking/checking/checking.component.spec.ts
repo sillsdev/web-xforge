@@ -276,22 +276,22 @@ describe('CheckingComponent', () => {
     it('can select a question', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       const question = env.selectQuestion(1);
-      expect(question.classes['mdc-list-item--activated']).toBeTruthy();
+      expect(question.classes['mdc-list-item--activated']).toBe(true);
     }));
 
     it('question status change to read', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       let question = env.selectQuestion(2, false);
-      expect(question.classes['question-read']).toBeFalsy();
+      expect(question.classes['question-read']).toBeUndefined();
       question = env.selectQuestion(3);
-      expect(question.classes['question-read']).toBeTruthy();
+      expect(question.classes['question-read']).toBe(true);
     }));
 
     it('question status change to answered', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
-      expect(question.classes['question-answered']).toBeTruthy();
+      expect(question.classes['question-answered']).toBe(true);
     }));
 
     it('question shows answers icon and total', fakeAsync(() => {
@@ -608,7 +608,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.yourAnswerField.classes['mdc-text-field--invalid']).toBeTruthy();
+      expect(env.yourAnswerField.classes['mdc-text-field--invalid']).toBe(true);
     }));
 
     it('can edit a new answer', fakeAsync(() => {
@@ -618,13 +618,13 @@ describe('CheckingComponent', () => {
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       env.clickButton(env.getAnswerEditButton(myAnswerIndex));
       env.setTextFieldValue(env.yourAnswerField, 'Edited question 7 answer');
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(0)).toBe('Edited question 7 answer');
     }));
 
@@ -640,8 +640,8 @@ describe('CheckingComponent', () => {
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
       expect(env.getAnswerText(myAnswerIndex)).toEqual('Answer 0 on question', 'setup problem');
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(false);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false, 'have already read this answer');
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeUndefined();
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined('have already read this answer');
 
       // Edit, save
       env.clickButton(env.getAnswerEditButton(myAnswerIndex));
@@ -649,7 +649,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(myAnswerIndex)).toEqual('Edited answer');
 
       // Edit, cancel
@@ -657,11 +657,10 @@ describe('CheckingComponent', () => {
       env.setTextFieldValue(env.yourAnswerField, 'Different edit, to cancel');
       env.clickButton(env.cancelAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(
-        false,
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeUndefined(
         "don't spotlight own answer on cancelled edit"
       );
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(myAnswerIndex)).toEqual('Edited answer', 'should not have been changed');
     }));
 
@@ -669,7 +668,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(9);
       const otherAnswerIndex = 1;
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(otherAnswerIndex)).toBe('Answer 1 on question');
 
       env.simulateRemoteEditAnswer(otherAnswerIndex, 'Question 9 edited answer');
@@ -681,11 +680,11 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(9);
       const answerIndex = 1;
-      expect(env.getAnswer(answerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(answerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(answerIndex)).toBe('Answer 1 on question');
 
       env.simulateSync(answerIndex);
-      expect(env.getAnswer(answerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(answerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(answerIndex)).toBe('Answer 1 on question');
     }));
 
@@ -696,13 +695,13 @@ describe('CheckingComponent', () => {
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       env.clickButton(env.getAnswerEditButton(0));
       env.setTextFieldValue(env.yourAnswerField, 'Edited question 7 answer');
       env.clickButton(env.cancelAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(false);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(myAnswerIndex).classes['attention']).toBeUndefined();
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(0)).toEqual('Answer question 7');
     }));
 
@@ -714,7 +713,7 @@ describe('CheckingComponent', () => {
       const myAnswerIndex = 0;
       const otherAnswerIndex = 1;
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
-      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBe(false);
+      expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
     }));
 
     it('can remove audio from answer', fakeAsync(() => {
