@@ -1612,7 +1612,7 @@ class TestEnvironment {
   }
 
   get selectVersesButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.answer-select-text button[primary]'));
+    return this.fixture.debugElement.query(By.css('.answer-select-text button[unelevated]'));
   }
 
   get showUnreadAnswersButton(): DebugElement {
