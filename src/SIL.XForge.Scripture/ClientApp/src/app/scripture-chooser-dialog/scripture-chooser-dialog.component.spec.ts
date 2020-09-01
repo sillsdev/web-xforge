@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA, MdcDialog, MdcDialogConfig, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcDialog, MdcDialogConfig, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
@@ -529,7 +529,7 @@ describe('ScriptureChooserDialog', () => {
     }
 
     get highlightedButton(): DebugElement {
-      return this.fixture.debugElement.query(By.css('.ngx-mdc-button--primary'));
+      return this.fixture.debugElement.query(By.css('.mdc-button--unelevated'));
     }
 
     click(element: DebugElement | undefined): void {
