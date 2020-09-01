@@ -147,6 +147,7 @@ describe('ExceptionHandlingService', () => {
     const env = new TestEnvironment();
     await env.service.handleError(new DOMException('error', 'QuotaExceededError'));
     verify(mockedNoticeService.showError(anything())).once();
+    expect().nothing();
   });
 });
 
