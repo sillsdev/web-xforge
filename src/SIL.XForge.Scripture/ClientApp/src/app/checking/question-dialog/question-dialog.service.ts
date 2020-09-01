@@ -33,6 +33,8 @@ export class QuestionDialogService {
       QuestionDialogComponent,
       QuestionDialogResult | 'close'
     >;
+    // ENHANCE: Put the audio upload logic into QuestionDialogComponent so we can detect if the upload
+    // fails and notify the user without discarding the question.
     const result: QuestionDialogResult | 'close' | undefined = await dialogRef.afterClosed().toPromise();
     if (result == null || result === 'close') {
       return questionDoc;
@@ -53,10 +55,11 @@ export class QuestionDialogService {
         result.audio.blob,
         result.audio.fileName
       );
-      // TODO: If storage is full we should prevent saving the answer rather than discarding it
-      if (urlResult != null) {
-        audioUrl = urlResult;
+      if (urlResult == null) {
+        // Discard the question if an error occurred while uploading or storing the audio
+        return undefined;
       }
+      audioUrl = urlResult;
     } else if (result.audio.status === 'reset') {
       audioUrl = undefined;
     }
