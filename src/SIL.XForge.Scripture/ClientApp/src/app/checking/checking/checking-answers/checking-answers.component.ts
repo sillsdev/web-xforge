@@ -290,6 +290,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.justEditedAnswer = false;
     this.selectionStartClipped = this.activeAnswer.selectionStartClipped;
     this.selectionEndClipped = this.activeAnswer.selectionEndClipped;
+    this.answerText.setValue(this.activeAnswer?.text || '');
     this.showAnswerForm();
   }
 

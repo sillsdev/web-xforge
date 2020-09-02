@@ -8,7 +8,10 @@ import { XFValidators } from 'xforge-common/xfvalidators';
   styleUrls: ['./checking-comment-form.component.scss']
 })
 export class CheckingCommentFormComponent {
-  @Input() text: string = '';
+  @Input() set text(value: string) {
+    this.commentText.setValue(value);
+  }
+
   @Output() save: EventEmitter<String> = new EventEmitter<String>();
   @Output() cancel: EventEmitter<Boolean> = new EventEmitter<Boolean>();
 
@@ -21,12 +24,16 @@ export class CheckingCommentFormComponent {
     if (this.commentForm.invalid) {
       return;
     }
-    this.save.emit(this.commentForm.controls.commentText.value);
+    this.save.emit(this.commentText.value);
     this.commentForm.reset();
   }
 
   submitCancel(): void {
     this.commentForm.reset();
     this.cancel.emit(false);
+  }
+
+  private get commentText(): FormControl {
+    return this.commentForm.controls.commentText as FormControl;
   }
 }
