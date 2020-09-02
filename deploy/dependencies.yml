@@ -44,7 +44,6 @@
           - "mongodb-org"
           - nodejs
           - npm
-          - python-pip
         update_cache: yes
       tags: ["packages"]
 
@@ -67,10 +66,23 @@
     - name: change node version
       shell: "n {{node_version}}"
 
-    - name: install custom mercurial
+    # Install mercurial 4.7+ from system or pip
+    - name: install pip mercurial dependencies
+      apt:
+        name:
+          - python-pip
+          - python2.7
+      when: ansible_distribution_major_version|int < 20
+    - name: install pip mercurial
       pip:
         name: mercurial
         version: 4.8.2
+      when: ansible_distribution_major_version|int < 20
+    - name: install system package mercurial
+      apt:
+        name:
+          - mercurial
+      when: ansible_distribution_major_version|int >= 20
 
     - name: update the mongo config file
       lineinfile:
