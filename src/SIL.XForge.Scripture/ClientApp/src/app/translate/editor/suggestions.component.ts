@@ -250,7 +250,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
           return false;
         }
         const keyCode = event.key.charCodeAt(0);
-        return (event.ctrlKey || event.metaKey) && (keyCode >= 48 && keyCode <= 57);
+        return (event.ctrlKey || event.metaKey) && keyCode >= 48 && keyCode <= 57;
     }
   }
 }

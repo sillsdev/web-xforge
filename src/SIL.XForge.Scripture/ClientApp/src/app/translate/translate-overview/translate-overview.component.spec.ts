@@ -265,22 +265,34 @@ class TestEnvironment {
         texts: [
           {
             bookNum: 40,
-            chapters: [{ number: 1, lastVerse: 3, isValid: true }, { number: 2, lastVerse: 3, isValid: true }],
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true },
+              { number: 2, lastVerse: 3, isValid: true }
+            ],
             hasSource: true
           },
           {
             bookNum: 41,
-            chapters: [{ number: 1, lastVerse: 3, isValid: true }, { number: 2, lastVerse: 3, isValid: true }],
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true },
+              { number: 2, lastVerse: 3, isValid: true }
+            ],
             hasSource: true
           },
           {
             bookNum: 42,
-            chapters: [{ number: 1, lastVerse: 3, isValid: true }, { number: 2, lastVerse: 3, isValid: true }],
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true },
+              { number: 2, lastVerse: 3, isValid: true }
+            ],
             hasSource: true
           },
           {
             bookNum: 43,
-            chapters: [{ number: 1, lastVerse: 3, isValid: true }, { number: 2, lastVerse: 3, isValid: true }],
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true },
+              { number: 2, lastVerse: 3, isValid: true }
+            ],
             hasSource: false
           }
         ]

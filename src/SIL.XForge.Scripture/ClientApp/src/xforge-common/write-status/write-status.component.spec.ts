@@ -64,9 +64,7 @@ class TestEnvironment {
 }
 
 @Component({
-  template: `
-    <app-write-status id="test-status" [state]="controlState" [formGroup]="testForm"></app-write-status>
-  `
+  template: `<app-write-status id="test-status" [state]="controlState" [formGroup]="testForm"></app-write-status>`
 })
 class TestHostComponent {
   testForm: FormGroup = new FormGroup({

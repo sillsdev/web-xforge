@@ -351,7 +351,10 @@ class TestEnvironment {
   static matthewText: TextInfo = {
     bookNum: 40,
     hasSource: false,
-    chapters: [{ number: 1, lastVerse: 25, isValid: true }, { number: 3, lastVerse: 17, isValid: true }]
+    chapters: [
+      { number: 1, lastVerse: 25, isValid: true },
+      { number: 3, lastVerse: 17, isValid: true }
+    ]
   };
   static textsByBookId = { ['MAT']: TestEnvironment.matthewText };
   static testProject: SFProject = {

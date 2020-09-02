@@ -8,7 +8,7 @@
             <mdc-icon mdcTopAppBarNavIcon>menu</mdc-icon>
           </a>
           <a (click)="goHome()">
-            <mdc-icon mdcTopAppBarNavIcon><img id="nav-logo" src="/assets/images/logo-sf.svg" height="30"/></mdc-icon>
+            <mdc-icon mdcTopAppBarNavIcon><img id="nav-logo" src="/assets/images/logo-sf.svg" height="30" /></mdc-icon>
           </a>
           <mdc-top-app-bar-title *ngIf="!topAppBar.isCollapsed()" (click)="goHome()" fxHide.xs>
             Scripture Forge
@@ -223,7 +223,7 @@
             </mdc-list-item>
           </ng-container>
         </div>
-        <div *ngIf="(isProjectAdmin$ | async)">
+        <div *ngIf="isProjectAdmin$ | async">
           <mdc-list-divider *ngIf="isCheckingEnabled"></mdc-list-divider>
           <mdc-list-item
             [appRouterLink]="['/projects', selectedProjectId, 'sync']"

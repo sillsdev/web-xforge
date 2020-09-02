@@ -330,9 +330,7 @@ export class AuthService {
           if (err.code === 'login_required') {
             resolve(null);
           } else if (retryUponTimeout && err.code === 'timeout') {
-            this.checkSession(false)
-              .then(resolve)
-              .catch(reject);
+            this.checkSession(false).then(resolve).catch(reject);
           } else {
             reject(err);
           }

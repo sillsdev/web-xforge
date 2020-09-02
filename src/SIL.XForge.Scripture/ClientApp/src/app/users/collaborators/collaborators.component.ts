@@ -103,11 +103,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       return (
         userRow.user &&
         ((userRow.user.displayName && userRow.user.displayName.toLowerCase().includes(term)) ||
-          (userRow.role &&
-            this.i18n
-              .localizeRole(userRow.role)
-              .toLowerCase()
-              .includes(term)) ||
+          (userRow.role && this.i18n.localizeRole(userRow.role).toLowerCase().includes(term)) ||
           (userRow.user.email && userRow.user.email.toLowerCase().includes(term)))
       );
     });
