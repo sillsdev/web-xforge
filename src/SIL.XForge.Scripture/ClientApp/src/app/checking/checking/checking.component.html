@@ -22,9 +22,9 @@
                   (update)="questionUpdated($event)"
                   (changed)="questionChanged($event)"
                   [visible]="isDrawerPermanent || isExpanded"
-                  [questionDocs]="questionDocs"
-                  [project]="projectDoc?.data"
                   [projectUserConfigDoc]="projectUserConfigDoc"
+                  [project]="projectDoc?.data"
+                  [questionDocs]="questionDocs"
                   [isAllBooksShown]="showAllBooks"
                 ></app-checking-questions>
               </div>
