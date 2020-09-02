@@ -270,9 +270,7 @@ class TestEnvironment {
   }
 
   syncDisabledControl(row: number): DebugElement {
-    return this.cell(row, this.syncDisabledColumn)
-      .query(By.css('mdc-checkbox'))
-      .query(By.css('input'));
+    return this.cell(row, this.syncDisabledColumn).query(By.css('mdc-checkbox')).query(By.css('input'));
   }
 
   changeSelectValue(select: DebugElement, option: number): void {

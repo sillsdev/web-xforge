@@ -39,9 +39,7 @@ const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 
 @Component({
-  template: `
-    <div>Mock</div>
-  `
+  template: `<div>Mock</div>`
 })
 class MockComponent {}
 

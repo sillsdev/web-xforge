@@ -449,12 +449,18 @@ describe('ScriptureChooserDialog', () => {
       let textsInProject: TextInfo[] = [
         {
           bookNum: 2,
-          chapters: [{ number: 39, lastVerse: 43, isValid: true }, { number: 40, lastVerse: 38, isValid: true }],
+          chapters: [
+            { number: 39, lastVerse: 43, isValid: true },
+            { number: 40, lastVerse: 38, isValid: true }
+          ],
           hasSource: false
         },
         {
           bookNum: 40,
-          chapters: [{ number: 1, lastVerse: 25, isValid: true }, { number: 2, lastVerse: 23, isValid: true }],
+          chapters: [
+            { number: 1, lastVerse: 25, isValid: true },
+            { number: 2, lastVerse: 23, isValid: true }
+          ],
           hasSource: false
         },
         {

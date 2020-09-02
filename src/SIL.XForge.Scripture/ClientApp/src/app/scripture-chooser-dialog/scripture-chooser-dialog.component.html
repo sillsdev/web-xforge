@@ -95,7 +95,7 @@
         </mdc-dialog-title>
         <mdc-dialog-content>
           <div class="reference">
-            {{ getBookName(data.booksAndChaptersToShow[(data.rangeStart?.book)]) }} {{ data.rangeStart?.chapter }}
+            {{ getBookName(data.booksAndChaptersToShow[data.rangeStart?.book]) }} {{ data.rangeStart?.chapter }}
           </div>
           <button
             *ngFor="let verse of versesOf(data.rangeStart?.book, data.rangeStart?.chapter, data.rangeStart?.verse)"

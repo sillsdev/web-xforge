@@ -68,10 +68,7 @@ export class UserService {
     queryParameters$: Observable<QueryParameters>,
     reload$: Observable<void>
   ): Observable<RealtimeQuery<UserDoc>> {
-    const debouncedTerm$ = term$.pipe(
-      debounceTime(400),
-      distinctUntilChanged()
-    );
+    const debouncedTerm$ = term$.pipe(debounceTime(400), distinctUntilChanged());
 
     return combineLatest(debouncedTerm$, queryParameters$, reload$).pipe(
       switchMap(([term, queryParameters]) => {
