@@ -39,9 +39,7 @@ const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 
 @Component({
-  template: `
-    <div>Mock</div>
-  `
+  template: `<div>Mock</div>`
 })
 class MockComponent {}
 
@@ -155,7 +153,7 @@ describe('SettingsComponent', () => {
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.loginButton).toBeNull();
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
+        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP1');
 
         env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
 
@@ -172,7 +170,7 @@ describe('SettingsComponent', () => {
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
+        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP1');
 
         env.clickElement(env.inputElement(env.translationSuggestionsCheckbox));
 
@@ -185,7 +183,7 @@ describe('SettingsComponent', () => {
         env.wait();
         expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
+        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP1');
       }));
 
       it('should change Based On select value', fakeAsync(() => {
@@ -195,12 +193,12 @@ describe('SettingsComponent', () => {
         env.wait();
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP1');
+        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP1');
         expect(env.statusDone(env.basedOnStatus)).toBeNull();
 
         env.setSelectValue(env.basedOnSelect, 'paratextId02');
 
-        expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP2');
+        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP2');
         expect(env.statusDone(env.basedOnStatus)).not.toBeNull();
       }));
 
@@ -245,7 +243,7 @@ describe('SettingsComponent', () => {
         expect(env.statusNone(env.translationSuggestionsStatus)).toBe(true);
         expect(env.loginButton).toBeNull();
         expect(env.basedOnSelect).not.toBeNull();
-        expect(env.basedOnSelect.nativeElement.textContent).toEqual('Based on');
+        expect(env.basedOnSelect.nativeElement.innerText).toEqual('Based on');
         expect(env.statusDone(env.basedOnStatus)).toBeNull();
       }));
 
@@ -276,13 +274,13 @@ describe('SettingsComponent', () => {
         expect(env.basedOnSelect).not.toBeNull();
         expect(env.statusNone(env.translationSuggestionsStatus)).toBe(true);
         expect(env.statusNone(env.basedOnStatus)).toBe(true);
-        expect(env.basedOnSelect.nativeElement.textContent).toEqual('Based on');
+        expect(env.basedOnSelect.nativeElement.innerText).toEqual('Based on');
         expect(env.statusDone(env.translationSuggestionsStatus)).toBeNull();
         expect(env.statusDone(env.basedOnStatus)).toBeNull();
 
         env.setSelectValue(env.basedOnSelect, 'paratextId02');
 
-        expect(env.basedOnSelect.nativeElement.textContent).toContain('ParatextP2');
+        expect(env.basedOnSelect.nativeElement.innerText).toContain('ParatextP2');
         expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
         expect(env.statusDone(env.basedOnStatus)).not.toBeNull();
       }));
