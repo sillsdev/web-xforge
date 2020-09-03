@@ -26,9 +26,9 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
   suggestionsSwitchFormGroup = new FormGroup({
     suggestionsEnabledSwitch: this.suggestionsEnabledSwitch
   });
+  confidenceThreshold$ = new BehaviorSubject<number>(20);
 
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
-  private confidenceThreshold$ = new BehaviorSubject<number>(20);
 
   constructor(
     dialogRef: MdcDialogRef<SuggestionsSettingsDialogComponent>,
