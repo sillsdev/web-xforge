@@ -197,7 +197,7 @@ class TestEnvironment {
   }
 
   updateConfidenceThresholdSlider(value: number): void {
-    this.confidenceThresholdSlider.value = value;
+    this.component!.confidenceThreshold = value;
     tick(CONFIDENCE_THRESHOLD_TIMEOUT);
     this.fixture.detectChanges();
   }
