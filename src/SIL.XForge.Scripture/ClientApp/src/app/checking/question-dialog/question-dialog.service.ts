@@ -28,7 +28,8 @@ export class QuestionDialogService {
   /** Opens a question dialog that can be used to add a new question or edit an existing question. */
   async questionDialog(config: QuestionDialogData): Promise<QuestionDoc | undefined> {
     const questionDoc = config.questionDoc;
-    const dialogConfig: MdcDialogConfig = { data: config, clickOutsideToClose: false };
+    // handling auto focus is left for the template because MdcDialog would focus the wrong element
+    const dialogConfig: MdcDialogConfig = { data: config, clickOutsideToClose: false, autoFocus: false };
     const dialogRef = this.dialog.open(QuestionDialogComponent, dialogConfig) as MdcDialogRef<
       QuestionDialogComponent,
       QuestionDialogResult | 'close'
