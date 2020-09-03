@@ -29,6 +29,9 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
   }
 
   async init(getAccessToken: () => string | undefined) {
+    if (this.connection != null) {
+      return;
+    }
     this.getAccessToken = getAccessToken;
     // Wait until we have a valid connection or error before proceeding so we know we're online/offline
     await new Promise(resolve => {
