@@ -97,6 +97,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.isAppOnline = status;
         this.checkDeviceStorage();
       }
+      // Check authentication when coming back online
+      // This is also run on first load when the websocket connects for the first time
+      if (this.isAppOnline && !this.isAppLoading) {
+        this.authService.checkOnlineAuth();
+      }
     });
 
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing

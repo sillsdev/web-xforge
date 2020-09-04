@@ -100,22 +100,35 @@ describe('QuestionDialogService', () => {
       audio: {}
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
-    const date = new Date().toJSON();
-    const newQuestion: Question = {
-      dataId: 'q1Id',
-      text: 'question to be edited',
-      verseRef: fromVerseRef(VerseRef.parse('MAT 1:3')),
-      answers: [],
-      isArchived: false,
-      ownerRef: 'ownerId',
-      projectRef: env.PROJECT01,
-      dateCreated: date,
-      dateModified: date
-    };
-    const questionDoc = env.addQuestion(newQuestion);
+    const questionDoc = env.addQuestion(env.getNewQuestion());
     expect(questionDoc!.data!.text).toBe('question to be edited');
     await env.service.questionDialog(env.getQuestionDialogData(questionDoc));
     expect(questionDoc!.data!.text).toBe('question edited');
+  });
+
+  it('discards changes if failed to upload or store the audio', async () => {
+    const env = new TestEnvironment();
+    const result: QuestionDialogResult = {
+      text: 'question added',
+      verseRef: VerseRef.parse('MAT 1:3'),
+      audio: { fileName: 'someFileName.mp3', blob: new Blob() }
+    };
+    when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
+    when(
+      mockedFileService.uploadFile(
+        FileType.Audio,
+        env.PROJECT01,
+        QuestionDoc.COLLECTION,
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
+    ).thenResolve(undefined);
+    const questionDoc = env.addQuestion(env.getNewQuestion());
+    const editedQuestion = await env.service.questionDialog(env.getQuestionDialogData(questionDoc));
+    expect(editedQuestion).toBeUndefined();
   });
 
   it('removes audio if audio deleted', async () => {
@@ -126,21 +139,9 @@ describe('QuestionDialogService', () => {
       audio: { status: 'reset' }
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
-    const date = new Date().toJSON();
-    const newQuestion: Question = {
-      dataId: 'q1Id',
-      text: 'question with audio',
-      verseRef: fromVerseRef(VerseRef.parse('MAT 1:3')),
-      answers: [],
-      isArchived: false,
-      audioUrl: 'anAudioFile.mp3',
-      ownerRef: 'ownerId',
-      projectRef: env.PROJECT01,
-      dateCreated: date,
-      dateModified: date
-    };
-    const questionDoc = env.addQuestion(newQuestion);
-    expect(questionDoc!.data!.audioUrl).toBe('anAudioFile.mp3');
+    const audioUrl = 'anAudioFile.mp3';
+    const questionDoc = env.addQuestion(env.getNewQuestion(audioUrl));
+    expect(questionDoc!.data!.audioUrl).toBe(audioUrl);
     await env.service.questionDialog(env.getQuestionDialogData(questionDoc));
     expect(questionDoc!.data!.audioUrl).toBeUndefined();
     verify(mockedFileService.deleteFile(FileType.Audio, env.PROJECT01, QuestionDoc.COLLECTION, anything(), anything()));
@@ -159,7 +160,10 @@ class TestEnvironment {
   matthewText: TextInfo = {
     bookNum: 40,
     hasSource: false,
-    chapters: [{ number: 1, lastVerse: 25, isValid: true }, { number: 3, lastVerse: 17, isValid: true }]
+    chapters: [
+      { number: 1, lastVerse: 25, isValid: true },
+      { number: 3, lastVerse: 17, isValid: true }
+    ]
   };
   readonly PROJECT01: string = 'project01';
   adminUser: UserInfo = { id: 'user01', role: SFProjectRole.ParatextAdministrator };
@@ -206,6 +210,22 @@ class TestEnvironment {
       data: question
     });
     return this.realtimeService.get(QUESTIONS_COLLECTION, getQuestionDocId(this.PROJECT01, question.dataId));
+  }
+
+  getNewQuestion(audioUrl?: string): Question {
+    const date = new Date().toJSON();
+    return {
+      dataId: 'q1Id',
+      text: 'question to be edited',
+      verseRef: fromVerseRef(VerseRef.parse('MAT 1:3')),
+      answers: [],
+      isArchived: false,
+      audioUrl: audioUrl,
+      ownerRef: 'ownerId',
+      projectRef: this.PROJECT01,
+      dateCreated: date,
+      dateModified: date
+    };
   }
 
   getQuestionDialogData(questionDoc?: QuestionDoc): QuestionDialogData {

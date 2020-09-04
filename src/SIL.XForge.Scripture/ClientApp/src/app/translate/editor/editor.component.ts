@@ -8,8 +8,8 @@ import {
   LatinWordTokenizer,
   MAX_SEGMENT_LENGTH,
   PhraseTranslationSuggester,
+  RangeTokenizer,
   RemoteTranslationEngine,
-  Tokenizer,
   TranslationSuggester
 } from '@sillsdev/machine';
 import isEqual from 'lodash/isEqual';
@@ -67,8 +67,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;
-  private readonly sourceWordTokenizer: Tokenizer;
-  private readonly targetWordTokenizer: Tokenizer;
+  private readonly sourceWordTokenizer: RangeTokenizer;
+  private readonly targetWordTokenizer: RangeTokenizer;
   private translationSession?: InteractiveTranslationSession;
   private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester();
   private insertSuggestionEnd: number = -1;
@@ -623,7 +623,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const sourceSegment = this.source.segmentText;
-    const words = this.sourceWordTokenizer.tokenizeToStrings(sourceSegment);
+    const words = this.sourceWordTokenizer.tokenize(sourceSegment);
     if (words.length === 0) {
       return;
     } else if (words.length > MAX_SEGMENT_LENGTH) {
@@ -662,7 +662,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           range.index - this.target.segment.range.index
         );
 
-        const tokenRanges = this.targetWordTokenizer.tokenize(text);
+        const tokenRanges = this.targetWordTokenizer.tokenizeAsRanges(text);
         const prefix = tokenRanges.map(r => text.substring(r.start, r.end));
         const isLastWordComplete =
           this.insertSuggestionEnd !== -1 ||

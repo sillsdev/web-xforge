@@ -43,6 +43,7 @@ export interface AnswerAction {
   selectionStartClipped?: boolean;
   selectionEndClipped?: boolean;
   audio?: AudioAttachment;
+  savedCallback?: () => void;
 }
 
 enum LikeAnswerResponse {
@@ -442,8 +443,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       await this.userService.editDisplayName(true);
     }
     this.emitAnswerToSave();
-    this.hideAnswerForm();
-    this.justEditedAnswer = true;
   }
 
   /** If a given answer should have attention drawn to it in the UI. */
@@ -519,7 +518,11 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       scriptureText: this.selectedText || undefined,
       selectionStartClipped: this.selectionStartClipped,
       selectionEndClipped: this.selectionEndClipped,
-      verseRef: this.verseRef == null ? undefined : fromVerseRef(this.verseRef)
+      verseRef: this.verseRef == null ? undefined : fromVerseRef(this.verseRef),
+      savedCallback: () => {
+        this.hideAnswerForm();
+        this.justEditedAnswer = true;
+      }
     });
   }
 

@@ -79,7 +79,7 @@ namespace SIL.XForge.Services
                 UserSecret userSecret = await _userSecrets.UpdateAsync(curUserId, update => update
                     .SetOnInsert(put => put.ParatextTokens, newPTTokens), true);
 
-                // only update the PT tokens if they are newer
+                // Only update the PT tokens if they are newer
                 if (newPTTokens.IssuedAt > userSecret.ParatextTokens.IssuedAt)
                 {
                     await _userSecrets.UpdateAsync(curUserId,

@@ -31,6 +31,7 @@
     "helphero",
     "idunno",
     "indexeddb",
+    "ldml",
     "libuv",
     "mailto",
     "mixins",
@@ -63,10 +64,12 @@
     "uncheck",
     "uninvite",
     "unsynchronized",
+    "usfm",
     "webm",
     "xforge",
     "xlink"
   ],
+  "python.formatting.provider": "black"
   "typescript.tsdk": "./src/SIL.XForge.Scripture/ClientApp/node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true
 }

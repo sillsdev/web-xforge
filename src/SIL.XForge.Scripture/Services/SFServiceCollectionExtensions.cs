@@ -16,6 +16,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddTransient<IParatextNotesMapper, ParatextNotesMapper>();
             services.AddSingleton<IGuidService, GuidService>();
             services.AddSingleton<ISFProjectService, SFProjectService>();
+            services.AddSingleton<IJwtTokenHelper, JwtTokenHelper>();
             return services;
         }
     }
