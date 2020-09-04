@@ -462,7 +462,10 @@ class TestEnvironment {
       {
         bookNum: 40,
         hasSource: false,
-        chapters: [{ number: 1, lastVerse: 25, isValid: true }, { number: 3, lastVerse: 17, isValid: true }]
+        chapters: [
+          { number: 1, lastVerse: 25, isValid: true },
+          { number: 3, lastVerse: 17, isValid: true }
+        ]
       },
       { bookNum: 42, hasSource: false, chapters: [{ number: 1, lastVerse: 80, isValid: true }] }
     ],

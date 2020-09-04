@@ -51,9 +51,7 @@ const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
 
 @Component({
-  template: `
-    <div>Mock</div>
-  `
+  template: `<div>Mock</div>`
 })
 class MockComponent {}
 

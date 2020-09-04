@@ -44,10 +44,7 @@ export abstract class ProjectService<
     term$: Observable<string>,
     queryParameters$: Observable<QueryParameters>
   ): Observable<RealtimeQuery<TDoc>> {
-    const debouncedTerm$ = term$.pipe(
-      debounceTime(400),
-      distinctUntilChanged()
-    );
+    const debouncedTerm$ = term$.pipe(debounceTime(400), distinctUntilChanged());
 
     return combineLatest(debouncedTerm$, queryParameters$).pipe(
       switchMap(([term, queryParameters]) => {

@@ -1068,13 +1068,19 @@ class TestEnvironment {
         texts: [
           {
             bookNum: 40,
-            chapters: [{ number: 1, lastVerse: 3, isValid: true }, { number: 2, lastVerse: 3, isValid: true }],
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true },
+              { number: 2, lastVerse: 3, isValid: true }
+            ],
             hasSource: true
           },
           { bookNum: 41, chapters: [{ number: 1, lastVerse: 3, isValid: false }], hasSource: true },
           {
             bookNum: 42,
-            chapters: [{ number: 1, lastVerse: 3, isValid: true }, { number: 2, lastVerse: 3, isValid: true }],
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true },
+              { number: 2, lastVerse: 3, isValid: true }
+            ],
             hasSource: false
           },
           {
@@ -1201,10 +1207,7 @@ class TestEnvironment {
 
   typeCharacters(str: string): number {
     const selection = this.targetEditor.getSelection()!;
-    const delta = new Delta()
-      .retain(selection.index)
-      .delete(selection.length)
-      .insert(str);
+    const delta = new Delta().retain(selection.index).delete(selection.length).insert(str);
     this.targetEditor.updateContents(delta, 'user');
     const selectionIndex = selection.index + str.length;
     this.targetEditor.setSelection(selectionIndex, 'user');
