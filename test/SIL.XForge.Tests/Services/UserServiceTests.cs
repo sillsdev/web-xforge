@@ -125,7 +125,7 @@ namespace SIL.XForge.Services
                         Id = "user01",
                         ParatextTokens = new Tokens
                         {
-                            AccessToken = CreateAccessToken(IssuedAt),
+                            AccessToken = TokenHelper.CreateAccessToken(IssuedAt),
                             RefreshToken = "refresh_token"
                         }
                     }
@@ -192,21 +192,8 @@ namespace SIL.XForge.Services
                         new JObject(
                             new JProperty("connection", "paratext"),
                             new JProperty("user_id", "paratext|paratext01"),
-                            new JProperty("access_token", CreateAccessToken(issuedAt)),
+                            new JProperty("access_token", TokenHelper.CreateAccessToken(issuedAt)),
                             new JProperty("refresh_token", "new_refresh_token")))));
-            }
-
-            private string CreateAccessToken(DateTime issuedAt)
-            {
-                var token = new JwtSecurityToken("ptreg_rsa", "pt-api",
-                    new[]
-                    {
-                        new Claim(JwtClaimTypes.Subject, "paratext01"),
-                        new Claim(JwtClaimTypes.IssuedAt, EpochTime.GetIntDate(issuedAt).ToString())
-                    },
-                    expires: issuedAt + TimeSpan.FromMinutes(5));
-                var handler = new JwtSecurityTokenHandler();
-                return handler.WriteToken(token);
             }
         }
     }
