@@ -1,7 +1,7 @@
 using System;
-using System.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
+using Paratext.Data;
 using PtxUtils;
 using SIL.XForge.Models;
 using SIL.XForge.Services;
@@ -37,7 +37,6 @@ namespace SIL.XForge.Scripture.Services
             };
             IInternetSharedRepositorySource source = env.Provider.GetSource(userSecret, "srServer", "regServer", "1");
             Assert.That(source, Is.Not.Null);
-
         }
 
         private class TestEnvironment
@@ -50,6 +49,7 @@ namespace SIL.XForge.Scripture.Services
                 MockJwtTokenHelper = Substitute.For<IJwtTokenHelper>();
                 MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns("token_1234");
                 RegistryU.Implementation = new DotNetCoreRegistry();
+                InternetAccess.RawStatus = InternetUse.Enabled;
                 Provider = new InternetSharedRepositorySourceProvider(MockJwtTokenHelper);
             }
         }
