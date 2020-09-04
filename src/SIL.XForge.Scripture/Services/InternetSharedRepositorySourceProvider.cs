@@ -18,10 +18,10 @@ namespace SIL.XForge.Scripture.Services
         public IInternetSharedRepositorySource GetSource(UserSecret userSecret, string sendReceiveServerUri,
             string registryServerUri, string applicationProductVersion)
         {
-            if (userSecret == null || sendReceiveServerUri == null || registryServerUri == null
-                || applicationProductVersion == null)
+            if (userSecret == null || string.IsNullOrEmpty(sendReceiveServerUri)
+                || string.IsNullOrEmpty(registryServerUri) || string.IsNullOrEmpty(applicationProductVersion))
             {
-                throw new ArgumentNullException();
+                throw new ArgumentException();
             }
 
             JwtRESTClient jwtClient = GenerateParatextRegistryJwtClient(userSecret, registryServerUri,
@@ -34,7 +34,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Initialize the Registry Server with a Jwt REST Client. Must be called for each unique user.
+        /// Initialize the Registry Server with a Jwt REST Client.
         /// </summary>
         private JwtRESTClient GenerateParatextRegistryJwtClient(UserSecret userSecret,
             string registryServerUri, string applicationProductVersion)

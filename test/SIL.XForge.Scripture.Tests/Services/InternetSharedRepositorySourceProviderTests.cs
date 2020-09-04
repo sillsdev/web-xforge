@@ -15,11 +15,17 @@ namespace SIL.XForge.Scripture.Services
         public void GetSource_BadArguments()
         {
             var env = new TestEnvironment();
-            Assert.Throws<ArgumentNullException>(() => env.Provider.GetSource(null, null, null, null));
-            Assert.Throws<ArgumentNullException>(() => env.Provider.GetSource(null, "abc", "abc", "abc"));
-            Assert.Throws<ArgumentNullException>(() => env.Provider.GetSource(new UserSecret(), null, "abc", "abc"));
-            Assert.Throws<ArgumentNullException>(() => env.Provider.GetSource(new UserSecret(), "abc", null, "abc"));
-            Assert.Throws<ArgumentNullException>(() => env.Provider.GetSource(new UserSecret(), "abc", "abc", null));
+            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(null, null, null, null));
+            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(null, "abc", "abc", "abc"));
+            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(new UserSecret(), null, "abc", "abc"));
+            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(new UserSecret(), "abc", null, "abc"));
+            Assert.Throws<ArgumentException>(() => env.Provider.GetSource(new UserSecret(), "abc", "abc", null));
+            Assert.Throws<ArgumentException>(() =>
+                env.Provider.GetSource(new UserSecret(), string.Empty, "abc", "abc"));
+            Assert.Throws<ArgumentException>(() =>
+                env.Provider.GetSource(new UserSecret(), "abc", string.Empty, "abc"));
+            Assert.Throws<ArgumentException>(() =>
+                env.Provider.GetSource(new UserSecret(), "abc", "abc", string.Empty));
         }
 
         [Test]
