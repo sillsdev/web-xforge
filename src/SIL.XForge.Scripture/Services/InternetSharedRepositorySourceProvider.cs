@@ -44,6 +44,5 @@ namespace SIL.XForge.Scripture.Services
             string api = registryServerUri + "/api8/";
             return new JwtRESTClient(api, applicationProductVersion, jwtToken);
         }
-
     }
 }

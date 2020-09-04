@@ -119,9 +119,6 @@ namespace SIL.XForge.Scripture.Services
         internal IScrTextCollection ScrTextCollection { get; set; }
         internal ISharingLogicWrapper SharingLogicWrapper { get; set; }
         internal IHgWrapper HgWrapper { get; set; }
-        /// <summary> Set of SF user IDs and corresponding sources for remote PT projects. </summary>
-        internal Dictionary<string, IInternetSharedRepositorySource> InternetSharedRepositorySources { get; set; }
-            = new Dictionary<string, IInternetSharedRepositorySource>();
 
         /// <summary> Prepare access to Paratext.Data library, authenticate, and prepare Mercurial. </summary>
         public void Init()
@@ -538,22 +535,14 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Get cached or setup new access to a source for PT project repositories, based on user secret.
+        /// Get access to a source for PT project repositories, based on user secret.
         ///</summary>
         private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(UserSecret userSecret)
         {
             if (userSecret == null) throw new ArgumentNullException();
-            IInternetSharedRepositorySource source;
             await RefreshAccessTokenAsync(userSecret);
-
-            if (!InternetSharedRepositorySources.ContainsKey(userSecret.Id))
-            {
-                source = _internetSharedRepositorySourceProvider.GetSource(userSecret,
-                    _sendReceiveServerUri, _registryServerUri, _applicationProductVersion);
-                InternetSharedRepositorySources[userSecret.Id] = source;
-            }
-            source = InternetSharedRepositorySources[userSecret.Id];
-            source.RefreshToken(userSecret.ParatextTokens.AccessToken);
+            IInternetSharedRepositorySource source = _internetSharedRepositorySourceProvider.GetSource(userSecret,
+                _sendReceiveServerUri, _registryServerUri, _applicationProductVersion);
             return source;
         }
 
