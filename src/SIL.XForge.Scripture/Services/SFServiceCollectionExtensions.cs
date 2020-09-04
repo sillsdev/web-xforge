@@ -17,6 +17,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IGuidService, GuidService>();
             services.AddSingleton<ISFProjectService, SFProjectService>();
             services.AddSingleton<IJwtTokenHelper, JwtTokenHelper>();
+            services.AddSingleton<IInternetSharedRepositorySourceProvider, InternetSharedRepositorySourceProvider>();
             return services;
         }
     }

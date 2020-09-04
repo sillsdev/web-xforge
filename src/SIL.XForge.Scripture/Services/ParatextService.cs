@@ -60,12 +60,14 @@ namespace SIL.XForge.Scripture.Services
         private string _applicationProductVersion = "SF";
         private string _registryServerUri = "https://registry.paratext.org";
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
+        private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
 
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
             IExceptionHandler exceptionHandler, IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService,
-            ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper)
+            ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper,
+            IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider)
         {
             _webHostEnvironment = env;
             _paratextOptions = paratextOptions;
@@ -76,6 +78,7 @@ namespace SIL.XForge.Scripture.Services
             _fileSystemService = fileSystemService;
             _logger = logger;
             _jwtTokenHelper = jwtTokenHelper;
+            _internetSharedRepositorySourceProvider = internetSharedRepositorySourceProvider;
 
             _httpClientHandler = new HttpClientHandler();
             _registryClient = new HttpClient(_httpClientHandler);
@@ -116,9 +119,6 @@ namespace SIL.XForge.Scripture.Services
         internal IScrTextCollection ScrTextCollection { get; set; }
         internal ISharingLogicWrapper SharingLogicWrapper { get; set; }
         internal IHgWrapper HgWrapper { get; set; }
-        /// <summary> Set of SF user IDs and corresponding sources for remote PT projects. </summary>
-        internal Dictionary<string, IInternetSharedRepositorySource> InternetSharedRepositorySources { get; set; }
-            = new Dictionary<string, IInternetSharedRepositorySource>();
 
         /// <summary> Prepare access to Paratext.Data library, authenticate, and prepare Mercurial. </summary>
         public void Init()
@@ -535,35 +535,15 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Get cached or setup new access to a source for PT project repositories, based on user secret.
+        /// Get access to a source for PT project repositories, based on user secret.
         ///</summary>
         private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(UserSecret userSecret)
         {
             if (userSecret == null) throw new ArgumentNullException();
-            IInternetSharedRepositorySource source;
             await RefreshAccessTokenAsync(userSecret);
-
-            if (!InternetSharedRepositorySources.ContainsKey(userSecret.Id))
-            {
-                JwtRESTClient jwtClient = GenerateParatextRegistryJwtClient(userSecret);
-                source = new JwtInternetSharedRepositorySource(userSecret.ParatextTokens.AccessToken, jwtClient,
-                    _sendReceiveServerUri);
-                InternetSharedRepositorySources[userSecret.Id] = source;
-            }
-            source = InternetSharedRepositorySources[userSecret.Id];
-            source.RefreshToken(userSecret.ParatextTokens.AccessToken);
+            IInternetSharedRepositorySource source = _internetSharedRepositorySourceProvider.GetSource(userSecret,
+                _sendReceiveServerUri, _registryServerUri, _applicationProductVersion);
             return source;
-        }
-
-        /// <summary>
-        /// Initialize the Registry Server with a Jwt REST Client. Must be called for each unique user.
-        /// </summary>
-        private JwtRESTClient GenerateParatextRegistryJwtClient(UserSecret userSecret)
-        {
-            string jwtToken = _jwtTokenHelper.GetJwtTokenFromUserSecret(userSecret);
-
-            string api = _registryServerUri + "/api8/";
-            return new JwtRESTClient(api, _applicationProductVersion, jwtToken);
         }
 
         // Make sure there are no asynchronous methods called after this until the progress is completed.
