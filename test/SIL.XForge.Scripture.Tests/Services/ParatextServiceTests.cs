@@ -186,7 +186,8 @@ namespace SIL.XForge.Scripture.Services
                         .ContainsKey(testCase.sfUserId), Is.EqualTo(testCase.sfUserIsOnSfProject),
                         "not set up - whether user is on existing sf project or not");
                 }
-                Assert.That(env.Service.InternetSharedRepositorySources[testCase.sfUserId].GetRepositories()
+                Assert.That(env.MockInternetSharedRepositorySourceProvider.GetSource(testCase.userSecret,
+                    string.Empty, string.Empty, string.Empty).GetRepositories()
                     .FirstOrDefault(sharedRepository => sharedRepository.SendReceiveId == testCase.paratextProjectId)
                     .SourceUsers.GetRole(testCase.ptUsername) == UserRoles.Administrator,
                     Is.EqualTo(testCase.ptUserIsAdminOnPtProject),
@@ -581,7 +582,8 @@ namespace SIL.XForge.Scripture.Services
                 ProjectMetadata projMeta3 = GetMetadata("paratext_" + Project03, "Full Name " + Project03);
                 mockSource.GetRepositories().Returns(new List<SharedRepository> { repo1, repo3, repo2 });
                 mockSource.GetProjectsMetaData().Returns(new[] { projMeta1, projMeta2, projMeta3 });
-                Service.InternetSharedRepositorySources[userSecret.Id] = mockSource;
+                MockInternetSharedRepositorySourceProvider.GetSource(userSecret, Arg.Any<string>(),
+                    Arg.Any<string>(), Arg.Any<string>()).Returns(mockSource);
                 return mockSource;
             }
 
