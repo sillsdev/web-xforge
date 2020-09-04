@@ -60,12 +60,14 @@ namespace SIL.XForge.Scripture.Services
         private string _applicationProductVersion = "SF";
         private string _registryServerUri = "https://registry.paratext.org";
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
+        private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
 
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
             IExceptionHandler exceptionHandler, IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService,
-            ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper)
+            ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper,
+            IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider)
         {
             _webHostEnvironment = env;
             _paratextOptions = paratextOptions;
@@ -76,6 +78,7 @@ namespace SIL.XForge.Scripture.Services
             _fileSystemService = fileSystemService;
             _logger = logger;
             _jwtTokenHelper = jwtTokenHelper;
+            _internetSharedRepositorySourceProvider = internetSharedRepositorySourceProvider;
 
             _httpClientHandler = new HttpClientHandler();
             _registryClient = new HttpClient(_httpClientHandler);
@@ -545,25 +548,13 @@ namespace SIL.XForge.Scripture.Services
 
             if (!InternetSharedRepositorySources.ContainsKey(userSecret.Id))
             {
-                JwtRESTClient jwtClient = GenerateParatextRegistryJwtClient(userSecret);
-                source = new JwtInternetSharedRepositorySource(userSecret.ParatextTokens.AccessToken, jwtClient,
-                    _sendReceiveServerUri);
+                source = _internetSharedRepositorySourceProvider.GetSource(userSecret,
+                    _sendReceiveServerUri, _registryServerUri, _applicationProductVersion);
                 InternetSharedRepositorySources[userSecret.Id] = source;
             }
             source = InternetSharedRepositorySources[userSecret.Id];
             source.RefreshToken(userSecret.ParatextTokens.AccessToken);
             return source;
-        }
-
-        /// <summary>
-        /// Initialize the Registry Server with a Jwt REST Client. Must be called for each unique user.
-        /// </summary>
-        private JwtRESTClient GenerateParatextRegistryJwtClient(UserSecret userSecret)
-        {
-            string jwtToken = _jwtTokenHelper.GetJwtTokenFromUserSecret(userSecret);
-
-            string api = _registryServerUri + "/api8/";
-            return new JwtRESTClient(api, _applicationProductVersion, jwtToken);
         }
 
         // Make sure there are no asynchronous methods called after this until the progress is completed.
