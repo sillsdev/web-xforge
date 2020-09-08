@@ -90,7 +90,19 @@ namespace PTDDCloneAll
             {
                 if (!await InitAsync(projectId, userId))
                 {
-                    await CompleteSync(false);
+                    if (silent)
+                    {
+                        await _projectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            op.Inc(pd => pd.Sync.QueuedCount, -1);
+                            op.Unset(pd => pd.Sync.PercentCompleted);
+                        });
+                    }
+                    else
+                    {
+                        await CompleteSync(false);
+                    }
+                    CloseConnection();
                     return;
                 }
 
