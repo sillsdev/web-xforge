@@ -84,7 +84,7 @@ namespace PTDDCloneAll
         // Do not allow multiple sync jobs to run in parallel on the same project by creating a mutex on the projectId
         // parameter, i.e. "{0}"
         [Mutex("{0}")]
-        public async Task RunAsync(string projectId, string userId, bool trainEngine)
+        public async Task RunAsync(string projectId, string userId, bool trainEngine, bool silent)
         {
             try
             {
@@ -119,6 +119,18 @@ namespace PTDDCloneAll
                 // perform Paratext send/receive
                 await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, sourceParatextId,
                     UseNewProgress());
+
+                // This is a clone without persisting the changes to the SF DB
+                if (silent)
+                {
+                    await _projectDoc.SubmitJson0OpAsync(op =>
+                    {
+                        op.Inc(pd => pd.Sync.QueuedCount, -1);
+                        op.Unset(pd => pd.Sync.PercentCompleted);
+                    });
+                    CloseConnection();
+                    return;
+                }
 
                 var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId,
                     TextType.Target));
@@ -226,7 +238,19 @@ namespace PTDDCloneAll
             catch (Exception e)
             {
                 _logger.LogError(e, "Error occurred while executing Paratext sync for project '{Project}'", projectId);
-                await CompleteSync(false);
+                if (silent)
+                {
+                    await _projectDoc.SubmitJson0OpAsync(op =>
+                    {
+                        op.Inc(pd => pd.Sync.QueuedCount, -1);
+                        op.Unset(pd => pd.Sync.PercentCompleted);
+                    });
+
+                }
+                else
+                {
+                    await CompleteSync(false);
+                }
                 CloseConnection();
                 throw;
             }
