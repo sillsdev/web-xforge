@@ -138,7 +138,13 @@ namespace PTDDCloneAll
             string syncDir, bool silent)
         {
             Log($"Cloning {proj.Name} ({proj.Id}) as SF user {userId}");
-            string partialCloneDir = Path.Combine(syncDir, proj.ParatextId);
+            string existingCloneDir = Path.Combine(syncDir, proj.ParatextId);
+            // If the project directory already exists, no need to sync the project
+            if (Directory.Exists(existingCloneDir))
+            {
+                Log("The project has already been cloned. Skipping...");
+                return;
+            }
             try
             {
                 PTDDSyncRunner syncRunner = webHost.Services.GetService<PTDDSyncRunner>();
@@ -147,14 +153,14 @@ namespace PTDDCloneAll
                 if (silent)
                 {
                     Log($"Deleting cloned repository for {proj.Name}");
-                    Directory.Delete(partialCloneDir, true);
+                    Directory.Delete(existingCloneDir, true);
                 }
             }
             catch (Exception e)
             {
                 Log($"There was a problem cloning the project.{Environment.NewLine}Exception is: {e}");
-                if (Directory.Exists(partialCloneDir))
-                    Directory.Delete(partialCloneDir, true);
+                if (Directory.Exists(existingCloneDir))
+                    Directory.Delete(existingCloneDir, true);
                 throw;
             }
         }
