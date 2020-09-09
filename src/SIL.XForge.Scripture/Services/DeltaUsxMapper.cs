@@ -419,12 +419,22 @@ namespace SIL.XForge.Scripture.Services
             return attributes;
         }
 
+        /// <summary>
+        /// It may be that this method is taking USX, leaving alone all chapters not specified and valid in
+        /// chapterDeltas, and then replacing all chapters in the USX, that are in chapterDeltas and valid, with
+        /// the data from the chapterDeltas.
+        /// </summary>
         public XDocument ToUsx(XDocument oldUsxDoc, IEnumerable<ChapterDelta> chapterDeltas)
         {
             var newUsxDoc = new XDocument(oldUsxDoc);
             int curChapter = 1;
             bool isFirstChapterFound = false;
             ChapterDelta[] chapterDeltaArray = chapterDeltas.ToArray();
+            if (chapterDeltaArray.Length == 1 && chapterDeltaArray[0]?.Delta.Ops.Count == 0)
+            {
+                // Book with no chapters
+                return oldUsxDoc;
+            }
             int i = 0;
             foreach (XNode curNode in newUsxDoc.Root.Nodes().ToArray())
             {

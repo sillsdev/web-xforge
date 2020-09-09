@@ -837,6 +837,29 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void ToUsx_MismatchNoChaptersNoUsxChange()
+        {
+            var chapterDeltas = new[] { new ChapterDelta(1, 0, true, new Delta()) };
+
+            var mapper = new DeltaUsxMapper(_mapperGuidService);
+
+            // The USX here has chapters that are not in ChapterDeltas.
+            XDocument input = Usx("PHM",
+                Chapter("1"),
+                Para("p",
+                    Verse("1"),
+                    "Verse text."), Chapter("2"),
+                Para("p",
+                    Verse("1"),
+                    "Verse text."));
+
+            XDocument newUsxDoc = mapper.ToUsx(input, chapterDeltas);
+
+            XDocument expected = input;
+            Assert.IsTrue(XNode.DeepEquals(newUsxDoc, expected));
+        }
+
+        [Test]
         public void ToUsx_BlankLine()
         {
             var chapterDelta = new ChapterDelta(1, 3, true, Delta.New()
