@@ -32,12 +32,13 @@ namespace PTDDCloneAll
     {
         const string CLONE = "clone";
         const string CLONE_AND_MOVE_OLD = "cloneandmoveold";
+        const string CLONE_SILENT = "clonesilent";
         const string INSPECT = "inspect";
 
         public static async Task Main(string[] args)
         {
             string modeEnv = Environment.GetEnvironmentVariable("PTDDCLONEALL_MODE");
-            string mode = modeEnv == CLONE || modeEnv == CLONE_AND_MOVE_OLD ? modeEnv : INSPECT;
+            string mode = modeEnv == CLONE || modeEnv == CLONE_AND_MOVE_OLD || modeEnv == CLONE_SILENT ? modeEnv : INSPECT;
             Log($"PTDDCloneAll starting. Migration mode: {mode}");
             string sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
             Directory.SetCurrentDirectory(sfAppDir);
@@ -73,7 +74,7 @@ namespace PTDDCloneAll
             IParatextService paratextService = webHost.Services.GetService<IParatextService>();
             IRepository<UserSecret> userSecretRepo = webHost.Services.GetService<IRepository<UserSecret>>();
             string syncDir = Path.Combine(siteOptions.Value.SiteDir, "sync");
-            bool doClone = mode == CLONE || mode == CLONE_AND_MOVE_OLD;
+            bool doClone = mode == CLONE || mode == CLONE_AND_MOVE_OLD || mode == CLONE_SILENT;
 
             string syncDirOld = Path.Combine(siteOptions.Value.SiteDir, "sync_old");
             if (mode == CLONE_AND_MOVE_OLD)
@@ -105,8 +106,9 @@ namespace PTDDCloneAll
                                 // Increment the queued count such as in SyncService
                                 op.Inc(pd => pd.Sync.QueuedCount);
                             });
+                            bool silent = mode == CLONE_SILENT;
                             // Clone the paratext project and update the SF database with the project data
-                            await CloneAndSyncFromParatext(webHost, proj, userId, syncDir);
+                            await CloneAndSyncFromParatext(webHost, proj, userId, syncDir, silent);
 
                             if (mode == CLONE_AND_MOVE_OLD)
                             {
@@ -132,21 +134,33 @@ namespace PTDDCloneAll
         /// Clone Paratext project data into the SF projects sync folder. Then synchronize existing books
         /// and notes in project.
         /// </summary>
-        public static async Task CloneAndSyncFromParatext(IWebHost webHost, SFProject proj, string userId, string syncDir)
+        public static async Task CloneAndSyncFromParatext(IWebHost webHost, SFProject proj, string userId,
+            string syncDir, bool silent)
         {
+            Log($"Cloning {proj.Name} ({proj.Id}) as SF user {userId}");
+            string existingCloneDir = Path.Combine(syncDir, proj.ParatextId);
+            // If the project directory already exists, no need to sync the project
+            if (Directory.Exists(existingCloneDir))
+            {
+                Log("The project has already been cloned. Skipping...");
+                return;
+            }
             try
             {
-                Log($"Cloning {proj.Name} ({proj.Id}) as SF user {userId}");
                 PTDDSyncRunner syncRunner = webHost.Services.GetService<PTDDSyncRunner>();
-                await syncRunner.RunAsync(proj.Id, userId, false);
+                await syncRunner.RunAsync(proj.Id, userId, false, silent);
                 Log($"{proj.Name} - Succeeded");
+                if (silent)
+                {
+                    Log($"Deleting cloned repository for {proj.Name}");
+                    Directory.Delete(existingCloneDir, true);
+                }
             }
             catch (Exception e)
             {
                 Log($"There was a problem cloning the project.{Environment.NewLine}Exception is: {e}");
-                string partialCloneDir = Path.Combine(syncDir, proj.ParatextId);
-                if (Directory.Exists(partialCloneDir))
-                    Directory.Delete(partialCloneDir);
+                if (Directory.Exists(existingCloneDir))
+                    Directory.Delete(existingCloneDir, true);
                 throw;
             }
         }
