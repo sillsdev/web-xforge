@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
 using System.Xml.Schema;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Realtime.RichText;
 
@@ -32,6 +33,7 @@ namespace SIL.XForge.Scripture.Services
         };
 
         private IGuidService GuidService;
+        private ILogger<DeltaUsxMapper> Logger;
 
         private class ParseState
         {
@@ -59,9 +61,10 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public DeltaUsxMapper(IGuidService guidService)
+        public DeltaUsxMapper(IGuidService guidService, ILogger<DeltaUsxMapper> logger)
         {
             GuidService = guidService;
+            Logger = logger;
         }
 
         /// <summary>
@@ -433,6 +436,12 @@ namespace SIL.XForge.Scripture.Services
             if (chapterDeltaArray.Length == 1 && chapterDeltaArray[0]?.Delta.Ops.Count == 0)
             {
                 // Book with no chapters
+                bool usxHasChapters = oldUsxDoc.Root.Nodes().Any((XNode node) => IsElement(node, "chapter"));
+                if (usxHasChapters)
+                {
+                    Logger.LogWarning("ToUsx() received a chapterDeltas with no chapters, and USX with chapters. "
+                        + "Possibly corrupt data in SF DB?");
+                }
                 return oldUsxDoc;
             }
             int i = 0;
