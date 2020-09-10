@@ -34,6 +34,7 @@ namespace SIL.XForge.Scripture.Services
 
         private IGuidService GuidService;
         private ILogger<DeltaUsxMapper> Logger;
+        private readonly IExceptionHandler ExceptionHandler;
 
         private class ParseState
         {
@@ -61,10 +62,12 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public DeltaUsxMapper(IGuidService guidService, ILogger<DeltaUsxMapper> logger)
+        public DeltaUsxMapper(IGuidService guidService, ILogger<DeltaUsxMapper> logger,
+            IExceptionHandler exceptionHandler)
         {
             GuidService = guidService;
             Logger = logger;
+            ExceptionHandler = exceptionHandler;
         }
 
         /// <summary>
@@ -438,12 +441,20 @@ namespace SIL.XForge.Scripture.Services
             {
                 if (chapterDeltaArray.Length == 1 && chapterDeltaArray[0]?.Delta.Ops.Count == 0)
                 {
-                    // Book with no chapters
-                    bool usxHasChapters = oldUsxDoc.Root.Nodes().Any((XNode node) => IsElement(node, "chapter"));
-                    if (usxHasChapters)
+                    int usxChapterCount = oldUsxDoc.Root.Nodes().Count((XNode node) => IsElement(node, "chapter"));
+                    // The chapterDeltas indicate this may be a book in the SF DB with no chapters, but the USX
+                    // indicates that we should have known there were chapters and previously recorded them in
+                    // the SF DB.
+                    if (usxChapterCount > 0)
                     {
-                        Logger.LogWarning("ToUsx() received a chapterDeltas with no chapters, and USX with chapters. "
-                            + "Possibly corrupt data in SF DB?");
+                        string errorExplanation = "ToUsx() received a chapterDeltas with no real chapters "
+                            + $"(just one 'chapter' with a Delta.Ops.Count of 0), and USX with {usxChapterCount} "
+                            + "chapters. This may indicate corrupt data in the SF DB. Handling by ignoring "
+                            + "chapterDeltas and returning the input USX.";
+                        Logger.LogWarning(errorExplanation);
+                        // Report to bugsnag, but don't throw.
+                        var report = new ArgumentException(errorExplanation);
+                        ExceptionHandler.ReportException(report);
                     }
                     return oldUsxDoc;
                 }
@@ -484,14 +495,14 @@ namespace SIL.XForge.Scripture.Services
             catch (Exception e)
             {
                 int usxChapterCount = oldUsxDoc.Root.Nodes().Count((XNode node) => IsElement(node, "chapter"));
-
-                Logger.LogWarning($"ToUsx() had a problem ({e.Message}). Other SF DB corruption can cause "
+                string errorExplanation = $"ToUsx() had a problem ({e.Message}). SF DB corruption can cause "
                     + "IndexOutOfRangeException to be thrown here. Rethrowing. Diagnostic info: "
                     + $"chapterDeltas length is {chapterDeltaArray.Length}, "
-                    + $"The first chapterDeltas Delta.Ops.Count is {chapterDeltaArray.ElementAtOrDefault(0)?.Delta.Ops.Count}, "
+                    + $"The first chapterDeltas Delta.Ops.Count is "
+                    + $"{chapterDeltaArray.ElementAtOrDefault(0)?.Delta.Ops.Count}, "
                     + $"The input oldUsxDoc has this many chapter elements: {usxChapterCount}, "
-                    + $"i is {i}, isFirstChapterFound is {isFirstChapterFound}.");
-                throw;
+                    + $"i is {i}, isFirstChapterFound is {isFirstChapterFound}.";
+                throw new Exception(errorExplanation, e);
             }
         }
 
