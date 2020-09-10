@@ -56,7 +56,7 @@ namespace PtdaSyncAll
 
             services.AddSFMachine(Configuration);
 
-            services.AddTransient<IParatextSyncRunner, ParatextSyncRunner>();
+            services.AddTransient<IParatextSyncRunner, PtdaSyncRunner>();
             services.AddSingleton<IProgramLogger>((IServiceProvider serviceProvider) =>
             {
                 using (Process thisProcess = Process.GetCurrentProcess())
