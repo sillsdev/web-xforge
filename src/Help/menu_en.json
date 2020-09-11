@@ -1,0 +1,14 @@
+{
+  "help_menu": {
+    "overview": "Overview",
+    "concepts": "Concepts",
+    "tasks": "Tasks",
+    "tasks_menu": {
+      "administrator_tasks": "Administrator tasks",
+      "basic_tasks": "Basic tasks",
+      "community_checking_tasks": "Community Checking tasks",
+      "translate_tasks": "Translate tasks"
+    },
+    "user_interface": "User Interface"
+  }
+}
