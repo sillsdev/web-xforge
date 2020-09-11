@@ -69,11 +69,19 @@ export class AuthService {
     private readonly pwaService: PwaService,
     private readonly noticeService: NoticeService
   ) {
-    // listen for changes to the auth state
-    // this indicates that a user has logged in/out on a different tab/window
-    // when localStorage is cleared event.key is null
+    // Listen for changes to the auth state. If the user logs out in another tab/window, redirect to the home page.
+    // When localStorage is cleared event.key is null. The logic below may be more specific than necessary, but we can't
+    // assume very much about the browser's implementation and under what conditions the event will fire.
+    // Safari 13.1 (but not 12.1 or most other browsers) fires the event even when the change occurred in this tab.
+    // This issue has been reported in Webkit's bug tracker: https://bugs.webkit.org/show_bug.cgi?id=210512
     this.localSettings.remoteChanges$
-      .pipe(filter(event => event.key === USER_ID_SETTING || event.key === null))
+      .pipe(
+        filter(
+          event =>
+            event.key === null ||
+            (event.key === USER_ID_SETTING && event.oldValue != null && event.oldValue !== event.newValue)
+        )
+      )
       .subscribe(() => this.locationService.go('/'));
 
     this.tryLogInPromise = this.tryLogIn();
