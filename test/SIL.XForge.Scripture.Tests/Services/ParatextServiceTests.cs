@@ -274,7 +274,8 @@ namespace SIL.XForge.Scripture.Services
 
             TextData data = new TextData(new Delta(new[] { token1, token2, token3, token4, token5 }));
             XDocument oldDocUsx = XDocument.Parse(ruthBookUsx);
-            DeltaUsxMapper mapper = new DeltaUsxMapper(new TestGuidService());
+            DeltaUsxMapper mapper = new DeltaUsxMapper(new TestGuidService(), Substitute.For<ILogger<DeltaUsxMapper>>(),
+                Substitute.For<IExceptionHandler>());
             var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
             env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx.Root.ToString());
             env.ProjectScrText.FileManager.Received(1)

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
 using System.Xml.Schema;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Realtime.RichText;
 
@@ -32,6 +33,8 @@ namespace SIL.XForge.Scripture.Services
         };
 
         private IGuidService GuidService;
+        private ILogger<DeltaUsxMapper> Logger;
+        private readonly IExceptionHandler ExceptionHandler;
 
         private class ParseState
         {
@@ -59,9 +62,12 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public DeltaUsxMapper(IGuidService guidService)
+        public DeltaUsxMapper(IGuidService guidService, ILogger<DeltaUsxMapper> logger,
+            IExceptionHandler exceptionHandler)
         {
             GuidService = guidService;
+            Logger = logger;
+            ExceptionHandler = exceptionHandler;
         }
 
         /// <summary>
@@ -419,6 +425,11 @@ namespace SIL.XForge.Scripture.Services
             return attributes;
         }
 
+        /// <summary>
+        /// It may be that this method is taking USX, leaving alone all chapters not specified and valid in
+        /// chapterDeltas, and then replacing all chapters in the USX, that are in chapterDeltas and valid, with
+        /// the data from the chapterDeltas.
+        /// </summary>
         public XDocument ToUsx(XDocument oldUsxDoc, IEnumerable<ChapterDelta> chapterDeltas)
         {
             var newUsxDoc = new XDocument(oldUsxDoc);
@@ -426,38 +437,73 @@ namespace SIL.XForge.Scripture.Services
             bool isFirstChapterFound = false;
             ChapterDelta[] chapterDeltaArray = chapterDeltas.ToArray();
             int i = 0;
-            foreach (XNode curNode in newUsxDoc.Root.Nodes().ToArray())
+            try
             {
-                if (IsElement(curNode, "chapter"))
+                if (chapterDeltaArray.Length == 1 && chapterDeltaArray[0]?.Delta.Ops.Count == 0)
                 {
-                    if (isFirstChapterFound)
+                    int usxChapterCount = oldUsxDoc.Root.Nodes().Count((XNode node) => IsElement(node, "chapter"));
+                    // The chapterDeltas indicate this may be a book in the SF DB with no chapters, but the USX
+                    // indicates that we should have known there were chapters and previously recorded them in
+                    // the SF DB.
+                    if (usxChapterCount > 0)
                     {
-                        ChapterDelta chapterDelta = chapterDeltaArray[i];
-                        if (chapterDelta.Number == curChapter)
+                        string errorExplanation = "ToUsx() received a chapterDeltas with no real chapters "
+                            + $"(just one 'chapter' with a Delta.Ops.Count of 0), and USX with {usxChapterCount} "
+                            + "chapters. This may indicate corrupt data in the SF DB. Handling by ignoring "
+                            + "chapterDeltas and returning the input USX.";
+                        Logger.LogWarning(errorExplanation);
+                        // Report to bugsnag, but don't throw.
+                        var report = new ArgumentException(errorExplanation);
+                        ExceptionHandler.ReportException(report);
+                    }
+                    return oldUsxDoc;
+                }
+                foreach (XNode curNode in newUsxDoc.Root.Nodes().ToArray())
+                {
+                    if (IsElement(curNode, "chapter"))
+                    {
+                        if (isFirstChapterFound)
                         {
-                            if (chapterDelta.IsValid)
-                                curNode.AddBeforeSelf(ProcessDelta(chapterDelta.Delta));
-                            i++;
+                            ChapterDelta chapterDelta = chapterDeltaArray[i];
+                            if (chapterDelta.Number == curChapter)
+                            {
+                                if (chapterDelta.IsValid)
+                                    curNode.AddBeforeSelf(ProcessDelta(chapterDelta.Delta));
+                                i++;
+                            }
+                            var numberStr = (string)((XElement)curNode).Attribute("number");
+                            if (int.TryParse(numberStr, out int number))
+                                curChapter = number;
                         }
-                        var numberStr = (string)((XElement)curNode).Attribute("number");
-                        if (int.TryParse(numberStr, out int number))
-                            curChapter = number;
+                        else
+                        {
+                            isFirstChapterFound = true;
+                        }
                     }
-                    else
-                    {
-                        isFirstChapterFound = true;
-                    }
-                }
-                if (chapterDeltaArray[i].Number == curChapter && chapterDeltaArray[i].IsValid
-                    && !IsElement(curNode, "book"))
-                {
-                    curNode.Remove();
-                }
-            }
 
-            if (chapterDeltaArray[i].Number == curChapter && chapterDeltaArray[i].IsValid)
-                newUsxDoc.Root.Add(ProcessDelta(chapterDeltaArray[i].Delta));
-            return newUsxDoc;
+                    if (chapterDeltaArray[i].Number == curChapter && chapterDeltaArray[i].IsValid
+                        && !IsElement(curNode, "book"))
+                    {
+                        curNode.Remove();
+                    }
+                }
+
+                if (chapterDeltaArray[i].Number == curChapter && chapterDeltaArray[i].IsValid)
+                    newUsxDoc.Root.Add(ProcessDelta(chapterDeltaArray[i].Delta));
+                return newUsxDoc;
+            }
+            catch (Exception e)
+            {
+                int usxChapterCount = oldUsxDoc.Root.Nodes().Count((XNode node) => IsElement(node, "chapter"));
+                string errorExplanation = $"ToUsx() had a problem ({e.Message}). SF DB corruption can cause "
+                    + "IndexOutOfRangeException to be thrown here. Rethrowing. Diagnostic info: "
+                    + $"chapterDeltas length is {chapterDeltaArray.Length}, "
+                    + $"The first chapterDeltas Delta.Ops.Count is "
+                    + $"{chapterDeltaArray.ElementAtOrDefault(0)?.Delta.Ops.Count}, "
+                    + $"The input oldUsxDoc has this many chapter elements: {usxChapterCount}, "
+                    + $"i is {i}, isFirstChapterFound is {isFirstChapterFound}.";
+                throw new Exception(errorExplanation, e);
+            }
         }
 
         private IEnumerable<XNode> ProcessDelta(Delta delta)
