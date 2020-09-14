@@ -30,15 +30,10 @@ namespace PTDDCloneAll
 {
     public class Program
     {
-        const string CLONE = "clone";
-        const string CLONE_AND_MOVE_OLD = "cloneandmoveold";
-        const string CLONE_SILENT = "clonesilent";
-        const string INSPECT = "inspect";
-
         public static async Task Main(string[] args)
         {
             string modeEnv = Environment.GetEnvironmentVariable("PTDDCLONEALL_MODE");
-            string mode = modeEnv == CLONE || modeEnv == CLONE_AND_MOVE_OLD || modeEnv == CLONE_SILENT ? modeEnv : INSPECT;
+            string mode = CloneAllService.GetMode(modeEnv);
             Log($"PTDDCloneAll starting. Migration mode: {mode}");
             string sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
             Directory.SetCurrentDirectory(sfAppDir);
@@ -54,115 +49,41 @@ namespace PTDDCloneAll
                     + " part. Maybe the SF server is running and needs shut down? Rethrowing.");
                 throw;
             }
-            await CloneSFProjects(webHost, mode);
+            await SelectProjectsAndClone(webHost, mode);
             await webHost.StopAsync();
             Log("Clone all projects - Completed");
         }
 
-        /// <summary>
-        /// Iterates through all SF projects on the server and identifies one administrator user on the project.
-        /// Using the administrator user's secrets, perform a send/receive with the Paratext server. Effectively,
-        /// this clones the project to the Scripture Forge server.
-        /// Text documents in the SF DB for Scripture texts are deleted and recreated from the up-to-date Paratext project data after
-        /// cloning. This will overwrite any un-synchronized data on SF.
-        /// </summary>
-        public static async Task CloneSFProjects(IWebHost webHost, string mode)
+        /// <summary> Selects the SF projects to clone and clones the projects. </summary>
+        public static async Task SelectProjectsAndClone(IWebHost webHost, string mode)
         {
-            IRealtimeService realtimeService = webHost.Services.GetService<IRealtimeService>();
-            IQueryable<SFProject> allSFProjects = realtimeService.QuerySnapshots<SFProject>();
-            IOptions<SiteOptions> siteOptions = webHost.Services.GetService<IOptions<SiteOptions>>();
-            IParatextService paratextService = webHost.Services.GetService<IParatextService>();
-            IRepository<UserSecret> userSecretRepo = webHost.Services.GetService<IRepository<UserSecret>>();
-            string syncDir = Path.Combine(siteOptions.Value.SiteDir, "sync");
-            bool doClone = mode == CLONE || mode == CLONE_AND_MOVE_OLD || mode == CLONE_SILENT;
-
-            string syncDirOld = Path.Combine(siteOptions.Value.SiteDir, "sync_old");
-            if (mode == CLONE_AND_MOVE_OLD)
-            {
-                if (!Directory.Exists(syncDirOld))
-                    Directory.CreateDirectory(syncDirOld);
-            }
-
-            IConnection connection = await realtimeService.ConnectAsync();
-            // Get the paratext project ID and admin user for all SF Projects
-            foreach (SFProject proj in allSFProjects)
-            {
-                bool foundAdmin = false;
-                foreach (string userId in proj.UserRoles.Keys)
-                {
-                    if (proj.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Administrator)
-                    {
-                        foundAdmin = true;
-                        UserSecret userSecret = userSecretRepo.Query().FirstOrDefault((UserSecret us) => us.Id == userId);
-                        string ptUsername = paratextService.GetParatextUsername(userSecret);
-                        Log($"Project administrator identified on {proj.Name}: {ptUsername} ({userId})");
-                        if (!doClone)
-                            break;
-                        try
-                        {
-                            var projectDoc = await connection.FetchAsync<SFProject>(proj.Id);
-                            await projectDoc.SubmitJson0OpAsync(op =>
-                            {
-                                // Increment the queued count such as in SyncService
-                                op.Inc(pd => pd.Sync.QueuedCount);
-                            });
-                            bool silent = mode == CLONE_SILENT;
-                            // Clone the paratext project and update the SF database with the project data
-                            await CloneAndSyncFromParatext(webHost, proj, userId, syncDir, silent);
-
-                            if (mode == CLONE_AND_MOVE_OLD)
-                            {
-                                string projectDir = Path.Combine(syncDir, proj.Id);
-                                string projectDirOld = Path.Combine(syncDirOld, proj.Id);
-                                Directory.Move(projectDir, projectDirOld);
-                            }
-                            break;
-                        }
-                        catch (Exception e)
-                        {
-                            Log($"Unable to clone {proj.Name} ({proj.Id}) as user: {userId}{Environment.NewLine}" +
-                                $"Error was: {e}");
-                        }
-                    }
-                }
-                if (!foundAdmin)
-                    Log($"ERROR: Unable to identify a project administrator on {proj.Name}");
-            }
-        }
-
-        /// <summary>
-        /// Clone Paratext project data into the SF projects sync folder. Then synchronize existing books
-        /// and notes in project.
-        /// </summary>
-        public static async Task CloneAndSyncFromParatext(IWebHost webHost, SFProject proj, string userId,
-            string syncDir, bool silent)
-        {
-            Log($"Cloning {proj.Name} ({proj.Id}) as SF user {userId}");
-            string existingCloneDir = Path.Combine(syncDir, proj.ParatextId);
-            // If the project directory already exists, no need to sync the project
-            if (Directory.Exists(existingCloneDir))
-            {
-                Log("The project has already been cloned. Skipping...");
-                return;
-            }
+            string cloneSubset = Environment.GetEnvironmentVariable("CLONE_SET");
+            HashSet<string> projectSubset = null;
             try
             {
-                PTDDSyncRunner syncRunner = webHost.Services.GetService<PTDDSyncRunner>();
-                await syncRunner.RunAsync(proj.Id, userId, false, silent);
-                Log($"{proj.Name} - Succeeded");
-                if (silent)
+                if (cloneSubset != null)
                 {
-                    Log($"Deleting cloned repository for {proj.Name}");
-                    Directory.Delete(existingCloneDir, true);
+                    projectSubset = new HashSet<string>(cloneSubset.Split(' '));
                 }
             }
-            catch (Exception e)
+            catch
             {
-                Log($"There was a problem cloning the project.{Environment.NewLine}Exception is: {e}");
-                if (Directory.Exists(existingCloneDir))
-                    Directory.Delete(existingCloneDir, true);
+                Log($"There was a problem parsing the SYNC_SET SF project ids "
+                    + $"environment variable. Rethrowing.");
                 throw;
             }
+            IRealtimeService realtimeService = webHost.Services.GetService<IRealtimeService>();
+            List<SFProject> projectsToClone = realtimeService.QuerySnapshots<SFProject>().ToList<SFProject>();
+            if (projectSubset != null)
+            {
+                projectsToClone.RemoveAll((SFProject sfProject) => !projectSubset.Contains(sfProject.Id));
+                string ids = string.Join(' ', projectsToClone.Select((SFProject sfProject) => sfProject.Id));
+                int count = projectsToClone.Count;
+                Log($"Only working on the subset of projects (count {count}) with these SF project ids: {ids}");
+            }
+
+            ICloneAllService cloneTool = webHost.Services.GetService<ICloneAllService>();
+            await cloneTool.CloneSFProjects(mode, projectsToClone);
         }
 
         public static void Log(string message)

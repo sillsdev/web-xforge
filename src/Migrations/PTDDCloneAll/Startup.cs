@@ -62,7 +62,8 @@ namespace PTDDCloneAll
                 });
             services.AddLocalization(options => options.ResourcesPath = "Resources");
             services.AddSFMachine(Configuration);
-            services.AddTransient<PTDDSyncRunner>();
+            services.AddTransient<IPTDDSyncRunner, PTDDSyncRunner>();
+            services.AddSingleton<ICloneAllService, CloneAllService>();
 
             containerBuilder.Populate(services);
             ApplicationContainer = containerBuilder.Build();
