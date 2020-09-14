@@ -90,6 +90,14 @@ export class FileService extends SubscriptionDisposable {
     });
   }
 
+  async get(dataCollection: string, dataId: string): Promise<FileOfflineData | undefined> {
+    return await this.offlineStore.get<FileOfflineData>(dataCollection, dataId);
+  }
+
+  async getAll(dataCollection: string): Promise<FileOfflineData[]> {
+    return await this.offlineStore.getAll<FileOfflineData>(dataCollection);
+  }
+
   /**
    * Uploads a file to the file server, or if offline, stores the file in IndexedDB and uploads next time there is a
    * valid connection.

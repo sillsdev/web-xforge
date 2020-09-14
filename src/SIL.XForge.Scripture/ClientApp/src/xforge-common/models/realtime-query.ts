@@ -18,7 +18,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private readonly _remoteChanges$ = new Subject<void>();
   private readonly _ready$ = new Subject<void>();
   private readonly docSubscriptions = new Map<string, Subscription>();
-  private readonly _remoteDocChanges$ = new Subject<void>();
+  private readonly _remoteDocChanges$ = new Subject<any>();
 
   constructor(private readonly realtimeService: RealtimeService, public readonly adapter: RealtimeQueryAdapter) {
     this.adapter.ready$.pipe(takeUntil(this.unsubscribe$)).subscribe(() => this.onReady());
@@ -59,8 +59,8 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     return this._ready$;
   }
 
-  get remoteDocChanges$(): Observable<void> {
-    return this._remoteDocChanges$;
+  get remoteDocChanges$(): Observable<any> {
+    return this._remoteDocChanges$.asObservable();
   }
 
   get ready(): boolean {
@@ -183,7 +183,9 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
       const newDoc = this.realtimeService.get<T>(this.collection, docId);
       promises.push(newDoc.onAddedToSubscribeQuery());
       newDocs.push(newDoc);
-      const docSubscription = newDoc.remoteChanges$.subscribe(this._remoteDocChanges$);
+      const docSubscription = newDoc.remoteChanges$.subscribe(() => {
+        this._remoteDocChanges$.next(newDoc);
+      });
       this.docSubscriptions.set(newDoc.id, docSubscription);
     }
     await Promise.all(promises);

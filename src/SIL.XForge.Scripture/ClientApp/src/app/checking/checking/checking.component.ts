@@ -350,16 +350,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (this.questionsRemoteChangesSub != null) {
           this.questionsRemoteChangesSub.unsubscribe();
         }
-        this.questionsRemoteChangesSub = this.subscribe(
-          merge(this.questionsQuery.remoteDocChanges$, this.questionsQuery.ready$),
-          () => {
-            if (this.pwaService.isOnline) {
-              for (const qd of this.questionsQuery!.docs) {
-                qd.updateFileCache();
-              }
+        this.questionsRemoteChangesSub = this.subscribe(this.questionsQuery.remoteDocChanges$, (qd: QuestionDoc) => {
+          if (this.pwaService.isOnline) {
+            qd.updateFileCache();
+            if (qd === this.questionsPanel!.activeQuestionDoc) {
+              qd.updateAnswerFileCache();
             }
           }
-        );
+        });
         if (this.questionsSub != null) {
           this.questionsSub.unsubscribe();
         }
@@ -628,6 +626,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
     this.collapseDrawer();
+    if (this.pwaService.isOnline) {
+      questionDoc.updateAnswerFileCache();
+    }
   }
 
   async questionDialog(): Promise<void> {
@@ -819,6 +820,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     } else {
       activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
     }
+    activeQuestionDoc.updateAnswerFileCache();
     this.questionsPanel.updateElementsRead(activeQuestionDoc);
     this.refreshSummary();
   }
