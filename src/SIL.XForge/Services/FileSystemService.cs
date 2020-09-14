@@ -40,6 +40,11 @@ namespace SIL.XForge.Services
             return Directory.Exists(path);
         }
 
+        public void MoveDirectory(string sourceDirPath, string targetDirPath)
+        {
+            Directory.Move(sourceDirPath, targetDirPath);
+        }
+
         public void DeleteDirectory(string path)
         {
             Directory.Delete(path, true);
