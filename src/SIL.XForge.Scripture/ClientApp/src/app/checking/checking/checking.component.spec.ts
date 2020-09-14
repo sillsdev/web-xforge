@@ -29,7 +29,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of } from 'rxjs';
-import { anyString, anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anyString, anything, deepEqual, instance, mock, reset, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { FileService } from 'xforge-common/file.service';
@@ -249,7 +249,7 @@ describe('CheckingComponent', () => {
     it('questions are displaying and audio is cached', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anything())).times(
-        45
+        30
       );
       // Question 5 has been stored as the last question to start at
       expect(env.component.questionsPanel!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
@@ -329,14 +329,14 @@ describe('CheckingComponent', () => {
       const questionId = 'q15Id';
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
-      ).times(4);
+      ).times(3);
       env.clickButton(env.editQuestionButton);
       verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).never();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       tick(env.questionReadTimer);
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
-      ).times(5);
+      ).times(4);
       expect().nothing();
     }));
 
@@ -352,11 +352,13 @@ describe('CheckingComponent', () => {
       expect(env.audioPlayerOnQuestion).not.toBeNull();
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
-      ).times(4);
+      ).times(3);
       env.clickButton(env.editQuestionButton);
       env.waitForSliderUpdate();
       expect(env.audioPlayerOnQuestion).toBeNull();
-      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, undefined)).once();
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, undefined)).times(
+        5
+      );
     }));
 
     it('user must confirm question answered dialog before question dialog appears', fakeAsync(() => {
@@ -445,19 +447,19 @@ describe('CheckingComponent', () => {
       expect(env.audioPlayerOnQuestion).toBeNull();
       env.simulateRemoteEditQuestionAudio('filename.mp3');
       expect(env.audioPlayerOnQuestion).not.toBeNull();
-      verify(
-        mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', 'filename.mp3')
-      ).twice();
-      resetCalls(mockedFileService);
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', 'filename.mp3')).times(
+        8
+      );
+      reset(mockedFileService);
       env.simulateRemoteEditQuestionAudio(undefined);
       expect(env.audioPlayerOnQuestion).toBeNull();
-      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', undefined)).once();
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', undefined)).times(7);
       env.selectQuestion(2);
       env.simulateRemoteEditQuestionAudio('filename2.mp3');
       env.waitForSliderUpdate();
       verify(
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q2Id', 'filename2.mp3')
-      ).twice();
+      ).times(8);
     }));
 
     it('question added to another book changes the route to that book and activates the question', fakeAsync(() => {
@@ -1278,6 +1280,36 @@ describe('CheckingComponent', () => {
         expect(env.getEditCommentButton(0, 0)).toBeNull();
       }));
     });
+
+    it('update answer audio cache when activating a question', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      const questionDoc = spy(env.getQuestionDoc('q5Id'));
+      verify(questionDoc!.updateAnswerFileCache()).never();
+      env.selectQuestion(5);
+      verify(questionDoc!.updateAnswerFileCache()).once();
+      expect().nothing();
+    }));
+
+    it('update answer audio cache after save', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      const questionDoc = spy(env.getQuestionDoc('q6Id'));
+      env.selectQuestion(6);
+      env.clickButton(env.getAnswerEditButton(0));
+      env.waitForSliderUpdate();
+      env.clickButton(env.saveAnswerButton);
+      env.waitForSliderUpdate();
+      verify(questionDoc!.updateAnswerFileCache()).twice();
+      expect().nothing();
+    }));
+
+    it('update answer audio cache on remote update to question', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      const questionDoc = spy(env.getQuestionDoc('q6Id'));
+      env.selectQuestion(6);
+      env.simulateRemoteEditAnswer(0, 'Question 6 edited answer');
+      verify(questionDoc!.updateAnswerFileCache()).twice();
+      expect().nothing();
+    }));
   });
 
   describe('Text', () => {
@@ -1308,7 +1340,7 @@ describe('CheckingComponent', () => {
 
     it('adds question count attribute to element', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
-      const segment = env.quillEditor.querySelector('usx-segment[data-segment=verse_1_1')!;
+      const segment = env.quillEditor.querySelector('usx-segment[data-segment=verse_1_1]')!;
       expect(segment.hasAttribute('data-question-count')).toBe(true);
       expect(segment.getAttribute('data-question-count')).toBe('13');
     }));
@@ -1451,6 +1483,7 @@ class TestEnvironment {
   };
 
   constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
+    reset(mockedFileService);
     this.setRouteSnapshot(projectBookRoute);
     this.setupDefaultProjectData(user);
     when(mockedUserService.editDisplayName(true)).thenResolve();
