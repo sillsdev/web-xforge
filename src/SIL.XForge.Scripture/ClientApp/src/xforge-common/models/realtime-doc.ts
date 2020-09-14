@@ -172,32 +172,12 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     return Promise.resolve();
   }
 
-  private async loadOfflineData(): Promise<void> {
-    if (this.loadOfflineDataPromise == null) {
-      this.loadOfflineDataPromise = this.loadFromOfflineStore();
-    }
-    return this.loadOfflineDataPromise;
-  }
-
-  private async loadFromOfflineStore(): Promise<void> {
-    const offlineData = await this.realtimeService.offlineStore.get<RealtimeOfflineData>(this.collection, this.id);
-    if (offlineData != null) {
-      if (offlineData.v == null) {
-        this.adapter.create(offlineData.data, offlineData.type).then(() => this.updateOfflineData(true));
-      } else {
-        await this.adapter.ingestSnapshot(offlineData);
-        this.offlineSnapshotVersion = this.adapter.version;
-        this.adapter.updatePendingOps(offlineData.pendingOps);
-      }
-    }
-  }
-
   /**
    * Updates offline storage with the current state of the realtime data.
    *
    * @param {boolean} [force=false] Indicates whether force the update to occur even if not subscribed.
    */
-  private async updateOfflineData(force: boolean = false): Promise<void> {
+  protected async updateOfflineData(force: boolean = false): Promise<void> {
     if (this.adapter.type == null) {
       return;
     }
@@ -222,6 +202,26 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       pendingOps
     };
     await this.realtimeService.offlineStore.put(this.collection, offlineData);
+  }
+
+  private async loadOfflineData(): Promise<void> {
+    if (this.loadOfflineDataPromise == null) {
+      this.loadOfflineDataPromise = this.loadFromOfflineStore();
+    }
+    return this.loadOfflineDataPromise;
+  }
+
+  private async loadFromOfflineStore(): Promise<void> {
+    const offlineData = await this.realtimeService.offlineStore.get<RealtimeOfflineData>(this.collection, this.id);
+    if (offlineData != null) {
+      if (offlineData.v == null) {
+        this.adapter.create(offlineData.data, offlineData.type).then(() => this.updateOfflineData(true));
+      } else {
+        await this.adapter.ingestSnapshot(offlineData);
+        this.offlineSnapshotVersion = this.adapter.version;
+        this.adapter.updatePendingOps(offlineData.pendingOps);
+      }
+    }
   }
 
   private async subscribeToChanges(): Promise<void> {
