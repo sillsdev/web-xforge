@@ -329,14 +329,14 @@ export class AuthService {
     });
   }
 
-  private checkSession(retryTimeout: boolean = false): Promise<auth0.Auth0DecodedHash | null> {
+  private checkSession(retryUponTimeout: boolean = true): Promise<auth0.Auth0DecodedHash | null> {
     return new Promise<auth0.Auth0DecodedHash | null>((resolve, reject) => {
-      this.auth0.checkSession({ state: JSON.stringify({}) }, async (err, authResult) => {
+      this.auth0.checkSession({ state: JSON.stringify({}) }, (err, authResult) => {
         if (err != null) {
           if (err.code === 'login_required') {
             resolve(null);
-          } else if (!retryTimeout && err.code === 'timeout') {
-            this.checkSession(true)
+          } else if (retryUponTimeout && err.code === 'timeout') {
+            this.checkSession(false)
               .then(retryAuthResult => {
                 resolve(retryAuthResult);
               })
