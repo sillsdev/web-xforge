@@ -16,6 +16,7 @@ namespace SIL.XForge.Services
     public class ProjectServiceTests
     {
         private const string Project01 = "project01";
+        private const string Project02 = "project02";
         private const string User01 = "user01";
         private const string User02 = "user02";
         private const string User03 = "user03";
@@ -147,6 +148,37 @@ namespace SIL.XForge.Services
                 env.Service.UpdateRoleAsync(User02, SystemRole.User, Project01, TestProjectRole.Administrator));
         }
 
+        [Test]
+        public void SetSyncDisabled_RequiresSysAdmin()
+        {
+            var env = new TestEnvironment();
+            // SUT 1
+            Assert.ThrowsAsync<ForbiddenException>(async () =>
+                await env.Service.SetSyncDisabledAsync(User03, SystemRole.User, Project01, false));
+            // SUT 2
+            Assert.ThrowsAsync<ForbiddenException>(async () =>
+                await env.Service.SetSyncDisabledAsync(User03, SystemRole.None, Project01, false));
+            // SUT 3
+            Assert.DoesNotThrowAsync(async () =>
+                await env.Service.SetSyncDisabledAsync(User03, SystemRole.SystemAdmin, Project01, false));
+        }
+
+        [Test]
+        public async Task SetSyncDisabled_Works()
+        {
+            var env = new TestEnvironment();
+
+            Assert.That(env.GetProject(Project01).SyncDisabled, Is.EqualTo(false));
+            // SUT 1
+            await env.Service.SetSyncDisabledAsync(User01, SystemRole.SystemAdmin, Project01, true);
+            Assert.That(env.GetProject(Project01).SyncDisabled, Is.EqualTo(true));
+
+            Assert.That(env.GetProject(Project02).SyncDisabled, Is.EqualTo(true));
+            // SUT 2
+            await env.Service.SetSyncDisabledAsync(User01, SystemRole.SystemAdmin, Project02, false);
+            Assert.That(env.GetProject(Project02).SyncDisabled, Is.EqualTo(false));
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment(bool isResetLinkExpired = false)
@@ -186,7 +218,18 @@ namespace SIL.XForge.Services
                                 { User01, TestProjectRole.Administrator },
                                 { User02, TestProjectRole.Reviewer }
                             }
-                        }
+                        },
+                        new TestProject
+                        {
+                            Id = Project02,
+                            Name = "Project 2",
+                            UserRoles =
+                            {
+                                { User01, TestProjectRole.Administrator },
+                                { User02, TestProjectRole.Reviewer }
+                            },
+                            SyncDisabled = true
+                        },
                     }));
 
                 var siteOptions = Substitute.For<IOptions<SiteOptions>>();

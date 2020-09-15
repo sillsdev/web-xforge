@@ -277,5 +277,22 @@ namespace SIL.XForge.Scripture.Controllers
                 return InvalidParamsError(fe.Message);
             }
         }
+
+        public async Task<IRpcMethodResult> SetSyncDisabled(string projectId, bool isDisabled)
+        {
+            try
+            {
+                await _projectService.SetSyncDisabledAsync(UserId, SystemRole, projectId, isDisabled);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
+        }
     }
 }
