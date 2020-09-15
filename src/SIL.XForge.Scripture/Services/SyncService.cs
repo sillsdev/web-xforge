@@ -3,6 +3,7 @@ using Hangfire;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -25,6 +26,10 @@ namespace SIL.XForge.Scripture.Services
             using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+                if (projectDoc.Data.SyncDisabled)
+                {
+                    throw new ForbiddenException();
+                }
                 await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
             }
             _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(projectId, curUserId, trainEngine));

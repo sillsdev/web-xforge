@@ -124,6 +124,20 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).toBeDefined();
   }));
+
+  it('should explain and disable button when syncDisabled', fakeAsync(() => {
+    const env = new TestEnvironment(true, false, true, true);
+    expect(env.logInButton).toBeNull();
+    expect(env.syncButton.nativeElement.disabled).toBe(true);
+    expect(env.lastSyncDate.textContent).toContain('Last synced on');
+    expect(env.syncDisabledMessage).not.toBeNull();
+  }));
+
+  it('should not explain or disable button when not syncDisabled', fakeAsync(() => {
+    const env = new TestEnvironment(true, false, true, false);
+    expect(env.syncButton.nativeElement.disabled).toBe(false);
+    expect(env.syncDisabledMessage).toBeNull();
+  }));
 });
 
 class TestEnvironment {
@@ -134,7 +148,12 @@ class TestEnvironment {
   private isLoading: boolean = false;
   private isOnline: BehaviorSubject<boolean>;
 
-  constructor(isParatextAccountConnected: boolean = false, isInProgress: boolean = false, isOnline: boolean = true) {
+  constructor(
+    isParatextAccountConnected: boolean = false,
+    isInProgress: boolean = false,
+    isOnline: boolean = true,
+    isSyncDisabled: boolean = false
+  ) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'testProject01' }));
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
@@ -171,6 +190,7 @@ class TestEnvironment {
           lastSyncSuccessful: true,
           dateLastSuccessfulSync: date.toJSON()
         },
+        syncDisabled: isSyncDisabled,
         texts: [],
         userRoles: {}
       }
@@ -208,6 +228,10 @@ class TestEnvironment {
 
   get syncMessage(): HTMLElement {
     return this.fixture.nativeElement.querySelector('#sync-message');
+  }
+
+  get syncDisabledMessage(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('#syncDisabled-message');
   }
 
   get offlineMessage(): HTMLElement {
