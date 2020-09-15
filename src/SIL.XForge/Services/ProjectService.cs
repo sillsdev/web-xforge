@@ -139,6 +139,18 @@ namespace SIL.XForge.Services
                 FileSystemService.DeleteFile(filePath);
         }
 
+        public async Task SetSyncDisabledAsync(string curUserId, string systemRole, string projectId, bool isDisabled)
+        {
+            if (systemRole != SystemRole.SystemAdmin)
+                throw new ForbiddenException();
+
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            {
+                IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
+                await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.SyncDisabled, isDisabled));
+            }
+        }
+
         protected virtual async Task AddUserToProjectAsync(IConnection conn, IDocument<TModel> projectDoc,
             IDocument<User> userDoc, string projectRole, bool removeShareKeys = true)
         {
