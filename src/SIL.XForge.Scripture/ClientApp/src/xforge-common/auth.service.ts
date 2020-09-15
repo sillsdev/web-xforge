@@ -337,12 +337,8 @@ export class AuthService {
             resolve(null);
           } else if (retryUponTimeout && err.code === 'timeout') {
             this.checkSession(false)
-              .then(retryAuthResult => {
-                resolve(retryAuthResult);
-              })
-              .catch(retryError => {
-                reject(retryError);
-              });
+              .then(resolve)
+              .catch(reject);
           } else {
             reject(err);
           }
