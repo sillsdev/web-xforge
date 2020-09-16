@@ -68,7 +68,7 @@ namespace PTDDCloneAll
             }
             catch
             {
-                Log($"There was a problem parsing the SYNC_SET SF project ids "
+                Log($"There was a problem parsing the CLONE_SET SF project ids "
                     + $"environment variable. Rethrowing.");
                 throw;
             }
