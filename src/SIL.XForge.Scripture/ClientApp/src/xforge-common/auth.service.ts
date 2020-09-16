@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { AuthorizeOptions, WebAuth } from 'auth0-js';
+import { Auth0DecodedHash, AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
@@ -57,6 +57,10 @@ export class AuthService {
     scope: 'openid profile email ' + environment.scope,
     audience: environment.audience
   });
+
+  private parsedHashPromise = new Promise<Auth0DecodedHash | null>((resolve, reject) =>
+    this.auth0.parseHash((err, authResult) => (err != null ? reject(err) : resolve(authResult)))
+  );
 
   constructor(
     private readonly remoteStore: SharedbRealtimeRemoteStore,
@@ -200,7 +204,7 @@ export class AuthService {
     try {
       if (await this.pwaService.checkOnline()) {
         // In online mode do the normal checks with auth0
-        let authResult = await this.parseHash();
+        let authResult = await this.parsedHashPromise;
         if (!(await this.handleOnlineAuth(authResult))) {
           authResult = await this.checkSession();
           if (!(await this.handleOnlineAuth(authResult))) {
@@ -208,6 +212,8 @@ export class AuthService {
             return { loggedIn: false, newlyLoggedIn: false };
           }
         } else {
+          // TODO newlyLoggedIn is incorrect the second time this is called, because a user cannot be "newly" logged in
+          // multiple times in a single session. The value is ignored though after the first time it's called.
           return { loggedIn: true, newlyLoggedIn: true };
         }
       }
@@ -315,18 +321,6 @@ export class AuthService {
     if (!success) {
       await this.logOut();
     }
-  }
-
-  private parseHash(): Promise<auth0.Auth0DecodedHash | null> {
-    return new Promise<auth0.Auth0DecodedHash | null>((resolve, reject) => {
-      this.auth0.parseHash((err, authResult) => {
-        if (err != null) {
-          reject(err);
-        } else {
-          resolve(authResult);
-        }
-      });
-    });
   }
 
   private checkSession(retryUponTimeout: boolean = true): Promise<auth0.Auth0DecodedHash | null> {
