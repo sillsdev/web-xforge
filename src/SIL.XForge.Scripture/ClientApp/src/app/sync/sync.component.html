@@ -2,6 +2,7 @@
   <div fxLayout="column" class="base-container">
     <h2 id="title">{{ t("synchronize_project", { projectName: projectName }) }}</h2>
     <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_synchronize") }} </span>
+    <span *ngIf="syncDisabled" id="syncDisabled-message" class="syncDisabled-text">{{ t("sync_is_disabled") }}</span>
     <mdc-card outlined class="sync-card">
       <div fxLayout="column" class="card-content">
         <button
@@ -22,7 +23,7 @@
             primary
             type="button"
             (click)="syncProject()"
-            [disabled]="isLoading || !isAppOnline"
+            [disabled]="isLoading || !isAppOnline || syncDisabled"
             id="btn-sync"
           >
             <mdc-icon>sync</mdc-icon>
