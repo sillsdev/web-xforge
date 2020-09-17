@@ -159,8 +159,17 @@ namespace SIL.XForge.Scripture.Services
             IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret);
             IEnumerable<SharedRepository> repositories = source.GetRepositories();
             IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
+            var projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid);
             Dictionary<string, ParatextProject> ptProjectsAvailable =
                 GetProjects(userSecret, repositories, projectsMetadata).ToDictionary(ptProject => ptProject.ParatextId);
+            if (!projectGuids.Contains(ptTargetId))
+            {
+                _logger.LogWarning($"The target project did not have a full name available {ptTargetId}");
+            }
+            if (!projectGuids.Contains(ptSourceId) && ptSourceId != null)
+            {
+                _logger.LogWarning($"The source project did not have a full name available {ptSourceId}");
+            }
             List<string> problemProjectIds = new List<string>();
             if (!ptProjectsAvailable.TryGetValue(ptTargetId, out ParatextProject targetPtProject))
                 problemProjectIds.Add(ptTargetId);
@@ -388,10 +397,16 @@ namespace SIL.XForge.Scripture.Services
                 bool ptProjectIsConnectable =
                     (sfProjectExists && !sfUserIsOnSfProject) || (!sfProjectExists && adminOnPtProject);
 
+                // On SF Live server, many users have projects without corresponding project metadata.
+                // If this happens, default to using the project's short name
+                var projectMD = projectsMetadata
+                    .SingleOrDefault(pmd => pmd.ProjectGuid == remotePtProject.SendReceiveId);
+                string fullOrShortName = projectMD == null ? remotePtProject.ScrTextName : projectMD.FullName;
+
                 paratextProjects.Add(new ParatextProject
                 {
                     ParatextId = remotePtProject.SendReceiveId,
-                    Name = projectsMetadata.Single(pmd => pmd.ProjectGuid == remotePtProject.SendReceiveId).FullName,
+                    Name = fullOrShortName,
                     ShortName = remotePtProject.ScrTextName,
                     LanguageTag = correspondingSfProject?.WritingSystem.Tag,
                     ProjectId = correspondingSfProject?.Id,
