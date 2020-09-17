@@ -7,6 +7,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { environment } from '../../environments/environment';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
@@ -21,6 +22,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   isAppOnline: boolean = false;
   showParatextLogin = false;
   syncDisabled: boolean = false;
+  issueEmail: string = environment.issueEmail;
 
   private projectDoc?: SFProjectDoc;
   private paratextUsername?: string;

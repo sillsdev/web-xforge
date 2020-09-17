@@ -48,11 +48,13 @@
       </ng-container>
       <ng-container matColumnDef="syncDisabled">
         <td mat-cell *matCellDef="let row">
-          <mdc-checkbox
-            [checked]="row.syncDisabled"
-            (change)="onUpdateSyncDisabled(row, $event.checked)"
-          ></mdc-checkbox>
-          Sync Disabled
+          <div fxLayoutAlign="start center">
+            <mdc-checkbox
+              [checked]="row.syncDisabled"
+              (change)="onUpdateSyncDisabled(row, $event.checked)"
+            ></mdc-checkbox>
+            <label>Sync Disabled</label>
+          </div>
         </td>
       </ng-container>
 

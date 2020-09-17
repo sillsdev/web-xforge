@@ -113,7 +113,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
     row.isUpdatingRole = false;
   }
 
-  async onUpdateSyncDisabled(row: Row, newValue: boolean): Promise<void> {
+  onUpdateSyncDisabled(row: Row, newValue: boolean): Promise<void> {
     return this.projectService.onlineSetSyncDisabled(row.id, newValue);
   }
 
