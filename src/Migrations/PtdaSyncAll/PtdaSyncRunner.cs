@@ -273,6 +273,10 @@ namespace PtdaSyncAll
             string bookId = Canon.BookNumberToId(text.BookNum);
             string ptBookText = await FetchFromAndUpdateParatextAsync(text,
                 paratextId, fileName, isReadOnly, bookId, dbChapterDocs);
+            if (ptBookText == null)
+            {
+                return null;
+            }
             await UpdateProgress();
 
             XElement bookTextElem = ParseText(ptBookText);
@@ -312,7 +316,20 @@ namespace PtdaSyncAll
 
                 if (XNode.DeepEquals(oldUsxDoc, newUsxDoc))
                 {
-                    ptBookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
+                    // We don't have any text changes to send to PT. If we fail to fetch an update to PT here, we can
+                    // just not worry about it, move on, and let the text be written to/updated by the stage2 migration.
+                    try
+                    {
+                        ptBookText = await _paratextService.GetBookTextAsync(_userSecret, paratextId, bookId);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogWarning("PtdaSyncRunner FetchFromAndUpdateParatextAsync() failed to fetch PT book "
+                            + $"text (bookId {bookId}, textinfo BookNum {text.BookNum}, "
+                            + $"textinfo chapters count {text.Chapters.Count()}), but for a book with no SF changes "
+                            + $"to upload. Skipping. The exception message is: {e.Message}");
+                        return null;
+                    }
                 }
                 else
                 {
