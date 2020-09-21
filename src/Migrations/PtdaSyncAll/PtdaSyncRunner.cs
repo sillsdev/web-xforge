@@ -22,6 +22,7 @@ using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Scripture.Services;
+using System.Text;
 
 namespace PtdaSyncAll
 {
@@ -362,6 +363,40 @@ namespace PtdaSyncAll
                 }
                 else
                 {
+                    // Output the chapter doc change to upload, to add context for what to do if problems arise.
+                    string tempOldUsxFile = "/tmp/old.usx";
+                    string tempNewUsxFile = "/tmp/new.usx";
+                    using (var oldWriter = new StringWriter())
+                    {
+                        oldUsxDoc.Save(oldWriter);
+                        File.WriteAllText(tempOldUsxFile, oldWriter.ToString().Replace("<", "\n<"));
+                    }
+                    using (var newWriter = new StringWriter())
+                    {
+                        newUsxDoc.Save(newWriter);
+                        File.WriteAllText(tempNewUsxFile, newWriter.ToString().Replace("<", "\n<"));
+                    }
+
+                    using (Process diffProcess = new Process()
+                    {
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = "/usr/bin/diff",
+                            Arguments = $"-u {tempOldUsxFile} {tempNewUsxFile}",
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            RedirectStandardOutput = true
+                        }
+                    })
+                    {
+                        diffProcess.Start();
+                        string diff = diffProcess.StandardOutput.ReadToEnd();
+                        diffProcess.WaitForExit();
+                        Console.WriteLine("FetchFromAndUpdateParatextAsync has some SF book text to send to PT "
+                            + $"pt project id {paratextId}, bookId {bookId}, dbChapterDocs count {dbChapterDocs.Count}. "
+                            + $"That diff is: \n{diff}");
+                    }
+
                     ptBookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
                         revision, newUsxDoc.Root.ToString());
                 }
