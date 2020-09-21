@@ -168,7 +168,8 @@ namespace PtdaSyncAll
                         if (hasSource)
                         {
                             var chaptersToInclude = new HashSet<int>(newChapters.Select(c => c.Number));
-                            await SyncOrCloneBookUsxAsync(text, TextType.Source, sourceParatextId, true, chaptersToInclude);
+                            await SyncOrCloneBookUsxAsync(text, TextType.Source, sourceParatextId, true,
+                                chaptersToInclude);
                         }
                         await UpdateNotesData(text, newChapters);
                         await _projectDoc.SubmitJson0OpAsync(op =>
@@ -265,9 +266,37 @@ namespace PtdaSyncAll
             }
         }
 
-        private async Task<List<Chapter>> SyncBookUsxAsync(TextInfo text, TextType textType, string paratextId,
+        public async Task<List<Chapter>> SyncBookUsxAsync(TextInfo text, TextType textType, string paratextId,
             string fileName, bool isReadOnly, ISet<int> chaptersToInclude)
         {
+            if (text.Chapters.Count < 1)
+            {
+                // The SF DB is corrupt. Also, the project doc in the SF DB has no record of any chapters that
+                // we could synchronize.
+                SortedList<int, IDocument<TextData>> allTextDocsForBook =
+                    await PessimisticallyFetchTextDocsAsync(text, textType);
+                if (allTextDocsForBook.Count < 1)
+                {
+                    // We don't have any chapter text docs for the book in the SF DB.
+                    _logger.LogWarning("SyncBookUsxAsync() detected a corrupt SF DB for project with paratext id "
+                        + $"{paratextId}, for book {text.BookNum}, TextType {textType}, because the TextInfo has an "
+                        + $"invalid chapter count of {text.Chapters.Count}. There aren't any chapter text docs for "
+                        + $"this book in the DB anyway though. Returning null to skip fetching or syncing this book.");
+                    return null;
+                }
+                else
+                {
+                    // We have chapter text docs for the book in the SF DB that the project doc did not know were there.
+                    // Throw an error and there may need to be a manual investigation to know how to sync this project.
+                    throw new Exception("SyncBookUsxAsync() stopped because there are chapter text docs for a "
+                        + $"project's book that are not known about by the project doc. And the project doc has an "
+                        + $"invalid description of book chapters. TextInfo booknum is {text.BookNum}. "
+                        + $"Text type is {textType}. Paratext project id is {paratextId}. The project TextInfo knows "
+                        + $"about {text.Chapters.Count} chapters, but in the DB there are {allTextDocsForBook.Count} "
+                        + "chapters for the book.");
+                }
+            }
+
             SortedList<int, IDocument<TextData>> dbChapterDocs = await FetchTextDocsAsync(text, textType);
 
             string bookId = Canon.BookNumberToId(text.BookNum);
@@ -396,6 +425,37 @@ namespace PtdaSyncAll
             {
                 IDocument<TextData> textDoc = GetTextDoc(text, chapter.Number, textType);
                 textDocs[chapter.Number] = textDoc;
+                tasks.Add(textDoc.FetchAsync());
+            }
+            await Task.WhenAll(tasks);
+
+            // Omit items that are not actually in the database.
+            foreach (KeyValuePair<int, IDocument<TextData>> item in textDocs.ToList())
+            {
+                if (!item.Value.IsLoaded)
+                {
+                    textDocs.Remove(item.Key);
+                }
+            }
+            return textDocs;
+        }
+
+        /// <summary>
+        /// Tries to fetch text docs for a book, but for lots of chapters, ignoring the chapters that the
+        /// TextInfo claims would be there.
+        /// </summary>
+        private async Task<SortedList<int, IDocument<TextData>>> PessimisticallyFetchTextDocsAsync(TextInfo text,
+            TextType textType)
+        {
+            int firstPossibleChapter = 1;
+            int lastPossibleChapter = 150;
+
+            var textDocs = new SortedList<int, IDocument<TextData>>();
+            var tasks = new List<Task>();
+            for (int chapter = firstPossibleChapter; chapter <= lastPossibleChapter; chapter++)
+            {
+                IDocument<TextData> textDoc = GetTextDoc(text, chapter, textType);
+                textDocs[chapter] = textDoc;
                 tasks.Add(textDoc.FetchAsync());
             }
             await Task.WhenAll(tasks);
