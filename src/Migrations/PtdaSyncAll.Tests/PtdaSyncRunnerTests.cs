@@ -9,6 +9,7 @@ using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.Machine.WebApi.Services;
 using SIL.Scripture;
@@ -511,6 +512,65 @@ namespace PtdaSyncAll
             Assert.That(env.GetText("MAT", 2, TextType.Source).DeepEquals(chapterContent), Is.True);
         }
 
+
+        [Test]
+        public async Task SyncBookUSxAsync_InvalidBookStateAndNoTextData_SkipSync()
+        {
+            var env = new TestEnvironment();
+            Book matBook = new Book("MAT", 3, 3)
+            {
+                MissingTargetChapters = { 1, 2, 3 },
+                MissingSourceChapters = { 1, 2, 3 }
+            };
+            env.SetupSFData(true, true, false, matBook);
+            env.SetupPTData(new Book("MAT", 3, true));
+            await env.Runner.InitAsync("project01", "user01");
+
+            // There are no Matthew text docs in the SF DB
+            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.False);
+            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.False);
+            TextInfo matBookTextInfo = env.TextInfoFromBook(matBook);
+            var chaptersToInclude = new HashSet<int>(matBookTextInfo.Chapters.Select(c => c.Number));
+            matBookTextInfo.Chapters.Clear();
+            // TextInfo from project doc claims there are zero chapters, which means the SF DB is corrupt.
+            // It should (?) have had all the chapters listed, or perhaps just one chapter (if it thinks it is a
+            // book with no chapters), but not zero chapters.
+            Assert.That(matBookTextInfo.Chapters.Count, Is.EqualTo(0), "setup");
+            string matFilename = TestEnvironment.GetUsxFileName(TextType.Target, "MAT");
+            // SUT
+            Assert.That(await env.Runner.SyncBookUsxAsync(matBookTextInfo, TextType.Target, "project01",
+                matFilename, false, chaptersToInclude), Is.Null);
+            // Did not throw. Returned a null list of Chapter objects.
+        }
+
+
+        [Test]
+        public async Task SyncBookUsxAsync_InvalidBookStateAndHasTextData_Crash()
+        {
+            var env = new TestEnvironment();
+            Book matBook = new Book("MAT", 3, 3);
+            env.SetupSFData(true, true, false, matBook);
+            env.SetupPTData(new Book("MAT", 3, true));
+            await env.Runner.InitAsync("project01", "user01");
+
+            // There are Matthew text docs in the SF DB, even tho the project doc has no record of them.
+            Assert.That(env.ContainsText("MAT", 1, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 2, TextType.Target), Is.True);
+            Assert.That(env.ContainsText("MAT", 3, TextType.Target), Is.True);
+            TextInfo matBookTextInfo = env.TextInfoFromBook(matBook);
+            var chaptersToInclude = new HashSet<int>(matBookTextInfo.Chapters.Select(c => c.Number));
+            matBookTextInfo.Chapters.Clear();
+            // TextInfo from project doc is corrupt and claims there are zero chapters.
+            Assert.That(matBookTextInfo.Chapters.Count, Is.EqualTo(0), "setup");
+            string matFilename = TestEnvironment.GetUsxFileName(TextType.Target, "MAT");
+            // SUT
+            string exceptionMessage = Assert.ThrowsAsync<Exception>(() =>
+                env.Runner.SyncBookUsxAsync(matBookTextInfo, TextType.Target, "project01", matFilename, false,
+                    chaptersToInclude)).Message;
+            Assert.That(exceptionMessage, Does.Contain("invalid"));
+        }
+
         [Test]
         public async Task SyncAsync_ParatextMissingChapter()
         {
@@ -998,8 +1058,14 @@ namespace PtdaSyncAll
                 DeltaUsxMapper.ToUsx(
                     Arg.Is<XDocument>(d => (string)d.Root.Element("book").Attribute("code") == bookId
                         && (string)d.Root.Element("book") == GetParatextProject(textType)),
-                    Arg.Any<IEnumerable<ChapterDelta>>())
+                    Arg.Is<IEnumerable<ChapterDelta>>(
+                        (IEnumerable<ChapterDelta> chapterDeltas) => chapterDeltas.Count() > 0))
                     .Returns(new XDocument(XElement.Parse(newBookText).Element("usx")));
+                DeltaUsxMapper.ToUsx(
+                    Arg.Any<XDocument>(),
+                    Arg.Is<IEnumerable<ChapterDelta>>(
+                        (IEnumerable<ChapterDelta> chapterDeltas) => chapterDeltas.Count() == 0))
+                    .Throws<Exception>();
 
                 for (int c = 1; c <= highestChapter; c++)
                 {
