@@ -208,7 +208,7 @@ namespace PtdaSyncAll
             }
         }
 
-        internal async Task<bool> InitAsync(string projectId, string userId)
+        public async Task<bool> InitAsync(string projectId, string userId)
         {
             _conn = await _realtimeService.ConnectAsync();
             _projectDoc = await _conn.FetchAsync<SFProject>(projectId);
@@ -233,7 +233,7 @@ namespace PtdaSyncAll
             return true;
         }
 
-        internal void CloseConnection()
+        public void CloseConnection()
         {
             _conn?.Dispose();
         }
@@ -340,7 +340,7 @@ namespace PtdaSyncAll
             return ptBookText;
         }
 
-        internal async Task<List<Chapter>> ChangeDbToNewSnapshotAsync(
+        public async Task<List<Chapter>> ChangeDbToNewSnapshotAsync(
             TextInfo text, TextType textType, ISet<int> chaptersToInclude,
             SortedList<int, IDocument<TextData>> dbChapterDocs, Dictionary<int,
             ChapterDelta> incomingChapters)
@@ -387,7 +387,7 @@ namespace PtdaSyncAll
         /// <summary>
         /// Fetches all text docs from the database for a book.
         /// </summary>
-        internal async Task<SortedList<int, IDocument<TextData>>> FetchTextDocsAsync(TextInfo text,
+        public async Task<SortedList<int, IDocument<TextData>>> FetchTextDocsAsync(TextInfo text,
             TextType textType)
         {
             var textDocs = new SortedList<int, IDocument<TextData>>();
