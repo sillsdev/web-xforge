@@ -149,22 +149,12 @@ export class ExceptionHandlingService implements ErrorHandler {
     locale: string,
     user?: UserForReport
   ) {
-    errorReportingService.notify(
-      error,
-      {
-        user,
-        metaData: {
-          eventId,
-          locale
-        }
-      },
-      err => {
-        if (err) {
-          this.console.error('Sending error report failed:');
-          this.console.error(err);
-        }
+    errorReportingService.notify(error, { user, eventId, locale }, err => {
+      if (err) {
+        this.console.error('Sending error report failed:');
+        this.console.error(err);
       }
-    );
+    });
   }
 
   private handleAlert(ngZone: NgZone, dialog: MdcDialog, error: ErrorAlert) {
