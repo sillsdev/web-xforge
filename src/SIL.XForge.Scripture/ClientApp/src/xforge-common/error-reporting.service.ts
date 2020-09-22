@@ -1,50 +1,58 @@
 import { Injectable } from '@angular/core';
-import bugsnag from '@bugsnag/js';
+import Bugsnag, { BrowserConfig, Client, Event, NotifiableError } from '@bugsnag/js';
 import { version } from '../../../version.json';
 import { environment } from '../environments/environment';
+
+export interface EventOptions {
+  user: any;
+  eventId: string;
+  locale: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class ErrorReportingService {
-  /**
-   * We don't `import { Bugsnag } from '@bugsnag/js';` because production builds fail. So below `any` is used.
-   * Bugsnag is not properly packaged so we can't use it's types in production.
-   */
-  static createBugsnagClient(): any {
-    const config: any = {
+  static createBugsnagClient(): Client {
+    const config: BrowserConfig = {
       apiKey: environment.bugsnagApiKey,
       appVersion: version,
       appType: 'angular',
-      notifyReleaseStages: ['live', 'qa'],
+      enabledReleaseStages: ['live', 'qa'],
       releaseStage: environment.releaseStage,
-      autoNotify: false,
-      trackInlineScripts: false,
-      beforeSend: ErrorReportingService.beforeSend
+      autoDetectErrors: false
     };
     if (environment.releaseStage === 'dev') {
       config.logger = null;
     }
-    return bugsnag(config);
+    return Bugsnag.createClient(config);
   }
 
-  static beforeSend(report: any) {
-    report.breadcrumbs = report.breadcrumbs.map((breadcrumb: any) => {
-      if (
-        breadcrumb.type === 'navigation' &&
-        breadcrumb.metaData &&
-        typeof breadcrumb.metaData.from === 'string' &&
-        breadcrumb.metaData.from.includes('/projects#access_token=')
-      ) {
-        breadcrumb.metaData.from = '/projects#access_token=redacted_for_error_report';
+  static beforeSend(options: EventOptions, event: Event) {
+    if (typeof event.request.url === 'string') {
+      event.request.url = ErrorReportingService.redactAccessToken(event.request.url as string);
+    }
+    event.breadcrumbs = event.breadcrumbs.map(breadcrumb => {
+      if (breadcrumb.type === 'navigation' && breadcrumb.metadata && typeof breadcrumb.metadata.from === 'string') {
+        breadcrumb.metadata.from = ErrorReportingService.redactAccessToken(breadcrumb.metadata.from);
       }
       return breadcrumb;
     });
+
+    event.setUser(options.user);
+    event.addMetadata('custom', {
+      eventId: options.eventId,
+      locale: options.locale
+    });
+  }
+
+  private static redactAccessToken(url: string): string {
+    return url.replace(/^(.*#access_token=).*$/, '$1redacted_for_error_report');
   }
 
   private readonly bugsnagClient = ErrorReportingService.createBugsnagClient();
 
-  notify(error: any, opts?: any, callback?: (err: any, report: any) => void): void {
-    this.bugsnagClient.notify(error, opts, callback);
+  notify(error: NotifiableError, options: EventOptions, callback?: (err: any, report: any) => void): void {
+    this.bugsnagClient.notify(error, event => ErrorReportingService.beforeSend(options, event), callback);
   }
 }
