@@ -248,8 +248,20 @@ namespace PtdaSyncAll
                 _fileSystemService.CreateDirectory(projectPath);
 
             string fileName = GetUsxFileName(projectPath, text.BookNum);
-            if (_fileSystemService.FileExists(fileName))
+
+            bool fileExists = _fileSystemService.FileExists(fileName);
+            if (fileExists && text.Chapters.Count < 1)
+            {
+                Console.WriteLine($"SyncOrCloneBookUsxAsync: Warning: When processing textinfo booknum {text.BookNum}, "
+                    + $"chapters {text.Chapters.Count}, texttype {textType}, for paratext project id {paratextId}, "
+                    + $"the text chapter count was 0 but there was already a file at {fileName}. Perhaps indicating "
+                    + $"a prior failed clone. Going to try cloning it again, rather than syncing.");
+            }
+
+            if (fileExists && text.Chapters.Count > 0)
+            {
                 return await SyncBookUsxAsync(text, textType, paratextId, fileName, isReadOnly, chaptersToInclude);
+            }
             else
             {
                 try
@@ -532,7 +544,14 @@ namespace PtdaSyncAll
                     IDocument<TextData> textDataDoc = GetTextDoc(text, chapterNum, textType);
                     await textDataDoc.FetchAsync();
                     if (textDataDoc.IsLoaded)
+                    {
+                        Console.WriteLine($"CloneBookUsxAsync: Going to delete text doc before re-creating it. "
+                            + $"FYI that it and its contents are: textinfo booknum {text.BookNum}, "
+                            + $"chapter count {text.Chapters.Count}, has source {text.HasSource}, "
+                            + $"int chapterNum: {chapterNum}, text type: {textType}, paratext project id {paratextId}. "
+                            + $"Contents: {textDataDoc.Data.ToString()} END_CONTENTS.");
                         await textDataDoc.DeleteAsync();
+                    }
                     await textDataDoc.CreateAsync(new TextData(delta));
                 }
                 tasks.Add(createText(kvp.Key, kvp.Value.Delta));
