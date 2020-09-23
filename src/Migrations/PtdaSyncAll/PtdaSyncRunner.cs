@@ -409,8 +409,20 @@ namespace PtdaSyncAll
                             + $"That diff is: \n{diff}");
                     }
 
-                    ptBookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
-                        revision, newUsxDoc.Root.ToString());
+                    var skipUpdate = Environment.GetEnvironmentVariable("SKIPSYNCBOOK");
+                    if (skipUpdate == "skip")
+                    {
+                        // Diffs will be recorded in the logs so we can evaluate if any changes were significant
+                        // and need to be addressed post-migration
+                        Console.WriteLine($"Skip pushing edits from SF to Paratext."
+                            + $"BookId: {bookId} ParatextId: {paratextId}");
+                        return null;
+                    }
+                    else
+                    {
+                        ptBookText = await _paratextService.UpdateBookTextAsync(_userSecret, paratextId, bookId,
+                            revision, newUsxDoc.Root.ToString());
+                    }
                 }
             }
             return ptBookText;
