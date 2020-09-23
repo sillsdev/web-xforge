@@ -414,7 +414,8 @@ namespace PtdaSyncAll
                     {
                         // Diffs will be recorded in the logs so we can evaluate if any changes were significant
                         // and need to be addressed post-migration
-                        Console.WriteLine($"Skip pushing edits from SF to Paratext for {bookId}");
+                        Console.WriteLine($"Skip pushing edits from SF to Paratext."
+                            + $"BookId: {bookId} ParatextId: {paratextId}");
                         return null;
                     }
                     else
