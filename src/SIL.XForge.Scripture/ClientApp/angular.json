@@ -183,5 +183,8 @@
       }
     }
   },
-  "defaultProject": "SIL.XForge.Scripture"
+  "defaultProject": "SIL.XForge.Scripture",
+  "cli": {
+    "analytics": "62cc4c83-1f58-4311-beb3-55e7dd022de8"
+  }
 }
