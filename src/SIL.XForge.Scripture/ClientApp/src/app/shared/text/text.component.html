@@ -14,10 +14,9 @@
     'template-editor': !readOnlyEnabled,
     ltr: isLtr,
     rtl: isRtl,
-    'mark-invalid': markInvalid,
-    'contains-rtl-text': containsRtlText
+    'mark-invalid': markInvalid
   }"
-  dir="auto"
+  [dir]="isRtl ? 'rtl' : 'ltr'"
   [lang]="lang"
   [attr.data-browser-engine]="browserEngine"
 >

@@ -194,6 +194,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     );
   }
 
+  get isRightToLeft(): boolean {
+    if (this.projectDoc?.data && this.projectDoc.data?.isRightToLeft) {
+      return this.projectDoc.data?.isRightToLeft;
+    }
+    return false;
+  }
+
   get questionDocs(): Readonly<QuestionDoc[]> {
     return this.questionsQuery != null ? this.questionsQuery.docs.filter(qd => !qd.data!.isArchived) : [];
   }
