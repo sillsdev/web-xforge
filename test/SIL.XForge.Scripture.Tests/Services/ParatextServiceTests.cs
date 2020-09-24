@@ -280,6 +280,9 @@ namespace SIL.XForge.Scripture.Services
             env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx.Root.ToString());
             env.ProjectScrText.FileManager.Received(1)
                 .WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
+
+            // PT username is not written to server logs
+            Assert.That(env.MockLogger.Messages.Any((string message) => message.Contains(env.Username01)), Is.False);
         }
 
         [Test]
@@ -333,6 +336,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
             comment = thread.Comments.First();
             Assert.That(comment.Deleted, Is.True, "Comment should be marked deleted");
+
+            // PT username is not written to server logs
+            Assert.That(env.MockLogger.Messages.Any((string message) => message.Contains(env.Username01)), Is.False);
         }
 
         [Test]
@@ -491,7 +497,7 @@ namespace SIL.XForge.Scripture.Services
             public IScrTextCollection MockScrTextCollection;
             public ISharingLogicWrapper MockSharingLogicWrapper;
             public IHgWrapper MockHgWrapper;
-            public ILogger<ParatextService> MockLogger;
+            public MockLogger<ParatextService> MockLogger;
             public IJwtTokenHelper MockJwtTokenHelper;
             public IInternetSharedRepositorySourceProvider MockInternetSharedRepositorySourceProvider;
             public ParatextService Service;
@@ -504,7 +510,7 @@ namespace SIL.XForge.Scripture.Services
                 MockExceptionHandler = Substitute.For<IExceptionHandler>();
                 MockSiteOptions = Substitute.For<IOptions<SiteOptions>>();
                 MockFileSystemService = Substitute.For<IFileSystemService>();
-                MockLogger = Substitute.For<ILogger<ParatextService>>();
+                MockLogger = new MockLogger<ParatextService>();
                 MockScrTextCollection = Substitute.For<IScrTextCollection>();
                 MockSharingLogicWrapper = Substitute.For<ISharingLogicWrapper>();
                 MockHgWrapper = Substitute.For<IHgWrapper>();
