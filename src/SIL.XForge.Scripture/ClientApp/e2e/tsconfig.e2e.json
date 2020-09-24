@@ -6,5 +6,7 @@
     "module": "commonjs",
     "target": "es2015",
     "types": ["jasmine", "jasminewd2", "node"]
-  }
+  },
+  "files": ["main.ts", "polyfills.ts"],
+  "include": ["**/*.d.ts"]
 }
