@@ -173,68 +173,6 @@ export class TextViewModel {
     }
   }
 
-  /**
-   * Not all browsers appear to be consistent with how child elements determine the value of dir="auto" i.e. paragraphs
-   * with child segments both having dir="auto" set.
-   * To get around this we apply dir="auto" to both paragraphs (when available) and segments. We then query
-   * each paragraph/segment and then specifically set the paragraph to what the direction of the first segment that
-   * contains text i.e. is not blank. For chapters we use the same direction value as the paragraph that follows it.
-   */
-  setDirection(): boolean {
-    const editor = this.checkEditor();
-
-    let containsRtlText = false;
-    // set direction on individual segments
-    let delta = new Delta();
-    for (const [segmentId, range] of this.segments) {
-      let dir = 'auto';
-      const segment = editor.root.querySelector(`usx-segment[data-segment="${segmentId}"]`);
-      if (segment != null && segment.querySelectorAll('usx-blank').length === 0) {
-        dir = window.getComputedStyle(segment).direction || 'auto';
-      }
-
-      delta = delta.compose(new Delta().retain(range.index).retain(range.length, { 'direction-segment': dir }));
-
-      if (dir === 'rtl') {
-        containsRtlText = true;
-      }
-    }
-    editor.updateContents(delta, 'silent');
-
-    // Loop through the paragraphs to see what direction it should be set to based off the first valid segment
-    delta = new Delta();
-    const paragraphs = editor.root.querySelectorAll('usx-para,p');
-    for (const paragraph of Array.from(paragraphs)) {
-      let dir = 'auto';
-      const segments = paragraph.querySelectorAll('usx-segment');
-      // Locate the first segment that isn't blank to see what direction the paragraph should be set to
-      const firstNonBlankSegment = Array.from(segments).find(segment => !segment.querySelector('usx-blank'));
-      if (firstNonBlankSegment != null) {
-        dir = window.getComputedStyle(firstNonBlankSegment).direction || 'auto';
-      }
-
-      const paraBlot = Quill.find(paragraph);
-      const index = editor.getIndex(paraBlot) + paraBlot.length() - 1;
-      delta = delta.compose(new Delta().retain(index).retain(1, { 'direction-block': dir }));
-    }
-    editor.updateContents(delta, 'silent');
-
-    // Chapters need its direction set from the paragraph that follows
-    delta = new Delta();
-    const chapters = editor.root.querySelectorAll('usx-chapter');
-    for (const chapter of Array.from(chapters)) {
-      const sibling = chapter.nextElementSibling;
-      if (sibling !== null) {
-        const dir = window.getComputedStyle(sibling).direction || 'auto';
-        const chapterEmbed = Quill.find(chapter);
-        const index = editor.getIndex(chapterEmbed);
-        delta = delta.compose(new Delta().retain(index).retain(1, { 'direction-block': dir }));
-      }
-    }
-    editor.updateContents(delta, 'silent');
-    return containsRtlText;
-  }
-
   highlight(segmentRefs: string[]): void {
     const refs = new Set(segmentRefs);
     const editor = this.checkEditor();

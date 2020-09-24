@@ -431,29 +431,15 @@ export function registerScripture(): string[] {
       return node.getAttribute(customAttributeName('segment'))!;
     }
 
-    constructor(domNode: HTMLElement) {
-      super(domNode);
-      domNode.setAttribute('dir', 'auto');
-    }
-
     format(name: string, value: any): void {
       if (name === SegmentInline.blotName && value != null) {
         this.domNode.setAttribute(customAttributeName('segment'), value);
-      } else if (name === 'direction-segment') {
-        this.domNode.setAttribute('dir', value);
       } else {
         super.format(name, value);
       }
     }
-
-    formats(): { [index: string]: any } {
-      const fmts = super.formats();
-      fmts['direction-segment'] = this.domNode.getAttribute('dir') || '';
-      return fmts;
-    }
   }
   formats.push(SegmentInline);
-  formats.push('direction-segment');
 
   (Inline as any).order.push('segment');
   (Inline as any).order.push('para-contents');
@@ -537,11 +523,6 @@ export function registerScripture(): string[] {
     scope: Parchment.Scope.INLINE
   });
   formats.push(InvalidInlineClass);
-
-  const BlockDirectionAttribute = new QuillParchment.Attributor.Attribute('direction-block', 'dir', {
-    scope: Parchment.Scope.BLOCK
-  });
-  formats.push(BlockDirectionAttribute);
 
   class DisableHtmlClipboard extends QuillClipboard {
     onPaste(e: ClipboardEvent): void {
