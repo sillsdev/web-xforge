@@ -80,23 +80,20 @@ quill-editor {
   }
 }
 
-usx-para,
-p {
-  &[dir='ltr'],
-  &[dir='auto'] {
-    .question-segment[data-question-count] {
-      margin-left: 1.75em;
-      &:before {
-        left: -2.25em;
-      }
-      &:after {
-        left: -1.5em;
-      }
+quill-editor.ltr {
+  .question-segment[data-question-count] {
+    margin-left: 1.75em;
+
+    &:before {
+      left: -2.25em;
+    }
+
+    &:after {
+      left: -1.5em;
     }
   }
 }
-usx-para[dir='rtl'],
-p[dir='rtl'] {
+quill-editor.rtl {
   .question-segment[data-question-count] {
     margin-right: 1.75em;
     &:before {
@@ -154,7 +151,7 @@ p[dir='rtl'] {
 
 // workaround for Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1569107
 // using "box-decoration-break: clone" or blur radius in a "box-shadow" with RTL text can cause weird behavior
-.template-editor.contains-rtl-text[data-browser-engine='gecko'] > .ql-container > .ql-editor {
+.template-editor.rtl[data-browser-engine='gecko'] > .ql-container > .ql-editor {
   usx-para,
   p {
     > usx-para-contents {

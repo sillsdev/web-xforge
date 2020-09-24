@@ -1375,25 +1375,6 @@ describe('CheckingComponent', () => {
       expect(segment.classList.contains('question-segment')).toBe(true);
       expect(segment.classList.contains('highlight-segment')).toBe(true);
     }));
-
-    it('sets text and paragraph direction ', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
-      // the dir property is needed on the Quill editor because chapters don't always have paragraphs
-      expect(env.quillEditorElement.getAttribute('dir')).toEqual('auto');
-      // ensure multiple paragraphs were found, otherwise the test is meaningless
-      expect(env.paragraphs.length).toBeGreaterThan(1);
-      for (const index in env.paragraphs) {
-        if (env.paragraphs.hasOwnProperty(index)) {
-          const paragraph = env.paragraphs[index];
-          // Ensure the correct direction has been applied to each paragraph
-          let expected = 'ltr';
-          if (index === '3') {
-            expected = 'rtl';
-          }
-          expect(paragraph.getAttribute('dir')).toEqual(expected);
-        }
-      }
-    }));
   });
 });
 

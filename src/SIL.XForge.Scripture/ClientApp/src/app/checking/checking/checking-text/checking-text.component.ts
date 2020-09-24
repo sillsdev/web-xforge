@@ -22,6 +22,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   private _activeVerse?: VerseRef;
   private _editorLoaded = false;
   private _id?: TextDocId;
+  private _isRightToLeft: boolean = false;
   private _questionVerses?: VerseRef[];
   private _placeholder?: string;
 
@@ -58,6 +59,14 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
   get id(): TextDocId | undefined {
     return this._id;
+  }
+
+  @Input() set isRightToLeft(value: boolean) {
+    this._isRightToLeft = value;
+  }
+
+  get isRightToLeft(): boolean {
+    return this._isRightToLeft;
   }
 
   @Input() set questionVerses(verseRefs: VerseRef[] | undefined) {
