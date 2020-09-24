@@ -8,7 +8,7 @@ import * as RichText from 'rich-text';
 import { anything, mock, when } from 'ts-mockito';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
@@ -22,7 +22,13 @@ const mockedSFProjectService = mock(SFProjectService);
 describe('CheckingTextComponent', () => {
   configureTestingModule(() => ({
     declarations: [CheckingTextComponent],
-    imports: [NoopAnimationsModule, SharedModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      NoopAnimationsModule,
+      SharedModule,
+      UICommonModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      TestTranslocoModule
+    ],
     providers: [{ provide: SFProjectService, useMock: mockedSFProjectService }]
   }));
 
@@ -165,7 +171,10 @@ class TestEnvironment {
         texts: [
           {
             bookNum: 40,
-            chapters: [{ number: 1, lastVerse: 3, isValid: true }, { number: 2, lastVerse: 3, isValid: true }],
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true },
+              { number: 2, lastVerse: 3, isValid: true }
+            ],
             hasSource: true
           }
         ]

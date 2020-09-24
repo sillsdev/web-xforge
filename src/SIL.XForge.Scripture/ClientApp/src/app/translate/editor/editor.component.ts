@@ -61,9 +61,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   showTrainingProgress: boolean = false;
   textHeight: string = '';
 
-  @ViewChild('targetContainer', { static: false }) targetContainer?: ElementRef;
-  @ViewChild('source', { static: false }) source?: TextComponent;
-  @ViewChild('target', { static: false }) target?: TextComponent;
+  @ViewChild('targetContainer') targetContainer?: ElementRef;
+  @ViewChild('source') source?: TextComponent;
+  @ViewChild('target') target?: TextComponent;
 
   private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;

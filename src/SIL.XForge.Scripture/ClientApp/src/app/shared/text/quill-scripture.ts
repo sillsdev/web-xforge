@@ -629,7 +629,7 @@ export function registerScripture(): string[] {
       return typeof lastOp.insert === 'string' && lastOp.insert.endsWith('\n');
     }
     if (lastOp.attributes != null) {
-      return Object.keys(lastOp.attributes).some(function(attr) {
+      return Object.keys(lastOp.attributes).some(function (attr) {
         return Parchment.query(attr, Parchment.Scope.BLOCK) != null;
       });
     }

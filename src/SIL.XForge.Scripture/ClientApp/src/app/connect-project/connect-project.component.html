@@ -11,9 +11,9 @@
     <mdc-card outlined *ngSwitchCase="'connecting'" class="progress-container">
       <div class="progress-label" mdcBody1>{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
       <mdc-linear-progress
-        [secondary]="true"
         [determinate]="!connectPending"
         [progress]="connectProgress"
+        [buffer]="1"
       ></mdc-linear-progress>
     </mdc-card>
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
@@ -36,13 +36,11 @@
                   [value]="project.paratextId"
                   [disabled]="!project.isConnectable"
                 >
-                  <span>
-                    {{ project.name }}
-                    <span *ngIf="!project.isConnectable && project.isConnected"
-                      >&nbsp;{{ t("already_connected") }}</span
-                    >
-                    <span *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</span>
-                  </span>
+                  {{ project.name }}
+                  <ng-container *ngIf="!project.isConnectable && project.isConnected">
+                    &nbsp;{{ t("already_connected") }}
+                  </ng-container>
+                  <ng-container *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</ng-container>
                 </mdc-list-item>
               </mdc-list>
             </mdc-menu>
@@ -116,7 +114,7 @@
       </mdc-card>
       <button
         mdc-button
-        primary
+        unelevated
         type="submit"
         id="connect-submit-button"
         [disabled]="!hasConnectableProjects || !isAppOnline"

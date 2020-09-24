@@ -55,22 +55,20 @@ interface Summary {
 export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   userDoc?: UserDoc;
   scriptureFontSize?: string;
-  @ViewChild('answerPanelContainer', { static: false }) set answersPanelElement(
-    answersPanelContainerElement: ElementRef
-  ) {
+  @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
     // Need to trigger the calculation for the slider after DOM has been updated
     this.answersPanelContainerElement = answersPanelContainerElement;
     this.calculateScriptureSliderPosition(true);
   }
 
   @HostBinding('class') classes = 'flex-max';
-  @ViewChild(CheckingAnswersComponent, { static: false }) answersPanel?: CheckingAnswersComponent;
-  @ViewChild(CheckingTextComponent, { static: false }) scripturePanel?: CheckingTextComponent;
-  @ViewChild(CheckingQuestionsComponent, { static: false }) questionsPanel?: CheckingQuestionsComponent;
-  @ViewChild(SplitComponent, { static: false }) splitComponent?: SplitComponent;
-  @ViewChild('splitContainer', { static: false }) splitContainerElement?: ElementRef;
-  @ViewChild('scripturePanelContainer', { static: false }) scripturePanelContainerElement?: ElementRef;
-  @ViewChild('chapterMenuList', { static: false }) chapterMenuList?: MdcList;
+  @ViewChild(CheckingAnswersComponent) answersPanel?: CheckingAnswersComponent;
+  @ViewChild(CheckingTextComponent) scripturePanel?: CheckingTextComponent;
+  @ViewChild(CheckingQuestionsComponent) questionsPanel?: CheckingQuestionsComponent;
+  @ViewChild(SplitComponent) splitComponent?: SplitComponent;
+  @ViewChild('splitContainer') splitContainerElement?: ElementRef;
+  @ViewChild('scripturePanelContainer') scripturePanelContainerElement?: ElementRef;
+  @ViewChild('chapterMenuList') chapterMenuList?: MdcList;
 
   chapters: number[] = [];
   isExpanded: boolean = false;

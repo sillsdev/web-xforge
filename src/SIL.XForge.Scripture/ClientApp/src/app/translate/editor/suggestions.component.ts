@@ -27,7 +27,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
   @Output() selected = new EventEmitter<SuggestionSelectedEvent>();
   @Output() showChange = new EventEmitter<boolean>();
 
-  @ViewChild('list', { static: false }) list?: MdcList;
+  @ViewChild('list') list?: MdcList;
 
   showHelp: boolean = false;
 
@@ -250,7 +250,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
           return false;
         }
         const keyCode = event.key.charCodeAt(0);
-        return (event.ctrlKey || event.metaKey) && (keyCode >= 48 && keyCode <= 57);
+        return (event.ctrlKey || event.metaKey) && keyCode >= 48 && keyCode <= 57;
     }
   }
 }

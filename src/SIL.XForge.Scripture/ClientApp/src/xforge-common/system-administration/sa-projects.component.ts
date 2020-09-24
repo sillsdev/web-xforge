@@ -30,6 +30,13 @@ class Row {
   get tasks(): string {
     return this.projectDoc.taskNames.join(', ');
   }
+
+  get syncDisabled(): boolean {
+    if (this.projectDoc.data == null || this.projectDoc.data.syncDisabled == null) {
+      return false;
+    }
+    return this.projectDoc.data.syncDisabled;
+  }
 }
 
 @Component({
@@ -104,6 +111,10 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
     }
     row.projectRole = projectRole;
     row.isUpdatingRole = false;
+  }
+
+  onUpdateSyncDisabled(row: Row, newValue: boolean): Promise<void> {
+    return this.projectService.onlineSetSyncDisabled(row.id, newValue);
   }
 
   private generateRows(): void {

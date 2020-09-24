@@ -71,6 +71,19 @@
       }
     },
     {
+      "name": "Migrations PTDDCloneAll",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-migrator-PTDDCloneAll",
+      "program": "${workspaceRoot}/src/Migrations/PTDDCloneAll/bin/Debug/netcoreapp3.1/PTDDCloneAll.dll",
+      "cwd": "${workspaceRoot}/src/Migrations/PTDDCloneAll",
+      "stopAtEntry": false,
+      "console": "integratedTerminal",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "vscode-jest-tests",

@@ -1,5 +1,5 @@
-@import '~@angular-mdc/theme/scss/icon-button/mixins';
-@import '~@angular-mdc/theme/scss/select/mixins';
+@use '@material/icon-button/mixins' as icon-button;
+@use '@material/select/mixins' as select;
 
 :host {
   display: flex;
@@ -9,28 +9,38 @@
 }
 
 .mdc-icon-button {
-  @include mdc-icon-button-size(24px, 24px, 8px);
+  @include icon-button.icon-size(24px, 24px, 8px);
 }
 
-.mdc-select.chapter-select {
-  @include mdc-select-container-fill-color(transparent);
-  height: 40px;
-  align-items: center;
+// Unfortunately, using Sass mixins to style the select was not successful at the current version of @angular-mdc/web
+// (5.1.1) and @angular/material (9.2.4). Consider reviewing this after upgrading dependencies.
+.chapter-select {
+  ::ng-deep {
+    &,
+    .mdc-select__anchor,
+    .mdc-select__selected-text {
+      height: 40px;
+    }
 
-  ::ng-deep .mdc-select__selected-text {
-    border: none;
-    min-width: 140px;
-    padding: 8px 2em 8px 8px;
-    height: 40px;
-  }
-  ::ng-deep .mdc-select__dropdown-icon {
-    bottom: 8px;
-  }
-  ::ng-deep .mdc-line-ripple {
-    display: none;
+    .mdc-select__anchor {
+      background-color: transparent;
+    }
+
+    .mdc-line-ripple {
+      display: none;
+    }
+
+    .mdc-select__selected-text {
+      min-width: 140px;
+      padding: 8px 2em 8px 8px !important;
+    }
+
+    .mdc-select__dropdown-icon {
+      bottom: 8px;
+    }
   }
 }
 
-.chapter-label {
+mdc-select mdc-list-item {
   white-space: nowrap;
 }

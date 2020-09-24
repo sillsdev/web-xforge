@@ -29,7 +29,7 @@
           <button
             *ngIf="currentUserTotalAnswers === 0 && canAddAnswer"
             mdc-button
-            primary
+            unelevated
             (click)="showAnswerForm()"
             id="add-answer"
           >
@@ -61,7 +61,6 @@
                 formControlName="answerText"
                 outlined
                 fullwidth
-                [value]="activeAnswer?.text"
               ></mdc-textarea>
             </mdc-form-field>
           </div>
@@ -90,7 +89,7 @@
                 icon="clear"
                 class="clear-selection"
               ></button>
-              <button type="button" (click)="selectScripture()" mdc-button primary>{{ t("select_verses") }}</button>
+              <button type="button" (click)="selectScripture()" mdc-button unelevated>{{ t("select_verses") }}</button>
             </div>
           </div>
           <div class="form-helper-text" [ngClass]="{ visible: answerFormSubmitAttempted && answerText.invalid }">
@@ -98,7 +97,7 @@
           </div>
           <div class="form-actions">
             <button mdc-button type="button" (click)="hideAnswerForm()" id="cancel-answer">{{ t("cancel") }}</button>
-            <button mdc-button primary form="answer-form" id="save-answer" type="submit" (click)="submit()">
+            <button mdc-button unelevated form="answer-form" id="save-answer" type="submit" (click)="submit()">
               {{ t("save_answer") }}
             </button>
           </div>

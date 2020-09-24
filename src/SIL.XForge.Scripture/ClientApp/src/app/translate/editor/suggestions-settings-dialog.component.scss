@@ -1,5 +1,3 @@
-@import '~src/styles';
-
 .slider-labels {
   margin-top: 15px;
 }
@@ -10,4 +8,9 @@
 
 mdc-dialog-content.content-padding {
   padding-top: 15px;
+  overflow: visible; // prevent mdc-select menu from causing scroll bar
+}
+
+#num-suggestions-select ::ng-deep .mdc-select__anchor {
+  width: 100%;
 }

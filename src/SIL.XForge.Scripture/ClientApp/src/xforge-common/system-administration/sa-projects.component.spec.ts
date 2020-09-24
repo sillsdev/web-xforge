@@ -1,5 +1,6 @@
+import { MdcCheckbox } from '@angular-mdc/web';
 import { DebugElement, getDebugNode } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -121,6 +122,38 @@ describe('SaProjectsComponent', () => {
     verify(mockedProjectService.onlineRemoveUser('project01', 'user01')).once();
   }));
 
+  it('should show if sync disabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    tick();
+
+    const projectRowWithSyncNotDisabled: number = 0;
+    const projectRowWithSyncDisabled: number = 1;
+    expect(env.isSyncDisabled(projectRowWithSyncNotDisabled)).toBe(false);
+    expect(env.isSyncDisabled(projectRowWithSyncDisabled)).toBe(true);
+    verify(mockedProjectService.onlineSetSyncDisabled(anything(), anything())).never();
+  }));
+
+  it('should process change for sync disabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    tick();
+
+    const projectInRow: number = 0;
+    expect(env.isSyncDisabled(projectInRow)).toBe(false);
+    // SUT
+    env.clickButton(env.syncDisabledControl(projectInRow));
+    expect(env.isSyncDisabled(projectInRow)).toBe(true);
+
+    verify(mockedProjectService.onlineSetSyncDisabled('project01', true)).once();
+  }));
+
   it('should filter projects', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
@@ -158,6 +191,8 @@ class TestEnvironment {
   readonly component: SaProjectsComponent;
   readonly fixture: ComponentFixture<SaProjectsComponent>;
 
+  private readonly roleColumn = 2;
+  private readonly syncDisabledColumn = 3;
   private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
@@ -226,7 +261,16 @@ class TestEnvironment {
   }
 
   roleSelect(row: number): DebugElement {
-    return this.cell(row, 2).query(By.css('mat-select'));
+    return this.cell(row, this.roleColumn).query(By.css('mat-select'));
+  }
+
+  isSyncDisabled(row: number): boolean {
+    return (this.cell(row, this.syncDisabledColumn).query(By.css('mdc-checkbox')).componentInstance as MdcCheckbox)
+      .checked;
+  }
+
+  syncDisabledControl(row: number): DebugElement {
+    return this.cell(row, this.syncDisabledColumn).query(By.css('mdc-checkbox')).query(By.css('input'));
   }
 
   changeSelectValue(select: DebugElement, option: number): void {
@@ -268,7 +312,8 @@ class TestEnvironment {
         id: 'project02',
         data: {
           name: 'Project 02',
-          userRoles: {}
+          userRoles: {},
+          syncDisabled: true
         }
       },
       {

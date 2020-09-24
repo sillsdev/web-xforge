@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA, MdcDialog, MdcDialogConfig, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcDialog, MdcDialogConfig, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
@@ -22,7 +22,6 @@ describe('ScriptureChooserDialog', () => {
     imports: [TestModule],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
-      { provide: MDC_DIALOG_DATA },
       { provide: CookieService, useMock: mock(CookieService) }
     ]
   }));
@@ -450,12 +449,18 @@ describe('ScriptureChooserDialog', () => {
       let textsInProject: TextInfo[] = [
         {
           bookNum: 2,
-          chapters: [{ number: 39, lastVerse: 43, isValid: true }, { number: 40, lastVerse: 38, isValid: true }],
+          chapters: [
+            { number: 39, lastVerse: 43, isValid: true },
+            { number: 40, lastVerse: 38, isValid: true }
+          ],
           hasSource: false
         },
         {
           bookNum: 40,
-          chapters: [{ number: 1, lastVerse: 25, isValid: true }, { number: 2, lastVerse: 23, isValid: true }],
+          chapters: [
+            { number: 1, lastVerse: 25, isValid: true },
+            { number: 2, lastVerse: 23, isValid: true }
+          ],
           hasSource: false
         },
         {
@@ -530,7 +535,7 @@ describe('ScriptureChooserDialog', () => {
     }
 
     get highlightedButton(): DebugElement {
-      return this.fixture.debugElement.query(By.css('.ngx-mdc-button--primary'));
+      return this.fixture.debugElement.query(By.css('.mdc-button--unelevated'));
     }
 
     click(element: DebugElement | undefined): void {

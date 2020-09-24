@@ -1,10 +1,43 @@
-/* Generic styles for the main html/body page itself */
+@use 'variables';
+
+@use '@material/theme' with (
+  $primary: variables.$mdc-theme-primary,
+  $secondary: variables.$mdc-theme-secondary
+);
+
+@use "@material/theme/variables" as theme-variables;
+
+@use "@material/theme/mdc-theme";
+@use '@material/dialog/mdc-dialog';
+@use '@material/list/mdc-list';
+@use '@material/menu/mdc-menu';
+@use '@material/menu-surface/mdc-menu-surface';
+@use '@material/icon-button/mdc-icon-button';
+@use '@material/button/mdc-button';
+@use '@material/select/mdc-select';
+@use '@material/top-app-bar/mdc-top-app-bar';
+@use '@material/textfield/mdc-text-field';
+@use '@material/card/mdc-card';
+@use '@material/checkbox/mdc-checkbox';
+@use '@material/typography/mdc-typography';
+@use '@material/slider/mdc-slider';
+@use '@material/snackbar/mdc-snackbar';
+@use '@material/tab-bar/mdc-tab-bar';
+@use '@material/tab-scroller/mdc-tab-scroller';
+@use '@material/tab-indicator/mdc-tab-indicator';
+@use '@material/tab/mdc-tab';
+@use '@material/drawer/mdc-drawer';
+@use '@material/form-field/mdc-form-field';
+@use '@material/radio/mdc-radio';
+@use '@material/switch/mdc-switch';
+@use '@material/linear-progress/mdc-linear-progress';
+
+@use '@angular-mdc/theme/material';
 
 @import 'variables';
 @import 'fonts';
-@import '~@angular-mdc/theme/material';
 /* Only import relevant Bootstrap 4.x styles */
-@import '~bootstrap/scss/bootstrap-grid';
+@import 'bootstrap/scss/bootstrap-grid';
 @import 'text';
 
 .panel {
@@ -84,19 +117,27 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 
 .mdc-button {
   transition: background-color 0.15s, color 0.15s;
-  &.ngx-mdc-button--primary:not(:disabled):hover {
-    background-color: $greenLight;
-    color: $sf_grey;
+  &.mdc-button--unelevated:not(:disabled):hover {
+    background-color: variables.$greenLight;
+    color: variables.$sf_grey;
   }
 }
 mdc-icon.ngx-mdc-icon--clickable,
 button.mdc-icon-button {
   transition: color 0.15s;
   &:hover {
-    color: $greenLight !important;
+    color: variables.$greenLight !important;
   }
 }
 
 .mat-tooltip {
   font-size: 1em;
+}
+
+.mdc-list-item--disabled {
+  opacity: theme-variables.text-emphasis(disabled);
+}
+
+.offline-text {
+  color: var(--mdc-theme-error);
 }

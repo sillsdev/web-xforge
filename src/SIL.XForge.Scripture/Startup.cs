@@ -177,6 +177,8 @@ namespace SIL.XForge.Scripture
 
             app.UseMachine();
 
+            app.UseSFServices();
+
             app.UseSFDataAccess();
 
             app.UsePing();

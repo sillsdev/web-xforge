@@ -27,10 +27,7 @@ export class LoginPage {
     await this.usernameInput.sendKeys(username);
     await this.passwordInput.sendKeys(password);
     if (shouldSubmitByEnterkey) {
-      await browser
-        .actions()
-        .sendKeys(protractor.Key.ENTER)
-        .perform();
+      await browser.actions().sendKeys(protractor.Key.ENTER).perform();
     } else {
       await this.loginButton.click();
     }

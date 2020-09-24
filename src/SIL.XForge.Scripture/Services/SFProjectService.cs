@@ -128,6 +128,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task DeleteProjectAsync(string curUserId, string projectId)
         {
+            string ptProjectId;
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
@@ -136,6 +137,7 @@ namespace SIL.XForge.Scripture.Services
                 if (!IsProjectAdmin(projectDoc.Data, curUserId))
                     throw new ForbiddenException();
 
+                ptProjectId = projectDoc.Data.ParatextId;
                 // delete the project first, so that users get notified about the deletion
                 string[] projectUserIds = projectDoc.Data.UserRoles.Keys.ToArray();
                 await projectDoc.DeleteAsync();
@@ -153,9 +155,9 @@ namespace SIL.XForge.Scripture.Services
             await ProjectSecrets.DeleteAsync(projectId);
             await RealtimeService.DeleteProjectAsync(projectId);
             await _engineService.RemoveProjectAsync(projectId);
-            string syncDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", projectId);
-            if (FileSystemService.DirectoryExists(syncDir))
-                FileSystemService.DeleteDirectory(syncDir);
+            string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
+            if (FileSystemService.DirectoryExists(projectDir))
+                FileSystemService.DeleteDirectory(projectDir);
             string audioDir = GetAudioDir(projectId);
             if (FileSystemService.DirectoryExists(audioDir))
                 FileSystemService.DeleteDirectory(audioDir);

@@ -32,6 +32,17 @@
       "problemMatcher": "$msCompile"
     },
     {
+      "label": "build-migrator-PTDDCloneAll",
+      "command": "dotnet",
+      "args": ["build", "/property:GenerateFullPaths=true"],
+      "type": "shell",
+      "group": "build",
+      "options": {
+        "cwd": "${workspaceRoot}/src/Migrations/PTDDCloneAll"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
       "label": "npm start (SF)",
       "command": "npm start",
       "type": "shell",

@@ -40,10 +40,19 @@
               },
               "src/styles.scss"
             ],
+            "stylePreprocessorOptions": {
+              "includePaths": ["node_modules"]
+            },
             "scripts": []
           },
           "configurations": {
             "production": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -62,6 +71,12 @@
               "serviceWorker": true
             },
             "staging": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -130,6 +145,9 @@
               },
               "src/styles.scss"
             ],
+            "stylePreprocessorOptions": {
+              "includePaths": ["node_modules"]
+            },
             "assets": ["src/favicon.ico", "src/assets", "src/manifest.json"],
             "sourceMap": false
           }
@@ -165,5 +183,8 @@
       }
     }
   },
-  "defaultProject": "SIL.XForge.Scripture"
+  "defaultProject": "SIL.XForge.Scripture",
+  "cli": {
+    "analytics": "62cc4c83-1f58-4311-beb3-55e7dd022de8"
+  }
 }

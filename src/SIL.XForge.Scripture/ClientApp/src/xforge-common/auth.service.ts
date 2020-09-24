@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { AuthorizeOptions, WebAuth } from 'auth0-js';
+import { Auth0DecodedHash, AuthorizeOptions, WebAuth } from 'auth0-js';
 import jwtDecode from 'jwt-decode';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/common/models/system-role';
@@ -58,6 +58,10 @@ export class AuthService {
     audience: environment.audience
   });
 
+  private parsedHashPromise = new Promise<Auth0DecodedHash | null>((resolve, reject) =>
+    this.auth0.parseHash((err, authResult) => (err != null ? reject(err) : resolve(authResult)))
+  );
+
   constructor(
     private readonly remoteStore: SharedbRealtimeRemoteStore,
     private readonly offlineStore: OfflineStore,
@@ -69,11 +73,19 @@ export class AuthService {
     private readonly pwaService: PwaService,
     private readonly noticeService: NoticeService
   ) {
-    // listen for changes to the auth state
-    // this indicates that a user has logged in/out on a different tab/window
-    // when localStorage is cleared event.key is null
+    // Listen for changes to the auth state. If the user logs out in another tab/window, redirect to the home page.
+    // When localStorage is cleared event.key is null. The logic below may be more specific than necessary, but we can't
+    // assume very much about the browser's implementation and under what conditions the event will fire.
+    // Safari 13.1 (but not 12.1 or most other browsers) fires the event even when the change occurred in this tab.
+    // This issue has been reported in Webkit's bug tracker: https://bugs.webkit.org/show_bug.cgi?id=210512
     this.localSettings.remoteChanges$
-      .pipe(filter(event => event.key === USER_ID_SETTING || event.key === null))
+      .pipe(
+        filter(
+          event =>
+            event.key === null ||
+            (event.key === USER_ID_SETTING && event.oldValue != null && event.oldValue !== event.newValue)
+        )
+      )
       .subscribe(() => this.locationService.go('/'));
 
     this.tryLogInPromise = this.tryLogIn();
@@ -192,7 +204,7 @@ export class AuthService {
     try {
       if (await this.pwaService.checkOnline()) {
         // In online mode do the normal checks with auth0
-        let authResult = await this.parseHash();
+        let authResult = await this.parsedHashPromise;
         if (!(await this.handleOnlineAuth(authResult))) {
           authResult = await this.checkSession();
           if (!(await this.handleOnlineAuth(authResult))) {
@@ -200,6 +212,8 @@ export class AuthService {
             return { loggedIn: false, newlyLoggedIn: false };
           }
         } else {
+          // TODO newlyLoggedIn is incorrect the second time this is called, because a user cannot be "newly" logged in
+          // multiple times in a single session. The value is ignored though after the first time it's called.
           return { loggedIn: true, newlyLoggedIn: true };
         }
       }
@@ -309,24 +323,14 @@ export class AuthService {
     }
   }
 
-  private parseHash(): Promise<auth0.Auth0DecodedHash | null> {
-    return new Promise<auth0.Auth0DecodedHash | null>((resolve, reject) => {
-      this.auth0.parseHash((err, authResult) => {
-        if (err != null) {
-          reject(err);
-        } else {
-          resolve(authResult);
-        }
-      });
-    });
-  }
-
-  private checkSession(): Promise<auth0.Auth0DecodedHash | null> {
+  private checkSession(retryUponTimeout: boolean = true): Promise<auth0.Auth0DecodedHash | null> {
     return new Promise<auth0.Auth0DecodedHash | null>((resolve, reject) => {
       this.auth0.checkSession({ state: JSON.stringify({}) }, (err, authResult) => {
         if (err != null) {
           if (err.code === 'login_required') {
             resolve(null);
+          } else if (retryUponTimeout && err.code === 'timeout') {
+            this.checkSession(false).then(resolve).catch(reject);
           } else {
             reject(err);
           }

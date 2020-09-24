@@ -19,7 +19,7 @@ export interface SuggestionsSettingsDialogData {
   styleUrls: ['./suggestions-settings-dialog.component.scss']
 })
 export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
-  @ViewChild('confidenceThresholdSlider', { static: false }) confidenceThresholdSlider?: MdcSlider;
+  @ViewChild('confidenceThresholdSlider') confidenceThresholdSlider?: MdcSlider;
   open: boolean = false;
 
   suggestionsEnabledSwitch = new FormControl();
@@ -42,7 +42,7 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
       if (this.confidenceThresholdSlider != null) {
         this.confidenceThresholdSlider.layout();
         this.confidenceThresholdSlider.disabled = false; // cannot set value when slider is disabled
-        this.confidenceThresholdSlider.setValue(this.projectUserConfigDoc.data!.confidenceThreshold * 100);
+        this.confidenceThresholdSlider.value = this.projectUserConfigDoc.data!.confidenceThreshold * 100;
         this.confidenceThresholdSlider.disabled = this.settingsDisabled;
       }
       this.open = true;

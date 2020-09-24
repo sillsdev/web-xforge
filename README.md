@@ -193,20 +193,21 @@ Although this setup is specifically written for **Windows**, the steps could be 
    `git clone --recurse-submodules https://github.com/sillsdev/web-xforge`.
 
 3. Install [MongoDB v4](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/) as a service
-4. Install [.Net Core SDK-2.1](https://dotnet.microsoft.com/download/dotnet-core/2.1)
-5. Install [Node v10](https://nodejs.org/en/download/)
+4. Install [.Net Core SDK-3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1)
+5. Install [Node v12](https://nodejs.org/en/download/)
 6. Install [FFmpeg v4](https://ffmpeg.org/download.html) executable into the `C:\usr\bin\` directory.
 7. Install a developer editor, [VS Code](https://code.visualstudio.com/download) is recommended (the repo includes VS Code settings)
-8. Create folders owned by you. Check in the Ansible `deploy/dependencies.yml` for the valid list of folders. As of writing they were:
+8. Install [Mercurial v4.8](https://www.mercurial-scm.org/) (python 2) and copy contents into the `C:\usr\local\bin\ directory`.
+9. Create folders owned by you. Check in the Ansible `deploy/dependencies.yml` for the valid list of folders. As of writing they were:
 
-   - `/var/lib/scriptureforge/sync/`
-   - `/var/lib/scriptureforge/audio/`
-   - `/var/lib/xforge/avatars/`
+- `/var/lib/scriptureforge/sync/`
+- `/var/lib/scriptureforge/audio/`
+- `/var/lib/xforge/avatars/`
 
-   On Windows, just put these off your root drive, e.g. `C:\var\lib\...`
+On Windows, just put these off your root drive, e.g. `C:\var\lib\...`
 
-9. Add developer secrets. Ask another developer how to get these.
-10. In `src/SIL.XForge.Scripture/`, run `dotnet run`. Browse to `http://localhost:5000`.
+10. Add developer secrets. Ask another developer how to get these.
+11. In `src/SIL.XForge.Scripture/`, run `dotnet run`. Browse to `http://localhost:5000`.
 
 ### Development Process
 

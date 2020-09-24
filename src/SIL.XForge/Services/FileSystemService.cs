@@ -20,6 +20,11 @@ namespace SIL.XForge.Services
             return File.Open(path, mode);
         }
 
+        public string FileReadText(string path)
+        {
+            return File.ReadAllText(path);
+        }
+
         public void DeleteFile(string path)
         {
             File.Delete(path);
@@ -35,6 +40,11 @@ namespace SIL.XForge.Services
             return Directory.Exists(path);
         }
 
+        public void MoveDirectory(string sourceDirPath, string targetDirPath)
+        {
+            Directory.Move(sourceDirPath, targetDirPath);
+        }
+
         public void DeleteDirectory(string path)
         {
             Directory.Delete(path, true);
@@ -43,6 +53,11 @@ namespace SIL.XForge.Services
         public IEnumerable<string> EnumerateFiles(string path)
         {
             return Directory.EnumerateFiles(path);
+        }
+
+        public IEnumerable<string> EnumerateDirectories(string path)
+        {
+            return Directory.EnumerateDirectories(path);
         }
     }
 }

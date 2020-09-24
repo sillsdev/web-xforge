@@ -9,7 +9,9 @@
           <form [formGroup]="questionForm" autocomplete="off" id="question-form">
             <div fxLayout="row wrap" fxLayoutAlign="space-around start" fxLayoutGap.gt-xs="1em">
               <mdc-form-field>
+                <!-- appAutofocus is needed because MdcDialog would focus the mdc-icon, since it is first in the dom -->
                 <mdc-text-field
+                  appAutofocus
                   label="{{ t('scripture_reference') }}"
                   type="text"
                   formControlName="scriptureStart"
@@ -76,7 +78,7 @@
           <button mdcDialogButton mdcDialogAction="close" type="button" id="question-cancel-btn">
             {{ t("cancel") }}
           </button>
-          <button mdc-button primary form="question-form" type="submit" id="question-save-btn" (click)="submit()">
+          <button mdc-button unelevated form="question-form" type="submit" id="question-save-btn" (click)="submit()">
             {{ t("save") }}
           </button>
         </mdc-dialog-actions>

@@ -2,6 +2,9 @@
   <div fxLayout="column" class="base-container">
     <h2 id="title">{{ t("synchronize_project", { projectName: projectName }) }}</h2>
     <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_synchronize") }} </span>
+    <span *ngIf="syncDisabled" id="syncDisabled-message" class="syncDisabled-text">
+      {{ t("sync_is_disabled", { email: issueEmail }) }}
+    </span>
     <mdc-card outlined class="sync-card">
       <div fxLayout="column" class="card-content">
         <button
@@ -19,10 +22,10 @@
             *ngIf="!syncActive"
             class="action-button"
             mdc-button
-            primary
+            unelevated
             type="button"
             (click)="syncProject()"
-            [disabled]="isLoading || !isAppOnline"
+            [disabled]="isLoading || !isAppOnline || syncDisabled"
             id="btn-sync"
           >
             <mdc-icon>sync</mdc-icon>
@@ -34,9 +37,9 @@
           <mdc-linear-progress
             *ngIf="syncActive"
             class="progress-bar"
-            [secondary]="true"
             [determinate]="isProgressDeterminate"
             [progress]="percentComplete"
+            [buffer]="1"
           ></mdc-linear-progress>
           <span *ngIf="!syncActive" [title]="lastSyncDate" id="date-last-sync" class="sync-info">
             {{ lastSyncNotice }}

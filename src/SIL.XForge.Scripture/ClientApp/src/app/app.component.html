@@ -1,6 +1,5 @@
 <ng-container *transloco="let t; read: 'app'">
-  <mdc-linear-progress [secondary]="true" *ngIf="isAppLoading != null" [open]="isAppLoading" fxFlex="none">
-  </mdc-linear-progress>
+  <mdc-linear-progress [class.mdc-linear-progress--closed]="isAppLoading != true"></mdc-linear-progress>
   <header [class.overlay-drawer]="isDrawerPermanent">
     <mdc-top-app-bar fixed #topAppBar [scrollTarget]="appContent">
       <mdc-top-app-bar-row>
@@ -9,7 +8,7 @@
             <mdc-icon mdcTopAppBarNavIcon>menu</mdc-icon>
           </a>
           <a (click)="goHome()">
-            <mdc-icon mdcTopAppBarNavIcon><img id="nav-logo" src="/assets/images/logo-sf.svg" height="30"/></mdc-icon>
+            <mdc-icon mdcTopAppBarNavIcon><img id="nav-logo" src="/assets/images/logo-sf.svg" height="30" /></mdc-icon>
           </a>
           <mdc-top-app-bar-title *ngIf="!topAppBar.isCollapsed()" (click)="goHome()" fxHide.xs>
             Scripture Forge
@@ -89,7 +88,7 @@
                   {{ t("logged_in_as") }}
                   <div fxLayout="row" fxLayoutAlign="start center">
                     <span fxFlex>&nbsp;</span>
-                    <button *ngIf="isAppOnline" id="edit-name-btn" mdcIconButton type="button" (click)="editName()">
+                    <button id="edit-name-btn" mdcIconButton type="button" (click)="editName()">
                       <mdc-icon>edit</mdc-icon>
                     </button>
                     <strong class="user-menu-name">{{ currentUser?.displayName }}</strong>
@@ -224,7 +223,7 @@
             </mdc-list-item>
           </ng-container>
         </div>
-        <div *ngIf="(isProjectAdmin$ | async)">
+        <div *ngIf="isProjectAdmin$ | async">
           <mdc-list-divider *ngIf="isCheckingEnabled"></mdc-list-divider>
           <mdc-list-item
             [appRouterLink]="['/projects', selectedProjectId, 'sync']"

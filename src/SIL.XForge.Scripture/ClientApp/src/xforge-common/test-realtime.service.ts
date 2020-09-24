@@ -1,3 +1,4 @@
+import { Injectable } from '@angular/core';
 import merge from 'lodash/merge';
 import * as OTJson0 from 'ot-json0';
 import { MemoryOfflineStore } from './memory-offline-store';
@@ -26,6 +27,9 @@ function addSnapshotDefaults(snapshot: Partial<Snapshot>): Snapshot {
 /**
  * This is a memory-based implementation of the real-time service. It is useful for testing.
  */
+@Injectable({
+  providedIn: 'root'
+})
 export class TestRealtimeService extends RealtimeService {
   set offlineStorageQuotaStatus(isFull: boolean) {
     (this.offlineStore as MemoryOfflineStore).storageQuotaFull = isFull;

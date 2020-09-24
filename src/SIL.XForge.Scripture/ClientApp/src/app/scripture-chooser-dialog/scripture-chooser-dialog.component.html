@@ -18,7 +18,7 @@
             <button
               *ngFor="let book of otBooks"
               mdc-button
-              [primary]="data.input?.book === book"
+              [unelevated]="data.input?.book === book"
               (click)="onClickBook(book)"
             >
               {{ i18n.localizeBook(book) }}
@@ -27,7 +27,7 @@
           <button
             *ngFor="let book of ntBooks"
             mdc-button
-            [primary]="data.input?.book === book"
+            [unelevated]="data.input?.book === book"
             (click)="onClickBook(book)"
           >
             {{ i18n.localizeBook(book) }}
@@ -47,7 +47,7 @@
           <button
             *ngFor="let chapter of chaptersOf(selection?.book)"
             mdc-button
-            [primary]="data.input?.book === selection?.book && +data.input?.chapterNum === +chapter"
+            [unelevated]="data.input?.book === selection?.book && +data.input?.chapterNum === +chapter"
             (click)="onClickChapter(chapter)"
           >
             {{ chapter }}
@@ -69,7 +69,7 @@
           <button
             *ngFor="let verse of versesOf(selection?.book, selection?.chapter)"
             mdc-button
-            [primary]="
+            [unelevated]="
               data.input?.book === selection?.book &&
               data.input?.chapter === selection?.chapter &&
               +data.input?.verseNum === +verse
@@ -95,12 +95,12 @@
         </mdc-dialog-title>
         <mdc-dialog-content>
           <div class="reference">
-            {{ getBookName(data.booksAndChaptersToShow[(data.rangeStart?.book)]) }} {{ data.rangeStart?.chapter }}
+            {{ getBookName(data.booksAndChaptersToShow[data.rangeStart?.book]) }} {{ data.rangeStart?.chapter }}
           </div>
           <button
             *ngFor="let verse of versesOf(data.rangeStart?.book, data.rangeStart?.chapter, data.rangeStart?.verse)"
             mdc-button
-            [primary]="
+            [unelevated]="
               data.input?.book === data.rangeStart?.book &&
               data.input?.chapter === data.rangeStart?.chapter &&
               +data.input?.verseNum === +verse

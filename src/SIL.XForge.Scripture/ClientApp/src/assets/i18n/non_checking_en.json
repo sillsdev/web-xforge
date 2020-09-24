@@ -162,7 +162,8 @@
     "successfully_synchronized_with_paratext": "Successfully synchronized {{ projectName }} with Paratext.",
     "synchronize": "Synchronize",
     "synchronize_project": "Synchronize {{ projectName }} with Paratext",
-    "your_project_is_being_synchronized": "Your project is being synchronized..."
+    "your_project_is_being_synchronized": "Your project is being synchronized...",
+    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again."
   },
   "text": {
     "book_does_not_exist": "This book does not exist.",

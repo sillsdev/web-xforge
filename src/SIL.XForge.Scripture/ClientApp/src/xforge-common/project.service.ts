@@ -44,10 +44,7 @@ export abstract class ProjectService<
     term$: Observable<string>,
     queryParameters$: Observable<QueryParameters>
   ): Observable<RealtimeQuery<TDoc>> {
-    const debouncedTerm$ = term$.pipe(
-      debounceTime(400),
-      distinctUntilChanged()
-    );
+    const debouncedTerm$ = term$.pipe(debounceTime(400), distinctUntilChanged());
 
     return combineLatest(debouncedTerm$, queryParameters$).pipe(
       switchMap(([term, queryParameters]) => {
@@ -85,6 +82,10 @@ export abstract class ProjectService<
 
   onlineDelete(id: string): Promise<void> {
     return this.onlineInvoke('delete', { projectId: id });
+  }
+
+  onlineSetSyncDisabled(projectId: string, isDisabled: boolean): Promise<void> {
+    return this.onlineInvoke<void>('setSyncDisabled', { projectId, isDisabled });
   }
 
   protected onlineInvoke<T>(method: string, params?: any): Promise<T | undefined> {
