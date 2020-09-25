@@ -72,7 +72,7 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
       if (offlineData != null) {
         for (const answer of offlineData.data.answers) {
           const file = await this.realtimeService.fileService!.get(FileType.Audio, answer.dataId);
-          if (file != null && this.data!.answers.find(a => a === answer) == null) {
+          if (file != null && this.data!.answers.find(a => a.dataId === answer.dataId) == null) {
             await this.realtimeService.fileService!.findOrUpdateCache(FileType.Audio, this.collection, answer.dataId);
           }
         }

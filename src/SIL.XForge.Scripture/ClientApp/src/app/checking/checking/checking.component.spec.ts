@@ -1310,6 +1310,15 @@ describe('CheckingComponent', () => {
       verify(questionDoc!.updateAnswerFileCache()).twice();
       expect().nothing();
     }));
+
+    it('update answer audio cache on remote removal of an answer', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      const questionDoc = spy(env.getQuestionDoc('q6Id'));
+      env.selectQuestion(6);
+      env.simulateRemoteDeleteAnswer('q6Id', 0);
+      verify(questionDoc!.updateAnswerFileCache()).twice();
+      expect().nothing();
+    }));
   });
 
   describe('Text', () => {
@@ -1939,6 +1948,12 @@ class TestEnvironment {
       }
     }, false);
     tick(this.questionReadTimer);
+    this.fixture.detectChanges();
+  }
+
+  simulateRemoteDeleteAnswer(questionId: string, answerIndex: number): void {
+    const questionDoc = this.getQuestionDoc(questionId);
+    questionDoc.submitJson0Op(op => op.remove(q => q.answers, answerIndex), false);
     this.fixture.detectChanges();
   }
 
