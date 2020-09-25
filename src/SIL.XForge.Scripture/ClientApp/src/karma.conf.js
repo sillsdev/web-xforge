@@ -41,6 +41,7 @@ module.exports = function (config) {
       }
     ],
     proxies: {
+      '/assets/audio/audio.mp3': '',
       '/assets/audio/': '/base/app/checking/checking/checking-audio-player/'
     },
     reporters: isTC ? ['teamcity', 'coverage-istanbul'] : ['progress', 'kjhtml'],
