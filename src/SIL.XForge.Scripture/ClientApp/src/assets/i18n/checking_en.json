@@ -236,6 +236,7 @@
     "try_again": "Try Again"
   },
   "exception_handling_service": {
+    "firefox_private_browsing_or_no_space": "Something went wrong. Please check that you are not using Firefox in the unsupported private browsing mode and that your device has the recommended 500 MB of free space.",
     "network_request_failed": "A network request failed. Some functionality may be unavailable.",
     "out_of_space": "An error occurred because your device is out of storage space.",
     "unknown_error": "Unknown error"
