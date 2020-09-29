@@ -64,6 +64,9 @@ export class CommandService {
       const response = await this.http
         .post<JsonRpcResponse<T>>(url, request, { headers: { 'Content-Type': 'application/json' } })
         .toPromise();
+      if (response.error != null) {
+        throw response.error;
+      }
       return response.result;
     } catch (error) {
       const message = `Error invoking ${method}: ${error.message}`;

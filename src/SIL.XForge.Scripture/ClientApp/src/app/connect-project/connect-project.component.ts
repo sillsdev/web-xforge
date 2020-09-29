@@ -1,10 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ErrorHandler, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { TranslocoService } from '@ngneat/transloco';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
+import { environment } from '../../environments/environment';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -49,7 +52,9 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     private readonly router: Router,
     readonly i18n: I18nService,
     noticeService: NoticeService,
-    private readonly pwaService: PwaService
+    private readonly pwaService: PwaService,
+    private readonly errorHandler: ErrorHandler,
+    private readonly translocoService: TranslocoService
   ) {
     super(noticeService);
     this.connectProjectForm.disable();
@@ -140,17 +145,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       this.isAppOnline = isOnline;
       if (isOnline) {
         if (this.projects == null) {
-          this.state = 'loading';
-          this.loadingStarted();
-          const paratextProjects = await this.paratextService.getProjects().toPromise();
-          this.projects = paratextProjects == null ? undefined : paratextProjects;
-          if (paratextProjects != null) {
-            this.targetProjects = paratextProjects.filter(p => p.isConnectable);
-            this.state = 'input';
-          } else {
-            this.state = 'login';
-          }
-          this.loadingFinished();
+          await this.populateProjectList();
         } else {
           this.state = 'input';
         }
@@ -191,7 +186,23 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
         sourceParatextId: values.settings.sourceParatextId
       };
 
-      const projectId = await this.projectService.onlineCreate(settings);
+      let projectId: string = '';
+      try {
+        projectId = await this.projectService.onlineCreate(settings);
+      } catch (err) {
+        if (!(err instanceof CommandError) || err.code !== CommandErrorCode.InvalidParams) {
+          throw err;
+        }
+
+        const problemMessage: string = this.translocoService.translate('start.problem_already_connected', {
+          siteName: environment.siteName
+        });
+        err.message = problemMessage + err.message;
+        this.errorHandler.handleError(err);
+        this.state = 'input';
+        this.populateProjectList();
+        return;
+      }
       this.projectDoc = await this.projectService.get(projectId);
       this.checkSyncStatus();
       this.subscribe(this.projectDoc.remoteChanges$, () => this.checkSyncStatus());
@@ -199,6 +210,20 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       await this.projectService.onlineAddCurrentUser(project.projectId);
       this.router.navigate(['/projects', project.projectId]);
     }
+  }
+
+  private async populateProjectList() {
+    this.state = 'loading';
+    this.loadingStarted();
+    const paratextProjects = await this.paratextService.getProjects().toPromise();
+    this.projects = paratextProjects == null ? undefined : paratextProjects;
+    if (paratextProjects != null) {
+      this.targetProjects = paratextProjects.filter(p => p.isConnectable);
+      this.state = 'input';
+    } else {
+      this.state = 'login';
+    }
+    this.loadingFinished();
   }
 
   private checkSyncStatus(): void {

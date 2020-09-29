@@ -15,6 +15,7 @@ export class ParatextService {
     this.authService.linkParatext(returnUrl);
   }
 
+  /** Get projects the user has access to. */
   getProjects(): Observable<ParatextProject[] | undefined> {
     return this.http
       .get<ParatextProject[]>('paratext-api/projects', { headers: this.getHeaders() })

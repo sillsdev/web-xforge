@@ -290,7 +290,8 @@
   },
   "start": {
     "connect_project": "Connect project",
-    "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet."
+    "not_connected_to_any_projects": "Looks like you aren't connected to any projects yet.",
+    "problem_already_connected": "There was a problem connecting the project. This can happen if another project administrator tried to connect to the project on {{ siteName }} at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed. Original error message: "
   },
   "supported_browsers_dialog": {
     "dismiss": "Dismiss",
