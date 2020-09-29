@@ -1,13 +1,9 @@
 import { ProjectData } from 'realtime-server/lib/common/models/project-data';
 import { getValue, PathItem } from 'realtime-server/lib/common/utils/obj-path';
-import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
 import { FileType } from './file-offline-data';
 import { JsonRealtimeDoc } from './json-realtime-doc';
 
 export abstract class ProjectDataDoc<T extends ProjectData = ProjectData> extends JsonRealtimeDoc<T> {
-  private updateFileCacheSub?: Subscription;
-
   async getFileContents(fileType: FileType, dataId: string): Promise<Blob | undefined> {
     if (this.realtimeService.fileService == null) {
       return undefined;
@@ -65,35 +61,22 @@ export abstract class ProjectDataDoc<T extends ProjectData = ProjectData> extend
 
   onRemovedFromSubscribeQuery(): void {
     super.onRemovedFromSubscribeQuery();
-    if (!this.subscribed && this.updateFileCacheSub != null) {
-      this.updateFileCacheSub.unsubscribe();
-      this.updateFileCacheSub = undefined;
-    }
   }
 
   async dispose(): Promise<void> {
     await super.dispose();
-    if (this.updateFileCacheSub != null) {
-      this.updateFileCacheSub.unsubscribe();
-      this.updateFileCacheSub = undefined;
-    }
   }
 
   protected async onSubscribe(): Promise<void> {
-    if (this.realtimeService.pwaService == null || this.updateFileCacheSub != null) {
-      return;
-    }
-
-    if (this.realtimeService.pwaService.isOnline) {
-      await this.updateFileCache();
-    }
-
-    this.updateFileCacheSub = this.realtimeService.pwaService.onlineStatus
-      .pipe(filter(isOnline => isOnline))
-      .subscribe(async () => await this.updateFileCache());
+    return Promise.resolve();
   }
 
   protected getFileUrlPath(_fileType: FileType, _dataId: string): PathItem[] | undefined {
     return undefined;
+  }
+
+  protected async updateOfflineData(force: boolean = false): Promise<void> {
+    await super.updateOfflineData(force);
+    await this.updateFileCache();
   }
 }
