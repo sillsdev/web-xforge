@@ -1,20 +1,20 @@
-import bugsnag from '@bugsnag/js';
+import Bugsnag, { Client, NotifiableError } from '@bugsnag/js';
 
 export class ExceptionReporter {
-  private readonly bugsnagClient: any;
+  private readonly bugsnagClient: Client;
 
   constructor(bugsnagApiKey: string, releaseStage: string, version: string) {
-    this.bugsnagClient = bugsnag({
+    this.bugsnagClient = Bugsnag.createClient({
       apiKey: bugsnagApiKey,
       appVersion: version,
       appType: 'node',
-      notifyReleaseStages: ['live', 'qa'],
+      enabledReleaseStages: ['live', 'qa'],
       releaseStage: releaseStage,
-      autoNotify: false
+      autoDetectErrors: false
     });
   }
 
-  report(error: any) {
+  report(error: NotifiableError) {
     this.bugsnagClient.notify(error);
   }
 }

@@ -73,21 +73,21 @@ describe('ProjectDataService', () => {
     const nonmemberConn = clientConnect(env.server, 'nonmember');
     await expect(
       submitJson0Op<TestData>(nonmemberConn, TEST_DATA_COLLECTION, 'test01', ops =>
-        ops.add(d => d.children, { id: 'sub04', ownerRef: 'nonmember' })
+        ops.add(d => d.children, { id: 'sub04', ownerRef: 'nonmember', children: [] })
       )
     ).rejects.toThrow();
 
     const observerConn = clientConnect(env.server, 'observer');
     await expect(
       submitJson0Op<TestData>(observerConn, TEST_DATA_COLLECTION, 'test01', ops =>
-        ops.add(d => d.children, { id: 'sub04', ownerRef: 'observer' })
+        ops.add(d => d.children, { id: 'sub04', ownerRef: 'observer', children: [] })
       )
     ).rejects.toThrow();
 
     const adminConn = clientConnect(env.server, 'admin');
     await expect(
       submitJson0Op<TestData>(adminConn, TEST_DATA_COLLECTION, 'test01', ops =>
-        ops.add(d => d.children, { id: 'sub04', ownerRef: 'admin' })
+        ops.add(d => d.children, { id: 'sub04', ownerRef: 'admin', children: [] })
       )
     ).resolves.not.toThrow();
   });
@@ -223,7 +223,9 @@ describe('ProjectDataService', () => {
     const userConn = clientConnect(env.server, 'user');
     await expect(
       submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test02', ops =>
-        ops.add(d => d.children, { id: 'sub04', ownerRef: 'user' }).set<number>(d => d.children[1].num!, 1)
+        ops
+          .add(d => d.children, { id: 'sub04', ownerRef: 'user', children: [] })
+          .set<number>(d => d.children[1].num!, 1)
       )
     ).resolves.not.toThrow();
   });
