@@ -524,6 +524,42 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ProjectSecrets.Contains(Project01), Is.False);
         }
 
+        [Test]
+        public async Task CreateProjectAsync_NotExisting_Created()
+        {
+            var env = new TestEnvironment();
+            int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+               .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
+            // SUT
+            string sfProjectId = await env.Service.CreateProjectAsync(User01, new SFProjectCreateSettings()
+            {
+                ParatextId = "ptProject123"
+            });
+            Assert.That(env.ContainsProject(sfProjectId), Is.True);
+            Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+                Is.EqualTo(projectCount + 1), "should have increased");
+        }
+
+        [Test]
+        public void CreateProjectAsync_AlreadyExists_Error()
+        {
+            var env = new TestEnvironment();
+            int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
+            env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>())
+               .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
+            SFProject existingSfProject = env.GetProject(Project01);
+            // SUT
+            InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(
+                () => env.Service.CreateProjectAsync(User01, new SFProjectCreateSettings()
+                {
+                    ParatextId = existingSfProject.ParatextId
+                }));
+            Assert.That(thrown.Message, Does.Contain(SFProjectService.ErrorAlreadyConnectedKey));
+            Assert.That(env.RealtimeService.GetRepository<SFProject>().Query().Count(),
+                Is.EqualTo(projectCount), "should not have changed");
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment()
@@ -691,6 +727,14 @@ namespace SIL.XForge.Scripture.Services
                         ParatextId = "changedId",
                         Name = "NewSource",
                         LanguageTag = "qaa"
+                    },
+                    new ParatextProject
+                    {
+                        ParatextId = GetProject(Project01).ParatextId
+                    },
+                    new ParatextProject
+                    {
+                        ParatextId = "ptProject123"
                     }
                 };
                 ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(ptProjects));
