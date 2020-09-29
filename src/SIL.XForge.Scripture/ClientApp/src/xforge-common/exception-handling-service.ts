@@ -98,7 +98,7 @@ export class ExceptionHandlingService implements ErrorHandler {
       message.includes('A mutation operation was attempted on a database that did not allow mutations.') &&
       window.navigator.userAgent.includes('Gecko/')
     ) {
-      message = 'Firefox private browsing mode is not supported because IndexedDB is not available.';
+      message = translate('exception_handling_service.firefox_private_browsing_or_no_space');
     }
 
     // try/finally blocks are to prevent an exception from preventing reporting or logging of an error
