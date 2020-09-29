@@ -79,7 +79,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     answered: 0
   };
   questionVerseRefs: VerseRef[] = [];
-
+  _activeQuestionVerseRef?: VerseRef;
   answersPanelContainerElement?: ElementRef;
   projectDoc?: SFProjectDoc;
   projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -147,7 +147,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   get activeQuestionVerseRef(): VerseRef | undefined {
     if (this.questionsPanel != null && this.book === this.questionsPanel.activeQuestionBook) {
-      return this.questionsPanel.activeQuestionVerseRef;
+      return this._activeQuestionVerseRef;
     }
   }
 
@@ -351,9 +351,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           this.questionsRemoteChangesSub.unsubscribe();
         }
         this.questionsRemoteChangesSub = this.subscribe(this.questionsQuery.remoteDocChanges$, (qd: QuestionDoc) => {
+          const isActiveQuestionDoc = qd.id === this.questionsPanel!.activeQuestionDoc?.id;
+          if (isActiveQuestionDoc) {
+            this._activeQuestionVerseRef = qd.data == null ? undefined : toVerseRef(qd.data.verseRef);
+          }
           if (this.pwaService.isOnline) {
             qd.updateFileCache();
-            if (qd === this.questionsPanel!.activeQuestionDoc) {
+            if (isActiveQuestionDoc) {
               qd.updateAnswerFileCache();
             }
           }
@@ -628,6 +632,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
     this.book = questionDoc.data == null ? undefined : questionDoc.data.verseRef.bookNum;
     this.chapter = this.questionsPanel.activeQuestionChapter;
+    this._activeQuestionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
     this.collapseDrawer();

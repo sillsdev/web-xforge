@@ -7,8 +7,6 @@ import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { toVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -33,7 +31,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
   @ViewChild(MdcList, { static: true }) mdcList!: MdcList;
-  private _activeQuestionVerseRef?: VerseRef;
   private questionDocSubscription?: Subscription;
 
   constructor(private readonly userService: UserService, private readonly projectService: SFProjectService) {
@@ -62,10 +59,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     }
     const activeQuestionDocId = this.activeQuestionDoc.id;
     return this.questionDocs.findIndex(question => question.id === activeQuestionDocId);
-  }
-
-  get activeQuestionVerseRef(): VerseRef | undefined {
-    return this._activeQuestionVerseRef;
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
@@ -252,7 +245,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   activateQuestion(questionDoc: QuestionDoc): void {
     // The reason for the convoluted questionChanged logic is because the change needs to be emitted even if it's the
     // same question, but calling activeQuestionDoc$.next when the question is unchanged causes complicated test errors
-    this._activeQuestionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
     let questionChanged = true;
     if (this.activeQuestionDoc != null && this.activeQuestionDoc.id === questionDoc.id) {
       questionChanged = false;
@@ -266,11 +258,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
           if (this.questionDocSubscription != null) {
             this.questionDocSubscription.unsubscribe();
           }
-          this.questionDocSubscription = questionDoc.remoteChanges$.subscribe(
-            () =>
-              (this._activeQuestionVerseRef =
-                questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef))
-          );
         }
       });
     }
