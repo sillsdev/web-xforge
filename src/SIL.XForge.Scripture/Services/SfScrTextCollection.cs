@@ -13,8 +13,6 @@ namespace SIL.XForge.Scripture.Services
     {
         protected override string DictionariesDirectoryInternal => null;
 
-        protected override string ResourcesDirectoryInternal => null;
-
         protected override void InitializeInternal(string settingsDir, bool allowMigration)
         {
             if (SettingsDirectoryInternal != null && (SettingsDirectoryInternal == settingsDir || settingsDir == null))

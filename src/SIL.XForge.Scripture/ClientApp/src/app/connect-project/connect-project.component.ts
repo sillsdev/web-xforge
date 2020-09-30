@@ -111,11 +111,17 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   ngOnInit(): void {
-    this.subscribe(this.paratextIdControl.valueChanges, (paratextId: string) => {
+    this.subscribe(this.paratextIdControl.valueChanges, async (paratextId: string) => {
       if (this.state !== 'input' || this.projects == null) {
         return;
       }
-      this.sourceProjects = this.projects.filter(p => p.paratextId !== paratextId);
+      let paratextProjects = this.projects.filter(p => p.paratextId !== paratextId);
+      // Merge the resources collection with the projects collection
+      const paratextResources = await this.paratextService.getResources().toPromise();
+      if (paratextResources != null) {
+        paratextProjects = paratextProjects?.concat(paratextResources) ?? paratextResources;
+      }
+      this.sourceProjects = paratextProjects;
       const settings = this.settings;
       if (this.showSettings) {
         settings.enable();
