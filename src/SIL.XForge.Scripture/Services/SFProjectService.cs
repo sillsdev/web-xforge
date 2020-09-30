@@ -78,7 +78,15 @@ namespace SIL.XForge.Scripture.Services
                 ParatextProject sourcePTProject = ptProjects
                     .SingleOrDefault(p => p.ParatextId == settings.SourceParatextId);
                 if (sourcePTProject == null)
-                    throw new DataNotFoundException("The source paratext project does not exist.");
+                {
+                    // If it is not a project, see if there is a matching resource
+                    var resources = this._paratextService.GetResources(userSecret);
+                    sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == settings.SourceParatextId);
+                    if (sourcePTProject == null)
+                    {
+                        throw new DataNotFoundException("The source paratext project does not exist.");
+                    }
+                }
                 source = new TranslateSource
                 {
                     ParatextId = settings.SourceParatextId,
@@ -189,7 +197,15 @@ namespace SIL.XForge.Scripture.Services
                 ParatextProject sourcePTProject = ptProjects
                     .SingleOrDefault(p => p.ParatextId == settings.SourceParatextId);
                 if (sourcePTProject == null)
-                    throw new DataNotFoundException("The source paratext project does not exist.");
+                {
+                    // If it is not a project, see if there is a matching resource
+                    var resources = this._paratextService.GetResources(userSecret);
+                    sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == settings.SourceParatextId);
+                    if (sourcePTProject == null)
+                    {
+                        throw new DataNotFoundException("The source paratext project does not exist.");
+                    }
+                }
                 source = new TranslateSource
                 {
                     ParatextId = settings.SourceParatextId,
