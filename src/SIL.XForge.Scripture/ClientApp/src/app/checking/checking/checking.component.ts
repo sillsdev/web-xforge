@@ -79,7 +79,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     answered: 0
   };
   questionVerseRefs: VerseRef[] = [];
-  _activeQuestionVerseRef?: VerseRef;
   answersPanelContainerElement?: ElementRef;
   projectDoc?: SFProjectDoc;
   projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -89,6 +88,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private _isDrawerPermanent: boolean = true;
   private _chapter?: number;
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
+  private _activeQuestionVerseRef?: VerseRef;
   private questionsSub?: Subscription;
   private projectDeleteSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
@@ -353,7 +353,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.questionsRemoteChangesSub = this.subscribe(this.questionsQuery.remoteDocChanges$, (qd: QuestionDoc) => {
           const isActiveQuestionDoc = qd.id === this.questionsPanel!.activeQuestionDoc?.id;
           if (isActiveQuestionDoc) {
-            this._activeQuestionVerseRef = qd.data == null ? undefined : toVerseRef(qd.data.verseRef);
+            this.updateActiveQuestionVerseRef(qd);
           }
           if (this.pwaService.isOnline) {
             qd.updateFileCache();
@@ -630,9 +630,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       return;
     }
 
-    this.book = questionDoc.data == null ? undefined : questionDoc.data.verseRef.bookNum;
+    this.book = questionDoc.data?.verseRef.bookNum;
     this.chapter = this.questionsPanel.activeQuestionChapter;
-    this._activeQuestionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
+    this.updateActiveQuestionVerseRef(questionDoc);
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
     this.collapseDrawer();
@@ -895,6 +895,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         })
       );
     }
+  }
+
+  private updateActiveQuestionVerseRef(questionDoc: QuestionDoc): void {
+    this._activeQuestionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
   }
 
   private calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {

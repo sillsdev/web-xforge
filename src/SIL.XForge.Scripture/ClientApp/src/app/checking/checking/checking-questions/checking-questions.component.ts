@@ -7,7 +7,7 @@ import { Comment } from 'realtime-server/lib/scriptureforge/models/comment';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
@@ -31,7 +31,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
   @ViewChild(MdcList, { static: true }) mdcList!: MdcList;
-  private questionDocSubscription?: Subscription;
 
   constructor(private readonly userService: UserService, private readonly projectService: SFProjectService) {
     super();
@@ -255,9 +254,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
         this.changed.emit(questionDoc);
         if (questionChanged) {
           this.activeQuestionDoc$.next(questionDoc);
-          if (this.questionDocSubscription != null) {
-            this.questionDocSubscription.unsubscribe();
-          }
         }
       });
     }
