@@ -1354,6 +1354,28 @@ describe('CheckingComponent', () => {
       expect(segment.getAttribute('data-question-count')).toBe('13');
     }));
 
+    it('updates question highlight when verse ref changes', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      env.selectQuestion(4);
+      expect(env.getVerse(1, 3)).not.toBeNull();
+      let segment = env.getVerse(1, 3);
+      expect(segment.classList.contains('question-segment')).toBe(true);
+      expect(segment.classList.contains('highlight-segment')).toBe(true);
+      expect(fromVerseRef(env.component.activeQuestionVerseRef!).verseNum).toEqual(3);
+      env.component.questionsPanel!.activeQuestionDoc!.submitJson0Op(op => {
+        op.set(qd => qd.verseRef, fromVerseRef(VerseRef.parse('JHN 1:5')));
+      }, false);
+      env.waitForSliderUpdate();
+      tick();
+      segment = env.getVerse(1, 3);
+      expect(segment.classList.contains('question-segment')).toBe(false);
+      expect(segment.classList.contains('highlight-segment')).toBe(false);
+      expect(fromVerseRef(env.component.activeQuestionVerseRef!).verseNum).toEqual(5);
+      segment = env.getVerse(1, 5);
+      expect(segment.classList.contains('question-segment')).toBe(true);
+      expect(segment.classList.contains('highlight-segment')).toBe(true);
+    }));
+
     it('sets text and paragraph direction ', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
       // the dir property is needed on the Quill editor because chapters don't always have paragraphs
