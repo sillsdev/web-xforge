@@ -47,6 +47,34 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
+        /// <summary>
+        /// GET /paratext-api/resources/
+        /// </summary>
+        /// <returns>
+        /// The resources as projects
+        /// </returns>
+        /// <remarks>
+        /// The UI does not need the extra properties found in the <see cref="ParatextResource" /> class,
+        /// so we just return the base class <see cref="ParatextProject" />.
+        /// </remarks>
+        [HttpGet("resources")]
+        public async Task<ActionResult<IEnumerable<ParatextProject>>> ResourcesAsync()
+        {
+            Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+            if (!attempt.TryResult(out UserSecret userSecret))
+                return NoContent();
+
+            try
+            {
+                var resources = _paratextService.GetResources(userSecret);
+                return Ok(resources);
+            }
+            catch (SecurityException)
+            {
+                return NoContent();
+            }
+        }
+
         [HttpGet("username")]
         public async Task<ActionResult<string>> UsernameAsync()
         {

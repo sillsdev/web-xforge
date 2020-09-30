@@ -61,6 +61,7 @@ describe('ConnectProjectComponent', () => {
   it('should display login button when PT projects is null', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(of(undefined));
+    when(mockedParatextService.getResources()).thenReturn(of(undefined));
     env.waitForProjectsResponse();
 
     expect(env.component.state).toEqual('login');
@@ -73,6 +74,7 @@ describe('ConnectProjectComponent', () => {
   it('should display form when PT projects is empty', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(of([]));
+    when(mockedParatextService.getResources()).thenReturn(of([]));
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.connectProjectForm).not.toBeNull();
@@ -83,6 +85,7 @@ describe('ConnectProjectComponent', () => {
   it('should do nothing when form is invalid', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(of([]));
+    when(mockedParatextService.getResources()).thenReturn(of([]));
     env.waitForProjectsResponse();
 
     expect(env.submitButton.nativeElement.disabled).toBe(true);
@@ -96,6 +99,7 @@ describe('ConnectProjectComponent', () => {
   it('should display loading when getting PT projects', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedParatextService.getProjects()).thenReturn(defer(() => Promise.resolve([])));
+    when(mockedParatextService.getResources()).thenReturn(defer(() => Promise.resolve([])));
     env.fixture.detectChanges();
 
     expect(env.component.state).toEqual('loading');
@@ -178,6 +182,7 @@ describe('ConnectProjectComponent', () => {
         }
       ])
     );
+    when(mockedParatextService.getResources()).thenReturn(of([]));
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
     expect(env.getMenuItems(env.projectSelect).length).toEqual(3);
@@ -548,6 +553,7 @@ class TestEnvironment {
         }
       ])
     );
+    when(mockedParatextService.getResources()).thenReturn(of([]));
   }
 
   waitForProjectsResponse(): void {

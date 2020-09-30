@@ -205,6 +205,24 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void GetResources_BadArguments()
+        {
+            var env = new TestEnvironment();
+            Assert.Throws<ArgumentNullException>(() => env.Service.GetResources(null));
+        }
+
+        [Test]
+        public void GetResources_ReturnResources()
+        {
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            env.SetRestClientFactory(user01Secret);
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            IEnumerable<ParatextResource> resources = env.Service.GetResources(user01Secret);
+            Assert.AreEqual(3, resources.Count());
+        }
+
+        [Test]
         public void GetBooks_ReturnCorrectNumberOfBooks()
         {
             var env = new TestEnvironment();
@@ -480,6 +498,37 @@ namespace SIL.XForge.Scripture.Services
             env.MockHgWrapper.Received(1).Update(sourcePath);
         }
 
+        [Test]
+        public void SendReceiveAsync_SourceResource_Missing()
+        {
+            var env = new TestEnvironment();
+            string ptProjectId = env.SetupProject(env.Project01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            IInternetSharedRepositorySource mockSource =
+                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            env.SetupSuccessfulSendReceive();
+            env.SetRestClientFactory(user01Secret);
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            string resourceId = "test_data"; // A missing or invalid resource or project
+            Assert.ThrowsAsync<ArgumentException>(() =>
+                env.Service.SendReceiveAsync(user01Secret, ptProjectId, resourceId));
+        }
+
+        [Test]
+        public async Task SendReceiveAsync_SourceResource_Valid()
+        {
+            var env = new TestEnvironment();
+            string ptProjectId = env.SetupProject(env.Project01);
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            IInternetSharedRepositorySource mockSource =
+                env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
+            env.SetupSuccessfulSendReceive();
+            env.SetRestClientFactory(user01Secret);
+            ScrTextCollection.Initialize("/srv/scriptureforge/projects");
+            string resourceId = "9bb76cd3e5a7f9b4"; // See the XML in SetRestClientFactory for this
+            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, resourceId);
+        }
+
         private class TestEnvironment
         {
             public readonly string Project01 = "project01";
@@ -510,6 +559,7 @@ namespace SIL.XForge.Scripture.Services
             public IJwtTokenHelper MockJwtTokenHelper;
             public IParatextDataHelper MockParatextDataHelper;
             public IInternetSharedRepositorySourceProvider MockInternetSharedRepositorySourceProvider;
+            public IRESTClientFactory<IRESTClient> MockRestClientFactory;
             public ParatextService Service;
 
             public TestEnvironment()
@@ -527,12 +577,14 @@ namespace SIL.XForge.Scripture.Services
                 MockJwtTokenHelper = Substitute.For<IJwtTokenHelper>();
                 MockParatextDataHelper = Substitute.For<IParatextDataHelper>();
                 MockInternetSharedRepositorySourceProvider = Substitute.For<IInternetSharedRepositorySourceProvider>();
+                MockRestClientFactory = Substitute.For<IRESTClientFactory<IRESTClient>>();
 
                 RealtimeService = new SFMemoryRealtimeService();
 
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository,
                     RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService,
-                    MockLogger, MockJwtTokenHelper, MockParatextDataHelper, MockInternetSharedRepositorySourceProvider);
+                    MockLogger, MockJwtTokenHelper, MockParatextDataHelper, MockInternetSharedRepositorySourceProvider,
+                    MockRestClientFactory);
                 Service.ScrTextCollection = MockScrTextCollection;
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
                 Service.HgWrapper = MockHgWrapper;
@@ -568,6 +620,80 @@ namespace SIL.XForge.Scripture.Services
                 userSecret.ParatextTokens = ptToken;
                 MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(username);
                 return userSecret;
+            }
+
+            public IRESTClientFactory<IRESTClient> SetRestClientFactory(UserSecret userSecret)
+            {
+                IRESTClient mockClient = Substitute.For<IRESTClient>();
+                string xml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
+<document>
+    <resources>
+        <item>
+            <languageCode>urw</languageCode>
+            <p8z-manifest-checksum>68c1ec33375a8c34</p8z-manifest-checksum>
+            <languageLDMLId>urw</languageLDMLId>
+            <languageName>Sop</languageName>
+            <nameCommon>Sob Jonah and Luke</nameCommon>
+            <fullname>Sob Jonah and Luke</fullname>
+            <name>SobP15</name>
+            <permissions-checksum>1ab119321b305f99</permissions-checksum>
+            <id>e01f11e9b4b8e338</id>
+            <relevance>
+                <basic_permissions>
+                    <item>allow_any_user</item>
+                </basic_permissions>
+            </relevance>
+            <dateUpdated>2017-12-20T17:36:13.021144</dateUpdated>
+            <revision>3</revision>
+        </item>
+        <item>
+            <languageCode>msy</languageCode>
+            <p8z-manifest-checksum>bb0a595a1cf5d8e8</p8z-manifest-checksum>
+            <languageLDMLId>msy</languageLDMLId>
+            <languageName>Aruamu</languageName>
+            <nameCommon>Aruamu New Testament [msy] Papua New Guinea 2004 DBL</nameCommon>
+            <fullname>Aruamu New Testament [msy] Papua New Guinea 2004 DBL</fullname>
+            <name>AruNT04</name>
+            <permissions-checksum>1ab119321b305f99</permissions-checksum>
+            <id>5e51f89e89947acb</id>
+            <relevance>
+                <basic_permissions>
+                    <item>allow_any_user</item>
+                </basic_permissions>
+            </relevance>
+            <dateUpdated>2017-12-20T20:11:20.447474</dateUpdated>
+            <revision>4</revision>
+        </item>
+        <item>
+            <languageCode>eng</languageCode>
+            <p8z-manifest-checksum>4328be8bf1ff0164</p8z-manifest-checksum>
+            <languageLDMLId>en</languageLDMLId>
+            <languageName>English</languageName>
+            <nameCommon>Revised Version with Apocrypha 1885, 1895</nameCommon>
+            <fullname>Revised Version with Apocrypha 1885, 1895</fullname>
+            <name>RV1895</name>
+            <permissions-checksum>1ab119321b305f99</permissions-checksum>
+            <id>9bb76cd3e5a7f9b4</id>
+            <relevance>
+                <basic_permissions>
+                    <item>allow_any_user</item>
+                </basic_permissions>
+            </relevance>
+            <dateUpdated>2020-03-20T22:05:54.180663</dateUpdated>
+            <revision>6</revision>
+        </item>
+    </resources>
+</document>";
+                mockClient
+                    .Get(Arg.Any<string>())
+                    .Returns(xml);
+                mockClient
+                    .GetFile(Arg.Any<string>(), Arg.Any<string>())
+                    .Returns(true);
+                MockRestClientFactory
+                    .Create(Arg.Any<string>(), Arg.Any<string>())
+                    .Returns(mockClient);
+                return MockRestClientFactory;
             }
 
             public IInternetSharedRepositorySource SetSharedRepositorySource(UserSecret userSecret,
