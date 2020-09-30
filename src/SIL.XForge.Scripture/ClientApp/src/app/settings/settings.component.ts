@@ -119,7 +119,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       this.isAppOnline = isOnline;
       if (isOnline && this.paratextProjects == null) {
         this.loadingStarted();
-        const paratextProjects = await this.paratextService.getProjects().toPromise();
+        let paratextProjects = await this.paratextService.getProjects().toPromise();
+        // Merge the resources collection with the projects collection
+        const paratextResources = await this.paratextService.getResources().toPromise();
+        if (paratextResources != null) {
+          paratextProjects = paratextProjects?.concat(paratextResources) ?? paratextResources;
+        }
         this.projectDoc = await this.projectService.get(projectId);
         this.paratextProjects = paratextProjects == null ? undefined : paratextProjects;
         if (this.projectDoc != null) {

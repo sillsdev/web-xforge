@@ -138,6 +138,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject();
         env.setupParatextProjects(undefined);
+        when(mockedParatextService.getResources()).thenReturn(of(undefined));
         env.wait();
         expect(env.loginButton).not.toBeNull();
         expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(true);
@@ -205,6 +206,7 @@ describe('SettingsComponent', () => {
       it('should display Based On project even if user is not a member', fakeAsync(() => {
         const env = new TestEnvironment();
         env.setupProject();
+        when(mockedParatextService.getResources()).thenReturn(of([]));
         env.setupParatextProjects([
           {
             paratextId: 'paratextId02',
@@ -403,6 +405,7 @@ class TestEnvironment {
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
+    when(mockedParatextService.getResources()).thenReturn(of([]));
     this.setupParatextProjects([
       {
         paratextId: 'paratextId01',

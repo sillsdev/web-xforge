@@ -1,3 +1,5 @@
+using Paratext.Data;
+using Paratext.Data.Archiving;
 using SIL.XForge.Scripture.Services;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -20,6 +22,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IParatextDataHelper, ParatextDataHelper>();
             services.AddSingleton<IInternetSharedRepositorySourceProvider, InternetSharedRepositorySourceProvider>();
             services.AddSingleton<ITransceleratorService, TransceleratorService>();
+            services.AddSingleton<IRESTClientFactory<IRESTClient>, DBLRESTClientFactory>();
             return services;
         }
     }
