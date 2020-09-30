@@ -15,8 +15,8 @@ namespace SIL.XForge.Scripture.Services
     {
         private readonly JwtRESTClient _registryClient;
 
-        public JwtInternetSharedRepositorySource(string accessToken, JwtRESTClient registryClient, string srServerUri)
-            : base(srServerUri)
+        public JwtInternetSharedRepositorySource(string accessToken, JwtRESTClient registryClient, ParatextUser authenticationPtUser, string srServerUri)
+            : base(authenticationPtUser, srServerUri)
         {
             _registryClient = registryClient;
             SetToken(accessToken);
@@ -84,6 +84,14 @@ namespace SIL.XForge.Scripture.Services
                 pushRepo.SendReceiveId, "registered", "yes", "userschanged", "no");
 
             MarkSharedChangeSetsPublic(repository);
+        }
+
+        /// <summary>
+        /// This looks like it would be important, but it doesn't seem to matter what it returns, to synchronize.
+        /// </summary>
+        public override string GetHgUri(SharedRepository sharedRepository)
+        {
+            return string.Empty;
         }
 
         /// <summary>

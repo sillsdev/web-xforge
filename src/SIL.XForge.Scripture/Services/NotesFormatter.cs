@@ -7,6 +7,7 @@ using System.Xml;
 using System.Xml.Linq;
 using Paratext.Data;
 using Paratext.Data.ProjectComments;
+using Paratext.Data.Users;
 using SIL.Xml;
 
 namespace SIL.XForge.Scripture.Services
@@ -36,15 +37,16 @@ namespace SIL.XForge.Scripture.Services
         /// Parses the XML into a nested list of Comments - each inner list is the data for a thread.
         /// </summary>
         /// <param name="noteXml"></param>
+        /// <param name="ptUser">ParatextUser to use when creating any new Comments.</param>
         /// <returns>Nested list of comments</returns>
         /// <remarks>This code assumes that the XML passes the validation of the notes XML schema.</remarks>
-        public static List<List<Comment>> ParseNotes(string noteXml)
+        public static List<List<Comment>> ParseNotes(string noteXml, ParatextUser ptUser)
         {
             List<List<Comment>> result = new List<List<Comment>>();
             XDocument doc = XDocument.Parse(noteXml);
             foreach (var threadElem in doc.Root.Elements("thread"))
             {
-                result.Add(ParseThread(threadElem));
+                result.Add(ParseThread(threadElem, ptUser));
             }
             return result;
         }
@@ -143,7 +145,7 @@ namespace SIL.XForge.Scripture.Services
         #endregion
 
         #region Private helper methods for parsing
-        private static List<Comment> ParseThread(XElement threadElem)
+        private static List<Comment> ParseThread(XElement threadElem, ParatextUser ptUser)
         {
             List<Comment> result = new List<Comment>();
             Comment comment = null;
@@ -151,7 +153,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 if (comment == null)
                 {
-                    comment = new Comment();
+                    comment = new Comment(ptUser);
                     XAttribute threadId = threadElem.Attribute("id");
                     if (threadId != null)
                         comment.Thread = threadId.Value;

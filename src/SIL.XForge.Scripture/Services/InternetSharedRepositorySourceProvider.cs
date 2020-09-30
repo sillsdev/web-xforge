@@ -1,5 +1,7 @@
 using System;
+using Paratext.Data.Users;
 using SIL.XForge.Models;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -24,11 +26,13 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentException();
             }
 
+            string ptUsername = _jwtTokenHelper.GetParatextUsername(userSecret);
+            var ptUser = new SFParatextUser(ptUsername);
             JwtRESTClient jwtClient = GenerateParatextRegistryJwtClient(userSecret, registryServerUri,
                 applicationProductVersion);
             IInternetSharedRepositorySource source =
                 new JwtInternetSharedRepositorySource(userSecret.ParatextTokens.AccessToken,
-                    jwtClient, sendReceiveServerUri);
+                    jwtClient, ptUser, sendReceiveServerUri);
             source.RefreshToken(userSecret.ParatextTokens.AccessToken);
             return source;
         }

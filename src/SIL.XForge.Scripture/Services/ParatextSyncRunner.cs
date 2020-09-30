@@ -266,6 +266,9 @@ namespace SIL.XForge.Scripture.Services
                 _paratextService.PutBookText(_userSecret, paratextId, text.BookNum, newUsxDoc.Root.ToString());
         }
 
+        /// <summary>
+        /// Send answer-notes to Paratext. Don't send questions that have no answers.
+        /// </summary>
         private async Task UpdateParatextNotesAsync(TextInfo text, IReadOnlyList<IDocument<Question>> questionDocs)
         {
             if (!CheckingEnabled)

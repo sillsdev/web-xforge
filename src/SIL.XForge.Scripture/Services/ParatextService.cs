@@ -139,7 +139,6 @@ namespace SIL.XForge.Scripture.Services
             SetupMercurial();
             WritingSystemRepository.Initialize();
             ScrTextCollection.Initialize(SyncDir);
-            RegistryServer.Initialize(_applicationProductVersion);
             InstallStyles();
             // Allow use of custom versification systems
             Versification.Table.Implementation = new ParatextVersificationTable();
@@ -295,7 +294,7 @@ namespace SIL.XForge.Scripture.Services
             doc.LoadXml(usx);
             UsxFragmenter.FindFragments(scrText.ScrStylesheet(bookNum), doc.CreateNavigator(),
                 XPathExpression.Compile("*[false()]"), out string usfm);
-            usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft);
+            usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft, scrText);
             scrText.PutText(bookNum, 0, false, usfm, null);
             _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
                 Canon.BookNumberToEnglishName(bookNum), scrText.Name);
@@ -327,7 +326,8 @@ namespace SIL.XForge.Scripture.Services
             if (scrText == null)
                 throw new DataNotFoundException("Can't get access to cloned project.");
             CommentManager manager = CommentManager.Get(scrText);
-            var notes = NotesFormatter.ParseNotes(notesText);
+            var ptUser = new SFParatextUser(username);
+            var notes = NotesFormatter.ParseNotes(notesText, ptUser);
 
             // Algorithm sourced from Paratext DataAccessServer
             foreach (var thread in notes)
