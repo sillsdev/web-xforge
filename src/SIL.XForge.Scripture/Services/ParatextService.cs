@@ -36,7 +36,6 @@ using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using SIL.Scripture;
-using System.Diagnostics;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -61,13 +60,14 @@ namespace SIL.XForge.Scripture.Services
         private string _registryServerUri = "https://registry.paratext.org";
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
         private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
-
+        private readonly IRESTClientFactory<IRESTClient> _restClientFactory;
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
             IExceptionHandler exceptionHandler, IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService,
             ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper, IParatextDataHelper paratextDataHelper,
-            IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider)
+            IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider,
+            IRESTClientFactory<IRESTClient> restClientFactory)
         {
             _paratextOptions = paratextOptions;
             _userSecretRepository = userSecretRepository;
@@ -79,6 +79,7 @@ namespace SIL.XForge.Scripture.Services
             _jwtTokenHelper = jwtTokenHelper;
             _paratextDataHelper = paratextDataHelper;
             _internetSharedRepositorySourceProvider = internetSharedRepositorySourceProvider;
+            _restClientFactory = restClientFactory;
 
             _httpClientHandler = new HttpClientHandler();
             _registryClient = new HttpClient(_httpClientHandler);
@@ -164,7 +165,17 @@ namespace SIL.XForge.Scripture.Services
             }
             if (!string.IsNullOrEmpty(ptSourceId) && !projectGuids.Contains(ptSourceId))
             {
-                _logger.LogWarning($"The source project did not have a full name available {ptSourceId}");
+                // See if this is a resource
+                var resources = this.GetResourcesInternal(userSecret, true);
+                var resource = resources.SingleOrDefault(r => r.ParatextId == ptSourceId);
+                if (resource != null)
+                {
+                    ptProjectsAvailable.Add(resource.ParatextId, resource);
+                }
+                else
+                {
+                    _logger.LogWarning($"The source project did not have a full name available {ptSourceId}");
+                }
             }
             List<string> problemProjectIds = new List<string>();
             if (!ptProjectsAvailable.TryGetValue(ptTargetId, out ParatextProject targetPtProject))
@@ -188,7 +199,7 @@ namespace SIL.XForge.Scripture.Services
             targetSharedProj.ScrText = ScrTextCollection.FindById(username, ptTargetId, Models.TextType.Target);
             targetSharedProj.Permissions = targetSharedProj.ScrText.Permissions;
             List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { targetSharedProj };
-            if (sourcePtProject != null)
+            if (sourcePtProject != null && !(sourcePtProject is ParatextResource))
             {
                 SharedProject sourceSharedProj = SharingLogicWrapper.CreateSharedProject(ptSourceId,
                     sourcePtProject.ShortName, source.AsInternetSharedRepositorySource(), repositories);
@@ -219,6 +230,12 @@ namespace SIL.XForge.Scripture.Services
             remotePtProjects.RemoveAll((SharedRepository project) =>
                 !projectMetadata.Any((ProjectMetadata metadata) => metadata.ProjectGuid == project.SendReceiveId));
             return GetProjects(userSecret, remotePtProjects, projectMetadata);
+        }
+
+        /// <summary>Get Paratext resources that a user has access to. </summary>
+        public IReadOnlyList<ParatextResource> GetResources(UserSecret userSecret)
+        {
+            return this.GetResourcesInternal(userSecret, false);
         }
 
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
@@ -469,9 +486,32 @@ namespace SIL.XForge.Scripture.Services
                 ScrTextCollection.FindById(username, target.ParatextId, Models.TextType.Target) == null;
             if (targetNeedsCloned)
             {
-                SharedRepository targetRepo = new SharedRepository(target.ShortName, target.ParatextId,
-                    RepositoryType.Shared);
-                CloneProjectRepo(repositorySource, target.ParatextId, targetRepo, Models.TextType.Target);
+                // If the source is a resource, install it
+                if (target is ParatextResource resource)
+                {
+                    if (resource.InstallableResource != null)
+                    {
+                        // Install the resource if it is missing or out of date
+                        if (!resource.IsInstalled || resource.AvailableRevision > resource.InstalledRevision)
+                        {
+                            resource.InstallableResource.Install();
+                        }
+
+                        // Extract the resource to the target directory
+                        string path = Path.Combine(SyncDir, target.ParatextId, TextTypeUtils.DirectoryName(Models.TextType.Target));
+                        resource.InstallableResource.ExtractToDirectory(path);
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"The installable resource is not available for {source.ParatextId}");
+                    }
+                }
+                else
+                {
+                    SharedRepository targetRepo = new SharedRepository(target.ShortName, target.ParatextId,
+                        RepositoryType.Shared);
+                    CloneProjectRepo(repositorySource, target.ParatextId, targetRepo, Models.TextType.Target);
+                }
             }
             if (source != null)
             {
@@ -487,9 +527,33 @@ namespace SIL.XForge.Scripture.Services
                 }
                 if (sourceNeedsCloned)
                 {
-                    SharedRepository sourceRepo = new SharedRepository(source.ShortName, source.ParatextId,
-                        RepositoryType.Shared);
-                    CloneProjectRepo(repositorySource, target.ParatextId, sourceRepo, Models.TextType.Source);
+                    // If the source is a resource, install it
+                    if (source is ParatextResource resource)
+                    {
+                        if (resource.InstallableResource != null)
+                        {
+                            // Install the resource if it is missing or out of date
+                            if (!resource.IsInstalled || resource.AvailableRevision > resource.InstalledRevision)
+                            {
+                                resource.InstallableResource.Install();
+                            }
+
+                            // Extract the resource to the source directory
+                            string path = Path.Combine(SyncDir, target.ParatextId, TextTypeUtils.DirectoryName(Models.TextType.Source));
+                            _fileSystemService.CreateDirectory(path);
+                            resource.InstallableResource.ExtractToDirectory(path);
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"The installable resource is not available for {source.ParatextId}");
+                        }
+                    }
+                    else
+                    {
+                        SharedRepository sourceRepo = new SharedRepository(source.ShortName, source.ParatextId,
+                            RepositoryType.Shared);
+                        CloneProjectRepo(repositorySource, target.ParatextId, sourceRepo, Models.TextType.Source);
+                    }
                 }
             }
         }
@@ -569,6 +633,34 @@ namespace SIL.XForge.Scripture.Services
             IInternetSharedRepositorySource source = _internetSharedRepositorySourceProvider.GetSource(userSecret,
                 _sendReceiveServerUri, _registryServerUri, _applicationProductVersion);
             return source;
+        }
+
+        /// <summary>
+        /// Get Paratext resources that a user has access to.
+        /// </summary>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="includeInstallableResource">If set to <c>true</c> include the installable resource.</param>
+        /// <returns>
+        /// The available resources.
+        /// </returns>
+        private IReadOnlyList<ParatextResource> GetResourcesInternal(UserSecret userSecret, bool includeInstallableResource)
+        {
+            var resources = SFInstallableDBLResource.GetInstallableDBLResources(userSecret, this._paratextOptions.Value, this._restClientFactory, this._fileSystemService);
+            var resourceRevisions = SFInstallableDBLResource.GetInstalledResourceRevisions();
+            return resources.OrderBy(r => r.FullName).Select(r => new ParatextResource
+            {
+                AvailableRevision = r.DBLRevision,
+                InstallableResource = includeInstallableResource ? r : null,
+                InstalledRevision = resourceRevisions.ContainsKey(r.DBLEntryUid) ? resourceRevisions[r.DBLEntryUid] : 0,
+                IsConnectable = false,
+                IsConnected = false,
+                IsInstalled = resourceRevisions.ContainsKey(r.DBLEntryUid),
+                LanguageTag = r.LanguageID.Code,
+                Name = r.FullName,
+                ParatextId = r.DBLEntryUid,
+                ProjectId = null,
+                ShortName = r.Name,
+            }).ToArray();
         }
 
         // Make sure there are no asynchronous methods called after this until the progress is completed.
