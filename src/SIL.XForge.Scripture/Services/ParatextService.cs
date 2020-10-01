@@ -255,6 +255,13 @@ namespace SIL.XForge.Scripture.Services
                 .ToDictionary(m => (string)m["userId"], m => (string)m["role"]);
         }
 
+        /// <summary> Determine if a specific project is in a right to left language. </summary>
+        public bool IsProjectLanguageRightToLeft(UserSecret userSecret, string ptProjectId, Models.TextType textType)
+        {
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId, textType);
+            return scrText == null ? false : scrText.RightToLeft;
+        }
+
         /// <summary> Get list of book numbers in PT project. </summary>
         public IReadOnlyList<int> GetBookList(UserSecret userSecret, string ptProjectId, Models.TextType textType)
         {

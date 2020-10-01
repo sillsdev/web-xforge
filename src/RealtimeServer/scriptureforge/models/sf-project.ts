@@ -12,6 +12,7 @@ export interface SFProject extends Project {
   paratextId: string;
   shortName: string;
   writingSystem: WritingSystem;
+  isRightToLeft?: boolean;
   translateConfig: TranslateConfig;
   checkingConfig: CheckingConfig;
   texts: TextInfo[];

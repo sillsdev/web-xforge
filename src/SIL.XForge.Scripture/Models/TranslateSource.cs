@@ -8,5 +8,6 @@ namespace SIL.XForge.Scripture.Models
         public string Name { get; set; }
         public string ShortName { get; set; }
         public WritingSystem WritingSystem { get; set; } = new WritingSystem();
+        public bool? IsRightToLeft { get; set; }
     }
 }
