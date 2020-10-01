@@ -65,7 +65,7 @@ export class ExceptionHandlingService implements ErrorHandler {
       return;
     }
 
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+    if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.name === 'DataError')) {
       ngZone.run(() => noticeService.showError(translate('exception_handling_service.out_of_space')));
       return;
     }
