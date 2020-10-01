@@ -9,6 +9,7 @@ namespace SIL.XForge.Scripture.Models
         public string ParatextId { get; set; }
         public string ShortName { get; set; }
         public WritingSystem WritingSystem { get; set; } = new WritingSystem();
+        public bool? IsRightToLeft { get; set; }
         public TranslateConfig TranslateConfig { get; set; } = new TranslateConfig();
         public CheckingConfig CheckingConfig { get; set; } = new CheckingConfig();
         public List<TextInfo> Texts { get; set; } = new List<TextInfo>();

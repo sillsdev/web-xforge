@@ -473,6 +473,15 @@ namespace SIL.XForge.Scripture.Services
                     else if (_projectDoc.Data.UserRoles[projectUser.UserId].StartsWith("pt"))
                         userIdsToRemove.Add(projectUser.UserId);
                 }
+                bool isRtl = _paratextService
+                    .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId, TextType.Target);
+                op.Set(pd => pd.IsRightToLeft, isRtl);
+                if (TranslationSuggestionsEnabled)
+                {
+                    bool sourceIsRtl = _paratextService
+                        .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId, TextType.Source);
+                    op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceIsRtl);
+                }
             });
             foreach (var userId in userIdsToRemove)
                 await _projectService.RemoveUserAsync(_userSecret.Id, _projectDoc.Id, userId);
