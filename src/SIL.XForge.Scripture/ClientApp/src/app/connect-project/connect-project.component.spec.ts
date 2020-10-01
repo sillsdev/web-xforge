@@ -254,7 +254,7 @@ describe('ConnectProjectComponent', () => {
     tick();
 
     expect(env.component.state).toEqual('connecting');
-    expect(env.progressBar).toBeDefined();
+    expect(env.progressBar).not.toBeNull();
     expect(env.component.connectPending).toEqual(true);
 
     env.emitSyncProgress(0);
@@ -286,7 +286,7 @@ describe('ConnectProjectComponent', () => {
     tick();
 
     expect(env.component.state).toEqual('connecting');
-    expect(env.progressBar).toBeDefined();
+    expect(env.progressBar).not.toBeNull();
     expect(env.component.connectPending).toEqual(true);
 
     env.emitSyncProgress(0);
