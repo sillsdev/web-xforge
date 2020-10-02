@@ -1,6 +1,6 @@
 import { MdcSelect } from '@angular-mdc/web/select';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AbstractControl } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -10,7 +10,8 @@ import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/ch
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, defer, of } from 'rxjs';
-import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -34,6 +35,7 @@ const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
 const mockedPwaService = mock(PwaService);
+const mockedErrorHandler = mock(ErrorHandler);
 
 describe('ConnectProjectComponent', () => {
   configureTestingModule(() => ({
@@ -51,6 +53,7 @@ describe('ConnectProjectComponent', () => {
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: I18nService, useMock: mockedI18nService },
+      { provide: ErrorHandler, useMock: mockedErrorHandler },
       { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
@@ -303,6 +306,41 @@ describe('ConnectProjectComponent', () => {
     };
     verify(mockedSFProjectService.onlineCreate(deepEqual(project))).once();
     verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).once();
+  }));
+
+  it('handles already connected error', fakeAsync(() => {
+    // Another user might have _just_ connected this PT project. We could respond by joining this user to the
+    // now-connected project. But the user may have made Translation or Checking selections on the Connect Project page
+    // that will have mysteriously been ignored. So for the unlikely event that two users connect the same project at
+    // the same time, give one user an error and they can try the process again, and probably join the now-connected
+    // project the second time they try.
+    const env = new TestEnvironment();
+    env.setupDefaultProjectData();
+    env.waitForProjectsResponse();
+    expect(env.component.state).toEqual('input');
+    env.changeSelectValue(env.projectSelect, 'pt01');
+    expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
+    expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
+    // Simulate someone else connecting the PT project to SF while we are working on the Connect Project form.
+    when(mockedSFProjectService.onlineCreate(anything())).thenThrow(
+      new CommandError(CommandErrorCode.InvalidParams, ConnectProjectComponent.errorAlreadyConnectedKey, null)
+    );
+    when(mockedErrorHandler.handleError(anything())).thenReturn();
+
+    resetCalls(mockedParatextService);
+    // SUT
+    env.clickElement(env.submitButton);
+    tick();
+    env.fixture.detectChanges();
+
+    verify(mockedParatextService.getProjects()).once();
+    verify(mockedErrorHandler.handleError(anything())).once();
+    expect(env.component.state).toEqual('input');
+    expect(env.progressBar).toBeNull();
+    expect(env.component.connectProgress).toBeUndefined();
+    verify(mockedSFProjectService.onlineCreate(anything())).once();
+    verify(mockedSFProjectService.onlineAddCurrentUser(anything())).never();
+    verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).never();
   }));
 });
 

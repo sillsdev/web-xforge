@@ -42,6 +42,10 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 return NotFoundError(dnfe.Message);
             }
+            catch (InvalidOperationException e)
+            {
+                return InvalidParamsError(e.Message);
+            }
         }
 
         public async Task<IRpcMethodResult> Delete(string projectId)

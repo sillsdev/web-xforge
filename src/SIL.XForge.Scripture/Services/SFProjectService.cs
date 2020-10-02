@@ -25,6 +25,7 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFProjectService
     {
+        public static readonly string ErrorAlreadyConnectedKey = "error-already-connected";
         private readonly IEngineService _engineService;
         private readonly ISyncService _syncService;
         private readonly IParatextService _paratextService;
@@ -53,6 +54,9 @@ namespace SIL.XForge.Scripture.Services
 
         protected override string ProjectAdminRole => SFProjectRole.Administrator;
 
+        /// <summary>
+        /// Returns SF project id of created project.
+        /// </summary>
         public async Task<string> CreateProjectAsync(string curUserId, SFProjectCreateSettings settings)
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
@@ -104,6 +108,11 @@ namespace SIL.XForge.Scripture.Services
             string projectId = ObjectId.GenerateNewId().ToString();
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
+                if (this.RealtimeService.QuerySnapshots<SFProject>().Any(
+                    (SFProject sfProject) => sfProject.ParatextId == project.ParatextId))
+                {
+                    throw new InvalidOperationException(ErrorAlreadyConnectedKey);
+                }
                 IDocument<SFProject> projectDoc = await conn.CreateAsync<SFProject>(projectId, project);
                 await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
 
