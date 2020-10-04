@@ -55,7 +55,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// The rest client factory.
         /// </summary>
-        private readonly IRESTClientFactory<IRESTClient> _restClientFactory;
+        private readonly ISFRESTClientFactory _restClientFactory;
 
         /// <summary>
         /// The user secret.
@@ -72,7 +72,7 @@ namespace SIL.XForge.Scripture.Services
         /// <remarks>
         /// This is a convenience constructor for unit tests.
         /// </remarks>
-        internal SFInstallableDBLResource(UserSecret userSecret, ParatextOptions paratextOptions, IRESTClientFactory<IRESTClient> restClientFactory, IFileSystemService fileSystemService)
+        internal SFInstallableDBLResource(UserSecret userSecret, ParatextOptions paratextOptions, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService)
             : this(userSecret, paratextOptions, restClientFactory, fileSystemService, new ParatextProjectDeleter(), new ParatextMigrationOperations(), new ParatextZippedResourcePasswordProvider(paratextOptions))
         {
         }
@@ -89,7 +89,7 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="passwordProvider">The password provider.</param>
         /// <param name="baseUrl">(Optional) The base URL.</param>
         /// <exception cref="ArgumentNullException">restClientFactory</exception>
-        private SFInstallableDBLResource(UserSecret userSecret, ParatextOptions paratextOptions, IRESTClientFactory<IRESTClient> restClientFactory, IFileSystemService fileSystemService, IProjectDeleter projectDeleter, IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider, string baseUrl = null)
+        private SFInstallableDBLResource(UserSecret userSecret, ParatextOptions paratextOptions, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, IProjectDeleter projectDeleter, IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider, string baseUrl = null)
             : base(projectDeleter, migrationOperations, passwordProvider)
         {
             this._userSecret = userSecret;
@@ -134,7 +134,7 @@ namespace SIL.XForge.Scripture.Services
         /// or
         /// userSecret
         /// </exception>
-        public static IEnumerable<SFInstallableDBLResource> GetInstallableDBLResources(UserSecret userSecret, ParatextOptions paratextOptions, IRESTClientFactory<IRESTClient> restClientFactory, IFileSystemService fileSystemService, string baseUrl = null)
+        public static IEnumerable<SFInstallableDBLResource> GetInstallableDBLResources(UserSecret userSecret, ParatextOptions paratextOptions, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, string baseUrl = null)
         {
             // Parameter check (just like the constructor)
             if (restClientFactory == null)
@@ -146,14 +146,7 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentNullException(nameof(userSecret));
             }
 
-            var client = restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion);
-            // TODO: Authentication!
-            // If authenticated, use the following call
-            // string response = client.Get(RESTClient.BuildCgiCall(BuildDBLResourceEntriesUrl(this._baseUrl) + ".xml",
-            //    new Dictionary<string, string>
-            //    {
-            //        {"username", user.Name} /* username included for logging purposes only */
-            //    }));
+            var client = restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, userSecret);
             baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? InternetAccess.ParatextDBLServer : baseUrl;
             string response = client.Get(BuildDBLResourceEntriesUrl(baseUrl) + ".xml");
             var resources = ConvertXmlResponseToInstallableDblResources(baseUrl, response, restClientFactory, fileSystemService, DateTime.Now, userSecret, paratextOptions, new ParatextProjectDeleter(), new ParatextMigrationOperations(), new ParatextZippedResourcePasswordProvider(paratextOptions));
@@ -372,8 +365,6 @@ namespace SIL.XForge.Scripture.Services
         {
             var uriBuilder = new UriBuilder(resource.DBLSourceUrl);
             var query = HttpUtils.ParseQueryString(uriBuilder.Query);
-            // TODO: Add the username, and make this non-static
-            // query["username"] = user.Name;
             uriBuilder.Query = query.ToString();
             return uriBuilder.ToString();
         }
@@ -394,7 +385,7 @@ namespace SIL.XForge.Scripture.Services
         /// <returns>
         /// The Installable Resources.
         /// </returns>
-        private static List<SFInstallableDBLResource> ConvertXmlResponseToInstallableDblResources(string baseUri, string response, IRESTClientFactory<IRESTClient> restClientFactory, IFileSystemService fileSystemService, DateTime createdTimestamp, UserSecret userSecret, ParatextOptions paratextOptions, IProjectDeleter projectDeleter, IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider)
+        private static List<SFInstallableDBLResource> ConvertXmlResponseToInstallableDblResources(string baseUri, string response, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, DateTime createdTimestamp, UserSecret userSecret, ParatextOptions paratextOptions, IProjectDeleter projectDeleter, IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider)
         {
             var resources = new List<SFInstallableDBLResource>();
             XPathDocument doc;
@@ -493,8 +484,7 @@ namespace SIL.XForge.Scripture.Services
         /// </returns>
         private bool GetFile(string filePath)
         {
-            var client = this._restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion);
-            // TODO: Authentication for file downloads from DBL
+            var client = this._restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, this._userSecret);
             var dblUrlToResource = CreateDBLUrlWithUsernameQuery(this);
             return client.GetFile(dblUrlToResource, filePath);
         }
