@@ -21,7 +21,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddSingleton<IJwtTokenHelper, JwtTokenHelper>();
             services.AddSingleton<IParatextDataHelper, ParatextDataHelper>();
             services.AddSingleton<IInternetSharedRepositorySourceProvider, InternetSharedRepositorySourceProvider>();
-            services.AddSingleton<IRESTClientFactory<IRESTClient>, DBLRESTClientFactory>();
+            services.AddSingleton<ISFRESTClientFactory, SFDBLRESTClientFactory>();
             return services;
         }
     }

@@ -60,14 +60,14 @@ namespace SIL.XForge.Scripture.Services
         private string _registryServerUri = "https://registry.paratext.org";
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
         private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
-        private readonly IRESTClientFactory<IRESTClient> _restClientFactory;
+        private readonly ISFRESTClientFactory _restClientFactory;
 
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
             IExceptionHandler exceptionHandler, IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService,
             ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper, IParatextDataHelper paratextDataHelper,
             IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider,
-            IRESTClientFactory<IRESTClient> restClientFactory)
+            ISFRESTClientFactory restClientFactory)
         {
             _paratextOptions = paratextOptions;
             _userSecretRepository = userSecretRepository;
