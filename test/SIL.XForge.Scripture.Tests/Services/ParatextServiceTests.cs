@@ -559,7 +559,7 @@ namespace SIL.XForge.Scripture.Services
             public IJwtTokenHelper MockJwtTokenHelper;
             public IParatextDataHelper MockParatextDataHelper;
             public IInternetSharedRepositorySourceProvider MockInternetSharedRepositorySourceProvider;
-            public IRESTClientFactory<IRESTClient> MockRestClientFactory;
+            public ISFRESTClientFactory MockRestClientFactory;
             public ParatextService Service;
 
             public TestEnvironment()
@@ -577,7 +577,7 @@ namespace SIL.XForge.Scripture.Services
                 MockJwtTokenHelper = Substitute.For<IJwtTokenHelper>();
                 MockParatextDataHelper = Substitute.For<IParatextDataHelper>();
                 MockInternetSharedRepositorySourceProvider = Substitute.For<IInternetSharedRepositorySourceProvider>();
-                MockRestClientFactory = Substitute.For<IRESTClientFactory<IRESTClient>>();
+                MockRestClientFactory = Substitute.For<ISFRESTClientFactory>();
 
                 RealtimeService = new SFMemoryRealtimeService();
 
@@ -622,7 +622,7 @@ namespace SIL.XForge.Scripture.Services
                 return userSecret;
             }
 
-            public IRESTClientFactory<IRESTClient> SetRestClientFactory(UserSecret userSecret)
+            public ISFRESTClientFactory SetRestClientFactory(UserSecret userSecret)
             {
                 IRESTClient mockClient = Substitute.For<IRESTClient>();
                 string xml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
@@ -691,7 +691,7 @@ namespace SIL.XForge.Scripture.Services
                     .GetFile(Arg.Any<string>(), Arg.Any<string>())
                     .Returns(true);
                 MockRestClientFactory
-                    .Create(Arg.Any<string>(), Arg.Any<string>())
+                    .Create(Arg.Any<string>(), Arg.Any<string>(), userSecret)
                     .Returns(mockClient);
                 return MockRestClientFactory;
             }
