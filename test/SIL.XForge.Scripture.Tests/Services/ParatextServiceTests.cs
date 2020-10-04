@@ -625,68 +625,67 @@ namespace SIL.XForge.Scripture.Services
             public ISFRESTClientFactory SetRestClientFactory(UserSecret userSecret)
             {
                 IRESTClient mockClient = Substitute.For<IRESTClient>();
-                string xml = @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<document>
-    <resources>
-        <item>
-            <languageCode>urw</languageCode>
-            <p8z-manifest-checksum>68c1ec33375a8c34</p8z-manifest-checksum>
-            <languageLDMLId>urw</languageLDMLId>
-            <languageName>Sop</languageName>
-            <nameCommon>Sob Jonah and Luke</nameCommon>
-            <fullname>Sob Jonah and Luke</fullname>
-            <name>SobP15</name>
-            <permissions-checksum>1ab119321b305f99</permissions-checksum>
-            <id>e01f11e9b4b8e338</id>
-            <relevance>
-                <basic_permissions>
-                    <item>allow_any_user</item>
-                </basic_permissions>
-            </relevance>
-            <dateUpdated>2017-12-20T17:36:13.021144</dateUpdated>
-            <revision>3</revision>
-        </item>
-        <item>
-            <languageCode>msy</languageCode>
-            <p8z-manifest-checksum>bb0a595a1cf5d8e8</p8z-manifest-checksum>
-            <languageLDMLId>msy</languageLDMLId>
-            <languageName>Aruamu</languageName>
-            <nameCommon>Aruamu New Testament [msy] Papua New Guinea 2004 DBL</nameCommon>
-            <fullname>Aruamu New Testament [msy] Papua New Guinea 2004 DBL</fullname>
-            <name>AruNT04</name>
-            <permissions-checksum>1ab119321b305f99</permissions-checksum>
-            <id>5e51f89e89947acb</id>
-            <relevance>
-                <basic_permissions>
-                    <item>allow_any_user</item>
-                </basic_permissions>
-            </relevance>
-            <dateUpdated>2017-12-20T20:11:20.447474</dateUpdated>
-            <revision>4</revision>
-        </item>
-        <item>
-            <languageCode>eng</languageCode>
-            <p8z-manifest-checksum>4328be8bf1ff0164</p8z-manifest-checksum>
-            <languageLDMLId>en</languageLDMLId>
-            <languageName>English</languageName>
-            <nameCommon>Revised Version with Apocrypha 1885, 1895</nameCommon>
-            <fullname>Revised Version with Apocrypha 1885, 1895</fullname>
-            <name>RV1895</name>
-            <permissions-checksum>1ab119321b305f99</permissions-checksum>
-            <id>9bb76cd3e5a7f9b4</id>
-            <relevance>
-                <basic_permissions>
-                    <item>allow_any_user</item>
-                </basic_permissions>
-            </relevance>
-            <dateUpdated>2020-03-20T22:05:54.180663</dateUpdated>
-            <revision>6</revision>
-        </item>
-    </resources>
-</document>";
+                string json = @"{
+    ""resources"": [
+        {
+            ""languageCode"": ""urw"",
+            ""p8z-manifest-checksum"": ""68c1ec33375a8c34"",
+            ""languageLDMLId"": ""urw"",
+            ""languageName"": ""Sop"",
+            ""nameCommon"": ""Sob Jonah and Luke"",
+            ""fullname"": ""Sob Jonah and Luke"",
+            ""name"": ""SobP15"",
+            ""permissions-checksum"": ""1ab119321b305f99"",
+            ""id"": ""e01f11e9b4b8e338"",
+            ""relevance"": {
+                ""basic_permissions"": [
+                    ""allow_any_user""
+                ]
+            },
+            ""dateUpdated"": ""2017-12-20T17:36:13.021144"",
+            ""revision"": 3
+        },
+        {
+            ""languageCode"": ""msy"",
+            ""p8z-manifest-checksum"": ""bb0a595a1cf5d8e8"",
+            ""languageLDMLId"": ""msy"",
+            ""languageName"": ""Aruamu"",
+            ""nameCommon"": ""Aruamu New Testament [msy] Papua New Guinea 2004 DBL"",
+            ""fullname"": ""Aruamu New Testament [msy] Papua New Guinea 2004 DBL"",
+            ""name"": ""AruNT04"",
+            ""permissions-checksum"": ""1ab119321b305f99"",
+            ""id"": ""5e51f89e89947acb"",
+            ""relevance"": {
+                ""basic_permissions"": [
+                    ""allow_any_user""
+                ]
+            },
+            ""dateUpdated"": ""2017-12-20T20:11:20.447474"",
+            ""revision"": 4
+        },
+        {
+            ""languageCode"": ""eng"",
+            ""p8z-manifest-checksum"": ""4328be8bf1ff0164"",
+            ""languageLDMLId"": ""en"",
+            ""languageName"": ""English"",
+            ""nameCommon"": ""Revised Version with Apocrypha 1885, 1895"",
+            ""fullname"": ""Revised Version with Apocrypha 1885, 1895"",
+            ""name"": ""RV1895"",
+            ""permissions-checksum"": ""1ab119321b305f99"",
+            ""id"": ""9bb76cd3e5a7f9b4"",
+            ""relevance"": {
+                ""basic_permissions"": [
+                    ""allow_any_user""
+                ]
+            },
+            ""dateUpdated"": ""2020-03-20T22:05:54.180663"",
+            ""revision"": 6
+        }
+    ]
+}";
                 mockClient
                     .Get(Arg.Any<string>())
-                    .Returns(xml);
+                    .Returns(json);
                 mockClient
                     .GetFile(Arg.Any<string>(), Arg.Any<string>())
                     .Returns(true);
