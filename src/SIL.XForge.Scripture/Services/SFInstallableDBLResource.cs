@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Xml;
-using System.Xml.XPath;
 using Ionic.Zip;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Archiving;
 using Paratext.Data.Languages;
@@ -148,8 +148,8 @@ namespace SIL.XForge.Scripture.Services
 
             var client = restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, userSecret);
             baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? InternetAccess.ParatextDBLServer : baseUrl;
-            string response = client.Get(BuildDBLResourceEntriesUrl(baseUrl) + ".xml");
-            var resources = ConvertXmlResponseToInstallableDblResources(baseUrl, response, restClientFactory, fileSystemService, DateTime.Now, userSecret, paratextOptions, new ParatextProjectDeleter(), new ParatextMigrationOperations(), new ParatextZippedResourcePasswordProvider(paratextOptions));
+            string response = client.Get(BuildDBLResourceEntriesUrl(baseUrl));
+            var resources = ConvertJsonResponseToInstallableDblResources(baseUrl, response, restClientFactory, fileSystemService, DateTime.Now, userSecret, paratextOptions, new ParatextProjectDeleter(), new ParatextMigrationOperations(), new ParatextZippedResourcePasswordProvider(paratextOptions));
             return resources;
         }
 
@@ -370,7 +370,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
-        /// Converts the XML response to a list of Installable DBL Resources.
+        /// Converts the JSON response to a list of Installable DBL Resources.
         /// </summary>
         /// <param name="baseUri">The base URI.</param>
         /// <param name="response">The response.</param>
@@ -385,73 +385,59 @@ namespace SIL.XForge.Scripture.Services
         /// <returns>
         /// The Installable Resources.
         /// </returns>
-        private static List<SFInstallableDBLResource> ConvertXmlResponseToInstallableDblResources(string baseUri, string response, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, DateTime createdTimestamp, UserSecret userSecret, ParatextOptions paratextOptions, IProjectDeleter projectDeleter, IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider)
+        private static IEnumerable<SFInstallableDBLResource> ConvertJsonResponseToInstallableDblResources(string baseUri, string response, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, DateTime createdTimestamp, UserSecret userSecret, ParatextOptions paratextOptions, IProjectDeleter projectDeleter, IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider)
         {
-            var resources = new List<SFInstallableDBLResource>();
-            XPathDocument doc;
-            try
+            if (!string.IsNullOrWhiteSpace(response))
             {
-                using var sr = new StringReader(response);
-                doc = new XPathDocument(sr);
-            }
-            catch (XmlException)
-            {
-                // ignore exception and just return empty result - probably caused by partial result from poor connection to DBL
-                return resources;
-            }
-            foreach (XPathNavigator nav in doc.CreateNavigator().Select("/document/resources/item"))
-            {
-                var name = DecodeNodeValue(nav, "name");
-                var nameCommon = DecodeNodeValue(nav, "nameCommon");
-                var fullname = DecodeNodeValue(nav, "fullname", nameCommon);
-                var languageName = DecodeNodeValue(nav, "languageName");
-                var id = DecodeNodeValue(nav, "id");
-                var revision = DecodeNodeValue(nav, "revision");
-                var permissionsChecksum = DecodeNodeValue(nav, "permissions-checksum");
-                var manifestChecksum = DecodeNodeValue(nav, "p8z-manifest-checksum");
-                var languageIdLDML = DecodeNodeValue(nav, "languageLDMLId");
-                var languageIdCode = DecodeNodeValue(nav, "languageCode");
-                var languageId = migrationOperations.DetermineBestLangIdToUseForResource(languageIdLDML, languageIdCode).Id;
-
-                var url = BuildDBLResourceEntriesUrl(baseUri, id);
-                var resource = new SFInstallableDBLResource(userSecret, paratextOptions, restClientFactory, fileSystemService, projectDeleter, migrationOperations, passwordProvider, baseUri)
+                JObject jsonResources;
+                try
                 {
-                    DisplayName = name,
-                    Name = name,
-                    FullName = fullname,
-                    LanguageID = !string.IsNullOrEmpty(languageId) ? LanguageId.FromEthnologueCode(languageId) : LanguageIdHelper.FromCommonLanguageName(languageName),
-                    DBLSourceUrl = url,
-                    DBLEntryUid = id,
-                    DBLRevision = int.Parse(revision),
-                    PermissionsChecksum = permissionsChecksum,
-                    ManifestChecksum = manifestChecksum,
-                    CreatedTimestamp = createdTimestamp,
-                };
+                    jsonResources = JObject.Parse(response);
+                }
+                catch (JsonReaderException)
+                {
+                    // ignore exception and just return empty result - probably caused by partial result from poor connection to DBL
+                    yield break;
+                }
+                foreach (var jsonResource in jsonResources["resources"] as JArray ?? new JArray())
+                {
+                    var name = (string)jsonResource["name"];
+                    var nameCommon = (string)jsonResource["nameCommon"];
+                    var fullname = (string)jsonResource["fullname"];
+                    if (string.IsNullOrWhiteSpace(fullname))
+                    {
+                        fullname = nameCommon;
+                    }
 
-                resource.LanguageName = MacroLanguageHelper.GetMacroLanguage(resource.LanguageID) ?? languageName;
+                    var languageName = (string)jsonResource["languageName"];
+                    var id = (string)jsonResource["id"];
+                    var revision = (string)jsonResource["revision"];
+                    var permissionsChecksum = (string)jsonResource["permissions-checksum"];
+                    var manifestChecksum = (string)jsonResource["p8z-manifest-checksum"];
+                    var languageIdLDML = (string)jsonResource["languageLDMLId"];
+                    var languageIdCode = (string)jsonResource["languageCode"];
+                    var languageId = migrationOperations.DetermineBestLangIdToUseForResource(languageIdLDML, languageIdCode).Id;
 
-                resources.Add(resource);
+                    var url = BuildDBLResourceEntriesUrl(baseUri, id);
+                    var resource = new SFInstallableDBLResource(userSecret, paratextOptions, restClientFactory, fileSystemService, projectDeleter, migrationOperations, passwordProvider, baseUri)
+                    {
+                        DisplayName = name,
+                        Name = name,
+                        FullName = fullname,
+                        LanguageID = !string.IsNullOrEmpty(languageId) ? LanguageId.FromEthnologueCode(languageId) : LanguageIdHelper.FromCommonLanguageName(languageName),
+                        DBLSourceUrl = url,
+                        DBLEntryUid = id,
+                        DBLRevision = int.Parse(revision),
+                        PermissionsChecksum = permissionsChecksum,
+                        ManifestChecksum = manifestChecksum,
+                        CreatedTimestamp = createdTimestamp,
+                    };
+
+                    resource.LanguageName = MacroLanguageHelper.GetMacroLanguage(resource.LanguageID) ?? languageName;
+
+                    yield return resource;
+                }
             }
-
-            return resources;
-        }
-
-        /// <summary>
-        /// Decodes the node value.
-        /// </summary>
-        /// <param name="nav">The XPath Navigator.</param>
-        /// <param name="key">The key.</param>
-        /// <param name="defaultValue">The default value.</param>
-        /// <returns></returns>
-        private static string DecodeNodeValue(XPathNavigator nav, string key, string defaultValue = "")
-        {
-            var val = nav.SelectSingleNode(key)?.Value;
-            if (string.IsNullOrEmpty(val))
-            {
-                val = defaultValue;
-            }
-
-            return HttpUtils.HtmlDecode(val);
         }
 
         /// <summary>
