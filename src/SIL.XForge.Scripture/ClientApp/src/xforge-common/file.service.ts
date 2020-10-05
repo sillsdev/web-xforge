@@ -261,7 +261,7 @@ export class FileService extends SubscriptionDisposable {
     }
     // Prompt the user to check storage space
     await this.noticeService.showMessageDialog(
-      () => this.transloco.translate('file_service.failed_to_save', { message: error.message }),
+      () => this.transloco.translate('file_service.failed_to_save'),
       () => this.transloco.translate('file_service.i_understand')
     );
   }
