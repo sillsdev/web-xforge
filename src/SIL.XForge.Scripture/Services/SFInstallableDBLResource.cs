@@ -63,6 +63,11 @@ namespace SIL.XForge.Scripture.Services
         private readonly UserSecret _userSecret;
 
         /// <summary>
+        /// The existing Scripture Text
+        /// </summary>
+        private ScrText existingScrText;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="SFInstallableDBLResource" /> class.
         /// </summary>
         /// <param name="userSecret">The user secret.</param>
@@ -118,6 +123,37 @@ namespace SIL.XForge.Scripture.Services
         /// This URL may or may not require authentication, depending on the resource.
         /// </remarks>
         public string DBLSourceUrl { get; set; }
+
+        /// <summary>
+        /// Gets the existing Scripture Text.
+        /// </summary>
+        /// <value>
+        /// The existing Scripture Text.
+        /// </value>
+        /// <remarks>
+        /// This is required for <see cref="InstallableResource.IsNewerThanCurrentlyInstalled" />.
+        /// </remarks>
+        public override ScrText ExistingScrText
+        {
+            get
+            {
+                if (existingScrText == null)
+                {
+                    // Generate an ExistingScrText from the p8z file on disk
+                    string projectPath = Path.Combine(ScrTextCollection.ResourcesDirectory, this.Name + ProjectFileManager.resourceFileExtension);
+                    if (RobustFile.Exists(projectPath))
+                    {
+                        var name = new ProjectName(projectPath);
+                        if (name != null)
+                        {
+                            existingScrText = new ResourceScrText(name, new ParatextZippedResourcePasswordProvider(this._paratextOptions));
+                        }
+                    }
+                }
+
+                return existingScrText;
+            }
+        }
 
         /// <summary>
         /// Return a list of resources which this user is allowed to install from DBL.
