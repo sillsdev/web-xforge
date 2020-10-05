@@ -20,12 +20,18 @@ namespace SIL.XForge.Scripture.Services
         {
             this.projectName = projectName;
             Settings = new MockProjectSettings(this);
+            // ScrText sets its cachedGuid from the settings Guid. Here we are doing it the other way around.
+            // Some tests may need both MockScrText.Guid and MockScrText.Settings.Guid to be set.
             _language = new MockScrLanguage(this);
         }
 
         public string CachedGuid
         {
-            set { cachedGuid = value; }
+            set
+            {
+                cachedGuid = value;
+                Settings.Guid = value;
+            }
         }
 
         public Dictionary<string, string> Data = new Dictionary<string, string>();
