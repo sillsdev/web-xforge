@@ -484,7 +484,7 @@ namespace SIL.XForge.Scripture.Services
             string username = GetParatextUsername(userSecret);
             bool targetNeedsCloned =
                 ScrTextCollection.FindById(username, target.ParatextId, Models.TextType.Target) == null;
-            if (targetNeedsCloned)
+            if (targetNeedsCloned || target is ParatextResource)
             {
                 // If the source is a resource, install it
                 if (target is ParatextResource resource)
@@ -492,14 +492,20 @@ namespace SIL.XForge.Scripture.Services
                     if (resource.InstallableResource != null)
                     {
                         // Install the resource if it is missing or out of date
-                        if (!resource.IsInstalled || resource.AvailableRevision > resource.InstalledRevision)
+                        if (!resource.IsInstalled
+                            || resource.AvailableRevision > resource.InstalledRevision
+                            || resource.InstallableResource.IsNewerThanCurrentlyInstalled())
                         {
                             resource.InstallableResource.Install();
+                            targetNeedsCloned = true;
                         }
 
                         // Extract the resource to the target directory
-                        string path = Path.Combine(SyncDir, target.ParatextId, TextTypeUtils.DirectoryName(Models.TextType.Target));
-                        resource.InstallableResource.ExtractToDirectory(path);
+                        if (targetNeedsCloned)
+                        {
+                            string path = Path.Combine(SyncDir, target.ParatextId, TextTypeUtils.DirectoryName(Models.TextType.Target));
+                            resource.InstallableResource.ExtractToDirectory(path);
+                        }
                     }
                     else
                     {
@@ -519,13 +525,14 @@ namespace SIL.XForge.Scripture.Services
                 ScrText sourceScrText = ScrTextCollection.FindById(username, target.ParatextId, Models.TextType.Source);
                 if (sourceScrText == null)
                     sourceNeedsCloned = true;
-                else if (sourceScrText.Guid != source.ParatextId)
+                else if (!(sourceScrText.Guid == source.ParatextId
+                    || (source is ParatextResource && sourceScrText.Guid.StartsWith(source.ParatextId, StringComparison.OrdinalIgnoreCase))))
                 {
                     // The source project has changed. So delete the obsolete source project
                     _fileSystemService.DeleteDirectory(sourceScrText.Directory);
                     sourceNeedsCloned = true;
                 }
-                if (sourceNeedsCloned)
+                if (sourceNeedsCloned || source is ParatextResource)
                 {
                     // If the source is a resource, install it
                     if (source is ParatextResource resource)
@@ -533,15 +540,21 @@ namespace SIL.XForge.Scripture.Services
                         if (resource.InstallableResource != null)
                         {
                             // Install the resource if it is missing or out of date
-                            if (!resource.IsInstalled || resource.AvailableRevision > resource.InstalledRevision)
+                            if (!resource.IsInstalled
+                                || resource.AvailableRevision > resource.InstalledRevision
+                                || resource.InstallableResource.IsNewerThanCurrentlyInstalled())
                             {
                                 resource.InstallableResource.Install();
+                                sourceNeedsCloned = true;
                             }
 
                             // Extract the resource to the source directory
-                            string path = Path.Combine(SyncDir, target.ParatextId, TextTypeUtils.DirectoryName(Models.TextType.Source));
-                            _fileSystemService.CreateDirectory(path);
-                            resource.InstallableResource.ExtractToDirectory(path);
+                            if (sourceNeedsCloned)
+                            {
+                                string path = Path.Combine(SyncDir, target.ParatextId, TextTypeUtils.DirectoryName(Models.TextType.Source));
+                                _fileSystemService.CreateDirectory(path);
+                                resource.InstallableResource.ExtractToDirectory(path);
+                            }
                         }
                         else
                         {
