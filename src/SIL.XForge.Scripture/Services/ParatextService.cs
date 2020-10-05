@@ -288,7 +288,7 @@ namespace SIL.XForge.Scripture.Services
                 XPathExpression.Compile("*[false()]"), out string usfm);
             usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft);
             scrText.PutText(bookNum, 0, false, usfm, null);
-            _logger.LogInformation("{0} updated {1} in {2}.", GetParatextUsername(userSecret),
+            _logger.LogInformation("{0} updated {1} in {2}.", userSecret.Id,
                 Canon.BookNumberToEnglishName(bookNum), scrText.Name);
         }
 
@@ -355,10 +355,10 @@ namespace SIL.XForge.Scripture.Services
                 foreach (string user in users)
                     manager.SaveUser(user, false);
                 VersionedText vText = VersioningManager.Get(scrText);
-                vText.Commit($"{nbrAddedComments} notes added and {nbrDeletedComments + nbrUpdatedComments} notes updated or deleted in synchronize",
-                     null, false, username);
-                _logger.LogInformation("{0} added {1} notes, updated {2} notes and deleted {3} notes",
-                    username, nbrAddedComments, nbrUpdatedComments, nbrDeletedComments);
+                vText.Commit($"{nbrAddedComments} notes added and {nbrDeletedComments + nbrUpdatedComments} notes "
+                    + $"updated or deleted in synchronize", null, false, username);
+                _logger.LogInformation("{0} added {1} notes, updated {2} notes and deleted {3} notes", userSecret.Id,
+                    nbrAddedComments, nbrUpdatedComments, nbrDeletedComments);
             }
             catch (Exception e)
             {
