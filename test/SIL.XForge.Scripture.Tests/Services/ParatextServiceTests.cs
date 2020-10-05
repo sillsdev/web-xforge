@@ -499,6 +499,7 @@ namespace SIL.XForge.Scripture.Services
             public IHgWrapper MockHgWrapper;
             public MockLogger<ParatextService> MockLogger;
             public IJwtTokenHelper MockJwtTokenHelper;
+            public IParatextDataHelper MockParatextDataHelper;
             public IInternetSharedRepositorySourceProvider MockInternetSharedRepositorySourceProvider;
             public ParatextService Service;
 
@@ -515,13 +516,14 @@ namespace SIL.XForge.Scripture.Services
                 MockSharingLogicWrapper = Substitute.For<ISharingLogicWrapper>();
                 MockHgWrapper = Substitute.For<IHgWrapper>();
                 MockJwtTokenHelper = Substitute.For<IJwtTokenHelper>();
+                MockParatextDataHelper = Substitute.For<IParatextDataHelper>();
                 MockInternetSharedRepositorySourceProvider = Substitute.For<IInternetSharedRepositorySourceProvider>();
 
                 RealtimeService = new SFMemoryRealtimeService();
 
                 Service = new ParatextService(MockWebHostEnvironment, MockParatextOptions, MockRepository,
                     RealtimeService, MockExceptionHandler, MockSiteOptions, MockFileSystemService,
-                    MockLogger, MockJwtTokenHelper, MockInternetSharedRepositorySourceProvider);
+                    MockLogger, MockJwtTokenHelper, MockParatextDataHelper, MockInternetSharedRepositorySourceProvider);
                 Service.ScrTextCollection = MockScrTextCollection;
                 Service.SharingLogicWrapper = MockSharingLogicWrapper;
                 Service.HgWrapper = MockHgWrapper;
