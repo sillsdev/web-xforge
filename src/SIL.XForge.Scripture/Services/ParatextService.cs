@@ -56,6 +56,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IExceptionHandler _exceptionHandler;
         private readonly ILogger _logger;
         private readonly IJwtTokenHelper _jwtTokenHelper;
+        private readonly IParatextDataHelper _paratextDataHelper;
         private string _applicationProductVersion = "SF";
         private string _registryServerUri = "https://registry.paratext.org";
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
@@ -65,7 +66,7 @@ namespace SIL.XForge.Scripture.Services
         public ParatextService(IWebHostEnvironment env, IOptions<ParatextOptions> paratextOptions,
             IRepository<UserSecret> userSecretRepository, IRealtimeService realtimeService,
             IExceptionHandler exceptionHandler, IOptions<SiteOptions> siteOptions, IFileSystemService fileSystemService,
-            ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper,
+            ILogger<ParatextService> logger, IJwtTokenHelper jwtTokenHelper, IParatextDataHelper paratextDataHelper,
             IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider)
         {
             _paratextOptions = paratextOptions;
@@ -76,6 +77,7 @@ namespace SIL.XForge.Scripture.Services
             _fileSystemService = fileSystemService;
             _logger = logger;
             _jwtTokenHelper = jwtTokenHelper;
+            _paratextDataHelper = paratextDataHelper;
             _internetSharedRepositorySourceProvider = internetSharedRepositorySourceProvider;
 
             _httpClientHandler = new HttpClientHandler();
@@ -361,9 +363,8 @@ namespace SIL.XForge.Scripture.Services
             {
                 foreach (string user in users)
                     manager.SaveUser(user, false);
-                VersionedText vText = VersioningManager.Get(scrText);
-                vText.Commit($"{nbrAddedComments} notes added and {nbrDeletedComments + nbrUpdatedComments} notes "
-                    + $"updated or deleted in synchronize", null, false, username);
+                _paratextDataHelper.CommitVersionedText(scrText, $"{nbrAddedComments} notes added and "
+                    + $"{nbrDeletedComments + nbrUpdatedComments} notes updated or deleted in synchronize");
                 _logger.LogInformation("{0} added {1} notes, updated {2} notes and deleted {3} notes", userSecret.Id,
                     nbrAddedComments, nbrUpdatedComments, nbrDeletedComments);
             }
