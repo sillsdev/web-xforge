@@ -17,7 +17,7 @@ namespace SIL.XForge.Services
 
         public async Task ConvertToMp3Async(string inputPath, string outputPath)
         {
-            var process = new Process()
+            using (var process = new Process()
             {
                 StartInfo = new ProcessStartInfo
                 {
@@ -26,11 +26,13 @@ namespace SIL.XForge.Services
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
-            };
-            process.Start();
-            await WaitForExitAsync(process);
-            if (process.ExitCode != 0)
-                throw new InvalidOperationException($"Error: Could not convert {inputPath} to mp3");
+            })
+            {
+                process.Start();
+                await WaitForExitAsync(process);
+                if (process.ExitCode != 0)
+                    throw new InvalidOperationException($"Error: Could not convert {inputPath} to mp3");
+            }
         }
 
         private static Task WaitForExitAsync(Process process)

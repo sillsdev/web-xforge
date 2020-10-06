@@ -529,23 +529,25 @@ namespace SIL.XForge.Scripture.Services
                     refreshed = true;
                 }
 
-                var request = new HttpRequestMessage(method, $"api8/{url}");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
-                    userSecret.ParatextTokens.AccessToken);
-                if (content != null)
-                    request.Content = new StringContent(content);
-                HttpResponseMessage response = await client.SendAsync(request);
-                if (response.IsSuccessStatusCode)
+                using (var request = new HttpRequestMessage(method, $"api8/{url}"))
                 {
-                    return await response.Content.ReadAsStringAsync();
-                }
-                else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    expired = true;
-                }
-                else
-                {
-                    throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer",
+                        userSecret.ParatextTokens.AccessToken);
+                    if (content != null)
+                        request.Content = new StringContent(content);
+                    HttpResponseMessage response = await client.SendAsync(request);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        return await response.Content.ReadAsStringAsync();
+                    }
+                    else if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    {
+                        expired = true;
+                    }
+                    else
+                    {
+                        throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                    }
                 }
             }
 

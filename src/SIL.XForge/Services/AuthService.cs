@@ -73,15 +73,17 @@ namespace SIL.XForge.Services
                 string accessToken = results.AccessToken;
                 refreshed = results.Refreshed;
 
-                var request = new HttpRequestMessage(method, $"api/v2/{url}");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-                if (content != null)
-                    request.Content = new StringContent(content.ToString(), Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await _httpClient.SendAsync(request);
-                if (response.StatusCode != HttpStatusCode.Unauthorized)
+                using (var request = new HttpRequestMessage(method, $"api/v2/{url}"))
                 {
-                    await _exceptionHandler.EnsureSuccessStatusCode(response);
-                    return await response.Content.ReadAsStringAsync();
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                    if (content != null)
+                        request.Content = new StringContent(content.ToString(), Encoding.UTF8, "application/json");
+                    HttpResponseMessage response = await _httpClient.SendAsync(request);
+                    if (response.StatusCode != HttpStatusCode.Unauthorized)
+                    {
+                        await _exceptionHandler.EnsureSuccessStatusCode(response);
+                        return await response.Content.ReadAsStringAsync();
+                    }
                 }
             }
 
@@ -95,22 +97,24 @@ namespace SIL.XForge.Services
             {
                 if (!IsAccessTokenExpired())
                     return (_accessToken, false);
-                var request = new HttpRequestMessage(HttpMethod.Post, "oauth/token");
 
-                AuthOptions options = _authOptions.Value;
-                var requestObj = new JObject(
-                    new JProperty("grant_type", "client_credentials"),
-                    new JProperty("client_id", options.BackendClientId),
-                    new JProperty("client_secret", options.BackendClientSecret),
-                    new JProperty("audience", _authOptions.Value.ManagementAudience));
-                request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
-                HttpResponseMessage response = await _httpClient.SendAsync(request);
-                await _exceptionHandler.EnsureSuccessStatusCode(response);
+                using (var request = new HttpRequestMessage(HttpMethod.Post, "oauth/token"))
+                {
+                    AuthOptions options = _authOptions.Value;
+                    var requestObj = new JObject(
+                        new JProperty("grant_type", "client_credentials"),
+                        new JProperty("client_id", options.BackendClientId),
+                        new JProperty("client_secret", options.BackendClientSecret),
+                        new JProperty("audience", _authOptions.Value.ManagementAudience));
+                    request.Content = new StringContent(requestObj.ToString(), Encoding.UTF8, "application/json");
+                    HttpResponseMessage response = await _httpClient.SendAsync(request);
+                    await _exceptionHandler.EnsureSuccessStatusCode(response);
 
-                string responseJson = await response.Content.ReadAsStringAsync();
-                var responseObj = JObject.Parse(responseJson);
-                _accessToken = (string)responseObj["access_token"];
-                return (_accessToken, true);
+                    string responseJson = await response.Content.ReadAsStringAsync();
+                    var responseObj = JObject.Parse(responseJson);
+                    _accessToken = (string)responseObj["access_token"];
+                    return (_accessToken, true);
+                }
             }
             finally
             {
