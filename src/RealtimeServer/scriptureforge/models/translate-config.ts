@@ -10,4 +10,5 @@ export interface TranslateSource {
   name: string;
   shortName: string;
   writingSystem: WritingSystem;
+  isRightToLeft?: boolean;
 }

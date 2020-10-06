@@ -416,6 +416,25 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_LanguageIsRightToLeft_ProjectPropertySet()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, false, false, books);
+            env.SetupPTData(books);
+
+            env.ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target", TextType.Target)
+                .Returns(true);
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            SFProject project = env.GetProject();
+            env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target", TextType.Target);
+            env.ParatextService.Received().IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), "target", TextType.Source);
+            Assert.That(project.IsRightToLeft, Is.True);
+            Assert.That(project.TranslateConfig.Source.IsRightToLeft, Is.False);
+        }
+
+        [Test]
         public async Task SyncAsync_TextDocAlreadyExists()
         {
             var env = new TestEnvironment();
@@ -673,6 +692,8 @@ namespace SIL.XForge.Scripture.Services
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
                 ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<string>()))
                     .Do(x => _sendReceivedCalled = true);
+                ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<TextType>())
+                    .Returns(false);
                 RealtimeService = new SFMemoryRealtimeService();
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
@@ -752,6 +773,7 @@ namespace SIL.XForge.Scripture.Services
                                 { "user02", SFProjectRole.Translator }
                             },
                             ParatextId = "target",
+                            IsRightToLeft = false,
                             TranslateConfig = new TranslateConfig
                             {
                                 TranslationSuggestionsEnabled = translationSuggestionsEnabled,
@@ -763,7 +785,8 @@ namespace SIL.XForge.Scripture.Services
                                     WritingSystem = new WritingSystem
                                     {
                                         Tag = "en"
-                                    }
+                                    },
+                                    IsRightToLeft = false
                                 }
                             },
                             CheckingConfig = new CheckingConfig
