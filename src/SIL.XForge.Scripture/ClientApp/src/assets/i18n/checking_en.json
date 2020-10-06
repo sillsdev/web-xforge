@@ -242,7 +242,7 @@
     "unknown_error": "Unknown error"
   },
   "file_service": {
-    "exceeded_storage_quota": "Failed to save your changes because your device is out of storage space. Please free up space to continue working without disruptions.",
+    "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
     "i_understand": "I understand",
     "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all feature are available. Please free up storage space."
   },

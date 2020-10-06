@@ -256,12 +256,12 @@ export class FileService extends SubscriptionDisposable {
    * Detects if the error is caused by exceeding the browser's storage quota, and prompt the user to free up space.
    */
   private async onCachingError(error: any): Promise<void> {
-    if (!(error instanceof DOMException) || error.name !== 'QuotaExceededError') {
+    if (!(error instanceof DOMException)) {
       return Promise.reject(error);
     }
-    // Prompt the user to free up storage space
+    // Prompt the user to check storage space
     await this.noticeService.showMessageDialog(
-      () => this.transloco.translate('file_service.exceeded_storage_quota'),
+      () => this.transloco.translate('file_service.failed_to_save'),
       () => this.transloco.translate('file_service.i_understand')
     );
   }
