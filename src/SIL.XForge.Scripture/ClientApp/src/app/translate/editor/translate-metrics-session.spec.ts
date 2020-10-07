@@ -11,9 +11,10 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { TranslateMetrics } from '../../core/models/translate-metrics';
 import { SFProjectService } from '../../core/sf-project.service';
+import { getTextDoc } from '../../shared/test-utils';
 import { TextComponent } from '../../shared/text/text.component';
 import {
   ACTIVE_EDIT_TIMEOUT,
@@ -23,12 +24,16 @@ import {
 } from './translate-metrics-session';
 
 const mockedSFProjectService = mock(SFProjectService);
+const mockedPwaService = mock(PwaService);
 
 describe('TranslateMetricsSession', () => {
   configureTestingModule(() => ({
     declarations: [TextComponent],
     imports: [QuillModule.forRoot(), TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [{ provide: SFProjectService, useMock: mockedSFProjectService }]
+    providers: [
+      { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: PwaService, useMock: mockedPwaService }
+    ]
   }));
 
   describe('edit', () => {
@@ -351,7 +356,6 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 40, 1, 'source'));
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
 
-    const mockedPwaService = mock(PwaService);
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
@@ -422,17 +426,10 @@ class TestEnvironment {
   }
 
   private addTextDoc(id: TextDocId): void {
-    const delta = new Delta();
-    delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
-    delta.insert({ verse: { number: '1', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
-    delta.insert({ verse: { number: '2', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2.`, { segment: `verse_${id.chapterNum}_2` });
-    delta.insert('\n', { para: { style: 'p' } });
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
       id: id.toString(),
       type: RichText.type.name,
-      data: delta
+      data: getTextDoc(id)
     });
   }
 }

@@ -1,18 +1,20 @@
 import {
+  AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
   Input,
   OnDestroy,
   Output,
-  ViewChild,
-  ChangeDetectorRef
+  ViewChild
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash/isEqual';
 import merge from 'lodash/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import { fromEvent } from 'rxjs';
+import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { getBrowserEngine } from 'xforge-common/utils';
 import { TextDocId } from '../../core/models/text-doc';
@@ -20,7 +22,6 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { TextViewModel } from './text-view-model';
-import { PwaService } from 'xforge-common/pwa.service';
 
 const EDITORS = new Set<Quill>();
 
@@ -58,7 +59,7 @@ export interface TextUpdatedEvent {
   selector: 'app-text',
   templateUrl: './text.component.html'
 })
-export class TextComponent extends SubscriptionDisposable implements OnDestroy {
+export class TextComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
   @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
   @Input() isReadOnly: boolean = true;
   @Input() markInvalid: boolean = false;
@@ -154,6 +155,7 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   private highlightMarkerTop: number = 0;
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
+  private displayMessage: string = '';
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -162,27 +164,13 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     private readonly changeDetector: ChangeDetectorRef
   ) {
     super();
-    // this._placeholder = this.transloco.translate('text.loading');
-  }
-
-  ngAfterViewInit() {
-    this.subscribe(this.pwaService.onlineStatus, isOnline => {
-      console.log('text component ngavi');
-      this.updatePlaceholderText(isOnline);
-      this.changeDetector.detectChanges();
-    });
   }
 
   get placeholder() {
-    if (this._placeholder !== undefined) {
+    if (this._id == null && this._placeholder != null) {
       return this._placeholder;
     }
-
-    if (this.pwaService.isOnline) {
-      return this.transloco.translate('text.loading');
-    } else {
-      return this.transloco.translate('text.not_avail_offline');
-    }
+    return this.displayMessage;
   }
 
   @Input() set placeholder(value: string) {
@@ -309,6 +297,13 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
 
   get readOnlyEnabled(): boolean {
     return this.isReadOnly || (this.viewModel != null && this.viewModel.isEmpty);
+  }
+
+  ngAfterViewInit(): void {
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      this.updatePlaceholderText(isOnline);
+      this.changeDetector.detectChanges();
+    });
   }
 
   ngOnDestroy(): void {
@@ -438,9 +433,9 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
       return;
     }
     if (this.pwaService.isOnline) {
-      this.placeholder = this.transloco.translate('text.loading');
+      this.displayMessage = this.transloco.translate('text.loading');
     } else {
-      this.placeholder = this.transloco.translate('text.not_avail_offline');
+      this.displayMessage = this.transloco.translate('text.not_available_offline');
     }
     const textDoc = await this.projectService.getText(this._id);
     this.viewModel.bind(textDoc, this.subscribeToUpdates);
@@ -674,24 +669,20 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
   }
 
-  private updatePlaceholderText(userIsOnline?: boolean): void {
+  private updatePlaceholderText(forceAndConnected?: boolean): void {
     if (!this.viewModel.isLoaded) {
-      if (this.pwaService.isOnline) {
-        this.placeholder = this.transloco.translate('text.book_does_not_exist');
-      } else {
-        this.placeholder = this.transloco.translate('text.not_avail_offline');
-      }
+      this.displayMessage = this.pwaService.isOnline
+        ? this.transloco.translate('text.book_does_not_exist')
+        : this.transloco.translate('text.not_available_offline');
     } else if (this.viewModel.isEmpty) {
-      this.placeholder = this.transloco.translate('text.book_is_empty');
+      this.displayMessage = this.transloco.translate('text.book_is_empty');
     } else {
-      if (userIsOnline === undefined) {
+      if (forceAndConnected == null) {
         return;
       }
-      if (userIsOnline) {
-        this.placeholder = this.transloco.translate('text.loading');
-      } else {
-        this.placeholder = '!!' + this.transloco.translate('text.not_avail_offline');
-      }
+      this.displayMessage = forceAndConnected
+        ? this.transloco.translate('text.loading')
+        : this.transloco.translate('text.not_available_offline');
     }
   }
 
