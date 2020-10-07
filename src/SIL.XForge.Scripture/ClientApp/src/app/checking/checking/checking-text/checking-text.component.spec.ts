@@ -1,23 +1,25 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
+import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
-import { Delta, TextDoc, TextDocId } from '../../../core/models/text-doc';
+import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { SharedModule } from '../../../shared/shared.module';
+import { getSFProject, getTextDoc } from '../../../shared/test-utils';
 import { CheckingTextComponent } from './checking-text.component';
 
 const mockedSFProjectService = mock(SFProjectService);
+const mockedPwaService = mock(PwaService);
 
 describe('CheckingTextComponent', () => {
   configureTestingModule(() => ({
@@ -29,7 +31,10 @@ describe('CheckingTextComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestTranslocoModule
     ],
-    providers: [{ provide: SFProjectService, useMock: mockedSFProjectService }]
+    providers: [
+      { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: PwaService, useMock: mockedPwaService }
+    ]
   }));
 
   it('should move the question icon when the question moves verses', fakeAsync(() => {
@@ -79,11 +84,6 @@ describe('CheckingTextComponent', () => {
     expect(env.segmentHasQuestion(1, 4)).toBe(true);
     expect(env.isSegmentHighlighted(1, 4)).toBe(true);
   }));
-
-  it('shows Loading message when offline and text not available', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.wait();
-  }));
 });
 
 class TestEnvironment {
@@ -91,16 +91,18 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<CheckingTextComponent>;
 
   private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
+  private isOnline: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   constructor() {
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
-    this.setupProject();
+    this.setupProject('project01');
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
+    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
 
     this.fixture = TestBed.createComponent(CheckingTextComponent);
     this.component = this.fixture.componentInstance;
@@ -112,6 +114,17 @@ class TestEnvironment {
 
   get quillEditor(): HTMLElement {
     return document.getElementsByClassName('ql-container')[0] as HTMLElement;
+  }
+
+  get quillPlaceHolderText(): string {
+    const editor = this.quillEditor.querySelector('.ql-editor');
+    return editor == null ? '' : editor.attributes['data-placeholder'];
+  }
+
+  set onlineStatus(hasConnection: boolean) {
+    this.isOnline.next(hasConnection);
+    tick();
+    this.fixture.detectChanges();
   }
 
   isSegmentHighlighted(chapter: number, verse: number): boolean {
@@ -131,59 +144,17 @@ class TestEnvironment {
   }
 
   private addTextDoc(id: TextDocId): void {
-    const delta = new Delta();
-    delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
-    delta.insert({ blank: true }, { segment: 'p_1' });
-    delta.insert({ verse: { number: '1', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
-    delta.insert({ verse: { number: '2', style: 'v' } });
-    delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_2` });
-    delta.insert({ verse: { number: '3', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 3.`, { segment: `verse_${id.chapterNum}_3` });
-    delta.insert({ verse: { number: '4', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 4.`, { segment: `verse_${id.chapterNum}_4` });
-    delta.insert('\n', { para: { style: 'p' } });
-    delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_4/p_1` });
-    delta.insert({ verse: { number: '5', style: 'v' } });
-    delta.insert(`${id.textType}: chapter ${id.chapterNum}, `, { segment: `verse_${id.chapterNum}_5` });
-    delta.insert('\n', { para: { style: 'p' } });
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
       id: id.toString(),
       type: RichText.type.name,
-      data: delta
+      data: getTextDoc(id)
     });
   }
 
-  private setupProject(): void {
+  private setupProject(id: string): void {
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
-      id: 'project01',
-      data: {
-        name: 'project 01',
-        paratextId: 'target01',
-        shortName: 'TRG',
-        userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
-        writingSystem: { tag: 'qaa' },
-        translateConfig: {
-          translationSuggestionsEnabled: false
-        },
-        checkingConfig: {
-          checkingEnabled: false,
-          usersSeeEachOthersResponses: true,
-          shareEnabled: true,
-          shareLevel: CheckingShareLevel.Specific
-        },
-        sync: { queuedCount: 0 },
-        texts: [
-          {
-            bookNum: 40,
-            chapters: [
-              { number: 1, lastVerse: 3, isValid: true },
-              { number: 2, lastVerse: 3, isValid: true }
-            ],
-            hasSource: true
-          }
-        ]
-      }
+      id,
+      data: getSFProject(id)
     });
   }
 }

@@ -15,6 +15,7 @@ import { of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DOCUMENT } from 'xforge-common/browser-globals';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -28,6 +29,7 @@ import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from
 
 const mockedProjectService = mock(SFProjectService);
 const mockedDocument = mock(Document);
+const mockedPwaService = mock(PwaService);
 
 describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
@@ -36,7 +38,8 @@ describe('TextChooserDialogComponent', () => {
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: DOCUMENT, useMock: mockedDocument },
-      { provide: CookieService, useMock: mock(CookieService) }
+      { provide: CookieService, useMock: mock(CookieService) },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -474,6 +477,8 @@ class TestEnvironment {
     when(dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
+    when(mockedPwaService.isOnline).thenReturn(true);
+    when(mockedPwaService.onlineStatus).thenReturn(of(true));
 
     this.fixture.detectChanges();
     flush();

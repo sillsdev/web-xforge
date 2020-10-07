@@ -17,6 +17,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -28,6 +29,7 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
+import { getTextDoc } from '../../shared/test-utils';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 import { QuestionDialogComponent, QuestionDialogData } from './question-dialog.component';
@@ -39,6 +41,7 @@ const mockedUserService = mock(UserService);
 const mockedHttpClient = mock(HttpClient);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
+const mockedPwaService = mock(PwaService);
 
 describe('QuestionDialogComponent', () => {
   configureTestingModule(() => ({
@@ -50,7 +53,8 @@ describe('QuestionDialogComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: FileService, useMock: mockedFileService }
+      { provide: FileService, useMock: mockedFileService },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -585,8 +589,8 @@ class TestEnvironment {
     when(this.dialogSpy.open(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
-    this.addTextDoc(40);
-    this.addTextDoc(42);
+    this.addTextDoc(new TextDocId('project01', 40, 1));
+    this.addTextDoc(new TextDocId('project01', 42, 1));
     this.addEmptyTextDoc(43);
     when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
@@ -595,6 +599,7 @@ class TestEnvironment {
     when(mockedFileService.findOrUpdateCache(FileType.Audio, anything(), 'question01', anything())).thenResolve(
       createStorageFileData(QuestionDoc.COLLECTION, 'question01', '/path/to/audio.mp3', getAudioBlob())
     );
+    when(mockedPwaService.onlineStatus).thenReturn(of(true));
     this.fixture.detectChanges();
   }
 
@@ -662,29 +667,11 @@ class TestEnvironment {
     this.component.processAudio(audio);
   }
 
-  private addTextDoc(bookNum: number): void {
-    const delta = new Delta();
-    delta.insert({ chapter: { number: '1', style: 'c' } });
-    delta.insert({ blank: true }, { segment: 'p_1' });
-    delta.insert({ verse: { number: '1', style: 'v' } });
-    delta.insert('target: chapter 1, verse 1.', { segment: 'verse_1_1' });
-    delta.insert({ verse: { number: '2', style: 'v' } });
-    delta.insert({ blank: true }, { segment: 'verse_1_2' });
-    delta.insert('\n', { para: { style: 'p' } });
-    delta.insert({ blank: true }, { segment: 'verse_1_2/p_1' });
-    delta.insert({ verse: { number: '3', style: 'v' } });
-    delta.insert(`target: chapter 1, verse 3.`, { segment: 'verse_1_3' });
-    delta.insert({ verse: { number: '4', style: 'v' } });
-    delta.insert(`target: chapter 1, verse 4.`, { segment: 'verse_1_4' });
-    delta.insert('\n', { para: { style: 'p' } });
-    delta.insert({ blank: true }, { segment: 'verse_1_4/p_1' });
-    delta.insert({ verse: { number: '5', style: 'v' } });
-    delta.insert(`target: chapter 1, `, { segment: 'verse_1_5' });
-    delta.insert('\n', { para: { style: 'p' } });
+  private addTextDoc(id: TextDocId): void {
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
-      id: getTextDocId('project01', bookNum, 1, 'target'),
+      id: getTextDocId(id.projectId, id.bookNum, id.chapterNum),
       type: RichText.type.name,
-      data: delta
+      data: getTextDoc(id)
     });
   }
 

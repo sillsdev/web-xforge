@@ -1,46 +1,36 @@
-import { ComponentFixture, fakeAsync, TestBed, tick, flush } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/checking-config';
+import { CommonModule } from '@angular/common';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { Component, ViewChild } from '@angular/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TranslocoService } from '@ngneat/transloco';
+import Quill from 'quill';
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
-import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
-import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
+import { getTextDocId, TextData } from 'realtime-server/lib/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
-import { anything, mock, when, instance, anyString } from 'ts-mockito';
+import { BehaviorSubject } from 'rxjs';
+import { anything, mock, when } from 'ts-mockito';
+import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
+import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
+import { getSFProject, getTextDoc } from '../test-utils';
 import { TextComponent } from './text.component';
-import { TranslocoService, translate, TranslocoModule } from '@ngneat/transloco';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
-import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
-import { ROUTES } from '@angular/router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { CommonModule } from '@angular/common';
-import { QuillEditorComponent, QuillModule } from 'ngx-quill';
-import { PwaService } from 'xforge-common/pwa.service';
-import { BehaviorSubject } from 'rxjs';
-import Quill from 'quill';
-import { TextViewModel } from './text-view-model';
 
 const mockedTranslocoService = mock(TranslocoService);
 const mockedPwaService = mock(PwaService);
-const mockedTextViewModel = mock(TextViewModel);
-
-when(mockedTranslocoService.translate<string>(anything())).thenCall(
-  (translationStringKey: string) => translationStringKey
-);
+const mockedProjectService = mock(SFProjectService);
 
 describe('TextComponent', () => {
   configureTestingModule(() => ({
-    // Declared in SharedModule
-    declarations: [],
+    declarations: [HostComponent],
     imports: [
       AvatarTestingModule,
       CommonModule,
@@ -56,55 +46,84 @@ describe('TextComponent', () => {
     ]
   }));
 
-  it('display Loading message when offline and text not available', fakeAsync(() => {
-    // TODO I wrote the test and made modifications to text.component.ts that seemed good. The test passed. I found
-    // that when running SF, my change had resulted in it saying book_does_not_exist when I didn't want it to. I
-    // modified the code so when running SF it displays the offline message at the right time, both for community
-    // checkers as well as for project admins when adding a question. Next steps: Revise the test so it checks for how
-    // I understand the program needs to behave to show the right messages. Note that showing 'Loading...' was not
-    // looked for very closely when testing the app. Clean up possibly unnecessarily extra calls to flush and
-    // detectChanges. Revisit changes in text.component.ts - clean up; make sensible.
+  it('display placeholder messages', fakeAsync(() => {
     const env: TestEnvironment = new TestEnvironment();
-    console.log('time for things');
-    // (Write to private field, and with type checking.)
-    env.component['viewModel'] = instance(mockedTextViewModel);
-    when(mockedTextViewModel.isLoaded).thenReturn(true);
-    when(mockedTextViewModel.isEmpty).thenReturn(false);
-
     const mockedQuill = new MockQuill('quill-editor');
     env.fixture.detectChanges();
     env.component.onEditorCreated(mockedQuill);
+    expect(env.component.placeholder).toEqual('initial placeholder text');
+    env.id = getTextDocId('project01', 40, 1);
     expect(env.component.placeholder).toEqual('text.loading');
     env.onlineStatus = false;
-    flush();
     env.fixture.detectChanges();
-    expect(env.component.placeholder).toEqual('text.not_avail_offline');
+    expect(env.component.placeholder).toEqual('text.not_available_offline');
     env.onlineStatus = true;
-    flush();
-    env.fixture.detectChanges();
     expect(env.component.placeholder).toEqual('text.loading');
   }));
 });
 
 class MockQuill extends Quill {}
 
+@Component({ selector: 'app-host', template: `<app-text [placeholder]="initialPlaceHolder" [id]="id"></app-text>` })
+class HostComponent {
+  @ViewChild(TextComponent) textComponent!: TextComponent;
+
+  initialPlaceHolder = 'initial placeholder text';
+  id?: string;
+}
+
 class TestEnvironment {
   readonly component: TextComponent;
-  readonly fixture: ComponentFixture<TextComponent>;
+  readonly hostComponent: HostComponent;
+  readonly fixture: ComponentFixture<HostComponent>;
+  realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
   private _onlineStatus = new BehaviorSubject<boolean>(true);
+  private isOnline: boolean = true;
 
   constructor() {
     when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
-    when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
+    when(mockedPwaService.isOnline).thenReturn(this.isOnline);
+    when(mockedTranslocoService.translate<string>(anything())).thenCall(
+      (translationStringKey: string) => translationStringKey
+    );
 
-    this.fixture = TestBed.createComponent(TextComponent);
-    this.component = this.fixture.componentInstance;
+    const textDocId = new TextDocId('project01', 40, 1);
+    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+      id: 'project01',
+      data: getSFProject('project01')
+    });
+    this.realtimeService.addSnapshot<TextData>(TextDoc.COLLECTION, {
+      id: textDocId.toString(),
+      data: getTextDoc(textDocId),
+      type: RichText.type.name
+    });
+
+    when(mockedProjectService.getText(anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    );
+    when(mockedProjectService.get(anything())).thenCall(() =>
+      this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
+    );
+
+    this.fixture = TestBed.createComponent(HostComponent);
+    this.fixture.detectChanges();
+    this.component = this.fixture.componentInstance.textComponent;
+    this.hostComponent = this.fixture.componentInstance;
+    tick();
+    this.fixture.detectChanges();
+  }
+
+  set id(value: string) {
+    this.hostComponent.id = value;
+    tick();
+    this.fixture.detectChanges();
   }
 
   set onlineStatus(value: boolean) {
+    this.isOnline = value;
+    tick();
     this._onlineStatus.next(value);
-    flush();
-    this.fixture.detectChanges();
+    tick();
     this.fixture.detectChanges();
   }
 }
