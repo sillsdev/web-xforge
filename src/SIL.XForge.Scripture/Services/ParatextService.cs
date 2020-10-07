@@ -658,7 +658,7 @@ namespace SIL.XForge.Scripture.Services
         /// </returns>
         private IReadOnlyList<ParatextResource> GetResourcesInternal(UserSecret userSecret, bool includeInstallableResource)
         {
-            var resources = SFInstallableDBLResource.GetInstallableDBLResources(userSecret, this._paratextOptions.Value, this._restClientFactory, this._fileSystemService);
+            var resources = SFInstallableDBLResource.GetInstallableDBLResources(userSecret, this._paratextOptions.Value, this._restClientFactory, this._fileSystemService, this._jwtTokenHelper);
             var resourceRevisions = SFInstallableDBLResource.GetInstalledResourceRevisions();
             return resources.OrderBy(r => r.FullName).Select(r => new ParatextResource
             {

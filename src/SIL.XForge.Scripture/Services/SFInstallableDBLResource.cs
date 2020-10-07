@@ -11,6 +11,7 @@ using Paratext.Data.Archiving;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.RegistryServerAccess;
+using Paratext.Data.Users;
 using PtxUtils;
 using PtxUtils.Http;
 using SIL.Extensions;
@@ -18,6 +19,7 @@ using SIL.IO;
 using SIL.WritingSystems;
 using SIL.XForge.Configuration;
 using SIL.XForge.Models;
+using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
@@ -48,6 +50,11 @@ namespace SIL.XForge.Scripture.Services
         private readonly IFileSystemService _fileSystemService;
 
         /// <summary>
+        /// The JWT token helper.
+        /// </summary>
+        private readonly IJwtTokenHelper _jwtTokenHelper;
+
+        /// <summary>
         /// The paratext options.
         /// </summary>
         private readonly ParatextOptions _paratextOptions;
@@ -74,11 +81,12 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="paratextOptions">The paratext options.</param>
         /// <param name="restClientFactory">The rest client factory.</param>
         /// <param name="fileSystemService">The file system service.</param>
+        /// <param name="jwtTokenHelper">The JWT token helper.</param>
         /// <remarks>
         /// This is a convenience constructor for unit tests.
         /// </remarks>
-        internal SFInstallableDBLResource(UserSecret userSecret, ParatextOptions paratextOptions, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService)
-            : this(userSecret, paratextOptions, restClientFactory, fileSystemService, new ParatextProjectDeleter(), new ParatextMigrationOperations(), new ParatextZippedResourcePasswordProvider(paratextOptions))
+        internal SFInstallableDBLResource(UserSecret userSecret, ParatextOptions paratextOptions, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper)
+            : this(userSecret, paratextOptions, restClientFactory, fileSystemService, jwtTokenHelper, new ParatextProjectDeleter(), new ParatextMigrationOperations(), new ParatextZippedResourcePasswordProvider(paratextOptions))
         {
         }
 
@@ -89,18 +97,20 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="paratextOptions">The paratext options.</param>
         /// <param name="restClientFactory">The rest client factory.</param>
         /// <param name="fileSystemService">The file system service.</param>
+        /// <param name="jwtTokenHelper">The JWT token helper.</param>
         /// <param name="projectDeleter">The project deleter.</param>
         /// <param name="migrationOperations">The migration operations.</param>
         /// <param name="passwordProvider">The password provider.</param>
         /// <param name="baseUrl">(Optional) The base URL.</param>
         /// <exception cref="ArgumentNullException">restClientFactory</exception>
-        private SFInstallableDBLResource(UserSecret userSecret, ParatextOptions paratextOptions, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, IProjectDeleter projectDeleter, IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider, string baseUrl = null)
+        private SFInstallableDBLResource(UserSecret userSecret, ParatextOptions paratextOptions, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper, IProjectDeleter projectDeleter, IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider, string baseUrl = null)
             : base(projectDeleter, migrationOperations, passwordProvider)
         {
             this._userSecret = userSecret;
             this._paratextOptions = paratextOptions;
             this._restClientFactory = restClientFactory;
             this._fileSystemService = fileSystemService;
+            this._jwtTokenHelper = jwtTokenHelper;
             if (this._restClientFactory == null)
             {
                 throw new ArgumentNullException(nameof(restClientFactory));
@@ -146,7 +156,9 @@ namespace SIL.XForge.Scripture.Services
                         var name = new ProjectName(projectPath);
                         if (name != null)
                         {
-                            existingScrText = new ResourceScrText(name, new ParatextZippedResourcePasswordProvider(this._paratextOptions));
+                            string userName = this._jwtTokenHelper.GetParatextUsername(this._userSecret);
+                            var ptUser = new SFParatextUser(userName);
+                            existingScrText = new ResourceScrText(name, ptUser, new ParatextZippedResourcePasswordProvider(this._paratextOptions));
                         }
                     }
                 }
@@ -163,14 +175,13 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="paratextOptions">The paratext options.</param>
         /// <param name="restClientFactory">The rest client factory.</param>
         /// <param name="fileSystemService">The file system service.</param>
+        /// <param name="jwtTokenHelper">The JWT token helper.</param>
         /// <param name="baseUrl">The base URL.</param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentNullException">
-        /// restClientFactory
+        /// <returns>The Installable Resources.</returns>
+        /// <exception cref="ArgumentNullException">restClientFactory
         /// or
-        /// userSecret
-        /// </exception>
-        public static IEnumerable<SFInstallableDBLResource> GetInstallableDBLResources(UserSecret userSecret, ParatextOptions paratextOptions, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, string baseUrl = null)
+        /// userSecret</exception>
+        public static IEnumerable<SFInstallableDBLResource> GetInstallableDBLResources(UserSecret userSecret, ParatextOptions paratextOptions, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper, string baseUrl = null)
         {
             // Parameter check (just like the constructor)
             if (restClientFactory == null)
@@ -185,7 +196,7 @@ namespace SIL.XForge.Scripture.Services
             var client = restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, userSecret);
             baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? InternetAccess.ParatextDBLServer : baseUrl;
             string response = client.Get(BuildDBLResourceEntriesUrl(baseUrl));
-            var resources = ConvertJsonResponseToInstallableDblResources(baseUrl, response, restClientFactory, fileSystemService, DateTime.Now, userSecret, paratextOptions, new ParatextProjectDeleter(), new ParatextMigrationOperations(), new ParatextZippedResourcePasswordProvider(paratextOptions));
+            var resources = ConvertJsonResponseToInstallableDblResources(baseUrl, response, restClientFactory, fileSystemService, jwtTokenHelper, DateTime.Now, userSecret, paratextOptions, new ParatextProjectDeleter(), new ParatextMigrationOperations(), new ParatextZippedResourcePasswordProvider(paratextOptions));
             return resources;
         }
 
@@ -412,6 +423,7 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="response">The response.</param>
         /// <param name="restClientFactory">The rest client factory.</param>
         /// <param name="fileSystemService">The file system service.</param>
+        /// <param name="jwtTokenHelper">The JWT token helper.</param>
         /// <param name="createdTimestamp">The created timestamp.</param>
         /// <param name="userSecret">The user secret.</param>
         /// <param name="paratextOptions">The paratext options.</param>
@@ -421,7 +433,7 @@ namespace SIL.XForge.Scripture.Services
         /// <returns>
         /// The Installable Resources.
         /// </returns>
-        private static IEnumerable<SFInstallableDBLResource> ConvertJsonResponseToInstallableDblResources(string baseUri, string response, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, DateTime createdTimestamp, UserSecret userSecret, ParatextOptions paratextOptions, IProjectDeleter projectDeleter, IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider)
+        private static IEnumerable<SFInstallableDBLResource> ConvertJsonResponseToInstallableDblResources(string baseUri, string response, ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService, IJwtTokenHelper jwtTokenHelper, DateTime createdTimestamp, UserSecret userSecret, ParatextOptions paratextOptions, IProjectDeleter projectDeleter, IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider)
         {
             if (!string.IsNullOrWhiteSpace(response))
             {
@@ -455,7 +467,7 @@ namespace SIL.XForge.Scripture.Services
                     var languageId = migrationOperations.DetermineBestLangIdToUseForResource(languageIdLDML, languageIdCode).Id;
 
                     var url = BuildDBLResourceEntriesUrl(baseUri, id);
-                    var resource = new SFInstallableDBLResource(userSecret, paratextOptions, restClientFactory, fileSystemService, projectDeleter, migrationOperations, passwordProvider, baseUri)
+                    var resource = new SFInstallableDBLResource(userSecret, paratextOptions, restClientFactory, fileSystemService, jwtTokenHelper, projectDeleter, migrationOperations, passwordProvider, baseUri)
                     {
                         DisplayName = name,
                         Name = name,
