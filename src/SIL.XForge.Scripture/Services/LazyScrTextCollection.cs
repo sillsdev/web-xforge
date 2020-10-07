@@ -4,6 +4,7 @@ using Paratext.Data;
 using Paratext.Data.ProjectSettingsAccess;
 using SIL.XForge.Services;
 using SIL.XForge.Scripture.Models;
+using Paratext.Data.Users;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -30,10 +31,10 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Get a ScrText for a given user from the data for a paratext project with the target project ID and type.
         /// </summary>
-        /// <param name="username"> The username of the user retrieving the ScrText. </param>
+        /// <param name="ptUsername"> The username of the user retrieving the ScrText. </param>
         /// <param name="projectId"> The ID of the target project. </param>
         /// <param name="textType"> Target or Source. </param>
-        public ScrText FindById(string username, string projectId, Models.TextType textType)
+        public ScrText FindById(string ptUsername, string projectId, Models.TextType textType)
         {
             if (projectId == null)
                 return null;
@@ -48,7 +49,7 @@ namespace SIL.XForge.Scripture.Services
 
             string name = GetNameFromSettings(settingsFile);
             if (name != null)
-                return CreateScrText(username, new ProjectName()
+                return CreateScrText(ptUsername, new ProjectName()
                 {
                     ProjectPath = fullProjectPath,
                     ShortName = name
@@ -56,9 +57,10 @@ namespace SIL.XForge.Scripture.Services
             return null;
         }
 
-        protected virtual ScrText CreateScrText(string username, ProjectName projectName)
+        protected virtual ScrText CreateScrText(string ptUsername, ProjectName projectName)
         {
-            return new MultiUserScrText(SettingsDirectory, username, projectName);
+            var associatedUser = new SFParatextUser(ptUsername);
+            return new ScrText(projectName, associatedUser);
         }
 
         private string GetNameFromSettings(string settingsFilePath)

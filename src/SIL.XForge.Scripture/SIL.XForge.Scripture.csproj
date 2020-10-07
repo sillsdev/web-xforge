@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.2" />
-    <PackageReference Include="ParatextData" Version="9.1.10-beta" />
+    <PackageReference Include="ParatextData" Version="9.2.3-alpha" />
     <PackageReference Include="SIL.Machine.WebApi" Version="$(MachineVersion)" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.0" />
   </ItemGroup>

@@ -7,6 +7,7 @@ using NSubstitute;
 using Paratext.Data.Languages;
 using PtxUtils;
 using SIL.WritingSystems;
+using Paratext.Data.Users;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -15,9 +16,9 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class MockScrText : ScrText
     {
-        public MockScrText(ProjectName pn)
+        public MockScrText(ParatextUser associatedPtUser, ProjectName projectName) : base(associatedPtUser)
         {
-            projectName = pn;
+            this.projectName = projectName;
             Settings = new MockProjectSettings(this);
             _language = new MockScrLanguage(this);
         }

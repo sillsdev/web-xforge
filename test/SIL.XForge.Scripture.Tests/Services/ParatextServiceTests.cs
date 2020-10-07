@@ -208,7 +208,8 @@ namespace SIL.XForge.Scripture.Services
         public void GetBooks_ReturnCorrectNumberOfBooks()
         {
             var env = new TestEnvironment();
-            string ptProjectId = env.SetupProject(env.Project01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
 
             // Books 1 thru 3.
@@ -227,7 +228,8 @@ namespace SIL.XForge.Scripture.Services
                 "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
             var env = new TestEnvironment();
-            string ptProjectId = env.SetupProject(env.Project01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             env.MakeUserSecret(env.User01, env.Username01);
 
             // SUT
@@ -255,7 +257,8 @@ namespace SIL.XForge.Scripture.Services
         public void PutBookText_TextEdited_BookTextIsUpdated()
         {
             var env = new TestEnvironment();
-            string ptProjectId = env.SetupProject(env.Project01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
 
             int ruthBookNum = 8;
@@ -290,10 +293,11 @@ namespace SIL.XForge.Scripture.Services
         {
             int ruthBookNum = 8;
             var env = new TestEnvironment();
-            string ptProjectId = env.SetupProject(env.Project01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
             env.ProjectCommentManager.AddComment(
-                new Paratext.Data.ProjectComments.Comment { Thread = "Answer_dataId0123", VerseRefStr = "RUT 1:1" });
+                new Paratext.Data.ProjectComments.Comment(associatedPtUser) { Thread = "Answer_dataId0123", VerseRefStr = "RUT 1:1" });
             string notes = env.Service.GetNotes(userSecret, ptProjectId, ruthBookNum);
             string expected = $"<notes version=\"1.1\">{Environment.NewLine}  <thread id=\"Answer_dataId0123\">";
             Assert.True(notes.StartsWith(expected));
@@ -303,7 +307,8 @@ namespace SIL.XForge.Scripture.Services
         public void PutNotes_AddEditDeleteComment_ThreadCorrectlyUpdated()
         {
             var env = new TestEnvironment();
-            string ptProjectId = env.SetupProject(env.Project01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01);
 
             // Add new comment
@@ -356,7 +361,8 @@ namespace SIL.XForge.Scripture.Services
         public void SendReceiveAsync_ShareChangesErrors_Throws()
         {
             var env = new TestEnvironment();
-            string projectId = env.SetupProject(env.Project01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string projectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
 
             IInternetSharedRepositorySource mockSource =
@@ -381,7 +387,8 @@ namespace SIL.XForge.Scripture.Services
         public async Task SendReceiveAsync_UserIsAdministrator_Succeeds()
         {
             var env = new TestEnvironment();
-            string ptProjectId = env.SetupProject(env.Project01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
@@ -414,9 +421,10 @@ namespace SIL.XForge.Scripture.Services
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
+            var associatedPtUser = new SFParatextUser(env.Username01);
             // FindById fails the first time, and then succeeds the second time after the pt project repo is cloned.
             env.MockScrTextCollection.FindById(env.Username01, ptProjectId, Models.TextType.Target)
-                .Returns(null, env.GetScrText(ptProjectId, Models.TextType.Target));
+                .Returns(null, env.GetScrText(associatedPtUser, ptProjectId, Models.TextType.Target));
 
             string clonePath = Path.Combine(env.SyncDir, ptProjectId, "target");
             env.MockFileSystemService.DirectoryExists(clonePath).Returns(false);
@@ -433,14 +441,15 @@ namespace SIL.XForge.Scripture.Services
         public async Task SendReceiveAsync_SourceProjectPresent_BothSucceeds()
         {
             var env = new TestEnvironment();
-            string targetProjectId = env.SetupProject(env.Project01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string targetProjectId = env.SetupProject(env.Project01, associatedPtUser);
             string sourceProjectId = "paratext_" + env.Project02;
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
 
-            ScrText sourceScrText = env.GetScrText(targetProjectId, Models.TextType.Source, sourceProjectId);
+            ScrText sourceScrText = env.GetScrText(associatedPtUser, targetProjectId, Models.TextType.Source, sourceProjectId);
             env.MockScrTextCollection.FindById(env.Username01, targetProjectId, Models.TextType.Source)
                 .Returns(sourceScrText);
             await env.Service.SendReceiveAsync(user01Secret, targetProjectId, sourceProjectId);
@@ -681,17 +690,17 @@ namespace SIL.XForge.Scripture.Services
                 return notesElem.ToString();
             }
 
-            public string SetupProject(string baseId)
+            public string SetupProject(string baseId, ParatextUser associatedPtUser)
             {
                 string ptProjectId = "paratext_" + baseId;
-                ProjectScrText = GetScrText(baseId, Models.TextType.Target);
+                ProjectScrText = GetScrText(associatedPtUser, baseId, Models.TextType.Target);
                 ProjectCommentManager = CommentManager.Get(ProjectScrText);
                 MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId, Models.TextType.Target)
                     .Returns(ProjectScrText);
                 return ptProjectId;
             }
 
-            public MockScrText GetScrText(string projectId, Models.TextType textType, string sourceGuid = null)
+            public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId, Models.TextType textType, string sourceGuid = null)
             {
                 string textTypeDir;
                 string guid = projectId;
@@ -708,7 +717,7 @@ namespace SIL.XForge.Scripture.Services
                 }
                 string scrtextDir = Path.Combine(SyncDir, projectId, textTypeDir);
                 ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
-                var scrText = new MockScrText(projectName);
+                var scrText = new MockScrText(associatedPtUser, projectName);
                 scrText.CachedGuid = guid;
                 scrText.Data.Add("RUT", ruthBookUsfm);
                 return scrText;
