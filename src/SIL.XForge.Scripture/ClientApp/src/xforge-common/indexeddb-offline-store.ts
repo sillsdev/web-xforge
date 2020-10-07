@@ -191,11 +191,14 @@ export class IndexeddbOfflineStore extends OfflineStore {
       };
       request.onupgradeneeded = () => {
         const db = request.result;
-        if (db.objectStoreNames.length === 0) {
-          for (const docType of this.typeRegistry.docTypes) {
+        const storeNames = db.objectStoreNames;
+        for (const docType of this.typeRegistry.docTypes) {
+          if (!storeNames.contains(docType.COLLECTION)) {
             createObjectStore(db, docType.COLLECTION, docType.INDEX_PATHS);
           }
-          for (const fileType of this.typeRegistry.fileTypes) {
+        }
+        for (const fileType of this.typeRegistry.fileTypes) {
+          if (!storeNames.contains(fileType)) {
             createObjectStore(db, fileType);
           }
         }
