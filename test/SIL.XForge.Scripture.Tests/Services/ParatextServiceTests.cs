@@ -530,7 +530,8 @@ namespace SIL.XForge.Scripture.Services
         public void SendReceiveAsync_SourceResource_Missing()
         {
             var env = new TestEnvironment();
-            string ptProjectId = env.SetupProject(env.Project01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
@@ -546,7 +547,8 @@ namespace SIL.XForge.Scripture.Services
         public async Task SendReceiveAsync_SourceResource_Valid()
         {
             var env = new TestEnvironment();
-            string ptProjectId = env.SetupProject(env.Project01);
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
             IInternetSharedRepositorySource mockSource =
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
