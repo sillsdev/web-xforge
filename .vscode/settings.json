@@ -69,7 +69,7 @@
     "xforge",
     "xlink"
   ],
-  "python.formatting.provider": "black"
+  "python.formatting.provider": "black",
   "typescript.tsdk": "./src/SIL.XForge.Scripture/ClientApp/node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true
 }
