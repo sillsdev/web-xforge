@@ -165,7 +165,7 @@
       become: no
       copy:
         src: InternetSettings.xml
-        dest: ~/.local/share/Paratext91/
+        dest: ~/.local/share/Paratext92/
 
   handlers:
     - name: restart mongod
