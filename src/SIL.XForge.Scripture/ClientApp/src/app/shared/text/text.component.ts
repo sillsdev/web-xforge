@@ -1,9 +1,20 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  Output,
+  ViewChild
+} from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
 import isEqual from 'lodash/isEqual';
 import merge from 'lodash/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import { fromEvent } from 'rxjs';
+import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { getBrowserEngine } from 'xforge-common/utils';
 import { TextDocId } from '../../core/models/text-doc';
@@ -48,7 +59,7 @@ export interface TextUpdatedEvent {
   selector: 'app-text',
   templateUrl: './text.component.html'
 })
-export class TextComponent extends SubscriptionDisposable implements OnDestroy {
+export class TextComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
   @ViewChild('quillEditor', { static: true, read: ElementRef }) quill!: ElementRef;
   @Input() isReadOnly: boolean = true;
   @Input() markInvalid: boolean = false;
@@ -144,13 +155,22 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
   private highlightMarkerTop: number = 0;
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
+  private displayMessage: string = '';
 
-  constructor(private readonly projectService: SFProjectService, private readonly transloco: TranslocoService) {
+  constructor(
+    private readonly projectService: SFProjectService,
+    private readonly transloco: TranslocoService,
+    private readonly pwaService: PwaService,
+    private readonly changeDetector: ChangeDetectorRef
+  ) {
     super();
   }
 
   get placeholder() {
-    return this._placeholder || this.transloco.translate('text.loading');
+    if (this._id == null && this._placeholder != null) {
+      return this._placeholder;
+    }
+    return this.displayMessage;
   }
 
   @Input() set placeholder(value: string) {
@@ -279,6 +299,13 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     return this.isReadOnly || (this.viewModel != null && this.viewModel.isEmpty);
   }
 
+  ngAfterViewInit(): void {
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      this.updatePlaceholderText(isOnline);
+      this.changeDetector.detectChanges();
+    });
+  }
+
   ngOnDestroy(): void {
     super.ngOnDestroy();
     if (this.viewModel != null) {
@@ -405,7 +432,11 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     if (this._id == null) {
       return;
     }
-    this.placeholder = this.transloco.translate('text.loading');
+    if (this.pwaService.isOnline) {
+      this.displayMessage = this.transloco.translate('text.loading');
+    } else {
+      this.displayMessage = this.transloco.translate('text.not_available_offline');
+    }
     const textDoc = await this.projectService.getText(this._id);
     this.viewModel.bind(textDoc, this.subscribeToUpdates);
     this.updatePlaceholderText();
@@ -638,11 +669,20 @@ export class TextComponent extends SubscriptionDisposable implements OnDestroy {
     }
   }
 
-  private updatePlaceholderText(): void {
+  private updatePlaceholderText(forceAndConnected?: boolean): void {
     if (!this.viewModel.isLoaded) {
-      this.placeholder = this.transloco.translate('text.book_does_not_exist');
+      this.displayMessage = this.pwaService.isOnline
+        ? this.transloco.translate('text.book_does_not_exist')
+        : this.transloco.translate('text.not_available_offline');
     } else if (this.viewModel.isEmpty) {
-      this.placeholder = this.transloco.translate('text.book_is_empty');
+      this.displayMessage = this.transloco.translate('text.book_is_empty');
+    } else {
+      if (forceAndConnected == null) {
+        return;
+      }
+      this.displayMessage = forceAndConnected
+        ? this.transloco.translate('text.loading')
+        : this.transloco.translate('text.not_available_offline');
     }
   }
 
