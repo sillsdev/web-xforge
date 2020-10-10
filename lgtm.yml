@@ -1,4 +1,12 @@
 extraction:
   csharp:
+    after_prepare:
+      - export N_PREFIX=$HOME/.n
+      - export PATH=$N_PREFIX/bin:$PATH
+      - curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n
+      - bash n 12
+      - node --version
+      - npm --version
     index:
-      buildless: true
+      dotnet:
+        version: 3.1.402
