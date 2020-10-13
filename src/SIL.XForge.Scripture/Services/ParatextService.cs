@@ -579,7 +579,7 @@ namespace SIL.XForge.Scripture.Services
             HgWrapper.Update(clonePath);
         }
 
-        private async Task RefreshAccessTokenAsync(UserSecret userSecret)
+        public async Task RefreshAccessTokenAsync(UserSecret userSecret)
         {
             ParatextOptions options = _paratextOptions.Value;
 
