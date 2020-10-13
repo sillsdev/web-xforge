@@ -1,4 +1,3 @@
-using Paratext.Data;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Services
@@ -24,7 +23,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <inheritdoc />
-        public IRESTClient Create(string baseUri, string applicationProductVersion, UserSecret userSecret)
+        public ISFRESTClient Create(string baseUri, string applicationProductVersion, UserSecret userSecret)
         {
             string jwtToken = this._jwtTokenHelper.GetJwtTokenFromUserSecret(userSecret);
             return new JwtRESTClient(baseUri, applicationProductVersion, jwtToken);
