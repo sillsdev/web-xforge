@@ -172,10 +172,10 @@ namespace SIL.XForge.Scripture.Services
                 {
                     ptProjectsAvailable.Add(resource.ParatextId, resource);
                 }
-                else if (ptSourceId.Length < 41)
+                else if (ptSourceId.Length == 16)
                 {
                     // We can skip syncing sources that are resources, as these don't change often
-                    // NOTE: The resource id length is usually 16
+                    // NOTE: The resource id length is project id truncated to 16 characters
                     ptProjectsAvailable.Add(ptSourceId, null);
                 }
                 else
@@ -510,7 +510,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                     else
                     {
-                        _logger.LogWarning($"The installable resource is not available for {source.ParatextId}");
+                        _logger.LogWarning($"The installable resource is not available for {target.ParatextId}");
                     }
                 }
                 else
