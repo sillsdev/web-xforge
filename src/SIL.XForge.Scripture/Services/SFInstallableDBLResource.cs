@@ -11,7 +11,6 @@ using Paratext.Data.Archiving;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.RegistryServerAccess;
-using Paratext.Data.Users;
 using PtxUtils;
 using PtxUtils.Http;
 using SIL.Extensions;
@@ -164,6 +163,53 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 return existingScrText;
+            }
+        }
+
+        /// <summary>
+        /// Checks the resource permission.
+        /// </summary>
+        /// <param name="id">The identifier.</param>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="restClientFactory">The rest client factory.</param>
+        /// <param name="baseUrl">The base URL.</param>
+        /// <returns>
+        ///   <c>true</c> if the user has permission to access the resource; otherwise, <c>false</c>.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">id
+        /// or
+        /// userSecret
+        /// or
+        /// restClientFactory</exception>
+        public static bool CheckResourcePermission(string id, UserSecret userSecret, ISFRESTClientFactory restClientFactory, string baseUrl = null)
+        {
+            // Parameter check
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                throw new ArgumentNullException(nameof(id));
+            }
+            else if (userSecret == null)
+            {
+                throw new ArgumentNullException(nameof(userSecret));
+            }
+            else if (restClientFactory == null)
+            {
+                throw new ArgumentNullException(nameof(restClientFactory));
+            }
+
+            var client = restClientFactory.Create(string.Empty, ApplicationProduct.DefaultVersion, userSecret);
+            baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? InternetAccess.ParatextDBLServer : baseUrl;
+            try
+            {
+                _ = client.Head(BuildDBLResourceEntriesUrl(baseUrl, id));
+                return true;
+            }
+            catch (Exception)
+            {
+                // A 403 error means no access.
+                // Normally we would catch the specific WebException,
+                // but something in ParatextData is interfering with it.
+                return false;
             }
         }
 

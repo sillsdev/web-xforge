@@ -655,7 +655,7 @@ namespace SIL.XForge.Scripture.Services
 
             public ISFRESTClientFactory SetRestClientFactory(UserSecret userSecret)
             {
-                IRESTClient mockClient = Substitute.For<IRESTClient>();
+                ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
                 string json = @"{
     ""resources"": [
         {

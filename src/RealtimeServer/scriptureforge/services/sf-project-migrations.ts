@@ -1,6 +1,8 @@
 import { Doc, Op, RawOp } from 'sharedb/lib/client';
 import { Migration, MigrationConstructor } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
+import { SFProjectRole } from '../models/sf-project-role';
+import { TextInfoPermission } from '../models/text-info-permission';
 
 class SFProjectMigration1 implements Migration {
   static readonly VERSION = 1;
@@ -25,4 +27,45 @@ class SFProjectMigration1 implements Migration {
   }
 }
 
-export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [SFProjectMigration1];
+class SFProjectMigration2 implements Migration {
+  static readonly VERSION = 2;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    for (let i = 0; i < doc.data.texts.length; i++) {
+      if (doc.data.texts[i].permissions === undefined || doc.data.texts[i].sourcePermissions === undefined) {
+        const permissions: { [userRef: string]: string } = {};
+        const sourcePermissions: { [userRef: string]: string } = {};
+        for (const userId in doc.data.userRoles) {
+          if (doc.data.userRoles.hasOwnProperty(userId)) {
+            if (
+              doc.data.userRoles[userId] === SFProjectRole.ParatextTranslator ||
+              doc.data.userRoles[userId] === SFProjectRole.ParatextAdministrator
+            ) {
+              permissions[userId] = TextInfoPermission.Write;
+              if (doc.data.texts[i].hasSource === true) {
+                sourcePermissions[userId] = TextInfoPermission.Read;
+              }
+            } else {
+              permissions[userId] = TextInfoPermission.Read;
+              if (doc.data.texts[i].hasSource === true) {
+                sourcePermissions[userId] = TextInfoPermission.None;
+              }
+            }
+          }
+        }
+        ops.push({ p: ['texts', i, 'permissions'], oi: permissions });
+        ops.push({ p: ['texts', i, 'sourcePermissions'], oi: sourcePermissions });
+      }
+    }
+    if (ops.length > 0) {
+      await submitMigrationOp(SFProjectMigration2.VERSION, doc, ops);
+    }
+  }
+
+  migrateOp(_op: RawOp): void {
+    // do nothing
+  }
+}
+
+export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [SFProjectMigration1, SFProjectMigration2];

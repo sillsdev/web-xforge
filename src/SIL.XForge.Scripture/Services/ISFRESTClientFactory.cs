@@ -1,4 +1,3 @@
-using Paratext.Data;
 using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Services
@@ -15,6 +14,6 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="applicationProductVersion">The application product version.</param>
         /// <param name="userSecret">The user secret.</param>
         /// <returns>The rest client.</returns>
-        IRESTClient Create(string baseUri, string applicationProductVersion, UserSecret userSecret);
+        ISFRESTClient Create(string baseUri, string applicationProductVersion, UserSecret userSecret);
     }
 }

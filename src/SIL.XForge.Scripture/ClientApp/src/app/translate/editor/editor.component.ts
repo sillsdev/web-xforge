@@ -18,6 +18,7 @@ import { Operation } from 'realtime-server/lib/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/scriptureforge/models/sf-project-rights';
 import { TextType } from 'realtime-server/lib/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
+import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
@@ -180,8 +181,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   get hasSource(): boolean {
     if (!this.canEdit) {
       return false;
+    } else if (this.text == null) {
+      return false;
+    } else {
+      let sourcePermission =
+        this.text?.sourcePermissions !== undefined
+          ? this.text?.sourcePermissions[this.userService.currentUserId]
+          : undefined;
+      if (sourcePermission === undefined) {
+        sourcePermission = TextInfoPermission.None;
+      }
+      return this.text.hasSource && sourcePermission !== TextInfoPermission.None;
     }
-    return this.text == null ? false : this.text.hasSource;
   }
 
   get hasEditRight(): boolean {

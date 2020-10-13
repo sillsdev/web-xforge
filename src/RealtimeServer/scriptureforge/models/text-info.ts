@@ -12,4 +12,6 @@ export interface TextInfo {
   bookNum: number;
   hasSource: boolean;
   chapters: Chapter[];
+  permissions: { [userRef: string]: string };
+  sourcePermissions: { [userRef: string]: string };
 }
