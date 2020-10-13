@@ -1548,12 +1548,16 @@ class TestEnvironment {
         chapters: [
           { number: 1, lastVerse: 18, isValid: true },
           { number: 2, lastVerse: 25, isValid: true }
-        ]
+        ],
+        permissions: {},
+        sourcePermissions: {}
       },
       {
         bookNum: 40,
         hasSource: false,
-        chapters: [{ number: 1, lastVerse: 28, isValid: true }]
+        chapters: [{ number: 1, lastVerse: 28, isValid: true }],
+        permissions: {},
+        sourcePermissions: {}
       }
     ],
     userRoles: {
