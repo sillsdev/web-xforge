@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.Machine.WebApi.Services;
 using SIL.Scripture;
@@ -37,7 +39,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.SetupSFData(true, true, true);
 
-            await env.Runner.RunAsync("project01", "user02", false);
+            await env.Runner.RunAsync("project01", "user03", false);
 
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
@@ -391,6 +393,55 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_UserHasNoResourcePermission()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, false, books);
+            env.SetupPTData(books);
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Translator }
+            };
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
+            mockClient.Head(Arg.Any<string>()).Throws<WebException>();
+            env.SFRESTClientFactory
+                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UserSecret>())
+                .Returns(mockClient);
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            Assert.That(project.Texts.First().SourcePermissions["user02"], Is.EqualTo(TextInfoPermission.None));
+        }
+
+        [Test]
+        public async Task SyncAsync_UserHasResourcePermission()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+            env.SetupSFData(true, true, false, books);
+            env.SetupPTData(books);
+            var ptUserRoles = new Dictionary<string, string>
+            {
+                { "pt01", SFProjectRole.Translator }
+            };
+            env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
+                .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+
+            await env.Runner.RunAsync("project01", "user01", false);
+
+            SFProject project = env.GetProject();
+            Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
+            Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+            Assert.That(project.Texts.First().SourcePermissions["user02"], Is.EqualTo(TextInfoPermission.Read));
+        }
+
+        [Test]
         public async Task SyncAsync_CheckerWithPTAccountNotRemoved()
         {
             var env = new TestEnvironment();
@@ -673,7 +724,8 @@ namespace SIL.XForge.Scripture.Services
                     });
                 var userSecrets = new MemoryRepository<UserSecret>(new[]
                 {
-                    new UserSecret { Id = "user01" }
+                    new UserSecret { Id = "user01" },
+                    new UserSecret { Id = "user02" },
                 });
                 _projectSecrets = new MemoryRepository<SFProjectSecret>(new[]
                 {
@@ -698,9 +750,10 @@ namespace SIL.XForge.Scripture.Services
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
                 Logger = Substitute.For<ILogger<ParatextSyncRunner>>();
+                SFRESTClientFactory = Substitute.For<ISFRESTClientFactory>();
 
                 Runner = new ParatextSyncRunner(userSecrets, _projectSecrets, SFProjectService, EngineService,
-                    ParatextService, RealtimeService, DeltaUsxMapper, _notesMapper, Logger);
+                    ParatextService, RealtimeService, DeltaUsxMapper, _notesMapper, Logger, SFRESTClientFactory);
             }
 
             public ParatextSyncRunner Runner { get; }
@@ -710,6 +763,7 @@ namespace SIL.XForge.Scripture.Services
             public SFMemoryRealtimeService RealtimeService { get; }
             public IDeltaUsxMapper DeltaUsxMapper { get; }
             public ILogger<ParatextSyncRunner> Logger { get; }
+            public ISFRESTClientFactory SFRESTClientFactory { get; }
 
             public SFProject GetProject()
             {
