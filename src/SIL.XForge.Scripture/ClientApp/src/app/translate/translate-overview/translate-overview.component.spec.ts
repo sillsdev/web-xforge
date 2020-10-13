@@ -11,6 +11,7 @@ import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/ch
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/scriptureforge/models/text-data';
+import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -278,7 +279,9 @@ class TestEnvironment {
               { number: 1, lastVerse: 3, isValid: true },
               { number: 2, lastVerse: 3, isValid: true }
             ],
-            hasSource: true
+            hasSource: true,
+            permissions: {},
+            sourcePermissions: { user01: TextInfoPermission.Read, user02: TextInfoPermission.None }
           },
           {
             bookNum: 41,
@@ -286,7 +289,9 @@ class TestEnvironment {
               { number: 1, lastVerse: 3, isValid: true },
               { number: 2, lastVerse: 3, isValid: true }
             ],
-            hasSource: true
+            hasSource: true,
+            permissions: {},
+            sourcePermissions: { user01: TextInfoPermission.Read, user02: TextInfoPermission.None }
           },
           {
             bookNum: 42,
@@ -294,7 +299,9 @@ class TestEnvironment {
               { number: 1, lastVerse: 3, isValid: true },
               { number: 2, lastVerse: 3, isValid: true }
             ],
-            hasSource: true
+            hasSource: true,
+            permissions: {},
+            sourcePermissions: { user01: TextInfoPermission.Read, user02: TextInfoPermission.None }
           },
           {
             bookNum: 43,
@@ -302,7 +309,9 @@ class TestEnvironment {
               { number: 1, lastVerse: 3, isValid: true },
               { number: 2, lastVerse: 3, isValid: true }
             ],
-            hasSource: false
+            hasSource: false,
+            permissions: {},
+            sourcePermissions: {}
           }
         ]
       }
