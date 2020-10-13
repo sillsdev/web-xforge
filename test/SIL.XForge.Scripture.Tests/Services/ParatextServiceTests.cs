@@ -527,7 +527,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void SendReceiveAsync_SourceResource_Missing()
+        public async Task SendReceiveAsync_SourceResource_Missing()
         {
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
@@ -538,9 +538,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSuccessfulSendReceive();
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
-            string resourceId = "test_data"; // A missing or invalid resource or project
-            Assert.ThrowsAsync<ArgumentException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, ptProjectId, resourceId));
+            string resourceId = "test_resource_id"; // A missing or invalid resource or project
+            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, resourceId);
         }
 
         [Test]

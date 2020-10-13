@@ -200,28 +200,28 @@ namespace SIL.XForge.Scripture.Services
                         // Calculate the book and source permissions
                         var permissions = new Dictionary<string, string>();
                         var sourcePermissions = new Dictionary<string, string>();
-                        foreach ((string id, string role) in _projectDoc.Data.UserRoles)
+                        foreach ((string uid, string role) in _projectDoc.Data.UserRoles)
                         {
                             // TODO: Load correct target book permissions
                             if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
                             {
-                                permissions.Add(id, TextInfoPermission.Write);
+                                permissions.Add(uid, TextInfoPermission.Write);
                                 if (hasSource)
                                 {
                                     // See if the source is a resource
                                     string sourceId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
                                     if (!string.IsNullOrWhiteSpace(sourceId) && sourceId.Length < 41)
                                     {
-                                        // NOTE: The resource id length is usually 16
+                                        // The resource id is a 41 character project id truncated to 16 characters
                                         UserSecret userSecret;
-                                        if (id == userId)
+                                        if (uid == userId)
                                         {
                                             userSecret = _userSecret;
                                         }
                                         else
                                         {
                                             // Get the user secret
-                                            if (!_userSecrets.TryGetAsync(id).WaitAndUnwrapException().TryResult(out userSecret))
+                                            if (!_userSecrets.TryGetAsync(uid).WaitAndUnwrapException().TryResult(out userSecret))
                                             {
                                                 userSecret = null;
                                             }
@@ -238,18 +238,18 @@ namespace SIL.XForge.Scripture.Services
                                             canRead = SFInstallableDBLResource.CheckResourcePermission(sourceId, userSecret, _restClientFactory);
                                         }
 
-                                        sourcePermissions.Add(id, canRead ? TextInfoPermission.Read : TextInfoPermission.None);
+                                        sourcePermissions.Add(uid, canRead ? TextInfoPermission.Read : TextInfoPermission.None);
                                     }
                                     else
                                     {
                                         // TODO: Check for correct source project permissions
-                                        sourcePermissions.Add(id, TextInfoPermission.Read);
+                                        sourcePermissions.Add(uid, TextInfoPermission.Read);
                                     }
                                 }
                             }
                             else
                             {
-                                permissions.Add(id, TextInfoPermission.Read);
+                                permissions.Add(uid, TextInfoPermission.Read);
                             }
                         }
 
