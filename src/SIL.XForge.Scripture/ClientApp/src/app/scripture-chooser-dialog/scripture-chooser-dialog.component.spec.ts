@@ -218,7 +218,9 @@ describe('ScriptureChooserDialog', () => {
       {
         bookNum: 49,
         chapters: [{ number: 3, lastVerse: 21, isValid: true }],
-        hasSource: false
+        hasSource: false,
+        permissions: {},
+        sourcePermissions: {}
       },
       {
         bookNum: 45,
@@ -227,7 +229,9 @@ describe('ScriptureChooserDialog', () => {
           { number: 11, lastVerse: 36, isValid: true },
           { number: 12, lastVerse: 21, isValid: true }
         ],
-        hasSource: false
+        hasSource: false,
+        permissions: {},
+        sourcePermissions: {}
       }
     ];
     const env = new TestEnvironment({ textsInProject: onlyNTTexts });
@@ -268,7 +272,9 @@ describe('ScriptureChooserDialog', () => {
       {
         bookNum: 49,
         chapters: [{ number: 3, lastVerse: 21, isValid: true }],
-        hasSource: false
+        hasSource: false,
+        permissions: {},
+        sourcePermissions: {}
       },
       {
         bookNum: 45,
@@ -277,7 +283,9 @@ describe('ScriptureChooserDialog', () => {
           { number: 11, lastVerse: 36, isValid: true },
           { number: 12, lastVerse: 21, isValid: true }
         ],
-        hasSource: false
+        hasSource: false,
+        permissions: {},
+        sourcePermissions: {}
       }
       // No RUT text
     ];
@@ -311,7 +319,9 @@ describe('ScriptureChooserDialog', () => {
       {
         bookNum: 49,
         chapters: [{ number: 3, lastVerse: 21, isValid: true }],
-        hasSource: false
+        hasSource: false,
+        permissions: {},
+        sourcePermissions: {}
       },
       {
         bookNum: 45,
@@ -320,7 +330,9 @@ describe('ScriptureChooserDialog', () => {
           { number: 11, lastVerse: 36, isValid: true },
           { number: 12, lastVerse: 21, isValid: true }
         ],
-        hasSource: false
+        hasSource: false,
+        permissions: {},
+        sourcePermissions: {}
       }
     ];
 
@@ -353,7 +365,9 @@ describe('ScriptureChooserDialog', () => {
       {
         bookNum: 49,
         chapters: [{ number: 3, lastVerse: 21, isValid: true }],
-        hasSource: false
+        hasSource: false,
+        permissions: {},
+        sourcePermissions: {}
       },
       {
         bookNum: 45,
@@ -362,7 +376,9 @@ describe('ScriptureChooserDialog', () => {
           { number: 11, lastVerse: 36, isValid: true },
           { number: 12, lastVerse: 21, isValid: true }
         ],
-        hasSource: false
+        hasSource: false,
+        permissions: {},
+        sourcePermissions: {}
       }
     ];
 
@@ -453,7 +469,9 @@ describe('ScriptureChooserDialog', () => {
             { number: 39, lastVerse: 43, isValid: true },
             { number: 40, lastVerse: 38, isValid: true }
           ],
-          hasSource: false
+          hasSource: false,
+          permissions: {},
+          sourcePermissions: {}
         },
         {
           bookNum: 40,
@@ -461,12 +479,16 @@ describe('ScriptureChooserDialog', () => {
             { number: 1, lastVerse: 25, isValid: true },
             { number: 2, lastVerse: 23, isValid: true }
           ],
-          hasSource: false
+          hasSource: false,
+          permissions: {},
+          sourcePermissions: {}
         },
         {
           bookNum: 49,
           chapters: [{ number: 3, lastVerse: 21, isValid: true }],
-          hasSource: false
+          hasSource: false,
+          permissions: {},
+          sourcePermissions: {}
         },
         {
           bookNum: 45,
@@ -475,7 +497,9 @@ describe('ScriptureChooserDialog', () => {
             { number: 11, lastVerse: 36, isValid: true },
             { number: 12, lastVerse: 21, isValid: true }
           ],
-          hasSource: false
+          hasSource: false,
+          permissions: {},
+          sourcePermissions: {}
         }
       ];
       if (args && args.textsInProject) {

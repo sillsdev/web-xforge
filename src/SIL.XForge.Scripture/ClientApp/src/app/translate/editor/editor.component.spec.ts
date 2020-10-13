@@ -24,6 +24,7 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/scriptureforge/models/sf-project-user-config';
+import { TextInfoPermission } from 'realtime-server/lib/scriptureforge/models/text-info-permission';
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, of, Subject } from 'rxjs';
@@ -666,6 +667,24 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('user has no resource access', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setCurrentUser('user01');
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'ACT' });
+      env.wait();
+      expect(env.bookName).toEqual('Acts');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(true);
+      expect(env.isSourceAreaHidden).toBe(true);
+      env.dispose();
+    }));
+
     it('empty book', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -845,6 +864,25 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(false);
+      expect(env.isSourceAreaHidden).toBe(true);
+      env.dispose();
+    }));
+
+    it('user has no resource access', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject(false);
+      env.setCurrentUser('user01');
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'ACT' });
+      env.wait();
+      expect(env.bookName).toEqual('Acts');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(true);
       expect(env.isSourceAreaHidden).toBe(true);
       env.dispose();
     }));
@@ -1072,21 +1110,40 @@ class TestEnvironment {
               { number: 1, lastVerse: 3, isValid: true },
               { number: 2, lastVerse: 3, isValid: true }
             ],
-            hasSource: true
+            hasSource: true,
+            permissions: {},
+            sourcePermissions: { user01: TextInfoPermission.Read, user02: TextInfoPermission.None }
           },
-          { bookNum: 41, chapters: [{ number: 1, lastVerse: 3, isValid: false }], hasSource: true },
+          {
+            bookNum: 41,
+            chapters: [{ number: 1, lastVerse: 3, isValid: false }],
+            hasSource: true,
+            permissions: {},
+            sourcePermissions: { user01: TextInfoPermission.Read, user02: TextInfoPermission.None }
+          },
           {
             bookNum: 42,
             chapters: [
               { number: 1, lastVerse: 3, isValid: true },
               { number: 2, lastVerse: 3, isValid: true }
             ],
-            hasSource: false
+            hasSource: false,
+            permissions: {},
+            sourcePermissions: {}
           },
           {
             bookNum: 43,
             chapters: [{ number: 1, lastVerse: 0, isValid: true }],
-            hasSource: false
+            hasSource: false,
+            permissions: {},
+            sourcePermissions: {}
+          },
+          {
+            bookNum: 44,
+            chapters: [{ number: 1, lastVerse: 3, isValid: true }],
+            hasSource: true,
+            permissions: {},
+            sourcePermissions: { user01: TextInfoPermission.None, user02: TextInfoPermission.None }
           }
         ]
       }

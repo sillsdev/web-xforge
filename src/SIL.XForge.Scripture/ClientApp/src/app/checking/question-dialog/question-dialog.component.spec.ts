@@ -567,10 +567,24 @@ class TestEnvironment {
             chapters: [
               { number: 1, lastVerse: 25, isValid: true },
               { number: 2, lastVerse: 23, isValid: true }
-            ]
+            ],
+            permissions: {},
+            sourcePermissions: {}
           },
-          LUK: { bookNum: 42, hasSource: false, chapters: [{ number: 1, lastVerse: 80, isValid: true }] },
-          JHN: { bookNum: 43, hasSource: false, chapters: [{ number: 1, lastVerse: 0, isValid: true }] }
+          LUK: {
+            bookNum: 42,
+            hasSource: false,
+            chapters: [{ number: 1, lastVerse: 80, isValid: true }],
+            permissions: {},
+            sourcePermissions: {}
+          },
+          JHN: {
+            bookNum: 43,
+            hasSource: false,
+            chapters: [{ number: 1, lastVerse: 0, isValid: true }],
+            permissions: {},
+            sourcePermissions: {}
+          }
         },
         projectId: 'project01',
         defaultVerse: defaultVerseRef

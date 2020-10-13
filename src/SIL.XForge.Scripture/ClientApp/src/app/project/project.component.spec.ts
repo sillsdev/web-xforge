@@ -277,8 +277,20 @@ class TestEnvironment {
         texts:
           args.hasTexts == null || args.hasTexts
             ? [
-                { bookNum: 40, chapters: [], hasSource: false },
-                { bookNum: 41, chapters: [], hasSource: false }
+                {
+                  bookNum: 40,
+                  chapters: [],
+                  hasSource: false,
+                  permissions: {},
+                  sourcePermissions: {}
+                },
+                {
+                  bookNum: 41,
+                  chapters: [],
+                  hasSource: false,
+                  permissions: {},
+                  sourcePermissions: {}
+                }
               ]
             : [],
         userRoles: { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }

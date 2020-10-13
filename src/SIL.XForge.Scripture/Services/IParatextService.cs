@@ -26,5 +26,6 @@ namespace SIL.XForge.Scripture.Services
 
         Task SendReceiveAsync(UserSecret userSecret, string ptTargetId, string ptSourceId,
             IProgress<ProgressState> progress = null);
+        Task RefreshAccessTokenAsync(UserSecret userSecret);
     }
 }

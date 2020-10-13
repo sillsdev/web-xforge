@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using SIL.Machine.WebApi.Services;
+using SIL.Machine.WebApi.Utils;
 using SIL.ObjectModel;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -53,6 +54,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IDeltaUsxMapper _deltaUsxMapper;
         private readonly IParatextNotesMapper _notesMapper;
         private readonly ILogger<ParatextSyncRunner> _logger;
+        private readonly ISFRESTClientFactory _restClientFactory;
 
         private IConnection _conn;
         private UserSecret _userSecret;
@@ -62,7 +64,7 @@ namespace SIL.XForge.Scripture.Services
         public ParatextSyncRunner(IRepository<UserSecret> userSecrets, IRepository<SFProjectSecret> projectSecrets,
             ISFProjectService projectService, IEngineService engineService, IParatextService paratextService,
             IRealtimeService realtimeService, IDeltaUsxMapper deltaUsxMapper, IParatextNotesMapper notesMapper,
-            ILogger<ParatextSyncRunner> logger)
+            ILogger<ParatextSyncRunner> logger, ISFRESTClientFactory restClientFactory)
         {
             _userSecrets = userSecrets;
             _projectSecrets = projectSecrets;
@@ -73,6 +75,7 @@ namespace SIL.XForge.Scripture.Services
             _logger = logger;
             _deltaUsxMapper = deltaUsxMapper;
             _notesMapper = notesMapper;
+            _restClientFactory = restClientFactory;
         }
 
         private bool TranslationSuggestionsEnabled => _projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
@@ -194,10 +197,68 @@ namespace SIL.XForge.Scripture.Services
                     // update project metadata
                     await _projectDoc.SubmitJson0OpAsync(op =>
                     {
+                        // Calculate the book and source permissions
+                        var permissions = new Dictionary<string, string>();
+                        var sourcePermissions = new Dictionary<string, string>();
+                        foreach ((string id, string role) in _projectDoc.Data.UserRoles)
+                        {
+                            // TODO: Load correct target book permissions
+                            if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
+                            {
+                                permissions.Add(id, TextInfoPermission.Write);
+                                if (hasSource)
+                                {
+                                    // See if the source is a resource
+                                    string sourceId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
+                                    if (!string.IsNullOrWhiteSpace(sourceId) && sourceId.Length < 41)
+                                    {
+                                        // NOTE: The resource id length is usually 16
+                                        UserSecret userSecret;
+                                        if (id == userId)
+                                        {
+                                            userSecret = _userSecret;
+                                        }
+                                        else
+                                        {
+                                            // Get the user secret
+                                            if (!_userSecrets.TryGetAsync(id).WaitAndUnwrapException().TryResult(out userSecret))
+                                            {
+                                                userSecret = null;
+                                            }
+                                        }
+
+                                        bool canRead = false;
+                                        if (userSecret != null)
+                                        {
+                                            if (!(userSecret.ParatextTokens?.ValidateLifetime() ?? false))
+                                            {
+                                                _paratextService.RefreshAccessTokenAsync(userSecret).WaitAndUnwrapException();
+                                            }
+
+                                            canRead = SFInstallableDBLResource.CheckResourcePermission(sourceId, userSecret, _restClientFactory);
+                                        }
+
+                                        sourcePermissions.Add(id, canRead ? TextInfoPermission.Read : TextInfoPermission.None);
+                                    }
+                                    else
+                                    {
+                                        // TODO: Check for correct source project permissions
+                                        sourcePermissions.Add(id, TextInfoPermission.Read);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                permissions.Add(id, TextInfoPermission.Read);
+                            }
+                        }
+
                         if (textIndex == -1)
                         {
                             // insert text info for new text
                             text.Chapters = newChapters;
+                            text.Permissions = permissions;
+                            text.SourcePermissions = sourcePermissions;
                             op.Add(pd => pd.Texts, text);
                         }
                         else
@@ -205,6 +266,8 @@ namespace SIL.XForge.Scripture.Services
                             // update text info
                             op.Set(pd => pd.Texts[textIndex].Chapters, newChapters, ChapterListEqualityComparer);
                             op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
+                            op.Set(pd => pd.Texts[textIndex].Permissions, permissions);
+                            op.Set(pd => pd.Texts[textIndex].SourcePermissions, sourcePermissions);
                         }
                     });
                 }
