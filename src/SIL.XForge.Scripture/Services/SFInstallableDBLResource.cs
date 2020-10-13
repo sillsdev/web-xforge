@@ -329,7 +329,18 @@ namespace SIL.XForge.Scripture.Services
                 return false;
             }
 
-            bool result = base.Install();
+            bool result;
+            try
+            {
+                result = base.Install();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Treat this like we couldn't get the resource from the DBL - ignore the error and continue.
+                // This was either caused by the file already being there and in use, or the SF Project directory not existing
+                result = false;
+            }
+
             if (RobustFile.Exists(filePath))
             {
                 RobustFile.Delete(filePath);
