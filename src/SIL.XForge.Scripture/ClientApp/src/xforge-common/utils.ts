@@ -33,13 +33,13 @@ export function supportedBrowser(): boolean {
     chromium: '>=58',
     edge: '>=76',
     firefox: '>=51',
-    safari: '>=10.1',
+    safari: '>=11.1',
 
     mobile: {
       chrome: '>=78',
       firefox: '>=68',
       opera: '>=46',
-      safari: '>=10.3',
+      safari: '>=11.3',
       'android browser': '>=76',
       'samsung internet': '>=7.2'
     }
