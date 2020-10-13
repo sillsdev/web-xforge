@@ -228,7 +228,6 @@
           <mdc-list-item
             [appRouterLink]="['/projects', selectedProjectId, 'sync']"
             [class.list-item-disabled]="!isAppOnline"
-            id="sync-item"
             (selectionChange)="itemSelected()"
           >
             <mdc-icon mdcListItemGraphic>sync</mdc-icon>
@@ -237,7 +236,6 @@
           <mdc-list-item
             [appRouterLink]="['/projects', selectedProjectId, 'settings']"
             [class.list-item-disabled]="!isAppOnline"
-            id="settings-item"
             (selectionChange)="itemSelected()"
           >
             <mdc-icon mdcListItemGraphic>settings</mdc-icon>
@@ -246,7 +244,6 @@
           <mdc-list-item
             [appRouterLink]="['/projects', selectedProjectId, 'users']"
             [class.list-item-disabled]="!isAppOnline"
-            id="users-item"
             (selectionChange)="itemSelected()"
           >
             <mdc-icon mdcListItemGraphic>people</mdc-icon>

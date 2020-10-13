@@ -87,7 +87,7 @@ describe('SyncComponent', () => {
     env.clickElement(env.syncButton);
     verify(mockedProjectService.onlineSync('testProject01')).once();
     expect(env.component.syncActive).toBe(true);
-    expect(env.progressBar).toBeDefined();
+    expect(env.progressBar).not.toBeNull();
     expect(env.component.isProgressDeterminate).toBe(false);
     expect(env.syncMessage.textContent).toContain('Your project is being synchronized');
     expect(env.logInButton).toBeNull();
@@ -110,7 +110,7 @@ describe('SyncComponent', () => {
     env.clickElement(env.syncButton);
     verify(mockedProjectService.onlineSync('testProject01')).once();
     expect(env.component.syncActive).toBe(true);
-    expect(env.progressBar).toBeDefined();
+    expect(env.progressBar).not.toBeNull();
     // Simulate sync in progress
     env.emitSyncProgress(0);
     // Simulate sync error
@@ -122,7 +122,7 @@ describe('SyncComponent', () => {
   it('should show progress if in-progress when loaded', fakeAsync(() => {
     const env = new TestEnvironment(true, true);
     expect(env.component.syncActive).toBe(true);
-    expect(env.progressBar).toBeDefined();
+    expect(env.progressBar).not.toBeNull();
   }));
 
   it('should explain and disable button when syncDisabled', fakeAsync(() => {
