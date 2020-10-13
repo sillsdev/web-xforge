@@ -172,6 +172,12 @@ namespace SIL.XForge.Scripture.Services
                 {
                     ptProjectsAvailable.Add(resource.ParatextId, resource);
                 }
+                else if (ptSourceId.Length < 41)
+                {
+                    // We can skip syncing sources that are resources, as these don't change often
+                    // NOTE: The resource id length is usually 16
+                    ptProjectsAvailable.Add(ptSourceId, null);
+                }
                 else
                 {
                     _logger.LogWarning($"The source project did not have a full name available {ptSourceId}");
