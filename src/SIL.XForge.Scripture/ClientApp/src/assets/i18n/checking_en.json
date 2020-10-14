@@ -182,7 +182,8 @@
   },
   "checking_audio_player": {
     "audio_unavailable": "Audio unavailable.",
-    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the internet to play.",
+    "audio_cannot_be_previewed": "The audio is in a format that cannot be previewed. Save any changes and connect to the internet to play."
   },
   "checking_audio_recorder": {
     "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",

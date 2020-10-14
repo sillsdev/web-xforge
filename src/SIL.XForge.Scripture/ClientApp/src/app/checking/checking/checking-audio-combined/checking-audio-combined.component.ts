@@ -4,6 +4,11 @@ import {
   CheckingAudioRecorderComponent
 } from '../checking-audio-recorder/checking-audio-recorder.component';
 
+interface FileMetadata {
+  file: File;
+  type: string;
+}
+
 @Component({
   selector: 'app-checking-audio-combined',
   templateUrl: './checking-audio-combined.component.html',
@@ -32,6 +37,17 @@ export class CheckingAudioCombinedComponent {
       this.audio.status === 'uploaded' ||
       (this.source != null && this.source !== '' && this.audio.status !== 'processed')
     );
+  }
+
+  set lastInvalids(value: FileMetadata[] | undefined) {
+    if (value == null) {
+      return;
+    }
+    // Firefox does not recognize the valid .ogg file type because it reads it as a video, so handle it here
+    if (value.length > 0 && value[0].file.type === 'video/ogg') {
+      this.uploadAudioFile = value[0].file;
+      this.prepareAudioFileUpload();
+    }
   }
 
   prepareAudioFileUpload() {

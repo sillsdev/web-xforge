@@ -12,12 +12,23 @@
       <mdc-icon>volume_off</mdc-icon>
       <span class="audio-unavailable-message">{{ t("audio_unavailable") }}</span>
       <a
+        *ngIf="!errorOnLoad; else loadError"
         #audioUnavailableTooltip="matTooltip"
         (click)="audioUnavailableTooltip.show()"
         matTooltip="{{ t('audio_cannot_be_played') }}"
       >
         <mdc-icon>help</mdc-icon>
       </a>
+      <ng-template #loadError>
+        <a
+          id="error-load"
+          #audioUnavailableTooltip="matTooltip"
+          (click)="audioUnavailableTooltip.show()"
+          matTooltip="{{ t('audio_cannot_be_previewed') }}"
+        >
+          <mdc-icon>help</mdc-icon>
+        </a>
+      </ng-template>
     </div>
   </div>
 </ng-container>
