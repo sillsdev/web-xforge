@@ -19,6 +19,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
   @ViewChild(MdcSlider) slider?: MdcSlider;
 
   seek: number = 0;
+  errorOnLoad: boolean = false;
 
   private _currentTime: number = 0;
   private _duration: number = 0;
@@ -32,6 +33,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     this.audio.addEventListener('loadedmetadata', () => {
       this.updateDuration();
       this.audioDataLoaded = true;
+      this.errorOnLoad = false;
     });
 
     this.audio.addEventListener('timeupdate', () => {
@@ -44,6 +46,10 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
       } else if (this.currentTime === this.duration) {
         this.seek = 100;
       }
+    });
+
+    this.audio.addEventListener('error', () => {
+      this.errorOnLoad = true;
     });
 
     this.subscribe(this.pwaService.onlineStatus, isOnline => {
@@ -95,10 +101,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
       this.enabled = false;
     }
     this.audioDataLoaded = false;
-  }
-
-  private get checkIsPlaying(): boolean {
-    return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
+    this.errorOnLoad = false;
   }
 
   /**
@@ -106,7 +109,11 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
    * loaded already (and therefore cached in memory).
    */
   get isAudioAvailable(): boolean {
-    return isLocalBlobUrl(this.audio.src) || this.pwaService.isOnline || this.audioDataLoaded;
+    return (isLocalBlobUrl(this.audio.src) || this.pwaService.isOnline || this.audioDataLoaded) && !this.errorOnLoad;
+  }
+
+  private get checkIsPlaying(): boolean {
+    return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
   }
 
   ngOnDestroy() {

@@ -73,7 +73,7 @@ describe('CheckingAudioPlayerComponent', () => {
   });
 
   it('it can play blobs even when offline', async () => {
-    const template = `<app-checking-audio-player #player1 source="blob://"></app-checking-audio-player>`;
+    const template = `<app-checking-audio-player #player1 source="${audioFile}"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(1000);
     expect(env.component.player1.hasSource).toBe(true);
@@ -88,6 +88,14 @@ describe('CheckingAudioPlayerComponent', () => {
     // The browser is online, but the component thinks it is offline. This simulates the scenario where audio data is
     // already loaded, but the browser is offline.
     expect(env.audioNotAvailableMessage).toBeNull();
+  });
+
+  it('show error tooltip if error loading audio', async () => {
+    const template = `<app-checking-audio-player #player1 source="unsupported.audio"></app-checking-audio-player>`;
+    const env = new TestEnvironment(template, false);
+    await env.waitForPlayer(1000);
+    expect(env.audioNotAvailableMessage).not.toBeNull();
+    expect(env.audioNotAvailableMessage.query(By.css('#error-load'))).not.toBeNull();
   });
 });
 
