@@ -69,7 +69,7 @@ describe('CheckingAudioPlayerComponent', () => {
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(1000);
     expect(env.component.player1.hasSource).toBe(true);
-    expect(env.audioNotAvailableMessage).toBeDefined();
+    expect(env.audioNotAvailableMessage).not.toBeNull();
   });
 
   it('it can play blobs even when offline', async () => {

@@ -487,7 +487,7 @@ describe('CheckingComponent', () => {
   describe('Answers', () => {
     it('answer panel is initiated and shows the first question', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
-      expect(env.answerPanel).toBeDefined();
+      expect(env.answerPanel).not.toBeNull();
     }));
 
     it('can answer a question', fakeAsync(() => {
@@ -552,11 +552,11 @@ describe('CheckingComponent', () => {
       env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.yourAnswerField).toBeDefined();
+      expect(env.yourAnswerField).not.toBeNull();
       env.clickButton(env.cancelAnswerButton);
       env.waitForSliderUpdate();
       expect(env.yourAnswerField).toBeNull();
-      expect(env.addAnswerButton).toBeDefined();
+      expect(env.addAnswerButton).not.toBeNull();
     }));
 
     it('does not save the answer when storage quota exceeded', fakeAsync(() => {
@@ -601,7 +601,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.addAnswerButton);
       env.waitForSliderUpdate();
       env.clickButton(env.audioTab);
-      expect(env.recordButton).toBeDefined();
+      expect(env.recordButton).not.toBeNull();
     }));
 
     it('check answering validation', fakeAsync(() => {

@@ -42,7 +42,7 @@ describe('ScriptureChooserDialog', () => {
     expect(env.dialogText).not.toContain('Matthew');
     expect(env.dialogText).toContain(env.backIconName);
     expect(env.dialogText).toContain('chapter');
-    expect(env.chapter3).toBeDefined('missing chapter 3 button');
+    expect(env.chapter3).not.toBeNull('missing chapter 3 button');
   }));
 
   it('clicking chapter goes to verse chooser, shows back button', fakeAsync(() => {
@@ -55,7 +55,7 @@ describe('ScriptureChooserDialog', () => {
     expect(env.dialogText).not.toContain('Matthew');
     expect(env.dialogText).not.toContain('chapter');
     expect(env.dialogText).toContain(env.backIconName);
-    expect(env.verse21).toBeDefined('missing verse 21 button');
+    expect(env.verse21).not.toBeNull('missing verse 21 button');
   }));
 
   it('clicking verse closes and reports selection', fakeAsync(() => {
@@ -88,7 +88,7 @@ describe('ScriptureChooserDialog', () => {
     env.click(env.backoutButton);
     expect(env.dialogText).toContain(env.backIconName);
     expect(env.dialogText).toContain('chapter');
-    expect(env.chapter3).toBeDefined('missing chapter 3 button');
+    expect(env.chapter3).not.toBeNull('missing chapter 3 button');
   }));
 
   it('book not highlighted, if no (undefined) incoming reference', fakeAsync(() => {
@@ -502,27 +502,27 @@ describe('ScriptureChooserDialog', () => {
       return this.overlayContainerElement.textContent;
     }
 
-    get bookEphesians(): DebugElement | undefined {
+    get bookEphesians(): DebugElement {
       return this.buttonWithText('EPHESIANS');
     }
 
-    get bookRomans(): DebugElement | undefined {
+    get bookRomans(): DebugElement {
       return this.buttonWithText('ROMANS');
     }
 
-    get chapter3(): DebugElement | undefined {
+    get chapter3(): DebugElement {
       return this.buttonWithText('3');
     }
 
-    get chapter11(): DebugElement | undefined {
+    get chapter11(): DebugElement {
       return this.buttonWithText('11');
     }
 
-    get verse21(): DebugElement | undefined {
+    get verse21(): DebugElement {
       return this.buttonWithText('21');
     }
 
-    get verse33(): DebugElement | undefined {
+    get verse33(): DebugElement {
       return this.buttonWithText('33');
     }
 
@@ -538,13 +538,13 @@ describe('ScriptureChooserDialog', () => {
       return this.fixture.debugElement.query(By.css('.mdc-button--unelevated'));
     }
 
-    click(element: DebugElement | undefined): void {
+    click(element: DebugElement): void {
       element!.nativeElement.click();
       this.fixture.detectChanges();
       flush();
     }
 
-    buttonWithText(text: string): DebugElement | undefined {
+    buttonWithText(text: string): DebugElement {
       return this.fixture.debugElement
         .queryAll(By.css('button'))
         .find(button => button.nativeElement.innerText === text)!;

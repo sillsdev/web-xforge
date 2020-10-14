@@ -1,9 +1,9 @@
-import { MdcList } from '@angular-mdc/web/list';
+import { MdcList, MdcListItem } from '@angular-mdc/web/list';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { CommonModule, Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -16,7 +16,7 @@ import { getQuestionDocId, Question } from 'realtime-server/lib/scriptureforge/m
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/scriptureforge/models/text-info';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -253,15 +253,18 @@ describe('AppComponent', () => {
 
   it('should only display Sync, Settings and Users for admin', fakeAsync(() => {
     const env = new TestEnvironment();
+    env.navigate(['/projects', 'project02']);
+    env.init();
+    // SUT 1
     env.makeUserAProjectAdmin(false);
-    expect(env.syncItem).toBeNull();
-    expect(env.settingsItem).toBeNull();
-    expect(env.usersItem).toBeNull();
+    expect(env.someMenuItemContains('Synchronize')).toBeFalse();
+    expect(env.someMenuItemContains('Settings')).toBeFalse();
+    expect(env.someMenuItemContains('Users')).toBeFalse();
+    // SUT 2
     env.makeUserAProjectAdmin();
-    expect(env.syncItem).toBeDefined();
-    expect(env.settingsItem).toBeDefined();
-    expect(env.usersItem).toBeDefined();
-    flush();
+    expect(env.someMenuItemContains('Synchronize')).toBeTrue();
+    expect(env.someMenuItemContains('Settings')).toBeTrue();
+    expect(env.someMenuItemContains('Users')).toBeTrue();
   }));
 
   describe('Community Checking', () => {
@@ -382,6 +385,7 @@ class TestEnvironment {
   readonly overlayContainer: OverlayContainer;
   readonly questions: Question[];
   readonly ngZone: NgZone;
+  readonly isProjectAdmin$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
@@ -440,7 +444,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
     when(mockedUserService.currentProjectId).thenReturn('project01');
-    when(mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(of(true));
+    when(mockedSFAdminAuthGuard.allowTransition(anything())).thenReturn(this.isProjectAdmin$);
     when(mockedCookieService.get(anything())).thenReturn('en');
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus).thenReturn(of(true));
@@ -493,18 +497,6 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('mdc-top-app-bar'));
   }
 
-  get syncItem(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#sync-item'));
-  }
-
-  get settingsItem(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#settings-item'));
-  }
-
-  get usersItem(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#usersItem'));
-  }
-
   get selectedProjectId(): string {
     return this.component.projectSelect!.value;
   }
@@ -540,6 +532,14 @@ class TestEnvironment {
     return menuItem.nativeElement.textContent;
   }
 
+  getMenuItemContaining(substring: string): MdcListItem | undefined {
+    return this.menuList.items.find((item: MdcListItem) => item.elementRef.nativeElement.innerText.includes(substring));
+  }
+
+  someMenuItemContains(substring: string): boolean {
+    return this.getMenuItemContaining(substring) !== undefined;
+  }
+
   remoteAddQuestion(newQuestion: Question): void {
     const docId = getQuestionDocId(newQuestion.projectRef, newQuestion.dataId);
     this.realtimeService.addSnapshot(QuestionDoc.COLLECTION, {
@@ -571,7 +571,9 @@ class TestEnvironment {
   }
 
   makeUserAProjectAdmin(isProjectAdmin: boolean = true) {
-    this.component.isProjectAdmin$ = of(isProjectAdmin);
+    this.isProjectAdmin$.next(isProjectAdmin);
+    this.fixture.detectChanges();
+    tick();
   }
 
   navigate(commands: any[]): void {

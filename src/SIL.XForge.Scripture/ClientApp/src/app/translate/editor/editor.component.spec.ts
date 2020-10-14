@@ -550,14 +550,14 @@ describe('EditorComponent', () => {
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).toBeDefined();
+      expect(env.trainingProgress).not.toBeNull();
       expect(env.component.showTrainingProgress).toBe(true);
-      expect(env.trainingProgressSpinner).toBeDefined();
+      expect(env.trainingProgressSpinner).not.toBeNull();
       env.updateTrainingProgress(1);
-      expect(env.trainingCompleteIcon).toBeDefined();
+      expect(env.trainingCompleteIcon).not.toBeNull();
       expect(env.trainingProgressSpinner).toBeNull();
       env.completeTrainingProgress();
-      expect(env.trainingProgress).toBeDefined();
+      expect(env.trainingProgress).not.toBeNull();
       expect(env.component.showTrainingProgress).toBe(true);
       tick(5000);
       env.wait();
@@ -565,9 +565,9 @@ describe('EditorComponent', () => {
       expect(env.trainingProgress).toBeNull();
       expect(env.component.showTrainingProgress).toBe(false);
       env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).toBeDefined();
+      expect(env.trainingProgress).not.toBeNull();
       expect(env.component.showTrainingProgress).toBe(true);
-      expect(env.trainingProgressSpinner).toBeDefined();
+      expect(env.trainingProgressSpinner).not.toBeNull();
 
       env.dispose();
     }));
@@ -583,9 +583,9 @@ describe('EditorComponent', () => {
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).toBeDefined();
+      expect(env.trainingProgress).not.toBeNull();
       expect(env.component.showTrainingProgress).toBe(true);
-      expect(env.trainingProgressSpinner).toBeDefined();
+      expect(env.trainingProgressSpinner).not.toBeNull();
       env.clickTrainingProgressCloseButton();
       expect(env.trainingProgress).toBeNull();
       expect(env.component.showTrainingProgress).toBe(false);
@@ -596,9 +596,9 @@ describe('EditorComponent', () => {
       verify(env.mockedRemoteTranslationEngine.translateInteractively(anything())).once();
 
       env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).toBeDefined();
+      expect(env.trainingProgress).not.toBeNull();
       expect(env.component.showTrainingProgress).toBe(true);
-      expect(env.trainingProgressSpinner).toBeDefined();
+      expect(env.trainingProgressSpinner).not.toBeNull();
 
       env.dispose();
     }));
@@ -614,18 +614,18 @@ describe('EditorComponent', () => {
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).toBeDefined();
+      expect(env.trainingProgress).not.toBeNull();
       expect(env.component.showTrainingProgress).toBe(true);
-      expect(env.trainingProgressSpinner).toBeDefined();
+      expect(env.trainingProgressSpinner).not.toBeNull();
       env.throwTrainingProgressError();
       expect(env.trainingProgress).toBeNull();
       expect(env.component.showTrainingProgress).toBe(false);
 
       tick(30000);
       env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).toBeDefined();
+      expect(env.trainingProgress).not.toBeNull();
       expect(env.component.showTrainingProgress).toBe(true);
-      expect(env.trainingProgressSpinner).toBeDefined();
+      expect(env.trainingProgressSpinner).not.toBeNull();
 
       env.dispose();
     }));
