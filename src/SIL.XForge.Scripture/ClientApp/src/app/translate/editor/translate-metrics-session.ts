@@ -190,8 +190,8 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       activities => this.onActiveEdit(activities)
     );
 
-    // periodic send
-    this.subscribe(interval(SEND_METRICS_INTERVAL), () => this.sendMetrics(this.target.segment));
+    // periodic send via a timeout callback because this can produce an error when going offline or coming online
+    this.subscribe(interval(SEND_METRICS_INTERVAL), () => setTimeout(() => this.sendMetrics(this.target.segment)));
   }
 
   private async sendMetrics(segment: Segment | undefined): Promise<void> {
@@ -213,9 +213,9 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       try {
         await this.projectService.onlineAddTranslateMetrics(this.projectId, this.metrics);
       } catch (err) {
-        // ignore "not found" and "forbidden" command errors
+        // ignore "not found" and "forbidden" command errors, or errors caused by being offline
         if (
-          !(err instanceof CommandError) ||
+          (!(err instanceof CommandError) && this.pwaService.isOnline) ||
           (err.code !== CommandErrorCode.NotFound && err.code !== CommandErrorCode.Forbidden)
         ) {
           throw err;
