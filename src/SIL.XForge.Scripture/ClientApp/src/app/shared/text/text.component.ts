@@ -69,13 +69,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
   lang: string = '';
-  containsRtlText: boolean = false;
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = USX_FORMATS;
   // allow for different CSS based on the browser engine
   readonly browserEngine: string = getBrowserEngine();
 
-  private direction: string | null = null;
   private _editorStyles: any = { fontSize: '1rem' };
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
