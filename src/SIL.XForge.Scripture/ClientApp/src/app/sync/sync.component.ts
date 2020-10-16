@@ -81,6 +81,12 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
     return this.projectDoc == null || this.projectDoc.data == null ? '' : this.projectDoc.data.name;
   }
 
+  get syncDisabledMessage(): string {
+    return this.i18n.translateAndInsertTags('sync.sync_is_disabled', {
+      email: `<a target="_blank" href="mailto:${this.issueEmail}">${this.issueEmail}</a>`
+    });
+  }
+
   ngOnInit() {
     this.subscribe(this.pwaService.onlineStatus, async isOnline => {
       this.isAppOnline = isOnline;
