@@ -22,7 +22,6 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
   isAppOnline: boolean = false;
   showParatextLogin = false;
   syncDisabled: boolean = false;
-  issueEmail: string = environment.issueEmail;
 
   private projectDoc?: SFProjectDoc;
   private paratextUsername?: string;
@@ -79,6 +78,12 @@ export class SyncComponent extends DataLoadingComponent implements OnInit, OnDes
 
   get projectName(): string {
     return this.projectDoc == null || this.projectDoc.data == null ? '' : this.projectDoc.data.name;
+  }
+
+  get syncDisabledMessage(): string {
+    return this.i18n.translateAndInsertTags('sync.sync_is_disabled', {
+      email: `<a target="_blank" href="mailto:${environment.issueEmail}">${environment.issueEmail}</a>`
+    });
   }
 
   ngOnInit() {
