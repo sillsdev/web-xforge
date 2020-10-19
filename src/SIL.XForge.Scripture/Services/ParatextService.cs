@@ -166,8 +166,8 @@ namespace SIL.XForge.Scripture.Services
             if (!string.IsNullOrEmpty(ptSourceId) && !projectGuids.Contains(ptSourceId))
             {
                 // See if this is a resource
-                var resources = this.GetResourcesInternal(userSecret, true);
-                var resource = resources.SingleOrDefault(r => r.ParatextId == ptSourceId);
+                IReadOnlyList<ParatextResource> resources = this.GetResourcesInternal(userSecret, true);
+                ParatextResource resource = resources.SingleOrDefault(r => r.ParatextId == ptSourceId);
                 if (resource != null)
                 {
                     ptProjectsAvailable.Add(resource.ParatextId, resource);
@@ -269,6 +269,87 @@ namespace SIL.XForge.Scripture.Services
         public string GetParatextUsername(UserSecret userSecret)
         {
             return _jwtTokenHelper.GetParatextUsername(userSecret);
+        }
+
+        /// <summary>
+        /// Gets the permissions for a project or resource.
+        /// </summary>
+        /// <param name="_userSecret">The user secret.</param>
+        /// <param name="project">The project - the UserRoles and Source ParatextId are used.</param>
+        /// <param name="textType">Type of the text - either source or target.</param>
+        /// <returns>
+        /// A dictionary of permissions where the key is the user ID and the value is the permission
+        /// </returns>
+        /// <remarks>
+        /// See <see cref="TextInfoPermission" /> for permisison values.
+        /// A dictionary is returned, as permissions can be updated.
+        /// </remarks>
+        public async Task<Dictionary<string, string>> GetPermissions(UserSecret userSecret, SFProject project,
+            Models.TextType textType)
+        {
+            // Calculate the book and source permissions
+            var permissions = new Dictionary<string, string>();
+            foreach ((string uid, string role) in project.UserRoles)
+            {
+                if (textType == Models.TextType.Target)
+                {
+                    // TODO: Load correct target book permissions
+                    if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
+                    {
+                        permissions.Add(uid, TextInfoPermission.Write);
+                    }
+                    else
+                    {
+                        permissions.Add(uid, TextInfoPermission.Read);
+                    }
+                }
+                else
+                {
+                    if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
+                    {
+                        // See if the source is a resource
+                        string sourceId = project.TranslateConfig.Source?.ParatextId;
+                        if (!string.IsNullOrWhiteSpace(sourceId) && sourceId.Length < 41)
+                        {
+                            // The resource id is a 41 character project id truncated to 16 characters
+                            UserSecret thisUserSecret;
+                            if (uid == userSecret.Id)
+                            {
+                                thisUserSecret = userSecret;
+                            }
+                            else
+                            {
+                                // Get the user secret
+                                Attempt<UserSecret> userSecretAttempt = await _userSecretRepository.TryGetAsync(uid);
+                                if (!userSecretAttempt.TryResult(out thisUserSecret))
+                                {
+                                    thisUserSecret = null;
+                                }
+                            }
+
+                            bool canRead = false;
+                            if (thisUserSecret != null)
+                            {
+                                if (!(thisUserSecret.ParatextTokens?.ValidateLifetime() ?? false))
+                                {
+                                    await RefreshAccessTokenAsync(thisUserSecret);
+                                }
+
+                                canRead = SFInstallableDBLResource.CheckResourcePermission(sourceId, thisUserSecret, _restClientFactory);
+                            }
+
+                            permissions.Add(uid, canRead ? TextInfoPermission.Read : TextInfoPermission.None);
+                        }
+                        else
+                        {
+                            // TODO: Check for correct source project permissions
+                            permissions.Add(uid, TextInfoPermission.Read);
+                        }
+                    }
+                }
+            }
+
+            return permissions;
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
@@ -490,40 +571,11 @@ namespace SIL.XForge.Scripture.Services
             string username = GetParatextUsername(userSecret);
             bool targetNeedsCloned =
                 ScrTextCollection.FindById(username, target.ParatextId, Models.TextType.Target) == null;
-            if (targetNeedsCloned || target is ParatextResource)
+            if (targetNeedsCloned)
             {
-                // If the source is a resource, install it
-                if (target is ParatextResource resource)
-                {
-                    if (resource.InstallableResource != null)
-                    {
-                        // Install the resource if it is missing or out of date
-                        if (!resource.IsInstalled
-                            || resource.AvailableRevision > resource.InstalledRevision
-                            || resource.InstallableResource.IsNewerThanCurrentlyInstalled())
-                        {
-                            resource.InstallableResource.Install();
-                            targetNeedsCloned = true;
-                        }
-
-                        // Extract the resource to the target directory
-                        if (targetNeedsCloned)
-                        {
-                            string path = Path.Combine(SyncDir, target.ParatextId, TextTypeUtils.DirectoryName(Models.TextType.Target));
-                            resource.InstallableResource.ExtractToDirectory(path);
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"The installable resource is not available for {target.ParatextId}");
-                    }
-                }
-                else
-                {
-                    SharedRepository targetRepo = new SharedRepository(target.ShortName, target.ParatextId,
-                        RepositoryType.Shared);
-                    CloneProjectRepo(repositorySource, target.ParatextId, targetRepo, Models.TextType.Target);
-                }
+                SharedRepository targetRepo = new SharedRepository(target.ShortName, target.ParatextId,
+                    RepositoryType.Shared);
+                CloneProjectRepo(repositorySource, target.ParatextId, targetRepo, Models.TextType.Target);
             }
             if (source != null)
             {
@@ -543,29 +595,7 @@ namespace SIL.XForge.Scripture.Services
                     // If the source is a resource, install it
                     if (source is ParatextResource resource)
                     {
-                        if (resource.InstallableResource != null)
-                        {
-                            // Install the resource if it is missing or out of date
-                            if (!resource.IsInstalled
-                                || resource.AvailableRevision > resource.InstalledRevision
-                                || resource.InstallableResource.IsNewerThanCurrentlyInstalled())
-                            {
-                                resource.InstallableResource.Install();
-                                sourceNeedsCloned = true;
-                            }
-
-                            // Extract the resource to the source directory
-                            if (sourceNeedsCloned)
-                            {
-                                string path = Path.Combine(SyncDir, target.ParatextId, TextTypeUtils.DirectoryName(Models.TextType.Source));
-                                _fileSystemService.CreateDirectory(path);
-                                resource.InstallableResource.ExtractToDirectory(path);
-                            }
-                        }
-                        else
-                        {
-                            _logger.LogWarning($"The installable resource is not available for {source.ParatextId}");
-                        }
+                        InstallResource(resource, target.ParatextId, sourceNeedsCloned, Models.TextType.Source);
                     }
                     else
                     {
@@ -574,6 +604,43 @@ namespace SIL.XForge.Scripture.Services
                         CloneProjectRepo(repositorySource, target.ParatextId, sourceRepo, Models.TextType.Source);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Installs the resource.
+        /// </summary>
+        /// <param name="resource">The resource.</param>
+        /// <param name="targetParatextId">The target paratext identifier.</param>
+        /// <param name="needsToBeCloned">If set to <c>true</c>, the resource needs to be cloned.</param>
+        /// <param name="textType">Type of the text.</param>
+        /// <remarks>
+        ///   <paramref name="targetParatextId" /> is required because the resource may be a source or target.
+        /// </remarks>
+        private void InstallResource(ParatextResource resource, string targetParatextId, bool needsToBeCloned, Models.TextType textType)
+        {
+            if (resource.InstallableResource != null)
+            {
+                // Install the resource if it is missing or out of date
+                if (!resource.IsInstalled
+                    || resource.AvailableRevision > resource.InstalledRevision
+                    || resource.InstallableResource.IsNewerThanCurrentlyInstalled())
+                {
+                    resource.InstallableResource.Install();
+                    needsToBeCloned = true;
+                }
+
+                // Extract the resource to the source directory
+                if (needsToBeCloned)
+                {
+                    string path = Path.Combine(SyncDir, targetParatextId, TextTypeUtils.DirectoryName(textType));
+                    _fileSystemService.CreateDirectory(path);
+                    resource.InstallableResource.ExtractToDirectory(path);
+                }
+            }
+            else
+            {
+                _logger.LogWarning($"The installable resource is not available for {resource.ParatextId}");
             }
         }
 
@@ -590,7 +657,7 @@ namespace SIL.XForge.Scripture.Services
             HgWrapper.Update(clonePath);
         }
 
-        public async Task RefreshAccessTokenAsync(UserSecret userSecret)
+        private async Task RefreshAccessTokenAsync(UserSecret userSecret)
         {
             ParatextOptions options = _paratextOptions.Value;
 
@@ -664,8 +731,8 @@ namespace SIL.XForge.Scripture.Services
         /// </returns>
         private IReadOnlyList<ParatextResource> GetResourcesInternal(UserSecret userSecret, bool includeInstallableResource)
         {
-            var resources = SFInstallableDBLResource.GetInstallableDBLResources(userSecret, this._paratextOptions.Value, this._restClientFactory, this._fileSystemService, this._jwtTokenHelper);
-            var resourceRevisions = SFInstallableDBLResource.GetInstalledResourceRevisions();
+            IEnumerable<SFInstallableDBLResource> resources = SFInstallableDBLResource.GetInstallableDBLResources(userSecret, this._paratextOptions.Value, this._restClientFactory, this._fileSystemService, this._jwtTokenHelper);
+            IReadOnlyDictionary<string, int> resourceRevisions = SFInstallableDBLResource.GetInstalledResourceRevisions();
             return resources.OrderBy(r => r.FullName).Select(r => new ParatextResource
             {
                 AvailableRevision = r.DBLRevision,
