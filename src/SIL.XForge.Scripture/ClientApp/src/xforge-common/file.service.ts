@@ -44,6 +44,7 @@ export function isLocalBlobUrl(url: string): boolean {
   providedIn: 'root'
 })
 export class FileService extends SubscriptionDisposable {
+  fileSyncCompletePromise?: Promise<void>;
   private limitedStorageDialogPromise?: Promise<void>;
 
   constructor(
@@ -60,33 +61,36 @@ export class FileService extends SubscriptionDisposable {
   }
 
   init(realtimeService: RealtimeService): void {
-    this.subscribe(this.pwaService.onlineStatus, async isOnline => {
-      // Wait until logged in so that the remote store gets initialized
-      if (isOnline && (await this.authService.isLoggedIn)) {
-        for (const fileType of this.typeRegistry.fileTypes) {
-          const files = await this.offlineStore.getAll<FileOfflineData>(fileType);
-          for (const fileData of files) {
-            if (fileData.deleteRef != null && fileData.projectRef != null) {
-              await this.onlineDeleteFile(fileType, fileData.projectRef, fileData.id, fileData.deleteRef);
-              await this.offlineStore.delete(fileType, fileData.id);
-            } else if (fileData.onlineUrl == null && fileData.projectRef != null) {
-              // The file has not been uploaded to the server
-              const doc = await realtimeService.onlineFetch<ProjectDataDoc>(
-                fileData.dataCollection,
-                fileData.realtimeDocRef!
-              );
-              if (doc.isLoaded) {
-                const url = await doc.uploadFile(fileType, fileData.id, fileData.blob!, fileData.filename!);
-                await doc.updateFileUrl(fileType, fileData.id, url);
-                if (!doc.alwaysKeepFileOffline(fileType, fileData.id)) {
-                  // the file is not available offline, so delete it from offline store
-                  await this.offlineStore.delete(fileType, fileData.id);
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      this.fileSyncCompletePromise = new Promise<void>(async resolve => {
+        // Wait until logged in so that the remote store gets initialized
+        if (isOnline && (await this.authService.isLoggedIn)) {
+          for (const fileType of this.typeRegistry.fileTypes) {
+            const files = await this.offlineStore.getAll<FileOfflineData>(fileType);
+            for (const fileData of files) {
+              if (fileData.deleteRef != null && fileData.projectRef != null) {
+                await this.onlineDeleteFile(fileType, fileData.projectRef, fileData.id, fileData.deleteRef);
+                await this.offlineStore.delete(fileType, fileData.id);
+              } else if (fileData.onlineUrl == null && fileData.projectRef != null) {
+                // The file has not been uploaded to the server
+                const doc = await realtimeService.onlineFetch<ProjectDataDoc>(
+                  fileData.dataCollection,
+                  fileData.realtimeDocRef!
+                );
+                if (doc.isLoaded) {
+                  const url = await doc.uploadFile(fileType, fileData.id, fileData.blob!, fileData.filename!);
+                  await doc.updateFileUrl(fileType, fileData.id, url);
+                  if (!doc.alwaysKeepFileOffline(fileType, fileData.id)) {
+                    // the file is not available offline, so delete it from offline store
+                    await this.offlineStore.delete(fileType, fileData.id);
+                  }
                 }
               }
             }
           }
         }
-      }
+        resolve();
+      });
     });
   }
 
