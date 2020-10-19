@@ -37,6 +37,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     })
   });
   projects?: ParatextProject[];
+  resources?: ParatextProject[];
   sourceProjects?: ParatextProject[];
   state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' = 'loading';
   connectProjectName?: string;
@@ -117,9 +118,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       }
       let paratextProjects = this.projects.filter(p => p.paratextId !== paratextId);
       // Merge the resources collection with the projects collection
-      const paratextResources = await this.paratextService.getResources().toPromise();
-      if (paratextResources != null) {
-        paratextProjects = paratextProjects?.concat(paratextResources) ?? paratextResources;
+      if (this.resources != null) {
+        paratextProjects = paratextProjects?.concat(this.resources) ?? this.resources;
       }
       this.sourceProjects = paratextProjects;
       const settings = this.settings;
@@ -219,6 +219,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.loadingStarted();
     const paratextProjects = await this.paratextService.getProjects().toPromise();
     this.projects = paratextProjects == null ? undefined : paratextProjects;
+    const paratextResources = await this.paratextService.getResources().toPromise();
+    this.resources = paratextResources == null ? undefined : paratextResources;
     if (paratextProjects != null) {
       this.targetProjects = paratextProjects.filter(p => p.isConnectable);
       this.state = 'input';
