@@ -182,13 +182,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     } else if (this.text == null) {
       return false;
     } else {
-      let sourcePermission =
-        this.text?.sourcePermissions !== undefined
-          ? this.text?.sourcePermissions[this.userService.currentUserId]
-          : undefined;
-      if (sourcePermission === undefined) {
-        sourcePermission = TextInfoPermission.None;
-      }
+      const sourcePermission = this.text.sourcePermissions[this.userService.currentUserId] ?? TextInfoPermission.None;
       return this.text.hasSource && sourcePermission !== TextInfoPermission.None;
     }
   }

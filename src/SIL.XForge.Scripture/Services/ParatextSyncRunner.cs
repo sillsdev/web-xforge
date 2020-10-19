@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using SIL.Machine.WebApi.Services;
-using SIL.Machine.WebApi.Utils;
 using SIL.ObjectModel;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -194,65 +193,15 @@ namespace SIL.XForge.Scripture.Services
                         await UpdateQuestionDocsAsync(questionDocs, newChapters);
                     }
 
+                    // Get the permissions
+                    Dictionary<string, string> permissions =
+                        await _paratextService.GetPermissions(_userSecret, _projectDoc.Data, TextType.Target);
+                    Dictionary<string, string> sourcePermissions = 
+                        await _paratextService.GetPermissions(_userSecret, _projectDoc.Data, TextType.Source);
+
                     // update project metadata
                     await _projectDoc.SubmitJson0OpAsync(op =>
                     {
-                        // Calculate the book and source permissions
-                        var permissions = new Dictionary<string, string>();
-                        var sourcePermissions = new Dictionary<string, string>();
-                        foreach ((string uid, string role) in _projectDoc.Data.UserRoles)
-                        {
-                            // TODO: Load correct target book permissions
-                            if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
-                            {
-                                permissions.Add(uid, TextInfoPermission.Write);
-                                if (hasSource)
-                                {
-                                    // See if the source is a resource
-                                    string sourceId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
-                                    if (!string.IsNullOrWhiteSpace(sourceId) && sourceId.Length < 41)
-                                    {
-                                        // The resource id is a 41 character project id truncated to 16 characters
-                                        UserSecret userSecret;
-                                        if (uid == userId)
-                                        {
-                                            userSecret = _userSecret;
-                                        }
-                                        else
-                                        {
-                                            // Get the user secret
-                                            if (!_userSecrets.TryGetAsync(uid).WaitAndUnwrapException().TryResult(out userSecret))
-                                            {
-                                                userSecret = null;
-                                            }
-                                        }
-
-                                        bool canRead = false;
-                                        if (userSecret != null)
-                                        {
-                                            if (!(userSecret.ParatextTokens?.ValidateLifetime() ?? false))
-                                            {
-                                                _paratextService.RefreshAccessTokenAsync(userSecret).WaitAndUnwrapException();
-                                            }
-
-                                            canRead = SFInstallableDBLResource.CheckResourcePermission(sourceId, userSecret, _restClientFactory);
-                                        }
-
-                                        sourcePermissions.Add(uid, canRead ? TextInfoPermission.Read : TextInfoPermission.None);
-                                    }
-                                    else
-                                    {
-                                        // TODO: Check for correct source project permissions
-                                        sourcePermissions.Add(uid, TextInfoPermission.Read);
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                permissions.Add(uid, TextInfoPermission.Read);
-                            }
-                        }
-
                         if (textIndex == -1)
                         {
                             // insert text info for new text
