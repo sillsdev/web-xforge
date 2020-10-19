@@ -29,7 +29,7 @@ import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon'
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of } from 'rxjs';
-import { anyString, anything, deepEqual, instance, mock, reset, spy, verify, when } from 'ts-mockito';
+import { anyString, anything, deepEqual, instance, mock, reset, spy, verify, when, resetCalls } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { FileService } from 'xforge-common/file.service';
@@ -359,6 +359,25 @@ describe('CheckingComponent', () => {
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, undefined)).times(
         5
       );
+    }));
+
+    it('uploads audio then updates audio url', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, 'JHN', false);
+      env.selectQuestion(14);
+      expect(env.component.answersPanel?.questionUrl).toBeUndefined();
+      const questionId = 'q14Id';
+      const questionDoc = cloneDeep(env.getQuestionDoc(questionId));
+      questionDoc.submitJson0Op(op => {
+        op.set<string>(qd => qd.audioUrl!, 'anAudioFile.mp3');
+      });
+      when(mockedQuestionDialogService.questionDialog(anything())).thenResolve(questionDoc);
+      env.clickButton(env.editQuestionButton);
+      // Simulate going online after the answer is edited
+      resetCalls(mockedFileService);
+      when(mockedFileService.fileSyncCompletePromise).thenReturn(Promise.resolve());
+      env.onlineStatus = true;
+      expect(env.component.answersPanel?.questionUrl).toBeDefined();
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', questionId, 'anAudioFile.mp3')).once();
     }));
 
     it('user must confirm question answered dialog before question dialog appears', fakeAsync(() => {
