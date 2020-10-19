@@ -32,7 +32,7 @@ describe('SFProjectMigrations', () => {
   });
   describe('version 2', () => {
     it('migrates docs', async () => {
-      const env = new TestEnvironment(0);
+      const env = new TestEnvironment(1);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
         texts: [

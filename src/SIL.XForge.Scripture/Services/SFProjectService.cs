@@ -80,7 +80,7 @@ namespace SIL.XForge.Scripture.Services
                 if (sourcePTProject == null)
                 {
                     // If it is not a project, see if there is a matching resource
-                    var resources = this._paratextService.GetResources(userSecret);
+                    IReadOnlyList<ParatextResource> resources = this._paratextService.GetResources(userSecret);
                     sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == settings.SourceParatextId);
                     if (sourcePTProject == null)
                     {
@@ -199,7 +199,7 @@ namespace SIL.XForge.Scripture.Services
                 if (sourcePTProject == null)
                 {
                     // If it is not a project, see if there is a matching resource
-                    var resources = this._paratextService.GetResources(userSecret);
+                    IReadOnlyList<ParatextResource> resources = this._paratextService.GetResources(userSecret);
                     sourcePTProject = resources.SingleOrDefault(r => r.ParatextId == settings.SourceParatextId);
                     if (sourcePTProject == null)
                     {
