@@ -114,6 +114,20 @@
   max-width: calc(100% - 44px);
 }
 
+#projects-menu {
+  // Make the MDC Menu List extend to the width of the MDC Select that it drops down from. For small displays,
+  // it works well at mdc-menu-surface max-width which is calc(100vw - 32px). For large displays, it can
+  // be the max-width of the div (512), but pulled in by 12px to stop the right side at the same place as
+  // on small displays.
+  min-width: min((512px - 12px), calc(100vw - 32px));
+}
+
+#based-on-menu {
+  // Make the Based on MDC Menu List extend to the width of the MDC Select that it drops down from. It works
+  // well at the form field's max-width.
+  min-width: calc(100% - 44px);
+}
+
 mdc-select {
   margin-bottom: 4px;
   ::ng-deep .mdc-select__anchor {

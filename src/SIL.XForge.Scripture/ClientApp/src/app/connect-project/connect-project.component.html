@@ -86,7 +86,7 @@
             <div fxFlex="44px" class="indent"></div>
             <mdc-form-field fxLayout="column" fxLayoutAlign="start" id="based-on-field">
               <mdc-select placeholder="{{ t('based_on') }}" formControlName="sourceParatextId">
-                <mdc-menu>
+                <mdc-menu id="based-on-menu">
                   <mdc-list>
                     <mdc-list-item *ngFor="let project of sourceProjects" [value]="project.paratextId">
                       {{ project.name }}
