@@ -68,6 +68,7 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
   protected async updateOfflineData(force: boolean = false): Promise<void> {
     // Check to see if any answers have been removed by comparing with current offline data
     if (this.realtimeService.offlineStore != null && this.realtimeService.fileService != null) {
+      await this.loadOfflineData();
       const offlineData = await this.realtimeService.offlineStore.get<RealtimeOfflineData>(this.collection, this.id);
       if (offlineData != null) {
         for (const answer of offlineData.data.answers) {

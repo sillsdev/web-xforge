@@ -204,7 +204,7 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
     await this.realtimeService.offlineStore.put(this.collection, offlineData);
   }
 
-  private async loadOfflineData(): Promise<void> {
+  protected async loadOfflineData(): Promise<void> {
     if (this.loadOfflineDataPromise == null) {
       this.loadOfflineDataPromise = this.loadFromOfflineStore();
     }
