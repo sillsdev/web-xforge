@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Paratext.Data;
 using Paratext.Data.ProjectComments;
@@ -247,6 +249,62 @@ namespace SIL.XForge.Scripture.Services
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
             IEnumerable<ParatextResource> resources = env.Service.GetResources(user01Secret);
             Assert.AreEqual(3, resources.Count());
+        }
+
+        [Test]
+        public async Task GetPermissionsAsync_UserHasNoResourcePermission()
+        {
+            // Set up environment
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+
+            // This is to make Tokens.ValidateLifetime() return false
+            user01Secret.ParatextTokens.AccessToken = null;
+
+            // Set up mock REST client to return an unsuccessful HEAD request
+            ISFRESTClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
+            ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
+            mockClient.Head(Arg.Any<string>()).Throws<WebException>();
+            mockRestClientFactory
+                .Create(Arg.Any<string>(), Arg.Any<string>(), user01Secret)
+                .Returns(mockClient);
+
+            // Set up mock project
+            var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+            var project = projects.First();
+
+            var permissions = await env.Service.GetPermissionsAsync(user01Secret, project, Models.TextType.Source);
+            Assert.That(permissions.Count(), Is.EqualTo(2));
+            Assert.That(permissions.First().Value, Is.EqualTo(TextInfoPermission.None));
+            Assert.That(permissions.Last().Value, Is.EqualTo(TextInfoPermission.None));
+        }
+
+        [Test]
+        public async Task GetPermissionsAsync_UserResourcePermission()
+        {
+            // Set up environment
+            var env = new TestEnvironment();
+            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+
+            // This is to make Tokens.ValidateLifetime() return false
+            user01Secret.ParatextTokens.AccessToken = null;
+
+            // Set up mock REST client to return a successful HEAD request
+            ISFRESTClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
+            ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
+            mockClient.Head(Arg.Any<string>()).Returns(string.Empty);
+            mockRestClientFactory
+                .Create(Arg.Any<string>(), Arg.Any<string>(), user01Secret)
+                .Returns(mockClient);
+
+            // Set up mock project
+            var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
+            var project = projects.First();
+
+            var permissions = await env.Service.GetPermissionsAsync(user01Secret, project, Models.TextType.Source);
+            Assert.That(permissions.Count(), Is.EqualTo(2));
+            Assert.That(permissions.First().Value, Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(permissions.Last().Value, Is.EqualTo(TextInfoPermission.None));
         }
 
         [Test]
