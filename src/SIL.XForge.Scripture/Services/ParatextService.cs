@@ -284,7 +284,7 @@ namespace SIL.XForge.Scripture.Services
         /// See <see cref="TextInfoPermission" /> for permisison values.
         /// A dictionary is returned, as permissions can be updated.
         /// </remarks>
-        public async Task<Dictionary<string, string>> GetPermissions(UserSecret userSecret, SFProject project,
+        public async Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project,
             Models.TextType textType)
         {
             // Calculate the book and source permissions
@@ -345,6 +345,11 @@ namespace SIL.XForge.Scripture.Services
                             // TODO: Check for correct source project permissions
                             permissions.Add(uid, TextInfoPermission.Read);
                         }
+                    }
+                    else
+                    {
+                        // Only administrators and translators can view sources
+                        permissions.Add(uid, TextInfoPermission.None);
                     }
                 }
             }
