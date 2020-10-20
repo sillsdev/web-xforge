@@ -2,13 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.Machine.WebApi.Services;
 using SIL.Scripture;
@@ -405,11 +403,13 @@ namespace SIL.XForge.Scripture.Services
             };
             env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-            ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
-            mockClient.Head(Arg.Any<string>()).Throws<WebException>();
-            env.SFRESTClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<UserSecret>())
-                .Returns(mockClient);
+            var ptSourcePermissions = new Dictionary<string, string>()
+            {
+                { "user01", TextInfoPermission.Read },
+                { "user02", TextInfoPermission.None },
+            };
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), TextType.Source)
+                .Returns(Task.FromResult(ptSourcePermissions));
 
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -432,6 +432,13 @@ namespace SIL.XForge.Scripture.Services
             };
             env.ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                 .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+            var ptSourcePermissions = new Dictionary<string, string>()
+            {
+                { "user01", TextInfoPermission.Read },
+                { "user02", TextInfoPermission.Read },
+            };
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), TextType.Source)
+                .Returns(Task.FromResult(ptSourcePermissions));
 
             await env.Runner.RunAsync("project01", "user01", false);
 
@@ -750,10 +757,9 @@ namespace SIL.XForge.Scripture.Services
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 _notesMapper = Substitute.For<IParatextNotesMapper>();
                 Logger = Substitute.For<ILogger<ParatextSyncRunner>>();
-                SFRESTClientFactory = Substitute.For<ISFRESTClientFactory>();
 
                 Runner = new ParatextSyncRunner(userSecrets, _projectSecrets, SFProjectService, EngineService,
-                    ParatextService, RealtimeService, DeltaUsxMapper, _notesMapper, Logger, SFRESTClientFactory);
+                    ParatextService, RealtimeService, DeltaUsxMapper, _notesMapper, Logger);
             }
 
             public ParatextSyncRunner Runner { get; }
@@ -763,7 +769,6 @@ namespace SIL.XForge.Scripture.Services
             public SFMemoryRealtimeService RealtimeService { get; }
             public IDeltaUsxMapper DeltaUsxMapper { get; }
             public ILogger<ParatextSyncRunner> Logger { get; }
-            public ISFRESTClientFactory SFRESTClientFactory { get; }
 
             public SFProject GetProject()
             {
