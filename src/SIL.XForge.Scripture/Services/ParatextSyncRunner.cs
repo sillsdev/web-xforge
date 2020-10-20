@@ -53,7 +53,6 @@ namespace SIL.XForge.Scripture.Services
         private readonly IDeltaUsxMapper _deltaUsxMapper;
         private readonly IParatextNotesMapper _notesMapper;
         private readonly ILogger<ParatextSyncRunner> _logger;
-        private readonly ISFRESTClientFactory _restClientFactory;
 
         private IConnection _conn;
         private UserSecret _userSecret;
@@ -63,7 +62,7 @@ namespace SIL.XForge.Scripture.Services
         public ParatextSyncRunner(IRepository<UserSecret> userSecrets, IRepository<SFProjectSecret> projectSecrets,
             ISFProjectService projectService, IEngineService engineService, IParatextService paratextService,
             IRealtimeService realtimeService, IDeltaUsxMapper deltaUsxMapper, IParatextNotesMapper notesMapper,
-            ILogger<ParatextSyncRunner> logger, ISFRESTClientFactory restClientFactory)
+            ILogger<ParatextSyncRunner> logger)
         {
             _userSecrets = userSecrets;
             _projectSecrets = projectSecrets;
@@ -74,7 +73,6 @@ namespace SIL.XForge.Scripture.Services
             _logger = logger;
             _deltaUsxMapper = deltaUsxMapper;
             _notesMapper = notesMapper;
-            _restClientFactory = restClientFactory;
         }
 
         private bool TranslationSuggestionsEnabled => _projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
@@ -195,9 +193,9 @@ namespace SIL.XForge.Scripture.Services
 
                     // Get the permissions
                     Dictionary<string, string> permissions =
-                        await _paratextService.GetPermissions(_userSecret, _projectDoc.Data, TextType.Target);
+                        await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data, TextType.Target);
                     Dictionary<string, string> sourcePermissions = 
-                        await _paratextService.GetPermissions(_userSecret, _projectDoc.Data, TextType.Source);
+                        await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data, TextType.Source);
 
                     // update project metadata
                     await _projectDoc.SubmitJson0OpAsync(op =>
