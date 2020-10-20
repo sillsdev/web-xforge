@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security;
 using System.Text.Json;
+using System.Web;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using HtmlAgilityPack;
@@ -15,7 +17,8 @@ namespace UpdateHelp
         /// Currently only HTML files are translated in Crowdin. Use the HTML files to:
         ///     Update idata files
         ///     Update TOC files
-        ///     Update topic tables and index files (not yet implemented)
+        ///     Replace search with Google Search
+        ///     Remove unused buttons and inputs
         /// </summary>
         /// <example>
         /// Assumes the user has ~/src/sf-helps/src/en/ folder and AWS console app setup locally
@@ -24,9 +27,10 @@ namespace UpdateHelp
         ///     cd ~/src/sf-helps/src/en/
         ///     aws s3 sync s3://help.scriptureforge.org/en . --exact-timestamps
         /// </code>
-        /// Copy /en/ to target /es/ (for a different language change <c>target</c> below)
+        /// Copy /en/ to <c>targetDir</c> folder
+        /// Copy Google search engine site verification HTML file to <c>targetDir</c> folder
         /// Copy translated target HTMl files and menu_[target].json from Crowdin to the <c>targetDir</c> folder
-        /// Run this program, <c>dotnet run es write</c>
+        /// Run this program, <c>dotnet run es write</c> (change 'es' for a different language)
         /// Push to help AWS S3:
         /// <code>
         ///     cd ~/src/sf-helps/src/es/
@@ -48,6 +52,11 @@ namespace UpdateHelp
             string targetDir = Path.Combine(helpDir, target);
             string targetWhxDir = Path.Combine(targetDir, "whxdata");
             string targetMenuJsonPath = Path.Combine(targetDir, $"menu_{target}.json");
+            // see https://programmablesearchengine.google.com/ to create an engine for each language
+            var searchEngineIDs = new Dictionary<string, string>()
+            {
+                { "es", "9f727aa1dd179dd6d" }
+            };
 
             Console.WriteLine("Update Help files.\n");
 
@@ -66,6 +75,11 @@ namespace UpdateHelp
 
             UpdateIdataFiles(sourceWhxDir, targetWhxDir, translations, doWrite);
             UpdateTocFiles(sourceWhxDir, targetWhxDir, translations, doWrite);
+
+            bool canReplaceSearch = searchEngineIDs.TryGetValue(target, out string searchEngineID);
+            if (canReplaceSearch)
+                ReplaceSearch(targetDir, searchEngineID, doWrite);
+            RemoveUnusedButtonsAndSearch(targetDir, !canReplaceSearch, doWrite);
 
             Console.WriteLine("\nFinished Help Update.");
         }
@@ -103,26 +117,33 @@ namespace UpdateHelp
         static Dictionary<string, string> ExtractHtmlTranslations(string sourcePath, string targetPath)
         {
             var result = new Dictionary<string, string>();
+            var sourceFileToTitles = new Dictionary<string, string>();
             var sourceFileToHeadings = new Dictionary<string, string>();
             try
             {
-                string[] files = Directory.GetFiles(sourcePath, "*.htm", SearchOption.AllDirectories);
-                Console.WriteLine($"There are {files.Length} HTML source files.");
-                foreach (string file in files)
+                string[] sourceFiles = Directory.GetFiles(sourcePath, "*.htm", SearchOption.AllDirectories);
+                Console.WriteLine($"There are {sourceFiles.Length} HTML source files.");
+                foreach (string file in sourceFiles)
                 {
                     string relativeFile = Path.GetRelativePath(sourcePath, file);
+                    string sourceTitle = GetHtmlTitle(file);
+                    if (sourceTitle != "")
+                        sourceFileToTitles.Add(relativeFile, sourceTitle);
                     string sourceHeading = GetHtmlHeading(file);
                     if (sourceHeading != "")
                         sourceFileToHeadings.Add(relativeFile, sourceHeading);
                 }
 
-                files = Directory.GetFiles(targetPath, "*.htm", SearchOption.AllDirectories);
-                foreach (string file in files)
+                string[] targetFiles = Directory.GetFiles(targetPath, "*.htm", SearchOption.AllDirectories);
+                foreach (string file in targetFiles)
                 {
                     string relativeFile = Path.GetRelativePath(targetPath, file);
+                    string targetTitle = GetHtmlTitle(file);
+                    if (targetTitle != "" && sourceFileToTitles.TryGetValue(relativeFile, out string sourceTitle))
+                        result.Add(sourceTitle, targetTitle);
                     string targetHeading = GetHtmlHeading(file);
                     if (targetHeading != "" && sourceFileToHeadings.TryGetValue(relativeFile, out string sourceHeading))
-                        result.Add(sourceHeading, targetHeading);
+                        result.TryAdd(sourceHeading, targetHeading);
                 }
             }
             catch (Exception e)
@@ -176,12 +197,33 @@ namespace UpdateHelp
             string result = "";
             var doc = new HtmlDocument();
             doc.Load(file);
-            HtmlAgilityPack.HtmlNode heading = doc.DocumentNode.SelectSingleNode("//body/h1") ??
+            HtmlNode heading = doc.DocumentNode.SelectSingleNode("//body/h1") ??
                 doc.DocumentNode.SelectSingleNode("//body/h2");
 
             if (heading != null)
             {
                 result = heading.InnerText ?? "";
+                result = result.Replace("\n", "");
+                result = result.Replace("  ", " ");
+                result = result.Trim();
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Get the title text from HTML file.
+        /// </summary>
+        static string GetHtmlTitle(string file)
+        {
+            string result = "";
+            var doc = new HtmlDocument();
+            doc.Load(file);
+            HtmlNode title = doc.DocumentNode.SelectSingleNode("//title");
+
+            if (title != null)
+            {
+                result = title.InnerText ?? "";
                 result = result.Replace("\n", "");
                 result = result.Replace("  ", " ");
                 result = result.Trim();
@@ -214,7 +256,8 @@ namespace UpdateHelp
                         ReplaceTranslationsInFile(idataFilePath, topicTextInIdata, topicUrlsByName.Keys, translations);
                         string idataNewFilePath = Path.Combine(targetPath,
                             Path.GetFileNameWithoutExtension(file) + ".new" + Path.GetExtension(file));
-                        ReplaceTranslationsInFile(idataNewFilePath, topicTextInIdataNew, topicUrlsByName.Keys, translations);
+                        ReplaceTranslationsInFile(idataNewFilePath, topicTextInIdataNew, topicUrlsByName.Keys,
+                            translations);
                     }
                 }
             }
@@ -235,10 +278,14 @@ namespace UpdateHelp
             {
                 string[] files = Directory.GetFiles(sourcePath, "toc???.js");
                 Console.WriteLine($"There are {files.Length} toc source files.");
-                Func<string, string> bookTextInToc = bookName => $"<book name=\\\"{bookName}\\\"";
-                Func<string, string> bookTextInTocNew = bookName => $"\"type\":\"book\",\"name\":\"{bookName}\"";
-                Func<string, string> itemTextInToc = itemName => $"<item name=\\\"{itemName}\\\"";
-                Func<string, string> itemTextInTocNew = itemName => $"\"type\":\"item\",\"name\":\"{itemName}\"";
+                Func<string, string> bookTextInToc =
+                    bookName => $"<book name=\\\"{SecurityElement.Escape(bookName)}\\\"";
+                Func<string, string> bookTextInTocNew =
+                    bookName => $"\"type\":\"book\",\"name\":\"{HttpUtility.JavaScriptStringEncode(bookName)}\"";
+                Func<string, string> itemTextInToc =
+                    itemName => $"<item name=\\\"{SecurityElement.Escape(itemName)}\\\"";
+                Func<string, string> itemTextInTocNew =
+                    itemName => $"\"type\":\"item\",\"name\":\"{HttpUtility.JavaScriptStringEncode(itemName)}\"";
                 var bookSrcsByName = new Dictionary<string, string>();
                 var itemUrlsByName = new Dictionary<string, string>();
                 foreach (string file in files)
@@ -262,6 +309,71 @@ namespace UpdateHelp
             {
                 Console.WriteLine($"The UpdateTocFiles process failed: {e.ToString()}");
             }
+        }
+
+        /// <summary>
+        /// Replace search with Google Programmable Search in target index.htm.
+        /// </summary>
+        static void ReplaceSearch(string targetPath, string searchEngineID, bool doWrite)
+        {
+            string file = Path.Combine(targetPath, "index.htm");
+            var doc = new HtmlDocument();
+            doc.Load(file);
+            HtmlNode head = doc.DocumentNode.SelectSingleNode("//head");
+            HtmlNode searchBarDiv = doc.DocumentNode.SelectSingleNode("//div[@class='searchbar left-pane']");
+            HtmlNode searchInputDiv = doc.DocumentNode.SelectSingleNode("//div[@class='search-input']");
+            HtmlNode searchResultsDiv = doc.DocumentNode.SelectSingleNode("//div[@class='searchresults left-pane']");
+
+            HtmlNode node = HtmlNode.CreateNode("<style>body.media-desktop div.searchresults.search-sidebar " +
+                "a.gs-title { color: #1155CC; }</style>");
+            if (head.FirstChild.Name == "style")
+                head.FirstChild.Remove();
+            head.PrependChild(node);
+
+            node = HtmlNode.CreateNode(
+                $"<script async src=\"https://cse.google.com/cse.js?cx={searchEngineID}\"></script>");
+            if (searchBarDiv.FirstChild.Name == "script")
+                searchBarDiv.FirstChild.Remove();
+            searchBarDiv.PrependChild(node);
+
+            searchInputDiv.RemoveAllChildren();
+            node = HtmlNode.CreateNode("<div style=\"margin: 10px\"><div class=\"gcse-searchbox\"></div></div>");
+            searchInputDiv.AppendChild(node);
+
+            searchResultsDiv.RemoveAllChildren();
+            searchResultsDiv.AppendChild(HtmlNode.CreateNode("<div class=\"gcse-searchresults\"></div>"));
+
+            if (doWrite)
+                doc.Save(file);
+        }
+
+        /// <summary>
+        /// Remove unused buttons (idx/glo/filter/?fts) and extra search field for desktop from target index.htm.
+        /// </summary>
+        static void RemoveUnusedButtonsAndSearch(string targetPath, bool removeSearchButton, bool doWrite)
+        {
+            string file = Path.Combine(targetPath, "index.htm");
+            var doc = new HtmlDocument();
+            doc.Load(file);
+            HtmlNode idxButton = doc.DocumentNode.SelectSingleNode("//a[@class='idx']");
+            HtmlNode gloButton = doc.DocumentNode.SelectSingleNode("//a[@class='glo']");
+            HtmlNode filterButton = doc.DocumentNode.SelectSingleNode("//a[@class='filter']");
+            HtmlNode searchButton = doc.DocumentNode.SelectSingleNode("//a[@class='fts']");
+            HtmlNode searchbarExtraInput =
+                doc.DocumentNode.SelectSingleNode("//div[@class='searchbar-extra']");
+            if (idxButton != null)
+                idxButton.Remove();
+            if (gloButton != null)
+                gloButton.Remove();
+            if (filterButton != null)
+                filterButton.Remove();
+            if (removeSearchButton && searchButton != null)
+                searchButton.Remove();
+            if (searchbarExtraInput != null)
+                searchbarExtraInput.Remove();
+
+            if (doWrite)
+                doc.Save(file);
         }
 
         /// <summary>
