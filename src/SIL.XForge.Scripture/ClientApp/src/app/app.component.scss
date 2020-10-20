@@ -83,9 +83,13 @@
     mdc-top-app-bar-section {
       mdc-menu {
         min-width: 200px;
+        text-align: left; // Needed for some menu items in Chrome but not Firefox
         a {
           width: 100%;
           color: var(--mdc-theme-text-primary-on-background);
+        }
+        .version {
+          color: var(--mdc-theme-text-secondary-on-background);
         }
       }
     }
