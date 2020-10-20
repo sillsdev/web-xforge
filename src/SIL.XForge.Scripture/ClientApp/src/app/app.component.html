@@ -49,21 +49,17 @@
             <mdc-menu #helpMenu [anchorCorner]="'bottomStart'" [anchorElement]="helpMenuAnchor">
               <mdc-list-group>
                 <mdc-list>
-                  <mdc-list-item>
-                    <a target="_blank" [href]="helpsPage">{{ t("help") }}</a>
-                  </mdc-list-item>
-                  <mdc-list-item name="issues">
-                    <a target="_blank" [href]="issueMailTo">
-                      <mdc-list-item-text>
-                        {{ t("report_issue") }}
-                        <div>
-                          <small>{{ t("report_issue_email", { email: issueEmail }) }}</small>
-                        </div>
-                      </mdc-list-item-text>
-                    </a>
-                  </mdc-list-item>
+                  <a mdc-list-item target="_blank" [href]="helpsPage">{{ t("help") }}</a>
+                  <a mdc-list-item target="_blank" [href]="issueMailTo">
+                    <mdc-list-item-text
+                      >{{ t("report_issue") }}
+                      <mdc-list-item-secondary
+                        >{{ t("report_issue_email", { email: issueEmail }) }}
+                      </mdc-list-item-secondary>
+                    </mdc-list-item-text>
+                  </a>
                   <mdc-list-divider></mdc-list-divider>
-                  <div class="mdc-list-group__subheader">{{ t("product_version", { version: version }) }}</div>
+                  <div mdcListGroupSubheader class="version">{{ t("product_version", { version: version }) }}</div>
                 </mdc-list>
               </mdc-list-group>
             </mdc-menu>
@@ -87,11 +83,8 @@
                 <div class="mdc-list-group__subheader">
                   {{ t("logged_in_as") }}
                   <div fxLayout="row" fxLayoutAlign="start center">
-                    <span fxFlex>&nbsp;</span>
-                    <button id="edit-name-btn" mdcIconButton type="button" (click)="editName()">
-                      <mdc-icon>edit</mdc-icon>
-                    </button>
                     <strong class="user-menu-name">{{ currentUser?.displayName }}</strong>
+                    <button id="edit-name-btn" mdcIconButton icon="edit" type="button" (click)="editName()"></button>
                   </div>
                 </div>
                 <div>
