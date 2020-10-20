@@ -23,7 +23,8 @@
     "localName": "Español",
     "englishName": "Spanish",
     "tags": ["es", "es-ES"],
-    "production": true
+    "production": true,
+    "helps": "es"
   },
   {
     "localName": "Русский",
