@@ -700,7 +700,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('ensure direction is RTL when project is to to RTL', fakeAsync(() => {
+    it('ensure direction is RTL when project is to set to RTL', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({ isRightToLeft: true });
       env.wait();
