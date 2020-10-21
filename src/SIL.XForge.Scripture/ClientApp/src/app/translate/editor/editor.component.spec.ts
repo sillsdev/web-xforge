@@ -700,46 +700,11 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('set chapter, paragraph, and segment direction when new text is added and deleted', fakeAsync(() => {
+    it('ensure direction is RTL when project is to set to RTL', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
+      env.setupProject({ isRightToLeft: true });
       env.wait();
-
-      // Chapter and paragraph set to language of the first segment
-      expect(env.getChapterDirection(0)).toBe('ltr');
-      expect(env.getParagraphDirection(0)).toBe('ltr');
-      expect(env.getSegmentDirection('verse_1_1')).toBe('ltr');
-
-      // Set segment to blank so dir="auto"
-      // - chapter and paragraph will remain as ltr as the next valid segment has ltr text
-      // - verse 1 & 2 are blank which makes verse 3 the next valid segment to check the direction on
-      env.targetEditor.setSelection(3, 27, 'user');
-      env.deleteCharacters();
-      expect(env.component.target!.segmentText).toBe('');
-      expect(env.getSegmentDirection('verse_1_1')).toBe('auto');
-      expect(env.getSegmentDirection('verse_1_2')).toBe('auto');
-      expect(env.getSegmentDirection('verse_1_3')).toBe('ltr');
-      expect(env.getChapterDirection(0)).toBe('ltr');
-      expect(env.getParagraphDirection(0)).toBe('ltr');
-
-      // Set segment to LTR text so dir="ltr"
-      // - chapter and paragraph remains as ltr but takes it from the first verse segment
-      const index = env.typeCharacters('ltr');
-      expect(env.component.target!.segmentText).toBe('ltr');
-      expect(env.getSegmentDirection('verse_1_1')).toBe('ltr');
-      expect(env.getChapterDirection(0)).toBe('ltr');
-      expect(env.getParagraphDirection(0)).toBe('ltr');
-      env.targetEditor.setSelection(index - 3, 3, 'user');
-      env.deleteCharacters();
-
-      // Set segment to RTL text so dir="rtl"
-      // - chapter and paragraph switches to rtl as well
-      env.typeCharacters('ישע');
-      expect(env.component.target!.segmentText).toBe('ישע');
-      expect(env.getSegmentDirection('verse_1_1')).toBe('rtl');
-      expect(env.getChapterDirection(0)).toBe('rtl');
-      expect(env.getParagraphDirection(0)).toBe('rtl');
-
+      expect(env.component.target!.isRtl).toBe(true);
       env.dispose();
     }));
 
@@ -755,7 +720,6 @@ describe('EditorComponent', () => {
       expect(contents.ops![5].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
-        'direction-segment': 'ltr',
         'highlight-segment': true
       });
       expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
@@ -768,7 +732,6 @@ describe('EditorComponent', () => {
       expect(contents.ops![5].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
-        'direction-segment': 'auto',
         'highlight-segment': true
       });
       // check to make sure that data after the affected segment hasn't gotten corrupted
@@ -784,7 +747,6 @@ describe('EditorComponent', () => {
       expect(contents.ops![5].attributes).toEqual({
         'para-contents': true,
         segment: 'verse_1_2',
-        'direction-segment': 'ltr',
         'highlight-segment': true
       });
       expect(contents.ops![6].insert).toEqual({ verse: { number: '3', style: 'v' } });
@@ -797,7 +759,7 @@ describe('EditorComponent', () => {
   describe('Translation Suggestions disabled', () => {
     it('start with no previous selection', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject(false);
+      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
@@ -814,7 +776,7 @@ describe('EditorComponent', () => {
 
     it('start with previously selected segment', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject(false);
+      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2, selectedSegment: 'verse_2_1' });
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
@@ -832,7 +794,7 @@ describe('EditorComponent', () => {
 
     it('user cannot edit', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject(false);
+      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
       env.setCurrentUser('user02');
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
@@ -851,7 +813,7 @@ describe('EditorComponent', () => {
 
     it('chapter is invalid', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProject(false);
+      env.setupProject({ translateConfig: { translationSuggestionsEnabled: false } });
       env.setProjectUserConfig();
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
@@ -952,6 +914,57 @@ class TestEnvironment {
   private readonly params$: BehaviorSubject<Params>;
   private trainingProgress$ = new Subject<ProgressStatus>();
 
+  private testProject: SFProject = {
+    name: 'project 01',
+    paratextId: 'target01',
+    shortName: 'TRG',
+    isRightToLeft: false,
+    userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
+    writingSystem: { tag: 'qaa' },
+    translateConfig: {
+      translationSuggestionsEnabled: true,
+      source: {
+        paratextId: 'source01',
+        name: 'source',
+        shortName: 'SRC',
+        writingSystem: {
+          tag: 'qaa'
+        }
+      }
+    },
+    checkingConfig: {
+      checkingEnabled: false,
+      usersSeeEachOthersResponses: true,
+      shareEnabled: true,
+      shareLevel: CheckingShareLevel.Specific
+    },
+    sync: { queuedCount: 0 },
+    texts: [
+      {
+        bookNum: 40,
+        chapters: [
+          { number: 1, lastVerse: 3, isValid: true },
+          { number: 2, lastVerse: 3, isValid: true }
+        ],
+        hasSource: true
+      },
+      { bookNum: 41, chapters: [{ number: 1, lastVerse: 3, isValid: false }], hasSource: true },
+      {
+        bookNum: 42,
+        chapters: [
+          { number: 1, lastVerse: 3, isValid: true },
+          { number: 2, lastVerse: 3, isValid: true }
+        ],
+        hasSource: false
+      },
+      {
+        bookNum: 43,
+        chapters: [{ number: 1, lastVerse: 0, isValid: true }],
+        hasSource: false
+      }
+    ]
+  };
+
   constructor() {
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'MAT' });
     this.addTextDoc(new TextDocId('project01', 40, 1, 'source'));
@@ -1038,58 +1051,17 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn(userId);
   }
 
-  setupProject(translationSuggestionsEnabled: boolean = true): void {
+  setupProject(data: Partial<SFProject> = {}): void {
+    const projectData = cloneDeep(this.testProject);
+    if (data.translateConfig?.translationSuggestionsEnabled != null) {
+      projectData.translateConfig.translationSuggestionsEnabled = data.translateConfig.translationSuggestionsEnabled;
+    }
+    if (data.isRightToLeft != null) {
+      projectData.isRightToLeft = data.isRightToLeft;
+    }
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
-      data: {
-        name: 'project 01',
-        paratextId: 'target01',
-        shortName: 'TRG',
-        userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
-        writingSystem: { tag: 'qaa' },
-        translateConfig: {
-          translationSuggestionsEnabled,
-          source: {
-            paratextId: 'source01',
-            name: 'source',
-            shortName: 'SRC',
-            writingSystem: {
-              tag: 'qaa'
-            }
-          }
-        },
-        checkingConfig: {
-          checkingEnabled: false,
-          usersSeeEachOthersResponses: true,
-          shareEnabled: true,
-          shareLevel: CheckingShareLevel.Specific
-        },
-        sync: { queuedCount: 0 },
-        texts: [
-          {
-            bookNum: 40,
-            chapters: [
-              { number: 1, lastVerse: 3, isValid: true },
-              { number: 2, lastVerse: 3, isValid: true }
-            ],
-            hasSource: true
-          },
-          { bookNum: 41, chapters: [{ number: 1, lastVerse: 3, isValid: false }], hasSource: true },
-          {
-            bookNum: 42,
-            chapters: [
-              { number: 1, lastVerse: 3, isValid: true },
-              { number: 2, lastVerse: 3, isValid: true }
-            ],
-            hasSource: false
-          },
-          {
-            bookNum: 43,
-            chapters: [{ number: 1, lastVerse: 0, isValid: true }],
-            hasSource: false
-          }
-        ]
-      }
+      data: projectData
     });
   }
 
@@ -1109,10 +1081,6 @@ class TestEnvironment {
     );
   }
 
-  getChapterDirection(index: number): string | null {
-    return this.getChapterElement(index)!.getAttribute('dir');
-  }
-
   getChapterElement(index: number): Element | null {
     const chapters = this.targetEditor.container.querySelectorAll('usx-chapter');
     if (chapters.hasOwnProperty(index) !== undefined) {
@@ -1121,20 +1089,12 @@ class TestEnvironment {
     return null;
   }
 
-  getParagraphDirection(index: number): string | null {
-    return this.getParagraphElement(index)!.getAttribute('dir');
-  }
-
   getParagraphElement(index: number): Element | null {
     const paragraphs = this.targetEditor.container.querySelectorAll('usx-para');
     if (paragraphs.hasOwnProperty(index) !== undefined) {
       return paragraphs[index];
     }
     return null;
-  }
-
-  getSegmentDirection(segmentRef: string): string | null {
-    return this.getSegmentElement(segmentRef)!.getAttribute('dir');
   }
 
   getSegmentElement(segmentRef: string): HTMLElement | null {

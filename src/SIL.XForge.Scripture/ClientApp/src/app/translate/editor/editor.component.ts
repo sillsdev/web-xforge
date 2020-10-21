@@ -195,6 +195,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.isValid && this.hasEditRight;
   }
 
+  get isRightToLeft(): boolean {
+    if (this.projectDoc?.data?.isRightToLeft != null) {
+      return this.projectDoc.data.isRightToLeft;
+    }
+    return false;
+  }
+
   get isValid(): boolean {
     if (this.text == null) {
       return true;

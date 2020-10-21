@@ -69,13 +69,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
   lang: string = '';
-  containsRtlText: boolean = false;
   // only use USX formats and not default Quill formats
   readonly allowedFormats: string[] = USX_FORMATS;
   // allow for different CSS based on the browser engine
   readonly browserEngine: string = getBrowserEngine();
 
-  private direction: string | null = null;
   private _editorStyles: any = { fontSize: '1rem' };
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
@@ -119,7 +117,17 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         'move next, segment end, right arrow': {
           key: 'right',
           handler: () => {
-            if (this.isSelectionAtSegmentEnd) {
+            if (this.isLtr && this.isSelectionAtSegmentEnd) {
+              this.moveNextSegment(false);
+              return false;
+            }
+            return true;
+          }
+        },
+        'move next, segment end, left arrow': {
+          key: 'left',
+          handler: () => {
+            if (this.isRtl && this.isSelectionAtSegmentEnd) {
               this.moveNextSegment(false);
               return false;
             }
@@ -142,6 +150,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   };
   private _id?: TextDocId;
+  private _isRightToLeft: boolean = false;
   private _modules: any = this.DEFAULT_MODULES;
   private _editor?: Quill;
   private viewModel = new TextViewModel();
@@ -197,6 +206,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       }
       this.setLangFromText();
     }
+  }
+
+  @Input() set isRightToLeft(value: boolean) {
+    this._isRightToLeft = value;
   }
 
   get modules(): any {
@@ -269,11 +282,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get isLtr(): boolean {
-    return this.direction === 'ltr';
+    return !this._isRightToLeft;
   }
 
   get isRtl(): boolean {
-    return this.direction === 'rtl';
+    return this._isRightToLeft;
   }
 
   get isSelectionAtSegmentEnd(): boolean {
@@ -380,10 +393,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
       this.update(delta);
-      // Update direction logic for the text
-      Promise.resolve().then(() => {
-        this.setDirection();
-      });
     }
   }
 
@@ -443,7 +452,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
     this.loaded.emit();
     this.applyEditorStyles();
-    this.setDirection();
   }
 
   private isBackspaceAllowed(range: RangeStatic): boolean {
@@ -489,17 +497,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     const prevRef = this.viewModel.getPrevSegmentRef(this._segment.ref);
     if (prevRef != null) {
       this.setSegment(prevRef, undefined, true, end);
-    }
-  }
-
-  private setDirection() {
-    // As the browser is automatically applying ltr/rtl we need to ask it which one it is using
-    // This value can then be used for other purposes e.g. CSS styles
-    if (this.editor !== undefined) {
-      const quillElement = this.quill.nativeElement as HTMLElement;
-      // set direction on the editor
-      this.direction = window.getComputedStyle(quillElement).direction;
-      this.containsRtlText = this.viewModel.setDirection();
     }
   }
 

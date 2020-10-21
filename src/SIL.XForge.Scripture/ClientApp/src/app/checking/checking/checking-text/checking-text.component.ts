@@ -17,6 +17,7 @@ import { TextComponent } from '../../../shared/text/text.component';
 export class CheckingTextComponent extends SubscriptionDisposable {
   @ViewChild(TextComponent, { static: true }) textComponent!: TextComponent;
   @Output() questionVerseSelected = new EventEmitter<VerseRef>();
+  @Input() isRightToLeft: boolean = false;
 
   private clickSubs: Subscription[] = [];
   private _activeVerse?: VerseRef;
