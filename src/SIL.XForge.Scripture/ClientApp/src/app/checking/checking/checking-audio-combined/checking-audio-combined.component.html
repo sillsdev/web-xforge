@@ -19,6 +19,7 @@
         (fileChange)="prepareAudioFileUpload()"
         accept="audio/*"
         class="upload-audio-file"
+        [(lastInvalids)]="lastInvalids"
       >
         <mdc-icon>cloud_upload</mdc-icon>
         <span fxShow fxHide.lt-sm>{{ t("upload_audio_file") }}</span> <span fxHide fxShow.xs>{{ t("upload") }}</span>

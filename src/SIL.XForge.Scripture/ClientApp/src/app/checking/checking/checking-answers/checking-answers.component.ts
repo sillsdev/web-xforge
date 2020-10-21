@@ -12,6 +12,7 @@ import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-proj
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
+import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -145,6 +146,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly noticeService: NoticeService,
     private readonly questionDialogService: QuestionDialogService,
     private readonly i18n: I18nService,
+    private readonly fileService: FileService,
     public media: MediaObserver
   ) {
     super();
@@ -249,6 +251,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   ngOnInit(): void {
     this.applyTextAudioValidators();
+    this.subscribe(this.fileService.fileSyncComplete$, () => this.updateQuestionAudioUrl());
   }
 
   clearSelection() {

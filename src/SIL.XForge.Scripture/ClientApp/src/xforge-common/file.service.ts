@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
+import { Observable, Subject } from 'rxjs';
 import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
@@ -44,7 +45,9 @@ export function isLocalBlobUrl(url: string): boolean {
   providedIn: 'root'
 })
 export class FileService extends SubscriptionDisposable {
+  private _fileSyncComplete$: Subject<void> = new Subject();
   private limitedStorageDialogPromise?: Promise<void>;
+  private realtimeService?: RealtimeService;
 
   constructor(
     private readonly typeRegistry: TypeRegistry,
@@ -59,33 +62,15 @@ export class FileService extends SubscriptionDisposable {
     super();
   }
 
+  get fileSyncComplete$(): Observable<void> {
+    return this._fileSyncComplete$;
+  }
+
   init(realtimeService: RealtimeService): void {
-    this.subscribe(this.pwaService.onlineStatus, async isOnline => {
-      // Wait until logged in so that the remote store gets initialized
-      if (isOnline && (await this.authService.isLoggedIn)) {
-        for (const fileType of this.typeRegistry.fileTypes) {
-          const files = await this.offlineStore.getAll<FileOfflineData>(fileType);
-          for (const fileData of files) {
-            if (fileData.deleteRef != null && fileData.projectRef != null) {
-              await this.onlineDeleteFile(fileType, fileData.projectRef, fileData.id, fileData.deleteRef);
-              await this.offlineStore.delete(fileType, fileData.id);
-            } else if (fileData.onlineUrl == null && fileData.projectRef != null) {
-              // The file has not been uploaded to the server
-              const doc = await realtimeService.onlineFetch<ProjectDataDoc>(
-                fileData.dataCollection,
-                fileData.realtimeDocRef!
-              );
-              if (doc.isLoaded) {
-                const url = await doc.uploadFile(fileType, fileData.id, fileData.blob!, fileData.filename!);
-                await doc.updateFileUrl(fileType, fileData.id, url);
-                if (!doc.alwaysKeepFileOffline(fileType, fileData.id)) {
-                  // the file is not available offline, so delete it from offline store
-                  await this.offlineStore.delete(fileType, fileData.id);
-                }
-              }
-            }
-          }
-        }
+    this.realtimeService = realtimeService;
+    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+      if (isOnline) {
+        this.syncFiles();
       }
     });
   }
@@ -244,6 +229,36 @@ export class FileService extends SubscriptionDisposable {
       return fileData;
     }
     throw Error('Trouble downloading requested file. It may not exist.');
+  }
+
+  private async syncFiles(): Promise<void> {
+    // Wait until logged in so that the remote store gets initialized
+    if (await this.authService.isLoggedIn) {
+      for (const fileType of this.typeRegistry.fileTypes) {
+        const files = await this.offlineStore.getAll<FileOfflineData>(fileType);
+        for (const fileData of files) {
+          if (fileData.deleteRef != null && fileData.projectRef != null) {
+            await this.onlineDeleteFile(fileType, fileData.projectRef, fileData.id, fileData.deleteRef);
+            await this.offlineStore.delete(fileType, fileData.id);
+          } else if (fileData.onlineUrl == null && fileData.projectRef != null && this.realtimeService != null) {
+            // The file has not been uploaded to the server
+            const doc = await this.realtimeService.onlineFetch<ProjectDataDoc>(
+              fileData.dataCollection,
+              fileData.realtimeDocRef!
+            );
+            if (doc.isLoaded) {
+              const url = await doc.uploadFile(fileType, fileData.id, fileData.blob!, fileData.filename!);
+              await doc.updateFileUrl(fileType, fileData.id, url);
+              if (!doc.alwaysKeepFileOffline(fileType, fileData.id)) {
+                // the file is not available offline, so delete it from offline store
+                await this.offlineStore.delete(fileType, fileData.id);
+              }
+            }
+          }
+        }
+      }
+      this._fileSyncComplete$.next();
+    }
   }
 
   private onlineRequestFile(url: string): Promise<Blob> {
