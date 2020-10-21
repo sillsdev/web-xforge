@@ -14,16 +14,16 @@
     mongodb_version: 4.0
     repo_path: "{{playbook_dir}}/.."
   pre_tasks:
-    - name: "Add .NET Core | add source"
-      apt_repository:
-        repo: "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-{{base_distribution_release}}-prod {{base_distribution_release}} main"
-        state: present
-      when: base_distribution == 'ubuntu'
     - name: "Add .NET Core | add key"
       apt_key:
         id: BE1229CF
         url: https://packages.microsoft.com/keys/microsoft.asc
         keyring: /etc/apt/trusted.gpg.d/microsoft.gpg
+      when: base_distribution == 'ubuntu'
+    - name: "Add .NET Core | add source"
+      apt_repository:
+        repo: "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-{{base_distribution_release}}-prod {{base_distribution_release}} main"
+        state: present
       when: base_distribution == 'ubuntu'
     - name: add Mongo apt key
       apt_key:
