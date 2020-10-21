@@ -17,12 +17,12 @@ import { TextComponent } from '../../../shared/text/text.component';
 export class CheckingTextComponent extends SubscriptionDisposable {
   @ViewChild(TextComponent, { static: true }) textComponent!: TextComponent;
   @Output() questionVerseSelected = new EventEmitter<VerseRef>();
+  @Input() isRightToLeft: boolean = false;
 
   private clickSubs: Subscription[] = [];
   private _activeVerse?: VerseRef;
   private _editorLoaded = false;
   private _id?: TextDocId;
-  private _isRightToLeft: boolean = false;
   private _questionVerses?: VerseRef[];
   private _placeholder?: string;
 
@@ -59,14 +59,6 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
   get id(): TextDocId | undefined {
     return this._id;
-  }
-
-  @Input() set isRightToLeft(value: boolean) {
-    this._isRightToLeft = value;
-  }
-
-  get isRightToLeft(): boolean {
-    return this._isRightToLeft;
   }
 
   @Input() set questionVerses(verseRefs: VerseRef[] | undefined) {
