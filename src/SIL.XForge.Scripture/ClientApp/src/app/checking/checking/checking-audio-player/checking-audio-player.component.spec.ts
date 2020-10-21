@@ -96,6 +96,7 @@ describe('CheckingAudioPlayerComponent', () => {
     await env.waitForPlayer(1000);
     expect(env.audioNotAvailableMessage).not.toBeNull();
     expect(env.audioNotAvailableMessage.query(By.css('#error-load'))).not.toBeNull();
+    expect(env.playButton(1)).toBeNull();
   });
 });
 

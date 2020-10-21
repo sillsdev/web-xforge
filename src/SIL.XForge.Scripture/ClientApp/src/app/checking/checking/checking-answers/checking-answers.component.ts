@@ -12,10 +12,10 @@ import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-proj
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
+import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
@@ -146,7 +146,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly noticeService: NoticeService,
     private readonly questionDialogService: QuestionDialogService,
     private readonly i18n: I18nService,
-    private readonly pwaService: PwaService,
+    private readonly fileService: FileService,
     public media: MediaObserver
   ) {
     super();
@@ -251,12 +251,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   ngOnInit(): void {
     this.applyTextAudioValidators();
-    this.subscribe(this.pwaService.onlineStatus, async isOnline => {
-      if (isOnline) {
-        await this.questionDoc?.fileSyncPromise;
-        this.updateQuestionAudioUrl();
-      }
-    });
+    this.subscribe(this.fileService.fileSyncComplete$, () => this.updateQuestionAudioUrl());
   }
 
   clearSelection() {

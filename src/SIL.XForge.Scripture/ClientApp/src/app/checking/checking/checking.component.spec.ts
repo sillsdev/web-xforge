@@ -28,8 +28,8 @@ import { fromVerseRef } from 'realtime-server/lib/scriptureforge/models/verse-re
 import { Canon } from 'realtime-server/lib/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/scriptureforge/scripture-utils/verse-ref';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, of } from 'rxjs';
-import { anyString, anything, deepEqual, instance, mock, reset, spy, verify, when, resetCalls } from 'ts-mockito';
+import { BehaviorSubject, of, Subject } from 'rxjs';
+import { anyString, anything, deepEqual, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { FileService } from 'xforge-common/file.service';
@@ -374,8 +374,10 @@ describe('CheckingComponent', () => {
       env.clickButton(env.editQuestionButton);
       // Simulate going online after the answer is edited
       resetCalls(mockedFileService);
-      when(mockedFileService.fileSyncCompletePromise).thenReturn(Promise.resolve());
       env.onlineStatus = true;
+      env.fileSyncComplete.next();
+      tick();
+      env.fixture.detectChanges();
       expect(env.component.answersPanel?.questionUrl).toBeDefined();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', questionId, 'anAudioFile.mp3')).once();
     }));
@@ -469,7 +471,7 @@ describe('CheckingComponent', () => {
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', 'filename.mp3')).times(
         8
       );
-      reset(mockedFileService);
+      resetCalls(mockedFileService);
       env.simulateRemoteEditQuestionAudio(undefined);
       expect(env.audioPlayerOnQuestion).toBeNull();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', undefined)).times(7);
@@ -1414,6 +1416,7 @@ class TestEnvironment {
   questionReadTimer: number = 2000;
   project01WritingSystemTag = 'en';
   isOnline: BehaviorSubject<boolean>;
+  fileSyncComplete: Subject<void> = new Subject();
 
   private readonly adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: ADMIN_USER.id,
@@ -1528,6 +1531,7 @@ class TestEnvironment {
     when(
       mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), undefined)
     ).thenResolve(undefined);
+    when(mockedFileService.fileSyncComplete$).thenReturn(this.fileSyncComplete);
     this.fixture = TestBed.createComponent(CheckingComponent);
     this.component = this.fixture.componentInstance;
     this.location = TestBed.get(Location);

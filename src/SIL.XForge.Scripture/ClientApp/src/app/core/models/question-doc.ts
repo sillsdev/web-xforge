@@ -15,10 +15,6 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
   static readonly COLLECTION = QUESTIONS_COLLECTION;
   static readonly INDEX_PATHS = QUESTION_INDEX_PATHS;
 
-  get fileSyncPromise(): Promise<void> | undefined {
-    return this.realtimeService.fileService?.fileSyncCompletePromise;
-  }
-
   alwaysKeepFileOffline(fileType: FileType, dataId: string): boolean {
     return this.data != null && fileType === FileType.Audio && !this.data.isArchived && this.data.dataId === dataId;
   }
