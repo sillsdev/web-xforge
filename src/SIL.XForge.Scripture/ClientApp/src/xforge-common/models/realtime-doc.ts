@@ -19,6 +19,7 @@ export interface RealtimeDocConstructor {
  */
 export abstract class RealtimeDoc<T = any, Ops = any> {
   private updateOfflineDataSub: Subscription;
+  private updatingOfflineData: Promise<void> = Promise.resolve();
   private onDeleteSub: Subscription;
   private offlineSnapshotVersion?: number;
   private subscribePromise?: Promise<void>;
@@ -201,10 +202,13 @@ export abstract class RealtimeDoc<T = any, Ops = any> {
       type: this.adapter.type.name,
       pendingOps
     };
-    await this.realtimeService.offlineStore.put(this.collection, offlineData);
+    this.updatingOfflineData = new Promise<void>(async resolve => {
+      await this.realtimeService.offlineStore.put(this.collection, offlineData);
+      resolve();
+    });
   }
 
-  protected async loadOfflineData(): Promise<void> {
+  private async loadOfflineData(): Promise<void> {
     if (this.loadOfflineDataPromise == null) {
       this.loadOfflineDataPromise = this.loadFromOfflineStore();
     }
