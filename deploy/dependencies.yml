@@ -63,8 +63,14 @@
         state: latest
         global: yes
 
-    - name: change node version
-      shell: "n {{node_version}}"
+    - name: check current node version
+      shell: node --version || echo error
+      register: node_version_installed
+      changed_when: False
+
+    - name: set node version
+      command: "n {{node_version}}"
+      when: "node_version_installed.stdout != 'v' + node_version"
 
     # Install mercurial 4.7+ from system or pip
     - name: install pip mercurial dependencies
