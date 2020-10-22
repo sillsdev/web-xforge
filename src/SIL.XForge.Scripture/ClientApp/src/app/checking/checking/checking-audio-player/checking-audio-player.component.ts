@@ -19,7 +19,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
   @ViewChild(MdcSlider) slider?: MdcSlider;
 
   seek: number = 0;
-  errorOnLoad: boolean = false;
+  localUrlError: boolean = false;
 
   private _currentTime: number = 0;
   private _duration: number = 0;
@@ -33,7 +33,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     this.audio.addEventListener('loadedmetadata', () => {
       this.updateDuration();
       this.audioDataLoaded = true;
-      this.errorOnLoad = false;
+      this.localUrlError = false;
     });
 
     this.audio.addEventListener('timeupdate', () => {
@@ -49,7 +49,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     });
 
     this.audio.addEventListener('error', () => {
-      this.errorOnLoad = true;
+      this.localUrlError = isLocalBlobUrl(this.audio.src) ? true : false;
     });
 
     this.subscribe(this.pwaService.onlineStatus, isOnline => {
@@ -101,7 +101,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
       this.enabled = false;
     }
     this.audioDataLoaded = false;
-    this.errorOnLoad = false;
+    this.localUrlError = false;
   }
 
   /**
@@ -109,7 +109,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
    * loaded already (and therefore cached in memory).
    */
   get isAudioAvailable(): boolean {
-    return (isLocalBlobUrl(this.audio.src) || this.pwaService.isOnline || this.audioDataLoaded) && !this.errorOnLoad;
+    return (isLocalBlobUrl(this.audio.src) || this.pwaService.isOnline || this.audioDataLoaded) && !this.localUrlError;
   }
 
   private get checkIsPlaying(): boolean {
