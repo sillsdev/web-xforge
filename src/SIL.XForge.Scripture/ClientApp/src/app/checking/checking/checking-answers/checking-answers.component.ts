@@ -86,12 +86,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (questionDoc == null) {
       return;
     }
-    this.updateQuestionAudioUrl();
+    this.updateQuestionDocAudioUrls();
     if (this.questionChangeSubscription != null) {
       this.questionChangeSubscription!.unsubscribe();
     }
     this.questionChangeSubscription = this.subscribe(questionDoc.remoteChanges$, ops => {
-      this.updateQuestionAudioUrl();
+      this.updateQuestionDocAudioUrls();
       // If the user hasn't added an answer yet and is able to, then
       // don't hold back any incoming answers from appearing right away
       // as soon as the user adds their answer.
@@ -131,6 +131,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   verseRef?: VerseRef;
   answersHighlightStatus: Map<string, boolean> = new Map<string, boolean>();
   questionUrl?: string;
+  answerUrls: { [answerId: string]: string } = {};
 
   /** IDs of answers to show to user (so, excluding unshown incoming answers). */
   private _answersToShow: string[] = [];
@@ -251,7 +252,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   ngOnInit(): void {
     this.applyTextAudioValidators();
-    this.subscribe(this.fileService.fileSyncComplete$, () => this.updateQuestionAudioUrl());
+    this.subscribe(this.fileService.fileSyncComplete$, () => this.updateQuestionDocAudioUrls());
   }
 
   clearSelection() {
@@ -323,13 +324,29 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
   }
 
-  async updateQuestionAudioUrl(): Promise<void> {
-    if (this.questionDoc == null || this.questionDoc.data == null || this.questionDoc.data.audioUrl == null) {
+  async updateQuestionDocAudioUrls(): Promise<void> {
+    if (this.questionDoc?.data == null) {
       this.questionUrl = undefined;
       return;
     }
     const blob = await this.questionDoc.getFileContents(FileType.Audio, this.questionDoc.data.dataId);
     this.questionUrl = blob != null ? URL.createObjectURL(blob) : undefined;
+    this.updateAnswerUrls();
+  }
+
+  async updateAnswerUrls(): Promise<void> {
+    this.answerUrls = {};
+    if (this.questionDoc?.data == null || this.questionDoc.data.answers.length === 0) {
+      return;
+    }
+    for (const answer of this.questionDoc.data.answers) {
+      if (answer.audioUrl == null) {
+        continue;
+      }
+      const audio: Blob | undefined = await this.questionDoc.getFileContents(FileType.Audio, answer.dataId);
+      // default to the answer's audioUrl to show the audio unavailable icon when offline and audio is not cached
+      this.answerUrls[answer.dataId] = audio == null ? answer.audioUrl : URL.createObjectURL(audio);
+    }
   }
 
   selectScripture() {
@@ -525,6 +542,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       savedCallback: () => {
         this.hideAnswerForm();
         this.justEditedAnswer = true;
+        this.updateAnswerUrls();
       }
     });
   }

@@ -33,7 +33,7 @@ import { anyString, anything, deepEqual, instance, mock, reset, resetCalls, spy,
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { FileService } from 'xforge-common/file.service';
-import { createStorageFileData, FileType } from 'xforge-common/models/file-offline-data';
+import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
@@ -63,7 +63,10 @@ import { CheckingCommentsComponent } from './checking-answers/checking-comments/
 import { CheckingOwnerComponent } from './checking-answers/checking-owner/checking-owner.component';
 import { CheckingAudioCombinedComponent } from './checking-audio-combined/checking-audio-combined.component';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
-import { CheckingAudioRecorderComponent } from './checking-audio-recorder/checking-audio-recorder.component';
+import {
+  AudioAttachment,
+  CheckingAudioRecorderComponent
+} from './checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
 import { CheckingComponent } from './checking.component';
@@ -249,7 +252,7 @@ describe('CheckingComponent', () => {
     it('questions are displaying and audio is cached', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anything())).times(
-        30
+        31
       );
       // Question 5 has been stored as the last question to start at
       expect(env.component.questionsPanel!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
@@ -357,7 +360,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.audioPlayerOnQuestion).toBeNull();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, undefined)).times(
-        5
+        6
       );
     }));
 
@@ -474,7 +477,7 @@ describe('CheckingComponent', () => {
       resetCalls(mockedFileService);
       env.simulateRemoteEditQuestionAudio(undefined);
       expect(env.audioPlayerOnQuestion).toBeNull();
-      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', undefined)).times(7);
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, 'q1Id', undefined)).times(8);
       env.selectQuestion(2);
       env.simulateRemoteEditQuestionAudio('filename2.mp3');
       env.waitForSliderUpdate();
@@ -741,6 +744,8 @@ describe('CheckingComponent', () => {
 
     it('can remove audio from answer', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
+      const data: FileOfflineData = { id: 'a6Id', dataCollection: 'questions', blob: getAudioBlob() };
+      when(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', 'a6Id', '/audio.mp3')).thenResolve(data);
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
       env.waitForSliderUpdate();
@@ -752,6 +757,45 @@ describe('CheckingComponent', () => {
         mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, 'a6Id', CHECKER_USER.id)
       ).once();
       expect().nothing();
+    }));
+
+    it('saves audio answer offline and plays from cache', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER, 'JHN', false);
+      when(
+        mockedFileService.uploadFile(
+          FileType.Audio,
+          'project01',
+          'questions',
+          anything(),
+          anything(),
+          anything(),
+          'audioFile.mp3',
+          anything()
+        )
+      ).thenResolve('blob://audio');
+      env.clickButton(env.addAnswerButton);
+      env.setTextFieldValue(env.yourAnswerField, 'An offline answer');
+      const audio: AudioAttachment = { status: 'processed', blob: getAudioBlob(), fileName: 'audioFile.mp3' };
+      env.component.answersPanel?.processAudio(audio);
+      env.clickButton(env.saveAnswerButton);
+      env.waitForSliderUpdate();
+      verify(
+        mockedFileService.uploadFile(
+          FileType.Audio,
+          'project01',
+          'questions',
+          anything(),
+          anything(),
+          anything(),
+          'audioFile.mp3',
+          anything()
+        )
+      ).once();
+      expect(env.component.answersPanel?.answers.length).toEqual(1);
+      const newAnswer = env.component.answersPanel!.answers[0];
+      expect(newAnswer.audioUrl).toEqual('blob://audio');
+      expect(env.component.answersPanel?.answerUrls[newAnswer.dataId]).toBeDefined();
+      verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', anything(), 'blob://audio'));
     }));
 
     it('can delete an answer', fakeAsync(() => {
