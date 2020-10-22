@@ -63,8 +63,15 @@
         state: latest
         global: yes
 
+    - name: check if have required node version
+      shell: n which {{node_version}} || true
+      register: required_node_version_installed
+      changed_when: False
+
     - name: change node version
-      shell: "n {{node_version}}"
+      command: "n {{node_version}}"
+      # Checking for more than just node_version in the output so we don't match a substring of a larger version string.
+      when: "required_node_version_installed.stdout.find('node/' + node_version + '/bin') == -1"
 
     # Install mercurial 4.7+ from system or pip
     - name: install pip mercurial dependencies
