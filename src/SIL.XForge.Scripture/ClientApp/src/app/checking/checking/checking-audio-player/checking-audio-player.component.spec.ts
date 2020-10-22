@@ -91,7 +91,7 @@ describe('CheckingAudioPlayerComponent', () => {
   });
 
   it('show error tooltip if error loading audio', async () => {
-    const template = `<app-checking-audio-player #player1 source="unsupported.audio"></app-checking-audio-player>`;
+    const template = `<app-checking-audio-player #player1 source="blob://unsupported"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(1000);
     expect(env.audioNotAvailableMessage).not.toBeNull();
