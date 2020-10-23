@@ -1,0 +1,30 @@
+{
+  "description": "Scripture Forge Development Machine",
+  "name": "sfdev",
+  "versions": [
+    {
+      "version": "0.0.1",
+      "status": "active",
+      "providers": [
+        {
+          "checksum": "a87b09cd35645c1b88a904d6354b1f9ec8b5a148334d3bc81b4be03733164dca",
+          "checksum_type": "sha256",
+          "name": "virtualbox",
+          "url": "http://linux.lsdev.sil.org/vagrant/sfdev/sfdev-0.0.1.box"
+        }
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "status": "active",
+      "providers": [
+        {
+          "checksum": "8376a4c30d3e82f5009a7a9a305baad715a027c2e8ac1b99fbab8fa907de9fd1",
+          "checksum_type": "sha256",
+          "name": "virtualbox",
+          "url": "http://linux.lsdev.sil.org/vagrant/sfdev/sfdev-1.0.0.box"
+        }
+      ]
+    }
+  ]
+}

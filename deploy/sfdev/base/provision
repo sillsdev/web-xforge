@@ -1,0 +1,308 @@
+#!/bin/bash
+# Vagrant sfdev provision script, to be run in guest when creating basebox
+set -ueo pipefail
+
+# Helper method to avoid failing from a network hiccup during provision
+function tryharderto() { i=0; until "$@"; do ((++i > 3)) && false
+  echo >&2 Retrying ${i}; sleep 2m; done }
+
+## Vagrant Ubuntu setup
+
+# Set mirror to generic
+sudo perl -pi -e 's#/...archive.ubuntu.com#/archive.ubuntu.com#g' /etc/apt/sources.list
+
+# Apply all available updates
+tryharderto sudo apt-get update
+# Download separately to break up the commands and reduce the chance of being
+# asked for sudo password again.
+tryharderto sudo apt-get -dy upgrade
+tryharderto sudo apt-get -y upgrade
+tryharderto sudo apt-get -y dist-upgrade
+
+# Swap shouldn't be necessary and may cause unnecessary churn when backing up the guest
+# image. Disable and delete the swapfile.
+sudo swapoff -a && sudo perl -ni -e 'print unless /swapfile/' /etc/fstab \
+  && sudo rm -fv /swapfile
+
+# Don't prompt for OS upgrade to newer release
+sudo perl -pi -e 's/Prompt=lts/Prompt=never/' /etc/update-manager/release-upgrades
+
+# Passwordless sudo
+sudo tee /etc/sudoers.d/passwordless >/dev/null <<< 'vagrant ALL=(ALL) NOPASSWD: ALL'
+
+sudo tee /etc/sudoers.d/stars >/dev/null <<END
+# Show stars when typing sudo password.
+Defaults pwfeedback
+END
+sudo chmod 0400 /etc/sudoers.d/stars
+
+# Make vagrant accessible via ssh
+sudo apt-get install -y openssh-server
+
+# Install initial vagrant login key.
+mkdir -p ~/.ssh && chmod 0700 ~/.ssh
+wget https://raw.githubusercontent.com/hashicorp/vagrant/master/keys/vagrant.pub \
+  -O ~/.ssh/authorized_keys
+chmod 0600 ~/.ssh/authorized_keys
+
+# Prepare for ssh host keys to be re-generated uniquely by users
+sudo tee /root/regenerate-ssh-host-keys >/dev/null << END
+#!/bin/bash
+# Regenerate ssh host keys if not present
+test -f /etc/ssh/ssh_host_rsa_key || dpkg-reconfigure openssh-server
+END
+sudo chmod +x /root/regenerate-ssh-host-keys
+sudo tee /etc/systemd/system/regenerate-ssh-host-keys.service >/dev/null << END
+[Unit]
+Description=regenerate-ssh-host-keys
+
+[Service]
+ExecStart=/root/regenerate-ssh-host-keys
+
+[Install]
+WantedBy=multi-user.target
+END
+sudo systemctl enable regenerate-ssh-host-keys
+
+# Don't blank or lock VM screen
+gsettings set org.gnome.desktop.session idle-delay 0
+gsettings set org.gnome.desktop.screensaver lock-enabled false
+
+# Don't let deja-dup hassle user about backing up from within guest
+sudo apt-get remove -y deja-dup
+
+# Adjust bash prompt for colour, $ on next line, and exit code display
+perl -pi -e '/#force/ and s/^#//' ~/.bashrc
+perl -pi -e '/PS1/ and s/\\\$ /\\n\\\$ /' ~/.bashrc
+perl -pi -e '/PS1/ and s/@/\$?/' ~/.bashrc
+
+# Don't report developer or tester usage to analytics
+tee -a ~/.pam_environment <<< 'FEEDBACK=false'
+tee -a ~/.pam_environment <<< 'WESAY_TRACK_AS_DEVELOPER=1'
+
+# Record some base box version info, to help with diagnosis
+tee ~/machine-info.txt >/dev/null << END
+Vagrant base box information
+Name: sfdev
+Version:
+Creation date: $(date -I)
+Installed from:
+Notes:
+END
+
+## Configure task bar
+
+tryharderto sudo apt-get install -y \
+  gnome-shell-extension-dash-to-panel \
+  gnome-shell-extension-system-monitor \
+  gnome-shell-extension-arc-menu \
+  gnome-shell-extensions
+
+# Settings - Notifications - Do Not Disturb. Can be turned back on if important.
+gsettings set org.gnome.desktop.notifications show-banners false
+# Settings - Appearance - Window theme - Dark
+gsettings set org.gnome.desktop.interface gtk-theme 'Yaru-dark'
+# Gedit: Menu - Preferences - Fonts & Colours - Solarized Dark
+gsettings set org.gnome.gedit.preferences.editor scheme 'solarized-dark'
+# Terminal: Menu - Preferences - Profiles > Unnamed - Colours.
+# Under Text and Background Color, clear "Use colors from system theme"; Built-in schemes: Solarized dark.
+# Under Palette, Build-in schemes: Solarized.
+dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/use-theme-colors false
+dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/background-color "'rgb(0,43,54)'"
+dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/foreground-color "'rgb(131,148,150)'"
+dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/palette \
+  "['rgb(7,54,66)', 'rgb(220,50,47)', 'rgb(133,153,0)', 'rgb(181,137,0)', 'rgb(38,139,210)', 'rgb(211,54,130)', 'rgb(42,161,152)', 'rgb(238,232,213)', 'rgb(0,43,54)', 'rgb(203,75,22)', 'rgb(88,110,117)', 'rgb(101,123,131)', 'rgb(131,148,150)', 'rgb(108,113,196)', 'rgb(147,161,161)', 'rgb(253,246,227)']"
+
+# Tweaks - Extensions
+gsettings set org.gnome.shell enabled-extensions \
+  "['arc-menu@linxgem33.com', 'dash-to-panel@jderose9.github.com', 'system-monitor@paradoxxx.zero.gmail.com']"
+# Dash to panel: Position - Clock location - Right of system indicators
+gsettings set org.gnome.shell.extensions.dash-to-panel location-clock 'STATUSRIGHT'
+# Dash to panel: Behavior - Show Applications icon - Off
+gsettings set org.gnome.shell.extensions.dash-to-panel show-show-apps-button false
+# Arc menu: General - Arc Menu Default View - Categories List
+dconf write /org/gnome/shell/extensions/arc-menu/enable-pinned-apps false
+# Arc menu: Appearance - Override Arc Menu Theme - On
+dconf write /org/gnome/shell/extensions/arc-menu/enable-custom-arc-menu true
+# Arc menu: Appearance - Arc Menu Icon Settings - Arc Menu Icon: Start Box
+dconf write /org/gnome/shell/extensions/arc-menu/menu-button-icon "'Start_Box'"
+# Arc menu: Appearance - Arc Menu Icon Settings - 24 px
+dconf write /org/gnome/shell/extensions/arc-menu/custom-menu-button-icon-size 24.0
+# System-monitor: Display Icon: Off. Cpu, Memory, Net - Graph Width: 10, Refresh Time: 10000, Show Text: Off
+dconf write /org/gnome/shell/extensions/system-monitor/icon-display false
+dconf write /org/gnome/shell/extensions/system-monitor/cpu-graph-width 10
+dconf write /org/gnome/shell/extensions/system-monitor/cpu-refresh-time 10000
+dconf write /org/gnome/shell/extensions/system-monitor/cpu-show-text false
+dconf write /org/gnome/shell/extensions/system-monitor/memory-graph-width 10
+dconf write /org/gnome/shell/extensions/system-monitor/memory-refresh-time 10000
+dconf write /org/gnome/shell/extensions/system-monitor/memory-show-text false
+dconf write /org/gnome/shell/extensions/system-monitor/net-graph-width 10
+dconf write /org/gnome/shell/extensions/system-monitor/net-refresh-time 10000
+dconf write /org/gnome/shell/extensions/system-monitor/net-show-text false
+
+## Configure desktop for SF development
+
+# Tools
+
+tryharderto sudo apt-get install -y \
+  ack \
+  tig \
+  vim \
+  wget \
+  glances \
+  inotify-tools \
+  python-pyinotify \
+  synaptic \
+  chromium-browser \
+  dconf-cli \
+  git-gui \
+  git-cola \
+  terminator \
+  byobu \
+  meld \
+  kdiff3-qt
+
+# GitKraken
+sudo snap install --classic gitkraken
+
+# Visual Studio Code https://code.visualstudio.com/docs/setup/linux
+tryharderto sudo apt-get install -y curl
+cd
+curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+sudo mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
+sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
+tryharderto sudo apt-get update
+tryharderto sudo apt-get install code
+# Let VS Code watch lots of files.
+sudo tee -a /etc/sysctl.conf >/dev/null <<< 'fs.inotify.max_user_watches=524288'
+sudo sysctl -p
+
+# Paratext
+(wget -O- https://packages.sil.org/keys/pso-keyring-2016.gpg \
+  | sudo tee /etc/apt/trusted.gpg.d/pso-keyring-2016.gpg) &> /dev/null
+(. /etc/os-release && sudo tee /etc/apt/sources.list.d/packages-sil-org.list>/dev/null \
+  <<< "deb http://packages.sil.org/$ID $VERSION_CODENAME main")
+sudo apt-get update
+tryharderto sudo apt-get install -y paratext-9.0
+
+# Git and GUI git tools settings
+git config --global diff.tool meld
+git config --global merge.conflictstyle diff3
+git config --global merge.tool kdiff3
+git config --global color.ui true
+git config --global rerere.enabled true
+git config --global gui.editor gedit
+git config --global rebase.autosquash true
+# Set the textwidth on the git cola commit tool to help auto wrap commit messages
+git config --global cola.textwidth 70
+
+# Launchers
+
+TOOLSDIR=${HOME}/Desktop/development-tools
+mkdir -p "${TOOLSDIR}"
+cp -aL /usr/share/applications/{terminator,code,byobu,chromium-browser,paratext9}.desktop \
+  /snap/gitkraken/current/meta/gui/gitkraken.desktop "${TOOLSDIR}"
+chmod +x "${TOOLSDIR}"/*.desktop
+
+# Fix icon
+perl -pi -e '/Icon/ and s#.*#Icon=/snap/gitkraken/current/usr/share/gitkraken/gitkraken.png#' \
+  "${TOOLSDIR}"/gitkraken.desktop
+
+OUTPUTFILE="${TOOLSDIR}/sf-git-cola.desktop"
+tee "${OUTPUTFILE}" >/dev/null << ENDOFOUTPUTFILE
+#!/usr/bin/env xdg-open
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Exec=bash -c 'cd \${HOME}/src/web-xforge && git cola'
+Name=SF Git Cola Commit Tool
+Icon=/usr/share/git-cola/icons/git-cola.svg
+ENDOFOUTPUTFILE
+chmod +x "${OUTPUTFILE}"
+
+OUTPUTFILE="${TOOLSDIR}/sf-gitk.desktop"
+tee "${OUTPUTFILE}" >/dev/null << ENDOFOUTPUTFILE
+#!/usr/bin/env xdg-open
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Exec=bash -c 'cd \${HOME}/src/web-xforge && gitk --branches'
+Name=SF Git History Viewer
+Icon=/usr/share/git-gui/lib/git-gui.ico
+ENDOFOUTPUTFILE
+chmod +x "${OUTPUTFILE}"
+
+# Trust the launchers. Seems to only work on desktop in Ubuntu 20.04.
+mv "${TOOLSDIR}"/*.desktop ~/Desktop/
+rmdir "${TOOLSDIR}"
+cd ~/Desktop
+for launcher in *.desktop; do
+  gio set "${launcher}" metadata::trusted true
+done
+
+# Set panel icons
+gsettings set org.gnome.shell favorite-apps \
+  "['firefox.desktop', 'org.gnome.Nautilus.desktop', 'chromium_chromium.desktop', 'code.desktop']"
+
+## SF repo and dev dependencies setup
+
+tryharderto sudo apt-get -y install ansible git
+
+mkdir -p ~/src
+cd ~/src
+if [ ! -d "web-xforge" ]; then
+  git clone --recurse-submodules https://github.com/sillsdev/web-xforge.git
+else
+  cd web-xforge
+  git pull --ff-only --recurse-submodules
+fi
+
+# mongodb-org isn't released for focal yet. Just install the bionic mongodb for now.
+perl -pi -e '/base_distribution_release/ and s/bionic/focal/' ~/src/web-xforge/deploy/dependencies.yml
+perl -pi -e '/repo.mongo/ and s/{{base_distribution_release}}/bionic/' ~/src/web-xforge/deploy/dependencies.yml
+# The first update_cache is causing trouble. Change it from 'yes' to 'no' for now. '0777'
+# isn't about file permissions; it's part of triggering multi-line substitution. The regex
+# finds the 'update_cache: yes' line that follows a line ending in 'mongodb-org'
+perl -0777 -pi -e 's/(mongodb-org.*?)update_cache: yes/$1update_cache: no/s' ~/src/web-xforge/deploy/dependencies.yml
+
+cd ~/src/web-xforge/deploy/
+ansible-playbook playbook_focal.yml --limit localhost
+
+# Undo temporary changes
+git checkout -- ~/src/web-xforge/deploy/dependencies.yml
+
+# Install node LTS to upgrade to node 12 and npm 6.14.
+sudo n lts
+
+# Prevent npm @angular/cli from stopping to ask if we want to feed their analytics
+export NG_CLI_ANALYTICS=false
+# Download dependencies so VSCode doesn't show errors on start, like missing jest
+cd ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp && npm i
+cd ~/src/web-xforge/src/RealtimeServer && npm i
+cd ~/src/web-xforge && dotnet build
+
+# Create readme `~/Desktop/machine-instructions.txt`.
+sudo tee ~/Desktop/machine-instructions.txt >/dev/null <<END
+Scripture Forge Development Machine
+
+If possible, your git user and email were set from your host machine. If not, run
+
+  git config --global user.name "My Name"
+  git config --global user.email "me@example.com"
+
+See the xForge Project Workflow gdoc for setting developer secrets,
+Paratext account setup, enabling multiple monitors in VirtualBox, etc.
+
+You may find it helpful to increase the amount of RAM your virtual machine
+is given, by increasing 'vb.memory' in 'Vagrantfile', then running
+'vagrant halt && vagrant up' from your host.
+
+SF is cloned in ~/src/web-xforge .
+Launchers for development tools are on the desktop.
+END
+
+echo "$0: $(date -Is): Script finished successfully."

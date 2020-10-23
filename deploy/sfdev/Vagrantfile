@@ -1,0 +1,75 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  # sfdev uses Ubuntu 20.04.
+  config.vm.box = "sfdev"
+  config.vm.box_url = "http://linux.lsdev.sil.org/vagrant/sfdev/sfdev.json"
+  config.vm.hostname = "sfdev"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = true
+    vb.cpus = 4
+    # At least 3000 MB of RAM is needed to run tests. Using an initial value here of 6000 MB in case the machine is
+    # opened on a computer with 8 GB RAM. Most of the time, 14000 MB RAM is enough for development, using Code,
+    # Chromium, running tests, etc. at the same time. Set the RAM value in a SFDEV_RAM environment variable by running
+    # a command such as
+    #   tee -a ~/.pam_environment <<< 'SFDEV_RAM="14000"'
+    # and then logging back into your computer. Or temporarily set the value here.
+    vb.memory = ENV['SFDEV_RAM'] || "6000"
+    # Enable 3D acceleration and enough video RAM for larger displays.
+    vb.customize ["modifyvm", :id, "--accelerate3d", "on"]
+    vb.customize ["modifyvm", :id, "--vram", "128"]
+  end
+
+  config.vm.provision "shell", privileged: false, inline: <<~SHELL
+    set -eux -o pipefail
+
+    function tryharderto() { i=0; until "$@"; do ((++i > 3)) && false; echo >&2 Retrying $i; sleep 2m; done }
+
+    # Canary
+    tee ~/Desktop/warning-not-provisioned.txt <<END
+    The presence of this file means that the vagrant virtual machine did not
+    finish provisioning correctly.
+    The best way to get to a working machine state is to backup any data that
+    you want to keep from this virtual machine, and then destroy and re-create
+    this vagrant virtual machine by running these commands from your host:
+        vagrant destroy
+        vagrant up
+    END
+
+    GIT_USER="#{`git config --get user.name`.strip}"
+    GIT_EMAIL="#{`git config --get user.email`.strip}"
+    [[ -z $GIT_USER ]] || git config --global user.name "${GIT_USER}"
+    [[ -z $GIT_EMAIL ]] || git config --global user.email "${GIT_EMAIL}"
+
+    cd ~/src/web-xforge
+    # Clear away some modified files. But not the whole tree in case a
+    # user runs this against their data.
+    git checkout -- src/SIL.XForge.Scripture/ClientApp/package{,-lock}.json || true
+    git pull --ff-only --recurse-submodules
+
+    cd ~/src/web-xforge/deploy
+    tryharderto ansible-playbook playbook_focal.yml --limit localhost
+
+    sudo n lts
+
+    cd ~/src/web-xforge/
+    dotnet clean
+    # Remove orphaned? dotnet process.
+    sleep 10s
+    pkill dotnet
+    rm -rf /tmp/NuGetScratch/lock
+
+    cd ~/src/web-xforge/src/RealtimeServer
+    npm i
+    cd ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp
+    npm i
+    cd ~/src/web-xforge/src/SIL.XForge.Scripture
+    dotnet build
+
+    # Remove canary
+    rm ~/Desktop/warning-not-provisioned.txt
+    echo Provisioning finished successfully.
+  SHELL
+end
