@@ -105,13 +105,13 @@ gsettings set org.gnome.desktop.interface gtk-theme 'Yaru-dark'
 # Gedit: Menu - Preferences - Fonts & Colours - Solarized Dark
 gsettings set org.gnome.gedit.preferences.editor scheme 'solarized-dark'
 # Terminal: Menu - Preferences - Profiles > Unnamed - Colours.
-# Under Text and Background Color, clear "Use colors from system theme"; Built-in schemes: Solarized dark.
-# Under Palette, Build-in schemes: Solarized.
+# Under Text and Background Color, clear "Use colors from system theme"; Built-in schemes: Tango dark.
+# Under Palette, Build-in schemes: Tango.
 dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/use-theme-colors false
-dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/background-color "'rgb(0,43,54)'"
-dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/foreground-color "'rgb(131,148,150)'"
+dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/background-color "'rgb(46,52,54)'"
+dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/foreground-color "'rgb(211,215,207)'"
 dconf write /org/gnome/terminal/legacy/profiles:/:b1dcc9dd-5262-4d8d-a863-c897e6d979b9/palette \
-  "['rgb(7,54,66)', 'rgb(220,50,47)', 'rgb(133,153,0)', 'rgb(181,137,0)', 'rgb(38,139,210)', 'rgb(211,54,130)', 'rgb(42,161,152)', 'rgb(238,232,213)', 'rgb(0,43,54)', 'rgb(203,75,22)', 'rgb(88,110,117)', 'rgb(101,123,131)', 'rgb(131,148,150)', 'rgb(108,113,196)', 'rgb(147,161,161)', 'rgb(253,246,227)']"
+  "['rgb(46,52,54)', 'rgb(204,0,0)', 'rgb(78,154,6)', 'rgb(196,160,0)', 'rgb(52,101,164)', 'rgb(117,80,123)', 'rgb(6,152,154)', 'rgb(211,215,207)', 'rgb(85,87,83)', 'rgb(239,41,41)', 'rgb(138,226,52)', 'rgb(252,233,79)', 'rgb(114,159,207)', 'rgb(173,127,168)', 'rgb(52,226,226)', 'rgb(238,238,236)']"
 
 # Tweaks - Extensions
 gsettings set org.gnome.shell enabled-extensions \
@@ -176,6 +176,8 @@ tryharderto sudo apt-get install code
 # Let VS Code watch lots of files.
 sudo tee -a /etc/sysctl.conf >/dev/null <<< 'fs.inotify.max_user_watches=524288'
 sudo sysctl -p
+# mono-devel for OmniSharp
+tryharderto sudo apt-get install -y mono-devel
 
 # Paratext
 (wget -O- https://packages.sil.org/keys/pso-keyring-2016.gpg \
@@ -193,8 +195,96 @@ git config --global color.ui true
 git config --global rerere.enabled true
 git config --global gui.editor gedit
 git config --global rebase.autosquash true
-# Set the textwidth on the git cola commit tool to help auto wrap commit messages
+# Git Cola settings. Set textwidth to help auto wrap commit messages.
 git config --global cola.textwidth 70
+git config --global cola.tabwidth 2
+git config --global cola.linebreak true
+git config --global cola.theme flat-dark-blue
+git config --global cola.icontheme dark
+# Arrange diff, commit, status, actions, branches, and console areas.
+mkdir -p "${HOME}/.config/git-cola"
+tee "${HOME}/.config/git-cola/settings" >/dev/null << END
+{
+    "gui_state": {
+        "mainview": {
+            "geometry": "AdnQywADAAAAAAA9AAAABwAABNsAAANKAAAAPQAAACwAAATbAAADSgAAAAAAAAAABkAAAAA9AAAALAAABNsAAANK",
+            "width": 1200,
+            "height": 800,
+            "x": 50,
+            "y": 10,
+            "lock_layout": false,
+            "windowstate": "AAAA/wAAAAL9AAAAAQAAAAIAAASfAAADB/wBAAAAA/sAAAAIAEQAaQBmAGYBAAAAAAAAAqoAAAB1AP////wAAAKtAAAB8gAAARUA/////AIAAAAE+wAAAAwAQwBvAG0AbQBpAHQBAAAAGAAAALsAAABFAP////sAAAAMAFMAdABhAHQAdQBzAQAAANYAAAEKAAAARQD////7AAAADgBBAGMAdABpAG8AbgBzAQAAAeMAAABFAAAARQD////8AAACKwAAAPQAAABFAP////wBAAAAAvsAAAAQAEIAcgBhAG4AYwBoAGUAcwEAAAKtAAAA7AAAAKIA////+wAAAA4AQwBvAG4AcwBvAGwAZQEAAAOcAAABAwAAAHAA/////AAAAqYAAAH5AAAAAAD////6/////wEAAAAD+wAAABQAUwB1AGIAbQBvAGQAdQBsAGUAcwAAAAAA/////wAAALgA////+wAAABIARgBhAHYAbwByAGkAdABlAHMAAAAAAP////8AAAC2AP////sAAAAMAFIAZQBjAGUAbgB0AAAAAAD/////AAAAkgD///8AAASfAAAAAAAAAAQAAAAEAAAACAAAAAj8AAAAAA=="
+        }
+    }
+}
+END
+# gitk solarized dark colour scheme
+mkdir -p "${HOME}/.config/git"
+tee "${HOME}/.config/git/gitk" >/dev/null << END
+set mainfont {sans 9}
+set textfont {monospace 9}
+set uifont {sans 9 bold}
+set tabstop 8
+set findmergefiles 0
+set maxgraphpct 50
+set maxwidth 16
+set cmitmode patch
+set wrapcomment none
+set autoselect 1
+set autosellen 40
+set showneartags 1
+set maxrefs 20
+set visiblerefs {"master"}
+set hideremotes 0
+set showlocalchanges 1
+set datetimeformat {%Y-%m-%d %H:%M:%S}
+set limitdiffs 1
+set uicolor #657b83
+set want_ttk 1
+set bgcolor #002b36
+set fgcolor #839496
+set uifgcolor #839496
+set uifgdisabledcolor #586e75
+set colors {"#6c71c4" "#268bd2" "#2aa198" "#859900" "#b58900" "#cb4b16" "#dc322f" "#d33682"}
+set diffcolors {"#dc322f" "#859900" "#268bd2"}
+set mergecolors {"#dc322f" "#268bd2" "#859900" "#6c71c4" brown "#009090" #d33682 "#808000" "#009000" "#ff0080" "#2aa198" "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
+set markbgcolor #073642
+set diffcontext 3
+set selectbgcolor #586e75
+set foundbgcolor #b58900
+set currentsearchhitbgcolor #cb4b16
+set extdifftool meld
+set perfile_attrs 0
+set headbgcolor #2aa198
+set headfgcolor #002b36
+set headoutlinecolor #839496
+set remotebgcolor #6c71c4
+set tagbgcolor #d33682
+set tagfgcolor #002b36
+set tagoutlinecolor #002b36
+set reflinecolor #839496
+set filesepbgcolor #073642
+set filesepfgcolor #839496
+set linehoverbgcolor #073642
+set linehoverfgcolor #839496
+set linehoveroutlinecolor #839496
+set mainheadcirclecolor #fdf6e3
+set workingfilescirclecolor #dc322f
+set indexcirclecolor #859900
+set circlecolors {white #268bd2 gray #268bd2 #268bd2}
+set linkfgcolor #268bd2
+set circleoutlinecolor #073642
+set web_browser xdg-open
+set geometry(main) 1227x739+53+11
+set geometry(state) normal
+set geometry(topwidth) 1227
+set geometry(topheight) 425
+set geometry(pwsash0) "684 1"
+set geometry(pwsash1) "1046 1"
+set geometry(botwidth) 773
+set geometry(botheight) 309
+set permviews {}
+END
 
 # Launchers
 
@@ -284,6 +374,9 @@ export NG_CLI_ANALYTICS=false
 cd ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp && npm i
 cd ~/src/web-xforge/src/RealtimeServer && npm i
 cd ~/src/web-xforge && dotnet build
+
+# Use system hg.
+tee -a ~/.pam_environment <<< 'HG_PATH=/usr/bin/hg'
 
 # Create readme `~/Desktop/machine-instructions.txt`.
 sudo tee ~/Desktop/machine-instructions.txt >/dev/null <<END
