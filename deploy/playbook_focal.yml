@@ -1,5 +1,5 @@
 ---
-- name: Linux Bionic or Xenial local webserver for xForge v2 developers
+- name: Scripture Forge local server for development and testing, for Ubuntu 16.04 thru 20.04 (focal)
   hosts: all
   become: yes
   tasks: []
