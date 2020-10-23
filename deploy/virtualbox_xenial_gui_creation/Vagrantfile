@@ -221,7 +221,7 @@ Vagrant.configure("2") do |config|
     [ ! -f .git/shallow ] || git fetch --unshallow
 
     cd ~/src/web-xforge/deploy/
-    ansible-playbook playbook_bionic.yml --limit localhost
+    ansible-playbook playbook_focal.yml --limit localhost
 
     tee ~/Desktop/development-tools/dev-readme.txt >/dev/null <<END
     xForge Development Machine
