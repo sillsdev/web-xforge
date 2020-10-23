@@ -77,28 +77,38 @@
 
 ## Generate and publish product
 
-* Export VM .box file. This may take 20+ minutes. The `--base` argument is the name of the
-  base machine in virtualbox manager. Replace the VERSION string in the below before
-  running.
+* Export VM .box file and prepare to test the result. This may take 30 minutes.
+  The `--base` argument is the name of the base machine in virtualbox manager. Replace
+  the VERSION string in the below before running.
 
-  export BOX="sfdev"
-  export VERSION="1.0.0"
-  date && time vagrant package --base ${BOX}-base --output ${BOX}-${VERSION}.box \
-    && ls -lh ${BOX}-${VERSION}.box && sha256sum ${BOX}-${VERSION}.box
+export BOX="sfdev"
+export VERSION="1.0.0"
+date && vagrant package --base ${BOX}-base --output ${BOX}-${VERSION}.box &&
+  date && ls -lh ${BOX}-${VERSION}.box &&
+  sha256sum ${BOX}-${VERSION}.box | tee -a sfdev.json &&
+  date && mkdir test && tee test/Vagrantfile << END &&
+Vagrant.configure("2") do |config|
+  config.vm.box = "../${BOX}-${VERSION}.box"
+  config.vm.provider "virtualbox" do |vb|
+    vb.gui = true
+    vb.cpus = 2
+    vb.memory = "6000"
+  end
+end
+END
+cd test && vagrant up; date
 
-* Update the box .json file, including the sha.
+* Test the result. Such as by adding secrets and running the "Full App (SF)" debug target
+  in Code.
 
-* Test base box. Enable vb.gui in Vagrantfile. Give it more RAM.
+* Clean up box test machine. In the `test` directory, run the following.
+  The `vagrant box remove` command removes the internally stored copy of the base box
+  (to free disk space); it's not removing the '../foo' _file_, but internally stored data
+  with the designation of '../foo'.
 
-  mkdir test && cd test && vagrant init ../${BOX}-${VERSION}.box && vim Vagrantfile
-  vagrant up
+  vagrant destroy && vagrant box remove "../${BOX}-${VERSION}.box" && cd .. && rm test -rf
 
-* Clean up box test machine. In the `test` directory, run the following. Then delete the
-  `test` directory. The `vagrant box remove` command removes the internally stored copy of
-  the base box (to free disk space); it's not removing the '../foo' _file_, but internally
-  stored data with the designation of '../foo'.
-
-  vagrant destroy && vagrant box remove "../${BOX}-${VERSION}.box"
+* Update the box .json file, and move the sha to the right place.
 
 ## Notes
 
