@@ -110,35 +110,38 @@ We use [Prettier](https://prettier.io/) with a pre-commit hook.
 
 We use [Angular Flex-Layout](https://github.com/angular/flex-layout) with [Angular MDC](https://trimox.github.io/angular-mdc-web) including the [Material Design Icons](https://google.github.io/material-design-icons/).
 
-### Recommended Development Environment
+### Development Environment
 
-Our recommended development environment for web development is Ubuntu 16.04.
-
-- [Vagrant GUI Setup](#vagrant-gui-setup). A Vagrant box with xForge already installed is downloaded and set up on your machine. This is the easiest and cleanest to setup.
-- [Local Linux Development Setup](#local-linux-development-setup). Everything is installed directly on your machine, which needs to be running Ubuntu 16.04. This is the fastest method because development is not done in a virtual machine.
+- [Vagrant GUI Setup](#vagrant-gui-setup). A Vagrant box with xForge already installed is downloaded and set up on your
+  machine. This is the easiest and cleanest to setup.
+- [Local Linux Development Setup](#local-linux-development-setup). Everything is installed directly on your machine,
+  which needs to be running Ubuntu 16.04. This is the fastest method because development is not done in a virtual machine.
 - [Manual Setup](#manual-setup) This setup is specifically written for **Windows** but the steps could be used for any OS.
 
-#### Vagrant GUI Setup
+#### Vagrant Development Machine
 
-Install [VirtualBox](https://www.virtualbox.org/), [Vagrant](https://www.vagrantup.com/), and [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git). To do this in Linux, run
+Install [VirtualBox](https://www.virtualbox.org/), [Vagrant](https://www.vagrantup.com/), and
+[git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git). To do this in Linux, run
 
     sudo apt install vagrant virtualbox virtualbox-guest-additions-iso git
 
-Setup git. At least name and email is needed in `.gitconfig`. You can do this from a terminal by running
+Setup git. At least name and email is needed in `.gitconfig`. You can do this from a terminal in your host machine by running
 
     git config --global user.name "My Name"
     git config --global user.email "me@example.com"
 
 Hardware-assisted virtualization (VT-x or AMD-V) needs to be enabled in your BIOS.
 
-Create a directory to manage the development machine, such as `xforge`. Checkout the xforge git repository to access (and later receive updates to) the vagrant development machine configuration file:
+Clone the xforge git repository to access (and later receive updates to) the vagrant development machine configuration file:
 
     git clone https://github.com/sillsdev/web-xforge
-    cd web-xforge/deploy/vagrant_xenial_gui
+    cd web-xforge/deploy/vagrant/sfdev
 
-Run `vagrant up`. This will download, initialize, and run the development machine. The machine is about 5GB, so expect the download to take a while.
+Run `vagrant up`. This will download, initialize, and run the development machine. The machine is about 7GB, so expect
+the download to take a while.
 
-In the guest development machine, do the following additional steps. If a dialog about grub appears during upgrade, use TAB, ENTER, and SPACE to specify to use `sda` or to not worry about it, depending on which dialog you get.
+In the guest development machine, take note of the `machine-instructions.txt` file on the desktop. Set local server
+secrets. Then do the following:
 
 ```shell
 sudo apt update
