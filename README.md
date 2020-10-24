@@ -172,11 +172,11 @@ Change the variable `mongo_path: /var/lib/mongodb` in `deploy/vars/config_palaso
 - **Vagrant VM Setup**: uncomment line 5 and comment line 4
 - **Local Linux Development Setup**: uncomment line 4 and comment line 5 (or whatever is appropriate on your system, its best to have Mongo store databases on your HDD rather than SSD). Make sure the `mongodb` user has permission to read and write to the path you specify.
 
-Run the following Ansible playbook (works on Ubuntu Xenial and Bionic).
+Run the following Ansible playbook (works on Ubuntu 16.04 thru 20.04 (focal)).
 
 ```bash
 cd web-xforge/deploy
-ansible-playbook playbook_bionic.yml --limit localhost -K
+ansible-playbook playbook_focal.yml --limit localhost -K
 ```
 
 Add developer secrets. Ask another developer how to get these.
