@@ -353,7 +353,7 @@ class TestEnvironment {
   private readonly tokenizer = new LatinWordTokenizer();
 
   constructor() {
-    this.addTextDoc(new TextDocId('project01', 40, 1, 'source'));
+    this.addTextDoc(new TextDocId('project02', 40, 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
 
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
@@ -366,7 +366,7 @@ class TestEnvironment {
 
     this.sourceFixture = TestBed.createComponent(TextComponent);
     this.source = this.sourceFixture.componentInstance;
-    this.source.id = new TextDocId('project01', 40, 1, 'source');
+    this.source.id = new TextDocId('project02', 40, 1, 'target');
     this.source.segmentRef = 'verse_1_1';
     this.targetFixture = TestBed.createComponent(TextComponent);
     this.target = this.targetFixture.componentInstance;
