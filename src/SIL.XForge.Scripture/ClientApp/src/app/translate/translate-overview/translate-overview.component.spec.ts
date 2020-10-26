@@ -283,8 +283,7 @@ class TestEnvironment {
               { number: 2, lastVerse: 3, isValid: true }
             ],
             hasSource: true,
-            permissions: {},
-            sourcePermissions: { user01: TextInfoPermission.Read, user02: TextInfoPermission.None }
+            permissions: {}
           },
           {
             bookNum: 41,
@@ -293,8 +292,7 @@ class TestEnvironment {
               { number: 2, lastVerse: 3, isValid: true }
             ],
             hasSource: true,
-            permissions: {},
-            sourcePermissions: { user01: TextInfoPermission.Read, user02: TextInfoPermission.None }
+            permissions: {}
           },
           {
             bookNum: 42,
@@ -303,8 +301,7 @@ class TestEnvironment {
               { number: 2, lastVerse: 3, isValid: true }
             ],
             hasSource: true,
-            permissions: {},
-            sourcePermissions: { user01: TextInfoPermission.Read, user02: TextInfoPermission.None }
+            permissions: {}
           },
           {
             bookNum: 43,
@@ -313,8 +310,7 @@ class TestEnvironment {
               { number: 2, lastVerse: 3, isValid: true }
             ],
             hasSource: false,
-            permissions: {},
-            sourcePermissions: {}
+            permissions: {}
           }
         ]
       }

@@ -36,7 +36,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
     this.onlineCallback(async () => {
       const engineTrainingData: EditedSegmentData[] = await this.getAll<EditedSegmentData>(EDITED_SEGMENTS);
       for (const data of engineTrainingData) {
-        await this.trainSegment(data.projectRef, data.bookNum, data.chapterNum, data.segment);
+        await this.trainSegment(data.projectRef, data.sourceProjectRef, data.bookNum, data.chapterNum, data.segment);
         await this.delete(EDITED_SEGMENTS, data.id);
       }
     });
@@ -49,7 +49,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
   /**
    * Train the translation engine with the text for a specified segment using the target and source text
    */
-  async trainSelectedSegment(projectUserConfig: SFProjectUserConfig): Promise<void> {
+  async trainSelectedSegment(projectUserConfig: SFProjectUserConfig, sourceProjectRef: string): Promise<void> {
     if (
       projectUserConfig.selectedTask === 'checking' ||
       projectUserConfig.selectedBookNum == null ||
@@ -61,6 +61,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
     }
     return this.trainSegment(
       projectUserConfig.projectRef,
+      sourceProjectRef,
       projectUserConfig.selectedBookNum,
       projectUserConfig.selectedChapterNum,
       projectUserConfig.selectedSegment,
@@ -71,7 +72,13 @@ export class TranslationEngineService extends SubscriptionDisposable {
   /**
    * Store a segment to be used to train the translation engine when returning online
    */
-  async storeTrainingSegment(projectRef: string, bookNum: number, chapterNum: number, segment: string): Promise<void> {
+  async storeTrainingSegment(
+    projectRef: string,
+    sourceProjectRef: string,
+    bookNum: number,
+    chapterNum: number,
+    segment: string
+  ): Promise<void> {
     let trainingData: EditedSegmentData | undefined = await this.get<EditedSegmentData>(
       EDITED_SEGMENTS,
       this.translationSuggestionId(projectRef, bookNum, segment)
@@ -83,6 +90,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
     trainingData = {
       id: this.translationSuggestionId(projectRef, bookNum, segment),
       projectRef: projectRef,
+      sourceProjectRef: sourceProjectRef,
       bookNum: bookNum,
       chapterNum: chapterNum,
       segment: segment
@@ -92,6 +100,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
 
   private async trainSegment(
     projectRef: string,
+    sourceProjectRef: string,
     bookNum: number,
     chapterNum: number,
     segment: string,
@@ -109,7 +118,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
       }
     }
 
-    const sourceDoc = await this.projectService.getText(getTextDocId(projectRef, bookNum, chapterNum, 'source'));
+    const sourceDoc = await this.projectService.getText(getTextDocId(sourceProjectRef, bookNum, chapterNum, 'source'));
     const sourceText = sourceDoc.getSegmentText(segment);
     if (sourceText === '') {
       return;
