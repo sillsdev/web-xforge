@@ -293,8 +293,7 @@ describe('CheckingOverviewComponent', () => {
         bookNum: 40,
         hasSource: false,
         chapters: [{ number: 1, lastVerse: 3, isValid: true }],
-        permissions: {},
-        sourcePermissions: {}
+        permissions: {}
       });
       expect(unread).toBe(3);
       expect(read).toBe(2);
@@ -494,15 +493,13 @@ class TestEnvironment {
           { number: 1, lastVerse: 25, isValid: true },
           { number: 3, lastVerse: 17, isValid: true }
         ],
-        permissions: {},
-        sourcePermissions: {}
+        permissions: {}
       },
       {
         bookNum: 42,
         hasSource: false,
         chapters: [{ number: 1, lastVerse: 80, isValid: true }],
-        permissions: {},
-        sourcePermissions: {}
+        permissions: {}
       }
     ],
     userRoles: {

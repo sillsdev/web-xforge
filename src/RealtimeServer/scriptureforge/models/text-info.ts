@@ -13,5 +13,4 @@ export interface TextInfo {
   hasSource: boolean;
   chapters: Chapter[];
   permissions: { [userRef: string]: string };
-  sourcePermissions: { [userRef: string]: string };
 }

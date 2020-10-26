@@ -54,17 +54,11 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.texts[0].permissions['user03']).toBe(TextInfoPermission.Read);
       expect(projectDoc.data.texts[0].permissions['user04']).toBe(TextInfoPermission.Read);
       expect(Object.keys(projectDoc.data.texts[0].permissions).length).toBe(4);
-      expect(projectDoc.data.texts[0].sourcePermissions['user01']).toBe(TextInfoPermission.Read);
-      expect(projectDoc.data.texts[0].sourcePermissions['user02']).toBe(TextInfoPermission.Read);
-      expect(projectDoc.data.texts[0].sourcePermissions['user03']).toBe(TextInfoPermission.None);
-      expect(projectDoc.data.texts[0].sourcePermissions['user04']).toBe(TextInfoPermission.None);
-      expect(Object.keys(projectDoc.data.texts[0].sourcePermissions).length).toBe(4);
       expect(projectDoc.data.texts[1].permissions['user01']).toBe(TextInfoPermission.Write);
       expect(projectDoc.data.texts[1].permissions['user02']).toBe(TextInfoPermission.Write);
       expect(projectDoc.data.texts[1].permissions['user03']).toBe(TextInfoPermission.Read);
       expect(projectDoc.data.texts[1].permissions['user04']).toBe(TextInfoPermission.Read);
       expect(Object.keys(projectDoc.data.texts[1].permissions).length).toBe(4);
-      expect(Object.keys(projectDoc.data.texts[1].sourcePermissions).length).toBe(0);
     });
   });
 });

@@ -50,8 +50,7 @@ export function getSFProject(id: string): SFProject {
           { number: 2, lastVerse: 3, isValid: true }
         ],
         hasSource: true,
-        permissions: {},
-        sourcePermissions: { user01: TextInfoPermission.Read, user02: TextInfoPermission.None }
+        permissions: {}
       }
     ]
   };

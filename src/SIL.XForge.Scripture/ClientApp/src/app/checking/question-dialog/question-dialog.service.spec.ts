@@ -164,8 +164,7 @@ class TestEnvironment {
       { number: 1, lastVerse: 25, isValid: true },
       { number: 3, lastVerse: 17, isValid: true }
     ],
-    permissions: {},
-    sourcePermissions: {}
+    permissions: {}
   };
   readonly PROJECT01: string = 'project01';
   adminUser: UserInfo = { id: 'user01', role: SFProjectRole.ParatextAdministrator };
