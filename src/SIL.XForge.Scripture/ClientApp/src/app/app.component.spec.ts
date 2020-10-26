@@ -413,7 +413,8 @@ class TestEnvironment {
         displayName: 'User 01',
         sites: {
           sf: {
-            projects: ['project01', 'project02', 'project03']
+            projects: ['project01', 'project02', 'project03'],
+            resources: ['resource01', 'resource02', 'resource03']
           }
         }
       }
@@ -429,21 +430,21 @@ class TestEnvironment {
     });
 
     this.addProject('project01', { user01: SFProjectRole.ParatextTranslator }, [
-      { bookNum: 40, hasSource: true, chapters: [], permissions: {}, sourcePermissions: {} },
-      { bookNum: 41, hasSource: false, chapters: [], permissions: {}, sourcePermissions: {} }
+      { bookNum: 40, hasSource: true, chapters: [], permissions: {} },
+      { bookNum: 41, hasSource: false, chapters: [], permissions: {} }
     ]);
     // Books are out-of-order on purpose so that we can test that books are displayed in canonical order
     this.addProject('project02', { user01: SFProjectRole.CommunityChecker }, [
-      { bookNum: 43, hasSource: false, chapters: [], permissions: {}, sourcePermissions: {} },
-      { bookNum: 42, hasSource: false, chapters: [], permissions: {}, sourcePermissions: {} }
+      { bookNum: 43, hasSource: false, chapters: [], permissions: {} },
+      { bookNum: 42, hasSource: false, chapters: [], permissions: {} }
     ]);
     this.addProject('project03', { user01: SFProjectRole.CommunityChecker }, [
-      { bookNum: 44, hasSource: true, chapters: [], permissions: {}, sourcePermissions: {} },
-      { bookNum: 45, hasSource: true, chapters: [], permissions: {}, sourcePermissions: {} }
+      { bookNum: 44, hasSource: true, chapters: [], permissions: {} },
+      { bookNum: 45, hasSource: true, chapters: [], permissions: {} }
     ]);
     this.addProject('project04', {}, [
-      { bookNum: 46, hasSource: true, chapters: [], permissions: {}, sourcePermissions: {} },
-      { bookNum: 47, hasSource: true, chapters: [], permissions: {}, sourcePermissions: {} }
+      { bookNum: 46, hasSource: true, chapters: [], permissions: {} },
+      { bookNum: 47, hasSource: true, chapters: [], permissions: {} }
     ]);
 
     when(mockedSFProjectService.get(anything())).thenCall(projectId =>

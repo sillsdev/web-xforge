@@ -393,6 +393,7 @@ class TestEnvironment {
               ? undefined
               : {
                   paratextId: settings.sourceParatextId,
+                  projectRef: 'project02',
                   name: 'Source',
                   shortName: 'SRC',
                   writingSystem: { tag: 'qaa' }

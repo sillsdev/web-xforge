@@ -613,6 +613,7 @@ class TestEnvironment {
       translationSuggestionsEnabled: true,
       source: {
         paratextId: 'paratextId01',
+        projectRef: 'paratext01',
         name: 'ParatextP1',
         shortName: 'PT1',
         writingSystem: {
