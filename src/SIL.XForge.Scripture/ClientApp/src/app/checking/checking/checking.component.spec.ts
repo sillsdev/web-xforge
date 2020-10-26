@@ -360,16 +360,16 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.audioPlayerOnQuestion).toBeNull();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, undefined)).times(
-        6
+        5
       );
     }));
 
     it('uploads audio then updates audio url', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER, 'JHN', false);
       env.selectQuestion(14);
-      expect(env.component.answersPanel?.questionUrl).toBeUndefined();
       const questionId = 'q14Id';
       const questionDoc = cloneDeep(env.getQuestionDoc(questionId));
+      expect(env.component.answersPanel?.getFileSource(questionDoc.data?.audioUrl)).toBeUndefined();
       questionDoc.submitJson0Op(op => {
         op.set<string>(qd => qd.audioUrl!, 'anAudioFile.mp3');
       });
@@ -381,7 +381,7 @@ describe('CheckingComponent', () => {
       env.fileSyncComplete.next();
       tick();
       env.fixture.detectChanges();
-      expect(env.component.answersPanel?.questionUrl).toBeDefined();
+      expect(env.component.answersPanel?.getFileSource(questionDoc.data?.audioUrl)).toBeDefined();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', questionId, 'anAudioFile.mp3')).once();
     }));
 
@@ -794,7 +794,7 @@ describe('CheckingComponent', () => {
       expect(env.component.answersPanel?.answers.length).toEqual(1);
       const newAnswer = env.component.answersPanel!.answers[0];
       expect(newAnswer.audioUrl).toEqual('blob://audio');
-      expect(env.component.answersPanel?.answerUrls[newAnswer.dataId]).toBeDefined();
+      expect(env.component.answersPanel?.getFileSource(newAnswer.audioUrl)).toBeDefined();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', anything(), 'blob://audio'));
     }));
 
