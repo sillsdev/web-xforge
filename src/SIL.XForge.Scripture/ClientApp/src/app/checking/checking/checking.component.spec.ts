@@ -547,7 +547,7 @@ describe('CheckingComponent', () => {
     it('saves the location of the last visited question', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
-      verify(mockedProjectService.trainSelectedSegment(anything())).once();
+      verify(mockedProjectService.trainSelectedSegment(anything(), anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
       env.component.projectDoc!.submitJson0Op(op => {
         op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, false);
@@ -557,19 +557,19 @@ describe('CheckingComponent', () => {
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBe(43);
-      verify(mockedProjectService.trainSelectedSegment(anything())).once();
+      verify(mockedProjectService.trainSelectedSegment(anything(), anything())).once();
     }));
 
     it('saves the last visited question in all question context', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER, 'ALL');
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
-      verify(mockedProjectService.trainSelectedSegment(anything())).once();
+      verify(mockedProjectService.trainSelectedSegment(anything(), anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
       env.selectQuestion(4);
       expect(projectUserConfigDoc.selectedTask).toBe('checking');
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
       expect(projectUserConfigDoc.selectedBookNum).toBeUndefined();
-      verify(mockedProjectService.trainSelectedSegment(anything())).twice();
+      verify(mockedProjectService.trainSelectedSegment(anything(), anything())).twice();
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
@@ -1537,7 +1537,14 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Anyone
     },
     translateConfig: {
-      translationSuggestionsEnabled: true
+      translationSuggestionsEnabled: true,
+      source: {
+        paratextId: 'project02',
+        projectRef: 'project02',
+        name: 'Source',
+        shortName: 'SRC',
+        writingSystem: { tag: 'qaa' }
+      }
     },
     texts: [
       {
@@ -1547,15 +1554,13 @@ class TestEnvironment {
           { number: 1, lastVerse: 18, isValid: true },
           { number: 2, lastVerse: 25, isValid: true }
         ],
-        permissions: {},
-        sourcePermissions: {}
+        permissions: {}
       },
       {
         bookNum: 40,
         hasSource: false,
         chapters: [{ number: 1, lastVerse: 28, isValid: true }],
-        permissions: {},
-        sourcePermissions: {}
+        permissions: {}
       }
     ],
     userRoles: {

@@ -33,9 +33,8 @@ class SFProjectMigration2 implements Migration {
   async migrateDoc(doc: Doc): Promise<void> {
     const ops: Op[] = [];
     for (let i = 0; i < doc.data.texts.length; i++) {
-      if (doc.data.texts[i].permissions === undefined || doc.data.texts[i].sourcePermissions === undefined) {
+      if (doc.data.texts[i].permissions === undefined) {
         const permissions: { [userRef: string]: string } = {};
-        const sourcePermissions: { [userRef: string]: string } = {};
         for (const userId in doc.data.userRoles) {
           if (doc.data.userRoles.hasOwnProperty(userId)) {
             if (
@@ -43,19 +42,12 @@ class SFProjectMigration2 implements Migration {
               doc.data.userRoles[userId] === SFProjectRole.ParatextAdministrator
             ) {
               permissions[userId] = TextInfoPermission.Write;
-              if (doc.data.texts[i].hasSource === true) {
-                sourcePermissions[userId] = TextInfoPermission.Read;
-              }
             } else {
               permissions[userId] = TextInfoPermission.Read;
-              if (doc.data.texts[i].hasSource === true) {
-                sourcePermissions[userId] = TextInfoPermission.None;
-              }
             }
           }
         }
         ops.push({ p: ['texts', i, 'permissions'], oi: permissions });
-        ops.push({ p: ['texts', i, 'sourcePermissions'], oi: sourcePermissions });
       }
     }
     if (ops.length > 0) {

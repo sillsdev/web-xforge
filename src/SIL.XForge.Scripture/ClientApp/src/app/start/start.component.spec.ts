@@ -101,7 +101,11 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
   }
 
-  setCurrentUserProjectData(projectId?: string, projects: string[] = ['project01', 'project02']): void {
+  setCurrentUserProjectData(
+    projectId?: string,
+    projects: string[] = ['project01', 'project02'],
+    resources: string[] = ['resource01', 'resource02']
+  ): void {
     when(mockedUserService.currentProjectId).thenReturn(projectId);
 
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
@@ -114,7 +118,7 @@ class TestEnvironment {
         avatarUrl: '',
         authId: 'auth01',
         displayName: 'User 01',
-        sites: { sf: { projects } }
+        sites: { sf: { projects, resources } }
       }
     });
   }
