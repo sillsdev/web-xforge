@@ -569,22 +569,19 @@ class TestEnvironment {
               { number: 1, lastVerse: 25, isValid: true },
               { number: 2, lastVerse: 23, isValid: true }
             ],
-            permissions: {},
-            sourcePermissions: {}
+            permissions: {}
           },
           LUK: {
             bookNum: 42,
             hasSource: false,
             chapters: [{ number: 1, lastVerse: 80, isValid: true }],
-            permissions: {},
-            sourcePermissions: {}
+            permissions: {}
           },
           JHN: {
             bookNum: 43,
             hasSource: false,
             chapters: [{ number: 1, lastVerse: 0, isValid: true }],
-            permissions: {},
-            sourcePermissions: {}
+            permissions: {}
           }
         },
         projectId: 'project01',

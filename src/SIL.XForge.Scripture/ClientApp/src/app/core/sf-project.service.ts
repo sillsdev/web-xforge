@@ -154,7 +154,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<boolean>('hasTransceleratorQuestions', { projectId }))!;
   }
 
-  async trainSelectedSegment(projectUserConfig: SFProjectUserConfig): Promise<void> {
+  async trainSelectedSegment(projectUserConfig: SFProjectUserConfig, sourceProjectRef: string): Promise<void> {
     if (
       projectUserConfig.selectedTask !== 'translate' ||
       projectUserConfig.selectedBookNum == null ||
@@ -183,12 +183,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     }
 
     const sourceDoc = await this.getText(
-      getTextDocId(
-        projectUserConfig.projectRef,
-        projectUserConfig.selectedBookNum,
-        projectUserConfig.selectedChapterNum,
-        'source'
-      )
+      getTextDocId(sourceProjectRef, projectUserConfig.selectedBookNum, projectUserConfig.selectedChapterNum)
     );
     const sourceText = sourceDoc.getSegmentText(projectUserConfig.selectedSegment);
     if (sourceText === '') {

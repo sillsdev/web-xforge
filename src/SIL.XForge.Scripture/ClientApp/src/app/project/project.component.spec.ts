@@ -281,15 +281,13 @@ class TestEnvironment {
                   bookNum: 40,
                   chapters: [],
                   hasSource: false,
-                  permissions: {},
-                  sourcePermissions: {}
+                  permissions: {}
                 },
                 {
                   bookNum: 41,
                   chapters: [],
                   hasSource: false,
-                  permissions: {},
-                  sourcePermissions: {}
+                  permissions: {}
                 }
               ]
             : [],
