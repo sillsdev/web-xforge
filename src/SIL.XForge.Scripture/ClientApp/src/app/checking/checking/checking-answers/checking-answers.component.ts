@@ -86,12 +86,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (questionDoc == null) {
       return;
     }
-    this.updateQuestionAudioUrl();
+    this.updateQuestionDocAudioUrls();
     if (this.questionChangeSubscription != null) {
       this.questionChangeSubscription!.unsubscribe();
     }
     this.questionChangeSubscription = this.subscribe(questionDoc.remoteChanges$, ops => {
-      this.updateQuestionAudioUrl();
+      this.updateQuestionDocAudioUrls();
       // If the user hasn't added an answer yet and is able to, then
       // don't hold back any incoming answers from appearing right away
       // as soon as the user adds their answer.
@@ -130,13 +130,13 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   selectionEndClipped?: boolean;
   verseRef?: VerseRef;
   answersHighlightStatus: Map<string, boolean> = new Map<string, boolean>();
-  questionUrl?: string;
 
   /** IDs of answers to show to user (so, excluding unshown incoming answers). */
   private _answersToShow: string[] = [];
   private _questionDoc?: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
+  private fileSources: Map<string, string> = new Map<string, string>();
   /** If the user has recently added or edited their answer since opening up the question. */
   private justEditedAnswer: boolean = false;
 
@@ -251,7 +251,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   ngOnInit(): void {
     this.applyTextAudioValidators();
-    this.subscribe(this.fileService.fileSyncComplete$, () => this.updateQuestionAudioUrl());
+    this.subscribe(this.fileService.fileSyncComplete$, () => this.updateQuestionDocAudioUrls());
   }
 
   clearSelection() {
@@ -315,21 +315,17 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       textsByBookId: this.textsByBookId!,
       projectId: projectId
     };
-    const questionDialogResponse = await this.questionDialogService.questionDialog(data);
-    if (questionDialogResponse != null && questionDialogResponse.data != null) {
-      const blob = await questionDialogResponse.getFileContents(FileType.Audio, questionDialogResponse.data.dataId);
-      this.questionUrl = blob != null ? URL.createObjectURL(blob) : undefined;
-      this.action.emit({ action: 'edit', questionDoc: questionDialogResponse });
+    const dialogResponseDoc: QuestionDoc | undefined = await this.questionDialogService.questionDialog(data);
+    if (dialogResponseDoc?.data != null) {
+      this.updateQuestionDocAudioUrls();
+      this.action.emit({ action: 'edit', questionDoc: dialogResponseDoc });
     }
   }
 
-  async updateQuestionAudioUrl(): Promise<void> {
-    if (this.questionDoc == null || this.questionDoc.data == null || this.questionDoc.data.audioUrl == null) {
-      this.questionUrl = undefined;
-      return;
+  getFileSource(url: string | undefined): string | undefined {
+    if (url != null && url !== '' && this.fileSources.has(url)) {
+      return this.fileSources.get(url);
     }
-    const blob = await this.questionDoc.getFileContents(FileType.Audio, this.questionDoc.data.dataId);
-    this.questionUrl = blob != null ? URL.createObjectURL(blob) : undefined;
   }
 
   selectScripture() {
@@ -503,6 +499,30 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return result;
   }
 
+  private async updateQuestionDocAudioUrls(): Promise<void> {
+    this.fileSources.clear();
+    if (this.questionDoc?.data == null) {
+      return;
+    }
+    this.cacheFileSource(this.questionDoc, this.questionDoc.data.dataId, this.questionDoc.data.audioUrl);
+    for (const answer of this.questionDoc.data.answers) {
+      this.cacheFileSource(this.questionDoc, answer.dataId, answer.audioUrl);
+    }
+  }
+
+  private async cacheFileSource(questionDoc: QuestionDoc, dataId: string, audioUrl: string | undefined): Promise<void> {
+    const audio: Blob | undefined = await questionDoc.getFileContents(FileType.Audio, dataId);
+    if (audioUrl == null) {
+      return;
+    }
+    // default to the audioUrl to access the file on server if online or show the audio unavailable icon
+    // when offline and audio is not cached
+    const source: string | undefined = audio == null ? audioUrl : URL.createObjectURL(audio);
+    if (source != null) {
+      this.fileSources.set(audioUrl, source);
+    }
+  }
+
   private refreshAnswersHighlightStatus(): void {
     this.answersHighlightStatus.clear();
     setTimeout(() => {
@@ -525,6 +545,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       savedCallback: () => {
         this.hideAnswerForm();
         this.justEditedAnswer = true;
+        this.updateQuestionDocAudioUrls();
       }
     });
   }

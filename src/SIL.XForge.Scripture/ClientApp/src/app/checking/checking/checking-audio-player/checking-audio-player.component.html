@@ -12,7 +12,7 @@
       <mdc-icon>volume_off</mdc-icon>
       <span class="audio-unavailable-message">{{ t("audio_unavailable") }}</span>
       <a
-        *ngIf="!errorOnLoad; else loadError"
+        *ngIf="!localUrlError; else loadError"
         #audioUnavailableTooltip="matTooltip"
         (click)="audioUnavailableTooltip.show()"
         matTooltip="{{ t('audio_cannot_be_played') }}"

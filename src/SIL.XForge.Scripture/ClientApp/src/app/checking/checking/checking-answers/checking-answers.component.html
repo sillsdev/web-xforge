@@ -11,8 +11,9 @@
       >
         <div class="question">
           <div class="question-text">{{ questionDoc?.data?.text }}</div>
-          <div *ngIf="questionUrl" class="question-audio">
-            <app-checking-audio-player [source]="questionUrl"></app-checking-audio-player>
+          <div *ngIf="questionDoc?.data?.audioUrl" class="question-audio">
+            <app-checking-audio-player [source]="getFileSource(questionDoc?.data?.audioUrl)">
+            </app-checking-audio-player>
           </div>
           <div class="question-footer" *ngIf="isProjectAdmin">
             <div class="actions">
@@ -66,7 +67,7 @@
           </div>
           <div [fxShow]="answerTabs.activeTabIndex === 1" class="answer-tab answer-record-upload">
             <app-checking-audio-combined
-              [source]="activeAnswer?.audioUrl"
+              [source]="getFileSource(activeAnswer?.audioUrl)"
               (update)="processAudio($event)"
             ></app-checking-audio-combined>
           </div>
@@ -138,7 +139,8 @@
                 }}</span>
                 <span class="answer-scripture-verse">{{ scriptureTextVerseRef(answer.verseRef) }}</span>
               </div>
-              <app-checking-audio-player *ngIf="answer.audioUrl" [source]="answer.audioUrl"></app-checking-audio-player>
+              <app-checking-audio-player *ngIf="answer.audioUrl" [source]="getFileSource(answer.audioUrl)">
+              </app-checking-audio-player>
               <div class="answer-footer">
                 <div class="actions">
                   <button
