@@ -323,10 +323,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   getFileSource(url: string | undefined): string | undefined {
-    if (url == null || url === '') {
-      return undefined;
-    }
-    if (this.fileSources.has(url)) {
+    if (url != null && url !== '' && this.fileSources.has(url)) {
       return this.fileSources.get(url);
     }
   }
