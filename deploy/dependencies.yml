@@ -35,6 +35,14 @@
         filename: mongodb-org
         update_cache: yes
       when: base_distribution == 'ubuntu' and (base_distribution_release == 'xenial' or base_distribution_release == 'bionic')
+    - name: add Mongo {{mongodb_version}} repository (bionic version)
+      # MongoDB only provides mongodb-org package version 4.4, not 4.0, for focal. They do provide a 4.0 tarball. But
+      # the 4.0 bionic package works too and comes with configs and a systemd service.
+      apt_repository:
+        repo: "deb [arch=amd64] http://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/{{mongodb_version}} multiverse"
+        filename: mongodb-org
+        update_cache: yes
+      when: base_distribution == 'ubuntu' and base_distribution_release == 'focal'
   tasks:
     - name: install packages
       apt:
