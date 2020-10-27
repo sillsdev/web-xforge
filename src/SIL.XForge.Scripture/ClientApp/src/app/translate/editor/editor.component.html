@@ -33,7 +33,7 @@
             [highlightSegment]="target.hasFocus"
             (loaded)="onTextLoaded('source')"
             (updated)="onSourceUpdated($event.delta != null)"
-            [isRightToLeft]="isRightToLeft"
+            [isRightToLeft]="isSourceRightToLeft"
           ></app-text>
         </div>
       </div>
@@ -50,7 +50,7 @@
             (loaded)="onTextLoaded('target')"
             [highlightSegment]="target.hasFocus"
             [markInvalid]="true"
-            [isRightToLeft]="isRightToLeft"
+            [isRightToLeft]="isTargetRightToLeft"
           ></app-text>
           <app-suggestions
             [mdcElevation]="2"
