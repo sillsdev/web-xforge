@@ -26,6 +26,7 @@ export interface QuestionDialogData {
   textsByBookId: TextsByBookId;
   projectId: string;
   defaultVerse?: VerseRef;
+  isRightToLeft?: boolean;
 }
 
 export interface QuestionDialogResult {
@@ -107,6 +108,10 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       end = translate('question_dialog.must_be_same_book_and_chapter');
     }
     return { startError: start, endError: end };
+  }
+
+  get isTextRightToLeft(): boolean {
+    return this.data.isRightToLeft == null ? false : this.data.isRightToLeft;
   }
 
   ngOnInit(): void {

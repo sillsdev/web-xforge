@@ -313,7 +313,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     const data: QuestionDialogData = {
       questionDoc: this._questionDoc,
       textsByBookId: this.textsByBookId!,
-      projectId: projectId
+      projectId: projectId,
+      isRightToLeft: this.project?.isRightToLeft
     };
     const dialogResponseDoc: QuestionDoc | undefined = await this.questionDialogService.questionDialog(data);
     if (dialogResponseDoc?.data != null) {
@@ -335,6 +336,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       chapterNum: (this.verseRef && this.verseRef.chapterNum) || verseRef.chapterNum,
       textsByBookId: this.textsByBookId!,
       projectId: this.projectId!,
+      isRightToLeft: this.project?.isRightToLeft,
       selectedText: this.selectedText || '',
       selectedVerses: this.verseRef
     };

@@ -60,15 +60,29 @@ describe('TextComponent', () => {
     env.onlineStatus = true;
     expect(env.component.placeholder).toEqual('text.loading');
   }));
+
+  it('does not apply right to left for placeholder message', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.hostComponent.isTextRightToLeft = true;
+    env.fixture.detectChanges();
+    expect(env.component.placeholder).toEqual('initial placeholder text');
+    expect(env.component.isRtl).toBe(false);
+    expect(env.fixture.nativeElement.querySelector('quill-editor[dir="auto"]')).not.toBeNull();
+  }));
 });
 
 class MockQuill extends Quill {}
 
-@Component({ selector: 'app-host', template: `<app-text [placeholder]="initialPlaceHolder" [id]="id"></app-text>` })
+@Component({
+  selector: 'app-host',
+  template: `<app-text [placeholder]="initialPlaceHolder" [id]="id" [isRightToLeft]="isTextRightToLeft"></app-text>`
+})
 class HostComponent {
   @ViewChild(TextComponent) textComponent!: TextComponent;
 
   initialPlaceHolder = 'initial placeholder text';
+  isTextRightToLeft: boolean = false;
   id?: string;
 }
 

@@ -62,6 +62,7 @@ describe('TextChooserDialogComponent', () => {
 
   it('allows selecting text', fakeAsync(async () => {
     const env = new TestEnvironment({ start: 1, end: 10 }, 'verse_1_2/p_1', 'verse_1_3');
+    expect(env.component.isTextRightToLeft).toBe(false);
     expect(env.selectedText).toEqual('');
     env.fireSelectionChange();
     expect(env.selectedText).toEqual('target: chapter… (Matthew 1:3)');
@@ -312,6 +313,12 @@ describe('TextChooserDialogComponent', () => {
       startOffset: 'Lor'.length,
       endOffset: 'Lorem ipsum'.length
     });
+  }));
+
+  it('can handle right to left text', fakeAsync(() => {
+    const config: TextChooserDialogData = { ...TestEnvironment.defaultDialogData, isRightToLeft: true };
+    const env = new TestEnvironment([], 'verse_1_1', 'verse_1_2', config);
+    expect(env.component.isTextRightToLeft).toBe(true);
   }));
 });
 
