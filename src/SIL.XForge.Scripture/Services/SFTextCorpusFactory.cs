@@ -46,26 +46,25 @@ namespace SIL.XForge.Scripture.Services
             var texts = new List<IText>();
             foreach (string projectId in projects)
             {
-                TextType textType;
+                var project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);
+                string textCorpusProjectId;
                 switch (type)
                 {
                     case TextCorpusType.Source:
-                        textType = TextType.Source;
+                        textCorpusProjectId = project.TranslateConfig.Source?.ProjectRef ?? projectId;
                         break;
                     case TextCorpusType.Target:
-                        textType = TextType.Target;
+                        textCorpusProjectId = projectId;
                         break;
                     default:
                         throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextType));
                 }
 
-                var project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);
-
                 foreach (TextInfo text in project.Texts.Where(t => t.HasSource))
                 {
                     foreach (Chapter chapter in text.Chapters)
                     {
-                        string id = TextData.GetTextDocId(projectId, text.BookNum, chapter.Number, textType);
+                        string id = TextData.GetTextDocId(textCorpusProjectId, text.BookNum, chapter.Number);
                         FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("_id", id);
                         BsonDocument doc = await textDataColl.Find(filter).FirstOrDefaultAsync();
                         if (doc != null && doc.TryGetValue("ops", out BsonValue ops) && ops as BsonArray != null)
