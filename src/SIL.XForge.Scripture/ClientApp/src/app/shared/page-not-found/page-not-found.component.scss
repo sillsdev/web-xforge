@@ -1,9 +1,15 @@
 :host {
   text-align: center;
+  max-width: 50em;
+  margin: 0 auto;
 }
 
 mdc-icon {
   line-height: 1.2em;
   vertical-align: top;
   padding-right: 0.25em;
+}
+
+mdc-linear-progress {
+  text-align: initial; // setting text-align: center; above destroys the layout of the progress bar
 }
