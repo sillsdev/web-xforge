@@ -273,7 +273,7 @@ namespace SIL.XForge.Scripture.Services
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
 
-            var permissions = await env.Service.GetPermissionsAsync(user01Secret, project, Models.TextType.Source);
+            var permissions = await env.Service.GetPermissionsAsync(user01Secret, project);
             Assert.That(permissions.Count(), Is.EqualTo(2));
             Assert.That(permissions.First().Value, Is.EqualTo(TextInfoPermission.None));
             Assert.That(permissions.Last().Value, Is.EqualTo(TextInfoPermission.None));
@@ -301,7 +301,7 @@ namespace SIL.XForge.Scripture.Services
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
 
-            var permissions = await env.Service.GetPermissionsAsync(user01Secret, project, Models.TextType.Source);
+            var permissions = await env.Service.GetPermissionsAsync(user01Secret, project);
             Assert.That(permissions.Count(), Is.EqualTo(2));
             Assert.That(permissions.First().Value, Is.EqualTo(TextInfoPermission.Read));
             Assert.That(permissions.Last().Value, Is.EqualTo(TextInfoPermission.None));
@@ -510,7 +510,7 @@ namespace SIL.XForge.Scripture.Services
             // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
             // SUT 2
             ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
-                env.Service.SendReceiveAsync(user01Secret, ptProjectId, "unknownPtProjectId8"));
+                env.Service.SendReceiveAsync(user01Secret,"unknownPtProjectId8"));
             Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
             env.MockSharingLogicWrapper.DidNotReceive().ShareChanges(default, Arg.Any<SharedRepositorySource>(),
                 out Arg.Any<List<SendReceiveResult>>(), default);
@@ -556,7 +556,8 @@ namespace SIL.XForge.Scripture.Services
             ScrText sourceScrText = env.GetScrText(associatedPtUser, targetProjectId, Models.TextType.Source, sourceProjectId);
             env.MockScrTextCollection.FindById(env.Username01, targetProjectId, Models.TextType.Source)
                 .Returns(sourceScrText);
-            await env.Service.SendReceiveAsync(user01Secret, targetProjectId, sourceProjectId);
+            await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
+            await env.Service.SendReceiveAsync(user01Secret, sourceProjectId);
             // Below, we are checking also that the SharedProject has a
             // Permissions that is set from the SharedProject's ScrText.Permissions.
             // Better may be to assert that each SharedProject.Permissions.GetUser()
@@ -576,7 +577,8 @@ namespace SIL.XForge.Scripture.Services
             // Replaces obsolete source project if the source project has been changed
             string newSourceProjectId = "paratext_" + env.Project03;
             string sourcePath = Path.Combine(env.SyncDir, targetProjectId, "source");
-            await env.Service.SendReceiveAsync(user01Secret, targetProjectId, newSourceProjectId);
+            await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
+            await env.Service.SendReceiveAsync(user01Secret, newSourceProjectId);
             env.MockFileSystemService.Received(1).DeleteDirectory(sourcePath);
             env.MockFileSystemService.Received(1).CreateDirectory(sourcePath);
             mockSource.Received(1).Pull(sourcePath, Arg.Is<SharedRepository>(repo =>
@@ -597,7 +599,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
             string resourceId = "test_resource_id"; // A missing or invalid resource or project
-            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, resourceId);
+            await env.Service.SendReceiveAsync(user01Secret, ptProjectId);
+            await env.Service.SendReceiveAsync(user01Secret, resourceId);
         }
 
         [Test]
@@ -613,7 +616,8 @@ namespace SIL.XForge.Scripture.Services
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
             string resourceId = "9bb76cd3e5a7f9b4"; // See the XML in SetRestClientFactory for this
-            await env.Service.SendReceiveAsync(user01Secret, ptProjectId, resourceId);
+            await env.Service.SendReceiveAsync(user01Secret, ptProjectId);
+            await env.Service.SendReceiveAsync(user01Secret, resourceId);
         }
 
         private class TestEnvironment

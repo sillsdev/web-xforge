@@ -95,18 +95,14 @@ namespace SIL.XForge.Scripture.Services
                 string sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
 
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
-                var sourceTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
 
                 // update target Paratext books and notes
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
-                    SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text,
-                        TextType.Target);
+                    SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
                     targetTextDocsByBook[text.BookNum] = targetTextDocs;
                     UpdateParatextBook(text, targetParatextId, targetTextDocs);
-                    if (text.HasSource)
-                        sourceTextDocsByBook[text.BookNum] = await FetchTextDocsAsync(text, TextType.Source);
 
                     IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
                     questionDocsByBook[text.BookNum] = questionDocs;
@@ -114,31 +110,21 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // perform Paratext send/receive
-                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId, sourceParatextId,
+                await _paratextService.SendReceiveAsync(_userSecret, targetParatextId,
                     UseNewProgress());
 
-                var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId,
-                    TextType.Target));
+                var targetBooks = new HashSet<int>(_paratextService.GetBookList(_userSecret, targetParatextId));
                 var sourceBooks = new HashSet<int>(TranslationSuggestionsEnabled
-                    ? _paratextService.GetBookList(_userSecret, targetParatextId, TextType.Source)
+                    ? _paratextService.GetBookList(_userSecret, sourceParatextId)
                     : Enumerable.Empty<int>());
                 sourceBooks.IntersectWith(targetBooks);
 
                 var targetBooksToDelete = new HashSet<int>(_projectDoc.Data.Texts.Select(t => t.BookNum)
                     .Except(targetBooks));
-                var sourceBooksToDelete = new HashSet<int>(TranslationSuggestionsEnabled
-                    ? _projectDoc.Data.Texts.Where(t => t.HasSource).Select(t => t.BookNum).Except(sourceBooks)
-                    : Enumerable.Empty<int>());
 
                 // delete all data for removed books
-                if (targetBooksToDelete.Count > 0 || sourceBooksToDelete.Count > 0)
+                if (targetBooksToDelete.Count > 0)
                 {
-                    // delete source books
-                    foreach (int bookNum in sourceBooksToDelete)
-                    {
-                        TextInfo text = _projectDoc.Data.Texts.First(t => t.BookNum == bookNum);
-                        await DeleteAllTextDocsForBookAsync(text, TextType.Source);
-                    }
                     // delete target books
                     foreach (int bookNum in targetBooksToDelete)
                     {
@@ -146,7 +132,7 @@ namespace SIL.XForge.Scripture.Services
                         TextInfo text = _projectDoc.Data.Texts[textIndex];
                         await _projectDoc.SubmitJson0OpAsync(op => op.Remove(pd => pd.Texts, textIndex));
 
-                        await DeleteAllTextDocsForBookAsync(text, TextType.Target);
+                        await DeleteAllTextDocsForBookAsync(text);
                         await DeleteAllQuestionsDocsForBookAsync(text);
                     }
                 }
@@ -171,18 +157,6 @@ namespace SIL.XForge.Scripture.Services
 
                     List<Chapter> newChapters = await UpdateTextDocsAsync(text, TextType.Target, targetParatextId,
                         targetTextDocs);
-                    if (hasSource)
-                    {
-                        // update source text docs
-                        if (!sourceTextDocsByBook.TryGetValue(text.BookNum,
-                            out SortedList<int, IDocument<TextData>> sourceTextDocs))
-                        {
-                            sourceTextDocs = new SortedList<int, IDocument<TextData>>();
-                        }
-                        var chaptersToInclude = new HashSet<int>(newChapters.Select(c => c.Number));
-                        await UpdateTextDocsAsync(text, TextType.Source, targetParatextId, sourceTextDocs,
-                            chaptersToInclude);
-                    }
 
                     // update question docs
                     if (questionDocsByBook.TryGetValue(text.BookNum,
@@ -193,9 +167,7 @@ namespace SIL.XForge.Scripture.Services
 
                     // Get the permissions
                     Dictionary<string, string> permissions =
-                        await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data, TextType.Target);
-                    Dictionary<string, string> sourcePermissions = 
-                        await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data, TextType.Source);
+                        await _paratextService.GetPermissionsAsync(_userSecret, _projectDoc.Data);
 
                     // update project metadata
                     await _projectDoc.SubmitJson0OpAsync(op =>
@@ -205,7 +177,6 @@ namespace SIL.XForge.Scripture.Services
                             // insert text info for new text
                             text.Chapters = newChapters;
                             text.Permissions = permissions;
-                            text.SourcePermissions = sourcePermissions;
                             op.Add(pd => pd.Texts, text);
                         }
                         else
@@ -214,7 +185,6 @@ namespace SIL.XForge.Scripture.Services
                             op.Set(pd => pd.Texts[textIndex].Chapters, newChapters, ChapterListEqualityComparer);
                             op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
                             op.Set(pd => pd.Texts[textIndex].Permissions, permissions);
-                            op.Set(pd => pd.Texts[textIndex].SourcePermissions, sourcePermissions);
                         }
                     });
                 }
@@ -251,6 +221,7 @@ namespace SIL.XForge.Scripture.Services
             if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
                 return false;
 
+            // TODO: This is needs to support resources
             List<User> paratextUsers = await _realtimeService.QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
                 .ToListAsync();
@@ -267,7 +238,7 @@ namespace SIL.XForge.Scripture.Services
 
         private void UpdateParatextBook(TextInfo text, string paratextId, SortedList<int, IDocument<TextData>> textDocs)
         {
-            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum, TextType.Target);
+            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             var oldUsxDoc = XDocument.Parse(bookText);
             XDocument newUsxDoc = _deltaUsxMapper.ToUsx(oldUsxDoc, text.Chapters.OrderBy(c => c.Number)
                 .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data)));
@@ -367,7 +338,7 @@ namespace SIL.XForge.Scripture.Services
         /// Fetches all text docs from the database for a book.
         /// </summary>
         internal async Task<SortedList<int, IDocument<TextData>>> FetchTextDocsAsync(TextInfo text,
-            TextType textType)
+            TextType textType = TextType.Target)
         {
             var textDocs = new SortedList<int, IDocument<TextData>>();
             var tasks = new List<Task>();
@@ -393,7 +364,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Deletes all text docs from the database for a book.
         /// </summary>
-        private async Task DeleteAllTextDocsForBookAsync(TextInfo text, TextType textType)
+        private async Task DeleteAllTextDocsForBookAsync(TextInfo text, TextType textType = TextType.Target)
         {
             var tasks = new List<Task>();
             foreach (Chapter chapter in text.Chapters)
@@ -487,12 +458,12 @@ namespace SIL.XForge.Scripture.Services
                         userIdsToRemove.Add(projectUser.UserId);
                 }
                 bool isRtl = _paratextService
-                    .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId, TextType.Target);
+                    .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
                 op.Set(pd => pd.IsRightToLeft, isRtl);
                 if (TranslationSuggestionsEnabled)
                 {
                     bool sourceIsRtl = _paratextService
-                        .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId, TextType.Source);
+                        .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.TranslateConfig.Source.ParatextId);
                     op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceIsRtl);
                 }
             });
@@ -508,12 +479,12 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private IDocument<TextData> GetTextDoc(TextInfo text, int chapter, TextType textType)
+        private IDocument<TextData> GetTextDoc(TextInfo text, int chapter, TextType textType = TextType.Target)
         {
             return _conn.Get<TextData>(TextData.GetTextDocId(_projectDoc.Id, text.BookNum, chapter, textType));
         }
 
-        private async Task DeleteTextDocAsync(TextInfo text, int chapter, TextType textType)
+        private async Task DeleteTextDocAsync(TextInfo text, int chapter, TextType textType = TextType.Target)
         {
             IDocument<TextData> textDoc = GetTextDoc(text, chapter, textType);
             await textDoc.FetchAsync();

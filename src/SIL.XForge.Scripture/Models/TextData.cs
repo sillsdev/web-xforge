@@ -15,9 +15,6 @@ namespace SIL.XForge.Scripture.Models
             string textTypeStr;
             switch (textType)
             {
-                case TextType.Source:
-                    textTypeStr = "source";
-                    break;
                 case TextType.Target:
                     textTypeStr = "target";
                     break;
