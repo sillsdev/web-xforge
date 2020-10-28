@@ -408,7 +408,7 @@ namespace SIL.XForge.Scripture.Services
                 { "user01", TextInfoPermission.Read },
                 { "user02", TextInfoPermission.None },
             };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), TextType.Source)
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>())
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -416,7 +416,7 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
-            Assert.That(project.Texts.First().SourcePermissions["user02"], Is.EqualTo(TextInfoPermission.None));
+            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.None));
         }
 
         [Test]
@@ -437,7 +437,7 @@ namespace SIL.XForge.Scripture.Services
                 { "user01", TextInfoPermission.Read },
                 { "user02", TextInfoPermission.Read },
             };
-            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), TextType.Source)
+            env.ParatextService.GetPermissionsAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>())
                 .Returns(Task.FromResult(ptSourcePermissions));
 
             await env.Runner.RunAsync("project01", "user01", false);
@@ -445,7 +445,7 @@ namespace SIL.XForge.Scripture.Services
             SFProject project = env.GetProject();
             Assert.That(project.Sync.QueuedCount, Is.EqualTo(0));
             Assert.That(project.Sync.LastSyncSuccessful, Is.True);
-            Assert.That(project.Texts.First().SourcePermissions["user02"], Is.EqualTo(TextInfoPermission.Read));
+            Assert.That(project.Texts.First().Permissions["user02"], Is.EqualTo(TextInfoPermission.Read));
         }
 
         [Test]
@@ -749,7 +749,7 @@ namespace SIL.XForge.Scripture.Services
                 };
                 ParatextService.GetProjectRolesAsync(Arg.Any<UserSecret>(), "target")
                     .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
-                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<string>()))
+                ParatextService.When(x => x.SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>()))
                     .Do(x => _sendReceivedCalled = true);
                 ParatextService.IsProjectLanguageRightToLeft(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<TextType>())
                     .Returns(false);
