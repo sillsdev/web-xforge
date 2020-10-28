@@ -183,6 +183,7 @@ namespace SourceTargetSplitting
 
             // Get the existing textdata objects from MongoDB
             List<TextData> texts = this._realtimeService.QuerySnapshots<TextData>().ToList();
+            List<string> textIds = texts.Select(t => t.Id).ToList(); 
 
             // Iterate over every text in database
             foreach (TextData text in texts)
@@ -197,24 +198,28 @@ namespace SourceTargetSplitting
                     if (sourceMapping.ContainsKey(targetId))
                     {
                         text.Id = $"{sourceMapping[targetId]}:{textIdParts[1]}:{textIdParts[2]}:target";
-                        Program.Log($"Rename TextData {oldId} to {text.Id}");
-                        if (doWrite)
+                        if (!textIds.Contains(text.Id))
                         {
-                            // NOTE: You cannot rename _id in MongoDB!
-
-                            // Delete from ShareDB
-                            IDocument<TextData> oldTextDoc = connection.Get<TextData>(oldId);
-                            await oldTextDoc.FetchAsync().ConfigureAwait(false);
-                            if (oldTextDoc.IsLoaded)
+                            textIds.Add(text.Id);
+                            Program.Log($"Rename TextData {oldId} to {text.Id}");
+                            if (doWrite)
                             {
-                                await oldTextDoc.DeleteAsync().ConfigureAwait(false);
+                                // NOTE: You cannot rename _id in MongoDB!
+
+                                // Delete from ShareDB
+                                IDocument<TextData> oldTextDoc = connection.Get<TextData>(oldId);
+                                await oldTextDoc.FetchAsync().ConfigureAwait(false);
+                                if (oldTextDoc.IsLoaded)
+                                {
+                                    await oldTextDoc.DeleteAsync().ConfigureAwait(false);
+                                }
+
+                                // Remove from MongoDB
+                                await this.DeleteDocsAsync("texts", oldId).ConfigureAwait(false);
+
+                                // Add the new text document via the real time service
+                                await connection.CreateAsync(text.Id, text).ConfigureAwait(false);
                             }
-
-                            // Remove from MongoDB
-                            await this.DeleteDocsAsync("texts", oldId).ConfigureAwait(false);
-
-                            // Add the new text document via the real time service
-                            await connection.CreateAsync(text.Id, text).ConfigureAwait(false);
                         }
                     }
                 }
