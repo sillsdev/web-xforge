@@ -23,6 +23,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task SyncAsync(string curUserId, string projectId, bool trainEngine)
         {
+            string sourceProjectId = null;
             using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
@@ -30,9 +31,21 @@ namespace SIL.XForge.Scripture.Services
                 {
                     throw new ForbiddenException();
                 }
+
+                sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ParatextId;
                 await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
             }
-            _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(projectId, curUserId, trainEngine));
+
+            if (!string.IsNullOrWhiteSpace(sourceProjectId))
+            {
+                // We need to sync the source first so that we can link the source texts and train the engine
+                var parentId = _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(sourceProjectId, curUserId, false));
+                _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(parentId, r => r.RunAsync(projectId, curUserId, trainEngine));
+            }
+            else
+            {
+                _backgroundJobClient.Enqueue<ParatextSyncRunner>(r => r.RunAsync(projectId, curUserId, trainEngine));
+            }
         }
     }
 }
