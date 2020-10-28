@@ -17,6 +17,7 @@
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
     "product_version": "Product version: v{{ version }}",
     "project_home": "Project home",
+    "redirecting_in_moments": "Redirecting in a few moments...",
     "report_issue_email": "email {{ email }}",
     "report_issue": "Report an issue",
     "scripture_checking_not_available": "Scripture checking is not available in this project."

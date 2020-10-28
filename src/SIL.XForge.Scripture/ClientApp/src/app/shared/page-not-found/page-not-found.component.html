@@ -1,4 +1,7 @@
 <ng-container *transloco="let t; read: 'app'">
   <h2><mdc-icon>error_outline</mdc-icon>{{ t("page_not_found") }}</h2>
+  <p>{{ t("redirecting_in_moments") }}</p>
+  <mdc-linear-progress determinate [progress]="progress | async" [buffer]="1"></mdc-linear-progress>
+  <br />
   <a appRouterLink="/projects">{{ t("project_home") }}</a>
 </ng-container>
