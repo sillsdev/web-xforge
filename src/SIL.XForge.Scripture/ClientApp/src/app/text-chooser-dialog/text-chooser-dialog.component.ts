@@ -20,6 +20,7 @@ export interface TextChooserDialogData {
   chapterNum: number;
   projectId: string;
   textsByBookId: TextsByBookId;
+  isRightToLeft?: boolean;
   selectedText?: string;
   selectedVerses?: VerseRefData;
 }
@@ -75,6 +76,10 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
 
   get bookName(): string {
     return this.i18n.localizeBook(this.bookNum);
+  }
+
+  get isTextRightToLeft(): boolean {
+    return this.data.isRightToLeft == null ? false : this.data.isRightToLeft;
   }
 
   updateSelection() {

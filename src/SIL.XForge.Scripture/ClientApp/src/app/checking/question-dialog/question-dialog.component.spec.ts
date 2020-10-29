@@ -164,11 +164,12 @@ describe('QuestionDialogComponent', () => {
     }
   }));
 
-  it('should set default verse if provided', fakeAsync(() => {
+  it('should set default verse and text direction when provided', fakeAsync(() => {
     const verseRef: VerseRef = VerseRef.parse('LUK 1:1');
-    const env = new TestEnvironment(undefined, verseRef);
+    const env = new TestEnvironment(undefined, verseRef, true);
     flush();
     expect(env.component.scriptureStart.value).toBe('LUK 1:1');
+    expect(env.component.isTextRightToLeft).toBe(true);
   }));
 
   it('should validate matching book and chapter', fakeAsync(() => {
@@ -544,7 +545,7 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.get<TestRealtimeService>(TestRealtimeService);
 
-  constructor(question?: Question, defaultVerseRef?: VerseRef) {
+  constructor(question?: Question, defaultVerseRef?: VerseRef, isRtl: boolean = false) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const viewContainerRef = this.fixture.componentInstance.childViewContainer;
     let questionDoc: QuestionDoc | undefined;
@@ -573,7 +574,8 @@ class TestEnvironment {
           JHN: { bookNum: 43, hasSource: false, chapters: [{ number: 1, lastVerse: 0, isValid: true }] }
         },
         projectId: 'project01',
-        defaultVerse: defaultVerseRef
+        defaultVerse: defaultVerseRef,
+        isRightToLeft: isRtl
       },
       viewContainerRef
     };

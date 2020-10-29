@@ -282,11 +282,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get isLtr(): boolean {
-    return !this._isRightToLeft;
+    return !this._isRightToLeft && this.contentShowing;
   }
 
   get isRtl(): boolean {
-    return this._isRightToLeft;
+    return this._isRightToLeft && this.contentShowing;
   }
 
   get isSelectionAtSegmentEnd(): boolean {
@@ -310,6 +310,17 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   get readOnlyEnabled(): boolean {
     return this.isReadOnly || (this.viewModel != null && this.viewModel.isEmpty);
+  }
+
+  get textDirection(): string {
+    if (this.contentShowing) {
+      return this.isRtl ? 'rtl' : 'ltr';
+    }
+    return 'auto';
+  }
+
+  private get contentShowing(): boolean {
+    return this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty;
   }
 
   ngAfterViewInit(): void {

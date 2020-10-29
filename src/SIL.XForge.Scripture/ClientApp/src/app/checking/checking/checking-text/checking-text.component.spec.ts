@@ -84,6 +84,15 @@ describe('CheckingTextComponent', () => {
     expect(env.segmentHasQuestion(1, 4)).toBe(true);
     expect(env.isSegmentHighlighted(1, 4)).toBe(true);
   }));
+
+  it('can set text direction explicitly', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.wait();
+    expect(env.fixture.nativeElement.querySelector('quill-editor[class="read-only-editor ltr"')).not.toBeNull();
+    env.component.isRightToLeft = true;
+    env.wait();
+    expect(env.fixture.nativeElement.querySelector('quill-editor[class="read-only-editor rtl"')).not.toBeNull();
+  }));
 });
 
 class TestEnvironment {

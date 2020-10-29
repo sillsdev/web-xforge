@@ -325,7 +325,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const data: QuestionDialogData = {
       questionDoc,
       textsByBookId: this.textsByBookId,
-      projectId: this.projectDoc.id
+      projectId: this.projectDoc.id,
+      isRightToLeft: this.projectDoc.data?.isRightToLeft
     };
     await this.questionDialogService.questionDialog(data);
     this.initTextsWithLoadingIndicator();
