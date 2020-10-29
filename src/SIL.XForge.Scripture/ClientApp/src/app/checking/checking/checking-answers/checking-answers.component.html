@@ -98,7 +98,15 @@
           </div>
           <div class="form-actions">
             <button mdc-button type="button" (click)="hideAnswerForm()" id="cancel-answer">{{ t("cancel") }}</button>
-            <button mdc-button unelevated form="answer-form" id="save-answer" type="submit" (click)="submit()">
+            <button
+              mdc-button
+              unelevated
+              form="answer-form"
+              id="save-answer"
+              type="submit"
+              (click)="submit()"
+              [disabled]="saveAnswerDisabled"
+            >
               {{ t("save_answer") }}
             </button>
           </div>
