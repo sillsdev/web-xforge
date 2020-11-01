@@ -2,6 +2,7 @@ namespace SourceTargetSplitting
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Net.Http;
@@ -245,7 +246,6 @@ namespace SourceTargetSplitting
                     // If we do not have the source project, create it, otherwise, delete it
                     if (!projectIds.Contains(sourceProjectId))
                     {
-                        // This will only be called if this is a resource.
                         Log($"\tMoving source directory to its own project: {sourceProjectId}");
                         string newProjectDirectoryPath = Path.Combine(syncDir, sourceProjectId);
                         string newProjectTargetDirectoryPath = Path.Combine(newProjectDirectoryPath, "target");
@@ -255,7 +255,7 @@ namespace SourceTargetSplitting
                             Directory.Move(sourcePath, newProjectTargetDirectoryPath);
                             try
                             {
-                                await objectMigrator!.CreateProjectFromResourceAsync(sourceProjectId, projectId).ConfigureAwait(false);
+                                await objectMigrator!.CreateProjectFromSourceAsync(sourceProjectId, projectId).ConfigureAwait(false);
                             }
                             catch (DataNotFoundException ex)
                             {
@@ -299,6 +299,9 @@ namespace SourceTargetSplitting
         {
             string when = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             Console.WriteLine($"{when} SourceTargetSplitting: {message}");
+#if DEBUG
+            Debug.WriteLine($"{when} SourceTargetSplitting: {message}");
+#endif
         }
     }
 }
