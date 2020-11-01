@@ -8,15 +8,15 @@ namespace SourceTargetSplitting
     public interface IObjectMigrator
     {
         /// <summary>
-        /// Creates the project from a resource.
+        /// Creates the project from a source project reference.
         /// </summary>
-        /// <param name="resourceId">The source resource identifier.</param>
+        /// <param name="sourceId">The source project/resource identifier.</param>
         /// <param name="targetId">The target project identifier.
-        /// This is the project that will reference this resource a source.</param>
+        /// This is the project that will reference this project/resource a source.</param>
         /// <returns>
         /// The task.
         /// </returns>
-        Task CreateProjectFromResourceAsync(string resourceId, string targetId);
+        Task CreateProjectFromSourceAsync(string sourceId, string targetId);
 
         /// <summary>
         /// Migrates the objects.
