@@ -73,7 +73,7 @@ namespace SourceTargetSplitting
         }
 
         /// <inheritdoc />
-        public async Task CreateProjectFromResourceAsync(string resourceId, string targetId)
+        public async Task CreateProjectFromSourceAsync(string sourceId, string targetId)
         {
             // Get the administrator for the specified project
             var targetProject = this._realtimeService.QuerySnapshots<SFProject>().FirstOrDefault(p => p.ParatextId == targetId);
@@ -97,13 +97,13 @@ namespace SourceTargetSplitting
 
             // We check projects first, in case it is a project, but also because this will refresh the token for us
             IReadOnlyList<ParatextProject> projects = await this._paratextService.GetProjectsAsync(userSecret).ConfigureAwait(false);
-            ParatextProject resource = projects.SingleOrDefault(r => r.ParatextId == resourceId);
-            if (resource == null)
+            ParatextProject source = projects.SingleOrDefault(r => r.ParatextId == sourceId);
+            if (source == null)
             {
                 // Otherwise, see if this is a resource
                 projects = this._paratextService.GetResources(userSecret);
-                resource = projects.SingleOrDefault(r => r.ParatextId == resourceId);
-                if (resource == null)
+                source = projects.SingleOrDefault(r => r.ParatextId == sourceId);
+                if (source == null)
                 {
                     throw new DataNotFoundException("The source paratext project does not exist.");
                 }
@@ -111,10 +111,10 @@ namespace SourceTargetSplitting
 
             var project = new SFProject
             {
-                ParatextId = resourceId,
-                Name = resource.Name,
-                ShortName = resource.ShortName,
-                WritingSystem = new WritingSystem { Tag = resource.LanguageTag },
+                ParatextId = sourceId,
+                Name = source.Name,
+                ShortName = source.ShortName,
+                WritingSystem = new WritingSystem { Tag = source.LanguageTag },
                 TranslateConfig = new TranslateConfig
                 {
                     TranslationSuggestionsEnabled = false,
@@ -176,52 +176,93 @@ namespace SourceTargetSplitting
                     }
                     else
                     {
-                        Program.Log($"Project {sourceParatextId} is missing from MongoDB!");
+                        Program.Log($"Error Migrating {project.Id} -  Source {sourceParatextId} is missing from MongoDB!");
                     }
                 }
             }
 
-            // Get the existing textdata objects from MongoDB
-            List<TextData> texts = this._realtimeService.QuerySnapshots<TextData>().ToList();
-            List<string> textIds = texts.Select(t => t.Id).ToList(); 
+            // Get the Textdata collection
+            string collectionName = this._realtimeService.GetCollectionName<TextData>();
+            IMongoCollection<TextData> collection = _database.GetCollection<TextData>(collectionName);
 
-            // Iterate over every text in database
-            foreach (TextData text in texts)
+            // Get the existing textdata object ids from MongoDB
+            List<string> textIds = collection.AsQueryable().Select(t => t.Id).ToList();
+
+            // Iterate over every text id in database
+            foreach (string textId in textIds.Where(t => t.EndsWith(":source", StringComparison.Ordinal)))
             {
-                // Create with new _id for source text, deleting the old one
-                // You cannot rename _id's, and the client will download a new object with the new id anyway
-                string oldId = text.Id;
-                string[] textIdParts = oldId.Split(':', StringSplitOptions.RemoveEmptyEntries);
-                if (textIdParts.Length == 4 && textIdParts.Last() == "source")
+                // Get the TextData from the database
+                TextData? text = await collection
+                    .Find(Builders<TextData>.Filter.Eq("_id", textId))
+                    .SingleOrDefaultAsync()
+                    .ConfigureAwait(false);
+                if (text != null)
                 {
-                    string targetId = textIdParts.First();
-                    if (sourceMapping.ContainsKey(targetId))
+                    // Create with new _id for source text, deleting the old one
+                    // You cannot rename _id's, and the client will download a new object with the new id anyway
+                    string oldId = text.Id;
+                    string[] textIdParts = oldId.Split(':', StringSplitOptions.RemoveEmptyEntries);
+                    if (textIdParts.Length == 4 && textIdParts.Last() == "source")
                     {
-                        text.Id = $"{sourceMapping[targetId]}:{textIdParts[1]}:{textIdParts[2]}:target";
-                        if (!textIds.Contains(text.Id))
+                        string targetId = textIdParts.First();
+                        if (sourceMapping.ContainsKey(targetId))
                         {
-                            textIds.Add(text.Id);
-                            Program.Log($"Rename TextData {oldId} to {text.Id}");
-                            if (doWrite)
+                            text.Id = $"{sourceMapping[targetId]}:{textIdParts[1]}:{textIdParts[2]}:target";
+                            if (!textIds.Contains(text.Id))
                             {
-                                // NOTE: You cannot rename _id in MongoDB!
-
-                                // Delete from ShareDB
-                                IDocument<TextData> oldTextDoc = connection.Get<TextData>(oldId);
-                                await oldTextDoc.FetchAsync().ConfigureAwait(false);
-                                if (oldTextDoc.IsLoaded)
+                                textIds.Add(text.Id);
+                                Program.Log($"Rename TextData {oldId} to {text.Id}");
+                                if (doWrite)
                                 {
-                                    await oldTextDoc.DeleteAsync().ConfigureAwait(false);
+                                    // NOTE: You cannot rename _id in MongoDB!
+
+                                    // Delete from ShareDB
+                                    IDocument<TextData> oldTextDoc = connection.Get<TextData>(oldId);
+                                    await oldTextDoc.FetchAsync().ConfigureAwait(false);
+                                    if (oldTextDoc.IsLoaded)
+                                    {
+                                        await oldTextDoc.DeleteAsync().ConfigureAwait(false);
+                                    }
+
+                                    // Remove from MongoDB
+                                    await this.DeleteDocsAsync("texts", oldId).ConfigureAwait(false);
+
+                                    // Add the new text document via the real time service
+                                    await connection.CreateAsync(text.Id, text).ConfigureAwait(false);
                                 }
+                            }
+                            else
+                            {
+                                // Remove the source, as the it already exists as a target
+                                Program.Log($"TextData {text.Id} already exists, deleting {oldId}");
+                                if (doWrite)
+                                {
+                                    // Delete from ShareDB
+                                    IDocument<TextData> oldTextDoc = connection.Get<TextData>(oldId);
+                                    await oldTextDoc.FetchAsync().ConfigureAwait(false);
+                                    if (oldTextDoc.IsLoaded)
+                                    {
+                                        await oldTextDoc.DeleteAsync().ConfigureAwait(false);
+                                    }
 
-                                // Remove from MongoDB
-                                await this.DeleteDocsAsync("texts", oldId).ConfigureAwait(false);
-
-                                // Add the new text document via the real time service
-                                await connection.CreateAsync(text.Id, text).ConfigureAwait(false);
+                                    // Remove from MongoDB
+                                    await this.DeleteDocsAsync("texts", oldId).ConfigureAwait(false);
+                                }
                             }
                         }
+                        else
+                        {
+                            Program.Log($"Error Migrating TextData {text.Id} - Missing Source Mapping");
+                        }
                     }
+                    else
+                    {
+                        Program.Log($"Error Migrating TextData {text.Id} - Incorrect Identifier Format");
+                    }
+                }
+                else
+                {
+                    Program.Log($"Error Migrating TextData {textId} - Could Not Load From MongoDB");
                 }
             }
         }
