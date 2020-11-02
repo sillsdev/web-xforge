@@ -351,9 +351,6 @@ else
   git pull --ff-only --recurse-submodules
 fi
 
-# mongodb-org isn't released for focal yet. Just install the bionic mongodb for now.
-perl -pi -e '/base_distribution_release/ and s/bionic/focal/' ~/src/web-xforge/deploy/dependencies.yml
-perl -pi -e '/repo.mongo/ and s/{{base_distribution_release}}/bionic/' ~/src/web-xforge/deploy/dependencies.yml
 # The first update_cache is causing trouble. Change it from 'yes' to 'no' for now. '0777'
 # isn't about file permissions; it's part of triggering multi-line substitution. The regex
 # finds the 'update_cache: yes' line that follows a line ending in 'mongodb-org'
