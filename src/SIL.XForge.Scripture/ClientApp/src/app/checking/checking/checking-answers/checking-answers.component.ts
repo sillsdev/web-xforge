@@ -437,10 +437,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
     this.applyTextAudioValidators();
     this.answerFormSubmitAttempted = true;
-    this.saveAnswerDisabled = true;
     if (this.answerForm.invalid) {
       return;
     }
+    this.saveAnswerDisabled = true;
     const userDoc = await this.userService.getCurrentUser();
     if (userDoc.data != null && !userDoc.data.isDisplayNameConfirmed) {
       await this.userService.editDisplayName(true);

@@ -799,7 +799,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  private saveAnswer(answer: Answer, questionDoc?: QuestionDoc): void {
+  private saveAnswer(answer: Answer, questionDoc: QuestionDoc | undefined): void {
     if (this.questionsPanel == null || questionDoc?.data == null) {
       return;
     }
