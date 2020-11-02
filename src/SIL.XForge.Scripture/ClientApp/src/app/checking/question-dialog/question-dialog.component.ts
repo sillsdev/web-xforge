@@ -239,7 +239,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     const questionDoc = this.data.questionDoc;
     if (questionDoc != null && questionDoc.data != null) {
       const blob = await questionDoc.getFileContents(FileType.Audio, questionDoc.data.dataId);
-      this.audioSource = blob != null ? URL.createObjectURL(blob) : undefined;
+      this.audioSource = blob != null ? URL.createObjectURL(blob) : questionDoc.data.audioUrl;
     }
   }
 }

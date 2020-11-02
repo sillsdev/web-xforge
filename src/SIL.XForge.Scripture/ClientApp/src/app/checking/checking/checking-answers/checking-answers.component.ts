@@ -137,7 +137,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   private _questionDoc?: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
-  private fileSources: Map<string, string> = new Map<string, string>();
+  private fileSources: Map<string, string | undefined> = new Map<string, string | undefined>();
   /** If the user has recently added or edited their answer since opening up the question. */
   private justEditedAnswer: boolean = false;
 
@@ -521,10 +521,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
     // default to the audioUrl to access the file on server if online or show the audio unavailable icon
     // when offline and audio is not cached
-    const source: string | undefined = audio == null ? audioUrl : URL.createObjectURL(audio);
-    if (source != null) {
-      this.fileSources.set(audioUrl, source);
-    }
+    const source: string | undefined = audio != null ? URL.createObjectURL(audio) : undefined;
+    this.fileSources.set(audioUrl, source);
   }
 
   private refreshAnswersHighlightStatus(): void {

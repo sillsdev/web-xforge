@@ -6,7 +6,7 @@ import { instance, mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player.component';
+import { AudioStatus, AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player.component';
 
 describe('CheckingAudioPlayerComponent', () => {
   const audioFile = 'test-audio-player.webm';
@@ -90,12 +90,33 @@ describe('CheckingAudioPlayerComponent', () => {
     expect(env.audioNotAvailableMessage).toBeNull();
   });
 
-  it('show error tooltip if error loading audio', async () => {
-    const template = `<app-checking-audio-player #player1 source="blob://unsupported"></app-checking-audio-player>`;
+  it('show error tooltip if error loading audio while online and the file does not exist', async () => {
+    const template = `<app-checking-audio-player #player1 source="audio-file-not-exists.webm"></app-checking-audio-player>`;
+    const env = new TestEnvironment(template, true);
+    await env.waitForPlayer(1000);
+    expect(env.audioNotAvailableMessage).not.toBeNull();
+    expect(env.audioNotAvailableMessage.query(By.css('#error-load'))).not.toBeNull();
+    expect(env.component.player1.audioStatus).toEqual(AudioStatus.Unavailable);
+    expect(env.playButton(1)).toBeNull();
+  });
+
+  it('show error tooltip if error loading audio while offline and the file does not exist', async () => {
+    const template = `<app-checking-audio-player #player1 source="audio-file-not-exists.webm"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(1000);
     expect(env.audioNotAvailableMessage).not.toBeNull();
     expect(env.audioNotAvailableMessage.query(By.css('#error-load'))).not.toBeNull();
+    expect(env.component.player1.audioStatus).toEqual(AudioStatus.Offline);
+    expect(env.playButton(1)).toBeNull();
+  });
+
+  it('show error tooltip if error loading audio is unsupported', async () => {
+    const template = `<app-checking-audio-player #player1 source="blob://unsupported"></app-checking-audio-player>`;
+    const env = new TestEnvironment(template, true);
+    await env.waitForPlayer(1000);
+    expect(env.audioNotAvailableMessage).not.toBeNull();
+    expect(env.audioNotAvailableMessage.query(By.css('#error-load'))).not.toBeNull();
+    expect(env.component.player1.audioStatus).toEqual(AudioStatus.LocalNotAvailable);
     expect(env.playButton(1)).toBeNull();
   });
 });
