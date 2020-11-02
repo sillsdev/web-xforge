@@ -725,7 +725,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private async trainSegment(segment: Segment | undefined): Promise<void> {
-    if (this.translationSession == null || segment == null || !this.canTrainSegment(segment)) {
+    if (
+      this.translationSession == null ||
+      segment == null ||
+      !this.canTrainSegment(segment) ||
+      !this.pwaService.isOnline
+    ) {
+      // the segment cannot be trained if offline, so skip it
       return;
     }
 

@@ -393,6 +393,25 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('does not train a modified segment after selecting a different segment if offline', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_5');
+      expect(env.component.showSuggestions).toBe(true);
+      env.insertSuggestion();
+      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
+      env.onlineStatus = false;
+      when(mockedPwaService.isOnline).thenReturn(false);
+      const range = env.component.target!.getSegmentRange('verse_1_1');
+      env.targetEditor.setSelection(range!.index, 0, 'user');
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_1');
+      expect(env.lastApprovedPrefix).toEqual([]);
+
+      env.dispose();
+    }));
+
     it('train a modified segment after switching to another text and back', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
@@ -1045,6 +1064,11 @@ class TestEnvironment {
 
   get targetEditor(): Quill {
     return this.component.target!.editor!;
+  }
+
+  set onlineStatus(value: boolean) {
+    when(mockedPwaService.isOnline).thenReturn(value);
+    when(mockedPwaService.onlineStatus).thenReturn(of(value));
   }
 
   setCurrentUser(userId: string): void {
