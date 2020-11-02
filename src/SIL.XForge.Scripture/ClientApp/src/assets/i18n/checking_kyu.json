@@ -182,7 +182,7 @@
   },
   "checking_audio_player": {
     "audio_unavailable": "Audio unavailable.",
-    "audio_cannot_be_played": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
+    "audio_cannot_be_played_offline": "This audio cannot be played while you are offline because it has not been downloaded. Connect to the Internet to play."
   },
   "checking_audio_recorder": {
     "mic_access_denied": "ꤔꤟꤢꤧ꤬ ꤜꤟꤢꤩꤔꤟꤤꤘꤢ꤭ ꤔꤢ microphone ꤔꤌꤣ꤬ ꤢ꤬ꤙꤤ ꤕꤢ꤭꤯ ꤋꤛꤢꤞꤢꤧꤘꤥ꤭ ꤗꤟꤢꤩ꤬ ꤊꤟꤢꤦꤚꤟꤢꤩ enable the microphone ꤘꤣ ꤔꤟꤢꤧ꤬ browser ꤊꤢꤨ꤭ ꤔꤌꤣ꤬꤯ ",
