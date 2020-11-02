@@ -2,6 +2,7 @@ import { Component, ErrorHandler, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
+import { CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -189,11 +190,14 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       try {
         projectId = await this.projectService.onlineCreate(settings);
       } catch (err) {
-        if (!err.message?.includes(ConnectProjectComponent.errorAlreadyConnectedKey)) {
+        if (err.code === CommandErrorCode.Forbidden) {
+          err.message = this.translocoService.translate('connect_project.problem_connecting_permissions_or_not_found');
+        } else if (err.message?.includes(ConnectProjectComponent.errorAlreadyConnectedKey)) {
+          err.message = this.translocoService.translate('connect_project.problem_already_connected');
+        } else {
           throw err;
         }
 
-        err.message = this.translocoService.translate('connect_project.problem_already_connected');
         this.errorHandler.handleError(err);
         this.state = 'input';
         this.populateProjectList();

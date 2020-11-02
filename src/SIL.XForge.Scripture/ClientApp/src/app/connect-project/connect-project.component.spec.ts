@@ -10,7 +10,7 @@ import { CheckingShareLevel } from 'realtime-server/lib/scriptureforge/models/ch
 import { SFProject } from 'realtime-server/lib/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, defer, of } from 'rxjs';
-import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -335,6 +335,43 @@ describe('ConnectProjectComponent', () => {
 
     verify(mockedParatextService.getProjects()).once();
     verify(mockedErrorHandler.handleError(anything())).once();
+    const errorArg: string = capture(mockedErrorHandler.handleError).last()[0];
+    expect(errorArg).toMatch(/already connect/);
+    expect(errorArg).not.toMatch(/not have been found/);
+    expect(env.component.state).toEqual('input');
+    expect(env.progressBar).toBeNull();
+    expect(env.component.connectProgress).toBeUndefined();
+    verify(mockedSFProjectService.onlineCreate(anything())).once();
+    verify(mockedSFProjectService.onlineAddCurrentUser(anything())).never();
+    verify(mockedRouter.navigate(deepEqual(['/projects', 'project01']))).never();
+  }));
+
+  it('handles permission error for connection', fakeAsync(() => {
+    // A ForbiddenError could come from the backend if the requesting user is not an admin on the project, or if the
+    // project is not found in the Paratext registry.
+    const env = new TestEnvironment();
+    env.setupDefaultProjectData();
+    env.waitForProjectsResponse();
+    expect(env.component.state).toEqual('input');
+    env.changeSelectValue(env.projectSelect, 'pt01');
+    expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(false);
+    expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
+    when(mockedSFProjectService.onlineCreate(anything())).thenThrow(
+      new CommandError(CommandErrorCode.Forbidden, '', null)
+    );
+    when(mockedErrorHandler.handleError(anything())).thenReturn();
+
+    resetCalls(mockedParatextService);
+    // SUT
+    env.clickElement(env.submitButton);
+    tick();
+    env.fixture.detectChanges();
+
+    verify(mockedParatextService.getProjects()).once();
+    verify(mockedErrorHandler.handleError(anything())).once();
+    const errorArg: string = capture(mockedErrorHandler.handleError).last()[0];
+    expect(errorArg).toMatch(/not have been found/);
+    expect(errorArg).not.toMatch(/already connect/);
     expect(env.component.state).toEqual('input');
     expect(env.progressBar).toBeNull();
     expect(env.component.connectProgress).toBeUndefined();

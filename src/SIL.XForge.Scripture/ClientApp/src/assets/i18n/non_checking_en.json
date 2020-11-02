@@ -57,6 +57,7 @@
     "only_paratext_admins_can_start": "** You must be the Paratext Administrator of a project to start it here. Ask your Administrator to connect to your project then you can also connect to it here after that.",
     "paratext_project": "Paratext Project",
     "problem_already_connected": "The project is already connected. Maybe another project administrator connected the project at the same time. Please try again. If it continues to be a problem, please report the issue so we can get it fixed.",
+    "problem_connecting_permissions_or_not_found": "There was a problem connecting to the project. You may not have adequate permissions on the project, or the project may not have been found in the registry. Back translations or other projects that are not always in the registry would need to be registered separately in order to connect, as connecting to projects not listed in the Paratext Registry is not supported at this time.",
     "translation_suggestions": "Translation Suggestions",
     "translations_will_be_suggested_as_you_edit": "Translations for words and phrases will be suggested as you edit Scripture. It is recommended that your project is setup as a {{ boldStart }}Daughter Translation{{ boldEnd }} in Paratext.",
     "you_can_change_later": "You can change these later.",
