@@ -467,9 +467,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         answer.dateModified = dateNow;
         if (answerAction.audio != null) {
           if (answerAction.audio.fileName != null && answerAction.audio.blob != null) {
-            if (this.questionsPanel.activeQuestionDoc != null) {
+            if (answerAction.questionDoc != null) {
               // Get the amended filename and save it against the answer
-              const urlResult = await this.questionsPanel.activeQuestionDoc.uploadFile(
+              const urlResult = await answerAction.questionDoc.uploadFile(
                 FileType.Audio,
                 answer.dataId,
                 answerAction.audio.blob,
@@ -484,7 +484,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             answer.audioUrl = undefined;
           }
         }
-        this.saveAnswer(answer);
+        this.saveAnswer(answer, answerAction.questionDoc);
         if (answerAction.savedCallback != null) {
           answerAction.savedCallback();
         }
@@ -799,15 +799,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  private saveAnswer(answer: Answer): void {
-    if (this.questionsPanel == null) {
+  private saveAnswer(answer: Answer, questionDoc: QuestionDoc | undefined): void {
+    if (this.questionsPanel == null || questionDoc?.data == null) {
       return;
     }
-    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
-    if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
-      return;
-    }
-    const answers = cloneDeep(activeQuestionDoc.data.answers);
+    const answers = cloneDeep(questionDoc.data.answers);
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
       answers[answerIndex] = answer;
@@ -815,10 +811,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       answers.unshift(answer);
     }
     if (answerIndex >= 0) {
-      const oldAnswer = activeQuestionDoc.data.answers[answerIndex];
+      const oldAnswer = questionDoc.data.answers[answerIndex];
       const newAnswer = answers[answerIndex];
       const deleteAudio = oldAnswer.audioUrl != null && newAnswer.audioUrl == null;
-      const submitPromise = activeQuestionDoc.submitJson0Op(op =>
+      const submitPromise = questionDoc.submitJson0Op(op =>
         op
           .set(q => q.answers[answerIndex].text, newAnswer.text)
           .set(q => q.answers[answerIndex].scriptureText, newAnswer.scriptureText)
@@ -831,15 +827,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       if (deleteAudio) {
         submitPromise.then(() => {
           if (this.projectDoc != null) {
-            activeQuestionDoc.deleteFile(FileType.Audio, oldAnswer.dataId, oldAnswer.ownerRef);
+            questionDoc.deleteFile(FileType.Audio, oldAnswer.dataId, oldAnswer.ownerRef);
           }
         });
       }
     } else {
-      activeQuestionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
+      questionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
     }
-    activeQuestionDoc.updateAnswerFileCache();
-    this.questionsPanel.updateElementsRead(activeQuestionDoc);
+    questionDoc.updateAnswerFileCache();
+    this.questionsPanel.updateElementsRead(questionDoc);
     this.refreshSummary();
   }
 

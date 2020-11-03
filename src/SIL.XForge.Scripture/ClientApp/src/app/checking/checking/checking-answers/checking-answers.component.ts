@@ -130,6 +130,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   selectionEndClipped?: boolean;
   verseRef?: VerseRef;
   answersHighlightStatus: Map<string, boolean> = new Map<string, boolean>();
+  saveAnswerDisabled: boolean = false;
 
   /** IDs of answers to show to user (so, excluding unshown incoming answers). */
   private _answersToShow: string[] = [];
@@ -439,6 +440,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this.answerForm.invalid) {
       return;
     }
+    this.saveAnswerDisabled = true;
     const userDoc = await this.userService.getCurrentUser();
     if (userDoc.data != null && !userDoc.data.isDisplayNameConfirmed) {
       await this.userService.editDisplayName(true);
@@ -544,8 +546,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       selectionStartClipped: this.selectionStartClipped,
       selectionEndClipped: this.selectionEndClipped,
       verseRef: this.verseRef == null ? undefined : fromVerseRef(this.verseRef),
+      questionDoc: this.questionDoc,
       savedCallback: () => {
         this.hideAnswerForm();
+        this.saveAnswerDisabled = false;
         this.justEditedAnswer = true;
         this.updateQuestionDocAudioUrls();
       }
