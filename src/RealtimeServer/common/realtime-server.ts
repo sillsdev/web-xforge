@@ -4,6 +4,7 @@ import shareDBAccess = require('sharedb-access');
 import { Connection, Doc, RawOp } from 'sharedb/lib/client';
 import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
+import { User, USERS_COLLECTION } from './models/user';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { DocService } from './services/doc-service';
 import { createFetchQuery, docFetch } from './utils/sharedb-utils';
@@ -171,6 +172,23 @@ export class RealtimeServer extends ShareDB {
       agent._open();
     });
     return agent;
+  }
+
+  async canUserAccessResource(session: ConnectSession, resourceId: string): Promise<boolean> {
+    const conn = this.connect();
+    const userDoc = conn.get(USERS_COLLECTION, session.userId);
+    await docFetch(userDoc);
+    if (userDoc.data != null) {
+      const user: User = userDoc.data;
+      if (user.sites != null) {
+        for (const key in user.sites) {
+          if (user.sites[key].resources != null && user.sites[key].resources.includes(resourceId)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   async getUserProjectRole(session: ConnectSession, projectId: string): Promise<string | undefined> {
