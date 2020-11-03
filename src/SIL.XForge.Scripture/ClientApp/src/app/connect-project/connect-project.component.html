@@ -11,7 +11,7 @@
     <mdc-card outlined *ngSwitchCase="'connecting'" class="progress-container">
       <div class="progress-label" mdcBody1>{{ t("connecting_to_project", { projectName: connectProjectName }) }}</div>
       <mdc-linear-progress
-        [determinate]="!connectPending"
+        [determinate]="isProgressDeterminate"
         [progress]="connectProgress"
         [buffer]="1"
       ></mdc-linear-progress>

@@ -65,8 +65,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       : this.projectDoc.data.sync.percentCompleted;
   }
 
-  get connectPending(): boolean {
-    return this.connectProgress == null;
+  get isProgressDeterminate(): boolean {
+    return this.connectProgress != null && this.connectProgress > 0;
   }
 
   get hasConnectableProjects(): boolean {

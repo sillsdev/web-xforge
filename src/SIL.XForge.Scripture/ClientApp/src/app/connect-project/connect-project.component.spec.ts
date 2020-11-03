@@ -258,11 +258,12 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('connecting');
     expect(env.progressBar).not.toBeNull();
-    expect(env.component.connectPending).toEqual(true);
+    expect(env.component.isProgressDeterminate).toEqual(false);
 
     env.emitSyncProgress(0);
-    expect(env.component.connectPending).toEqual(false);
+    expect(env.component.isProgressDeterminate).toEqual(false);
     env.emitSyncProgress(0.5);
+    expect(env.component.isProgressDeterminate).toEqual(true);
     env.emitSyncProgress(1);
     env.emitSyncComplete();
 
@@ -290,11 +291,12 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('connecting');
     expect(env.progressBar).not.toBeNull();
-    expect(env.component.connectPending).toEqual(true);
+    expect(env.component.isProgressDeterminate).toEqual(false);
 
     env.emitSyncProgress(0);
-    expect(env.component.connectPending).toEqual(false);
+    expect(env.component.isProgressDeterminate).toEqual(false);
     env.emitSyncProgress(0.5);
+    expect(env.component.isProgressDeterminate).toEqual(true);
     env.emitSyncProgress(1);
     env.emitSyncComplete();
 
