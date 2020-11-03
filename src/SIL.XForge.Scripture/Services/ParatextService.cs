@@ -45,6 +45,7 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class ParatextService : DisposableBase, IParatextService
     {
+        private const int ResourceIdentifierLength = 16;
         private readonly IOptions<ParatextOptions> _paratextOptions;
         private readonly IRepository<UserSecret> _userSecretRepository;
         private readonly IRealtimeService _realtimeService;
@@ -168,12 +169,6 @@ namespace SIL.XForge.Scripture.Services
                 {
                     ptProjectsAvailable.Add(resource.ParatextId, resource);
                 }
-                else if (ptTargetId.Length == 16)
-                {
-                    // We can skip syncing targets that are resources, as these don't change often
-                    // NOTE: The resource id length is project id truncated to 16 characters
-                    ptProjectsAvailable.Add(ptTargetId, null);
-                }
                 else
                 {
                     _logger.LogWarning($"The target project did not have a full name available {ptTargetId}");
@@ -256,67 +251,91 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>
+        /// Gets the permission a user has to access a resource.
+        /// </summary>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="paratextId">The paratext resource identifier.</param>
+        /// <param name="userId">The user identifier.</param>
+        /// <returns>
+        /// A dictionary of permissions where the key is the user ID and the value is the permission
+        /// </returns>
+        /// <remarks>
+        /// See <see cref="TextInfoPermission" /> for permission values.
+        /// </remarks>
+        public async Task<string> GetResourcePermissionAsync(UserSecret userSecret, string paratextId, string userId)
+        {
+            // See if the source is a resource
+            if (paratextId.Length == ResourceIdentifierLength)
+            {
+                // The resource id is a 41 character project id truncated to 16 characters
+                UserSecret thisUserSecret;
+                if (userId == userSecret.Id)
+                {
+                    thisUserSecret = userSecret;
+                }
+                else
+                {
+                    // Get the user secret
+                    Attempt<UserSecret> userSecretAttempt = await _userSecretRepository.TryGetAsync(userId);
+                    if (!userSecretAttempt.TryResult(out thisUserSecret))
+                    {
+                        thisUserSecret = null;
+                    }
+                }
+
+                bool canRead = false;
+                if (thisUserSecret != null)
+                {
+                    if (!(thisUserSecret.ParatextTokens?.ValidateLifetime() ?? false))
+                    {
+                        await RefreshAccessTokenAsync(thisUserSecret);
+                    }
+
+                    canRead = SFInstallableDBLResource.CheckResourcePermission(paratextId, thisUserSecret, _restClientFactory);
+                }
+
+                return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
+            }
+            else
+            {
+                return TextInfoPermission.None;
+            }
+        }
+
+        /// <summary>
         /// Gets the permissions for a project or resource.
         /// </summary>
         /// <param name="_userSecret">The user secret.</param>
         /// <param name="project">The project - the UserRoles and Source ParatextId are used.</param>
         /// <returns>
-        /// A dictionary of permissions where the key is the user ID and the value is the permission
+        /// A dictionary of permissions where the key is the user ID and the value is the permission.
         /// </returns>
         /// <remarks>
-        /// See <see cref="TextInfoPermission" /> for permisison values.
+        /// See <see cref="TextInfoPermission" /> for permission values.
         /// A dictionary is returned, as permissions can be updated.
         /// </remarks>
         public async Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project)
         {
-            // Calculate the book and source permissions
+            // Calculate the book and resource permissions
             var permissions = new Dictionary<string, string>();
             foreach ((string uid, string role) in project.UserRoles)
             {
-                if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
+                // See if the source is a resource
+                if (project.ParatextId.Length == ResourceIdentifierLength)
                 {
-                    // See if the source is a resource
-                    if (project.ParatextId.Length < 41)
-                    {
-                        // The resource id is a 41 character project id truncated to 16 characters
-                        UserSecret thisUserSecret;
-                        if (uid == userSecret.Id)
-                        {
-                            thisUserSecret = userSecret;
-                        }
-                        else
-                        {
-                            // Get the user secret
-                            Attempt<UserSecret> userSecretAttempt = await _userSecretRepository.TryGetAsync(uid);
-                            if (!userSecretAttempt.TryResult(out thisUserSecret))
-                            {
-                                thisUserSecret = null;
-                            }
-                        }
-
-                        bool canRead = false;
-                        if (thisUserSecret != null)
-                        {
-                            if (!(thisUserSecret.ParatextTokens?.ValidateLifetime() ?? false))
-                            {
-                                await RefreshAccessTokenAsync(thisUserSecret);
-                            }
-
-                            canRead = SFInstallableDBLResource.CheckResourcePermission(project.ParatextId, thisUserSecret, _restClientFactory);
-                        }
-
-                        permissions.Add(uid, canRead ? TextInfoPermission.Read : TextInfoPermission.None);
-                    }
-                    else
-                    {
-                        // TODO: Check for correct project permissions
-                        permissions.Add(uid, TextInfoPermission.Write);
-                    }
+                    permissions.Add(uid, await this.GetResourcePermissionAsync(userSecret, project.ParatextId, uid));
                 }
                 else
                 {
                     // TODO: Check for correct project permissions
-                    permissions.Add(uid, TextInfoPermission.Read);
+                    if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
+                    {
+                        permissions.Add(uid, TextInfoPermission.Write);
+                    }
+                    else
+                    {
+                        permissions.Add(uid, TextInfoPermission.Read);
+                    }
                 }
             }
 
@@ -326,14 +345,22 @@ namespace SIL.XForge.Scripture.Services
         public async Task<IReadOnlyDictionary<string, string>> GetProjectRolesAsync(UserSecret userSecret,
             string projectId)
         {
-            // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
-            // environment so instead we call the registry API.
-            string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
-                $"projects/{projectId}/members");
-            var members = JArray.Parse(response);
-            return members.OfType<JObject>()
-                .Where(m => !string.IsNullOrEmpty((string)m["userId"]) && !string.IsNullOrEmpty((string)m["role"]))
-                .ToDictionary(m => (string)m["userId"], m => (string)m["role"]);
+            if (projectId.Length == ResourceIdentifierLength)
+            {
+                // Resources do not have roles
+                return new Dictionary<string, string>();
+            }
+            else
+            {
+                // Paratext RegistryServer has methods to do this, but it is unreliable to use it in a multi-user
+                // environment so instead we call the registry API.
+                string response = await CallApiAsync(_registryClient, userSecret, HttpMethod.Get,
+                    $"projects/{projectId}/members");
+                var members = JArray.Parse(response);
+                return members.OfType<JObject>()
+                    .Where(m => !string.IsNullOrEmpty((string)m["userId"]) && !string.IsNullOrEmpty((string)m["role"]))
+                    .ToDictionary(m => (string)m["userId"], m => (string)m["role"]);
+            }
         }
 
         /// <summary> Determine if a specific project is in a right to left language. </summary>

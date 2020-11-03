@@ -7,15 +7,15 @@ namespace SourceTargetSplitting
     using Microsoft.Extensions.Options;
     using MongoDB.Bson;
     using MongoDB.Driver;
+    using Paratext;
     using SIL.XForge.Configuration;
     using SIL.XForge.DataAccess;
-    using SIL.XForge.Models;
     using SIL.XForge.Realtime;
     using SIL.XForge.Realtime.Json0;
     using SIL.XForge.Scripture.Models;
     using SIL.XForge.Scripture.Services;
     using SIL.XForge.Services;
-    using SIL.XForge.Utils;
+    using Spart.Parsers.Primitives;
 
     /// <summary>
     /// The object migrator implementation.
@@ -29,14 +29,9 @@ namespace SourceTargetSplitting
         private readonly IMongoDatabase _database;
 
         /// <summary>
-        /// The paratext service.
+        /// The project service.
         /// </summary>
-        private readonly IParatextService _paratextService;
-
-        /// <summary>
-        /// The project secrets repository.
-        /// </summary>
-        private readonly IRepository<SFProjectSecret> _projectSecrets;
+        private readonly ISFProjectService _projectService;
 
         /// <summary>
         /// The realtime service.
@@ -44,32 +39,21 @@ namespace SourceTargetSplitting
         private readonly IRealtimeService _realtimeService;
 
         /// <summary>
-        /// The user secrets repository.
-        /// </summary>
-        private readonly IRepository<UserSecret> _userSecrets;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="ObjectMigrator" /> class.
         /// </summary>
         /// <param name="dataAccessOptions">The data access options.</param>
         /// <param name="mongoClient">The mongo client.</param>
-        /// <param name="paratextService">The paratext service.</param>
-        /// <param name="projectSecrets">The project secrets repository.</param>
+        /// <param name="projectService">The project service.</param>
         /// <param name="realtimeService">The realtime service.</param>
-        /// <param name="userSecrets">The user secrets repository.</param>
         public ObjectMigrator(
             IOptions<DataAccessOptions> dataAccessOptions,
             IMongoClient mongoClient,
-            IParatextService paratextService,
-            IRepository<SFProjectSecret> projectSecrets,
-            IRealtimeService realtimeService,
-            IRepository<UserSecret> userSecrets)
+            ISFProjectService projectService,
+            IRealtimeService realtimeService)
         {
             this._database = mongoClient.GetDatabase(dataAccessOptions.Value.MongoDatabaseName);
-            this._paratextService = paratextService;
-            this._projectSecrets = projectSecrets;
+            this._projectService = projectService;
             this._realtimeService = realtimeService;
-            this._userSecrets = userSecrets;
         }
 
         /// <inheritdoc />
@@ -83,56 +67,29 @@ namespace SourceTargetSplitting
             }
 
             // Get the highest ranked for this project, that probably has source access
-            string userId = targetProject.UserRoles
+            string[] userIds = targetProject.UserRoles
                 .Where(ur => ur.Value == SFProjectRole.Administrator || ur.Value == SFProjectRole.Translator)
                 .OrderBy(ur => ur.Value)
-                .FirstOrDefault().Key;
+                .Select(ur => ur.Key)
+                .ToArray();
 
-            // Get the user secret for the user
-            Attempt<UserSecret> userSecretAttempt = await this._userSecrets.TryGetAsync(userId);
-            if (!userSecretAttempt.TryResult(out UserSecret userSecret))
+            // Iterate through the users until we find someone with access
+            foreach (string userId in userIds)
             {
-                throw new DataNotFoundException("The user does not exist.");
-            }
-
-            // We check projects first, in case it is a project, but also because this will refresh the token for us
-            IReadOnlyList<ParatextProject> projects = await this._paratextService.GetProjectsAsync(userSecret).ConfigureAwait(false);
-            ParatextProject source = projects.SingleOrDefault(r => r.ParatextId == sourceId);
-            if (source == null)
-            {
-                // Otherwise, see if this is a resource
-                projects = this._paratextService.GetResources(userSecret);
-                source = projects.SingleOrDefault(r => r.ParatextId == sourceId);
-                if (source == null)
+                try
                 {
-                    throw new DataNotFoundException("The source paratext project does not exist.");
+                    // Use the project service to create the resource project
+                    await this._projectService.CreateResourceProjectAsync(userId, sourceId).ConfigureAwait(false);
+
+                    // Successfully created
+                    break;
+                }
+                catch (DataNotFoundException)
+                {
+                    // We don't have access
+                    continue;
                 }
             }
-
-            var project = new SFProject
-            {
-                ParatextId = sourceId,
-                Name = source.Name,
-                ShortName = source.ShortName,
-                WritingSystem = new WritingSystem { Tag = source.LanguageTag },
-                TranslateConfig = new TranslateConfig
-                {
-                    TranslationSuggestionsEnabled = false,
-                    Source = null
-                },
-                CheckingConfig = new CheckingConfig
-                {
-                    CheckingEnabled = false
-                }
-            };
-
-            // Connect to the realtime service
-            using IConnection connection = await this._realtimeService.ConnectAsync().ConfigureAwait(false);
-
-            // Create the new project using the realtime service
-            string projectId = ObjectId.GenerateNewId().ToString();
-            IDocument<SFProject> projectDoc = await connection.CreateAsync(projectId, project);
-            await this._projectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id }).ConfigureAwait(false);
         }
 
         /// <inheritdoc />

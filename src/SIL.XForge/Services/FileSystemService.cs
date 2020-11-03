@@ -50,9 +50,9 @@ namespace SIL.XForge.Services
             Directory.Delete(path, true);
         }
 
-        public IEnumerable<string> EnumerateFiles(string path)
+        public IEnumerable<string> EnumerateFiles(string path, string searchPattern)
         {
-            return Directory.EnumerateFiles(path);
+            return Directory.EnumerateFiles(path, searchPattern);
         }
 
         public IEnumerable<string> EnumerateDirectories(string path)

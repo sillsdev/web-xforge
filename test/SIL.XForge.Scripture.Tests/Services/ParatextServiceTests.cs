@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -28,6 +29,7 @@ using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Services;
+using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -252,54 +254,37 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetPermissionsAsync_UserHasNoResourcePermission()
-        {
-            // Set up environment
-            var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
-
-            // This is to make Tokens.ValidateLifetime() return false
-            user01Secret.ParatextTokens.AccessToken = null;
-
-            // Set up mock REST client to return an unsuccessful HEAD request
-            ISFRESTClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
-            ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
-            mockClient.Head(Arg.Any<string>()).Throws<WebException>();
-            mockRestClientFactory
-                .Create(Arg.Any<string>(), Arg.Any<string>(), user01Secret)
-                .Returns(mockClient);
-
-            // Set up mock project
-            var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
-            var project = projects.First();
-
-            var permissions = await env.Service.GetPermissionsAsync(user01Secret, project);
-            Assert.That(permissions.Count(), Is.EqualTo(2));
-            Assert.That(permissions.First().Value, Is.EqualTo(TextInfoPermission.None));
-            Assert.That(permissions.Last().Value, Is.EqualTo(TextInfoPermission.None));
-        }
-
-        [Test]
         public async Task GetPermissionsAsync_UserResourcePermission()
         {
             // Set up environment
             var env = new TestEnvironment();
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01);
+            UserSecret user02Secret = env.MakeUserSecret(env.User02, env.Username02);
+            env.MockRepository.Query().Returns(new List<UserSecret>() { user01Secret, user02Secret }.AsQueryable());
 
             // This is to make Tokens.ValidateLifetime() return false
             user01Secret.ParatextTokens.AccessToken = null;
+            user02Secret.ParatextTokens.AccessToken = null;
 
             // Set up mock REST client to return a successful HEAD request
             ISFRESTClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
-            ISFRESTClient mockClient = Substitute.For<ISFRESTClient>();
-            mockClient.Head(Arg.Any<string>()).Returns(string.Empty);
+            ISFRESTClient successMockClient = Substitute.For<ISFRESTClient>();
+            successMockClient.Head(Arg.Any<string>()).Returns(string.Empty);
             mockRestClientFactory
                 .Create(Arg.Any<string>(), Arg.Any<string>(), user01Secret)
-                .Returns(mockClient);
+                .Returns(successMockClient);
+
+            // Set up mock REST client to return an unsuccessful HEAD request
+            ISFRESTClient failureMockClient = Substitute.For<ISFRESTClient>();
+            failureMockClient.Head(Arg.Any<string>()).Throws<WebException>();
+            mockRestClientFactory
+                .Create(Arg.Any<string>(), Arg.Any<string>(), user02Secret)
+                .Returns(failureMockClient);
 
             // Set up mock project
             var projects = await env.RealtimeService.GetRepository<SFProject>().GetAllAsync();
             var project = projects.First();
+            project.ParatextId = "resid_is_16_char";
 
             var permissions = await env.Service.GetPermissionsAsync(user01Secret, project);
             Assert.That(permissions.Count(), Is.EqualTo(2));
@@ -553,9 +538,10 @@ namespace SIL.XForge.Scripture.Services
                 env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
 
-            ScrText sourceScrText = env.GetScrText(associatedPtUser, targetProjectId, Models.TextType.Source, sourceProjectId);
-            env.MockScrTextCollection.FindById(env.Username01, targetProjectId, Models.TextType.Source)
+            ScrText sourceScrText = env.GetScrText(associatedPtUser, sourceProjectId, Models.TextType.Target);
+            env.MockScrTextCollection.FindById(env.Username01, sourceProjectId, Models.TextType.Target)
                 .Returns(sourceScrText);
+
             await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
             await env.Service.SendReceiveAsync(user01Secret, sourceProjectId);
             // Below, we are checking also that the SharedProject has a
@@ -563,23 +549,30 @@ namespace SIL.XForge.Scripture.Services
             // Better may be to assert that each SharedProject.Permissions.GetUser()
             // returns a desired PT username, if the test environment wasn't
             // mired in mock.
-            env.MockSharingLogicWrapper.Received(1).ShareChanges(
+            env.MockSharingLogicWrapper.Received(2).ShareChanges(
                 Arg.Is<List<SharedProject>>(
                     list =>
-                    list.Count().Equals(2) && list[0].SendReceiveId == targetProjectId &&
-                    list[1].SendReceiveId == sourceProjectId
-                        && Object.ReferenceEquals(list[0].Permissions, list[0].ScrText.Permissions)
-                        && Object.ReferenceEquals(list[1].Permissions, list[1].ScrText.Permissions)),
+                    list.Count().Equals(1) && (list[0].SendReceiveId == targetProjectId || list[0].SendReceiveId == sourceProjectId)
+                        && Object.ReferenceEquals(list[0].Permissions, list[0].ScrText.Permissions)),
                     Arg.Any<SharedRepositorySource>(), out Arg.Any<List<SendReceiveResult>>(),
                     Arg.Any<List<SharedProject>>());
             env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
 
             // Replaces obsolete source project if the source project has been changed
             string newSourceProjectId = "paratext_" + env.Project03;
-            string sourcePath = Path.Combine(env.SyncDir, targetProjectId, "source");
+            string sourcePath = Path.Combine(env.SyncDir, newSourceProjectId, "target");
+
+            // Only set the the new source ScrText when it is "cloned" to the filesystem
+            env.MockFileSystemService.When(fs => fs.CreateDirectory(sourcePath)).Do(_ =>
+            {
+                ScrText newSourceScrText = env.GetScrText(associatedPtUser, newSourceProjectId, Models.TextType.Target);
+                env.MockScrTextCollection.FindById(env.Username01, newSourceProjectId, Models.TextType.Target)
+                    .Returns(newSourceScrText);
+            });
+
             await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
             await env.Service.SendReceiveAsync(user01Secret, newSourceProjectId);
-            env.MockFileSystemService.Received(1).DeleteDirectory(sourcePath);
+            env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
             env.MockFileSystemService.Received(1).CreateDirectory(sourcePath);
             mockSource.Received(1).Pull(sourcePath, Arg.Is<SharedRepository>(repo =>
                 repo.SendReceiveId == newSourceProjectId));
@@ -600,7 +593,7 @@ namespace SIL.XForge.Scripture.Services
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
             string resourceId = "test_resource_id"; // A missing or invalid resource or project
             await env.Service.SendReceiveAsync(user01Secret, ptProjectId);
-            await env.Service.SendReceiveAsync(user01Secret, resourceId);
+            Assert.ThrowsAsync<ArgumentException>(() => env.Service.SendReceiveAsync(user01Secret, resourceId));
         }
 
         [Test]
@@ -630,6 +623,7 @@ namespace SIL.XForge.Scripture.Services
             public readonly string User02 = "user02";
             public readonly string User03 = "user03";
             public readonly string Username01 = "User 01";
+            public readonly string Username02 = "User 02";
             public readonly string SyncDir = Path.GetTempPath();
 
             private string ruthBookUsfm = "\\id RUT - ProjectNameHere\n" +
@@ -932,25 +926,17 @@ namespace SIL.XForge.Scripture.Services
                 return ptProjectId;
             }
 
-            public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId, Models.TextType textType, string sourceGuid = null)
+            public MockScrText GetScrText(ParatextUser associatedPtUser, string projectId, Models.TextType textType = Models.TextType.Target)
             {
-                string textTypeDir;
-                string guid = projectId;
-                switch (textType)
+                string textTypeDir = textType switch
                 {
-                    case Models.TextType.Source:
-                        textTypeDir = "source";
-                        Assert.NotNull(sourceGuid, "Setup: must provide a source guid");
-                        guid = sourceGuid;
-                        break;
-                    default:
-                        textTypeDir = "target";
-                        break;
-                }
+                    Models.TextType.Target => "target",
+                    _ => throw new InvalidEnumArgumentException(nameof(textType), (int)textType, typeof(Models.TextType)),
+                };
                 string scrtextDir = Path.Combine(SyncDir, projectId, textTypeDir);
                 ProjectName projectName = new ProjectName() { ProjectPath = scrtextDir, ShortName = "Proj" };
                 var scrText = new MockScrText(associatedPtUser, projectName);
-                scrText.CachedGuid = guid;
+                scrText.CachedGuid = projectId;
                 scrText.Data.Add("RUT", ruthBookUsfm);
                 return scrText;
             }

@@ -17,6 +17,7 @@ namespace SIL.XForge.Scripture.Services
         bool IsProjectLanguageRightToLeft(UserSecret userSecret, string ptProjectId, TextType textType = TextType.Target);
 
         IReadOnlyList<ParatextResource> GetResources(UserSecret userSecret);
+        Task<string> GetResourcePermissionAsync(UserSecret _userSecret, string paratextId, string userId);
         Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret _userSecret, SFProject project);
 
         IReadOnlyList<int> GetBookList(UserSecret userSecret, string ptProjectId, TextType textType = TextType.Target);

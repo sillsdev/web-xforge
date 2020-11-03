@@ -39,11 +39,6 @@ namespace SIL.XForge.Scripture.Services
         private const string DBLResourceEntriesApiCall = "api/resource_entries";
 
         /// <summary>
-        /// The base URL.
-        /// </summary>
-        private readonly string _baseUrl;
-
-        /// <summary>
         /// The file system service.
         /// </summary>
         private readonly IFileSystemService _fileSystemService;
@@ -109,8 +104,7 @@ namespace SIL.XForge.Scripture.Services
         private SFInstallableDBLResource(UserSecret userSecret, ParatextOptions paratextOptions,
             ISFRESTClientFactory restClientFactory, IFileSystemService fileSystemService,
             IJwtTokenHelper jwtTokenHelper, IProjectDeleter projectDeleter,
-            IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider,
-            string baseUrl = null)
+            IMigrationOperations migrationOperations, IZippedResourcePasswordProvider passwordProvider)
             : base(projectDeleter, migrationOperations, passwordProvider)
         {
             this._userSecret = userSecret;
@@ -126,8 +120,6 @@ namespace SIL.XForge.Scripture.Services
             {
                 throw new ArgumentNullException(nameof(fileSystemService));
             }
-
-            this._baseUrl = string.IsNullOrWhiteSpace(baseUrl) ? InternetAccess.ParatextDBLServer : baseUrl;
         }
 
         /// <summary>
@@ -557,7 +549,7 @@ namespace SIL.XForge.Scripture.Services
 
                     string url = BuildDBLResourceEntriesUrl(baseUri, id);
                     var resource = new SFInstallableDBLResource(userSecret, paratextOptions, restClientFactory,
-                        fileSystemService, jwtTokenHelper, projectDeleter, migrationOperations, passwordProvider, baseUri)
+                        fileSystemService, jwtTokenHelper, projectDeleter, migrationOperations, passwordProvider)
                     {
                         DisplayName = name,
                         Name = name,
