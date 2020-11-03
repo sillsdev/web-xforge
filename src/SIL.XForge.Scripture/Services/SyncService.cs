@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Hangfire;
 using SIL.XForge.Realtime;
@@ -15,7 +16,9 @@ namespace SIL.XForge.Scripture.Services
         private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly IRealtimeService _realtimeService;
 
-        public SyncService(IBackgroundJobClient backgroundJobClient, IRealtimeService realtimeService)
+        public SyncService(
+            IBackgroundJobClient backgroundJobClient,
+            IRealtimeService realtimeService)
         {
             _backgroundJobClient = backgroundJobClient;
             _realtimeService = realtimeService;
@@ -32,7 +35,7 @@ namespace SIL.XForge.Scripture.Services
                     throw new ForbiddenException();
                 }
 
-                sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ParatextId;
+                sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
                 await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
             }
 
