@@ -77,6 +77,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 ParatextProject sourcePTProject = ptProjects
                     .SingleOrDefault(p => p.ParatextId == settings.SourceParatextId);
+                string sourceProjectRef = null;
                 if (sourcePTProject == null)
                 {
                     // If it is not a project, see if there is a matching resource
@@ -86,10 +87,24 @@ namespace SIL.XForge.Scripture.Services
                     {
                         throw new DataNotFoundException("The source paratext project does not exist.");
                     }
+                    else
+                    {
+                        SFProject sourceProject = RealtimeService.QuerySnapshots<SFProject>()
+                           .FirstOrDefault(p => p.ParatextId == sourcePTProject.ParatextId);
+                        if (sourceProject != null)
+                        {
+                            sourceProjectRef = sourceProject.Id;
+                        }
+                        else
+                        {
+                            sourceProjectRef = await CreateResourceProjectInternalAsync(curUserId, sourcePTProject);
+                        }
+                    }
                 }
                 source = new TranslateSource
                 {
                     ParatextId = settings.SourceParatextId,
+                    ProjectRef = sourceProjectRef,
                     Name = sourcePTProject.Name,
                     ShortName = sourcePTProject.ShortName,
                     WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag }
@@ -146,6 +161,46 @@ namespace SIL.XForge.Scripture.Services
             return projectId;
         }
 
+        /// <summary>
+        /// Asynchronously creates a project for a Paratext resource.
+        /// </summary>
+        /// <param name="curUserId">The current user identifier.</param>
+        /// <param name="paratextId">The paratext resource identifier.</param>
+        /// <returns>SF project id of created project</returns>
+        /// <remarks>
+        /// This method will also work for a source project that has been deleted for some reason.
+        /// </remarks>
+        /// <exception cref="DataNotFoundException">
+        /// The user does not exist.
+        /// or
+        /// The paratext project does not exist.
+        /// </exception>
+        /// <exception cref="InvalidOperationException"></exception>
+        public async Task<string> CreateResourceProjectAsync(string curUserId, string paratextId)
+        {
+            Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+            if (!userSecretAttempt.TryResult(out UserSecret userSecret))
+            {
+                throw new DataNotFoundException("The user does not exist.");
+            }
+
+            // We check projects first, in case it is a project
+            IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
+            ParatextProject ptProject = ptProjects.SingleOrDefault(p => p.ParatextId == paratextId);
+            if (ptProject == null)
+            {
+                // If it is not a project, see if there is a matching resource
+                IReadOnlyList<ParatextResource> resources = this._paratextService.GetResources(userSecret);
+                ptProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
+                if (ptProject == null)
+                {
+                    throw new DataNotFoundException("The paratext project or resource does not exist.");
+                }
+            }
+
+            return await CreateResourceProjectInternalAsync(curUserId, ptProject);
+        }
+
         public async Task DeleteProjectAsync(string curUserId, string projectId)
         {
             string ptProjectId;
@@ -196,6 +251,7 @@ namespace SIL.XForge.Scripture.Services
 
                 ParatextProject sourcePTProject = ptProjects
                     .SingleOrDefault(p => p.ParatextId == settings.SourceParatextId);
+                string sourceProjectRef = null;
                 if (sourcePTProject == null)
                 {
                     // If it is not a project, see if there is a matching resource
@@ -205,10 +261,24 @@ namespace SIL.XForge.Scripture.Services
                     {
                         throw new DataNotFoundException("The source paratext project does not exist.");
                     }
+                    else
+                    {
+                        SFProject sourceProject = RealtimeService.QuerySnapshots<SFProject>()
+                           .FirstOrDefault(p => p.ParatextId == sourcePTProject.ParatextId);
+                        if (sourceProject != null)
+                        {
+                            sourceProjectRef = sourceProject.Id;
+                        }
+                        else
+                        {
+                            sourceProjectRef = await CreateResourceProjectInternalAsync(curUserId, sourcePTProject);
+                        }
+                    }
                 }
                 source = new TranslateSource
                 {
                     ParatextId = settings.SourceParatextId,
+                    ProjectRef = sourceProjectRef,
                     Name = sourcePTProject.Name,
                     ShortName = sourcePTProject.ShortName,
                     WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag }
@@ -486,6 +556,51 @@ namespace SIL.XForge.Scripture.Services
         {
             if (setting != null)
                 builder.Set(field, setting);
+        }
+
+        /// <summary>
+        /// Asynchronously creates a ScriuptureForge project from Paratext resource/project.
+        /// </summary>
+        /// <param name="curUserId">The current user identifier.</param>
+        /// <param name="ptProject">The paratext project.</param>
+        /// <returns>SF project id of created project</returns>
+        /// <remarks>
+        /// This method will also work for a source project that has been deleted for some reason.
+        /// </remarks>
+        /// <exception cref="InvalidOperationException"></exception>
+        private async Task<string> CreateResourceProjectInternalAsync(string curUserId, ParatextProject ptProject)
+        {
+            var project = new SFProject
+            {
+                ParatextId = ptProject.ParatextId,
+                Name = ptProject.Name,
+                ShortName = ptProject.ShortName,
+                WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
+                TranslateConfig = new TranslateConfig
+                {
+                    TranslationSuggestionsEnabled = false,
+                    Source = null
+                },
+                CheckingConfig = new CheckingConfig
+                {
+                    CheckingEnabled = false
+                }
+            };
+
+            // Create the new project using the realtime service
+            string projectId = ObjectId.GenerateNewId().ToString();
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            {
+                if (this.RealtimeService.QuerySnapshots<SFProject>().Any(
+                    (SFProject sfProject) => sfProject.ParatextId == project.ParatextId))
+                {
+                    throw new InvalidOperationException(ErrorAlreadyConnectedKey);
+                }
+                IDocument<SFProject> projectDoc = await conn.CreateAsync(projectId, project);
+                await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
+            }
+
+            return projectId;
         }
     }
 }
