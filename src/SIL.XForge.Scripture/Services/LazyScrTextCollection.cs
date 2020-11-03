@@ -1,15 +1,21 @@
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Linq;
 using Paratext.Data;
 using Paratext.Data.ProjectSettingsAccess;
-using SIL.XForge.Services;
 using SIL.XForge.Scripture.Models;
-using Paratext.Data.Users;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
     public class LazyScrTextCollection : IScrTextCollection
     {
+        /// <summary>
+        /// A simple in memory cache that lasts the until the end of the request.
+        /// </summary>
+        private ConcurrentDictionary<string, ScrText> scrTextCache = new ConcurrentDictionary<string, ScrText>();
         public LazyScrTextCollection()
         {
             FileSystemService = new FileSystemService();
@@ -42,18 +48,44 @@ namespace SIL.XForge.Scripture.Services
             if (!FileSystemService.DirectoryExists(baseProjectPath))
                 return null;
 
+            // We cache the ScrText object as this method is called repeated during a sync
+            // This will only last in memory until the sync is finished
+            string cacheKey = $"{ptUsername}-{projectId}-{textType}";
+            if (this.scrTextCache.ContainsKey(cacheKey))
+            {
+                return this.scrTextCache[cacheKey];
+            }
+
             string fullProjectPath = Path.Combine(baseProjectPath, TextTypeUtils.DirectoryName(textType));
             string settingsFile = Path.Combine(fullProjectPath, ProjectSettings.fileName);
             if (!FileSystemService.FileExists(settingsFile))
-                return null;
+            {
+                // If this is an older project (most likely a resource), there will be an SSF file
+                settingsFile = FileSystemService.EnumerateFiles(fullProjectPath, "*.ssf").FirstOrDefault();
+
+                // We couldn't find the xml or ssf file
+                if (settingsFile == null)
+                {
+                    return null;
+                }
+            }
 
             string name = GetNameFromSettings(settingsFile);
             if (name != null)
-                return CreateScrText(ptUsername, new ProjectName()
+            {
+                ScrText scrText = CreateScrText(ptUsername, new ProjectName()
                 {
                     ProjectPath = fullProjectPath,
                     ShortName = name
                 });
+
+                // We don't mind if this fails - another thread would have updated this
+                this.scrTextCache.TryAdd(cacheKey, scrText);
+
+                // return the object
+                return scrText;
+            }
+
             return null;
         }
 
