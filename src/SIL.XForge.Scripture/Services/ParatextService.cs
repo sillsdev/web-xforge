@@ -212,8 +212,13 @@ namespace SIL.XForge.Scripture.Services
         public async Task<IReadOnlyList<ParatextProject>> GetProjectsAsync(UserSecret userSecret)
         {
             IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(userSecret);
-            IEnumerable<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories();
-            return GetProjects(userSecret, remotePtProjects, ptRepoSource.GetProjectsMetaData());
+            List<SharedRepository> remotePtProjects = ptRepoSource.GetRepositories().ToList();
+            List<ProjectMetadata> projectMetadata = ptRepoSource.GetProjectsMetaData().ToList();
+
+            // Omit projects that are not in the PT Registry until we support connecting to such projects.
+            remotePtProjects.RemoveAll((SharedRepository project) =>
+                !projectMetadata.Any((ProjectMetadata metadata) => metadata.ProjectGuid == project.SendReceiveId));
+            return GetProjects(userSecret, remotePtProjects, projectMetadata);
         }
 
         public async Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId)
