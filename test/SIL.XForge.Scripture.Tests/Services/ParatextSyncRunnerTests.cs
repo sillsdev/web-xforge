@@ -952,9 +952,9 @@ namespace SIL.XForge.Scripture.Services
                         .Select(b => Canon.BookIdToNumber(b.Id)).ToArray());
                 foreach (Book book in books)
                 {
-                    AddPTBook("project01", "target", book.Id, book.HighestTargetChapter, TextType.Target, book.MissingTargetChapters, book.InvalidChapters);
+                    AddPTBook("target", book.Id, book.HighestTargetChapter, TextType.Target, book.MissingTargetChapters, book.InvalidChapters);
                     if (book.HighestSourceChapter > 0 || book.HighestSourceChapter == book.HighestTargetChapter)
-                        AddPTBook("project02", "source", book.Id, book.HighestSourceChapter, TextType.Target, book.MissingSourceChapters);
+                        AddPTBook("source", book.Id, book.HighestSourceChapter, TextType.Target, book.MissingSourceChapters);
                 }
             }
 
@@ -964,7 +964,7 @@ namespace SIL.XForge.Scripture.Services
                     u.Set(pr => pr.UserRoles[userId], role));
             }
 
-            private void AddPTBook(string projectId, string paratextId, string bookId, int highestChapter, TextType textType, HashSet<int> missingChapters,
+            private void AddPTBook(string paratextId, string bookId, int highestChapter, TextType textType, HashSet<int> missingChapters,
                 HashSet<int> invalidChapters = null)
             {
                 MockGetBookText(paratextId, bookId, textType);

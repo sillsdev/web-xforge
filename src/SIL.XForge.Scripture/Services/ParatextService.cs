@@ -298,7 +298,8 @@ namespace SIL.XForge.Scripture.Services
             }
             else
             {
-                return TextInfoPermission.None;
+                // Default to read permissions for projects used as  sources
+                return TextInfoPermission.Read;
             }
         }
 
@@ -316,7 +317,7 @@ namespace SIL.XForge.Scripture.Services
         /// </remarks>
         public async Task<Dictionary<string, string>> GetPermissionsAsync(UserSecret userSecret, SFProject project)
         {
-            // Calculate the book and resource permissions
+            // Calculate the project and resource permissions
             var permissions = new Dictionary<string, string>();
             foreach ((string uid, string role) in project.UserRoles)
             {
@@ -327,7 +328,7 @@ namespace SIL.XForge.Scripture.Services
                 }
                 else
                 {
-                    // TODO: Check for correct project permissions
+                    // TODO: Check for correct book permissions
                     if (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
                     {
                         permissions.Add(uid, TextInfoPermission.Write);
