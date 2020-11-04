@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -468,8 +469,20 @@ namespace SIL.XForge.Scripture.Services
             if (_projectDoc == null || _projectSecret == null)
                 return;
 
-            IReadOnlyDictionary<string, string> ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
-                _projectDoc.Data.ParatextId);
+            bool updateRoles = true;
+            IReadOnlyDictionary<string, string> ptUserRoles;
+            try
+            {
+                ptUserRoles = await _paratextService.GetProjectRolesAsync(_userSecret,
+                    _projectDoc.Data.ParatextId);
+            }
+            catch (HttpRequestException)
+            {
+                // This throws a 404 if the user does not have access to the project
+                ptUserRoles = new Dictionary<string, string>();
+                updateRoles = false;
+            }
+
             var userIdsToRemove = new List<string>();
             var projectUsers = await _realtimeService.QuerySnapshots<User>()
                     .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
@@ -488,12 +501,16 @@ namespace SIL.XForge.Scripture.Services
                 // complete.
                 op.Inc(pd => pd.Sync.QueuedCount, -1);
 
-                foreach (var projectUser in projectUsers)
+                if (updateRoles)
                 {
-                    if (ptUserRoles.TryGetValue(projectUser.ParatextId, out string role))
-                        op.Set(p => p.UserRoles[projectUser.UserId], role);
-                    else if (_projectDoc.Data.UserRoles[projectUser.UserId].StartsWith("pt"))
-                        userIdsToRemove.Add(projectUser.UserId);
+                    // Only update the roles if we received information from Paratext
+                    foreach (var projectUser in projectUsers)
+                    {
+                        if (ptUserRoles.TryGetValue(projectUser.ParatextId, out string role))
+                            op.Set(p => p.UserRoles[projectUser.UserId], role);
+                        else if (_projectDoc.Data.UserRoles[projectUser.UserId].StartsWith("pt"))
+                            userIdsToRemove.Add(projectUser.UserId);
+                    }
                 }
                 bool isRtl = _paratextService
                     .IsProjectLanguageRightToLeft(_userSecret, _projectDoc.Data.ParatextId);
