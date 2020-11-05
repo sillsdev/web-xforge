@@ -36,7 +36,7 @@ describe('SaProjectsComponent', () => {
       RouterTestingModule,
       UICommonModule,
       TestTranslocoModule,
-      TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio]))
+      TestRealtimeModule.forRoot(new TypeRegistry([TestProjectDoc], [FileType.Audio], []))
     ],
     declarations: [SaProjectsComponent],
     providers: [

@@ -29,7 +29,7 @@ describe('FileService', () => {
     imports: [
       HttpClientTestingModule,
       TestTranslocoModule,
-      TestRealtimeModule.forRoot(new TypeRegistry([TestDataDoc], [FileType.Audio]))
+      TestRealtimeModule.forRoot(new TypeRegistry([TestDataDoc], [FileType.Audio], []))
     ],
     providers: [
       FileService,

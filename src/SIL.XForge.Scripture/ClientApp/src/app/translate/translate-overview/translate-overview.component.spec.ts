@@ -26,10 +26,12 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TranslationEngineService } from '../../core/translation-engine.service';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedSFProjectService = mock(SFProjectService);
+const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
 
@@ -41,6 +43,7 @@ describe('TranslateOverviewComponent', () => {
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: UserService, useMock: mockedUserService },
       { provide: CookieService, useMock: mock(CookieService) }
@@ -171,7 +174,7 @@ class TestEnvironment {
     const params = { ['projectId']: 'project01' } as Params;
     when(mockedActivatedRoute.params).thenReturn(of(params));
     when(mockedActivatedRoute.snapshot).thenReturn({} as any); // just needs to not be null/undefined
-    when(mockedSFProjectService.createTranslationEngine('project01')).thenReturn(
+    when(mockedTranslationEngineService.createTranslationEngine('project01')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
     );
     when(this.mockedRemoteTranslationEngine.getStats()).thenResolve({ confidence: 0.25, trainedSegmentCount: 100 });

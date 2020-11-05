@@ -16,6 +16,7 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TranslationEngineService } from '../../core/translation-engine.service';
 
 const ENGINE_QUALITY_STAR_COUNT = 3;
 const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]);
@@ -63,6 +64,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     private readonly activatedRoute: ActivatedRoute,
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
+    private readonly translationEngineService: TranslationEngineService,
     private readonly userService: UserService,
     private readonly i18n: I18nService
   ) {
@@ -185,7 +187,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       return;
     }
 
-    this.translationEngine = this.projectService.createTranslationEngine(this.projectDoc.id);
+    this.translationEngine = this.translationEngineService.createTranslationEngine(this.projectDoc.id);
     const trainingStatus$ = this.translationEngine.listenForTrainingStatus().pipe(
       tap(
         undefined,
